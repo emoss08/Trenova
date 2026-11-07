@@ -12,6 +12,7 @@ otherwise. The defects these boundaries tend to grow are in
 | A person (`PrincipalTypeUser`) | a session, sealed against tampering in Redis (`infrastructure/redis/authstore/seal.go`) | `authctx.SetSessionAuthContext` | the permission engine, active roles, row-level security |
 | A federated person | an OIDC sign-in, then a session that records the issuer | `identity/app/authservice` | as above, and only in organizations that trust that issuer (`requireTargetSignIn`) |
 | An API key (`PrincipalTypeAPIKey`) | a key looked up by hash | `authctx.SetAPIKeyContext` | its own grants |
+| A SCIM directory (an identity provider provisioning people) | a token looked up by prefix, its hash compared in constant time, for the slug in the path | `scimservice.Authenticate` | its own organization and business unit, only the people it provisioned or linked, and for roles only what the person who saved each group mapping may still grant ([scim.md](scim.md)) |
 | An agent (`PrincipalTypeAgent`) | the run it belongs to | the agent runtime | `agentceiling`, autonomy tiers, taint, and a person's approval for what it may not do alone |
 | A Capture device | device tokens from a pairing a person approved | `api/handlers/capturehandler/device.go` | the person it acts for, the roles active at approval, their session epoch |
 | A local print client | the Windows process on the other end of the socket | `desktop/capture/bins/trenova-capture-svc/src/win/peer.rs` | `ClientAccess` in `capture-ipp`: only the spooler may print, others may only discover |
@@ -30,7 +31,7 @@ is the only thing that narrows the query.
 |---|---|
 | Carrier tracking, tender, rate confirmation, invoice share, portal invitation, password reset, Capture pairing | a token looked up by its hash |
 | Telematics, email, mailbox and accounting webhooks | the provider's signature, then a realm or account the tenant verified |
-| AS2 | the partner's identifier and its signature. A profile may accept unsigned documents, which the partner page warns about (`acceptsUnsignedInbound`) |
+| AS2 | the profile's own inbound URL, an unguessable token that names one profile and so its tenant, then the identifier pair that profile holds and the partner's signature. A receipt is read inside that tenant and must belong to the profile's partner. A profile may accept unsigned documents, which the partner page warns about (`acceptsUnsignedInbound`) |
 | Web watch deliveries | an HMAC over timestamp and body, per watch (`shared/exa`) |
 
 Tenants configure no outbound webhook. An integration's base URL goes through the
@@ -54,7 +55,9 @@ parameters, so what a person approved is what runs ([proposal-previews.md](propo
 | Operator to the cluster | a namespaced `Role`, no `ClusterRole`; a namespace the chart creates enforces `baseline` Pod Security |
 | TMS to imaging worker | mutual TLS ([imaging-worker.md](imaging-worker.md)) |
 | Every client to PostgreSQL | `verify-full` against the install's CA: CloudNativePG's on Kubernetes, `postgres-certs` in Compose. No image carries a key |
-| TMS to Temporal and Gotenberg, GTC's dashboard | nothing but the network: NetworkPolicies in the chart, separate Docker networks in Compose. Neither takes a credential, so nothing that parses files may share a network with them |
+| TMS to Gotenberg | basic auth with a generated password on every route but `/health`, and the network: NetworkPolicies in the chart, a network of its own in Compose |
+| TMS to Temporal | mutual TLS against a CA issued per install (the chart's Secrets, `temporal-certs` in Compose), on the frontend and between Temporal's services; production refuses a Temporal connection that presents no client certificate, API key or profile (`temporalconfig.ValidateProduction`) |
+| GTC's dashboard | nothing but the network: NetworkPolicies in the chart, the data network in Compose. It takes no credential, so nothing that parses files may share a network with it |
 
 A scanner driver is native code in the process that loads it, so what it returns crosses no
 boundary; parse it defensively anyway. A printed job comes from whoever printed, so `pwg.rs` checks

@@ -156,11 +156,33 @@ type TelematicsWebhookConfig struct {
 	WebhookSecret string
 }
 
+type TractorHome struct {
+	TractorID     pulid.ID
+	WorkerID      pulid.ID
+	HomeLatitude  float64
+	HomeLongitude float64
+}
+
+type HomeVisit struct {
+	WorkerID pulid.ID
+	At       int64
+}
+
+type HomeVisitRecorder interface {
+	RecordPositions(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		positions []*telematics.VehiclePosition,
+	)
+}
+
 type TelematicsRepository interface {
 	UpsertVehiclePositions(
 		ctx context.Context,
 		positions []*telematics.VehiclePosition,
 	) error
+	ListTractorHomes(ctx context.Context, tractorIDs []pulid.ID) ([]TractorHome, error)
+	RecordHomeVisits(ctx context.Context, visits []HomeVisit) error
 	ListVehiclePositions(
 		ctx context.Context,
 		req *ListVehiclePositionsRequest,

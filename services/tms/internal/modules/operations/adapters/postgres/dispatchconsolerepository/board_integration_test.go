@@ -76,7 +76,7 @@ func TestGetBoardSummary_CountsMovesByTheirNextStop(t *testing.T) {
 
 	sm := shipmentdb.ShipmentMoves
 	move, err := sm.AllTenants().
-		Where(sm.Status.In(shipmentvocab.MoveStatusNew, shipmentvocab.MoveStatusAssigned)).
+		Where(sm.Status.Eq(shipmentvocab.MoveStatusNew)).
 		Order(sm.ID.Asc()).
 		First(dbscope.WithSystem(ctx, "test"), db)
 	require.NoError(t, err)
@@ -159,4 +159,10 @@ func TestGetBoardSummary_CountsMovesByTheirNextStop(t *testing.T) {
 	closedPickup := pickup(now-7200, now-3600)
 	assert.Equal(t, [3]int{1, 0, 0},
 		[3]int{closedPickup.OverdueMoves, closedPickup.DueNowMoves, closedPickup.DueTodayMoves})
+
+	// The coverage alarms on the console's figure strip read the same rule for a move
+	// nobody holds: an open pickup is Due now, and only a closed one is Late.
+	assert.Equal(t, [2]int{0, 1}, [2]int{openPickup.LateMoves, openPickup.AtRiskMoves},
+		"an uncovered move with its pickup window open is due now, not late")
+	assert.Equal(t, [2]int{1, 0}, [2]int{closedPickup.LateMoves, closedPickup.AtRiskMoves})
 }

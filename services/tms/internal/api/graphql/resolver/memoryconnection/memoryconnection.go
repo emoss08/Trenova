@@ -2,20 +2,20 @@ package memoryconnection
 
 import (
 	"cmp"
-	"encoding/base64"
 	"fmt"
 	"slices"
 	"strconv"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 )
 
 const (
 	memoryDefaultPage = 20
 	memoryMaxPage     = 200
-	memoryCursorTag   = "mem:"
 )
 
 // MemoryField is one column of an in-memory connection: how to read it from a
@@ -26,6 +26,7 @@ type MemoryField[T any] func(row T) any
 // aggregate, so the data table can search, filter, sort and page them the
 // way it does any other connection.
 type MemoryTable[T any] struct {
+	Scope  string
 	Fields map[string]MemoryField[T]
 	// Search is the text a query is matched against; nil disables search.
 	Search func(row T) string
@@ -39,6 +40,7 @@ type MemoryPage[T any] struct {
 	Total     int
 	HasNext   bool
 	EndCursor *string
+	binding   pagination.CursorBinding
 }
 
 // Page applies the data table's input to rows: search, then field filters
@@ -48,6 +50,7 @@ type MemoryPage[T any] struct {
 func (m *MemoryTable[T]) Page(
 	input *gqlmodel.DataTableConnectionInput,
 	rows []T,
+	tenantInfo pagination.TenantInfo,
 ) (*MemoryPage[T], error) {
 	if input == nil {
 		input = &gqlmodel.DataTableConnectionInput{}
@@ -68,7 +71,12 @@ func (m *MemoryTable[T]) Page(
 		return nil, err
 	}
 
-	offset, err := decodeMemoryCursor(input.After)
+	binding := pagination.BindCursor(
+		tenantInfo,
+		m.Scope,
+		pagination.SortShape(gqlconnection.SortFieldsFromGraphQL(input.Sort)),
+	)
+	offset, err := decodeMemoryCursor(binding, input.After)
 	if err != nil {
 		return nil, err
 	}
@@ -84,9 +92,10 @@ func (m *MemoryTable[T]) Page(
 		Rows:    matched[start:end],
 		Total:   len(matched),
 		HasNext: end < len(matched),
+		binding: binding,
 	}
 	if end > start {
-		cursor := encodeMemoryCursor(end)
+		cursor := pagination.EncodeOffsetCursor(binding, end)
 		page.EndCursor = &cursor
 	}
 	return page, nil
@@ -227,21 +236,17 @@ func asNumber(value any) (float64, bool) {
 	}
 }
 
-func encodeMemoryCursor(offset int) string {
-	return base64.RawURLEncoding.EncodeToString([]byte(memoryCursorTag + strconv.Itoa(offset)))
-}
-
-func decodeMemoryCursor(after *string) (int, error) {
+func decodeMemoryCursor(binding pagination.CursorBinding, after *string) (int, error) {
 	if after == nil || *after == "" {
 		return 0, nil
 	}
-	raw, err := base64.RawURLEncoding.DecodeString(*after)
-	if err != nil || !strings.HasPrefix(string(raw), memoryCursorTag) {
-		return 0, errortypes.NewValidationError("after", errortypes.ErrInvalid, "Invalid cursor")
-	}
-	offset, err := strconv.Atoi(strings.TrimPrefix(string(raw), memoryCursorTag))
-	if err != nil || offset < 0 {
-		return 0, errortypes.NewValidationError("after", errortypes.ErrInvalid, "Invalid cursor")
+	offset, err := pagination.DecodeOffsetCursor(binding, *after)
+	if err != nil {
+		return 0, errortypes.NewValidationError(
+			"after",
+			errortypes.ErrInvalidFormat,
+			"Cursor is invalid",
+		)
 	}
 	return offset, nil
 }
@@ -249,5 +254,5 @@ func decodeMemoryCursor(after *string) (int, error) {
 // CursorAt is the cursor of the page's row at index, which a reader resumes
 // after.
 func (p *MemoryPage[T]) CursorAt(index int) string {
-	return encodeMemoryCursor(p.Start + index + 1)
+	return pagination.EncodeOffsetCursor(p.binding, p.Start+index+1)
 }

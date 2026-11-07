@@ -1,14 +1,20 @@
 package dispatchconsoleresolver
 
 import (
+	"context"
+
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
-	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchcandidateservice"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchconsoleservice"
-	"github.com/emoss08/trenova/internal/modules/operations/app/dispatcheligibility"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchfinding"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchplanprice"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchplanports"
+	"github.com/emoss08/trenova/pkg/authctx"
 )
 
 func mapDispatchBoard(board *dispatchconsoleservice.Board) *gqlmodel.DispatchBoard {
@@ -27,12 +33,103 @@ func mapDispatchBoard(board *dispatchconsoleservice.Board) *gqlmodel.DispatchBoa
 	}
 
 	return &gqlmodel.DispatchBoard{
-		Moves:       moves,
-		Drivers:     drivers,
-		Summary:     mapDispatchSummary(board.Summary),
-		WindowStart: int(board.WindowStart),
-		WindowEnd:   int(board.WindowEnd),
-		GeneratedAt: int(board.GeneratedAt),
+		Moves:            moves,
+		Drivers:          drivers,
+		DriversTruncated: board.DriversTruncated,
+		Summary:          mapDispatchSummary(board.Summary),
+		WindowStart:      int(board.WindowStart),
+		WindowEnd:        int(board.WindowEnd),
+		GeneratedAt:      int(board.GeneratedAt),
+	}
+}
+
+func (r *QueryResolver) attachCoverageProposals(
+	ctx context.Context,
+	authCtx *authctx.AuthContext,
+	moves []*dispatchconsoleservice.BoardMove,
+	mapped []*gqlmodel.DispatchBoardMove,
+) error {
+	if len(moves) == 0 ||
+		!r.HasPermission(ctx, authCtx, permission.ResourceAgentProposal, permission.OpRead) {
+		return nil
+	}
+
+	targets := make([]dispatchconsoleports.CoverageMove, 0, len(moves))
+	for _, move := range moves {
+		if move == nil || move.BoardMove == nil || move.IsCovered {
+			continue
+		}
+		targets = append(targets, dispatchconsoleports.CoverageMove{
+			MoveID:      move.MoveID,
+			MoveVersion: move.MoveVersion,
+		})
+	}
+	if len(targets) == 0 {
+		return nil
+	}
+
+	proposals, err := r.DispatchAutoAssignService.CoverageProposals(
+		ctx,
+		&dispatchconsoleports.CoverageProposalsRequest{
+			TenantInfo: resolvercore.TenantInfo(authCtx),
+			Moves:      targets,
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	for i, move := range moves {
+		if move == nil || move.BoardMove == nil {
+			continue
+		}
+		coverage, ok := proposals[move.MoveID]
+		if !ok {
+			continue
+		}
+		if coverage.Pending != nil {
+			mapped[i].PendingProposal = mapDispatchMoveProposal(coverage.Pending)
+		}
+		if coverage.Failed != nil {
+			mapped[i].FailedProposal = mapDispatchMoveFailedProposal(coverage.Failed)
+		}
+	}
+
+	return nil
+}
+
+func mapDispatchMoveProposal(
+	coverage *dispatchconsoleports.PendingCoverage,
+) *gqlmodel.DispatchMoveProposal {
+	var expiresAt *int
+	if coverage.ExpiresAt > 0 {
+		value := int(coverage.ExpiresAt)
+		expiresAt = &value
+	}
+
+	return &gqlmodel.DispatchMoveProposal{
+		ID:         coverage.ProposalID.String(),
+		WorkerID:   coverage.WorkerID.String(),
+		WorkerName: coverage.WorkerName,
+		TractorID:  coverage.TractorID.String(),
+		TrailerID:  gqlid.IDPtr(coverage.TrailerID),
+		Confidence: coverage.Confidence.InexactFloat64(),
+		Rationale:  coverage.Rationale,
+		CreatedAt:  int(coverage.CreatedAt),
+		ExpiresAt:  expiresAt,
+		Stale:      coverage.Stale,
+	}
+}
+
+func mapDispatchMoveFailedProposal(
+	failed *dispatchconsoleports.FailedCoverage,
+) *gqlmodel.DispatchMoveFailedProposal {
+	return &gqlmodel.DispatchMoveFailedProposal{
+		ID:         failed.ProposalID.String(),
+		WorkerID:   failed.WorkerID.String(),
+		WorkerName: failed.WorkerName,
+		Reason:     failed.Reason,
+		FailedAt:   int(failed.FailedAt),
 	}
 }
 
@@ -120,6 +217,64 @@ func mapDispatchBoardMove(move *dispatchconsoleservice.BoardMove) *gqlmodel.Disp
 		PreviousMoveTrailerID: gqlid.IDPtr(move.PreviousMoveTrailerID),
 
 		LiveTender: mapDispatchBoardTenderSummary(move.LiveTender),
+		PlanPrice:  mapDispatchMovePlanPrice(move.PlanPrice),
+	}
+}
+
+func mapDispatchMovePlanPrice(
+	price *dispatchplanprice.DispatchPlanPrice,
+) *gqlmodel.DispatchMovePlanPrice {
+	if price == nil {
+		return nil
+	}
+
+	var reason *gqlmodel.DispatchUncoveredReason
+	if !price.Covered() {
+		value := gqlmodel.DispatchUncoveredReason(price.UncoveredReason)
+		reason = &value
+	}
+
+	return &gqlmodel.DispatchMovePlanPrice{
+		WorkerID:             gqlid.IDPtr(price.WorkerID),
+		WorkerName:           price.WorkerName,
+		CostCents:            int(price.CostCents),
+		PreferenceFloorCents: int(price.PreferenceFloorCents),
+		CoveragePriceCents:   int(price.CoveragePriceCents),
+		DriverValueCents:     int(price.DriverValueCents),
+		UncoveredReason:      reason,
+		Alternatives:         mapDispatchPlanAlternatives(price.Alternatives),
+		GeneratedAt:          int(price.GeneratedAt),
+	}
+}
+
+func mapDispatchPlanAlternatives(
+	alternatives []dispatchplanprice.Alternative,
+) []*gqlmodel.DispatchPlanAlternative {
+	mapped := make([]*gqlmodel.DispatchPlanAlternative, 0, len(alternatives))
+	for _, alternative := range alternatives {
+		mapped = append(mapped, &gqlmodel.DispatchPlanAlternative{
+			WorkerID:   alternative.WorkerID.String(),
+			WorkerName: alternative.WorkerName,
+			ExtraCents: int(alternative.ExtraCents),
+		})
+	}
+
+	return mapped
+}
+
+func mapDispatchDriverPlannedMove(
+	planned *dispatchconsoleservice.PlannedMove,
+) *gqlmodel.DispatchDriverPlannedMove {
+	if planned == nil {
+		return nil
+	}
+
+	return &gqlmodel.DispatchDriverPlannedMove{
+		MoveID:      planned.MoveID.String(),
+		ProNumber:   planned.ProNumber,
+		CostCents:   int(planned.CostCents),
+		ValueCents:  int(planned.ValueCents),
+		GeneratedAt: int(planned.GeneratedAt),
 	}
 }
 
@@ -215,25 +370,24 @@ func mapDispatchBoardDriver(
 		Commitments:            commitments,
 		TimeOff:                timeOff,
 		Findings:               mapDispatchFindings(driver.Findings),
+		PlannedMove:            mapDispatchDriverPlannedMove(driver.PlannedMove),
+		LastHomeAt:             gqlscalar.NonZeroIntPtr(driver.LastHomeAt),
 	}
 }
 
 func mapDispatchCandidate(
-	score *dispatchcandidateservice.CandidateScore,
+	score *dispatchplanports.CandidateScore,
 ) *gqlmodel.DispatchCandidate {
 	if score == nil {
 		return nil
 	}
 
-	factors := make([]*gqlmodel.DispatchScoreFactor, 0, len(score.Factors))
-	for _, factor := range score.Factors {
-		factors = append(factors, &gqlmodel.DispatchScoreFactor{
-			Key:          string(factor.Key),
-			Label:        factor.Label,
-			Raw:          factor.Raw,
-			Weight:       factor.Weight,
-			Contribution: factor.Contribution,
-			Detail:       factor.Detail,
+	lines := make([]*gqlmodel.DispatchCostLine, 0, len(score.Cost.Lines))
+	for _, line := range score.Cost.Lines {
+		lines = append(lines, &gqlmodel.DispatchCostLine{
+			Component: string(line.Component),
+			Cents:     int(line.Cents),
+			Soft:      line.Component.Soft(),
 		})
 	}
 
@@ -243,13 +397,22 @@ func mapDispatchCandidate(
 		TractorID:              gqlid.IDPtr(score.TractorID),
 		TrailerID:              gqlid.IDPtr(score.TrailerID),
 		MoveID:                 score.MoveID.String(),
-		Score:                  score.Score,
+		CostCents:              int(score.Cost.TotalCents),
+		CostLines:              lines,
 		Verdict:                score.Verdict,
 		Blocked:                score.Blocked(),
 		DeadheadMiles:          score.DeadheadMiles,
+		OriginSource:           string(score.OriginSource),
+		LoadedMiles:            score.LoadedMiles,
 		EstimatedDriveMs:       int(score.EstimatedDriveMs),
+		RestMs:                 int(score.RestMs),
 		ProjectedArrival:       int(score.ProjectedArrival),
+		ProjectedDelivery:      int(score.ProjectedDelivery),
+		ProjectedFreeAt:        int(score.ProjectedFreeAt),
 		MinutesOfSlack:         int(score.MinutesOfSlack),
+		SlackKnown:             score.SlackKnown,
+		HosKnown:               score.HOSKnown,
+		DeliveryLateMinutes:    int(score.DeliveryLateMinutes),
 		DriveRemainingMs:       int(score.DriveRemainingMs),
 		ShiftRemainingMs:       int(score.ShiftRemainingMs),
 		CycleRemainingMs:       int(score.CycleRemainingMs),
@@ -260,12 +423,12 @@ func mapDispatchCandidate(
 		HosProjectedShiftMs:    int(score.HOSProjectedShiftMs),
 		HosProjectedCycleMs:    int(score.HOSProjectedCycleMs),
 		Findings:               mapDispatchFindings(score.Findings),
-		Factors:                factors,
+		EndMarket:              mapDispatchEndMarket(score.EndMarket),
 	}
 }
 
 func mapDispatchFindings(
-	findings []dispatcheligibility.Finding,
+	findings []dispatchfinding.Finding,
 ) []*gqlmodel.DispatchFinding {
 	mapped := make([]*gqlmodel.DispatchFinding, 0, len(findings))
 	for i := range findings {
@@ -289,34 +452,40 @@ func mapDispatchPlan(plan *dispatchconsoleports.DispatchPlan) *gqlmodel.Dispatch
 	assignments := make([]*gqlmodel.DispatchPlannedAssignment, 0, len(plan.Assignments))
 	for _, planned := range plan.Assignments {
 		confidence, _ := planned.Confidence.Float64()
+		candidate := planned.Candidate
 		assignments = append(assignments, &gqlmodel.DispatchPlannedAssignment{
-			MoveID:         planned.MoveID.String(),
-			ProNumber:      planned.ProNumber,
-			WorkerID:       planned.WorkerID.String(),
-			WorkerName:     planned.WorkerName,
-			TractorID:      gqlid.IDPtr(planned.TractorID),
-			TrailerID:      gqlid.IDPtr(planned.TrailerID),
-			Confidence:     confidence,
-			Rationale:      planned.Rationale,
-			AutoExecutable: planned.AutoExecutable,
-			ProposalID:     gqlid.IDPtr(planned.ProposalID),
-			Score:          mapDispatchCandidate(planned.Score),
-
-			TourID:                    gqlid.IDPtr(planned.TourID),
-			SequenceIndex:             planned.SequenceIndex,
-			ProjectedStartAt:          int(planned.ProjectedStartAt),
-			ProjectedCompleteAt:       int(planned.ProjectedCompleteAt),
-			ProjectedDriveRemainingMs: int(planned.ProjectedDriveRemains),
+			MoveID:              planned.MoveID.String(),
+			ProNumber:           planned.ProNumber,
+			WorkerID:            candidate.WorkerID.String(),
+			WorkerName:          candidate.WorkerName,
+			TractorID:           gqlid.IDPtr(candidate.TractorID),
+			TrailerID:           gqlid.IDPtr(candidate.TrailerID),
+			Confidence:          confidence,
+			Rationale:           planned.Rationale,
+			AutoExecutable:      planned.AutoExecutable,
+			ProposalID:          gqlid.IDPtr(planned.ProposalID),
+			Candidate:           mapDispatchCandidate(candidate),
+			PlanCostCents:       int(planned.PlanCostCents),
+			CoveragePriceCents:  int(planned.CoveragePriceCents),
+			DriverValueCents:    int(planned.DriverValueCents),
+			Alternatives:        mapDispatchPlanAlternatives(planned.Alternatives),
+			TourID:              gqlid.IDPtr(planned.TourID),
+			SequenceIndex:       planned.SequenceIndex,
+			ProjectedStartAt:    int(planned.ProjectedStartAt),
+			ProjectedCompleteAt: int(planned.ProjectedCompleteAt),
 		})
 	}
 
 	uncovered := make([]*gqlmodel.DispatchUncoveredMove, 0, len(plan.Uncovered))
 	for _, item := range plan.Uncovered {
 		uncovered = append(uncovered, &gqlmodel.DispatchUncoveredMove{
-			MoveID:              item.MoveID.String(),
-			ProNumber:           item.ProNumber,
-			Reason:              item.Reason,
-			BestBlockedFindings: mapDispatchFindings(item.BestBlockedFindings),
+			MoveID:             item.MoveID.String(),
+			ProNumber:          item.ProNumber,
+			Reason:             gqlmodel.DispatchUncoveredReason(item.Reason),
+			Explanation:        item.Explanation(),
+			PlanCostCents:      int(item.PlanCostCents),
+			CoveragePriceCents: int(item.CoveragePriceCents),
+			BestCandidate:      mapDispatchCandidate(item.BestCandidate),
 		})
 	}
 
@@ -326,28 +495,28 @@ func mapDispatchPlan(plan *dispatchconsoleports.DispatchPlan) *gqlmodel.Dispatch
 		for _, moveID := range tour.MoveIDs {
 			moveIDs = append(moveIDs, moveID.String())
 		}
-
 		tours = append(tours, &gqlmodel.DispatchTour{
-			TourID:             tour.TourID.String(),
-			WorkerID:           tour.WorkerID.String(),
-			WorkerName:         tour.WorkerName,
-			MoveIds:            moveIDs,
-			StartsAt:           int(tour.StartsAt),
-			EndsAt:             int(tour.EndsAt),
-			TotalScore:         tour.TotalScore,
-			TotalDeadheadMiles: tour.TotalDeadheadMiles,
+			TourID:     tour.TourID.String(),
+			WorkerID:   tour.WorkerID.String(),
+			WorkerName: tour.WorkerName,
+			MoveIds:    moveIDs,
+			StartsAt:   int(tour.StartsAt),
+			EndsAt:     int(tour.EndsAt),
+			CostCents:  int(tour.CostCents),
+			EmptyMiles: tour.EmptyMiles,
 		})
 	}
 
 	return &gqlmodel.DispatchPlan{
-		RunID:        gqlid.IDPtr(plan.RunID),
-		Assignments:  assignments,
-		Uncovered:    uncovered,
-		Tours:        tours,
-		PlanningMode: plan.PlanningMode,
-		ShadowMode:   plan.ShadowMode,
-		AutonomyTier: string(plan.AutonomyTier),
-		TotalScore:   plan.TotalScore,
-		GeneratedAt:  int(plan.GeneratedAt),
+		RunID:          gqlid.IDPtr(plan.RunID),
+		Assignments:    assignments,
+		Uncovered:      uncovered,
+		Tours:          tours,
+		PlanningMode:   plan.Mode.String(),
+		ShadowMode:     plan.ShadowMode,
+		AutonomyTier:   string(plan.AutonomyTier),
+		CostCents:      int(plan.CostCents),
+		UncoveredCents: int(plan.UncoveredCents),
+		GeneratedAt:    int(plan.GeneratedAt),
 	}
 }

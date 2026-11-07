@@ -86,10 +86,10 @@ type RateMatrixVersionsTable struct {
 // RateMatrixVersions references the rate_matrix_versions table.
 var RateMatrixVersions = &RateMatrixVersionsTable{
 	TableBase:      keel.TableBase{Ref: &rateMatrixVersionsRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateMatrixVersionsRef, Index: 0}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateMatrixVersionsRef, Index: 1}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateMatrixVersionsRef, Index: 2}}},
-	RateMatrixID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateMatrixVersionsRef, Index: 3}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateMatrixVersionsRef, Index: 0}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateMatrixVersionsRef, Index: 1}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateMatrixVersionsRef, Index: 2}}},
+	RateMatrixID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateMatrixVersionsRef, Index: 3}}},
 	VersionNumber:  keel.Int64Col{Col: keel.Col{Ref: &rateMatrixVersionsRef, Index: 4}},
 	Code:           keel.StringCol{Col: keel.Col{Ref: &rateMatrixVersionsRef, Index: 5}},
 	Name:           keel.StringCol{Col: keel.Col{Ref: &rateMatrixVersionsRef, Index: 6}},
@@ -97,8 +97,8 @@ var RateMatrixVersions = &RateMatrixVersionsTable{
 	ValueType:      keel.StringCol{Col: keel.Col{Ref: &rateMatrixVersionsRef, Index: 8}},
 	CellCount:      keel.Int64Col{Col: keel.Col{Ref: &rateMatrixVersionsRef, Index: 9}},
 	ChangeMessage:  keel.StringCol{Col: keel.Col{Ref: &rateMatrixVersionsRef, Index: 10}},
-	SubmittedByID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateMatrixVersionsRef, Index: 11}}},
-	PublishedByID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateMatrixVersionsRef, Index: 12}}},
+	SubmittedByID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateMatrixVersionsRef, Index: 11}}},
+	PublishedByID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateMatrixVersionsRef, Index: 12}}},
 	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &rateMatrixVersionsRef, Index: 13}},
 }
 
@@ -106,10 +106,10 @@ var RateMatrixVersions = &RateMatrixVersionsTable{
 func BuildRateMatrixVersions(r *keel.Ref) *RateMatrixVersionsTable {
 	return &RateMatrixVersionsTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		RateMatrixID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		RateMatrixID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		VersionNumber:  keel.Int64Col{Col: keel.Col{Ref: r, Index: 4}},
 		Code:           keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		Name:           keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
@@ -117,8 +117,8 @@ func BuildRateMatrixVersions(r *keel.Ref) *RateMatrixVersionsTable {
 		ValueType:      keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
 		CellCount:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
 		ChangeMessage:  keel.StringCol{Col: keel.Col{Ref: r, Index: 10}},
-		SubmittedByID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
-		PublishedByID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 12}}},
+		SubmittedByID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 11}}},
+		PublishedByID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 12}}},
 		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
 	}
 }
@@ -143,8 +143,6 @@ func (t *RateMatrixVersionsTable) Get(ctx context.Context, db *keel.DB, key puli
 
 // RateMatrixVersionsQuery is a query over ratematrixversion.RateMatrixVersion.
 type RateMatrixVersionsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*ratematrixversion.RateMatrixVersion] = (*RateMatrixVersionsTable)(nil)
 
 var _ keel.Query[*ratematrixversion.RateMatrixVersion] = (*RateMatrixVersionsQuery)(nil)
 
@@ -260,42 +258,42 @@ func (t *RateMatrixVersionsTable) Compute(col keel.Column, e keel.Expr) keel.Que
 
 // Create inserts row.
 func (t *RateMatrixVersionsTable) Create(ctx context.Context, db *keel.DB, row *ratematrixversion.RateMatrixVersion) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *RateMatrixVersionsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*ratematrixversion.RateMatrixVersion) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *RateMatrixVersionsTable) Save(ctx context.Context, db *keel.DB, row *ratematrixversion.RateMatrixVersion, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *RateMatrixVersionsTable) SaveExcept(ctx context.Context, db *keel.DB, row *ratematrixversion.RateMatrixVersion, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *RateMatrixVersionsTable) DeleteRow(ctx context.Context, db *keel.DB, row *ratematrixversion.RateMatrixVersion) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *RateMatrixVersionsTable) Upsert(ctx context.Context, db *keel.DB, rows []*ratematrixversion.RateMatrixVersion, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *RateMatrixVersionsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*ratematrixversion.RateMatrixVersion, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *RateMatrixVersionsTable) Copy(ctx context.Context, db *keel.DB, rows []*ratematrixversion.RateMatrixVersion) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -467,37 +465,45 @@ func (q *RateMatrixVersionsQuery) Clone() keel.Query[*ratematrixversion.RateMatr
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *RateMatrixVersionsQuery) One(ctx context.Context, db *keel.DB) (*ratematrixversion.RateMatrixVersion, error) {
-	return keel.One[*ratematrixversion.RateMatrixVersion](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*ratematrixversion.RateMatrixVersion)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *RateMatrixVersionsQuery) First(ctx context.Context, db *keel.DB) (*ratematrixversion.RateMatrixVersion, error) {
-	return keel.First[*ratematrixversion.RateMatrixVersion](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*ratematrixversion.RateMatrixVersion)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *RateMatrixVersionsQuery) List(ctx context.Context, db *keel.DB) ([]*ratematrixversion.RateMatrixVersion, error) {
-	return keel.List[*ratematrixversion.RateMatrixVersion](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*ratematrixversion.RateMatrixVersion)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *RateMatrixVersionsQuery) All(ctx context.Context, db *keel.DB) ([]*ratematrixversion.RateMatrixVersion, error) {
-	return keel.All[*ratematrixversion.RateMatrixVersion](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*ratematrixversion.RateMatrixVersion)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *RateMatrixVersionsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*ratematrixversion.RateMatrixVersion, error) {
-	return keel.UpdateReturning[*ratematrixversion.RateMatrixVersion](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*ratematrixversion.RateMatrixVersion)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *RateMatrixVersionsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*ratematrixversion.RateMatrixVersion], error) {
-	return keel.PageOf[*ratematrixversion.RateMatrixVersion](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*ratematrixversion.RateMatrixVersion])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *RateMatrixVersionsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*ratematrixversion.RateMatrixVersion) error) error {
-	return keel.Each[*ratematrixversion.RateMatrixVersion](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*ratematrixversion.RateMatrixVersion)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newRateMatrixVersion() unsafe.Pointer {

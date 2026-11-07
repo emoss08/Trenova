@@ -170,18 +170,18 @@ type DetentionPoliciesTable struct {
 // DetentionPolicies references the detention_policies table.
 var DetentionPolicies = &DetentionPoliciesTable{
 	TableBase:                   keel.TableBase{Ref: &detentionPoliciesRef},
-	ID:                          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 0}}},
-	BusinessUnitID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 1}}},
-	OrganizationID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 2}}},
+	ID:                          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 0}}},
+	BusinessUnitID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 1}}},
+	OrganizationID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 2}}},
 	Name:                        keel.StringCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 3}},
 	Code:                        keel.StringCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 4}},
 	Description:                 keel.StringCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 5}},
-	Status:                      PolicyStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 6}}},
+	Status:                      PolicyStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 6}}},
 	IsOrgDefault:                keel.BoolCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 7}},
 	Priority:                    keel.Int16Col{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 8}},
 	SpecificityScore:            keel.Int32Col{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 9}},
-	CustomerID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 10}}},
-	LocationID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 11}}},
+	CustomerID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 10}}},
+	LocationID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 11}}},
 	ShipmentTypeIDs:             keel.JSONBCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 12}},
 	ServiceTypeIDs:              keel.JSONBCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 13}},
 	CommodityIDs:                keel.JSONBCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 14}},
@@ -189,8 +189,8 @@ var DetentionPolicies = &DetentionPoliciesTable{
 	AppointmentStopsOnly:        keel.BoolCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 16}},
 	EffectiveStartDate:          keel.Int64Col{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 17}},
 	EffectiveEndDate:            keel.Int64Col{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 18}},
-	ClockStartBasis:             ClockStartBasisCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 19}}},
-	LateArrivalRule:             LateArrivalRuleCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 20}}},
+	ClockStartBasis:             ClockStartBasisCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 19}}},
+	LateArrivalRule:             LateArrivalRuleCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 20}}},
 	LateArrivalGraceMinutes:     keel.Int16Col{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 21}},
 	BillingFreeMinutes:          keel.Int32Col{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 22}},
 	PickupFreeMinutes:           keel.Int32Col{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 23}},
@@ -198,20 +198,20 @@ var DetentionPolicies = &DetentionPoliciesTable{
 	PayFreeMinutes:              keel.Int32Col{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 25}},
 	MinimumBillableMinutes:      keel.Int32Col{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 26}},
 	BillingIncrementMinutes:     keel.Int16Col{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 27}},
-	RoundingMode:                RoundingModeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 28}}},
-	RateSource:                  RateSourceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 29}}},
-	AccessorialChargeID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 30}}},
+	RoundingMode:                RoundingModeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 28}}},
+	RateSource:                  RateSourceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 29}}},
+	AccessorialChargeID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 30}}},
 	MaxBillableMinutesPerStop:   keel.Int32Col{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 31}},
 	MaxChargePerStop:            keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 32}}},
 	MaxChargePerDay:             keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 33}}},
 	MaxChargePerShipment:        keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 34}}},
-	DayBoundaryMode:             CapScopeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 35}}},
+	DayBoundaryMode:             CapScopeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 35}}},
 	ConvertToLayoverAtMinutes:   keel.Int32Col{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 36}},
-	LayoverAccessorialChargeID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 37}}},
-	NotificationRequirement:     NotificationRequirementCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 38}}},
+	LayoverAccessorialChargeID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 37}}},
+	NotificationRequirement:     NotificationRequirementCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 38}}},
 	NotificationLeadMinutes:     keel.Int16Col{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 39}},
 	NotificationDeadlineMinutes: keel.Int16Col{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 40}},
-	UnnotifiedBehavior:          UnnotifiedBehaviorCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 41}}},
+	UnnotifiedBehavior:          UnnotifiedBehaviorCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 41}}},
 	AutoSendNotice:              keel.BoolCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 42}},
 	AttachNoticePDF:             keel.BoolCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 43}},
 	SendDepartureSummary:        keel.BoolCol{Col: keel.Col{Ref: &detentionPoliciesRef, Index: 44}},
@@ -230,18 +230,18 @@ var DetentionPolicies = &DetentionPoliciesTable{
 func BuildDetentionPolicies(r *keel.Ref) *DetentionPoliciesTable {
 	return &DetentionPoliciesTable{
 		TableBase:                   keel.TableBase{Ref: r},
-		ID:                          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ID:                          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		Name:                        keel.StringCol{Col: keel.Col{Ref: r, Index: 3}},
 		Code:                        keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		Description:                 keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
-		Status:                      PolicyStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		Status:                      PolicyStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		IsOrgDefault:                keel.BoolCol{Col: keel.Col{Ref: r, Index: 7}},
 		Priority:                    keel.Int16Col{Col: keel.Col{Ref: r, Index: 8}},
 		SpecificityScore:            keel.Int32Col{Col: keel.Col{Ref: r, Index: 9}},
-		CustomerID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
-		LocationID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
+		CustomerID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		LocationID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 11}}},
 		ShipmentTypeIDs:             keel.JSONBCol{Col: keel.Col{Ref: r, Index: 12}},
 		ServiceTypeIDs:              keel.JSONBCol{Col: keel.Col{Ref: r, Index: 13}},
 		CommodityIDs:                keel.JSONBCol{Col: keel.Col{Ref: r, Index: 14}},
@@ -249,8 +249,8 @@ func BuildDetentionPolicies(r *keel.Ref) *DetentionPoliciesTable {
 		AppointmentStopsOnly:        keel.BoolCol{Col: keel.Col{Ref: r, Index: 16}},
 		EffectiveStartDate:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
 		EffectiveEndDate:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
-		ClockStartBasis:             ClockStartBasisCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 19}}},
-		LateArrivalRule:             LateArrivalRuleCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 20}}},
+		ClockStartBasis:             ClockStartBasisCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 19}}},
+		LateArrivalRule:             LateArrivalRuleCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 20}}},
 		LateArrivalGraceMinutes:     keel.Int16Col{Col: keel.Col{Ref: r, Index: 21}},
 		BillingFreeMinutes:          keel.Int32Col{Col: keel.Col{Ref: r, Index: 22}},
 		PickupFreeMinutes:           keel.Int32Col{Col: keel.Col{Ref: r, Index: 23}},
@@ -258,20 +258,20 @@ func BuildDetentionPolicies(r *keel.Ref) *DetentionPoliciesTable {
 		PayFreeMinutes:              keel.Int32Col{Col: keel.Col{Ref: r, Index: 25}},
 		MinimumBillableMinutes:      keel.Int32Col{Col: keel.Col{Ref: r, Index: 26}},
 		BillingIncrementMinutes:     keel.Int16Col{Col: keel.Col{Ref: r, Index: 27}},
-		RoundingMode:                RoundingModeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 28}}},
-		RateSource:                  RateSourceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 29}}},
-		AccessorialChargeID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 30}}},
+		RoundingMode:                RoundingModeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 28}}},
+		RateSource:                  RateSourceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 29}}},
+		AccessorialChargeID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 30}}},
 		MaxBillableMinutesPerStop:   keel.Int32Col{Col: keel.Col{Ref: r, Index: 31}},
 		MaxChargePerStop:            keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 32}}},
 		MaxChargePerDay:             keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 33}}},
 		MaxChargePerShipment:        keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 34}}},
-		DayBoundaryMode:             CapScopeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 35}}},
+		DayBoundaryMode:             CapScopeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 35}}},
 		ConvertToLayoverAtMinutes:   keel.Int32Col{Col: keel.Col{Ref: r, Index: 36}},
-		LayoverAccessorialChargeID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 37}}},
-		NotificationRequirement:     NotificationRequirementCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 38}}},
+		LayoverAccessorialChargeID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 37}}},
+		NotificationRequirement:     NotificationRequirementCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 38}}},
 		NotificationLeadMinutes:     keel.Int16Col{Col: keel.Col{Ref: r, Index: 39}},
 		NotificationDeadlineMinutes: keel.Int16Col{Col: keel.Col{Ref: r, Index: 40}},
-		UnnotifiedBehavior:          UnnotifiedBehaviorCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 41}}},
+		UnnotifiedBehavior:          UnnotifiedBehaviorCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 41}}},
 		AutoSendNotice:              keel.BoolCol{Col: keel.Col{Ref: r, Index: 42}},
 		AttachNoticePDF:             keel.BoolCol{Col: keel.Col{Ref: r, Index: 43}},
 		SendDepartureSummary:        keel.BoolCol{Col: keel.Col{Ref: r, Index: 44}},
@@ -312,8 +312,6 @@ func (t *DetentionPoliciesTable) Get(ctx context.Context, db *keel.DB, key pulid
 
 // DetentionPoliciesQuery is a query over detentionpolicy.DetentionPolicy.
 type DetentionPoliciesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*detentionpolicy.DetentionPolicy] = (*DetentionPoliciesTable)(nil)
 
 var _ keel.Query[*detentionpolicy.DetentionPolicy] = (*DetentionPoliciesQuery)(nil)
 
@@ -429,42 +427,42 @@ func (t *DetentionPoliciesTable) Compute(col keel.Column, e keel.Expr) keel.Quer
 
 // Create inserts row.
 func (t *DetentionPoliciesTable) Create(ctx context.Context, db *keel.DB, row *detentionpolicy.DetentionPolicy) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *DetentionPoliciesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*detentionpolicy.DetentionPolicy) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *DetentionPoliciesTable) Save(ctx context.Context, db *keel.DB, row *detentionpolicy.DetentionPolicy, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *DetentionPoliciesTable) SaveExcept(ctx context.Context, db *keel.DB, row *detentionpolicy.DetentionPolicy, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *DetentionPoliciesTable) DeleteRow(ctx context.Context, db *keel.DB, row *detentionpolicy.DetentionPolicy) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *DetentionPoliciesTable) Upsert(ctx context.Context, db *keel.DB, rows []*detentionpolicy.DetentionPolicy, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *DetentionPoliciesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*detentionpolicy.DetentionPolicy, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *DetentionPoliciesTable) Copy(ctx context.Context, db *keel.DB, rows []*detentionpolicy.DetentionPolicy) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -636,37 +634,45 @@ func (q *DetentionPoliciesQuery) Clone() keel.Query[*detentionpolicy.DetentionPo
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *DetentionPoliciesQuery) One(ctx context.Context, db *keel.DB) (*detentionpolicy.DetentionPolicy, error) {
-	return keel.One[*detentionpolicy.DetentionPolicy](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*detentionpolicy.DetentionPolicy)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *DetentionPoliciesQuery) First(ctx context.Context, db *keel.DB) (*detentionpolicy.DetentionPolicy, error) {
-	return keel.First[*detentionpolicy.DetentionPolicy](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*detentionpolicy.DetentionPolicy)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *DetentionPoliciesQuery) List(ctx context.Context, db *keel.DB) ([]*detentionpolicy.DetentionPolicy, error) {
-	return keel.List[*detentionpolicy.DetentionPolicy](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*detentionpolicy.DetentionPolicy)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *DetentionPoliciesQuery) All(ctx context.Context, db *keel.DB) ([]*detentionpolicy.DetentionPolicy, error) {
-	return keel.All[*detentionpolicy.DetentionPolicy](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*detentionpolicy.DetentionPolicy)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *DetentionPoliciesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*detentionpolicy.DetentionPolicy, error) {
-	return keel.UpdateReturning[*detentionpolicy.DetentionPolicy](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*detentionpolicy.DetentionPolicy)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *DetentionPoliciesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*detentionpolicy.DetentionPolicy], error) {
-	return keel.PageOf[*detentionpolicy.DetentionPolicy](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*detentionpolicy.DetentionPolicy])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *DetentionPoliciesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*detentionpolicy.DetentionPolicy) error) error {
-	return keel.Each[*detentionpolicy.DetentionPolicy](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*detentionpolicy.DetentionPolicy)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newDetentionPolicy() unsafe.Pointer { return unsafe.Pointer(new(detentionpolicy.DetentionPolicy)) }
@@ -1036,14 +1042,14 @@ type DetentionPolicyTiersTable struct {
 // DetentionPolicyTiers references the detention_policy_tiers table.
 var DetentionPolicyTiers = &DetentionPolicyTiersTable{
 	TableBase:         keel.TableBase{Ref: &detentionPolicyTiersRef},
-	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &detentionPolicyTiersRef, Index: 0}}},
-	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &detentionPolicyTiersRef, Index: 1}}},
-	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &detentionPolicyTiersRef, Index: 2}}},
-	DetentionPolicyID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &detentionPolicyTiersRef, Index: 3}}},
+	ID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &detentionPolicyTiersRef, Index: 0}}},
+	BusinessUnitID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &detentionPolicyTiersRef, Index: 1}}},
+	OrganizationID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &detentionPolicyTiersRef, Index: 2}}},
+	DetentionPolicyID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &detentionPolicyTiersRef, Index: 3}}},
 	FromMinute:        keel.Int32Col{Col: keel.Col{Ref: &detentionPolicyTiersRef, Index: 4}},
 	ToMinute:          keel.Int32Col{Col: keel.Col{Ref: &detentionPolicyTiersRef, Index: 5}},
 	Rate:              keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &detentionPolicyTiersRef, Index: 6}}},
-	RateUnit:          TierRateUnitCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &detentionPolicyTiersRef, Index: 7}}},
+	RateUnit:          TierRateUnitCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &detentionPolicyTiersRef, Index: 7}}},
 	Label:             keel.StringCol{Col: keel.Col{Ref: &detentionPolicyTiersRef, Index: 8}},
 	SortOrder:         keel.Int32Col{Col: keel.Col{Ref: &detentionPolicyTiersRef, Index: 9}},
 	CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: &detentionPolicyTiersRef, Index: 10}},
@@ -1054,14 +1060,14 @@ var DetentionPolicyTiers = &DetentionPolicyTiersTable{
 func BuildDetentionPolicyTiers(r *keel.Ref) *DetentionPolicyTiersTable {
 	return &DetentionPolicyTiersTable{
 		TableBase:         keel.TableBase{Ref: r},
-		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		DetentionPolicyID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		DetentionPolicyID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		FromMinute:        keel.Int32Col{Col: keel.Col{Ref: r, Index: 4}},
 		ToMinute:          keel.Int32Col{Col: keel.Col{Ref: r, Index: 5}},
 		Rate:              keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 6}}},
-		RateUnit:          TierRateUnitCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		RateUnit:          TierRateUnitCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
 		Label:             keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
 		SortOrder:         keel.Int32Col{Col: keel.Col{Ref: r, Index: 9}},
 		CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
@@ -1084,8 +1090,6 @@ func (t *DetentionPolicyTiersTable) Get(ctx context.Context, db *keel.DB, key pu
 
 // DetentionPolicyTiersQuery is a query over detentionpolicy.DetentionPolicyTier.
 type DetentionPolicyTiersQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*detentionpolicy.DetentionPolicyTier] = (*DetentionPolicyTiersTable)(nil)
 
 var _ keel.Query[*detentionpolicy.DetentionPolicyTier] = (*DetentionPolicyTiersQuery)(nil)
 
@@ -1201,42 +1205,42 @@ func (t *DetentionPolicyTiersTable) Compute(col keel.Column, e keel.Expr) keel.Q
 
 // Create inserts row.
 func (t *DetentionPolicyTiersTable) Create(ctx context.Context, db *keel.DB, row *detentionpolicy.DetentionPolicyTier) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *DetentionPolicyTiersTable) CreateMany(ctx context.Context, db *keel.DB, rows []*detentionpolicy.DetentionPolicyTier) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *DetentionPolicyTiersTable) Save(ctx context.Context, db *keel.DB, row *detentionpolicy.DetentionPolicyTier, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *DetentionPolicyTiersTable) SaveExcept(ctx context.Context, db *keel.DB, row *detentionpolicy.DetentionPolicyTier, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *DetentionPolicyTiersTable) DeleteRow(ctx context.Context, db *keel.DB, row *detentionpolicy.DetentionPolicyTier) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *DetentionPolicyTiersTable) Upsert(ctx context.Context, db *keel.DB, rows []*detentionpolicy.DetentionPolicyTier, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *DetentionPolicyTiersTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*detentionpolicy.DetentionPolicyTier, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *DetentionPolicyTiersTable) Copy(ctx context.Context, db *keel.DB, rows []*detentionpolicy.DetentionPolicyTier) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1408,37 +1412,45 @@ func (q *DetentionPolicyTiersQuery) Clone() keel.Query[*detentionpolicy.Detentio
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *DetentionPolicyTiersQuery) One(ctx context.Context, db *keel.DB) (*detentionpolicy.DetentionPolicyTier, error) {
-	return keel.One[*detentionpolicy.DetentionPolicyTier](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*detentionpolicy.DetentionPolicyTier)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *DetentionPolicyTiersQuery) First(ctx context.Context, db *keel.DB) (*detentionpolicy.DetentionPolicyTier, error) {
-	return keel.First[*detentionpolicy.DetentionPolicyTier](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*detentionpolicy.DetentionPolicyTier)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *DetentionPolicyTiersQuery) List(ctx context.Context, db *keel.DB) ([]*detentionpolicy.DetentionPolicyTier, error) {
-	return keel.List[*detentionpolicy.DetentionPolicyTier](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*detentionpolicy.DetentionPolicyTier)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *DetentionPolicyTiersQuery) All(ctx context.Context, db *keel.DB) ([]*detentionpolicy.DetentionPolicyTier, error) {
-	return keel.All[*detentionpolicy.DetentionPolicyTier](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*detentionpolicy.DetentionPolicyTier)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *DetentionPolicyTiersQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*detentionpolicy.DetentionPolicyTier, error) {
-	return keel.UpdateReturning[*detentionpolicy.DetentionPolicyTier](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*detentionpolicy.DetentionPolicyTier)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *DetentionPolicyTiersQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*detentionpolicy.DetentionPolicyTier], error) {
-	return keel.PageOf[*detentionpolicy.DetentionPolicyTier](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*detentionpolicy.DetentionPolicyTier])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *DetentionPolicyTiersQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*detentionpolicy.DetentionPolicyTier) error) error {
-	return keel.Each[*detentionpolicy.DetentionPolicyTier](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*detentionpolicy.DetentionPolicyTier)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newDetentionPolicyTier() unsafe.Pointer {
@@ -1587,308 +1599,284 @@ var enumUnnotifiedBehavior = [...]schema.EnumValue{
 }
 
 // CapScopeCol is a column of detentionpolicy.CapScope values.
-type CapScopeCol struct{ keel.StringCol }
+type CapScopeCol struct{ keel.TypedStringCol }
 
-func (c CapScopeCol) Eq(v detentionpolicy.CapScope) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c CapScopeCol) Ne(v detentionpolicy.CapScope) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c CapScopeCol) Gt(v detentionpolicy.CapScope) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c CapScopeCol) Gte(v detentionpolicy.CapScope) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c CapScopeCol) Lt(v detentionpolicy.CapScope) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c CapScopeCol) Lte(v detentionpolicy.CapScope) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c CapScopeCol) Eq(v detentionpolicy.CapScope) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c CapScopeCol) Ne(v detentionpolicy.CapScope) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c CapScopeCol) Gt(v detentionpolicy.CapScope) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c CapScopeCol) Gte(v detentionpolicy.CapScope) keel.Pred { return c.Text().Gte(string(v)) }
+func (c CapScopeCol) Lt(v detentionpolicy.CapScope) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c CapScopeCol) Lte(v detentionpolicy.CapScope) keel.Pred { return c.Text().Lte(string(v)) }
 func (c CapScopeCol) IsDistinctFrom(v detentionpolicy.CapScope) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c CapScopeCol) Between(lo, hi detentionpolicy.CapScope) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c CapScopeCol) To(v detentionpolicy.CapScope) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c CapScopeCol) To(v detentionpolicy.CapScope) keel.Assignment { return c.Text().To(string(v)) }
 func (c CapScopeCol) In(vs ...detentionpolicy.CapScope) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c CapScopeCol) NotIn(vs ...detentionpolicy.CapScope) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // ClockStartBasisCol is a column of detentionpolicy.ClockStartBasis values.
-type ClockStartBasisCol struct{ keel.StringCol }
+type ClockStartBasisCol struct{ keel.TypedStringCol }
 
 func (c ClockStartBasisCol) Eq(v detentionpolicy.ClockStartBasis) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c ClockStartBasisCol) Ne(v detentionpolicy.ClockStartBasis) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c ClockStartBasisCol) Gt(v detentionpolicy.ClockStartBasis) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c ClockStartBasisCol) Gte(v detentionpolicy.ClockStartBasis) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c ClockStartBasisCol) Lt(v detentionpolicy.ClockStartBasis) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c ClockStartBasisCol) Lte(v detentionpolicy.ClockStartBasis) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c ClockStartBasisCol) IsDistinctFrom(v detentionpolicy.ClockStartBasis) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ClockStartBasisCol) Between(lo, hi detentionpolicy.ClockStartBasis) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c ClockStartBasisCol) To(v detentionpolicy.ClockStartBasis) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c ClockStartBasisCol) In(vs ...detentionpolicy.ClockStartBasis) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ClockStartBasisCol) NotIn(vs ...detentionpolicy.ClockStartBasis) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // LateArrivalRuleCol is a column of detentionpolicy.LateArrivalRule values.
-type LateArrivalRuleCol struct{ keel.StringCol }
+type LateArrivalRuleCol struct{ keel.TypedStringCol }
 
 func (c LateArrivalRuleCol) Eq(v detentionpolicy.LateArrivalRule) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c LateArrivalRuleCol) Ne(v detentionpolicy.LateArrivalRule) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c LateArrivalRuleCol) Gt(v detentionpolicy.LateArrivalRule) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c LateArrivalRuleCol) Gte(v detentionpolicy.LateArrivalRule) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c LateArrivalRuleCol) Lt(v detentionpolicy.LateArrivalRule) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c LateArrivalRuleCol) Lte(v detentionpolicy.LateArrivalRule) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c LateArrivalRuleCol) IsDistinctFrom(v detentionpolicy.LateArrivalRule) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c LateArrivalRuleCol) Between(lo, hi detentionpolicy.LateArrivalRule) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c LateArrivalRuleCol) To(v detentionpolicy.LateArrivalRule) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c LateArrivalRuleCol) In(vs ...detentionpolicy.LateArrivalRule) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c LateArrivalRuleCol) NotIn(vs ...detentionpolicy.LateArrivalRule) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // NotificationRequirementCol is a column of detentionpolicy.NotificationRequirement values.
-type NotificationRequirementCol struct{ keel.StringCol }
+type NotificationRequirementCol struct{ keel.TypedStringCol }
 
 func (c NotificationRequirementCol) Eq(v detentionpolicy.NotificationRequirement) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c NotificationRequirementCol) Ne(v detentionpolicy.NotificationRequirement) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c NotificationRequirementCol) Gt(v detentionpolicy.NotificationRequirement) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c NotificationRequirementCol) Gte(v detentionpolicy.NotificationRequirement) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c NotificationRequirementCol) Lt(v detentionpolicy.NotificationRequirement) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c NotificationRequirementCol) Lte(v detentionpolicy.NotificationRequirement) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c NotificationRequirementCol) IsDistinctFrom(v detentionpolicy.NotificationRequirement) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c NotificationRequirementCol) Between(lo, hi detentionpolicy.NotificationRequirement) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c NotificationRequirementCol) To(v detentionpolicy.NotificationRequirement) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c NotificationRequirementCol) In(vs ...detentionpolicy.NotificationRequirement) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c NotificationRequirementCol) NotIn(vs ...detentionpolicy.NotificationRequirement) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // PolicyStatusCol is a column of detentionpolicy.PolicyStatus values.
-type PolicyStatusCol struct{ keel.StringCol }
+type PolicyStatusCol struct{ keel.TypedStringCol }
 
-func (c PolicyStatusCol) Eq(v detentionpolicy.PolicyStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c PolicyStatusCol) Ne(v detentionpolicy.PolicyStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c PolicyStatusCol) Gt(v detentionpolicy.PolicyStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
+func (c PolicyStatusCol) Eq(v detentionpolicy.PolicyStatus) keel.Pred { return c.Text().Eq(string(v)) }
+func (c PolicyStatusCol) Ne(v detentionpolicy.PolicyStatus) keel.Pred { return c.Text().Ne(string(v)) }
+func (c PolicyStatusCol) Gt(v detentionpolicy.PolicyStatus) keel.Pred { return c.Text().Gt(string(v)) }
 func (c PolicyStatusCol) Gte(v detentionpolicy.PolicyStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
-func (c PolicyStatusCol) Lt(v detentionpolicy.PolicyStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
+func (c PolicyStatusCol) Lt(v detentionpolicy.PolicyStatus) keel.Pred { return c.Text().Lt(string(v)) }
 func (c PolicyStatusCol) Lte(v detentionpolicy.PolicyStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c PolicyStatusCol) IsDistinctFrom(v detentionpolicy.PolicyStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c PolicyStatusCol) Between(lo, hi detentionpolicy.PolicyStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c PolicyStatusCol) To(v detentionpolicy.PolicyStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c PolicyStatusCol) In(vs ...detentionpolicy.PolicyStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c PolicyStatusCol) NotIn(vs ...detentionpolicy.PolicyStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // RateSourceCol is a column of detentionpolicy.RateSource values.
-type RateSourceCol struct{ keel.StringCol }
+type RateSourceCol struct{ keel.TypedStringCol }
 
-func (c RateSourceCol) Eq(v detentionpolicy.RateSource) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c RateSourceCol) Ne(v detentionpolicy.RateSource) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c RateSourceCol) Gt(v detentionpolicy.RateSource) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c RateSourceCol) Gte(v detentionpolicy.RateSource) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c RateSourceCol) Lt(v detentionpolicy.RateSource) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c RateSourceCol) Lte(v detentionpolicy.RateSource) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c RateSourceCol) Eq(v detentionpolicy.RateSource) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c RateSourceCol) Ne(v detentionpolicy.RateSource) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c RateSourceCol) Gt(v detentionpolicy.RateSource) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c RateSourceCol) Gte(v detentionpolicy.RateSource) keel.Pred { return c.Text().Gte(string(v)) }
+func (c RateSourceCol) Lt(v detentionpolicy.RateSource) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c RateSourceCol) Lte(v detentionpolicy.RateSource) keel.Pred { return c.Text().Lte(string(v)) }
 func (c RateSourceCol) IsDistinctFrom(v detentionpolicy.RateSource) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c RateSourceCol) Between(lo, hi detentionpolicy.RateSource) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c RateSourceCol) To(v detentionpolicy.RateSource) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c RateSourceCol) In(vs ...detentionpolicy.RateSource) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c RateSourceCol) NotIn(vs ...detentionpolicy.RateSource) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // RoundingModeCol is a column of detentionpolicy.RoundingMode values.
-type RoundingModeCol struct{ keel.StringCol }
+type RoundingModeCol struct{ keel.TypedStringCol }
 
-func (c RoundingModeCol) Eq(v detentionpolicy.RoundingMode) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c RoundingModeCol) Ne(v detentionpolicy.RoundingMode) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c RoundingModeCol) Gt(v detentionpolicy.RoundingMode) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
+func (c RoundingModeCol) Eq(v detentionpolicy.RoundingMode) keel.Pred { return c.Text().Eq(string(v)) }
+func (c RoundingModeCol) Ne(v detentionpolicy.RoundingMode) keel.Pred { return c.Text().Ne(string(v)) }
+func (c RoundingModeCol) Gt(v detentionpolicy.RoundingMode) keel.Pred { return c.Text().Gt(string(v)) }
 func (c RoundingModeCol) Gte(v detentionpolicy.RoundingMode) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
-func (c RoundingModeCol) Lt(v detentionpolicy.RoundingMode) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
+func (c RoundingModeCol) Lt(v detentionpolicy.RoundingMode) keel.Pred { return c.Text().Lt(string(v)) }
 func (c RoundingModeCol) Lte(v detentionpolicy.RoundingMode) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c RoundingModeCol) IsDistinctFrom(v detentionpolicy.RoundingMode) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c RoundingModeCol) Between(lo, hi detentionpolicy.RoundingMode) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c RoundingModeCol) To(v detentionpolicy.RoundingMode) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c RoundingModeCol) In(vs ...detentionpolicy.RoundingMode) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c RoundingModeCol) NotIn(vs ...detentionpolicy.RoundingMode) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // TierRateUnitCol is a column of detentionpolicy.TierRateUnit values.
-type TierRateUnitCol struct{ keel.StringCol }
+type TierRateUnitCol struct{ keel.TypedStringCol }
 
-func (c TierRateUnitCol) Eq(v detentionpolicy.TierRateUnit) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c TierRateUnitCol) Ne(v detentionpolicy.TierRateUnit) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c TierRateUnitCol) Gt(v detentionpolicy.TierRateUnit) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
+func (c TierRateUnitCol) Eq(v detentionpolicy.TierRateUnit) keel.Pred { return c.Text().Eq(string(v)) }
+func (c TierRateUnitCol) Ne(v detentionpolicy.TierRateUnit) keel.Pred { return c.Text().Ne(string(v)) }
+func (c TierRateUnitCol) Gt(v detentionpolicy.TierRateUnit) keel.Pred { return c.Text().Gt(string(v)) }
 func (c TierRateUnitCol) Gte(v detentionpolicy.TierRateUnit) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
-func (c TierRateUnitCol) Lt(v detentionpolicy.TierRateUnit) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
+func (c TierRateUnitCol) Lt(v detentionpolicy.TierRateUnit) keel.Pred { return c.Text().Lt(string(v)) }
 func (c TierRateUnitCol) Lte(v detentionpolicy.TierRateUnit) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c TierRateUnitCol) IsDistinctFrom(v detentionpolicy.TierRateUnit) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c TierRateUnitCol) Between(lo, hi detentionpolicy.TierRateUnit) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c TierRateUnitCol) To(v detentionpolicy.TierRateUnit) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c TierRateUnitCol) In(vs ...detentionpolicy.TierRateUnit) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c TierRateUnitCol) NotIn(vs ...detentionpolicy.TierRateUnit) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // UnnotifiedBehaviorCol is a column of detentionpolicy.UnnotifiedBehavior values.
-type UnnotifiedBehaviorCol struct{ keel.StringCol }
+type UnnotifiedBehaviorCol struct{ keel.TypedStringCol }
 
 func (c UnnotifiedBehaviorCol) Eq(v detentionpolicy.UnnotifiedBehavior) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c UnnotifiedBehaviorCol) Ne(v detentionpolicy.UnnotifiedBehavior) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c UnnotifiedBehaviorCol) Gt(v detentionpolicy.UnnotifiedBehavior) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c UnnotifiedBehaviorCol) Gte(v detentionpolicy.UnnotifiedBehavior) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c UnnotifiedBehaviorCol) Lt(v detentionpolicy.UnnotifiedBehavior) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c UnnotifiedBehaviorCol) Lte(v detentionpolicy.UnnotifiedBehavior) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c UnnotifiedBehaviorCol) IsDistinctFrom(v detentionpolicy.UnnotifiedBehavior) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c UnnotifiedBehaviorCol) Between(lo, hi detentionpolicy.UnnotifiedBehavior) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c UnnotifiedBehaviorCol) To(v detentionpolicy.UnnotifiedBehavior) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c UnnotifiedBehaviorCol) In(vs ...detentionpolicy.UnnotifiedBehavior) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c UnnotifiedBehaviorCol) NotIn(vs ...detentionpolicy.UnnotifiedBehavior) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

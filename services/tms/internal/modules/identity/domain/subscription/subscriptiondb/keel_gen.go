@@ -76,11 +76,11 @@ type SubscriptionsTable struct {
 // Subscriptions references the organization_subscriptions table.
 var Subscriptions = &SubscriptionsTable{
 	TableBase:            keel.TableBase{Ref: &subscriptionsRef},
-	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &subscriptionsRef, Index: 0}}},
-	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &subscriptionsRef, Index: 1}}},
-	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &subscriptionsRef, Index: 2}}},
+	ID:                   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &subscriptionsRef, Index: 0}}},
+	BusinessUnitID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &subscriptionsRef, Index: 1}}},
+	OrganizationID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &subscriptionsRef, Index: 2}}},
 	PlanKey:              keel.StringCol{Col: keel.Col{Ref: &subscriptionsRef, Index: 3}},
-	Status:               StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &subscriptionsRef, Index: 4}}},
+	Status:               StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &subscriptionsRef, Index: 4}}},
 	TrialEndsAt:          keel.Int64Col{Col: keel.Col{Ref: &subscriptionsRef, Index: 5}},
 	ReadOnlyUntil:        keel.Int64Col{Col: keel.Col{Ref: &subscriptionsRef, Index: 6}},
 	StripeCustomerID:     keel.StringCol{Col: keel.Col{Ref: &subscriptionsRef, Index: 7}},
@@ -94,11 +94,11 @@ var Subscriptions = &SubscriptionsTable{
 func BuildSubscriptions(r *keel.Ref) *SubscriptionsTable {
 	return &SubscriptionsTable{
 		TableBase:            keel.TableBase{Ref: r},
-		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ID:                   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		PlanKey:              keel.StringCol{Col: keel.Col{Ref: r, Index: 3}},
-		Status:               StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		Status:               StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		TrialEndsAt:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 5}},
 		ReadOnlyUntil:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
 		StripeCustomerID:     keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
@@ -124,8 +124,6 @@ func (t *SubscriptionsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID)
 
 // SubscriptionsQuery is a query over subscription.Subscription.
 type SubscriptionsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*subscription.Subscription] = (*SubscriptionsTable)(nil)
 
 var _ keel.Query[*subscription.Subscription] = (*SubscriptionsQuery)(nil)
 
@@ -241,42 +239,42 @@ func (t *SubscriptionsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*s
 
 // Create inserts row.
 func (t *SubscriptionsTable) Create(ctx context.Context, db *keel.DB, row *subscription.Subscription) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *SubscriptionsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*subscription.Subscription) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *SubscriptionsTable) Save(ctx context.Context, db *keel.DB, row *subscription.Subscription, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *SubscriptionsTable) SaveExcept(ctx context.Context, db *keel.DB, row *subscription.Subscription, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *SubscriptionsTable) DeleteRow(ctx context.Context, db *keel.DB, row *subscription.Subscription) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *SubscriptionsTable) Upsert(ctx context.Context, db *keel.DB, rows []*subscription.Subscription, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *SubscriptionsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*subscription.Subscription, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *SubscriptionsTable) Copy(ctx context.Context, db *keel.DB, rows []*subscription.Subscription) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -448,37 +446,45 @@ func (q *SubscriptionsQuery) Clone() keel.Query[*subscription.Subscription] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *SubscriptionsQuery) One(ctx context.Context, db *keel.DB) (*subscription.Subscription, error) {
-	return keel.One[*subscription.Subscription](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*subscription.Subscription)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *SubscriptionsQuery) First(ctx context.Context, db *keel.DB) (*subscription.Subscription, error) {
-	return keel.First[*subscription.Subscription](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*subscription.Subscription)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *SubscriptionsQuery) List(ctx context.Context, db *keel.DB) ([]*subscription.Subscription, error) {
-	return keel.List[*subscription.Subscription](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*subscription.Subscription)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *SubscriptionsQuery) All(ctx context.Context, db *keel.DB) ([]*subscription.Subscription, error) {
-	return keel.All[*subscription.Subscription](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*subscription.Subscription)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *SubscriptionsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*subscription.Subscription, error) {
-	return keel.UpdateReturning[*subscription.Subscription](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*subscription.Subscription)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *SubscriptionsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*subscription.Subscription], error) {
-	return keel.PageOf[*subscription.Subscription](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*subscription.Subscription])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *SubscriptionsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*subscription.Subscription) error) error {
-	return keel.Each[*subscription.Subscription](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*subscription.Subscription)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newSubscription() unsafe.Pointer { return unsafe.Pointer(new(subscription.Subscription)) }
@@ -563,24 +569,24 @@ var enumStatus = [...]schema.EnumValue{
 }
 
 // StatusCol is a column of subscription.Status values.
-type StatusCol struct{ keel.StringCol }
+type StatusCol struct{ keel.TypedStringCol }
 
-func (c StatusCol) Eq(v subscription.Status) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c StatusCol) Ne(v subscription.Status) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c StatusCol) Gt(v subscription.Status) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c StatusCol) Gte(v subscription.Status) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c StatusCol) Lt(v subscription.Status) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c StatusCol) Lte(v subscription.Status) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c StatusCol) Eq(v subscription.Status) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c StatusCol) Ne(v subscription.Status) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c StatusCol) Gt(v subscription.Status) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c StatusCol) Gte(v subscription.Status) keel.Pred { return c.Text().Gte(string(v)) }
+func (c StatusCol) Lt(v subscription.Status) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c StatusCol) Lte(v subscription.Status) keel.Pred { return c.Text().Lte(string(v)) }
 func (c StatusCol) IsDistinctFrom(v subscription.Status) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c StatusCol) Between(lo, hi subscription.Status) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c StatusCol) To(v subscription.Status) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c StatusCol) To(v subscription.Status) keel.Assignment { return c.Text().To(string(v)) }
 func (c StatusCol) In(vs ...subscription.Status) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c StatusCol) NotIn(vs ...subscription.Status) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

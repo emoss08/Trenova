@@ -354,7 +354,7 @@ func lapsedQuery(req *workersafetyports.ListWorkersWithLapsedPointsRequest) keel
 		[]string{"worker_id", "organization_id", "business_unit_id"},
 		keel.Union(events, actions),
 	)
-	q := lapsed.Query().
+	q := keel.RowsOf(lapsed.TableRef()).
 		With(lapsed).
 		Pick(
 			lapsed.Col("worker_id"),

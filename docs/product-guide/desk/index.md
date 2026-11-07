@@ -15,7 +15,7 @@ covers:
 ---
 
 ## What it's for
-The Desk is where you talk to Trenova's AI agents about the work in front of you: a shipment, a driver, a customer, or how to do something in the app. Its **Today** page greets you with the date and one line on what the day holds (the morning briefing's headline when one was written, otherwise how many decisions are waiting on you), and below it the box you ask in. The box names the agent it will ask and types out that agent's starter questions as its placeholder: press Tab to take the one on screen, or ⌘1–3 (Ctrl+1–3) to ask it outright. The rail down the left holds **New conversation**, search, links to **Today**, **Watchtower** and **Decisions**, every conversation grouped by when it was last used (**Pinned** first, then **Today**, **Yesterday**, **Previous 7 days**, **Previous 30 days** and **Older**), **Desk settings** and **Back to Trenova**. Select a group's heading to fold it away or open it again; a folded group shows how many conversations it holds, and the rail remembers which groups you folded. On a phone the rail slides over the page from the menu button at the top left.
+The Desk is where you talk to Trenova's AI agents about the work in front of you: a shipment, a driver, a customer, or how to do something in the app. Its **Today** page greets you with the date and one line on what the day holds (the morning briefing's headline when one was written, otherwise how many decisions are waiting on you, which opens them), and below it the box you ask in. The box names the agent it will ask and types out that agent's starter questions as its placeholder: press Tab to take the one on screen, or ⌘1–3 (Ctrl+1–3) to ask it outright. The rail down the left holds **New conversation**, search, links to **Today**, **Watchtower** and **Decisions** (each with a count only while something waits there), every conversation grouped by when it was last used (**Pinned** first, then **Today**, **Yesterday**, **Previous 7 days**, **Previous 30 days** and **Older**), **Keyboard shortcuts**, **Desk settings** and **Back to Trenova**. A conversation that needs you or has an agent at work says so under its name, with the agent: "Needs your approval", "Writing a reply" or "Last reply failed". Press ? anywhere outside a text box to see every Desk shortcut. Select a group's heading to fold it away or open it again; a folded group shows how many conversations it holds, and the rail remembers which groups you folded. On a phone the rail slides over the page from the menu button at the top left.
 
 Each conversation opens in the middle, and anything an agent produces (a table, a draft, a document, a plan) opens in the workspace beside it. Changes an agent wants to make to your records are not applied on their own: in a Desk conversation they wait in a card above the message box, and they are also listed on [Decisions](/desk/decisions).
 
@@ -40,18 +40,20 @@ Keywords: auto switch agent, switch agents automatically, stop suggesting agents
 4. **Start new conversations with** sets the agent a fresh conversation starts with. Questions go to it even when another agent has the tools, unless auto switch is on.
 
 ### Approve a change on the Desk
-Keywords: approve in desk, agent wants to change, review agent change, not now, redraft, out of date
-1. While a change waits on you, a card stands above the message box. It names the change, how many records it touches and the value it would set, and says whether it can be undone.
-2. Select **Approve** (or press ⌘Enter / Ctrl+Enter) once it has been checked against your records. A plan of several steps approves as one.
-3. Select **Review** to read the change in full in the workspace, or **Not now** to put it off; it then waits in the workspace and on [Decisions](/desk/decisions), where you can also decline it or change its values first.
-4. If the card says the change is out of date, what it was drafted against has changed since. Select the redraft button on the card to ask the agent to draft it again with the records as they are now.
+Keywords: approve in desk, agent wants to change, review agent change, decline in desk, reject agent change, decide later, not now, permanent, redraft, out of date
+1. While a change waits on you, a card stands above the message box. It names the change and the record it is for (or how many records it touches), and the value it would set. A change that can't be undone is marked **Permanent**; one that can says reversible.
+2. Select **Approve** once it has been checked against your records, or press ⌘Enter (Ctrl+Enter on Windows) while the message box is empty. With text in the box the key never approves, so a question about the change is never taken as a yes. A plan of several steps approves as one. For a few seconds after, a bar says when it goes through and **Undo** takes it back; the keyboard lands on **Undo**.
+3. Select **Decline** to turn it down. Say why: the agent reads it in the conversation, and so does whoever looks after the agent. A declined change never runs.
+4. Select **Review** to read the change in full in the workspace, or **Decide later** (the clock) to put it off; it then waits in the workspace and on [Decisions](/desk/decisions), where you can also change its values first.
+5. If the card says the change is out of date, what it was drafted against has changed since. Select the redraft button on the card to ask the agent to draft it again with the records as they are now.
 
 ### Answer a change an agent proposes in the floating assistant
-Keywords: approve in chat, review agent change, preview before approving, what will this change, approval card, not now
-1. The assistant on every page asks the same way the Desk does: while a change waits on you, a card stands above the message box. It names the change, how many records it touches and the value it would set, and says whether it is reversible or can't be undone.
-2. Select **Approve** once it has been checked against your records (or press ⌘Enter / Ctrl+Enter; Enter alone never approves). For a few seconds after, a bar says when it goes through: select **Undo** to take it back, or **Do it now** to let it go straight away.
-3. Select **Review** to read the change in full: the assistant opens the conversation on the [Desk](/desk) with the change beside it, where you can also decline it or change its values first. Select **Not now** to put it off; it waits on [Decisions](/desk/decisions), and a pill above the message box says how many changes wait on you.
-4. If the card says the change is out of date, what it was drafted against has changed since. Select the redraft button on the card to ask the agent to draft it again with the records as they are now.
+Keywords: approve in chat, review agent change, preview before approving, what will this change, approval card, decline, decide later, not now, permanent
+1. The assistant on every page asks the same way the Desk does: while a change waits on you, a card stands above the message box. It names the change and the record it is for (or how many records it touches), and the value it would set. A change that can't be undone is marked **Permanent**; one that can says reversible.
+2. Select **Approve** once it has been checked against your records, or press ⌘Enter (Ctrl+Enter on Windows) while the message box is empty; Enter alone never approves. For a few seconds after, a bar says when it goes through: select **Undo** to take it back, or **Do it now** to let it go straight away.
+3. Select **Decline** to turn it down, and say why; the agent reads your reason.
+4. Select **Review** to read the change in full: the assistant opens the conversation on the [Desk](/desk) with the change beside it, where you can also change its values first. Select **Decide later** (the clock) to put it off; it waits on [Decisions](/desk/decisions), and a pill above the message box says how many changes wait on you.
+5. If the card says the change is out of date, what it was drafted against has changed since. Select the redraft button on the card to ask the agent to draft it again with the records as they are now.
 
 ### Keep or undo what an agent learned
 Keywords: agent learned, learned from this conversation, self-improving, memory, procedure, lesson
@@ -62,7 +64,7 @@ Keywords: agent learned, learned from this conversation, self-improving, memory,
 
 ### Start a new conversation
 Keywords: new chat, blank conversation, start over
-1. Select **New conversation** in the rail of [Desk](/desk), or press ⌘N (Ctrl+N).
+1. Select **New conversation** in the rail of [Desk](/desk), or press ⇧⌘O (Ctrl+Shift+O on Windows).
 2. Pick the agent in the box and ask your question.
 
 ### Go back to an earlier conversation
@@ -98,7 +100,7 @@ Keywords: steer, steering, interrupt, redirect, change direction, correct the ag
 1. While the agent works, a light runs round the message box and a line at its top says what the agent is doing.
 2. Type your correction or extra detail in the box.
 3. Press Enter, or select the round arrow button. The agent reads it at its next step and carries on with it in mind.
-4. To stop the reply altogether, empty the box and select **Stop** (the square button).
+4. To stop the reply altogether, select **Stop** (the square button beside the arrow) or press Esc in the box. Whatever you typed stays in the box.
 
 ### Queue a follow-up for after the reply
 Keywords: queue message, send after, follow-up, line up questions, wait for reply, send next
@@ -429,7 +431,7 @@ Keywords: desk preferences, dark mode, text size, send with enter, default agent
 1. On [Desk](/desk), select **Desk settings** at the bottom of the rail.
 2. Pick a section and change what you need. Every change applies straight away:
    - **Appearance**: **Theme**, **Conversation width**, **Motion** and **Text size**.
-   - **Conversation**: **Send with** (**Enter** or **⌘ Enter**), **Source numbers**, and **Open Desk to** (**Today** or **Last conversation**).
+   - **Conversation**: **Send with** (**Enter**, or ⌘Enter on a Mac and Ctrl+Enter elsewhere), **Source numbers**, and **Open Desk to** (**Today** or **Last conversation**).
    - **Composer**: **Start new conversations with** a chosen agent or **The last one I used**, **Share the page you came from**, **@ mentions**, **Slash commands**, **Dictation** and **Suggested questions**.
    - **Files & scanning**: **Drop files** (**Anywhere** or **On the composer**), **Scan with** and **Scan settings**.
    - **Artifacts**: **Open new artifacts** (**Right away** or **When I click**) and **New artifact dot**.
@@ -445,7 +447,7 @@ The conversation marks each decided change with a line ("Approved"), and decidin
 
 A long conversation eventually becomes read-only; select **Start a new conversation** to carry on. A conversation also becomes read-only when its agent is turned off, removed, set to run on its own, or no longer available to you, and the note in place of the message box says which, and whether an administrator can change it.
 
-- Enter sends and Shift+Enter starts a new line. In **Desk settings**, **Send with** can be set to **⌘ Enter** instead. **@ mentions**, **Slash commands** and **Dictation** can each be turned off there.
+- Enter sends and Shift+Enter starts a new line. In **Desk settings**, **Send with** can be set to ⌘Enter (Ctrl+Enter on Windows) instead. **@ mentions**, **Slash commands** and **Dictation** can each be turned off there.
 - Only words can steer a reply under way. A message carrying files always waits until the reply finishes. Once a steering message has been handed to the agent, it can't be edited or taken back; stopping the reply is the only way to undo it. Waiting messages are kept with the conversation, so they survive a reload or another tab.
 - You can't change the agent or the model while an agent is replying.
 - A message can carry up to 5 files, each up to 25 MB: PDF, PNG, JPG, HEIC, TIFF, CSV, Excel, Word, text and email (.eml) files. Password-protected PDFs and other file types are refused before they upload. Scanning works only inside an open conversation, not from the box on Today.

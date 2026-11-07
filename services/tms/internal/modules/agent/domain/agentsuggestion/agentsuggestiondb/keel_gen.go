@@ -74,14 +74,14 @@ type SuggestionsTable struct {
 // Suggestions references the agent_suggestions table.
 var Suggestions = &SuggestionsTable{
 	TableBase:        keel.TableBase{Ref: &suggestionsRef},
-	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &suggestionsRef, Index: 0}}},
-	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &suggestionsRef, Index: 1}}},
-	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &suggestionsRef, Index: 2}}},
-	UserID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &suggestionsRef, Index: 3}}},
-	SuggestedAgentID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &suggestionsRef, Index: 4}}},
-	CurrentAgentID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &suggestionsRef, Index: 5}}},
-	Surface:          SurfaceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &suggestionsRef, Index: 6}}},
-	Outcome:          OutcomeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &suggestionsRef, Index: 7}}},
+	ID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &suggestionsRef, Index: 0}}},
+	BusinessUnitID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &suggestionsRef, Index: 1}}},
+	OrganizationID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &suggestionsRef, Index: 2}}},
+	UserID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &suggestionsRef, Index: 3}}},
+	SuggestedAgentID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &suggestionsRef, Index: 4}}},
+	CurrentAgentID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &suggestionsRef, Index: 5}}},
+	Surface:          SurfaceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &suggestionsRef, Index: 6}}},
+	Outcome:          OutcomeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &suggestionsRef, Index: 7}}},
 	Version:          keel.Int64Col{Col: keel.Col{Ref: &suggestionsRef, Index: 8}},
 	CreatedAt:        keel.Int64Col{Col: keel.Col{Ref: &suggestionsRef, Index: 9}},
 	UpdatedAt:        keel.Int64Col{Col: keel.Col{Ref: &suggestionsRef, Index: 10}},
@@ -91,14 +91,14 @@ var Suggestions = &SuggestionsTable{
 func BuildSuggestions(r *keel.Ref) *SuggestionsTable {
 	return &SuggestionsTable{
 		TableBase:        keel.TableBase{Ref: r},
-		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		UserID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		SuggestedAgentID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		CurrentAgentID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		Surface:          SurfaceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		Outcome:          OutcomeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		ID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		UserID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		SuggestedAgentID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		CurrentAgentID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		Surface:          SurfaceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		Outcome:          OutcomeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
 		Version:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
 		CreatedAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
 		UpdatedAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
@@ -120,8 +120,6 @@ func (t *SuggestionsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (
 
 // SuggestionsQuery is a query over agentsuggestion.Suggestion.
 type SuggestionsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*agentsuggestion.Suggestion] = (*SuggestionsTable)(nil)
 
 var _ keel.Query[*agentsuggestion.Suggestion] = (*SuggestionsQuery)(nil)
 
@@ -237,42 +235,42 @@ func (t *SuggestionsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*age
 
 // Create inserts row.
 func (t *SuggestionsTable) Create(ctx context.Context, db *keel.DB, row *agentsuggestion.Suggestion) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *SuggestionsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*agentsuggestion.Suggestion) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *SuggestionsTable) Save(ctx context.Context, db *keel.DB, row *agentsuggestion.Suggestion, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *SuggestionsTable) SaveExcept(ctx context.Context, db *keel.DB, row *agentsuggestion.Suggestion, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *SuggestionsTable) DeleteRow(ctx context.Context, db *keel.DB, row *agentsuggestion.Suggestion) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *SuggestionsTable) Upsert(ctx context.Context, db *keel.DB, rows []*agentsuggestion.Suggestion, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *SuggestionsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*agentsuggestion.Suggestion, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *SuggestionsTable) Copy(ctx context.Context, db *keel.DB, rows []*agentsuggestion.Suggestion) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -444,37 +442,45 @@ func (q *SuggestionsQuery) Clone() keel.Query[*agentsuggestion.Suggestion] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *SuggestionsQuery) One(ctx context.Context, db *keel.DB) (*agentsuggestion.Suggestion, error) {
-	return keel.One[*agentsuggestion.Suggestion](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*agentsuggestion.Suggestion)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *SuggestionsQuery) First(ctx context.Context, db *keel.DB) (*agentsuggestion.Suggestion, error) {
-	return keel.First[*agentsuggestion.Suggestion](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*agentsuggestion.Suggestion)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *SuggestionsQuery) List(ctx context.Context, db *keel.DB) ([]*agentsuggestion.Suggestion, error) {
-	return keel.List[*agentsuggestion.Suggestion](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*agentsuggestion.Suggestion)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *SuggestionsQuery) All(ctx context.Context, db *keel.DB) ([]*agentsuggestion.Suggestion, error) {
-	return keel.All[*agentsuggestion.Suggestion](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*agentsuggestion.Suggestion)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *SuggestionsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*agentsuggestion.Suggestion, error) {
-	return keel.UpdateReturning[*agentsuggestion.Suggestion](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*agentsuggestion.Suggestion)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *SuggestionsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*agentsuggestion.Suggestion], error) {
-	return keel.PageOf[*agentsuggestion.Suggestion](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*agentsuggestion.Suggestion])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *SuggestionsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*agentsuggestion.Suggestion) error) error {
-	return keel.Each[*agentsuggestion.Suggestion](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*agentsuggestion.Suggestion)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newSuggestion() unsafe.Pointer { return unsafe.Pointer(new(agentsuggestion.Suggestion)) }
@@ -559,47 +565,47 @@ var enumSurface = [...]schema.EnumValue{
 }
 
 // OutcomeCol is a column of agentsuggestion.Outcome values.
-type OutcomeCol struct{ keel.StringCol }
+type OutcomeCol struct{ keel.TypedStringCol }
 
-func (c OutcomeCol) Eq(v agentsuggestion.Outcome) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c OutcomeCol) Ne(v agentsuggestion.Outcome) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c OutcomeCol) Gt(v agentsuggestion.Outcome) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c OutcomeCol) Gte(v agentsuggestion.Outcome) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c OutcomeCol) Lt(v agentsuggestion.Outcome) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c OutcomeCol) Lte(v agentsuggestion.Outcome) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c OutcomeCol) Eq(v agentsuggestion.Outcome) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c OutcomeCol) Ne(v agentsuggestion.Outcome) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c OutcomeCol) Gt(v agentsuggestion.Outcome) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c OutcomeCol) Gte(v agentsuggestion.Outcome) keel.Pred { return c.Text().Gte(string(v)) }
+func (c OutcomeCol) Lt(v agentsuggestion.Outcome) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c OutcomeCol) Lte(v agentsuggestion.Outcome) keel.Pred { return c.Text().Lte(string(v)) }
 func (c OutcomeCol) IsDistinctFrom(v agentsuggestion.Outcome) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c OutcomeCol) Between(lo, hi agentsuggestion.Outcome) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c OutcomeCol) To(v agentsuggestion.Outcome) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c OutcomeCol) To(v agentsuggestion.Outcome) keel.Assignment { return c.Text().To(string(v)) }
 func (c OutcomeCol) In(vs ...agentsuggestion.Outcome) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c OutcomeCol) NotIn(vs ...agentsuggestion.Outcome) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // SurfaceCol is a column of agentsuggestion.Surface values.
-type SurfaceCol struct{ keel.StringCol }
+type SurfaceCol struct{ keel.TypedStringCol }
 
-func (c SurfaceCol) Eq(v agentsuggestion.Surface) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c SurfaceCol) Ne(v agentsuggestion.Surface) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c SurfaceCol) Gt(v agentsuggestion.Surface) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c SurfaceCol) Gte(v agentsuggestion.Surface) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c SurfaceCol) Lt(v agentsuggestion.Surface) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c SurfaceCol) Lte(v agentsuggestion.Surface) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c SurfaceCol) Eq(v agentsuggestion.Surface) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c SurfaceCol) Ne(v agentsuggestion.Surface) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c SurfaceCol) Gt(v agentsuggestion.Surface) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c SurfaceCol) Gte(v agentsuggestion.Surface) keel.Pred { return c.Text().Gte(string(v)) }
+func (c SurfaceCol) Lt(v agentsuggestion.Surface) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c SurfaceCol) Lte(v agentsuggestion.Surface) keel.Pred { return c.Text().Lte(string(v)) }
 func (c SurfaceCol) IsDistinctFrom(v agentsuggestion.Surface) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c SurfaceCol) Between(lo, hi agentsuggestion.Surface) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c SurfaceCol) To(v agentsuggestion.Surface) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c SurfaceCol) To(v agentsuggestion.Surface) keel.Assignment { return c.Text().To(string(v)) }
 func (c SurfaceCol) In(vs ...agentsuggestion.Surface) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c SurfaceCol) NotIn(vs ...agentsuggestion.Surface) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

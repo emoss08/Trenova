@@ -110,11 +110,11 @@ type CommoditiesTable struct {
 // Commodities references the commodities table.
 var Commodities = &CommoditiesTable{
 	TableBase:              keel.TableBase{Ref: &commoditiesRef},
-	ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &commoditiesRef, Index: 0}}},
-	BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &commoditiesRef, Index: 1}}},
-	OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &commoditiesRef, Index: 2}}},
-	HazardousMaterialID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &commoditiesRef, Index: 3}}},
-	Status:                 keelkinds.DomaintypesStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &commoditiesRef, Index: 4}}},
+	ID:                     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &commoditiesRef, Index: 0}}},
+	BusinessUnitID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &commoditiesRef, Index: 1}}},
+	OrganizationID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &commoditiesRef, Index: 2}}},
+	HazardousMaterialID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &commoditiesRef, Index: 3}}},
+	Status:                 keelkinds.DomaintypesStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &commoditiesRef, Index: 4}}},
 	Name:                   keel.StringCol{Col: keel.Col{Ref: &commoditiesRef, Index: 5}},
 	Description:            keel.StringCol{Col: keel.Col{Ref: &commoditiesRef, Index: 6}},
 	MinTemperature:         keel.Int64Col{Col: keel.Col{Ref: &commoditiesRef, Index: 7}},
@@ -125,7 +125,7 @@ var Commodities = &CommoditiesTable{
 	WidthPerUnit:           keel.Float64Col{Col: keel.Col{Ref: &commoditiesRef, Index: 12}},
 	HeightPerUnit:          keel.Float64Col{Col: keel.Col{Ref: &commoditiesRef, Index: 13}},
 	MaxQuantityPerShipment: keel.Float64Col{Col: keel.Col{Ref: &commoditiesRef, Index: 14}},
-	FreightClass:           FreightClassCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &commoditiesRef, Index: 15}}},
+	FreightClass:           FreightClassCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &commoditiesRef, Index: 15}}},
 	LoadingInstructions:    keel.StringCol{Col: keel.Col{Ref: &commoditiesRef, Index: 16}},
 	Stackable:              keel.BoolCol{Col: keel.Col{Ref: &commoditiesRef, Index: 17}},
 	Fragile:                keel.BoolCol{Col: keel.Col{Ref: &commoditiesRef, Index: 18}},
@@ -140,11 +140,11 @@ var Commodities = &CommoditiesTable{
 func BuildCommodities(r *keel.Ref) *CommoditiesTable {
 	return &CommoditiesTable{
 		TableBase:              keel.TableBase{Ref: r},
-		ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		HazardousMaterialID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		Status:                 keelkinds.DomaintypesStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ID:                     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		HazardousMaterialID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		Status:                 keelkinds.DomaintypesStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		Name:                   keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		Description:            keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
 		MinTemperature:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
@@ -155,7 +155,7 @@ func BuildCommodities(r *keel.Ref) *CommoditiesTable {
 		WidthPerUnit:           keel.Float64Col{Col: keel.Col{Ref: r, Index: 12}},
 		HeightPerUnit:          keel.Float64Col{Col: keel.Col{Ref: r, Index: 13}},
 		MaxQuantityPerShipment: keel.Float64Col{Col: keel.Col{Ref: r, Index: 14}},
-		FreightClass:           FreightClassCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 15}}},
+		FreightClass:           FreightClassCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 15}}},
 		LoadingInstructions:    keel.StringCol{Col: keel.Col{Ref: r, Index: 16}},
 		Stackable:              keel.BoolCol{Col: keel.Col{Ref: r, Index: 17}},
 		Fragile:                keel.BoolCol{Col: keel.Col{Ref: r, Index: 18}},
@@ -187,8 +187,6 @@ func (t *CommoditiesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (
 
 // CommoditiesQuery is a query over commodity.Commodity.
 type CommoditiesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*commodity.Commodity] = (*CommoditiesTable)(nil)
 
 var _ keel.Query[*commodity.Commodity] = (*CommoditiesQuery)(nil)
 
@@ -304,42 +302,42 @@ func (t *CommoditiesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*com
 
 // Create inserts row.
 func (t *CommoditiesTable) Create(ctx context.Context, db *keel.DB, row *commodity.Commodity) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *CommoditiesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*commodity.Commodity) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *CommoditiesTable) Save(ctx context.Context, db *keel.DB, row *commodity.Commodity, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *CommoditiesTable) SaveExcept(ctx context.Context, db *keel.DB, row *commodity.Commodity, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *CommoditiesTable) DeleteRow(ctx context.Context, db *keel.DB, row *commodity.Commodity) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *CommoditiesTable) Upsert(ctx context.Context, db *keel.DB, rows []*commodity.Commodity, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *CommoditiesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*commodity.Commodity, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *CommoditiesTable) Copy(ctx context.Context, db *keel.DB, rows []*commodity.Commodity) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -511,37 +509,45 @@ func (q *CommoditiesQuery) Clone() keel.Query[*commodity.Commodity] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *CommoditiesQuery) One(ctx context.Context, db *keel.DB) (*commodity.Commodity, error) {
-	return keel.One[*commodity.Commodity](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*commodity.Commodity)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *CommoditiesQuery) First(ctx context.Context, db *keel.DB) (*commodity.Commodity, error) {
-	return keel.First[*commodity.Commodity](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*commodity.Commodity)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *CommoditiesQuery) List(ctx context.Context, db *keel.DB) ([]*commodity.Commodity, error) {
-	return keel.List[*commodity.Commodity](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*commodity.Commodity)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *CommoditiesQuery) All(ctx context.Context, db *keel.DB) ([]*commodity.Commodity, error) {
-	return keel.All[*commodity.Commodity](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*commodity.Commodity)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *CommoditiesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*commodity.Commodity, error) {
-	return keel.UpdateReturning[*commodity.Commodity](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*commodity.Commodity)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *CommoditiesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*commodity.Commodity], error) {
-	return keel.PageOf[*commodity.Commodity](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*commodity.Commodity])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *CommoditiesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*commodity.Commodity) error) error {
-	return keel.Each[*commodity.Commodity](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*commodity.Commodity)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newCommodity() unsafe.Pointer { return unsafe.Pointer(new(commodity.Commodity)) }
@@ -757,26 +763,24 @@ var reportMeasureFloat = schema.ReportInfo{Included: true, Kind: schema.Measure,
 var reportMeasureIntegerHidden = schema.ReportInfo{Kind: schema.Measure, Type: schema.ValueInt, Aggs: schema.AggsNumeric}
 
 // FreightClassCol is a column of commodity.FreightClass values.
-type FreightClassCol struct{ keel.StringCol }
+type FreightClassCol struct{ keel.TypedStringCol }
 
-func (c FreightClassCol) Eq(v commodity.FreightClass) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c FreightClassCol) Ne(v commodity.FreightClass) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c FreightClassCol) Gt(v commodity.FreightClass) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c FreightClassCol) Gte(v commodity.FreightClass) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c FreightClassCol) Lt(v commodity.FreightClass) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c FreightClassCol) Lte(v commodity.FreightClass) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c FreightClassCol) Eq(v commodity.FreightClass) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c FreightClassCol) Ne(v commodity.FreightClass) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c FreightClassCol) Gt(v commodity.FreightClass) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c FreightClassCol) Gte(v commodity.FreightClass) keel.Pred { return c.Text().Gte(string(v)) }
+func (c FreightClassCol) Lt(v commodity.FreightClass) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c FreightClassCol) Lte(v commodity.FreightClass) keel.Pred { return c.Text().Lte(string(v)) }
 func (c FreightClassCol) IsDistinctFrom(v commodity.FreightClass) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c FreightClassCol) Between(lo, hi commodity.FreightClass) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c FreightClassCol) To(v commodity.FreightClass) keel.Assignment {
-	return c.StringCol.To(string(v))
-}
+func (c FreightClassCol) To(v commodity.FreightClass) keel.Assignment { return c.Text().To(string(v)) }
 func (c FreightClassCol) In(vs ...commodity.FreightClass) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c FreightClassCol) NotIn(vs ...commodity.FreightClass) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

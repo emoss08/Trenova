@@ -102,7 +102,7 @@ func (s accumulationSource) routeRows() keel.Query[*keel.Row] {
 	miles := jm.Col("miles").Sum()
 	loaded := keel.BoolOf(jm.Col("loaded"))
 
-	return jm.Query().
+	return keel.RowsOf(jm.TableRef()).
 		With(s.inp, jm).
 		LeftJoin(a, a.ShipmentMoveID.EqCol(jm.Col("shipment_move_id")), a.ArchivedAt.IsNull()).
 		LeftJoin(ifj, ifj.CountryCode.EqCol(jm.Col("country_code")), ifj.Code.EqCol(jm.Col("jurisdiction_code"))).
@@ -128,7 +128,7 @@ func (s accumulationSource) noTractor() keel.Query[*keel.Row] {
 	jm := s.jm
 	a := shipmentdb.Assignments
 
-	return jm.Query().
+	return keel.RowsOf(jm.TableRef()).
 		With(s.inp, jm).
 		LeftJoin(a, a.ShipmentMoveID.EqCol(jm.Col("shipment_move_id")), a.ArchivedAt.IsNull()).
 		Pick(jm.Col("shipment_move_id"), roundMiles(keel.NumericOf(jm.Col("miles").Sum()).Coalesce(0))).
@@ -142,7 +142,7 @@ func (s accumulationSource) unattributed() keel.Query[*keel.Row] {
 	smjm := shipmentdb.ShipmentMoveJurisdictionMiles
 	me := iftadb.JurisdictionMileageEntries
 
-	return inp.Query().
+	return keel.RowsOf(inp.TableRef()).
 		With(inp).
 		Pick(inp.Col("id"), roundMiles(inp.Col("distance"))).
 		Where(
@@ -158,7 +158,7 @@ func (s accumulationSource) mismatches() keel.Query[*keel.Row] {
 	moveDistance := keel.Float64Of(jm.Col("move_distance"))
 	attributed := keel.Float64Of(jm.Col("miles").Sum())
 
-	return jm.Query().
+	return keel.RowsOf(jm.TableRef()).
 		With(s.inp, jm).
 		Pick(jm.Col("shipment_move_id"), roundMiles(moveDistance), roundMiles(attributed)).
 		Where(moveDistance.IsNotNull()).

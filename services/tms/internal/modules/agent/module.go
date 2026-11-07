@@ -134,6 +134,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/casechecklistservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/conversationscheduleservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/dispatchautoassignservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/dispatchcoveragewatch"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/dispatchjobs/dispatchcoveragecontract"
 	"github.com/emoss08/trenova/internal/modules/agent/app/documentreader"
 	"github.com/emoss08/trenova/internal/modules/agent/app/extensionportalservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/extensionwebwatchservice"
@@ -369,6 +371,12 @@ func SharedOptions() fx.Option {
 				fx.As(new(agenteventports.AgentEventPublisher)),
 			),
 			agentproposalservice.New,
+			dispatchcoveragecontract.NewRequester,
+			fx.Annotate(
+				dispatchcoveragewatch.New,
+				fx.As(new(agenteventports.AgentEventObserver)),
+				fx.ResultTags(`group:"agent_event_observers"`),
+			),
 			agentexceptionservice.New,
 			proposalexecutor.New,
 			proposalpreviewservice.New,
@@ -468,6 +476,7 @@ func SharedOptions() fx.Option {
 		aiproviderspendservice.Module,
 		agenttoolruleservice.LoaderModule,
 		fx.Invoke(agentevents.RegisterAttachmentObservers),
+		fx.Invoke(agentevents.RegisterEventObservers),
 	)
 }
 

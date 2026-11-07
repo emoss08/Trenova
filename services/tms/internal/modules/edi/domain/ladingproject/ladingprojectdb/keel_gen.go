@@ -77,16 +77,16 @@ type FlowEventsTable struct {
 // FlowEvents references the edi_flow_events table.
 var FlowEvents = &FlowEventsTable{
 	TableBase:      keel.TableBase{Ref: &flowEventsRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &flowEventsRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &flowEventsRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &flowEventsRef, Index: 2}}},
-	InstanceID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &flowEventsRef, Index: 3}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &flowEventsRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &flowEventsRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &flowEventsRef, Index: 2}}},
+	InstanceID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &flowEventsRef, Index: 3}}},
 	Kind:           keel.StringCol{Col: keel.Col{Ref: &flowEventsRef, Index: 4}},
 	Detail:         keel.JSONBCol{Col: keel.Col{Ref: &flowEventsRef, Index: 5}},
 	Actions:        keel.JSONBCol{Col: keel.Col{Ref: &flowEventsRef, Index: 6}},
 	Error:          keel.JSONBCol{Col: keel.Col{Ref: &flowEventsRef, Index: 7}},
-	MessageID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &flowEventsRef, Index: 8}}},
-	ActorID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &flowEventsRef, Index: 9}}},
+	MessageID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &flowEventsRef, Index: 8}}},
+	ActorID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &flowEventsRef, Index: 9}}},
 	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &flowEventsRef, Index: 10}},
 }
 
@@ -94,16 +94,16 @@ var FlowEvents = &FlowEventsTable{
 func BuildFlowEvents(r *keel.Ref) *FlowEventsTable {
 	return &FlowEventsTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		InstanceID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		InstanceID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		Kind:           keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		Detail:         keel.JSONBCol{Col: keel.Col{Ref: r, Index: 5}},
 		Actions:        keel.JSONBCol{Col: keel.Col{Ref: r, Index: 6}},
 		Error:          keel.JSONBCol{Col: keel.Col{Ref: r, Index: 7}},
-		MessageID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
-		ActorID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		MessageID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		ActorID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
 		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
 	}
 }
@@ -123,8 +123,6 @@ func (t *FlowEventsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*
 
 // FlowEventsQuery is a query over ladingproject.FlowEvent.
 type FlowEventsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*ladingproject.FlowEvent] = (*FlowEventsTable)(nil)
 
 var _ keel.Query[*ladingproject.FlowEvent] = (*FlowEventsQuery)(nil)
 
@@ -240,42 +238,42 @@ func (t *FlowEventsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*ladi
 
 // Create inserts row.
 func (t *FlowEventsTable) Create(ctx context.Context, db *keel.DB, row *ladingproject.FlowEvent) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *FlowEventsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*ladingproject.FlowEvent) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *FlowEventsTable) Save(ctx context.Context, db *keel.DB, row *ladingproject.FlowEvent, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *FlowEventsTable) SaveExcept(ctx context.Context, db *keel.DB, row *ladingproject.FlowEvent, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *FlowEventsTable) DeleteRow(ctx context.Context, db *keel.DB, row *ladingproject.FlowEvent) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *FlowEventsTable) Upsert(ctx context.Context, db *keel.DB, rows []*ladingproject.FlowEvent, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *FlowEventsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*ladingproject.FlowEvent, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *FlowEventsTable) Copy(ctx context.Context, db *keel.DB, rows []*ladingproject.FlowEvent) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -447,37 +445,45 @@ func (q *FlowEventsQuery) Clone() keel.Query[*ladingproject.FlowEvent] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *FlowEventsQuery) One(ctx context.Context, db *keel.DB) (*ladingproject.FlowEvent, error) {
-	return keel.One[*ladingproject.FlowEvent](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*ladingproject.FlowEvent)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *FlowEventsQuery) First(ctx context.Context, db *keel.DB) (*ladingproject.FlowEvent, error) {
-	return keel.First[*ladingproject.FlowEvent](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*ladingproject.FlowEvent)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *FlowEventsQuery) List(ctx context.Context, db *keel.DB) ([]*ladingproject.FlowEvent, error) {
-	return keel.List[*ladingproject.FlowEvent](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*ladingproject.FlowEvent)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *FlowEventsQuery) All(ctx context.Context, db *keel.DB) ([]*ladingproject.FlowEvent, error) {
-	return keel.All[*ladingproject.FlowEvent](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*ladingproject.FlowEvent)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *FlowEventsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*ladingproject.FlowEvent, error) {
-	return keel.UpdateReturning[*ladingproject.FlowEvent](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*ladingproject.FlowEvent)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *FlowEventsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*ladingproject.FlowEvent], error) {
-	return keel.PageOf[*ladingproject.FlowEvent](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*ladingproject.FlowEvent])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *FlowEventsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*ladingproject.FlowEvent) error) error {
-	return keel.Each[*ladingproject.FlowEvent](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*ladingproject.FlowEvent)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newFlowEvent() unsafe.Pointer { return unsafe.Pointer(new(ladingproject.FlowEvent)) }
@@ -643,23 +649,23 @@ type FlowInstancesTable struct {
 // FlowInstances references the edi_flow_instances table.
 var FlowInstances = &FlowInstancesTable{
 	TableBase:      keel.TableBase{Ref: &flowInstancesRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &flowInstancesRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &flowInstancesRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &flowInstancesRef, Index: 2}}},
-	EDIPartnerID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &flowInstancesRef, Index: 3}}},
-	ProjectID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &flowInstancesRef, Index: 4}}},
-	VersionID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &flowInstancesRef, Index: 5}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &flowInstancesRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &flowInstancesRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &flowInstancesRef, Index: 2}}},
+	EDIPartnerID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &flowInstancesRef, Index: 3}}},
+	ProjectID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &flowInstancesRef, Index: 4}}},
+	VersionID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &flowInstancesRef, Index: 5}}},
 	Flow:           keel.StringCol{Col: keel.Col{Ref: &flowInstancesRef, Index: 6}},
 	Key:            keel.StringCol{Col: keel.Col{Ref: &flowInstancesRef, Index: 7}},
 	State:          keel.JSONBCol{Col: keel.Col{Ref: &flowInstancesRef, Index: 8}},
-	Status:         FlowInstanceStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &flowInstancesRef, Index: 9}}},
+	Status:         FlowInstanceStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &flowInstancesRef, Index: 9}}},
 	Reason:         keel.JSONBCol{Col: keel.Col{Ref: &flowInstancesRef, Index: 10}},
 	WakeAt:         keel.Int64Col{Col: keel.Col{Ref: &flowInstancesRef, Index: 11}},
-	ShipmentID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &flowInstancesRef, Index: 12}}},
-	TransferID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &flowInstancesRef, Index: 13}}},
+	ShipmentID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &flowInstancesRef, Index: 12}}},
+	TransferID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &flowInstancesRef, Index: 13}}},
 	LastEventAt:    keel.Int64Col{Col: keel.Col{Ref: &flowInstancesRef, Index: 14}},
 	HeldAt:         keel.Int64Col{Col: keel.Col{Ref: &flowInstancesRef, Index: 15}},
-	ResolvedByID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &flowInstancesRef, Index: 16}}},
+	ResolvedByID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &flowInstancesRef, Index: 16}}},
 	ResolvedAt:     keel.Int64Col{Col: keel.Col{Ref: &flowInstancesRef, Index: 17}},
 	Version:        keel.Int64Col{Col: keel.Col{Ref: &flowInstancesRef, Index: 18}},
 	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &flowInstancesRef, Index: 19}},
@@ -670,23 +676,23 @@ var FlowInstances = &FlowInstancesTable{
 func BuildFlowInstances(r *keel.Ref) *FlowInstancesTable {
 	return &FlowInstancesTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		EDIPartnerID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		ProjectID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		VersionID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		EDIPartnerID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ProjectID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		VersionID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		Flow:           keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
 		Key:            keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
 		State:          keel.JSONBCol{Col: keel.Col{Ref: r, Index: 8}},
-		Status:         FlowInstanceStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		Status:         FlowInstanceStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
 		Reason:         keel.JSONBCol{Col: keel.Col{Ref: r, Index: 10}},
 		WakeAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
-		ShipmentID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 12}}},
-		TransferID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 13}}},
+		ShipmentID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 12}}},
+		TransferID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 13}}},
 		LastEventAt:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
 		HeldAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
-		ResolvedByID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 16}}},
+		ResolvedByID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 16}}},
 		ResolvedAt:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
 		Version:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
 		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 19}},
@@ -714,8 +720,6 @@ func (t *FlowInstancesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID)
 
 // FlowInstancesQuery is a query over ladingproject.FlowInstance.
 type FlowInstancesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*ladingproject.FlowInstance] = (*FlowInstancesTable)(nil)
 
 var _ keel.Query[*ladingproject.FlowInstance] = (*FlowInstancesQuery)(nil)
 
@@ -831,42 +835,42 @@ func (t *FlowInstancesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*l
 
 // Create inserts row.
 func (t *FlowInstancesTable) Create(ctx context.Context, db *keel.DB, row *ladingproject.FlowInstance) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *FlowInstancesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*ladingproject.FlowInstance) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *FlowInstancesTable) Save(ctx context.Context, db *keel.DB, row *ladingproject.FlowInstance, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *FlowInstancesTable) SaveExcept(ctx context.Context, db *keel.DB, row *ladingproject.FlowInstance, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *FlowInstancesTable) DeleteRow(ctx context.Context, db *keel.DB, row *ladingproject.FlowInstance) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *FlowInstancesTable) Upsert(ctx context.Context, db *keel.DB, rows []*ladingproject.FlowInstance, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *FlowInstancesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*ladingproject.FlowInstance, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *FlowInstancesTable) Copy(ctx context.Context, db *keel.DB, rows []*ladingproject.FlowInstance) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1038,37 +1042,45 @@ func (q *FlowInstancesQuery) Clone() keel.Query[*ladingproject.FlowInstance] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *FlowInstancesQuery) One(ctx context.Context, db *keel.DB) (*ladingproject.FlowInstance, error) {
-	return keel.One[*ladingproject.FlowInstance](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*ladingproject.FlowInstance)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *FlowInstancesQuery) First(ctx context.Context, db *keel.DB) (*ladingproject.FlowInstance, error) {
-	return keel.First[*ladingproject.FlowInstance](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*ladingproject.FlowInstance)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *FlowInstancesQuery) List(ctx context.Context, db *keel.DB) ([]*ladingproject.FlowInstance, error) {
-	return keel.List[*ladingproject.FlowInstance](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*ladingproject.FlowInstance)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *FlowInstancesQuery) All(ctx context.Context, db *keel.DB) ([]*ladingproject.FlowInstance, error) {
-	return keel.All[*ladingproject.FlowInstance](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*ladingproject.FlowInstance)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *FlowInstancesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*ladingproject.FlowInstance, error) {
-	return keel.UpdateReturning[*ladingproject.FlowInstance](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*ladingproject.FlowInstance)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *FlowInstancesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*ladingproject.FlowInstance], error) {
-	return keel.PageOf[*ladingproject.FlowInstance](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*ladingproject.FlowInstance])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *FlowInstancesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*ladingproject.FlowInstance) error) error {
-	return keel.Each[*ladingproject.FlowInstance](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*ladingproject.FlowInstance)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newFlowInstance() unsafe.Pointer { return unsafe.Pointer(new(ladingproject.FlowInstance)) }
@@ -1278,12 +1290,12 @@ type LadingProjectsTable struct {
 // LadingProjects references the edi_lading_projects table.
 var LadingProjects = &LadingProjectsTable{
 	TableBase:         keel.TableBase{Ref: &ladingProjectsRef},
-	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingProjectsRef, Index: 0}}},
-	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingProjectsRef, Index: 1}}},
-	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingProjectsRef, Index: 2}}},
-	EDIPartnerID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingProjectsRef, Index: 3}}},
-	ActiveVersionID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingProjectsRef, Index: 4}}},
-	ShadowVersionID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingProjectsRef, Index: 5}}},
+	ID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &ladingProjectsRef, Index: 0}}},
+	BusinessUnitID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &ladingProjectsRef, Index: 1}}},
+	OrganizationID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &ladingProjectsRef, Index: 2}}},
+	EDIPartnerID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &ladingProjectsRef, Index: 3}}},
+	ActiveVersionID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &ladingProjectsRef, Index: 4}}},
+	ShadowVersionID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &ladingProjectsRef, Index: 5}}},
 	Settings:          keel.JSONBCol{Col: keel.Col{Ref: &ladingProjectsRef, Index: 6}},
 	NextVersionNumber: keel.Int64Col{Col: keel.Col{Ref: &ladingProjectsRef, Index: 7}},
 	Version:           keel.Int64Col{Col: keel.Col{Ref: &ladingProjectsRef, Index: 8}},
@@ -1295,12 +1307,12 @@ var LadingProjects = &LadingProjectsTable{
 func BuildLadingProjects(r *keel.Ref) *LadingProjectsTable {
 	return &LadingProjectsTable{
 		TableBase:         keel.TableBase{Ref: r},
-		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		EDIPartnerID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		ActiveVersionID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		ShadowVersionID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		ID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		EDIPartnerID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ActiveVersionID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ShadowVersionID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		Settings:          keel.JSONBCol{Col: keel.Col{Ref: r, Index: 6}},
 		NextVersionNumber: keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
 		Version:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
@@ -1334,8 +1346,6 @@ func (t *LadingProjectsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID
 
 // LadingProjectsQuery is a query over ladingproject.LadingProject.
 type LadingProjectsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*ladingproject.LadingProject] = (*LadingProjectsTable)(nil)
 
 var _ keel.Query[*ladingproject.LadingProject] = (*LadingProjectsQuery)(nil)
 
@@ -1451,42 +1461,42 @@ func (t *LadingProjectsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*
 
 // Create inserts row.
 func (t *LadingProjectsTable) Create(ctx context.Context, db *keel.DB, row *ladingproject.LadingProject) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *LadingProjectsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*ladingproject.LadingProject) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *LadingProjectsTable) Save(ctx context.Context, db *keel.DB, row *ladingproject.LadingProject, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *LadingProjectsTable) SaveExcept(ctx context.Context, db *keel.DB, row *ladingproject.LadingProject, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *LadingProjectsTable) DeleteRow(ctx context.Context, db *keel.DB, row *ladingproject.LadingProject) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *LadingProjectsTable) Upsert(ctx context.Context, db *keel.DB, rows []*ladingproject.LadingProject, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *LadingProjectsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*ladingproject.LadingProject, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *LadingProjectsTable) Copy(ctx context.Context, db *keel.DB, rows []*ladingproject.LadingProject) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1658,37 +1668,45 @@ func (q *LadingProjectsQuery) Clone() keel.Query[*ladingproject.LadingProject] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *LadingProjectsQuery) One(ctx context.Context, db *keel.DB) (*ladingproject.LadingProject, error) {
-	return keel.One[*ladingproject.LadingProject](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*ladingproject.LadingProject)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *LadingProjectsQuery) First(ctx context.Context, db *keel.DB) (*ladingproject.LadingProject, error) {
-	return keel.First[*ladingproject.LadingProject](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*ladingproject.LadingProject)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *LadingProjectsQuery) List(ctx context.Context, db *keel.DB) ([]*ladingproject.LadingProject, error) {
-	return keel.List[*ladingproject.LadingProject](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*ladingproject.LadingProject)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *LadingProjectsQuery) All(ctx context.Context, db *keel.DB) ([]*ladingproject.LadingProject, error) {
-	return keel.All[*ladingproject.LadingProject](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*ladingproject.LadingProject)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *LadingProjectsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*ladingproject.LadingProject, error) {
-	return keel.UpdateReturning[*ladingproject.LadingProject](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*ladingproject.LadingProject)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *LadingProjectsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*ladingproject.LadingProject], error) {
-	return keel.PageOf[*ladingproject.LadingProject](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*ladingproject.LadingProject])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *LadingProjectsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*ladingproject.LadingProject) error) error {
-	return keel.Each[*ladingproject.LadingProject](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*ladingproject.LadingProject)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newLadingProject() unsafe.Pointer { return unsafe.Pointer(new(ladingproject.LadingProject)) }
@@ -1848,20 +1866,20 @@ type LadingReplaysTable struct {
 // LadingReplays references the edi_lading_replays table.
 var LadingReplays = &LadingReplaysTable{
 	TableBase:        keel.TableBase{Ref: &ladingReplaysRef},
-	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingReplaysRef, Index: 0}}},
-	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingReplaysRef, Index: 1}}},
-	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingReplaysRef, Index: 2}}},
-	ProjectID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingReplaysRef, Index: 3}}},
-	VersionID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingReplaysRef, Index: 4}}},
-	AgainstVersionID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingReplaysRef, Index: 5}}},
+	ID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &ladingReplaysRef, Index: 0}}},
+	BusinessUnitID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &ladingReplaysRef, Index: 1}}},
+	OrganizationID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &ladingReplaysRef, Index: 2}}},
+	ProjectID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &ladingReplaysRef, Index: 3}}},
+	VersionID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &ladingReplaysRef, Index: 4}}},
+	AgainstVersionID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &ladingReplaysRef, Index: 5}}},
 	Map:              keel.StringCol{Col: keel.Col{Ref: &ladingReplaysRef, Index: 6}},
 	PeriodStart:      keel.Int64Col{Col: keel.Col{Ref: &ladingReplaysRef, Index: 7}},
 	PeriodEnd:        keel.Int64Col{Col: keel.Col{Ref: &ladingReplaysRef, Index: 8}},
-	Status:           LadingReplayStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingReplaysRef, Index: 9}}},
+	Status:           LadingReplayStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &ladingReplaysRef, Index: 9}}},
 	Summary:          keel.JSONBCol{Col: keel.Col{Ref: &ladingReplaysRef, Index: 10}},
 	Items:            keel.JSONBCol{Col: keel.Col{Ref: &ladingReplaysRef, Index: 11}},
 	Error:            keel.StringCol{Col: keel.Col{Ref: &ladingReplaysRef, Index: 12}},
-	CreatedByID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingReplaysRef, Index: 13}}},
+	CreatedByID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &ladingReplaysRef, Index: 13}}},
 	FinishedAt:       keel.Int64Col{Col: keel.Col{Ref: &ladingReplaysRef, Index: 14}},
 	Version:          keel.Int64Col{Col: keel.Col{Ref: &ladingReplaysRef, Index: 15}},
 	CreatedAt:        keel.Int64Col{Col: keel.Col{Ref: &ladingReplaysRef, Index: 16}},
@@ -1872,20 +1890,20 @@ var LadingReplays = &LadingReplaysTable{
 func BuildLadingReplays(r *keel.Ref) *LadingReplaysTable {
 	return &LadingReplaysTable{
 		TableBase:        keel.TableBase{Ref: r},
-		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		ProjectID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		VersionID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		AgainstVersionID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		ID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ProjectID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		VersionID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		AgainstVersionID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		Map:              keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
 		PeriodStart:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
 		PeriodEnd:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
-		Status:           LadingReplayStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		Status:           LadingReplayStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
 		Summary:          keel.JSONBCol{Col: keel.Col{Ref: r, Index: 10}},
 		Items:            keel.JSONBCol{Col: keel.Col{Ref: r, Index: 11}},
 		Error:            keel.StringCol{Col: keel.Col{Ref: r, Index: 12}},
-		CreatedByID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 13}}},
+		CreatedByID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 13}}},
 		FinishedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
 		Version:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
 		CreatedAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
@@ -1908,8 +1926,6 @@ func (t *LadingReplaysTable) Get(ctx context.Context, db *keel.DB, key pulid.ID)
 
 // LadingReplaysQuery is a query over ladingproject.LadingReplay.
 type LadingReplaysQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*ladingproject.LadingReplay] = (*LadingReplaysTable)(nil)
 
 var _ keel.Query[*ladingproject.LadingReplay] = (*LadingReplaysQuery)(nil)
 
@@ -2025,42 +2041,42 @@ func (t *LadingReplaysTable) Compute(col keel.Column, e keel.Expr) keel.Query[*l
 
 // Create inserts row.
 func (t *LadingReplaysTable) Create(ctx context.Context, db *keel.DB, row *ladingproject.LadingReplay) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *LadingReplaysTable) CreateMany(ctx context.Context, db *keel.DB, rows []*ladingproject.LadingReplay) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *LadingReplaysTable) Save(ctx context.Context, db *keel.DB, row *ladingproject.LadingReplay, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *LadingReplaysTable) SaveExcept(ctx context.Context, db *keel.DB, row *ladingproject.LadingReplay, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *LadingReplaysTable) DeleteRow(ctx context.Context, db *keel.DB, row *ladingproject.LadingReplay) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *LadingReplaysTable) Upsert(ctx context.Context, db *keel.DB, rows []*ladingproject.LadingReplay, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *LadingReplaysTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*ladingproject.LadingReplay, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *LadingReplaysTable) Copy(ctx context.Context, db *keel.DB, rows []*ladingproject.LadingReplay) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -2232,37 +2248,45 @@ func (q *LadingReplaysQuery) Clone() keel.Query[*ladingproject.LadingReplay] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *LadingReplaysQuery) One(ctx context.Context, db *keel.DB) (*ladingproject.LadingReplay, error) {
-	return keel.One[*ladingproject.LadingReplay](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*ladingproject.LadingReplay)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *LadingReplaysQuery) First(ctx context.Context, db *keel.DB) (*ladingproject.LadingReplay, error) {
-	return keel.First[*ladingproject.LadingReplay](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*ladingproject.LadingReplay)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *LadingReplaysQuery) List(ctx context.Context, db *keel.DB) ([]*ladingproject.LadingReplay, error) {
-	return keel.List[*ladingproject.LadingReplay](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*ladingproject.LadingReplay)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *LadingReplaysQuery) All(ctx context.Context, db *keel.DB) ([]*ladingproject.LadingReplay, error) {
-	return keel.All[*ladingproject.LadingReplay](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*ladingproject.LadingReplay)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *LadingReplaysQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*ladingproject.LadingReplay, error) {
-	return keel.UpdateReturning[*ladingproject.LadingReplay](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*ladingproject.LadingReplay)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *LadingReplaysQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*ladingproject.LadingReplay], error) {
-	return keel.PageOf[*ladingproject.LadingReplay](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*ladingproject.LadingReplay])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *LadingReplaysQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*ladingproject.LadingReplay) error) error {
-	return keel.Each[*ladingproject.LadingReplay](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*ladingproject.LadingReplay)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newLadingReplay() unsafe.Pointer { return unsafe.Pointer(new(ladingproject.LadingReplay)) }
@@ -2426,10 +2450,10 @@ type LadingSamplesTable struct {
 // LadingSamples references the edi_lading_samples table.
 var LadingSamples = &LadingSamplesTable{
 	TableBase:      keel.TableBase{Ref: &ladingSamplesRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingSamplesRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingSamplesRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingSamplesRef, Index: 2}}},
-	ProjectID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingSamplesRef, Index: 3}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &ladingSamplesRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &ladingSamplesRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &ladingSamplesRef, Index: 2}}},
+	ProjectID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &ladingSamplesRef, Index: 3}}},
 	Digest:         keel.StringCol{Col: keel.Col{Ref: &ladingSamplesRef, Index: 4}},
 	Size:           keel.Int64Col{Col: keel.Col{Ref: &ladingSamplesRef, Index: 5}},
 	Content:        keel.StringCol{Col: keel.Col{Ref: &ladingSamplesRef, Index: 6}},
@@ -2440,10 +2464,10 @@ var LadingSamples = &LadingSamplesTable{
 func BuildLadingSamples(r *keel.Ref) *LadingSamplesTable {
 	return &LadingSamplesTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		ProjectID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ProjectID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		Digest:         keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		Size:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 5}},
 		Content:        keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
@@ -2466,8 +2490,6 @@ func (t *LadingSamplesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID)
 
 // LadingSamplesQuery is a query over ladingproject.LadingSample.
 type LadingSamplesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*ladingproject.LadingSample] = (*LadingSamplesTable)(nil)
 
 var _ keel.Query[*ladingproject.LadingSample] = (*LadingSamplesQuery)(nil)
 
@@ -2583,42 +2605,42 @@ func (t *LadingSamplesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*l
 
 // Create inserts row.
 func (t *LadingSamplesTable) Create(ctx context.Context, db *keel.DB, row *ladingproject.LadingSample) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *LadingSamplesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*ladingproject.LadingSample) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *LadingSamplesTable) Save(ctx context.Context, db *keel.DB, row *ladingproject.LadingSample, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *LadingSamplesTable) SaveExcept(ctx context.Context, db *keel.DB, row *ladingproject.LadingSample, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *LadingSamplesTable) DeleteRow(ctx context.Context, db *keel.DB, row *ladingproject.LadingSample) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *LadingSamplesTable) Upsert(ctx context.Context, db *keel.DB, rows []*ladingproject.LadingSample, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *LadingSamplesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*ladingproject.LadingSample, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *LadingSamplesTable) Copy(ctx context.Context, db *keel.DB, rows []*ladingproject.LadingSample) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -2790,37 +2812,45 @@ func (q *LadingSamplesQuery) Clone() keel.Query[*ladingproject.LadingSample] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *LadingSamplesQuery) One(ctx context.Context, db *keel.DB) (*ladingproject.LadingSample, error) {
-	return keel.One[*ladingproject.LadingSample](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*ladingproject.LadingSample)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *LadingSamplesQuery) First(ctx context.Context, db *keel.DB) (*ladingproject.LadingSample, error) {
-	return keel.First[*ladingproject.LadingSample](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*ladingproject.LadingSample)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *LadingSamplesQuery) List(ctx context.Context, db *keel.DB) ([]*ladingproject.LadingSample, error) {
-	return keel.List[*ladingproject.LadingSample](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*ladingproject.LadingSample)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *LadingSamplesQuery) All(ctx context.Context, db *keel.DB) ([]*ladingproject.LadingSample, error) {
-	return keel.All[*ladingproject.LadingSample](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*ladingproject.LadingSample)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *LadingSamplesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*ladingproject.LadingSample, error) {
-	return keel.UpdateReturning[*ladingproject.LadingSample](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*ladingproject.LadingSample)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *LadingSamplesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*ladingproject.LadingSample], error) {
-	return keel.PageOf[*ladingproject.LadingSample](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*ladingproject.LadingSample])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *LadingSamplesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*ladingproject.LadingSample) error) error {
-	return keel.Each[*ladingproject.LadingSample](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*ladingproject.LadingSample)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newLadingSample() unsafe.Pointer { return unsafe.Pointer(new(ladingproject.LadingSample)) }
@@ -2937,12 +2967,12 @@ type LadingShadowResultsTable struct {
 // LadingShadowResults references the edi_lading_shadow_results table.
 var LadingShadowResults = &LadingShadowResultsTable{
 	TableBase:      keel.TableBase{Ref: &ladingShadowResultsRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingShadowResultsRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingShadowResultsRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingShadowResultsRef, Index: 2}}},
-	VersionID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingShadowResultsRef, Index: 3}}},
-	MessageID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingShadowResultsRef, Index: 4}}},
-	TransactionSet: edidocumentdb.TransactionSetCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingShadowResultsRef, Index: 5}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &ladingShadowResultsRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &ladingShadowResultsRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &ladingShadowResultsRef, Index: 2}}},
+	VersionID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &ladingShadowResultsRef, Index: 3}}},
+	MessageID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &ladingShadowResultsRef, Index: 4}}},
+	TransactionSet: edidocumentdb.TransactionSetCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &ladingShadowResultsRef, Index: 5}}},
 	Same:           keel.BoolCol{Col: keel.Col{Ref: &ladingShadowResultsRef, Index: 6}},
 	Differences:    keel.JSONBCol{Col: keel.Col{Ref: &ladingShadowResultsRef, Index: 7}},
 	NewOutcomes:    keel.JSONBCol{Col: keel.Col{Ref: &ladingShadowResultsRef, Index: 8}},
@@ -2955,12 +2985,12 @@ var LadingShadowResults = &LadingShadowResultsTable{
 func BuildLadingShadowResults(r *keel.Ref) *LadingShadowResultsTable {
 	return &LadingShadowResultsTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		VersionID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		MessageID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		TransactionSet: edidocumentdb.TransactionSetCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		VersionID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		MessageID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		TransactionSet: edidocumentdb.TransactionSetCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		Same:           keel.BoolCol{Col: keel.Col{Ref: r, Index: 6}},
 		Differences:    keel.JSONBCol{Col: keel.Col{Ref: r, Index: 7}},
 		NewOutcomes:    keel.JSONBCol{Col: keel.Col{Ref: r, Index: 8}},
@@ -2985,8 +3015,6 @@ func (t *LadingShadowResultsTable) Get(ctx context.Context, db *keel.DB, key pul
 
 // LadingShadowResultsQuery is a query over ladingproject.LadingShadowResult.
 type LadingShadowResultsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*ladingproject.LadingShadowResult] = (*LadingShadowResultsTable)(nil)
 
 var _ keel.Query[*ladingproject.LadingShadowResult] = (*LadingShadowResultsQuery)(nil)
 
@@ -3102,42 +3130,42 @@ func (t *LadingShadowResultsTable) Compute(col keel.Column, e keel.Expr) keel.Qu
 
 // Create inserts row.
 func (t *LadingShadowResultsTable) Create(ctx context.Context, db *keel.DB, row *ladingproject.LadingShadowResult) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *LadingShadowResultsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*ladingproject.LadingShadowResult) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *LadingShadowResultsTable) Save(ctx context.Context, db *keel.DB, row *ladingproject.LadingShadowResult, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *LadingShadowResultsTable) SaveExcept(ctx context.Context, db *keel.DB, row *ladingproject.LadingShadowResult, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *LadingShadowResultsTable) DeleteRow(ctx context.Context, db *keel.DB, row *ladingproject.LadingShadowResult) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *LadingShadowResultsTable) Upsert(ctx context.Context, db *keel.DB, rows []*ladingproject.LadingShadowResult, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *LadingShadowResultsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*ladingproject.LadingShadowResult, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *LadingShadowResultsTable) Copy(ctx context.Context, db *keel.DB, rows []*ladingproject.LadingShadowResult) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -3309,37 +3337,45 @@ func (q *LadingShadowResultsQuery) Clone() keel.Query[*ladingproject.LadingShado
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *LadingShadowResultsQuery) One(ctx context.Context, db *keel.DB) (*ladingproject.LadingShadowResult, error) {
-	return keel.One[*ladingproject.LadingShadowResult](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*ladingproject.LadingShadowResult)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *LadingShadowResultsQuery) First(ctx context.Context, db *keel.DB) (*ladingproject.LadingShadowResult, error) {
-	return keel.First[*ladingproject.LadingShadowResult](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*ladingproject.LadingShadowResult)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *LadingShadowResultsQuery) List(ctx context.Context, db *keel.DB) ([]*ladingproject.LadingShadowResult, error) {
-	return keel.List[*ladingproject.LadingShadowResult](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*ladingproject.LadingShadowResult)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *LadingShadowResultsQuery) All(ctx context.Context, db *keel.DB) ([]*ladingproject.LadingShadowResult, error) {
-	return keel.All[*ladingproject.LadingShadowResult](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*ladingproject.LadingShadowResult)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *LadingShadowResultsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*ladingproject.LadingShadowResult, error) {
-	return keel.UpdateReturning[*ladingproject.LadingShadowResult](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*ladingproject.LadingShadowResult)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *LadingShadowResultsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*ladingproject.LadingShadowResult], error) {
-	return keel.PageOf[*ladingproject.LadingShadowResult](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*ladingproject.LadingShadowResult])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *LadingShadowResultsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*ladingproject.LadingShadowResult) error) error {
-	return keel.Each[*ladingproject.LadingShadowResult](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*ladingproject.LadingShadowResult)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newLadingShadowResult() unsafe.Pointer {
@@ -3512,13 +3548,13 @@ type LadingVersionsTable struct {
 // LadingVersions references the edi_lading_versions table.
 var LadingVersions = &LadingVersionsTable{
 	TableBase:       keel.TableBase{Ref: &ladingVersionsRef},
-	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingVersionsRef, Index: 0}}},
-	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingVersionsRef, Index: 1}}},
-	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingVersionsRef, Index: 2}}},
-	ProjectID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingVersionsRef, Index: 3}}},
+	ID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &ladingVersionsRef, Index: 0}}},
+	BusinessUnitID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &ladingVersionsRef, Index: 1}}},
+	OrganizationID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &ladingVersionsRef, Index: 2}}},
+	ProjectID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &ladingVersionsRef, Index: 3}}},
 	Number:          keel.Int64Col{Col: keel.Col{Ref: &ladingVersionsRef, Index: 4}},
-	Status:          LadingVersionStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingVersionsRef, Index: 5}}},
-	ParentVersionID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingVersionsRef, Index: 6}}},
+	Status:          LadingVersionStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &ladingVersionsRef, Index: 5}}},
+	ParentVersionID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &ladingVersionsRef, Index: 6}}},
 	Files:           keel.JSONBCol{Col: keel.Col{Ref: &ladingVersionsRef, Index: 7}},
 	Samples:         keel.JSONBCol{Col: keel.Col{Ref: &ladingVersionsRef, Index: 8}},
 	Manifest:        keel.JSONBCol{Col: keel.Col{Ref: &ladingVersionsRef, Index: 9}},
@@ -3527,10 +3563,10 @@ var LadingVersions = &LadingVersionsTable{
 	ErrorCount:      keel.Int64Col{Col: keel.Col{Ref: &ladingVersionsRef, Index: 12}},
 	WarningCount:    keel.Int64Col{Col: keel.Col{Ref: &ladingVersionsRef, Index: 13}},
 	ShadowUntil:     keel.Int64Col{Col: keel.Col{Ref: &ladingVersionsRef, Index: 14}},
-	CreatedByID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingVersionsRef, Index: 15}}},
-	CertifiedByID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingVersionsRef, Index: 16}}},
+	CreatedByID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &ladingVersionsRef, Index: 15}}},
+	CertifiedByID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &ladingVersionsRef, Index: 16}}},
 	CertifiedAt:     keel.Int64Col{Col: keel.Col{Ref: &ladingVersionsRef, Index: 17}},
-	ActivatedByID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingVersionsRef, Index: 18}}},
+	ActivatedByID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &ladingVersionsRef, Index: 18}}},
 	ActivatedAt:     keel.Int64Col{Col: keel.Col{Ref: &ladingVersionsRef, Index: 19}},
 	SupersededAt:    keel.Int64Col{Col: keel.Col{Ref: &ladingVersionsRef, Index: 20}},
 	ArchivedAt:      keel.Int64Col{Col: keel.Col{Ref: &ladingVersionsRef, Index: 21}},
@@ -3543,13 +3579,13 @@ var LadingVersions = &LadingVersionsTable{
 func BuildLadingVersions(r *keel.Ref) *LadingVersionsTable {
 	return &LadingVersionsTable{
 		TableBase:       keel.TableBase{Ref: r},
-		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		ProjectID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ProjectID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		Number:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 4}},
-		Status:          LadingVersionStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		ParentVersionID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		Status:          LadingVersionStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		ParentVersionID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		Files:           keel.JSONBCol{Col: keel.Col{Ref: r, Index: 7}},
 		Samples:         keel.JSONBCol{Col: keel.Col{Ref: r, Index: 8}},
 		Manifest:        keel.JSONBCol{Col: keel.Col{Ref: r, Index: 9}},
@@ -3558,10 +3594,10 @@ func BuildLadingVersions(r *keel.Ref) *LadingVersionsTable {
 		ErrorCount:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
 		WarningCount:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
 		ShadowUntil:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
-		CreatedByID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 15}}},
-		CertifiedByID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 16}}},
+		CreatedByID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 15}}},
+		CertifiedByID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 16}}},
 		CertifiedAt:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
-		ActivatedByID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 18}}},
+		ActivatedByID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 18}}},
 		ActivatedAt:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 19}},
 		SupersededAt:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 20}},
 		ArchivedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 21}},
@@ -3586,8 +3622,6 @@ func (t *LadingVersionsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID
 
 // LadingVersionsQuery is a query over ladingproject.LadingVersion.
 type LadingVersionsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*ladingproject.LadingVersion] = (*LadingVersionsTable)(nil)
 
 var _ keel.Query[*ladingproject.LadingVersion] = (*LadingVersionsQuery)(nil)
 
@@ -3703,42 +3737,42 @@ func (t *LadingVersionsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*
 
 // Create inserts row.
 func (t *LadingVersionsTable) Create(ctx context.Context, db *keel.DB, row *ladingproject.LadingVersion) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *LadingVersionsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*ladingproject.LadingVersion) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *LadingVersionsTable) Save(ctx context.Context, db *keel.DB, row *ladingproject.LadingVersion, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *LadingVersionsTable) SaveExcept(ctx context.Context, db *keel.DB, row *ladingproject.LadingVersion, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *LadingVersionsTable) DeleteRow(ctx context.Context, db *keel.DB, row *ladingproject.LadingVersion) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *LadingVersionsTable) Upsert(ctx context.Context, db *keel.DB, rows []*ladingproject.LadingVersion, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *LadingVersionsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*ladingproject.LadingVersion, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *LadingVersionsTable) Copy(ctx context.Context, db *keel.DB, rows []*ladingproject.LadingVersion) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -3910,37 +3944,45 @@ func (q *LadingVersionsQuery) Clone() keel.Query[*ladingproject.LadingVersion] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *LadingVersionsQuery) One(ctx context.Context, db *keel.DB) (*ladingproject.LadingVersion, error) {
-	return keel.One[*ladingproject.LadingVersion](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*ladingproject.LadingVersion)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *LadingVersionsQuery) First(ctx context.Context, db *keel.DB) (*ladingproject.LadingVersion, error) {
-	return keel.First[*ladingproject.LadingVersion](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*ladingproject.LadingVersion)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *LadingVersionsQuery) List(ctx context.Context, db *keel.DB) ([]*ladingproject.LadingVersion, error) {
-	return keel.List[*ladingproject.LadingVersion](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*ladingproject.LadingVersion)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *LadingVersionsQuery) All(ctx context.Context, db *keel.DB) ([]*ladingproject.LadingVersion, error) {
-	return keel.All[*ladingproject.LadingVersion](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*ladingproject.LadingVersion)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *LadingVersionsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*ladingproject.LadingVersion, error) {
-	return keel.UpdateReturning[*ladingproject.LadingVersion](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*ladingproject.LadingVersion)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *LadingVersionsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*ladingproject.LadingVersion], error) {
-	return keel.PageOf[*ladingproject.LadingVersion](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*ladingproject.LadingVersion])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *LadingVersionsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*ladingproject.LadingVersion) error) error {
-	return keel.Each[*ladingproject.LadingVersion](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*ladingproject.LadingVersion)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newLadingVersion() unsafe.Pointer { return unsafe.Pointer(new(ladingproject.LadingVersion)) }
@@ -4143,112 +4185,112 @@ var enumLadingVersionStatus = [...]schema.EnumValue{
 }
 
 // FlowInstanceStatusCol is a column of ladingproject.FlowInstanceStatus values.
-type FlowInstanceStatusCol struct{ keel.StringCol }
+type FlowInstanceStatusCol struct{ keel.TypedStringCol }
 
 func (c FlowInstanceStatusCol) Eq(v ladingproject.FlowInstanceStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c FlowInstanceStatusCol) Ne(v ladingproject.FlowInstanceStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c FlowInstanceStatusCol) Gt(v ladingproject.FlowInstanceStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c FlowInstanceStatusCol) Gte(v ladingproject.FlowInstanceStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c FlowInstanceStatusCol) Lt(v ladingproject.FlowInstanceStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c FlowInstanceStatusCol) Lte(v ladingproject.FlowInstanceStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c FlowInstanceStatusCol) IsDistinctFrom(v ladingproject.FlowInstanceStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c FlowInstanceStatusCol) Between(lo, hi ladingproject.FlowInstanceStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c FlowInstanceStatusCol) To(v ladingproject.FlowInstanceStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c FlowInstanceStatusCol) In(vs ...ladingproject.FlowInstanceStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c FlowInstanceStatusCol) NotIn(vs ...ladingproject.FlowInstanceStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // LadingReplayStatusCol is a column of ladingproject.LadingReplayStatus values.
-type LadingReplayStatusCol struct{ keel.StringCol }
+type LadingReplayStatusCol struct{ keel.TypedStringCol }
 
 func (c LadingReplayStatusCol) Eq(v ladingproject.LadingReplayStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c LadingReplayStatusCol) Ne(v ladingproject.LadingReplayStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c LadingReplayStatusCol) Gt(v ladingproject.LadingReplayStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c LadingReplayStatusCol) Gte(v ladingproject.LadingReplayStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c LadingReplayStatusCol) Lt(v ladingproject.LadingReplayStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c LadingReplayStatusCol) Lte(v ladingproject.LadingReplayStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c LadingReplayStatusCol) IsDistinctFrom(v ladingproject.LadingReplayStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c LadingReplayStatusCol) Between(lo, hi ladingproject.LadingReplayStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c LadingReplayStatusCol) To(v ladingproject.LadingReplayStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c LadingReplayStatusCol) In(vs ...ladingproject.LadingReplayStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c LadingReplayStatusCol) NotIn(vs ...ladingproject.LadingReplayStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // LadingVersionStatusCol is a column of ladingproject.LadingVersionStatus values.
-type LadingVersionStatusCol struct{ keel.StringCol }
+type LadingVersionStatusCol struct{ keel.TypedStringCol }
 
 func (c LadingVersionStatusCol) Eq(v ladingproject.LadingVersionStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c LadingVersionStatusCol) Ne(v ladingproject.LadingVersionStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c LadingVersionStatusCol) Gt(v ladingproject.LadingVersionStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c LadingVersionStatusCol) Gte(v ladingproject.LadingVersionStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c LadingVersionStatusCol) Lt(v ladingproject.LadingVersionStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c LadingVersionStatusCol) Lte(v ladingproject.LadingVersionStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c LadingVersionStatusCol) IsDistinctFrom(v ladingproject.LadingVersionStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c LadingVersionStatusCol) Between(lo, hi ladingproject.LadingVersionStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c LadingVersionStatusCol) To(v ladingproject.LadingVersionStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c LadingVersionStatusCol) In(vs ...ladingproject.LadingVersionStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c LadingVersionStatusCol) NotIn(vs ...ladingproject.LadingVersionStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

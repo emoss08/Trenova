@@ -31,7 +31,7 @@ func TestPayCodeSelectOptionItem(t *testing.T) {
 	assert.Equal(t, "Linehaul", item.Option.Meta["name"])
 	assert.Equal(t, string(paycode.PayCodeDirectionEarning), item.Option.Meta["direction"])
 	assert.Equal(t, true, item.Option.Meta["taxable"])
-	assert.Equal(t, int64(1780415883), item.Cursor.At)
+	assert.Equal(t, entity.ID.String(), item.Option.ID)
 }
 
 func TestPayProfileSelectOptionItem(t *testing.T) {

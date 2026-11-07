@@ -1,6 +1,6 @@
 //! `trenova-imaging certs`: the private CA, server certificate and client
-//! certificate a self-hosted install's TMS and imaging worker authenticate
-//! each other with.
+//! certificate a self-hosted install's TMS and one of its services (the
+//! imaging worker, PostgreSQL, Temporal) authenticate each other with.
 //!
 //! It writes two directories, so each half can be mounted only where it is
 //! used: the server's (`ca.pem`, `server.pem`, `server-key.pem`) into the
@@ -30,6 +30,11 @@ pub struct CertsRequest {
     pub ca_dir: PathBuf,
     /// DNS names the worker is reached by.
     pub server_names: Vec<String>,
+    /// The CA's common name.
+    pub ca_name: String,
+    /// Whether the server certificate also authenticates as a client, for a
+    /// service whose nodes call each other with it (Temporal).
+    pub server_client_auth: bool,
     pub years: i32,
     pub force: bool,
 }
@@ -39,14 +44,14 @@ pub fn run(request: &CertsRequest) -> ExitCode {
         Ok(true) => {
             let _ = writeln!(
                 std::io::stdout(),
-                "issued the imaging CA, server and client certificates"
+                "issued the CA, server and client certificates"
             );
             ExitCode::SUCCESS
         }
         Ok(false) => {
             let _ = writeln!(
                 std::io::stdout(),
-                "the imaging certificates already exist; nothing to do"
+                "the certificates already exist; nothing to do"
             );
             ExitCode::SUCCESS
         }
@@ -84,7 +89,7 @@ pub fn issue(request: &CertsRequest) -> Result<bool, Box<dyn std::error::Error>>
 
     let ca_key = KeyPair::generate()?;
     let mut ca_params = CertificateParams::new(Vec::<String>::new())?;
-    ca_params.distinguished_name = name("Trenova imaging CA");
+    ca_params.distinguished_name = name(&request.ca_name);
     ca_params.is_ca = IsCa::Ca(BasicConstraints::Constrained(0));
     ca_params.key_usages = vec![KeyUsagePurpose::KeyCertSign, KeyUsagePurpose::CrlSign];
     validity(&mut ca_params);
@@ -92,10 +97,7 @@ pub fn issue(request: &CertsRequest) -> Result<bool, Box<dyn std::error::Error>>
     let ca = Issuer::new(ca_params, &ca_key);
 
     let server_key = KeyPair::generate()?;
-    let mut server_params = CertificateParams::new(request.server_names.clone())?;
-    server_params.distinguished_name = name(&request.server_names[0]);
-    server_params.key_usages = vec![KeyUsagePurpose::DigitalSignature];
-    server_params.extended_key_usages = vec![ExtendedKeyUsagePurpose::ServerAuth];
+    let mut server_params = server_params(request)?;
     validity(&mut server_params);
     let server_cert = server_params.signed_by(&server_key, &ca)?;
 
@@ -142,6 +144,19 @@ pub fn issue(request: &CertsRequest) -> Result<bool, Box<dyn std::error::Error>>
     Ok(true)
 }
 
+fn server_params(request: &CertsRequest) -> Result<CertificateParams, rcgen::Error> {
+    let mut params = CertificateParams::new(request.server_names.clone())?;
+    params.distinguished_name = name(&request.server_names[0]);
+    params.key_usages = vec![KeyUsagePurpose::DigitalSignature];
+    params.extended_key_usages = vec![ExtendedKeyUsagePurpose::ServerAuth];
+    if request.server_client_auth {
+        params
+            .extended_key_usages
+            .push(ExtendedKeyUsagePurpose::ClientAuth);
+    }
+    Ok(params)
+}
+
 fn name(common_name: &str) -> DistinguishedName {
     let mut name = DistinguishedName::new();
     name.push(DnType::OrganizationName, "Trenova");
@@ -179,6 +194,8 @@ mod tests {
             client_dir: dir.path().join("client"),
             ca_dir: dir.path().join("ca"),
             server_names: vec!["imaging".into()],
+            ca_name: "Trenova imaging CA".into(),
+            server_client_auth: false,
             years: 2,
             force: false,
         };
@@ -193,5 +210,29 @@ mod tests {
             !issue(&request).expect("checks"),
             "a complete set is left alone"
         );
+    }
+
+    #[test]
+    fn a_server_certificate_authenticates_as_a_client_only_when_asked() {
+        for server_client_auth in [false, true] {
+            let dir = tempfile::tempdir().expect("tempdir");
+            let request = CertsRequest {
+                server_dir: dir.path().join("server"),
+                client_dir: dir.path().join("client"),
+                ca_dir: dir.path().join("ca"),
+                server_names: vec!["temporal".into()],
+                ca_name: "Trenova Temporal CA".into(),
+                server_client_auth,
+                years: 2,
+                force: false,
+            };
+            let usages = server_params(&request).expect("params").extended_key_usages;
+            assert!(usages.contains(&ExtendedKeyUsagePurpose::ServerAuth));
+            assert_eq!(
+                usages.contains(&ExtendedKeyUsagePurpose::ClientAuth),
+                server_client_auth
+            );
+            assert!(issue(&request).expect("issues"));
+        }
     }
 }

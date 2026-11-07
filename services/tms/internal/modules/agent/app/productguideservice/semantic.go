@@ -68,10 +68,13 @@ func writeLine(b *strings.Builder, text string) {
 }
 
 func NewOffline(catalog *productguide.Catalog) *Service {
+	index, rarity := buildIndex(catalog)
+
 	return &Service{
 		l:         zap.NewNop(),
 		catalog:   catalog,
-		index:     buildIndex(catalog),
+		index:     index,
+		rarity:    rarity,
 		resources: permissioncatalog.Default(),
 		items:     CatalogItems(catalog),
 	}
@@ -193,7 +196,7 @@ func (s *Service) fuse(
 			continue
 		}
 		entry := entries[path]
-		task, _ := bestTask(entry, terms)
+		task, _ := bestTask(entry, terms, s.rarity)
 		fused = append(fused, scored{entry: entry, task: task})
 	}
 

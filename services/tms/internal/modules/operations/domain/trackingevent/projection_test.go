@@ -5,6 +5,8 @@ import (
 	"math/rand/v2"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/operations/domain/stopactual"
+
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/trackingevent"
@@ -77,7 +79,7 @@ func settleAll(
 		if !projection.HasChanges() {
 			return projection
 		}
-		_, err := f.move.ApplyStopActualChanges(projection.Changes)
+		_, err := stopactual.Apply(f.move, projection.Changes)
 		require.NoError(t, err)
 	}
 	t.Fatal("projection did not settle")

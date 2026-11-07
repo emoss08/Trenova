@@ -4,7 +4,6 @@ mutation ExportTableView($input: ExportTableViewInput!) {
     skippedColumns
     run {
       id
-      status
     }
   }
 }

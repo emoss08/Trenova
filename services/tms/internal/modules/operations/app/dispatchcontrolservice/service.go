@@ -3,10 +3,13 @@ package dispatchcontrolservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/operations/ports/demandforecastports"
+
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchlearningports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -23,6 +26,8 @@ type Params struct {
 	Validator    *Validator
 	AuditService auditports.AuditService
 	Fields       permissionports.FieldAccess
+	Learning     dispatchlearningports.LearningStarter
+	Forecasts    demandforecastports.FitStarter
 }
 
 type Service struct {
@@ -31,15 +36,19 @@ type Service struct {
 	validator    *Validator
 	auditService auditports.AuditService
 	fields       permissionports.FieldAccess
+	learning     dispatchlearningports.LearningStarter
+	forecasts    demandforecastports.FitStarter
 }
 
-func New(p Params) *Service {
+func New(p Params) *Service { //nolint:gocritic // fx requires an fx.In parameter struct by value
 	return &Service{
 		l:            p.Logger.Named("service.dispatchcontrol"),
 		repo:         p.Repo,
 		validator:    p.Validator,
 		auditService: p.AuditService,
 		fields:       p.Fields,
+		learning:     p.Learning,
+		forecasts:    p.Forecasts,
 	}
 }
 
@@ -83,6 +92,25 @@ func (s *Service) Update(
 	if err != nil {
 		log.Error("failed to update dispatch control", zap.Error(err))
 		return nil, err
+	}
+	if updatedEntity.LearnDispatchStyle && !original.LearnDispatchStyle {
+		if err = s.learning.StartLearning(ctx, pagination.TenantInfo{
+			OrgID:  updatedEntity.OrganizationID,
+			BuID:   updatedEntity.BusinessUnitID,
+			UserID: userID,
+		}); err != nil {
+			log.Error("failed to start learning the dispatch style", zap.Error(err))
+			return nil, err
+		}
+	}
+
+	if updatedEntity.AnticipateFreight && !original.AnticipateFreight {
+		if err = s.forecasts.StartFitting(ctx, pagination.TenantInfo{
+			OrgID: updatedEntity.OrganizationID,
+			BuID:  updatedEntity.BusinessUnitID,
+		}); err != nil {
+			log.Warn("the freight forecast will be fitted tonight instead of now", zap.Error(err))
+		}
 	}
 
 	if err = s.auditService.LogAction(

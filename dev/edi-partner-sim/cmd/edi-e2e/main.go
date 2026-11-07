@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/cookiejar"
+	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -32,11 +33,6 @@ func main() {
 	simBase := flag.String("sim", "http://localhost:9210", "EDI partner simulator base URL")
 	email := flag.String("email", "admin@trenova.app", "login email")
 	password := flag.String("password", "admin123!", "login password")
-	inboundURL := flag.String(
-		"inbound",
-		"http://localhost:8080/api/v1/edi/as2/inbound/",
-		"Trenova AS2 inbound URL the simulator posts to",
-	)
 	flag.Parse()
 
 	jar, err := cookiejar.New(nil)
@@ -51,7 +47,7 @@ func main() {
 	}
 
 	fmt.Println("=== Trenova EDI end-to-end run ===")
-	if !r.run(*email, *password, *inboundURL) || r.failures > 0 {
+	if !r.run(*email, *password) || r.failures > 0 {
 		fmt.Printf("\nRESULT: FAILED (%d failed step(s))\n", r.failures)
 		os.Exit(1)
 	}
@@ -59,7 +55,7 @@ func main() {
 }
 
 //nolint:funlen // The scenario is intentionally one linear script.
-func (r *runner) run(email, password, inboundURL string) bool {
+func (r *runner) run(email, password string) bool {
 	// 1. Preconditions
 	var simIdentity struct {
 		AS2ID          string `json:"as2Id"`
@@ -118,7 +114,6 @@ func (r *runner) run(email, password, inboundURL string) bool {
 	r.step("configure simulator (certificate + unique AS2 identity)", func() error {
 		return r.postJSON(r.simBase+"/control/partner", map[string]any{
 			"certificatePem": trenova.CertificatePEM,
-			"inboundUrl":     inboundURL,
 			"autoAck":        true,
 			"as2Id":          r.simAS2ID,
 			"remoteAs2Id":    r.trenovaAS2ID,
@@ -153,7 +148,8 @@ func (r *runner) run(email, password, inboundURL string) bool {
 
 	// 5. AS2 communication profile
 	var profile struct {
-		ID string `json:"id"`
+		ID             string `json:"id"`
+		AS2InboundPath string `json:"as2InboundPath"`
 	}
 	if !r.step("create AS2 communication profile", func() error {
 		return r.postJSON(r.apiBase+"/edi/communication-profiles/", map[string]any{
@@ -187,6 +183,20 @@ func (r *runner) run(email, password, inboundURL string) bool {
 				"privateKey": trenova.KeyPEM,
 			},
 		}, &profile)
+	}) {
+		return false
+	}
+
+	var inboundURL string
+	if !r.step("point the simulator at the profile's inbound URL", func() error {
+		resolved, err := r.inboundURL(profile.AS2InboundPath)
+		if err != nil {
+			return err
+		}
+		inboundURL = resolved
+		return r.postJSON(r.simBase+"/control/partner", map[string]any{
+			"inboundUrl": inboundURL,
+		}, nil)
 	}) {
 		return false
 	}
@@ -869,4 +879,16 @@ func (r *runner) do(request *http.Request, out any) error {
 		return fmt.Errorf("decode %s response: %w", request.URL.Path, err)
 	}
 	return nil
+}
+
+func (r *runner) inboundURL(path string) (string, error) {
+	if path == "" {
+		return "", fmt.Errorf("the AS2 profile has no inbound URL")
+	}
+	base, err := url.Parse(r.apiBase)
+	if err != nil {
+		return "", fmt.Errorf("parse API base URL: %w", err)
+	}
+
+	return base.Scheme + "://" + base.Host + path, nil
 }

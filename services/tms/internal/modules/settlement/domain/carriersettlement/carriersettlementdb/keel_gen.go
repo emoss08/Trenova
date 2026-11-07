@@ -147,13 +147,13 @@ type CarrierSettlementsTable struct {
 // CarrierSettlements references the carrier_settlements table.
 var CarrierSettlements = &CarrierSettlementsTable{
 	TableBase:              keel.TableBase{Ref: &carrierSettlementsRef},
-	ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierSettlementsRef, Index: 0}}},
-	BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierSettlementsRef, Index: 1}}},
-	OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierSettlementsRef, Index: 2}}},
-	CarrierID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierSettlementsRef, Index: 3}}},
-	BatchID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierSettlementsRef, Index: 4}}},
+	ID:                     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierSettlementsRef, Index: 0}}},
+	BusinessUnitID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierSettlementsRef, Index: 1}}},
+	OrganizationID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierSettlementsRef, Index: 2}}},
+	CarrierID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierSettlementsRef, Index: 3}}},
+	BatchID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierSettlementsRef, Index: 4}}},
 	SettlementNumber:       keel.StringCol{Col: keel.Col{Ref: &carrierSettlementsRef, Index: 5}},
-	Status:                 StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierSettlementsRef, Index: 6}}},
+	Status:                 StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierSettlementsRef, Index: 6}}},
 	PeriodStart:            keel.Int64Col{Col: keel.Col{Ref: &carrierSettlementsRef, Index: 7}},
 	PeriodEnd:              keel.Int64Col{Col: keel.Col{Ref: &carrierSettlementsRef, Index: 8}},
 	PayDate:                keel.Int64Col{Col: keel.Col{Ref: &carrierSettlementsRef, Index: 9}},
@@ -165,26 +165,26 @@ var CarrierSettlements = &CarrierSettlementsTable{
 	ExchangeRate:           keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &carrierSettlementsRef, Index: 15}}},
 	ExchangeRateDate:       keel.Int64Col{Col: keel.Col{Ref: &carrierSettlementsRef, Index: 16}},
 	Notes:                  keel.StringCol{Col: keel.Col{Ref: &carrierSettlementsRef, Index: 17}},
-	SubmittedByID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierSettlementsRef, Index: 18}}},
+	SubmittedByID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierSettlementsRef, Index: 18}}},
 	SubmittedAt:            keel.Int64Col{Col: keel.Col{Ref: &carrierSettlementsRef, Index: 19}},
-	ApprovedByID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierSettlementsRef, Index: 20}}},
+	ApprovedByID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierSettlementsRef, Index: 20}}},
 	ApprovedAt:             keel.Int64Col{Col: keel.Col{Ref: &carrierSettlementsRef, Index: 21}},
-	PostedByID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierSettlementsRef, Index: 22}}},
+	PostedByID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierSettlementsRef, Index: 22}}},
 	PostedAt:               keel.Int64Col{Col: keel.Col{Ref: &carrierSettlementsRef, Index: 23}},
-	PostedJournalBatchID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierSettlementsRef, Index: 24}}},
-	PostedExpenseAccountID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierSettlementsRef, Index: 25}}},
-	PostedAPAccountID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierSettlementsRef, Index: 26}}},
+	PostedJournalBatchID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierSettlementsRef, Index: 24}}},
+	PostedExpenseAccountID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierSettlementsRef, Index: 25}}},
+	PostedAPAccountID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierSettlementsRef, Index: 26}}},
 	PaidAt:                 keel.Int64Col{Col: keel.Col{Ref: &carrierSettlementsRef, Index: 27}},
-	PaidByID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierSettlementsRef, Index: 28}}},
+	PaidByID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierSettlementsRef, Index: 28}}},
 	PaymentMethod:          keel.StringCol{Col: keel.Col{Ref: &carrierSettlementsRef, Index: 29}},
 	PaymentReference:       keel.StringCol{Col: keel.Col{Ref: &carrierSettlementsRef, Index: 30}},
-	PaidJournalBatchID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierSettlementsRef, Index: 31}}},
+	PaidJournalBatchID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierSettlementsRef, Index: 31}}},
 	PaidExchangeRate:       keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &carrierSettlementsRef, Index: 32}}},
 	PaidExchangeRateDate:   keel.Int64Col{Col: keel.Col{Ref: &carrierSettlementsRef, Index: 33}},
-	VoidedByID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierSettlementsRef, Index: 34}}},
+	VoidedByID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierSettlementsRef, Index: 34}}},
 	VoidedAt:               keel.Int64Col{Col: keel.Col{Ref: &carrierSettlementsRef, Index: 35}},
 	VoidReason:             keel.StringCol{Col: keel.Col{Ref: &carrierSettlementsRef, Index: 36}},
-	VoidJournalBatchID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierSettlementsRef, Index: 37}}},
+	VoidJournalBatchID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierSettlementsRef, Index: 37}}},
 	Version:                keel.Int64Col{Col: keel.Col{Ref: &carrierSettlementsRef, Index: 38}},
 	CreatedAt:              keel.Int64Col{Col: keel.Col{Ref: &carrierSettlementsRef, Index: 39}},
 	UpdatedAt:              keel.Int64Col{Col: keel.Col{Ref: &carrierSettlementsRef, Index: 40}},
@@ -194,13 +194,13 @@ var CarrierSettlements = &CarrierSettlementsTable{
 func BuildCarrierSettlements(r *keel.Ref) *CarrierSettlementsTable {
 	return &CarrierSettlementsTable{
 		TableBase:              keel.TableBase{Ref: r},
-		ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		CarrierID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		BatchID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ID:                     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		CarrierID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		BatchID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		SettlementNumber:       keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
-		Status:                 StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		Status:                 StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		PeriodStart:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
 		PeriodEnd:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
 		PayDate:                keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
@@ -212,26 +212,26 @@ func BuildCarrierSettlements(r *keel.Ref) *CarrierSettlementsTable {
 		ExchangeRate:           keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 15}}},
 		ExchangeRateDate:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
 		Notes:                  keel.StringCol{Col: keel.Col{Ref: r, Index: 17}},
-		SubmittedByID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 18}}},
+		SubmittedByID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 18}}},
 		SubmittedAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 19}},
-		ApprovedByID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 20}}},
+		ApprovedByID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 20}}},
 		ApprovedAt:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 21}},
-		PostedByID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 22}}},
+		PostedByID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 22}}},
 		PostedAt:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 23}},
-		PostedJournalBatchID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 24}}},
-		PostedExpenseAccountID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 25}}},
-		PostedAPAccountID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 26}}},
+		PostedJournalBatchID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 24}}},
+		PostedExpenseAccountID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 25}}},
+		PostedAPAccountID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 26}}},
 		PaidAt:                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 27}},
-		PaidByID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 28}}},
+		PaidByID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 28}}},
 		PaymentMethod:          keel.StringCol{Col: keel.Col{Ref: r, Index: 29}},
 		PaymentReference:       keel.StringCol{Col: keel.Col{Ref: r, Index: 30}},
-		PaidJournalBatchID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 31}}},
+		PaidJournalBatchID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 31}}},
 		PaidExchangeRate:       keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 32}}},
 		PaidExchangeRateDate:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 33}},
-		VoidedByID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 34}}},
+		VoidedByID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 34}}},
 		VoidedAt:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 35}},
 		VoidReason:             keel.StringCol{Col: keel.Col{Ref: r, Index: 36}},
-		VoidJournalBatchID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 37}}},
+		VoidJournalBatchID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 37}}},
 		Version:                keel.Int64Col{Col: keel.Col{Ref: r, Index: 38}},
 		CreatedAt:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 39}},
 		UpdatedAt:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 40}},
@@ -268,8 +268,6 @@ func (t *CarrierSettlementsTable) Get(ctx context.Context, db *keel.DB, key puli
 
 // CarrierSettlementsQuery is a query over carriersettlement.CarrierSettlement.
 type CarrierSettlementsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*carriersettlement.CarrierSettlement] = (*CarrierSettlementsTable)(nil)
 
 var _ keel.Query[*carriersettlement.CarrierSettlement] = (*CarrierSettlementsQuery)(nil)
 
@@ -385,42 +383,42 @@ func (t *CarrierSettlementsTable) Compute(col keel.Column, e keel.Expr) keel.Que
 
 // Create inserts row.
 func (t *CarrierSettlementsTable) Create(ctx context.Context, db *keel.DB, row *carriersettlement.CarrierSettlement) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *CarrierSettlementsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*carriersettlement.CarrierSettlement) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *CarrierSettlementsTable) Save(ctx context.Context, db *keel.DB, row *carriersettlement.CarrierSettlement, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *CarrierSettlementsTable) SaveExcept(ctx context.Context, db *keel.DB, row *carriersettlement.CarrierSettlement, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *CarrierSettlementsTable) DeleteRow(ctx context.Context, db *keel.DB, row *carriersettlement.CarrierSettlement) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *CarrierSettlementsTable) Upsert(ctx context.Context, db *keel.DB, rows []*carriersettlement.CarrierSettlement, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *CarrierSettlementsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*carriersettlement.CarrierSettlement, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *CarrierSettlementsTable) Copy(ctx context.Context, db *keel.DB, rows []*carriersettlement.CarrierSettlement) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -592,37 +590,45 @@ func (q *CarrierSettlementsQuery) Clone() keel.Query[*carriersettlement.CarrierS
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *CarrierSettlementsQuery) One(ctx context.Context, db *keel.DB) (*carriersettlement.CarrierSettlement, error) {
-	return keel.One[*carriersettlement.CarrierSettlement](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*carriersettlement.CarrierSettlement)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *CarrierSettlementsQuery) First(ctx context.Context, db *keel.DB) (*carriersettlement.CarrierSettlement, error) {
-	return keel.First[*carriersettlement.CarrierSettlement](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*carriersettlement.CarrierSettlement)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *CarrierSettlementsQuery) List(ctx context.Context, db *keel.DB) ([]*carriersettlement.CarrierSettlement, error) {
-	return keel.List[*carriersettlement.CarrierSettlement](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*carriersettlement.CarrierSettlement)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *CarrierSettlementsQuery) All(ctx context.Context, db *keel.DB) ([]*carriersettlement.CarrierSettlement, error) {
-	return keel.All[*carriersettlement.CarrierSettlement](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*carriersettlement.CarrierSettlement)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *CarrierSettlementsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*carriersettlement.CarrierSettlement, error) {
-	return keel.UpdateReturning[*carriersettlement.CarrierSettlement](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*carriersettlement.CarrierSettlement)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *CarrierSettlementsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*carriersettlement.CarrierSettlement], error) {
-	return keel.PageOf[*carriersettlement.CarrierSettlement](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*carriersettlement.CarrierSettlement])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *CarrierSettlementsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*carriersettlement.CarrierSettlement) error) error {
-	return keel.Each[*carriersettlement.CarrierSettlement](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*carriersettlement.CarrierSettlement)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newCarrierSettlement() unsafe.Pointer {
@@ -979,10 +985,10 @@ type CarrierSettlementBatchesTable struct {
 // CarrierSettlementBatches references the carrier_settlement_batches table.
 var CarrierSettlementBatches = &CarrierSettlementBatchesTable{
 	TableBase:       keel.TableBase{Ref: &carrierSettlementBatchesRef},
-	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierSettlementBatchesRef, Index: 0}}},
-	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierSettlementBatchesRef, Index: 1}}},
-	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierSettlementBatchesRef, Index: 2}}},
-	Status:          BatchStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierSettlementBatchesRef, Index: 3}}},
+	ID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierSettlementBatchesRef, Index: 0}}},
+	BusinessUnitID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierSettlementBatchesRef, Index: 1}}},
+	OrganizationID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierSettlementBatchesRef, Index: 2}}},
+	Status:          BatchStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierSettlementBatchesRef, Index: 3}}},
 	Name:            keel.StringCol{Col: keel.Col{Ref: &carrierSettlementBatchesRef, Index: 4}},
 	PeriodStart:     keel.Int64Col{Col: keel.Col{Ref: &carrierSettlementBatchesRef, Index: 5}},
 	PeriodEnd:       keel.Int64Col{Col: keel.Col{Ref: &carrierSettlementBatchesRef, Index: 6}},
@@ -992,10 +998,10 @@ var CarrierSettlementBatches = &CarrierSettlementBatchesTable{
 	TotalNetMinor:   keel.Int64Col{Col: keel.Col{Ref: &carrierSettlementBatchesRef, Index: 10}},
 	CurrencyCode:    keel.StringCol{Col: keel.Col{Ref: &carrierSettlementBatchesRef, Index: 11}},
 	Notes:           keel.StringCol{Col: keel.Col{Ref: &carrierSettlementBatchesRef, Index: 12}},
-	GeneratedByID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierSettlementBatchesRef, Index: 13}}},
+	GeneratedByID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierSettlementBatchesRef, Index: 13}}},
 	GeneratedAt:     keel.Int64Col{Col: keel.Col{Ref: &carrierSettlementBatchesRef, Index: 14}},
 	CompletedAt:     keel.Int64Col{Col: keel.Col{Ref: &carrierSettlementBatchesRef, Index: 15}},
-	CanceledByID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierSettlementBatchesRef, Index: 16}}},
+	CanceledByID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierSettlementBatchesRef, Index: 16}}},
 	CanceledAt:      keel.Int64Col{Col: keel.Col{Ref: &carrierSettlementBatchesRef, Index: 17}},
 	Version:         keel.Int64Col{Col: keel.Col{Ref: &carrierSettlementBatchesRef, Index: 18}},
 	CreatedAt:       keel.Int64Col{Col: keel.Col{Ref: &carrierSettlementBatchesRef, Index: 19}},
@@ -1006,10 +1012,10 @@ var CarrierSettlementBatches = &CarrierSettlementBatchesTable{
 func BuildCarrierSettlementBatches(r *keel.Ref) *CarrierSettlementBatchesTable {
 	return &CarrierSettlementBatchesTable{
 		TableBase:       keel.TableBase{Ref: r},
-		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		Status:          BatchStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		Status:          BatchStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		Name:            keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		PeriodStart:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 5}},
 		PeriodEnd:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
@@ -1019,10 +1025,10 @@ func BuildCarrierSettlementBatches(r *keel.Ref) *CarrierSettlementBatchesTable {
 		TotalNetMinor:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
 		CurrencyCode:    keel.StringCol{Col: keel.Col{Ref: r, Index: 11}},
 		Notes:           keel.StringCol{Col: keel.Col{Ref: r, Index: 12}},
-		GeneratedByID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 13}}},
+		GeneratedByID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 13}}},
 		GeneratedAt:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
 		CompletedAt:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
-		CanceledByID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 16}}},
+		CanceledByID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 16}}},
 		CanceledAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
 		Version:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
 		CreatedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 19}},
@@ -1050,8 +1056,6 @@ func (t *CarrierSettlementBatchesTable) Get(ctx context.Context, db *keel.DB, ke
 
 // CarrierSettlementBatchesQuery is a query over carriersettlement.CarrierSettlementBatch.
 type CarrierSettlementBatchesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*carriersettlement.CarrierSettlementBatch] = (*CarrierSettlementBatchesTable)(nil)
 
 var _ keel.Query[*carriersettlement.CarrierSettlementBatch] = (*CarrierSettlementBatchesQuery)(nil)
 
@@ -1167,42 +1171,42 @@ func (t *CarrierSettlementBatchesTable) Compute(col keel.Column, e keel.Expr) ke
 
 // Create inserts row.
 func (t *CarrierSettlementBatchesTable) Create(ctx context.Context, db *keel.DB, row *carriersettlement.CarrierSettlementBatch) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *CarrierSettlementBatchesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*carriersettlement.CarrierSettlementBatch) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *CarrierSettlementBatchesTable) Save(ctx context.Context, db *keel.DB, row *carriersettlement.CarrierSettlementBatch, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *CarrierSettlementBatchesTable) SaveExcept(ctx context.Context, db *keel.DB, row *carriersettlement.CarrierSettlementBatch, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *CarrierSettlementBatchesTable) DeleteRow(ctx context.Context, db *keel.DB, row *carriersettlement.CarrierSettlementBatch) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *CarrierSettlementBatchesTable) Upsert(ctx context.Context, db *keel.DB, rows []*carriersettlement.CarrierSettlementBatch, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *CarrierSettlementBatchesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*carriersettlement.CarrierSettlementBatch, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *CarrierSettlementBatchesTable) Copy(ctx context.Context, db *keel.DB, rows []*carriersettlement.CarrierSettlementBatch) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1374,37 +1378,45 @@ func (q *CarrierSettlementBatchesQuery) Clone() keel.Query[*carriersettlement.Ca
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *CarrierSettlementBatchesQuery) One(ctx context.Context, db *keel.DB) (*carriersettlement.CarrierSettlementBatch, error) {
-	return keel.One[*carriersettlement.CarrierSettlementBatch](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*carriersettlement.CarrierSettlementBatch)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *CarrierSettlementBatchesQuery) First(ctx context.Context, db *keel.DB) (*carriersettlement.CarrierSettlementBatch, error) {
-	return keel.First[*carriersettlement.CarrierSettlementBatch](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*carriersettlement.CarrierSettlementBatch)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *CarrierSettlementBatchesQuery) List(ctx context.Context, db *keel.DB) ([]*carriersettlement.CarrierSettlementBatch, error) {
-	return keel.List[*carriersettlement.CarrierSettlementBatch](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*carriersettlement.CarrierSettlementBatch)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *CarrierSettlementBatchesQuery) All(ctx context.Context, db *keel.DB) ([]*carriersettlement.CarrierSettlementBatch, error) {
-	return keel.All[*carriersettlement.CarrierSettlementBatch](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*carriersettlement.CarrierSettlementBatch)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *CarrierSettlementBatchesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*carriersettlement.CarrierSettlementBatch, error) {
-	return keel.UpdateReturning[*carriersettlement.CarrierSettlementBatch](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*carriersettlement.CarrierSettlementBatch)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *CarrierSettlementBatchesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*carriersettlement.CarrierSettlementBatch], error) {
-	return keel.PageOf[*carriersettlement.CarrierSettlementBatch](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*carriersettlement.CarrierSettlementBatch])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *CarrierSettlementBatchesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*carriersettlement.CarrierSettlementBatch) error) error {
-	return keel.Each[*carriersettlement.CarrierSettlementBatch](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*carriersettlement.CarrierSettlementBatch)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newCarrierSettlementBatch() unsafe.Pointer {
@@ -1613,18 +1625,18 @@ type CarrierSettlementLinesTable struct {
 // CarrierSettlementLines references the carrier_settlement_lines table.
 var CarrierSettlementLines = &CarrierSettlementLinesTable{
 	TableBase:      keel.TableBase{Ref: &carrierSettlementLinesRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierSettlementLinesRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierSettlementLinesRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierSettlementLinesRef, Index: 2}}},
-	SettlementID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierSettlementLinesRef, Index: 3}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierSettlementLinesRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierSettlementLinesRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierSettlementLinesRef, Index: 2}}},
+	SettlementID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierSettlementLinesRef, Index: 3}}},
 	LineNumber:     keel.Int64Col{Col: keel.Col{Ref: &carrierSettlementLinesRef, Index: 4}},
-	EventType:      CostEventTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierSettlementLinesRef, Index: 5}}},
+	EventType:      CostEventTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierSettlementLinesRef, Index: 5}}},
 	Description:    keel.StringCol{Col: keel.Col{Ref: &carrierSettlementLinesRef, Index: 6}},
 	AmountMinor:    keel.Int64Col{Col: keel.Col{Ref: &carrierSettlementLinesRef, Index: 7}},
-	CostEventID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierSettlementLinesRef, Index: 8}}},
-	GLAccountID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierSettlementLinesRef, Index: 9}}},
-	ShipmentID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierSettlementLinesRef, Index: 10}}},
-	MoveID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierSettlementLinesRef, Index: 11}}},
+	CostEventID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierSettlementLinesRef, Index: 8}}},
+	GLAccountID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierSettlementLinesRef, Index: 9}}},
+	ShipmentID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierSettlementLinesRef, Index: 10}}},
+	MoveID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierSettlementLinesRef, Index: 11}}},
 	ProNumber:      keel.StringCol{Col: keel.Col{Ref: &carrierSettlementLinesRef, Index: 12}},
 	AddedByAgent:   keel.BoolCol{Col: keel.Col{Ref: &carrierSettlementLinesRef, Index: 13}},
 	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &carrierSettlementLinesRef, Index: 14}},
@@ -1635,18 +1647,18 @@ var CarrierSettlementLines = &CarrierSettlementLinesTable{
 func BuildCarrierSettlementLines(r *keel.Ref) *CarrierSettlementLinesTable {
 	return &CarrierSettlementLinesTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		SettlementID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		SettlementID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		LineNumber:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 4}},
-		EventType:      CostEventTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		EventType:      CostEventTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		Description:    keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
 		AmountMinor:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
-		CostEventID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
-		GLAccountID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
-		ShipmentID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
-		MoveID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
+		CostEventID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		GLAccountID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		ShipmentID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		MoveID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 11}}},
 		ProNumber:      keel.StringCol{Col: keel.Col{Ref: r, Index: 12}},
 		AddedByAgent:   keel.BoolCol{Col: keel.Col{Ref: r, Index: 13}},
 		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
@@ -1669,8 +1681,6 @@ func (t *CarrierSettlementLinesTable) Get(ctx context.Context, db *keel.DB, key 
 
 // CarrierSettlementLinesQuery is a query over carriersettlement.CarrierSettlementLine.
 type CarrierSettlementLinesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*carriersettlement.CarrierSettlementLine] = (*CarrierSettlementLinesTable)(nil)
 
 var _ keel.Query[*carriersettlement.CarrierSettlementLine] = (*CarrierSettlementLinesQuery)(nil)
 
@@ -1786,42 +1796,42 @@ func (t *CarrierSettlementLinesTable) Compute(col keel.Column, e keel.Expr) keel
 
 // Create inserts row.
 func (t *CarrierSettlementLinesTable) Create(ctx context.Context, db *keel.DB, row *carriersettlement.CarrierSettlementLine) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *CarrierSettlementLinesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*carriersettlement.CarrierSettlementLine) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *CarrierSettlementLinesTable) Save(ctx context.Context, db *keel.DB, row *carriersettlement.CarrierSettlementLine, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *CarrierSettlementLinesTable) SaveExcept(ctx context.Context, db *keel.DB, row *carriersettlement.CarrierSettlementLine, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *CarrierSettlementLinesTable) DeleteRow(ctx context.Context, db *keel.DB, row *carriersettlement.CarrierSettlementLine) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *CarrierSettlementLinesTable) Upsert(ctx context.Context, db *keel.DB, rows []*carriersettlement.CarrierSettlementLine, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *CarrierSettlementLinesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*carriersettlement.CarrierSettlementLine, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *CarrierSettlementLinesTable) Copy(ctx context.Context, db *keel.DB, rows []*carriersettlement.CarrierSettlementLine) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1993,37 +2003,45 @@ func (q *CarrierSettlementLinesQuery) Clone() keel.Query[*carriersettlement.Carr
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *CarrierSettlementLinesQuery) One(ctx context.Context, db *keel.DB) (*carriersettlement.CarrierSettlementLine, error) {
-	return keel.One[*carriersettlement.CarrierSettlementLine](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*carriersettlement.CarrierSettlementLine)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *CarrierSettlementLinesQuery) First(ctx context.Context, db *keel.DB) (*carriersettlement.CarrierSettlementLine, error) {
-	return keel.First[*carriersettlement.CarrierSettlementLine](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*carriersettlement.CarrierSettlementLine)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *CarrierSettlementLinesQuery) List(ctx context.Context, db *keel.DB) ([]*carriersettlement.CarrierSettlementLine, error) {
-	return keel.List[*carriersettlement.CarrierSettlementLine](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*carriersettlement.CarrierSettlementLine)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *CarrierSettlementLinesQuery) All(ctx context.Context, db *keel.DB) ([]*carriersettlement.CarrierSettlementLine, error) {
-	return keel.All[*carriersettlement.CarrierSettlementLine](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*carriersettlement.CarrierSettlementLine)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *CarrierSettlementLinesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*carriersettlement.CarrierSettlementLine, error) {
-	return keel.UpdateReturning[*carriersettlement.CarrierSettlementLine](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*carriersettlement.CarrierSettlementLine)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *CarrierSettlementLinesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*carriersettlement.CarrierSettlementLine], error) {
-	return keel.PageOf[*carriersettlement.CarrierSettlementLine](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*carriersettlement.CarrierSettlementLine])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *CarrierSettlementLinesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*carriersettlement.CarrierSettlementLine) error) error {
-	return keel.Each[*carriersettlement.CarrierSettlementLine](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*carriersettlement.CarrierSettlementLine)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newCarrierSettlementLine() unsafe.Pointer {
@@ -2216,16 +2234,16 @@ type CostEventsTable struct {
 // CostEvents references the carrier_cost_events table.
 var CostEvents = &CostEventsTable{
 	TableBase:           keel.TableBase{Ref: &costEventsRef},
-	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &costEventsRef, Index: 0}}},
-	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &costEventsRef, Index: 1}}},
-	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &costEventsRef, Index: 2}}},
-	CarrierID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &costEventsRef, Index: 3}}},
-	CarrierAssignmentID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &costEventsRef, Index: 4}}},
-	ShipmentID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &costEventsRef, Index: 5}}},
-	MoveID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &costEventsRef, Index: 6}}},
-	SettlementID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &costEventsRef, Index: 7}}},
-	EventType:           CostEventTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &costEventsRef, Index: 8}}},
-	Status:              CostEventStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &costEventsRef, Index: 9}}},
+	ID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &costEventsRef, Index: 0}}},
+	BusinessUnitID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &costEventsRef, Index: 1}}},
+	OrganizationID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &costEventsRef, Index: 2}}},
+	CarrierID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &costEventsRef, Index: 3}}},
+	CarrierAssignmentID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &costEventsRef, Index: 4}}},
+	ShipmentID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &costEventsRef, Index: 5}}},
+	MoveID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &costEventsRef, Index: 6}}},
+	SettlementID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &costEventsRef, Index: 7}}},
+	EventType:           CostEventTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &costEventsRef, Index: 8}}},
+	Status:              CostEventStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &costEventsRef, Index: 9}}},
 	IdempotencyKey:      keel.StringCol{Col: keel.Col{Ref: &costEventsRef, Index: 10}},
 	EventDate:           keel.Int64Col{Col: keel.Col{Ref: &costEventsRef, Index: 11}},
 	AmountMinor:         keel.Int64Col{Col: keel.Col{Ref: &costEventsRef, Index: 12}},
@@ -2244,16 +2262,16 @@ var CostEvents = &CostEventsTable{
 func BuildCostEvents(r *keel.Ref) *CostEventsTable {
 	return &CostEventsTable{
 		TableBase:           keel.TableBase{Ref: r},
-		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		CarrierID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		CarrierAssignmentID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		ShipmentID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		MoveID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		SettlementID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
-		EventType:           CostEventTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
-		Status:              CostEventStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		ID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		CarrierID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		CarrierAssignmentID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ShipmentID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		MoveID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		SettlementID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		EventType:           CostEventTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		Status:              CostEventStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
 		IdempotencyKey:      keel.StringCol{Col: keel.Col{Ref: r, Index: 10}},
 		EventDate:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
 		AmountMinor:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
@@ -2289,8 +2307,6 @@ func (t *CostEventsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*
 
 // CostEventsQuery is a query over carriersettlement.CostEvent.
 type CostEventsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*carriersettlement.CostEvent] = (*CostEventsTable)(nil)
 
 var _ keel.Query[*carriersettlement.CostEvent] = (*CostEventsQuery)(nil)
 
@@ -2406,42 +2422,42 @@ func (t *CostEventsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*carr
 
 // Create inserts row.
 func (t *CostEventsTable) Create(ctx context.Context, db *keel.DB, row *carriersettlement.CostEvent) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *CostEventsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*carriersettlement.CostEvent) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *CostEventsTable) Save(ctx context.Context, db *keel.DB, row *carriersettlement.CostEvent, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *CostEventsTable) SaveExcept(ctx context.Context, db *keel.DB, row *carriersettlement.CostEvent, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *CostEventsTable) DeleteRow(ctx context.Context, db *keel.DB, row *carriersettlement.CostEvent) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *CostEventsTable) Upsert(ctx context.Context, db *keel.DB, rows []*carriersettlement.CostEvent, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *CostEventsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*carriersettlement.CostEvent, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *CostEventsTable) Copy(ctx context.Context, db *keel.DB, rows []*carriersettlement.CostEvent) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -2613,37 +2629,45 @@ func (q *CostEventsQuery) Clone() keel.Query[*carriersettlement.CostEvent] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *CostEventsQuery) One(ctx context.Context, db *keel.DB) (*carriersettlement.CostEvent, error) {
-	return keel.One[*carriersettlement.CostEvent](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*carriersettlement.CostEvent)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *CostEventsQuery) First(ctx context.Context, db *keel.DB) (*carriersettlement.CostEvent, error) {
-	return keel.First[*carriersettlement.CostEvent](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*carriersettlement.CostEvent)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *CostEventsQuery) List(ctx context.Context, db *keel.DB) ([]*carriersettlement.CostEvent, error) {
-	return keel.List[*carriersettlement.CostEvent](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*carriersettlement.CostEvent)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *CostEventsQuery) All(ctx context.Context, db *keel.DB) ([]*carriersettlement.CostEvent, error) {
-	return keel.All[*carriersettlement.CostEvent](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*carriersettlement.CostEvent)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *CostEventsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*carriersettlement.CostEvent, error) {
-	return keel.UpdateReturning[*carriersettlement.CostEvent](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*carriersettlement.CostEvent)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *CostEventsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*carriersettlement.CostEvent], error) {
-	return keel.PageOf[*carriersettlement.CostEvent](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*carriersettlement.CostEvent])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *CostEventsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*carriersettlement.CostEvent) error) error {
-	return keel.Each[*carriersettlement.CostEvent](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*carriersettlement.CostEvent)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newCostEvent() unsafe.Pointer { return unsafe.Pointer(new(carriersettlement.CostEvent)) }
@@ -2885,27 +2909,27 @@ type InvoiceMatchesTable struct {
 // InvoiceMatches references the carrier_invoice_matches table.
 var InvoiceMatches = &InvoiceMatchesTable{
 	TableBase:              keel.TableBase{Ref: &invoiceMatchesRef},
-	ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceMatchesRef, Index: 0}}},
-	BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceMatchesRef, Index: 1}}},
-	OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceMatchesRef, Index: 2}}},
-	EDICarrierInvoiceID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceMatchesRef, Index: 3}}},
-	DocumentAIExtractionID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceMatchesRef, Index: 4}}},
-	CarrierID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceMatchesRef, Index: 5}}},
-	CarrierAssignmentID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceMatchesRef, Index: 6}}},
-	CarrierSettlementID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceMatchesRef, Index: 7}}},
-	AdjustmentCostEventID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceMatchesRef, Index: 8}}},
-	Status:                 InvoiceMatchStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceMatchesRef, Index: 9}}},
-	MatchedVia:             MatchViaCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceMatchesRef, Index: 10}}},
+	ID:                     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceMatchesRef, Index: 0}}},
+	BusinessUnitID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceMatchesRef, Index: 1}}},
+	OrganizationID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceMatchesRef, Index: 2}}},
+	EDICarrierInvoiceID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceMatchesRef, Index: 3}}},
+	DocumentAIExtractionID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceMatchesRef, Index: 4}}},
+	CarrierID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceMatchesRef, Index: 5}}},
+	CarrierAssignmentID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceMatchesRef, Index: 6}}},
+	CarrierSettlementID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceMatchesRef, Index: 7}}},
+	AdjustmentCostEventID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceMatchesRef, Index: 8}}},
+	Status:                 InvoiceMatchStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceMatchesRef, Index: 9}}},
+	MatchedVia:             MatchViaCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceMatchesRef, Index: 10}}},
 	InvoiceNumber:          keel.StringCol{Col: keel.Col{Ref: &invoiceMatchesRef, Index: 11}},
 	InvoiceNumberKey:       keel.StringCol{Col: keel.Col{Ref: &invoiceMatchesRef, Index: 12}},
-	DuplicateOfMatchID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceMatchesRef, Index: 13}}},
-	PossibleDuplicateOfID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceMatchesRef, Index: 14}}},
+	DuplicateOfMatchID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceMatchesRef, Index: 13}}},
+	PossibleDuplicateOfID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceMatchesRef, Index: 14}}},
 	InvoiceTotalMinor:      keel.Int64Col{Col: keel.Col{Ref: &invoiceMatchesRef, Index: 15}},
 	ExpectedTotalMinor:     keel.Int64Col{Col: keel.Col{Ref: &invoiceMatchesRef, Index: 16}},
 	VarianceMinor:          keel.Int64Col{Col: keel.Col{Ref: &invoiceMatchesRef, Index: 17}},
 	CurrencyCode:           keel.StringCol{Col: keel.Col{Ref: &invoiceMatchesRef, Index: 18}},
 	ResolutionNote:         keel.StringCol{Col: keel.Col{Ref: &invoiceMatchesRef, Index: 19}},
-	ResolvedByID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceMatchesRef, Index: 20}}},
+	ResolvedByID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceMatchesRef, Index: 20}}},
 	ResolvedAt:             keel.Int64Col{Col: keel.Col{Ref: &invoiceMatchesRef, Index: 21}},
 	Version:                keel.Int64Col{Col: keel.Col{Ref: &invoiceMatchesRef, Index: 22}},
 	CreatedAt:              keel.Int64Col{Col: keel.Col{Ref: &invoiceMatchesRef, Index: 23}},
@@ -2916,27 +2940,27 @@ var InvoiceMatches = &InvoiceMatchesTable{
 func BuildInvoiceMatches(r *keel.Ref) *InvoiceMatchesTable {
 	return &InvoiceMatchesTable{
 		TableBase:              keel.TableBase{Ref: r},
-		ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		EDICarrierInvoiceID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		DocumentAIExtractionID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		CarrierID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		CarrierAssignmentID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		CarrierSettlementID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
-		AdjustmentCostEventID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
-		Status:                 InvoiceMatchStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
-		MatchedVia:             MatchViaCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		ID:                     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		EDICarrierInvoiceID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		DocumentAIExtractionID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		CarrierID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		CarrierAssignmentID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		CarrierSettlementID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		AdjustmentCostEventID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		Status:                 InvoiceMatchStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		MatchedVia:             MatchViaCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
 		InvoiceNumber:          keel.StringCol{Col: keel.Col{Ref: r, Index: 11}},
 		InvoiceNumberKey:       keel.StringCol{Col: keel.Col{Ref: r, Index: 12}},
-		DuplicateOfMatchID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 13}}},
-		PossibleDuplicateOfID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 14}}},
+		DuplicateOfMatchID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 13}}},
+		PossibleDuplicateOfID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 14}}},
 		InvoiceTotalMinor:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
 		ExpectedTotalMinor:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
 		VarianceMinor:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
 		CurrencyCode:           keel.StringCol{Col: keel.Col{Ref: r, Index: 18}},
 		ResolutionNote:         keel.StringCol{Col: keel.Col{Ref: r, Index: 19}},
-		ResolvedByID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 20}}},
+		ResolvedByID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 20}}},
 		ResolvedAt:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 21}},
 		Version:                keel.Int64Col{Col: keel.Col{Ref: r, Index: 22}},
 		CreatedAt:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 23}},
@@ -2969,8 +2993,6 @@ func (t *InvoiceMatchesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID
 
 // InvoiceMatchesQuery is a query over carriersettlement.InvoiceMatch.
 type InvoiceMatchesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*carriersettlement.InvoiceMatch] = (*InvoiceMatchesTable)(nil)
 
 var _ keel.Query[*carriersettlement.InvoiceMatch] = (*InvoiceMatchesQuery)(nil)
 
@@ -3086,42 +3108,42 @@ func (t *InvoiceMatchesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*
 
 // Create inserts row.
 func (t *InvoiceMatchesTable) Create(ctx context.Context, db *keel.DB, row *carriersettlement.InvoiceMatch) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *InvoiceMatchesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*carriersettlement.InvoiceMatch) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *InvoiceMatchesTable) Save(ctx context.Context, db *keel.DB, row *carriersettlement.InvoiceMatch, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *InvoiceMatchesTable) SaveExcept(ctx context.Context, db *keel.DB, row *carriersettlement.InvoiceMatch, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *InvoiceMatchesTable) DeleteRow(ctx context.Context, db *keel.DB, row *carriersettlement.InvoiceMatch) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *InvoiceMatchesTable) Upsert(ctx context.Context, db *keel.DB, rows []*carriersettlement.InvoiceMatch, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *InvoiceMatchesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*carriersettlement.InvoiceMatch, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *InvoiceMatchesTable) Copy(ctx context.Context, db *keel.DB, rows []*carriersettlement.InvoiceMatch) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -3293,37 +3315,45 @@ func (q *InvoiceMatchesQuery) Clone() keel.Query[*carriersettlement.InvoiceMatch
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *InvoiceMatchesQuery) One(ctx context.Context, db *keel.DB) (*carriersettlement.InvoiceMatch, error) {
-	return keel.One[*carriersettlement.InvoiceMatch](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*carriersettlement.InvoiceMatch)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *InvoiceMatchesQuery) First(ctx context.Context, db *keel.DB) (*carriersettlement.InvoiceMatch, error) {
-	return keel.First[*carriersettlement.InvoiceMatch](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*carriersettlement.InvoiceMatch)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *InvoiceMatchesQuery) List(ctx context.Context, db *keel.DB) ([]*carriersettlement.InvoiceMatch, error) {
-	return keel.List[*carriersettlement.InvoiceMatch](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*carriersettlement.InvoiceMatch)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *InvoiceMatchesQuery) All(ctx context.Context, db *keel.DB) ([]*carriersettlement.InvoiceMatch, error) {
-	return keel.All[*carriersettlement.InvoiceMatch](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*carriersettlement.InvoiceMatch)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *InvoiceMatchesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*carriersettlement.InvoiceMatch, error) {
-	return keel.UpdateReturning[*carriersettlement.InvoiceMatch](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*carriersettlement.InvoiceMatch)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *InvoiceMatchesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*carriersettlement.InvoiceMatch], error) {
-	return keel.PageOf[*carriersettlement.InvoiceMatch](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*carriersettlement.InvoiceMatch])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *InvoiceMatchesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*carriersettlement.InvoiceMatch) error) error {
-	return keel.Each[*carriersettlement.InvoiceMatch](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*carriersettlement.InvoiceMatch)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newInvoiceMatch() unsafe.Pointer { return unsafe.Pointer(new(carriersettlement.InvoiceMatch)) }
@@ -3571,21 +3601,21 @@ type LedgerEntriesTable struct {
 // LedgerEntries references the carrier_ledger_entries table.
 var LedgerEntries = &LedgerEntriesTable{
 	TableBase:           keel.TableBase{Ref: &ledgerEntriesRef},
-	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ledgerEntriesRef, Index: 0}}},
-	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ledgerEntriesRef, Index: 1}}},
-	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ledgerEntriesRef, Index: 2}}},
-	CarrierID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ledgerEntriesRef, Index: 3}}},
-	EntryType:           LedgerEntryTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ledgerEntriesRef, Index: 4}}},
+	ID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &ledgerEntriesRef, Index: 0}}},
+	BusinessUnitID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &ledgerEntriesRef, Index: 1}}},
+	OrganizationID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &ledgerEntriesRef, Index: 2}}},
+	CarrierID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &ledgerEntriesRef, Index: 3}}},
+	EntryType:           LedgerEntryTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &ledgerEntriesRef, Index: 4}}},
 	SourceObjectType:    keel.StringCol{Col: keel.Col{Ref: &ledgerEntriesRef, Index: 5}},
 	SourceObjectID:      keel.StringCol{Col: keel.Col{Ref: &ledgerEntriesRef, Index: 6}},
 	SourceEventType:     keel.StringCol{Col: keel.Col{Ref: &ledgerEntriesRef, Index: 7}},
-	RelatedSettlementID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ledgerEntriesRef, Index: 8}}},
-	JournalBatchID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ledgerEntriesRef, Index: 9}}},
+	RelatedSettlementID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &ledgerEntriesRef, Index: 8}}},
+	JournalBatchID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &ledgerEntriesRef, Index: 9}}},
 	DocumentNumber:      keel.StringCol{Col: keel.Col{Ref: &ledgerEntriesRef, Index: 10}},
 	TransactionDate:     keel.Int64Col{Col: keel.Col{Ref: &ledgerEntriesRef, Index: 11}},
 	LineNumber:          keel.Int64Col{Col: keel.Col{Ref: &ledgerEntriesRef, Index: 12}},
 	AmountMinor:         keel.Int64Col{Col: keel.Col{Ref: &ledgerEntriesRef, Index: 13}},
-	CreatedByID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ledgerEntriesRef, Index: 14}}},
+	CreatedByID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &ledgerEntriesRef, Index: 14}}},
 	CreatedAt:           keel.Int64Col{Col: keel.Col{Ref: &ledgerEntriesRef, Index: 15}},
 }
 
@@ -3593,21 +3623,21 @@ var LedgerEntries = &LedgerEntriesTable{
 func BuildLedgerEntries(r *keel.Ref) *LedgerEntriesTable {
 	return &LedgerEntriesTable{
 		TableBase:           keel.TableBase{Ref: r},
-		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		CarrierID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		EntryType:           LedgerEntryTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		CarrierID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		EntryType:           LedgerEntryTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		SourceObjectType:    keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		SourceObjectID:      keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
 		SourceEventType:     keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
-		RelatedSettlementID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
-		JournalBatchID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		RelatedSettlementID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		JournalBatchID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
 		DocumentNumber:      keel.StringCol{Col: keel.Col{Ref: r, Index: 10}},
 		TransactionDate:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
 		LineNumber:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
 		AmountMinor:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
-		CreatedByID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 14}}},
+		CreatedByID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 14}}},
 		CreatedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
 	}
 }
@@ -3632,8 +3662,6 @@ func (t *LedgerEntriesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID)
 
 // LedgerEntriesQuery is a query over carriersettlement.LedgerEntry.
 type LedgerEntriesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*carriersettlement.LedgerEntry] = (*LedgerEntriesTable)(nil)
 
 var _ keel.Query[*carriersettlement.LedgerEntry] = (*LedgerEntriesQuery)(nil)
 
@@ -3749,42 +3777,42 @@ func (t *LedgerEntriesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*c
 
 // Create inserts row.
 func (t *LedgerEntriesTable) Create(ctx context.Context, db *keel.DB, row *carriersettlement.LedgerEntry) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *LedgerEntriesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*carriersettlement.LedgerEntry) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *LedgerEntriesTable) Save(ctx context.Context, db *keel.DB, row *carriersettlement.LedgerEntry, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *LedgerEntriesTable) SaveExcept(ctx context.Context, db *keel.DB, row *carriersettlement.LedgerEntry, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *LedgerEntriesTable) DeleteRow(ctx context.Context, db *keel.DB, row *carriersettlement.LedgerEntry) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *LedgerEntriesTable) Upsert(ctx context.Context, db *keel.DB, rows []*carriersettlement.LedgerEntry, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *LedgerEntriesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*carriersettlement.LedgerEntry, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *LedgerEntriesTable) Copy(ctx context.Context, db *keel.DB, rows []*carriersettlement.LedgerEntry) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -3956,37 +3984,45 @@ func (q *LedgerEntriesQuery) Clone() keel.Query[*carriersettlement.LedgerEntry] 
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *LedgerEntriesQuery) One(ctx context.Context, db *keel.DB) (*carriersettlement.LedgerEntry, error) {
-	return keel.One[*carriersettlement.LedgerEntry](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*carriersettlement.LedgerEntry)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *LedgerEntriesQuery) First(ctx context.Context, db *keel.DB) (*carriersettlement.LedgerEntry, error) {
-	return keel.First[*carriersettlement.LedgerEntry](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*carriersettlement.LedgerEntry)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *LedgerEntriesQuery) List(ctx context.Context, db *keel.DB) ([]*carriersettlement.LedgerEntry, error) {
-	return keel.List[*carriersettlement.LedgerEntry](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*carriersettlement.LedgerEntry)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *LedgerEntriesQuery) All(ctx context.Context, db *keel.DB) ([]*carriersettlement.LedgerEntry, error) {
-	return keel.All[*carriersettlement.LedgerEntry](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*carriersettlement.LedgerEntry)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *LedgerEntriesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*carriersettlement.LedgerEntry, error) {
-	return keel.UpdateReturning[*carriersettlement.LedgerEntry](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*carriersettlement.LedgerEntry)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *LedgerEntriesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*carriersettlement.LedgerEntry], error) {
-	return keel.PageOf[*carriersettlement.LedgerEntry](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*carriersettlement.LedgerEntry])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *LedgerEntriesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*carriersettlement.LedgerEntry) error) error {
-	return keel.Each[*carriersettlement.LedgerEntry](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*carriersettlement.LedgerEntry)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newLedgerEntry() unsafe.Pointer { return unsafe.Pointer(new(carriersettlement.LedgerEntry)) }
@@ -4169,234 +4205,224 @@ var reportMeasureInteger = schema.ReportInfo{Included: true, Kind: schema.Measur
 var reportMeasureIntegerHidden = schema.ReportInfo{Kind: schema.Measure, Type: schema.ValueInt, Aggs: schema.AggsNumeric}
 
 // BatchStatusCol is a column of carriersettlement.BatchStatus values.
-type BatchStatusCol struct{ keel.StringCol }
+type BatchStatusCol struct{ keel.TypedStringCol }
 
-func (c BatchStatusCol) Eq(v carriersettlement.BatchStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c BatchStatusCol) Ne(v carriersettlement.BatchStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c BatchStatusCol) Gt(v carriersettlement.BatchStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
+func (c BatchStatusCol) Eq(v carriersettlement.BatchStatus) keel.Pred { return c.Text().Eq(string(v)) }
+func (c BatchStatusCol) Ne(v carriersettlement.BatchStatus) keel.Pred { return c.Text().Ne(string(v)) }
+func (c BatchStatusCol) Gt(v carriersettlement.BatchStatus) keel.Pred { return c.Text().Gt(string(v)) }
 func (c BatchStatusCol) Gte(v carriersettlement.BatchStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
-func (c BatchStatusCol) Lt(v carriersettlement.BatchStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
+func (c BatchStatusCol) Lt(v carriersettlement.BatchStatus) keel.Pred { return c.Text().Lt(string(v)) }
 func (c BatchStatusCol) Lte(v carriersettlement.BatchStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c BatchStatusCol) IsDistinctFrom(v carriersettlement.BatchStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c BatchStatusCol) Between(lo, hi carriersettlement.BatchStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c BatchStatusCol) To(v carriersettlement.BatchStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c BatchStatusCol) In(vs ...carriersettlement.BatchStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c BatchStatusCol) NotIn(vs ...carriersettlement.BatchStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // CostEventStatusCol is a column of carriersettlement.CostEventStatus values.
-type CostEventStatusCol struct{ keel.StringCol }
+type CostEventStatusCol struct{ keel.TypedStringCol }
 
 func (c CostEventStatusCol) Eq(v carriersettlement.CostEventStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c CostEventStatusCol) Ne(v carriersettlement.CostEventStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c CostEventStatusCol) Gt(v carriersettlement.CostEventStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c CostEventStatusCol) Gte(v carriersettlement.CostEventStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c CostEventStatusCol) Lt(v carriersettlement.CostEventStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c CostEventStatusCol) Lte(v carriersettlement.CostEventStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c CostEventStatusCol) IsDistinctFrom(v carriersettlement.CostEventStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c CostEventStatusCol) Between(lo, hi carriersettlement.CostEventStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c CostEventStatusCol) To(v carriersettlement.CostEventStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c CostEventStatusCol) In(vs ...carriersettlement.CostEventStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c CostEventStatusCol) NotIn(vs ...carriersettlement.CostEventStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // CostEventTypeCol is a column of carriersettlement.CostEventType values.
-type CostEventTypeCol struct{ keel.StringCol }
+type CostEventTypeCol struct{ keel.TypedStringCol }
 
 func (c CostEventTypeCol) Eq(v carriersettlement.CostEventType) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c CostEventTypeCol) Ne(v carriersettlement.CostEventType) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c CostEventTypeCol) Gt(v carriersettlement.CostEventType) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c CostEventTypeCol) Gte(v carriersettlement.CostEventType) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c CostEventTypeCol) Lt(v carriersettlement.CostEventType) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c CostEventTypeCol) Lte(v carriersettlement.CostEventType) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c CostEventTypeCol) IsDistinctFrom(v carriersettlement.CostEventType) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c CostEventTypeCol) Between(lo, hi carriersettlement.CostEventType) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c CostEventTypeCol) To(v carriersettlement.CostEventType) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c CostEventTypeCol) In(vs ...carriersettlement.CostEventType) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c CostEventTypeCol) NotIn(vs ...carriersettlement.CostEventType) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // InvoiceMatchStatusCol is a column of carriersettlement.InvoiceMatchStatus values.
-type InvoiceMatchStatusCol struct{ keel.StringCol }
+type InvoiceMatchStatusCol struct{ keel.TypedStringCol }
 
 func (c InvoiceMatchStatusCol) Eq(v carriersettlement.InvoiceMatchStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c InvoiceMatchStatusCol) Ne(v carriersettlement.InvoiceMatchStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c InvoiceMatchStatusCol) Gt(v carriersettlement.InvoiceMatchStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c InvoiceMatchStatusCol) Gte(v carriersettlement.InvoiceMatchStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c InvoiceMatchStatusCol) Lt(v carriersettlement.InvoiceMatchStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c InvoiceMatchStatusCol) Lte(v carriersettlement.InvoiceMatchStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c InvoiceMatchStatusCol) IsDistinctFrom(v carriersettlement.InvoiceMatchStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c InvoiceMatchStatusCol) Between(lo, hi carriersettlement.InvoiceMatchStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c InvoiceMatchStatusCol) To(v carriersettlement.InvoiceMatchStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c InvoiceMatchStatusCol) In(vs ...carriersettlement.InvoiceMatchStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c InvoiceMatchStatusCol) NotIn(vs ...carriersettlement.InvoiceMatchStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // LedgerEntryTypeCol is a column of carriersettlement.LedgerEntryType values.
-type LedgerEntryTypeCol struct{ keel.StringCol }
+type LedgerEntryTypeCol struct{ keel.TypedStringCol }
 
 func (c LedgerEntryTypeCol) Eq(v carriersettlement.LedgerEntryType) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c LedgerEntryTypeCol) Ne(v carriersettlement.LedgerEntryType) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c LedgerEntryTypeCol) Gt(v carriersettlement.LedgerEntryType) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c LedgerEntryTypeCol) Gte(v carriersettlement.LedgerEntryType) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c LedgerEntryTypeCol) Lt(v carriersettlement.LedgerEntryType) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c LedgerEntryTypeCol) Lte(v carriersettlement.LedgerEntryType) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c LedgerEntryTypeCol) IsDistinctFrom(v carriersettlement.LedgerEntryType) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c LedgerEntryTypeCol) Between(lo, hi carriersettlement.LedgerEntryType) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c LedgerEntryTypeCol) To(v carriersettlement.LedgerEntryType) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c LedgerEntryTypeCol) In(vs ...carriersettlement.LedgerEntryType) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c LedgerEntryTypeCol) NotIn(vs ...carriersettlement.LedgerEntryType) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // MatchViaCol is a column of carriersettlement.MatchVia values.
-type MatchViaCol struct{ keel.StringCol }
+type MatchViaCol struct{ keel.TypedStringCol }
 
-func (c MatchViaCol) Eq(v carriersettlement.MatchVia) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c MatchViaCol) Ne(v carriersettlement.MatchVia) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c MatchViaCol) Gt(v carriersettlement.MatchVia) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c MatchViaCol) Gte(v carriersettlement.MatchVia) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c MatchViaCol) Lt(v carriersettlement.MatchVia) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c MatchViaCol) Lte(v carriersettlement.MatchVia) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c MatchViaCol) Eq(v carriersettlement.MatchVia) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c MatchViaCol) Ne(v carriersettlement.MatchVia) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c MatchViaCol) Gt(v carriersettlement.MatchVia) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c MatchViaCol) Gte(v carriersettlement.MatchVia) keel.Pred { return c.Text().Gte(string(v)) }
+func (c MatchViaCol) Lt(v carriersettlement.MatchVia) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c MatchViaCol) Lte(v carriersettlement.MatchVia) keel.Pred { return c.Text().Lte(string(v)) }
 func (c MatchViaCol) IsDistinctFrom(v carriersettlement.MatchVia) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c MatchViaCol) Between(lo, hi carriersettlement.MatchVia) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c MatchViaCol) To(v carriersettlement.MatchVia) keel.Assignment {
-	return c.StringCol.To(string(v))
-}
+func (c MatchViaCol) To(v carriersettlement.MatchVia) keel.Assignment { return c.Text().To(string(v)) }
 func (c MatchViaCol) In(vs ...carriersettlement.MatchVia) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c MatchViaCol) NotIn(vs ...carriersettlement.MatchVia) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // StatusCol is a column of carriersettlement.Status values.
-type StatusCol struct{ keel.StringCol }
+type StatusCol struct{ keel.TypedStringCol }
 
-func (c StatusCol) Eq(v carriersettlement.Status) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c StatusCol) Ne(v carriersettlement.Status) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c StatusCol) Gt(v carriersettlement.Status) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c StatusCol) Gte(v carriersettlement.Status) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c StatusCol) Lt(v carriersettlement.Status) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c StatusCol) Lte(v carriersettlement.Status) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c StatusCol) Eq(v carriersettlement.Status) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c StatusCol) Ne(v carriersettlement.Status) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c StatusCol) Gt(v carriersettlement.Status) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c StatusCol) Gte(v carriersettlement.Status) keel.Pred { return c.Text().Gte(string(v)) }
+func (c StatusCol) Lt(v carriersettlement.Status) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c StatusCol) Lte(v carriersettlement.Status) keel.Pred { return c.Text().Lte(string(v)) }
 func (c StatusCol) IsDistinctFrom(v carriersettlement.Status) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c StatusCol) Between(lo, hi carriersettlement.Status) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c StatusCol) To(v carriersettlement.Status) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c StatusCol) To(v carriersettlement.Status) keel.Assignment { return c.Text().To(string(v)) }
 func (c StatusCol) In(vs ...carriersettlement.Status) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c StatusCol) NotIn(vs ...carriersettlement.Status) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

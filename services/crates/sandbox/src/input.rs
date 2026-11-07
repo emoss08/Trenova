@@ -7,6 +7,13 @@
 //! bytes where they are, and nothing either side does can change them under
 //! the other. Nothing touches a filesystem, so a read-only root and a
 //! landlock policy with no writable paths cost nothing.
+//!
+//! The file holds bytes the document's author chose, so a child keeps no
+//! descriptor for it once it is mapped: seccomp lets a file be mapped
+//! executable, for the dynamic loader, and a child with no descriptor has
+//! nothing to map. `MFD_NOEXEC_SEAL` is a separate guarantee, that the file
+//! can never be made an executable program. It does not refuse an executable
+//! mapping, so the descriptor has to go whatever the kernel supports.
 
 use std::fs::File;
 use std::io::{self, Write};
@@ -14,12 +21,26 @@ use std::os::fd::{AsFd, BorrowedFd, OwnedFd};
 use std::ptr::NonNull;
 
 use rustix::fs::{MemfdFlags, SealFlags, fcntl_add_seals, fcntl_get_seals, memfd_create};
+use rustix::io::Errno;
 use rustix::mm::{MapFlags, ProtFlags, mmap, munmap};
 
 const REQUIRED_SEALS: SealFlags = SealFlags::SEAL
     .union(SealFlags::SHRINK)
     .union(SealFlags::GROW)
     .union(SealFlags::WRITE);
+
+/// Creates the file through `create`, sealed against ever being executable.
+/// A kernel before 6.3 answers `EINVAL` to that flag and gets the same file
+/// without it.
+fn sealed_against_execution(
+    create: impl Fn(MemfdFlags) -> rustix::io::Result<OwnedFd>,
+) -> io::Result<OwnedFd> {
+    let flags = MemfdFlags::CLOEXEC | MemfdFlags::ALLOW_SEALING;
+    match create(flags | MemfdFlags::NOEXEC_SEAL) {
+        Err(Errno::INVAL) => Ok(create(flags)?),
+        created => Ok(created?),
+    }
+}
 
 /// An input being written. Every write is checked against the limit, so a
 /// caller that streams more than it declared is stopped at the limit.
@@ -32,7 +53,7 @@ pub struct InputWriter {
 
 impl InputWriter {
     pub fn new(name: &str, limit: u64) -> io::Result<Self> {
-        let fd = memfd_create(name, MemfdFlags::CLOEXEC | MemfdFlags::ALLOW_SEALING)?;
+        let fd = sealed_against_execution(|flags| memfd_create(name, flags))?;
         Ok(Self {
             file: File::from(fd),
             written: 0,
@@ -107,7 +128,6 @@ impl SealedInput {
 pub struct MappedInput {
     ptr: Option<NonNull<u8>>,
     len: usize,
-    _fd: OwnedFd,
 }
 
 // SAFETY: the mapping is read-only and backed by a sealed file whose contents
@@ -118,7 +138,8 @@ unsafe impl Sync for MappedInput {}
 
 impl MappedInput {
     /// Maps a descriptor received from the supervisor, refusing one that is
-    /// not sealed against writing, growing and shrinking.
+    /// not sealed against writing, growing and shrinking. The descriptor is
+    /// closed on return; the mapping does not need it.
     pub fn map(fd: OwnedFd) -> io::Result<Self> {
         let seals = fcntl_get_seals(&fd)?;
         if !seals.contains(REQUIRED_SEALS) {
@@ -131,11 +152,7 @@ impl MappedInput {
         let len = usize::try_from(size)
             .map_err(|_| io::Error::new(io::ErrorKind::InvalidInput, "the input has no size"))?;
         if len == 0 {
-            return Ok(Self {
-                ptr: None,
-                len: 0,
-                _fd: fd,
-            });
+            return Ok(Self { ptr: None, len: 0 });
         }
         // SAFETY: a fresh read-only private mapping of `len` bytes of a sealed
         // file at offset 0; the kernel picks the address, and the file cannot
@@ -151,10 +168,10 @@ impl MappedInput {
                 0,
             )
         }?;
+        drop(fd);
         Ok(Self {
             ptr: NonNull::new(ptr.cast::<u8>()),
             len,
-            _fd: fd,
         })
     }
 
@@ -191,6 +208,47 @@ mod tests {
         assert_eq!(sealed.len(), 11);
         let mapped = MappedInput::map(sealed.fd).expect("map");
         assert_eq!(mapped.as_bytes(), b"hello, page");
+    }
+
+    #[test]
+    fn an_input_is_never_executable_where_the_kernel_can_promise_it() {
+        let sealed = InputWriter::new("test", 64)
+            .expect("memfd")
+            .seal()
+            .expect("seal");
+        let seals = fcntl_get_seals(&sealed.fd).expect("seals");
+        assert!(seals.contains(REQUIRED_SEALS));
+        if seals.contains(SealFlags::EXEC) {
+            let status = rustix::fs::fstat(&sealed.fd).expect("stat");
+            assert_eq!(status.st_mode & 0o111, 0);
+        }
+    }
+
+    #[test]
+    fn a_kernel_without_the_execution_seal_still_gets_an_input() {
+        let plain = MemfdFlags::CLOEXEC | MemfdFlags::ALLOW_SEALING;
+        let asked = std::cell::RefCell::new(Vec::new());
+        let created = sealed_against_execution(|flags| {
+            asked.borrow_mut().push(flags);
+            if flags.contains(MemfdFlags::NOEXEC_SEAL) {
+                Err(Errno::INVAL)
+            } else {
+                memfd_create("test", flags)
+            }
+        });
+        assert!(created.is_ok());
+        assert_eq!(*asked.borrow(), [plain | MemfdFlags::NOEXEC_SEAL, plain]);
+    }
+
+    #[test]
+    fn any_other_failure_to_create_an_input_is_reported() {
+        let attempts = std::cell::Cell::new(0);
+        let created = sealed_against_execution(|_| {
+            attempts.set(attempts.get() + 1);
+            Err(Errno::NOMEM)
+        });
+        assert!(created.is_err());
+        assert_eq!(attempts.get(), 1);
     }
 
     #[test]

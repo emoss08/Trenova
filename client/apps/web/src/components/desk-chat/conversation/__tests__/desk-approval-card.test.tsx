@@ -8,6 +8,7 @@ import type {
 import type { AssistantPlan, AssistantProposal } from "@/types/assistant";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } from "vitest";
 import { Operation } from "@trenova/shared/types/permission";
@@ -174,6 +175,7 @@ function renderCard(proposals: AssistantProposal[] = [proposal()], plans: Assist
   const undo = { start: vi.fn(), scheduled: vi.fn(), clear: vi.fn() };
   const onDecided = vi.fn();
   const onReview = vi.fn();
+  const onDefer = vi.fn();
   render(
     <QueryClientProvider client={client}>
       <MemoryRouter>
@@ -182,7 +184,7 @@ function renderCard(proposals: AssistantProposal[] = [proposal()], plans: Assist
           entry={entryOf(proposals, plans)}
           approveRef={approveRef}
           onReview={onReview}
-          onDefer={vi.fn()}
+          onDefer={onDefer}
           onDecided={onDecided}
           undo={undo}
         />
@@ -190,7 +192,7 @@ function renderCard(proposals: AssistantProposal[] = [proposal()], plans: Assist
     </QueryClientProvider>,
   );
 
-  return { approveRef, undo, onDecided, onReview, client };
+  return { approveRef, undo, onDecided, onReview, onDefer, client };
 }
 
 const approve = () => screen.getByRole("button", { name: /^Approve/ });
@@ -780,5 +782,201 @@ describe("DeskApprovalCard when the server refuses the approval", () => {
         }),
       ],
     });
+  });
+});
+
+/**
+ * The card is the one moment the Desk is sold on. It used to say "on 1 shipment",
+ * set "can't be undone" as its faintest text at the end of a line an ellipsis cut,
+ * and offer no way to turn a change down.
+ */
+describe("DeskApprovalCard says what a change is for and what it can't take back", () => {
+  it("names the one record the change acts on", async () => {
+    fetchProposalPreview.mockResolvedValue(preview({ changes: [record({ label: "S-240201" })] }));
+    renderCard();
+
+    expect(await screen.findByText("on S-240201")).toBeInTheDocument();
+  });
+
+  it("marks a change that can't be undone Permanent, beside the actions, and says why", async () => {
+    fetchProposalPreview.mockResolvedValue(
+      preview({ tool: "exception_resolve_service_failure", digest: "sha256:shown" }),
+    );
+    renderCard([
+      proposal({
+        toolName: "exception_resolve_service_failure",
+        arguments: { serviceFailureId: "sf_1", reasonCodeId: "rc_1", note: "Customer confirmed" },
+      }),
+    ]);
+    const user = userEvent.setup();
+
+    await waitFor(() => expect(approve()).toBeEnabled());
+    const permanent = screen.getByText("Permanent");
+    expect(permanent).toHaveClass("dk-dcx-perm");
+    expect(permanent.closest(".dk-dcx-acts")).not.toBeNull();
+    expect(screen.queryByText(/can't be undone/)).toBeNull();
+
+    await user.hover(permanent);
+
+    expect(
+      await screen.findByText(
+        "Once approved, this change can't be undone. Undo and the undo window don't apply to it.",
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it("calls a change that can be undone reversible, and not Permanent", async () => {
+    fetchProposalPreview.mockResolvedValue(preview({ digest: "sha256:shown" }));
+    renderCard();
+
+    await waitFor(() => expect(approve()).toBeEnabled());
+    expect(screen.getByText(/reversible/)).toBeInTheDocument();
+    expect(screen.queryByText("Permanent")).toBeNull();
+  });
+
+  it("puts the change off with Decide later, from More actions", async () => {
+    fetchProposalPreview.mockResolvedValue(preview());
+    const { onDefer } = renderCard();
+    const user = userEvent.setup();
+
+    await user.click(await screen.findByRole("button", { name: "More actions" }));
+    await user.click(await screen.findByRole("menuitem", { name: "Decide later" }));
+
+    expect(onDefer).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole("button", { name: "Not now" })).toBeNull();
+  });
+
+  it("opens the change to read from More actions", async () => {
+    fetchProposalPreview.mockResolvedValue(preview());
+    const { onReview } = renderCard();
+    const user = userEvent.setup();
+
+    await user.click(await screen.findByRole("button", { name: "More actions" }));
+    await user.click(await screen.findByRole("menuitem", { name: "Review the change" }));
+
+    expect(onReview).toHaveBeenCalledTimes(1);
+  });
+
+  /*
+   * Every action on the card's face used to wrap on its own, which left Approve alone on a
+   * second line. The face now keeps only the decision, Decline beside Approve, on the title's row.
+   */
+  it("keeps only the decision on the card's face", async () => {
+    fetchProposalPreview.mockResolvedValue(preview({ digest: "sha256:shown" }));
+    renderCard();
+
+    await waitFor(() => expect(approve()).toBeEnabled());
+    const actions = approve().closest(".dk-dcx-acts") as HTMLElement;
+    expect(
+      within(actions)
+        .getAllByRole("button")
+        .map((button) => button.getAttribute("aria-label") ?? button.textContent),
+    ).toEqual(["More actions", "Decline", expect.stringMatching(/^Approve/)]);
+  });
+
+  it("shows the approve key the way the person's platform spells it", async () => {
+    fetchProposalPreview.mockResolvedValue(preview({ digest: "sha256:shown" }));
+    renderCard();
+
+    await waitFor(() => expect(approve()).toBeEnabled());
+    // jsdom reports no Apple platform, so the key reads as it does on Windows.
+    expect(approve()).toHaveTextContent("Ctrl+↵");
+    expect(approve()).toHaveAttribute("aria-keyshortcuts", "Meta+Enter Control+Enter");
+  });
+});
+
+describe("DeskApprovalCard declines a change with a reason", () => {
+  async function openDecline() {
+    fireEvent.click(await screen.findByRole("button", { name: "Decline" }));
+    return screen.findByRole("dialog");
+  }
+
+  it("sends the reason as the note the agent reads, and lets the card go", async () => {
+    fetchProposalPreview.mockResolvedValue(preview());
+    decideMyProposal.mockResolvedValue(
+      proposalResult({ decision: decisionOf({ decision: "Rejected" }) }),
+    );
+    const { onDecided, undo } = renderCard();
+
+    const dialog = await openDecline();
+    fireEvent.change(within(dialog).getByRole("textbox", { name: "Reason" }), {
+      target: { value: "Marcus is on a home-time request today" },
+    });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Decline" }));
+
+    await waitFor(() =>
+      expect(decideMyProposal).toHaveBeenCalledWith("aprop_1", {
+        decision: "Rejected",
+        reasonCode: "rejected_in_conversation",
+        note: "Marcus is on a home-time request today",
+      }),
+    );
+    await waitFor(() => expect(onDecided).toHaveBeenCalledTimes(1));
+    // A decline is final at once: there is no undo window to open.
+    expect(undo.start).not.toHaveBeenCalled();
+  });
+
+  it("asks for a reason before it declines anything", async () => {
+    fetchProposalPreview.mockResolvedValue(preview());
+    renderCard();
+
+    const dialog = await openDecline();
+    fireEvent.click(within(dialog).getByRole("button", { name: "Decline" }));
+
+    expect(await within(dialog).findByText("Say why")).toBeInTheDocument();
+    expect(decideMyProposal).not.toHaveBeenCalled();
+  });
+
+  it("declines a plan whole, with the reason on it", async () => {
+    fetchPlanPreview.mockResolvedValue(planPreview({ digest: "sha256:plan" }));
+    decideMyPlan.mockResolvedValue(planResult({ status: "Rejected", commitsAt: null }));
+    const { onDecided } = renderCard([], [plan()]);
+
+    const dialog = await openDecline();
+    fireEvent.change(within(dialog).getByRole("textbox", { name: "Reason" }), {
+      target: { value: "Reprice after the customer call" },
+    });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Decline" }));
+
+    await waitFor(() =>
+      expect(decideMyPlan).toHaveBeenCalledWith("apl_1", {
+        decision: "Rejected",
+        reasonCode: "rejected_in_conversation",
+        note: "Reprice after the customer call",
+      }),
+    );
+    await waitFor(() => expect(onDecided).toHaveBeenCalledTimes(1));
+  });
+
+  it("declines every change of a batch together", async () => {
+    fetchProposalPreview.mockResolvedValue(preview());
+    decideMyProposals.mockResolvedValue([
+      proposalResult({ proposalId: "aprop_1", decision: decisionOf({ decision: "Rejected" }) }),
+      proposalResult({
+        proposalId: "aprop_2",
+        decision: decisionOf({ proposalId: "aprop_2", decision: "Rejected" }),
+      }),
+    ]);
+    const { onDecided } = renderCard([
+      proposal({ id: "aprop_1", reviewRequired: false }),
+      proposal({ id: "aprop_2", reviewRequired: false, arguments: { shipmentId: "shp_2" } }),
+    ]);
+
+    fireEvent.click(await screen.findByRole("button", { name: "Decline" }));
+    const dialog = await screen.findByRole("dialog", { name: "Decline 2 changes?" });
+    fireEvent.change(within(dialog).getByRole("textbox", { name: "Reason" }), {
+      target: { value: "Wrong week" },
+    });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Decline 2" }));
+
+    await waitFor(() =>
+      expect(decideMyProposals).toHaveBeenCalledWith(["aprop_1", "aprop_2"], {
+        decision: "Rejected",
+        reasonCode: "rejected_in_conversation",
+        previewDigests: undefined,
+        note: "Wrong week",
+      }),
+    );
+    await waitFor(() => expect(onDecided).toHaveBeenCalledTimes(1));
   });
 });

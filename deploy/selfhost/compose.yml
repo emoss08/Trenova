@@ -17,8 +17,8 @@
 #              internal, one for each service that parses input nobody vetted
 #              (Gotenberg, docling-serve, the imaging worker, ClamAV), shared
 #              only with the TMS processes that call it. None of them can reach
-#              Temporal, GTC's dashboard, the databases or each other: Temporal
-#              and Gotenberg take no credentials, so the network is their guard.
+#              Temporal, GTC's dashboard, the databases or each other: GTC's
+#              dashboard takes no credentials, so the network is its guard.
 #
 # Image versions come from .env: TRENOVA_VERSION for the TMS and client
 # images, TRENOVA_POSTGRES_VERSION for the database image (published only when
@@ -43,8 +43,13 @@ x-tms-environment: &tms-environment
   TRENOVA_PORTAL_BASEURL: https://${DOMAIN}/dash
   TRENOVA_REPORTING_DELIVERYLINKBASEURL: https://${DOMAIN}
   TRENOVA_DATABASE_NAME: ${TRENOVA_DATABASE_NAME:-trenova}
-  TRENOVA_DATABASE_USER: ${TRENOVA_DATABASE_USER:-trenova}
-  TRENOVA_DATABASE_PASSWORD: ${TRENOVA_DATABASE_PASSWORD:?set TRENOVA_DATABASE_PASSWORD in .env}
+  TRENOVA_DATABASE_USER: ${TRENOVA_DATABASE_APP_USER:-trenova_app}
+  TRENOVA_DATABASE_PASSWORD: ${TRENOVA_DATABASE_APP_PASSWORD:?set TRENOVA_DATABASE_APP_PASSWORD in .env (./scripts/init-env.sh --upgrade)}
+  TRENOVA_DATABASE_SYSTEM_USER: ${TRENOVA_DATABASE_SYSTEM_USER:-trenova_system}
+  TRENOVA_DATABASE_SYSTEM_PASSWORD: ${TRENOVA_DATABASE_SYSTEM_PASSWORD:?set TRENOVA_DATABASE_SYSTEM_PASSWORD in .env (./scripts/init-env.sh --upgrade)}
+  TRENOVA_DATABASE_MIGRATOR_USER: ${TRENOVA_DATABASE_USER:-trenova}
+  TRENOVA_DATABASE_RLS_SCOPEKEYID: ${TRENOVA_DATABASE_RLS_SCOPEKEYID:?set TRENOVA_DATABASE_RLS_SCOPEKEYID in .env (./scripts/init-env.sh --upgrade)}
+  TRENOVA_DATABASE_RLS_SCOPEKEY: ${TRENOVA_DATABASE_RLS_SCOPEKEY:?set TRENOVA_DATABASE_RLS_SCOPEKEY in .env (./scripts/init-env.sh --upgrade)}
   TRENOVA_CACHE_PASSWORD: ${TRENOVA_REDIS_PASSWORD:?set TRENOVA_REDIS_PASSWORD in .env}
   TRENOVA_SEARCH_MEILISEARCH_APIKEY: ${TRENOVA_MEILI_MASTER_KEY:?set TRENOVA_MEILI_MASTER_KEY in .env}
   TRENOVA_STORAGE_ENDPOINT: ${TRENOVA_STORAGE_ENDPOINT:-minio:9000}
@@ -59,6 +64,7 @@ x-tms-environment: &tms-environment
   TRENOVA_SECURITY_ENCRYPTION_RETIREDKEYS: ${TRENOVA_SECURITY_ENCRYPTION_RETIREDKEYS:-}
   TRENOVA_SECURITY_MFA_RECOVERYCODEPEPPER: ${TRENOVA_SECURITY_MFA_RECOVERYCODEPEPPER:?set TRENOVA_SECURITY_MFA_RECOVERYCODEPEPPER in .env (openssl rand -hex 32)}
   TRENOVA_SYSTEM_SYSTEMUSERPASSWORD: ${TRENOVA_SYSTEM_SYSTEMUSERPASSWORD:?set TRENOVA_SYSTEM_SYSTEMUSERPASSWORD in .env}
+  TRENOVA_RENDERER_GOTENBERGPASSWORD: ${TRENOVA_RENDERER_GOTENBERGPASSWORD:?set TRENOVA_RENDERER_GOTENBERGPASSWORD in .env (./scripts/init-env.sh --upgrade)}
   TRENOVA_DOCUMENTCONVERSION_APIKEY: ${TRENOVA_DOCUMENTCONVERSION_APIKEY:-}
   TRENOVA_CONTENTSCAN_CLAMAV_ADDRESS: ${TRENOVA_CONTENTSCAN_CLAMAV_ADDRESS:-}
   TRENOVA_AI_AUDIT_CHAIN_KEYS: ${TRENOVA_AI_AUDIT_CHAIN_KEYS:-}
@@ -79,12 +85,19 @@ x-tms-environment: &tms-environment
   TRENOVA_NETSUITE_CLIENT_ID: ${TRENOVA_NETSUITE_CLIENT_ID:-}
   TRENOVA_NETSUITE_CLIENT_SECRET: ${TRENOVA_NETSUITE_CLIENT_SECRET:-}
 
+# The owner is a superuser, so its password goes only to the one-shot services
+# that need it, never to the API and worker.
+x-tms-migrator-environment: &tms-migrator-environment
+  <<: *tms-environment
+  TRENOVA_DATABASE_MIGRATOR_PASSWORD: ${TRENOVA_DATABASE_PASSWORD:?set TRENOVA_DATABASE_PASSWORD in .env}
+
 x-tms-service: &tms-service
   image: ghcr.io/emoss08/trenova/tms:${TRENOVA_VERSION:?set TRENOVA_VERSION in .env}
   environment: *tms-environment
   volumes:
     - ./config/config.yaml:/app/config/config.yaml:ro
     - imaging-client-tls:/certs/imaging:ro
+    - temporal-client-tls:/certs/temporal:ro
     - postgres-client-tls:/certs/postgres:ro
   security_opt:
     - "no-new-privileges:true"
@@ -145,7 +158,6 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql
       - ./postgresql.conf:/etc/postgresql/postgresql.conf:ro
-      - ./initdb/10-temporal-databases.sh:/docker-entrypoint-initdb.d/10-temporal-databases.sh:ro
       - postgres-server-tls:/certs:ro
     depends_on:
       postgres-certs:
@@ -160,6 +172,38 @@ services:
       start_period: 30s
     stop_grace_period: 1m
     restart: unless-stopped
+    logging: *logging
+    networks: [data]
+
+  # One-shot: the roles Temporal and GTC sign in as and the databases Temporal
+  # keeps its state in (scripts/db-prepare.sh), as the Helm chart's release Job
+  # does. Idempotent, and it runs on every start: it sets each role's password
+  # back to the one in .env, and hands Temporal's and GTC's objects to their
+  # roles on an install that made them as the owner.
+  db-prepare:
+    image: ghcr.io/emoss08/trenova/postgres:${TRENOVA_POSTGRES_VERSION:?set TRENOVA_POSTGRES_VERSION in .env}
+    entrypoint: ["/bin/sh", "/scripts/db-prepare.sh"]
+    environment:
+      PGHOST: postgres
+      PGPORT: 5432
+      PGUSER: ${TRENOVA_DATABASE_USER:-trenova}
+      PGPASSWORD: ${TRENOVA_DATABASE_PASSWORD:?set TRENOVA_DATABASE_PASSWORD in .env}
+      PGDATABASE: ${TRENOVA_DATABASE_NAME:-trenova}
+      PGSSLMODE: verify-full
+      PGSSLROOTCERT: /certs/postgres/ca.pem
+      OWNER: ${TRENOVA_DATABASE_USER:-trenova}
+      OWNER_PASSWORD: ${TRENOVA_DATABASE_PASSWORD:?set TRENOVA_DATABASE_PASSWORD in .env}
+      TEMPORAL_ROLE: ${TRENOVA_DATABASE_TEMPORAL_USER:-temporal}
+      TEMPORAL_PASSWORD: ${TRENOVA_DATABASE_TEMPORAL_PASSWORD:?set TRENOVA_DATABASE_TEMPORAL_PASSWORD in .env (./scripts/init-env.sh --upgrade)}
+      GTC_ROLE: ${TRENOVA_DATABASE_GTC_USER:-trenova_gtc}
+      GTC_PASSWORD: ${TRENOVA_DATABASE_GTC_PASSWORD:?set TRENOVA_DATABASE_GTC_PASSWORD in .env (./scripts/init-env.sh --upgrade)}
+    volumes:
+      - ./scripts/db-prepare.sh:/scripts/db-prepare.sh:ro
+      - postgres-client-tls:/certs/postgres:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
     logging: *logging
     networks: [data]
 
@@ -235,17 +279,54 @@ services:
     logging: *logging
     networks: [data]
 
+  # Issues the private CA and the certificates the TMS and Temporal
+  # authenticate each other with, once, like imaging-certs. Temporal's server
+  # certificate also authenticates as a client, because Temporal's services call
+  # each other with it. Reissue with `docker compose run --rm temporal-certs
+  # certs --force --server-dir=/certs/server --client-dir=/certs/client
+  # --ca-dir=/certs/ca --server-name=temporal --server-client-auth
+  # --ca-name="Trenova Temporal CA"`.
+  temporal-certs:
+    image: ghcr.io/emoss08/trenova/imaging:${TRENOVA_VERSION:?set TRENOVA_VERSION in .env}
+    command:
+      - certs
+      - --server-dir=/certs/server
+      - --client-dir=/certs/client
+      - --ca-dir=/certs/ca
+      - --server-name=temporal
+      - --server-client-auth
+      - --ca-name=Trenova Temporal CA
+    user: "65532:65532"
+    volumes:
+      - temporal-server-tls:/certs/server
+      - temporal-client-tls:/certs/client
+      - temporal-ca:/certs/ca
+    read_only: true
+    network_mode: none
+    cap_drop:
+      - ALL
+    security_opt:
+      - "no-new-privileges:true"
+    restart: "no"
+    logging: *logging
+
   temporal:
-    # Every AI feature runs here. auto-setup creates and migrates its schema
-    # in the temporal and temporal_visibility databases on start; the settings
-    # the agent runtime needs are in temporal/dynamicconfig.yaml.
+    # Every AI feature runs here. auto-setup migrates its schema in the temporal
+    # and temporal_visibility databases on start, as the role that owns them
+    # (db-prepare makes both); the settings the agent runtime needs are in
+    # temporal/dynamicconfig.yaml. Its frontend and its services' calls to each
+    # other take only certificates temporal-certs issued: the TMS presents the
+    # client's, Temporal itself (and its CLI, for the health check) the
+    # server's. The CLI names are given in both the current and the older
+    # spelling, as the CLI in the image reads one or the other.
     image: temporalio/auto-setup:1.29.7@sha256:f14912b699cf73015ad5c4fc18d522d4b014db90e794039214dfb7c022c2644f
     environment:
       DB: postgres12
       DB_PORT: 5432
       POSTGRES_SEEDS: postgres
-      POSTGRES_USER: ${TRENOVA_DATABASE_USER:-trenova}
-      POSTGRES_PWD: ${TRENOVA_DATABASE_PASSWORD:?set TRENOVA_DATABASE_PASSWORD in .env}
+      POSTGRES_USER: ${TRENOVA_DATABASE_TEMPORAL_USER:-temporal}
+      POSTGRES_PWD: ${TRENOVA_DATABASE_TEMPORAL_PASSWORD:?set TRENOVA_DATABASE_TEMPORAL_PASSWORD in .env (./scripts/init-env.sh --upgrade)}
+      SKIP_DB_CREATE: "true"
       POSTGRES_TLS_ENABLED: "true"
       POSTGRES_TLS_DISABLE_HOST_VERIFICATION: "false"
       POSTGRES_TLS_CA_FILE: /certs/postgres/ca.pem
@@ -255,12 +336,33 @@ services:
       SQL_CA: /certs/postgres/ca.pem
       SQL_HOST_NAME: postgres
       DYNAMIC_CONFIG_FILE_PATH: /etc/temporal/dynamic_config.yaml
+      TEMPORAL_ADDRESS: temporal:7233
+      TEMPORAL_TLS_REQUIRE_CLIENT_AUTH: "true"
+      TEMPORAL_TLS_SERVER_CA_CERT: /certs/temporal/ca.pem
+      TEMPORAL_TLS_SERVER_CERT: /certs/temporal/server.pem
+      TEMPORAL_TLS_SERVER_KEY: /certs/temporal/server-key.pem
+      TEMPORAL_TLS_INTERNODE_SERVER_NAME: temporal
+      TEMPORAL_TLS_FRONTEND_CERT: /certs/temporal/server.pem
+      TEMPORAL_TLS_FRONTEND_KEY: /certs/temporal/server-key.pem
+      TEMPORAL_TLS_CLIENT1_CA_CERT: /certs/temporal/ca.pem
+      TEMPORAL_TLS_CLIENT2_CA_CERT: /certs/temporal/ca.pem
+      TEMPORAL_TLS_FRONTEND_SERVER_NAME: temporal
+      TEMPORAL_TLS_SERVER_NAME: temporal
+      TEMPORAL_TLS_SERVER_CA_CERT_PATH: /certs/temporal/ca.pem
+      TEMPORAL_TLS_CLIENT_CERT_PATH: /certs/temporal/server.pem
+      TEMPORAL_TLS_CLIENT_KEY_PATH: /certs/temporal/server-key.pem
+      TEMPORAL_TLS_CA: /certs/temporal/ca.pem
+      TEMPORAL_TLS_CERT: /certs/temporal/server.pem
+      TEMPORAL_TLS_KEY: /certs/temporal/server-key.pem
     volumes:
       - ./temporal/dynamicconfig.yaml:/etc/temporal/dynamic_config.yaml:ro
       - postgres-client-tls:/certs/postgres:ro
+      - temporal-server-tls:/certs/temporal:ro
     depends_on:
-      postgres:
-        condition: service_healthy
+      db-prepare:
+        condition: service_completed_successfully
+      temporal-certs:
+        condition: service_completed_successfully
     healthcheck:
       test: ["CMD", "temporal", "operator", "cluster", "health", "--address", "temporal:7233"]
       interval: 10s
@@ -275,7 +377,8 @@ services:
   # than trusted: JavaScript off, only data: and its own staging files
   # allowed, no published port, no route through Caddy, no network off the
   # host, and a network of its own with the TMS processes. See dev/compose.yml
-  # for why each flag is there.
+  # for why each flag is there. Every route but /health needs the password in
+  # .env, which the TMS sends.
   gotenberg:
     image: gotenberg/gotenberg:8@sha256:13672f317b443c793e972b1bd2155ec62a3e7b6891b411e8196442cc053ee5f5
     command:
@@ -287,6 +390,10 @@ services:
       - --pdfengines-disable-routes=true
       - --api-timeout=30s
       - --api-disable-health-check-logging=true
+      - --api-enable-basic-auth=true
+    environment:
+      GOTENBERG_API_BASIC_AUTH_USERNAME: trenova
+      GOTENBERG_API_BASIC_AUTH_PASSWORD: ${TRENOVA_RENDERER_GOTENBERGPASSWORD:?set TRENOVA_RENDERER_GOTENBERGPASSWORD in .env (./scripts/init-env.sh --upgrade)}
     read_only: true
     tmpfs:
       - /tmp
@@ -457,7 +564,11 @@ services:
   # opens it. Start it with `docker compose --profile clamav up -d` and set
   # TRENOVA_CONTENTSCAN_CLAMAV_ADDRESS=clamav:3310 in .env. Once the address
   # is set a file is refused while clamd is unreachable, so wait for the
-  # first signature download (several minutes) before setting it. freshclam
+  # first signature download (several minutes) before setting it. clamd holds
+  # about 1.2 GB of signatures and about 2.4 GB while it reloads them each day
+  # (the old and new copies at once), plus what scans use: ClamAV documents
+  # 3 GB as the minimum and 4 GB as the preferred size for its container, so
+  # 3 GB is reserved and 4 GB is the limit. freshclam
   # runs inside the container and needs the egress network for signature
   # updates; clamd itself is reached only on the scan network, so the service
   # with a route out cannot reach the databases. See "Malware scanning" in
@@ -480,6 +591,8 @@ services:
         limits:
           memory: 4G
           pids: 256
+        reservations:
+          memory: 3G
     healthcheck:
       test: ["CMD", "clamdcheck.sh"]
       interval: 30s
@@ -499,7 +612,7 @@ services:
   trenova-db:
     image: ghcr.io/emoss08/trenova/tms-db:${TRENOVA_VERSION:?set TRENOVA_VERSION in .env}
     command: ["up", "-env", "production"]
-    environment: *tms-environment
+    environment: *tms-migrator-environment
     volumes:
       - ./config/config.yaml:/app/config/config.yaml:ro
       - postgres-client-tls:/certs/postgres:ro
@@ -512,6 +625,23 @@ services:
     logging: *logging
     networks: [data]
 
+  # One-shot: creates the application and system roles the API and worker sign
+  # in as (trenova db rls provision-roles), as the Helm chart's release Job does.
+  # Idempotent, and it runs on every start: it sets each role's password back to
+  # the one in .env and touches no table, so it works on a database with data.
+  rls-roles:
+    <<: *tms-service
+    command: ["db", "rls", "provision-roles"]
+    environment: *tms-migrator-environment
+    depends_on:
+      trenova-db:
+        condition: service_completed_successfully
+      imaging-certs:
+        condition: service_completed_successfully
+      temporal-certs:
+        condition: service_completed_successfully
+    restart: "no"
+    networks: [data]
 
   # One-shot: creates the first organization and its administrator from the
   # TRENOVA_BOOTSTRAP_* values in .env (trenova db bootstrap). It runs on every
@@ -531,7 +661,7 @@ services:
         fi
         exec trenova db bootstrap
     environment:
-      <<: *tms-environment
+      <<: *tms-migrator-environment
       TRENOVA_BOOTSTRAP_ORG_NAME: ${TRENOVA_BOOTSTRAP_ORG_NAME:-}
       TRENOVA_BOOTSTRAP_ADMIN_NAME: ${TRENOVA_BOOTSTRAP_ADMIN_NAME:-}
       TRENOVA_BOOTSTRAP_ADMIN_EMAIL: ${TRENOVA_BOOTSTRAP_ADMIN_EMAIL:-}
@@ -544,15 +674,15 @@ services:
       TRENOVA_BOOTSTRAP_SCAC: ${TRENOVA_BOOTSTRAP_SCAC:-}
       TRENOVA_BOOTSTRAP_DOT_NUMBER: ${TRENOVA_BOOTSTRAP_DOT_NUMBER:-}
     depends_on:
-      trenova-db:
+      rls-roles:
         condition: service_completed_successfully
       redis:
         condition: service_healthy
     restart: "no"
     networks: [data]
 
-  # One-shot: scopes GTC's publication to the tables it routes
-  # (scripts/db-bootstrap.sh).
+  # One-shot: scopes GTC's publication to the tables it routes and lets GTC's
+  # role read them (scripts/db-bootstrap.sh).
   db-bootstrap:
     image: ghcr.io/emoss08/trenova/postgres:${TRENOVA_POSTGRES_VERSION:?set TRENOVA_POSTGRES_VERSION in .env}
     entrypoint: ["/bin/sh", "/scripts/db-bootstrap.sh"]
@@ -565,11 +695,14 @@ services:
       PGSSLMODE: verify-full
       PGSSLROOTCERT: /certs/postgres/ca.pem
       SINKS_FILE: /config/sinks.yaml
+      GTC_ROLE: ${TRENOVA_DATABASE_GTC_USER:-trenova_gtc}
     volumes:
       - ./scripts/db-bootstrap.sh:/scripts/db-bootstrap.sh:ro
       - ../gtc/sinks.yaml:/config/sinks.yaml:ro
       - postgres-client-tls:/certs/postgres:ro
     depends_on:
+      db-prepare:
+        condition: service_completed_successfully
       trenova-db:
         condition: service_completed_successfully
     restart: "no"
@@ -651,6 +784,8 @@ services:
     depends_on:
       trenova-db:
         condition: service_completed_successfully
+      rls-roles:
+        condition: service_completed_successfully
       db-bootstrap:
         condition: service_completed_successfully
       tms-bootstrap:
@@ -685,6 +820,8 @@ services:
     depends_on:
       trenova-db:
         condition: service_completed_successfully
+      rls-roles:
+        condition: service_completed_successfully
       db-bootstrap:
         condition: service_completed_successfully
       tms-bootstrap:
@@ -716,13 +853,15 @@ services:
   # and feeds the Meilisearch indexes, the Redis caches and the tca:events
   # stream. Routing is ../gtc/sinks.yaml; db-bootstrap owns the publication,
   # and GTC creates its replication slot, which also starts the first backfill.
+  # It signs in as its own role, which replicates and reads the published
+  # tables and keeps its backfill state in a schema it owns.
   # Its dashboard (port 8080) can trigger backfills and discard dead letters
   # without authentication, so it is never published, and no service that
   # parses uploads shares a network with it.
   gtc:
     image: ghcr.io/emoss08/gtc:${GTC_VERSION:?set GTC_VERSION in .env}
     environment:
-      DATABASE_URL: postgres://${TRENOVA_DATABASE_USER:-trenova}:${TRENOVA_DATABASE_PASSWORD:?set TRENOVA_DATABASE_PASSWORD in .env}@postgres:5432/${TRENOVA_DATABASE_NAME:-trenova}?replication=database&sslmode=verify-full&sslrootcert=/certs/postgres/ca.pem
+      DATABASE_URL: postgres://${TRENOVA_DATABASE_GTC_USER:-trenova_gtc}:${TRENOVA_DATABASE_GTC_PASSWORD:?set TRENOVA_DATABASE_GTC_PASSWORD in .env (./scripts/init-env.sh --upgrade)}@postgres:5432/${TRENOVA_DATABASE_NAME:-trenova}?replication=database&sslmode=verify-full&sslrootcert=/certs/postgres/ca.pem
       CDC_SLOT_NAME: gtc_slot
       CDC_PUBLICATION_NAME: gtc_publication
       CDC_AUTO_CREATE_SLOT: "true"
@@ -794,6 +933,9 @@ volumes:
   imaging-server-tls:
   imaging-client-tls:
   imaging-ca:
+  temporal-server-tls:
+  temporal-client-tls:
+  temporal-ca:
   postgres-server-tls:
   postgres-client-tls:
   postgres-ca:

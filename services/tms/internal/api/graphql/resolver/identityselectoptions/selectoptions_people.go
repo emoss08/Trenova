@@ -140,11 +140,7 @@ func (r *Sources) Role(
 }
 
 func organizationSelectOptionItem(entity *tenant.Organization) selectoption.Item {
-	return selectoption.ItemFor(
-		organizationSelectOption(entity),
-		entity.CreatedAt,
-		entity.ID,
-	)
+	return selectoption.ItemFor(organizationSelectOption(entity))
 }
 
 func organizationSelectOption(entity *tenant.Organization) *gqlmodel.SelectOption {
@@ -164,11 +160,7 @@ func organizationID(entity *tenant.Organization) pulid.ID {
 }
 
 func userSelectOptionItem(entity *tenant.User) selectoption.Item {
-	return selectoption.ItemFor(
-		userSelectOption(entity),
-		entity.CreatedAt,
-		entity.ID,
-	)
+	return selectoption.ItemFor(userSelectOption(entity))
 }
 
 func userSelectOption(entity *tenant.User) *gqlmodel.SelectOption {
@@ -189,11 +181,7 @@ func userSelectOption(entity *tenant.User) *gqlmodel.SelectOption {
 }
 
 func roleSelectOptionItem(entity *rbac.Role) selectoption.Item {
-	return selectoption.ItemFor(
-		roleSelectOption(entity),
-		entity.CreatedAt,
-		entity.ID,
-	)
+	return selectoption.ItemFor(roleSelectOption(entity))
 }
 
 func roleSelectOption(entity *rbac.Role) *gqlmodel.SelectOption {

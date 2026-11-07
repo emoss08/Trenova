@@ -15,6 +15,8 @@ export type ApprovalFacts = {
   count: number;
   /** The kind of record, as the preview names it; empty when it names none. */
   resource: string;
+  /** The one record the change touches, by its own name; empty when it touches several or has no name. */
+  record: string;
   /** The field the change sets, when one field is set on every record. */
   field: ApprovalField | null;
   /** Records the change would refuse as they stand, each with why. */
@@ -76,6 +78,7 @@ export function approvalFacts(preview: ProposalPreview | undefined, t: Translate
     return {
       count: 0,
       resource: "",
+      record: "",
       field: null,
       refused: [],
       wouldFail: null,
@@ -105,7 +108,8 @@ export function approvalFacts(preview: ProposalPreview | undefined, t: Translate
   const changedSince = changes.filter((change) =>
     change.fields.some((field) => field.changedSinceProposed),
   ).length;
-  const extra = { refused, wouldFail, changedSince, creates };
+  const record = changes.length === 1 && preview.withheldCount === 0 ? changes[0].label : "";
+  const extra = { record, refused, wouldFail, changedSince, creates };
   const first = changes[0]?.fields.find((field) => !field.withheld && field.path !== OUTCOME_FIELD);
   if (!first) {
     return { count, resource, field: null, ...extra };
@@ -159,10 +163,15 @@ export function refusalReasons(refused: readonly { reason: string }[]): [string,
 }
 
 /**
- * What the card says the change reaches: "on 11 items" for records it acts
- * on, "3 shipments in all" for several it creates, nothing for one it creates.
+ * What the card says the change reaches: the one existing record it acts on by
+ * its own name ("on S-240201"), "on 11 items" for several, "3 shipments in all"
+ * for several it creates, nothing for one it creates. A record being created
+ * carries only a placeholder label, such as "New shipment", so it is not named.
  */
 export function scopePhrase(facts: ApprovalFacts, t: TranslateFn): string | null {
+  if (facts.count === 1 && facts.record !== "" && !facts.creates) {
+    return t("on {0}", facts.record);
+  }
   if (facts.count === 0 || (facts.creates && facts.count === 1)) {
     return null;
   }

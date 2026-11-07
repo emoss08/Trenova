@@ -21,7 +21,7 @@ func Candidate(sm *shipmentdb.ShipmentMovesTable, start, end int64) keel.Pred {
 	done := shipmentdb.ShipmentMoves.As(candidateMove)
 	touched := stp.ActualDeparture.Coalesce(stp.ActualArrival)
 
-	return sm.ID.InArray(keel.StringArrayOf(keel.ArrayOf(keel.Union(
+	return sm.ID.Text().InArray(keel.StringArrayOf(keel.ArrayOf(keel.Union(
 		stp.Pick(stp.ShipmentMoveID).Where(touched.Gte(start), touched.Lt(end)),
 		done.Pick(done.ID).Where(
 			done.Status.Eq(shipmentvocab.MoveStatusCompleted),

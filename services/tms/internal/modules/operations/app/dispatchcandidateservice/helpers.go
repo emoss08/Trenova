@@ -37,16 +37,6 @@ func uniqueMoveIDs(
 	return ids
 }
 
-func ProjectedTimeAvailable(commitments []*dispatchboardports.WorkerCommitment, now int64) int64 {
-	latest := now
-	for _, commitment := range commitments {
-		if commitment.WindowEnd > latest {
-			latest = commitment.WindowEnd
-		}
-	}
-	return latest
-}
-
 func ResolveWindow(
 	start, end int64,
 	control *dispatchcontrol.DispatchControl,
@@ -67,23 +57,6 @@ func MoveWindowEnd(move *dispatchboardports.BoardMove) int64 {
 		end = *move.DestinationWindowEnd
 	}
 	return end
-}
-
-func CompareRank(left, right *CandidateScore) int {
-	leftBlocked, rightBlocked := left.Blocked(), right.Blocked()
-	if leftBlocked != rightBlocked {
-		if rightBlocked {
-			return -1
-		}
-		return 1
-	}
-	if left.Score != right.Score {
-		if left.Score > right.Score {
-			return -1
-		}
-		return 1
-	}
-	return 0
 }
 
 func PTOInclusiveEnd(endDate int64) int64 {

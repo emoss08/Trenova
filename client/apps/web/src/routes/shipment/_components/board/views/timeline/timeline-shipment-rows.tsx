@@ -12,8 +12,13 @@ import {
   TimelineRow,
   type TimelineScrollMemory,
   type TimelineSheetItem,
-} from "./timeline-canvas";
-import { BAR_HEIGHT, GROUP_HEIGHT, ROW_HEIGHT, type TimelineScale } from "./timeline-scale";
+} from "@/components/timeline/timeline-canvas";
+import {
+  BAR_HEIGHT,
+  GROUP_HEIGHT,
+  ROW_HEIGHT,
+  type TimelineScale,
+} from "@/components/timeline/timeline-scale";
 
 /** The sheet's lines for the shipments view: a header per stage, then a row per load, most urgent first. */
 function shipmentSheetItems({

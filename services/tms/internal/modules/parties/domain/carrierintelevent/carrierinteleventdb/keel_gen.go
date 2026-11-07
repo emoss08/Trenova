@@ -120,35 +120,35 @@ type CarrierIntelEventsTable struct {
 // CarrierIntelEvents references the carrier_intel_events table.
 var CarrierIntelEvents = &CarrierIntelEventsTable{
 	TableBase:        keel.TableBase{Ref: &carrierIntelEventsRef},
-	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierIntelEventsRef, Index: 0}}},
-	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierIntelEventsRef, Index: 1}}},
-	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierIntelEventsRef, Index: 2}}},
-	SubjectType:      keelkinds.CarrierintelSubjectTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierIntelEventsRef, Index: 3}}},
+	ID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierIntelEventsRef, Index: 0}}},
+	BusinessUnitID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierIntelEventsRef, Index: 1}}},
+	OrganizationID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierIntelEventsRef, Index: 2}}},
+	SubjectType:      keelkinds.CarrierintelSubjectTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierIntelEventsRef, Index: 3}}},
 	SubjectID:        keel.StringCol{Col: keel.Col{Ref: &carrierIntelEventsRef, Index: 4}},
-	CarrierID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierIntelEventsRef, Index: 5}}},
+	CarrierID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierIntelEventsRef, Index: 5}}},
 	DOTNumber:        keel.StringCol{Col: keel.Col{Ref: &carrierIntelEventsRef, Index: 6}},
 	SubjectName:      keel.StringCol{Col: keel.Col{Ref: &carrierIntelEventsRef, Index: 7}},
-	Provider:         integrationdb.TypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierIntelEventsRef, Index: 8}}},
-	Source:           EventSourceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierIntelEventsRef, Index: 9}}},
-	Category:         keelkinds.CarrierintelSectionCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierIntelEventsRef, Index: 10}}},
+	Provider:         integrationdb.TypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierIntelEventsRef, Index: 8}}},
+	Source:           EventSourceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierIntelEventsRef, Index: 9}}},
+	Category:         keelkinds.CarrierintelSectionCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierIntelEventsRef, Index: 10}}},
 	FieldPath:        keel.StringCol{Col: keel.Col{Ref: &carrierIntelEventsRef, Index: 11}},
-	RuleCode:         keelkinds.CarrierintelruleRuleCodeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierIntelEventsRef, Index: 12}}},
-	Severity:         keelkinds.CarrierintelSeverityCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierIntelEventsRef, Index: 13}}},
-	Action:           keelkinds.CarrierintelRuleActionCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierIntelEventsRef, Index: 14}}},
+	RuleCode:         keelkinds.CarrierintelruleRuleCodeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierIntelEventsRef, Index: 12}}},
+	Severity:         keelkinds.CarrierintelSeverityCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierIntelEventsRef, Index: 13}}},
+	Action:           keelkinds.CarrierintelRuleActionCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierIntelEventsRef, Index: 14}}},
 	PriorValue:       keel.JSONBCol{Col: keel.Col{Ref: &carrierIntelEventsRef, Index: 15}},
 	CurrentValue:     keel.JSONBCol{Col: keel.Col{Ref: &carrierIntelEventsRef, Index: 16}},
 	Summary:          keel.StringCol{Col: keel.Col{Ref: &carrierIntelEventsRef, Index: 17}},
 	VendorChangedAt:  keel.Int64Col{Col: keel.Col{Ref: &carrierIntelEventsRef, Index: 18}},
 	DetectedAt:       keel.Int64Col{Col: keel.Col{Ref: &carrierIntelEventsRef, Index: 19}},
 	Fingerprint:      keel.StringCol{Col: keel.Col{Ref: &carrierIntelEventsRef, Index: 20}},
-	Status:           EventStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierIntelEventsRef, Index: 21}}},
-	AcknowledgedByID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierIntelEventsRef, Index: 22}}},
+	Status:           EventStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierIntelEventsRef, Index: 21}}},
+	AcknowledgedByID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierIntelEventsRef, Index: 22}}},
 	AcknowledgedAt:   keel.Int64Col{Col: keel.Col{Ref: &carrierIntelEventsRef, Index: 23}},
-	ResolvedByID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierIntelEventsRef, Index: 24}}},
+	ResolvedByID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierIntelEventsRef, Index: 24}}},
 	ResolvedAt:       keel.Int64Col{Col: keel.Col{Ref: &carrierIntelEventsRef, Index: 25}},
-	Resolution:       EventResolutionCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierIntelEventsRef, Index: 26}}},
+	Resolution:       EventResolutionCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierIntelEventsRef, Index: 26}}},
 	ResolutionNote:   keel.StringCol{Col: keel.Col{Ref: &carrierIntelEventsRef, Index: 27}},
-	SnapshotID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierIntelEventsRef, Index: 28}}},
+	SnapshotID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierIntelEventsRef, Index: 28}}},
 	NotifiedAt:       keel.Int64Col{Col: keel.Col{Ref: &carrierIntelEventsRef, Index: 29}},
 	Version:          keel.Int64Col{Col: keel.Col{Ref: &carrierIntelEventsRef, Index: 30}},
 	CreatedAt:        keel.Int64Col{Col: keel.Col{Ref: &carrierIntelEventsRef, Index: 31}},
@@ -159,35 +159,35 @@ var CarrierIntelEvents = &CarrierIntelEventsTable{
 func BuildCarrierIntelEvents(r *keel.Ref) *CarrierIntelEventsTable {
 	return &CarrierIntelEventsTable{
 		TableBase:        keel.TableBase{Ref: r},
-		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		SubjectType:      keelkinds.CarrierintelSubjectTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		SubjectType:      keelkinds.CarrierintelSubjectTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		SubjectID:        keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
-		CarrierID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		CarrierID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		DOTNumber:        keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
 		SubjectName:      keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
-		Provider:         integrationdb.TypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
-		Source:           EventSourceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
-		Category:         keelkinds.CarrierintelSectionCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		Provider:         integrationdb.TypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		Source:           EventSourceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		Category:         keelkinds.CarrierintelSectionCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
 		FieldPath:        keel.StringCol{Col: keel.Col{Ref: r, Index: 11}},
-		RuleCode:         keelkinds.CarrierintelruleRuleCodeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 12}}},
-		Severity:         keelkinds.CarrierintelSeverityCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 13}}},
-		Action:           keelkinds.CarrierintelRuleActionCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 14}}},
+		RuleCode:         keelkinds.CarrierintelruleRuleCodeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 12}}},
+		Severity:         keelkinds.CarrierintelSeverityCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 13}}},
+		Action:           keelkinds.CarrierintelRuleActionCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 14}}},
 		PriorValue:       keel.JSONBCol{Col: keel.Col{Ref: r, Index: 15}},
 		CurrentValue:     keel.JSONBCol{Col: keel.Col{Ref: r, Index: 16}},
 		Summary:          keel.StringCol{Col: keel.Col{Ref: r, Index: 17}},
 		VendorChangedAt:  keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
 		DetectedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 19}},
 		Fingerprint:      keel.StringCol{Col: keel.Col{Ref: r, Index: 20}},
-		Status:           EventStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 21}}},
-		AcknowledgedByID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 22}}},
+		Status:           EventStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 21}}},
+		AcknowledgedByID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 22}}},
 		AcknowledgedAt:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 23}},
-		ResolvedByID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 24}}},
+		ResolvedByID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 24}}},
 		ResolvedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 25}},
-		Resolution:       EventResolutionCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 26}}},
+		Resolution:       EventResolutionCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 26}}},
 		ResolutionNote:   keel.StringCol{Col: keel.Col{Ref: r, Index: 27}},
-		SnapshotID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 28}}},
+		SnapshotID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 28}}},
 		NotifiedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 29}},
 		Version:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 30}},
 		CreatedAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 31}},
@@ -210,8 +210,6 @@ func (t *CarrierIntelEventsTable) Get(ctx context.Context, db *keel.DB, key puli
 
 // CarrierIntelEventsQuery is a query over carrierintelevent.CarrierIntelEvent.
 type CarrierIntelEventsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*carrierintelevent.CarrierIntelEvent] = (*CarrierIntelEventsTable)(nil)
 
 var _ keel.Query[*carrierintelevent.CarrierIntelEvent] = (*CarrierIntelEventsQuery)(nil)
 
@@ -327,42 +325,42 @@ func (t *CarrierIntelEventsTable) Compute(col keel.Column, e keel.Expr) keel.Que
 
 // Create inserts row.
 func (t *CarrierIntelEventsTable) Create(ctx context.Context, db *keel.DB, row *carrierintelevent.CarrierIntelEvent) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *CarrierIntelEventsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*carrierintelevent.CarrierIntelEvent) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *CarrierIntelEventsTable) Save(ctx context.Context, db *keel.DB, row *carrierintelevent.CarrierIntelEvent, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *CarrierIntelEventsTable) SaveExcept(ctx context.Context, db *keel.DB, row *carrierintelevent.CarrierIntelEvent, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *CarrierIntelEventsTable) DeleteRow(ctx context.Context, db *keel.DB, row *carrierintelevent.CarrierIntelEvent) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *CarrierIntelEventsTable) Upsert(ctx context.Context, db *keel.DB, rows []*carrierintelevent.CarrierIntelEvent, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *CarrierIntelEventsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*carrierintelevent.CarrierIntelEvent, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *CarrierIntelEventsTable) Copy(ctx context.Context, db *keel.DB, rows []*carrierintelevent.CarrierIntelEvent) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -534,37 +532,45 @@ func (q *CarrierIntelEventsQuery) Clone() keel.Query[*carrierintelevent.CarrierI
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *CarrierIntelEventsQuery) One(ctx context.Context, db *keel.DB) (*carrierintelevent.CarrierIntelEvent, error) {
-	return keel.One[*carrierintelevent.CarrierIntelEvent](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*carrierintelevent.CarrierIntelEvent)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *CarrierIntelEventsQuery) First(ctx context.Context, db *keel.DB) (*carrierintelevent.CarrierIntelEvent, error) {
-	return keel.First[*carrierintelevent.CarrierIntelEvent](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*carrierintelevent.CarrierIntelEvent)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *CarrierIntelEventsQuery) List(ctx context.Context, db *keel.DB) ([]*carrierintelevent.CarrierIntelEvent, error) {
-	return keel.List[*carrierintelevent.CarrierIntelEvent](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*carrierintelevent.CarrierIntelEvent)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *CarrierIntelEventsQuery) All(ctx context.Context, db *keel.DB) ([]*carrierintelevent.CarrierIntelEvent, error) {
-	return keel.All[*carrierintelevent.CarrierIntelEvent](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*carrierintelevent.CarrierIntelEvent)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *CarrierIntelEventsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*carrierintelevent.CarrierIntelEvent, error) {
-	return keel.UpdateReturning[*carrierintelevent.CarrierIntelEvent](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*carrierintelevent.CarrierIntelEvent)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *CarrierIntelEventsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*carrierintelevent.CarrierIntelEvent], error) {
-	return keel.PageOf[*carrierintelevent.CarrierIntelEvent](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*carrierintelevent.CarrierIntelEvent])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *CarrierIntelEventsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*carrierintelevent.CarrierIntelEvent) error) error {
-	return keel.Each[*carrierintelevent.CarrierIntelEvent](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*carrierintelevent.CarrierIntelEvent)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newCarrierIntelEvent() unsafe.Pointer {
@@ -888,112 +894,96 @@ var enumIntegrationType = [...]schema.EnumValue{
 }
 
 // EventResolutionCol is a column of carrierintelevent.EventResolution values.
-type EventResolutionCol struct{ keel.StringCol }
+type EventResolutionCol struct{ keel.TypedStringCol }
 
 func (c EventResolutionCol) Eq(v carrierintelevent.EventResolution) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c EventResolutionCol) Ne(v carrierintelevent.EventResolution) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c EventResolutionCol) Gt(v carrierintelevent.EventResolution) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c EventResolutionCol) Gte(v carrierintelevent.EventResolution) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c EventResolutionCol) Lt(v carrierintelevent.EventResolution) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c EventResolutionCol) Lte(v carrierintelevent.EventResolution) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c EventResolutionCol) IsDistinctFrom(v carrierintelevent.EventResolution) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c EventResolutionCol) Between(lo, hi carrierintelevent.EventResolution) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c EventResolutionCol) To(v carrierintelevent.EventResolution) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c EventResolutionCol) In(vs ...carrierintelevent.EventResolution) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c EventResolutionCol) NotIn(vs ...carrierintelevent.EventResolution) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // EventSourceCol is a column of carrierintelevent.EventSource values.
-type EventSourceCol struct{ keel.StringCol }
+type EventSourceCol struct{ keel.TypedStringCol }
 
-func (c EventSourceCol) Eq(v carrierintelevent.EventSource) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c EventSourceCol) Ne(v carrierintelevent.EventSource) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c EventSourceCol) Gt(v carrierintelevent.EventSource) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
+func (c EventSourceCol) Eq(v carrierintelevent.EventSource) keel.Pred { return c.Text().Eq(string(v)) }
+func (c EventSourceCol) Ne(v carrierintelevent.EventSource) keel.Pred { return c.Text().Ne(string(v)) }
+func (c EventSourceCol) Gt(v carrierintelevent.EventSource) keel.Pred { return c.Text().Gt(string(v)) }
 func (c EventSourceCol) Gte(v carrierintelevent.EventSource) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
-func (c EventSourceCol) Lt(v carrierintelevent.EventSource) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
+func (c EventSourceCol) Lt(v carrierintelevent.EventSource) keel.Pred { return c.Text().Lt(string(v)) }
 func (c EventSourceCol) Lte(v carrierintelevent.EventSource) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c EventSourceCol) IsDistinctFrom(v carrierintelevent.EventSource) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c EventSourceCol) Between(lo, hi carrierintelevent.EventSource) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c EventSourceCol) To(v carrierintelevent.EventSource) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c EventSourceCol) In(vs ...carrierintelevent.EventSource) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c EventSourceCol) NotIn(vs ...carrierintelevent.EventSource) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // EventStatusCol is a column of carrierintelevent.EventStatus values.
-type EventStatusCol struct{ keel.StringCol }
+type EventStatusCol struct{ keel.TypedStringCol }
 
-func (c EventStatusCol) Eq(v carrierintelevent.EventStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c EventStatusCol) Ne(v carrierintelevent.EventStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c EventStatusCol) Gt(v carrierintelevent.EventStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
+func (c EventStatusCol) Eq(v carrierintelevent.EventStatus) keel.Pred { return c.Text().Eq(string(v)) }
+func (c EventStatusCol) Ne(v carrierintelevent.EventStatus) keel.Pred { return c.Text().Ne(string(v)) }
+func (c EventStatusCol) Gt(v carrierintelevent.EventStatus) keel.Pred { return c.Text().Gt(string(v)) }
 func (c EventStatusCol) Gte(v carrierintelevent.EventStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
-func (c EventStatusCol) Lt(v carrierintelevent.EventStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
+func (c EventStatusCol) Lt(v carrierintelevent.EventStatus) keel.Pred { return c.Text().Lt(string(v)) }
 func (c EventStatusCol) Lte(v carrierintelevent.EventStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c EventStatusCol) IsDistinctFrom(v carrierintelevent.EventStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c EventStatusCol) Between(lo, hi carrierintelevent.EventStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c EventStatusCol) To(v carrierintelevent.EventStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c EventStatusCol) In(vs ...carrierintelevent.EventStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c EventStatusCol) NotIn(vs ...carrierintelevent.EventStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

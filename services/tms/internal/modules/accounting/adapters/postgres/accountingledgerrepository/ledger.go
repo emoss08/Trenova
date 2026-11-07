@@ -200,7 +200,7 @@ func (s *ledgerSource) SumLines(
 				party := jel.GLAccountID.In(req.PartyAccountIDs...)
 				customer = keel.CaseString().When(party, jel.CustomerID).End().Coalesce("")
 				sourceEntry = keel.CaseString().
-					When(party, je.ReversalOfID.Coalesce(je.ID)).
+					When(party, je.ReversalOfID.Text().Coalesce(je.ID)).
 					End().
 					Coalesce("")
 			}
@@ -582,7 +582,7 @@ func (s *ledgerSource) originParties(
 	adjustments, err := s.lookupParties(ctx, &partyLookup{
 		query: func(ids []string) keel.Projection {
 			ia := invoiceadjustmentdb.InvoiceAdjustments
-			return ia.Pick(ia.ID, ia.OriginalInvoiceID).Where(ia.ID.StringCol.In(ids...))
+			return ia.Pick(ia.ID, ia.OriginalInvoiceID).Where(ia.ID.Text().In(ids...))
 		},
 		objects: objects[journalsource.ObjectInvoiceAdjustment],
 	})
@@ -596,7 +596,7 @@ func (s *ledgerSource) originParties(
 	invoices, err := s.lookupParties(ctx, &partyLookup{
 		query: func(ids []string) keel.Projection {
 			inv := invoicedb.Invoices
-			return inv.Pick(inv.ID, inv.CustomerID).Where(inv.ID.StringCol.In(ids...))
+			return inv.Pick(inv.ID, inv.CustomerID).Where(inv.ID.Text().In(ids...))
 		},
 		objects: invoiceIDs,
 	})
@@ -626,7 +626,7 @@ func (s *ledgerSource) originParties(
 			lookup: partyLookup{
 				query: func(ids []string) keel.Projection {
 					cp := customerpaymentdb.Payments
-					return cp.Pick(cp.ID, cp.CustomerID).Where(cp.ID.StringCol.In(ids...))
+					return cp.Pick(cp.ID, cp.CustomerID).Where(cp.ID.Text().In(ids...))
 				},
 			},
 		},
@@ -636,7 +636,7 @@ func (s *ledgerSource) originParties(
 			lookup: partyLookup{
 				query: func(ids []string) keel.Projection {
 					cs := carriersettlementdb.CarrierSettlements
-					return cs.Pick(cs.ID, cs.CarrierID).Where(cs.ID.StringCol.In(ids...))
+					return cs.Pick(cs.ID, cs.CarrierID).Where(cs.ID.Text().In(ids...))
 				},
 			},
 		},
@@ -646,7 +646,7 @@ func (s *ledgerSource) originParties(
 			lookup: partyLookup{
 				query: func(ids []string) keel.Projection {
 					ds := driversettlementdb.Settlements
-					return ds.Pick(ds.ID, ds.WorkerID).Where(ds.ID.StringCol.In(ids...))
+					return ds.Pick(ds.ID, ds.WorkerID).Where(ds.ID.Text().In(ids...))
 				},
 			},
 		},

@@ -67,12 +67,12 @@ type TestPromptsTable struct {
 // TestPrompts references the agent_test_prompts table.
 var TestPrompts = &TestPromptsTable{
 	TableBase:         keel.TableBase{Ref: &testPromptsRef},
-	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &testPromptsRef, Index: 0}}},
-	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &testPromptsRef, Index: 1}}},
-	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &testPromptsRef, Index: 2}}},
-	AgentDefinitionID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &testPromptsRef, Index: 3}}},
+	ID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &testPromptsRef, Index: 0}}},
+	BusinessUnitID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &testPromptsRef, Index: 1}}},
+	OrganizationID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &testPromptsRef, Index: 2}}},
+	AgentDefinitionID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &testPromptsRef, Index: 3}}},
 	Prompt:            keel.StringCol{Col: keel.Col{Ref: &testPromptsRef, Index: 4}},
-	CreatedByID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &testPromptsRef, Index: 5}}},
+	CreatedByID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &testPromptsRef, Index: 5}}},
 	CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: &testPromptsRef, Index: 6}},
 }
 
@@ -80,12 +80,12 @@ var TestPrompts = &TestPromptsTable{
 func BuildTestPrompts(r *keel.Ref) *TestPromptsTable {
 	return &TestPromptsTable{
 		TableBase:         keel.TableBase{Ref: r},
-		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		AgentDefinitionID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		AgentDefinitionID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		Prompt:            keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
-		CreatedByID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		CreatedByID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
 	}
 }
@@ -105,8 +105,6 @@ func (t *TestPromptsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (
 
 // TestPromptsQuery is a query over agenttestprompt.TestPrompt.
 type TestPromptsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*agenttestprompt.TestPrompt] = (*TestPromptsTable)(nil)
 
 var _ keel.Query[*agenttestprompt.TestPrompt] = (*TestPromptsQuery)(nil)
 
@@ -222,42 +220,42 @@ func (t *TestPromptsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*age
 
 // Create inserts row.
 func (t *TestPromptsTable) Create(ctx context.Context, db *keel.DB, row *agenttestprompt.TestPrompt) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *TestPromptsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*agenttestprompt.TestPrompt) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *TestPromptsTable) Save(ctx context.Context, db *keel.DB, row *agenttestprompt.TestPrompt, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *TestPromptsTable) SaveExcept(ctx context.Context, db *keel.DB, row *agenttestprompt.TestPrompt, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *TestPromptsTable) DeleteRow(ctx context.Context, db *keel.DB, row *agenttestprompt.TestPrompt) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *TestPromptsTable) Upsert(ctx context.Context, db *keel.DB, rows []*agenttestprompt.TestPrompt, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *TestPromptsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*agenttestprompt.TestPrompt, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *TestPromptsTable) Copy(ctx context.Context, db *keel.DB, rows []*agenttestprompt.TestPrompt) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -429,37 +427,45 @@ func (q *TestPromptsQuery) Clone() keel.Query[*agenttestprompt.TestPrompt] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *TestPromptsQuery) One(ctx context.Context, db *keel.DB) (*agenttestprompt.TestPrompt, error) {
-	return keel.One[*agenttestprompt.TestPrompt](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*agenttestprompt.TestPrompt)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *TestPromptsQuery) First(ctx context.Context, db *keel.DB) (*agenttestprompt.TestPrompt, error) {
-	return keel.First[*agenttestprompt.TestPrompt](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*agenttestprompt.TestPrompt)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *TestPromptsQuery) List(ctx context.Context, db *keel.DB) ([]*agenttestprompt.TestPrompt, error) {
-	return keel.List[*agenttestprompt.TestPrompt](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*agenttestprompt.TestPrompt)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *TestPromptsQuery) All(ctx context.Context, db *keel.DB) ([]*agenttestprompt.TestPrompt, error) {
-	return keel.All[*agenttestprompt.TestPrompt](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*agenttestprompt.TestPrompt)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *TestPromptsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*agenttestprompt.TestPrompt, error) {
-	return keel.UpdateReturning[*agenttestprompt.TestPrompt](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*agenttestprompt.TestPrompt)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *TestPromptsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*agenttestprompt.TestPrompt], error) {
-	return keel.PageOf[*agenttestprompt.TestPrompt](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*agenttestprompt.TestPrompt])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *TestPromptsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*agenttestprompt.TestPrompt) error) error {
-	return keel.Each[*agenttestprompt.TestPrompt](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*agenttestprompt.TestPrompt)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newTestPrompt() unsafe.Pointer { return unsafe.Pointer(new(agenttestprompt.TestPrompt)) }

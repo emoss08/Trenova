@@ -14,6 +14,7 @@ const (
 	RateLimitScopeAPIKey      RateLimitScope = "apiKey"
 	RateLimitScopeTenant      RateLimitScope = "tenant"
 	RateLimitScopePublicToken RateLimitScope = "publicToken"
+	RateLimitScopeSCIM        RateLimitScope = "scim"
 )
 
 const (
@@ -47,6 +48,7 @@ type RateLimitConfig struct {
 	APIKey             RateLimitScopeConfig `mapstructure:"apiKey"`
 	Tenant             RateLimitScopeConfig `mapstructure:"tenant"`
 	PublicToken        RateLimitScopeConfig `mapstructure:"publicToken"`
+	SCIM               RateLimitScopeConfig `mapstructure:"scim"`
 }
 
 type RateLimitScopePolicy struct {
@@ -65,6 +67,7 @@ var rateLimitScopeDefaultTable = map[RateLimitScope]rateLimitScopeDefaults{
 	RateLimitScopeAPIKey:      {requestsPerMinute: 300, burstSize: 30},
 	RateLimitScopeTenant:      {requestsPerMinute: 6000, burstSize: 600},
 	RateLimitScopePublicToken: {requestsPerMinute: 60, burstSize: 20},
+	RateLimitScopeSCIM:        {requestsPerMinute: 600, burstSize: 100},
 }
 
 func (c *RateLimitConfig) GetCleanupInterval() time.Duration {
@@ -107,6 +110,8 @@ func (c *RateLimitConfig) ScopePolicy(scope RateLimitScope) RateLimitScopePolicy
 		scopeCfg = c.Tenant
 	case RateLimitScopePublicToken:
 		scopeCfg = c.PublicToken
+	case RateLimitScopeSCIM:
+		scopeCfg = c.SCIM
 	default:
 		return RateLimitScopePolicy{}
 	}

@@ -1,87 +1,153 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { KpiStrip } from "@/components/kpi/kpi-strip";
+import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
 import { KpiStripSkeleton } from "@/components/kpi/kpi-strip-skeleton";
-import { StatTile } from "@/components/stat-tile";
 import type { DispatchBoardSummary } from "@/lib/graphql/dispatch-console";
-import { formatMiles } from "./dispatch-vocabulary";
-import type { CapacityFilter, UrgencyBucket } from "./dispatch-vocabulary";
+import { NovaBadge } from "@trenova/shared/components/ui/nova-badge";
+import type { ReactNode } from "react";
+import type { UrgencyBucket } from "./dispatch-vocabulary";
 
+// A bar across the workspace, as the design draws it, rather than a card in a page.
+const STRIP_CLASS = "rounded-none border-x-0 border-t-0";
+
+// The strip's tone draws the severity dot, so a label carries only its words (and Nova's
+// badge where Nova is named).
+function Label({ children }: { children: ReactNode }) {
+  return <span className="inline-flex items-center gap-1.5">{children}</span>;
+}
+
+/**
+ * The figures a dispatcher is measured on, each one a way into the queue: the groups it
+ * counts, Nova's waiting proposals, the exceptions tab and the open drivers.
+ */
 export function SummaryStrip({
   summary,
-  isLoading,
+  proposalsWaiting,
+  exceptions,
+  isPending,
+  isError,
   urgencyFocus,
   onUrgencyFocus,
-  onCapacityFilter,
+  onShowExceptions,
+  onShowOpenDrivers,
+  showsDrivers,
 }: {
   summary: DispatchBoardSummary | undefined;
-  isLoading: boolean;
+  /** Proposals waiting on the moves the board holds. */
+  proposalsWaiting: number;
+  /** Open dispatch exceptions; null until they have been read. */
+  exceptions: { count: number; more: boolean } | null;
+  isPending: boolean;
+  /** The board could not be read, so there are no figures to show. */
+  isError: boolean;
   urgencyFocus: UrgencyBucket | null;
   onUrgencyFocus: (bucket: UrgencyBucket | null) => void;
-  onCapacityFilter: (filter: CapacityFilter) => void;
+  onShowExceptions: () => void;
+  onShowOpenDrivers: () => void;
+  showsDrivers: boolean;
 }) {
   const t = useT();
 
-  if (isLoading || !summary) {
-    return <KpiStripSkeleton count={6} />;
+  if (isError && !summary) {
+    // A failed read is never drawn as figures still loading: each one says it is unknown.
+    const unknown = [
+      t("Needs a driver"),
+      t("Late"),
+      t("Due now"),
+      t("Proposals waiting"),
+      t("Exceptions"),
+      t("Open drivers"),
+    ];
+    return (
+      <KpiStrip aria-label={t("Dispatch figures")} className={STRIP_CLASS}>
+        {unknown.map((label) => (
+          <KpiStripItem
+            key={label}
+            label={<Label>{label}</Label>}
+            value={<span className="text-muted-foreground">—</span>}
+            sub={t("not updated")}
+          />
+        ))}
+      </KpiStrip>
+    );
+  }
+
+  if (isPending || !summary) {
+    return <KpiStripSkeleton count={6} className={STRIP_CLASS} />;
   }
 
   const toggleFocus = (bucket: UrgencyBucket) =>
     onUrgencyFocus(urgencyFocus === bucket ? null : bucket);
 
   return (
-    <KpiStrip>
-      <StatTile
-        label={t("Needs coverage")}
-        hint={t("Moves in the window with no driver — click to show every urgency bucket.")}
-        tone={summary.uncoveredMoves > 0 ? "warn" : undefined}
-        clickable
-        active={urgencyFocus === null}
+    <KpiStrip aria-label={t("Dispatch figures")} className={STRIP_CLASS}>
+      <KpiStripItem
+        label={<Label>{t("Needs a driver")}</Label>}
+        hint={t("Moves in the window with no driver. Shows every group.")}
+        tone={summary.uncoveredMoves > 0 ? "warning" : undefined}
         onClick={() => onUrgencyFocus(null)}
         value={<span className="tabular-nums">{summary.uncoveredMoves.toLocaleString()}</span>}
-        sub={<span>{t("{0} already covered", summary.coveredMoves.toLocaleString())}</span>}
+        sub={t("{0} already covered", summary.coveredMoves.toLocaleString())}
       />
-      <StatTile
-        label={t("Late")}
-        hint={t("Pickup window already open, still uncovered — click to focus the Late lane.")}
+      <KpiStripItem
+        label={<Label>{t("Late")}</Label>}
+        hint={t("Uncovered, and the window closed without an arrival. Shows only the Late group.")}
         tone={summary.lateMoves > 0 ? "danger" : undefined}
-        clickable={summary.lateMoves > 0}
         active={urgencyFocus === "Late"}
-        onClick={summary.lateMoves > 0 ? () => toggleFocus("Late") : undefined}
+        onClick={
+          summary.lateMoves > 0 || urgencyFocus === "Late" ? () => toggleFocus("Late") : undefined
+        }
         value={<span className="tabular-nums">{summary.lateMoves.toLocaleString()}</span>}
-        sub={<span>{t("past the pickup window")}</span>}
+        sub={t("window closed")}
       />
-      <StatTile
-        label={t("At risk")}
-        hint={t("Uncovered with a pickup inside 4 hours — click to focus the Next 4 Hours lane.")}
-        tone={summary.atRiskMoves > 0 ? "warn" : undefined}
-        clickable={summary.atRiskMoves > 0}
-        active={urgencyFocus === "Now"}
-        onClick={summary.atRiskMoves > 0 ? () => toggleFocus("Now") : undefined}
-        value={<span className="tabular-nums">{summary.atRiskMoves.toLocaleString()}</span>}
-        sub={<span>{t("pickup inside 4 hours")}</span>}
-      />
-      <StatTile
-        label={t("Open drivers")}
-        hint={t("Available drivers holding no work — click to filter the capacity rail to them.")}
-        tone={summary.unseatedDrivers > 0 ? "info" : undefined}
-        clickable={summary.unseatedDrivers > 0}
-        onClick={summary.unseatedDrivers > 0 ? () => onCapacityFilter("open") : undefined}
-        value={<span className="tabular-nums">{summary.unseatedDrivers.toLocaleString()}</span>}
-        sub={<span>{t("of {0} available", summary.availableDrivers.toLocaleString())}</span>}
-      />
-      <StatTile
-        label={t("Utilization")}
+      <KpiStripItem
+        label={<Label>{t("Due now")}</Label>}
         hint={t(
-          "Share of available drivers currently holding work; average empty miles across covered moves with a live position.",
+          "Uncovered, with the window open or opening within 4 hours. Shows only the Due now group.",
         )}
-        value={<span className="tabular-nums">{Math.round(summary.utilizationPercent)}%</span>}
-        sub={<span>{t("{0} avg deadhead", formatMiles(summary.averageDeadheadMiles))}</span>}
+        tone={summary.atRiskMoves > 0 ? "warning" : undefined}
+        active={urgencyFocus === "Now"}
+        onClick={
+          summary.atRiskMoves > 0 || urgencyFocus === "Now" ? () => toggleFocus("Now") : undefined
+        }
+        value={<span className="tabular-nums">{summary.atRiskMoves.toLocaleString()}</span>}
+        sub={t("open or opens within 4 hours")}
       />
-      <StatTile
-        label={t("Assigned today")}
-        hint={t("Assignments created since midnight.")}
-        value={<span className="tabular-nums">{summary.assignedToday.toLocaleString()}</span>}
-        sub={<span>{t("across the fleet")}</span>}
+      <KpiStripItem
+        label={
+          <Label>
+            <NovaBadge size="xs" />
+            {t("Proposals waiting")}
+          </Label>
+        }
+        hint={t("Moves where Nova picked a driver and is waiting on a decision.")}
+        value={<span className="tabular-nums">{proposalsWaiting.toLocaleString()}</span>}
+        sub={t("Nova picked a driver")}
+      />
+      <KpiStripItem
+        label={<Label>{t("Exceptions")}</Label>}
+        hint={t(
+          "Covered moves that slipped: late, a missed stop, no check call, or out of carriers.",
+        )}
+        tone={exceptions && exceptions.count > 0 ? "danger" : undefined}
+        onClick={onShowExceptions}
+        value={
+          <span className="tabular-nums">
+            {exceptions === null
+              ? "—"
+              : exceptions.more
+                ? t("{0}+", exceptions.count)
+                : exceptions.count.toLocaleString()}
+          </span>
+        }
+        sub={t("covered, off plan")}
+      />
+      <KpiStripItem
+        label={<Label>{t("Open drivers")}</Label>}
+        hint={t("Available drivers holding no work.")}
+        tone={summary.unseatedDrivers > 0 ? "info" : undefined}
+        onClick={showsDrivers && summary.unseatedDrivers > 0 ? onShowOpenDrivers : undefined}
+        value={<span className="tabular-nums">{summary.unseatedDrivers.toLocaleString()}</span>}
+        sub={t("of {0} available", summary.availableDrivers.toLocaleString())}
       />
     </KpiStrip>
   );

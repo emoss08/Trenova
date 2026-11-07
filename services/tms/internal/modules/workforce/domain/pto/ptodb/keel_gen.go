@@ -79,12 +79,12 @@ type OrgHolidaysTable struct {
 // OrgHolidays references the org_holidays table.
 var OrgHolidays = &OrgHolidaysTable{
 	TableBase:      keel.TableBase{Ref: &orgHolidaysRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &orgHolidaysRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &orgHolidaysRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &orgHolidaysRef, Index: 2}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &orgHolidaysRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &orgHolidaysRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &orgHolidaysRef, Index: 2}}},
 	Name:           keel.StringCol{Col: keel.Col{Ref: &orgHolidaysRef, Index: 3}},
 	HolidayDate:    keel.Int64Col{Col: keel.Col{Ref: &orgHolidaysRef, Index: 4}},
-	Kind:           HolidayKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &orgHolidaysRef, Index: 5}}},
+	Kind:           HolidayKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &orgHolidaysRef, Index: 5}}},
 	RecursAnnually: keel.BoolCol{Col: keel.Col{Ref: &orgHolidaysRef, Index: 6}},
 	Description:    keel.StringCol{Col: keel.Col{Ref: &orgHolidaysRef, Index: 7}},
 	Version:        keel.Int64Col{Col: keel.Col{Ref: &orgHolidaysRef, Index: 8}},
@@ -96,12 +96,12 @@ var OrgHolidays = &OrgHolidaysTable{
 func BuildOrgHolidays(r *keel.Ref) *OrgHolidaysTable {
 	return &OrgHolidaysTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		Name:           keel.StringCol{Col: keel.Col{Ref: r, Index: 3}},
 		HolidayDate:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 4}},
-		Kind:           HolidayKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		Kind:           HolidayKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		RecursAnnually: keel.BoolCol{Col: keel.Col{Ref: r, Index: 6}},
 		Description:    keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
 		Version:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
@@ -125,8 +125,6 @@ func (t *OrgHolidaysTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (
 
 // OrgHolidaysQuery is a query over pto.OrgHoliday.
 type OrgHolidaysQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*pto.OrgHoliday] = (*OrgHolidaysTable)(nil)
 
 var _ keel.Query[*pto.OrgHoliday] = (*OrgHolidaysQuery)(nil)
 
@@ -242,42 +240,42 @@ func (t *OrgHolidaysTable) Compute(col keel.Column, e keel.Expr) keel.Query[*pto
 
 // Create inserts row.
 func (t *OrgHolidaysTable) Create(ctx context.Context, db *keel.DB, row *pto.OrgHoliday) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *OrgHolidaysTable) CreateMany(ctx context.Context, db *keel.DB, rows []*pto.OrgHoliday) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *OrgHolidaysTable) Save(ctx context.Context, db *keel.DB, row *pto.OrgHoliday, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *OrgHolidaysTable) SaveExcept(ctx context.Context, db *keel.DB, row *pto.OrgHoliday, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *OrgHolidaysTable) DeleteRow(ctx context.Context, db *keel.DB, row *pto.OrgHoliday) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *OrgHolidaysTable) Upsert(ctx context.Context, db *keel.DB, rows []*pto.OrgHoliday, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *OrgHolidaysTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*pto.OrgHoliday, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *OrgHolidaysTable) Copy(ctx context.Context, db *keel.DB, rows []*pto.OrgHoliday) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -449,37 +447,45 @@ func (q *OrgHolidaysQuery) Clone() keel.Query[*pto.OrgHoliday] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *OrgHolidaysQuery) One(ctx context.Context, db *keel.DB) (*pto.OrgHoliday, error) {
-	return keel.One[*pto.OrgHoliday](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*pto.OrgHoliday)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *OrgHolidaysQuery) First(ctx context.Context, db *keel.DB) (*pto.OrgHoliday, error) {
-	return keel.First[*pto.OrgHoliday](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*pto.OrgHoliday)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *OrgHolidaysQuery) List(ctx context.Context, db *keel.DB) ([]*pto.OrgHoliday, error) {
-	return keel.List[*pto.OrgHoliday](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*pto.OrgHoliday)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *OrgHolidaysQuery) All(ctx context.Context, db *keel.DB) ([]*pto.OrgHoliday, error) {
-	return keel.All[*pto.OrgHoliday](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*pto.OrgHoliday)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *OrgHolidaysQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*pto.OrgHoliday, error) {
-	return keel.UpdateReturning[*pto.OrgHoliday](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*pto.OrgHoliday)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *OrgHolidaysQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*pto.OrgHoliday], error) {
-	return keel.PageOf[*pto.OrgHoliday](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*pto.OrgHoliday])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *OrgHolidaysQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*pto.OrgHoliday) error) error {
-	return keel.Each[*pto.OrgHoliday](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*pto.OrgHoliday)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newOrgHoliday() unsafe.Pointer { return unsafe.Pointer(new(pto.OrgHoliday)) }
@@ -635,15 +641,15 @@ type PTOPoliciesTable struct {
 // PTOPolicies references the pto_policies table.
 var PTOPolicies = &PTOPoliciesTable{
 	TableBase:         keel.TableBase{Ref: &pTOPoliciesRef},
-	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &pTOPoliciesRef, Index: 0}}},
-	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &pTOPoliciesRef, Index: 1}}},
-	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &pTOPoliciesRef, Index: 2}}},
+	ID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &pTOPoliciesRef, Index: 0}}},
+	BusinessUnitID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &pTOPoliciesRef, Index: 1}}},
+	OrganizationID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &pTOPoliciesRef, Index: 2}}},
 	Name:              keel.StringCol{Col: keel.Col{Ref: &pTOPoliciesRef, Index: 3}},
 	Code:              keel.StringCol{Col: keel.Col{Ref: &pTOPoliciesRef, Index: 4}},
 	Description:       keel.StringCol{Col: keel.Col{Ref: &pTOPoliciesRef, Index: 5}},
-	Status:            PTOPolicyStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &pTOPoliciesRef, Index: 6}}},
+	Status:            PTOPolicyStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &pTOPoliciesRef, Index: 6}}},
 	IsDefault:         keel.BoolCol{Col: keel.Col{Ref: &pTOPoliciesRef, Index: 7}},
-	YearBasis:         PTOYearBasisCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &pTOPoliciesRef, Index: 8}}},
+	YearBasis:         PTOYearBasisCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &pTOPoliciesRef, Index: 8}}},
 	CountWeekends:     keel.BoolCol{Col: keel.Col{Ref: &pTOPoliciesRef, Index: 9}},
 	WaitingPeriodDays: keel.Int32Col{Col: keel.Col{Ref: &pTOPoliciesRef, Index: 10}},
 	RequiresApproval:  keel.BoolCol{Col: keel.Col{Ref: &pTOPoliciesRef, Index: 11}},
@@ -660,15 +666,15 @@ var PTOPolicies = &PTOPoliciesTable{
 func BuildPTOPolicies(r *keel.Ref) *PTOPoliciesTable {
 	return &PTOPoliciesTable{
 		TableBase:         keel.TableBase{Ref: r},
-		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		Name:              keel.StringCol{Col: keel.Col{Ref: r, Index: 3}},
 		Code:              keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		Description:       keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
-		Status:            PTOPolicyStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		Status:            PTOPolicyStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		IsDefault:         keel.BoolCol{Col: keel.Col{Ref: r, Index: 7}},
-		YearBasis:         PTOYearBasisCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		YearBasis:         PTOYearBasisCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
 		CountWeekends:     keel.BoolCol{Col: keel.Col{Ref: r, Index: 9}},
 		WaitingPeriodDays: keel.Int32Col{Col: keel.Col{Ref: r, Index: 10}},
 		RequiresApproval:  keel.BoolCol{Col: keel.Col{Ref: r, Index: 11}},
@@ -702,8 +708,6 @@ func (t *PTOPoliciesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (
 
 // PTOPoliciesQuery is a query over pto.PTOPolicy.
 type PTOPoliciesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*pto.PTOPolicy] = (*PTOPoliciesTable)(nil)
 
 var _ keel.Query[*pto.PTOPolicy] = (*PTOPoliciesQuery)(nil)
 
@@ -819,42 +823,42 @@ func (t *PTOPoliciesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*pto
 
 // Create inserts row.
 func (t *PTOPoliciesTable) Create(ctx context.Context, db *keel.DB, row *pto.PTOPolicy) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *PTOPoliciesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*pto.PTOPolicy) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *PTOPoliciesTable) Save(ctx context.Context, db *keel.DB, row *pto.PTOPolicy, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *PTOPoliciesTable) SaveExcept(ctx context.Context, db *keel.DB, row *pto.PTOPolicy, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *PTOPoliciesTable) DeleteRow(ctx context.Context, db *keel.DB, row *pto.PTOPolicy) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *PTOPoliciesTable) Upsert(ctx context.Context, db *keel.DB, rows []*pto.PTOPolicy, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *PTOPoliciesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*pto.PTOPolicy, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *PTOPoliciesTable) Copy(ctx context.Context, db *keel.DB, rows []*pto.PTOPolicy) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1026,37 +1030,45 @@ func (q *PTOPoliciesQuery) Clone() keel.Query[*pto.PTOPolicy] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *PTOPoliciesQuery) One(ctx context.Context, db *keel.DB) (*pto.PTOPolicy, error) {
-	return keel.One[*pto.PTOPolicy](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*pto.PTOPolicy)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *PTOPoliciesQuery) First(ctx context.Context, db *keel.DB) (*pto.PTOPolicy, error) {
-	return keel.First[*pto.PTOPolicy](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*pto.PTOPolicy)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *PTOPoliciesQuery) List(ctx context.Context, db *keel.DB) ([]*pto.PTOPolicy, error) {
-	return keel.List[*pto.PTOPolicy](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*pto.PTOPolicy)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *PTOPoliciesQuery) All(ctx context.Context, db *keel.DB) ([]*pto.PTOPolicy, error) {
-	return keel.All[*pto.PTOPolicy](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*pto.PTOPolicy)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *PTOPoliciesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*pto.PTOPolicy, error) {
-	return keel.UpdateReturning[*pto.PTOPolicy](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*pto.PTOPolicy)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *PTOPoliciesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*pto.PTOPolicy], error) {
-	return keel.PageOf[*pto.PTOPolicy](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*pto.PTOPolicy])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *PTOPoliciesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*pto.PTOPolicy) error) error {
-	return keel.Each[*pto.PTOPolicy](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*pto.PTOPolicy)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newPTOPolicy() unsafe.Pointer { return unsafe.Pointer(new(pto.PTOPolicy)) }
@@ -1241,18 +1253,18 @@ type PTOPolicyRulesTable struct {
 // PTOPolicyRules references the pto_policy_rules table.
 var PTOPolicyRules = &PTOPolicyRulesTable{
 	TableBase:           keel.TableBase{Ref: &pTOPolicyRulesRef},
-	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &pTOPolicyRulesRef, Index: 0}}},
-	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &pTOPolicyRulesRef, Index: 1}}},
-	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &pTOPolicyRulesRef, Index: 2}}},
-	PTOPolicyID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &pTOPolicyRulesRef, Index: 3}}},
-	PTOType:             workerdb.PTOTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &pTOPolicyRulesRef, Index: 4}}},
-	AccrualMethod:       PTOAccrualMethodCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &pTOPolicyRulesRef, Index: 5}}},
+	ID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &pTOPolicyRulesRef, Index: 0}}},
+	BusinessUnitID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &pTOPolicyRulesRef, Index: 1}}},
+	OrganizationID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &pTOPolicyRulesRef, Index: 2}}},
+	PTOPolicyID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &pTOPolicyRulesRef, Index: 3}}},
+	PTOType:             workerdb.PTOTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &pTOPolicyRulesRef, Index: 4}}},
+	AccrualMethod:       PTOAccrualMethodCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &pTOPolicyRulesRef, Index: 5}}},
 	AccrualAmountDays:   keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &pTOPolicyRulesRef, Index: 6}}},
 	MaxBalanceDays:      keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &pTOPolicyRulesRef, Index: 7}}},
 	CarryoverCapDays:    keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &pTOPolicyRulesRef, Index: 8}}},
 	CarryoverExpiryDays: keel.Int32Col{Col: keel.Col{Ref: &pTOPolicyRulesRef, Index: 9}},
 	Tiers:               keel.JSONBCol{Col: keel.Col{Ref: &pTOPolicyRulesRef, Index: 10}},
-	OnTermination:       PTOTerminationActionCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &pTOPolicyRulesRef, Index: 11}}},
+	OnTermination:       PTOTerminationActionCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &pTOPolicyRulesRef, Index: 11}}},
 	SortOrder:           keel.Int32Col{Col: keel.Col{Ref: &pTOPolicyRulesRef, Index: 12}},
 	CreatedAt:           keel.Int64Col{Col: keel.Col{Ref: &pTOPolicyRulesRef, Index: 13}},
 	UpdatedAt:           keel.Int64Col{Col: keel.Col{Ref: &pTOPolicyRulesRef, Index: 14}},
@@ -1262,18 +1274,18 @@ var PTOPolicyRules = &PTOPolicyRulesTable{
 func BuildPTOPolicyRules(r *keel.Ref) *PTOPolicyRulesTable {
 	return &PTOPolicyRulesTable{
 		TableBase:           keel.TableBase{Ref: r},
-		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		PTOPolicyID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		PTOType:             workerdb.PTOTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		AccrualMethod:       PTOAccrualMethodCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		ID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		PTOPolicyID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		PTOType:             workerdb.PTOTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		AccrualMethod:       PTOAccrualMethodCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		AccrualAmountDays:   keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 6}}},
 		MaxBalanceDays:      keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 7}}},
 		CarryoverCapDays:    keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 8}}},
 		CarryoverExpiryDays: keel.Int32Col{Col: keel.Col{Ref: r, Index: 9}},
 		Tiers:               keel.JSONBCol{Col: keel.Col{Ref: r, Index: 10}},
-		OnTermination:       PTOTerminationActionCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
+		OnTermination:       PTOTerminationActionCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 11}}},
 		SortOrder:           keel.Int32Col{Col: keel.Col{Ref: r, Index: 12}},
 		CreatedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
 		UpdatedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
@@ -1295,8 +1307,6 @@ func (t *PTOPolicyRulesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID
 
 // PTOPolicyRulesQuery is a query over pto.PTOPolicyRule.
 type PTOPolicyRulesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*pto.PTOPolicyRule] = (*PTOPolicyRulesTable)(nil)
 
 var _ keel.Query[*pto.PTOPolicyRule] = (*PTOPolicyRulesQuery)(nil)
 
@@ -1412,42 +1422,42 @@ func (t *PTOPolicyRulesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*
 
 // Create inserts row.
 func (t *PTOPolicyRulesTable) Create(ctx context.Context, db *keel.DB, row *pto.PTOPolicyRule) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *PTOPolicyRulesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*pto.PTOPolicyRule) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *PTOPolicyRulesTable) Save(ctx context.Context, db *keel.DB, row *pto.PTOPolicyRule, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *PTOPolicyRulesTable) SaveExcept(ctx context.Context, db *keel.DB, row *pto.PTOPolicyRule, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *PTOPolicyRulesTable) DeleteRow(ctx context.Context, db *keel.DB, row *pto.PTOPolicyRule) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *PTOPolicyRulesTable) Upsert(ctx context.Context, db *keel.DB, rows []*pto.PTOPolicyRule, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *PTOPolicyRulesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*pto.PTOPolicyRule, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *PTOPolicyRulesTable) Copy(ctx context.Context, db *keel.DB, rows []*pto.PTOPolicyRule) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1619,37 +1629,45 @@ func (q *PTOPolicyRulesQuery) Clone() keel.Query[*pto.PTOPolicyRule] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *PTOPolicyRulesQuery) One(ctx context.Context, db *keel.DB) (*pto.PTOPolicyRule, error) {
-	return keel.One[*pto.PTOPolicyRule](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*pto.PTOPolicyRule)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *PTOPolicyRulesQuery) First(ctx context.Context, db *keel.DB) (*pto.PTOPolicyRule, error) {
-	return keel.First[*pto.PTOPolicyRule](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*pto.PTOPolicyRule)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *PTOPolicyRulesQuery) List(ctx context.Context, db *keel.DB) ([]*pto.PTOPolicyRule, error) {
-	return keel.List[*pto.PTOPolicyRule](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*pto.PTOPolicyRule)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *PTOPolicyRulesQuery) All(ctx context.Context, db *keel.DB) ([]*pto.PTOPolicyRule, error) {
-	return keel.All[*pto.PTOPolicyRule](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*pto.PTOPolicyRule)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *PTOPolicyRulesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*pto.PTOPolicyRule, error) {
-	return keel.UpdateReturning[*pto.PTOPolicyRule](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*pto.PTOPolicyRule)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *PTOPolicyRulesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*pto.PTOPolicyRule], error) {
-	return keel.PageOf[*pto.PTOPolicyRule](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*pto.PTOPolicyRule])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *PTOPolicyRulesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*pto.PTOPolicyRule) error) error {
-	return keel.Each[*pto.PTOPolicyRule](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*pto.PTOPolicyRule)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newPTOPolicyRule() unsafe.Pointer { return unsafe.Pointer(new(pto.PTOPolicyRule)) }
@@ -1820,11 +1838,11 @@ type WorkerPTOBalancesTable struct {
 // WorkerPTOBalances references the worker_pto_balances table.
 var WorkerPTOBalances = &WorkerPTOBalancesTable{
 	TableBase:            keel.TableBase{Ref: &workerPTOBalancesRef},
-	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPTOBalancesRef, Index: 0}}},
-	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPTOBalancesRef, Index: 1}}},
-	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPTOBalancesRef, Index: 2}}},
-	WorkerID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPTOBalancesRef, Index: 3}}},
-	PTOType:              workerdb.PTOTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPTOBalancesRef, Index: 4}}},
+	ID:                   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerPTOBalancesRef, Index: 0}}},
+	BusinessUnitID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerPTOBalancesRef, Index: 1}}},
+	OrganizationID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerPTOBalancesRef, Index: 2}}},
+	WorkerID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerPTOBalancesRef, Index: 3}}},
+	PTOType:              workerdb.PTOTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerPTOBalancesRef, Index: 4}}},
 	BalanceDays:          keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &workerPTOBalancesRef, Index: 5}}},
 	AccruedYTDDays:       keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &workerPTOBalancesRef, Index: 6}}},
 	UsedYTDDays:          keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &workerPTOBalancesRef, Index: 7}}},
@@ -1842,11 +1860,11 @@ var WorkerPTOBalances = &WorkerPTOBalancesTable{
 func BuildWorkerPTOBalances(r *keel.Ref) *WorkerPTOBalancesTable {
 	return &WorkerPTOBalancesTable{
 		TableBase:            keel.TableBase{Ref: r},
-		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		WorkerID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		PTOType:              workerdb.PTOTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ID:                   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		WorkerID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		PTOType:              workerdb.PTOTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		BalanceDays:          keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 5}}},
 		AccruedYTDDays:       keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 6}}},
 		UsedYTDDays:          keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 7}}},
@@ -1881,8 +1899,6 @@ func (t *WorkerPTOBalancesTable) Get(ctx context.Context, db *keel.DB, key pulid
 
 // WorkerPTOBalancesQuery is a query over pto.WorkerPTOBalance.
 type WorkerPTOBalancesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*pto.WorkerPTOBalance] = (*WorkerPTOBalancesTable)(nil)
 
 var _ keel.Query[*pto.WorkerPTOBalance] = (*WorkerPTOBalancesQuery)(nil)
 
@@ -1998,42 +2014,42 @@ func (t *WorkerPTOBalancesTable) Compute(col keel.Column, e keel.Expr) keel.Quer
 
 // Create inserts row.
 func (t *WorkerPTOBalancesTable) Create(ctx context.Context, db *keel.DB, row *pto.WorkerPTOBalance) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *WorkerPTOBalancesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*pto.WorkerPTOBalance) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *WorkerPTOBalancesTable) Save(ctx context.Context, db *keel.DB, row *pto.WorkerPTOBalance, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *WorkerPTOBalancesTable) SaveExcept(ctx context.Context, db *keel.DB, row *pto.WorkerPTOBalance, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *WorkerPTOBalancesTable) DeleteRow(ctx context.Context, db *keel.DB, row *pto.WorkerPTOBalance) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *WorkerPTOBalancesTable) Upsert(ctx context.Context, db *keel.DB, rows []*pto.WorkerPTOBalance, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *WorkerPTOBalancesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*pto.WorkerPTOBalance, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *WorkerPTOBalancesTable) Copy(ctx context.Context, db *keel.DB, rows []*pto.WorkerPTOBalance) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -2205,37 +2221,45 @@ func (q *WorkerPTOBalancesQuery) Clone() keel.Query[*pto.WorkerPTOBalance] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *WorkerPTOBalancesQuery) One(ctx context.Context, db *keel.DB) (*pto.WorkerPTOBalance, error) {
-	return keel.One[*pto.WorkerPTOBalance](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*pto.WorkerPTOBalance)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *WorkerPTOBalancesQuery) First(ctx context.Context, db *keel.DB) (*pto.WorkerPTOBalance, error) {
-	return keel.First[*pto.WorkerPTOBalance](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*pto.WorkerPTOBalance)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *WorkerPTOBalancesQuery) List(ctx context.Context, db *keel.DB) ([]*pto.WorkerPTOBalance, error) {
-	return keel.List[*pto.WorkerPTOBalance](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*pto.WorkerPTOBalance)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *WorkerPTOBalancesQuery) All(ctx context.Context, db *keel.DB) ([]*pto.WorkerPTOBalance, error) {
-	return keel.All[*pto.WorkerPTOBalance](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*pto.WorkerPTOBalance)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *WorkerPTOBalancesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*pto.WorkerPTOBalance, error) {
-	return keel.UpdateReturning[*pto.WorkerPTOBalance](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*pto.WorkerPTOBalance)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *WorkerPTOBalancesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*pto.WorkerPTOBalance], error) {
-	return keel.PageOf[*pto.WorkerPTOBalance](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*pto.WorkerPTOBalance])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *WorkerPTOBalancesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*pto.WorkerPTOBalance) error) error {
-	return keel.Each[*pto.WorkerPTOBalance](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*pto.WorkerPTOBalance)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newWorkerPTOBalance() unsafe.Pointer { return unsafe.Pointer(new(pto.WorkerPTOBalance)) }
@@ -2419,22 +2443,22 @@ type WorkerPTOLedgerEntriesTable struct {
 // WorkerPTOLedgerEntries references the worker_pto_ledger table.
 var WorkerPTOLedgerEntries = &WorkerPTOLedgerEntriesTable{
 	TableBase:        keel.TableBase{Ref: &workerPTOLedgerEntriesRef},
-	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPTOLedgerEntriesRef, Index: 0}}},
-	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPTOLedgerEntriesRef, Index: 1}}},
-	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPTOLedgerEntriesRef, Index: 2}}},
-	WorkerID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPTOLedgerEntriesRef, Index: 3}}},
-	PTOType:          workerdb.PTOTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPTOLedgerEntriesRef, Index: 4}}},
-	EntryType:        PTOLedgerEntryTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPTOLedgerEntriesRef, Index: 5}}},
+	ID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerPTOLedgerEntriesRef, Index: 0}}},
+	BusinessUnitID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerPTOLedgerEntriesRef, Index: 1}}},
+	OrganizationID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerPTOLedgerEntriesRef, Index: 2}}},
+	WorkerID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerPTOLedgerEntriesRef, Index: 3}}},
+	PTOType:          workerdb.PTOTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerPTOLedgerEntriesRef, Index: 4}}},
+	EntryType:        PTOLedgerEntryTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerPTOLedgerEntriesRef, Index: 5}}},
 	AmountDays:       keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &workerPTOLedgerEntriesRef, Index: 6}}},
 	BalanceAfterDays: keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &workerPTOLedgerEntriesRef, Index: 7}}},
 	Sequence:         keel.Int64Col{Col: keel.Col{Ref: &workerPTOLedgerEntriesRef, Index: 8}},
 	EffectiveAt:      keel.Int64Col{Col: keel.Col{Ref: &workerPTOLedgerEntriesRef, Index: 9}},
 	PeriodKey:        keel.StringCol{Col: keel.Col{Ref: &workerPTOLedgerEntriesRef, Index: 10}},
-	SourcePTOID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPTOLedgerEntriesRef, Index: 11}}},
-	AssignmentID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPTOLedgerEntriesRef, Index: 12}}},
-	PTOPolicyID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPTOLedgerEntriesRef, Index: 13}}},
-	ActorType:        PTOLedgerActorTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPTOLedgerEntriesRef, Index: 14}}},
-	CreatedByID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPTOLedgerEntriesRef, Index: 15}}},
+	SourcePTOID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerPTOLedgerEntriesRef, Index: 11}}},
+	AssignmentID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerPTOLedgerEntriesRef, Index: 12}}},
+	PTOPolicyID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerPTOLedgerEntriesRef, Index: 13}}},
+	ActorType:        PTOLedgerActorTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerPTOLedgerEntriesRef, Index: 14}}},
+	CreatedByID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerPTOLedgerEntriesRef, Index: 15}}},
 	Note:             keel.StringCol{Col: keel.Col{Ref: &workerPTOLedgerEntriesRef, Index: 16}},
 	CreatedAt:        keel.Int64Col{Col: keel.Col{Ref: &workerPTOLedgerEntriesRef, Index: 17}},
 }
@@ -2443,22 +2467,22 @@ var WorkerPTOLedgerEntries = &WorkerPTOLedgerEntriesTable{
 func BuildWorkerPTOLedgerEntries(r *keel.Ref) *WorkerPTOLedgerEntriesTable {
 	return &WorkerPTOLedgerEntriesTable{
 		TableBase:        keel.TableBase{Ref: r},
-		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		WorkerID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		PTOType:          workerdb.PTOTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		EntryType:        PTOLedgerEntryTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		ID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		WorkerID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		PTOType:          workerdb.PTOTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		EntryType:        PTOLedgerEntryTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		AmountDays:       keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 6}}},
 		BalanceAfterDays: keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 7}}},
 		Sequence:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
 		EffectiveAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
 		PeriodKey:        keel.StringCol{Col: keel.Col{Ref: r, Index: 10}},
-		SourcePTOID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
-		AssignmentID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 12}}},
-		PTOPolicyID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 13}}},
-		ActorType:        PTOLedgerActorTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 14}}},
-		CreatedByID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 15}}},
+		SourcePTOID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 11}}},
+		AssignmentID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 12}}},
+		PTOPolicyID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 13}}},
+		ActorType:        PTOLedgerActorTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 14}}},
+		CreatedByID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 15}}},
 		Note:             keel.StringCol{Col: keel.Col{Ref: r, Index: 16}},
 		CreatedAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
 	}
@@ -2489,8 +2513,6 @@ func (t *WorkerPTOLedgerEntriesTable) Get(ctx context.Context, db *keel.DB, key 
 
 // WorkerPTOLedgerEntriesQuery is a query over pto.WorkerPTOLedgerEntry.
 type WorkerPTOLedgerEntriesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*pto.WorkerPTOLedgerEntry] = (*WorkerPTOLedgerEntriesTable)(nil)
 
 var _ keel.Query[*pto.WorkerPTOLedgerEntry] = (*WorkerPTOLedgerEntriesQuery)(nil)
 
@@ -2606,42 +2628,42 @@ func (t *WorkerPTOLedgerEntriesTable) Compute(col keel.Column, e keel.Expr) keel
 
 // Create inserts row.
 func (t *WorkerPTOLedgerEntriesTable) Create(ctx context.Context, db *keel.DB, row *pto.WorkerPTOLedgerEntry) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *WorkerPTOLedgerEntriesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*pto.WorkerPTOLedgerEntry) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *WorkerPTOLedgerEntriesTable) Save(ctx context.Context, db *keel.DB, row *pto.WorkerPTOLedgerEntry, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *WorkerPTOLedgerEntriesTable) SaveExcept(ctx context.Context, db *keel.DB, row *pto.WorkerPTOLedgerEntry, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *WorkerPTOLedgerEntriesTable) DeleteRow(ctx context.Context, db *keel.DB, row *pto.WorkerPTOLedgerEntry) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *WorkerPTOLedgerEntriesTable) Upsert(ctx context.Context, db *keel.DB, rows []*pto.WorkerPTOLedgerEntry, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *WorkerPTOLedgerEntriesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*pto.WorkerPTOLedgerEntry, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *WorkerPTOLedgerEntriesTable) Copy(ctx context.Context, db *keel.DB, rows []*pto.WorkerPTOLedgerEntry) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -2813,37 +2835,45 @@ func (q *WorkerPTOLedgerEntriesQuery) Clone() keel.Query[*pto.WorkerPTOLedgerEnt
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *WorkerPTOLedgerEntriesQuery) One(ctx context.Context, db *keel.DB) (*pto.WorkerPTOLedgerEntry, error) {
-	return keel.One[*pto.WorkerPTOLedgerEntry](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*pto.WorkerPTOLedgerEntry)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *WorkerPTOLedgerEntriesQuery) First(ctx context.Context, db *keel.DB) (*pto.WorkerPTOLedgerEntry, error) {
-	return keel.First[*pto.WorkerPTOLedgerEntry](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*pto.WorkerPTOLedgerEntry)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *WorkerPTOLedgerEntriesQuery) List(ctx context.Context, db *keel.DB) ([]*pto.WorkerPTOLedgerEntry, error) {
-	return keel.List[*pto.WorkerPTOLedgerEntry](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*pto.WorkerPTOLedgerEntry)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *WorkerPTOLedgerEntriesQuery) All(ctx context.Context, db *keel.DB) ([]*pto.WorkerPTOLedgerEntry, error) {
-	return keel.All[*pto.WorkerPTOLedgerEntry](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*pto.WorkerPTOLedgerEntry)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *WorkerPTOLedgerEntriesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*pto.WorkerPTOLedgerEntry, error) {
-	return keel.UpdateReturning[*pto.WorkerPTOLedgerEntry](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*pto.WorkerPTOLedgerEntry)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *WorkerPTOLedgerEntriesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*pto.WorkerPTOLedgerEntry], error) {
-	return keel.PageOf[*pto.WorkerPTOLedgerEntry](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*pto.WorkerPTOLedgerEntry])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *WorkerPTOLedgerEntriesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*pto.WorkerPTOLedgerEntry) error) error {
-	return keel.Each[*pto.WorkerPTOLedgerEntry](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*pto.WorkerPTOLedgerEntry)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newWorkerPTOLedgerEntry() unsafe.Pointer { return unsafe.Pointer(new(pto.WorkerPTOLedgerEntry)) }
@@ -3038,14 +3068,14 @@ type WorkerPTOPolicyAssignmentsTable struct {
 // WorkerPTOPolicyAssignments references the worker_pto_policy_assignments table.
 var WorkerPTOPolicyAssignments = &WorkerPTOPolicyAssignmentsTable{
 	TableBase:      keel.TableBase{Ref: &workerPTOPolicyAssignmentsRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPTOPolicyAssignmentsRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPTOPolicyAssignmentsRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPTOPolicyAssignmentsRef, Index: 2}}},
-	WorkerID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPTOPolicyAssignmentsRef, Index: 3}}},
-	PTOPolicyID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPTOPolicyAssignmentsRef, Index: 4}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerPTOPolicyAssignmentsRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerPTOPolicyAssignmentsRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerPTOPolicyAssignmentsRef, Index: 2}}},
+	WorkerID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerPTOPolicyAssignmentsRef, Index: 3}}},
+	PTOPolicyID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerPTOPolicyAssignmentsRef, Index: 4}}},
 	EffectiveFrom:  keel.Int64Col{Col: keel.Col{Ref: &workerPTOPolicyAssignmentsRef, Index: 5}},
 	EffectiveTo:    keel.Int64Col{Col: keel.Col{Ref: &workerPTOPolicyAssignmentsRef, Index: 6}},
-	AssignedByID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerPTOPolicyAssignmentsRef, Index: 7}}},
+	AssignedByID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerPTOPolicyAssignmentsRef, Index: 7}}},
 	Note:           keel.StringCol{Col: keel.Col{Ref: &workerPTOPolicyAssignmentsRef, Index: 8}},
 	Version:        keel.Int64Col{Col: keel.Col{Ref: &workerPTOPolicyAssignmentsRef, Index: 9}},
 	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &workerPTOPolicyAssignmentsRef, Index: 10}},
@@ -3056,14 +3086,14 @@ var WorkerPTOPolicyAssignments = &WorkerPTOPolicyAssignmentsTable{
 func BuildWorkerPTOPolicyAssignments(r *keel.Ref) *WorkerPTOPolicyAssignmentsTable {
 	return &WorkerPTOPolicyAssignmentsTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		WorkerID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		PTOPolicyID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		WorkerID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		PTOPolicyID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		EffectiveFrom:  keel.Int64Col{Col: keel.Col{Ref: r, Index: 5}},
 		EffectiveTo:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
-		AssignedByID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		AssignedByID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
 		Note:           keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
 		Version:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
 		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
@@ -3096,8 +3126,6 @@ func (t *WorkerPTOPolicyAssignmentsTable) Get(ctx context.Context, db *keel.DB, 
 
 // WorkerPTOPolicyAssignmentsQuery is a query over pto.WorkerPTOPolicyAssignment.
 type WorkerPTOPolicyAssignmentsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*pto.WorkerPTOPolicyAssignment] = (*WorkerPTOPolicyAssignmentsTable)(nil)
 
 var _ keel.Query[*pto.WorkerPTOPolicyAssignment] = (*WorkerPTOPolicyAssignmentsQuery)(nil)
 
@@ -3213,42 +3241,42 @@ func (t *WorkerPTOPolicyAssignmentsTable) Compute(col keel.Column, e keel.Expr) 
 
 // Create inserts row.
 func (t *WorkerPTOPolicyAssignmentsTable) Create(ctx context.Context, db *keel.DB, row *pto.WorkerPTOPolicyAssignment) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *WorkerPTOPolicyAssignmentsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*pto.WorkerPTOPolicyAssignment) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *WorkerPTOPolicyAssignmentsTable) Save(ctx context.Context, db *keel.DB, row *pto.WorkerPTOPolicyAssignment, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *WorkerPTOPolicyAssignmentsTable) SaveExcept(ctx context.Context, db *keel.DB, row *pto.WorkerPTOPolicyAssignment, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *WorkerPTOPolicyAssignmentsTable) DeleteRow(ctx context.Context, db *keel.DB, row *pto.WorkerPTOPolicyAssignment) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *WorkerPTOPolicyAssignmentsTable) Upsert(ctx context.Context, db *keel.DB, rows []*pto.WorkerPTOPolicyAssignment, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *WorkerPTOPolicyAssignmentsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*pto.WorkerPTOPolicyAssignment, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *WorkerPTOPolicyAssignmentsTable) Copy(ctx context.Context, db *keel.DB, rows []*pto.WorkerPTOPolicyAssignment) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -3420,37 +3448,45 @@ func (q *WorkerPTOPolicyAssignmentsQuery) Clone() keel.Query[*pto.WorkerPTOPolic
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *WorkerPTOPolicyAssignmentsQuery) One(ctx context.Context, db *keel.DB) (*pto.WorkerPTOPolicyAssignment, error) {
-	return keel.One[*pto.WorkerPTOPolicyAssignment](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*pto.WorkerPTOPolicyAssignment)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *WorkerPTOPolicyAssignmentsQuery) First(ctx context.Context, db *keel.DB) (*pto.WorkerPTOPolicyAssignment, error) {
-	return keel.First[*pto.WorkerPTOPolicyAssignment](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*pto.WorkerPTOPolicyAssignment)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *WorkerPTOPolicyAssignmentsQuery) List(ctx context.Context, db *keel.DB) ([]*pto.WorkerPTOPolicyAssignment, error) {
-	return keel.List[*pto.WorkerPTOPolicyAssignment](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*pto.WorkerPTOPolicyAssignment)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *WorkerPTOPolicyAssignmentsQuery) All(ctx context.Context, db *keel.DB) ([]*pto.WorkerPTOPolicyAssignment, error) {
-	return keel.All[*pto.WorkerPTOPolicyAssignment](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*pto.WorkerPTOPolicyAssignment)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *WorkerPTOPolicyAssignmentsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*pto.WorkerPTOPolicyAssignment, error) {
-	return keel.UpdateReturning[*pto.WorkerPTOPolicyAssignment](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*pto.WorkerPTOPolicyAssignment)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *WorkerPTOPolicyAssignmentsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*pto.WorkerPTOPolicyAssignment], error) {
-	return keel.PageOf[*pto.WorkerPTOPolicyAssignment](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*pto.WorkerPTOPolicyAssignment])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *WorkerPTOPolicyAssignmentsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*pto.WorkerPTOPolicyAssignment) error) error {
-	return keel.Each[*pto.WorkerPTOPolicyAssignment](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*pto.WorkerPTOPolicyAssignment)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newWorkerPTOPolicyAssignment() unsafe.Pointer {
@@ -3621,208 +3657,190 @@ var reportMeasureInteger = schema.ReportInfo{Included: true, Kind: schema.Measur
 var reportMeasureIntegerHidden = schema.ReportInfo{Kind: schema.Measure, Type: schema.ValueInt, Aggs: schema.AggsNumeric}
 
 // HolidayKindCol is a column of pto.HolidayKind values.
-type HolidayKindCol struct{ keel.StringCol }
+type HolidayKindCol struct{ keel.TypedStringCol }
 
-func (c HolidayKindCol) Eq(v pto.HolidayKind) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c HolidayKindCol) Ne(v pto.HolidayKind) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c HolidayKindCol) Gt(v pto.HolidayKind) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c HolidayKindCol) Gte(v pto.HolidayKind) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c HolidayKindCol) Lt(v pto.HolidayKind) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c HolidayKindCol) Lte(v pto.HolidayKind) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c HolidayKindCol) Eq(v pto.HolidayKind) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c HolidayKindCol) Ne(v pto.HolidayKind) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c HolidayKindCol) Gt(v pto.HolidayKind) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c HolidayKindCol) Gte(v pto.HolidayKind) keel.Pred { return c.Text().Gte(string(v)) }
+func (c HolidayKindCol) Lt(v pto.HolidayKind) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c HolidayKindCol) Lte(v pto.HolidayKind) keel.Pred { return c.Text().Lte(string(v)) }
 func (c HolidayKindCol) IsDistinctFrom(v pto.HolidayKind) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c HolidayKindCol) Between(lo, hi pto.HolidayKind) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c HolidayKindCol) To(v pto.HolidayKind) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c HolidayKindCol) To(v pto.HolidayKind) keel.Assignment { return c.Text().To(string(v)) }
 func (c HolidayKindCol) In(vs ...pto.HolidayKind) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c HolidayKindCol) NotIn(vs ...pto.HolidayKind) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // PTOAccrualMethodCol is a column of pto.PTOAccrualMethod values.
-type PTOAccrualMethodCol struct{ keel.StringCol }
+type PTOAccrualMethodCol struct{ keel.TypedStringCol }
 
-func (c PTOAccrualMethodCol) Eq(v pto.PTOAccrualMethod) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c PTOAccrualMethodCol) Ne(v pto.PTOAccrualMethod) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c PTOAccrualMethodCol) Gt(v pto.PTOAccrualMethod) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c PTOAccrualMethodCol) Gte(v pto.PTOAccrualMethod) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c PTOAccrualMethodCol) Lt(v pto.PTOAccrualMethod) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c PTOAccrualMethodCol) Lte(v pto.PTOAccrualMethod) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c PTOAccrualMethodCol) Eq(v pto.PTOAccrualMethod) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c PTOAccrualMethodCol) Ne(v pto.PTOAccrualMethod) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c PTOAccrualMethodCol) Gt(v pto.PTOAccrualMethod) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c PTOAccrualMethodCol) Gte(v pto.PTOAccrualMethod) keel.Pred { return c.Text().Gte(string(v)) }
+func (c PTOAccrualMethodCol) Lt(v pto.PTOAccrualMethod) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c PTOAccrualMethodCol) Lte(v pto.PTOAccrualMethod) keel.Pred { return c.Text().Lte(string(v)) }
 func (c PTOAccrualMethodCol) IsDistinctFrom(v pto.PTOAccrualMethod) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c PTOAccrualMethodCol) Between(lo, hi pto.PTOAccrualMethod) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c PTOAccrualMethodCol) To(v pto.PTOAccrualMethod) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c PTOAccrualMethodCol) In(vs ...pto.PTOAccrualMethod) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c PTOAccrualMethodCol) NotIn(vs ...pto.PTOAccrualMethod) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // PTOLedgerActorTypeCol is a column of pto.PTOLedgerActorType values.
-type PTOLedgerActorTypeCol struct{ keel.StringCol }
+type PTOLedgerActorTypeCol struct{ keel.TypedStringCol }
 
-func (c PTOLedgerActorTypeCol) Eq(v pto.PTOLedgerActorType) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c PTOLedgerActorTypeCol) Ne(v pto.PTOLedgerActorType) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c PTOLedgerActorTypeCol) Gt(v pto.PTOLedgerActorType) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
+func (c PTOLedgerActorTypeCol) Eq(v pto.PTOLedgerActorType) keel.Pred { return c.Text().Eq(string(v)) }
+func (c PTOLedgerActorTypeCol) Ne(v pto.PTOLedgerActorType) keel.Pred { return c.Text().Ne(string(v)) }
+func (c PTOLedgerActorTypeCol) Gt(v pto.PTOLedgerActorType) keel.Pred { return c.Text().Gt(string(v)) }
 func (c PTOLedgerActorTypeCol) Gte(v pto.PTOLedgerActorType) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
-func (c PTOLedgerActorTypeCol) Lt(v pto.PTOLedgerActorType) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
+func (c PTOLedgerActorTypeCol) Lt(v pto.PTOLedgerActorType) keel.Pred { return c.Text().Lt(string(v)) }
 func (c PTOLedgerActorTypeCol) Lte(v pto.PTOLedgerActorType) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c PTOLedgerActorTypeCol) IsDistinctFrom(v pto.PTOLedgerActorType) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c PTOLedgerActorTypeCol) Between(lo, hi pto.PTOLedgerActorType) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c PTOLedgerActorTypeCol) To(v pto.PTOLedgerActorType) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c PTOLedgerActorTypeCol) In(vs ...pto.PTOLedgerActorType) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c PTOLedgerActorTypeCol) NotIn(vs ...pto.PTOLedgerActorType) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // PTOLedgerEntryTypeCol is a column of pto.PTOLedgerEntryType values.
-type PTOLedgerEntryTypeCol struct{ keel.StringCol }
+type PTOLedgerEntryTypeCol struct{ keel.TypedStringCol }
 
-func (c PTOLedgerEntryTypeCol) Eq(v pto.PTOLedgerEntryType) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c PTOLedgerEntryTypeCol) Ne(v pto.PTOLedgerEntryType) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c PTOLedgerEntryTypeCol) Gt(v pto.PTOLedgerEntryType) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
+func (c PTOLedgerEntryTypeCol) Eq(v pto.PTOLedgerEntryType) keel.Pred { return c.Text().Eq(string(v)) }
+func (c PTOLedgerEntryTypeCol) Ne(v pto.PTOLedgerEntryType) keel.Pred { return c.Text().Ne(string(v)) }
+func (c PTOLedgerEntryTypeCol) Gt(v pto.PTOLedgerEntryType) keel.Pred { return c.Text().Gt(string(v)) }
 func (c PTOLedgerEntryTypeCol) Gte(v pto.PTOLedgerEntryType) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
-func (c PTOLedgerEntryTypeCol) Lt(v pto.PTOLedgerEntryType) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
+func (c PTOLedgerEntryTypeCol) Lt(v pto.PTOLedgerEntryType) keel.Pred { return c.Text().Lt(string(v)) }
 func (c PTOLedgerEntryTypeCol) Lte(v pto.PTOLedgerEntryType) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c PTOLedgerEntryTypeCol) IsDistinctFrom(v pto.PTOLedgerEntryType) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c PTOLedgerEntryTypeCol) Between(lo, hi pto.PTOLedgerEntryType) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c PTOLedgerEntryTypeCol) To(v pto.PTOLedgerEntryType) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c PTOLedgerEntryTypeCol) In(vs ...pto.PTOLedgerEntryType) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c PTOLedgerEntryTypeCol) NotIn(vs ...pto.PTOLedgerEntryType) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // PTOPolicyStatusCol is a column of pto.PTOPolicyStatus values.
-type PTOPolicyStatusCol struct{ keel.StringCol }
+type PTOPolicyStatusCol struct{ keel.TypedStringCol }
 
-func (c PTOPolicyStatusCol) Eq(v pto.PTOPolicyStatus) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c PTOPolicyStatusCol) Ne(v pto.PTOPolicyStatus) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c PTOPolicyStatusCol) Gt(v pto.PTOPolicyStatus) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c PTOPolicyStatusCol) Gte(v pto.PTOPolicyStatus) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c PTOPolicyStatusCol) Lt(v pto.PTOPolicyStatus) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c PTOPolicyStatusCol) Lte(v pto.PTOPolicyStatus) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c PTOPolicyStatusCol) Eq(v pto.PTOPolicyStatus) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c PTOPolicyStatusCol) Ne(v pto.PTOPolicyStatus) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c PTOPolicyStatusCol) Gt(v pto.PTOPolicyStatus) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c PTOPolicyStatusCol) Gte(v pto.PTOPolicyStatus) keel.Pred { return c.Text().Gte(string(v)) }
+func (c PTOPolicyStatusCol) Lt(v pto.PTOPolicyStatus) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c PTOPolicyStatusCol) Lte(v pto.PTOPolicyStatus) keel.Pred { return c.Text().Lte(string(v)) }
 func (c PTOPolicyStatusCol) IsDistinctFrom(v pto.PTOPolicyStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c PTOPolicyStatusCol) Between(lo, hi pto.PTOPolicyStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c PTOPolicyStatusCol) To(v pto.PTOPolicyStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
-}
+func (c PTOPolicyStatusCol) To(v pto.PTOPolicyStatus) keel.Assignment { return c.Text().To(string(v)) }
 func (c PTOPolicyStatusCol) In(vs ...pto.PTOPolicyStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c PTOPolicyStatusCol) NotIn(vs ...pto.PTOPolicyStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // PTOTerminationActionCol is a column of pto.PTOTerminationAction values.
-type PTOTerminationActionCol struct{ keel.StringCol }
+type PTOTerminationActionCol struct{ keel.TypedStringCol }
 
 func (c PTOTerminationActionCol) Eq(v pto.PTOTerminationAction) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c PTOTerminationActionCol) Ne(v pto.PTOTerminationAction) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c PTOTerminationActionCol) Gt(v pto.PTOTerminationAction) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c PTOTerminationActionCol) Gte(v pto.PTOTerminationAction) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c PTOTerminationActionCol) Lt(v pto.PTOTerminationAction) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c PTOTerminationActionCol) Lte(v pto.PTOTerminationAction) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c PTOTerminationActionCol) IsDistinctFrom(v pto.PTOTerminationAction) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c PTOTerminationActionCol) Between(lo, hi pto.PTOTerminationAction) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c PTOTerminationActionCol) To(v pto.PTOTerminationAction) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c PTOTerminationActionCol) In(vs ...pto.PTOTerminationAction) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c PTOTerminationActionCol) NotIn(vs ...pto.PTOTerminationAction) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // PTOYearBasisCol is a column of pto.PTOYearBasis values.
-type PTOYearBasisCol struct{ keel.StringCol }
+type PTOYearBasisCol struct{ keel.TypedStringCol }
 
-func (c PTOYearBasisCol) Eq(v pto.PTOYearBasis) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c PTOYearBasisCol) Ne(v pto.PTOYearBasis) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c PTOYearBasisCol) Gt(v pto.PTOYearBasis) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c PTOYearBasisCol) Gte(v pto.PTOYearBasis) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c PTOYearBasisCol) Lt(v pto.PTOYearBasis) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c PTOYearBasisCol) Lte(v pto.PTOYearBasis) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c PTOYearBasisCol) Eq(v pto.PTOYearBasis) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c PTOYearBasisCol) Ne(v pto.PTOYearBasis) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c PTOYearBasisCol) Gt(v pto.PTOYearBasis) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c PTOYearBasisCol) Gte(v pto.PTOYearBasis) keel.Pred { return c.Text().Gte(string(v)) }
+func (c PTOYearBasisCol) Lt(v pto.PTOYearBasis) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c PTOYearBasisCol) Lte(v pto.PTOYearBasis) keel.Pred { return c.Text().Lte(string(v)) }
 func (c PTOYearBasisCol) IsDistinctFrom(v pto.PTOYearBasis) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c PTOYearBasisCol) Between(lo, hi pto.PTOYearBasis) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c PTOYearBasisCol) To(v pto.PTOYearBasis) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c PTOYearBasisCol) To(v pto.PTOYearBasis) keel.Assignment { return c.Text().To(string(v)) }
 func (c PTOYearBasisCol) In(vs ...pto.PTOYearBasis) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c PTOYearBasisCol) NotIn(vs ...pto.PTOYearBasis) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

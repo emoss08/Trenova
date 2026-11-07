@@ -93,13 +93,13 @@ type SettlementControlsTable struct {
 // SettlementControls references the settlement_controls table.
 var SettlementControls = &SettlementControlsTable{
 	TableBase:                     keel.TableBase{Ref: &settlementControlsRef},
-	ID:                            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settlementControlsRef, Index: 0}}},
-	BusinessUnitID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settlementControlsRef, Index: 1}}},
-	OrganizationID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settlementControlsRef, Index: 2}}},
-	PayPeriodFrequency:            PayPeriodFrequencyCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settlementControlsRef, Index: 3}}},
+	ID:                            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &settlementControlsRef, Index: 0}}},
+	BusinessUnitID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &settlementControlsRef, Index: 1}}},
+	OrganizationID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &settlementControlsRef, Index: 2}}},
+	PayPeriodFrequency:            PayPeriodFrequencyCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &settlementControlsRef, Index: 3}}},
 	PeriodEndDayOfWeek:            keel.Int64Col{Col: keel.Col{Ref: &settlementControlsRef, Index: 4}},
 	PayDelayDays:                  keel.Int64Col{Col: keel.Col{Ref: &settlementControlsRef, Index: 5}},
-	PayTrigger:                    PayTriggerCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settlementControlsRef, Index: 6}}},
+	PayTrigger:                    PayTriggerCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &settlementControlsRef, Index: 6}}},
 	AutoGenerateBatches:           keel.BoolCol{Col: keel.Col{Ref: &settlementControlsRef, Index: 7}},
 	AutoApproveClean:              keel.BoolCol{Col: keel.Col{Ref: &settlementControlsRef, Index: 8}},
 	AutoAttachAccruals:            keel.BoolCol{Col: keel.Col{Ref: &settlementControlsRef, Index: 9}},
@@ -119,13 +119,13 @@ var SettlementControls = &SettlementControlsTable{
 func BuildSettlementControls(r *keel.Ref) *SettlementControlsTable {
 	return &SettlementControlsTable{
 		TableBase:                     keel.TableBase{Ref: r},
-		ID:                            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		PayPeriodFrequency:            PayPeriodFrequencyCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:                            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		PayPeriodFrequency:            PayPeriodFrequencyCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		PeriodEndDayOfWeek:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 4}},
 		PayDelayDays:                  keel.Int64Col{Col: keel.Col{Ref: r, Index: 5}},
-		PayTrigger:                    PayTriggerCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		PayTrigger:                    PayTriggerCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		AutoGenerateBatches:           keel.BoolCol{Col: keel.Col{Ref: r, Index: 7}},
 		AutoApproveClean:              keel.BoolCol{Col: keel.Col{Ref: r, Index: 8}},
 		AutoAttachAccruals:            keel.BoolCol{Col: keel.Col{Ref: r, Index: 9}},
@@ -157,8 +157,6 @@ func (t *SettlementControlsTable) Get(ctx context.Context, db *keel.DB, key puli
 
 // SettlementControlsQuery is a query over settlementcontrol.SettlementControl.
 type SettlementControlsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*settlementcontrol.SettlementControl] = (*SettlementControlsTable)(nil)
 
 var _ keel.Query[*settlementcontrol.SettlementControl] = (*SettlementControlsQuery)(nil)
 
@@ -274,42 +272,42 @@ func (t *SettlementControlsTable) Compute(col keel.Column, e keel.Expr) keel.Que
 
 // Create inserts row.
 func (t *SettlementControlsTable) Create(ctx context.Context, db *keel.DB, row *settlementcontrol.SettlementControl) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *SettlementControlsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*settlementcontrol.SettlementControl) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *SettlementControlsTable) Save(ctx context.Context, db *keel.DB, row *settlementcontrol.SettlementControl, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *SettlementControlsTable) SaveExcept(ctx context.Context, db *keel.DB, row *settlementcontrol.SettlementControl, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *SettlementControlsTable) DeleteRow(ctx context.Context, db *keel.DB, row *settlementcontrol.SettlementControl) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *SettlementControlsTable) Upsert(ctx context.Context, db *keel.DB, rows []*settlementcontrol.SettlementControl, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *SettlementControlsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*settlementcontrol.SettlementControl, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *SettlementControlsTable) Copy(ctx context.Context, db *keel.DB, rows []*settlementcontrol.SettlementControl) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -481,37 +479,45 @@ func (q *SettlementControlsQuery) Clone() keel.Query[*settlementcontrol.Settleme
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *SettlementControlsQuery) One(ctx context.Context, db *keel.DB) (*settlementcontrol.SettlementControl, error) {
-	return keel.One[*settlementcontrol.SettlementControl](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*settlementcontrol.SettlementControl)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *SettlementControlsQuery) First(ctx context.Context, db *keel.DB) (*settlementcontrol.SettlementControl, error) {
-	return keel.First[*settlementcontrol.SettlementControl](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*settlementcontrol.SettlementControl)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *SettlementControlsQuery) List(ctx context.Context, db *keel.DB) ([]*settlementcontrol.SettlementControl, error) {
-	return keel.List[*settlementcontrol.SettlementControl](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*settlementcontrol.SettlementControl)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *SettlementControlsQuery) All(ctx context.Context, db *keel.DB) ([]*settlementcontrol.SettlementControl, error) {
-	return keel.All[*settlementcontrol.SettlementControl](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*settlementcontrol.SettlementControl)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *SettlementControlsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*settlementcontrol.SettlementControl, error) {
-	return keel.UpdateReturning[*settlementcontrol.SettlementControl](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*settlementcontrol.SettlementControl)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *SettlementControlsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*settlementcontrol.SettlementControl], error) {
-	return keel.PageOf[*settlementcontrol.SettlementControl](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*settlementcontrol.SettlementControl])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *SettlementControlsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*settlementcontrol.SettlementControl) error) error {
-	return keel.Each[*settlementcontrol.SettlementControl](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*settlementcontrol.SettlementControl)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newSettlementControl() unsafe.Pointer {
@@ -637,67 +643,63 @@ var enumPayTrigger = [...]schema.EnumValue{
 }
 
 // PayPeriodFrequencyCol is a column of settlementcontrol.PayPeriodFrequency values.
-type PayPeriodFrequencyCol struct{ keel.StringCol }
+type PayPeriodFrequencyCol struct{ keel.TypedStringCol }
 
 func (c PayPeriodFrequencyCol) Eq(v settlementcontrol.PayPeriodFrequency) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c PayPeriodFrequencyCol) Ne(v settlementcontrol.PayPeriodFrequency) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c PayPeriodFrequencyCol) Gt(v settlementcontrol.PayPeriodFrequency) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c PayPeriodFrequencyCol) Gte(v settlementcontrol.PayPeriodFrequency) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c PayPeriodFrequencyCol) Lt(v settlementcontrol.PayPeriodFrequency) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c PayPeriodFrequencyCol) Lte(v settlementcontrol.PayPeriodFrequency) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c PayPeriodFrequencyCol) IsDistinctFrom(v settlementcontrol.PayPeriodFrequency) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c PayPeriodFrequencyCol) Between(lo, hi settlementcontrol.PayPeriodFrequency) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c PayPeriodFrequencyCol) To(v settlementcontrol.PayPeriodFrequency) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c PayPeriodFrequencyCol) In(vs ...settlementcontrol.PayPeriodFrequency) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c PayPeriodFrequencyCol) NotIn(vs ...settlementcontrol.PayPeriodFrequency) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // PayTriggerCol is a column of settlementcontrol.PayTrigger values.
-type PayTriggerCol struct{ keel.StringCol }
+type PayTriggerCol struct{ keel.TypedStringCol }
 
-func (c PayTriggerCol) Eq(v settlementcontrol.PayTrigger) keel.Pred { return c.StringCol.Eq(string(v)) }
-func (c PayTriggerCol) Ne(v settlementcontrol.PayTrigger) keel.Pred { return c.StringCol.Ne(string(v)) }
-func (c PayTriggerCol) Gt(v settlementcontrol.PayTrigger) keel.Pred { return c.StringCol.Gt(string(v)) }
-func (c PayTriggerCol) Gte(v settlementcontrol.PayTrigger) keel.Pred {
-	return c.StringCol.Gte(string(v))
-}
-func (c PayTriggerCol) Lt(v settlementcontrol.PayTrigger) keel.Pred { return c.StringCol.Lt(string(v)) }
-func (c PayTriggerCol) Lte(v settlementcontrol.PayTrigger) keel.Pred {
-	return c.StringCol.Lte(string(v))
-}
+func (c PayTriggerCol) Eq(v settlementcontrol.PayTrigger) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c PayTriggerCol) Ne(v settlementcontrol.PayTrigger) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c PayTriggerCol) Gt(v settlementcontrol.PayTrigger) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c PayTriggerCol) Gte(v settlementcontrol.PayTrigger) keel.Pred { return c.Text().Gte(string(v)) }
+func (c PayTriggerCol) Lt(v settlementcontrol.PayTrigger) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c PayTriggerCol) Lte(v settlementcontrol.PayTrigger) keel.Pred { return c.Text().Lte(string(v)) }
 func (c PayTriggerCol) IsDistinctFrom(v settlementcontrol.PayTrigger) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c PayTriggerCol) Between(lo, hi settlementcontrol.PayTrigger) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c PayTriggerCol) To(v settlementcontrol.PayTrigger) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c PayTriggerCol) In(vs ...settlementcontrol.PayTrigger) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c PayTriggerCol) NotIn(vs ...settlementcontrol.PayTrigger) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

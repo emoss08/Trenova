@@ -18,5 +18,6 @@
   "The AP account credited when a settlement posts and debited when it is paid.": "結算過帳時貸記、付款時借記的應付帳款科目。",
   "The expense account debited for carrier cost when a settlement posts.": "結算過帳時就承運業者成本借記的費用科目。",
   "The shipment milestone at which carrier cost accrues into the settlement pool.": "承運業者成本計入結算池的運單里程碑。",
-  "Variance tolerance": "差異容差"
+  "Variance tolerance": "差異容差",
+  "Whoever submits a carrier settlement cannot also approve it. Turn this off if one person runs carrier pay.": "提交承運商結算的人不能同時核准。如果由一人負責承運商付款，請關閉此選項。"
 }

@@ -1,6 +1,9 @@
 package values_test
 
 import (
+	"crypto/x509"
+	"encoding/base64"
+	"encoding/pem"
 	"regexp"
 	"strings"
 	"testing"
@@ -10,6 +13,7 @@ import (
 	"helm.sh/helm/v3/pkg/chart/loader"
 	"helm.sh/helm/v3/pkg/chartutil"
 	"helm.sh/helm/v3/pkg/engine"
+	"sigs.k8s.io/yaml"
 
 	"github.com/emoss08/trenova/operator/internal/instanceapi"
 	"github.com/emoss08/trenova/operator/internal/values"
@@ -51,9 +55,12 @@ func TestChartHasNoModeThatSignsInAsTheOwner(t *testing.T) {
 	b["postgres"] = map[string]any{"rlsMode": "off"}
 	ch, err := loader.Load(chartDir)
 	require.NoError(t, err)
-	r, err := values.Render(ptr(spec(plans[0], instanceapi.Active, "docling")), b, operatorNS)
+	r, err := values.Render(ptr(spec(plans[0], instanceapi.Active)), b, operatorNS)
 	require.NoError(t, err)
-	require.ErrorContains(t, chartutil.ValidateAgainstSchema(ch, r.Values), "rlsMode")
+	_, err = chartutil.ToRenderValues(ch, r.Values, chartutil.ReleaseOptions{
+		Name: "trenova", Namespace: "trenova", Revision: 1, IsInstall: true,
+	}, chartutil.DefaultCapabilities)
+	require.ErrorContains(t, err, "rlsMode")
 }
 
 func TestApplicationSignsInAsItsOwnRoleInEveryMode(t *testing.T) {
@@ -68,6 +75,124 @@ func TestApplicationSignsInAsItsOwnRoleInEveryMode(t *testing.T) {
 		require.Contains(t, config, "user: trenova_app", mode)
 		require.Contains(t, config, "user: trenova_system", mode)
 		require.Contains(t, template(t, out, "templates/release-job.yaml"), "name: rls-roles", mode)
+	}
+}
+
+type renderedSecret struct {
+	Metadata struct {
+		Name string `json:"name"`
+	} `json:"metadata"`
+	Data map[string]string `json:"data"`
+}
+
+func renderedSecrets(t *testing.T, out map[string]string) map[string]renderedSecret {
+	t.Helper()
+	secrets := map[string]renderedSecret{}
+	for _, doc := range strings.Split(template(t, out, "templates/secrets.yaml"), "\n---") {
+		var s renderedSecret
+		require.NoError(t, yaml.Unmarshal([]byte(doc), &s))
+		if s.Metadata.Name != "" {
+			secrets[s.Metadata.Name] = s
+		}
+	}
+	return secrets
+}
+
+func certificate(t *testing.T, s renderedSecret, key string) *x509.Certificate {
+	t.Helper()
+	raw, err := base64.StdEncoding.DecodeString(s.Data[key])
+	require.NoError(t, err)
+	block, _ := pem.Decode(raw)
+	require.NotNil(t, block, key)
+	cert, err := x509.ParseCertificate(block.Bytes)
+	require.NoError(t, err)
+	return cert
+}
+
+func TestTemporalCertificatesComeFromOneCAAndServeItsName(t *testing.T) {
+	t.Parallel()
+	_, _, out := renderChart(t, base())
+	secrets := renderedSecrets(t, out)
+
+	server, ok := secrets["trenova-temporal-server-tls"]
+	require.True(t, ok)
+	client, ok := secrets["trenova-temporal-client-tls"]
+	require.True(t, ok)
+	require.Equal(t, server.Data["ca.crt"], client.Data["ca.crt"])
+
+	pool := x509.NewCertPool()
+	pool.AddCert(certificate(t, server, "ca.crt"))
+
+	serverCert := certificate(t, server, "tls.crt")
+	require.Contains(t, serverCert.DNSNames, "trenova-temporal")
+	_, err := serverCert.Verify(x509.VerifyOptions{
+		DNSName:   "trenova-temporal",
+		Roots:     pool,
+		KeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+	})
+	require.NoError(t, err)
+	_, err = serverCert.Verify(x509.VerifyOptions{
+		Roots:     pool,
+		KeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
+	})
+	require.NoError(t, err, "Temporal's services present the server certificate to each other")
+
+	_, err = certificate(t, client, "tls.crt").Verify(x509.VerifyOptions{
+		Roots:     pool,
+		KeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
+	})
+	require.NoError(t, err)
+
+	require.NotEqual(t, secrets["trenova-imaging-server-tls"].Data["ca.crt"], server.Data["ca.crt"])
+}
+
+func TestTemporalRequiresAClientCertificateAndTheTMSPresentsOne(t *testing.T) {
+	t.Parallel()
+	_, _, out := renderChart(t, base())
+
+	services := template(t, out, "templates/services.yaml")
+	temporal := services[:strings.Index(services, "name: trenova-gotenberg")]
+	require.Regexp(t, `name: TEMPORAL_TLS_REQUIRE_CLIENT_AUTH\s+value: "true"`, temporal)
+	require.Regexp(t, `name: TEMPORAL_TLS_CLIENT1_CA_CERT\s+value: /certs/temporal/ca.crt`, temporal)
+	require.Regexp(t, `name: TEMPORAL_TLS_FRONTEND_CERT\s+value: /certs/temporal/tls.crt`, temporal)
+	require.Regexp(t, `name: TEMPORAL_TLS_SERVER_CERT\s+value: /certs/temporal/tls.crt`, temporal)
+	require.Contains(t, temporal, "secretName: trenova-temporal-server-tls")
+
+	config := template(t, out, "templates/configmap.yaml")
+	require.Contains(t, config, "clientCertPath: /certs/temporal/tls.crt")
+	require.Contains(t, config, "clientKeyPath: /certs/temporal/tls.key")
+	require.Contains(t, config, "serverCACertPath: /certs/temporal/ca.crt")
+	require.Contains(t, config, "serverName: trenova-temporal")
+
+	for _, suffix := range []string{"templates/tms.yaml", "templates/release-job.yaml"} {
+		body := template(t, out, suffix)
+		require.Contains(t, body, "secretName: trenova-temporal-client-tls", suffix)
+		require.NotContains(t, body, "trenova-temporal-server-tls", suffix)
+	}
+}
+
+func TestGotenbergAndTheTMSShareOneGeneratedCredential(t *testing.T) {
+	t.Parallel()
+	_, _, out := renderChart(t, base())
+
+	require.Contains(t, template(t, out, "templates/secrets.yaml"), "gotenbergPassword: ")
+	require.Contains(t, template(t, out, "templates/configmap.yaml"), "gotenbergUsername: trenova")
+
+	services := template(t, out, "templates/services.yaml")
+	require.Contains(t, services, "--api-enable-basic-auth=true")
+	require.Regexp(
+		t,
+		`name: GOTENBERG_API_BASIC_AUTH_PASSWORD\s+valueFrom:\s+secretKeyRef:\s+name: trenova-secrets\s+key: gotenbergPassword`,
+		services,
+	)
+
+	for _, suffix := range []string{"templates/tms.yaml", "templates/release-job.yaml"} {
+		require.Regexp(
+			t,
+			`name: TRENOVA_RENDERER_GOTENBERGPASSWORD\s+valueFrom:\s+secretKeyRef:\s+name: trenova-secrets\s+key: gotenbergPassword`,
+			template(t, out, suffix),
+			suffix,
+		)
 	}
 }
 

@@ -12,39 +12,56 @@ export const URGENCY_ORDER = ["Late", "Now", "Today", "Tomorrow", "Planned"] as 
 
 export type UrgencyBucket = (typeof URGENCY_ORDER)[number];
 
+/**
+ * The groups follow the server's rule (`dispatchconsoleservice/decorate.go`): Late once the
+ * window has closed, Due now while it is open or opens within four hours, then rolling
+ * 24- and 48-hour spans. The windows roll with the clock, so there is no "today".
+ */
 export const URGENCY_META: Record<
   UrgencyBucket,
-  { label: string; description: string; variant: BadgeVariant; dotClass: string }
+  {
+    label: string;
+    description: string;
+    variant: BadgeVariant;
+    dotClass: string;
+    /** The colour token a move in this group is tinted in on the timeline. */
+    colorVar: string;
+  }
 > = {
   Late: {
     label: "Late",
-    description: "Pickup window already open",
+    description: "pickup window closed, no arrival",
     variant: "danger",
     dotClass: "bg-destructive",
+    colorVar: "--danger",
   },
   Now: {
-    label: "Next 4 hours",
-    description: "Needs a driver now",
+    label: "Due now",
+    description: "window open or opens within 4 hours",
     variant: "warning",
     dotClass: "bg-warning",
+    colorVar: "--warning",
   },
   Today: {
-    label: "Today",
-    description: "Picks up later today",
+    label: "Within 24 hours",
+    description: "window opens in 4 to 24 hours",
     variant: "info",
     dotClass: "bg-info",
+    colorVar: "--info",
   },
   Tomorrow: {
-    label: "Tomorrow",
-    description: "Picks up tomorrow",
+    label: "Within 48 hours",
+    description: "window opens in 24 to 48 hours",
     variant: "info",
     dotClass: "bg-accent-violet",
+    colorVar: "--accent-violet",
   },
   Planned: {
-    label: "Planned",
-    description: "Further out",
+    label: "Later",
+    description: "further out, or no appointment yet",
     variant: "neutral",
     dotClass: "bg-muted-foreground/50",
+    colorVar: "--muted-foreground",
   },
 };
 
@@ -181,24 +198,111 @@ export function dutyStatusMeta(value: string) {
   return DUTY_STATUS_META[value];
 }
 
-export function scoreTone(score: number): string {
-  if (score >= 75) return "text-success-foreground";
-  if (score >= 50) return "text-warning-foreground";
-  return "text-muted-foreground";
-}
-
 export function formatMiles(value: number | null | undefined): string {
   if (value === null || value === undefined) return "—";
   return translate("{0} mi", Math.round(value).toLocaleString());
 }
 
+export type PickupTone = "danger" | "warning" | "neutral";
+
+export type PickupState = {
+  tone: PickupTone;
+  /** What the window is doing now: "Closed 25m ago", "Open · closes in 1h 48m". */
+  headline: string;
+  /** The window itself, so the headline can be checked at a glance. */
+  window: string;
+};
+
+type PickupMove = {
+  urgency: string;
+  originWindowStart: number;
+  originWindowEnd?: number | null;
+  originActualArrival?: number | null;
+  destinationWindowStart: number;
+  destinationWindowEnd?: number | null;
+};
+
+const FOUR_HOURS_SECONDS = 4 * 60 * 60;
+
+function windowLabel(
+  start: number,
+  end: number | null | undefined,
+  formatTime: (seconds: number) => string,
+  formatClock: (seconds: number) => string,
+): string {
+  if (start <= 0) return translate("no appointment");
+  if (!end || end <= start) return translate("window {0}", formatTime(start));
+  // A window inside one day names the day once: "Nov 1, 4:31–6:31 PM".
+  const sameDay = new Date(start * 1000).toDateString() === new Date(end * 1000).toDateString();
+  return translate(
+    "window {0}–{1}",
+    formatTime(start),
+    sameDay ? formatClock(end) : formatTime(end),
+  );
+}
+
 /**
- * Renders a countdown the way a dispatcher says it out loud: "40m late", "in 3h 10m".
+ * Where a move's next window stands, phrased from the server's urgency so the queue and the
+ * groups never disagree. Once the truck has arrived at pickup the delivery window is the
+ * one that matters, as it is on the server.
  */
-export function formatMinutesToPickup(minutes: number): string {
-  if (minutes === 0) return translate("due now");
-  const span = formatMinutesSpan(minutes);
-  return minutes < 0 ? translate("{0} late", span) : translate("in {0}", span);
+export function pickupState(
+  move: PickupMove,
+  nowSeconds: number,
+  formatTime: (seconds: number) => string,
+  formatClock: (seconds: number) => string = formatTime,
+): PickupState {
+  const delivering = (move.originActualArrival ?? 0) > 0;
+  const start = delivering ? move.destinationWindowStart : move.originWindowStart;
+  const rawEnd = delivering ? move.destinationWindowEnd : move.originWindowEnd;
+  const end = rawEnd && rawEnd > start ? rawEnd : start;
+  const window = windowLabel(start, rawEnd, formatTime, formatClock);
+
+  if (start <= 0) {
+    return { tone: "neutral", headline: translate("No appointment"), window };
+  }
+
+  if (move.urgency === "Late" || end < nowSeconds) {
+    const span = formatMinutesSpan(Math.max(1, Math.round((nowSeconds - end) / 60)));
+    return {
+      tone: "danger",
+      headline: delivering
+        ? translate("Delivery closed {0} ago", span)
+        : translate("Closed {0} ago", span),
+      window,
+    };
+  }
+
+  if (start <= nowSeconds) {
+    const span = formatMinutesSpan(Math.max(1, Math.round((end - nowSeconds) / 60)));
+    return {
+      tone: "warning",
+      headline: delivering
+        ? translate("Delivery open · closes in {0}", span)
+        : translate("Open · closes in {0}", span),
+      window,
+    };
+  }
+
+  const untilOpen = start - nowSeconds;
+  if (untilOpen <= FOUR_HOURS_SECONDS) {
+    const span = formatMinutesSpan(Math.max(1, Math.round(untilOpen / 60)));
+    return {
+      tone: "neutral",
+      headline: delivering
+        ? translate("Delivery opens in {0}", span)
+        : translate("Opens in {0}", span),
+      window,
+    };
+  }
+
+  return {
+    tone: "neutral",
+    headline: delivering
+      ? translate("Delivery opens {0}", formatTime(start))
+      : translate("Opens {0}", formatTime(start)),
+    window,
+  };
 }
 
 /**

@@ -252,9 +252,10 @@ queries, and CI holds every path to it:
 
 - GraphQL: every root field that returns a shipment, order, invoice or worker, directly
   or through a connection, checks read (or an operation implying it) on the kind in its
-  resolver (`TestEveryRootOfADatabaseScopedKindChecksItsRead`). One that such a mutation's
-  payload carries rather than returns (a training record's worker) is the root record only
-  for a caller who reads its kind or when the mutation declares `@authorizes`; otherwise
+  resolver (`TestEveryRootOfADatabaseScopedKindChecksItsRead`). A record of any kind that a
+  mutation's payload carries rather than returns (a training record's worker, an
+  assignment's customer) is the root record only for a caller who reads its kind or when
+  the mutation declares `@authorizes`, which its resolver must then check; otherwise
   the field guard shows it as linked, and `TestEveryLinkedFieldIsDeclared` holds client
   operations to that (`applyCreditMemo` and `unapplyCreditMemoApplication` check invoice
   read for it).
@@ -611,7 +612,10 @@ resource, operation, data scope or sensitivity the person saving does not hold:
   never be made to inherit);
 - API key create and update;
 - SCIM group role mappings, through `permissionports.RoleGrantGuard`, because a mapping
-  hands its role to whoever the identity provider puts in the group.
+  hands its role to whoever the identity provider puts in the group. The mapping records who
+  saved it, and provisioning checks again before every grant that this person is still an
+  active member who may grant the role; a grant whose saver lost that authority is taken back
+  ([scim.md](scim.md#groups-and-roles)).
 
 What the person holds is `GetEffectivePermissions`, which counts only the roles active in
 their session when the organization requires role activation. Comparing two people

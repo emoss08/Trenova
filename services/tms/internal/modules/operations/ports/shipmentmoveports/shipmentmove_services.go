@@ -3,6 +3,8 @@ package shipmentmoveports
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/operations/domain/stopactual"
+
 	"github.com/emoss08/trenova/internal/modules/operations/domain/movesplit"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -12,7 +14,7 @@ import (
 type StopActualPlanner func(
 	ctx context.Context,
 	move *shipment.ShipmentMove,
-) ([]shipment.StopActualChange, error)
+) ([]stopactual.Change, error)
 
 type ReconcileStopActualsRequest struct {
 	TenantInfo pagination.TenantInfo
@@ -22,7 +24,7 @@ type ReconcileStopActualsRequest struct {
 
 type ReconcileStopActualsResult struct {
 	Move    *shipment.ShipmentMove
-	Changes []shipment.StopActualChange
+	Changes []stopactual.Change
 }
 
 type StopActualPlan struct {

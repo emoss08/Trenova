@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config/databaseconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/rendererconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/searchconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/storageconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/systemconfig"
@@ -35,4 +36,33 @@ func TestProductionRefusesPlaceholderSecrets(t *testing.T) {
 
 	search.Enabled = false
 	require.NoError(t, search.ValidateProduction())
+}
+
+func TestProductionRendererNeedsCredentialsOnlyWhileConfigured(t *testing.T) {
+	t.Parallel()
+
+	const url = "http://gotenberg:3000"
+	for name, renderer := range map[string]*rendererconfig.Config{
+		"no password": {GotenbergURL: url, GotenbergUsername: "trenova"},
+		"no username": {GotenbergURL: url, GotenbergPassword: stagedGotenbergPassword},
+		"placeholder": {
+			GotenbergURL:      url,
+			GotenbergUsername: "trenova",
+			GotenbergPassword: "change-me",
+		},
+	} {
+		require.ErrorIs(
+			t,
+			renderer.ValidateProduction(),
+			rendererconfig.ErrProductionCredentialsRequired,
+			name,
+		)
+	}
+
+	require.NoError(t, (&rendererconfig.Config{}).ValidateProduction())
+	require.NoError(t, (&rendererconfig.Config{
+		GotenbergURL:      url,
+		GotenbergUsername: "trenova",
+		GotenbergPassword: stagedGotenbergPassword,
+	}).ValidateProduction())
 }

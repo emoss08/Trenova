@@ -12,7 +12,7 @@ import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Textarea } from "@trenova/shared/components/ui/textarea";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatClockDurationMs, formatMinutesSpan } from "@trenova/shared/lib/date";
-import { cn, formatCurrency, formatPerMile } from "@trenova/shared/lib/utils";
+import { cn, formatCurrency, formatCurrencyWhole, formatPerMile } from "@trenova/shared/lib/utils";
 import type { Shipment } from "@trenova/shared/types/shipment";
 import { useEffect, useState, type ReactNode } from "react";
 import { IdentityAvatar } from "../identity-avatar";
@@ -170,9 +170,12 @@ function CoverageOptions({
                 .filter(Boolean)
                 .join(" · ")}
               trailing={
-                ai && driver.fitPercent != null ? (
-                  <span className="text-success font-mono text-xs tabular-nums">
-                    {Math.round(driver.fitPercent)}%
+                ai && driver.costCents != null ? (
+                  <span
+                    className="text-muted-foreground font-mono text-xs tabular-nums"
+                    title={t("What this driver taking the move costs the plan")}
+                  >
+                    {formatCurrencyWhole(driver.costCents / 100)}
                   </span>
                 ) : null
               }

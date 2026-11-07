@@ -92,12 +92,14 @@ func DataTableConnectionFromGraphQL(
 func MemtableRequestFromGraphQL(
 	ctx context.Context,
 	input *gqlmodel.DataTableConnectionInput,
+	tenantInfo pagination.TenantInfo,
 ) memtable.Request {
 	if input == nil {
 		input = &gqlmodel.DataTableConnectionInput{}
 	}
 
 	return memtable.Request{
+		Tenant:            tenantInfo,
 		Query:             gqlscalar.StringValue(input.Query),
 		FieldFilters:      FieldFiltersFromGraphQL(input.FieldFilters),
 		FilterGroups:      FilterGroupsFromGraphQL(input.FilterGroups),

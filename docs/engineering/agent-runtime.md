@@ -2608,6 +2608,53 @@ conflict, and records the preview with the decision. A plan's later step on a
 record an earlier step changed runs against the version that step left. See
 [proposal-previews.md](proposal-previews.md).
 
+### Coverage proposals: one per move, decided where the move is
+
+Dispatch auto-assign (`dispatchautoassignservice`) is not a turn: it solves the board and
+files one `dispatch_assign_move` proposal per move it covers, under an inline run whose
+trigger says who asked (`Manual` from the console, `Chat` from the plan tool, `Scheduled`
+from the horizon sweep, `Event` from a refresh). Each proposal pins the move it covers:
+`TargetResource` `shipment_move`, `TargetID` the move, `TargetVersion` the move's version as
+the plan read it.
+
+- **A move carries one pending proposal.** `ReplacePendingForTargets` files a plan's
+  proposals and, in the same write, supersedes every pending proposal of the same tool for
+  the same moves from earlier runs (`idx_agent_proposals_pending_target`). Re-planning no
+  longer stacks sets in Decisions that each expire in seven days; a move the new plan left
+  out keeps its proposal.
+- **The board carries it.** `dispatchBoard` and `dispatchMove` attach each uncovered move's
+  proposals through `CoverageProposals`, two reads for the whole board and only for a reader
+  who may read agent proposals: the pending one (`DispatchMoveProposal`, from
+  `ListPendingByTargets`) and the last approval whose assignment was refused
+  (`DispatchMoveFailedProposal`, from `ListFailedByTargets` on
+  `idx_agent_proposals_failed_target`). `stale` is true when the move moved on since the
+  plan; approving one is refused by the executor's version check. A failure stays while the
+  move is at the version it failed on and no newer proposal exists, so an approval that did
+  not go through never reads as "no proposal yet"; its `reason` is
+  `errortypes.SummaryOfText` of the stored error, which says where in words ("Move 1, stop
+  1: …"). The decision result's `error` is `errortypes.Summary` of the same refusal.
+- **Deciding it is the same decision as in Decisions.** The console approves with
+  `decideAgentProposal` and the dry run's digest (`approved_from_dispatch_console`) and
+  declines with a required note (`declined_from_dispatch_console`), so a pairing is decided
+  once and leaves both places together. Undo takes an approval back with `undoMyDecision`
+  while it waits out its window, and unassigns once it has run.
+- **Proposals can be waiting before anyone asks.** With `autoProposeCoverage` on (under
+  `enableAutoAssignment`, off by default because each plan is real spend), a shipment
+  created or a move unassigned is seen by `dispatchcoveragewatch` (an `AgentEventObserver`
+  on the event publisher) and signals `DispatchCoverageRefreshWorkflow`: one debounced
+  workflow per organization and business unit, two minutes of quiet before it plans, so a
+  burst of new loads plans once. The hourly sweep plans these organizations too and keeps
+  their proposals; an organization that plans the horizon only to see risk still has its
+  sweep's proposals retired.
+- **The plan comes from operations, priced.** The service calls
+  `dispatchplanports.Planner` and never operations' application code. Each pairing carries
+  its cost in cents, the move's coverage price, the driver's value and the exact extra cost
+  of each alternative. The confidence and rationale come from those numbers. The planner
+  stores the same prices per move for the board; see [dispatch-optimizer.md](dispatch-optimizer.md).
+- **A person's click never runs the plan's writes.** "Propose coverage" only proposes,
+  whatever the autonomy tier; only the scheduled and event-driven plans apply pairings the
+  tier lets run on their own.
+
 ### Who a run acts as
 
 A run nobody is in has two identities, kept apart on purpose.

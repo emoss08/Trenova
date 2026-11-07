@@ -35,6 +35,7 @@ var toolMinutesSaved = map[string]int{
 	"dispatch_assign_move":        12,
 	"dispatch_plan":               20,
 	"dispatch_rank_candidates":    8,
+	"dispatch_forecast_demand":   readMinutesSaved,
 	"shipment_place_hold":         4,
 	"shipment_release_hold":       4,
 	"dispatch_record_stop_actual": 2,

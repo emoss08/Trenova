@@ -91,14 +91,14 @@ type FuelIndexesTable struct {
 // FuelIndexes references the fuel_indices table.
 var FuelIndexes = &FuelIndexesTable{
 	TableBase:      keel.TableBase{Ref: &fuelIndexesRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fuelIndexesRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fuelIndexesRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fuelIndexesRef, Index: 2}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &fuelIndexesRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &fuelIndexesRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &fuelIndexesRef, Index: 2}}},
 	Name:           keel.StringCol{Col: keel.Col{Ref: &fuelIndexesRef, Index: 3}},
 	Code:           keel.StringCol{Col: keel.Col{Ref: &fuelIndexesRef, Index: 4}},
 	Description:    keel.StringCol{Col: keel.Col{Ref: &fuelIndexesRef, Index: 5}},
-	Source:         IndexSourceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fuelIndexesRef, Index: 6}}},
-	FuelType:       FuelTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fuelIndexesRef, Index: 7}}},
+	Source:         IndexSourceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &fuelIndexesRef, Index: 6}}},
+	FuelType:       FuelTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &fuelIndexesRef, Index: 7}}},
 	Region:         keel.StringCol{Col: keel.Col{Ref: &fuelIndexesRef, Index: 8}},
 	EIASeriesID:    keel.StringCol{Col: keel.Col{Ref: &fuelIndexesRef, Index: 9}},
 	Currency:       keel.StringCol{Col: keel.Col{Ref: &fuelIndexesRef, Index: 10}},
@@ -114,14 +114,14 @@ var FuelIndexes = &FuelIndexesTable{
 func BuildFuelIndexes(r *keel.Ref) *FuelIndexesTable {
 	return &FuelIndexesTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		Name:           keel.StringCol{Col: keel.Col{Ref: r, Index: 3}},
 		Code:           keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		Description:    keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
-		Source:         IndexSourceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		FuelType:       FuelTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		Source:         IndexSourceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		FuelType:       FuelTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
 		Region:         keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
 		EIASeriesID:    keel.StringCol{Col: keel.Col{Ref: r, Index: 9}},
 		Currency:       keel.StringCol{Col: keel.Col{Ref: r, Index: 10}},
@@ -149,8 +149,6 @@ func (t *FuelIndexesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (
 
 // FuelIndexesQuery is a query over fuelsurcharge.FuelIndex.
 type FuelIndexesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*fuelsurcharge.FuelIndex] = (*FuelIndexesTable)(nil)
 
 var _ keel.Query[*fuelsurcharge.FuelIndex] = (*FuelIndexesQuery)(nil)
 
@@ -266,42 +264,42 @@ func (t *FuelIndexesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*fue
 
 // Create inserts row.
 func (t *FuelIndexesTable) Create(ctx context.Context, db *keel.DB, row *fuelsurcharge.FuelIndex) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *FuelIndexesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*fuelsurcharge.FuelIndex) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *FuelIndexesTable) Save(ctx context.Context, db *keel.DB, row *fuelsurcharge.FuelIndex, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *FuelIndexesTable) SaveExcept(ctx context.Context, db *keel.DB, row *fuelsurcharge.FuelIndex, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *FuelIndexesTable) DeleteRow(ctx context.Context, db *keel.DB, row *fuelsurcharge.FuelIndex) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *FuelIndexesTable) Upsert(ctx context.Context, db *keel.DB, rows []*fuelsurcharge.FuelIndex, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *FuelIndexesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*fuelsurcharge.FuelIndex, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *FuelIndexesTable) Copy(ctx context.Context, db *keel.DB, rows []*fuelsurcharge.FuelIndex) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -473,37 +471,45 @@ func (q *FuelIndexesQuery) Clone() keel.Query[*fuelsurcharge.FuelIndex] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *FuelIndexesQuery) One(ctx context.Context, db *keel.DB) (*fuelsurcharge.FuelIndex, error) {
-	return keel.One[*fuelsurcharge.FuelIndex](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*fuelsurcharge.FuelIndex)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *FuelIndexesQuery) First(ctx context.Context, db *keel.DB) (*fuelsurcharge.FuelIndex, error) {
-	return keel.First[*fuelsurcharge.FuelIndex](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*fuelsurcharge.FuelIndex)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *FuelIndexesQuery) List(ctx context.Context, db *keel.DB) ([]*fuelsurcharge.FuelIndex, error) {
-	return keel.List[*fuelsurcharge.FuelIndex](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*fuelsurcharge.FuelIndex)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *FuelIndexesQuery) All(ctx context.Context, db *keel.DB) ([]*fuelsurcharge.FuelIndex, error) {
-	return keel.All[*fuelsurcharge.FuelIndex](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*fuelsurcharge.FuelIndex)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *FuelIndexesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*fuelsurcharge.FuelIndex, error) {
-	return keel.UpdateReturning[*fuelsurcharge.FuelIndex](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*fuelsurcharge.FuelIndex)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *FuelIndexesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*fuelsurcharge.FuelIndex], error) {
-	return keel.PageOf[*fuelsurcharge.FuelIndex](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*fuelsurcharge.FuelIndex])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *FuelIndexesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*fuelsurcharge.FuelIndex) error) error {
-	return keel.Each[*fuelsurcharge.FuelIndex](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*fuelsurcharge.FuelIndex)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newFuelIndex() unsafe.Pointer { return unsafe.Pointer(new(fuelsurcharge.FuelIndex)) }
@@ -678,15 +684,15 @@ type FuelIndexPricesTable struct {
 // FuelIndexPrices references the fuel_index_prices table.
 var FuelIndexPrices = &FuelIndexPricesTable{
 	TableBase:      keel.TableBase{Ref: &fuelIndexPricesRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fuelIndexPricesRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fuelIndexPricesRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fuelIndexPricesRef, Index: 2}}},
-	FuelIndexID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fuelIndexPricesRef, Index: 3}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &fuelIndexPricesRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &fuelIndexPricesRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &fuelIndexPricesRef, Index: 2}}},
+	FuelIndexID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &fuelIndexPricesRef, Index: 3}}},
 	PriceDate:      keel.StringCol{Col: keel.Col{Ref: &fuelIndexPricesRef, Index: 4}},
 	Price:          keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &fuelIndexPricesRef, Index: 5}}},
 	Currency:       keel.StringCol{Col: keel.Col{Ref: &fuelIndexPricesRef, Index: 6}},
 	IsManual:       keel.BoolCol{Col: keel.Col{Ref: &fuelIndexPricesRef, Index: 7}},
-	EnteredByID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fuelIndexPricesRef, Index: 8}}},
+	EnteredByID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &fuelIndexPricesRef, Index: 8}}},
 	SourceRaw:      keel.StringCol{Col: keel.Col{Ref: &fuelIndexPricesRef, Index: 9}},
 	FetchedAt:      keel.TimeCol{Col: keel.Col{Ref: &fuelIndexPricesRef, Index: 10}},
 }
@@ -695,15 +701,15 @@ var FuelIndexPrices = &FuelIndexPricesTable{
 func BuildFuelIndexPrices(r *keel.Ref) *FuelIndexPricesTable {
 	return &FuelIndexPricesTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		FuelIndexID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		FuelIndexID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		PriceDate:      keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		Price:          keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 5}}},
 		Currency:       keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
 		IsManual:       keel.BoolCol{Col: keel.Col{Ref: r, Index: 7}},
-		EnteredByID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		EnteredByID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
 		SourceRaw:      keel.StringCol{Col: keel.Col{Ref: r, Index: 9}},
 		FetchedAt:      keel.TimeCol{Col: keel.Col{Ref: r, Index: 10}},
 	}
@@ -729,8 +735,6 @@ func (t *FuelIndexPricesTable) Get(ctx context.Context, db *keel.DB, key pulid.I
 
 // FuelIndexPricesQuery is a query over fuelsurcharge.FuelIndexPrice.
 type FuelIndexPricesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*fuelsurcharge.FuelIndexPrice] = (*FuelIndexPricesTable)(nil)
 
 var _ keel.Query[*fuelsurcharge.FuelIndexPrice] = (*FuelIndexPricesQuery)(nil)
 
@@ -846,42 +850,42 @@ func (t *FuelIndexPricesTable) Compute(col keel.Column, e keel.Expr) keel.Query[
 
 // Create inserts row.
 func (t *FuelIndexPricesTable) Create(ctx context.Context, db *keel.DB, row *fuelsurcharge.FuelIndexPrice) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *FuelIndexPricesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*fuelsurcharge.FuelIndexPrice) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *FuelIndexPricesTable) Save(ctx context.Context, db *keel.DB, row *fuelsurcharge.FuelIndexPrice, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *FuelIndexPricesTable) SaveExcept(ctx context.Context, db *keel.DB, row *fuelsurcharge.FuelIndexPrice, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *FuelIndexPricesTable) DeleteRow(ctx context.Context, db *keel.DB, row *fuelsurcharge.FuelIndexPrice) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *FuelIndexPricesTable) Upsert(ctx context.Context, db *keel.DB, rows []*fuelsurcharge.FuelIndexPrice, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *FuelIndexPricesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*fuelsurcharge.FuelIndexPrice, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *FuelIndexPricesTable) Copy(ctx context.Context, db *keel.DB, rows []*fuelsurcharge.FuelIndexPrice) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1053,37 +1057,45 @@ func (q *FuelIndexPricesQuery) Clone() keel.Query[*fuelsurcharge.FuelIndexPrice]
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *FuelIndexPricesQuery) One(ctx context.Context, db *keel.DB) (*fuelsurcharge.FuelIndexPrice, error) {
-	return keel.One[*fuelsurcharge.FuelIndexPrice](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*fuelsurcharge.FuelIndexPrice)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *FuelIndexPricesQuery) First(ctx context.Context, db *keel.DB) (*fuelsurcharge.FuelIndexPrice, error) {
-	return keel.First[*fuelsurcharge.FuelIndexPrice](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*fuelsurcharge.FuelIndexPrice)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *FuelIndexPricesQuery) List(ctx context.Context, db *keel.DB) ([]*fuelsurcharge.FuelIndexPrice, error) {
-	return keel.List[*fuelsurcharge.FuelIndexPrice](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*fuelsurcharge.FuelIndexPrice)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *FuelIndexPricesQuery) All(ctx context.Context, db *keel.DB) ([]*fuelsurcharge.FuelIndexPrice, error) {
-	return keel.All[*fuelsurcharge.FuelIndexPrice](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*fuelsurcharge.FuelIndexPrice)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *FuelIndexPricesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*fuelsurcharge.FuelIndexPrice, error) {
-	return keel.UpdateReturning[*fuelsurcharge.FuelIndexPrice](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*fuelsurcharge.FuelIndexPrice)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *FuelIndexPricesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*fuelsurcharge.FuelIndexPrice], error) {
-	return keel.PageOf[*fuelsurcharge.FuelIndexPrice](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*fuelsurcharge.FuelIndexPrice])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *FuelIndexPricesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*fuelsurcharge.FuelIndexPrice) error) error {
-	return keel.Each[*fuelsurcharge.FuelIndexPrice](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*fuelsurcharge.FuelIndexPrice)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newFuelIndexPrice() unsafe.Pointer { return unsafe.Pointer(new(fuelsurcharge.FuelIndexPrice)) }
@@ -1287,29 +1299,29 @@ type FuelSurchargeProgramsTable struct {
 // FuelSurchargePrograms references the fuel_surcharge_programs table.
 var FuelSurchargePrograms = &FuelSurchargeProgramsTable{
 	TableBase:            keel.TableBase{Ref: &fuelSurchargeProgramsRef},
-	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fuelSurchargeProgramsRef, Index: 0}}},
-	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fuelSurchargeProgramsRef, Index: 1}}},
-	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fuelSurchargeProgramsRef, Index: 2}}},
+	ID:                   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &fuelSurchargeProgramsRef, Index: 0}}},
+	BusinessUnitID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &fuelSurchargeProgramsRef, Index: 1}}},
+	OrganizationID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &fuelSurchargeProgramsRef, Index: 2}}},
 	Name:                 keel.StringCol{Col: keel.Col{Ref: &fuelSurchargeProgramsRef, Index: 3}},
 	Code:                 keel.StringCol{Col: keel.Col{Ref: &fuelSurchargeProgramsRef, Index: 4}},
 	Description:          keel.StringCol{Col: keel.Col{Ref: &fuelSurchargeProgramsRef, Index: 5}},
-	Status:               ProgramStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fuelSurchargeProgramsRef, Index: 6}}},
-	FuelIndexID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fuelSurchargeProgramsRef, Index: 7}}},
-	AccessorialChargeID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fuelSurchargeProgramsRef, Index: 8}}},
-	Method:               ProgramMethodCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fuelSurchargeProgramsRef, Index: 9}}},
+	Status:               ProgramStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &fuelSurchargeProgramsRef, Index: 6}}},
+	FuelIndexID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &fuelSurchargeProgramsRef, Index: 7}}},
+	AccessorialChargeID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &fuelSurchargeProgramsRef, Index: 8}}},
+	Method:               ProgramMethodCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &fuelSurchargeProgramsRef, Index: 9}}},
 	PegPrice:             keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &fuelSurchargeProgramsRef, Index: 10}}},
 	Increment:            keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &fuelSurchargeProgramsRef, Index: 11}}},
 	IncrementRate:        keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &fuelSurchargeProgramsRef, Index: 12}}},
 	MilesPerGallon:       keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &fuelSurchargeProgramsRef, Index: 13}}},
-	PercentBasis:         PercentBasisCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fuelSurchargeProgramsRef, Index: 14}}},
-	StepRounding:         StepRoundingCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fuelSurchargeProgramsRef, Index: 15}}},
-	RateRounding:         RateRoundingCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fuelSurchargeProgramsRef, Index: 16}}},
+	PercentBasis:         PercentBasisCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &fuelSurchargeProgramsRef, Index: 14}}},
+	StepRounding:         StepRoundingCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &fuelSurchargeProgramsRef, Index: 15}}},
+	RateRounding:         RateRoundingCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &fuelSurchargeProgramsRef, Index: 16}}},
 	RatePrecision:        keel.Int16Col{Col: keel.Col{Ref: &fuelSurchargeProgramsRef, Index: 17}},
 	MinAmount:            keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &fuelSurchargeProgramsRef, Index: 18}}},
 	MaxAmount:            keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &fuelSurchargeProgramsRef, Index: 19}}},
-	DateBasis:            DateBasisCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fuelSurchargeProgramsRef, Index: 20}}},
+	DateBasis:            DateBasisCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &fuelSurchargeProgramsRef, Index: 20}}},
 	PriceEffectiveDay:    keel.Int16Col{Col: keel.Col{Ref: &fuelSurchargeProgramsRef, Index: 21}},
-	MissingPriceFallback: MissingPriceFallbackCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fuelSurchargeProgramsRef, Index: 22}}},
+	MissingPriceFallback: MissingPriceFallbackCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &fuelSurchargeProgramsRef, Index: 22}}},
 	EffectiveStartDate:   keel.Int64Col{Col: keel.Col{Ref: &fuelSurchargeProgramsRef, Index: 23}},
 	EffectiveEndDate:     keel.Int64Col{Col: keel.Col{Ref: &fuelSurchargeProgramsRef, Index: 24}},
 	ShipmentTypeIDs:      keel.JSONBCol{Col: keel.Col{Ref: &fuelSurchargeProgramsRef, Index: 25}},
@@ -1327,29 +1339,29 @@ var FuelSurchargePrograms = &FuelSurchargeProgramsTable{
 func BuildFuelSurchargePrograms(r *keel.Ref) *FuelSurchargeProgramsTable {
 	return &FuelSurchargeProgramsTable{
 		TableBase:            keel.TableBase{Ref: r},
-		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ID:                   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		Name:                 keel.StringCol{Col: keel.Col{Ref: r, Index: 3}},
 		Code:                 keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		Description:          keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
-		Status:               ProgramStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		FuelIndexID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
-		AccessorialChargeID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
-		Method:               ProgramMethodCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		Status:               ProgramStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		FuelIndexID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		AccessorialChargeID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		Method:               ProgramMethodCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
 		PegPrice:             keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 10}}},
 		Increment:            keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 11}}},
 		IncrementRate:        keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 12}}},
 		MilesPerGallon:       keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 13}}},
-		PercentBasis:         PercentBasisCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 14}}},
-		StepRounding:         StepRoundingCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 15}}},
-		RateRounding:         RateRoundingCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 16}}},
+		PercentBasis:         PercentBasisCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 14}}},
+		StepRounding:         StepRoundingCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 15}}},
+		RateRounding:         RateRoundingCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 16}}},
 		RatePrecision:        keel.Int16Col{Col: keel.Col{Ref: r, Index: 17}},
 		MinAmount:            keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 18}}},
 		MaxAmount:            keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 19}}},
-		DateBasis:            DateBasisCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 20}}},
+		DateBasis:            DateBasisCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 20}}},
 		PriceEffectiveDay:    keel.Int16Col{Col: keel.Col{Ref: r, Index: 21}},
-		MissingPriceFallback: MissingPriceFallbackCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 22}}},
+		MissingPriceFallback: MissingPriceFallbackCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 22}}},
 		EffectiveStartDate:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 23}},
 		EffectiveEndDate:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 24}},
 		ShipmentTypeIDs:      keel.JSONBCol{Col: keel.Col{Ref: r, Index: 25}},
@@ -1394,8 +1406,6 @@ func (t *FuelSurchargeProgramsTable) Get(ctx context.Context, db *keel.DB, key p
 
 // FuelSurchargeProgramsQuery is a query over fuelsurcharge.FuelSurchargeProgram.
 type FuelSurchargeProgramsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*fuelsurcharge.FuelSurchargeProgram] = (*FuelSurchargeProgramsTable)(nil)
 
 var _ keel.Query[*fuelsurcharge.FuelSurchargeProgram] = (*FuelSurchargeProgramsQuery)(nil)
 
@@ -1511,42 +1521,42 @@ func (t *FuelSurchargeProgramsTable) Compute(col keel.Column, e keel.Expr) keel.
 
 // Create inserts row.
 func (t *FuelSurchargeProgramsTable) Create(ctx context.Context, db *keel.DB, row *fuelsurcharge.FuelSurchargeProgram) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *FuelSurchargeProgramsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*fuelsurcharge.FuelSurchargeProgram) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *FuelSurchargeProgramsTable) Save(ctx context.Context, db *keel.DB, row *fuelsurcharge.FuelSurchargeProgram, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *FuelSurchargeProgramsTable) SaveExcept(ctx context.Context, db *keel.DB, row *fuelsurcharge.FuelSurchargeProgram, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *FuelSurchargeProgramsTable) DeleteRow(ctx context.Context, db *keel.DB, row *fuelsurcharge.FuelSurchargeProgram) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *FuelSurchargeProgramsTable) Upsert(ctx context.Context, db *keel.DB, rows []*fuelsurcharge.FuelSurchargeProgram, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *FuelSurchargeProgramsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*fuelsurcharge.FuelSurchargeProgram, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *FuelSurchargeProgramsTable) Copy(ctx context.Context, db *keel.DB, rows []*fuelsurcharge.FuelSurchargeProgram) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1718,37 +1728,45 @@ func (q *FuelSurchargeProgramsQuery) Clone() keel.Query[*fuelsurcharge.FuelSurch
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *FuelSurchargeProgramsQuery) One(ctx context.Context, db *keel.DB) (*fuelsurcharge.FuelSurchargeProgram, error) {
-	return keel.One[*fuelsurcharge.FuelSurchargeProgram](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*fuelsurcharge.FuelSurchargeProgram)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *FuelSurchargeProgramsQuery) First(ctx context.Context, db *keel.DB) (*fuelsurcharge.FuelSurchargeProgram, error) {
-	return keel.First[*fuelsurcharge.FuelSurchargeProgram](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*fuelsurcharge.FuelSurchargeProgram)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *FuelSurchargeProgramsQuery) List(ctx context.Context, db *keel.DB) ([]*fuelsurcharge.FuelSurchargeProgram, error) {
-	return keel.List[*fuelsurcharge.FuelSurchargeProgram](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*fuelsurcharge.FuelSurchargeProgram)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *FuelSurchargeProgramsQuery) All(ctx context.Context, db *keel.DB) ([]*fuelsurcharge.FuelSurchargeProgram, error) {
-	return keel.All[*fuelsurcharge.FuelSurchargeProgram](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*fuelsurcharge.FuelSurchargeProgram)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *FuelSurchargeProgramsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*fuelsurcharge.FuelSurchargeProgram, error) {
-	return keel.UpdateReturning[*fuelsurcharge.FuelSurchargeProgram](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*fuelsurcharge.FuelSurchargeProgram)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *FuelSurchargeProgramsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*fuelsurcharge.FuelSurchargeProgram], error) {
-	return keel.PageOf[*fuelsurcharge.FuelSurchargeProgram](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*fuelsurcharge.FuelSurchargeProgram])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *FuelSurchargeProgramsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*fuelsurcharge.FuelSurchargeProgram) error) error {
-	return keel.Each[*fuelsurcharge.FuelSurchargeProgram](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*fuelsurcharge.FuelSurchargeProgram)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newFuelSurchargeProgram() unsafe.Pointer {
@@ -2008,10 +2026,10 @@ type FuelSurchargeTableRowsTable struct {
 // FuelSurchargeTableRows references the fuel_surcharge_table_rows table.
 var FuelSurchargeTableRows = &FuelSurchargeTableRowsTable{
 	TableBase:              keel.TableBase{Ref: &fuelSurchargeTableRowsRef},
-	ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fuelSurchargeTableRowsRef, Index: 0}}},
-	BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fuelSurchargeTableRowsRef, Index: 1}}},
-	OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fuelSurchargeTableRowsRef, Index: 2}}},
-	FuelSurchargeProgramID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &fuelSurchargeTableRowsRef, Index: 3}}},
+	ID:                     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &fuelSurchargeTableRowsRef, Index: 0}}},
+	BusinessUnitID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &fuelSurchargeTableRowsRef, Index: 1}}},
+	OrganizationID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &fuelSurchargeTableRowsRef, Index: 2}}},
+	FuelSurchargeProgramID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &fuelSurchargeTableRowsRef, Index: 3}}},
 	PriceMin:               keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &fuelSurchargeTableRowsRef, Index: 4}}},
 	PriceMax:               keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &fuelSurchargeTableRowsRef, Index: 5}}},
 	Value:                  keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &fuelSurchargeTableRowsRef, Index: 6}}},
@@ -2024,10 +2042,10 @@ var FuelSurchargeTableRows = &FuelSurchargeTableRowsTable{
 func BuildFuelSurchargeTableRows(r *keel.Ref) *FuelSurchargeTableRowsTable {
 	return &FuelSurchargeTableRowsTable{
 		TableBase:              keel.TableBase{Ref: r},
-		ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		FuelSurchargeProgramID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:                     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		FuelSurchargeProgramID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		PriceMin:               keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 4}}},
 		PriceMax:               keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 5}}},
 		Value:                  keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 6}}},
@@ -2052,8 +2070,6 @@ func (t *FuelSurchargeTableRowsTable) Get(ctx context.Context, db *keel.DB, key 
 
 // FuelSurchargeTableRowsQuery is a query over fuelsurcharge.FuelSurchargeTableRow.
 type FuelSurchargeTableRowsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*fuelsurcharge.FuelSurchargeTableRow] = (*FuelSurchargeTableRowsTable)(nil)
 
 var _ keel.Query[*fuelsurcharge.FuelSurchargeTableRow] = (*FuelSurchargeTableRowsQuery)(nil)
 
@@ -2169,42 +2185,42 @@ func (t *FuelSurchargeTableRowsTable) Compute(col keel.Column, e keel.Expr) keel
 
 // Create inserts row.
 func (t *FuelSurchargeTableRowsTable) Create(ctx context.Context, db *keel.DB, row *fuelsurcharge.FuelSurchargeTableRow) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *FuelSurchargeTableRowsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*fuelsurcharge.FuelSurchargeTableRow) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *FuelSurchargeTableRowsTable) Save(ctx context.Context, db *keel.DB, row *fuelsurcharge.FuelSurchargeTableRow, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *FuelSurchargeTableRowsTable) SaveExcept(ctx context.Context, db *keel.DB, row *fuelsurcharge.FuelSurchargeTableRow, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *FuelSurchargeTableRowsTable) DeleteRow(ctx context.Context, db *keel.DB, row *fuelsurcharge.FuelSurchargeTableRow) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *FuelSurchargeTableRowsTable) Upsert(ctx context.Context, db *keel.DB, rows []*fuelsurcharge.FuelSurchargeTableRow, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *FuelSurchargeTableRowsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*fuelsurcharge.FuelSurchargeTableRow, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *FuelSurchargeTableRowsTable) Copy(ctx context.Context, db *keel.DB, rows []*fuelsurcharge.FuelSurchargeTableRow) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -2376,37 +2392,45 @@ func (q *FuelSurchargeTableRowsQuery) Clone() keel.Query[*fuelsurcharge.FuelSurc
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *FuelSurchargeTableRowsQuery) One(ctx context.Context, db *keel.DB) (*fuelsurcharge.FuelSurchargeTableRow, error) {
-	return keel.One[*fuelsurcharge.FuelSurchargeTableRow](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*fuelsurcharge.FuelSurchargeTableRow)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *FuelSurchargeTableRowsQuery) First(ctx context.Context, db *keel.DB) (*fuelsurcharge.FuelSurchargeTableRow, error) {
-	return keel.First[*fuelsurcharge.FuelSurchargeTableRow](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*fuelsurcharge.FuelSurchargeTableRow)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *FuelSurchargeTableRowsQuery) List(ctx context.Context, db *keel.DB) ([]*fuelsurcharge.FuelSurchargeTableRow, error) {
-	return keel.List[*fuelsurcharge.FuelSurchargeTableRow](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*fuelsurcharge.FuelSurchargeTableRow)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *FuelSurchargeTableRowsQuery) All(ctx context.Context, db *keel.DB) ([]*fuelsurcharge.FuelSurchargeTableRow, error) {
-	return keel.All[*fuelsurcharge.FuelSurchargeTableRow](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*fuelsurcharge.FuelSurchargeTableRow)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *FuelSurchargeTableRowsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*fuelsurcharge.FuelSurchargeTableRow, error) {
-	return keel.UpdateReturning[*fuelsurcharge.FuelSurchargeTableRow](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*fuelsurcharge.FuelSurchargeTableRow)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *FuelSurchargeTableRowsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*fuelsurcharge.FuelSurchargeTableRow], error) {
-	return keel.PageOf[*fuelsurcharge.FuelSurchargeTableRow](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*fuelsurcharge.FuelSurchargeTableRow])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *FuelSurchargeTableRowsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*fuelsurcharge.FuelSurchargeTableRow) error) error {
-	return keel.Each[*fuelsurcharge.FuelSurchargeTableRow](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*fuelsurcharge.FuelSurchargeTableRow)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newFuelSurchargeTableRow() unsafe.Pointer {
@@ -2529,270 +2553,242 @@ var enumStepRounding = [...]schema.EnumValue{
 }
 
 // DateBasisCol is a column of fuelsurcharge.DateBasis values.
-type DateBasisCol struct{ keel.StringCol }
+type DateBasisCol struct{ keel.TypedStringCol }
 
-func (c DateBasisCol) Eq(v fuelsurcharge.DateBasis) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c DateBasisCol) Ne(v fuelsurcharge.DateBasis) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c DateBasisCol) Gt(v fuelsurcharge.DateBasis) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c DateBasisCol) Gte(v fuelsurcharge.DateBasis) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c DateBasisCol) Lt(v fuelsurcharge.DateBasis) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c DateBasisCol) Lte(v fuelsurcharge.DateBasis) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c DateBasisCol) Eq(v fuelsurcharge.DateBasis) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c DateBasisCol) Ne(v fuelsurcharge.DateBasis) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c DateBasisCol) Gt(v fuelsurcharge.DateBasis) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c DateBasisCol) Gte(v fuelsurcharge.DateBasis) keel.Pred { return c.Text().Gte(string(v)) }
+func (c DateBasisCol) Lt(v fuelsurcharge.DateBasis) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c DateBasisCol) Lte(v fuelsurcharge.DateBasis) keel.Pred { return c.Text().Lte(string(v)) }
 func (c DateBasisCol) IsDistinctFrom(v fuelsurcharge.DateBasis) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c DateBasisCol) Between(lo, hi fuelsurcharge.DateBasis) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c DateBasisCol) To(v fuelsurcharge.DateBasis) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c DateBasisCol) To(v fuelsurcharge.DateBasis) keel.Assignment { return c.Text().To(string(v)) }
 func (c DateBasisCol) In(vs ...fuelsurcharge.DateBasis) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c DateBasisCol) NotIn(vs ...fuelsurcharge.DateBasis) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // FuelTypeCol is a column of fuelsurcharge.FuelType values.
-type FuelTypeCol struct{ keel.StringCol }
+type FuelTypeCol struct{ keel.TypedStringCol }
 
-func (c FuelTypeCol) Eq(v fuelsurcharge.FuelType) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c FuelTypeCol) Ne(v fuelsurcharge.FuelType) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c FuelTypeCol) Gt(v fuelsurcharge.FuelType) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c FuelTypeCol) Gte(v fuelsurcharge.FuelType) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c FuelTypeCol) Lt(v fuelsurcharge.FuelType) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c FuelTypeCol) Lte(v fuelsurcharge.FuelType) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c FuelTypeCol) Eq(v fuelsurcharge.FuelType) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c FuelTypeCol) Ne(v fuelsurcharge.FuelType) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c FuelTypeCol) Gt(v fuelsurcharge.FuelType) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c FuelTypeCol) Gte(v fuelsurcharge.FuelType) keel.Pred { return c.Text().Gte(string(v)) }
+func (c FuelTypeCol) Lt(v fuelsurcharge.FuelType) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c FuelTypeCol) Lte(v fuelsurcharge.FuelType) keel.Pred { return c.Text().Lte(string(v)) }
 func (c FuelTypeCol) IsDistinctFrom(v fuelsurcharge.FuelType) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c FuelTypeCol) Between(lo, hi fuelsurcharge.FuelType) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c FuelTypeCol) To(v fuelsurcharge.FuelType) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c FuelTypeCol) To(v fuelsurcharge.FuelType) keel.Assignment { return c.Text().To(string(v)) }
 func (c FuelTypeCol) In(vs ...fuelsurcharge.FuelType) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c FuelTypeCol) NotIn(vs ...fuelsurcharge.FuelType) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // IndexSourceCol is a column of fuelsurcharge.IndexSource values.
-type IndexSourceCol struct{ keel.StringCol }
+type IndexSourceCol struct{ keel.TypedStringCol }
 
-func (c IndexSourceCol) Eq(v fuelsurcharge.IndexSource) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c IndexSourceCol) Ne(v fuelsurcharge.IndexSource) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c IndexSourceCol) Gt(v fuelsurcharge.IndexSource) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c IndexSourceCol) Gte(v fuelsurcharge.IndexSource) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c IndexSourceCol) Lt(v fuelsurcharge.IndexSource) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c IndexSourceCol) Lte(v fuelsurcharge.IndexSource) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c IndexSourceCol) Eq(v fuelsurcharge.IndexSource) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c IndexSourceCol) Ne(v fuelsurcharge.IndexSource) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c IndexSourceCol) Gt(v fuelsurcharge.IndexSource) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c IndexSourceCol) Gte(v fuelsurcharge.IndexSource) keel.Pred { return c.Text().Gte(string(v)) }
+func (c IndexSourceCol) Lt(v fuelsurcharge.IndexSource) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c IndexSourceCol) Lte(v fuelsurcharge.IndexSource) keel.Pred { return c.Text().Lte(string(v)) }
 func (c IndexSourceCol) IsDistinctFrom(v fuelsurcharge.IndexSource) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c IndexSourceCol) Between(lo, hi fuelsurcharge.IndexSource) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c IndexSourceCol) To(v fuelsurcharge.IndexSource) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c IndexSourceCol) In(vs ...fuelsurcharge.IndexSource) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c IndexSourceCol) NotIn(vs ...fuelsurcharge.IndexSource) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // MissingPriceFallbackCol is a column of fuelsurcharge.MissingPriceFallback values.
-type MissingPriceFallbackCol struct{ keel.StringCol }
+type MissingPriceFallbackCol struct{ keel.TypedStringCol }
 
 func (c MissingPriceFallbackCol) Eq(v fuelsurcharge.MissingPriceFallback) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c MissingPriceFallbackCol) Ne(v fuelsurcharge.MissingPriceFallback) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c MissingPriceFallbackCol) Gt(v fuelsurcharge.MissingPriceFallback) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c MissingPriceFallbackCol) Gte(v fuelsurcharge.MissingPriceFallback) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c MissingPriceFallbackCol) Lt(v fuelsurcharge.MissingPriceFallback) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c MissingPriceFallbackCol) Lte(v fuelsurcharge.MissingPriceFallback) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c MissingPriceFallbackCol) IsDistinctFrom(v fuelsurcharge.MissingPriceFallback) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c MissingPriceFallbackCol) Between(lo, hi fuelsurcharge.MissingPriceFallback) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c MissingPriceFallbackCol) To(v fuelsurcharge.MissingPriceFallback) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c MissingPriceFallbackCol) In(vs ...fuelsurcharge.MissingPriceFallback) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c MissingPriceFallbackCol) NotIn(vs ...fuelsurcharge.MissingPriceFallback) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // PercentBasisCol is a column of fuelsurcharge.PercentBasis values.
-type PercentBasisCol struct{ keel.StringCol }
+type PercentBasisCol struct{ keel.TypedStringCol }
 
-func (c PercentBasisCol) Eq(v fuelsurcharge.PercentBasis) keel.Pred { return c.StringCol.Eq(string(v)) }
-func (c PercentBasisCol) Ne(v fuelsurcharge.PercentBasis) keel.Pred { return c.StringCol.Ne(string(v)) }
-func (c PercentBasisCol) Gt(v fuelsurcharge.PercentBasis) keel.Pred { return c.StringCol.Gt(string(v)) }
-func (c PercentBasisCol) Gte(v fuelsurcharge.PercentBasis) keel.Pred {
-	return c.StringCol.Gte(string(v))
-}
-func (c PercentBasisCol) Lt(v fuelsurcharge.PercentBasis) keel.Pred { return c.StringCol.Lt(string(v)) }
-func (c PercentBasisCol) Lte(v fuelsurcharge.PercentBasis) keel.Pred {
-	return c.StringCol.Lte(string(v))
-}
+func (c PercentBasisCol) Eq(v fuelsurcharge.PercentBasis) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c PercentBasisCol) Ne(v fuelsurcharge.PercentBasis) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c PercentBasisCol) Gt(v fuelsurcharge.PercentBasis) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c PercentBasisCol) Gte(v fuelsurcharge.PercentBasis) keel.Pred { return c.Text().Gte(string(v)) }
+func (c PercentBasisCol) Lt(v fuelsurcharge.PercentBasis) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c PercentBasisCol) Lte(v fuelsurcharge.PercentBasis) keel.Pred { return c.Text().Lte(string(v)) }
 func (c PercentBasisCol) IsDistinctFrom(v fuelsurcharge.PercentBasis) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c PercentBasisCol) Between(lo, hi fuelsurcharge.PercentBasis) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c PercentBasisCol) To(v fuelsurcharge.PercentBasis) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c PercentBasisCol) In(vs ...fuelsurcharge.PercentBasis) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c PercentBasisCol) NotIn(vs ...fuelsurcharge.PercentBasis) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // ProgramMethodCol is a column of fuelsurcharge.ProgramMethod values.
-type ProgramMethodCol struct{ keel.StringCol }
+type ProgramMethodCol struct{ keel.TypedStringCol }
 
-func (c ProgramMethodCol) Eq(v fuelsurcharge.ProgramMethod) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c ProgramMethodCol) Ne(v fuelsurcharge.ProgramMethod) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c ProgramMethodCol) Gt(v fuelsurcharge.ProgramMethod) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
+func (c ProgramMethodCol) Eq(v fuelsurcharge.ProgramMethod) keel.Pred { return c.Text().Eq(string(v)) }
+func (c ProgramMethodCol) Ne(v fuelsurcharge.ProgramMethod) keel.Pred { return c.Text().Ne(string(v)) }
+func (c ProgramMethodCol) Gt(v fuelsurcharge.ProgramMethod) keel.Pred { return c.Text().Gt(string(v)) }
 func (c ProgramMethodCol) Gte(v fuelsurcharge.ProgramMethod) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
-func (c ProgramMethodCol) Lt(v fuelsurcharge.ProgramMethod) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
+func (c ProgramMethodCol) Lt(v fuelsurcharge.ProgramMethod) keel.Pred { return c.Text().Lt(string(v)) }
 func (c ProgramMethodCol) Lte(v fuelsurcharge.ProgramMethod) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c ProgramMethodCol) IsDistinctFrom(v fuelsurcharge.ProgramMethod) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ProgramMethodCol) Between(lo, hi fuelsurcharge.ProgramMethod) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c ProgramMethodCol) To(v fuelsurcharge.ProgramMethod) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c ProgramMethodCol) In(vs ...fuelsurcharge.ProgramMethod) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ProgramMethodCol) NotIn(vs ...fuelsurcharge.ProgramMethod) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // ProgramStatusCol is a column of fuelsurcharge.ProgramStatus values.
-type ProgramStatusCol struct{ keel.StringCol }
+type ProgramStatusCol struct{ keel.TypedStringCol }
 
-func (c ProgramStatusCol) Eq(v fuelsurcharge.ProgramStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c ProgramStatusCol) Ne(v fuelsurcharge.ProgramStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c ProgramStatusCol) Gt(v fuelsurcharge.ProgramStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
+func (c ProgramStatusCol) Eq(v fuelsurcharge.ProgramStatus) keel.Pred { return c.Text().Eq(string(v)) }
+func (c ProgramStatusCol) Ne(v fuelsurcharge.ProgramStatus) keel.Pred { return c.Text().Ne(string(v)) }
+func (c ProgramStatusCol) Gt(v fuelsurcharge.ProgramStatus) keel.Pred { return c.Text().Gt(string(v)) }
 func (c ProgramStatusCol) Gte(v fuelsurcharge.ProgramStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
-func (c ProgramStatusCol) Lt(v fuelsurcharge.ProgramStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
+func (c ProgramStatusCol) Lt(v fuelsurcharge.ProgramStatus) keel.Pred { return c.Text().Lt(string(v)) }
 func (c ProgramStatusCol) Lte(v fuelsurcharge.ProgramStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c ProgramStatusCol) IsDistinctFrom(v fuelsurcharge.ProgramStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ProgramStatusCol) Between(lo, hi fuelsurcharge.ProgramStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c ProgramStatusCol) To(v fuelsurcharge.ProgramStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c ProgramStatusCol) In(vs ...fuelsurcharge.ProgramStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ProgramStatusCol) NotIn(vs ...fuelsurcharge.ProgramStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // RateRoundingCol is a column of fuelsurcharge.RateRounding values.
-type RateRoundingCol struct{ keel.StringCol }
+type RateRoundingCol struct{ keel.TypedStringCol }
 
-func (c RateRoundingCol) Eq(v fuelsurcharge.RateRounding) keel.Pred { return c.StringCol.Eq(string(v)) }
-func (c RateRoundingCol) Ne(v fuelsurcharge.RateRounding) keel.Pred { return c.StringCol.Ne(string(v)) }
-func (c RateRoundingCol) Gt(v fuelsurcharge.RateRounding) keel.Pred { return c.StringCol.Gt(string(v)) }
-func (c RateRoundingCol) Gte(v fuelsurcharge.RateRounding) keel.Pred {
-	return c.StringCol.Gte(string(v))
-}
-func (c RateRoundingCol) Lt(v fuelsurcharge.RateRounding) keel.Pred { return c.StringCol.Lt(string(v)) }
-func (c RateRoundingCol) Lte(v fuelsurcharge.RateRounding) keel.Pred {
-	return c.StringCol.Lte(string(v))
-}
+func (c RateRoundingCol) Eq(v fuelsurcharge.RateRounding) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c RateRoundingCol) Ne(v fuelsurcharge.RateRounding) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c RateRoundingCol) Gt(v fuelsurcharge.RateRounding) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c RateRoundingCol) Gte(v fuelsurcharge.RateRounding) keel.Pred { return c.Text().Gte(string(v)) }
+func (c RateRoundingCol) Lt(v fuelsurcharge.RateRounding) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c RateRoundingCol) Lte(v fuelsurcharge.RateRounding) keel.Pred { return c.Text().Lte(string(v)) }
 func (c RateRoundingCol) IsDistinctFrom(v fuelsurcharge.RateRounding) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c RateRoundingCol) Between(lo, hi fuelsurcharge.RateRounding) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c RateRoundingCol) To(v fuelsurcharge.RateRounding) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c RateRoundingCol) In(vs ...fuelsurcharge.RateRounding) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c RateRoundingCol) NotIn(vs ...fuelsurcharge.RateRounding) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // StepRoundingCol is a column of fuelsurcharge.StepRounding values.
-type StepRoundingCol struct{ keel.StringCol }
+type StepRoundingCol struct{ keel.TypedStringCol }
 
-func (c StepRoundingCol) Eq(v fuelsurcharge.StepRounding) keel.Pred { return c.StringCol.Eq(string(v)) }
-func (c StepRoundingCol) Ne(v fuelsurcharge.StepRounding) keel.Pred { return c.StringCol.Ne(string(v)) }
-func (c StepRoundingCol) Gt(v fuelsurcharge.StepRounding) keel.Pred { return c.StringCol.Gt(string(v)) }
-func (c StepRoundingCol) Gte(v fuelsurcharge.StepRounding) keel.Pred {
-	return c.StringCol.Gte(string(v))
-}
-func (c StepRoundingCol) Lt(v fuelsurcharge.StepRounding) keel.Pred { return c.StringCol.Lt(string(v)) }
-func (c StepRoundingCol) Lte(v fuelsurcharge.StepRounding) keel.Pred {
-	return c.StringCol.Lte(string(v))
-}
+func (c StepRoundingCol) Eq(v fuelsurcharge.StepRounding) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c StepRoundingCol) Ne(v fuelsurcharge.StepRounding) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c StepRoundingCol) Gt(v fuelsurcharge.StepRounding) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c StepRoundingCol) Gte(v fuelsurcharge.StepRounding) keel.Pred { return c.Text().Gte(string(v)) }
+func (c StepRoundingCol) Lt(v fuelsurcharge.StepRounding) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c StepRoundingCol) Lte(v fuelsurcharge.StepRounding) keel.Pred { return c.Text().Lte(string(v)) }
 func (c StepRoundingCol) IsDistinctFrom(v fuelsurcharge.StepRounding) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c StepRoundingCol) Between(lo, hi fuelsurcharge.StepRounding) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c StepRoundingCol) To(v fuelsurcharge.StepRounding) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c StepRoundingCol) In(vs ...fuelsurcharge.StepRounding) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c StepRoundingCol) NotIn(vs ...fuelsurcharge.StepRounding) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

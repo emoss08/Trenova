@@ -10,13 +10,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/app/assignmentservice"
-	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchcandidateservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchconsoleservice"
-	"github.com/emoss08/trenova/internal/modules/operations/app/dispatcheligibility"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchfinding"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentcoverage"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchplanports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -126,10 +126,10 @@ func TestAssignMove_PreviewMatchesWhatIsSaved(t *testing.T) {
 	entity := uncoveredShipment()
 	assignments := &savingAssignments{shipment: entity}
 	console := &checkingConsole{preview: &dispatchconsoleservice.AssignmentPreview{
-		Score: &dispatchcandidateservice.CandidateScore{
+		Score: &dispatchplanports.CandidateScore{
 			WorkerName: "Ana Reyes",
-			Findings: []dispatcheligibility.Finding{{
-				Severity: dispatcheligibility.SeverityWarn,
+			Findings: []dispatchfinding.Finding{{
+				Severity: dispatchfinding.SeverityWarn,
 				Message:  "Medical card expires in 12 days",
 			}},
 		},
@@ -180,9 +180,9 @@ func TestAssignMove_PreviewWarnsWhenDispatchRulesBlockTheDriver(t *testing.T) {
 	console := &checkingConsole{preview: &dispatchconsoleservice.AssignmentPreview{
 		Blocked:          true,
 		RequiresOverride: true,
-		Score: &dispatchcandidateservice.CandidateScore{
-			Findings: []dispatcheligibility.Finding{{
-				Severity: dispatcheligibility.SeverityBlock,
+		Score: &dispatchplanports.CandidateScore{
+			Findings: []dispatchfinding.Finding{{
+				Severity: dispatchfinding.SeverityBlock,
 				Message:  "Driver is out of drive time",
 			}},
 		},

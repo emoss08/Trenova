@@ -251,11 +251,11 @@ func (r *FuelPurchaseImportSummaryResolver) ByJurisdiction(ctx context.Context, 
 }
 
 func (r *FuelPurchaseImportSummaryResolver) EarliestPurchasedAt(ctx context.Context, obj *fuelpurchase.ImportSummary) (*int, error) {
-	return epochPtr(obj.EarliestPurchasedAt), nil
+	return gqlscalar.NonZeroIntPtr(obj.EarliestPurchasedAt), nil
 }
 
 func (r *FuelPurchaseImportSummaryResolver) LatestPurchasedAt(ctx context.Context, obj *fuelpurchase.ImportSummary) (*int, error) {
-	return epochPtr(obj.LatestPurchasedAt), nil
+	return gqlscalar.NonZeroIntPtr(obj.LatestPurchasedAt), nil
 }
 
 func (r *MutationResolver) CreateFuelCard(ctx context.Context, input gqlmodel.FuelCardInput) (*fuelpurchase.FuelCard, error) {

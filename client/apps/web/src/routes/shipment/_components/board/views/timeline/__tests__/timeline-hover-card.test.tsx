@@ -4,14 +4,18 @@ import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { TimelineBar } from "../timeline-bar";
 import { TimelineHoverCard } from "../timeline-hover-card";
-import { createTimelineScale } from "../timeline-scale";
+import { createTimelineScale } from "@/components/timeline/timeline-scale";
 
 /* Loads are built from shipments shaped as the ShipmentScheduleFields fragment
    selects them. Times are Unix seconds from a fixed Tuesday in UTC. */
 const TUE = Date.UTC(2026, 10, 3) / 1000;
 const HOUR = 3_600;
 const at = (hours: number) => TUE + hours * HOUR;
-const scale = createTimelineScale("day", [TUE, TUE + 24 * HOUR]);
+const scale = createTimelineScale([TUE, TUE + 24 * HOUR], {
+  pxPerHour: 64,
+  tickHours: 2,
+  hourLabels: true,
+});
 /** The card is 288px wide and sits right of and below the pointer. */
 const CARD_WIDTH = 288;
 const BESIDE_X = 14;

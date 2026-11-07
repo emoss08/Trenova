@@ -46,6 +46,11 @@ func TestProtectedFieldsAreTheDeclaredSet(t *testing.T) {
 	detentionPay := margins("driverPayAmount", "netMargin")
 
 	assert.Equal(t, ProtectedFieldMap{
+		"Worker": {
+			"homeLatitude":  protectedfield.Personal,
+			"homeLongitude": protectedfield.Personal,
+			"homePlaceId":   protectedfield.Personal,
+		},
 		"WorkerProfile": {
 			"dob":            protectedfield.Personal,
 			"licenseNumber":  protectedfield.Personal,

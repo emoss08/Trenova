@@ -16,6 +16,7 @@ import { startOfDay } from "date-fns";
 import {
   createLoader,
   debounce,
+  parseAsArrayOf,
   parseAsBoolean,
   parseAsNumberLiteral,
   parseAsString,
@@ -39,13 +40,13 @@ import { TIMELINE_ZOOM_OPTIONS, type TimelineZoomDays } from "./timeline-metrics
  * session and lives in the store instead.
  */
 
-const CENTER_MODES = ["board", "timeline"] as const;
+const CENTER_MODES = ["queue", "timeline"] as const;
 export type CenterMode = (typeof CENTER_MODES)[number];
 
 /**
  * The console's timeline is a grid of driver lanes with loads dropped onto them —
  * the same shape as the capacity rail, laid out horizontally. An organization
- * without its own drivers has no lanes, so the view is withheld and the board is
+ * without its own drivers has no lanes, so the view is withheld and the queue is
  * the only centre.
  */
 export function isDispatchTimelineAvailable(capabilities: OrganizationCapabilities): boolean {
@@ -62,16 +63,26 @@ export function resolveCenterMode(
   mode: CenterMode,
   capabilities: OrganizationCapabilities,
 ): CenterMode {
-  return mode === "timeline" && !isDispatchTimelineAvailable(capabilities) ? "board" : mode;
+  return mode === "timeline" && !isDispatchTimelineAvailable(capabilities) ? "queue" : mode;
 }
 
 const ZOOM_VALUES: readonly TimelineZoomDays[] = TIMELINE_ZOOM_OPTIONS.map((option) => option.id);
 const CAPACITY_FILTER_IDS: readonly CapacityFilter[] = CAPACITY_FILTERS.map((filter) => filter.id);
 
+const QUEUE_TABS = ["moves", "exceptions", "drivers", "outlook"] as const;
+export type QueueTab = (typeof QUEUE_TABS)[number];
+
+/**
+ * Everything that changes what the board query asks for: the window, whether covered moves
+ * come back, and the search and filters the server applies.
+ */
 export const dispatchWindowParsers = {
   at: parseAsString,
   zoom: parseAsNumberLiteral(ZOOM_VALUES).withDefault(1),
   covered: parseAsBoolean.withDefault(false),
+  search: parseAsString.withDefault(""),
+  fleets: parseAsArrayOf(parseAsString).withDefault([]),
+  customers: parseAsArrayOf(parseAsString).withDefault([]),
 };
 
 export const dispatchSelectionParsers = {
@@ -80,7 +91,8 @@ export const dispatchSelectionParsers = {
 };
 
 export const dispatchViewParsers = {
-  mode: parseAsStringLiteral(CENTER_MODES).withDefault("board"),
+  mode: parseAsStringLiteral(CENTER_MODES).withDefault("queue"),
+  tab: parseAsStringLiteral(QUEUE_TABS).withDefault("moves"),
   urgency: parseAsStringLiteral(URGENCY_ORDER),
 };
 
@@ -99,11 +111,23 @@ const loadDispatchWindow = createLoader(dispatchWindowParsers);
  * below or straight off a navigation request. Both must produce an identical object:
  * the input is the query key, and a key that differs by one field is a second request.
  */
-export function toDispatchBoardInput(
-  range: TimeRange,
-  includeCovered: boolean,
-): DispatchBoardInput {
-  return { includeCovered, windowStart: range.start, windowEnd: range.end };
+export type BoardFilters = {
+  includeCovered: boolean;
+  search: string;
+  fleetCodeIds: readonly string[];
+  customerIds: readonly string[];
+};
+
+export function toDispatchBoardInput(range: TimeRange, filters: BoardFilters): DispatchBoardInput {
+  const query = filters.search.trim();
+  return {
+    includeCovered: filters.includeCovered,
+    windowStart: range.start,
+    windowEnd: range.end,
+    ...(query ? { query } : {}),
+    ...(filters.fleetCodeIds.length > 0 ? { fleetCodeIds: [...filters.fleetCodeIds] } : {}),
+    ...(filters.customerIds.length > 0 ? { customerIds: [...filters.customerIds] } : {}),
+  };
 }
 
 /**
@@ -111,12 +135,20 @@ export function toDispatchBoardInput(
  * query before the console mounts. Reads the same parsers `useDispatchWindow` does.
  */
 export function dispatchBoardInputFromRequest(request: Request): DispatchBoardInput {
-  const { at, zoom, covered } = loadDispatchWindow(request);
-  return toDispatchBoardInput(getRangeForDays(parseAnchorDate(at), zoom), covered);
+  const { at, zoom, covered, search, fleets, customers } = loadDispatchWindow(request);
+  return toDispatchBoardInput(getRangeForDays(parseAnchorDate(at), zoom), {
+    includeCovered: covered,
+    search,
+    fleetCodeIds: fleets,
+    customerIds: customers,
+  });
 }
 
 export function useDispatchWindow() {
-  const [{ at, zoom, covered }, setWindow] = useQueryStates(dispatchWindowParsers, URL_OPTIONS);
+  const [{ at, zoom, covered, search, fleets, customers }, setWindow] = useQueryStates(
+    dispatchWindowParsers,
+    URL_OPTIONS,
+  );
 
   const anchor = useMemo(() => parseAnchorDate(at), [at]);
   const range = useMemo(() => getRangeForDays(anchor, zoom), [anchor, zoom]);
@@ -139,11 +171,33 @@ export function useDispatchWindow() {
     (next: boolean) => void setWindow({ covered: next }),
     [setWindow],
   );
+  // The box reads from state on the keystroke; the URL, and with it the board query,
+  // catches up once typing stops.
+  const setSearch = useCallback(
+    (next: string) => void setWindow({ search: next }, { limitUrlUpdates: debounce(300) }),
+    [setWindow],
+  );
+  const setFleets = useCallback((next: string[]) => void setWindow({ fleets: next }), [setWindow]);
+  const setCustomers = useCallback(
+    (next: string[]) => void setWindow({ customers: next }),
+    [setWindow],
+  );
+  const filters = useMemo<BoardFilters>(
+    () => ({ includeCovered: covered, search, fleetCodeIds: fleets, customerIds: customers }),
+    [covered, customers, fleets, search],
+  );
 
   return {
     anchor,
     range,
     zoom,
+    filters,
+    search,
+    fleetCodeIds: fleets,
+    customerIds: customers,
+    setSearch,
+    setFleets,
+    setCustomers,
     includeCovered: covered,
     setAnchor,
     shiftWindow,
@@ -181,10 +235,11 @@ export function useDispatchSelection() {
 }
 
 export function useDispatchView() {
-  const [{ mode, urgency }, setView] = useQueryStates(dispatchViewParsers, URL_OPTIONS);
+  const [{ mode, tab, urgency }, setView] = useQueryStates(dispatchViewParsers, URL_OPTIONS);
   const capabilities = useOrgCapabilities();
 
   const setMode = useCallback((next: CenterMode) => void setView({ mode: next }), [setView]);
+  const setTab = useCallback((next: QueueTab) => void setView({ tab: next }), [setView]);
   const setUrgencyFocus = useCallback(
     (next: UrgencyBucket | null) => void setView({ urgency: next }),
     [setView],
@@ -193,6 +248,8 @@ export function useDispatchView() {
   return {
     mode: resolveCenterMode(mode, capabilities),
     timelineAvailable: isDispatchTimelineAvailable(capabilities),
+    tab,
+    setTab,
     urgencyFocus: urgency,
     setMode,
     setUrgencyFocus,

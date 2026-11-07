@@ -88,18 +88,18 @@ type AccountingBackfillsTable struct {
 // AccountingBackfills references the accounting_backfills table.
 var AccountingBackfills = &AccountingBackfillsTable{
 	TableBase:          keel.TableBase{Ref: &accountingBackfillsRef},
-	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingBackfillsRef, Index: 0}}},
-	BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingBackfillsRef, Index: 1}}},
-	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingBackfillsRef, Index: 2}}},
-	ConnectionID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingBackfillsRef, Index: 3}}},
+	ID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingBackfillsRef, Index: 0}}},
+	BusinessUnitID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingBackfillsRef, Index: 1}}},
+	OrganizationID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingBackfillsRef, Index: 2}}},
+	ConnectionID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingBackfillsRef, Index: 3}}},
 	RangeStart:         keel.Int64Col{Col: keel.Col{Ref: &accountingBackfillsRef, Index: 4}},
 	RangeEnd:           keel.Int64Col{Col: keel.Col{Ref: &accountingBackfillsRef, Index: 5}},
 	ObjectTypes:        keel.StringArrayCol{Col: keel.Col{Ref: &accountingBackfillsRef, Index: 6}},
 	Cursor:             keel.JSONBCol{Col: keel.Col{Ref: &accountingBackfillsRef, Index: 7}},
-	Status:             BackfillStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingBackfillsRef, Index: 8}}},
+	Status:             BackfillStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingBackfillsRef, Index: 8}}},
 	EnqueuedCount:      keel.Int64Col{Col: keel.Col{Ref: &accountingBackfillsRef, Index: 9}},
 	AlreadyQueuedCount: keel.Int64Col{Col: keel.Col{Ref: &accountingBackfillsRef, Index: 10}},
-	RequestedByID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingBackfillsRef, Index: 11}}},
+	RequestedByID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingBackfillsRef, Index: 11}}},
 	StartedAt:          keel.Int64Col{Col: keel.Col{Ref: &accountingBackfillsRef, Index: 12}},
 	CompletedAt:        keel.Int64Col{Col: keel.Col{Ref: &accountingBackfillsRef, Index: 13}},
 	LastError:          keel.StringCol{Col: keel.Col{Ref: &accountingBackfillsRef, Index: 14}},
@@ -112,18 +112,18 @@ var AccountingBackfills = &AccountingBackfillsTable{
 func BuildAccountingBackfills(r *keel.Ref) *AccountingBackfillsTable {
 	return &AccountingBackfillsTable{
 		TableBase:          keel.TableBase{Ref: r},
-		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		ConnectionID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ConnectionID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		RangeStart:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 4}},
 		RangeEnd:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 5}},
 		ObjectTypes:        keel.StringArrayCol{Col: keel.Col{Ref: r, Index: 6}},
 		Cursor:             keel.JSONBCol{Col: keel.Col{Ref: r, Index: 7}},
-		Status:             BackfillStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		Status:             BackfillStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
 		EnqueuedCount:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
 		AlreadyQueuedCount: keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
-		RequestedByID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
+		RequestedByID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 11}}},
 		StartedAt:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
 		CompletedAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
 		LastError:          keel.StringCol{Col: keel.Col{Ref: r, Index: 14}},
@@ -148,8 +148,6 @@ func (t *AccountingBackfillsTable) Get(ctx context.Context, db *keel.DB, key pul
 
 // AccountingBackfillsQuery is a query over accountingbackfill.AccountingBackfill.
 type AccountingBackfillsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*accountingbackfill.AccountingBackfill] = (*AccountingBackfillsTable)(nil)
 
 var _ keel.Query[*accountingbackfill.AccountingBackfill] = (*AccountingBackfillsQuery)(nil)
 
@@ -265,42 +263,42 @@ func (t *AccountingBackfillsTable) Compute(col keel.Column, e keel.Expr) keel.Qu
 
 // Create inserts row.
 func (t *AccountingBackfillsTable) Create(ctx context.Context, db *keel.DB, row *accountingbackfill.AccountingBackfill) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *AccountingBackfillsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*accountingbackfill.AccountingBackfill) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *AccountingBackfillsTable) Save(ctx context.Context, db *keel.DB, row *accountingbackfill.AccountingBackfill, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *AccountingBackfillsTable) SaveExcept(ctx context.Context, db *keel.DB, row *accountingbackfill.AccountingBackfill, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *AccountingBackfillsTable) DeleteRow(ctx context.Context, db *keel.DB, row *accountingbackfill.AccountingBackfill) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *AccountingBackfillsTable) Upsert(ctx context.Context, db *keel.DB, rows []*accountingbackfill.AccountingBackfill, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *AccountingBackfillsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*accountingbackfill.AccountingBackfill, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *AccountingBackfillsTable) Copy(ctx context.Context, db *keel.DB, rows []*accountingbackfill.AccountingBackfill) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -472,37 +470,45 @@ func (q *AccountingBackfillsQuery) Clone() keel.Query[*accountingbackfill.Accoun
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *AccountingBackfillsQuery) One(ctx context.Context, db *keel.DB) (*accountingbackfill.AccountingBackfill, error) {
-	return keel.One[*accountingbackfill.AccountingBackfill](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*accountingbackfill.AccountingBackfill)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *AccountingBackfillsQuery) First(ctx context.Context, db *keel.DB) (*accountingbackfill.AccountingBackfill, error) {
-	return keel.First[*accountingbackfill.AccountingBackfill](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*accountingbackfill.AccountingBackfill)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *AccountingBackfillsQuery) List(ctx context.Context, db *keel.DB) ([]*accountingbackfill.AccountingBackfill, error) {
-	return keel.List[*accountingbackfill.AccountingBackfill](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*accountingbackfill.AccountingBackfill)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *AccountingBackfillsQuery) All(ctx context.Context, db *keel.DB) ([]*accountingbackfill.AccountingBackfill, error) {
-	return keel.All[*accountingbackfill.AccountingBackfill](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*accountingbackfill.AccountingBackfill)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *AccountingBackfillsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*accountingbackfill.AccountingBackfill, error) {
-	return keel.UpdateReturning[*accountingbackfill.AccountingBackfill](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*accountingbackfill.AccountingBackfill)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *AccountingBackfillsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*accountingbackfill.AccountingBackfill], error) {
-	return keel.PageOf[*accountingbackfill.AccountingBackfill](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*accountingbackfill.AccountingBackfill])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *AccountingBackfillsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*accountingbackfill.AccountingBackfill) error) error {
-	return keel.Each[*accountingbackfill.AccountingBackfill](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*accountingbackfill.AccountingBackfill)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newAccountingBackfill() unsafe.Pointer {
@@ -627,38 +633,38 @@ var enumBackfillStatus = [...]schema.EnumValue{
 }
 
 // BackfillStatusCol is a column of accountingbackfill.BackfillStatus values.
-type BackfillStatusCol struct{ keel.StringCol }
+type BackfillStatusCol struct{ keel.TypedStringCol }
 
 func (c BackfillStatusCol) Eq(v accountingbackfill.BackfillStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c BackfillStatusCol) Ne(v accountingbackfill.BackfillStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c BackfillStatusCol) Gt(v accountingbackfill.BackfillStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c BackfillStatusCol) Gte(v accountingbackfill.BackfillStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c BackfillStatusCol) Lt(v accountingbackfill.BackfillStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c BackfillStatusCol) Lte(v accountingbackfill.BackfillStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c BackfillStatusCol) IsDistinctFrom(v accountingbackfill.BackfillStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c BackfillStatusCol) Between(lo, hi accountingbackfill.BackfillStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c BackfillStatusCol) To(v accountingbackfill.BackfillStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c BackfillStatusCol) In(vs ...accountingbackfill.BackfillStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c BackfillStatusCol) NotIn(vs ...accountingbackfill.BackfillStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

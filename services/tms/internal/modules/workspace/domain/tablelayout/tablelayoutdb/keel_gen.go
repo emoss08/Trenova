@@ -76,10 +76,10 @@ type TableLayoutsTable struct {
 // TableLayouts references the table_layouts table.
 var TableLayouts = &TableLayoutsTable{
 	TableBase:      keel.TableBase{Ref: &tableLayoutsRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tableLayoutsRef, Index: 0}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tableLayoutsRef, Index: 1}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tableLayoutsRef, Index: 2}}},
-	UserID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tableLayoutsRef, Index: 3}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &tableLayoutsRef, Index: 0}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &tableLayoutsRef, Index: 1}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &tableLayoutsRef, Index: 2}}},
+	UserID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &tableLayoutsRef, Index: 3}}},
 	Resource:       keel.StringCol{Col: keel.Col{Ref: &tableLayoutsRef, Index: 4}},
 	Layout:         keel.JSONBCol{Col: keel.Col{Ref: &tableLayoutsRef, Index: 5}},
 	Version:        keel.Int64Col{Col: keel.Col{Ref: &tableLayoutsRef, Index: 6}},
@@ -91,10 +91,10 @@ var TableLayouts = &TableLayoutsTable{
 func BuildTableLayouts(r *keel.Ref) *TableLayoutsTable {
 	return &TableLayoutsTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		UserID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		UserID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		Resource:       keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		Layout:         keel.JSONBCol{Col: keel.Col{Ref: r, Index: 5}},
 		Version:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
@@ -123,8 +123,6 @@ func (t *TableLayoutsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) 
 
 // TableLayoutsQuery is a query over tablelayout.TableLayout.
 type TableLayoutsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*tablelayout.TableLayout] = (*TableLayoutsTable)(nil)
 
 var _ keel.Query[*tablelayout.TableLayout] = (*TableLayoutsQuery)(nil)
 
@@ -240,42 +238,42 @@ func (t *TableLayoutsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*ta
 
 // Create inserts row.
 func (t *TableLayoutsTable) Create(ctx context.Context, db *keel.DB, row *tablelayout.TableLayout) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *TableLayoutsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*tablelayout.TableLayout) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *TableLayoutsTable) Save(ctx context.Context, db *keel.DB, row *tablelayout.TableLayout, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *TableLayoutsTable) SaveExcept(ctx context.Context, db *keel.DB, row *tablelayout.TableLayout, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *TableLayoutsTable) DeleteRow(ctx context.Context, db *keel.DB, row *tablelayout.TableLayout) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *TableLayoutsTable) Upsert(ctx context.Context, db *keel.DB, rows []*tablelayout.TableLayout, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *TableLayoutsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*tablelayout.TableLayout, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *TableLayoutsTable) Copy(ctx context.Context, db *keel.DB, rows []*tablelayout.TableLayout) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -447,37 +445,45 @@ func (q *TableLayoutsQuery) Clone() keel.Query[*tablelayout.TableLayout] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *TableLayoutsQuery) One(ctx context.Context, db *keel.DB) (*tablelayout.TableLayout, error) {
-	return keel.One[*tablelayout.TableLayout](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*tablelayout.TableLayout)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *TableLayoutsQuery) First(ctx context.Context, db *keel.DB) (*tablelayout.TableLayout, error) {
-	return keel.First[*tablelayout.TableLayout](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*tablelayout.TableLayout)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *TableLayoutsQuery) List(ctx context.Context, db *keel.DB) ([]*tablelayout.TableLayout, error) {
-	return keel.List[*tablelayout.TableLayout](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*tablelayout.TableLayout)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *TableLayoutsQuery) All(ctx context.Context, db *keel.DB) ([]*tablelayout.TableLayout, error) {
-	return keel.All[*tablelayout.TableLayout](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*tablelayout.TableLayout)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *TableLayoutsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*tablelayout.TableLayout, error) {
-	return keel.UpdateReturning[*tablelayout.TableLayout](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*tablelayout.TableLayout)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *TableLayoutsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*tablelayout.TableLayout], error) {
-	return keel.PageOf[*tablelayout.TableLayout](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*tablelayout.TableLayout])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *TableLayoutsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*tablelayout.TableLayout) error) error {
-	return keel.Each[*tablelayout.TableLayout](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*tablelayout.TableLayout)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newTableLayout() unsafe.Pointer { return unsafe.Pointer(new(tablelayout.TableLayout)) }

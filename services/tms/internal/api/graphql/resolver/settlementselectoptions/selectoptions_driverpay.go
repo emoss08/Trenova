@@ -65,23 +65,19 @@ func (r *Sources) PayCode(
 }
 
 func payCodeSelectOptionItem(entity *paycode.PayCode) selectoption.Item {
-	return selectoption.ItemFor(
-		&gqlmodel.SelectOption{
-			ID:          entity.ID.String(),
-			Label:       entity.Code,
-			Description: stringutils.Ptr(entity.Name),
-			Meta: map[string]any{
-				selectoption.MetaKeyCode: entity.Code,
-				"name":                   entity.Name,
-				"direction":              string(entity.Direction),
-				"taxable":                entity.Taxable,
-				"countsTowardGuarantee":  entity.CountsTowardGuarantee,
-				"defaultAmountMinor":     int64PtrValue(entity.DefaultAmountMinor),
-			},
+	return selectoption.ItemFor(&gqlmodel.SelectOption{
+		ID:          entity.ID.String(),
+		Label:       entity.Code,
+		Description: stringutils.Ptr(entity.Name),
+		Meta: map[string]any{
+			selectoption.MetaKeyCode: entity.Code,
+			"name":                   entity.Name,
+			"direction":              string(entity.Direction),
+			"taxable":                entity.Taxable,
+			"countsTowardGuarantee":  entity.CountsTowardGuarantee,
+			"defaultAmountMinor":     int64PtrValue(entity.DefaultAmountMinor),
 		},
-		entity.CreatedAt,
-		entity.ID,
-	)
+	})
 }
 
 func (r *Sources) PayProfile(
@@ -130,19 +126,15 @@ func (r *Sources) PayProfile(
 }
 
 func payProfileSelectOptionItem(entity *driverpay.PayProfile) selectoption.Item {
-	return selectoption.ItemFor(
-		&gqlmodel.SelectOption{
-			ID:          entity.ID.String(),
-			Label:       entity.Name,
-			Description: stringutils.Ptr(entity.Description),
-			Meta: map[string]any{
-				"classification": string(entity.Classification),
-				"currencyCode":   entity.CurrencyCode,
-			},
+	return selectoption.ItemFor(&gqlmodel.SelectOption{
+		ID:          entity.ID.String(),
+		Label:       entity.Name,
+		Description: stringutils.Ptr(entity.Description),
+		Meta: map[string]any{
+			"classification": string(entity.Classification),
+			"currencyCode":   entity.CurrencyCode,
 		},
-		entity.CreatedAt,
-		entity.ID,
-	)
+	})
 }
 
 func int64PtrValue(value *int64) any {

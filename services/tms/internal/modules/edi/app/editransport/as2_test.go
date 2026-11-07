@@ -72,7 +72,7 @@ func as2TestProfile(local, partner *as2TestIdentity, endpointURL, mdnMode string
 			ConfigKeyPartnerAS2ID:              "PARTNER-AS2",
 			ConfigKeyEndpointURL:               endpointURL,
 			ConfigKeyMDNMode:                   mdnMode,
-			ConfigKeyMDNURL:                    "https://trenova.example/api/v1/edi/as2/inbound/",
+			ConfigKeyMDNURL:                    "https://trenova.example/api/v1/edi/as2/inbound/PROFILEADDRESS/",
 			ConfigKeyLocalCertificate:          local.certificatePEM,
 			ConfigKeyPartnerSigningCertificate: partner.certificatePEM,
 		},

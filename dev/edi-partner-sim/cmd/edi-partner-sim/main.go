@@ -25,8 +25,8 @@ func run() int {
 	remoteAS2ID := flag.String("remote-as2-id", "TRENOVA", "the Trenova AS2 identifier")
 	trenovaInbound := flag.String(
 		"trenova-inbound",
-		"http://localhost:3001/api/v1/edi/as2/inbound/",
-		"Trenova AS2 inbound receiver URL",
+		"",
+		"the inbound URL shown on the Trenova AS2 communication profile",
 	)
 	autoAck := flag.Bool("auto-ack", true, "automatically send a 997 for received documents")
 	identityDir := flag.String(

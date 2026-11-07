@@ -160,15 +160,18 @@ type tenantRow struct {
 	BusinessUnitID pulid.ID
 }
 
-func (r *repository) ListHorizonPlanningTenants(
+func (r *repository) ListCoveragePlanningTenants(
 	ctx context.Context,
 ) ([]pagination.TenantInfo, error) {
-	ctx = dbscope.WithSystem(ctx, "list organizations with horizon planning on")
+	ctx = dbscope.WithSystem(ctx, "list organizations that plan coverage on a schedule")
 	dc := dispatchcontroldb.DispatchControls
 	return r.listTenantsWhere(
 		ctx,
 		dc.EnableAutoAssignment.IsTrue(),
-		dc.PlanningMode.Eq(dispatchcontrol.PlanningModeHorizon),
+		keel.Or(
+			dc.PlanningMode.Eq(dispatchcontrol.PlanningModeHorizon),
+			dc.AutoProposeCoverage.IsTrue(),
+		),
 	)
 }
 

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"slices"
-	"strconv"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytool"
@@ -13,13 +12,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchconsoleservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
-// boardReader is the dispatch console's one read: the board a dispatcher
-// looks at, moves on one side and drivers on the other, already scored for
-// urgency, coverage, hours and position.
 type boardReader interface {
 	GetBoard(
 		ctx context.Context,
@@ -100,8 +95,6 @@ type boardView struct {
 
 func (v *boardView) PageRows() int { return len(v.Moves) }
 
-// CutPage is the board with its first rows moves, resuming at the move after
-// them; the drivers and the summary stay whole.
 func (v *boardView) CutPage(rows int) (any, bool) {
 	if rows <= 0 || rows >= len(v.Moves) {
 		return nil, false
@@ -109,15 +102,12 @@ func (v *boardView) CutPage(rows int) (any, bool) {
 	cut := *v
 	cut.Moves = v.Moves[:rows]
 	cut.HasMore = true
-	cut.NextCursor = pagination.EncodeKeyCursor(
-		v.window.Scope, strconv.Itoa(v.window.Offset+rows))
+	cut.NextCursor = v.window.At(v.window.Offset + rows)
 	cut.tally()
 
 	return &cut, true
 }
 
-// tally counts the moves listed by urgency and by what each is late to do,
-// and says so in the note.
 func (v *boardView) tally() {
 	v.Counts = make(map[string]int, 5)
 	late := lateTally{}
@@ -148,10 +138,6 @@ func (v *boardView) tally() {
 	)
 }
 
-// boardSummaryRow counts every move in the window, not only the moves listed.
-// The console's "late" and "at risk" are coverage alarms for uncovered moves;
-// called lateMoves beside an urgency count of Late an agent read 6 against 34
-// as the board disagreeing with itself, so each is named for what it counts.
 type boardSummaryRow struct {
 	UncoveredMoves      int     `json:"uncoveredMoves"`
 	CoveredMoves        int     `json:"coveredMoves"`
@@ -192,7 +178,7 @@ func (t *getDispatchBoardTool) Description() string {
 
 func (t *getDispatchBoardTool) ParamSchema() map[string]any {
 	properties := map[string]any{
-		"hoursAhead": map[string]any{
+		paramHoursAhead: map[string]any{
 			"type": "integer",
 			"description": fmt.Sprintf(
 				"How far ahead the window reaches, in hours. Default %d, at most %d.",
@@ -245,13 +231,12 @@ func (t *getDispatchBoardTool) Query(
 		return nil, err
 	}
 
-	hours := querytool.OptionalInt(params.Params, "hoursAhead", defaultBoardHours)
+	hours := querytool.OptionalInt(params.Params, paramHoursAhead, defaultBoardHours)
 	if hours <= 0 || hours > maxBoardHours {
 		hours = defaultBoardHours
 	}
 	window, err := querytool.ReadOffsetWindow(
-		t.Name(),
-		params.Params,
+		querytool.CallOf(t.Name(), params),
 		defaultBoardLimit,
 		maxBoardLimit,
 	)
@@ -294,8 +279,6 @@ func (t *getDispatchBoardTool) Query(
 	return &view, nil
 }
 
-// boardViewOf is a page of the board, at most limit moves in the board's
-// order, which the read made due-first: the furthest behind lead.
 func boardViewOf(board *dispatchconsoleservice.Board, timezone string, limit int) boardView {
 	view := boardView{
 		Window: fmt.Sprintf(
@@ -351,11 +334,6 @@ const (
 	millisPerSecond = 1000
 )
 
-// lateness is what a move is late to do at now, and how many seconds past the
-// window's close it is: pick up, when its pickup window has closed with no
-// arrival recorded, or deliver, when it was picked up and its delivery
-// window has closed. A move inside its pickup window is due, not late, as
-// the board's urgency and the shipment list's late both read it.
 func lateness(move *dispatchboardports.BoardMove, now int64) (lateTo string, lateSeconds int64) {
 	if move.OriginActualArrive == nil || *move.OriginActualArrive <= 0 {
 		pickupClose := closeOf(move.OriginWindowStart, move.OriginWindowEnd)
@@ -390,9 +368,6 @@ func lateFor(seconds int64) string {
 	return timeutils.FormatLongDurationMs(seconds * millisPerSecond)
 }
 
-// lateTally counts the board's late moves by what they are late to do, and
-// keeps the shipments marked Delayed for the note, which list shortening
-// never cuts.
 type lateTally struct {
 	pickUp  int
 	deliver int

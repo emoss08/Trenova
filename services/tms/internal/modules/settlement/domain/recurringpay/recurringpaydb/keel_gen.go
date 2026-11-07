@@ -116,19 +116,19 @@ type RecurringDeductionsTable struct {
 // RecurringDeductions references the recurring_deductions table.
 var RecurringDeductions = &RecurringDeductionsTable{
 	TableBase:           keel.TableBase{Ref: &recurringDeductionsRef},
-	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &recurringDeductionsRef, Index: 0}}},
-	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &recurringDeductionsRef, Index: 1}}},
-	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &recurringDeductionsRef, Index: 2}}},
-	WorkerID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &recurringDeductionsRef, Index: 3}}},
-	PayCodeID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &recurringDeductionsRef, Index: 4}}},
-	EscrowAccountID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &recurringDeductionsRef, Index: 5}}},
-	Status:              DeductionStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &recurringDeductionsRef, Index: 6}}},
-	Kind:                DeductionKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &recurringDeductionsRef, Index: 7}}},
+	ID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &recurringDeductionsRef, Index: 0}}},
+	BusinessUnitID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &recurringDeductionsRef, Index: 1}}},
+	OrganizationID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &recurringDeductionsRef, Index: 2}}},
+	WorkerID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &recurringDeductionsRef, Index: 3}}},
+	PayCodeID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &recurringDeductionsRef, Index: 4}}},
+	EscrowAccountID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &recurringDeductionsRef, Index: 5}}},
+	Status:              DeductionStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &recurringDeductionsRef, Index: 6}}},
+	Kind:                DeductionKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &recurringDeductionsRef, Index: 7}}},
 	CourtOrderNumber:    keel.StringCol{Col: keel.Col{Ref: &recurringDeductionsRef, Index: 8}},
 	CaseNumber:          keel.StringCol{Col: keel.Col{Ref: &recurringDeductionsRef, Index: 9}},
 	IssuingAgency:       keel.StringCol{Col: keel.Col{Ref: &recurringDeductionsRef, Index: 10}},
 	Priority:            keel.Int16Col{Col: keel.Col{Ref: &recurringDeductionsRef, Index: 11}},
-	Frequency:           DeductionFrequencyCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &recurringDeductionsRef, Index: 12}}},
+	Frequency:           DeductionFrequencyCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &recurringDeductionsRef, Index: 12}}},
 	Description:         keel.StringCol{Col: keel.Col{Ref: &recurringDeductionsRef, Index: 13}},
 	AmountMinor:         keel.Int64Col{Col: keel.Col{Ref: &recurringDeductionsRef, Index: 14}},
 	TotalCapMinor:       keel.Int64Col{Col: keel.Col{Ref: &recurringDeductionsRef, Index: 15}},
@@ -136,7 +136,7 @@ var RecurringDeductions = &RecurringDeductionsTable{
 	StartDate:           keel.Int64Col{Col: keel.Col{Ref: &recurringDeductionsRef, Index: 17}},
 	EndDate:             keel.Int64Col{Col: keel.Col{Ref: &recurringDeductionsRef, Index: 18}},
 	CurrencyCode:        keel.StringCol{Col: keel.Col{Ref: &recurringDeductionsRef, Index: 19}},
-	CreatedByID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &recurringDeductionsRef, Index: 20}}},
+	CreatedByID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &recurringDeductionsRef, Index: 20}}},
 	Version:             keel.Int64Col{Col: keel.Col{Ref: &recurringDeductionsRef, Index: 21}},
 	CreatedAt:           keel.Int64Col{Col: keel.Col{Ref: &recurringDeductionsRef, Index: 22}},
 	UpdatedAt:           keel.Int64Col{Col: keel.Col{Ref: &recurringDeductionsRef, Index: 23}},
@@ -146,19 +146,19 @@ var RecurringDeductions = &RecurringDeductionsTable{
 func BuildRecurringDeductions(r *keel.Ref) *RecurringDeductionsTable {
 	return &RecurringDeductionsTable{
 		TableBase:           keel.TableBase{Ref: r},
-		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		WorkerID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		PayCodeID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		EscrowAccountID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		Status:              DeductionStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		Kind:                DeductionKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		ID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		WorkerID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		PayCodeID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		EscrowAccountID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		Status:              DeductionStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		Kind:                DeductionKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
 		CourtOrderNumber:    keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
 		CaseNumber:          keel.StringCol{Col: keel.Col{Ref: r, Index: 9}},
 		IssuingAgency:       keel.StringCol{Col: keel.Col{Ref: r, Index: 10}},
 		Priority:            keel.Int16Col{Col: keel.Col{Ref: r, Index: 11}},
-		Frequency:           DeductionFrequencyCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 12}}},
+		Frequency:           DeductionFrequencyCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 12}}},
 		Description:         keel.StringCol{Col: keel.Col{Ref: r, Index: 13}},
 		AmountMinor:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
 		TotalCapMinor:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
@@ -166,7 +166,7 @@ func BuildRecurringDeductions(r *keel.Ref) *RecurringDeductionsTable {
 		StartDate:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
 		EndDate:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
 		CurrencyCode:        keel.StringCol{Col: keel.Col{Ref: r, Index: 19}},
-		CreatedByID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 20}}},
+		CreatedByID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 20}}},
 		Version:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 21}},
 		CreatedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 22}},
 		UpdatedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 23}},
@@ -203,8 +203,6 @@ func (t *RecurringDeductionsTable) Get(ctx context.Context, db *keel.DB, key pul
 
 // RecurringDeductionsQuery is a query over recurringpay.RecurringDeduction.
 type RecurringDeductionsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*recurringpay.RecurringDeduction] = (*RecurringDeductionsTable)(nil)
 
 var _ keel.Query[*recurringpay.RecurringDeduction] = (*RecurringDeductionsQuery)(nil)
 
@@ -320,42 +318,42 @@ func (t *RecurringDeductionsTable) Compute(col keel.Column, e keel.Expr) keel.Qu
 
 // Create inserts row.
 func (t *RecurringDeductionsTable) Create(ctx context.Context, db *keel.DB, row *recurringpay.RecurringDeduction) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *RecurringDeductionsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*recurringpay.RecurringDeduction) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *RecurringDeductionsTable) Save(ctx context.Context, db *keel.DB, row *recurringpay.RecurringDeduction, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *RecurringDeductionsTable) SaveExcept(ctx context.Context, db *keel.DB, row *recurringpay.RecurringDeduction, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *RecurringDeductionsTable) DeleteRow(ctx context.Context, db *keel.DB, row *recurringpay.RecurringDeduction) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *RecurringDeductionsTable) Upsert(ctx context.Context, db *keel.DB, rows []*recurringpay.RecurringDeduction, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *RecurringDeductionsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*recurringpay.RecurringDeduction, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *RecurringDeductionsTable) Copy(ctx context.Context, db *keel.DB, rows []*recurringpay.RecurringDeduction) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -527,37 +525,45 @@ func (q *RecurringDeductionsQuery) Clone() keel.Query[*recurringpay.RecurringDed
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *RecurringDeductionsQuery) One(ctx context.Context, db *keel.DB) (*recurringpay.RecurringDeduction, error) {
-	return keel.One[*recurringpay.RecurringDeduction](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*recurringpay.RecurringDeduction)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *RecurringDeductionsQuery) First(ctx context.Context, db *keel.DB) (*recurringpay.RecurringDeduction, error) {
-	return keel.First[*recurringpay.RecurringDeduction](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*recurringpay.RecurringDeduction)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *RecurringDeductionsQuery) List(ctx context.Context, db *keel.DB) ([]*recurringpay.RecurringDeduction, error) {
-	return keel.List[*recurringpay.RecurringDeduction](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*recurringpay.RecurringDeduction)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *RecurringDeductionsQuery) All(ctx context.Context, db *keel.DB) ([]*recurringpay.RecurringDeduction, error) {
-	return keel.All[*recurringpay.RecurringDeduction](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*recurringpay.RecurringDeduction)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *RecurringDeductionsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*recurringpay.RecurringDeduction, error) {
-	return keel.UpdateReturning[*recurringpay.RecurringDeduction](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*recurringpay.RecurringDeduction)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *RecurringDeductionsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*recurringpay.RecurringDeduction], error) {
-	return keel.PageOf[*recurringpay.RecurringDeduction](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*recurringpay.RecurringDeduction])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *RecurringDeductionsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*recurringpay.RecurringDeduction) error) error {
-	return keel.Each[*recurringpay.RecurringDeduction](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*recurringpay.RecurringDeduction)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newRecurringDeduction() unsafe.Pointer {
@@ -800,14 +806,14 @@ type RecurringEarningsTable struct {
 // RecurringEarnings references the recurring_earnings table.
 var RecurringEarnings = &RecurringEarningsTable{
 	TableBase:       keel.TableBase{Ref: &recurringEarningsRef},
-	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &recurringEarningsRef, Index: 0}}},
-	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &recurringEarningsRef, Index: 1}}},
-	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &recurringEarningsRef, Index: 2}}},
-	WorkerID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &recurringEarningsRef, Index: 3}}},
-	PayCodeID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &recurringEarningsRef, Index: 4}}},
-	Status:          EarningStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &recurringEarningsRef, Index: 5}}},
-	Kind:            EarningKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &recurringEarningsRef, Index: 6}}},
-	Frequency:       EarningFrequencyCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &recurringEarningsRef, Index: 7}}},
+	ID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &recurringEarningsRef, Index: 0}}},
+	BusinessUnitID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &recurringEarningsRef, Index: 1}}},
+	OrganizationID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &recurringEarningsRef, Index: 2}}},
+	WorkerID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &recurringEarningsRef, Index: 3}}},
+	PayCodeID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &recurringEarningsRef, Index: 4}}},
+	Status:          EarningStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &recurringEarningsRef, Index: 5}}},
+	Kind:            EarningKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &recurringEarningsRef, Index: 6}}},
+	Frequency:       EarningFrequencyCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &recurringEarningsRef, Index: 7}}},
 	Description:     keel.StringCol{Col: keel.Col{Ref: &recurringEarningsRef, Index: 8}},
 	AmountMinor:     keel.Int64Col{Col: keel.Col{Ref: &recurringEarningsRef, Index: 9}},
 	TotalCapMinor:   keel.Int64Col{Col: keel.Col{Ref: &recurringEarningsRef, Index: 10}},
@@ -815,7 +821,7 @@ var RecurringEarnings = &RecurringEarningsTable{
 	StartDate:       keel.Int64Col{Col: keel.Col{Ref: &recurringEarningsRef, Index: 12}},
 	EndDate:         keel.Int64Col{Col: keel.Col{Ref: &recurringEarningsRef, Index: 13}},
 	CurrencyCode:    keel.StringCol{Col: keel.Col{Ref: &recurringEarningsRef, Index: 14}},
-	CreatedByID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &recurringEarningsRef, Index: 15}}},
+	CreatedByID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &recurringEarningsRef, Index: 15}}},
 	Version:         keel.Int64Col{Col: keel.Col{Ref: &recurringEarningsRef, Index: 16}},
 	CreatedAt:       keel.Int64Col{Col: keel.Col{Ref: &recurringEarningsRef, Index: 17}},
 	UpdatedAt:       keel.Int64Col{Col: keel.Col{Ref: &recurringEarningsRef, Index: 18}},
@@ -825,14 +831,14 @@ var RecurringEarnings = &RecurringEarningsTable{
 func BuildRecurringEarnings(r *keel.Ref) *RecurringEarningsTable {
 	return &RecurringEarningsTable{
 		TableBase:       keel.TableBase{Ref: r},
-		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		WorkerID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		PayCodeID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		Status:          EarningStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		Kind:            EarningKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		Frequency:       EarningFrequencyCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		ID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		WorkerID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		PayCodeID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		Status:          EarningStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		Kind:            EarningKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		Frequency:       EarningFrequencyCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
 		Description:     keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
 		AmountMinor:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
 		TotalCapMinor:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
@@ -840,7 +846,7 @@ func BuildRecurringEarnings(r *keel.Ref) *RecurringEarningsTable {
 		StartDate:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
 		EndDate:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
 		CurrencyCode:    keel.StringCol{Col: keel.Col{Ref: r, Index: 14}},
-		CreatedByID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 15}}},
+		CreatedByID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 15}}},
 		Version:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
 		CreatedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
 		UpdatedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
@@ -872,8 +878,6 @@ func (t *RecurringEarningsTable) Get(ctx context.Context, db *keel.DB, key pulid
 
 // RecurringEarningsQuery is a query over recurringpay.RecurringEarning.
 type RecurringEarningsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*recurringpay.RecurringEarning] = (*RecurringEarningsTable)(nil)
 
 var _ keel.Query[*recurringpay.RecurringEarning] = (*RecurringEarningsQuery)(nil)
 
@@ -989,42 +993,42 @@ func (t *RecurringEarningsTable) Compute(col keel.Column, e keel.Expr) keel.Quer
 
 // Create inserts row.
 func (t *RecurringEarningsTable) Create(ctx context.Context, db *keel.DB, row *recurringpay.RecurringEarning) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *RecurringEarningsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*recurringpay.RecurringEarning) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *RecurringEarningsTable) Save(ctx context.Context, db *keel.DB, row *recurringpay.RecurringEarning, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *RecurringEarningsTable) SaveExcept(ctx context.Context, db *keel.DB, row *recurringpay.RecurringEarning, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *RecurringEarningsTable) DeleteRow(ctx context.Context, db *keel.DB, row *recurringpay.RecurringEarning) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *RecurringEarningsTable) Upsert(ctx context.Context, db *keel.DB, rows []*recurringpay.RecurringEarning, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *RecurringEarningsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*recurringpay.RecurringEarning, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *RecurringEarningsTable) Copy(ctx context.Context, db *keel.DB, rows []*recurringpay.RecurringEarning) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1196,37 +1200,45 @@ func (q *RecurringEarningsQuery) Clone() keel.Query[*recurringpay.RecurringEarni
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *RecurringEarningsQuery) One(ctx context.Context, db *keel.DB) (*recurringpay.RecurringEarning, error) {
-	return keel.One[*recurringpay.RecurringEarning](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*recurringpay.RecurringEarning)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *RecurringEarningsQuery) First(ctx context.Context, db *keel.DB) (*recurringpay.RecurringEarning, error) {
-	return keel.First[*recurringpay.RecurringEarning](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*recurringpay.RecurringEarning)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *RecurringEarningsQuery) List(ctx context.Context, db *keel.DB) ([]*recurringpay.RecurringEarning, error) {
-	return keel.List[*recurringpay.RecurringEarning](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*recurringpay.RecurringEarning)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *RecurringEarningsQuery) All(ctx context.Context, db *keel.DB) ([]*recurringpay.RecurringEarning, error) {
-	return keel.All[*recurringpay.RecurringEarning](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*recurringpay.RecurringEarning)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *RecurringEarningsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*recurringpay.RecurringEarning, error) {
-	return keel.UpdateReturning[*recurringpay.RecurringEarning](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*recurringpay.RecurringEarning)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *RecurringEarningsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*recurringpay.RecurringEarning], error) {
-	return keel.PageOf[*recurringpay.RecurringEarning](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*recurringpay.RecurringEarning])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *RecurringEarningsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*recurringpay.RecurringEarning) error) error {
-	return keel.Each[*recurringpay.RecurringEarning](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*recurringpay.RecurringEarning)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newRecurringEarning() unsafe.Pointer { return unsafe.Pointer(new(recurringpay.RecurringEarning)) }
@@ -1404,211 +1416,185 @@ var reportMeasureInteger = schema.ReportInfo{Included: true, Kind: schema.Measur
 var reportMeasureIntegerHidden = schema.ReportInfo{Kind: schema.Measure, Type: schema.ValueInt, Aggs: schema.AggsNumeric}
 
 // DeductionFrequencyCol is a column of recurringpay.DeductionFrequency values.
-type DeductionFrequencyCol struct{ keel.StringCol }
+type DeductionFrequencyCol struct{ keel.TypedStringCol }
 
 func (c DeductionFrequencyCol) Eq(v recurringpay.DeductionFrequency) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c DeductionFrequencyCol) Ne(v recurringpay.DeductionFrequency) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c DeductionFrequencyCol) Gt(v recurringpay.DeductionFrequency) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c DeductionFrequencyCol) Gte(v recurringpay.DeductionFrequency) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c DeductionFrequencyCol) Lt(v recurringpay.DeductionFrequency) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c DeductionFrequencyCol) Lte(v recurringpay.DeductionFrequency) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c DeductionFrequencyCol) IsDistinctFrom(v recurringpay.DeductionFrequency) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c DeductionFrequencyCol) Between(lo, hi recurringpay.DeductionFrequency) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c DeductionFrequencyCol) To(v recurringpay.DeductionFrequency) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c DeductionFrequencyCol) In(vs ...recurringpay.DeductionFrequency) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c DeductionFrequencyCol) NotIn(vs ...recurringpay.DeductionFrequency) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // DeductionKindCol is a column of recurringpay.DeductionKind values.
-type DeductionKindCol struct{ keel.StringCol }
+type DeductionKindCol struct{ keel.TypedStringCol }
 
-func (c DeductionKindCol) Eq(v recurringpay.DeductionKind) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c DeductionKindCol) Ne(v recurringpay.DeductionKind) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c DeductionKindCol) Gt(v recurringpay.DeductionKind) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
-func (c DeductionKindCol) Gte(v recurringpay.DeductionKind) keel.Pred {
-	return c.StringCol.Gte(string(v))
-}
-func (c DeductionKindCol) Lt(v recurringpay.DeductionKind) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
-func (c DeductionKindCol) Lte(v recurringpay.DeductionKind) keel.Pred {
-	return c.StringCol.Lte(string(v))
-}
+func (c DeductionKindCol) Eq(v recurringpay.DeductionKind) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c DeductionKindCol) Ne(v recurringpay.DeductionKind) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c DeductionKindCol) Gt(v recurringpay.DeductionKind) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c DeductionKindCol) Gte(v recurringpay.DeductionKind) keel.Pred { return c.Text().Gte(string(v)) }
+func (c DeductionKindCol) Lt(v recurringpay.DeductionKind) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c DeductionKindCol) Lte(v recurringpay.DeductionKind) keel.Pred { return c.Text().Lte(string(v)) }
 func (c DeductionKindCol) IsDistinctFrom(v recurringpay.DeductionKind) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c DeductionKindCol) Between(lo, hi recurringpay.DeductionKind) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c DeductionKindCol) To(v recurringpay.DeductionKind) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c DeductionKindCol) In(vs ...recurringpay.DeductionKind) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c DeductionKindCol) NotIn(vs ...recurringpay.DeductionKind) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // DeductionStatusCol is a column of recurringpay.DeductionStatus values.
-type DeductionStatusCol struct{ keel.StringCol }
+type DeductionStatusCol struct{ keel.TypedStringCol }
 
 func (c DeductionStatusCol) Eq(v recurringpay.DeductionStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c DeductionStatusCol) Ne(v recurringpay.DeductionStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c DeductionStatusCol) Gt(v recurringpay.DeductionStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c DeductionStatusCol) Gte(v recurringpay.DeductionStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c DeductionStatusCol) Lt(v recurringpay.DeductionStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c DeductionStatusCol) Lte(v recurringpay.DeductionStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c DeductionStatusCol) IsDistinctFrom(v recurringpay.DeductionStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c DeductionStatusCol) Between(lo, hi recurringpay.DeductionStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c DeductionStatusCol) To(v recurringpay.DeductionStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c DeductionStatusCol) In(vs ...recurringpay.DeductionStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c DeductionStatusCol) NotIn(vs ...recurringpay.DeductionStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // EarningFrequencyCol is a column of recurringpay.EarningFrequency values.
-type EarningFrequencyCol struct{ keel.StringCol }
+type EarningFrequencyCol struct{ keel.TypedStringCol }
 
 func (c EarningFrequencyCol) Eq(v recurringpay.EarningFrequency) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c EarningFrequencyCol) Ne(v recurringpay.EarningFrequency) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c EarningFrequencyCol) Gt(v recurringpay.EarningFrequency) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c EarningFrequencyCol) Gte(v recurringpay.EarningFrequency) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c EarningFrequencyCol) Lt(v recurringpay.EarningFrequency) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c EarningFrequencyCol) Lte(v recurringpay.EarningFrequency) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c EarningFrequencyCol) IsDistinctFrom(v recurringpay.EarningFrequency) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c EarningFrequencyCol) Between(lo, hi recurringpay.EarningFrequency) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c EarningFrequencyCol) To(v recurringpay.EarningFrequency) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c EarningFrequencyCol) In(vs ...recurringpay.EarningFrequency) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c EarningFrequencyCol) NotIn(vs ...recurringpay.EarningFrequency) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // EarningKindCol is a column of recurringpay.EarningKind values.
-type EarningKindCol struct{ keel.StringCol }
+type EarningKindCol struct{ keel.TypedStringCol }
 
-func (c EarningKindCol) Eq(v recurringpay.EarningKind) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c EarningKindCol) Ne(v recurringpay.EarningKind) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c EarningKindCol) Gt(v recurringpay.EarningKind) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c EarningKindCol) Gte(v recurringpay.EarningKind) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c EarningKindCol) Lt(v recurringpay.EarningKind) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c EarningKindCol) Lte(v recurringpay.EarningKind) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c EarningKindCol) Eq(v recurringpay.EarningKind) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c EarningKindCol) Ne(v recurringpay.EarningKind) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c EarningKindCol) Gt(v recurringpay.EarningKind) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c EarningKindCol) Gte(v recurringpay.EarningKind) keel.Pred { return c.Text().Gte(string(v)) }
+func (c EarningKindCol) Lt(v recurringpay.EarningKind) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c EarningKindCol) Lte(v recurringpay.EarningKind) keel.Pred { return c.Text().Lte(string(v)) }
 func (c EarningKindCol) IsDistinctFrom(v recurringpay.EarningKind) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c EarningKindCol) Between(lo, hi recurringpay.EarningKind) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c EarningKindCol) To(v recurringpay.EarningKind) keel.Assignment {
-	return c.StringCol.To(string(v))
-}
+func (c EarningKindCol) To(v recurringpay.EarningKind) keel.Assignment { return c.Text().To(string(v)) }
 func (c EarningKindCol) In(vs ...recurringpay.EarningKind) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c EarningKindCol) NotIn(vs ...recurringpay.EarningKind) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // EarningStatusCol is a column of recurringpay.EarningStatus values.
-type EarningStatusCol struct{ keel.StringCol }
+type EarningStatusCol struct{ keel.TypedStringCol }
 
-func (c EarningStatusCol) Eq(v recurringpay.EarningStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c EarningStatusCol) Ne(v recurringpay.EarningStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c EarningStatusCol) Gt(v recurringpay.EarningStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
-func (c EarningStatusCol) Gte(v recurringpay.EarningStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
-}
-func (c EarningStatusCol) Lt(v recurringpay.EarningStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
-func (c EarningStatusCol) Lte(v recurringpay.EarningStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
-}
+func (c EarningStatusCol) Eq(v recurringpay.EarningStatus) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c EarningStatusCol) Ne(v recurringpay.EarningStatus) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c EarningStatusCol) Gt(v recurringpay.EarningStatus) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c EarningStatusCol) Gte(v recurringpay.EarningStatus) keel.Pred { return c.Text().Gte(string(v)) }
+func (c EarningStatusCol) Lt(v recurringpay.EarningStatus) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c EarningStatusCol) Lte(v recurringpay.EarningStatus) keel.Pred { return c.Text().Lte(string(v)) }
 func (c EarningStatusCol) IsDistinctFrom(v recurringpay.EarningStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c EarningStatusCol) Between(lo, hi recurringpay.EarningStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c EarningStatusCol) To(v recurringpay.EarningStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c EarningStatusCol) In(vs ...recurringpay.EarningStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c EarningStatusCol) NotIn(vs ...recurringpay.EarningStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

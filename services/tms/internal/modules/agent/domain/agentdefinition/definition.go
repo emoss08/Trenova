@@ -402,12 +402,14 @@ func (d *Definition) Validate(multiErr *errortypes.MultiError) {
 		),
 		validation.Field(
 			&d.MaxToolCalls,
-			validation.Min(1).Error("An agent needs at least one tool call per run"),
+			validation.Min(1).
+				ValidateEmpty().
+				Error("An agent needs at least one tool call per run"),
 			validation.Max(maxToolCallsCeiling).
 				Error("An agent cannot make more than 64 tool calls per run"),
 		),
 		validation.Field(&d.MaxConcurrentRuns,
-			validation.Min(1).Error("At least one concurrent run is required"),
+			validation.Min(1).ValidateEmpty().Error("At least one concurrent run is required"),
 			validation.Max(maxConcurrentRuns).Error("At most 10 concurrent runs are allowed"),
 		),
 		validation.Field(&d.SystemKey,

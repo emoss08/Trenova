@@ -10782,6 +10782,10 @@
         },
         {
           "method": "POST",
+          "path": "/edi/communication-profiles/:param/rotate-inbound-url/"
+        },
+        {
+          "method": "POST",
           "path": "/edi/communication-profiles/:param/test-connection/"
         },
         {
@@ -11002,6 +11006,10 @@
         },
         {
           "method": "POST",
+          "path": "/edi/communication-profiles/:param/rotate-inbound-url/"
+        },
+        {
+          "method": "POST",
           "path": "/edi/communication-profiles/:param/test-connection/"
         },
         {
@@ -11219,6 +11227,10 @@
         {
           "method": "PUT",
           "path": "/edi/communication-profiles/:param/"
+        },
+        {
+          "method": "POST",
+          "path": "/edi/communication-profiles/:param/rotate-inbound-url/"
         },
         {
           "method": "POST",
@@ -11620,6 +11632,10 @@
         },
         {
           "method": "POST",
+          "path": "/edi/communication-profiles/:param/rotate-inbound-url/"
+        },
+        {
+          "method": "POST",
           "path": "/edi/communication-profiles/:param/test-connection/"
         },
         {
@@ -11837,6 +11853,10 @@
         {
           "method": "PUT",
           "path": "/edi/communication-profiles/:param/"
+        },
+        {
+          "method": "POST",
+          "path": "/edi/communication-profiles/:param/rotate-inbound-url/"
         },
         {
           "method": "POST",
@@ -12060,6 +12080,10 @@
         },
         {
           "method": "POST",
+          "path": "/edi/communication-profiles/:param/rotate-inbound-url/"
+        },
+        {
+          "method": "POST",
           "path": "/edi/communication-profiles/:param/test-connection/"
         },
         {
@@ -12277,6 +12301,10 @@
         {
           "method": "PUT",
           "path": "/edi/communication-profiles/:param/"
+        },
+        {
+          "method": "POST",
+          "path": "/edi/communication-profiles/:param/rotate-inbound-url/"
         },
         {
           "method": "POST",
@@ -12500,6 +12528,10 @@
         },
         {
           "method": "POST",
+          "path": "/edi/communication-profiles/:param/rotate-inbound-url/"
+        },
+        {
+          "method": "POST",
           "path": "/edi/communication-profiles/:param/test-connection/"
         },
         {
@@ -12717,6 +12749,10 @@
         {
           "method": "PUT",
           "path": "/edi/communication-profiles/:param/"
+        },
+        {
+          "method": "POST",
+          "path": "/edi/communication-profiles/:param/rotate-inbound-url/"
         },
         {
           "method": "POST",

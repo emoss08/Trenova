@@ -186,6 +186,9 @@ func (c *Client) postConvert(
 		return nil, backoff.Permanent(fmt.Errorf("build render request: %w", err))
 	}
 	httpReq.Header.Set("Content-Type", contentType)
+	if c.cfg.UsesBasicAuth() {
+		httpReq.SetBasicAuth(c.cfg.GotenbergUsername, c.cfg.GotenbergPassword)
+	}
 	if renderReq.TraceID != "" {
 		httpReq.Header.Set("Gotenberg-Trace", renderReq.TraceID)
 	}
@@ -214,6 +217,12 @@ func (c *Client) postConvert(
 			))
 		}
 		return pdf, nil
+
+	case resp.StatusCode == http.StatusUnauthorized:
+		return nil, backoff.Permanent(fmt.Errorf(
+			"%w: renderer refused the configured credentials",
+			documenttemplateports.ErrPDFRendererUnavailable,
+		))
 
 	case retryableStatus(resp.StatusCode):
 		return nil, fmt.Errorf(

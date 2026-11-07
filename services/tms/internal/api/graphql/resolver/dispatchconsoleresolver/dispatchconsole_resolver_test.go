@@ -9,14 +9,23 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvertest"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/operations/app/dispatcheligibility"
+	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchconsoleservice"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/demandforecast"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchfinding"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/demandforecastports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/mocks/dispatchconsoleportsmock"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -71,6 +80,14 @@ func TestDispatchResolvers_RequireTheCorrectPermission(t *testing.T) {
 			},
 		},
 		{
+			name:      "a single move requires read",
+			operation: permission.OpRead,
+			invoke: func(ctx context.Context, r *Deps) error {
+				_, err := (&QueryResolver{r}).DispatchMove(ctx, pulid.MustNew("sm_").String())
+				return err
+			},
+		},
+		{
 			name:      "move candidates require read",
 			operation: permission.OpRead,
 			invoke: func(ctx context.Context, r *Deps) error {
@@ -103,6 +120,22 @@ func TestDispatchResolvers_RequireTheCorrectPermission(t *testing.T) {
 						WorkerID: pulid.MustNew("wrk_").String(),
 					},
 				)
+				return err
+			},
+		},
+		{
+			name:      "the freight outlook requires read",
+			operation: permission.OpRead,
+			invoke: func(ctx context.Context, r *Deps) error {
+				_, err := (&QueryResolver{r}).DispatchFreightOutlook(ctx, nil, nil)
+				return err
+			},
+		},
+		{
+			name:      "the forecast quality requires read",
+			operation: permission.OpRead,
+			invoke: func(ctx context.Context, r *Deps) error {
+				_, err := (&QueryResolver{r}).DispatchForecastQuality(ctx)
 				return err
 			},
 		},
@@ -272,9 +305,9 @@ func TestFindingsFromError_MapsValidationErrorsToFindings(t *testing.T) {
 	findings := findingsFromError(multiErr)
 
 	require.Len(t, findings, 2)
-	assert.Equal(t, string(dispatcheligibility.SeverityBlock), findings[0].Severity)
+	assert.Equal(t, string(dispatchfinding.SeverityBlock), findings[0].Severity)
 	assert.Equal(t, "Driver has no drive time remaining", findings[0].Message)
-	assert.Equal(t, string(dispatcheligibility.SeverityWarn), findings[1].Severity)
+	assert.Equal(t, string(dispatchfinding.SeverityWarn), findings[1].Severity)
 }
 
 func TestFindingsFromError_NonValidationErrorYieldsNoFindings(t *testing.T) {
@@ -324,4 +357,239 @@ func TestParseDispatchID_ReturnsASafeValidationError(t *testing.T) {
 	message := errorMessage(err)
 	require.NotNil(t, message)
 	assert.Equal(t, "Move ID is not a valid identifier", *message)
+}
+
+type boardService struct {
+	dispatchconsoleports.DispatchConsoleService
+
+	board *dispatchconsoleservice.Board
+}
+
+func (s *boardService) GetBoard(
+	context.Context,
+	*dispatchconsoleservice.GetBoardRequest,
+) (*dispatchconsoleservice.Board, error) {
+	return s.board, nil
+}
+
+func boardOf(moves ...*dispatchconsoleservice.BoardMove) *dispatchconsoleservice.Board {
+	return &dispatchconsoleservice.Board{
+		Moves:   moves,
+		Drivers: []*dispatchconsoleservice.BoardDriver{},
+		Summary: &dispatchboardports.BoardSummary{},
+	}
+}
+
+func boardMove(covered bool, version int64) *dispatchconsoleservice.BoardMove {
+	return &dispatchconsoleservice.BoardMove{
+		BoardMove: &dispatchboardports.BoardMove{
+			MoveID:      pulid.MustNew("sm_"),
+			MoveVersion: version,
+		},
+		IsCovered: covered,
+	}
+}
+
+/*
+The board carries each uncovered move's coverage proposals, the one waiting and the last approval
+that failed, read once for the whole
+board, and only for someone who may see agent proposals: a dispatcher without it sees the
+moves and no proposal, rather than the board failing.
+*/
+func TestDispatchBoard_AttachesEachUncoveredMovesProposalsInOneRead(t *testing.T) {
+	t.Parallel()
+
+	uncovered, failed, covered := boardMove(false, 3), boardMove(false, 2), boardMove(true, 1)
+	autoAssign := dispatchconsoleportsmock.NewMockDispatchAutoAssignService(t)
+	workerID := pulid.MustNew("wrk_")
+	failedProposalID := pulid.MustNew("ap_")
+	autoAssign.EXPECT().
+		CoverageProposals(mock.Anything, mock.MatchedBy(func(req *dispatchconsoleports.CoverageProposalsRequest) bool {
+			return len(req.Moves) == 2 &&
+				req.Moves[0].MoveID == uncovered.MoveID &&
+				req.Moves[0].MoveVersion == 3 &&
+				req.Moves[1].MoveID == failed.MoveID
+		})).
+		Return(map[pulid.ID]*dispatchconsoleports.MoveCoverageProposals{
+			uncovered.MoveID: {Pending: &dispatchconsoleports.PendingCoverage{
+				ProposalID: pulid.MustNew("ap_"),
+				MoveID:     uncovered.MoveID,
+				WorkerID:   workerID,
+				WorkerName: "Dana Ortiz",
+				TractorID:  pulid.MustNew("trc_"),
+				Confidence: decimal.NewFromFloat(0.91),
+				Stale:      true,
+			}},
+			failed.MoveID: {Failed: &dispatchconsoleports.FailedCoverage{
+				ProposalID: failedProposalID,
+				MoveID:     failed.MoveID,
+				WorkerID:   workerID,
+				WorkerName: "Dana Ortiz",
+				Reason:     "Move 1, stop 1: Scheduled window end must be before the next stop's scheduled window start",
+				FailedAt:   1_800_000_500,
+			}},
+		}, nil).
+		Once()
+
+	board, err := (&QueryResolver{&Deps{
+		Core:                      &resolvercore.Core{PermissionEngine: &mocks.AllowAllPermissionEngine{}},
+		DispatchConsoleService:    &boardService{board: boardOf(uncovered, failed, covered)},
+		DispatchAutoAssignService: autoAssign,
+	}}).DispatchBoard(dispatchAuthContext(t), gqlmodel.DispatchBoardInput{})
+	require.NoError(t, err)
+
+	require.NotNil(t, board.Moves[0].PendingProposal)
+	assert.Equal(t, workerID.String(), board.Moves[0].PendingProposal.WorkerID)
+	assert.Equal(t, "Dana Ortiz", board.Moves[0].PendingProposal.WorkerName)
+	assert.InDelta(t, 0.91, board.Moves[0].PendingProposal.Confidence, 0.0001)
+	assert.True(t, board.Moves[0].PendingProposal.Stale)
+	assert.Nil(t, board.Moves[0].FailedProposal)
+	assert.Equal(t, &gqlmodel.DispatchMoveFailedProposal{
+		ID:         failedProposalID.String(),
+		WorkerID:   workerID.String(),
+		WorkerName: "Dana Ortiz",
+		Reason:     "Move 1, stop 1: Scheduled window end must be before the next stop's scheduled window start",
+		FailedAt:   1_800_000_500,
+	}, board.Moves[1].FailedProposal, "an approval that failed stays on its move with why")
+	assert.Nil(t, board.Moves[2].PendingProposal, "a covered move waits on no proposal")
+}
+
+func TestDispatchBoard_LeavesProposalsOffForSomeoneWhoMayNotSeeThem(t *testing.T) {
+	t.Parallel()
+
+	autoAssign := dispatchconsoleportsmock.NewMockDispatchAutoAssignService(t)
+
+	board, err := (&QueryResolver{&Deps{
+		Core: &resolvercore.Core{PermissionEngine: &denyResourcePermissionEngine{
+			deniedResource: permission.ResourceAgentProposal.String(),
+		}},
+		DispatchConsoleService:    &boardService{board: boardOf(boardMove(false, 1))},
+		DispatchAutoAssignService: autoAssign,
+	}}).DispatchBoard(dispatchAuthContext(t), gqlmodel.DispatchBoardInput{})
+	require.NoError(t, err)
+
+	assert.Nil(t, board.Moves[0].PendingProposal)
+	autoAssign.AssertNotCalled(t, "CoverageProposals", mock.Anything, mock.Anything)
+}
+
+func allowAllCore() *resolvercore.Core {
+	return &resolvercore.Core{PermissionEngine: &mocks.AllowAllPermissionEngine{}}
+}
+
+type forecastService struct {
+	demandforecastports.Service
+
+	outlookRequest *demandforecastports.OutlookRequest
+	qualityTenant  pagination.TenantInfo
+	quality        *demandforecast.Quality
+}
+
+func (s *forecastService) Outlook(
+	_ context.Context,
+	req *demandforecastports.OutlookRequest,
+) (*demandforecastports.Outlook, error) {
+	s.outlookRequest = req
+	return &demandforecastports.Outlook{
+		Quality:     s.quality,
+		GeneratedAt: 1_800_000_000,
+		Windows: []*demandforecastports.OutlookWindow{{
+			AreaLabel:   "Dallas, TX",
+			WindowStart: 1_800_000_000,
+			WindowEnd:   1_800_014_400,
+			Explanation: "Ending near Dallas, TX is worth $610.00.",
+		}},
+	}, nil
+}
+
+func (s *forecastService) Quality(
+	_ context.Context,
+	tenantInfo pagination.TenantInfo,
+) (*demandforecast.Quality, error) {
+	s.qualityTenant = tenantInfo
+	return s.quality, nil
+}
+
+func TestDispatchFreightOutlook_ReadsTheCallersTenantWithTheirWindow(t *testing.T) {
+	t.Parallel()
+
+	ctx := dispatchAuthContext(t)
+	service := &forecastService{
+		quality: &demandforecast.Quality{Status: demandforecast.StatusReady, FittedAt: 1},
+	}
+
+	outlook, err := (&QueryResolver{&Deps{
+		Core:                  allowAllCore(),
+		DemandForecastService: service,
+	}}).DispatchFreightOutlook(ctx, new(72), new(10))
+	require.NoError(t, err)
+
+	authCtx, ok := gqlctx.AuthContext(ctx)
+	require.True(t, ok)
+	require.NotNil(t, service.outlookRequest)
+	assert.Equal(t, authCtx.OrganizationID, service.outlookRequest.TenantInfo.OrgID)
+	assert.Equal(t, authCtx.BusinessUnitID, service.outlookRequest.TenantInfo.BuID)
+	assert.Equal(t, 72, service.outlookRequest.Hours)
+	assert.Equal(t, 10, service.outlookRequest.Limit)
+	assert.Equal(t, gqlmodel.DispatchForecastStatusReady, outlook.Quality.Status)
+	require.Len(t, outlook.Windows, 1)
+	assert.Equal(t, "Dallas, TX", outlook.Windows[0].AreaLabel)
+}
+
+func TestDispatchFreightOutlook_LeavesTheDefaultsToTheService(t *testing.T) {
+	t.Parallel()
+
+	service := &forecastService{
+		quality: &demandforecast.Quality{Status: demandforecast.StatusReady},
+	}
+
+	_, err := (&QueryResolver{&Deps{
+		Core:                  allowAllCore(),
+		DemandForecastService: service,
+	}}).DispatchFreightOutlook(dispatchAuthContext(t), nil, nil)
+	require.NoError(t, err)
+
+	require.NotNil(t, service.outlookRequest)
+	assert.Zero(t, service.outlookRequest.Hours)
+	assert.Zero(t, service.outlookRequest.Limit)
+}
+
+func TestDispatchForecastQuality_ReadsTheCallersTenant(t *testing.T) {
+	t.Parallel()
+
+	ctx := dispatchAuthContext(t)
+	service := &forecastService{
+		quality: &demandforecast.Quality{Status: demandforecast.StatusNoSkill, Skill: 0.02},
+	}
+
+	quality, err := (&QueryResolver{&Deps{
+		Core:                  allowAllCore(),
+		DemandForecastService: service,
+	}}).DispatchForecastQuality(ctx)
+	require.NoError(t, err)
+
+	authCtx, ok := gqlctx.AuthContext(ctx)
+	require.True(t, ok)
+	assert.Equal(t, authCtx.OrganizationID, service.qualityTenant.OrgID)
+	assert.Equal(t, authCtx.BusinessUnitID, service.qualityTenant.BuID)
+	assert.Equal(t, gqlmodel.DispatchForecastStatusNoSkill, quality.Status)
+	assert.InDelta(t, 0.02, quality.Skill, 0.0001)
+	assert.Nil(t, quality.FittedAt)
+}
+
+func TestDispatchForecastResolvers_DeniedReadNeverReachesTheService(t *testing.T) {
+	t.Parallel()
+
+	service := &forecastService{}
+	resolver := &QueryResolver{&Deps{
+		Core:                  &resolvercore.Core{PermissionEngine: &denyingPermissionEngine{}},
+		DemandForecastService: service,
+	}}
+
+	_, err := resolver.DispatchFreightOutlook(dispatchAuthContext(t), nil, nil)
+	require.Error(t, err)
+	_, err = resolver.DispatchForecastQuality(dispatchAuthContext(t))
+	require.Error(t, err)
+
+	assert.Nil(t, service.outlookRequest)
+	assert.True(t, service.qualityTenant.OrgID.IsNil())
 }

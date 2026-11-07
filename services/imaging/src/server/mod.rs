@@ -17,6 +17,7 @@ use prost::Message;
 use tokio::sync::{Semaphore, mpsc};
 use tokio::time::Instant;
 use tokio_stream::wrappers::ReceiverStream;
+use tonic::metadata::MetadataMap;
 use tonic::{Request, Response, Status, Streaming};
 use trenova_proto::imaging::v1::imaging_service_server::ImagingService;
 use trenova_proto::imaging::v1::{
@@ -43,6 +44,10 @@ const MAX_SOURCES: u32 = 500;
 const MAX_OUTPUTS: usize = 1000;
 /// Frames buffered between a child and the caller.
 const FORWARD_BUFFER: usize = 8;
+/// The metadata naming the tenant whose documents a call carries.
+const TENANT_KEY: &str = "x-trenova-tenant";
+/// The longest tenant key taken.
+const MAX_TENANT_KEY: usize = 64;
 
 const CONTENT_TYPES: &[&str] = &[
     "application/pdf",
@@ -82,10 +87,11 @@ impl ImagingServer {
     }
 }
 
-/// One call's context: what it is, its class and its deadline.
+/// One call's context: what it is, whose it is, its class and its deadline.
 #[derive(Clone, Debug)]
 struct Call {
     operation: &'static str,
+    tenant: Option<String>,
     priority: Priority,
     deadline: Instant,
     started: Instant,
@@ -108,6 +114,7 @@ impl Call {
         let started = Instant::now();
         Self {
             operation,
+            tenant: tenant_of(metadata),
             priority,
             deadline: started + asked.map_or(cap, |asked| asked.min(cap)),
             started,
@@ -208,6 +215,7 @@ impl Call {
             .encode_to_vec(),
             input,
             deadline: self.deadline,
+            tenant: self.tenant.clone(),
         };
         let (frames_tx, mut frames_rx) = mpsc::channel::<Vec<u8>>(FORWARD_BUFFER);
         let running = self.shared.pool.run(job, frames_tx);
@@ -261,6 +269,17 @@ impl Call {
             Err(err) => Err(from_job(&err)),
         }
     }
+}
+
+/// The call's tenant key. One that is missing, empty or too long names nobody,
+/// and the pool gives such a job a child of its own.
+fn tenant_of(metadata: &MetadataMap) -> Option<String> {
+    metadata
+        .get(TENANT_KEY)
+        .and_then(|value| value.to_str().ok())
+        .map(str::trim)
+        .filter(|key| !key.is_empty() && key.len() <= MAX_TENANT_KEY)
+        .map(str::to_owned)
 }
 
 /// Parses the `grpc-timeout` header: up to eight digits and a unit.
@@ -1155,6 +1174,28 @@ mod tests {
         assert_eq!(parse_grpc_timeout("123456789S"), None);
         assert_eq!(parse_grpc_timeout("S"), None);
         assert_eq!(parse_grpc_timeout("10x"), None);
+    }
+
+    fn metadata_with_tenant(value: &str) -> MetadataMap {
+        let mut metadata = MetadataMap::new();
+        metadata.insert(TENANT_KEY, value.parse().expect("ascii"));
+        metadata
+    }
+
+    #[test]
+    fn a_call_names_its_tenant_in_its_metadata() {
+        assert_eq!(
+            tenant_of(&metadata_with_tenant(" org_1 ")).as_deref(),
+            Some("org_1")
+        );
+    }
+
+    #[test]
+    fn a_tenant_key_that_names_nobody_is_no_tenant() {
+        assert_eq!(tenant_of(&MetadataMap::new()), None);
+        assert_eq!(tenant_of(&metadata_with_tenant("   ")), None);
+        let long = "o".repeat(MAX_TENANT_KEY + 1);
+        assert_eq!(tenant_of(&metadata_with_tenant(&long)), None);
     }
 
     #[test]

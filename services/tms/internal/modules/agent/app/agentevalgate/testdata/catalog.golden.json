@@ -9912,6 +9912,11 @@
             "type": "string",
             "x-recordOf": "worker"
           },
+          "reason": {
+            "description": "Why this driver, in one or two sentences the dispatcher reads with the proposal: the cost, empty miles, hours or fit that decided it over the others ranked. The driver never sees it.",
+            "maxLength": 600,
+            "type": "string"
+          },
           "secondaryWorkerId": {
             "description": "A second driver for a team move, from worker_list.",
             "type": "string",
@@ -9936,7 +9941,8 @@
         "required": [
           "shipmentMoveId",
           "primaryWorkerId",
-          "tractorId"
+          "tractorId",
+          "reason"
         ],
         "type": "object"
       },
@@ -10148,6 +10154,11 @@
             "type": "string",
             "x-enumOf": "shipment.carrierRateMethod"
           },
+          "reason": {
+            "description": "Why this carrier at this rate, in one or two sentences the dispatcher reads with the proposal: the contract or quote the rate came from and why it beats covering the move with a driver. The carrier never sees it.",
+            "maxLength": 600,
+            "type": "string"
+          },
           "replace": {
             "description": "Replace the carrier already on the move, canceling their assignment and voiding their rate confirmation. Off by default.",
             "type": "boolean"
@@ -10162,7 +10173,8 @@
           "shipmentMoveId",
           "carrierId",
           "rateMethod",
-          "baseRate"
+          "baseRate",
+          "reason"
         ],
         "type": "object"
       },
@@ -10340,6 +10352,64 @@
       }
     },
     {
+      "name": "dispatch_forecast_demand",
+      "description": "Say which areas will be busy in the coming days and where to send trucks, weighing freight customers have not booked yet against the drivers expected. Answers whether freight is coming into a city, how many loads usually appear on a given day and which regions will need more trucks. Learned from this organization's own shipment history, not market data: each twelve-hour window gives the usual range of loads, what is booked, the loads still expected, the drivers expected free there, the shortfall and what one more driver ending there is worth in dollars. Plans use it only once quality.status is Ready; until then it lists no windows, so say it is not proven yet and why, from quality.meaning, rather than guessing. Answer by naming the areas, the windows and the shortfall; act on it through dispatch_plan.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "hoursAhead": {
+            "description": "How many hours ahead to look, from now: 48 unless you ask, at most 96. Ask for enough to reach the day in question; a weekend can need all 96.",
+            "maximum": 96,
+            "minimum": 1,
+            "type": "integer",
+            "x-clamp": true
+          },
+          "limit": {
+            "description": "How many rows to return: 20 unless you ask, at most 50.",
+            "maximum": 50,
+            "minimum": 1,
+            "type": "integer",
+            "x-clamp": true
+          }
+        },
+        "type": "object"
+      },
+      "searchTerms": [
+        "outlook",
+        "anticipate",
+        "demand",
+        "upcoming",
+        "coming",
+        "busy",
+        "usually",
+        "regions",
+        "short of drivers",
+        "need more trucks",
+        "position trucks"
+      ],
+      "policy": {
+        "kind": "query",
+        "resource": "shipment_move",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads records the caller may already open; it changes nothing and sends nothing."
+      }
+    },
+    {
       "name": "dispatch_get_board",
       "description": "The dispatch board: moves in the window, furthest behind first, with urgency and coverage, and drivers with availability, hours left and position. Urgency (Late, Now, Today, Tomorrow, Planned) follows the next stop: pickup window until picked up, then delivery window. The one call for \"what is late\" (late), \"what is uncovered\" (uncoveredOnly) and \"who is free\". Say a late move as its lateTo (late to pick up or to deliver) and lateBy (how far past the window). Answer a rundown from the board as it stands, not by tracking each move; check shipment_get_tracking before acting on a late move, since arrivals are sometimes recorded late. summary counts every move in the window, listed or not; on a board, show it with the metrics movesLate, movesDueNow, movesDueToday and movesUncovered. To act on one load, find it with shipment_list.",
       "parameters": {
@@ -10498,7 +10568,7 @@
     },
     {
       "name": "dispatch_rank_candidates",
-      "description": "Rank the drivers who could cover a shipment move, scored as the dispatch console scores them: hours left, deadhead, slack against the window, equipment fit. Each candidate carries a verdict, the findings behind it and the factors that made its score. Call this before dispatch_assign_move and propose from the top of the list unless a finding says why not.",
+      "description": "Rank the drivers who could cover a shipment move, cheapest first, priced as the dispatch console prices them. Each driver comes with what they cost on the move in dollars (empty miles, lateness, waiting, rest, then preferences such as home time and fairness), a verdict, the findings behind it and the cost lines. Call this before dispatch_assign_move, propose from the top of the list unless a finding says why not, and give the cost or finding that decided it as the reason.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -55920,6 +55990,22 @@
             "description": "The driving title the worker holds; front-office titles are held by users. true for only records that have a position, false for only those that have none.",
             "type": "boolean"
           },
+          "lastHomeAtFrom": {
+            "description": "When the driver was last at home, as a dispatcher recorded it or as telematics saw them there. Only records whose last home at is on or after this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
+          "lastHomeAtTo": {
+            "description": "When the driver was last at home, as a dispatcher recorded it or as telematics saw them there. Only records whose last home at is on or before this day, in the organization's timezone. A calendar day as YYYY-MM-DD, such as 2026-10-01.",
+            "examples": [
+              "2026-10-01"
+            ],
+            "format": "date",
+            "type": "string"
+          },
           "lastName": {
             "description": "Only records whose last name contains this text.",
             "type": "string"
@@ -56317,6 +56403,10 @@
               "firstName",
               "fleetCodeId",
               "gender",
+              "homeLatitude",
+              "homeLongitude",
+              "homePlaceId",
+              "lastHomeAt",
               "lastName",
               "leaveType",
               "managerId",

@@ -40,8 +40,8 @@ func TestEquipmentSelectOptionMappers(t *testing.T) {
 	assert.Equal(t, "Trailer manufacturer", *manufacturerOption.Description)
 	assert.Equal(
 		t,
-		manufacturer.CreatedAt,
-		equipmentManufacturerSelectOptionItem(manufacturer).Cursor.At,
+		manufacturer.ID.String(),
+		equipmentManufacturerSelectOptionItem(manufacturer).Option.ID,
 	)
 
 	assert.Equal(t, "TRL-1", trailerSelectOption(&trailer.Trailer{

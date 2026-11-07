@@ -1,7 +1,8 @@
 //! The manifest and the installer, fetched from a mock release host.
 
 use capture_protocol::release::{
-    Installer, PRODUCT, Release, encode_key_pair, public_key, sign, signing_key,
+    Installer, PRODUCT, Release, ReleaseError, encode_key_pair, public_key, sign, signing_key,
+    unix_now,
 };
 use capture_update::{UpdateError, download, fetch_release};
 use sha2::{Digest, Sha256};
@@ -15,6 +16,7 @@ fn release(server: &MockServer, msi: &[u8]) -> Release {
         product: PRODUCT.into(),
         version: "1.5.0".into(),
         published_at: 1_780_000_000,
+        expires_at: Some(unix_now() + 3600),
         minimum_windows_build: 19045,
         installer: Installer {
             file_name: "TrenovaCapture-1.5.0-x64.msi".into(),
@@ -155,4 +157,34 @@ async fn an_unpublished_forged_or_oversized_manifest_is_not_a_release() {
         .await;
     let huge = fetch_release(&client, &url, &public).await;
     assert!(matches!(huge, Err(UpdateError::Manifest(_))), "{huge:?}");
+}
+
+#[tokio::test]
+async fn an_expired_manifest_is_not_a_release() {
+    let server = MockServer::start().await;
+    let (private, public) = keys();
+    let mut expired = release(&server, MSI);
+    expired.installer.url = "https://example.test/TrenovaCapture-1.5.0-x64.msi".into();
+    expired.expires_at = Some(expired.published_at + 60);
+    Mock::given(method("GET"))
+        .and(path("/releases/latest/"))
+        .respond_with(
+            ResponseTemplate::new(200).set_body_json(sign(&expired, &private).expect("signs")),
+        )
+        .mount(&server)
+        .await;
+
+    let fetched = fetch_release(
+        &reqwest::Client::new(),
+        &format!("{}/releases/latest/", server.uri()),
+        &public,
+    )
+    .await;
+    assert!(
+        matches!(
+            fetched,
+            Err(UpdateError::Release(ReleaseError::Expired { .. }))
+        ),
+        "{fetched:?}"
+    );
 }

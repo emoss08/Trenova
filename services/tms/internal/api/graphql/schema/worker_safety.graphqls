@@ -312,7 +312,7 @@ extend type Mutation {
   reviewWorkerSafetyEvent(input: SafetyEventStatusInput!): WorkerSafetyEvent!
   reopenWorkerSafetyEvent(input: SafetyEventStatusInput!): WorkerSafetyEvent!
   deleteWorkerSafetyEvent(id: ID!): Boolean!
-  issueDisciplinaryAction(input: IssueDisciplinaryActionInput!): IssueDisciplinaryActionPayload!
+  issueDisciplinaryAction(input: IssueDisciplinaryActionInput!): IssueDisciplinaryActionPayload! @authorizes(resource: "worker_disciplinary_action")
   rescindDisciplinaryAction(input: RescindDisciplinaryActionInput!): WorkerDisciplinaryAction!
   giveWorkerRecognition(input: WorkerRecognitionInput!): WorkerRecognition!
   deleteWorkerRecognition(id: ID!): Boolean!

@@ -97,8 +97,6 @@ func (t *StatesTable) Get(ctx context.Context, db *keel.DB, key string) (*manage
 // StatesQuery is a query over managedusage.State.
 type StatesQuery struct{ keel.QueryCore }
 
-var _ keel.Handle[*managedusage.State] = (*StatesTable)(nil)
-
 var _ keel.Query[*managedusage.State] = (*StatesQuery)(nil)
 
 // Query starts a query over the table.
@@ -213,42 +211,42 @@ func (t *StatesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*managedu
 
 // Create inserts row.
 func (t *StatesTable) Create(ctx context.Context, db *keel.DB, row *managedusage.State) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *StatesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*managedusage.State) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *StatesTable) Save(ctx context.Context, db *keel.DB, row *managedusage.State, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *StatesTable) SaveExcept(ctx context.Context, db *keel.DB, row *managedusage.State, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *StatesTable) DeleteRow(ctx context.Context, db *keel.DB, row *managedusage.State) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *StatesTable) Upsert(ctx context.Context, db *keel.DB, rows []*managedusage.State, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *StatesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*managedusage.State, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *StatesTable) Copy(ctx context.Context, db *keel.DB, rows []*managedusage.State) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -420,37 +418,45 @@ func (q *StatesQuery) Clone() keel.Query[*managedusage.State] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *StatesQuery) One(ctx context.Context, db *keel.DB) (*managedusage.State, error) {
-	return keel.One[*managedusage.State](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*managedusage.State)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *StatesQuery) First(ctx context.Context, db *keel.DB) (*managedusage.State, error) {
-	return keel.First[*managedusage.State](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*managedusage.State)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *StatesQuery) List(ctx context.Context, db *keel.DB) ([]*managedusage.State, error) {
-	return keel.List[*managedusage.State](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*managedusage.State)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *StatesQuery) All(ctx context.Context, db *keel.DB) ([]*managedusage.State, error) {
-	return keel.All[*managedusage.State](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*managedusage.State)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *StatesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*managedusage.State, error) {
-	return keel.UpdateReturning[*managedusage.State](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*managedusage.State)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *StatesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*managedusage.State], error) {
-	return keel.PageOf[*managedusage.State](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*managedusage.State])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *StatesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*managedusage.State) error) error {
-	return keel.Each[*managedusage.State](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*managedusage.State)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newState() unsafe.Pointer { return unsafe.Pointer(new(managedusage.State)) }

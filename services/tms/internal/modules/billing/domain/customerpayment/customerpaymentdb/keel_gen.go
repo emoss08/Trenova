@@ -83,11 +83,11 @@ type ApplicationsTable struct {
 // Applications references the customer_payment_applications table.
 var Applications = &ApplicationsTable{
 	TableBase:           keel.TableBase{Ref: &applicationsRef},
-	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &applicationsRef, Index: 0}}},
-	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &applicationsRef, Index: 1}}},
-	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &applicationsRef, Index: 2}}},
-	CustomerPaymentID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &applicationsRef, Index: 3}}},
-	InvoiceID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &applicationsRef, Index: 4}}},
+	ID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &applicationsRef, Index: 0}}},
+	OrganizationID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &applicationsRef, Index: 1}}},
+	BusinessUnitID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &applicationsRef, Index: 2}}},
+	CustomerPaymentID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &applicationsRef, Index: 3}}},
+	InvoiceID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &applicationsRef, Index: 4}}},
 	AppliedAmountMinor:  keel.Int64Col{Col: keel.Col{Ref: &applicationsRef, Index: 5}},
 	ShortPayAmountMinor: keel.Int64Col{Col: keel.Col{Ref: &applicationsRef, Index: 6}},
 	LineNumber:          keel.Int64Col{Col: keel.Col{Ref: &applicationsRef, Index: 7}},
@@ -99,11 +99,11 @@ var Applications = &ApplicationsTable{
 func BuildApplications(r *keel.Ref) *ApplicationsTable {
 	return &ApplicationsTable{
 		TableBase:           keel.TableBase{Ref: r},
-		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		CustomerPaymentID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		InvoiceID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		OrganizationID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		BusinessUnitID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		CustomerPaymentID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		InvoiceID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		AppliedAmountMinor:  keel.Int64Col{Col: keel.Col{Ref: r, Index: 5}},
 		ShortPayAmountMinor: keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
 		LineNumber:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
@@ -135,8 +135,6 @@ func (t *ApplicationsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) 
 
 // ApplicationsQuery is a query over customerpayment.Application.
 type ApplicationsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*customerpayment.Application] = (*ApplicationsTable)(nil)
 
 var _ keel.Query[*customerpayment.Application] = (*ApplicationsQuery)(nil)
 
@@ -252,42 +250,42 @@ func (t *ApplicationsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*cu
 
 // Create inserts row.
 func (t *ApplicationsTable) Create(ctx context.Context, db *keel.DB, row *customerpayment.Application) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *ApplicationsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*customerpayment.Application) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *ApplicationsTable) Save(ctx context.Context, db *keel.DB, row *customerpayment.Application, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *ApplicationsTable) SaveExcept(ctx context.Context, db *keel.DB, row *customerpayment.Application, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *ApplicationsTable) DeleteRow(ctx context.Context, db *keel.DB, row *customerpayment.Application) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *ApplicationsTable) Upsert(ctx context.Context, db *keel.DB, rows []*customerpayment.Application, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *ApplicationsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*customerpayment.Application, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *ApplicationsTable) Copy(ctx context.Context, db *keel.DB, rows []*customerpayment.Application) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -459,37 +457,45 @@ func (q *ApplicationsQuery) Clone() keel.Query[*customerpayment.Application] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *ApplicationsQuery) One(ctx context.Context, db *keel.DB) (*customerpayment.Application, error) {
-	return keel.One[*customerpayment.Application](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*customerpayment.Application)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *ApplicationsQuery) First(ctx context.Context, db *keel.DB) (*customerpayment.Application, error) {
-	return keel.First[*customerpayment.Application](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*customerpayment.Application)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *ApplicationsQuery) List(ctx context.Context, db *keel.DB) ([]*customerpayment.Application, error) {
-	return keel.List[*customerpayment.Application](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*customerpayment.Application)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *ApplicationsQuery) All(ctx context.Context, db *keel.DB) ([]*customerpayment.Application, error) {
-	return keel.All[*customerpayment.Application](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*customerpayment.Application)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *ApplicationsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*customerpayment.Application, error) {
-	return keel.UpdateReturning[*customerpayment.Application](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*customerpayment.Application)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *ApplicationsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*customerpayment.Application], error) {
-	return keel.PageOf[*customerpayment.Application](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*customerpayment.Application])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *ApplicationsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*customerpayment.Application) error) error {
-	return keel.Each[*customerpayment.Application](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*customerpayment.Application)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newApplication() unsafe.Pointer { return unsafe.Pointer(new(customerpayment.Application)) }
@@ -637,19 +643,19 @@ type CreditMemoApplicationsTable struct {
 // CreditMemoApplications references the credit_memo_applications table.
 var CreditMemoApplications = &CreditMemoApplicationsTable{
 	TableBase:           keel.TableBase{Ref: &creditMemoApplicationsRef},
-	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &creditMemoApplicationsRef, Index: 0}}},
-	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &creditMemoApplicationsRef, Index: 1}}},
-	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &creditMemoApplicationsRef, Index: 2}}},
-	CreditMemoInvoiceID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &creditMemoApplicationsRef, Index: 3}}},
-	InvoiceID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &creditMemoApplicationsRef, Index: 4}}},
+	ID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &creditMemoApplicationsRef, Index: 0}}},
+	OrganizationID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &creditMemoApplicationsRef, Index: 1}}},
+	BusinessUnitID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &creditMemoApplicationsRef, Index: 2}}},
+	CreditMemoInvoiceID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &creditMemoApplicationsRef, Index: 3}}},
+	InvoiceID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &creditMemoApplicationsRef, Index: 4}}},
 	AppliedAmountMinor:  keel.Int64Col{Col: keel.Col{Ref: &creditMemoApplicationsRef, Index: 5}},
 	AccountingDate:      keel.Int64Col{Col: keel.Col{Ref: &creditMemoApplicationsRef, Index: 6}},
 	LineNumber:          keel.Int64Col{Col: keel.Col{Ref: &creditMemoApplicationsRef, Index: 7}},
-	Status:              CreditApplicationStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &creditMemoApplicationsRef, Index: 8}}},
+	Status:              CreditApplicationStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &creditMemoApplicationsRef, Index: 8}}},
 	UnappliedAt:         keel.Int64Col{Col: keel.Col{Ref: &creditMemoApplicationsRef, Index: 9}},
-	UnappliedByID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &creditMemoApplicationsRef, Index: 10}}},
+	UnappliedByID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &creditMemoApplicationsRef, Index: 10}}},
 	UnappliedReason:     keel.StringCol{Col: keel.Col{Ref: &creditMemoApplicationsRef, Index: 11}},
-	CreatedByID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &creditMemoApplicationsRef, Index: 12}}},
+	CreatedByID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &creditMemoApplicationsRef, Index: 12}}},
 	CreatedAt:           keel.Int64Col{Col: keel.Col{Ref: &creditMemoApplicationsRef, Index: 13}},
 	UpdatedAt:           keel.Int64Col{Col: keel.Col{Ref: &creditMemoApplicationsRef, Index: 14}},
 }
@@ -658,19 +664,19 @@ var CreditMemoApplications = &CreditMemoApplicationsTable{
 func BuildCreditMemoApplications(r *keel.Ref) *CreditMemoApplicationsTable {
 	return &CreditMemoApplicationsTable{
 		TableBase:           keel.TableBase{Ref: r},
-		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		CreditMemoInvoiceID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		InvoiceID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		OrganizationID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		BusinessUnitID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		CreditMemoInvoiceID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		InvoiceID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		AppliedAmountMinor:  keel.Int64Col{Col: keel.Col{Ref: r, Index: 5}},
 		AccountingDate:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
 		LineNumber:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
-		Status:              CreditApplicationStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		Status:              CreditApplicationStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
 		UnappliedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
-		UnappliedByID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		UnappliedByID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
 		UnappliedReason:     keel.StringCol{Col: keel.Col{Ref: r, Index: 11}},
-		CreatedByID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 12}}},
+		CreatedByID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 12}}},
 		CreatedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
 		UpdatedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
 	}
@@ -701,8 +707,6 @@ func (t *CreditMemoApplicationsTable) Get(ctx context.Context, db *keel.DB, key 
 
 // CreditMemoApplicationsQuery is a query over customerpayment.CreditMemoApplication.
 type CreditMemoApplicationsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*customerpayment.CreditMemoApplication] = (*CreditMemoApplicationsTable)(nil)
 
 var _ keel.Query[*customerpayment.CreditMemoApplication] = (*CreditMemoApplicationsQuery)(nil)
 
@@ -818,42 +822,42 @@ func (t *CreditMemoApplicationsTable) Compute(col keel.Column, e keel.Expr) keel
 
 // Create inserts row.
 func (t *CreditMemoApplicationsTable) Create(ctx context.Context, db *keel.DB, row *customerpayment.CreditMemoApplication) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *CreditMemoApplicationsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*customerpayment.CreditMemoApplication) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *CreditMemoApplicationsTable) Save(ctx context.Context, db *keel.DB, row *customerpayment.CreditMemoApplication, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *CreditMemoApplicationsTable) SaveExcept(ctx context.Context, db *keel.DB, row *customerpayment.CreditMemoApplication, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *CreditMemoApplicationsTable) DeleteRow(ctx context.Context, db *keel.DB, row *customerpayment.CreditMemoApplication) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *CreditMemoApplicationsTable) Upsert(ctx context.Context, db *keel.DB, rows []*customerpayment.CreditMemoApplication, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *CreditMemoApplicationsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*customerpayment.CreditMemoApplication, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *CreditMemoApplicationsTable) Copy(ctx context.Context, db *keel.DB, rows []*customerpayment.CreditMemoApplication) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1025,37 +1029,45 @@ func (q *CreditMemoApplicationsQuery) Clone() keel.Query[*customerpayment.Credit
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *CreditMemoApplicationsQuery) One(ctx context.Context, db *keel.DB) (*customerpayment.CreditMemoApplication, error) {
-	return keel.One[*customerpayment.CreditMemoApplication](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*customerpayment.CreditMemoApplication)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *CreditMemoApplicationsQuery) First(ctx context.Context, db *keel.DB) (*customerpayment.CreditMemoApplication, error) {
-	return keel.First[*customerpayment.CreditMemoApplication](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*customerpayment.CreditMemoApplication)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *CreditMemoApplicationsQuery) List(ctx context.Context, db *keel.DB) ([]*customerpayment.CreditMemoApplication, error) {
-	return keel.List[*customerpayment.CreditMemoApplication](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*customerpayment.CreditMemoApplication)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *CreditMemoApplicationsQuery) All(ctx context.Context, db *keel.DB) ([]*customerpayment.CreditMemoApplication, error) {
-	return keel.All[*customerpayment.CreditMemoApplication](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*customerpayment.CreditMemoApplication)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *CreditMemoApplicationsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*customerpayment.CreditMemoApplication, error) {
-	return keel.UpdateReturning[*customerpayment.CreditMemoApplication](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*customerpayment.CreditMemoApplication)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *CreditMemoApplicationsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*customerpayment.CreditMemoApplication], error) {
-	return keel.PageOf[*customerpayment.CreditMemoApplication](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*customerpayment.CreditMemoApplication])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *CreditMemoApplicationsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*customerpayment.CreditMemoApplication) error) error {
-	return keel.Each[*customerpayment.CreditMemoApplication](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*customerpayment.CreditMemoApplication)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newCreditMemoApplication() unsafe.Pointer {
@@ -1261,29 +1273,29 @@ type PaymentsTable struct {
 // Payments references the customer_payments table.
 var Payments = &PaymentsTable{
 	TableBase:            keel.TableBase{Ref: &paymentsRef},
-	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &paymentsRef, Index: 0}}},
-	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &paymentsRef, Index: 1}}},
-	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &paymentsRef, Index: 2}}},
-	CustomerID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &paymentsRef, Index: 3}}},
+	ID:                   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &paymentsRef, Index: 0}}},
+	OrganizationID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &paymentsRef, Index: 1}}},
+	BusinessUnitID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &paymentsRef, Index: 2}}},
+	CustomerID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &paymentsRef, Index: 3}}},
 	PaymentDate:          keel.Int64Col{Col: keel.Col{Ref: &paymentsRef, Index: 4}},
 	AccountingDate:       keel.Int64Col{Col: keel.Col{Ref: &paymentsRef, Index: 5}},
 	AmountMinor:          keel.Int64Col{Col: keel.Col{Ref: &paymentsRef, Index: 6}},
 	AppliedAmountMinor:   keel.Int64Col{Col: keel.Col{Ref: &paymentsRef, Index: 7}},
 	UnappliedAmountMinor: keel.Int64Col{Col: keel.Col{Ref: &paymentsRef, Index: 8}},
-	Status:               StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &paymentsRef, Index: 9}}},
-	PaymentMethod:        MethodCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &paymentsRef, Index: 10}}},
+	Status:               StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &paymentsRef, Index: 9}}},
+	PaymentMethod:        MethodCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &paymentsRef, Index: 10}}},
 	ReferenceNumber:      keel.StringCol{Col: keel.Col{Ref: &paymentsRef, Index: 11}},
 	Memo:                 keel.StringCol{Col: keel.Col{Ref: &paymentsRef, Index: 12}},
 	CurrencyCode:         keel.StringCol{Col: keel.Col{Ref: &paymentsRef, Index: 13}},
 	ExchangeRate:         keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &paymentsRef, Index: 14}}},
 	ExchangeRateDate:     keel.Int64Col{Col: keel.Col{Ref: &paymentsRef, Index: 15}},
-	PostedBatchID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &paymentsRef, Index: 16}}},
-	ReversalBatchID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &paymentsRef, Index: 17}}},
-	ReversedByID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &paymentsRef, Index: 18}}},
+	PostedBatchID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &paymentsRef, Index: 16}}},
+	ReversalBatchID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &paymentsRef, Index: 17}}},
+	ReversedByID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &paymentsRef, Index: 18}}},
 	ReversedAt:           keel.Int64Col{Col: keel.Col{Ref: &paymentsRef, Index: 19}},
 	ReversalReason:       keel.StringCol{Col: keel.Col{Ref: &paymentsRef, Index: 20}},
-	CreatedByID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &paymentsRef, Index: 21}}},
-	UpdatedByID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &paymentsRef, Index: 22}}},
+	CreatedByID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &paymentsRef, Index: 21}}},
+	UpdatedByID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &paymentsRef, Index: 22}}},
 	Version:              keel.Int64Col{Col: keel.Col{Ref: &paymentsRef, Index: 23}},
 	CreatedAt:            keel.Int64Col{Col: keel.Col{Ref: &paymentsRef, Index: 24}},
 	UpdatedAt:            keel.Int64Col{Col: keel.Col{Ref: &paymentsRef, Index: 25}},
@@ -1293,29 +1305,29 @@ var Payments = &PaymentsTable{
 func BuildPayments(r *keel.Ref) *PaymentsTable {
 	return &PaymentsTable{
 		TableBase:            keel.TableBase{Ref: r},
-		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		CustomerID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:                   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		OrganizationID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		BusinessUnitID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		CustomerID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		PaymentDate:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 4}},
 		AccountingDate:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 5}},
 		AmountMinor:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
 		AppliedAmountMinor:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
 		UnappliedAmountMinor: keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
-		Status:               StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
-		PaymentMethod:        MethodCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		Status:               StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		PaymentMethod:        MethodCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
 		ReferenceNumber:      keel.StringCol{Col: keel.Col{Ref: r, Index: 11}},
 		Memo:                 keel.StringCol{Col: keel.Col{Ref: r, Index: 12}},
 		CurrencyCode:         keel.StringCol{Col: keel.Col{Ref: r, Index: 13}},
 		ExchangeRate:         keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 14}}},
 		ExchangeRateDate:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
-		PostedBatchID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 16}}},
-		ReversalBatchID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 17}}},
-		ReversedByID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 18}}},
+		PostedBatchID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 16}}},
+		ReversalBatchID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 17}}},
+		ReversedByID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 18}}},
 		ReversedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 19}},
 		ReversalReason:       keel.StringCol{Col: keel.Col{Ref: r, Index: 20}},
-		CreatedByID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 21}}},
-		UpdatedByID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 22}}},
+		CreatedByID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 21}}},
+		UpdatedByID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 22}}},
 		Version:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 23}},
 		CreatedAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 24}},
 		UpdatedAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 25}},
@@ -1347,8 +1359,6 @@ func (t *PaymentsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*cu
 
 // PaymentsQuery is a query over customerpayment.Payment.
 type PaymentsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*customerpayment.Payment] = (*PaymentsTable)(nil)
 
 var _ keel.Query[*customerpayment.Payment] = (*PaymentsQuery)(nil)
 
@@ -1464,42 +1474,42 @@ func (t *PaymentsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*custom
 
 // Create inserts row.
 func (t *PaymentsTable) Create(ctx context.Context, db *keel.DB, row *customerpayment.Payment) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *PaymentsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*customerpayment.Payment) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *PaymentsTable) Save(ctx context.Context, db *keel.DB, row *customerpayment.Payment, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *PaymentsTable) SaveExcept(ctx context.Context, db *keel.DB, row *customerpayment.Payment, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *PaymentsTable) DeleteRow(ctx context.Context, db *keel.DB, row *customerpayment.Payment) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *PaymentsTable) Upsert(ctx context.Context, db *keel.DB, rows []*customerpayment.Payment, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *PaymentsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*customerpayment.Payment, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *PaymentsTable) Copy(ctx context.Context, db *keel.DB, rows []*customerpayment.Payment) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1671,37 +1681,45 @@ func (q *PaymentsQuery) Clone() keel.Query[*customerpayment.Payment] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *PaymentsQuery) One(ctx context.Context, db *keel.DB) (*customerpayment.Payment, error) {
-	return keel.One[*customerpayment.Payment](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*customerpayment.Payment)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *PaymentsQuery) First(ctx context.Context, db *keel.DB) (*customerpayment.Payment, error) {
-	return keel.First[*customerpayment.Payment](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*customerpayment.Payment)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *PaymentsQuery) List(ctx context.Context, db *keel.DB) ([]*customerpayment.Payment, error) {
-	return keel.List[*customerpayment.Payment](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*customerpayment.Payment)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *PaymentsQuery) All(ctx context.Context, db *keel.DB) ([]*customerpayment.Payment, error) {
-	return keel.All[*customerpayment.Payment](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*customerpayment.Payment)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *PaymentsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*customerpayment.Payment, error) {
-	return keel.UpdateReturning[*customerpayment.Payment](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*customerpayment.Payment)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *PaymentsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*customerpayment.Payment], error) {
-	return keel.PageOf[*customerpayment.Payment](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*customerpayment.Payment])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *PaymentsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*customerpayment.Payment) error) error {
-	return keel.Each[*customerpayment.Payment](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*customerpayment.Payment)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newPayment() unsafe.Pointer { return unsafe.Pointer(new(customerpayment.Payment)) }
@@ -1917,84 +1935,84 @@ var reportMeasureInteger = schema.ReportInfo{Included: true, Kind: schema.Measur
 var reportMeasureIntegerHidden = schema.ReportInfo{Kind: schema.Measure, Type: schema.ValueInt, Aggs: schema.AggsNumeric}
 
 // CreditApplicationStatusCol is a column of customerpayment.CreditApplicationStatus values.
-type CreditApplicationStatusCol struct{ keel.StringCol }
+type CreditApplicationStatusCol struct{ keel.TypedStringCol }
 
 func (c CreditApplicationStatusCol) Eq(v customerpayment.CreditApplicationStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c CreditApplicationStatusCol) Ne(v customerpayment.CreditApplicationStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c CreditApplicationStatusCol) Gt(v customerpayment.CreditApplicationStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c CreditApplicationStatusCol) Gte(v customerpayment.CreditApplicationStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c CreditApplicationStatusCol) Lt(v customerpayment.CreditApplicationStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c CreditApplicationStatusCol) Lte(v customerpayment.CreditApplicationStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c CreditApplicationStatusCol) IsDistinctFrom(v customerpayment.CreditApplicationStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c CreditApplicationStatusCol) Between(lo, hi customerpayment.CreditApplicationStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c CreditApplicationStatusCol) To(v customerpayment.CreditApplicationStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c CreditApplicationStatusCol) In(vs ...customerpayment.CreditApplicationStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c CreditApplicationStatusCol) NotIn(vs ...customerpayment.CreditApplicationStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // MethodCol is a column of customerpayment.Method values.
-type MethodCol struct{ keel.StringCol }
+type MethodCol struct{ keel.TypedStringCol }
 
-func (c MethodCol) Eq(v customerpayment.Method) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c MethodCol) Ne(v customerpayment.Method) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c MethodCol) Gt(v customerpayment.Method) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c MethodCol) Gte(v customerpayment.Method) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c MethodCol) Lt(v customerpayment.Method) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c MethodCol) Lte(v customerpayment.Method) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c MethodCol) Eq(v customerpayment.Method) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c MethodCol) Ne(v customerpayment.Method) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c MethodCol) Gt(v customerpayment.Method) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c MethodCol) Gte(v customerpayment.Method) keel.Pred { return c.Text().Gte(string(v)) }
+func (c MethodCol) Lt(v customerpayment.Method) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c MethodCol) Lte(v customerpayment.Method) keel.Pred { return c.Text().Lte(string(v)) }
 func (c MethodCol) IsDistinctFrom(v customerpayment.Method) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c MethodCol) Between(lo, hi customerpayment.Method) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c MethodCol) To(v customerpayment.Method) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c MethodCol) To(v customerpayment.Method) keel.Assignment { return c.Text().To(string(v)) }
 func (c MethodCol) In(vs ...customerpayment.Method) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c MethodCol) NotIn(vs ...customerpayment.Method) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // StatusCol is a column of customerpayment.Status values.
-type StatusCol struct{ keel.StringCol }
+type StatusCol struct{ keel.TypedStringCol }
 
-func (c StatusCol) Eq(v customerpayment.Status) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c StatusCol) Ne(v customerpayment.Status) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c StatusCol) Gt(v customerpayment.Status) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c StatusCol) Gte(v customerpayment.Status) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c StatusCol) Lt(v customerpayment.Status) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c StatusCol) Lte(v customerpayment.Status) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c StatusCol) Eq(v customerpayment.Status) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c StatusCol) Ne(v customerpayment.Status) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c StatusCol) Gt(v customerpayment.Status) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c StatusCol) Gte(v customerpayment.Status) keel.Pred { return c.Text().Gte(string(v)) }
+func (c StatusCol) Lt(v customerpayment.Status) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c StatusCol) Lte(v customerpayment.Status) keel.Pred { return c.Text().Lte(string(v)) }
 func (c StatusCol) IsDistinctFrom(v customerpayment.Status) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c StatusCol) Between(lo, hi customerpayment.Status) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c StatusCol) To(v customerpayment.Status) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c StatusCol) To(v customerpayment.Status) keel.Assignment { return c.Text().To(string(v)) }
 func (c StatusCol) In(vs ...customerpayment.Status) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c StatusCol) NotIn(vs ...customerpayment.Status) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

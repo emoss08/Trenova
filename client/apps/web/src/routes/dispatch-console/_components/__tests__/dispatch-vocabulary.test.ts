@@ -3,9 +3,8 @@ import {
   URGENCY_ORDER,
   availabilityMeta,
   formatMiles,
-  formatMinutesToPickup,
   groupMovesByUrgency,
-  scoreTone,
+  pickupState,
   severityMeta,
   urgencyMeta,
   verdictMeta,
@@ -17,8 +16,18 @@ describe("urgency", () => {
     expect(URGENCY_ORDER).toEqual(["Late", "Now", "Today", "Tomorrow", "Planned"]);
   });
 
-  it("marks an already-open pickup window as the most severe", () => {
+  it("marks a closed pickup window as the most severe", () => {
     expect(urgencyMeta("Late").variant).toBe("danger");
+  });
+
+  it("names the groups by the server's rolling rule, not by the calendar", () => {
+    expect(URGENCY_ORDER.map((bucket) => urgencyMeta(bucket).label)).toEqual([
+      "Late",
+      "Due now",
+      "Within 24 hours",
+      "Within 48 hours",
+      "Later",
+    ]);
   });
 
   it("falls back to Planned for an unrecognized bucket", () => {
@@ -46,19 +55,74 @@ describe("availability and verdict", () => {
   });
 });
 
-describe("formatMinutesToPickup", () => {
-  it("says how late a move already is", () => {
-    expect(formatMinutesToPickup(-40)).toBe("40m late");
-    expect(formatMinutesToPickup(-190)).toBe("3h 10m late");
+describe("pickupState", () => {
+  const now = 1_800_000_000;
+  const clock = (seconds: number) => `t${seconds - now}`;
+  const move = (overrides: Partial<Parameters<typeof pickupState>[0]>) => ({
+    urgency: "Now",
+    originWindowStart: now - 3600,
+    originWindowEnd: now + 6 * 60,
+    originActualArrival: 0,
+    destinationWindowStart: now + 86_400,
+    destinationWindowEnd: null,
+    ...overrides,
   });
 
-  it("counts down to an upcoming pickup", () => {
-    expect(formatMinutesToPickup(45)).toBe("in 45m");
-    expect(formatMinutesToPickup(190)).toBe("in 3h 10m");
+  it("reads an open window as open with the time left, in warning, not as late", () => {
+    expect(pickupState(move({}), now, clock)).toEqual({
+      tone: "warning",
+      headline: "Open · closes in 6m",
+      window: "window t-3600–t360",
+    });
   });
 
-  it("reads zero as due now rather than as in 0m", () => {
-    expect(formatMinutesToPickup(0)).toBe("due now");
+  it("reads a closed window as how long ago it closed, in danger", () => {
+    expect(
+      pickupState(move({ urgency: "Late", originWindowEnd: now - 25 * 60 }), now, clock),
+    ).toMatchObject({ tone: "danger", headline: "Closed 25m ago" });
+  });
+
+  it("counts down to a window opening within four hours", () => {
+    expect(
+      pickupState(
+        move({ originWindowStart: now + 40 * 60, originWindowEnd: now + 3 * 3600 }),
+        now,
+        clock,
+      ),
+    ).toMatchObject({ tone: "neutral", headline: "Opens in 40m" });
+  });
+
+  it("names the opening time for a window further out", () => {
+    expect(
+      pickupState(
+        move({ urgency: "Today", originWindowStart: now + 6 * 3600, originWindowEnd: null }),
+        now,
+        clock,
+      ),
+    ).toEqual({ tone: "neutral", headline: "Opens t21600", window: "window t21600" });
+  });
+
+  it("reads the delivery window once the truck has arrived at pickup", () => {
+    expect(
+      pickupState(
+        move({
+          urgency: "Late",
+          originActualArrival: now - 7200,
+          destinationWindowStart: now - 3 * 3600,
+          destinationWindowEnd: now - 2 * 3600,
+        }),
+        now,
+        clock,
+      ),
+    ).toMatchObject({ tone: "danger", headline: "Delivery closed 2h 0m ago" });
+  });
+
+  it("says when there is no appointment rather than inventing a time", () => {
+    expect(pickupState(move({ originWindowStart: 0, originWindowEnd: null }), now, clock)).toEqual({
+      tone: "neutral",
+      headline: "No appointment",
+      window: "no appointment",
+    });
   });
 });
 
@@ -96,12 +160,5 @@ describe("groupMovesByUrgency", () => {
     expect(grouped.get("Late")?.map((move) => move.id)).toEqual(["b"]);
     expect(grouped.get("Now")?.map((move) => move.id)).toEqual(["a"]);
     expect(grouped.get("Planned")?.map((move) => move.id)).toEqual(["c"]);
-  });
-});
-
-describe("scoreTone", () => {
-  it("separates strong, middling, and weak scores", () => {
-    expect(scoreTone(90)).not.toBe(scoreTone(60));
-    expect(scoreTone(60)).not.toBe(scoreTone(20));
   });
 });

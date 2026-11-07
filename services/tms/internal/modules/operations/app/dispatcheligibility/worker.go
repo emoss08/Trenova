@@ -2,6 +2,7 @@ package dispatcheligibility
 
 import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchfinding"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
@@ -53,7 +54,7 @@ func EvaluateWorkerCompliance(in WorkerComplianceInput) *Evaluation {
 
 func evaluateDriverQualification(
 	in WorkerComplianceInput,
-	severity Severity,
+	severity dispatchfinding.Severity,
 	eval *Evaluation,
 ) {
 	if !in.Control.EnforceDriverQualificationCompliance {
@@ -63,8 +64,8 @@ func evaluateDriverQualification(
 	profile := in.Worker.Profile
 
 	if !timeutils.IsAtLeastAge(profile.DOB, minDriverAgeInterstate) {
-		eval.Add(Finding{
-			Code:       CodeDriverUnderage,
+		eval.Add(&dispatchfinding.Finding{
+			Code:       dispatchfinding.CodeDriverUnderage,
 			Severity:   severity,
 			Field:      "dob",
 			Message:    "Driver must be at least 21 years old for interstate commerce (49 CFR 391.11(b)(1))",
@@ -73,8 +74,8 @@ func evaluateDriverQualification(
 	}
 
 	if timeutils.IsExpired(profile.LicenseExpiry) {
-		eval.Add(Finding{
-			Code:       CodeLicenseExpired,
+		eval.Add(&dispatchfinding.Finding{
+			Code:       dispatchfinding.CodeLicenseExpired,
 			Severity:   severity,
 			Field:      "licenseExpiry",
 			Message:    "Commercial driver's license is expired (49 CFR 391.11(b)(5))",
@@ -83,7 +84,11 @@ func evaluateDriverQualification(
 	}
 }
 
-func evaluateMedicalCert(in WorkerComplianceInput, severity Severity, eval *Evaluation) {
+func evaluateMedicalCert(
+	in WorkerComplianceInput,
+	severity dispatchfinding.Severity,
+	eval *Evaluation,
+) {
 	if !in.Control.EnforceMedicalCertCompliance {
 		return
 	}
@@ -91,8 +96,8 @@ func evaluateMedicalCert(in WorkerComplianceInput, severity Severity, eval *Eval
 	profile := in.Worker.Profile
 
 	if profile.MedicalCardExpiry != nil && timeutils.IsExpired(*profile.MedicalCardExpiry) {
-		eval.Add(Finding{
-			Code:       CodeMedicalCardExpired,
+		eval.Add(&dispatchfinding.Finding{
+			Code:       dispatchfinding.CodeMedicalCardExpired,
 			Severity:   severity,
 			Field:      "medicalCardExpiry",
 			Message:    "Medical certificate is expired (49 CFR 391.45)",
@@ -101,8 +106,8 @@ func evaluateMedicalCert(in WorkerComplianceInput, severity Severity, eval *Eval
 	}
 
 	if profile.PhysicalDueDate != nil && timeutils.IsOverdue(*profile.PhysicalDueDate) {
-		eval.Add(Finding{
-			Code:       CodePhysicalOverdue,
+		eval.Add(&dispatchfinding.Finding{
+			Code:       dispatchfinding.CodePhysicalOverdue,
 			Severity:   severity,
 			Field:      "physicalDueDate",
 			Message:    "Physical examination is overdue (49 CFR 391.45)",
@@ -120,7 +125,11 @@ func evaluateMedicalCert(in WorkerComplianceInput, severity Severity, eval *Eval
 // waiting on a laboratory, is a gap in the paperwork rather than a finding
 // against the driver, and grounding a fleet over paperwork is not what
 // 49 CFR 382 asks for — so those warn at every enforcement level.
-func evaluateDrugAndAlcohol(in WorkerComplianceInput, severity Severity, eval *Evaluation) {
+func evaluateDrugAndAlcohol(
+	in WorkerComplianceInput,
+	severity dispatchfinding.Severity,
+	eval *Evaluation,
+) {
 	if !in.Control.EnforceDrugAndAlcoholCompliance {
 		return
 	}
@@ -129,25 +138,25 @@ func evaluateDrugAndAlcohol(in WorkerComplianceInput, severity Severity, eval *E
 
 	switch profile.DrugAlcoholStatus.Normalized() {
 	case worker.DrugAlcoholProhibited:
-		eval.Add(Finding{
-			Code:       CodeDrugAlcoholProhibited,
-			Severity:   SeverityBlock,
+		eval.Add(&dispatchfinding.Finding{
+			Code:       dispatchfinding.CodeDrugAlcoholProhibited,
+			Severity:   dispatchfinding.SeverityBlock,
 			Field:      "drugAlcoholStatus",
 			Message:    drugAlcoholProhibitedMessage(profile.ReturnToDutyStatus),
 			Regulation: regDrugAndAlcoholProhibition,
 		})
 	case worker.DrugAlcoholPending:
-		eval.Add(Finding{
-			Code:       CodeDrugAlcoholPending,
-			Severity:   SeverityWarn,
+		eval.Add(&dispatchfinding.Finding{
+			Code:       dispatchfinding.CodeDrugAlcoholPending,
+			Severity:   dispatchfinding.SeverityWarn,
 			Field:      "drugAlcoholStatus",
 			Message:    "A drug or alcohol test is awaiting a result",
 			Regulation: regDrugAndAlcohol,
 		})
 	case worker.DrugAlcoholUnknown:
-		eval.Add(Finding{
-			Code:     CodeDrugAlcoholUnknown,
-			Severity: SeverityWarn,
+		eval.Add(&dispatchfinding.Finding{
+			Code:     dispatchfinding.CodeDrugAlcoholUnknown,
+			Severity: dispatchfinding.SeverityWarn,
 			Field:    "drugAlcoholStatus",
 			Message: "No pre-employment drug test is on file " +
 				"(49 CFR 382.301(a))",
@@ -158,8 +167,8 @@ func evaluateDrugAndAlcohol(in WorkerComplianceInput, severity Severity, eval *E
 
 	if profile.NextClearinghouseQueryDue != nil &&
 		timeutils.IsOverdue(*profile.NextClearinghouseQueryDue) {
-		eval.Add(Finding{
-			Code:       CodeClearinghouseOverdue,
+		eval.Add(&dispatchfinding.Finding{
+			Code:       dispatchfinding.CodeClearinghouseOverdue,
 			Severity:   severity,
 			Field:      "nextClearinghouseQueryDue",
 			Message:    "The annual Clearinghouse query is overdue (49 CFR 382.701(b))",
@@ -184,7 +193,7 @@ func drugAlcoholProhibitedMessage(rtd worker.ReturnToDutyStatus) string {
 	}
 }
 
-func evaluateMVR(in WorkerComplianceInput, severity Severity, eval *Evaluation) {
+func evaluateMVR(in WorkerComplianceInput, severity dispatchfinding.Severity, eval *Evaluation) {
 	if !in.Control.EnforceDriverQualificationCompliance {
 		return
 	}
@@ -193,8 +202,8 @@ func evaluateMVR(in WorkerComplianceInput, severity Severity, eval *Evaluation) 
 
 	if profile.LastMVRCheck > 0 &&
 		!timeutils.IsWithinMonths(profile.LastMVRCheck, mvrCheckValidityMonths) {
-		eval.Add(Finding{
-			Code:       CodeMVROverdue,
+		eval.Add(&dispatchfinding.Finding{
+			Code:       dispatchfinding.CodeMVROverdue,
 			Severity:   severity,
 			Field:      "lastMvrCheck",
 			Message:    "Annual MVR check is overdue (49 CFR 391.25(c)(2))",
@@ -203,8 +212,8 @@ func evaluateMVR(in WorkerComplianceInput, severity Severity, eval *Evaluation) 
 	}
 
 	if profile.MVRDueDate != nil && timeutils.IsOverdue(*profile.MVRDueDate) {
-		eval.Add(Finding{
-			Code:       CodeMVRDueDatePassed,
+		eval.Add(&dispatchfinding.Finding{
+			Code:       dispatchfinding.CodeMVRDueDatePassed,
 			Severity:   severity,
 			Field:      "mvrDueDate",
 			Message:    "MVR due date has passed (49 CFR 391.25(c)(2))",
@@ -213,7 +222,11 @@ func evaluateMVR(in WorkerComplianceInput, severity Severity, eval *Evaluation) 
 	}
 }
 
-func evaluateHazmatEndorsement(in WorkerComplianceInput, severity Severity, eval *Evaluation) {
+func evaluateHazmatEndorsement(
+	in WorkerComplianceInput,
+	severity dispatchfinding.Severity,
+	eval *Evaluation,
+) {
 	if !in.Control.EnforceHazmatCompliance || !in.HasHazmatCommodities {
 		return
 	}
@@ -221,8 +234,8 @@ func evaluateHazmatEndorsement(in WorkerComplianceInput, severity Severity, eval
 	profile := in.Worker.Profile
 
 	if !profile.Endorsement.RequiresHazmatExpiry() {
-		eval.Add(Finding{
-			Code:     CodeHazmatEndorsementMissing,
+		eval.Add(&dispatchfinding.Finding{
+			Code:     dispatchfinding.CodeHazmatEndorsementMissing,
 			Severity: severity,
 			Field:    "endorsement",
 			Message: "Shipment contains hazardous materials — worker requires an H or X " +
@@ -233,8 +246,8 @@ func evaluateHazmatEndorsement(in WorkerComplianceInput, severity Severity, eval
 	}
 
 	if profile.HazmatExpiry == nil || *profile.HazmatExpiry <= 0 {
-		eval.Add(Finding{
-			Code:       CodeHazmatExpiryMissing,
+		eval.Add(&dispatchfinding.Finding{
+			Code:       dispatchfinding.CodeHazmatExpiryMissing,
 			Severity:   severity,
 			Field:      "hazmatExpiry",
 			Message:    "Hazmat expiry date is required for H or X endorsement (49 CFR 383.93)",
@@ -244,8 +257,8 @@ func evaluateHazmatEndorsement(in WorkerComplianceInput, severity Severity, eval
 	}
 
 	if timeutils.IsExpired(*profile.HazmatExpiry) {
-		eval.Add(Finding{
-			Code:       CodeHazmatExpired,
+		eval.Add(&dispatchfinding.Finding{
+			Code:       dispatchfinding.CodeHazmatExpired,
 			Severity:   severity,
 			Field:      "hazmatExpiry",
 			Message:    "Hazmat endorsement is expired (49 CFR 383.93)",
@@ -255,8 +268,8 @@ func evaluateHazmatEndorsement(in WorkerComplianceInput, severity Severity, eval
 
 	maxAllowed := timeutils.MaxAllowedUnix(timeutils.NowUnix(), hazmatCertValidityYears)
 	if *profile.HazmatExpiry > maxAllowed {
-		eval.Add(Finding{
-			Code:       CodeHazmatExceedsValidity,
+		eval.Add(&dispatchfinding.Finding{
+			Code:       dispatchfinding.CodeHazmatExceedsValidity,
 			Severity:   severity,
 			Field:      "hazmatExpiry",
 			Message:    "Hazmat endorsement exceeds maximum validity period of 5 years (49 CFR 383.93)",

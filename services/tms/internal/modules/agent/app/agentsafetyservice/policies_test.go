@@ -341,7 +341,12 @@ func TestListToolPoliciesRejectsABadCursorAndBadFilters(t *testing.T) {
 
 	for name, table := range map[string]memtable.Request{
 		"garbage cursor": {After: "%%%"},
-		"foreign cursor": {After: pagination.EncodeOffsetCursor("shipment", 2)},
+		"foreign cursor": {
+			After: pagination.EncodeOffsetCursor(
+				pagination.BindCursor(pagination.TenantInfo{}, "shipment", nil),
+				2,
+			),
+		},
 		"unknown class": {
 			FieldFilters: []domaintypes.FieldFilter{eq("egress", "everywhere")},
 		},
@@ -381,7 +386,10 @@ func TestListToolPoliciesPastTheLastRuleIsAnEmptyPage(t *testing.T) {
 
 	svc := testService(&fakeDefinitions{}, &agentcontrol.AgentControl{})
 	page := listRules(t, svc, memtable.Request{
-		After: pagination.EncodeOffsetCursor(toolRuleCursorScope, 40),
+		After: pagination.EncodeOffsetCursor(
+			pagination.BindCursor(pagination.TenantInfo{}, toolRuleCursorScope, nil),
+			40,
+		),
 	})
 	assert.Empty(t, page.Edges)
 	assert.False(t, page.HasNextPage)

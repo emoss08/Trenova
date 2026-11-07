@@ -156,6 +156,8 @@ func (r *repository) Update(
 				sc.PayTrigger,
 				sc.AutoGenerateBatches,
 				sc.AutoApproveClean,
+				sc.AutoAttachAccruals,
+				sc.AutoPostOnApprove,
 				sc.AllowNegativeNet,
 				sc.VarianceThresholdPct,
 				sc.VarianceLookbackWeeks,

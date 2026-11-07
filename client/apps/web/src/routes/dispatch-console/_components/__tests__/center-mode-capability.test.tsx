@@ -1,19 +1,18 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
+import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import type { OrganizationCapabilities } from "@trenova/shared/types/organization-capability";
+import { Operation, Resource, type PermissionManifest } from "@trenova/shared/types/permission";
 import type { User } from "@trenova/shared/types/user";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { ConsoleCenterPane } from "../console-center-pane";
-import { ConsoleToolbar } from "../console-toolbar";
+import { ConsolePageActions } from "../console-page-actions";
+import type { DispatchActions } from "../use-dispatch-actions";
 import { resolveCenterMode } from "../url-state";
 
 vi.mock("../dispatch-timeline", () => ({
   DispatchTimeline: () => <div data-testid="dispatch-timeline" />,
-}));
-vi.mock("../coverage-kanban", () => ({
-  CoverageKanban: () => <div data-testid="coverage-kanban" />,
 }));
 
 const hybrid: OrganizationCapabilities = {
@@ -25,7 +24,10 @@ const brokerageOnly: OrganizationCapabilities = {
   assetOperationsEnabled: false,
 };
 
-function signIn(capabilities: OrganizationCapabilities) {
+function signIn(
+  capabilities: OrganizationCapabilities,
+  operations = Operation.Read | Operation.Assign,
+) {
   useAuthStore.setState({
     user: {
       currentOrganizationId: "org_01",
@@ -40,141 +42,101 @@ function signIn(capabilities: OrganizationCapabilities) {
     } as unknown as User,
     isAuthenticated: true,
   });
+  usePermissionStore.setState({
+    manifest: {
+      version: "1.0",
+      permissions: { [Resource.ShipmentMove]: operations },
+      routeAccess: {},
+      availableOrgs: [],
+      checksum: "abc123",
+      expiresAt: 1_782_403_304,
+    } as unknown as PermissionManifest,
+    lastFetched: Date.now(),
+    isLoading: false,
+  });
 }
 
-function renderPane(searchParams: string) {
-  return render(
-    <NuqsTestingAdapter searchParams={searchParams}>
-      <ConsoleCenterPane
-        moves={[]}
-        drivers={[]}
-        isLoading={false}
-        range={{ start: 0, end: 86_400 }}
-        zoom={1}
-        selectedMoveId={null}
-        selectedWorkerId={null}
-        onSelectMove={vi.fn()}
-        onSelectDriver={vi.fn()}
-      />
-    </NuqsTestingAdapter>,
-  );
-}
+const actions = {
+  canUndo: false,
+  undoLabel: null,
+  isAssigning: false,
+  isDeciding: false,
+  isPlanning: false,
+  undo: vi.fn(),
+} as unknown as DispatchActions;
 
-function renderToolbar() {
-  return render(
+function renderActions(onPropose = vi.fn()) {
+  render(
     <NuqsTestingAdapter searchParams="">
-      <ConsoleToolbar
-        canUndo={false}
-        isAssigning={false}
-        isPlanning={false}
-        onUndo={vi.fn()}
-        onPlan={vi.fn()}
-      />
+      <ConsolePageActions actions={actions} onPropose={onPropose} />
     </NuqsTestingAdapter>,
   );
+  return onPropose;
 }
+
+afterEach(() => {
+  cleanup();
+  useAuthStore.setState({ user: null, isAuthenticated: false });
+  usePermissionStore.getState().clearPermissions();
+});
 
 describe("resolveCenterMode", () => {
   it("keeps the driver timeline for an organization that employs drivers", () => {
     expect(resolveCenterMode("timeline", hybrid)).toBe("timeline");
-    expect(resolveCenterMode("board", hybrid)).toBe("board");
+    expect(resolveCenterMode("queue", hybrid)).toBe("queue");
   });
 
-  it("falls back to the coverage board for a brokerage", () => {
-    expect(resolveCenterMode("timeline", brokerageOnly)).toBe("board");
-    expect(resolveCenterMode("board", brokerageOnly)).toBe("board");
-  });
-});
-
-describe("dispatch console center view", () => {
-  afterEach(() => {
-    cleanup();
-    useAuthStore.setState({ user: null, isAuthenticated: false });
-  });
-
-  it("mounts the driver timeline for an organization that employs drivers", async () => {
-    signIn(hybrid);
-
-    renderPane("?mode=timeline");
-
-    expect(await screen.findByTestId("dispatch-timeline")).toBeInTheDocument();
-  });
-
-  it("leaves the driver timeline unmounted for a brokerage", async () => {
-    signIn(brokerageOnly);
-
-    renderPane("?mode=timeline");
-
-    expect(await screen.findByTestId("coverage-kanban")).toBeInTheDocument();
-    expect(screen.queryByTestId("dispatch-timeline")).toBeNull();
+  it("falls back to the queue for a brokerage", () => {
+    expect(resolveCenterMode("timeline", brokerageOnly)).toBe("queue");
+    expect(resolveCenterMode("queue", brokerageOnly)).toBe("queue");
   });
 });
 
-describe("dispatch console centre view toggle", () => {
-  afterEach(() => {
-    cleanup();
-    useAuthStore.setState({ user: null, isAuthenticated: false });
-  });
-
-  it("offers the choice of centre views to an organization that employs drivers", () => {
+describe("dispatch console view switch", () => {
+  it("offers the queue and the timeline to an organization that employs drivers", () => {
     signIn(hybrid);
 
-    renderToolbar();
+    renderActions();
 
-    expect(screen.getByRole("group", { name: "Center view" })).toBeInTheDocument();
+    const group = screen.getByRole("group", { name: "View" });
+    expect(group).toHaveTextContent("Queue");
+    expect(group).toHaveTextContent("Timeline");
   });
 
-  it("withdraws the toggle from a brokerage rather than offering one option", () => {
+  it("withdraws the switch from a brokerage rather than offering one option", () => {
     signIn(brokerageOnly);
 
-    renderToolbar();
+    renderActions();
 
-    expect(screen.queryByRole("group", { name: "Center view" })).toBeNull();
+    expect(screen.queryByRole("group", { name: "View" })).toBeNull();
   });
 });
 
-describe("dispatch console auto-assign", () => {
-  afterEach(() => {
-    cleanup();
-    useAuthStore.setState({ user: null, isAuthenticated: false });
-  });
-
-  it("offers auto-assign to an organization that employs drivers", () => {
+describe("dispatch console Propose coverage", () => {
+  it("offers it to a dispatcher who may assign moves in an organization with drivers", () => {
     signIn(hybrid);
 
-    renderToolbar();
+    renderActions();
 
-    expect(screen.getByRole("button", { name: /auto-assign/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Propose coverage" })).toBeInTheDocument();
   });
 
-  it("withholds auto-assign from a brokerage, whose proposals could never execute", () => {
-    signIn(brokerageOnly);
+  it("withholds it from someone who may only read moves", () => {
+    signIn(hybrid, Operation.Read);
 
-    renderToolbar();
+    renderActions();
 
-    expect(screen.queryByRole("button", { name: /auto-assign/i })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Propose coverage" })).toBeNull();
   });
 
-  it("leaves a brokerage no control at all that reaches the plan mutation", async () => {
+  it("leaves a brokerage no control at all that reaches the plan", async () => {
     signIn(brokerageOnly);
-    const onPlan = vi.fn();
 
-    render(
-      <NuqsTestingAdapter searchParams="">
-        <ConsoleToolbar
-          canUndo
-          isAssigning={false}
-          isPlanning={false}
-          onUndo={vi.fn()}
-          onPlan={onPlan}
-        />
-      </NuqsTestingAdapter>,
-    );
-
+    const onPropose = renderActions();
     for (const control of screen.getAllByRole("button")) {
       await userEvent.click(control);
     }
 
-    expect(onPlan).not.toHaveBeenCalled();
+    expect(onPropose).not.toHaveBeenCalled();
   });
 });

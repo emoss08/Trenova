@@ -145,6 +145,7 @@ const TOOL_TITLES: Record<string, string> = defineLabels({
   carrier_shop: "Shop carriers",
   dispatch_rank_candidates: "Rank drivers for move",
   dispatch_plan: "Plan dispatch",
+  dispatch_forecast_demand: "Forecast freight",
   shipment_create: "Enter shipment",
   shipment_update: "Change shipment",
   dispatch_create_tender_from_routing_guide: "Tender via routing guide",

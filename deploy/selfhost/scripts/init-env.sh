@@ -7,30 +7,44 @@
 #
 #   ./scripts/init-env.sh                       # trial on https://localhost
 #   ./scripts/init-env.sh trenova.example.com   # public install
+#   ./scripts/init-env.sh --upgrade             # add what a new release needs
 #
 # Without a terminal, give the administrator in the environment instead:
 # TRENOVA_BOOTSTRAP_ORG_NAME, TRENOVA_BOOTSTRAP_ADMIN_NAME and
 # TRENOVA_BOOTSTRAP_ADMIN_EMAIL, and optionally TRENOVA_BOOTSTRAP_ADMIN_PASSWORD.
 #
 # Refuses to overwrite an existing .env: regenerating secrets on a running
-# install locks it out of its own data.
+# install locks it out of its own data. --upgrade is the exception: it adds the
+# secrets a newer release needs to an existing .env and changes nothing else, so
+# it is safe to run twice.
 set -eu
 
 cd "$(dirname "$0")/.."
 
 if [ "${1:-}" = "-h" ] || [ "${1:-}" = "--help" ]; then
-  sed -n '2,17p' "$0" | sed 's/^# \{0,1\}//'
+  sed -n '2,19p' "$0" | sed 's/^# \{0,1\}//'
   exit 0
 fi
 
+upgrade=false
 domain="${1:-}"
+if [ "${domain}" = "--upgrade" ]; then
+  upgrade=true
+  domain=""
+fi
+
 if [ -n "${domain}" ] && ! printf '%s' "${domain}" | grep -Eq '^[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?(\.[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?)+$'; then
   echo "'${domain}' is not a hostname (give it without https:// or a path)." >&2
   exit 1
 fi
 
-if [ -e .env ]; then
-  echo ".env already exists; refusing to overwrite it." >&2
+if [ "${upgrade}" = false ] && [ -e .env ]; then
+  echo ".env already exists; refusing to overwrite it. To add what a new release needs: $0 --upgrade" >&2
+  exit 1
+fi
+
+if [ "${upgrade}" = true ] && [ ! -e .env ]; then
+  echo "No .env to upgrade; run $0 without --upgrade to create one." >&2
   exit 1
 fi
 
@@ -48,6 +62,44 @@ fi
 secret() {
   openssl rand -hex 32
 }
+
+scope_key_id() {
+  printf 'k%s' "$(date -u +%Y%m%d)"
+}
+
+scope_key() {
+  openssl rand -base64 32 | tr -d '\n'
+}
+
+# Adds a value an existing .env lacks. One already set is left alone, and a
+# line left empty or at the example's placeholder is replaced.
+add_missing() {
+  if grep -q "^$1=." .env && ! grep -q "^$1=change-me" .env; then
+    return
+  fi
+  tmp="$(mktemp .env.XXXXXX)"
+  grep -v "^$1=" .env > "${tmp}" || true
+  printf '%s=%s\n' "$1" "$2" >> "${tmp}"
+  cat "${tmp}" > .env
+  rm -f "${tmp}"
+  echo "Added $1"
+}
+
+if [ "${upgrade}" = true ]; then
+  add_missing TRENOVA_DATABASE_APP_USER trenova_app
+  add_missing TRENOVA_DATABASE_APP_PASSWORD "$(secret)"
+  add_missing TRENOVA_DATABASE_SYSTEM_USER trenova_system
+  add_missing TRENOVA_DATABASE_SYSTEM_PASSWORD "$(secret)"
+  add_missing TRENOVA_DATABASE_TEMPORAL_USER temporal
+  add_missing TRENOVA_DATABASE_TEMPORAL_PASSWORD "$(secret)"
+  add_missing TRENOVA_DATABASE_GTC_USER trenova_gtc
+  add_missing TRENOVA_DATABASE_GTC_PASSWORD "$(secret)"
+  add_missing TRENOVA_DATABASE_RLS_SCOPEKEYID "$(scope_key_id)"
+  add_missing TRENOVA_DATABASE_RLS_SCOPEKEY "$(scope_key)"
+  add_missing TRENOVA_RENDERER_GOTENBERGPASSWORD "$(secret)"
+  echo ".env is up to date. Back it up, then: docker compose up -d"
+  exit 0
+fi
 
 generate_password() {
   openssl rand -base64 32 | tr -d '/+=\n' | cut -c1-24
@@ -150,6 +202,10 @@ cp .env.example .env
 
 for name in \
   TRENOVA_DATABASE_PASSWORD \
+  TRENOVA_DATABASE_APP_PASSWORD \
+  TRENOVA_DATABASE_SYSTEM_PASSWORD \
+  TRENOVA_DATABASE_TEMPORAL_PASSWORD \
+  TRENOVA_DATABASE_GTC_PASSWORD \
   TRENOVA_REDIS_PASSWORD \
   TRENOVA_MEILI_MASTER_KEY \
   TRENOVA_STORAGE_SECRETKEY \
@@ -157,9 +213,13 @@ for name in \
   TRENOVA_SECURITY_ENCRYPTION_KEY \
   TRENOVA_SECURITY_MFA_RECOVERYCODEPEPPER \
   TRENOVA_SYSTEM_SYSTEMUSERPASSWORD \
+  TRENOVA_RENDERER_GOTENBERGPASSWORD \
   TRENOVA_DOCUMENTCONVERSION_APIKEY; do
   set_value "${name}" "$(secret)"
 done
+
+set_value TRENOVA_DATABASE_RLS_SCOPEKEYID "$(scope_key_id)"
+set_value TRENOVA_DATABASE_RLS_SCOPEKEY "$(scope_key)"
 
 audit_key_id="selfhost-$(date -u +%Y%m%d)"
 set_value TRENOVA_AI_AUDIT_CHAIN_KEYS "${audit_key_id}:$(secret)"

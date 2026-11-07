@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"maps"
 	"slices"
-	"strconv"
 	"strings"
 
 	"github.com/bytedance/sonic"
@@ -19,7 +18,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
 )
 
@@ -203,7 +201,7 @@ func (t *UnpagedTool) Query(
 	if err := t.checkArguments(args); err != nil {
 		return nil, err
 	}
-	variables, window, err := t.variables(args, clk)
+	variables, window, err := t.variables(params, args, clk)
 	if err != nil {
 		return nil, err
 	}
@@ -302,6 +300,7 @@ func (t *UnpagedTool) packaged(
 }
 
 func (t *UnpagedTool) variables(
+	params *agenttoolports.QueryToolParams,
 	args map[string]any,
 	clk filtercatalog.Clock,
 ) (map[string]any, querytool.OffsetWindow, error) {
@@ -316,7 +315,12 @@ func (t *UnpagedTool) variables(
 	if !t.paged {
 		return variables, window, nil
 	}
-	if window, err = querytool.ReadOffsetWindow(t.spec.Name, args, querytool.GraphQLListLimit,
+	call := querytool.CursorCall{
+		Tool:   t.spec.Name,
+		Tenant: querytool.CallTenant(params),
+		Params: args,
+	}
+	if window, err = querytool.ReadOffsetWindow(call, querytool.GraphQLListLimit,
 		querytool.UnpagedMost); err != nil {
 		return nil, window, err
 	}
@@ -395,8 +399,7 @@ func (p *OffsetPage) CutPage(rows int) (any, bool) {
 	record[graphqlread.OutcomeItems] = items[:rows]
 	record[graphqlread.OutcomeCount] = rows
 	record[OutcomeHasMore] = true
-	record[OutcomeNextCursor] = pagination.EncodeKeyCursor(
-		p.Window.Scope, strconv.Itoa(p.Window.Offset+p.Positions[rows-1]+1))
+	record[OutcomeNextCursor] = p.Window.At(p.Window.Offset + p.Positions[rows-1] + 1)
 
 	return &OffsetPage{
 		Record:    record,

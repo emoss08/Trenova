@@ -73,13 +73,13 @@ type DataEntryControlsTable struct {
 // DataEntryControls references the data_entry_controls table.
 var DataEntryControls = &DataEntryControlsTable{
 	TableBase:      keel.TableBase{Ref: &dataEntryControlsRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dataEntryControlsRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dataEntryControlsRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dataEntryControlsRef, Index: 2}}},
-	CodeCase:       CaseFormatCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dataEntryControlsRef, Index: 3}}},
-	NameCase:       CaseFormatCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dataEntryControlsRef, Index: 4}}},
-	EmailCase:      CaseFormatCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dataEntryControlsRef, Index: 5}}},
-	CityCase:       CaseFormatCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dataEntryControlsRef, Index: 6}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &dataEntryControlsRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &dataEntryControlsRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &dataEntryControlsRef, Index: 2}}},
+	CodeCase:       CaseFormatCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &dataEntryControlsRef, Index: 3}}},
+	NameCase:       CaseFormatCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &dataEntryControlsRef, Index: 4}}},
+	EmailCase:      CaseFormatCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &dataEntryControlsRef, Index: 5}}},
+	CityCase:       CaseFormatCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &dataEntryControlsRef, Index: 6}}},
 	Version:        keel.Int64Col{Col: keel.Col{Ref: &dataEntryControlsRef, Index: 7}},
 	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &dataEntryControlsRef, Index: 8}},
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &dataEntryControlsRef, Index: 9}},
@@ -89,13 +89,13 @@ var DataEntryControls = &DataEntryControlsTable{
 func BuildDataEntryControls(r *keel.Ref) *DataEntryControlsTable {
 	return &DataEntryControlsTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		CodeCase:       CaseFormatCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		NameCase:       CaseFormatCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		EmailCase:      CaseFormatCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		CityCase:       CaseFormatCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		CodeCase:       CaseFormatCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		NameCase:       CaseFormatCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		EmailCase:      CaseFormatCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		CityCase:       CaseFormatCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		Version:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
 		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
 		UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
@@ -117,8 +117,6 @@ func (t *DataEntryControlsTable) Get(ctx context.Context, db *keel.DB, key pulid
 
 // DataEntryControlsQuery is a query over dataentrycontrol.DataEntryControl.
 type DataEntryControlsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*dataentrycontrol.DataEntryControl] = (*DataEntryControlsTable)(nil)
 
 var _ keel.Query[*dataentrycontrol.DataEntryControl] = (*DataEntryControlsQuery)(nil)
 
@@ -234,42 +232,42 @@ func (t *DataEntryControlsTable) Compute(col keel.Column, e keel.Expr) keel.Quer
 
 // Create inserts row.
 func (t *DataEntryControlsTable) Create(ctx context.Context, db *keel.DB, row *dataentrycontrol.DataEntryControl) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *DataEntryControlsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*dataentrycontrol.DataEntryControl) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *DataEntryControlsTable) Save(ctx context.Context, db *keel.DB, row *dataentrycontrol.DataEntryControl, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *DataEntryControlsTable) SaveExcept(ctx context.Context, db *keel.DB, row *dataentrycontrol.DataEntryControl, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *DataEntryControlsTable) DeleteRow(ctx context.Context, db *keel.DB, row *dataentrycontrol.DataEntryControl) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *DataEntryControlsTable) Upsert(ctx context.Context, db *keel.DB, rows []*dataentrycontrol.DataEntryControl, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *DataEntryControlsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*dataentrycontrol.DataEntryControl, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *DataEntryControlsTable) Copy(ctx context.Context, db *keel.DB, rows []*dataentrycontrol.DataEntryControl) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -441,37 +439,45 @@ func (q *DataEntryControlsQuery) Clone() keel.Query[*dataentrycontrol.DataEntryC
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *DataEntryControlsQuery) One(ctx context.Context, db *keel.DB) (*dataentrycontrol.DataEntryControl, error) {
-	return keel.One[*dataentrycontrol.DataEntryControl](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*dataentrycontrol.DataEntryControl)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *DataEntryControlsQuery) First(ctx context.Context, db *keel.DB) (*dataentrycontrol.DataEntryControl, error) {
-	return keel.First[*dataentrycontrol.DataEntryControl](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*dataentrycontrol.DataEntryControl)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *DataEntryControlsQuery) List(ctx context.Context, db *keel.DB) ([]*dataentrycontrol.DataEntryControl, error) {
-	return keel.List[*dataentrycontrol.DataEntryControl](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*dataentrycontrol.DataEntryControl)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *DataEntryControlsQuery) All(ctx context.Context, db *keel.DB) ([]*dataentrycontrol.DataEntryControl, error) {
-	return keel.All[*dataentrycontrol.DataEntryControl](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*dataentrycontrol.DataEntryControl)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *DataEntryControlsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*dataentrycontrol.DataEntryControl, error) {
-	return keel.UpdateReturning[*dataentrycontrol.DataEntryControl](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*dataentrycontrol.DataEntryControl)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *DataEntryControlsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*dataentrycontrol.DataEntryControl], error) {
-	return keel.PageOf[*dataentrycontrol.DataEntryControl](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*dataentrycontrol.DataEntryControl])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *DataEntryControlsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*dataentrycontrol.DataEntryControl) error) error {
-	return keel.Each[*dataentrycontrol.DataEntryControl](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*dataentrycontrol.DataEntryControl)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newDataEntryControl() unsafe.Pointer {
@@ -548,30 +554,26 @@ var enumCaseFormat = [...]schema.EnumValue{
 }
 
 // CaseFormatCol is a column of dataentrycontrol.CaseFormat values.
-type CaseFormatCol struct{ keel.StringCol }
+type CaseFormatCol struct{ keel.TypedStringCol }
 
-func (c CaseFormatCol) Eq(v dataentrycontrol.CaseFormat) keel.Pred { return c.StringCol.Eq(string(v)) }
-func (c CaseFormatCol) Ne(v dataentrycontrol.CaseFormat) keel.Pred { return c.StringCol.Ne(string(v)) }
-func (c CaseFormatCol) Gt(v dataentrycontrol.CaseFormat) keel.Pred { return c.StringCol.Gt(string(v)) }
-func (c CaseFormatCol) Gte(v dataentrycontrol.CaseFormat) keel.Pred {
-	return c.StringCol.Gte(string(v))
-}
-func (c CaseFormatCol) Lt(v dataentrycontrol.CaseFormat) keel.Pred { return c.StringCol.Lt(string(v)) }
-func (c CaseFormatCol) Lte(v dataentrycontrol.CaseFormat) keel.Pred {
-	return c.StringCol.Lte(string(v))
-}
+func (c CaseFormatCol) Eq(v dataentrycontrol.CaseFormat) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c CaseFormatCol) Ne(v dataentrycontrol.CaseFormat) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c CaseFormatCol) Gt(v dataentrycontrol.CaseFormat) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c CaseFormatCol) Gte(v dataentrycontrol.CaseFormat) keel.Pred { return c.Text().Gte(string(v)) }
+func (c CaseFormatCol) Lt(v dataentrycontrol.CaseFormat) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c CaseFormatCol) Lte(v dataentrycontrol.CaseFormat) keel.Pred { return c.Text().Lte(string(v)) }
 func (c CaseFormatCol) IsDistinctFrom(v dataentrycontrol.CaseFormat) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c CaseFormatCol) Between(lo, hi dataentrycontrol.CaseFormat) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c CaseFormatCol) To(v dataentrycontrol.CaseFormat) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c CaseFormatCol) In(vs ...dataentrycontrol.CaseFormat) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c CaseFormatCol) NotIn(vs ...dataentrycontrol.CaseFormat) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

@@ -11,6 +11,8 @@ import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { handleMutationError } from "@/hooks/use-api-mutation";
+import { GraphQLRequestError } from "@trenova/shared/lib/graphql";
 import { MoveCard } from "../move-card";
 
 const { getUIPolicy, getEta, fetchGraphQLSelectedOption, getAssignment, assignmentDialog } =
@@ -113,25 +115,60 @@ function Harness({
   move,
   shipmentId = "shp_1",
   stopError,
+  errors = [],
+  refusal,
+  onEdit = vi.fn(),
 }: {
   move: ShipmentMove;
   shipmentId?: string | undefined;
   stopError?: string;
+  /** Errors to set on the form, each a form path and its message. */
+  errors?: [string, string][];
+  /** A refusal the server sends for the shipment's save, each a field and its message. */
+  refusal?: { field: string; message: string }[];
+  onEdit?: (focusPath?: string) => void;
 }) {
   const form = useForm<Shipment>({
     defaultValues: { id: shipmentId, moves: [move] } as unknown as Shipment,
+    // The shipment form validates with its schema; this one finds nothing.
+    resolver: async (values) => ({ values, errors: {} }),
   });
   const [client] = useState(
     () => new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } }),
   );
+  // Set once, on mount: the form's errors stand for a save that already failed.
+  const [initialErrors] = useState(errors);
+  const [initialRefusal] = useState(refusal);
+  // After the card's own effects, as a save's refusal arrives after the card has drawn.
+  useEffect(() => {
+    if (!initialRefusal) return;
+    const extensions = {
+      code: "INVALID",
+      type: "https://api.trenova.app/problems/validation-error",
+      traceId: "trace-A",
+      errors: initialRefusal.map((error) => ({ ...error, code: "INVALID" })),
+    };
+    handleMutationError({
+      form,
+      error: new GraphQLRequestError({
+        graphQLErrors: [{ ...extensions, extensions, message: "Validation failed" }],
+        kind: "graphql",
+        message: "Validation failed",
+        status: 200,
+      }),
+    });
+  }, [form, initialRefusal]);
   useEffect(() => {
     if (stopError) form.setError("moves.0.stops.1.locationId", { message: stopError });
-  }, [form, stopError]);
+    for (const [path, message] of initialErrors) {
+      form.setError(path as Parameters<typeof form.setError>[0], { message });
+    }
+  }, [form, stopError, initialErrors]);
   return (
     <QueryClientProvider client={client}>
       <MemoryRouter>
         <FormProvider {...form}>
-          <MoveCard moveIndex={0} allowPersistedMoveRemoval onEdit={vi.fn()} onRemove={vi.fn()} />
+          <MoveCard moveIndex={0} allowPersistedMoveRemoval onEdit={onEdit} onRemove={vi.fn()} />
         </FormProvider>
       </MemoryRouter>
     </QueryClientProvider>
@@ -240,6 +277,96 @@ describe("MoveCard", () => {
     const delivery = stopRows()[1]!;
     expect(await within(delivery).findByText("1 problem to fix")).toBeInTheDocument();
     expect(delivery).toHaveAttribute("data-stop-phase", "invalid");
+  });
+
+  it("counts the move's problems in its header, in place of the line under the headline", async () => {
+    const { container } = render(
+      <Harness
+        move={inTransitMove()}
+        errors={[
+          ["moves.0.stops.0.weight", "Weight must be a whole number"],
+          ["moves.0.stops.1.locationId", "Location is required"],
+        ]}
+      />,
+    );
+
+    expect(await screen.findByText("2 problems to fix")).toBeInTheDocument();
+    expect(screen.getAllByText("1 problem to fix")).toHaveLength(2);
+    expect(container.querySelector("[data-move-card]")).toHaveAttribute("data-invalid", "true");
+  });
+
+  it("flags a problem on the move itself on the card, where no stop shows it", async () => {
+    render(
+      <Harness
+        move={inTransitMove()}
+        errors={[["moves.0.distance", "Distance cannot be negative"]]}
+      />,
+    );
+
+    expect(await screen.findByText("1 problem to fix")).toBeInTheDocument();
+    expect(stopRows().map((row) => row.getAttribute("data-stop-phase"))).toEqual(["done", "next"]);
+  });
+
+  it("opens the editor at the move's first problem from its header", async () => {
+    const onEdit = vi.fn();
+    render(
+      <Harness
+        move={inTransitMove()}
+        onEdit={onEdit}
+        errors={[
+          ["moves.0.distance", "Distance cannot be negative"],
+          ["moves.0.stops.1.locationId", "Location is required"],
+        ]}
+      />,
+    );
+
+    await userEvent.click(await screen.findByText("2 problems to fix"));
+
+    expect(onEdit).toHaveBeenCalledWith("moves.0.distance");
+  });
+
+  it("opens the editor at the field to fix from a stop's problems", async () => {
+    const onEdit = vi.fn();
+    render(
+      <Harness
+        move={inTransitMove()}
+        onEdit={onEdit}
+        errors={[["moves.0.stops.1.scheduledWindowEnd", "The window must end after it starts"]]}
+      />,
+    );
+
+    const delivery = stopRows()[1]!;
+    await userEvent.click(await within(delivery).findByText("1 problem to fix"));
+
+    expect(onEdit).toHaveBeenCalledWith("moves.0.stops.1.scheduledWindowEnd");
+  });
+
+  // The stop's fields mount only in the move editor, which has not been opened.
+  it("shows the server's refusal of a stop field on that stop", async () => {
+    render(
+      <Harness
+        move={inTransitMove()}
+        refusal={[
+          {
+            field: "moves[0].stops[1].scheduledWindowEnd",
+            message: "The window must end after it starts",
+          },
+        ]}
+      />,
+    );
+
+    const delivery = stopRows()[1]!;
+    expect(await within(delivery).findByText("1 problem to fix")).toBeInTheDocument();
+    expect(delivery).toHaveAttribute("data-stop-phase", "invalid");
+  });
+
+  it("opens the editor at a stop's location from its name", async () => {
+    const onEdit = vi.fn();
+    render(<Harness move={inTransitMove()} onEdit={onEdit} />);
+
+    await userEvent.click(screen.getByRole("button", { name: "Lexington Yard" }));
+
+    expect(onEdit).toHaveBeenCalledWith("moves.0.stops.1.locationId");
   });
 
   it("covers the move with its carrier in one line that opens to the details", async () => {

@@ -109,21 +109,21 @@ type WorkerCredentialsTable struct {
 // WorkerCredentials references the worker_credentials table.
 var WorkerCredentials = &WorkerCredentialsTable{
 	TableBase:        keel.TableBase{Ref: &workerCredentialsRef},
-	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerCredentialsRef, Index: 0}}},
-	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerCredentialsRef, Index: 1}}},
-	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerCredentialsRef, Index: 2}}},
-	WorkerID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerCredentialsRef, Index: 3}}},
-	CredentialTypeID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerCredentialsRef, Index: 4}}},
-	Status:           CredentialStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerCredentialsRef, Index: 5}}},
+	ID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerCredentialsRef, Index: 0}}},
+	BusinessUnitID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerCredentialsRef, Index: 1}}},
+	OrganizationID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerCredentialsRef, Index: 2}}},
+	WorkerID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerCredentialsRef, Index: 3}}},
+	CredentialTypeID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerCredentialsRef, Index: 4}}},
+	Status:           CredentialStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerCredentialsRef, Index: 5}}},
 	Number:           keel.StringCol{Col: keel.Col{Ref: &workerCredentialsRef, Index: 6}},
 	IssuingAuthority: keel.StringCol{Col: keel.Col{Ref: &workerCredentialsRef, Index: 7}},
 	IssuedAt:         keel.Int64Col{Col: keel.Col{Ref: &workerCredentialsRef, Index: 8}},
 	ExpiresAt:        keel.Int64Col{Col: keel.Col{Ref: &workerCredentialsRef, Index: 9}},
-	DocumentID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerCredentialsRef, Index: 10}}},
+	DocumentID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerCredentialsRef, Index: 10}}},
 	Notes:            keel.StringCol{Col: keel.Col{Ref: &workerCredentialsRef, Index: 11}},
-	VerifiedByID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerCredentialsRef, Index: 12}}},
+	VerifiedByID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerCredentialsRef, Index: 12}}},
 	VerifiedAt:       keel.Int64Col{Col: keel.Col{Ref: &workerCredentialsRef, Index: 13}},
-	ArchivedByID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerCredentialsRef, Index: 14}}},
+	ArchivedByID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerCredentialsRef, Index: 14}}},
 	ArchivedAt:       keel.Int64Col{Col: keel.Col{Ref: &workerCredentialsRef, Index: 15}},
 	ArchiveReason:    keel.StringCol{Col: keel.Col{Ref: &workerCredentialsRef, Index: 16}},
 	Version:          keel.Int64Col{Col: keel.Col{Ref: &workerCredentialsRef, Index: 17}},
@@ -135,21 +135,21 @@ var WorkerCredentials = &WorkerCredentialsTable{
 func BuildWorkerCredentials(r *keel.Ref) *WorkerCredentialsTable {
 	return &WorkerCredentialsTable{
 		TableBase:        keel.TableBase{Ref: r},
-		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		WorkerID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		CredentialTypeID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		Status:           CredentialStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		ID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		WorkerID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		CredentialTypeID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		Status:           CredentialStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		Number:           keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
 		IssuingAuthority: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
 		IssuedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
 		ExpiresAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
-		DocumentID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		DocumentID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
 		Notes:            keel.StringCol{Col: keel.Col{Ref: r, Index: 11}},
-		VerifiedByID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 12}}},
+		VerifiedByID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 12}}},
 		VerifiedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
-		ArchivedByID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 14}}},
+		ArchivedByID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 14}}},
 		ArchivedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
 		ArchiveReason:    keel.StringCol{Col: keel.Col{Ref: r, Index: 16}},
 		Version:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
@@ -193,8 +193,6 @@ func (t *WorkerCredentialsTable) Get(ctx context.Context, db *keel.DB, key pulid
 
 // WorkerCredentialsQuery is a query over workercredential.WorkerCredential.
 type WorkerCredentialsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*workercredential.WorkerCredential] = (*WorkerCredentialsTable)(nil)
 
 var _ keel.Query[*workercredential.WorkerCredential] = (*WorkerCredentialsQuery)(nil)
 
@@ -310,42 +308,42 @@ func (t *WorkerCredentialsTable) Compute(col keel.Column, e keel.Expr) keel.Quer
 
 // Create inserts row.
 func (t *WorkerCredentialsTable) Create(ctx context.Context, db *keel.DB, row *workercredential.WorkerCredential) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *WorkerCredentialsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*workercredential.WorkerCredential) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *WorkerCredentialsTable) Save(ctx context.Context, db *keel.DB, row *workercredential.WorkerCredential, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *WorkerCredentialsTable) SaveExcept(ctx context.Context, db *keel.DB, row *workercredential.WorkerCredential, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *WorkerCredentialsTable) DeleteRow(ctx context.Context, db *keel.DB, row *workercredential.WorkerCredential) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *WorkerCredentialsTable) Upsert(ctx context.Context, db *keel.DB, rows []*workercredential.WorkerCredential, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *WorkerCredentialsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*workercredential.WorkerCredential, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *WorkerCredentialsTable) Copy(ctx context.Context, db *keel.DB, rows []*workercredential.WorkerCredential) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -517,37 +515,45 @@ func (q *WorkerCredentialsQuery) Clone() keel.Query[*workercredential.WorkerCred
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *WorkerCredentialsQuery) One(ctx context.Context, db *keel.DB) (*workercredential.WorkerCredential, error) {
-	return keel.One[*workercredential.WorkerCredential](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*workercredential.WorkerCredential)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *WorkerCredentialsQuery) First(ctx context.Context, db *keel.DB) (*workercredential.WorkerCredential, error) {
-	return keel.First[*workercredential.WorkerCredential](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*workercredential.WorkerCredential)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *WorkerCredentialsQuery) List(ctx context.Context, db *keel.DB) ([]*workercredential.WorkerCredential, error) {
-	return keel.List[*workercredential.WorkerCredential](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*workercredential.WorkerCredential)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *WorkerCredentialsQuery) All(ctx context.Context, db *keel.DB) ([]*workercredential.WorkerCredential, error) {
-	return keel.All[*workercredential.WorkerCredential](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*workercredential.WorkerCredential)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *WorkerCredentialsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*workercredential.WorkerCredential, error) {
-	return keel.UpdateReturning[*workercredential.WorkerCredential](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*workercredential.WorkerCredential)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *WorkerCredentialsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*workercredential.WorkerCredential], error) {
-	return keel.PageOf[*workercredential.WorkerCredential](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*workercredential.WorkerCredential])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *WorkerCredentialsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*workercredential.WorkerCredential) error) error {
-	return keel.Each[*workercredential.WorkerCredential](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*workercredential.WorkerCredential)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newWorkerCredential() unsafe.Pointer {
@@ -789,21 +795,21 @@ type WorkerCredentialTypesTable struct {
 // WorkerCredentialTypes references the worker_credential_types table.
 var WorkerCredentialTypes = &WorkerCredentialTypesTable{
 	TableBase:              keel.TableBase{Ref: &workerCredentialTypesRef},
-	ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerCredentialTypesRef, Index: 0}}},
-	BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerCredentialTypesRef, Index: 1}}},
-	OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerCredentialTypesRef, Index: 2}}},
+	ID:                     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerCredentialTypesRef, Index: 0}}},
+	BusinessUnitID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerCredentialTypesRef, Index: 1}}},
+	OrganizationID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerCredentialTypesRef, Index: 2}}},
 	Code:                   keel.StringCol{Col: keel.Col{Ref: &workerCredentialTypesRef, Index: 3}},
 	Name:                   keel.StringCol{Col: keel.Col{Ref: &workerCredentialTypesRef, Index: 4}},
 	Description:            keel.StringCol{Col: keel.Col{Ref: &workerCredentialTypesRef, Index: 5}},
-	Category:               CredentialCategoryCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerCredentialTypesRef, Index: 6}}},
-	Status:                 keelkinds.DomaintypesStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerCredentialTypesRef, Index: 7}}},
+	Category:               CredentialCategoryCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerCredentialTypesRef, Index: 6}}},
+	Status:                 keelkinds.DomaintypesStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerCredentialTypesRef, Index: 7}}},
 	IsRequired:             keel.BoolCol{Col: keel.Col{Ref: &workerCredentialTypesRef, Index: 8}},
 	RequiredForDriverTypes: keel.JSONBCol{Col: keel.Col{Ref: &workerCredentialTypesRef, Index: 9}},
 	RenewalWindowDays:      keel.Int32Col{Col: keel.Col{Ref: &workerCredentialTypesRef, Index: 10}},
 	ValidityMonths:         keel.Int32Col{Col: keel.Col{Ref: &workerCredentialTypesRef, Index: 11}},
 	RequiresNumber:         keel.BoolCol{Col: keel.Col{Ref: &workerCredentialTypesRef, Index: 12}},
 	RequiresDocument:       keel.BoolCol{Col: keel.Col{Ref: &workerCredentialTypesRef, Index: 13}},
-	ProfileField:           CredentialProfileFieldCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerCredentialTypesRef, Index: 14}}},
+	ProfileField:           CredentialProfileFieldCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerCredentialTypesRef, Index: 14}}},
 	IsSystem:               keel.BoolCol{Col: keel.Col{Ref: &workerCredentialTypesRef, Index: 15}},
 	SortOrder:              keel.Int32Col{Col: keel.Col{Ref: &workerCredentialTypesRef, Index: 16}},
 	Version:                keel.Int64Col{Col: keel.Col{Ref: &workerCredentialTypesRef, Index: 17}},
@@ -816,21 +822,21 @@ var WorkerCredentialTypes = &WorkerCredentialTypesTable{
 func BuildWorkerCredentialTypes(r *keel.Ref) *WorkerCredentialTypesTable {
 	return &WorkerCredentialTypesTable{
 		TableBase:              keel.TableBase{Ref: r},
-		ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ID:                     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		Code:                   keel.StringCol{Col: keel.Col{Ref: r, Index: 3}},
 		Name:                   keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		Description:            keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
-		Category:               CredentialCategoryCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		Status:                 keelkinds.DomaintypesStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		Category:               CredentialCategoryCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		Status:                 keelkinds.DomaintypesStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
 		IsRequired:             keel.BoolCol{Col: keel.Col{Ref: r, Index: 8}},
 		RequiredForDriverTypes: keel.JSONBCol{Col: keel.Col{Ref: r, Index: 9}},
 		RenewalWindowDays:      keel.Int32Col{Col: keel.Col{Ref: r, Index: 10}},
 		ValidityMonths:         keel.Int32Col{Col: keel.Col{Ref: r, Index: 11}},
 		RequiresNumber:         keel.BoolCol{Col: keel.Col{Ref: r, Index: 12}},
 		RequiresDocument:       keel.BoolCol{Col: keel.Col{Ref: r, Index: 13}},
-		ProfileField:           CredentialProfileFieldCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 14}}},
+		ProfileField:           CredentialProfileFieldCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 14}}},
 		IsSystem:               keel.BoolCol{Col: keel.Col{Ref: r, Index: 15}},
 		SortOrder:              keel.Int32Col{Col: keel.Col{Ref: r, Index: 16}},
 		Version:                keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
@@ -855,8 +861,6 @@ func (t *WorkerCredentialTypesTable) Get(ctx context.Context, db *keel.DB, key p
 
 // WorkerCredentialTypesQuery is a query over workercredential.WorkerCredentialType.
 type WorkerCredentialTypesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*workercredential.WorkerCredentialType] = (*WorkerCredentialTypesTable)(nil)
 
 var _ keel.Query[*workercredential.WorkerCredentialType] = (*WorkerCredentialTypesQuery)(nil)
 
@@ -972,42 +976,42 @@ func (t *WorkerCredentialTypesTable) Compute(col keel.Column, e keel.Expr) keel.
 
 // Create inserts row.
 func (t *WorkerCredentialTypesTable) Create(ctx context.Context, db *keel.DB, row *workercredential.WorkerCredentialType) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *WorkerCredentialTypesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*workercredential.WorkerCredentialType) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *WorkerCredentialTypesTable) Save(ctx context.Context, db *keel.DB, row *workercredential.WorkerCredentialType, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *WorkerCredentialTypesTable) SaveExcept(ctx context.Context, db *keel.DB, row *workercredential.WorkerCredentialType, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *WorkerCredentialTypesTable) DeleteRow(ctx context.Context, db *keel.DB, row *workercredential.WorkerCredentialType) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *WorkerCredentialTypesTable) Upsert(ctx context.Context, db *keel.DB, rows []*workercredential.WorkerCredentialType, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *WorkerCredentialTypesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*workercredential.WorkerCredentialType, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *WorkerCredentialTypesTable) Copy(ctx context.Context, db *keel.DB, rows []*workercredential.WorkerCredentialType) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1179,37 +1183,45 @@ func (q *WorkerCredentialTypesQuery) Clone() keel.Query[*workercredential.Worker
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *WorkerCredentialTypesQuery) One(ctx context.Context, db *keel.DB) (*workercredential.WorkerCredentialType, error) {
-	return keel.One[*workercredential.WorkerCredentialType](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*workercredential.WorkerCredentialType)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *WorkerCredentialTypesQuery) First(ctx context.Context, db *keel.DB) (*workercredential.WorkerCredentialType, error) {
-	return keel.First[*workercredential.WorkerCredentialType](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*workercredential.WorkerCredentialType)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *WorkerCredentialTypesQuery) List(ctx context.Context, db *keel.DB) ([]*workercredential.WorkerCredentialType, error) {
-	return keel.List[*workercredential.WorkerCredentialType](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*workercredential.WorkerCredentialType)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *WorkerCredentialTypesQuery) All(ctx context.Context, db *keel.DB) ([]*workercredential.WorkerCredentialType, error) {
-	return keel.All[*workercredential.WorkerCredentialType](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*workercredential.WorkerCredentialType)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *WorkerCredentialTypesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*workercredential.WorkerCredentialType, error) {
-	return keel.UpdateReturning[*workercredential.WorkerCredentialType](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*workercredential.WorkerCredentialType)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *WorkerCredentialTypesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*workercredential.WorkerCredentialType], error) {
-	return keel.PageOf[*workercredential.WorkerCredentialType](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*workercredential.WorkerCredentialType])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *WorkerCredentialTypesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*workercredential.WorkerCredentialType) error) error {
-	return keel.Each[*workercredential.WorkerCredentialType](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*workercredential.WorkerCredentialType)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newWorkerCredentialType() unsafe.Pointer {
@@ -1400,112 +1412,112 @@ var reportDimTsvectorHidden = schema.ReportInfo{Kind: schema.Dimension, Type: sc
 var reportMeasureIntegerHidden = schema.ReportInfo{Kind: schema.Measure, Type: schema.ValueInt, Aggs: schema.AggsNumeric}
 
 // CredentialCategoryCol is a column of workercredential.CredentialCategory values.
-type CredentialCategoryCol struct{ keel.StringCol }
+type CredentialCategoryCol struct{ keel.TypedStringCol }
 
 func (c CredentialCategoryCol) Eq(v workercredential.CredentialCategory) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c CredentialCategoryCol) Ne(v workercredential.CredentialCategory) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c CredentialCategoryCol) Gt(v workercredential.CredentialCategory) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c CredentialCategoryCol) Gte(v workercredential.CredentialCategory) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c CredentialCategoryCol) Lt(v workercredential.CredentialCategory) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c CredentialCategoryCol) Lte(v workercredential.CredentialCategory) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c CredentialCategoryCol) IsDistinctFrom(v workercredential.CredentialCategory) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c CredentialCategoryCol) Between(lo, hi workercredential.CredentialCategory) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c CredentialCategoryCol) To(v workercredential.CredentialCategory) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c CredentialCategoryCol) In(vs ...workercredential.CredentialCategory) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c CredentialCategoryCol) NotIn(vs ...workercredential.CredentialCategory) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // CredentialProfileFieldCol is a column of workercredential.CredentialProfileField values.
-type CredentialProfileFieldCol struct{ keel.StringCol }
+type CredentialProfileFieldCol struct{ keel.TypedStringCol }
 
 func (c CredentialProfileFieldCol) Eq(v workercredential.CredentialProfileField) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c CredentialProfileFieldCol) Ne(v workercredential.CredentialProfileField) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c CredentialProfileFieldCol) Gt(v workercredential.CredentialProfileField) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c CredentialProfileFieldCol) Gte(v workercredential.CredentialProfileField) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c CredentialProfileFieldCol) Lt(v workercredential.CredentialProfileField) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c CredentialProfileFieldCol) Lte(v workercredential.CredentialProfileField) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c CredentialProfileFieldCol) IsDistinctFrom(v workercredential.CredentialProfileField) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c CredentialProfileFieldCol) Between(lo, hi workercredential.CredentialProfileField) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c CredentialProfileFieldCol) To(v workercredential.CredentialProfileField) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c CredentialProfileFieldCol) In(vs ...workercredential.CredentialProfileField) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c CredentialProfileFieldCol) NotIn(vs ...workercredential.CredentialProfileField) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // CredentialStatusCol is a column of workercredential.CredentialStatus values.
-type CredentialStatusCol struct{ keel.StringCol }
+type CredentialStatusCol struct{ keel.TypedStringCol }
 
 func (c CredentialStatusCol) Eq(v workercredential.CredentialStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c CredentialStatusCol) Ne(v workercredential.CredentialStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c CredentialStatusCol) Gt(v workercredential.CredentialStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c CredentialStatusCol) Gte(v workercredential.CredentialStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c CredentialStatusCol) Lt(v workercredential.CredentialStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c CredentialStatusCol) Lte(v workercredential.CredentialStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c CredentialStatusCol) IsDistinctFrom(v workercredential.CredentialStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c CredentialStatusCol) Between(lo, hi workercredential.CredentialStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c CredentialStatusCol) To(v workercredential.CredentialStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c CredentialStatusCol) In(vs ...workercredential.CredentialStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c CredentialStatusCol) NotIn(vs ...workercredential.CredentialStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

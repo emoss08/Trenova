@@ -98,23 +98,23 @@ type InboundAttachmentsTable struct {
 // InboundAttachments references the inbound_message_attachments table.
 var InboundAttachments = &InboundAttachmentsTable{
 	TableBase:            keel.TableBase{Ref: &inboundAttachmentsRef},
-	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &inboundAttachmentsRef, Index: 0}}},
-	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &inboundAttachmentsRef, Index: 1}}},
-	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &inboundAttachmentsRef, Index: 2}}},
-	MessageID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &inboundAttachmentsRef, Index: 3}}},
+	ID:                   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &inboundAttachmentsRef, Index: 0}}},
+	BusinessUnitID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &inboundAttachmentsRef, Index: 1}}},
+	OrganizationID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &inboundAttachmentsRef, Index: 2}}},
+	MessageID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &inboundAttachmentsRef, Index: 3}}},
 	FileName:             keel.StringCol{Col: keel.Col{Ref: &inboundAttachmentsRef, Index: 4}},
 	ContentType:          keel.StringCol{Col: keel.Col{Ref: &inboundAttachmentsRef, Index: 5}},
 	ByteSize:             keel.Int64Col{Col: keel.Col{Ref: &inboundAttachmentsRef, Index: 6}},
-	Kind:                 AttachmentKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &inboundAttachmentsRef, Index: 7}}},
+	Kind:                 AttachmentKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &inboundAttachmentsRef, Index: 7}}},
 	ProviderAttachmentID: keel.StringCol{Col: keel.Col{Ref: &inboundAttachmentsRef, Index: 8}},
-	UploadSessionID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &inboundAttachmentsRef, Index: 9}}},
-	DocumentID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &inboundAttachmentsRef, Index: 10}}},
-	DraftID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &inboundAttachmentsRef, Index: 11}}},
+	UploadSessionID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &inboundAttachmentsRef, Index: 9}}},
+	DocumentID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &inboundAttachmentsRef, Index: 10}}},
+	DraftID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &inboundAttachmentsRef, Index: 11}}},
 	FailureText:          keel.StringCol{Col: keel.Col{Ref: &inboundAttachmentsRef, Index: 12}},
-	FiledShipmentID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &inboundAttachmentsRef, Index: 13}}},
+	FiledShipmentID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &inboundAttachmentsRef, Index: 13}}},
 	FiledAs:              keel.StringCol{Col: keel.Col{Ref: &inboundAttachmentsRef, Index: 14}},
 	FiledAt:              keel.Int64Col{Col: keel.Col{Ref: &inboundAttachmentsRef, Index: 15}},
-	FiledBy:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &inboundAttachmentsRef, Index: 16}}},
+	FiledBy:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &inboundAttachmentsRef, Index: 16}}},
 	PageCount:            keel.Int64Col{Col: keel.Col{Ref: &inboundAttachmentsRef, Index: 17}},
 	Pages:                keel.JSONBCol{Col: keel.Col{Ref: &inboundAttachmentsRef, Index: 18}},
 	SplitDocuments:       keel.JSONBCol{Col: keel.Col{Ref: &inboundAttachmentsRef, Index: 19}},
@@ -126,23 +126,23 @@ var InboundAttachments = &InboundAttachmentsTable{
 func BuildInboundAttachments(r *keel.Ref) *InboundAttachmentsTable {
 	return &InboundAttachmentsTable{
 		TableBase:            keel.TableBase{Ref: r},
-		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		MessageID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:                   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		MessageID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		FileName:             keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		ContentType:          keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		ByteSize:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
-		Kind:                 AttachmentKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		Kind:                 AttachmentKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
 		ProviderAttachmentID: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
-		UploadSessionID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
-		DocumentID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
-		DraftID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
+		UploadSessionID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		DocumentID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		DraftID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 11}}},
 		FailureText:          keel.StringCol{Col: keel.Col{Ref: r, Index: 12}},
-		FiledShipmentID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 13}}},
+		FiledShipmentID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 13}}},
 		FiledAs:              keel.StringCol{Col: keel.Col{Ref: r, Index: 14}},
 		FiledAt:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
-		FiledBy:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 16}}},
+		FiledBy:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 16}}},
 		PageCount:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
 		Pages:                keel.JSONBCol{Col: keel.Col{Ref: r, Index: 18}},
 		SplitDocuments:       keel.JSONBCol{Col: keel.Col{Ref: r, Index: 19}},
@@ -166,8 +166,6 @@ func (t *InboundAttachmentsTable) Get(ctx context.Context, db *keel.DB, key puli
 
 // InboundAttachmentsQuery is a query over inboundmessage.InboundAttachment.
 type InboundAttachmentsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*inboundmessage.InboundAttachment] = (*InboundAttachmentsTable)(nil)
 
 var _ keel.Query[*inboundmessage.InboundAttachment] = (*InboundAttachmentsQuery)(nil)
 
@@ -283,42 +281,42 @@ func (t *InboundAttachmentsTable) Compute(col keel.Column, e keel.Expr) keel.Que
 
 // Create inserts row.
 func (t *InboundAttachmentsTable) Create(ctx context.Context, db *keel.DB, row *inboundmessage.InboundAttachment) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *InboundAttachmentsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*inboundmessage.InboundAttachment) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *InboundAttachmentsTable) Save(ctx context.Context, db *keel.DB, row *inboundmessage.InboundAttachment, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *InboundAttachmentsTable) SaveExcept(ctx context.Context, db *keel.DB, row *inboundmessage.InboundAttachment, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *InboundAttachmentsTable) DeleteRow(ctx context.Context, db *keel.DB, row *inboundmessage.InboundAttachment) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *InboundAttachmentsTable) Upsert(ctx context.Context, db *keel.DB, rows []*inboundmessage.InboundAttachment, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *InboundAttachmentsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*inboundmessage.InboundAttachment, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *InboundAttachmentsTable) Copy(ctx context.Context, db *keel.DB, rows []*inboundmessage.InboundAttachment) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -490,37 +488,45 @@ func (q *InboundAttachmentsQuery) Clone() keel.Query[*inboundmessage.InboundAtta
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *InboundAttachmentsQuery) One(ctx context.Context, db *keel.DB) (*inboundmessage.InboundAttachment, error) {
-	return keel.One[*inboundmessage.InboundAttachment](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*inboundmessage.InboundAttachment)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *InboundAttachmentsQuery) First(ctx context.Context, db *keel.DB) (*inboundmessage.InboundAttachment, error) {
-	return keel.First[*inboundmessage.InboundAttachment](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*inboundmessage.InboundAttachment)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *InboundAttachmentsQuery) List(ctx context.Context, db *keel.DB) ([]*inboundmessage.InboundAttachment, error) {
-	return keel.List[*inboundmessage.InboundAttachment](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*inboundmessage.InboundAttachment)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *InboundAttachmentsQuery) All(ctx context.Context, db *keel.DB) ([]*inboundmessage.InboundAttachment, error) {
-	return keel.All[*inboundmessage.InboundAttachment](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*inboundmessage.InboundAttachment)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *InboundAttachmentsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*inboundmessage.InboundAttachment, error) {
-	return keel.UpdateReturning[*inboundmessage.InboundAttachment](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*inboundmessage.InboundAttachment)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *InboundAttachmentsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*inboundmessage.InboundAttachment], error) {
-	return keel.PageOf[*inboundmessage.InboundAttachment](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*inboundmessage.InboundAttachment])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *InboundAttachmentsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*inboundmessage.InboundAttachment) error) error {
-	return keel.Each[*inboundmessage.InboundAttachment](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*inboundmessage.InboundAttachment)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newInboundAttachment() unsafe.Pointer {
@@ -834,10 +840,10 @@ type InboundMessagesTable struct {
 // InboundMessages references the inbound_messages table.
 var InboundMessages = &InboundMessagesTable{
 	TableBase:               keel.TableBase{Ref: &inboundMessagesRef},
-	ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &inboundMessagesRef, Index: 0}}},
-	BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &inboundMessagesRef, Index: 1}}},
-	OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &inboundMessagesRef, Index: 2}}},
-	MailboxID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &inboundMessagesRef, Index: 3}}},
+	ID:                      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &inboundMessagesRef, Index: 0}}},
+	BusinessUnitID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &inboundMessagesRef, Index: 1}}},
+	OrganizationID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &inboundMessagesRef, Index: 2}}},
+	MailboxID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &inboundMessagesRef, Index: 3}}},
 	ProviderMessageID:       keel.StringCol{Col: keel.Col{Ref: &inboundMessagesRef, Index: 4}},
 	MessageID:               keel.StringCol{Col: keel.Col{Ref: &inboundMessagesRef, Index: 5}},
 	InReplyTo:               keel.StringCol{Col: keel.Col{Ref: &inboundMessagesRef, Index: 6}},
@@ -851,15 +857,15 @@ var InboundMessages = &InboundMessagesTable{
 	HTMLKey:                 keel.StringCol{Col: keel.Col{Ref: &inboundMessagesRef, Index: 14}},
 	ReceivedAt:              keel.Int64Col{Col: keel.Col{Ref: &inboundMessagesRef, Index: 15}},
 	SpamScore:               keel.Float64Col{Col: keel.Col{Ref: &inboundMessagesRef, Index: 16}},
-	Classification:          ClassificationCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &inboundMessagesRef, Index: 17}}},
+	Classification:          ClassificationCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &inboundMessagesRef, Index: 17}}},
 	Confidence:              keel.Float64Col{Col: keel.Col{Ref: &inboundMessagesRef, Index: 18}},
-	Status:                  StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &inboundMessagesRef, Index: 19}}},
-	MatchedCustomerID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &inboundMessagesRef, Index: 20}}},
-	MatchedCarrierID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &inboundMessagesRef, Index: 21}}},
-	MatchedShipmentID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &inboundMessagesRef, Index: 22}}},
+	Status:                  StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &inboundMessagesRef, Index: 19}}},
+	MatchedCustomerID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &inboundMessagesRef, Index: 20}}},
+	MatchedCarrierID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &inboundMessagesRef, Index: 21}}},
+	MatchedShipmentID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &inboundMessagesRef, Index: 22}}},
 	MatchReason:             keel.StringCol{Col: keel.Col{Ref: &inboundMessagesRef, Index: 23}},
-	RunID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &inboundMessagesRef, Index: 24}}},
-	ReviewedBy:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &inboundMessagesRef, Index: 25}}},
+	RunID:                   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &inboundMessagesRef, Index: 24}}},
+	ReviewedBy:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &inboundMessagesRef, Index: 25}}},
 	ReviewedAt:              keel.Int64Col{Col: keel.Col{Ref: &inboundMessagesRef, Index: 26}},
 	ReviewNote:              keel.StringCol{Col: keel.Col{Ref: &inboundMessagesRef, Index: 27}},
 	FailureCode:             keel.StringCol{Col: keel.Col{Ref: &inboundMessagesRef, Index: 28}},
@@ -867,20 +873,20 @@ var InboundMessages = &InboundMessagesTable{
 	MessageKey:              keel.StringCol{Col: keel.Col{Ref: &inboundMessagesRef, Index: 30}},
 	ThreadKey:               keel.StringCol{Col: keel.Col{Ref: &inboundMessagesRef, Index: 31}},
 	SenderDomain:            keel.StringCol{Col: keel.Col{Ref: &inboundMessagesRef, Index: 32}},
-	OwnerID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &inboundMessagesRef, Index: 33}}},
+	OwnerID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &inboundMessagesRef, Index: 33}}},
 	DueAt:                   keel.Int64Col{Col: keel.Col{Ref: &inboundMessagesRef, Index: 34}},
-	Parked:                  ParkingCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &inboundMessagesRef, Index: 35}}},
+	Parked:                  ParkingCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &inboundMessagesRef, Index: 35}}},
 	SnoozedUntil:            keel.Int64Col{Col: keel.Col{Ref: &inboundMessagesRef, Index: 36}},
-	SnoozeEvent:             SnoozeEventCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &inboundMessagesRef, Index: 37}}},
-	SnoozeWatchID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &inboundMessagesRef, Index: 38}}},
-	SnoozeDocumentTypeID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &inboundMessagesRef, Index: 39}}},
+	SnoozeEvent:             SnoozeEventCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &inboundMessagesRef, Index: 37}}},
+	SnoozeWatchID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &inboundMessagesRef, Index: 38}}},
+	SnoozeDocumentTypeID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &inboundMessagesRef, Index: 39}}},
 	SnoozedAt:               keel.Int64Col{Col: keel.Col{Ref: &inboundMessagesRef, Index: 40}},
-	SnoozedBy:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &inboundMessagesRef, Index: 41}}},
+	SnoozedBy:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &inboundMessagesRef, Index: 41}}},
 	AwaitingSince:           keel.Int64Col{Col: keel.Col{Ref: &inboundMessagesRef, Index: 42}},
 	AwaitingUntil:           keel.Int64Col{Col: keel.Col{Ref: &inboundMessagesRef, Index: 43}},
 	NovaRead:                keel.BoolCol{Col: keel.Col{Ref: &inboundMessagesRef, Index: 44}},
-	HandledByRuleID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &inboundMessagesRef, Index: 45}}},
-	HandledAction:           NovaActionCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &inboundMessagesRef, Index: 46}}},
+	HandledByRuleID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &inboundMessagesRef, Index: 45}}},
+	HandledAction:           NovaActionCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &inboundMessagesRef, Index: 46}}},
 	ClassificationCorrected: keel.BoolCol{Col: keel.Col{Ref: &inboundMessagesRef, Index: 47}},
 	Facts:                   keel.JSONBCol{Col: keel.Col{Ref: &inboundMessagesRef, Index: 48}},
 	Conflicts:               keel.JSONBCol{Col: keel.Col{Ref: &inboundMessagesRef, Index: 49}},
@@ -896,10 +902,10 @@ var InboundMessages = &InboundMessagesTable{
 func BuildInboundMessages(r *keel.Ref) *InboundMessagesTable {
 	return &InboundMessagesTable{
 		TableBase:               keel.TableBase{Ref: r},
-		ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		MailboxID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:                      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		MailboxID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		ProviderMessageID:       keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		MessageID:               keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		InReplyTo:               keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
@@ -913,15 +919,15 @@ func BuildInboundMessages(r *keel.Ref) *InboundMessagesTable {
 		HTMLKey:                 keel.StringCol{Col: keel.Col{Ref: r, Index: 14}},
 		ReceivedAt:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
 		SpamScore:               keel.Float64Col{Col: keel.Col{Ref: r, Index: 16}},
-		Classification:          ClassificationCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 17}}},
+		Classification:          ClassificationCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 17}}},
 		Confidence:              keel.Float64Col{Col: keel.Col{Ref: r, Index: 18}},
-		Status:                  StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 19}}},
-		MatchedCustomerID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 20}}},
-		MatchedCarrierID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 21}}},
-		MatchedShipmentID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 22}}},
+		Status:                  StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 19}}},
+		MatchedCustomerID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 20}}},
+		MatchedCarrierID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 21}}},
+		MatchedShipmentID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 22}}},
 		MatchReason:             keel.StringCol{Col: keel.Col{Ref: r, Index: 23}},
-		RunID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 24}}},
-		ReviewedBy:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 25}}},
+		RunID:                   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 24}}},
+		ReviewedBy:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 25}}},
 		ReviewedAt:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 26}},
 		ReviewNote:              keel.StringCol{Col: keel.Col{Ref: r, Index: 27}},
 		FailureCode:             keel.StringCol{Col: keel.Col{Ref: r, Index: 28}},
@@ -929,20 +935,20 @@ func BuildInboundMessages(r *keel.Ref) *InboundMessagesTable {
 		MessageKey:              keel.StringCol{Col: keel.Col{Ref: r, Index: 30}},
 		ThreadKey:               keel.StringCol{Col: keel.Col{Ref: r, Index: 31}},
 		SenderDomain:            keel.StringCol{Col: keel.Col{Ref: r, Index: 32}},
-		OwnerID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 33}}},
+		OwnerID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 33}}},
 		DueAt:                   keel.Int64Col{Col: keel.Col{Ref: r, Index: 34}},
-		Parked:                  ParkingCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 35}}},
+		Parked:                  ParkingCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 35}}},
 		SnoozedUntil:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 36}},
-		SnoozeEvent:             SnoozeEventCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 37}}},
-		SnoozeWatchID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 38}}},
-		SnoozeDocumentTypeID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 39}}},
+		SnoozeEvent:             SnoozeEventCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 37}}},
+		SnoozeWatchID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 38}}},
+		SnoozeDocumentTypeID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 39}}},
 		SnoozedAt:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 40}},
-		SnoozedBy:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 41}}},
+		SnoozedBy:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 41}}},
 		AwaitingSince:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 42}},
 		AwaitingUntil:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 43}},
 		NovaRead:                keel.BoolCol{Col: keel.Col{Ref: r, Index: 44}},
-		HandledByRuleID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 45}}},
-		HandledAction:           NovaActionCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 46}}},
+		HandledByRuleID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 45}}},
+		HandledAction:           NovaActionCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 46}}},
 		ClassificationCorrected: keel.BoolCol{Col: keel.Col{Ref: r, Index: 47}},
 		Facts:                   keel.JSONBCol{Col: keel.Col{Ref: r, Index: 48}},
 		Conflicts:               keel.JSONBCol{Col: keel.Col{Ref: r, Index: 49}},
@@ -978,8 +984,6 @@ func (t *InboundMessagesTable) Get(ctx context.Context, db *keel.DB, key pulid.I
 
 // InboundMessagesQuery is a query over inboundmessage.InboundMessage.
 type InboundMessagesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*inboundmessage.InboundMessage] = (*InboundMessagesTable)(nil)
 
 var _ keel.Query[*inboundmessage.InboundMessage] = (*InboundMessagesQuery)(nil)
 
@@ -1095,42 +1099,42 @@ func (t *InboundMessagesTable) Compute(col keel.Column, e keel.Expr) keel.Query[
 
 // Create inserts row.
 func (t *InboundMessagesTable) Create(ctx context.Context, db *keel.DB, row *inboundmessage.InboundMessage) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *InboundMessagesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*inboundmessage.InboundMessage) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *InboundMessagesTable) Save(ctx context.Context, db *keel.DB, row *inboundmessage.InboundMessage, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *InboundMessagesTable) SaveExcept(ctx context.Context, db *keel.DB, row *inboundmessage.InboundMessage, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *InboundMessagesTable) DeleteRow(ctx context.Context, db *keel.DB, row *inboundmessage.InboundMessage) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *InboundMessagesTable) Upsert(ctx context.Context, db *keel.DB, rows []*inboundmessage.InboundMessage, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *InboundMessagesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*inboundmessage.InboundMessage, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *InboundMessagesTable) Copy(ctx context.Context, db *keel.DB, rows []*inboundmessage.InboundMessage) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1302,37 +1306,45 @@ func (q *InboundMessagesQuery) Clone() keel.Query[*inboundmessage.InboundMessage
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *InboundMessagesQuery) One(ctx context.Context, db *keel.DB) (*inboundmessage.InboundMessage, error) {
-	return keel.One[*inboundmessage.InboundMessage](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*inboundmessage.InboundMessage)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *InboundMessagesQuery) First(ctx context.Context, db *keel.DB) (*inboundmessage.InboundMessage, error) {
-	return keel.First[*inboundmessage.InboundMessage](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*inboundmessage.InboundMessage)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *InboundMessagesQuery) List(ctx context.Context, db *keel.DB) ([]*inboundmessage.InboundMessage, error) {
-	return keel.List[*inboundmessage.InboundMessage](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*inboundmessage.InboundMessage)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *InboundMessagesQuery) All(ctx context.Context, db *keel.DB) ([]*inboundmessage.InboundMessage, error) {
-	return keel.All[*inboundmessage.InboundMessage](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*inboundmessage.InboundMessage)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *InboundMessagesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*inboundmessage.InboundMessage, error) {
-	return keel.UpdateReturning[*inboundmessage.InboundMessage](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*inboundmessage.InboundMessage)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *InboundMessagesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*inboundmessage.InboundMessage], error) {
-	return keel.PageOf[*inboundmessage.InboundMessage](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*inboundmessage.InboundMessage])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *InboundMessagesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*inboundmessage.InboundMessage) error) error {
-	return keel.Each[*inboundmessage.InboundMessage](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*inboundmessage.InboundMessage)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newInboundMessage() unsafe.Pointer { return unsafe.Pointer(new(inboundmessage.InboundMessage)) }
@@ -1796,19 +1808,19 @@ type MailboxesTable struct {
 // Mailboxes references the inbound_mailboxes table.
 var Mailboxes = &MailboxesTable{
 	TableBase:      keel.TableBase{Ref: &mailboxesRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &mailboxesRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &mailboxesRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &mailboxesRef, Index: 2}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &mailboxesRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &mailboxesRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &mailboxesRef, Index: 2}}},
 	Name:           keel.StringCol{Col: keel.Col{Ref: &mailboxesRef, Index: 3}},
 	Address:        keel.StringCol{Col: keel.Col{Ref: &mailboxesRef, Index: 4}},
-	Provider:       ProviderCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &mailboxesRef, Index: 5}}},
+	Provider:       ProviderCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &mailboxesRef, Index: 5}}},
 	TokenHash:      keel.StringCol{Col: keel.Col{Ref: &mailboxesRef, Index: 6}},
 	SigningSecret:  keel.StringCol{Col: keel.Col{Ref: &mailboxesRef, Index: 7}},
 	ProviderAPIKey: keel.StringCol{Col: keel.Col{Ref: &mailboxesRef, Index: 8}},
 	Purpose:        keel.StringCol{Col: keel.Col{Ref: &mailboxesRef, Index: 9}},
-	ReviewPolicy:   ReviewPolicyCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &mailboxesRef, Index: 10}}},
+	ReviewPolicy:   ReviewPolicyCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &mailboxesRef, Index: 10}}},
 	MinConfidence:  keel.Float64Col{Col: keel.Col{Ref: &mailboxesRef, Index: 11}},
-	Status:         MailboxStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &mailboxesRef, Index: 12}}},
+	Status:         MailboxStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &mailboxesRef, Index: 12}}},
 	LastReceivedAt: keel.Int64Col{Col: keel.Col{Ref: &mailboxesRef, Index: 13}},
 	TestToken:      keel.StringCol{Col: keel.Col{Ref: &mailboxesRef, Index: 14}},
 	TestSentAt:     keel.Int64Col{Col: keel.Col{Ref: &mailboxesRef, Index: 15}},
@@ -1823,19 +1835,19 @@ var Mailboxes = &MailboxesTable{
 func BuildMailboxes(r *keel.Ref) *MailboxesTable {
 	return &MailboxesTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		Name:           keel.StringCol{Col: keel.Col{Ref: r, Index: 3}},
 		Address:        keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
-		Provider:       ProviderCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		Provider:       ProviderCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		TokenHash:      keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
 		SigningSecret:  keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
 		ProviderAPIKey: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
 		Purpose:        keel.StringCol{Col: keel.Col{Ref: r, Index: 9}},
-		ReviewPolicy:   ReviewPolicyCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		ReviewPolicy:   ReviewPolicyCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
 		MinConfidence:  keel.Float64Col{Col: keel.Col{Ref: r, Index: 11}},
-		Status:         MailboxStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 12}}},
+		Status:         MailboxStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 12}}},
 		LastReceivedAt: keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
 		TestToken:      keel.StringCol{Col: keel.Col{Ref: r, Index: 14}},
 		TestSentAt:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
@@ -1862,8 +1874,6 @@ func (t *MailboxesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*i
 
 // MailboxesQuery is a query over inboundmessage.Mailbox.
 type MailboxesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*inboundmessage.Mailbox] = (*MailboxesTable)(nil)
 
 var _ keel.Query[*inboundmessage.Mailbox] = (*MailboxesQuery)(nil)
 
@@ -1979,42 +1989,42 @@ func (t *MailboxesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*inbou
 
 // Create inserts row.
 func (t *MailboxesTable) Create(ctx context.Context, db *keel.DB, row *inboundmessage.Mailbox) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *MailboxesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*inboundmessage.Mailbox) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *MailboxesTable) Save(ctx context.Context, db *keel.DB, row *inboundmessage.Mailbox, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *MailboxesTable) SaveExcept(ctx context.Context, db *keel.DB, row *inboundmessage.Mailbox, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *MailboxesTable) DeleteRow(ctx context.Context, db *keel.DB, row *inboundmessage.Mailbox) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *MailboxesTable) Upsert(ctx context.Context, db *keel.DB, rows []*inboundmessage.Mailbox, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *MailboxesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*inboundmessage.Mailbox, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *MailboxesTable) Copy(ctx context.Context, db *keel.DB, rows []*inboundmessage.Mailbox) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -2186,37 +2196,45 @@ func (q *MailboxesQuery) Clone() keel.Query[*inboundmessage.Mailbox] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *MailboxesQuery) One(ctx context.Context, db *keel.DB) (*inboundmessage.Mailbox, error) {
-	return keel.One[*inboundmessage.Mailbox](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*inboundmessage.Mailbox)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *MailboxesQuery) First(ctx context.Context, db *keel.DB) (*inboundmessage.Mailbox, error) {
-	return keel.First[*inboundmessage.Mailbox](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*inboundmessage.Mailbox)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *MailboxesQuery) List(ctx context.Context, db *keel.DB) ([]*inboundmessage.Mailbox, error) {
-	return keel.List[*inboundmessage.Mailbox](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*inboundmessage.Mailbox)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *MailboxesQuery) All(ctx context.Context, db *keel.DB) ([]*inboundmessage.Mailbox, error) {
-	return keel.All[*inboundmessage.Mailbox](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*inboundmessage.Mailbox)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *MailboxesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*inboundmessage.Mailbox, error) {
-	return keel.UpdateReturning[*inboundmessage.Mailbox](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*inboundmessage.Mailbox)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *MailboxesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*inboundmessage.Mailbox], error) {
-	return keel.PageOf[*inboundmessage.Mailbox](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*inboundmessage.Mailbox])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *MailboxesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*inboundmessage.Mailbox) error) error {
-	return keel.Each[*inboundmessage.Mailbox](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*inboundmessage.Mailbox)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newMailbox() unsafe.Pointer { return unsafe.Pointer(new(inboundmessage.Mailbox)) }
@@ -2427,272 +2445,246 @@ var enumStatus = [...]schema.EnumValue{
 }
 
 // AttachmentKindCol is a column of inboundmessage.AttachmentKind values.
-type AttachmentKindCol struct{ keel.StringCol }
+type AttachmentKindCol struct{ keel.TypedStringCol }
 
 func (c AttachmentKindCol) Eq(v inboundmessage.AttachmentKind) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c AttachmentKindCol) Ne(v inboundmessage.AttachmentKind) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c AttachmentKindCol) Gt(v inboundmessage.AttachmentKind) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c AttachmentKindCol) Gte(v inboundmessage.AttachmentKind) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c AttachmentKindCol) Lt(v inboundmessage.AttachmentKind) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c AttachmentKindCol) Lte(v inboundmessage.AttachmentKind) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c AttachmentKindCol) IsDistinctFrom(v inboundmessage.AttachmentKind) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c AttachmentKindCol) Between(lo, hi inboundmessage.AttachmentKind) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c AttachmentKindCol) To(v inboundmessage.AttachmentKind) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c AttachmentKindCol) In(vs ...inboundmessage.AttachmentKind) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c AttachmentKindCol) NotIn(vs ...inboundmessage.AttachmentKind) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // ClassificationCol is a column of inboundmessage.Classification values.
-type ClassificationCol struct{ keel.StringCol }
+type ClassificationCol struct{ keel.TypedStringCol }
 
 func (c ClassificationCol) Eq(v inboundmessage.Classification) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c ClassificationCol) Ne(v inboundmessage.Classification) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c ClassificationCol) Gt(v inboundmessage.Classification) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c ClassificationCol) Gte(v inboundmessage.Classification) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c ClassificationCol) Lt(v inboundmessage.Classification) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c ClassificationCol) Lte(v inboundmessage.Classification) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c ClassificationCol) IsDistinctFrom(v inboundmessage.Classification) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ClassificationCol) Between(lo, hi inboundmessage.Classification) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c ClassificationCol) To(v inboundmessage.Classification) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c ClassificationCol) In(vs ...inboundmessage.Classification) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ClassificationCol) NotIn(vs ...inboundmessage.Classification) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // MailboxStatusCol is a column of inboundmessage.MailboxStatus values.
-type MailboxStatusCol struct{ keel.StringCol }
+type MailboxStatusCol struct{ keel.TypedStringCol }
 
-func (c MailboxStatusCol) Eq(v inboundmessage.MailboxStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c MailboxStatusCol) Ne(v inboundmessage.MailboxStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c MailboxStatusCol) Gt(v inboundmessage.MailboxStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
+func (c MailboxStatusCol) Eq(v inboundmessage.MailboxStatus) keel.Pred { return c.Text().Eq(string(v)) }
+func (c MailboxStatusCol) Ne(v inboundmessage.MailboxStatus) keel.Pred { return c.Text().Ne(string(v)) }
+func (c MailboxStatusCol) Gt(v inboundmessage.MailboxStatus) keel.Pred { return c.Text().Gt(string(v)) }
 func (c MailboxStatusCol) Gte(v inboundmessage.MailboxStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
-func (c MailboxStatusCol) Lt(v inboundmessage.MailboxStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
+func (c MailboxStatusCol) Lt(v inboundmessage.MailboxStatus) keel.Pred { return c.Text().Lt(string(v)) }
 func (c MailboxStatusCol) Lte(v inboundmessage.MailboxStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c MailboxStatusCol) IsDistinctFrom(v inboundmessage.MailboxStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c MailboxStatusCol) Between(lo, hi inboundmessage.MailboxStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c MailboxStatusCol) To(v inboundmessage.MailboxStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c MailboxStatusCol) In(vs ...inboundmessage.MailboxStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c MailboxStatusCol) NotIn(vs ...inboundmessage.MailboxStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // NovaActionCol is a column of inboundmessage.NovaAction values.
-type NovaActionCol struct{ keel.StringCol }
+type NovaActionCol struct{ keel.TypedStringCol }
 
-func (c NovaActionCol) Eq(v inboundmessage.NovaAction) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c NovaActionCol) Ne(v inboundmessage.NovaAction) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c NovaActionCol) Gt(v inboundmessage.NovaAction) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c NovaActionCol) Gte(v inboundmessage.NovaAction) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c NovaActionCol) Lt(v inboundmessage.NovaAction) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c NovaActionCol) Lte(v inboundmessage.NovaAction) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c NovaActionCol) Eq(v inboundmessage.NovaAction) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c NovaActionCol) Ne(v inboundmessage.NovaAction) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c NovaActionCol) Gt(v inboundmessage.NovaAction) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c NovaActionCol) Gte(v inboundmessage.NovaAction) keel.Pred { return c.Text().Gte(string(v)) }
+func (c NovaActionCol) Lt(v inboundmessage.NovaAction) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c NovaActionCol) Lte(v inboundmessage.NovaAction) keel.Pred { return c.Text().Lte(string(v)) }
 func (c NovaActionCol) IsDistinctFrom(v inboundmessage.NovaAction) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c NovaActionCol) Between(lo, hi inboundmessage.NovaAction) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c NovaActionCol) To(v inboundmessage.NovaAction) keel.Assignment {
-	return c.StringCol.To(string(v))
-}
+func (c NovaActionCol) To(v inboundmessage.NovaAction) keel.Assignment { return c.Text().To(string(v)) }
 func (c NovaActionCol) In(vs ...inboundmessage.NovaAction) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c NovaActionCol) NotIn(vs ...inboundmessage.NovaAction) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // ParkingCol is a column of inboundmessage.Parking values.
-type ParkingCol struct{ keel.StringCol }
+type ParkingCol struct{ keel.TypedStringCol }
 
-func (c ParkingCol) Eq(v inboundmessage.Parking) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c ParkingCol) Ne(v inboundmessage.Parking) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c ParkingCol) Gt(v inboundmessage.Parking) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c ParkingCol) Gte(v inboundmessage.Parking) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c ParkingCol) Lt(v inboundmessage.Parking) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c ParkingCol) Lte(v inboundmessage.Parking) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c ParkingCol) Eq(v inboundmessage.Parking) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c ParkingCol) Ne(v inboundmessage.Parking) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c ParkingCol) Gt(v inboundmessage.Parking) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c ParkingCol) Gte(v inboundmessage.Parking) keel.Pred { return c.Text().Gte(string(v)) }
+func (c ParkingCol) Lt(v inboundmessage.Parking) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c ParkingCol) Lte(v inboundmessage.Parking) keel.Pred { return c.Text().Lte(string(v)) }
 func (c ParkingCol) IsDistinctFrom(v inboundmessage.Parking) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ParkingCol) Between(lo, hi inboundmessage.Parking) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c ParkingCol) To(v inboundmessage.Parking) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c ParkingCol) To(v inboundmessage.Parking) keel.Assignment { return c.Text().To(string(v)) }
 func (c ParkingCol) In(vs ...inboundmessage.Parking) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ParkingCol) NotIn(vs ...inboundmessage.Parking) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // ProviderCol is a column of inboundmessage.Provider values.
-type ProviderCol struct{ keel.StringCol }
+type ProviderCol struct{ keel.TypedStringCol }
 
-func (c ProviderCol) Eq(v inboundmessage.Provider) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c ProviderCol) Ne(v inboundmessage.Provider) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c ProviderCol) Gt(v inboundmessage.Provider) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c ProviderCol) Gte(v inboundmessage.Provider) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c ProviderCol) Lt(v inboundmessage.Provider) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c ProviderCol) Lte(v inboundmessage.Provider) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c ProviderCol) Eq(v inboundmessage.Provider) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c ProviderCol) Ne(v inboundmessage.Provider) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c ProviderCol) Gt(v inboundmessage.Provider) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c ProviderCol) Gte(v inboundmessage.Provider) keel.Pred { return c.Text().Gte(string(v)) }
+func (c ProviderCol) Lt(v inboundmessage.Provider) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c ProviderCol) Lte(v inboundmessage.Provider) keel.Pred { return c.Text().Lte(string(v)) }
 func (c ProviderCol) IsDistinctFrom(v inboundmessage.Provider) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ProviderCol) Between(lo, hi inboundmessage.Provider) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c ProviderCol) To(v inboundmessage.Provider) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c ProviderCol) To(v inboundmessage.Provider) keel.Assignment { return c.Text().To(string(v)) }
 func (c ProviderCol) In(vs ...inboundmessage.Provider) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ProviderCol) NotIn(vs ...inboundmessage.Provider) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // ReviewPolicyCol is a column of inboundmessage.ReviewPolicy values.
-type ReviewPolicyCol struct{ keel.StringCol }
+type ReviewPolicyCol struct{ keel.TypedStringCol }
 
-func (c ReviewPolicyCol) Eq(v inboundmessage.ReviewPolicy) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c ReviewPolicyCol) Ne(v inboundmessage.ReviewPolicy) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c ReviewPolicyCol) Gt(v inboundmessage.ReviewPolicy) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
-func (c ReviewPolicyCol) Gte(v inboundmessage.ReviewPolicy) keel.Pred {
-	return c.StringCol.Gte(string(v))
-}
-func (c ReviewPolicyCol) Lt(v inboundmessage.ReviewPolicy) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
-func (c ReviewPolicyCol) Lte(v inboundmessage.ReviewPolicy) keel.Pred {
-	return c.StringCol.Lte(string(v))
-}
+func (c ReviewPolicyCol) Eq(v inboundmessage.ReviewPolicy) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c ReviewPolicyCol) Ne(v inboundmessage.ReviewPolicy) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c ReviewPolicyCol) Gt(v inboundmessage.ReviewPolicy) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c ReviewPolicyCol) Gte(v inboundmessage.ReviewPolicy) keel.Pred { return c.Text().Gte(string(v)) }
+func (c ReviewPolicyCol) Lt(v inboundmessage.ReviewPolicy) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c ReviewPolicyCol) Lte(v inboundmessage.ReviewPolicy) keel.Pred { return c.Text().Lte(string(v)) }
 func (c ReviewPolicyCol) IsDistinctFrom(v inboundmessage.ReviewPolicy) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ReviewPolicyCol) Between(lo, hi inboundmessage.ReviewPolicy) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c ReviewPolicyCol) To(v inboundmessage.ReviewPolicy) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c ReviewPolicyCol) In(vs ...inboundmessage.ReviewPolicy) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ReviewPolicyCol) NotIn(vs ...inboundmessage.ReviewPolicy) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // SnoozeEventCol is a column of inboundmessage.SnoozeEvent values.
-type SnoozeEventCol struct{ keel.StringCol }
+type SnoozeEventCol struct{ keel.TypedStringCol }
 
-func (c SnoozeEventCol) Eq(v inboundmessage.SnoozeEvent) keel.Pred { return c.StringCol.Eq(string(v)) }
-func (c SnoozeEventCol) Ne(v inboundmessage.SnoozeEvent) keel.Pred { return c.StringCol.Ne(string(v)) }
-func (c SnoozeEventCol) Gt(v inboundmessage.SnoozeEvent) keel.Pred { return c.StringCol.Gt(string(v)) }
-func (c SnoozeEventCol) Gte(v inboundmessage.SnoozeEvent) keel.Pred {
-	return c.StringCol.Gte(string(v))
-}
-func (c SnoozeEventCol) Lt(v inboundmessage.SnoozeEvent) keel.Pred { return c.StringCol.Lt(string(v)) }
-func (c SnoozeEventCol) Lte(v inboundmessage.SnoozeEvent) keel.Pred {
-	return c.StringCol.Lte(string(v))
-}
+func (c SnoozeEventCol) Eq(v inboundmessage.SnoozeEvent) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c SnoozeEventCol) Ne(v inboundmessage.SnoozeEvent) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c SnoozeEventCol) Gt(v inboundmessage.SnoozeEvent) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c SnoozeEventCol) Gte(v inboundmessage.SnoozeEvent) keel.Pred { return c.Text().Gte(string(v)) }
+func (c SnoozeEventCol) Lt(v inboundmessage.SnoozeEvent) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c SnoozeEventCol) Lte(v inboundmessage.SnoozeEvent) keel.Pred { return c.Text().Lte(string(v)) }
 func (c SnoozeEventCol) IsDistinctFrom(v inboundmessage.SnoozeEvent) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c SnoozeEventCol) Between(lo, hi inboundmessage.SnoozeEvent) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c SnoozeEventCol) To(v inboundmessage.SnoozeEvent) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c SnoozeEventCol) In(vs ...inboundmessage.SnoozeEvent) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c SnoozeEventCol) NotIn(vs ...inboundmessage.SnoozeEvent) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // StatusCol is a column of inboundmessage.Status values.
-type StatusCol struct{ keel.StringCol }
+type StatusCol struct{ keel.TypedStringCol }
 
-func (c StatusCol) Eq(v inboundmessage.Status) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c StatusCol) Ne(v inboundmessage.Status) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c StatusCol) Gt(v inboundmessage.Status) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c StatusCol) Gte(v inboundmessage.Status) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c StatusCol) Lt(v inboundmessage.Status) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c StatusCol) Lte(v inboundmessage.Status) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c StatusCol) Eq(v inboundmessage.Status) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c StatusCol) Ne(v inboundmessage.Status) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c StatusCol) Gt(v inboundmessage.Status) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c StatusCol) Gte(v inboundmessage.Status) keel.Pred { return c.Text().Gte(string(v)) }
+func (c StatusCol) Lt(v inboundmessage.Status) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c StatusCol) Lte(v inboundmessage.Status) keel.Pred { return c.Text().Lte(string(v)) }
 func (c StatusCol) IsDistinctFrom(v inboundmessage.Status) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c StatusCol) Between(lo, hi inboundmessage.Status) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c StatusCol) To(v inboundmessage.Status) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c StatusCol) To(v inboundmessage.Status) keel.Assignment { return c.Text().To(string(v)) }
 func (c StatusCol) In(vs ...inboundmessage.Status) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c StatusCol) NotIn(vs ...inboundmessage.Status) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

@@ -107,21 +107,21 @@ type WorkerChecklistsTable struct {
 // WorkerChecklists references the worker_checklists table.
 var WorkerChecklists = &WorkerChecklistsTable{
 	TableBase:      keel.TableBase{Ref: &workerChecklistsRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerChecklistsRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerChecklistsRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerChecklistsRef, Index: 2}}},
-	WorkerID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerChecklistsRef, Index: 3}}},
-	TemplateID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerChecklistsRef, Index: 4}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerChecklistsRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerChecklistsRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerChecklistsRef, Index: 2}}},
+	WorkerID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerChecklistsRef, Index: 3}}},
+	TemplateID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerChecklistsRef, Index: 4}}},
 	Name:           keel.StringCol{Col: keel.Col{Ref: &workerChecklistsRef, Index: 5}},
-	Kind:           ChecklistKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerChecklistsRef, Index: 6}}},
-	Status:         ChecklistStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerChecklistsRef, Index: 7}}},
+	Kind:           ChecklistKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerChecklistsRef, Index: 6}}},
+	Status:         ChecklistStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerChecklistsRef, Index: 7}}},
 	StartedAt:      keel.Int64Col{Col: keel.Col{Ref: &workerChecklistsRef, Index: 8}},
 	DueAt:          keel.Int64Col{Col: keel.Col{Ref: &workerChecklistsRef, Index: 9}},
 	CompletedAt:    keel.Int64Col{Col: keel.Col{Ref: &workerChecklistsRef, Index: 10}},
 	CancelledAt:    keel.Int64Col{Col: keel.Col{Ref: &workerChecklistsRef, Index: 11}},
 	CancelReason:   keel.StringCol{Col: keel.Col{Ref: &workerChecklistsRef, Index: 12}},
-	SourceEventID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerChecklistsRef, Index: 13}}},
-	StartedByID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerChecklistsRef, Index: 14}}},
+	SourceEventID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerChecklistsRef, Index: 13}}},
+	StartedByID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerChecklistsRef, Index: 14}}},
 	Version:        keel.Int64Col{Col: keel.Col{Ref: &workerChecklistsRef, Index: 15}},
 	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &workerChecklistsRef, Index: 16}},
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &workerChecklistsRef, Index: 17}},
@@ -131,21 +131,21 @@ var WorkerChecklists = &WorkerChecklistsTable{
 func BuildWorkerChecklists(r *keel.Ref) *WorkerChecklistsTable {
 	return &WorkerChecklistsTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		WorkerID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		TemplateID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		WorkerID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		TemplateID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		Name:           keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
-		Kind:           ChecklistKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		Status:         ChecklistStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		Kind:           ChecklistKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		Status:         ChecklistStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
 		StartedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
 		DueAt:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
 		CompletedAt:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
 		CancelledAt:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
 		CancelReason:   keel.StringCol{Col: keel.Col{Ref: r, Index: 12}},
-		SourceEventID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 13}}},
-		StartedByID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 14}}},
+		SourceEventID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 13}}},
+		StartedByID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 14}}},
 		Version:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
 		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
 		UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
@@ -187,8 +187,6 @@ func (t *WorkerChecklistsTable) Get(ctx context.Context, db *keel.DB, key pulid.
 
 // WorkerChecklistsQuery is a query over workerchecklist.WorkerChecklist.
 type WorkerChecklistsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*workerchecklist.WorkerChecklist] = (*WorkerChecklistsTable)(nil)
 
 var _ keel.Query[*workerchecklist.WorkerChecklist] = (*WorkerChecklistsQuery)(nil)
 
@@ -304,42 +302,42 @@ func (t *WorkerChecklistsTable) Compute(col keel.Column, e keel.Expr) keel.Query
 
 // Create inserts row.
 func (t *WorkerChecklistsTable) Create(ctx context.Context, db *keel.DB, row *workerchecklist.WorkerChecklist) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *WorkerChecklistsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*workerchecklist.WorkerChecklist) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *WorkerChecklistsTable) Save(ctx context.Context, db *keel.DB, row *workerchecklist.WorkerChecklist, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *WorkerChecklistsTable) SaveExcept(ctx context.Context, db *keel.DB, row *workerchecklist.WorkerChecklist, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *WorkerChecklistsTable) DeleteRow(ctx context.Context, db *keel.DB, row *workerchecklist.WorkerChecklist) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *WorkerChecklistsTable) Upsert(ctx context.Context, db *keel.DB, rows []*workerchecklist.WorkerChecklist, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *WorkerChecklistsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*workerchecklist.WorkerChecklist, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *WorkerChecklistsTable) Copy(ctx context.Context, db *keel.DB, rows []*workerchecklist.WorkerChecklist) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -511,37 +509,45 @@ func (q *WorkerChecklistsQuery) Clone() keel.Query[*workerchecklist.WorkerCheckl
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *WorkerChecklistsQuery) One(ctx context.Context, db *keel.DB) (*workerchecklist.WorkerChecklist, error) {
-	return keel.One[*workerchecklist.WorkerChecklist](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*workerchecklist.WorkerChecklist)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *WorkerChecklistsQuery) First(ctx context.Context, db *keel.DB) (*workerchecklist.WorkerChecklist, error) {
-	return keel.First[*workerchecklist.WorkerChecklist](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*workerchecklist.WorkerChecklist)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *WorkerChecklistsQuery) List(ctx context.Context, db *keel.DB) ([]*workerchecklist.WorkerChecklist, error) {
-	return keel.List[*workerchecklist.WorkerChecklist](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*workerchecklist.WorkerChecklist)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *WorkerChecklistsQuery) All(ctx context.Context, db *keel.DB) ([]*workerchecklist.WorkerChecklist, error) {
-	return keel.All[*workerchecklist.WorkerChecklist](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*workerchecklist.WorkerChecklist)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *WorkerChecklistsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*workerchecklist.WorkerChecklist, error) {
-	return keel.UpdateReturning[*workerchecklist.WorkerChecklist](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*workerchecklist.WorkerChecklist)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *WorkerChecklistsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*workerchecklist.WorkerChecklist], error) {
-	return keel.PageOf[*workerchecklist.WorkerChecklist](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*workerchecklist.WorkerChecklist])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *WorkerChecklistsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*workerchecklist.WorkerChecklist) error) error {
-	return keel.Each[*workerchecklist.WorkerChecklist](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*workerchecklist.WorkerChecklist)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newWorkerChecklist() unsafe.Pointer { return unsafe.Pointer(new(workerchecklist.WorkerChecklist)) }
@@ -770,26 +776,26 @@ type WorkerChecklistItemsTable struct {
 // WorkerChecklistItems references the worker_checklist_items table.
 var WorkerChecklistItems = &WorkerChecklistItemsTable{
 	TableBase:            keel.TableBase{Ref: &workerChecklistItemsRef},
-	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerChecklistItemsRef, Index: 0}}},
-	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerChecklistItemsRef, Index: 1}}},
-	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerChecklistItemsRef, Index: 2}}},
-	ChecklistID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerChecklistItemsRef, Index: 3}}},
-	TemplateItemID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerChecklistItemsRef, Index: 4}}},
+	ID:                   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerChecklistItemsRef, Index: 0}}},
+	BusinessUnitID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerChecklistItemsRef, Index: 1}}},
+	OrganizationID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerChecklistItemsRef, Index: 2}}},
+	ChecklistID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerChecklistItemsRef, Index: 3}}},
+	TemplateItemID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerChecklistItemsRef, Index: 4}}},
 	Label:                keel.StringCol{Col: keel.Col{Ref: &workerChecklistItemsRef, Index: 5}},
 	Description:          keel.StringCol{Col: keel.Col{Ref: &workerChecklistItemsRef, Index: 6}},
-	Kind:                 ChecklistItemKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerChecklistItemsRef, Index: 7}}},
+	Kind:                 ChecklistItemKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerChecklistItemsRef, Index: 7}}},
 	Required:             keel.BoolCol{Col: keel.Col{Ref: &workerChecklistItemsRef, Index: 8}},
-	Owner:                ChecklistOwnerCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerChecklistItemsRef, Index: 9}}},
+	Owner:                ChecklistOwnerCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerChecklistItemsRef, Index: 9}}},
 	DueAt:                keel.Int64Col{Col: keel.Col{Ref: &workerChecklistItemsRef, Index: 10}},
-	CredentialTypeID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerChecklistItemsRef, Index: 11}}},
-	DocumentTypeID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerChecklistItemsRef, Index: 12}}},
-	Status:               ChecklistItemStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerChecklistItemsRef, Index: 13}}},
-	CompletedByID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerChecklistItemsRef, Index: 14}}},
+	CredentialTypeID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerChecklistItemsRef, Index: 11}}},
+	DocumentTypeID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerChecklistItemsRef, Index: 12}}},
+	Status:               ChecklistItemStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerChecklistItemsRef, Index: 13}}},
+	CompletedByID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerChecklistItemsRef, Index: 14}}},
 	CompletedAt:          keel.Int64Col{Col: keel.Col{Ref: &workerChecklistItemsRef, Index: 15}},
 	AutoCompleted:        keel.BoolCol{Col: keel.Col{Ref: &workerChecklistItemsRef, Index: 16}},
 	Note:                 keel.StringCol{Col: keel.Col{Ref: &workerChecklistItemsRef, Index: 17}},
-	EvidenceDocumentID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerChecklistItemsRef, Index: 18}}},
-	EvidenceCredentialID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerChecklistItemsRef, Index: 19}}},
+	EvidenceDocumentID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerChecklistItemsRef, Index: 18}}},
+	EvidenceCredentialID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerChecklistItemsRef, Index: 19}}},
 	SortOrder:            keel.Int32Col{Col: keel.Col{Ref: &workerChecklistItemsRef, Index: 20}},
 	Version:              keel.Int64Col{Col: keel.Col{Ref: &workerChecklistItemsRef, Index: 21}},
 	CreatedAt:            keel.Int64Col{Col: keel.Col{Ref: &workerChecklistItemsRef, Index: 22}},
@@ -800,26 +806,26 @@ var WorkerChecklistItems = &WorkerChecklistItemsTable{
 func BuildWorkerChecklistItems(r *keel.Ref) *WorkerChecklistItemsTable {
 	return &WorkerChecklistItemsTable{
 		TableBase:            keel.TableBase{Ref: r},
-		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		ChecklistID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		TemplateItemID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ID:                   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ChecklistID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		TemplateItemID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		Label:                keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		Description:          keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
-		Kind:                 ChecklistItemKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		Kind:                 ChecklistItemKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
 		Required:             keel.BoolCol{Col: keel.Col{Ref: r, Index: 8}},
-		Owner:                ChecklistOwnerCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		Owner:                ChecklistOwnerCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
 		DueAt:                keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
-		CredentialTypeID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
-		DocumentTypeID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 12}}},
-		Status:               ChecklistItemStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 13}}},
-		CompletedByID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 14}}},
+		CredentialTypeID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 11}}},
+		DocumentTypeID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 12}}},
+		Status:               ChecklistItemStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 13}}},
+		CompletedByID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 14}}},
 		CompletedAt:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
 		AutoCompleted:        keel.BoolCol{Col: keel.Col{Ref: r, Index: 16}},
 		Note:                 keel.StringCol{Col: keel.Col{Ref: r, Index: 17}},
-		EvidenceDocumentID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 18}}},
-		EvidenceCredentialID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 19}}},
+		EvidenceDocumentID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 18}}},
+		EvidenceCredentialID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 19}}},
 		SortOrder:            keel.Int32Col{Col: keel.Col{Ref: r, Index: 20}},
 		Version:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 21}},
 		CreatedAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 22}},
@@ -862,8 +868,6 @@ func (t *WorkerChecklistItemsTable) Get(ctx context.Context, db *keel.DB, key pu
 
 // WorkerChecklistItemsQuery is a query over workerchecklist.WorkerChecklistItem.
 type WorkerChecklistItemsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*workerchecklist.WorkerChecklistItem] = (*WorkerChecklistItemsTable)(nil)
 
 var _ keel.Query[*workerchecklist.WorkerChecklistItem] = (*WorkerChecklistItemsQuery)(nil)
 
@@ -979,42 +983,42 @@ func (t *WorkerChecklistItemsTable) Compute(col keel.Column, e keel.Expr) keel.Q
 
 // Create inserts row.
 func (t *WorkerChecklistItemsTable) Create(ctx context.Context, db *keel.DB, row *workerchecklist.WorkerChecklistItem) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *WorkerChecklistItemsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*workerchecklist.WorkerChecklistItem) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *WorkerChecklistItemsTable) Save(ctx context.Context, db *keel.DB, row *workerchecklist.WorkerChecklistItem, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *WorkerChecklistItemsTable) SaveExcept(ctx context.Context, db *keel.DB, row *workerchecklist.WorkerChecklistItem, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *WorkerChecklistItemsTable) DeleteRow(ctx context.Context, db *keel.DB, row *workerchecklist.WorkerChecklistItem) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *WorkerChecklistItemsTable) Upsert(ctx context.Context, db *keel.DB, rows []*workerchecklist.WorkerChecklistItem, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *WorkerChecklistItemsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*workerchecklist.WorkerChecklistItem, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *WorkerChecklistItemsTable) Copy(ctx context.Context, db *keel.DB, rows []*workerchecklist.WorkerChecklistItem) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1186,37 +1190,45 @@ func (q *WorkerChecklistItemsQuery) Clone() keel.Query[*workerchecklist.WorkerCh
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *WorkerChecklistItemsQuery) One(ctx context.Context, db *keel.DB) (*workerchecklist.WorkerChecklistItem, error) {
-	return keel.One[*workerchecklist.WorkerChecklistItem](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*workerchecklist.WorkerChecklistItem)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *WorkerChecklistItemsQuery) First(ctx context.Context, db *keel.DB) (*workerchecklist.WorkerChecklistItem, error) {
-	return keel.First[*workerchecklist.WorkerChecklistItem](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*workerchecklist.WorkerChecklistItem)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *WorkerChecklistItemsQuery) List(ctx context.Context, db *keel.DB) ([]*workerchecklist.WorkerChecklistItem, error) {
-	return keel.List[*workerchecklist.WorkerChecklistItem](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*workerchecklist.WorkerChecklistItem)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *WorkerChecklistItemsQuery) All(ctx context.Context, db *keel.DB) ([]*workerchecklist.WorkerChecklistItem, error) {
-	return keel.All[*workerchecklist.WorkerChecklistItem](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*workerchecklist.WorkerChecklistItem)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *WorkerChecklistItemsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*workerchecklist.WorkerChecklistItem, error) {
-	return keel.UpdateReturning[*workerchecklist.WorkerChecklistItem](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*workerchecklist.WorkerChecklistItem)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *WorkerChecklistItemsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*workerchecklist.WorkerChecklistItem], error) {
-	return keel.PageOf[*workerchecklist.WorkerChecklistItem](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*workerchecklist.WorkerChecklistItem])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *WorkerChecklistItemsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*workerchecklist.WorkerChecklistItem) error) error {
-	return keel.Each[*workerchecklist.WorkerChecklistItem](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*workerchecklist.WorkerChecklistItem)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newWorkerChecklistItem() unsafe.Pointer {
@@ -1457,15 +1469,15 @@ type WorkerChecklistTemplatesTable struct {
 // WorkerChecklistTemplates references the worker_checklist_templates table.
 var WorkerChecklistTemplates = &WorkerChecklistTemplatesTable{
 	TableBase:      keel.TableBase{Ref: &workerChecklistTemplatesRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerChecklistTemplatesRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerChecklistTemplatesRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerChecklistTemplatesRef, Index: 2}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerChecklistTemplatesRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerChecklistTemplatesRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerChecklistTemplatesRef, Index: 2}}},
 	Code:           keel.StringCol{Col: keel.Col{Ref: &workerChecklistTemplatesRef, Index: 3}},
 	Name:           keel.StringCol{Col: keel.Col{Ref: &workerChecklistTemplatesRef, Index: 4}},
 	Description:    keel.StringCol{Col: keel.Col{Ref: &workerChecklistTemplatesRef, Index: 5}},
-	Kind:           ChecklistKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerChecklistTemplatesRef, Index: 6}}},
-	Trigger:        ChecklistTriggerCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerChecklistTemplatesRef, Index: 7}}},
-	Status:         keelkinds.DomaintypesStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerChecklistTemplatesRef, Index: 8}}},
+	Kind:           ChecklistKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerChecklistTemplatesRef, Index: 6}}},
+	Trigger:        ChecklistTriggerCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerChecklistTemplatesRef, Index: 7}}},
+	Status:         keelkinds.DomaintypesStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerChecklistTemplatesRef, Index: 8}}},
 	IsDefault:      keel.BoolCol{Col: keel.Col{Ref: &workerChecklistTemplatesRef, Index: 9}},
 	Version:        keel.Int64Col{Col: keel.Col{Ref: &workerChecklistTemplatesRef, Index: 10}},
 	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &workerChecklistTemplatesRef, Index: 11}},
@@ -1477,15 +1489,15 @@ var WorkerChecklistTemplates = &WorkerChecklistTemplatesTable{
 func BuildWorkerChecklistTemplates(r *keel.Ref) *WorkerChecklistTemplatesTable {
 	return &WorkerChecklistTemplatesTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		Code:           keel.StringCol{Col: keel.Col{Ref: r, Index: 3}},
 		Name:           keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		Description:    keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
-		Kind:           ChecklistKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		Trigger:        ChecklistTriggerCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
-		Status:         keelkinds.DomaintypesStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		Kind:           ChecklistKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		Trigger:        ChecklistTriggerCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		Status:         keelkinds.DomaintypesStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
 		IsDefault:      keel.BoolCol{Col: keel.Col{Ref: r, Index: 9}},
 		Version:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
 		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
@@ -1514,8 +1526,6 @@ func (t *WorkerChecklistTemplatesTable) Get(ctx context.Context, db *keel.DB, ke
 
 // WorkerChecklistTemplatesQuery is a query over workerchecklist.WorkerChecklistTemplate.
 type WorkerChecklistTemplatesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*workerchecklist.WorkerChecklistTemplate] = (*WorkerChecklistTemplatesTable)(nil)
 
 var _ keel.Query[*workerchecklist.WorkerChecklistTemplate] = (*WorkerChecklistTemplatesQuery)(nil)
 
@@ -1631,42 +1641,42 @@ func (t *WorkerChecklistTemplatesTable) Compute(col keel.Column, e keel.Expr) ke
 
 // Create inserts row.
 func (t *WorkerChecklistTemplatesTable) Create(ctx context.Context, db *keel.DB, row *workerchecklist.WorkerChecklistTemplate) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *WorkerChecklistTemplatesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*workerchecklist.WorkerChecklistTemplate) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *WorkerChecklistTemplatesTable) Save(ctx context.Context, db *keel.DB, row *workerchecklist.WorkerChecklistTemplate, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *WorkerChecklistTemplatesTable) SaveExcept(ctx context.Context, db *keel.DB, row *workerchecklist.WorkerChecklistTemplate, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *WorkerChecklistTemplatesTable) DeleteRow(ctx context.Context, db *keel.DB, row *workerchecklist.WorkerChecklistTemplate) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *WorkerChecklistTemplatesTable) Upsert(ctx context.Context, db *keel.DB, rows []*workerchecklist.WorkerChecklistTemplate, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *WorkerChecklistTemplatesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*workerchecklist.WorkerChecklistTemplate, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *WorkerChecklistTemplatesTable) Copy(ctx context.Context, db *keel.DB, rows []*workerchecklist.WorkerChecklistTemplate) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1838,37 +1848,45 @@ func (q *WorkerChecklistTemplatesQuery) Clone() keel.Query[*workerchecklist.Work
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *WorkerChecklistTemplatesQuery) One(ctx context.Context, db *keel.DB) (*workerchecklist.WorkerChecklistTemplate, error) {
-	return keel.One[*workerchecklist.WorkerChecklistTemplate](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*workerchecklist.WorkerChecklistTemplate)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *WorkerChecklistTemplatesQuery) First(ctx context.Context, db *keel.DB) (*workerchecklist.WorkerChecklistTemplate, error) {
-	return keel.First[*workerchecklist.WorkerChecklistTemplate](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*workerchecklist.WorkerChecklistTemplate)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *WorkerChecklistTemplatesQuery) List(ctx context.Context, db *keel.DB) ([]*workerchecklist.WorkerChecklistTemplate, error) {
-	return keel.List[*workerchecklist.WorkerChecklistTemplate](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*workerchecklist.WorkerChecklistTemplate)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *WorkerChecklistTemplatesQuery) All(ctx context.Context, db *keel.DB) ([]*workerchecklist.WorkerChecklistTemplate, error) {
-	return keel.All[*workerchecklist.WorkerChecklistTemplate](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*workerchecklist.WorkerChecklistTemplate)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *WorkerChecklistTemplatesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*workerchecklist.WorkerChecklistTemplate, error) {
-	return keel.UpdateReturning[*workerchecklist.WorkerChecklistTemplate](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*workerchecklist.WorkerChecklistTemplate)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *WorkerChecklistTemplatesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*workerchecklist.WorkerChecklistTemplate], error) {
-	return keel.PageOf[*workerchecklist.WorkerChecklistTemplate](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*workerchecklist.WorkerChecklistTemplate])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *WorkerChecklistTemplatesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*workerchecklist.WorkerChecklistTemplate) error) error {
-	return keel.Each[*workerchecklist.WorkerChecklistTemplate](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*workerchecklist.WorkerChecklistTemplate)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newWorkerChecklistTemplate() unsafe.Pointer {
@@ -2039,18 +2057,18 @@ type WorkerChecklistTemplateItemsTable struct {
 // WorkerChecklistTemplateItems references the worker_checklist_template_items table.
 var WorkerChecklistTemplateItems = &WorkerChecklistTemplateItemsTable{
 	TableBase:        keel.TableBase{Ref: &workerChecklistTemplateItemsRef},
-	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerChecklistTemplateItemsRef, Index: 0}}},
-	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerChecklistTemplateItemsRef, Index: 1}}},
-	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerChecklistTemplateItemsRef, Index: 2}}},
-	TemplateID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerChecklistTemplateItemsRef, Index: 3}}},
+	ID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerChecklistTemplateItemsRef, Index: 0}}},
+	BusinessUnitID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerChecklistTemplateItemsRef, Index: 1}}},
+	OrganizationID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerChecklistTemplateItemsRef, Index: 2}}},
+	TemplateID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerChecklistTemplateItemsRef, Index: 3}}},
 	Label:            keel.StringCol{Col: keel.Col{Ref: &workerChecklistTemplateItemsRef, Index: 4}},
 	Description:      keel.StringCol{Col: keel.Col{Ref: &workerChecklistTemplateItemsRef, Index: 5}},
-	Kind:             ChecklistItemKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerChecklistTemplateItemsRef, Index: 6}}},
+	Kind:             ChecklistItemKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerChecklistTemplateItemsRef, Index: 6}}},
 	Required:         keel.BoolCol{Col: keel.Col{Ref: &workerChecklistTemplateItemsRef, Index: 7}},
 	DueOffsetDays:    keel.Int32Col{Col: keel.Col{Ref: &workerChecklistTemplateItemsRef, Index: 8}},
-	Owner:            ChecklistOwnerCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerChecklistTemplateItemsRef, Index: 9}}},
-	CredentialTypeID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerChecklistTemplateItemsRef, Index: 10}}},
-	DocumentTypeID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &workerChecklistTemplateItemsRef, Index: 11}}},
+	Owner:            ChecklistOwnerCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerChecklistTemplateItemsRef, Index: 9}}},
+	CredentialTypeID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerChecklistTemplateItemsRef, Index: 10}}},
+	DocumentTypeID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &workerChecklistTemplateItemsRef, Index: 11}}},
 	SortOrder:        keel.Int32Col{Col: keel.Col{Ref: &workerChecklistTemplateItemsRef, Index: 12}},
 	CreatedAt:        keel.Int64Col{Col: keel.Col{Ref: &workerChecklistTemplateItemsRef, Index: 13}},
 	UpdatedAt:        keel.Int64Col{Col: keel.Col{Ref: &workerChecklistTemplateItemsRef, Index: 14}},
@@ -2060,18 +2078,18 @@ var WorkerChecklistTemplateItems = &WorkerChecklistTemplateItemsTable{
 func BuildWorkerChecklistTemplateItems(r *keel.Ref) *WorkerChecklistTemplateItemsTable {
 	return &WorkerChecklistTemplateItemsTable{
 		TableBase:        keel.TableBase{Ref: r},
-		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		TemplateID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		TemplateID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		Label:            keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		Description:      keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
-		Kind:             ChecklistItemKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		Kind:             ChecklistItemKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		Required:         keel.BoolCol{Col: keel.Col{Ref: r, Index: 7}},
 		DueOffsetDays:    keel.Int32Col{Col: keel.Col{Ref: r, Index: 8}},
-		Owner:            ChecklistOwnerCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
-		CredentialTypeID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
-		DocumentTypeID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
+		Owner:            ChecklistOwnerCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		CredentialTypeID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		DocumentTypeID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 11}}},
 		SortOrder:        keel.Int32Col{Col: keel.Col{Ref: r, Index: 12}},
 		CreatedAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
 		UpdatedAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
@@ -2103,8 +2121,6 @@ func (t *WorkerChecklistTemplateItemsTable) Get(ctx context.Context, db *keel.DB
 
 // WorkerChecklistTemplateItemsQuery is a query over workerchecklist.WorkerChecklistTemplateItem.
 type WorkerChecklistTemplateItemsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*workerchecklist.WorkerChecklistTemplateItem] = (*WorkerChecklistTemplateItemsTable)(nil)
 
 var _ keel.Query[*workerchecklist.WorkerChecklistTemplateItem] = (*WorkerChecklistTemplateItemsQuery)(nil)
 
@@ -2220,42 +2236,42 @@ func (t *WorkerChecklistTemplateItemsTable) Compute(col keel.Column, e keel.Expr
 
 // Create inserts row.
 func (t *WorkerChecklistTemplateItemsTable) Create(ctx context.Context, db *keel.DB, row *workerchecklist.WorkerChecklistTemplateItem) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *WorkerChecklistTemplateItemsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*workerchecklist.WorkerChecklistTemplateItem) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *WorkerChecklistTemplateItemsTable) Save(ctx context.Context, db *keel.DB, row *workerchecklist.WorkerChecklistTemplateItem, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *WorkerChecklistTemplateItemsTable) SaveExcept(ctx context.Context, db *keel.DB, row *workerchecklist.WorkerChecklistTemplateItem, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *WorkerChecklistTemplateItemsTable) DeleteRow(ctx context.Context, db *keel.DB, row *workerchecklist.WorkerChecklistTemplateItem) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *WorkerChecklistTemplateItemsTable) Upsert(ctx context.Context, db *keel.DB, rows []*workerchecklist.WorkerChecklistTemplateItem, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *WorkerChecklistTemplateItemsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*workerchecklist.WorkerChecklistTemplateItem, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *WorkerChecklistTemplateItemsTable) Copy(ctx context.Context, db *keel.DB, rows []*workerchecklist.WorkerChecklistTemplateItem) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -2427,37 +2443,45 @@ func (q *WorkerChecklistTemplateItemsQuery) Clone() keel.Query[*workerchecklist.
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *WorkerChecklistTemplateItemsQuery) One(ctx context.Context, db *keel.DB) (*workerchecklist.WorkerChecklistTemplateItem, error) {
-	return keel.One[*workerchecklist.WorkerChecklistTemplateItem](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*workerchecklist.WorkerChecklistTemplateItem)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *WorkerChecklistTemplateItemsQuery) First(ctx context.Context, db *keel.DB) (*workerchecklist.WorkerChecklistTemplateItem, error) {
-	return keel.First[*workerchecklist.WorkerChecklistTemplateItem](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*workerchecklist.WorkerChecklistTemplateItem)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *WorkerChecklistTemplateItemsQuery) List(ctx context.Context, db *keel.DB) ([]*workerchecklist.WorkerChecklistTemplateItem, error) {
-	return keel.List[*workerchecklist.WorkerChecklistTemplateItem](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*workerchecklist.WorkerChecklistTemplateItem)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *WorkerChecklistTemplateItemsQuery) All(ctx context.Context, db *keel.DB) ([]*workerchecklist.WorkerChecklistTemplateItem, error) {
-	return keel.All[*workerchecklist.WorkerChecklistTemplateItem](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*workerchecklist.WorkerChecklistTemplateItem)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *WorkerChecklistTemplateItemsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*workerchecklist.WorkerChecklistTemplateItem, error) {
-	return keel.UpdateReturning[*workerchecklist.WorkerChecklistTemplateItem](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*workerchecklist.WorkerChecklistTemplateItem)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *WorkerChecklistTemplateItemsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*workerchecklist.WorkerChecklistTemplateItem], error) {
-	return keel.PageOf[*workerchecklist.WorkerChecklistTemplateItem](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*workerchecklist.WorkerChecklistTemplateItem])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *WorkerChecklistTemplateItemsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*workerchecklist.WorkerChecklistTemplateItem) error) error {
-	return keel.Each[*workerchecklist.WorkerChecklistTemplateItem](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*workerchecklist.WorkerChecklistTemplateItem)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newWorkerChecklistTemplateItem() unsafe.Pointer {
@@ -2628,223 +2652,223 @@ var enumDomaintypesStatus = [...]schema.EnumValue{
 }
 
 // ChecklistItemKindCol is a column of workerchecklist.ChecklistItemKind values.
-type ChecklistItemKindCol struct{ keel.StringCol }
+type ChecklistItemKindCol struct{ keel.TypedStringCol }
 
 func (c ChecklistItemKindCol) Eq(v workerchecklist.ChecklistItemKind) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c ChecklistItemKindCol) Ne(v workerchecklist.ChecklistItemKind) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c ChecklistItemKindCol) Gt(v workerchecklist.ChecklistItemKind) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c ChecklistItemKindCol) Gte(v workerchecklist.ChecklistItemKind) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c ChecklistItemKindCol) Lt(v workerchecklist.ChecklistItemKind) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c ChecklistItemKindCol) Lte(v workerchecklist.ChecklistItemKind) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c ChecklistItemKindCol) IsDistinctFrom(v workerchecklist.ChecklistItemKind) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ChecklistItemKindCol) Between(lo, hi workerchecklist.ChecklistItemKind) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c ChecklistItemKindCol) To(v workerchecklist.ChecklistItemKind) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c ChecklistItemKindCol) In(vs ...workerchecklist.ChecklistItemKind) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ChecklistItemKindCol) NotIn(vs ...workerchecklist.ChecklistItemKind) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // ChecklistItemStatusCol is a column of workerchecklist.ChecklistItemStatus values.
-type ChecklistItemStatusCol struct{ keel.StringCol }
+type ChecklistItemStatusCol struct{ keel.TypedStringCol }
 
 func (c ChecklistItemStatusCol) Eq(v workerchecklist.ChecklistItemStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c ChecklistItemStatusCol) Ne(v workerchecklist.ChecklistItemStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c ChecklistItemStatusCol) Gt(v workerchecklist.ChecklistItemStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c ChecklistItemStatusCol) Gte(v workerchecklist.ChecklistItemStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c ChecklistItemStatusCol) Lt(v workerchecklist.ChecklistItemStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c ChecklistItemStatusCol) Lte(v workerchecklist.ChecklistItemStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c ChecklistItemStatusCol) IsDistinctFrom(v workerchecklist.ChecklistItemStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ChecklistItemStatusCol) Between(lo, hi workerchecklist.ChecklistItemStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c ChecklistItemStatusCol) To(v workerchecklist.ChecklistItemStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c ChecklistItemStatusCol) In(vs ...workerchecklist.ChecklistItemStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ChecklistItemStatusCol) NotIn(vs ...workerchecklist.ChecklistItemStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // ChecklistKindCol is a column of workerchecklist.ChecklistKind values.
-type ChecklistKindCol struct{ keel.StringCol }
+type ChecklistKindCol struct{ keel.TypedStringCol }
 
 func (c ChecklistKindCol) Eq(v workerchecklist.ChecklistKind) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c ChecklistKindCol) Ne(v workerchecklist.ChecklistKind) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c ChecklistKindCol) Gt(v workerchecklist.ChecklistKind) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c ChecklistKindCol) Gte(v workerchecklist.ChecklistKind) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c ChecklistKindCol) Lt(v workerchecklist.ChecklistKind) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c ChecklistKindCol) Lte(v workerchecklist.ChecklistKind) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c ChecklistKindCol) IsDistinctFrom(v workerchecklist.ChecklistKind) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ChecklistKindCol) Between(lo, hi workerchecklist.ChecklistKind) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c ChecklistKindCol) To(v workerchecklist.ChecklistKind) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c ChecklistKindCol) In(vs ...workerchecklist.ChecklistKind) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ChecklistKindCol) NotIn(vs ...workerchecklist.ChecklistKind) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // ChecklistOwnerCol is a column of workerchecklist.ChecklistOwner values.
-type ChecklistOwnerCol struct{ keel.StringCol }
+type ChecklistOwnerCol struct{ keel.TypedStringCol }
 
 func (c ChecklistOwnerCol) Eq(v workerchecklist.ChecklistOwner) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c ChecklistOwnerCol) Ne(v workerchecklist.ChecklistOwner) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c ChecklistOwnerCol) Gt(v workerchecklist.ChecklistOwner) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c ChecklistOwnerCol) Gte(v workerchecklist.ChecklistOwner) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c ChecklistOwnerCol) Lt(v workerchecklist.ChecklistOwner) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c ChecklistOwnerCol) Lte(v workerchecklist.ChecklistOwner) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c ChecklistOwnerCol) IsDistinctFrom(v workerchecklist.ChecklistOwner) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ChecklistOwnerCol) Between(lo, hi workerchecklist.ChecklistOwner) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c ChecklistOwnerCol) To(v workerchecklist.ChecklistOwner) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c ChecklistOwnerCol) In(vs ...workerchecklist.ChecklistOwner) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ChecklistOwnerCol) NotIn(vs ...workerchecklist.ChecklistOwner) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // ChecklistStatusCol is a column of workerchecklist.ChecklistStatus values.
-type ChecklistStatusCol struct{ keel.StringCol }
+type ChecklistStatusCol struct{ keel.TypedStringCol }
 
 func (c ChecklistStatusCol) Eq(v workerchecklist.ChecklistStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c ChecklistStatusCol) Ne(v workerchecklist.ChecklistStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c ChecklistStatusCol) Gt(v workerchecklist.ChecklistStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c ChecklistStatusCol) Gte(v workerchecklist.ChecklistStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c ChecklistStatusCol) Lt(v workerchecklist.ChecklistStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c ChecklistStatusCol) Lte(v workerchecklist.ChecklistStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c ChecklistStatusCol) IsDistinctFrom(v workerchecklist.ChecklistStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ChecklistStatusCol) Between(lo, hi workerchecklist.ChecklistStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c ChecklistStatusCol) To(v workerchecklist.ChecklistStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c ChecklistStatusCol) In(vs ...workerchecklist.ChecklistStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ChecklistStatusCol) NotIn(vs ...workerchecklist.ChecklistStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // ChecklistTriggerCol is a column of workerchecklist.ChecklistTrigger values.
-type ChecklistTriggerCol struct{ keel.StringCol }
+type ChecklistTriggerCol struct{ keel.TypedStringCol }
 
 func (c ChecklistTriggerCol) Eq(v workerchecklist.ChecklistTrigger) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c ChecklistTriggerCol) Ne(v workerchecklist.ChecklistTrigger) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c ChecklistTriggerCol) Gt(v workerchecklist.ChecklistTrigger) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c ChecklistTriggerCol) Gte(v workerchecklist.ChecklistTrigger) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c ChecklistTriggerCol) Lt(v workerchecklist.ChecklistTrigger) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c ChecklistTriggerCol) Lte(v workerchecklist.ChecklistTrigger) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c ChecklistTriggerCol) IsDistinctFrom(v workerchecklist.ChecklistTrigger) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ChecklistTriggerCol) Between(lo, hi workerchecklist.ChecklistTrigger) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c ChecklistTriggerCol) To(v workerchecklist.ChecklistTrigger) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c ChecklistTriggerCol) In(vs ...workerchecklist.ChecklistTrigger) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ChecklistTriggerCol) NotIn(vs ...workerchecklist.ChecklistTrigger) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

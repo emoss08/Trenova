@@ -2,6 +2,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { ArtIcon, DeskArtKindIcon, type DeskArtKind } from "./desk-art-kinds";
+import { formatShortcut } from "@trenova/shared/lib/shortcuts";
 
 const STACK: readonly DeskArtKind[] = ["report", "record", "table"];
 
@@ -46,7 +47,7 @@ export function DeskArtifactsEmpty({ onClose }: { onClose: () => void }) {
           )}
         </p>
         <span className="dk-axe-k">
-          <span className="dk-kbd">⌘J</span>
+          <span className="dk-kbd">{formatShortcut("J")}</span>
           {t("opens this panel")}
         </span>
       </div>

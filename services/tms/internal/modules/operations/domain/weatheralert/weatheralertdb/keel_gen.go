@@ -72,11 +72,11 @@ type ActivitiesTable struct {
 // Activities references the weather_alert_activities table.
 var Activities = &ActivitiesTable{
 	TableBase:      keel.TableBase{Ref: &activitiesRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &activitiesRef, Index: 0}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &activitiesRef, Index: 1}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &activitiesRef, Index: 2}}},
-	WeatherAlertID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &activitiesRef, Index: 3}}},
-	ActivityType:   ActivityTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &activitiesRef, Index: 4}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &activitiesRef, Index: 0}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &activitiesRef, Index: 1}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &activitiesRef, Index: 2}}},
+	WeatherAlertID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &activitiesRef, Index: 3}}},
+	ActivityType:   ActivityTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &activitiesRef, Index: 4}}},
 	Timestamp:      keel.Int64Col{Col: keel.Col{Ref: &activitiesRef, Index: 5}},
 	Details:        keel.JSONBCol{Col: keel.Col{Ref: &activitiesRef, Index: 6}},
 	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &activitiesRef, Index: 7}},
@@ -87,11 +87,11 @@ var Activities = &ActivitiesTable{
 func BuildActivities(r *keel.Ref) *ActivitiesTable {
 	return &ActivitiesTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		WeatherAlertID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		ActivityType:   ActivityTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		WeatherAlertID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ActivityType:   ActivityTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		Timestamp:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 5}},
 		Details:        keel.JSONBCol{Col: keel.Col{Ref: r, Index: 6}},
 		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
@@ -114,8 +114,6 @@ func (t *ActivitiesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*
 
 // ActivitiesQuery is a query over weatheralert.Activity.
 type ActivitiesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*weatheralert.Activity] = (*ActivitiesTable)(nil)
 
 var _ keel.Query[*weatheralert.Activity] = (*ActivitiesQuery)(nil)
 
@@ -231,42 +229,42 @@ func (t *ActivitiesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*weat
 
 // Create inserts row.
 func (t *ActivitiesTable) Create(ctx context.Context, db *keel.DB, row *weatheralert.Activity) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *ActivitiesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*weatheralert.Activity) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *ActivitiesTable) Save(ctx context.Context, db *keel.DB, row *weatheralert.Activity, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *ActivitiesTable) SaveExcept(ctx context.Context, db *keel.DB, row *weatheralert.Activity, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *ActivitiesTable) DeleteRow(ctx context.Context, db *keel.DB, row *weatheralert.Activity) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *ActivitiesTable) Upsert(ctx context.Context, db *keel.DB, rows []*weatheralert.Activity, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *ActivitiesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*weatheralert.Activity, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *ActivitiesTable) Copy(ctx context.Context, db *keel.DB, rows []*weatheralert.Activity) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -438,37 +436,45 @@ func (q *ActivitiesQuery) Clone() keel.Query[*weatheralert.Activity] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *ActivitiesQuery) One(ctx context.Context, db *keel.DB) (*weatheralert.Activity, error) {
-	return keel.One[*weatheralert.Activity](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*weatheralert.Activity)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *ActivitiesQuery) First(ctx context.Context, db *keel.DB) (*weatheralert.Activity, error) {
-	return keel.First[*weatheralert.Activity](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*weatheralert.Activity)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *ActivitiesQuery) List(ctx context.Context, db *keel.DB) ([]*weatheralert.Activity, error) {
-	return keel.List[*weatheralert.Activity](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*weatheralert.Activity)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *ActivitiesQuery) All(ctx context.Context, db *keel.DB) ([]*weatheralert.Activity, error) {
-	return keel.All[*weatheralert.Activity](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*weatheralert.Activity)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *ActivitiesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*weatheralert.Activity, error) {
-	return keel.UpdateReturning[*weatheralert.Activity](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*weatheralert.Activity)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *ActivitiesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*weatheralert.Activity], error) {
-	return keel.PageOf[*weatheralert.Activity](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*weatheralert.Activity])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *ActivitiesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*weatheralert.Activity) error) error {
-	return keel.Each[*weatheralert.Activity](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*weatheralert.Activity)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newActivity() unsafe.Pointer { return unsafe.Pointer(new(weatheralert.Activity)) }
@@ -627,9 +633,9 @@ type WeatherAlertsTable struct {
 // WeatherAlerts references the weather_alerts table.
 var WeatherAlerts = &WeatherAlertsTable{
 	TableBase:      keel.TableBase{Ref: &weatherAlertsRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &weatherAlertsRef, Index: 0}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &weatherAlertsRef, Index: 1}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &weatherAlertsRef, Index: 2}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &weatherAlertsRef, Index: 0}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &weatherAlertsRef, Index: 1}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &weatherAlertsRef, Index: 2}}},
 	NWSID:          keel.StringCol{Col: keel.Col{Ref: &weatherAlertsRef, Index: 3}},
 	Event:          keel.StringCol{Col: keel.Col{Ref: &weatherAlertsRef, Index: 4}},
 	Severity:       keel.StringCol{Col: keel.Col{Ref: &weatherAlertsRef, Index: 5}},
@@ -648,7 +654,7 @@ var WeatherAlerts = &WeatherAlertsTable{
 	SenderName:     keel.StringCol{Col: keel.Col{Ref: &weatherAlertsRef, Index: 18}},
 	Response:       keel.StringCol{Col: keel.Col{Ref: &weatherAlertsRef, Index: 19}},
 	Category:       keel.StringCol{Col: keel.Col{Ref: &weatherAlertsRef, Index: 20}},
-	AlertCategory:  AlertCategoryCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &weatherAlertsRef, Index: 21}}},
+	AlertCategory:  AlertCategoryCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &weatherAlertsRef, Index: 21}}},
 	Geometry:       postgis.GeometryCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &weatherAlertsRef, Index: 22}}},
 	FirstSeenAt:    keel.Int64Col{Col: keel.Col{Ref: &weatherAlertsRef, Index: 23}},
 	LastUpdatedAt:  keel.Int64Col{Col: keel.Col{Ref: &weatherAlertsRef, Index: 24}},
@@ -662,9 +668,9 @@ var WeatherAlerts = &WeatherAlertsTable{
 func BuildWeatherAlerts(r *keel.Ref) *WeatherAlertsTable {
 	return &WeatherAlertsTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		NWSID:          keel.StringCol{Col: keel.Col{Ref: r, Index: 3}},
 		Event:          keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		Severity:       keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
@@ -683,7 +689,7 @@ func BuildWeatherAlerts(r *keel.Ref) *WeatherAlertsTable {
 		SenderName:     keel.StringCol{Col: keel.Col{Ref: r, Index: 18}},
 		Response:       keel.StringCol{Col: keel.Col{Ref: r, Index: 19}},
 		Category:       keel.StringCol{Col: keel.Col{Ref: r, Index: 20}},
-		AlertCategory:  AlertCategoryCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 21}}},
+		AlertCategory:  AlertCategoryCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 21}}},
 		Geometry:       postgis.GeometryCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 22}}},
 		FirstSeenAt:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 23}},
 		LastUpdatedAt:  keel.Int64Col{Col: keel.Col{Ref: r, Index: 24}},
@@ -709,8 +715,6 @@ func (t *WeatherAlertsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID)
 
 // WeatherAlertsQuery is a query over weatheralert.WeatherAlert.
 type WeatherAlertsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*weatheralert.WeatherAlert] = (*WeatherAlertsTable)(nil)
 
 var _ keel.Query[*weatheralert.WeatherAlert] = (*WeatherAlertsQuery)(nil)
 
@@ -826,42 +830,42 @@ func (t *WeatherAlertsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*w
 
 // Create inserts row.
 func (t *WeatherAlertsTable) Create(ctx context.Context, db *keel.DB, row *weatheralert.WeatherAlert) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *WeatherAlertsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*weatheralert.WeatherAlert) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *WeatherAlertsTable) Save(ctx context.Context, db *keel.DB, row *weatheralert.WeatherAlert, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *WeatherAlertsTable) SaveExcept(ctx context.Context, db *keel.DB, row *weatheralert.WeatherAlert, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *WeatherAlertsTable) DeleteRow(ctx context.Context, db *keel.DB, row *weatheralert.WeatherAlert) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *WeatherAlertsTable) Upsert(ctx context.Context, db *keel.DB, rows []*weatheralert.WeatherAlert, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *WeatherAlertsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*weatheralert.WeatherAlert, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *WeatherAlertsTable) Copy(ctx context.Context, db *keel.DB, rows []*weatheralert.WeatherAlert) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1033,37 +1037,45 @@ func (q *WeatherAlertsQuery) Clone() keel.Query[*weatheralert.WeatherAlert] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *WeatherAlertsQuery) One(ctx context.Context, db *keel.DB) (*weatheralert.WeatherAlert, error) {
-	return keel.One[*weatheralert.WeatherAlert](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*weatheralert.WeatherAlert)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *WeatherAlertsQuery) First(ctx context.Context, db *keel.DB) (*weatheralert.WeatherAlert, error) {
-	return keel.First[*weatheralert.WeatherAlert](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*weatheralert.WeatherAlert)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *WeatherAlertsQuery) List(ctx context.Context, db *keel.DB) ([]*weatheralert.WeatherAlert, error) {
-	return keel.List[*weatheralert.WeatherAlert](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*weatheralert.WeatherAlert)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *WeatherAlertsQuery) All(ctx context.Context, db *keel.DB) ([]*weatheralert.WeatherAlert, error) {
-	return keel.All[*weatheralert.WeatherAlert](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*weatheralert.WeatherAlert)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *WeatherAlertsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*weatheralert.WeatherAlert, error) {
-	return keel.UpdateReturning[*weatheralert.WeatherAlert](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*weatheralert.WeatherAlert)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *WeatherAlertsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*weatheralert.WeatherAlert], error) {
-	return keel.PageOf[*weatheralert.WeatherAlert](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*weatheralert.WeatherAlert])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *WeatherAlertsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*weatheralert.WeatherAlert) error) error {
-	return keel.Each[*weatheralert.WeatherAlert](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*weatheralert.WeatherAlert)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newWeatherAlert() unsafe.Pointer { return unsafe.Pointer(new(weatheralert.WeatherAlert)) }
@@ -1275,67 +1287,51 @@ var enumAlertCategory = [...]schema.EnumValue{
 }
 
 // ActivityTypeCol is a column of weatheralert.ActivityType values.
-type ActivityTypeCol struct{ keel.StringCol }
+type ActivityTypeCol struct{ keel.TypedStringCol }
 
-func (c ActivityTypeCol) Eq(v weatheralert.ActivityType) keel.Pred { return c.StringCol.Eq(string(v)) }
-func (c ActivityTypeCol) Ne(v weatheralert.ActivityType) keel.Pred { return c.StringCol.Ne(string(v)) }
-func (c ActivityTypeCol) Gt(v weatheralert.ActivityType) keel.Pred { return c.StringCol.Gt(string(v)) }
-func (c ActivityTypeCol) Gte(v weatheralert.ActivityType) keel.Pred {
-	return c.StringCol.Gte(string(v))
-}
-func (c ActivityTypeCol) Lt(v weatheralert.ActivityType) keel.Pred { return c.StringCol.Lt(string(v)) }
-func (c ActivityTypeCol) Lte(v weatheralert.ActivityType) keel.Pred {
-	return c.StringCol.Lte(string(v))
-}
+func (c ActivityTypeCol) Eq(v weatheralert.ActivityType) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c ActivityTypeCol) Ne(v weatheralert.ActivityType) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c ActivityTypeCol) Gt(v weatheralert.ActivityType) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c ActivityTypeCol) Gte(v weatheralert.ActivityType) keel.Pred { return c.Text().Gte(string(v)) }
+func (c ActivityTypeCol) Lt(v weatheralert.ActivityType) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c ActivityTypeCol) Lte(v weatheralert.ActivityType) keel.Pred { return c.Text().Lte(string(v)) }
 func (c ActivityTypeCol) IsDistinctFrom(v weatheralert.ActivityType) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ActivityTypeCol) Between(lo, hi weatheralert.ActivityType) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c ActivityTypeCol) To(v weatheralert.ActivityType) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c ActivityTypeCol) In(vs ...weatheralert.ActivityType) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ActivityTypeCol) NotIn(vs ...weatheralert.ActivityType) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // AlertCategoryCol is a column of weatheralert.AlertCategory values.
-type AlertCategoryCol struct{ keel.StringCol }
+type AlertCategoryCol struct{ keel.TypedStringCol }
 
-func (c AlertCategoryCol) Eq(v weatheralert.AlertCategory) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c AlertCategoryCol) Ne(v weatheralert.AlertCategory) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c AlertCategoryCol) Gt(v weatheralert.AlertCategory) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
-func (c AlertCategoryCol) Gte(v weatheralert.AlertCategory) keel.Pred {
-	return c.StringCol.Gte(string(v))
-}
-func (c AlertCategoryCol) Lt(v weatheralert.AlertCategory) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
-func (c AlertCategoryCol) Lte(v weatheralert.AlertCategory) keel.Pred {
-	return c.StringCol.Lte(string(v))
-}
+func (c AlertCategoryCol) Eq(v weatheralert.AlertCategory) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c AlertCategoryCol) Ne(v weatheralert.AlertCategory) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c AlertCategoryCol) Gt(v weatheralert.AlertCategory) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c AlertCategoryCol) Gte(v weatheralert.AlertCategory) keel.Pred { return c.Text().Gte(string(v)) }
+func (c AlertCategoryCol) Lt(v weatheralert.AlertCategory) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c AlertCategoryCol) Lte(v weatheralert.AlertCategory) keel.Pred { return c.Text().Lte(string(v)) }
 func (c AlertCategoryCol) IsDistinctFrom(v weatheralert.AlertCategory) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c AlertCategoryCol) Between(lo, hi weatheralert.AlertCategory) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c AlertCategoryCol) To(v weatheralert.AlertCategory) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c AlertCategoryCol) In(vs ...weatheralert.AlertCategory) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c AlertCategoryCol) NotIn(vs ...weatheralert.AlertCategory) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

@@ -282,6 +282,8 @@ type deskWorld struct {
 	svc      *Service
 	repo     *deskRepo
 	avery    pulid.ID
+	orgID    pulid.ID
+	buID     pulid.ID
 	billing  *rbac.Role
 	dispatch *rbac.Role
 }
@@ -300,6 +302,8 @@ func newDeskWorld() *deskWorld {
 		}),
 		repo:     repo,
 		avery:    pulid.MustNew("usr_"),
+		orgID:    pulid.MustNew("org_"),
+		buID:     pulid.MustNew("bu_"),
 		billing:  billing,
 		dispatch: dispatch,
 	}
@@ -312,8 +316,8 @@ func (w *deskWorld) actor(shared bool) *agentmemoryports.DeskMemoryActor {
 			PrincipalType:  permissionports.PrincipalTypeUser,
 			PrincipalID:    w.avery,
 			UserID:         w.avery,
-			OrganizationID: pulid.MustNew("org_"),
-			BusinessUnitID: pulid.MustNew("bu_"),
+			OrganizationID: w.orgID,
+			BusinessUnitID: w.buID,
 		},
 		MayManageShared: shared,
 	}
@@ -614,6 +618,14 @@ func TestDeskMemories_ListCountsEveryScopeAndPages(t *testing.T) {
 		Actor: w.actor(false), After: "not a cursor",
 	})
 	require.Error(t, err)
+
+	someoneElse := w.actor(false)
+	someoneElse.Actor.UserID = pulid.MustNew("usr_")
+	someoneElse.Actor.PrincipalID = someoneElse.Actor.UserID
+	_, err = w.svc.ListDesk(t.Context(), &agentmemoryports.ListDeskMemoriesRequest{
+		Actor: someoneElse, Limit: 3, After: page.Next,
+	})
+	require.Error(t, err, "a page cursor reads only for the person it was handed to")
 }
 
 // A memory an agent offered waits for the person it was offered to. They

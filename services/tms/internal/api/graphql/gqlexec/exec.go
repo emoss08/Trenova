@@ -270,6 +270,18 @@ func (ec *Exec) fieldContext(
 	field graphql.CollectedField,
 ) (fc *graphql.FieldContext, err error) {
 	isMethod := f.IsMethod || f.IsResolver
+	if f.Args == nil && !f.HasChild {
+		return &graphql.FieldContext{
+			Object:     objectName,
+			Field:      field,
+			IsMethod:   isMethod,
+			IsResolver: f.IsResolver,
+			Child: func(context.Context, graphql.CollectedField) (*graphql.FieldContext, error) {
+				return nil, f.ChildErr
+			},
+		}, nil
+	}
+
 	fc = &graphql.FieldContext{
 		Object:     objectName,
 		Field:      field,

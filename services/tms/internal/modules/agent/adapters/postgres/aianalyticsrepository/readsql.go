@@ -62,7 +62,7 @@ func toolScope(t *aianalyticsdb.UnitToolsTable, filter *aianalyticsports.Filter)
 }
 
 func providerKey(w *aianalyticsdb.WorkUnitsTable) keel.StringExpr {
-	return w.ProviderID.Coalesce("")
+	return w.ProviderID.Text().Coalesce("")
 }
 
 func deploymentColumns(w *aianalyticsdb.WorkUnitsTable) []keel.Expr {
@@ -376,7 +376,7 @@ func toolExamplesQuery(req *aianalyticsports.ToolFailureRequest) keel.Query[*kee
 	unitID := candidates.Col(colUnitID)
 	outcome := s.Outcome
 
-	return candidates.Query().With(candidates).
+	return keel.RowsOf(candidates.TableRef()).With(candidates).
 		Join(w, w.ID.EqCol(unitID)).
 		Join(s, s.OwnerID.EqCol(unitID)).
 		Pick(

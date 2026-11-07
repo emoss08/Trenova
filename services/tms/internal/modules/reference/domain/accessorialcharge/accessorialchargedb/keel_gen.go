@@ -86,14 +86,14 @@ type AccessorialChargesTable struct {
 // AccessorialCharges references the accessorial_charges table.
 var AccessorialCharges = &AccessorialChargesTable{
 	TableBase:      keel.TableBase{Ref: &accessorialChargesRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accessorialChargesRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accessorialChargesRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accessorialChargesRef, Index: 2}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accessorialChargesRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accessorialChargesRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accessorialChargesRef, Index: 2}}},
 	Code:           keel.StringCol{Col: keel.Col{Ref: &accessorialChargesRef, Index: 3}},
 	Description:    keel.StringCol{Col: keel.Col{Ref: &accessorialChargesRef, Index: 4}},
-	Status:         keelkinds.DomaintypesStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accessorialChargesRef, Index: 5}}},
-	Method:         MethodCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accessorialChargesRef, Index: 6}}},
-	RateUnit:       RateUnitCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accessorialChargesRef, Index: 7}}},
+	Status:         keelkinds.DomaintypesStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accessorialChargesRef, Index: 5}}},
+	Method:         MethodCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accessorialChargesRef, Index: 6}}},
+	RateUnit:       RateUnitCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accessorialChargesRef, Index: 7}}},
 	Amount:         keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &accessorialChargesRef, Index: 8}}},
 	SearchVector:   keel.TSVectorCol{Col: keel.Col{Ref: &accessorialChargesRef, Index: 9}},
 	Rank:           keel.StringCol{Col: keel.Col{Ref: &accessorialChargesRef, Index: 10}},
@@ -106,14 +106,14 @@ var AccessorialCharges = &AccessorialChargesTable{
 func BuildAccessorialCharges(r *keel.Ref) *AccessorialChargesTable {
 	return &AccessorialChargesTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		Code:           keel.StringCol{Col: keel.Col{Ref: r, Index: 3}},
 		Description:    keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
-		Status:         keelkinds.DomaintypesStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		Method:         MethodCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		RateUnit:       RateUnitCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		Status:         keelkinds.DomaintypesStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		Method:         MethodCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		RateUnit:       RateUnitCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
 		Amount:         keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 8}}},
 		SearchVector:   keel.TSVectorCol{Col: keel.Col{Ref: r, Index: 9}},
 		Rank:           keel.StringCol{Col: keel.Col{Ref: r, Index: 10}},
@@ -138,8 +138,6 @@ func (t *AccessorialChargesTable) Get(ctx context.Context, db *keel.DB, key puli
 
 // AccessorialChargesQuery is a query over accessorialcharge.AccessorialCharge.
 type AccessorialChargesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*accessorialcharge.AccessorialCharge] = (*AccessorialChargesTable)(nil)
 
 var _ keel.Query[*accessorialcharge.AccessorialCharge] = (*AccessorialChargesQuery)(nil)
 
@@ -255,42 +253,42 @@ func (t *AccessorialChargesTable) Compute(col keel.Column, e keel.Expr) keel.Que
 
 // Create inserts row.
 func (t *AccessorialChargesTable) Create(ctx context.Context, db *keel.DB, row *accessorialcharge.AccessorialCharge) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *AccessorialChargesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*accessorialcharge.AccessorialCharge) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *AccessorialChargesTable) Save(ctx context.Context, db *keel.DB, row *accessorialcharge.AccessorialCharge, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *AccessorialChargesTable) SaveExcept(ctx context.Context, db *keel.DB, row *accessorialcharge.AccessorialCharge, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *AccessorialChargesTable) DeleteRow(ctx context.Context, db *keel.DB, row *accessorialcharge.AccessorialCharge) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *AccessorialChargesTable) Upsert(ctx context.Context, db *keel.DB, rows []*accessorialcharge.AccessorialCharge, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *AccessorialChargesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*accessorialcharge.AccessorialCharge, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *AccessorialChargesTable) Copy(ctx context.Context, db *keel.DB, rows []*accessorialcharge.AccessorialCharge) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -462,37 +460,45 @@ func (q *AccessorialChargesQuery) Clone() keel.Query[*accessorialcharge.Accessor
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *AccessorialChargesQuery) One(ctx context.Context, db *keel.DB) (*accessorialcharge.AccessorialCharge, error) {
-	return keel.One[*accessorialcharge.AccessorialCharge](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*accessorialcharge.AccessorialCharge)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *AccessorialChargesQuery) First(ctx context.Context, db *keel.DB) (*accessorialcharge.AccessorialCharge, error) {
-	return keel.First[*accessorialcharge.AccessorialCharge](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*accessorialcharge.AccessorialCharge)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *AccessorialChargesQuery) List(ctx context.Context, db *keel.DB) ([]*accessorialcharge.AccessorialCharge, error) {
-	return keel.List[*accessorialcharge.AccessorialCharge](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*accessorialcharge.AccessorialCharge)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *AccessorialChargesQuery) All(ctx context.Context, db *keel.DB) ([]*accessorialcharge.AccessorialCharge, error) {
-	return keel.All[*accessorialcharge.AccessorialCharge](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*accessorialcharge.AccessorialCharge)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *AccessorialChargesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*accessorialcharge.AccessorialCharge, error) {
-	return keel.UpdateReturning[*accessorialcharge.AccessorialCharge](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*accessorialcharge.AccessorialCharge)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *AccessorialChargesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*accessorialcharge.AccessorialCharge], error) {
-	return keel.PageOf[*accessorialcharge.AccessorialCharge](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*accessorialcharge.AccessorialCharge])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *AccessorialChargesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*accessorialcharge.AccessorialCharge) error) error {
-	return keel.Each[*accessorialcharge.AccessorialCharge](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*accessorialcharge.AccessorialCharge)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newAccessorialCharge() unsafe.Pointer {
@@ -621,49 +627,47 @@ var reportMeasureDecimalMoney = schema.ReportInfo{Included: true, Kind: schema.M
 var reportMeasureIntegerHidden = schema.ReportInfo{Kind: schema.Measure, Type: schema.ValueInt, Aggs: schema.AggsNumeric}
 
 // MethodCol is a column of accessorialcharge.Method values.
-type MethodCol struct{ keel.StringCol }
+type MethodCol struct{ keel.TypedStringCol }
 
-func (c MethodCol) Eq(v accessorialcharge.Method) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c MethodCol) Ne(v accessorialcharge.Method) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c MethodCol) Gt(v accessorialcharge.Method) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c MethodCol) Gte(v accessorialcharge.Method) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c MethodCol) Lt(v accessorialcharge.Method) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c MethodCol) Lte(v accessorialcharge.Method) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c MethodCol) Eq(v accessorialcharge.Method) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c MethodCol) Ne(v accessorialcharge.Method) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c MethodCol) Gt(v accessorialcharge.Method) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c MethodCol) Gte(v accessorialcharge.Method) keel.Pred { return c.Text().Gte(string(v)) }
+func (c MethodCol) Lt(v accessorialcharge.Method) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c MethodCol) Lte(v accessorialcharge.Method) keel.Pred { return c.Text().Lte(string(v)) }
 func (c MethodCol) IsDistinctFrom(v accessorialcharge.Method) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c MethodCol) Between(lo, hi accessorialcharge.Method) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c MethodCol) To(v accessorialcharge.Method) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c MethodCol) To(v accessorialcharge.Method) keel.Assignment { return c.Text().To(string(v)) }
 func (c MethodCol) In(vs ...accessorialcharge.Method) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c MethodCol) NotIn(vs ...accessorialcharge.Method) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // RateUnitCol is a column of accessorialcharge.RateUnit values.
-type RateUnitCol struct{ keel.StringCol }
+type RateUnitCol struct{ keel.TypedStringCol }
 
-func (c RateUnitCol) Eq(v accessorialcharge.RateUnit) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c RateUnitCol) Ne(v accessorialcharge.RateUnit) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c RateUnitCol) Gt(v accessorialcharge.RateUnit) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c RateUnitCol) Gte(v accessorialcharge.RateUnit) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c RateUnitCol) Lt(v accessorialcharge.RateUnit) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c RateUnitCol) Lte(v accessorialcharge.RateUnit) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c RateUnitCol) Eq(v accessorialcharge.RateUnit) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c RateUnitCol) Ne(v accessorialcharge.RateUnit) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c RateUnitCol) Gt(v accessorialcharge.RateUnit) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c RateUnitCol) Gte(v accessorialcharge.RateUnit) keel.Pred { return c.Text().Gte(string(v)) }
+func (c RateUnitCol) Lt(v accessorialcharge.RateUnit) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c RateUnitCol) Lte(v accessorialcharge.RateUnit) keel.Pred { return c.Text().Lte(string(v)) }
 func (c RateUnitCol) IsDistinctFrom(v accessorialcharge.RateUnit) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c RateUnitCol) Between(lo, hi accessorialcharge.RateUnit) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c RateUnitCol) To(v accessorialcharge.RateUnit) keel.Assignment {
-	return c.StringCol.To(string(v))
-}
+func (c RateUnitCol) To(v accessorialcharge.RateUnit) keel.Assignment { return c.Text().To(string(v)) }
 func (c RateUnitCol) In(vs ...accessorialcharge.RateUnit) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c RateUnitCol) NotIn(vs ...accessorialcharge.RateUnit) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

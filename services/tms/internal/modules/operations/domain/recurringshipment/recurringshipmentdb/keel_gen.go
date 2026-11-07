@@ -132,18 +132,18 @@ type RecurringShipmentsTable struct {
 // RecurringShipments references the recurring_shipments table.
 var RecurringShipments = &RecurringShipmentsTable{
 	TableBase:               keel.TableBase{Ref: &recurringShipmentsRef},
-	ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &recurringShipmentsRef, Index: 0}}},
-	BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &recurringShipmentsRef, Index: 1}}},
-	OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &recurringShipmentsRef, Index: 2}}},
-	SourceShipmentID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &recurringShipmentsRef, Index: 3}}},
-	CustomerID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &recurringShipmentsRef, Index: 4}}},
-	OriginLocationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &recurringShipmentsRef, Index: 5}}},
-	DestinationLocationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &recurringShipmentsRef, Index: 6}}},
-	EnteredByID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &recurringShipmentsRef, Index: 7}}},
-	LastGeneratedShipmentID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &recurringShipmentsRef, Index: 8}}},
+	ID:                      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &recurringShipmentsRef, Index: 0}}},
+	BusinessUnitID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &recurringShipmentsRef, Index: 1}}},
+	OrganizationID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &recurringShipmentsRef, Index: 2}}},
+	SourceShipmentID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &recurringShipmentsRef, Index: 3}}},
+	CustomerID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &recurringShipmentsRef, Index: 4}}},
+	OriginLocationID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &recurringShipmentsRef, Index: 5}}},
+	DestinationLocationID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &recurringShipmentsRef, Index: 6}}},
+	EnteredByID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &recurringShipmentsRef, Index: 7}}},
+	LastGeneratedShipmentID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &recurringShipmentsRef, Index: 8}}},
 	Name:                    keel.StringCol{Col: keel.Col{Ref: &recurringShipmentsRef, Index: 9}},
 	Description:             keel.StringCol{Col: keel.Col{Ref: &recurringShipmentsRef, Index: 10}},
-	Status:                  StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &recurringShipmentsRef, Index: 11}}},
+	Status:                  StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &recurringShipmentsRef, Index: 11}}},
 	CronExpression:          keel.StringCol{Col: keel.Col{Ref: &recurringShipmentsRef, Index: 12}},
 	Timezone:                keel.StringCol{Col: keel.Col{Ref: &recurringShipmentsRef, Index: 13}},
 	StartDate:               keel.Int64Col{Col: keel.Col{Ref: &recurringShipmentsRef, Index: 14}},
@@ -151,7 +151,7 @@ var RecurringShipments = &RecurringShipmentsTable{
 	MaxOccurrences:          keel.Int32Col{Col: keel.Col{Ref: &recurringShipmentsRef, Index: 16}},
 	LeadTimeDays:            keel.Int16Col{Col: keel.Col{Ref: &recurringShipmentsRef, Index: 17}},
 	SkipWeekends:            keel.BoolCol{Col: keel.Col{Ref: &recurringShipmentsRef, Index: 18}},
-	ExceptionPolicy:         ExceptionPolicyCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &recurringShipmentsRef, Index: 19}}},
+	ExceptionPolicy:         ExceptionPolicyCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &recurringShipmentsRef, Index: 19}}},
 	BlackoutDates:           keel.StringArrayCol{Col: keel.Col{Ref: &recurringShipmentsRef, Index: 20}},
 	AutoGenerate:            keel.BoolCol{Col: keel.Col{Ref: &recurringShipmentsRef, Index: 21}},
 	NextOccurrenceAt:        keel.Int64Col{Col: keel.Col{Ref: &recurringShipmentsRef, Index: 22}},
@@ -169,18 +169,18 @@ var RecurringShipments = &RecurringShipmentsTable{
 func BuildRecurringShipments(r *keel.Ref) *RecurringShipmentsTable {
 	return &RecurringShipmentsTable{
 		TableBase:               keel.TableBase{Ref: r},
-		ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		SourceShipmentID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		CustomerID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		OriginLocationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		DestinationLocationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		EnteredByID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
-		LastGeneratedShipmentID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		ID:                      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		SourceShipmentID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		CustomerID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		OriginLocationID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		DestinationLocationID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		EnteredByID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		LastGeneratedShipmentID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
 		Name:                    keel.StringCol{Col: keel.Col{Ref: r, Index: 9}},
 		Description:             keel.StringCol{Col: keel.Col{Ref: r, Index: 10}},
-		Status:                  StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
+		Status:                  StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 11}}},
 		CronExpression:          keel.StringCol{Col: keel.Col{Ref: r, Index: 12}},
 		Timezone:                keel.StringCol{Col: keel.Col{Ref: r, Index: 13}},
 		StartDate:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
@@ -188,7 +188,7 @@ func BuildRecurringShipments(r *keel.Ref) *RecurringShipmentsTable {
 		MaxOccurrences:          keel.Int32Col{Col: keel.Col{Ref: r, Index: 16}},
 		LeadTimeDays:            keel.Int16Col{Col: keel.Col{Ref: r, Index: 17}},
 		SkipWeekends:            keel.BoolCol{Col: keel.Col{Ref: r, Index: 18}},
-		ExceptionPolicy:         ExceptionPolicyCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 19}}},
+		ExceptionPolicy:         ExceptionPolicyCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 19}}},
 		BlackoutDates:           keel.StringArrayCol{Col: keel.Col{Ref: r, Index: 20}},
 		AutoGenerate:            keel.BoolCol{Col: keel.Col{Ref: r, Index: 21}},
 		NextOccurrenceAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 22}},
@@ -243,8 +243,6 @@ func (t *RecurringShipmentsTable) Get(ctx context.Context, db *keel.DB, key puli
 
 // RecurringShipmentsQuery is a query over recurringshipment.RecurringShipment.
 type RecurringShipmentsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*recurringshipment.RecurringShipment] = (*RecurringShipmentsTable)(nil)
 
 var _ keel.Query[*recurringshipment.RecurringShipment] = (*RecurringShipmentsQuery)(nil)
 
@@ -360,42 +358,42 @@ func (t *RecurringShipmentsTable) Compute(col keel.Column, e keel.Expr) keel.Que
 
 // Create inserts row.
 func (t *RecurringShipmentsTable) Create(ctx context.Context, db *keel.DB, row *recurringshipment.RecurringShipment) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *RecurringShipmentsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*recurringshipment.RecurringShipment) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *RecurringShipmentsTable) Save(ctx context.Context, db *keel.DB, row *recurringshipment.RecurringShipment, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *RecurringShipmentsTable) SaveExcept(ctx context.Context, db *keel.DB, row *recurringshipment.RecurringShipment, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *RecurringShipmentsTable) DeleteRow(ctx context.Context, db *keel.DB, row *recurringshipment.RecurringShipment) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *RecurringShipmentsTable) Upsert(ctx context.Context, db *keel.DB, rows []*recurringshipment.RecurringShipment, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *RecurringShipmentsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*recurringshipment.RecurringShipment, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *RecurringShipmentsTable) Copy(ctx context.Context, db *keel.DB, rows []*recurringshipment.RecurringShipment) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -567,37 +565,45 @@ func (q *RecurringShipmentsQuery) Clone() keel.Query[*recurringshipment.Recurrin
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *RecurringShipmentsQuery) One(ctx context.Context, db *keel.DB) (*recurringshipment.RecurringShipment, error) {
-	return keel.One[*recurringshipment.RecurringShipment](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*recurringshipment.RecurringShipment)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *RecurringShipmentsQuery) First(ctx context.Context, db *keel.DB) (*recurringshipment.RecurringShipment, error) {
-	return keel.First[*recurringshipment.RecurringShipment](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*recurringshipment.RecurringShipment)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *RecurringShipmentsQuery) List(ctx context.Context, db *keel.DB) ([]*recurringshipment.RecurringShipment, error) {
-	return keel.List[*recurringshipment.RecurringShipment](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*recurringshipment.RecurringShipment)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *RecurringShipmentsQuery) All(ctx context.Context, db *keel.DB) ([]*recurringshipment.RecurringShipment, error) {
-	return keel.All[*recurringshipment.RecurringShipment](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*recurringshipment.RecurringShipment)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *RecurringShipmentsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*recurringshipment.RecurringShipment, error) {
-	return keel.UpdateReturning[*recurringshipment.RecurringShipment](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*recurringshipment.RecurringShipment)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *RecurringShipmentsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*recurringshipment.RecurringShipment], error) {
-	return keel.PageOf[*recurringshipment.RecurringShipment](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*recurringshipment.RecurringShipment])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *RecurringShipmentsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*recurringshipment.RecurringShipment) error) error {
-	return keel.Each[*recurringshipment.RecurringShipment](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*recurringshipment.RecurringShipment)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newRecurringShipment() unsafe.Pointer {
@@ -877,14 +883,14 @@ type RecurringShipmentRunsTable struct {
 // RecurringShipmentRuns references the recurring_shipment_runs table.
 var RecurringShipmentRuns = &RecurringShipmentRunsTable{
 	TableBase:            keel.TableBase{Ref: &recurringShipmentRunsRef},
-	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &recurringShipmentRunsRef, Index: 0}}},
-	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &recurringShipmentRunsRef, Index: 1}}},
-	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &recurringShipmentRunsRef, Index: 2}}},
-	RecurringShipmentID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &recurringShipmentRunsRef, Index: 3}}},
-	GeneratedShipmentID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &recurringShipmentRunsRef, Index: 4}}},
-	TriggeredByID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &recurringShipmentRunsRef, Index: 5}}},
-	Status:               RunStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &recurringShipmentRunsRef, Index: 6}}},
-	Trigger:              RunTriggerCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &recurringShipmentRunsRef, Index: 7}}},
+	ID:                   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &recurringShipmentRunsRef, Index: 0}}},
+	BusinessUnitID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &recurringShipmentRunsRef, Index: 1}}},
+	OrganizationID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &recurringShipmentRunsRef, Index: 2}}},
+	RecurringShipmentID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &recurringShipmentRunsRef, Index: 3}}},
+	GeneratedShipmentID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &recurringShipmentRunsRef, Index: 4}}},
+	TriggeredByID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &recurringShipmentRunsRef, Index: 5}}},
+	Status:               RunStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &recurringShipmentRunsRef, Index: 6}}},
+	Trigger:              RunTriggerCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &recurringShipmentRunsRef, Index: 7}}},
 	OccurrenceAt:         keel.Int64Col{Col: keel.Col{Ref: &recurringShipmentRunsRef, Index: 8}},
 	OriginalOccurrenceAt: keel.Int64Col{Col: keel.Col{Ref: &recurringShipmentRunsRef, Index: 9}},
 	Detail:               keel.StringCol{Col: keel.Col{Ref: &recurringShipmentRunsRef, Index: 10}},
@@ -895,14 +901,14 @@ var RecurringShipmentRuns = &RecurringShipmentRunsTable{
 func BuildRecurringShipmentRuns(r *keel.Ref) *RecurringShipmentRunsTable {
 	return &RecurringShipmentRunsTable{
 		TableBase:            keel.TableBase{Ref: r},
-		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		RecurringShipmentID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		GeneratedShipmentID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		TriggeredByID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		Status:               RunStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		Trigger:              RunTriggerCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		ID:                   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		RecurringShipmentID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		GeneratedShipmentID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		TriggeredByID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		Status:               RunStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		Trigger:              RunTriggerCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
 		OccurrenceAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
 		OriginalOccurrenceAt: keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
 		Detail:               keel.StringCol{Col: keel.Col{Ref: r, Index: 10}},
@@ -940,8 +946,6 @@ func (t *RecurringShipmentRunsTable) Get(ctx context.Context, db *keel.DB, key p
 
 // RecurringShipmentRunsQuery is a query over recurringshipment.RecurringShipmentRun.
 type RecurringShipmentRunsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*recurringshipment.RecurringShipmentRun] = (*RecurringShipmentRunsTable)(nil)
 
 var _ keel.Query[*recurringshipment.RecurringShipmentRun] = (*RecurringShipmentRunsQuery)(nil)
 
@@ -1057,42 +1061,42 @@ func (t *RecurringShipmentRunsTable) Compute(col keel.Column, e keel.Expr) keel.
 
 // Create inserts row.
 func (t *RecurringShipmentRunsTable) Create(ctx context.Context, db *keel.DB, row *recurringshipment.RecurringShipmentRun) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *RecurringShipmentRunsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*recurringshipment.RecurringShipmentRun) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *RecurringShipmentRunsTable) Save(ctx context.Context, db *keel.DB, row *recurringshipment.RecurringShipmentRun, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *RecurringShipmentRunsTable) SaveExcept(ctx context.Context, db *keel.DB, row *recurringshipment.RecurringShipmentRun, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *RecurringShipmentRunsTable) DeleteRow(ctx context.Context, db *keel.DB, row *recurringshipment.RecurringShipmentRun) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *RecurringShipmentRunsTable) Upsert(ctx context.Context, db *keel.DB, rows []*recurringshipment.RecurringShipmentRun, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *RecurringShipmentRunsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*recurringshipment.RecurringShipmentRun, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *RecurringShipmentRunsTable) Copy(ctx context.Context, db *keel.DB, rows []*recurringshipment.RecurringShipmentRun) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1264,37 +1268,45 @@ func (q *RecurringShipmentRunsQuery) Clone() keel.Query[*recurringshipment.Recur
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *RecurringShipmentRunsQuery) One(ctx context.Context, db *keel.DB) (*recurringshipment.RecurringShipmentRun, error) {
-	return keel.One[*recurringshipment.RecurringShipmentRun](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*recurringshipment.RecurringShipmentRun)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *RecurringShipmentRunsQuery) First(ctx context.Context, db *keel.DB) (*recurringshipment.RecurringShipmentRun, error) {
-	return keel.First[*recurringshipment.RecurringShipmentRun](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*recurringshipment.RecurringShipmentRun)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *RecurringShipmentRunsQuery) List(ctx context.Context, db *keel.DB) ([]*recurringshipment.RecurringShipmentRun, error) {
-	return keel.List[*recurringshipment.RecurringShipmentRun](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*recurringshipment.RecurringShipmentRun)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *RecurringShipmentRunsQuery) All(ctx context.Context, db *keel.DB) ([]*recurringshipment.RecurringShipmentRun, error) {
-	return keel.All[*recurringshipment.RecurringShipmentRun](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*recurringshipment.RecurringShipmentRun)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *RecurringShipmentRunsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*recurringshipment.RecurringShipmentRun, error) {
-	return keel.UpdateReturning[*recurringshipment.RecurringShipmentRun](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*recurringshipment.RecurringShipmentRun)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *RecurringShipmentRunsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*recurringshipment.RecurringShipmentRun], error) {
-	return keel.PageOf[*recurringshipment.RecurringShipmentRun](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*recurringshipment.RecurringShipmentRun])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *RecurringShipmentRunsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*recurringshipment.RecurringShipmentRun) error) error {
-	return keel.Each[*recurringshipment.RecurringShipmentRun](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*recurringshipment.RecurringShipmentRun)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newRecurringShipmentRun() unsafe.Pointer {
@@ -1426,115 +1438,111 @@ var enumStatus = [...]schema.EnumValue{
 }
 
 // ExceptionPolicyCol is a column of recurringshipment.ExceptionPolicy values.
-type ExceptionPolicyCol struct{ keel.StringCol }
+type ExceptionPolicyCol struct{ keel.TypedStringCol }
 
 func (c ExceptionPolicyCol) Eq(v recurringshipment.ExceptionPolicy) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c ExceptionPolicyCol) Ne(v recurringshipment.ExceptionPolicy) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c ExceptionPolicyCol) Gt(v recurringshipment.ExceptionPolicy) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c ExceptionPolicyCol) Gte(v recurringshipment.ExceptionPolicy) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c ExceptionPolicyCol) Lt(v recurringshipment.ExceptionPolicy) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c ExceptionPolicyCol) Lte(v recurringshipment.ExceptionPolicy) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c ExceptionPolicyCol) IsDistinctFrom(v recurringshipment.ExceptionPolicy) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ExceptionPolicyCol) Between(lo, hi recurringshipment.ExceptionPolicy) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c ExceptionPolicyCol) To(v recurringshipment.ExceptionPolicy) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c ExceptionPolicyCol) In(vs ...recurringshipment.ExceptionPolicy) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ExceptionPolicyCol) NotIn(vs ...recurringshipment.ExceptionPolicy) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // RunStatusCol is a column of recurringshipment.RunStatus values.
-type RunStatusCol struct{ keel.StringCol }
+type RunStatusCol struct{ keel.TypedStringCol }
 
-func (c RunStatusCol) Eq(v recurringshipment.RunStatus) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c RunStatusCol) Ne(v recurringshipment.RunStatus) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c RunStatusCol) Gt(v recurringshipment.RunStatus) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c RunStatusCol) Gte(v recurringshipment.RunStatus) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c RunStatusCol) Lt(v recurringshipment.RunStatus) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c RunStatusCol) Lte(v recurringshipment.RunStatus) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c RunStatusCol) Eq(v recurringshipment.RunStatus) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c RunStatusCol) Ne(v recurringshipment.RunStatus) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c RunStatusCol) Gt(v recurringshipment.RunStatus) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c RunStatusCol) Gte(v recurringshipment.RunStatus) keel.Pred { return c.Text().Gte(string(v)) }
+func (c RunStatusCol) Lt(v recurringshipment.RunStatus) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c RunStatusCol) Lte(v recurringshipment.RunStatus) keel.Pred { return c.Text().Lte(string(v)) }
 func (c RunStatusCol) IsDistinctFrom(v recurringshipment.RunStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c RunStatusCol) Between(lo, hi recurringshipment.RunStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c RunStatusCol) To(v recurringshipment.RunStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c RunStatusCol) In(vs ...recurringshipment.RunStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c RunStatusCol) NotIn(vs ...recurringshipment.RunStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // RunTriggerCol is a column of recurringshipment.RunTrigger values.
-type RunTriggerCol struct{ keel.StringCol }
+type RunTriggerCol struct{ keel.TypedStringCol }
 
-func (c RunTriggerCol) Eq(v recurringshipment.RunTrigger) keel.Pred { return c.StringCol.Eq(string(v)) }
-func (c RunTriggerCol) Ne(v recurringshipment.RunTrigger) keel.Pred { return c.StringCol.Ne(string(v)) }
-func (c RunTriggerCol) Gt(v recurringshipment.RunTrigger) keel.Pred { return c.StringCol.Gt(string(v)) }
-func (c RunTriggerCol) Gte(v recurringshipment.RunTrigger) keel.Pred {
-	return c.StringCol.Gte(string(v))
-}
-func (c RunTriggerCol) Lt(v recurringshipment.RunTrigger) keel.Pred { return c.StringCol.Lt(string(v)) }
-func (c RunTriggerCol) Lte(v recurringshipment.RunTrigger) keel.Pred {
-	return c.StringCol.Lte(string(v))
-}
+func (c RunTriggerCol) Eq(v recurringshipment.RunTrigger) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c RunTriggerCol) Ne(v recurringshipment.RunTrigger) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c RunTriggerCol) Gt(v recurringshipment.RunTrigger) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c RunTriggerCol) Gte(v recurringshipment.RunTrigger) keel.Pred { return c.Text().Gte(string(v)) }
+func (c RunTriggerCol) Lt(v recurringshipment.RunTrigger) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c RunTriggerCol) Lte(v recurringshipment.RunTrigger) keel.Pred { return c.Text().Lte(string(v)) }
 func (c RunTriggerCol) IsDistinctFrom(v recurringshipment.RunTrigger) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c RunTriggerCol) Between(lo, hi recurringshipment.RunTrigger) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c RunTriggerCol) To(v recurringshipment.RunTrigger) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c RunTriggerCol) In(vs ...recurringshipment.RunTrigger) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c RunTriggerCol) NotIn(vs ...recurringshipment.RunTrigger) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // StatusCol is a column of recurringshipment.Status values.
-type StatusCol struct{ keel.StringCol }
+type StatusCol struct{ keel.TypedStringCol }
 
-func (c StatusCol) Eq(v recurringshipment.Status) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c StatusCol) Ne(v recurringshipment.Status) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c StatusCol) Gt(v recurringshipment.Status) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c StatusCol) Gte(v recurringshipment.Status) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c StatusCol) Lt(v recurringshipment.Status) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c StatusCol) Lte(v recurringshipment.Status) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c StatusCol) Eq(v recurringshipment.Status) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c StatusCol) Ne(v recurringshipment.Status) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c StatusCol) Gt(v recurringshipment.Status) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c StatusCol) Gte(v recurringshipment.Status) keel.Pred { return c.Text().Gte(string(v)) }
+func (c StatusCol) Lt(v recurringshipment.Status) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c StatusCol) Lte(v recurringshipment.Status) keel.Pred { return c.Text().Lte(string(v)) }
 func (c StatusCol) IsDistinctFrom(v recurringshipment.Status) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c StatusCol) Between(lo, hi recurringshipment.Status) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c StatusCol) To(v recurringshipment.Status) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c StatusCol) To(v recurringshipment.Status) keel.Assignment { return c.Text().To(string(v)) }
 func (c StatusCol) In(vs ...recurringshipment.Status) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c StatusCol) NotIn(vs ...recurringshipment.Status) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

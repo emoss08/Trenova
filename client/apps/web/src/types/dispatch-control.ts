@@ -17,183 +17,137 @@ export const serviceIncidentTypeSchema = z.enum([
 
 export type ServiceIncidentType = z.infer<typeof serviceIncidentTypeSchema>;
 
-export const autoAssignmentStrategySchema = z.enum([
-  "Proximity",
-  "Availability",
-  "LoadBalancing",
-  "Performance",
-]);
-
-export type AutoAssignmentStrategy = z.infer<typeof autoAssignmentStrategySchema>;
-
-export const scoringFactorSchema = z.enum([
-  "deadhead",
-  "hosMargin",
-  "onTime",
-  "trailerContinuity",
-  "fleetMatch",
-  "driverTypeFit",
-  "homeTime",
-  "loadBalance",
-  "laneExperience",
-  "onTimeHistory",
-  "safetyHistory",
-  "acceptance",
-  "ptoProximity",
-]);
-
-export type ScoringFactor = z.infer<typeof scoringFactorSchema>;
-
-export const scoringWeightsSchema = z.partialRecord(
-  scoringFactorSchema,
+const centsSchema = (label: string, max = 1_000_000) =>
   z
     .number()
-    .min(0, { error: () => translate("Weights must be at least 0") })
-    .max(10, { error: () => translate("Weights cannot exceed 10") })
-    .optional(),
-);
+    .int()
+    .min(0, { error: () => translate("{0} cannot be negative", label) })
+    .max(max, { error: () => translate("{0} is too large", label) });
 
-export type ScoringWeights = z.infer<typeof scoringWeightsSchema>;
+const coverageCentsSchema = (label: string) =>
+  z
+    .number()
+    .int()
+    .min(0, { error: () => translate("{0} cannot be negative", label) })
+    .max(100_000_000, { error: () => translate("{0} is too large", label) });
 
-/**
- * Mirrors the server's strategy presets (dispatchcontrol.PresetWeights) so the weight
- * editor can show what an unset factor inherits.
- */
-export const PRESET_SCORING_WEIGHTS: Record<
-  AutoAssignmentStrategy,
-  Record<ScoringFactor, number>
-> = {
-  Proximity: {
-    deadhead: 3,
-    hosMargin: 1.5,
-    onTime: 2.5,
-    trailerContinuity: 1,
-    fleetMatch: 0.5,
-    driverTypeFit: 1,
-    homeTime: 0.5,
-    loadBalance: 0.5,
-    laneExperience: 0.5,
-    onTimeHistory: 1,
-    safetyHistory: 0.5,
-    acceptance: 0.5,
-    ptoProximity: 0.5,
-  },
-  Availability: {
-    deadhead: 1,
-    hosMargin: 3,
-    onTime: 2.5,
-    trailerContinuity: 1,
-    fleetMatch: 0.5,
-    driverTypeFit: 1,
-    homeTime: 1,
-    loadBalance: 0.5,
-    laneExperience: 0.5,
-    onTimeHistory: 1,
-    safetyHistory: 1,
-    acceptance: 1,
-    ptoProximity: 1.5,
-  },
-  LoadBalancing: {
-    deadhead: 1,
-    hosMargin: 1,
-    onTime: 2,
-    trailerContinuity: 0.5,
-    fleetMatch: 0.5,
-    driverTypeFit: 1,
-    homeTime: 2,
-    loadBalance: 3,
-    laneExperience: 0.5,
-    onTimeHistory: 0.5,
-    safetyHistory: 0.5,
-    acceptance: 1,
-    ptoProximity: 1.5,
-  },
-  Performance: {
-    deadhead: 1,
-    hosMargin: 1,
-    onTime: 2,
-    trailerContinuity: 0.5,
-    fleetMatch: 0.5,
-    driverTypeFit: 1,
-    homeTime: 0.5,
-    loadBalance: 0.5,
-    laneExperience: 1.5,
-    onTimeHistory: 3,
-    safetyHistory: 2,
-    acceptance: 2,
-    ptoProximity: 1,
-  },
-};
+export const dispatchPreferenceSchema = z.enum([
+  "customerExperience",
+  "onTimeHistory",
+  "safety",
+  "acceptance",
+  "trailerContinuity",
+  "haulFit",
+  "timeOffBuffer",
+]);
 
-export const SCORING_FACTOR_META: ReadonlyArray<{
-  key: ScoringFactor;
+export type DispatchPreference = z.infer<typeof dispatchPreferenceSchema>;
+
+/** Mirrors dispatcheconomics.Default on the server: what an organization starts with. */
+export const DEFAULT_DISPATCH_ECONOMICS = {
+  emptyMileCents: 200,
+  lateMinuteCents: 100,
+  driverHourCents: 3_000,
+  earlyGraceMinutes: 120,
+  homeTimeTargetDays: 10,
+  homeTimeDayCents: 7_500,
+  fairnessMileCents: 3,
+  preferences: {
+    customerExperience: 5_000,
+    onTimeHistory: 7_500,
+    safety: 7_500,
+    acceptance: 3_000,
+    trailerContinuity: 10_000,
+    haulFit: 6_000,
+    timeOffBuffer: 10_000,
+  },
+  coverageMarginPercent: 30,
+  coverageFloorCents: 40_000,
+  latePremiumCents: 150_000,
+  dueNowPremiumCents: 75_000,
+  candidatesPerMove: 40,
+  replanChangeCents: 2_500,
+  anticipationMaxCents: 0,
+} as const satisfies DispatchEconomics;
+
+export const dispatchEconomicsSchema = z.object({
+  emptyMileCents: centsSchema("Empty mile cost"),
+  lateMinuteCents: centsSchema("Late minute cost"),
+  driverHourCents: centsSchema("Driver hour cost"),
+  earlyGraceMinutes: z
+    .number()
+    .int()
+    .min(0, { error: () => translate("Early grace cannot be negative") })
+    .max(1_440, { error: () => translate("Early grace cannot exceed 1440 minutes") }),
+  homeTimeTargetDays: z
+    .number()
+    .int()
+    .min(0, { error: () => translate("Home time target cannot be negative") })
+    .max(60, { error: () => translate("Home time target cannot exceed 60 days") }),
+  homeTimeDayCents: centsSchema("Home time cost"),
+  fairnessMileCents: centsSchema("Fairness cost"),
+  preferences: z.record(dispatchPreferenceSchema, centsSchema("Preference")),
+  coverageMarginPercent: z
+    .number()
+    .int()
+    .min(0, { error: () => translate("Coverage margin cannot be negative") })
+    .max(100, { error: () => translate("Coverage margin cannot exceed 100%") }),
+  coverageFloorCents: coverageCentsSchema("Coverage floor"),
+  latePremiumCents: coverageCentsSchema("Late premium"),
+  dueNowPremiumCents: coverageCentsSchema("Due now premium"),
+  candidatesPerMove: z
+    .number()
+    .int()
+    .min(5, { error: () => translate("Candidates per move must be at least 5") })
+    .max(200, { error: () => translate("Candidates per move cannot exceed 200") }),
+  replanChangeCents: centsSchema("Replan change cost"),
+  anticipationMaxCents: centsSchema("Likely load value", 200_000).default(0),
+});
+
+export type DispatchEconomics = z.infer<typeof dispatchEconomicsSchema>;
+
+export const DISPATCH_PREFERENCE_META: ReadonlyArray<{
+  key: DispatchPreference;
   label: string;
   description: string;
 }> = [
   {
-    key: "deadhead",
-    label: "Empty miles",
-    description: "Fewer empty miles from the driver's projected location to the pickup.",
-  },
-  {
-    key: "hosMargin",
-    label: "Hours remaining",
-    description: "Projected hours-of-service margin left after completing the trip.",
-  },
-  {
-    key: "onTime",
-    label: "On-time margin",
-    description: "Slack between the projected arrival and the pickup appointment.",
-  },
-  {
-    key: "trailerContinuity",
-    label: "Trailer continuity",
-    description: "Driver keeps the trailer from their previous leg instead of swapping.",
-  },
-  {
-    key: "fleetMatch",
-    label: "Fleet match",
-    description: "Driver and power unit belong to the same fleet.",
-  },
-  {
-    key: "driverTypeFit",
-    label: "Haul fit",
-    description: "Trip length suits the driver's type (local, regional, or over-the-road).",
-  },
-  {
-    key: "homeTime",
-    label: "Home time",
-    description: "Drivers recently home score higher than those out for weeks.",
-  },
-  {
-    key: "loadBalance",
-    label: "Load balance",
-    description: "Spreads work by weekly miles, move count, and open assignments.",
-  },
-  {
-    key: "laneExperience",
+    key: "customerExperience",
     label: "Customer experience",
-    description: "How often the driver has run freight for this customer in the last year.",
+    description:
+      "What a driver who has never run this customer costs against one who runs it often.",
   },
   {
     key: "onTimeHistory",
     label: "On-time history",
-    description: "The driver's delivered-on-time percentage versus the organization's goal.",
+    description: "What a driver far below your on-time goal costs against one who meets it.",
   },
   {
-    key: "safetyHistory",
+    key: "safety",
     label: "Safety history",
-    description: "Hours-of-service violations recorded in the last 90 days.",
+    description: "What five or more hours-of-service violations in 90 days cost against none.",
   },
   {
     key: "acceptance",
     label: "Acceptance",
-    description: "How reliably and quickly the driver accepts offered assignments.",
+    description: "What a driver who rarely accepts assignments costs against one who always does.",
   },
   {
-    key: "ptoProximity",
+    key: "trailerContinuity",
+    label: "Trailer continuity",
+    description: "What a trailer swap costs against keeping the trailer from the previous leg.",
+  },
+  {
+    key: "haulFit",
+    label: "Haul fit",
+    description:
+      "What a run that does not suit the driver's type costs, such as a local driver on a long haul.",
+  },
+  {
+    key: "timeOffBuffer",
     label: "Time-off buffer",
-    description: "Whether the run finishes comfortably before the driver's approved time off.",
+    description:
+      "What finishing right before approved time off costs against finishing two days ahead.",
   },
 ];
 
@@ -252,8 +206,11 @@ export const dispatchControlSchema = z
     businessUnitId: optionalStringSchema,
 
     enableAutoAssignment: z.boolean(),
-    autoAssignmentStrategy: autoAssignmentStrategySchema,
-    scoringWeights: scoringWeightsSchema.optional(),
+    autoProposeCoverage: z.boolean(),
+    economics: dispatchEconomicsSchema.default(DEFAULT_DISPATCH_ECONOMICS),
+    learnDispatchStyle: z.boolean().default(false),
+    planForEndMarket: z.boolean().default(false),
+    anticipateFreight: z.boolean().default(false),
     autoAssignConfidenceThreshold: z.coerce
       .number()
       .min(0, { error: () => translate("Confidence threshold must be at least 0") })

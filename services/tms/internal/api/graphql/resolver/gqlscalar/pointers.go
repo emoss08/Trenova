@@ -110,3 +110,12 @@ func Int32Ptr(value *int32) *int {
 	out := int(*value)
 	return &out
 }
+
+func NonZeroIntPtr(value int64) *int {
+	if value == 0 {
+		return nil
+	}
+	v := int(value)
+
+	return &v
+}

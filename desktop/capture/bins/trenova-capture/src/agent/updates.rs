@@ -1,8 +1,8 @@
 //! Keeping the companion current.
 //!
 //! The agent asks the server for the current release when a session starts
-//! and every few hours after, verifies the manifest against the key built in,
-//! and compares it with its own version. A newer release is installed by the
+//! and every few hours after, verifies the manifest against the key built in
+//! and that it has not expired, and compares it with its own version. A newer release is installed by the
 //! updater service when both the organization (a server setting) and this
 //! computer (a registry policy) allow it, and offered as a note to pass on to
 //! IT when they do not. A scan in progress is never interrupted for an update;
@@ -13,7 +13,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use capture_client::{Api, ApiError};
-use capture_protocol::release::{Release, verify};
+use capture_protocol::release::{Release, unix_now, verify};
 use capture_update::ed25519_dalek::VerifyingKey;
 use tokio::sync::mpsc;
 use tokio_util::sync::CancellationToken;
@@ -34,8 +34,9 @@ pub fn manifest_url(api: &Api) -> String {
 }
 
 /// The current release the server publishes, verified. A manifest that does
-/// not verify is logged and treated as no release: a server that serves a
-/// bad manifest gets no say over what is installed.
+/// not verify, or has expired, is logged and treated as no release: a server
+/// that serves a bad or stale manifest gets no say over what is installed,
+/// and the installed release carries on as it is.
 pub async fn check(api: &Api, key: Option<&VerifyingKey>) -> Result<Option<Release>, ApiError> {
     let Some(key) = key else {
         return Ok(None);
@@ -43,13 +44,22 @@ pub async fn check(api: &Api, key: Option<&VerifyingKey>) -> Result<Option<Relea
     let Some(signed) = api.latest_release().await? else {
         return Ok(None);
     };
-    match verify(&signed, key) {
-        Ok(release) => Ok(Some(release)),
+    let release = match verify(&signed, key) {
+        Ok(release) => release,
         Err(err) => {
             tracing::warn!(error = %err, "the server's release manifest does not verify");
-            Ok(None)
+            return Ok(None);
         }
+    };
+    if let Err(err) = release.check_current(unix_now()) {
+        tracing::warn!(
+            error = %err,
+            version = %release.version,
+            "the server's release manifest is out of date; updates are paused until a current one is served"
+        );
+        return Ok(None);
     }
+    Ok(Some(release))
 }
 
 /// Checks now and then every [`CHECK_EVERY`] until `cancel`.

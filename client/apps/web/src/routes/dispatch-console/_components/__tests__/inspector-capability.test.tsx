@@ -122,12 +122,18 @@ function renderInspector() {
     <QueryClientProvider client={queryClient}>
       <MemoryRouter>
         <Inspector
-          selectedMove={move}
-          selectedDriver={null}
-          onAssign={vi.fn()}
-          onSelectMove={vi.fn()}
-          isAssigning={false}
+          move={move}
+          moveRead={null}
+          outsideWindow={false}
+          driver={null}
+          range={{ start: 0, end: 86_400 }}
           hotkeysEnabled={false}
+          queueScope={null}
+          onClose={vi.fn()}
+          onSelectMove={vi.fn()}
+          onNextMove={vi.fn()}
+          onCovered={vi.fn()}
+          onJumpTo={vi.fn()}
           actions={actions}
         />
       </MemoryRouter>
@@ -171,16 +177,16 @@ describe("Inspector carrier procurement is hidden when the organization does not
 
     renderInspector();
 
-    await screen.findByRole("button", { name: /ineligible/ });
+    await screen.findByText("No eligible driver");
     expect(screen.queryByText("Tenders")).toBeNull();
   });
 
-  it("keeps driver assignment intact for an asset-only organization", () => {
+  it("keeps driver assignment intact for an asset-only organization", async () => {
     signIn(false);
 
     renderInspector();
 
-    expect(screen.getByText("0 candidates")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Show ineligible" })).toBeInTheDocument();
+    expect(await screen.findByText("No eligible driver")).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: "Show ineligible" }).length).toBeGreaterThan(0);
   });
 });

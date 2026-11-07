@@ -103,13 +103,13 @@ type RateImportBatchesTable struct {
 // RateImportBatches references the rate_import_batches table.
 var RateImportBatches = &RateImportBatchesTable{
 	TableBase:       keel.TableBase{Ref: &rateImportBatchesRef},
-	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateImportBatchesRef, Index: 0}}},
-	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateImportBatchesRef, Index: 1}}},
-	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateImportBatchesRef, Index: 2}}},
-	RateAgreementID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateImportBatchesRef, Index: 3}}},
+	ID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateImportBatchesRef, Index: 0}}},
+	BusinessUnitID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateImportBatchesRef, Index: 1}}},
+	OrganizationID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateImportBatchesRef, Index: 2}}},
+	RateAgreementID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateImportBatchesRef, Index: 3}}},
 	FileName:        keel.StringCol{Col: keel.Col{Ref: &rateImportBatchesRef, Index: 4}},
-	SourceFormat:    SourceFormatCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateImportBatchesRef, Index: 5}}},
-	Status:          StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateImportBatchesRef, Index: 6}}},
+	SourceFormat:    SourceFormatCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateImportBatchesRef, Index: 5}}},
+	Status:          StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateImportBatchesRef, Index: 6}}},
 	EffectiveFrom:   keel.Int64Col{Col: keel.Col{Ref: &rateImportBatchesRef, Index: 7}},
 	Mapping:         keel.JSONBCol{Col: keel.Col{Ref: &rateImportBatchesRef, Index: 8}},
 	UnmappedHeaders: keel.JSONBCol{Col: keel.Col{Ref: &rateImportBatchesRef, Index: 9}},
@@ -118,9 +118,9 @@ var RateImportBatches = &RateImportBatchesTable{
 	RowCount:        keel.Int64Col{Col: keel.Col{Ref: &rateImportBatchesRef, Index: 12}},
 	ErrorCount:      keel.Int64Col{Col: keel.Col{Ref: &rateImportBatchesRef, Index: 13}},
 	Error:           keel.StringCol{Col: keel.Col{Ref: &rateImportBatchesRef, Index: 14}},
-	UploadedByID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateImportBatchesRef, Index: 15}}},
+	UploadedByID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateImportBatchesRef, Index: 15}}},
 	CommittedAt:     keel.Int64Col{Col: keel.Col{Ref: &rateImportBatchesRef, Index: 16}},
-	CommittedBy:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateImportBatchesRef, Index: 17}}},
+	CommittedBy:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateImportBatchesRef, Index: 17}}},
 	Version:         keel.Int64Col{Col: keel.Col{Ref: &rateImportBatchesRef, Index: 18}},
 	CreatedAt:       keel.Int64Col{Col: keel.Col{Ref: &rateImportBatchesRef, Index: 19}},
 	UpdatedAt:       keel.Int64Col{Col: keel.Col{Ref: &rateImportBatchesRef, Index: 20}},
@@ -130,13 +130,13 @@ var RateImportBatches = &RateImportBatchesTable{
 func BuildRateImportBatches(r *keel.Ref) *RateImportBatchesTable {
 	return &RateImportBatchesTable{
 		TableBase:       keel.TableBase{Ref: r},
-		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		RateAgreementID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		RateAgreementID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		FileName:        keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
-		SourceFormat:    SourceFormatCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		Status:          StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		SourceFormat:    SourceFormatCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		Status:          StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		EffectiveFrom:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
 		Mapping:         keel.JSONBCol{Col: keel.Col{Ref: r, Index: 8}},
 		UnmappedHeaders: keel.JSONBCol{Col: keel.Col{Ref: r, Index: 9}},
@@ -145,9 +145,9 @@ func BuildRateImportBatches(r *keel.Ref) *RateImportBatchesTable {
 		RowCount:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
 		ErrorCount:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
 		Error:           keel.StringCol{Col: keel.Col{Ref: r, Index: 14}},
-		UploadedByID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 15}}},
+		UploadedByID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 15}}},
 		CommittedAt:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
-		CommittedBy:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 17}}},
+		CommittedBy:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 17}}},
 		Version:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
 		CreatedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 19}},
 		UpdatedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 20}},
@@ -179,8 +179,6 @@ func (t *RateImportBatchesTable) Get(ctx context.Context, db *keel.DB, key pulid
 
 // RateImportBatchesQuery is a query over rateimport.RateImportBatch.
 type RateImportBatchesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*rateimport.RateImportBatch] = (*RateImportBatchesTable)(nil)
 
 var _ keel.Query[*rateimport.RateImportBatch] = (*RateImportBatchesQuery)(nil)
 
@@ -296,42 +294,42 @@ func (t *RateImportBatchesTable) Compute(col keel.Column, e keel.Expr) keel.Quer
 
 // Create inserts row.
 func (t *RateImportBatchesTable) Create(ctx context.Context, db *keel.DB, row *rateimport.RateImportBatch) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *RateImportBatchesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*rateimport.RateImportBatch) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *RateImportBatchesTable) Save(ctx context.Context, db *keel.DB, row *rateimport.RateImportBatch, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *RateImportBatchesTable) SaveExcept(ctx context.Context, db *keel.DB, row *rateimport.RateImportBatch, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *RateImportBatchesTable) DeleteRow(ctx context.Context, db *keel.DB, row *rateimport.RateImportBatch) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *RateImportBatchesTable) Upsert(ctx context.Context, db *keel.DB, rows []*rateimport.RateImportBatch, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *RateImportBatchesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*rateimport.RateImportBatch, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *RateImportBatchesTable) Copy(ctx context.Context, db *keel.DB, rows []*rateimport.RateImportBatch) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -503,37 +501,45 @@ func (q *RateImportBatchesQuery) Clone() keel.Query[*rateimport.RateImportBatch]
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *RateImportBatchesQuery) One(ctx context.Context, db *keel.DB) (*rateimport.RateImportBatch, error) {
-	return keel.One[*rateimport.RateImportBatch](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*rateimport.RateImportBatch)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *RateImportBatchesQuery) First(ctx context.Context, db *keel.DB) (*rateimport.RateImportBatch, error) {
-	return keel.First[*rateimport.RateImportBatch](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*rateimport.RateImportBatch)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *RateImportBatchesQuery) List(ctx context.Context, db *keel.DB) ([]*rateimport.RateImportBatch, error) {
-	return keel.List[*rateimport.RateImportBatch](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*rateimport.RateImportBatch)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *RateImportBatchesQuery) All(ctx context.Context, db *keel.DB) ([]*rateimport.RateImportBatch, error) {
-	return keel.All[*rateimport.RateImportBatch](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*rateimport.RateImportBatch)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *RateImportBatchesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*rateimport.RateImportBatch, error) {
-	return keel.UpdateReturning[*rateimport.RateImportBatch](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*rateimport.RateImportBatch)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *RateImportBatchesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*rateimport.RateImportBatch], error) {
-	return keel.PageOf[*rateimport.RateImportBatch](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*rateimport.RateImportBatch])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *RateImportBatchesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*rateimport.RateImportBatch) error) error {
-	return keel.Each[*rateimport.RateImportBatch](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*rateimport.RateImportBatch)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newRateImportBatch() unsafe.Pointer { return unsafe.Pointer(new(rateimport.RateImportBatch)) }
@@ -741,10 +747,10 @@ type RateImportRowsTable struct {
 // RateImportRows references the rate_import_rows table.
 var RateImportRows = &RateImportRowsTable{
 	TableBase:         keel.TableBase{Ref: &rateImportRowsRef},
-	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateImportRowsRef, Index: 0}}},
-	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateImportRowsRef, Index: 1}}},
-	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateImportRowsRef, Index: 2}}},
-	RateImportBatchID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateImportRowsRef, Index: 3}}},
+	ID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateImportRowsRef, Index: 0}}},
+	BusinessUnitID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateImportRowsRef, Index: 1}}},
+	OrganizationID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateImportRowsRef, Index: 2}}},
+	RateImportBatchID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateImportRowsRef, Index: 3}}},
 	RowNumber:         keel.Int64Col{Col: keel.Col{Ref: &rateImportRowsRef, Index: 4}},
 	Cells:             keel.JSONBCol{Col: keel.Col{Ref: &rateImportRowsRef, Index: 5}},
 	Rule:              keel.JSONBCol{Col: keel.Col{Ref: &rateImportRowsRef, Index: 6}},
@@ -757,10 +763,10 @@ var RateImportRows = &RateImportRowsTable{
 func BuildRateImportRows(r *keel.Ref) *RateImportRowsTable {
 	return &RateImportRowsTable{
 		TableBase:         keel.TableBase{Ref: r},
-		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		RateImportBatchID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		RateImportBatchID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		RowNumber:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 4}},
 		Cells:             keel.JSONBCol{Col: keel.Col{Ref: r, Index: 5}},
 		Rule:              keel.JSONBCol{Col: keel.Col{Ref: r, Index: 6}},
@@ -790,8 +796,6 @@ func (t *RateImportRowsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID
 
 // RateImportRowsQuery is a query over rateimport.RateImportRow.
 type RateImportRowsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*rateimport.RateImportRow] = (*RateImportRowsTable)(nil)
 
 var _ keel.Query[*rateimport.RateImportRow] = (*RateImportRowsQuery)(nil)
 
@@ -907,42 +911,42 @@ func (t *RateImportRowsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*
 
 // Create inserts row.
 func (t *RateImportRowsTable) Create(ctx context.Context, db *keel.DB, row *rateimport.RateImportRow) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *RateImportRowsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*rateimport.RateImportRow) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *RateImportRowsTable) Save(ctx context.Context, db *keel.DB, row *rateimport.RateImportRow, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *RateImportRowsTable) SaveExcept(ctx context.Context, db *keel.DB, row *rateimport.RateImportRow, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *RateImportRowsTable) DeleteRow(ctx context.Context, db *keel.DB, row *rateimport.RateImportRow) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *RateImportRowsTable) Upsert(ctx context.Context, db *keel.DB, rows []*rateimport.RateImportRow, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *RateImportRowsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*rateimport.RateImportRow, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *RateImportRowsTable) Copy(ctx context.Context, db *keel.DB, rows []*rateimport.RateImportRow) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1114,37 +1118,45 @@ func (q *RateImportRowsQuery) Clone() keel.Query[*rateimport.RateImportRow] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *RateImportRowsQuery) One(ctx context.Context, db *keel.DB) (*rateimport.RateImportRow, error) {
-	return keel.One[*rateimport.RateImportRow](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*rateimport.RateImportRow)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *RateImportRowsQuery) First(ctx context.Context, db *keel.DB) (*rateimport.RateImportRow, error) {
-	return keel.First[*rateimport.RateImportRow](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*rateimport.RateImportRow)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *RateImportRowsQuery) List(ctx context.Context, db *keel.DB) ([]*rateimport.RateImportRow, error) {
-	return keel.List[*rateimport.RateImportRow](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*rateimport.RateImportRow)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *RateImportRowsQuery) All(ctx context.Context, db *keel.DB) ([]*rateimport.RateImportRow, error) {
-	return keel.All[*rateimport.RateImportRow](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*rateimport.RateImportRow)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *RateImportRowsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*rateimport.RateImportRow, error) {
-	return keel.UpdateReturning[*rateimport.RateImportRow](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*rateimport.RateImportRow)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *RateImportRowsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*rateimport.RateImportRow], error) {
-	return keel.PageOf[*rateimport.RateImportRow](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*rateimport.RateImportRow])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *RateImportRowsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*rateimport.RateImportRow) error) error {
-	return keel.Each[*rateimport.RateImportRow](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*rateimport.RateImportRow)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newRateImportRow() unsafe.Pointer { return unsafe.Pointer(new(rateimport.RateImportRow)) }
@@ -1250,47 +1262,47 @@ var enumStatus = [...]schema.EnumValue{
 }
 
 // SourceFormatCol is a column of rateimport.SourceFormat values.
-type SourceFormatCol struct{ keel.StringCol }
+type SourceFormatCol struct{ keel.TypedStringCol }
 
-func (c SourceFormatCol) Eq(v rateimport.SourceFormat) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c SourceFormatCol) Ne(v rateimport.SourceFormat) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c SourceFormatCol) Gt(v rateimport.SourceFormat) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c SourceFormatCol) Gte(v rateimport.SourceFormat) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c SourceFormatCol) Lt(v rateimport.SourceFormat) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c SourceFormatCol) Lte(v rateimport.SourceFormat) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c SourceFormatCol) Eq(v rateimport.SourceFormat) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c SourceFormatCol) Ne(v rateimport.SourceFormat) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c SourceFormatCol) Gt(v rateimport.SourceFormat) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c SourceFormatCol) Gte(v rateimport.SourceFormat) keel.Pred { return c.Text().Gte(string(v)) }
+func (c SourceFormatCol) Lt(v rateimport.SourceFormat) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c SourceFormatCol) Lte(v rateimport.SourceFormat) keel.Pred { return c.Text().Lte(string(v)) }
 func (c SourceFormatCol) IsDistinctFrom(v rateimport.SourceFormat) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c SourceFormatCol) Between(lo, hi rateimport.SourceFormat) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c SourceFormatCol) To(v rateimport.SourceFormat) keel.Assignment {
-	return c.StringCol.To(string(v))
-}
+func (c SourceFormatCol) To(v rateimport.SourceFormat) keel.Assignment { return c.Text().To(string(v)) }
 func (c SourceFormatCol) In(vs ...rateimport.SourceFormat) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c SourceFormatCol) NotIn(vs ...rateimport.SourceFormat) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // StatusCol is a column of rateimport.Status values.
-type StatusCol struct{ keel.StringCol }
+type StatusCol struct{ keel.TypedStringCol }
 
-func (c StatusCol) Eq(v rateimport.Status) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c StatusCol) Ne(v rateimport.Status) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c StatusCol) Gt(v rateimport.Status) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c StatusCol) Gte(v rateimport.Status) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c StatusCol) Lt(v rateimport.Status) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c StatusCol) Lte(v rateimport.Status) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c StatusCol) Eq(v rateimport.Status) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c StatusCol) Ne(v rateimport.Status) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c StatusCol) Gt(v rateimport.Status) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c StatusCol) Gte(v rateimport.Status) keel.Pred { return c.Text().Gte(string(v)) }
+func (c StatusCol) Lt(v rateimport.Status) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c StatusCol) Lte(v rateimport.Status) keel.Pred { return c.Text().Lte(string(v)) }
 func (c StatusCol) IsDistinctFrom(v rateimport.Status) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c StatusCol) Between(lo, hi rateimport.Status) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c StatusCol) To(v rateimport.Status) keel.Assignment { return c.StringCol.To(string(v)) }
-func (c StatusCol) In(vs ...rateimport.Status) keel.Pred   { return c.StringCol.In(keel.Strings(vs)...) }
+func (c StatusCol) To(v rateimport.Status) keel.Assignment { return c.Text().To(string(v)) }
+func (c StatusCol) In(vs ...rateimport.Status) keel.Pred {
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
+}
 func (c StatusCol) NotIn(vs ...rateimport.Status) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

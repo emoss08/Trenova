@@ -22,5 +22,6 @@
   "Settlements without exceptions skip manual review and go straight to approved.": "沒有例外的結算會略過人工審查，直接轉為已核准。",
   "The milestone at which driver pay accrues. Move Completed pays each driver as soon as their own move finishes — the most accurate option when drivers split a load.": "駕駛員薪酬計提的里程碑。「運程完成」會在各駕駛員自己的運程結束時即給付 — 當多位駕駛員分擔同一趟貨載時，這是最精確的選項。",
   "Variance threshold": "差異門檻",
-  "When deductions exceed earnings, carry the balance to the next settlement instead of capping recoveries.": "當扣款超過薪酬時，將餘額結轉至下一次結算，而非限制回收金額。"
+  "When deductions exceed earnings, carry the balance to the next settlement instead of capping recoveries.": "當扣款超過薪酬時，將餘額結轉至下一次結算，而非限制回收金額。",
+  "Whoever submits a settlement cannot also approve it. Turn this off if one person runs payroll. Auto-approving clean settlements is not affected.": "提交結算的人不能同時核准。如果由一人負責薪資，請關閉此選項。自動核准無異常結算不受影響。"
 }

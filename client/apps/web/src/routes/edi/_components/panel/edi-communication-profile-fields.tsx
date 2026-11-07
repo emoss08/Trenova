@@ -21,6 +21,7 @@ import {
   type CommunicationProfileFormValues,
   type CommunicationProfileMethod,
 } from "../edi-schemas";
+import { AS2InboundURLSection } from "./edi-as2-inbound-url";
 import { EDICertificateField } from "./edi-certificate-field";
 import { EDIEmptyState } from "./edi-panel-primitives";
 
@@ -52,9 +53,11 @@ export function TransportProfileFields({
   control,
   method,
   authMode,
+  profile,
 }: ProfileFieldsProps & {
   method: CommunicationProfileMethod;
   authMode: string;
+  profile: EDICommunicationProfileRow | null;
 }) {
   const t = useT();
 
@@ -107,6 +110,7 @@ export function TransportProfileFields({
             </FormControl>
           </FormGroup>
         </FormSection>
+        <AS2InboundURLSection key={profile?.id ?? "new"} profile={profile} />
         <FormSection title={t("Security and MDN")}>
           <FormGroup cols={2}>
             <FormControl>
@@ -126,8 +130,9 @@ export function TransportProfileFields({
                 control={control}
                 name="config.mdnUrl"
                 label={t("Async MDN return URL")}
-                placeholder="https://edi.example.com/as2/mdn"
-                description={t("Required when MDN mode is asynchronous.")}
+                description={t(
+                  "Required when MDN mode is asynchronous. Enter this profile's inbound URL so the partner's receipt reaches it.",
+                )}
               />
             </FormControl>
             <FormControl>

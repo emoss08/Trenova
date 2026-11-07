@@ -2,8 +2,12 @@
 {{- $db := include "trenova.dbSecret" . -}}
 {{- $files := include "trenova.name" (dict "root" . "component" "files") -}}
 {{- /* Temporal: every AI feature's workflows. auto-setup migrates its schema in
-the databases the release Job made, then serves. */ -}}
+the databases the release Job made, then serves. Its frontend and its services'
+calls to each other take only certificates from the chart's Temporal CA: the
+TMS presents the client's, Temporal itself (and its CLI, for the probe) the
+server's. */ -}}
 {{- $c := dict "root" . "component" "temporal" }}
+{{- $temporal := include "trenova.name" $c }}
 apiVersion: v1
 kind: Service
 metadata:
@@ -82,6 +86,9 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: status.podIP
+            - name: TEMPORAL_ADDRESS
+              value: 127.0.0.1:7233
+            {{- include "trenova.temporalServerTlsEnv" (dict "dir" "/certs/temporal" "ca" "ca.crt" "cert" "tls.crt" "key" "tls.key" "serverName" $temporal) | nindent 12 }}
           ports:
             - name: grpc
               containerPort: 7233
@@ -107,9 +114,16 @@ spec:
             - name: dynamicconfig
               mountPath: /etc/temporal/dynamicconfig
               readOnly: true
+            - name: tls
+              mountPath: /certs/temporal
+              readOnly: true
             {{- include "trenova.postgresCaMount" . | nindent 12 }}
       volumes:
         {{- include "trenova.postgresCaVolume" . | nindent 8 }}
+        - name: tls
+          secret:
+            secretName: {{ include "trenova.temporalServerSecret" . }}
+            defaultMode: 0440
         - name: dynamicconfig
           configMap:
             name: {{ $files }}
@@ -118,7 +132,8 @@ spec:
                 path: dynamic_config.yaml
 {{- /* Gotenberg renders organization-authored HTML to PDF, so it is locked
 down rather than trusted: JavaScript off, only data: and its own staging
-files allowed, no network (templates/networkpolicy.yaml). */ -}}
+files allowed, no network (templates/networkpolicy.yaml). Every route but
+/health needs the password in the app Secret, which the TMS sends. */ -}}
 {{- $c = dict "root" . "component" "gotenberg" }}
 ---
 apiVersion: v1
@@ -167,6 +182,11 @@ spec:
             - --pdfengines-disable-routes=true
             - --api-timeout=30s
             - --api-disable-health-check-logging=true
+            - --api-enable-basic-auth=true
+          env:
+            - name: GOTENBERG_API_BASIC_AUTH_USERNAME
+              value: {{ include "trenova.gotenbergUsername" . }}
+            {{- include "trenova.secretEnv" (dict "name" "GOTENBERG_API_BASIC_AUTH_PASSWORD" "secret" $app "key" "gotenbergPassword") | nindent 12 }}
           ports:
             - name: http
               containerPort: 3000

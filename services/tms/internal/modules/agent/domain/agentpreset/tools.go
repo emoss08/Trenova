@@ -13,11 +13,11 @@ func StarterTools(t agenttemplate.Template) []string {
 var starterTools = map[agenttemplate.Template][]string{
 	agenttemplate.TemplateDispatchAssistant: {
 		"insight_get_daily_briefing",
+		"dispatch_forecast_demand",
 		"shipment_list",
 		"worker_get",
 		"worker_list",
 		"equipment_list_tractors",
-		"equipment_list_trailers",
 		"worker_list_credentials",
 		"worker_list_time_off",
 		"masterdata_list_hold_reasons",
@@ -401,6 +401,7 @@ var starterTools = map[agenttemplate.Template][]string{
 		"dispatch_get_board",
 		"dispatch_rank_candidates",
 		"dispatch_plan",
+		"dispatch_forecast_demand",
 		"carrier_list",
 		"carrier_shop",
 		"dispatch_assign_move",

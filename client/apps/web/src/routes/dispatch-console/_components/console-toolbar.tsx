@@ -1,70 +1,99 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { CapabilityGate } from "@/components/capability-gate";
+import { MultiSelectAutocomplete } from "@/components/fields/multi-select-field";
+import { isTypingTarget, isWithinDialog } from "@/lib/dom";
+import type {
+  GraphQLSelectOptionsConfig,
+  SelectOption as GraphQLSelectOption,
+} from "@/lib/graphql/select-options";
 import { formatRangeLabelForDays, isTodayAnchor } from "@/lib/timeline/time-scale";
-import { Button } from "@trenova/shared/components/ui/button";
-import { Calendar } from "@trenova/shared/components/ui/calendar";
-import { Kbd } from "@trenova/shared/components/ui/kbd";
-import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
-import { Switch } from "@trenova/shared/components/ui/switch";
-import { cn } from "@trenova/shared/lib/utils";
-import { OrganizationCapability } from "@trenova/shared/types/organization-capability";
 import {
   CalendarIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
-  Columns03Icon,
-  FlipBackwardIcon,
-  HorizontalBarChart03Icon,
+  SearchLgIcon,
 } from "@trenova/shared/components/icons";
-import { preloadCenterView } from "./console-center-pane";
+import { Button } from "@trenova/shared/components/ui/button";
+import { Calendar } from "@trenova/shared/components/ui/calendar";
+import { Input } from "@trenova/shared/components/ui/input";
+import { Kbd } from "@trenova/shared/components/ui/kbd";
+import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
+import { Switch } from "@trenova/shared/components/ui/switch";
+import { useLocale } from "@trenova/shared/i18n/use-t";
+import { cn } from "@trenova/shared/lib/utils";
+import { useEffect, useRef, useState } from "react";
+import { ConsoleStatusLine, type BoardFreshness } from "./console-status-line";
 import { TIMELINE_ZOOM_OPTIONS } from "./timeline-metrics";
-import { useDispatchView, useDispatchWindow, type CenterMode } from "./url-state";
-import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
+import { useDispatchRail, useDispatchView, useDispatchWindow } from "./url-state";
 
-const CENTER_MODE_OPTIONS: readonly {
-  id: CenterMode;
-  label: string;
-  Icon: typeof Columns03Icon;
-}[] = [
-  { id: "board", label: "Board", Icon: Columns03Icon },
-  { id: "timeline", label: "Timeline", Icon: HorizontalBarChart03Icon },
-];
+const FLEET_SELECT_OPTIONS = { resource: "FLEET_CODE" } satisfies GraphQLSelectOptionsConfig;
+const CUSTOMER_SELECT_OPTIONS = { resource: "CUSTOMER" } satisfies GraphQLSelectOptionsConfig;
+
+function selectedIds(values: readonly (string | GraphQLSelectOption)[]): string[] {
+  return values
+    .map((value) => (typeof value === "string" ? value : (value.id ?? "")))
+    .filter(Boolean);
+}
 
 /**
- * The window the board is asked about, the shape it is drawn in, and the two actions that
- * write to it. Everything the toolbar changes lives in the URL, so it owns that state
- * directly rather than being handed it.
+ * The window the board is asked about and what narrows it. Everything here lives in the
+ * URL, so the toolbar owns that state rather than being handed it; the status line on the
+ * left says how fresh the answer is.
  */
-export function ConsoleToolbar({
-  canUndo,
-  isAssigning,
-  isPlanning,
-  onUndo,
-  onPlan,
-}: {
-  canUndo: boolean;
-  isAssigning: boolean;
-  isPlanning: boolean;
-  onUndo: () => void;
-  onPlan: () => void;
-}) {
+export function ConsoleToolbar({ freshness }: { freshness: BoardFreshness }) {
   const t = useT();
+  const locale = useLocale();
+  const searchRef = useRef<HTMLInputElement>(null);
 
   const {
     anchor,
     zoom,
     includeCovered,
+    search,
+    fleetCodeIds,
+    customerIds,
     setAnchor,
     shiftWindow,
     goToday,
     setZoom,
     setIncludeCovered,
+    setSearch,
+    setFleets,
+    setCustomers,
   } = useDispatchWindow();
-  const { mode, setMode, timelineAvailable } = useDispatchView();
+  const { tab } = useDispatchView();
+  const { driverSearch, setDriverSearch } = useDispatchRail();
+  // One search box: on the Drivers tab it finds drivers, everywhere else moves.
+  const onDrivers = tab === "drivers";
+  const boxSearch = onDrivers ? driverSearch : search;
+  const setBoxSearch = onDrivers ? setDriverSearch : setSearch;
+
+  // The box answers on the keystroke while the URL, and the query behind it, settles.
+  const [draft, setDraft] = useState(boxSearch);
+  const [prevSearch, setPrevSearch] = useState(boxSearch);
+  if (prevSearch !== boxSearch) {
+    setPrevSearch(boxSearch);
+    setDraft(boxSearch);
+  }
+
+  // "/" reaches the search from anywhere on the console, as it does in the mockup's legend.
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key !== "/" || event.metaKey || event.ctrlKey || event.altKey) return;
+      if (isTypingTarget(event.target) || isWithinDialog(event.target)) return;
+      event.preventDefault();
+      searchRef.current?.focus();
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <div className="flex items-center gap-1">
+    // One line on a wide screen, the search giving up width first; it wraps only when it must.
+    <div className="border-border bg-card flex flex-wrap items-center gap-x-2 gap-y-1.5 border-b px-4 py-2 xl:flex-nowrap">
+      <ConsoleStatusLine freshness={freshness} />
+      <span className="bg-border h-4 w-px shrink-0" aria-hidden />
+
+      <div className="flex shrink-0 items-center gap-1">
         <Button
           type="button"
           variant="ghost"
@@ -99,11 +128,11 @@ export function ConsoleToolbar({
 
       <Popover>
         <PopoverTrigger
-          className="hover:bg-muted flex items-center gap-1.5 rounded-md px-1.5 py-0.5 text-xs font-medium transition-colors"
+          className="hover:bg-surface-hover ui-focus-ring flex shrink-0 items-center gap-1.5 rounded-md px-1.5 py-0.5 text-xs font-medium whitespace-nowrap transition-colors"
           aria-label={t("Jump to date")}
         >
           <CalendarIcon className="text-muted-foreground size-3" />
-          {formatRangeLabelForDays(anchor, zoom)}
+          {formatRangeLabelForDays(anchor, zoom, locale)}
         </PopoverTrigger>
         <PopoverContent align="start" className="w-auto p-0">
           <Calendar
@@ -118,7 +147,7 @@ export function ConsoleToolbar({
       <div
         role="group"
         aria-label={t("Window length")}
-        className="border-border inline-flex overflow-hidden rounded-md border"
+        className="border-border inline-flex shrink-0 overflow-hidden rounded-md border whitespace-nowrap"
       >
         {TIMELINE_ZOOM_OPTIONS.map((option, index) => (
           <button
@@ -127,7 +156,7 @@ export function ConsoleToolbar({
             onClick={() => setZoom(option.id)}
             aria-pressed={zoom === option.id}
             className={cn(
-              "px-2 py-1 text-xs transition-colors",
+              "ui-inset-focus-ring px-2 py-1 text-xs transition-colors",
               index > 0 && "border-border border-l",
               zoom === option.id
                 ? "bg-muted text-foreground"
@@ -139,71 +168,67 @@ export function ConsoleToolbar({
         ))}
       </div>
 
-      {/* With the driver timeline withheld the board is the only centre there is,
-          so the toggle goes rather than offering a choice of one. */}
-      {timelineAvailable && (
-        <div
-          role="group"
-          aria-label={t("Center view")}
-          className="border-border inline-flex overflow-hidden rounded-md border"
-        >
-          {CENTER_MODE_OPTIONS.map((option, index) => (
-            <button
-              key={option.id}
-              type="button"
-              onClick={() => setMode(option.id)}
-              // Reaching for the toggle is enough warning to fetch the view behind it.
-              onPointerEnter={() => preloadCenterView(option.id)}
-              onFocus={() => preloadCenterView(option.id)}
-              aria-pressed={mode === option.id}
-              className={cn(
-                "flex items-center gap-1 px-2 py-1 text-xs transition-colors",
-                index > 0 && "border-border border-l",
-                mode === option.id
-                  ? "bg-muted text-foreground"
-                  : "bg-background text-muted-foreground hover:text-foreground",
-              )}
-            >
-              <option.Icon className="size-3" aria-hidden />
-              {t(option.label)}
-            </button>
-          ))}
-        </div>
-      )}
+      <span className="bg-border h-4 w-px shrink-0" aria-hidden />
 
-      <label className="text-muted-foreground flex items-center gap-1.5 text-xs">
+      <Input
+        ref={searchRef}
+        value={draft}
+        onChange={(event) => {
+          setDraft(event.target.value);
+          setBoxSearch(event.target.value);
+        }}
+        onKeyDown={(event) => {
+          if (event.key === "Escape" && draft) {
+            event.preventDefault();
+            setDraft("");
+            setBoxSearch("");
+          }
+        }}
+        placeholder={onDrivers ? t("Search drivers") : t("Search PRO, customer or city")}
+        aria-label={
+          onDrivers
+            ? t("Search drivers by name, tractor code, or fleet")
+            : t("Search moves by PRO, customer or city")
+        }
+        leftElement={<SearchLgIcon className="text-muted-foreground size-3.5" />}
+        rightElement={<Kbd className="h-4 min-w-4 text-3xs">/</Kbd>}
+        inputContainerClassName="w-60 min-w-40 shrink"
+        className="h-7 text-xs md:text-xs"
+      />
+
+      <div className="shrink-0">
+        <MultiSelectAutocomplete<GraphQLSelectOption>
+          graphql={FLEET_SELECT_OPTIONS}
+          label={t("Fleet")}
+          placeholder={t("Fleet: all")}
+          values={[...fleetCodeIds]}
+          onChange={(values) => setFleets(selectedIds(values))}
+          getOptionValue={(option) => option.id}
+          getDisplayValue={(option) => option.label}
+          renderOption={(option) => <span className="text-xs">{option.label}</span>}
+          triggerClassName="h-7 w-32 text-xs"
+          maxCount={1}
+        />
+      </div>
+      <div className="shrink-0">
+        <MultiSelectAutocomplete<GraphQLSelectOption>
+          graphql={CUSTOMER_SELECT_OPTIONS}
+          label={t("Customer")}
+          placeholder={t("Customer: all")}
+          values={[...customerIds]}
+          onChange={(values) => setCustomers(selectedIds(values))}
+          getOptionValue={(option) => option.id}
+          getDisplayValue={(option) => option.label}
+          renderOption={(option) => <span className="text-xs">{option.label}</span>}
+          triggerClassName="h-7 w-36 text-xs"
+          maxCount={1}
+        />
+      </div>
+
+      <label className="text-muted-foreground ml-auto flex shrink-0 items-center gap-1.5 text-xs whitespace-nowrap">
         <Switch checked={includeCovered} onCheckedChange={setIncludeCovered} />
         {t("Show covered")}
       </label>
-
-      <div className="ml-auto flex items-center gap-1.5">
-        <Button
-          size="sm"
-          variant="outline"
-          className="h-7 gap-1 px-2 text-xs"
-          disabled={!canUndo || isAssigning}
-          onClick={onUndo}
-        >
-          <FlipBackwardIcon className="size-3" aria-hidden />
-          {t("Undo")}
-          <Kbd className="h-4 min-w-4 text-3xs">u</Kbd>
-        </Button>
-        {/* Auto-assign plans driver/tractor pairings, which the API refuses for an
-            organization without asset operations. Withholding the button is the whole
-            trigger — there is no hotkey and the plan mutation fires from nowhere else. */}
-        <CapabilityGate capability={OrganizationCapability.AssetOperations}>
-          <Button
-            size="sm"
-            className="h-7 gap-1 px-2 text-xs"
-            disabled={isPlanning}
-            isLoading={isPlanning}
-            onClick={onPlan}
-          >
-            <AssistMark className="size-3" aria-hidden />
-            {t("Auto-assign")}
-          </Button>
-        </CapabilityGate>
-      </div>
     </div>
   );
 }

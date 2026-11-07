@@ -4,66 +4,34 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchcandidateservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchconsoleservice"
-	"github.com/emoss08/trenova/internal/modules/operations/app/dispatcheligibility"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchplanports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 )
 
 type DispatchPlannedAssignment struct {
-	MoveID         pulid.ID                                 `json:"moveId"`
-	ProNumber      string                                   `json:"proNumber"`
-	WorkerID       pulid.ID                                 `json:"workerId"`
-	WorkerName     string                                   `json:"workerName"`
-	TractorID      pulid.ID                                 `json:"tractorId"`
-	TrailerID      pulid.ID                                 `json:"trailerId"`
-	Score          *dispatchcandidateservice.CandidateScore `json:"score"`
-	Confidence     decimal.Decimal                          `json:"confidence"`
-	Rationale      string                                   `json:"rationale"`
-	AutoExecutable bool                                     `json:"autoExecutable"`
-	ProposalID     pulid.ID                                 `json:"proposalId"`
+	*dispatchplanports.Pairing
 
-	TourID                pulid.ID `json:"tourId"`
-	SequenceIndex         int      `json:"sequenceIndex"`
-	ProjectedStartAt      int64    `json:"projectedStartAt"`
-	ProjectedCompleteAt   int64    `json:"projectedCompleteAt"`
-	ProjectedDriveRemains int64    `json:"projectedDriveRemainingMs"`
-}
-
-type DispatchTour struct {
-	TourID             pulid.ID   `json:"tourId"`
-	WorkerID           pulid.ID   `json:"workerId"`
-	WorkerName         string     `json:"workerName"`
-	MoveIDs            []pulid.ID `json:"moveIds"`
-	StartsAt           int64      `json:"startsAt"`
-	EndsAt             int64      `json:"endsAt"`
-	TotalScore         int        `json:"totalScore"`
-	TotalDeadheadMiles float64    `json:"totalDeadheadMiles"`
-}
-
-type DispatchUncoveredMove struct {
-	MoveID    pulid.ID `json:"moveId"`
-	ProNumber string   `json:"proNumber"`
-	Reason    string   `json:"reason"`
-	// StartsAt is the origin window, which is what decides whether an
-	// uncovered move is still a planning problem or has become somebody's
-	// afternoon.
-	StartsAt            int64                         `json:"startsAt"`
-	BestBlockedFindings []dispatcheligibility.Finding `json:"bestBlockedFindings"`
+	Confidence     decimal.Decimal `json:"confidence"`
+	Rationale      string          `json:"rationale"`
+	AutoExecutable bool            `json:"autoExecutable"`
+	ProposalID     pulid.ID        `json:"proposalId"`
 }
 
 type DispatchPlan struct {
-	RunID        pulid.ID                     `json:"runId"`
-	Assignments  []*DispatchPlannedAssignment `json:"assignments"`
-	Uncovered    []*DispatchUncoveredMove     `json:"uncovered"`
-	Tours        []*DispatchTour              `json:"tours"`
-	PlanningMode string                       `json:"planningMode"`
-	ShadowMode   bool                         `json:"shadowMode"`
-	AutonomyTier agent.AutonomyTier           `json:"autonomyTier"`
-	TotalScore   int                          `json:"totalScore"`
-	GeneratedAt  int64                        `json:"generatedAt"`
+	RunID          pulid.ID                       `json:"runId"`
+	Mode           dispatchcontrol.PlanningMode   `json:"mode"`
+	GeneratedAt    int64                          `json:"generatedAt"`
+	Assignments    []*DispatchPlannedAssignment   `json:"assignments"`
+	Uncovered      []*dispatchplanports.Uncovered `json:"uncovered"`
+	Tours          []*dispatchplanports.Tour      `json:"tours"`
+	CostCents      int64                          `json:"costCents"`
+	UncoveredCents int64                          `json:"uncoveredCents"`
+	ShadowMode     bool                           `json:"shadowMode"`
+	AutonomyTier   agent.AutonomyTier             `json:"autonomyTier"`
 }
 
 type DispatchPlanRequest struct {
@@ -73,10 +41,57 @@ type DispatchPlanRequest struct {
 	FleetCodeIDs []pulid.ID
 	MoveIDs      []pulid.ID
 	Apply        bool
+	Trigger      agent.RunTrigger
+}
+
+type CoverageRefreshRequester interface {
+	RequestRefresh(ctx context.Context, tenantInfo pagination.TenantInfo)
+}
+
+type CoverageMove struct {
+	MoveID      pulid.ID
+	MoveVersion int64
+}
+
+type CoverageProposalsRequest struct {
+	TenantInfo pagination.TenantInfo
+	Moves      []CoverageMove
+}
+
+type PendingCoverage struct {
+	ProposalID pulid.ID
+	MoveID     pulid.ID
+	WorkerID   pulid.ID
+	WorkerName string
+	TractorID  pulid.ID
+	TrailerID  pulid.ID
+	Confidence decimal.Decimal
+	Rationale  string
+	CreatedAt  int64
+	ExpiresAt  int64
+	Stale      bool
+}
+
+type FailedCoverage struct {
+	ProposalID pulid.ID
+	MoveID     pulid.ID
+	WorkerID   pulid.ID
+	WorkerName string
+	Reason     string
+	FailedAt   int64
+}
+
+type MoveCoverageProposals struct {
+	Pending *PendingCoverage
+	Failed  *FailedCoverage
 }
 
 type DispatchAutoAssignService interface {
 	Plan(ctx context.Context, req *DispatchPlanRequest) (*DispatchPlan, error)
+	CoverageProposals(
+		ctx context.Context,
+		req *CoverageProposalsRequest,
+	) (map[pulid.ID]*MoveCoverageProposals, error)
 }
 
 type DispatchConsoleService interface {
@@ -88,10 +103,15 @@ type DispatchConsoleService interface {
 		ctx context.Context,
 		req *dispatchconsoleservice.GetBoardRequest,
 	) ([]*dispatchconsoleservice.BoardMove, error)
+	GetMove(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		moveID pulid.ID,
+	) (*dispatchconsoleservice.BoardMove, error)
 	GetMoveCandidates(
 		ctx context.Context,
 		req *dispatchconsoleservice.MoveCandidatesRequest,
-	) ([]*dispatchcandidateservice.CandidateScore, error)
+	) ([]*dispatchplanports.CandidateScore, error)
 	GetDriverMoves(
 		ctx context.Context,
 		req *dispatchconsoleservice.DriverMovesRequest,

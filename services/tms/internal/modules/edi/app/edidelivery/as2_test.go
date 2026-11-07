@@ -37,6 +37,8 @@ import (
 
 const as2TestMIC = "q1w2e3r4, sha256"
 
+var as2TestPartnerID = pulid.MustNew("edip_")
+
 type mdnSigner struct {
 	certificate    *x509.Certificate
 	key            *rsa.PrivateKey
@@ -74,7 +76,7 @@ func pendingAS2Message(messageID string) *edimessage.EDIMessage {
 		ID:             pulid.MustNew("edimsg_"),
 		OrganizationID: pulid.MustNew("org_"),
 		BusinessUnitID: pulid.MustNew("bu_"),
-		EDIPartnerID:   pulid.MustNew("edip_"),
+		EDIPartnerID:   as2TestPartnerID,
 		Direction:      edidocument.DocumentDirectionOutbound,
 		DeliveryStatus: edimessage.MessageDeliveryStatusSending,
 		AS2MessageID:   messageID,
@@ -189,7 +191,11 @@ func buildMDN(t *testing.T, opts *as2.BuildMDNOptions) *ApplyAS2MDNRequest {
 	mdn, err := as2.BuildMDN(opts)
 	require.NoError(t, err)
 
-	return &ApplyAS2MDNRequest{ContentType: mdn.ContentType, Body: mdn.Body}
+	return &ApplyAS2MDNRequest{
+		PartnerID:   as2TestPartnerID,
+		ContentType: mdn.ContentType,
+		Body:        mdn.Body,
+	}
 }
 
 func TestApplyAS2MDNResolvesPendingDeliveryWhenMICMatches(t *testing.T) {
@@ -313,4 +319,23 @@ func TestApplyAS2MDNFailsDeliveryOnSignedMICMismatch(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.Equal(t, edimessage.MessageDeliveryStatusFailed, message.DeliveryStatus)
+}
+
+func TestApplyAS2MDNRefusesAReceiptAtAnotherPartnersAddress(t *testing.T) {
+	t.Parallel()
+
+	message := pendingAS2Message("<pending-other-partner@trenova.as2>")
+	h := newMDNTestHarness(t, message, nil)
+
+	request := buildMDN(t, &as2.BuildMDNOptions{
+		OriginalMessageID:  message.AS2MessageID,
+		ReceivedContentMIC: as2TestMIC,
+	})
+	request.PartnerID = pulid.MustNew("edip_")
+
+	err := h.service.ApplyAS2MDN(t.Context(), request)
+
+	require.Error(t, err)
+	assert.True(t, errortypes.IsAuthenticationError(err))
+	assert.Equal(t, edimessage.MessageDeliveryStatusSending, message.DeliveryStatus)
 }

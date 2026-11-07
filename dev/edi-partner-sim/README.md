@@ -46,7 +46,9 @@ go run ./cmd/edi-e2e
 ```
 
 The runner generates fresh AS2 certificates and a unique AS2 identifier per run, so it
-can be run repeatedly without colliding with earlier partners.
+can be run repeatedly without colliding with earlier partners. It reads the inbound URL from
+the AS2 profile it creates and points the simulator at it: every AS2 profile has its own
+inbound URL, and Trenova accepts a partner's messages only there.
 
 ## Setting the simulator up from its guide
 
@@ -57,15 +59,17 @@ exactly what `/control/send-tender` sends (`internal/sim/spec_test.go` holds the
 With the simulator running, attach it to a Desk conversation with an agent that handles EDI and
 ask for the connection to be set up from it. The draft should be ready with no decisions; after
 approving it, enter your AS2 private key and certificate and the simulator's certificate (from
-`/control/identity`) on the communication profile, then turn the profile on. The guide names no
-password or key, so none is drafted.
+`/control/identity`) on the communication profile, then turn the profile on. Copy the profile's
+**Inbound URL** from its **Transport** tab and give it to the simulator, with
+`-trenova-inbound` or `inboundUrl` on `POST /control/partner`; it sends nothing until it has
+one. The guide names no password or key, so none is drafted.
 
 ## Simulator control API
 
 | Method | Path | Purpose |
 | --- | --- | --- |
 | `GET`  | `/control/identity` | AS2 identity + the simulator's public certificate (PEM) |
-| `POST` | `/control/partner` | Set the Trenova certificate, inbound URL, auto-ack, and per-run AS2 identity (`as2Id`/`remoteAs2Id`) |
+| `POST` | `/control/partner` | Set the Trenova certificate, the profile's inbound URL, auto-ack, and per-run AS2 identity (`as2Id`/`remoteAs2Id`) |
 | `GET`  | `/control/received` | Documents received from Trenova (with parsed X12 envelope, signed/encrypted flags, ack status) |
 | `GET`  | `/control/sent` | Documents sent to Trenova and the resolved MDN status |
 | `POST` | `/control/send` | Send a raw X12 payload to Trenova |

@@ -15,7 +15,11 @@ import {
 } from "@/components/assistant/proposal-preview/preview-gate";
 import { presentProposal } from "@/components/assistant/proposal-presenters";
 import { usePermission } from "@/hooks/use-permission";
-import { decideAgentPlan, decideAgentProposal } from "@/lib/graphql/agent-decisions";
+import {
+  decideAgentPlan,
+  decideAgentProposal,
+  decideAgentProposals,
+} from "@/lib/graphql/agent-decisions";
 import { announceRefusal, approvalFailure } from "@/lib/approval-outcome";
 import { invalidateProposalViews } from "@/lib/proposal-cache";
 import { formatTimeAgo } from "@/lib/time-utils";
@@ -47,7 +51,6 @@ import { useQueueCursor, useQueueLeave } from "../queue/use-queue-cursor";
 import { DecisionCard, type CardGate } from "./decision-card";
 import { asAssistantProposal } from "./decision-presenters";
 import {
-  decideAgentProposals,
   isPendingPlan,
   isPendingProposal,
   startOfToday,

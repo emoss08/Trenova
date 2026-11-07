@@ -8,12 +8,14 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatcheconomics"
+
 	"github.com/emoss08/trenova/internal/modules/operations/app/customerupdateservice"
-	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchcandidateservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchconsoleservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentsuggestion"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchplanports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentboardports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentsuggestionports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -229,7 +231,7 @@ func (s *Service) bestDriver(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	moveID pulid.ID,
-) (*dispatchcandidateservice.CandidateScore, error) {
+) (*dispatchplanports.CandidateScore, error) {
 	ranked, err := s.console.GetMoveCandidates(ctx, &dispatchconsoleservice.MoveCandidatesRequest{
 		TenantInfo: tenant,
 		MoveID:     moveID,
@@ -269,7 +271,7 @@ func pickupDue(move *dispatchconsoleservice.BoardMove) *int64 {
 func assignSuggestion(
 	in *ruleInput,
 	move *dispatchconsoleservice.BoardMove,
-	driver *dispatchcandidateservice.CandidateScore,
+	driver *dispatchplanports.CandidateScore,
 ) *shipmentsuggestionports.ShipmentSuggestion {
 	first := stringutils.FirstName(driver.WorkerName)
 	deadhead := ""
@@ -290,7 +292,7 @@ func assignSuggestion(
 		Impact: compactImpact(
 			money(move.Revenue),
 			deadhead,
-			fmt.Sprintf("%d%% fit", driver.Score),
+			"costs "+dispatcheconomics.Dollars(driver.Cost.TotalCents)+" to the plan",
 		),
 		Primary: shipmentsuggestionports.SuggestionAction{
 			Type:      shipmentsuggestionports.SuggestionActionAssignDriver,

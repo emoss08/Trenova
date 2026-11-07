@@ -261,11 +261,7 @@ func orderSelectOption(entity *order.Order) *gqlmodel.SelectOption {
 }
 
 func orderSelectOptionItem(entity *order.Order) selectoption.Item {
-	return selectoption.ItemFor(
-		orderSelectOption(entity),
-		entity.CreatedAt,
-		entity.ID,
-	)
+	return selectoption.ItemFor(orderSelectOption(entity))
 }
 
 func orderID(entity *order.Order) pulid.ID {
@@ -313,11 +309,7 @@ func (r *Sources) Shipment(
 }
 
 func shipmentTypeSelectOptionItem(entity *shipmenttype.ShipmentType) selectoption.Item {
-	return selectoption.ItemFor(
-		shipmentTypeSelectOption(entity),
-		entity.CreatedAt,
-		entity.ID,
-	)
+	return selectoption.ItemFor(shipmentTypeSelectOption(entity))
 }
 
 func shipmentTypeSelectOption(entity *shipmenttype.ShipmentType) *gqlmodel.SelectOption {
@@ -333,11 +325,7 @@ func shipmentTypeSelectOption(entity *shipmenttype.ShipmentType) *gqlmodel.Selec
 }
 
 func serviceTypeSelectOptionItem(entity *servicetype.ServiceType) selectoption.Item {
-	return selectoption.ItemFor(
-		serviceTypeSelectOption(entity),
-		entity.CreatedAt,
-		entity.ID,
-	)
+	return selectoption.ItemFor(serviceTypeSelectOption(entity))
 }
 
 func serviceTypeSelectOption(entity *servicetype.ServiceType) *gqlmodel.SelectOption {
@@ -353,11 +341,7 @@ func serviceTypeSelectOption(entity *servicetype.ServiceType) *gqlmodel.SelectOp
 }
 
 func commoditySelectOptionItem(entity *commodity.Commodity) selectoption.Item {
-	return selectoption.ItemFor(
-		commoditySelectOption(entity),
-		entity.CreatedAt,
-		entity.ID,
-	)
+	return selectoption.ItemFor(commoditySelectOption(entity))
 }
 
 func commoditySelectOption(entity *commodity.Commodity) *gqlmodel.SelectOption {
@@ -376,11 +360,7 @@ func commoditySelectOption(entity *commodity.Commodity) *gqlmodel.SelectOption {
 func hazardousMaterialSelectOptionItem(
 	entity *hazardousmaterial.HazardousMaterial,
 ) selectoption.Item {
-	return selectoption.ItemFor(
-		hazardousMaterialSelectOption(entity),
-		entity.CreatedAt,
-		entity.ID,
-	)
+	return selectoption.ItemFor(hazardousMaterialSelectOption(entity))
 }
 
 func hazardousMaterialSelectOption(
@@ -397,11 +377,7 @@ func hazardousMaterialSelectOption(
 }
 
 func shipmentSelectOptionItem(entity *shipment.Shipment) selectoption.Item {
-	return selectoption.ItemFor(
-		shipmentSelectOption(entity),
-		entity.CreatedAt,
-		entity.ID,
-	)
+	return selectoption.ItemFor(shipmentSelectOption(entity))
 }
 
 func shipmentSelectOption(entity *shipment.Shipment) *gqlmodel.SelectOption {

@@ -1,6 +1,6 @@
 module github.com/emoss08/trenova
 
-go 1.26.10
+go 1.27.1
 
 require (
 	github.com/SherClockHolmes/webpush-go v1.4.0
@@ -9,7 +9,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/config v1.33.14
 	github.com/aws/aws-sdk-go-v2/credentials v1.20.14
 	github.com/boombuler/barcode v1.1.0
-	github.com/emoss08/keel v0.9.0
+	github.com/emoss08/keel v0.10.0
 	github.com/emoss08/trenova/shared v0.0.0
 	github.com/ledongthuc/pdf v0.0.0-20261020125853-5e46805f718e
 	github.com/pgvector/pgvector-go v0.4.1

@@ -1,6 +1,6 @@
 ---
 path: /shipment-management/shipments
-aliases: [loads, freight, load board, shipment list, pro number, BOL, command center, trips, dispatch board, capacity, suggested actions]
+aliases: [loads, freight, load board, shipment list, pro number, BOL, command center, trips, capacity, suggested actions]
 related:
   - /shipment-management/orders
   - /shipment-management/service-failures

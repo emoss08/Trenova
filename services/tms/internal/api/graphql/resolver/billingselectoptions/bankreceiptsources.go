@@ -8,7 +8,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/selectoption"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptbatchports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/shared/pulid"
 )
 
 type Sources struct {
@@ -51,9 +50,5 @@ func (r *Sources) BankReceiptSource(
 }
 
 func bankReceiptSourceItem(value, label string) selectoption.Item {
-	return selectoption.ItemFor(
-		&gqlmodel.SelectOption{ID: value, Label: label},
-		0,
-		pulid.ID(value),
-	)
+	return selectoption.ItemFor(&gqlmodel.SelectOption{ID: value, Label: label})
 }

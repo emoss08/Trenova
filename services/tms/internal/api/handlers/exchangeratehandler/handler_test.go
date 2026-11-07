@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/exchangerate"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/exchangerateports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/exchangerateportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
 	sharedtestutil "github.com/emoss08/trenova/shared/testutil"
@@ -22,6 +23,8 @@ import (
 const (
 	refreshPath = "/api/v1/exchange-rates/refresh"
 	quotePath   = "/api/v1/exchange-rates/settlement-quotes"
+	latestPath  = "/api/v1/exchange-rates/latest"
+	convertPath = "/api/v1/exchange-rates/convert"
 )
 
 func serve(
@@ -29,6 +32,17 @@ func serve(
 	service *exchangerateportsmock.MockExchangeRateService,
 	engine *permissionportsmock.MockPermissionEngine,
 	path string,
+) int {
+	t.Helper()
+
+	return serveMethod(t, service, engine, http.MethodPost, path)
+}
+
+func serveMethod(
+	t *testing.T,
+	service *exchangerateportsmock.MockExchangeRateService,
+	engine *permissionportsmock.MockPermissionEngine,
+	method, path string,
 ) int {
 	t.Helper()
 
@@ -48,8 +62,9 @@ func serve(
 	})
 
 	ginCtx := sharedtestutil.NewGinTestContext().
-		WithMethod(http.MethodPost).
+		WithMethod(method).
 		WithPath(path).
+		WithQuery(map[string]string{"from": "USD", "to": "CAD", "amount": "10"}).
 		WithDefaultAuthContext().
 		WithJSONBody(map[string]string{
 			"fromCurrency": "USD",
@@ -119,4 +134,60 @@ func TestSettlementQuote_RefusedWithoutCustomerPaymentCreate(t *testing.T) {
 	expectCheck(engine, permission.ResourceCustomerPayment, permission.OpCreate, false)
 
 	assert.Equal(t, http.StatusForbidden, serve(t, service, engine, quotePath))
+}
+
+func TestLatest_TakesIntegrationUpdate(t *testing.T) {
+	t.Parallel()
+
+	service := exchangerateportsmock.NewMockExchangeRateService(t)
+	engine := permissionportsmock.NewMockPermissionEngine(t)
+	expectCheck(engine, permission.ResourceIntegration, permission.OpUpdate, true)
+	service.EXPECT().
+		GetLatestRates(mock.Anything, mock.Anything, "USD").
+		Return(&exchangerateports.LatestRatesResult{}, nil).
+		Once()
+
+	assert.Equal(t, http.StatusOK, serveMethod(t, service, engine, http.MethodGet, latestPath))
+}
+
+func TestLatest_RefusedWithoutIntegrationUpdate(t *testing.T) {
+	t.Parallel()
+
+	service := exchangerateportsmock.NewMockExchangeRateService(t)
+	engine := permissionportsmock.NewMockPermissionEngine(t)
+	expectCheck(engine, permission.ResourceIntegration, permission.OpUpdate, false)
+
+	assert.Equal(
+		t,
+		http.StatusForbidden,
+		serveMethod(t, service, engine, http.MethodGet, latestPath),
+	)
+}
+
+func TestConvert_TakesCustomerPaymentCreate(t *testing.T) {
+	t.Parallel()
+
+	service := exchangerateportsmock.NewMockExchangeRateService(t)
+	engine := permissionportsmock.NewMockPermissionEngine(t)
+	expectCheck(engine, permission.ResourceCustomerPayment, permission.OpCreate, true)
+	service.EXPECT().
+		Convert(mock.Anything, mock.Anything, "USD", "CAD", mock.Anything, mock.Anything).
+		Return(&exchangerateports.RateConversionResult{}, nil).
+		Once()
+
+	assert.Equal(t, http.StatusOK, serveMethod(t, service, engine, http.MethodGet, convertPath))
+}
+
+func TestConvert_RefusedWithoutCustomerPaymentCreate(t *testing.T) {
+	t.Parallel()
+
+	service := exchangerateportsmock.NewMockExchangeRateService(t)
+	engine := permissionportsmock.NewMockPermissionEngine(t)
+	expectCheck(engine, permission.ResourceCustomerPayment, permission.OpCreate, false)
+
+	assert.Equal(
+		t,
+		http.StatusForbidden,
+		serveMethod(t, service, engine, http.MethodGet, convertPath),
+	)
 }

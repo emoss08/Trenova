@@ -150,14 +150,14 @@ type TrailersTable struct {
 // Trailers references the trailers table.
 var Trailers = &TrailersTable{
 	TableBase:                  keel.TableBase{Ref: &trailersRef},
-	ID:                         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &trailersRef, Index: 0}}},
-	BusinessUnitID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &trailersRef, Index: 1}}},
-	OrganizationID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &trailersRef, Index: 2}}},
-	EquipmentTypeID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &trailersRef, Index: 3}}},
-	EquipmentManufacturerID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &trailersRef, Index: 4}}},
-	RegistrationStateID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &trailersRef, Index: 5}}},
-	FleetCodeID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &trailersRef, Index: 6}}},
-	Status:                     keelkinds.DomaintypesEquipmentStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &trailersRef, Index: 7}}},
+	ID:                         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &trailersRef, Index: 0}}},
+	BusinessUnitID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &trailersRef, Index: 1}}},
+	OrganizationID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &trailersRef, Index: 2}}},
+	EquipmentTypeID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &trailersRef, Index: 3}}},
+	EquipmentManufacturerID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &trailersRef, Index: 4}}},
+	RegistrationStateID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &trailersRef, Index: 5}}},
+	FleetCodeID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &trailersRef, Index: 6}}},
+	Status:                     keelkinds.DomaintypesEquipmentStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &trailersRef, Index: 7}}},
 	Code:                       keel.StringCol{Col: keel.Col{Ref: &trailersRef, Index: 8}},
 	Model:                      keel.StringCol{Col: keel.Col{Ref: &trailersRef, Index: 9}},
 	Make:                       keel.StringCol{Col: keel.Col{Ref: &trailersRef, Index: 10}},
@@ -167,18 +167,18 @@ var Trailers = &TrailersTable{
 	ExternalID:                 keel.StringCol{Col: keel.Col{Ref: &trailersRef, Index: 14}},
 	RegistrationNumber:         keel.StringCol{Col: keel.Col{Ref: &trailersRef, Index: 15}},
 	MaxLoadWeight:              keel.Int64Col{Col: keel.Col{Ref: &trailersRef, Index: 16}},
-	OwnershipType:              keelkinds.DomaintypesOwnershipTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &trailersRef, Index: 17}}},
-	OwnerWorkerID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &trailersRef, Index: 18}}},
+	OwnershipType:              keelkinds.DomaintypesOwnershipTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &trailersRef, Index: 17}}},
+	OwnerWorkerID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &trailersRef, Index: 18}}},
 	LessorName:                 keel.StringCol{Col: keel.Col{Ref: &trailersRef, Index: 19}},
 	LeaseReference:             keel.StringCol{Col: keel.Col{Ref: &trailersRef, Index: 20}},
 	LeaseEndDate:               keel.Int64Col{Col: keel.Col{Ref: &trailersRef, Index: 21}},
 	LastInspectionDate:         keel.Int64Col{Col: keel.Col{Ref: &trailersRef, Index: 22}},
 	RegistrationExpiry:         keel.Int64Col{Col: keel.Col{Ref: &trailersRef, Index: 23}},
-	LastKnownLocationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &trailersRef, Index: 24}}},
+	LastKnownLocationID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &trailersRef, Index: 24}}},
 	LastKnownLocationName:      keel.StringCol{Col: keel.Col{Ref: &trailersRef, Index: 25}},
 	LastKnownLocationLatitude:  keel.Float64Col{Col: keel.Col{Ref: &trailersRef, Index: 26}},
 	LastKnownLocationLongitude: keel.Float64Col{Col: keel.Col{Ref: &trailersRef, Index: 27}},
-	InProgressMoveID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &trailersRef, Index: 28}}},
+	InProgressMoveID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &trailersRef, Index: 28}}},
 	InProgressProNumber:        keel.StringCol{Col: keel.Col{Ref: &trailersRef, Index: 29}},
 	InProgressDueAt:            keel.Int64Col{Col: keel.Col{Ref: &trailersRef, Index: 30}},
 	SearchVector:               keel.TSVectorCol{Col: keel.Col{Ref: &trailersRef, Index: 31}},
@@ -192,14 +192,14 @@ var Trailers = &TrailersTable{
 func BuildTrailers(r *keel.Ref) *TrailersTable {
 	return &TrailersTable{
 		TableBase:                  keel.TableBase{Ref: r},
-		ID:                         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		EquipmentTypeID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		EquipmentManufacturerID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		RegistrationStateID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		FleetCodeID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		Status:                     keelkinds.DomaintypesEquipmentStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		ID:                         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		EquipmentTypeID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		EquipmentManufacturerID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		RegistrationStateID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		FleetCodeID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		Status:                     keelkinds.DomaintypesEquipmentStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
 		Code:                       keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
 		Model:                      keel.StringCol{Col: keel.Col{Ref: r, Index: 9}},
 		Make:                       keel.StringCol{Col: keel.Col{Ref: r, Index: 10}},
@@ -209,18 +209,18 @@ func BuildTrailers(r *keel.Ref) *TrailersTable {
 		ExternalID:                 keel.StringCol{Col: keel.Col{Ref: r, Index: 14}},
 		RegistrationNumber:         keel.StringCol{Col: keel.Col{Ref: r, Index: 15}},
 		MaxLoadWeight:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
-		OwnershipType:              keelkinds.DomaintypesOwnershipTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 17}}},
-		OwnerWorkerID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 18}}},
+		OwnershipType:              keelkinds.DomaintypesOwnershipTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 17}}},
+		OwnerWorkerID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 18}}},
 		LessorName:                 keel.StringCol{Col: keel.Col{Ref: r, Index: 19}},
 		LeaseReference:             keel.StringCol{Col: keel.Col{Ref: r, Index: 20}},
 		LeaseEndDate:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 21}},
 		LastInspectionDate:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 22}},
 		RegistrationExpiry:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 23}},
-		LastKnownLocationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 24}}},
+		LastKnownLocationID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 24}}},
 		LastKnownLocationName:      keel.StringCol{Col: keel.Col{Ref: r, Index: 25}},
 		LastKnownLocationLatitude:  keel.Float64Col{Col: keel.Col{Ref: r, Index: 26}},
 		LastKnownLocationLongitude: keel.Float64Col{Col: keel.Col{Ref: r, Index: 27}},
-		InProgressMoveID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 28}}},
+		InProgressMoveID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 28}}},
 		InProgressProNumber:        keel.StringCol{Col: keel.Col{Ref: r, Index: 29}},
 		InProgressDueAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 30}},
 		SearchVector:               keel.TSVectorCol{Col: keel.Col{Ref: r, Index: 31}},
@@ -281,8 +281,6 @@ func (t *TrailersTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*tr
 
 // TrailersQuery is a query over trailer.Trailer.
 type TrailersQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*trailer.Trailer] = (*TrailersTable)(nil)
 
 var _ keel.Query[*trailer.Trailer] = (*TrailersQuery)(nil)
 
@@ -398,42 +396,42 @@ func (t *TrailersTable) Compute(col keel.Column, e keel.Expr) keel.Query[*traile
 
 // Create inserts row.
 func (t *TrailersTable) Create(ctx context.Context, db *keel.DB, row *trailer.Trailer) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *TrailersTable) CreateMany(ctx context.Context, db *keel.DB, rows []*trailer.Trailer) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *TrailersTable) Save(ctx context.Context, db *keel.DB, row *trailer.Trailer, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *TrailersTable) SaveExcept(ctx context.Context, db *keel.DB, row *trailer.Trailer, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *TrailersTable) DeleteRow(ctx context.Context, db *keel.DB, row *trailer.Trailer) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *TrailersTable) Upsert(ctx context.Context, db *keel.DB, rows []*trailer.Trailer, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *TrailersTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*trailer.Trailer, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *TrailersTable) Copy(ctx context.Context, db *keel.DB, rows []*trailer.Trailer) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -605,37 +603,45 @@ func (q *TrailersQuery) Clone() keel.Query[*trailer.Trailer] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *TrailersQuery) One(ctx context.Context, db *keel.DB) (*trailer.Trailer, error) {
-	return keel.One[*trailer.Trailer](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*trailer.Trailer)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *TrailersQuery) First(ctx context.Context, db *keel.DB) (*trailer.Trailer, error) {
-	return keel.First[*trailer.Trailer](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*trailer.Trailer)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *TrailersQuery) List(ctx context.Context, db *keel.DB) ([]*trailer.Trailer, error) {
-	return keel.List[*trailer.Trailer](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*trailer.Trailer)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *TrailersQuery) All(ctx context.Context, db *keel.DB) ([]*trailer.Trailer, error) {
-	return keel.All[*trailer.Trailer](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*trailer.Trailer)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *TrailersQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*trailer.Trailer, error) {
-	return keel.UpdateReturning[*trailer.Trailer](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*trailer.Trailer)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *TrailersQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*trailer.Trailer], error) {
-	return keel.PageOf[*trailer.Trailer](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*trailer.Trailer])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *TrailersQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*trailer.Trailer) error) error {
-	return keel.Each[*trailer.Trailer](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*trailer.Trailer)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newTrailer() unsafe.Pointer { return unsafe.Pointer(new(trailer.Trailer)) }

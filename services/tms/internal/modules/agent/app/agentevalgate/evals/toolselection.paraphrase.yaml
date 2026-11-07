@@ -26,6 +26,14 @@ cases:
     expect: [equipment_list_tractors]
   - request: who is the best person to haul this leg
     expect: [dispatch_rank_candidates]
+  - request: where should I send trucks tomorrow
+    expect: [dispatch_forecast_demand]
+  - request: will Dallas be busy Tuesday morning
+    expect: [dispatch_forecast_demand]
+  - request: which regions are going to need more trucks than we will have there
+    expect: [dispatch_forecast_demand]
+  - request: which cities tend to get a rush of orders early in the week
+    expect: [dispatch_forecast_demand]
   - request: offer this freight to outside haulers
     expect: [dispatch_create_tender, dispatch_create_tender_from_routing_guide, carrier_shop]
   - request: what is the going price to haul freight from Denver to Phoenix

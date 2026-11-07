@@ -85,14 +85,14 @@ type InvoiceSharesTable struct {
 // InvoiceShares references the invoice_shares table.
 var InvoiceShares = &InvoiceSharesTable{
 	TableBase:      keel.TableBase{Ref: &invoiceSharesRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceSharesRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceSharesRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceSharesRef, Index: 2}}},
-	InvoiceID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceSharesRef, Index: 3}}},
-	SharedWithID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceSharesRef, Index: 4}}},
-	SharedByID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceSharesRef, Index: 5}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceSharesRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceSharesRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceSharesRef, Index: 2}}},
+	InvoiceID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceSharesRef, Index: 3}}},
+	SharedWithID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceSharesRef, Index: 4}}},
+	SharedByID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceSharesRef, Index: 5}}},
 	Note:           keel.StringCol{Col: keel.Col{Ref: &invoiceSharesRef, Index: 6}},
-	Tab:            ShareTabCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceSharesRef, Index: 7}}},
+	Tab:            ShareTabCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceSharesRef, Index: 7}}},
 	ShareCount:     keel.Int64Col{Col: keel.Col{Ref: &invoiceSharesRef, Index: 8}},
 	FirstSharedAt:  keel.Int64Col{Col: keel.Col{Ref: &invoiceSharesRef, Index: 9}},
 	LastSharedAt:   keel.Int64Col{Col: keel.Col{Ref: &invoiceSharesRef, Index: 10}},
@@ -104,14 +104,14 @@ var InvoiceShares = &InvoiceSharesTable{
 func BuildInvoiceShares(r *keel.Ref) *InvoiceSharesTable {
 	return &InvoiceSharesTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		InvoiceID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		SharedWithID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		SharedByID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		InvoiceID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		SharedWithID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		SharedByID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		Note:           keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
-		Tab:            ShareTabCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		Tab:            ShareTabCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
 		ShareCount:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
 		FirstSharedAt:  keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
 		LastSharedAt:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
@@ -145,8 +145,6 @@ func (t *InvoiceSharesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID)
 
 // InvoiceSharesQuery is a query over invoiceshare.InvoiceShare.
 type InvoiceSharesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*invoiceshare.InvoiceShare] = (*InvoiceSharesTable)(nil)
 
 var _ keel.Query[*invoiceshare.InvoiceShare] = (*InvoiceSharesQuery)(nil)
 
@@ -262,42 +260,42 @@ func (t *InvoiceSharesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*i
 
 // Create inserts row.
 func (t *InvoiceSharesTable) Create(ctx context.Context, db *keel.DB, row *invoiceshare.InvoiceShare) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *InvoiceSharesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*invoiceshare.InvoiceShare) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *InvoiceSharesTable) Save(ctx context.Context, db *keel.DB, row *invoiceshare.InvoiceShare, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *InvoiceSharesTable) SaveExcept(ctx context.Context, db *keel.DB, row *invoiceshare.InvoiceShare, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *InvoiceSharesTable) DeleteRow(ctx context.Context, db *keel.DB, row *invoiceshare.InvoiceShare) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *InvoiceSharesTable) Upsert(ctx context.Context, db *keel.DB, rows []*invoiceshare.InvoiceShare, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *InvoiceSharesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*invoiceshare.InvoiceShare, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *InvoiceSharesTable) Copy(ctx context.Context, db *keel.DB, rows []*invoiceshare.InvoiceShare) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -469,37 +467,45 @@ func (q *InvoiceSharesQuery) Clone() keel.Query[*invoiceshare.InvoiceShare] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *InvoiceSharesQuery) One(ctx context.Context, db *keel.DB) (*invoiceshare.InvoiceShare, error) {
-	return keel.One[*invoiceshare.InvoiceShare](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*invoiceshare.InvoiceShare)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *InvoiceSharesQuery) First(ctx context.Context, db *keel.DB) (*invoiceshare.InvoiceShare, error) {
-	return keel.First[*invoiceshare.InvoiceShare](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*invoiceshare.InvoiceShare)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *InvoiceSharesQuery) List(ctx context.Context, db *keel.DB) ([]*invoiceshare.InvoiceShare, error) {
-	return keel.List[*invoiceshare.InvoiceShare](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*invoiceshare.InvoiceShare)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *InvoiceSharesQuery) All(ctx context.Context, db *keel.DB) ([]*invoiceshare.InvoiceShare, error) {
-	return keel.All[*invoiceshare.InvoiceShare](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*invoiceshare.InvoiceShare)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *InvoiceSharesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*invoiceshare.InvoiceShare, error) {
-	return keel.UpdateReturning[*invoiceshare.InvoiceShare](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*invoiceshare.InvoiceShare)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *InvoiceSharesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*invoiceshare.InvoiceShare], error) {
-	return keel.PageOf[*invoiceshare.InvoiceShare](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*invoiceshare.InvoiceShare])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *InvoiceSharesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*invoiceshare.InvoiceShare) error) error {
-	return keel.Each[*invoiceshare.InvoiceShare](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*invoiceshare.InvoiceShare)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newInvoiceShare() unsafe.Pointer { return unsafe.Pointer(new(invoiceshare.InvoiceShare)) }
@@ -604,24 +610,24 @@ var enumShareTab = [...]schema.EnumValue{
 }
 
 // ShareTabCol is a column of invoiceshare.ShareTab values.
-type ShareTabCol struct{ keel.StringCol }
+type ShareTabCol struct{ keel.TypedStringCol }
 
-func (c ShareTabCol) Eq(v invoiceshare.ShareTab) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c ShareTabCol) Ne(v invoiceshare.ShareTab) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c ShareTabCol) Gt(v invoiceshare.ShareTab) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c ShareTabCol) Gte(v invoiceshare.ShareTab) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c ShareTabCol) Lt(v invoiceshare.ShareTab) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c ShareTabCol) Lte(v invoiceshare.ShareTab) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c ShareTabCol) Eq(v invoiceshare.ShareTab) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c ShareTabCol) Ne(v invoiceshare.ShareTab) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c ShareTabCol) Gt(v invoiceshare.ShareTab) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c ShareTabCol) Gte(v invoiceshare.ShareTab) keel.Pred { return c.Text().Gte(string(v)) }
+func (c ShareTabCol) Lt(v invoiceshare.ShareTab) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c ShareTabCol) Lte(v invoiceshare.ShareTab) keel.Pred { return c.Text().Lte(string(v)) }
 func (c ShareTabCol) IsDistinctFrom(v invoiceshare.ShareTab) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ShareTabCol) Between(lo, hi invoiceshare.ShareTab) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c ShareTabCol) To(v invoiceshare.ShareTab) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c ShareTabCol) To(v invoiceshare.ShareTab) keel.Assignment { return c.Text().To(string(v)) }
 func (c ShareTabCol) In(vs ...invoiceshare.ShareTab) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ShareTabCol) NotIn(vs ...invoiceshare.ShareTab) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

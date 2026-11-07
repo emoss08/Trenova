@@ -104,6 +104,10 @@ func (s *Service) approveInternal(
 		}
 
 		previous = *entity
+		txErr = s.requireSeparateApprover(txCtx, tenantInfo, entity, actor.UserID)
+		if txErr != nil {
+			return txErr
+		}
 		if txErr = PlanApprove(entity, actor.UserID, timeutils.NowUnix()); txErr != nil {
 			return txErr
 		}

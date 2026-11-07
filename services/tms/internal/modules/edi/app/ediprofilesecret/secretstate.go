@@ -30,5 +30,7 @@ func WithSecretState(
 		)
 	}
 	profile.EncryptedSecrets = nil
+	profile.AS2InboundPath = profile.InboundPath()
+	profile.AS2InboundToken = ""
 	return profile
 }

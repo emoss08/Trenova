@@ -145,20 +145,20 @@ type AIUsageRecordsTable struct {
 // AIUsageRecords references the ai_usage_records table.
 var AIUsageRecords = &AIUsageRecordsTable{
 	TableBase:               keel.TableBase{Ref: &aIUsageRecordsRef},
-	ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &aIUsageRecordsRef, Index: 0}}},
-	BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &aIUsageRecordsRef, Index: 1}}},
-	OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &aIUsageRecordsRef, Index: 2}}},
-	ProviderID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &aIUsageRecordsRef, Index: 3}}},
-	ProviderKind:            aiproviderdb.KindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &aIUsageRecordsRef, Index: 4}}},
+	ID:                      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &aIUsageRecordsRef, Index: 0}}},
+	BusinessUnitID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &aIUsageRecordsRef, Index: 1}}},
+	OrganizationID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &aIUsageRecordsRef, Index: 2}}},
+	ProviderID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &aIUsageRecordsRef, Index: 3}}},
+	ProviderKind:            aiproviderdb.KindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &aIUsageRecordsRef, Index: 4}}},
 	Model:                   keel.StringCol{Col: keel.Col{Ref: &aIUsageRecordsRef, Index: 5}},
-	Task:                    keelkinds.AitaskTaskCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &aIUsageRecordsRef, Index: 6}}},
-	Surface:                 SurfaceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &aIUsageRecordsRef, Index: 7}}},
-	UserID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &aIUsageRecordsRef, Index: 8}}},
-	AgentDefinitionID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &aIUsageRecordsRef, Index: 9}}},
-	ThreadID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &aIUsageRecordsRef, Index: 10}}},
-	RunID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &aIUsageRecordsRef, Index: 11}}},
-	Feature:                 FeatureCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &aIUsageRecordsRef, Index: 12}}},
-	SubjectType:             SubjectTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &aIUsageRecordsRef, Index: 13}}},
+	Task:                    keelkinds.AitaskTaskCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &aIUsageRecordsRef, Index: 6}}},
+	Surface:                 SurfaceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &aIUsageRecordsRef, Index: 7}}},
+	UserID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &aIUsageRecordsRef, Index: 8}}},
+	AgentDefinitionID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &aIUsageRecordsRef, Index: 9}}},
+	ThreadID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &aIUsageRecordsRef, Index: 10}}},
+	RunID:                   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &aIUsageRecordsRef, Index: 11}}},
+	Feature:                 FeatureCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &aIUsageRecordsRef, Index: 12}}},
+	SubjectType:             SubjectTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &aIUsageRecordsRef, Index: 13}}},
 	SubjectID:               keel.StringCol{Col: keel.Col{Ref: &aIUsageRecordsRef, Index: 14}},
 	Succeeded:               keel.BoolCol{Col: keel.Col{Ref: &aIUsageRecordsRef, Index: 15}},
 	ErrorClass:              keel.StringCol{Col: keel.Col{Ref: &aIUsageRecordsRef, Index: 16}},
@@ -171,8 +171,8 @@ var AIUsageRecords = &AIUsageRecordsTable{
 	CostUSD:                 keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &aIUsageRecordsRef, Index: 23}}},
 	TraceID:                 keel.StringCol{Col: keel.Col{Ref: &aIUsageRecordsRef, Index: 24}},
 	SpanID:                  keel.StringCol{Col: keel.Col{Ref: &aIUsageRecordsRef, Index: 25}},
-	OwnerKind:               agentdb.RunOwnerKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &aIUsageRecordsRef, Index: 26}}},
-	OwnerID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &aIUsageRecordsRef, Index: 27}}},
+	OwnerKind:               agentdb.RunOwnerKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &aIUsageRecordsRef, Index: 26}}},
+	OwnerID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &aIUsageRecordsRef, Index: 27}}},
 	DelegateCallID:          keel.StringCol{Col: keel.Col{Ref: &aIUsageRecordsRef, Index: 28}},
 	AgentDefinitionVersion:  keel.Int64Col{Col: keel.Col{Ref: &aIUsageRecordsRef, Index: 29}},
 	Attempt:                 keel.Int64Col{Col: keel.Col{Ref: &aIUsageRecordsRef, Index: 30}},
@@ -196,20 +196,20 @@ var AIUsageRecords = &AIUsageRecordsTable{
 func BuildAIUsageRecords(r *keel.Ref) *AIUsageRecordsTable {
 	return &AIUsageRecordsTable{
 		TableBase:               keel.TableBase{Ref: r},
-		ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		ProviderID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		ProviderKind:            aiproviderdb.KindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ID:                      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ProviderID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ProviderKind:            aiproviderdb.KindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		Model:                   keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
-		Task:                    keelkinds.AitaskTaskCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		Surface:                 SurfaceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
-		UserID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
-		AgentDefinitionID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
-		ThreadID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
-		RunID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
-		Feature:                 FeatureCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 12}}},
-		SubjectType:             SubjectTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 13}}},
+		Task:                    keelkinds.AitaskTaskCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		Surface:                 SurfaceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		UserID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		AgentDefinitionID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		ThreadID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		RunID:                   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 11}}},
+		Feature:                 FeatureCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 12}}},
+		SubjectType:             SubjectTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 13}}},
 		SubjectID:               keel.StringCol{Col: keel.Col{Ref: r, Index: 14}},
 		Succeeded:               keel.BoolCol{Col: keel.Col{Ref: r, Index: 15}},
 		ErrorClass:              keel.StringCol{Col: keel.Col{Ref: r, Index: 16}},
@@ -222,8 +222,8 @@ func BuildAIUsageRecords(r *keel.Ref) *AIUsageRecordsTable {
 		CostUSD:                 keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 23}}},
 		TraceID:                 keel.StringCol{Col: keel.Col{Ref: r, Index: 24}},
 		SpanID:                  keel.StringCol{Col: keel.Col{Ref: r, Index: 25}},
-		OwnerKind:               agentdb.RunOwnerKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 26}}},
-		OwnerID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 27}}},
+		OwnerKind:               agentdb.RunOwnerKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 26}}},
+		OwnerID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 27}}},
 		DelegateCallID:          keel.StringCol{Col: keel.Col{Ref: r, Index: 28}},
 		AgentDefinitionVersion:  keel.Int64Col{Col: keel.Col{Ref: r, Index: 29}},
 		Attempt:                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 30}},
@@ -259,8 +259,6 @@ func (t *AIUsageRecordsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID
 
 // AIUsageRecordsQuery is a query over aiusage.AIUsageRecord.
 type AIUsageRecordsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*aiusage.AIUsageRecord] = (*AIUsageRecordsTable)(nil)
 
 var _ keel.Query[*aiusage.AIUsageRecord] = (*AIUsageRecordsQuery)(nil)
 
@@ -376,42 +374,42 @@ func (t *AIUsageRecordsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*
 
 // Create inserts row.
 func (t *AIUsageRecordsTable) Create(ctx context.Context, db *keel.DB, row *aiusage.AIUsageRecord) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *AIUsageRecordsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*aiusage.AIUsageRecord) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *AIUsageRecordsTable) Save(ctx context.Context, db *keel.DB, row *aiusage.AIUsageRecord, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *AIUsageRecordsTable) SaveExcept(ctx context.Context, db *keel.DB, row *aiusage.AIUsageRecord, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *AIUsageRecordsTable) DeleteRow(ctx context.Context, db *keel.DB, row *aiusage.AIUsageRecord) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *AIUsageRecordsTable) Upsert(ctx context.Context, db *keel.DB, rows []*aiusage.AIUsageRecord, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *AIUsageRecordsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*aiusage.AIUsageRecord, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *AIUsageRecordsTable) Copy(ctx context.Context, db *keel.DB, rows []*aiusage.AIUsageRecord) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -583,37 +581,45 @@ func (q *AIUsageRecordsQuery) Clone() keel.Query[*aiusage.AIUsageRecord] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *AIUsageRecordsQuery) One(ctx context.Context, db *keel.DB) (*aiusage.AIUsageRecord, error) {
-	return keel.One[*aiusage.AIUsageRecord](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*aiusage.AIUsageRecord)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *AIUsageRecordsQuery) First(ctx context.Context, db *keel.DB) (*aiusage.AIUsageRecord, error) {
-	return keel.First[*aiusage.AIUsageRecord](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*aiusage.AIUsageRecord)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *AIUsageRecordsQuery) List(ctx context.Context, db *keel.DB) ([]*aiusage.AIUsageRecord, error) {
-	return keel.List[*aiusage.AIUsageRecord](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*aiusage.AIUsageRecord)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *AIUsageRecordsQuery) All(ctx context.Context, db *keel.DB) ([]*aiusage.AIUsageRecord, error) {
-	return keel.All[*aiusage.AIUsageRecord](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*aiusage.AIUsageRecord)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *AIUsageRecordsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*aiusage.AIUsageRecord, error) {
-	return keel.UpdateReturning[*aiusage.AIUsageRecord](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*aiusage.AIUsageRecord)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *AIUsageRecordsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*aiusage.AIUsageRecord], error) {
-	return keel.PageOf[*aiusage.AIUsageRecord](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*aiusage.AIUsageRecord])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *AIUsageRecordsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*aiusage.AIUsageRecord) error) error {
-	return keel.Each[*aiusage.AIUsageRecord](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*aiusage.AIUsageRecord)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newAIUsageRecord() unsafe.Pointer { return unsafe.Pointer(new(aiusage.AIUsageRecord)) }
@@ -959,66 +965,70 @@ var enumSurface = [...]schema.EnumValue{
 }
 
 // FeatureCol is a column of aiusage.Feature values.
-type FeatureCol struct{ keel.StringCol }
+type FeatureCol struct{ keel.TypedStringCol }
 
-func (c FeatureCol) Eq(v aiusage.Feature) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c FeatureCol) Ne(v aiusage.Feature) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c FeatureCol) Gt(v aiusage.Feature) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c FeatureCol) Gte(v aiusage.Feature) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c FeatureCol) Lt(v aiusage.Feature) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c FeatureCol) Lte(v aiusage.Feature) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c FeatureCol) Eq(v aiusage.Feature) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c FeatureCol) Ne(v aiusage.Feature) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c FeatureCol) Gt(v aiusage.Feature) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c FeatureCol) Gte(v aiusage.Feature) keel.Pred { return c.Text().Gte(string(v)) }
+func (c FeatureCol) Lt(v aiusage.Feature) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c FeatureCol) Lte(v aiusage.Feature) keel.Pred { return c.Text().Lte(string(v)) }
 func (c FeatureCol) IsDistinctFrom(v aiusage.Feature) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c FeatureCol) Between(lo, hi aiusage.Feature) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c FeatureCol) To(v aiusage.Feature) keel.Assignment { return c.StringCol.To(string(v)) }
-func (c FeatureCol) In(vs ...aiusage.Feature) keel.Pred   { return c.StringCol.In(keel.Strings(vs)...) }
+func (c FeatureCol) To(v aiusage.Feature) keel.Assignment { return c.Text().To(string(v)) }
+func (c FeatureCol) In(vs ...aiusage.Feature) keel.Pred {
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
+}
 func (c FeatureCol) NotIn(vs ...aiusage.Feature) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // SubjectTypeCol is a column of aiusage.SubjectType values.
-type SubjectTypeCol struct{ keel.StringCol }
+type SubjectTypeCol struct{ keel.TypedStringCol }
 
-func (c SubjectTypeCol) Eq(v aiusage.SubjectType) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c SubjectTypeCol) Ne(v aiusage.SubjectType) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c SubjectTypeCol) Gt(v aiusage.SubjectType) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c SubjectTypeCol) Gte(v aiusage.SubjectType) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c SubjectTypeCol) Lt(v aiusage.SubjectType) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c SubjectTypeCol) Lte(v aiusage.SubjectType) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c SubjectTypeCol) Eq(v aiusage.SubjectType) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c SubjectTypeCol) Ne(v aiusage.SubjectType) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c SubjectTypeCol) Gt(v aiusage.SubjectType) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c SubjectTypeCol) Gte(v aiusage.SubjectType) keel.Pred { return c.Text().Gte(string(v)) }
+func (c SubjectTypeCol) Lt(v aiusage.SubjectType) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c SubjectTypeCol) Lte(v aiusage.SubjectType) keel.Pred { return c.Text().Lte(string(v)) }
 func (c SubjectTypeCol) IsDistinctFrom(v aiusage.SubjectType) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c SubjectTypeCol) Between(lo, hi aiusage.SubjectType) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c SubjectTypeCol) To(v aiusage.SubjectType) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c SubjectTypeCol) To(v aiusage.SubjectType) keel.Assignment { return c.Text().To(string(v)) }
 func (c SubjectTypeCol) In(vs ...aiusage.SubjectType) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c SubjectTypeCol) NotIn(vs ...aiusage.SubjectType) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // SurfaceCol is a column of aiusage.Surface values.
-type SurfaceCol struct{ keel.StringCol }
+type SurfaceCol struct{ keel.TypedStringCol }
 
-func (c SurfaceCol) Eq(v aiusage.Surface) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c SurfaceCol) Ne(v aiusage.Surface) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c SurfaceCol) Gt(v aiusage.Surface) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c SurfaceCol) Gte(v aiusage.Surface) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c SurfaceCol) Lt(v aiusage.Surface) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c SurfaceCol) Lte(v aiusage.Surface) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c SurfaceCol) Eq(v aiusage.Surface) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c SurfaceCol) Ne(v aiusage.Surface) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c SurfaceCol) Gt(v aiusage.Surface) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c SurfaceCol) Gte(v aiusage.Surface) keel.Pred { return c.Text().Gte(string(v)) }
+func (c SurfaceCol) Lt(v aiusage.Surface) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c SurfaceCol) Lte(v aiusage.Surface) keel.Pred { return c.Text().Lte(string(v)) }
 func (c SurfaceCol) IsDistinctFrom(v aiusage.Surface) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c SurfaceCol) Between(lo, hi aiusage.Surface) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c SurfaceCol) To(v aiusage.Surface) keel.Assignment { return c.StringCol.To(string(v)) }
-func (c SurfaceCol) In(vs ...aiusage.Surface) keel.Pred   { return c.StringCol.In(keel.Strings(vs)...) }
+func (c SurfaceCol) To(v aiusage.Surface) keel.Assignment { return c.Text().To(string(v)) }
+func (c SurfaceCol) In(vs ...aiusage.Surface) keel.Pred {
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
+}
 func (c SurfaceCol) NotIn(vs ...aiusage.Surface) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

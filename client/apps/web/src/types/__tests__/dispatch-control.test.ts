@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { dispatchControlSchema } from "../dispatch-control";
+import { DEFAULT_DISPATCH_ECONOMICS, dispatchControlSchema } from "../dispatch-control";
 
 const BASE = {
   enableAutoAssignment: false,
-  autoAssignmentStrategy: "Proximity",
+  autoProposeCoverage: false,
   enforceWorkerAssign: true,
   enforceTrailerContinuity: true,
   enforceHosCompliance: true,
@@ -139,5 +139,69 @@ describe("dispatchControlSchema tender settings", () => {
 
   it("refuses an exhausted-tender action the server does not know", () => {
     expect(tenderIssues({ tenderExhaustedAction: "Retry" })).toHaveLength(1);
+  });
+});
+
+describe("dispatchControlSchema economics", () => {
+  it("gives a record that predates costs and prices the server's defaults", () => {
+    const parsed = dispatchControlSchema.parse(BASE);
+
+    expect(parsed.economics).toEqual(DEFAULT_DISPATCH_ECONOMICS);
+    expect(parsed.learnDispatchStyle).toBe(false);
+    expect(parsed.planForEndMarket).toBe(false);
+    expect(parsed.anticipateFreight).toBe(false);
+    expect(parsed.economics.anticipationMaxCents).toBe(0);
+  });
+
+  it("keeps anticipating freight and the most a likely load is worth as the server sent them", () => {
+    const parsed = dispatchControlSchema.parse({
+      ...BASE,
+      anticipateFreight: true,
+      economics: { ...DEFAULT_DISPATCH_ECONOMICS, anticipationMaxCents: 125_000 },
+    });
+
+    expect(parsed.anticipateFreight).toBe(true);
+    expect(parsed.economics.anticipationMaxCents).toBe(125_000);
+    expect(dispatchControlSchema.parse(parsed)).toEqual(parsed);
+  });
+
+  it("reads economics saved without a likely-load cap as the automatic cap", () => {
+    const withoutCap: Record<string, unknown> = { ...DEFAULT_DISPATCH_ECONOMICS };
+    delete withoutCap.anticipationMaxCents;
+    const parsed = dispatchControlSchema.parse({
+      ...BASE,
+      economics: { ...withoutCap, emptyMileCents: 250 },
+    });
+
+    expect(parsed.economics.anticipationMaxCents).toBe(0);
+    expect(parsed.economics.emptyMileCents).toBe(250);
+  });
+
+  it("holds the most a likely load is worth between $0 and $2,000 in whole cents", () => {
+    const capIssues = (anticipationMaxCents: number) => {
+      const result = dispatchControlSchema.safeParse({
+        ...BASE,
+        economics: { ...DEFAULT_DISPATCH_ECONOMICS, anticipationMaxCents },
+      });
+      return result.success ? [] : result.error.issues.map((issue) => issue.path.join("."));
+    };
+
+    expect(capIssues(0)).toEqual([]);
+    expect(capIssues(200_000)).toEqual([]);
+    expect(capIssues(200_001)).toEqual(["economics.anticipationMaxCents"]);
+    expect(capIssues(-1)).toEqual(["economics.anticipationMaxCents"]);
+    expect(capIssues(100.5)).toEqual(["economics.anticipationMaxCents"]);
+  });
+
+  it("refuses a negative cost on the field that holds it", () => {
+    const result = dispatchControlSchema.safeParse({
+      ...BASE,
+      economics: { ...DEFAULT_DISPATCH_ECONOMICS, emptyMileCents: -1 },
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues.map((issue) => issue.path.join("."))).toContain(
+      "economics.emptyMileCents",
+    );
   });
 });

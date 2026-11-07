@@ -1,6 +1,7 @@
 import { AssistantAgentProvider } from "@/components/agent-identity/agent-context";
 import { stepsFromExchanges, type ToolStep } from "@/components/assistant/activity";
 import { decisionArtifactFor, type ApprovalEntry } from "@/components/assistant/approval-queue";
+import { isTypingTarget } from "@/lib/dom";
 import { ArtifactOpenerProvider } from "@/components/assistant/artifact-opener";
 import { askAnswerIds, liveAskRequest } from "@/components/assistant/ask-requests";
 import { fillCommand, SLASH_COMMANDS } from "@/components/assistant/composer-commands";
@@ -40,6 +41,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { useT } from "@trenova/shared/i18n/use-t";
+import { formatShortcut } from "@trenova/shared/lib/shortcuts";
 import { cn } from "@trenova/shared/lib/utils";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { useReducedMotion } from "motion/react";
@@ -58,6 +60,8 @@ import {
 import { useNavigate } from "react-router";
 import { useDeskAttachments } from "./composer/desk-attachments";
 import { useDeskScans } from "./composer/desk-capture";
+import { approvesFromKey } from "./approve-shortcut";
+import { DeskCardsLiveProvider } from "./desk-card";
 import { DeskComposer } from "./composer/desk-composer";
 import { DeskAgentRecommendation, DeskNoAgentFits } from "./composer/desk-agent-recommendation";
 import { DeskQueue } from "./composer/desk-queue";
@@ -456,6 +460,16 @@ export function DeskThread({
     onPageRequestSent,
   });
   const { entries, placements, turn, isActive, compaction } = model;
+  // History drawn on the frame after it loads is the page as it was; a card
+  // that appears after that is something that just happened.
+  const [historySettled, setHistorySettled] = useState(false);
+  useEffect(() => {
+    if (model.historyLoading || historySettled) {
+      return;
+    }
+    const frame = window.requestAnimationFrame(() => setHistorySettled(true));
+    return () => window.cancelAnimationFrame(frame);
+  }, [model.historyLoading, historySettled]);
   const { allowed: canAddTools } = usePermission(Resource.AgentDefinition, Operation.Update);
   const suggestion = useConversationSuggestion({
     agent,
@@ -634,11 +648,15 @@ export function DeskThread({
   };
 
   const onKeyDown = (event: KeyboardEvent) => {
-    if ((event.metaKey || event.ctrlKey) && event.key === "Enter" && approveRef.current) {
+    if (event.defaultPrevented) {
+      return;
+    }
+    if (approveRef.current && approvesFromKey(event)) {
       event.preventDefault();
       approveRef.current();
+      return;
     }
-    if (event.key === "Escape" && workspaceOpen) {
+    if (event.key === "Escape" && workspaceOpen && !isTypingTarget(event.target)) {
       setWorkspaceOpen?.(false);
     }
   };
@@ -1011,238 +1029,431 @@ export function DeskThread({
       <ArtifactOpenerProvider onOpen={openArtifact} attachmentCards={attachmentCards}>
         <ArtifactLinkContext value={renderArtifactLink}>
           <DecisionFollowUpProvider value={model.followUpDecision}>
-            <div
-              className={cn("dk-stage", compact && "dk-dense", workspaceOpen && "dk-open")}
-              onKeyDown={onKeyDown}
-            >
+            <DeskCardsLiveProvider value={historySettled}>
               <div
-                className={cn("dk-room", isActive && "dk-lit")}
-                style={
-                  dockHeight === null
-                    ? undefined
-                    : ({ "--dk-dock-h": `${dockHeight}px` } as CSSProperties)
-                }
+                className={cn("dk-stage", compact && "dk-dense", workspaceOpen && "dk-open")}
+                onKeyDown={onKeyDown}
               >
-                {chapters && <div className="dk-chap-rail-slot">{chapters.rail(chapterNav)}</div>}
-                <div className="dk-scroll" ref={scrollRef} tabIndex={0}>
-                  <div className="dk-grid dk-flow">
-                    {model.historyLoading && entries.length === 0 && turn === null && (
-                      <DeskTranscriptSkeleton />
-                    )}
-                    {emptyState &&
-                      !model.historyLoading &&
-                      entries.length === 0 &&
-                      turn === null &&
-                      !opening.openingQuestion &&
-                      !waitingOpening &&
-                      !queued &&
-                      emptyState({ ask, busy: isActive })}
-                    {hasOlder && (
-                      <div ref={olderRef} className="dk-older" aria-live="polite">
-                        {loadingOlder ? t("Reading earlier messages…") : ""}
-                      </div>
-                    )}
-                    {entries.map((entry) => {
-                      if (entry.kind === "compaction") {
-                        return (
-                          <DeskRow
-                            key={entry.message.id}
-                            kind="event"
-                            className="dk-cmpd"
-                            first={isFirst(entry.message.id)}
-                          >
-                            <DeskCompactMark message={entry.message} />
-                          </DeskRow>
-                        );
-                      }
-                      if (entry.kind === "user" && answerIds.has(entry.message.id)) {
-                        // An answer reads under its question's record; only
-                        // the files it carried are drawn here.
-                        const attachments = entry.message.attachments ?? [];
-                        return attachments.length > 0 ? (
-                          <DeskRow key={entry.message.id} kind="continued">
-                            <DeskMessageAttachments attachments={attachments} />
-                          </DeskRow>
-                        ) : null;
-                      }
-                      if (entry.kind === "user") {
-                        return (
-                          <Fragment key={entry.message.id}>
-                            {chapterRow(entry.message.turnId, isFirst(entry.message.id))}
-                            <DeskRow kind="question" first={isFirst(entry.message.id)}>
+                <div
+                  className={cn("dk-room", isActive && "dk-lit")}
+                  style={
+                    dockHeight === null
+                      ? undefined
+                      : ({ "--dk-dock-h": `${dockHeight}px` } as CSSProperties)
+                  }
+                >
+                  {chapters && <div className="dk-chap-rail-slot">{chapters.rail(chapterNav)}</div>}
+                  <div
+                    className="dk-scroll"
+                    ref={scrollRef}
+                    tabIndex={0}
+                    role="region"
+                    aria-label={t("Conversation")}
+                  >
+                    <div className="dk-grid dk-flow">
+                      {model.historyLoading && entries.length === 0 && turn === null && (
+                        <DeskTranscriptSkeleton />
+                      )}
+                      {emptyState &&
+                        !model.historyLoading &&
+                        entries.length === 0 &&
+                        turn === null &&
+                        !opening.openingQuestion &&
+                        !waitingOpening &&
+                        !queued &&
+                        emptyState({ ask, busy: isActive })}
+                      {hasOlder && (
+                        <div ref={olderRef} className="dk-older" aria-live="polite">
+                          {loadingOlder ? t("Reading earlier messages…") : ""}
+                        </div>
+                      )}
+                      {entries.map((entry) => {
+                        if (entry.kind === "compaction") {
+                          return (
+                            <DeskRow
+                              key={entry.message.id}
+                              kind="event"
+                              className="dk-cmpd"
+                              first={isFirst(entry.message.id)}
+                            >
+                              <DeskCompactMark message={entry.message} />
+                            </DeskRow>
+                          );
+                        }
+                        if (entry.kind === "user" && answerIds.has(entry.message.id)) {
+                          // An answer reads under its question's record; only
+                          // the files it carried are drawn here.
+                          const attachments = entry.message.attachments ?? [];
+                          return attachments.length > 0 ? (
+                            <DeskRow key={entry.message.id} kind="continued">
+                              <DeskMessageAttachments attachments={attachments} />
+                            </DeskRow>
+                          ) : null;
+                        }
+                        if (entry.kind === "user") {
+                          return (
+                            <Fragment key={entry.message.id}>
+                              {chapterRow(entry.message.turnId, isFirst(entry.message.id))}
+                              <DeskRow kind="question" first={isFirst(entry.message.id)}>
+                                <DeskQuestion
+                                  text={entry.message.content}
+                                  mentions={entry.message.mentions}
+                                  attachments={entry.message.attachments}
+                                />
+                              </DeskRow>
+                            </Fragment>
+                          );
+                        }
+                        if (entry.kind === "steer") {
+                          return (
+                            <DeskRow
+                              key={entry.message.id}
+                              kind="question"
+                              first={isFirst(entry.message.id)}
+                            >
                               <DeskQuestion
                                 text={entry.message.content}
                                 mentions={entry.message.mentions}
-                                attachments={entry.message.attachments}
+                                tag={t("Sent while it was working")}
                               />
                             </DeskRow>
-                          </Fragment>
-                        );
-                      }
-                      if (entry.kind === "steer") {
-                        return (
-                          <DeskRow
-                            key={entry.message.id}
-                            kind="question"
-                            first={isFirst(entry.message.id)}
-                          >
-                            <DeskQuestion
-                              text={entry.message.content}
-                              mentions={entry.message.mentions}
-                              tag={t("Sent while it was working")}
-                            />
-                          </DeskRow>
-                        );
-                      }
-                      if (entry.kind === "wait") {
-                        return (
-                          <DeskRow
-                            key={entry.message.id}
-                            kind="event"
-                            first={isFirst(entry.message.id)}
-                          >
-                            <DeskWaitNote
-                              content={entry.message.content}
-                              waits={model.waits.byId}
-                              timezone={timezone}
-                            />
-                          </DeskRow>
-                        );
-                      }
-                      if (entry.kind === "world") {
-                        return (
-                          <DeskRow
-                            key={entry.message.id}
-                            kind="event"
-                            first={isFirst(entry.message.id)}
-                          >
-                            <DeskWorldChange changes={entry.message.worldChanges ?? []} />
-                          </DeskRow>
-                        );
-                      }
-                      if (entry.kind === "schedule") {
-                        const scheduleId = entry.message.scheduleId ?? "";
-                        // A schedule an agent proposed carries the words it
-                        // wrote out, not the person's: only its card is drawn.
-                        if (entry.message.proposalId) {
-                          return schedules ? (
+                          );
+                        }
+                        if (entry.kind === "wait") {
+                          return (
                             <DeskRow
                               key={entry.message.id}
                               kind="event"
                               first={isFirst(entry.message.id)}
                             >
-                              {schedules.card(scheduleId, true)}
+                              <DeskWaitNote
+                                content={entry.message.content}
+                                waits={model.waits.byId}
+                                timezone={timezone}
+                              />
+                            </DeskRow>
+                          );
+                        }
+                        if (entry.kind === "world") {
+                          return (
+                            <DeskRow
+                              key={entry.message.id}
+                              kind="event"
+                              first={isFirst(entry.message.id)}
+                            >
+                              <DeskWorldChange changes={entry.message.worldChanges ?? []} />
+                            </DeskRow>
+                          );
+                        }
+                        if (entry.kind === "schedule") {
+                          const scheduleId = entry.message.scheduleId ?? "";
+                          // A schedule an agent proposed carries the words it
+                          // wrote out, not the person's: only its card is drawn.
+                          if (entry.message.proposalId) {
+                            return schedules ? (
+                              <DeskRow
+                                key={entry.message.id}
+                                kind="event"
+                                first={isFirst(entry.message.id)}
+                              >
+                                {schedules.card(scheduleId, true)}
+                              </DeskRow>
+                            ) : null;
+                          }
+                          return (
+                            <Fragment key={entry.message.id}>
+                              <DeskRow kind="question" first={isFirst(entry.message.id)}>
+                                <DeskQuestion text={entry.message.content} />
+                              </DeskRow>
+                              {schedules && (
+                                <DeskRow kind="event">{schedules.card(scheduleId, false)}</DeskRow>
+                              )}
+                            </Fragment>
+                          );
+                        }
+                        if (entry.kind === "declined") {
+                          return (
+                            <DeskRow
+                              key={entry.message.id}
+                              kind="question"
+                              first={isFirst(entry.message.id)}
+                            >
+                              <DeskQuestion
+                                text={entry.message.content}
+                                muted
+                                tag={t("Not sent to the agent")}
+                              />
+                            </DeskRow>
+                          );
+                        }
+                        if (entry.kind === "refusal") {
+                          return (
+                            <DeskRow
+                              key={entry.message.id}
+                              kind="event"
+                              first={isFirst(entry.message.id)}
+                            >
+                              <DeskErrorCard
+                                tone="neutral"
+                                icon="shield"
+                                title={t(
+                                  "This is outside what {0} can do",
+                                  agent?.name ?? t("the agent"),
+                                )}
+                                sub={entry.message.content}
+                                actions={
+                                  refusedQuestion.has(entry.message.id) ? (
+                                    <>
+                                      <DeskErrorButton
+                                        ink
+                                        onClick={() => {
+                                          model.onDraftChange(
+                                            refusedQuestion.get(entry.message.id) ?? "",
+                                          );
+                                          setAgentPickerSignal((value) => value + 1);
+                                        }}
+                                      >
+                                        {t("Ask another agent")}
+                                      </DeskErrorButton>
+                                      <DeskErrorButton
+                                        onClick={() =>
+                                          model.onDraftChange(
+                                            refusedQuestion.get(entry.message.id) ?? "",
+                                          )
+                                        }
+                                      >
+                                        {t("Rephrase")}
+                                      </DeskErrorButton>
+                                    </>
+                                  ) : undefined
+                                }
+                              />
+                            </DeskRow>
+                          );
+                        }
+                        if (entry.kind === "decision") {
+                          return null;
+                        }
+                        if (entry.kind === "handoff") {
+                          const card = renderHandoff?.(entry.message);
+                          return card ? (
+                            <DeskRow
+                              key={entry.message.id}
+                              kind="event"
+                              first={isFirst(entry.message.id)}
+                            >
+                              {card}
                             </DeskRow>
                           ) : null;
                         }
-                        return (
-                          <Fragment key={entry.message.id}>
-                            <DeskRow kind="question" first={isFirst(entry.message.id)}>
-                              <DeskQuestion text={entry.message.content} />
+                        const failure = entry.message.failure;
+                        if (failure) {
+                          const arrived = arrivedBefore.get(entry.message.id) ?? "";
+                          const question = questionBefore.get(entry.message.id) ?? "";
+                          return (
+                            <DeskRow
+                              key={entry.message.id}
+                              kind="event"
+                              first={isFirst(entry.message.id)}
+                            >
+                              {failure.kind === "no_model" ? (
+                                <DeskNoModelCard
+                                  providers={failure.providers}
+                                  onRetry={question !== "" ? () => ask(question) : undefined}
+                                  onCheckStatus={checkProviders}
+                                />
+                              ) : failure.kind === "stopped" || failure.kind === "interrupted" ? (
+                                <DeskCutOffCard
+                                  arrived={arrived}
+                                  vendor={vendorOf(entry.message.providerId)}
+                                  stoppedByYou={failure.kind === "stopped"}
+                                  onRetry={question !== "" ? () => ask(question) : undefined}
+                                  onContinue={() => ask(t("Continue from where you stopped."))}
+                                />
+                              ) : (
+                                <DeskErrorCard
+                                  tone="err"
+                                  compact
+                                  title={t("The reply didn't come through")}
+                                  sub={
+                                    closingReason(entry.message.content) ||
+                                    t("Nothing was changed.")
+                                  }
+                                  actions={
+                                    question !== "" ? (
+                                      <DeskErrorButton ink onClick={() => ask(question)}>
+                                        <DeskIcon name="replay" size={12} />
+                                        {t("Try again")}
+                                      </DeskErrorButton>
+                                    ) : undefined
+                                  }
+                                />
+                              )}
                             </DeskRow>
-                            {schedules && (
-                              <DeskRow kind="event">{schedules.card(scheduleId, false)}</DeskRow>
-                            )}
-                          </Fragment>
-                        );
-                      }
-                      if (entry.kind === "declined") {
+                          );
+                        }
+                        if (!replyShows(entry)) {
+                          return null;
+                        }
+                        const continued = !layout.headed.has(entry.message.id);
                         return (
                           <DeskRow
                             key={entry.message.id}
-                            kind="question"
+                            kind={continued ? "continued" : "reply"}
                             first={isFirst(entry.message.id)}
+                            time={
+                              continued ? undefined : turnTime(entry.message.createdAt, timezone, t)
+                            }
                           >
-                            <DeskQuestion
-                              text={entry.message.content}
-                              muted
-                              tag={t("Not sent to the agent")}
+                            <DeskReply
+                              entry={entry}
+                              steps={replySteps.get(entry.message.id) ?? NO_STEPS}
+                              threadArtifacts={artifacts}
+                              asks={replyAsks.get(entry.message.id)}
+                              dockedAskId={dockedAsk?.callId ?? null}
+                              sentAnswer={
+                                sentAnswer !== null &&
+                                replyAsks
+                                  .get(entry.message.id)
+                                  ?.some(
+                                    (replyAsk) => replyAsk.request.callId === sentAnswer.callId,
+                                  )
+                                  ? sentAnswer
+                                  : null
+                              }
+                              closesTurn={lastOfTurn.has(entry.message.id)}
+                              onStartChapter={chapters?.startAt(entry.message)}
+                              onOpenArtifact={openArtifact}
                             />
+                            {(poorlyRead.get(entry.message.id) ?? []).map((fileName) => (
+                              <div key={fileName} className="dk-ec-after">
+                                <DeskPoorlyReadCard
+                                  fileName={fileName}
+                                  onUploadClearer={
+                                    composerLock
+                                      ? undefined
+                                      : () => setFilePickerSignal((n) => n + 1)
+                                  }
+                                  onUseWhatWasRead={
+                                    composerLock
+                                      ? undefined
+                                      : () =>
+                                          ask(
+                                            t(
+                                              "Go ahead with what you could read from {0}.",
+                                              fileName,
+                                            ),
+                                          )
+                                  }
+                                />
+                              </div>
+                            ))}
+                            {renderReplyExtras?.(entry.message.id)}
+                            {(writeResults.get(entry.message.id) ?? []).map((proposal) => (
+                              <div key={proposal.id} className="dk-ec-after">
+                                <DeskWriteResultCard proposal={proposal} onAsk={ask} />
+                              </div>
+                            ))}
+                            {entry.message.fallbackFrom && (
+                              <DeskFallbackLine
+                                fromVendor={vendorOf(entry.message.fallbackFrom.providerId) ?? ""}
+                                fromModel={
+                                  entry.message.fallbackFrom.model ||
+                                  entry.message.fallbackFrom.name
+                                }
+                                answeredVendor={vendorOf(entry.message.providerId) ?? ""}
+                                answeredModel={entry.message.model}
+                              />
+                            )}
+                            {entry.message.truncated && (
+                              <DeskCutOffCard
+                                arrived={withoutCutNote(entry.message.content)}
+                                vendor={vendorOf(entry.message.providerId)}
+                                onRetry={retryFor(entry.message.id)}
+                                onContinue={() => ask(t("Continue from where you stopped."))}
+                              />
+                            )}
                           </DeskRow>
                         );
-                      }
-                      if (entry.kind === "refusal") {
-                        return (
-                          <DeskRow
-                            key={entry.message.id}
-                            kind="event"
-                            first={isFirst(entry.message.id)}
-                          >
-                            <DeskErrorCard
-                              tone="neutral"
-                              icon="shield"
-                              title={t(
-                                "This is outside what {0} can do",
-                                agent?.name ?? t("the agent"),
-                              )}
-                              sub={entry.message.content}
-                              actions={
-                                refusedQuestion.has(entry.message.id) ? (
-                                  <>
-                                    <DeskErrorButton
-                                      ink
-                                      onClick={() => {
-                                        model.onDraftChange(
-                                          refusedQuestion.get(entry.message.id) ?? "",
-                                        );
-                                        setAgentPickerSignal((value) => value + 1);
-                                      }}
-                                    >
-                                      {t("Ask another agent")}
-                                    </DeskErrorButton>
-                                    <DeskErrorButton
-                                      onClick={() =>
-                                        model.onDraftChange(
-                                          refusedQuestion.get(entry.message.id) ?? "",
-                                        )
-                                      }
-                                    >
-                                      {t("Rephrase")}
-                                    </DeskErrorButton>
-                                  </>
-                                ) : undefined
+                      })}
+                      {sentAnswer !== null && turn && turn.attachments.length > 0 && (
+                        <DeskRow kind="continued">
+                          <DeskMessageAttachments attachments={turn.attachments} />
+                        </DeskRow>
+                      )}
+                      {sentAnswer === null &&
+                        turn &&
+                        !turn.followUp &&
+                        turn.userContent !== "" &&
+                        turn.rateLimited === null &&
+                        chapterRow(liveChapterTurn, !layout.any)}
+                      {sentAnswer === null &&
+                        turn &&
+                        !turn.followUp &&
+                        turn.userContent !== "" &&
+                        turn.rateLimited === null && (
+                          <DeskRow kind="question" first={!layout.any}>
+                            <DeskQuestion
+                              text={turn.userContent}
+                              attachments={turn.attachments}
+                              mentions={turn.mentions}
+                              muted={turn.status === "refused"}
+                              tag={
+                                turn.status === "refused" ? t("Not sent to the agent") : undefined
                               }
                             />
                           </DeskRow>
-                        );
-                      }
-                      if (entry.kind === "decision") {
-                        return null;
-                      }
-                      if (entry.kind === "handoff") {
-                        const card = renderHandoff?.(entry.message);
-                        return card ? (
-                          <DeskRow
-                            key={entry.message.id}
-                            kind="event"
-                            first={isFirst(entry.message.id)}
-                          >
-                            {card}
+                        )}
+                      {turn?.interjections.map((interjection) =>
+                        interjection.kind === "steer" ? (
+                          <DeskRow key={interjection.id} kind="question" first={!layout.any}>
+                            <DeskQuestion
+                              text={interjection.text}
+                              mentions={interjection.mentions}
+                              tag={t("Read at its next step")}
+                            />
                           </DeskRow>
-                        ) : null;
-                      }
-                      const failure = entry.message.failure;
-                      if (failure) {
-                        const arrived = arrivedBefore.get(entry.message.id) ?? "";
-                        const question = questionBefore.get(entry.message.id) ?? "";
-                        return (
-                          <DeskRow
-                            key={entry.message.id}
-                            kind="event"
-                            first={isFirst(entry.message.id)}
-                          >
-                            {failure.kind === "no_model" ? (
+                        ) : (
+                          <DeskRow key={interjection.key} kind="event" first={!layout.any}>
+                            <DeskWorldChange changes={interjection.changes} />
+                          </DeskRow>
+                        ),
+                      )}
+                      {turn && (live !== "" || webSearch !== null) && (
+                        <DeskRow
+                          kind="reply"
+                          first={!layout.any}
+                          time={turnTime(Math.floor(turn.startedAt / 1000), timezone, t)}
+                        >
+                          <DeskStreamingReply
+                            text={live}
+                            usedMemoryIds={turn.usedMemoryIds}
+                            webSources={liveSources}
+                          />
+                          {webSearch && (
+                            <DeskWebLive
+                              label={t("Searching the web")}
+                              query={webSearch.query}
+                              sources={webSearch.sources}
+                            />
+                          )}
+                        </DeskRow>
+                      )}
+                      {turn?.status === "error" &&
+                        turn.limit === null &&
+                        turn.rateLimited === null && (
+                          <DeskRow kind="event" first={!layout.any}>
+                            {turn.failedProviders.length > 0 ? (
                               <DeskNoModelCard
-                                providers={failure.providers}
-                                onRetry={question !== "" ? () => ask(question) : undefined}
+                                providers={turn.failedProviders}
+                                onRetry={model.retry ? () => void model.retry?.() : undefined}
                                 onCheckStatus={checkProviders}
                               />
-                            ) : failure.kind === "stopped" || failure.kind === "interrupted" ? (
+                            ) : turn.stopped || live !== "" ? (
                               <DeskCutOffCard
-                                arrived={arrived}
-                                vendor={vendorOf(entry.message.providerId)}
-                                stoppedByYou={failure.kind === "stopped"}
-                                onRetry={question !== "" ? () => ask(question) : undefined}
+                                arrived={live}
+                                stoppedByYou={turn.stopped}
+                                onRetry={model.retry ? () => void model.retry?.() : undefined}
                                 onContinue={() => ask(t("Continue from where you stopped."))}
                               />
                             ) : (
@@ -1250,580 +1461,409 @@ export function DeskThread({
                                 tone="err"
                                 compact
                                 title={t("The reply didn't come through")}
-                                sub={
-                                  closingReason(entry.message.content) || t("Nothing was changed.")
-                                }
+                                sub={turn.error ?? t("Nothing was changed.")}
                                 actions={
-                                  question !== "" ? (
-                                    <DeskErrorButton ink onClick={() => ask(question)}>
-                                      <DeskIcon name="replay" size={12} />
-                                      {t("Try again")}
+                                  <>
+                                    {model.retry && (
+                                      <DeskErrorButton ink onClick={() => void model.retry?.()}>
+                                        <DeskIcon name="replay" size={12} />
+                                        {t("Try again")}
+                                      </DeskErrorButton>
+                                    )}
+                                    <DeskErrorButton onClick={() => void model.dismiss()}>
+                                      {t("Dismiss")}
                                     </DeskErrorButton>
-                                  ) : undefined
+                                  </>
                                 }
                               />
                             )}
                           </DeskRow>
-                        );
-                      }
-                      if (!replyShows(entry)) {
-                        return null;
-                      }
-                      const continued = !layout.headed.has(entry.message.id);
-                      return (
-                        <DeskRow
-                          key={entry.message.id}
-                          kind={continued ? "continued" : "reply"}
-                          first={isFirst(entry.message.id)}
-                          time={
-                            continued ? undefined : turnTime(entry.message.createdAt, timezone, t)
-                          }
-                        >
-                          <DeskReply
-                            entry={entry}
-                            steps={replySteps.get(entry.message.id) ?? NO_STEPS}
-                            threadArtifacts={artifacts}
-                            asks={replyAsks.get(entry.message.id)}
-                            dockedAskId={dockedAsk?.callId ?? null}
-                            sentAnswer={
-                              sentAnswer !== null &&
-                              replyAsks
-                                .get(entry.message.id)
-                                ?.some((replyAsk) => replyAsk.request.callId === sentAnswer.callId)
-                                ? sentAnswer
-                                : null
-                            }
-                            closesTurn={lastOfTurn.has(entry.message.id)}
-                            onStartChapter={chapters?.startAt(entry.message)}
-                            onOpenArtifact={openArtifact}
-                          />
-                          {(poorlyRead.get(entry.message.id) ?? []).map((fileName) => (
-                            <div key={fileName} className="dk-ec-after">
-                              <DeskPoorlyReadCard
-                                fileName={fileName}
-                                onUploadClearer={
-                                  composerLock ? undefined : () => setFilePickerSignal((n) => n + 1)
-                                }
-                                onUseWhatWasRead={
-                                  composerLock
-                                    ? undefined
-                                    : () =>
-                                        ask(
-                                          t(
-                                            "Go ahead with what you could read from {0}.",
-                                            fileName,
-                                          ),
-                                        )
-                                }
-                              />
-                            </div>
-                          ))}
-                          {renderReplyExtras?.(entry.message.id)}
-                          {(writeResults.get(entry.message.id) ?? []).map((proposal) => (
-                            <div key={proposal.id} className="dk-ec-after">
-                              <DeskWriteResultCard proposal={proposal} onAsk={ask} />
-                            </div>
-                          ))}
-                          {entry.message.fallbackFrom && (
-                            <DeskFallbackLine
-                              fromVendor={vendorOf(entry.message.fallbackFrom.providerId) ?? ""}
-                              fromModel={
-                                entry.message.fallbackFrom.model || entry.message.fallbackFrom.name
-                              }
-                              answeredVendor={vendorOf(entry.message.providerId) ?? ""}
-                              answeredModel={entry.message.model}
+                        )}
+                      {/* The question that opened the conversation goes once the
+                        thread's history has loaded; it shows from the first
+                        frame, as it does when sent from here. */}
+                      {!waitingOpening &&
+                        !turn &&
+                        openingSchedule === null &&
+                        opening.openingQuestion && (
+                          <DeskRow kind="question" first={entries.length === 0}>
+                            <DeskQuestion
+                              text={opening.openingQuestion}
+                              mentions={handoff?.mentions}
                             />
-                          )}
-                          {entry.message.truncated && (
-                            <DeskCutOffCard
-                              arrived={withoutCutNote(entry.message.content)}
-                              vendor={vendorOf(entry.message.providerId)}
-                              onRetry={retryFor(entry.message.id)}
-                              onContinue={() => ask(t("Continue from where you stopped."))}
-                            />
-                          )}
-                        </DeskRow>
-                      );
-                    })}
-                    {sentAnswer !== null && turn && turn.attachments.length > 0 && (
-                      <DeskRow kind="continued">
-                        <DeskMessageAttachments attachments={turn.attachments} />
-                      </DeskRow>
-                    )}
-                    {sentAnswer === null &&
-                      turn &&
-                      !turn.followUp &&
-                      turn.userContent !== "" &&
-                      turn.rateLimited === null &&
-                      chapterRow(liveChapterTurn, !layout.any)}
-                    {sentAnswer === null &&
-                      turn &&
-                      !turn.followUp &&
-                      turn.userContent !== "" &&
-                      turn.rateLimited === null && (
-                        <DeskRow kind="question" first={!layout.any}>
+                          </DeskRow>
+                        )}
+                      {waitingOpening && (
+                        <DeskRow kind="question" first={entries.length === 0}>
                           <DeskQuestion
-                            text={turn.userContent}
-                            attachments={turn.attachments}
-                            mentions={turn.mentions}
-                            muted={turn.status === "refused"}
-                            tag={turn.status === "refused" ? t("Not sent to the agent") : undefined}
+                            text={waitingOpening}
+                            attachments={waitingFiles}
+                            mentions={handoff?.mentions}
                           />
+                          <div className="dk-ec-queued dk-ec-queued-row">
+                            <Spinner size={12} />
+                            {t(
+                              "{0, plural, one {Uploading # file} other {Uploading # files}}",
+                              Math.max(waitingFiles.length, handoff?.files.length ?? 0),
+                            )}
+                          </div>
                         </DeskRow>
                       )}
-                    {turn?.interjections.map((interjection) =>
-                      interjection.kind === "steer" ? (
-                        <DeskRow key={interjection.id} kind="question" first={!layout.any}>
-                          <DeskQuestion
-                            text={interjection.text}
-                            mentions={interjection.mentions}
-                            tag={t("Read at its next step")}
-                          />
+                      {schedules?.pending != null && (
+                        <DeskRow kind="question" first={entries.length === 0}>
+                          <DeskQuestion text={schedules.pending} />
                         </DeskRow>
+                      )}
+                      {queued && (
+                        <DeskRow kind="question" first={entries.length === 0}>
+                          <DeskQuestion text={queued.content} />
+                          <div className="dk-ec-queued dk-ec-queued-row">
+                            <DeskIcon name="undo" size={11} stroke={2.2} className="dk-ec-wait" />
+                            {t("Waiting to send")}
+                          </div>
+                        </DeskRow>
+                      )}
+                    </div>
+                  </div>
+                  {!online && (
+                    <div className="dk-ec-off dk-ec-offtop" role="status">
+                      <span className="dk-ec-offd" />
+                      {t("You're offline · messages will send when you reconnect")}
+                    </div>
+                  )}
+                  <DeskDropOverlay show={drag.on} hot={drag.hot} count={drag.count} />
+                  {burst !== null && <DeskConfetti key={burst} seed={burst % 1000} />}
+                  <div
+                    className={cn(
+                      "dk-jump",
+                      jumping && "dk-show",
+                      isActive && jumping && "dk-live",
+                    )}
+                  >
+                    <Button
+                      variant="bare"
+                      size="bare"
+                      className="dk-jump-b h-8 gap-2 rounded-badge bg-dsk-raised pr-3 pl-3.25 text-sm font-medium text-dsk-fg transition-[translate,scale,box-shadow] duration-160 ease-(--dk-spring) in-[.dk-dense]:h-7 hover:-translate-y-px active:translate-y-0 active:scale-96 [&_svg]:text-dsk-subtle"
+                      onClick={jumpToLatest}
+                      tabIndex={jumping ? 0 : -1}
+                    >
+                      {isActive && jumping ? (
+                        <>
+                          <span className="dk-jump-d" />
+                          {t("Agent is replying")}
+                        </>
+                      ) : unread > 0 ? (
+                        <>
+                          <span className="dk-jump-n">{unread}</span>
+                          {t("{0, plural, one {New reply} other {New replies}}", unread)}
+                        </>
                       ) : (
-                        <DeskRow key={interjection.key} kind="event" first={!layout.any}>
-                          <DeskWorldChange changes={interjection.changes} />
-                        </DeskRow>
-                      ),
-                    )}
-                    {turn && (live !== "" || webSearch !== null) && (
-                      <DeskRow
-                        kind="reply"
-                        first={!layout.any}
-                        time={turnTime(Math.floor(turn.startedAt / 1000), timezone, t)}
+                        t("Jump to latest")
+                      )}
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.4"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        aria-hidden
                       >
-                        <DeskStreamingReply
-                          text={live}
-                          usedMemoryIds={turn.usedMemoryIds}
-                          webSources={liveSources}
-                        />
-                        {webSearch && (
-                          <DeskWebLive
-                            label={t("Searching the web")}
-                            query={webSearch.query}
-                            sources={webSearch.sources}
-                          />
+                        <path d="M12 5v14M6 13l6 6 6-6" />
+                      </svg>
+                    </Button>
+                  </div>
+                  <div className="dk-dock" ref={dockRef}>
+                    <div className="dk-grid">
+                      <div className="dk-g" />
+                      <div className={cn("dk-c", attached && "dk-has-dec")}>
+                        {typeof dockTop === "function" ? dockTop({ ask, busy: isActive }) : dockTop}
+                        {!pending && !holding && <DeskTermsNote />}
+                        {pending && model.current === null && !holding && (
+                          <Button
+                            variant="quiet"
+                            size="sm"
+                            className={cn(
+                              "self-center rounded-lg text-dsk-muted hover:bg-dsk-hover hover:text-dsk-fg",
+                              attached && "mb-2",
+                            )}
+                            onClick={model.resumeAll}
+                          >
+                            {t(
+                              "{0, plural, one {# change waits on you} other {# changes wait on you}}",
+                              model.queue.length,
+                            )}
+                          </Button>
                         )}
-                      </DeskRow>
-                    )}
-                    {turn?.status === "error" &&
-                      turn.limit === null &&
-                      turn.rateLimited === null && (
-                        <DeskRow kind="event" first={!layout.any}>
-                          {turn.failedProviders.length > 0 ? (
-                            <DeskNoModelCard
-                              providers={turn.failedProviders}
-                              onRetry={model.retry ? () => void model.retry?.() : undefined}
-                              onCheckStatus={checkProviders}
-                            />
-                          ) : turn.stopped || live !== "" ? (
-                            <DeskCutOffCard
-                              arrived={live}
-                              stoppedByYou={turn.stopped}
-                              onRetry={model.retry ? () => void model.retry?.() : undefined}
-                              onContinue={() => ask(t("Continue from where you stopped."))}
-                            />
-                          ) : (
+                        {model.block === "full" && !composerLock && (
+                          <div className="dk-ec-dockcard">
                             <DeskErrorCard
-                              tone="err"
+                              tone="info"
+                              icon="info"
                               compact
-                              title={t("The reply didn't come through")}
-                              sub={turn.error ?? t("Nothing was changed.")}
+                              title={t("This conversation is too long for {0}", currentModelName)}
+                              sub={t(
+                                "Start a new conversation with {0} to keep going. This one stays here to read.",
+                                agent?.name ?? t("the agent"),
+                              )}
                               actions={
                                 <>
-                                  {model.retry && (
-                                    <DeskErrorButton ink onClick={() => void model.retry?.()}>
-                                      <DeskIcon name="replay" size={12} />
-                                      {t("Try again")}
+                                  {onStartNew && (
+                                    <DeskErrorButton ink onClick={onStartNew}>
+                                      {t("Continue in a new conversation")}
                                     </DeskErrorButton>
                                   )}
-                                  <DeskErrorButton onClick={() => void model.dismiss()}>
-                                    {t("Dismiss")}
-                                  </DeskErrorButton>
+                                  {model.providers.length > 1 && (
+                                    <DeskErrorButton
+                                      onClick={() => setPickerSignal((value) => value + 1)}
+                                    >
+                                      {t("Switch model")}
+                                    </DeskErrorButton>
+                                  )}
                                 </>
                               }
                             />
-                          )}
-                        </DeskRow>
-                      )}
-                    {/* The question that opened the conversation goes once the
-                        thread's history has loaded; it shows from the first
-                        frame, as it does when sent from here. */}
-                    {!waitingOpening &&
-                      !turn &&
-                      openingSchedule === null &&
-                      opening.openingQuestion && (
-                        <DeskRow kind="question" first={entries.length === 0}>
-                          <DeskQuestion
-                            text={opening.openingQuestion}
-                            mentions={handoff?.mentions}
-                          />
-                        </DeskRow>
-                      )}
-                    {waitingOpening && (
-                      <DeskRow kind="question" first={entries.length === 0}>
-                        <DeskQuestion
-                          text={waitingOpening}
-                          attachments={waitingFiles}
-                          mentions={handoff?.mentions}
-                        />
-                        <div className="dk-ec-queued dk-ec-queued-row">
-                          <Spinner size={12} />
-                          {t(
-                            "{0, plural, one {Uploading # file} other {Uploading # files}}",
-                            Math.max(waitingFiles.length, handoff?.files.length ?? 0),
-                          )}
-                        </div>
-                      </DeskRow>
-                    )}
-                    {schedules?.pending != null && (
-                      <DeskRow kind="question" first={entries.length === 0}>
-                        <DeskQuestion text={schedules.pending} />
-                      </DeskRow>
-                    )}
-                    {queued && (
-                      <DeskRow kind="question" first={entries.length === 0}>
-                        <DeskQuestion text={queued.content} />
-                        <div className="dk-ec-queued dk-ec-queued-row">
-                          <DeskIcon name="undo" size={11} stroke={2.2} className="dk-ec-wait" />
-                          {t("Waiting to send")}
-                        </div>
-                      </DeskRow>
-                    )}
-                  </div>
-                </div>
-                {!online && (
-                  <div className="dk-ec-off dk-ec-offtop" role="status">
-                    <span className="dk-ec-offd" />
-                    {t("You're offline · messages will send when you reconnect")}
-                  </div>
-                )}
-                <DeskDropOverlay show={drag.on} hot={drag.hot} count={drag.count} />
-                {burst !== null && <DeskConfetti key={burst} seed={burst % 1000} />}
-                <div
-                  className={cn("dk-jump", jumping && "dk-show", isActive && jumping && "dk-live")}
-                >
-                  <Button
-                    variant="bare"
-                    size="bare"
-                    className="dk-jump-b h-8 gap-2 rounded-badge bg-dsk-raised pr-3 pl-3.25 text-sm font-medium text-dsk-fg transition-[translate,scale,box-shadow] duration-160 ease-(--dk-spring) in-[.dk-dense]:h-7 hover:-translate-y-px active:translate-y-0 active:scale-96 [&_svg]:text-dsk-subtle"
-                    onClick={jumpToLatest}
-                    tabIndex={jumping ? 0 : -1}
-                  >
-                    {isActive && jumping ? (
-                      <>
-                        <span className="dk-jump-d" />
-                        {t("Agent is replying")}
-                      </>
-                    ) : unread > 0 ? (
-                      <>
-                        <span className="dk-jump-n">{unread}</span>
-                        {t("{0, plural, one {New reply} other {New replies}}", unread)}
-                      </>
-                    ) : (
-                      t("Jump to latest")
-                    )}
-                    <svg
-                      width="12"
-                      height="12"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.4"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      aria-hidden
-                    >
-                      <path d="M12 5v14M6 13l6 6 6-6" />
-                    </svg>
-                  </Button>
-                </div>
-                <div className="dk-dock" ref={dockRef}>
-                  <div className="dk-grid">
-                    <div className="dk-g" />
-                    <div className={cn("dk-c", attached && "dk-has-dec")}>
-                      {typeof dockTop === "function" ? dockTop({ ask, busy: isActive }) : dockTop}
-                      {!pending && !holding && <DeskTermsNote />}
-                      {pending && model.current === null && !holding && (
-                        <Button
-                          variant="quiet"
-                          size="sm"
-                          className={cn(
-                            "self-center rounded-lg text-dsk-muted hover:bg-dsk-hover hover:text-dsk-fg",
-                            attached && "mb-2",
-                          )}
-                          onClick={model.resumeAll}
-                        >
-                          {t(
-                            "{0, plural, one {# change waits on you} other {# changes wait on you}}",
-                            model.queue.length,
-                          )}
-                        </Button>
-                      )}
-                      {model.block === "full" && !composerLock && (
-                        <div className="dk-ec-dockcard">
-                          <DeskErrorCard
-                            tone="info"
-                            icon="info"
-                            compact
-                            title={t("This conversation is too long for {0}", currentModelName)}
-                            sub={t(
-                              "Start a new conversation with {0} to keep going. This one stays here to read.",
-                              agent?.name ?? t("the agent"),
-                            )}
-                            actions={
-                              <>
-                                {onStartNew && (
-                                  <DeskErrorButton ink onClick={onStartNew}>
-                                    {t("Continue in a new conversation")}
-                                  </DeskErrorButton>
-                                )}
-                                {model.providers.length > 1 && (
-                                  <DeskErrorButton
-                                    onClick={() => setPickerSignal((value) => value + 1)}
-                                  >
-                                    {t("Switch model")}
-                                  </DeskErrorButton>
-                                )}
-                              </>
-                            }
-                          />
-                        </div>
-                      )}
-                      {budgetQuery.data && !lock && <DeskUsageMeter budget={budgetQuery.data} />}
-                      {dockedAsk && answerAsk && (
-                        <DeskAskDock
-                          key={dockedAsk.callId}
-                          request={dockedAsk}
-                          disabled={askBlocked}
-                          disabledNote={
-                            isActive
-                              ? undefined
-                              : !online
-                                ? t("You can answer once you're back online.")
-                                : t("You can answer in a moment.")
-                          }
-                          compact={compact}
-                          onAnswer={answerAsk}
-                        />
-                      )}
-                      {undo.state.phase === "waiting" && (
-                        <DeskUndoBar
-                          key={undo.state.window.key}
-                          held={undo.state.window}
-                          left={undo.left}
-                          busy={undo.busy}
-                          onUndo={undo.undo}
-                          onNow={undo.commitNow}
-                        />
-                      )}
-                      {undo.state.phase === "committed" && (
-                        <DeskApprovedCard held={undo.state.window} />
-                      )}
-                      {showCard && model.current && (
-                        <DeskApprovalCard
-                          key={model.current.entry.key}
-                          threadId={thread.id}
-                          entry={model.current.entry}
-                          approveRef={approveRef}
-                          onReview={reviewEntry}
-                          onDefer={model.deferAll}
-                          onDecided={model.decided}
-                          undo={undo}
-                          onAsk={ask}
-                        />
-                      )}
-                      <DeskWaits waits={model.waits} timezone={timezone} />
-                      <DeskQueue queue={model.waiting} busy={isActive} />
-                      <span className="sr-only" role="status" aria-live="polite" aria-atomic>
-                        {suggestion.offered
-                          ? t("{0} has the tools for this", suggestion.offered.agent.name)
-                          : suggestion.nobody
-                            ? t("None of your agents has the tools for this.")
-                            : ""}
-                      </span>
-                      {suggestion.offered && agent && (
-                        <DeskAgentRecommendation
-                          match={suggestion.offered}
-                          agent={agent}
-                          action="handoff"
-                          disabled={suggestion.routing || suggestion.handingOff}
-                          onUse={() => void suggestion.handOff()}
-                          onKeep={suggestion.keep}
-                        />
-                      )}
-                      {!suggestion.offered && suggestion.nobody && (
-                        <DeskNoAgentFits
-                          canManage={canAddTools}
-                          onDismiss={suggestion.dismissNobody}
-                        />
-                      )}
-                      <DeskComposer
-                        value={model.draft}
-                        onChange={model.onDraftChange}
-                        onSteer={(content, payload, mode) => {
-                          composerContext.clear();
-                          attachments.clear();
-                          void model.waiting.add(content, payload, mode).then((taken) => {
-                            if (!taken && model.draft.trim() === "") {
-                              model.onDraftChange(content);
-                            }
-                          });
-                        }}
-                        onSend={(content, payload) => {
-                          if (createSchedule && schedules?.isRequest(content)) {
-                            // Kept as a schedule, not asked: its card says when
-                            // it runs. Refused, the words go back in the box.
-                            createSchedule(content, model.onDraftChange);
-                            composerContext.clear();
-                            attachments.clear();
-                            return;
-                          }
-                          if (!online) {
-                            setQueued({ content, payload });
-                            composerContext.clear();
-                            attachments.clear();
-                            return;
-                          }
-                          void suggestion.route(content, payload.mentions).then((handed) => {
-                            if (!handed) {
-                              suggestion.sentHere();
-                              void model.send(content, undefined, model.providerId, payload);
-                            }
-                          });
-                          composerContext.clear();
-                          attachments.clear();
-                        }}
-                        onStop={model.stop}
-                        agent={agent}
-                        onAgentChange={
-                          onSwitchAgent
-                            ? (next) => {
-                                if (next.id !== agent?.id) {
-                                  onSwitchAgent(next.id, model.draft.trim() || undefined);
-                                  model.onDraftChange("");
-                                }
-                              }
-                            : undefined
-                        }
-                        recentAgentIds={askable.recency.ids}
-                        agentLastUsedAt={askable.recency.lastUsedAt}
-                        busy={isActive}
-                        status={
-                          rateLimited !== null
-                            ? {
-                                text: t("You're sending messages quickly · send again in a moment"),
-                                pose: "retry",
-                                countdown: rateLimited,
-                              }
-                            : status
-                        }
-                        wait={rateLimited ?? 0}
-                        agentPickerSignal={agentPickerSignal}
-                        filePickerSignal={filePickerSignal}
-                        disabled={suggestion.routing || suggestion.handingOff}
-                        placeholder={
-                          suggestion.routing
-                            ? t("Finding the agent with the tools for this…")
-                            : suggestion.handingOff
-                              ? t("Handing off…")
-                              : showCard
-                                ? t("Reply, or ask about this change…")
-                                : dockedAsk
-                                  ? deskAskPlaceholder(dockedAsk, t)
-                                  : lastIsRefusal
-                                    ? t("Rephrase, or ask another agent…")
-                                    : undefined
-                        }
-                        suggestedAnswer={
-                          dockedAsk && !suggestion.routing && !suggestion.handingOff && !showCard
-                            ? dockedAsk.suggestion
-                            : undefined
-                        }
-                        lock={lock}
-                        note={composerLock?.note}
-                        attachments={composerKit === "page" ? undefined : attachments}
-                        scans={composerKit === "page" ? null : scans}
-                        mentions={composerContext.mentions}
-                        onMentionsChange={composerContext.setMentions}
-                        suggestions={model.suggestions}
-                        drag={drag}
-                        dictation={composerKit !== "page"}
-                        typewriter={presets !== undefined && presets.length > 0}
-                        presets={presets}
-                        extras={
-                          composerKit === "page" ? (
-                            composerChip
-                          ) : page || pageSource === "none" ? undefined : (
-                            <DeskPageChip
-                              page={deskPage.page}
-                              share={deskPage.share}
-                              onShareChange={deskPage.setShare}
-                              onExplain={explainPage}
-                              onScreen={deskPage.onScreen}
-                            />
-                          )
-                        }
-                        model={
-                          <DeskModelPicker
-                            options={model.providers}
-                            value={model.providerId}
-                            onChange={model.setProviderId}
-                            hasReplies={replies > 0}
-                            disabled={isActive}
-                            openSignal={pickerSignal}
-                          />
-                        }
-                        meter={
-                          composerKit === "page" ? undefined : (
-                            <DeskContextMeter
-                              usage={compaction.usage}
-                              auto={compaction.auto}
-                              onAutoChange={(on) => void compaction.setAuto(on)}
-                              onCompact={() => void compaction.compact()}
-                              compacting={compaction.compacting !== null}
-                              budget={budgetQuery.data}
-                            />
-                          )
-                        }
-                        compacting={
-                          compaction.compacting && {
-                            auto: compaction.compacting.auto,
-                            before: compaction.compacting.before,
-                            after: compaction.compacting.after,
-                            window: meterView(compaction.usage).window,
-                          }
-                        }
-                        onCancelCompact={compaction.cancel}
-                        onCompact={() => void compaction.compact()}
-                      />
-                      <div className="dk-hint">
-                        {showCard && model.current?.entry.hold === null ? (
-                          <span>
-                            {rt("Press <kbd/> to approve", {
-                              kbd: () => <span className="dk-kbd">⌘↵</span>,
-                            })}
-                          </span>
-                        ) : (
-                          <span>
-                            {disclaimer ??
-                              t(
-                                "Desk can make mistakes. Check important details before you act on them.",
-                              )}
-                          </span>
+                          </div>
                         )}
+                        {budgetQuery.data && !lock && <DeskUsageMeter budget={budgetQuery.data} />}
+                        {dockedAsk && answerAsk && (
+                          <DeskAskDock
+                            key={dockedAsk.callId}
+                            request={dockedAsk}
+                            disabled={askBlocked}
+                            disabledNote={
+                              isActive
+                                ? undefined
+                                : !online
+                                  ? t("You can answer once you're back online.")
+                                  : t("You can answer in a moment.")
+                            }
+                            compact={compact}
+                            onAnswer={answerAsk}
+                          />
+                        )}
+                        {undo.state.phase === "waiting" && (
+                          <DeskUndoBar
+                            key={undo.state.window.key}
+                            held={undo.state.window}
+                            left={undo.left}
+                            busy={undo.busy}
+                            onUndo={undo.undo}
+                            onNow={undo.commitNow}
+                          />
+                        )}
+                        {undo.state.phase === "committed" && (
+                          <DeskApprovedCard held={undo.state.window} />
+                        )}
+                        {showCard && model.current && (
+                          <DeskApprovalCard
+                            key={model.current.entry.key}
+                            threadId={thread.id}
+                            entry={model.current.entry}
+                            approveRef={approveRef}
+                            onReview={reviewEntry}
+                            onDefer={model.deferAll}
+                            onDecided={model.decided}
+                            undo={undo}
+                            onAsk={ask}
+                          />
+                        )}
+                        <DeskWaits waits={model.waits} timezone={timezone} />
+                        <DeskQueue queue={model.waiting} busy={isActive} />
+                        <span className="sr-only" role="status" aria-live="polite" aria-atomic>
+                          {suggestion.offered
+                            ? t("{0} has the tools for this", suggestion.offered.agent.name)
+                            : suggestion.nobody
+                              ? t("None of your agents has the tools for this.")
+                              : ""}
+                        </span>
+                        {suggestion.offered && agent && (
+                          <DeskAgentRecommendation
+                            match={suggestion.offered}
+                            agent={agent}
+                            action="handoff"
+                            disabled={suggestion.routing || suggestion.handingOff}
+                            onUse={() => void suggestion.handOff()}
+                            onKeep={suggestion.keep}
+                          />
+                        )}
+                        {!suggestion.offered && suggestion.nobody && (
+                          <DeskNoAgentFits
+                            canManage={canAddTools}
+                            onDismiss={suggestion.dismissNobody}
+                          />
+                        )}
+                        <DeskComposer
+                          value={model.draft}
+                          onChange={model.onDraftChange}
+                          onSteer={(content, payload, mode) => {
+                            composerContext.clear();
+                            attachments.clear();
+                            void model.waiting.add(content, payload, mode).then((taken) => {
+                              if (!taken && model.draft.trim() === "") {
+                                model.onDraftChange(content);
+                              }
+                            });
+                          }}
+                          onSend={(content, payload) => {
+                            if (createSchedule && schedules?.isRequest(content)) {
+                              // Kept as a schedule, not asked: its card says when
+                              // it runs. Refused, the words go back in the box.
+                              createSchedule(content, model.onDraftChange);
+                              composerContext.clear();
+                              attachments.clear();
+                              return;
+                            }
+                            if (!online) {
+                              setQueued({ content, payload });
+                              composerContext.clear();
+                              attachments.clear();
+                              return;
+                            }
+                            void suggestion.route(content, payload.mentions).then((handed) => {
+                              if (!handed) {
+                                suggestion.sentHere();
+                                void model.send(content, undefined, model.providerId, payload);
+                              }
+                            });
+                            composerContext.clear();
+                            attachments.clear();
+                          }}
+                          onStop={model.stop}
+                          agent={agent}
+                          onAgentChange={
+                            onSwitchAgent
+                              ? (next) => {
+                                  if (next.id !== agent?.id) {
+                                    onSwitchAgent(next.id, model.draft.trim() || undefined);
+                                    model.onDraftChange("");
+                                  }
+                                }
+                              : undefined
+                          }
+                          recentAgentIds={askable.recency.ids}
+                          agentLastUsedAt={askable.recency.lastUsedAt}
+                          busy={isActive}
+                          status={
+                            rateLimited !== null
+                              ? {
+                                  text: t(
+                                    "You're sending messages quickly · send again in a moment",
+                                  ),
+                                  pose: "retry",
+                                  countdown: rateLimited,
+                                }
+                              : status
+                          }
+                          wait={rateLimited ?? 0}
+                          agentPickerSignal={agentPickerSignal}
+                          filePickerSignal={filePickerSignal}
+                          disabled={suggestion.routing || suggestion.handingOff}
+                          placeholder={
+                            suggestion.routing
+                              ? t("Finding the agent with the tools for this…")
+                              : suggestion.handingOff
+                                ? t("Handing off…")
+                                : showCard
+                                  ? t("Reply, or ask about this change…")
+                                  : dockedAsk
+                                    ? deskAskPlaceholder(dockedAsk, t)
+                                    : lastIsRefusal
+                                      ? t("Rephrase, or ask another agent…")
+                                      : undefined
+                          }
+                          suggestedAnswer={
+                            dockedAsk && !suggestion.routing && !suggestion.handingOff && !showCard
+                              ? dockedAsk.suggestion
+                              : undefined
+                          }
+                          lock={lock}
+                          note={composerLock?.note}
+                          attachments={composerKit === "page" ? undefined : attachments}
+                          scans={composerKit === "page" ? null : scans}
+                          mentions={composerContext.mentions}
+                          onMentionsChange={composerContext.setMentions}
+                          suggestions={model.suggestions}
+                          drag={drag}
+                          dictation={composerKit !== "page"}
+                          typewriter={presets !== undefined && presets.length > 0}
+                          presets={presets}
+                          extras={
+                            composerKit === "page" ? (
+                              composerChip
+                            ) : page || pageSource === "none" ? undefined : (
+                              <DeskPageChip
+                                page={deskPage.page}
+                                share={deskPage.share}
+                                onShareChange={deskPage.setShare}
+                                onExplain={explainPage}
+                                onScreen={deskPage.onScreen}
+                              />
+                            )
+                          }
+                          model={
+                            <DeskModelPicker
+                              options={model.providers}
+                              value={model.providerId}
+                              onChange={model.setProviderId}
+                              hasReplies={replies > 0}
+                              disabled={isActive}
+                              openSignal={pickerSignal}
+                            />
+                          }
+                          meter={
+                            composerKit === "page" ? undefined : (
+                              <DeskContextMeter
+                                usage={compaction.usage}
+                                auto={compaction.auto}
+                                onAutoChange={(on) => void compaction.setAuto(on)}
+                                onCompact={() => void compaction.compact()}
+                                compacting={compaction.compacting !== null}
+                                budget={budgetQuery.data}
+                              />
+                            )
+                          }
+                          compacting={
+                            compaction.compacting && {
+                              auto: compaction.compacting.auto,
+                              before: compaction.compacting.before,
+                              after: compaction.compacting.after,
+                              window: meterView(compaction.usage).window,
+                            }
+                          }
+                          onCancelCompact={compaction.cancel}
+                          onCompact={() => void compaction.compact()}
+                        />
+                        <div className="dk-hint">
+                          {showCard && model.current?.entry.hold === null ? (
+                            <span>
+                              {rt("Press <kbd/> to approve while the message box is empty", {
+                                kbd: () => <span className="dk-kbd">{formatShortcut("↵")}</span>,
+                              })}
+                            </span>
+                          ) : (
+                            <span>
+                              {disclaimer ??
+                                t(
+                                  "Desk can make mistakes. Check important details before you act on them.",
+                                )}
+                            </span>
+                          )}
+                        </div>
                       </div>
+                      <div className="dk-m" />
                     </div>
-                    <div className="dk-m" />
                   </div>
                 </div>
+                {workspace && (
+                  <aside className="dk-sheet" aria-label={t("Artifacts")}>
+                    {workspaceOpen && workspace.content}
+                  </aside>
+                )}
               </div>
-              {workspace && (
-                <aside className="dk-sheet" aria-label={t("Artifacts")}>
-                  {workspaceOpen && workspace.content}
-                </aside>
-              )}
-            </div>
+            </DeskCardsLiveProvider>
           </DecisionFollowUpProvider>
         </ArtifactLinkContext>
       </ArtifactOpenerProvider>

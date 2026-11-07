@@ -315,8 +315,7 @@ func (r *repository) findNearestActualEvent(
 				order = keel.Asc(ts)
 			}
 
-			events, err := keel.Into[assignmentports.ActualTimelineEvent](ctx, r.db.Keel(ctx), ev.
-				Query().
+			events, err := keel.Into[assignmentports.ActualTimelineEvent](ctx, r.db.Keel(ctx), keel.RowsOf(ev.TableRef()).
 				With(ev).
 				Pick(
 					ts,
@@ -360,8 +359,7 @@ func (r *repository) findOverlappingActualWindow(
 			moveID := ev.Col("shipment_move_id")
 			shipmentID := ev.Col("shipment_id")
 
-			windows, err := keel.Into[assignmentports.ActualTimelineWindow](ctx, r.db.Keel(ctx), ev.
-				Query().
+			windows, err := keel.Into[assignmentports.ActualTimelineWindow](ctx, r.db.Keel(ctx), keel.RowsOf(ev.TableRef()).
 				With(ev).
 				Group(moveID, shipmentID).
 				Pick(keel.Min(ts), keel.Max(ts), moveID, shipmentID).

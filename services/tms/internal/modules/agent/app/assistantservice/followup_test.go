@@ -195,7 +195,7 @@ func TestSendMessageStream_AnswersAPlanDecision(t *testing.T) {
 
 	note := conversations.Appended[0]
 	assert.Equal(t, conversation.MessageKindDecisionNote, note.Kind)
-	assert.Contains(t, note.Content,
+	assert.Contains(t, decisionnotes.DecisionHeadline(note.Content),
 		`Approved the plan "Recover load 4471", but step 2 failed (the driver is out of hours)`)
 	assert.Contains(t, note.Content, "plan "+plan.ID.String())
 }

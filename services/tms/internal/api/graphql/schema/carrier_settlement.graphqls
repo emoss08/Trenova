@@ -303,6 +303,8 @@ type CarrierSettlementControl {
   autoGenerateBatches: Boolean!
   "When on, approving a carrier settlement immediately posts it to the general ledger."
   autoPostOnApprove: Boolean!
+  "When on, whoever submits a carrier settlement cannot also approve it."
+  requireSeparateApprover: Boolean!
   "Invoice totals within this many minor units of the buy rate auto-match; larger gaps flag a variance."
   varianceToleranceMinor: Int!
   "When on, inbound EDI 210 invoices that resolve to an accepted tender offer are matched to their carrier assignment automatically."
@@ -467,6 +469,7 @@ input UpdateCarrierSettlementControlInput {
   payDelayDays: Int!
   autoGenerateBatches: Boolean!
   autoPostOnApprove: Boolean!
+  requireSeparateApprover: Boolean!
   varianceToleranceMinor: Int!
   autoMatchInboundInvoices: Boolean!
   autoAcceptWithinTolerance: Boolean!

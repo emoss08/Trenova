@@ -191,6 +191,7 @@ export const ediCommunicationProfileSchema = z.object({
   description: z.string().nullish(),
   config: z.record(z.string(), z.unknown()).default({}),
   secretState: nullableArraySchema(ediCommunicationProfileSecretStateSchema),
+  as2InboundPath: z.string().nullish(),
   version: z.number().default(0),
   createdAt: z.number(),
   updatedAt: z.number(),

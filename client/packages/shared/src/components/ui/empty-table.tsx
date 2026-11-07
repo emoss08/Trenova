@@ -43,9 +43,6 @@ export function EmptyTable({
 }: EmptyTableProps) {
   const t = useT();
 
-  const template = columns
-    .map((column) => (column.numeric ? "minmax(3.5rem,0.6fr)" : "minmax(0,1fr)"))
-    .join(" ");
   return (
     <EmptySheet
       className={className}
@@ -62,44 +59,58 @@ export function EmptyTable({
           action
         )
       }
-      sketch={
-        <div className="border-border/70 bg-card rounded-md border text-left">
-          <div
-            className="text-muted-foreground text-2xs grid items-center gap-4 border-b px-3 py-1.5 leading-none"
-            style={{ gridTemplateColumns: template }}
-          >
-            {columns.map((column) => (
-              <span key={column.label} className={cn("truncate", column.numeric && "text-right")}>
-                {t(column.label)}
-              </span>
-            ))}
-          </div>
-          {Array.from({ length: GHOST_ROWS }, (_, row) => (
-            <div
-              key={row}
-              className="border-border/60 grid items-center gap-4 border-b border-dashed px-3 py-2.5 last:border-0"
-              style={{ gridTemplateColumns: template }}
+      sketch={<EmptyTableSketch columns={columns} />}
+    />
+  );
+}
+
+/**
+ * The ruled page of a table with its own headings and nothing on the lines: the sketch
+ * EmptyTable draws, for a surface that says something else over it (ErrorState's "sheet").
+ */
+export function EmptyTableSketch({ columns }: { columns: readonly EmptyTableColumn[] }) {
+  const t = useT();
+
+  const template = columns
+    .map((column) => (column.numeric ? "minmax(3.5rem,0.6fr)" : "minmax(0,1fr)"))
+    .join(" ");
+
+  return (
+    <div className="border-border/70 bg-card rounded-md border text-left">
+      <div
+        className="text-muted-foreground text-2xs grid items-center gap-4 border-b px-3 py-1.5 leading-none"
+        style={{ gridTemplateColumns: template }}
+      >
+        {columns.map((column) => (
+          <span key={column.label} className={cn("truncate", column.numeric && "text-right")}>
+            {t(column.label)}
+          </span>
+        ))}
+      </div>
+      {Array.from({ length: GHOST_ROWS }, (_, row) => (
+        <div
+          key={row}
+          className="border-border/60 grid items-center gap-4 border-b border-dashed px-3 py-2.5 last:border-0"
+          style={{ gridTemplateColumns: template }}
+        >
+          {columns.map((column, index) => (
+            <span
+              key={column.label}
+              className={cn("flex", column.numeric ? "justify-end" : "justify-start")}
             >
-              {columns.map((column, index) => (
-                <span
-                  key={column.label}
-                  className={cn("flex", column.numeric ? "justify-end" : "justify-start")}
-                >
-                  <GhostLine
-                    className={
-                      column.numeric
-                        ? `h-2 ${NUMBER_WIDTHS[(row + index) % NUMBER_WIDTHS.length]}`
-                        : index === 0
-                          ? `h-2 ${TEXT_WIDTHS[row % TEXT_WIDTHS.length]}`
-                          : TEXT_WIDTHS[(row + index) % TEXT_WIDTHS.length]
-                    }
-                  />
-                </span>
-              ))}
-            </div>
+              <GhostLine
+                className={
+                  column.numeric
+                    ? `h-2 ${NUMBER_WIDTHS[(row + index) % NUMBER_WIDTHS.length]}`
+                    : index === 0
+                      ? `h-2 ${TEXT_WIDTHS[row % TEXT_WIDTHS.length]}`
+                      : TEXT_WIDTHS[(row + index) % TEXT_WIDTHS.length]
+                }
+              />
+            </span>
           ))}
         </div>
-      }
-    />
+      ))}
+    </div>
   );
 }

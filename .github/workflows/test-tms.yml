@@ -96,6 +96,10 @@ jobs:
 
       - name: Set up Go
         uses: ./.github/actions/setup-go
+        with:
+          r2-endpoint: ${{ secrets.R2_BUILD_CACHE_ENDPOINT }}
+          r2-access-key-id: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' && secrets.R2_BUILD_CACHE_WRITE_ACCESS_KEY_ID || secrets.R2_BUILD_CACHE_READ_ACCESS_KEY_ID }}
+          r2-secret-access-key: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' && secrets.R2_BUILD_CACHE_WRITE_SECRET_ACCESS_KEY || secrets.R2_BUILD_CACHE_READ_SECRET_ACCESS_KEY }}
 
       # Also the build check: -coverprofile compiles every package of the four
       # modules, test-less and main packages included. If coverage is ever
@@ -238,7 +242,9 @@ jobs:
       - name: Set up Go
         uses: ./.github/actions/setup-go
         with:
-          cache-key: integration
+          r2-endpoint: ${{ secrets.R2_BUILD_CACHE_ENDPOINT }}
+          r2-access-key-id: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' && secrets.R2_BUILD_CACHE_WRITE_ACCESS_KEY_ID || secrets.R2_BUILD_CACHE_READ_ACCESS_KEY_ID }}
+          r2-secret-access-key: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' && secrets.R2_BUILD_CACHE_WRITE_SECRET_ACCESS_KEY || secrets.R2_BUILD_CACHE_READ_SECRET_ACCESS_KEY }}
 
       - name: Run integration tests
         working-directory: ./services/tms
@@ -331,7 +337,9 @@ jobs:
       - name: Set up Go
         uses: ./.github/actions/setup-go
         with:
-          cache-key: integration
+          r2-endpoint: ${{ secrets.R2_BUILD_CACHE_ENDPOINT }}
+          r2-access-key-id: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' && secrets.R2_BUILD_CACHE_WRITE_ACCESS_KEY_ID || secrets.R2_BUILD_CACHE_READ_ACCESS_KEY_ID }}
+          r2-secret-access-key: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' && secrets.R2_BUILD_CACHE_WRITE_SECRET_ACCESS_KEY || secrets.R2_BUILD_CACHE_READ_SECRET_ACCESS_KEY }}
 
       - name: Run retrieval storage tests without pgvector
         working-directory: ./services/tms
@@ -356,15 +364,16 @@ jobs:
         id: setup-go
         uses: ./.github/actions/setup-go
         with:
-          cache-key: lint
-          save-build-cache: "false"
+          r2-endpoint: ${{ secrets.R2_BUILD_CACHE_ENDPOINT }}
+          r2-access-key-id: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' && secrets.R2_BUILD_CACHE_WRITE_ACCESS_KEY_ID || secrets.R2_BUILD_CACHE_READ_ACCESS_KEY_ID }}
+          r2-secret-access-key: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' && secrets.R2_BUILD_CACHE_WRITE_SECRET_ACCESS_KEY || secrets.R2_BUILD_CACHE_READ_SECRET_ACCESS_KEY }}
 
       # golangci-lint-action keys its analysis cache by go.mod and a 7-day
       # interval and skips the save on a primary-key hit, so the first run of
       # an interval fixes the cache for a week: on this repository a 6 KB stub
-      # that held no analysis. The analysis cache lives beside the build cache
-      # here, restored from the newest run and saved by every run, failed or
-      # not, so a run that times out still leaves the next one warm.
+      # that held no analysis. The analysis cache is restored from the newest
+      # run and saved by every run, failed or not, so a run that times out
+      # still leaves the next one warm.
       - name: Restore golangci-lint analysis cache
         uses: actions/cache/restore@v4
         with:
@@ -386,7 +395,7 @@ jobs:
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v9
         with:
-          version: v2.12.2
+          version: v2.15.0
           working-directory: ./services/tms
           verify: false
           skip-cache: true
@@ -546,14 +555,6 @@ jobs:
             exit 1
           fi
 
-      # Last, so the cache holds what golangci-lint and the generators compiled.
-      - name: Save Go build output
-        if: always()
-        uses: actions/cache/save@v4
-        with:
-          path: ~/.cache/go-build
-          key: gobuild-${{ runner.os }}-1.26-lint-${{ github.sha }}
-
   fuzz:
     name: Fuzz (bounded)
     if: github.event_name != 'pull_request'
@@ -565,7 +566,9 @@ jobs:
       - name: Set up Go
         uses: ./.github/actions/setup-go
         with:
-          cache-key: fuzz
+          r2-endpoint: ${{ secrets.R2_BUILD_CACHE_ENDPOINT }}
+          r2-access-key-id: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' && secrets.R2_BUILD_CACHE_WRITE_ACCESS_KEY_ID || secrets.R2_BUILD_CACHE_READ_ACCESS_KEY_ID }}
+          r2-secret-access-key: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' && secrets.R2_BUILD_CACHE_WRITE_SECRET_ACCESS_KEY || secrets.R2_BUILD_CACHE_READ_SECRET_ACCESS_KEY }}
 
       - name: Fuzz every target
         working-directory: ./services/tms
@@ -634,7 +637,9 @@ jobs:
       - name: Set up Go
         uses: ./.github/actions/setup-go
         with:
-          cache-key: race
+          r2-endpoint: ${{ secrets.R2_BUILD_CACHE_ENDPOINT }}
+          r2-access-key-id: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' && secrets.R2_BUILD_CACHE_WRITE_ACCESS_KEY_ID || secrets.R2_BUILD_CACHE_READ_ACCESS_KEY_ID }}
+          r2-secret-access-key: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' && secrets.R2_BUILD_CACHE_WRITE_SECRET_ACCESS_KEY || secrets.R2_BUILD_CACHE_READ_SECRET_ACCESS_KEY }}
 
       - name: Run shared module race tests
         working-directory: ./shared

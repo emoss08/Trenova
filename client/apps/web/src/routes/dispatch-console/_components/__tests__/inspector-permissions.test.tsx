@@ -83,12 +83,18 @@ function renderInspector() {
     <QueryClientProvider client={queryClient}>
       <MemoryRouter>
         <Inspector
-          selectedMove={move}
-          selectedDriver={null}
-          onAssign={vi.fn()}
-          onSelectMove={vi.fn()}
-          isAssigning={false}
+          move={move}
+          moveRead={null}
+          outsideWindow={false}
+          driver={null}
+          range={{ start: 0, end: 86_400 }}
           hotkeysEnabled={false}
+          queueScope={null}
+          onClose={vi.fn()}
+          onSelectMove={vi.fn()}
+          onNextMove={vi.fn()}
+          onCovered={vi.fn()}
+          onJumpTo={vi.fn()}
           actions={actions}
         />
       </MemoryRouter>

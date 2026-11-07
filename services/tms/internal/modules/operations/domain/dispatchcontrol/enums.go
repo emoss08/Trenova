@@ -4,7 +4,6 @@ import "errors"
 
 var (
 	ErrInvalidServiceIncidentType        = errors.New("invalid service incident type")
-	ErrInvalidAutoAssignmentStrategy     = errors.New("invalid auto assignment strategy")
 	ErrInvalidComplianceEnforcementLevel = errors.New("invalid compliance enforcement level")
 	ErrInvalidPlanningMode               = errors.New("invalid planning mode")
 )
@@ -78,46 +77,6 @@ func ServiceIncidentTypeFromString(s string) (ServiceIncidentType, error) {
 		return ServiceIncidentTypeAllExceptShipper, nil
 	default:
 		return "", ErrInvalidServiceIncidentType
-	}
-}
-
-type AutoAssignmentStrategy string
-
-const (
-	AutoAssignmentStrategyProximity     = AutoAssignmentStrategy("Proximity")
-	AutoAssignmentStrategyAvailability  = AutoAssignmentStrategy("Availability")
-	AutoAssignmentStrategyLoadBalancing = AutoAssignmentStrategy("LoadBalancing")
-	AutoAssignmentStrategyPerformance   = AutoAssignmentStrategy("Performance")
-)
-
-func (a AutoAssignmentStrategy) String() string {
-	return string(a)
-}
-
-func (a AutoAssignmentStrategy) IsValid() bool {
-	switch a {
-	case AutoAssignmentStrategyProximity,
-		AutoAssignmentStrategyAvailability,
-		AutoAssignmentStrategyLoadBalancing,
-		AutoAssignmentStrategyPerformance:
-		return true
-	default:
-		return false
-	}
-}
-
-func AutoAssignmentStrategyFromString(s string) (AutoAssignmentStrategy, error) {
-	switch s {
-	case "Proximity":
-		return AutoAssignmentStrategyProximity, nil
-	case "Availability":
-		return AutoAssignmentStrategyAvailability, nil
-	case "LoadBalancing":
-		return AutoAssignmentStrategyLoadBalancing, nil
-	case "Performance":
-		return AutoAssignmentStrategyPerformance, nil
-	default:
-		return "", ErrInvalidAutoAssignmentStrategy
 	}
 }
 

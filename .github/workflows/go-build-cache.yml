@@ -1,0 +1,66 @@
+name: Go build cache
+
+# Fills the shared build cache (docs/engineering/go-build-cache.md) with the
+# objects of the local watch build, so `GO_REMOTE_CACHE=on task run-watch` on a
+# developer machine or in a cloud session starts from master instead of from
+# nothing. The test jobs' objects never match it: they build without the watch
+# build's -gcflags.
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - "services/tms/**"
+      - "shared/**"
+      - "go.work"
+      - "go.work.sum"
+      - ".github/actions/setup-go/**"
+      - ".github/workflows/go-build-cache.yml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  watch-targets:
+    name: Watch targets (${{ matrix.goos }}/${{ matrix.goarch }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - goos: linux
+            goarch: amd64
+          # Cross-compiled: with cgo off a linux runner produces the same
+          # action IDs as a Mac's native build.
+          - goos: darwin
+            goarch: arm64
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Set up Go
+        uses: ./.github/actions/setup-go
+        with:
+          r2-endpoint: ${{ secrets.R2_BUILD_CACHE_ENDPOINT }}
+          r2-access-key-id: ${{ secrets.R2_BUILD_CACHE_WRITE_ACCESS_KEY_ID }}
+          r2-secret-access-key: ${{ secrets.R2_BUILD_CACHE_WRITE_SECRET_ACCESS_KEY }}
+
+      - name: Install Task
+        uses: arduino/setup-task@v2
+        with:
+          version: 3.x
+          repo-token: ${{ github.token }}
+
+      # Through the Taskfile, so the flags are the ones developers build with.
+      - name: Build cmd/api, cmd/worker and cmd/cli
+        working-directory: ./services/tms
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          GOCUT: "off"
+        run: task build-watch-targets

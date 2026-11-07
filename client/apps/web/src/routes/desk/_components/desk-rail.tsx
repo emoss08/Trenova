@@ -3,7 +3,6 @@ import logo from "@/assets/logo.webp";
 import { DeleteConversationCard } from "@/components/assistant/delete-conversation-card";
 import { useDeleteConversation } from "@/components/assistant/use-delete-conversation";
 import { useLiveThreadIds } from "@/components/assistant/use-active-turns";
-import { conversationPath } from "@/lib/conversation-path";
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import type { AssistantThread } from "@/types/assistant";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -14,8 +13,9 @@ import { useLatestCallback } from "@trenova/shared/hooks/use-latest-callback";
 import { useDeskSettingsStore } from "@/stores/desk-settings-store";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useMemo, useState } from "react";
-import { useNavigate } from "react-router";
-import { DeskIcon } from "@/components/desk-chat/desk-icons";
+import { useAppDialogsStore } from "@/stores/app-dialogs-store";
+import { Link, useNavigate } from "react-router";
+import { DeskIcon, type DeskIconName } from "@/components/desk-chat/desk-icons";
 import {
   deskRailRows,
   type DeskRailRow,
@@ -28,6 +28,7 @@ import { deskIconClass } from "@/components/desk-chat/desk-button-styles";
 import { DeskRailFrame } from "./desk-rail-frame";
 import { DeskRailList } from "./desk-rail-list";
 import { DeskRailThreadRow, type DeskRailRowActions } from "./desk-rail-row";
+import { formatModShiftShortcut, formatShortcut } from "@trenova/shared/lib/shortcuts";
 
 /** Which of the Desk's places is in front, so the rail can light it. */
 export type DeskPlace =
@@ -48,6 +49,47 @@ const NAV_ITEM_CLASS =
   "relative z-1 flex h-7.5 w-full gap-2.5 rounded-lg pr-2 pl-2.5 text-left text-sm text-dsk-muted transition-colors duration-150 hover:bg-dsk-fg/4 hover:text-dsk-fg";
 const NAV_ITEM_ON_CLASS = "text-dsk-fg hover:bg-transparent";
 const NAV_LABEL_CLASS = "min-w-0 flex-1 truncate";
+
+/**
+ * One of the Desk's places on the rail, as a link: it opens in a new tab like any
+ * link, says it is the current page, and shows a count only when something waits.
+ */
+function RailPlace({
+  to,
+  placeKey,
+  activeKey,
+  icon,
+  label,
+  count = 0,
+  waitsHere = false,
+}: {
+  to: string;
+  placeKey: string;
+  activeKey: string | null;
+  icon: DeskIconName;
+  label: string;
+  count?: number;
+  /** A change waits on the person in the conversation they have open. */
+  waitsHere?: boolean;
+}) {
+  const active = activeKey === placeKey;
+  return (
+    <Link
+      to={to}
+      data-k={placeKey}
+      aria-current={active ? "page" : undefined}
+      className={cn(
+        "ui-focus-ring items-center outline-none",
+        NAV_ITEM_CLASS,
+        active && NAV_ITEM_ON_CLASS,
+      )}
+    >
+      <DeskIcon name={icon} size={14} />
+      <span className={NAV_LABEL_CLASS}>{label}</span>
+      {count > 0 && <em className={cn("dk-sb-ct", waitsHere && "dk-w")}>{count}</em>}
+    </Link>
+  );
+}
 
 export type DeskRailProps = {
   place: DeskPlace;
@@ -117,6 +159,7 @@ export function DeskRail({
   const t = useT();
   const rt = useRichT();
   const navigate = useNavigate();
+  const setDialogOpen = useAppDialogsStore((state) => state.setDialogOpen);
   const user = useAuthStore((state) => state.user);
   const timezone = resolveUserTimezone(user?.timezone);
   const liveThreadIds = useLiveThreadIds();
@@ -169,11 +212,10 @@ export function DeskRail({
   // row re-renders only when its own conversation or state changes.
   const actions = useMemo<DeskRailRowActions>(
     () => ({
-      open: (thread) => void navigate(conversationPath(thread.id)),
       setPinned: onSetPinned,
       askDelete,
     }),
-    [askDelete, navigate, onSetPinned],
+    [askDelete, onSetPinned],
   );
 
   const renderRow = (row: DeskRailRow) => {
@@ -253,7 +295,7 @@ export function DeskRail({
           variant="quiet"
           size="icon-sm"
           className={deskIconClass}
-          title={t("Search  ⌘K")}
+          title={t("Search ({0})", formatShortcut("K"))}
           aria-label={t("Search")}
           onClick={onSearch}
         >
@@ -266,7 +308,7 @@ export function DeskRail({
             deskIconClass,
             "dk-sb-new bg-dsk-card text-dsk-fg hover:text-dsk-fg [&_svg]:transition-transform [&_svg]:duration-[360ms] [&_svg]:ease-(--dk-spring) hover:[&_svg]:rotate-90",
           )}
-          title={t("New conversation  ⌘N")}
+          title={t("New conversation ({0})", formatModShiftShortcut("O"))}
           aria-label={t("New conversation")}
           onClick={() => void navigate("/desk")}
         >
@@ -282,62 +324,48 @@ export function DeskRail({
         onThreadsInView={onThreadsInView}
         nav={
           <>
-            <Button
-              variant="bare"
-              size="bare"
-              data-k="n:today"
-              className={cn(NAV_ITEM_CLASS, activeKey === "n:today" && NAV_ITEM_ON_CLASS)}
-              onClick={() => void navigate("/desk")}
-            >
-              <DeskIcon name="home" size={14} />
-              <span className={NAV_LABEL_CLASS}>{t("Today")}</span>
-            </Button>
+            <RailPlace
+              to="/desk"
+              placeKey="n:today"
+              activeKey={activeKey}
+              icon="home"
+              label={t("Today")}
+            />
             {canWatch && (
-              <Button
-                variant="bare"
-                size="bare"
-                data-k="n:watch"
-                className={cn(NAV_ITEM_CLASS, activeKey === "n:watch" && NAV_ITEM_ON_CLASS)}
-                onClick={() => void navigate("/desk/watchtower")}
-              >
-                <DeskIcon name="radar" size={14} />
-                <span className={NAV_LABEL_CLASS}>{t("Watchtower")}</span>
-                <em className="dk-sb-ct">{watchtowerCount}</em>
-              </Button>
+              <RailPlace
+                to="/desk/watchtower"
+                placeKey="n:watch"
+                activeKey={activeKey}
+                icon="radar"
+                label={t("Watchtower")}
+                count={watchtowerCount}
+              />
             )}
             {canDecide && (
-              <Button
-                variant="bare"
-                size="bare"
-                data-k="n:dec"
-                className={cn(NAV_ITEM_CLASS, activeKey === "n:dec" && NAV_ITEM_ON_CLASS)}
-                onClick={() => void navigate("/desk/decisions")}
-              >
-                <DeskIcon name="inbox" size={14} />
-                <span className={NAV_LABEL_CLASS}>{t("Decisions")}</span>
-                <em className={cn("dk-sb-ct", decisionsWaitHere && "dk-w")}>{decisionsCount}</em>
-              </Button>
+              <RailPlace
+                to="/desk/decisions"
+                placeKey="n:dec"
+                activeKey={activeKey}
+                icon="inbox"
+                label={t("Decisions")}
+                count={decisionsCount}
+                waitsHere={decisionsWaitHere}
+              />
             )}
-            <Button
-              variant="bare"
-              size="bare"
-              data-k="n:sched"
-              className={cn(NAV_ITEM_CLASS, activeKey === "n:sched" && NAV_ITEM_ON_CLASS)}
-              onClick={() => void navigate("/desk/scheduled")}
-            >
-              <DeskIcon name="clock" size={14} />
-              <span className={NAV_LABEL_CLASS}>{t("Scheduled")}</span>
-            </Button>
-            <Button
-              variant="bare"
-              size="bare"
-              data-k="n:memory"
-              className={cn(NAV_ITEM_CLASS, activeKey === "n:memory" && NAV_ITEM_ON_CLASS)}
-              onClick={() => void navigate("/desk/memory")}
-            >
-              <DeskIcon name="memory" size={14} />
-              <span className={NAV_LABEL_CLASS}>{t("Memory")}</span>
-            </Button>
+            <RailPlace
+              to="/desk/scheduled"
+              placeKey="n:sched"
+              activeKey={activeKey}
+              icon="clock"
+              label={t("Scheduled")}
+            />
+            <RailPlace
+              to="/desk/memory"
+              placeKey="n:memory"
+              activeKey={activeKey}
+              icon="memory"
+              label={t("Memory")}
+            />
           </>
         }
         empty={
@@ -346,7 +374,7 @@ export function DeskRail({
               <div className="dk-sb-gh">{t("Conversations")}</div>
               <div className="dk-sb-empty">
                 {rt("Your chats will show up here. Press <kbd/> to start one.", {
-                  kbd: () => <span className="dk-kbd">⌘N</span>,
+                  kbd: () => <span className="dk-kbd">{formatModShiftShortcut("O")}</span>,
                 })}
               </div>
             </>
@@ -360,6 +388,16 @@ export function DeskRail({
           {name}
         </b>
         <span style={{ flex: 1 }} />
+        <Button
+          variant="quiet"
+          size="icon-sm"
+          className={deskIconClass}
+          title={t("Keyboard shortcuts (?)")}
+          aria-label={t("Keyboard shortcuts")}
+          onClick={() => setDialogOpen("shortcuts", true)}
+        >
+          <DeskIcon name="keyboard" size={15} />
+        </Button>
         <Button
           variant="quiet"
           size="icon-sm"

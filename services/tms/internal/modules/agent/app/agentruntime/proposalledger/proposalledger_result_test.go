@@ -85,6 +85,7 @@ func TestProposalOutcomeText_DoesNotCallAnAutomaticWriteApproved(t *testing.T) {
 		ExecutionError: "name taken",
 	})
 	assert.True(t, strings.HasPrefix(failed,
-		`The call to "report_create" ran on its own but it FAILED when it ran: name taken`))
+		`The call to "report_create" ran on its own but it FAILED when it ran: `+
+			`<untrusted_data>name taken</untrusted_data>`))
 	assert.NotContains(t, failed, "approved")
 }

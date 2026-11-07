@@ -96,20 +96,20 @@ type DocumentTemplatesTable struct {
 // DocumentTemplates references the document_templates table.
 var DocumentTemplates = &DocumentTemplatesTable{
 	TableBase:       keel.TableBase{Ref: &documentTemplatesRef},
-	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentTemplatesRef, Index: 0}}},
-	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentTemplatesRef, Index: 1}}},
-	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentTemplatesRef, Index: 2}}},
-	Kind:            KindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentTemplatesRef, Index: 3}}},
+	ID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &documentTemplatesRef, Index: 0}}},
+	BusinessUnitID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &documentTemplatesRef, Index: 1}}},
+	OrganizationID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &documentTemplatesRef, Index: 2}}},
+	Kind:            KindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &documentTemplatesRef, Index: 3}}},
 	Code:            keel.StringCol{Col: keel.Col{Ref: &documentTemplatesRef, Index: 4}},
 	Name:            keel.StringCol{Col: keel.Col{Ref: &documentTemplatesRef, Index: 5}},
 	Description:     keel.StringCol{Col: keel.Col{Ref: &documentTemplatesRef, Index: 6}},
 	IsOrgDefault:    keel.BoolCol{Col: keel.Col{Ref: &documentTemplatesRef, Index: 7}},
-	ActiveVersionID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentTemplatesRef, Index: 8}}},
+	ActiveVersionID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &documentTemplatesRef, Index: 8}}},
 	Version:         keel.Int64Col{Col: keel.Col{Ref: &documentTemplatesRef, Index: 9}},
 	CreatedAt:       keel.Int64Col{Col: keel.Col{Ref: &documentTemplatesRef, Index: 10}},
 	UpdatedAt:       keel.Int64Col{Col: keel.Col{Ref: &documentTemplatesRef, Index: 11}},
-	CreatedByID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentTemplatesRef, Index: 12}}},
-	UpdatedByID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentTemplatesRef, Index: 13}}},
+	CreatedByID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &documentTemplatesRef, Index: 12}}},
+	UpdatedByID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &documentTemplatesRef, Index: 13}}},
 	SearchVector:    keel.TSVectorCol{Col: keel.Col{Ref: &documentTemplatesRef, Index: 14}},
 	Rank:            keel.StringCol{Col: keel.Col{Ref: &documentTemplatesRef, Index: 15}},
 }
@@ -118,20 +118,20 @@ var DocumentTemplates = &DocumentTemplatesTable{
 func BuildDocumentTemplates(r *keel.Ref) *DocumentTemplatesTable {
 	return &DocumentTemplatesTable{
 		TableBase:       keel.TableBase{Ref: r},
-		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		Kind:            KindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		Kind:            KindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		Code:            keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		Name:            keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		Description:     keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
 		IsOrgDefault:    keel.BoolCol{Col: keel.Col{Ref: r, Index: 7}},
-		ActiveVersionID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		ActiveVersionID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
 		Version:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
 		CreatedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
 		UpdatedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
-		CreatedByID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 12}}},
-		UpdatedByID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 13}}},
+		CreatedByID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 12}}},
+		UpdatedByID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 13}}},
 		SearchVector:    keel.TSVectorCol{Col: keel.Col{Ref: r, Index: 14}},
 		Rank:            keel.StringCol{Col: keel.Col{Ref: r, Index: 15}},
 	}
@@ -167,8 +167,6 @@ func (t *DocumentTemplatesTable) Get(ctx context.Context, db *keel.DB, key pulid
 
 // DocumentTemplatesQuery is a query over documenttemplate.DocumentTemplate.
 type DocumentTemplatesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*documenttemplate.DocumentTemplate] = (*DocumentTemplatesTable)(nil)
 
 var _ keel.Query[*documenttemplate.DocumentTemplate] = (*DocumentTemplatesQuery)(nil)
 
@@ -284,42 +282,42 @@ func (t *DocumentTemplatesTable) Compute(col keel.Column, e keel.Expr) keel.Quer
 
 // Create inserts row.
 func (t *DocumentTemplatesTable) Create(ctx context.Context, db *keel.DB, row *documenttemplate.DocumentTemplate) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *DocumentTemplatesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*documenttemplate.DocumentTemplate) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *DocumentTemplatesTable) Save(ctx context.Context, db *keel.DB, row *documenttemplate.DocumentTemplate, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *DocumentTemplatesTable) SaveExcept(ctx context.Context, db *keel.DB, row *documenttemplate.DocumentTemplate, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *DocumentTemplatesTable) DeleteRow(ctx context.Context, db *keel.DB, row *documenttemplate.DocumentTemplate) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *DocumentTemplatesTable) Upsert(ctx context.Context, db *keel.DB, rows []*documenttemplate.DocumentTemplate, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *DocumentTemplatesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*documenttemplate.DocumentTemplate, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *DocumentTemplatesTable) Copy(ctx context.Context, db *keel.DB, rows []*documenttemplate.DocumentTemplate) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -491,37 +489,45 @@ func (q *DocumentTemplatesQuery) Clone() keel.Query[*documenttemplate.DocumentTe
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *DocumentTemplatesQuery) One(ctx context.Context, db *keel.DB) (*documenttemplate.DocumentTemplate, error) {
-	return keel.One[*documenttemplate.DocumentTemplate](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*documenttemplate.DocumentTemplate)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *DocumentTemplatesQuery) First(ctx context.Context, db *keel.DB) (*documenttemplate.DocumentTemplate, error) {
-	return keel.First[*documenttemplate.DocumentTemplate](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*documenttemplate.DocumentTemplate)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *DocumentTemplatesQuery) List(ctx context.Context, db *keel.DB) ([]*documenttemplate.DocumentTemplate, error) {
-	return keel.List[*documenttemplate.DocumentTemplate](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*documenttemplate.DocumentTemplate)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *DocumentTemplatesQuery) All(ctx context.Context, db *keel.DB) ([]*documenttemplate.DocumentTemplate, error) {
-	return keel.All[*documenttemplate.DocumentTemplate](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*documenttemplate.DocumentTemplate)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *DocumentTemplatesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*documenttemplate.DocumentTemplate, error) {
-	return keel.UpdateReturning[*documenttemplate.DocumentTemplate](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*documenttemplate.DocumentTemplate)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *DocumentTemplatesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*documenttemplate.DocumentTemplate], error) {
-	return keel.PageOf[*documenttemplate.DocumentTemplate](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*documenttemplate.DocumentTemplate])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *DocumentTemplatesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*documenttemplate.DocumentTemplate) error) error {
-	return keel.Each[*documenttemplate.DocumentTemplate](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*documenttemplate.DocumentTemplate)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newDocumentTemplate() unsafe.Pointer {
@@ -707,13 +713,13 @@ type DocumentTemplateAssignmentsTable struct {
 // DocumentTemplateAssignments references the document_template_assignments table.
 var DocumentTemplateAssignments = &DocumentTemplateAssignmentsTable{
 	TableBase:      keel.TableBase{Ref: &documentTemplateAssignmentsRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentTemplateAssignmentsRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentTemplateAssignmentsRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentTemplateAssignmentsRef, Index: 2}}},
-	Kind:           KindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentTemplateAssignmentsRef, Index: 3}}},
-	TemplateID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentTemplateAssignmentsRef, Index: 4}}},
-	CustomerID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentTemplateAssignmentsRef, Index: 5}}},
-	AssignedByID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentTemplateAssignmentsRef, Index: 6}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &documentTemplateAssignmentsRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &documentTemplateAssignmentsRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &documentTemplateAssignmentsRef, Index: 2}}},
+	Kind:           KindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &documentTemplateAssignmentsRef, Index: 3}}},
+	TemplateID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &documentTemplateAssignmentsRef, Index: 4}}},
+	CustomerID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &documentTemplateAssignmentsRef, Index: 5}}},
+	AssignedByID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &documentTemplateAssignmentsRef, Index: 6}}},
 	Version:        keel.Int64Col{Col: keel.Col{Ref: &documentTemplateAssignmentsRef, Index: 7}},
 	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &documentTemplateAssignmentsRef, Index: 8}},
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &documentTemplateAssignmentsRef, Index: 9}},
@@ -723,13 +729,13 @@ var DocumentTemplateAssignments = &DocumentTemplateAssignmentsTable{
 func BuildDocumentTemplateAssignments(r *keel.Ref) *DocumentTemplateAssignmentsTable {
 	return &DocumentTemplateAssignmentsTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		Kind:           KindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		TemplateID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		CustomerID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		AssignedByID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		Kind:           KindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		TemplateID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		CustomerID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		AssignedByID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		Version:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
 		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
 		UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
@@ -761,8 +767,6 @@ func (t *DocumentTemplateAssignmentsTable) Get(ctx context.Context, db *keel.DB,
 
 // DocumentTemplateAssignmentsQuery is a query over documenttemplate.DocumentTemplateAssignment.
 type DocumentTemplateAssignmentsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*documenttemplate.DocumentTemplateAssignment] = (*DocumentTemplateAssignmentsTable)(nil)
 
 var _ keel.Query[*documenttemplate.DocumentTemplateAssignment] = (*DocumentTemplateAssignmentsQuery)(nil)
 
@@ -878,42 +882,42 @@ func (t *DocumentTemplateAssignmentsTable) Compute(col keel.Column, e keel.Expr)
 
 // Create inserts row.
 func (t *DocumentTemplateAssignmentsTable) Create(ctx context.Context, db *keel.DB, row *documenttemplate.DocumentTemplateAssignment) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *DocumentTemplateAssignmentsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*documenttemplate.DocumentTemplateAssignment) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *DocumentTemplateAssignmentsTable) Save(ctx context.Context, db *keel.DB, row *documenttemplate.DocumentTemplateAssignment, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *DocumentTemplateAssignmentsTable) SaveExcept(ctx context.Context, db *keel.DB, row *documenttemplate.DocumentTemplateAssignment, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *DocumentTemplateAssignmentsTable) DeleteRow(ctx context.Context, db *keel.DB, row *documenttemplate.DocumentTemplateAssignment) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *DocumentTemplateAssignmentsTable) Upsert(ctx context.Context, db *keel.DB, rows []*documenttemplate.DocumentTemplateAssignment, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *DocumentTemplateAssignmentsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*documenttemplate.DocumentTemplateAssignment, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *DocumentTemplateAssignmentsTable) Copy(ctx context.Context, db *keel.DB, rows []*documenttemplate.DocumentTemplateAssignment) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1085,37 +1089,45 @@ func (q *DocumentTemplateAssignmentsQuery) Clone() keel.Query[*documenttemplate.
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *DocumentTemplateAssignmentsQuery) One(ctx context.Context, db *keel.DB) (*documenttemplate.DocumentTemplateAssignment, error) {
-	return keel.One[*documenttemplate.DocumentTemplateAssignment](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*documenttemplate.DocumentTemplateAssignment)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *DocumentTemplateAssignmentsQuery) First(ctx context.Context, db *keel.DB) (*documenttemplate.DocumentTemplateAssignment, error) {
-	return keel.First[*documenttemplate.DocumentTemplateAssignment](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*documenttemplate.DocumentTemplateAssignment)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *DocumentTemplateAssignmentsQuery) List(ctx context.Context, db *keel.DB) ([]*documenttemplate.DocumentTemplateAssignment, error) {
-	return keel.List[*documenttemplate.DocumentTemplateAssignment](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*documenttemplate.DocumentTemplateAssignment)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *DocumentTemplateAssignmentsQuery) All(ctx context.Context, db *keel.DB) ([]*documenttemplate.DocumentTemplateAssignment, error) {
-	return keel.All[*documenttemplate.DocumentTemplateAssignment](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*documenttemplate.DocumentTemplateAssignment)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *DocumentTemplateAssignmentsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*documenttemplate.DocumentTemplateAssignment, error) {
-	return keel.UpdateReturning[*documenttemplate.DocumentTemplateAssignment](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*documenttemplate.DocumentTemplateAssignment)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *DocumentTemplateAssignmentsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*documenttemplate.DocumentTemplateAssignment], error) {
-	return keel.PageOf[*documenttemplate.DocumentTemplateAssignment](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*documenttemplate.DocumentTemplateAssignment])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *DocumentTemplateAssignmentsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*documenttemplate.DocumentTemplateAssignment) error) error {
-	return keel.Each[*documenttemplate.DocumentTemplateAssignment](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*documenttemplate.DocumentTemplateAssignment)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newDocumentTemplateAssignment() unsafe.Pointer {
@@ -1300,21 +1312,21 @@ type DocumentTemplateVersionsTable struct {
 // DocumentTemplateVersions references the document_template_versions table.
 var DocumentTemplateVersions = &DocumentTemplateVersionsTable{
 	TableBase:       keel.TableBase{Ref: &documentTemplateVersionsRef},
-	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentTemplateVersionsRef, Index: 0}}},
-	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentTemplateVersionsRef, Index: 1}}},
-	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentTemplateVersionsRef, Index: 2}}},
-	TemplateID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentTemplateVersionsRef, Index: 3}}},
-	SourceVersionID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentTemplateVersionsRef, Index: 4}}},
+	ID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &documentTemplateVersionsRef, Index: 0}}},
+	BusinessUnitID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &documentTemplateVersionsRef, Index: 1}}},
+	OrganizationID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &documentTemplateVersionsRef, Index: 2}}},
+	TemplateID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &documentTemplateVersionsRef, Index: 3}}},
+	SourceVersionID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &documentTemplateVersionsRef, Index: 4}}},
 	VersionNumber:   keel.Int64Col{Col: keel.Col{Ref: &documentTemplateVersionsRef, Index: 5}},
-	Status:          VersionStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentTemplateVersionsRef, Index: 6}}},
+	Status:          VersionStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &documentTemplateVersionsRef, Index: 6}}},
 	Subject:         keel.StringCol{Col: keel.Col{Ref: &documentTemplateVersionsRef, Index: 7}},
 	BodyHTML:        keel.StringCol{Col: keel.Col{Ref: &documentTemplateVersionsRef, Index: 8}},
 	BodyText:        keel.StringCol{Col: keel.Col{Ref: &documentTemplateVersionsRef, Index: 9}},
 	CSSContent:      keel.StringCol{Col: keel.Col{Ref: &documentTemplateVersionsRef, Index: 10}},
 	HeaderHTML:      keel.StringCol{Col: keel.Col{Ref: &documentTemplateVersionsRef, Index: 11}},
 	FooterHTML:      keel.StringCol{Col: keel.Col{Ref: &documentTemplateVersionsRef, Index: 12}},
-	PageSize:        PageSizeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentTemplateVersionsRef, Index: 13}}},
-	Orientation:     OrientationCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentTemplateVersionsRef, Index: 14}}},
+	PageSize:        PageSizeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &documentTemplateVersionsRef, Index: 13}}},
+	Orientation:     OrientationCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &documentTemplateVersionsRef, Index: 14}}},
 	MarginTop:       keel.Float64Col{Col: keel.Col{Ref: &documentTemplateVersionsRef, Index: 15}},
 	MarginBottom:    keel.Float64Col{Col: keel.Col{Ref: &documentTemplateVersionsRef, Index: 16}},
 	MarginLeft:      keel.Float64Col{Col: keel.Col{Ref: &documentTemplateVersionsRef, Index: 17}},
@@ -1322,36 +1334,36 @@ var DocumentTemplateVersions = &DocumentTemplateVersionsTable{
 	ContentHash:     keel.StringCol{Col: keel.Col{Ref: &documentTemplateVersionsRef, Index: 19}},
 	StarterHash:     keel.StringCol{Col: keel.Col{Ref: &documentTemplateVersionsRef, Index: 20}},
 	PublishNotes:    keel.StringCol{Col: keel.Col{Ref: &documentTemplateVersionsRef, Index: 21}},
-	PublishedByID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentTemplateVersionsRef, Index: 22}}},
+	PublishedByID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &documentTemplateVersionsRef, Index: 22}}},
 	PublishedAt:     keel.Int64Col{Col: keel.Col{Ref: &documentTemplateVersionsRef, Index: 23}},
-	ArchivedByID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentTemplateVersionsRef, Index: 24}}},
+	ArchivedByID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &documentTemplateVersionsRef, Index: 24}}},
 	ArchivedAt:      keel.Int64Col{Col: keel.Col{Ref: &documentTemplateVersionsRef, Index: 25}},
 	Version:         keel.Int64Col{Col: keel.Col{Ref: &documentTemplateVersionsRef, Index: 26}},
 	CreatedAt:       keel.Int64Col{Col: keel.Col{Ref: &documentTemplateVersionsRef, Index: 27}},
 	UpdatedAt:       keel.Int64Col{Col: keel.Col{Ref: &documentTemplateVersionsRef, Index: 28}},
-	CreatedByID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentTemplateVersionsRef, Index: 29}}},
-	UpdatedByID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &documentTemplateVersionsRef, Index: 30}}},
+	CreatedByID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &documentTemplateVersionsRef, Index: 29}}},
+	UpdatedByID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &documentTemplateVersionsRef, Index: 30}}},
 }
 
 // BuildDocumentTemplateVersions builds the table of document_template_versions for ref. Generated relation and alias methods call it.
 func BuildDocumentTemplateVersions(r *keel.Ref) *DocumentTemplateVersionsTable {
 	return &DocumentTemplateVersionsTable{
 		TableBase:       keel.TableBase{Ref: r},
-		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		TemplateID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		SourceVersionID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		TemplateID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		SourceVersionID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		VersionNumber:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 5}},
-		Status:          VersionStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		Status:          VersionStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		Subject:         keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
 		BodyHTML:        keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
 		BodyText:        keel.StringCol{Col: keel.Col{Ref: r, Index: 9}},
 		CSSContent:      keel.StringCol{Col: keel.Col{Ref: r, Index: 10}},
 		HeaderHTML:      keel.StringCol{Col: keel.Col{Ref: r, Index: 11}},
 		FooterHTML:      keel.StringCol{Col: keel.Col{Ref: r, Index: 12}},
-		PageSize:        PageSizeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 13}}},
-		Orientation:     OrientationCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 14}}},
+		PageSize:        PageSizeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 13}}},
+		Orientation:     OrientationCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 14}}},
 		MarginTop:       keel.Float64Col{Col: keel.Col{Ref: r, Index: 15}},
 		MarginBottom:    keel.Float64Col{Col: keel.Col{Ref: r, Index: 16}},
 		MarginLeft:      keel.Float64Col{Col: keel.Col{Ref: r, Index: 17}},
@@ -1359,15 +1371,15 @@ func BuildDocumentTemplateVersions(r *keel.Ref) *DocumentTemplateVersionsTable {
 		ContentHash:     keel.StringCol{Col: keel.Col{Ref: r, Index: 19}},
 		StarterHash:     keel.StringCol{Col: keel.Col{Ref: r, Index: 20}},
 		PublishNotes:    keel.StringCol{Col: keel.Col{Ref: r, Index: 21}},
-		PublishedByID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 22}}},
+		PublishedByID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 22}}},
 		PublishedAt:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 23}},
-		ArchivedByID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 24}}},
+		ArchivedByID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 24}}},
 		ArchivedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 25}},
 		Version:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 26}},
 		CreatedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 27}},
 		UpdatedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 28}},
-		CreatedByID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 29}}},
-		UpdatedByID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 30}}},
+		CreatedByID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 29}}},
+		UpdatedByID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 30}}},
 	}
 }
 
@@ -1391,8 +1403,6 @@ func (t *DocumentTemplateVersionsTable) Get(ctx context.Context, db *keel.DB, ke
 
 // DocumentTemplateVersionsQuery is a query over documenttemplate.DocumentTemplateVersion.
 type DocumentTemplateVersionsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*documenttemplate.DocumentTemplateVersion] = (*DocumentTemplateVersionsTable)(nil)
 
 var _ keel.Query[*documenttemplate.DocumentTemplateVersion] = (*DocumentTemplateVersionsQuery)(nil)
 
@@ -1508,42 +1518,42 @@ func (t *DocumentTemplateVersionsTable) Compute(col keel.Column, e keel.Expr) ke
 
 // Create inserts row.
 func (t *DocumentTemplateVersionsTable) Create(ctx context.Context, db *keel.DB, row *documenttemplate.DocumentTemplateVersion) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *DocumentTemplateVersionsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*documenttemplate.DocumentTemplateVersion) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *DocumentTemplateVersionsTable) Save(ctx context.Context, db *keel.DB, row *documenttemplate.DocumentTemplateVersion, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *DocumentTemplateVersionsTable) SaveExcept(ctx context.Context, db *keel.DB, row *documenttemplate.DocumentTemplateVersion, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *DocumentTemplateVersionsTable) DeleteRow(ctx context.Context, db *keel.DB, row *documenttemplate.DocumentTemplateVersion) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *DocumentTemplateVersionsTable) Upsert(ctx context.Context, db *keel.DB, rows []*documenttemplate.DocumentTemplateVersion, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *DocumentTemplateVersionsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*documenttemplate.DocumentTemplateVersion, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *DocumentTemplateVersionsTable) Copy(ctx context.Context, db *keel.DB, rows []*documenttemplate.DocumentTemplateVersion) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1715,37 +1725,45 @@ func (q *DocumentTemplateVersionsQuery) Clone() keel.Query[*documenttemplate.Doc
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *DocumentTemplateVersionsQuery) One(ctx context.Context, db *keel.DB) (*documenttemplate.DocumentTemplateVersion, error) {
-	return keel.One[*documenttemplate.DocumentTemplateVersion](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*documenttemplate.DocumentTemplateVersion)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *DocumentTemplateVersionsQuery) First(ctx context.Context, db *keel.DB) (*documenttemplate.DocumentTemplateVersion, error) {
-	return keel.First[*documenttemplate.DocumentTemplateVersion](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*documenttemplate.DocumentTemplateVersion)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *DocumentTemplateVersionsQuery) List(ctx context.Context, db *keel.DB) ([]*documenttemplate.DocumentTemplateVersion, error) {
-	return keel.List[*documenttemplate.DocumentTemplateVersion](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*documenttemplate.DocumentTemplateVersion)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *DocumentTemplateVersionsQuery) All(ctx context.Context, db *keel.DB) ([]*documenttemplate.DocumentTemplateVersion, error) {
-	return keel.All[*documenttemplate.DocumentTemplateVersion](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*documenttemplate.DocumentTemplateVersion)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *DocumentTemplateVersionsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*documenttemplate.DocumentTemplateVersion, error) {
-	return keel.UpdateReturning[*documenttemplate.DocumentTemplateVersion](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*documenttemplate.DocumentTemplateVersion)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *DocumentTemplateVersionsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*documenttemplate.DocumentTemplateVersion], error) {
-	return keel.PageOf[*documenttemplate.DocumentTemplateVersion](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*documenttemplate.DocumentTemplateVersion])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *DocumentTemplateVersionsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*documenttemplate.DocumentTemplateVersion) error) error {
-	return keel.Each[*documenttemplate.DocumentTemplateVersion](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*documenttemplate.DocumentTemplateVersion)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newDocumentTemplateVersion() unsafe.Pointer {
@@ -2055,123 +2073,109 @@ var enumVersionStatus = [...]schema.EnumValue{
 }
 
 // KindCol is a column of documenttemplate.Kind values.
-type KindCol struct{ keel.StringCol }
+type KindCol struct{ keel.TypedStringCol }
 
-func (c KindCol) Eq(v documenttemplate.Kind) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c KindCol) Ne(v documenttemplate.Kind) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c KindCol) Gt(v documenttemplate.Kind) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c KindCol) Gte(v documenttemplate.Kind) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c KindCol) Lt(v documenttemplate.Kind) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c KindCol) Lte(v documenttemplate.Kind) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c KindCol) Eq(v documenttemplate.Kind) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c KindCol) Ne(v documenttemplate.Kind) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c KindCol) Gt(v documenttemplate.Kind) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c KindCol) Gte(v documenttemplate.Kind) keel.Pred { return c.Text().Gte(string(v)) }
+func (c KindCol) Lt(v documenttemplate.Kind) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c KindCol) Lte(v documenttemplate.Kind) keel.Pred { return c.Text().Lte(string(v)) }
 func (c KindCol) IsDistinctFrom(v documenttemplate.Kind) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c KindCol) Between(lo, hi documenttemplate.Kind) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c KindCol) To(v documenttemplate.Kind) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c KindCol) To(v documenttemplate.Kind) keel.Assignment { return c.Text().To(string(v)) }
 func (c KindCol) In(vs ...documenttemplate.Kind) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c KindCol) NotIn(vs ...documenttemplate.Kind) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // OrientationCol is a column of documenttemplate.Orientation values.
-type OrientationCol struct{ keel.StringCol }
+type OrientationCol struct{ keel.TypedStringCol }
 
-func (c OrientationCol) Eq(v documenttemplate.Orientation) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c OrientationCol) Ne(v documenttemplate.Orientation) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c OrientationCol) Gt(v documenttemplate.Orientation) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
-func (c OrientationCol) Gte(v documenttemplate.Orientation) keel.Pred {
-	return c.StringCol.Gte(string(v))
-}
-func (c OrientationCol) Lt(v documenttemplate.Orientation) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
-func (c OrientationCol) Lte(v documenttemplate.Orientation) keel.Pred {
-	return c.StringCol.Lte(string(v))
-}
+func (c OrientationCol) Eq(v documenttemplate.Orientation) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c OrientationCol) Ne(v documenttemplate.Orientation) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c OrientationCol) Gt(v documenttemplate.Orientation) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c OrientationCol) Gte(v documenttemplate.Orientation) keel.Pred { return c.Text().Gte(string(v)) }
+func (c OrientationCol) Lt(v documenttemplate.Orientation) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c OrientationCol) Lte(v documenttemplate.Orientation) keel.Pred { return c.Text().Lte(string(v)) }
 func (c OrientationCol) IsDistinctFrom(v documenttemplate.Orientation) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c OrientationCol) Between(lo, hi documenttemplate.Orientation) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c OrientationCol) To(v documenttemplate.Orientation) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c OrientationCol) In(vs ...documenttemplate.Orientation) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c OrientationCol) NotIn(vs ...documenttemplate.Orientation) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // PageSizeCol is a column of documenttemplate.PageSize values.
-type PageSizeCol struct{ keel.StringCol }
+type PageSizeCol struct{ keel.TypedStringCol }
 
-func (c PageSizeCol) Eq(v documenttemplate.PageSize) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c PageSizeCol) Ne(v documenttemplate.PageSize) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c PageSizeCol) Gt(v documenttemplate.PageSize) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c PageSizeCol) Gte(v documenttemplate.PageSize) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c PageSizeCol) Lt(v documenttemplate.PageSize) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c PageSizeCol) Lte(v documenttemplate.PageSize) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c PageSizeCol) Eq(v documenttemplate.PageSize) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c PageSizeCol) Ne(v documenttemplate.PageSize) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c PageSizeCol) Gt(v documenttemplate.PageSize) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c PageSizeCol) Gte(v documenttemplate.PageSize) keel.Pred { return c.Text().Gte(string(v)) }
+func (c PageSizeCol) Lt(v documenttemplate.PageSize) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c PageSizeCol) Lte(v documenttemplate.PageSize) keel.Pred { return c.Text().Lte(string(v)) }
 func (c PageSizeCol) IsDistinctFrom(v documenttemplate.PageSize) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c PageSizeCol) Between(lo, hi documenttemplate.PageSize) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c PageSizeCol) To(v documenttemplate.PageSize) keel.Assignment {
-	return c.StringCol.To(string(v))
-}
+func (c PageSizeCol) To(v documenttemplate.PageSize) keel.Assignment { return c.Text().To(string(v)) }
 func (c PageSizeCol) In(vs ...documenttemplate.PageSize) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c PageSizeCol) NotIn(vs ...documenttemplate.PageSize) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // VersionStatusCol is a column of documenttemplate.VersionStatus values.
-type VersionStatusCol struct{ keel.StringCol }
+type VersionStatusCol struct{ keel.TypedStringCol }
 
 func (c VersionStatusCol) Eq(v documenttemplate.VersionStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c VersionStatusCol) Ne(v documenttemplate.VersionStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c VersionStatusCol) Gt(v documenttemplate.VersionStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c VersionStatusCol) Gte(v documenttemplate.VersionStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c VersionStatusCol) Lt(v documenttemplate.VersionStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c VersionStatusCol) Lte(v documenttemplate.VersionStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c VersionStatusCol) IsDistinctFrom(v documenttemplate.VersionStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c VersionStatusCol) Between(lo, hi documenttemplate.VersionStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c VersionStatusCol) To(v documenttemplate.VersionStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c VersionStatusCol) In(vs ...documenttemplate.VersionStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c VersionStatusCol) NotIn(vs ...documenttemplate.VersionStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

@@ -58,6 +58,9 @@ func setupTestEngine(
 	t.Helper()
 
 	roleRepo := permissionportsmock.NewMockRoleRepository(t)
+	roleRepo.On("GetMembershipExpiry", mock.Anything, mock.Anything, mock.Anything).
+		Return(nil, nil).
+		Maybe()
 	cacheRepo := permissionportsmock.NewMockPermissionCacheRepository(t)
 	cacheRepo.On("Epoch", mock.Anything, mock.Anything, mock.Anything).
 		Return(testEpoch, nil).
@@ -673,10 +676,70 @@ func TestPermissionsExpireAt_KeepsTheCacheLifetimeWithoutAnEarlierExpiry(t *test
 	far := timeutils.NowUnix() + 2*int64(cacheTTL.Seconds())
 	before := timeutils.NowUnix()
 
-	expiresAt := permissionsExpireAt([]*rbac.UserRoleAssignment{{}, {ExpiresAt: &far}})
+	expiresAt := permissionsExpireAt([]*rbac.UserRoleAssignment{{}, {ExpiresAt: &far}}, nil)
 
 	assert.GreaterOrEqual(t, expiresAt, before+int64(cacheTTL.Seconds()))
 	assert.Less(t, expiresAt, far)
+}
+
+func membershipEnding(
+	t *testing.T,
+	eng *engine,
+	userID, orgID, roleID pulid.ID,
+	ends int64,
+) *permissionportsmock.MockRoleRepository {
+	t.Helper()
+
+	roles := permissionportsmock.NewMockRoleRepository(t)
+	eng.roleRepo = roles
+	roles.On("GetUserRoleAssignments", mock.Anything, userID, orgID).
+		Return([]*rbac.UserRoleAssignment{
+			{RoleID: roleID, UserID: userID, OrganizationID: orgID},
+		}, nil)
+	roles.On("GetMembershipExpiry", mock.Anything, userID, orgID).Return(&ends, nil)
+
+	return roles
+}
+
+func TestCachedPermissionsEndWithTheMembership(t *testing.T) {
+	t.Parallel()
+
+	eng, _, _, _ := setupTestEngine(t)
+	userID, orgID, roleID := pulid.MustNew("usr_"), pulid.MustNew("org_"), pulid.MustNew("rol_")
+	ends := timeutils.NowUnix() + 60
+	roles := membershipEnding(t, eng, userID, orgID, roleID, ends)
+	roles.On("GetRolesWithInheritance", mock.Anything, []pulid.ID{roleID}).Return([]*rbac.Role{
+		{ID: roleID, MaxSensitivity: permission.SensitivityInternal},
+	}, nil)
+
+	perms, err := eng.computePermissions(t.Context(), userID, orgID)
+
+	require.NoError(t, err)
+	assert.Equal(t, ends, perms.ExpiresAt)
+	assert.Equal(t, string(permission.SensitivityInternal), perms.MaxSensitivity)
+}
+
+func TestAnEndedMembershipGrantsNothing(t *testing.T) {
+	t.Parallel()
+
+	eng, _, _, _ := setupTestEngine(t)
+	userID, orgID, roleID := pulid.MustNew("usr_"), pulid.MustNew("org_"), pulid.MustNew("rol_")
+	roles := membershipEnding(t, eng, userID, orgID, roleID, timeutils.NowUnix()-60)
+	roles.On("GetRolesWithInheritance", mock.Anything, []pulid.ID{}).
+		Return([]*rbac.Role{}, nil)
+
+	perms, err := eng.computePermissions(t.Context(), userID, orgID)
+
+	require.NoError(t, err)
+	assert.Empty(t, perms.Resources)
+	assert.Equal(t, string(permission.SensitivityPublic), perms.MaxSensitivity)
+	assert.Greater(t, perms.ExpiresAt, timeutils.NowUnix())
+
+	result, err := eng.GetEffectivePermissions(t.Context(), userID, orgID)
+
+	require.NoError(t, err)
+	assert.Empty(t, result.Resources)
+	roles.AssertNotCalled(t, "GetRolesWithInheritance", mock.Anything, []pulid.ID{roleID})
 }
 
 func TestExpiredAssignmentsIgnored(t *testing.T) {

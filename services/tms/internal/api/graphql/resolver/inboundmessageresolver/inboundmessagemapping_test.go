@@ -1,6 +1,7 @@
 package inboundmessageresolver
 
 import (
+	"encoding/base64"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
@@ -19,8 +20,12 @@ func TestInboundMessageConnectionCursorsCarryTheArrivalSort(t *testing.T) {
 		{Field: "receivedAt", Direction: "desc"},
 		{Field: "id", Direction: "desc"},
 	}
+	binding := pagination.BindCursor(pagination.TenantInfo{}, "inbound_messages", sort)
 	edge := func(keyset string) string {
-		cursor, err := pagination.EncodeKeysetCursor(sort, keyset)
+		cursor, err := pagination.EncodeKeysetCursor(
+			binding,
+			base64.RawURLEncoding.EncodeToString([]byte(keyset)),
+		)
 		require.NoError(t, err)
 		return cursor
 	}
@@ -38,8 +43,7 @@ func TestInboundMessageConnectionCursorsCarryTheArrivalSort(t *testing.T) {
 	require.NotNil(t, conn.PageInfo.EndCursor)
 	assert.Equal(t, result.EdgeCursors[1], *conn.PageInfo.EndCursor)
 
-	cursor, err := pagination.DecodeCursor(*conn.PageInfo.EndCursor)
+	keyset, err := pagination.DecodeKeysetCursor(binding, *conn.PageInfo.EndCursor)
 	require.NoError(t, err)
-	assert.True(t, cursor.MatchesSort(sort))
-	assert.Equal(t, "k2", cursor.Keyset)
+	assert.Equal(t, base64.RawURLEncoding.EncodeToString([]byte("k2")), keyset)
 }

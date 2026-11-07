@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/driverstart"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/keel/postgis"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -14,9 +16,7 @@ import (
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
-const atRiskLeadSeconds = int64(4 * 3600)
-
-const positionFreshnessSeconds = int64(4 * 3600)
+const positionFreshnessSeconds = driverstart.PositionFreshnessSeconds
 
 const metersPerMile = 1609.344
 
@@ -99,11 +99,9 @@ func moveSummaryQuery(
 	asn := assignments
 	ca := carrierAssignments
 	pos := telematicsdb.VehiclePositions
-	windowStart := origin.stop.ScheduledWindowStart
 
 	uncovered := keel.And(asn.ID.IsNull(), ca.ID.IsNull())
 	covered := keel.Or(asn.ID.IsNotNull(), ca.ID.IsNotNull())
-	scheduled := windowStart.Coalesce(0).Gt(0)
 	urgency := urgencyOf(now)
 
 	return boardMoves().
@@ -114,13 +112,8 @@ func moveSummaryQuery(
 		Pick(
 			countIf(uncovered),
 			countIf(covered),
-			countIf(uncovered, scheduled, windowStart.Lt(now)),
-			countIf(
-				uncovered,
-				scheduled,
-				windowStart.Gte(now),
-				windowStart.Lte(now+atRiskLeadSeconds),
-			),
+			countIf(uncovered, urgency.overdue),
+			countIf(uncovered, urgency.dueNow),
 			countIf(urgency.overdue),
 			countIf(urgency.dueNow),
 			countIf(urgency.dueToday),
@@ -196,10 +189,11 @@ func driverSummaryQuery(
 	filter *dispatchboardports.DispatchBoardFilter,
 ) keel.Query[*worker.Worker] {
 	w := workerdb.Workers
-	return w.
+	q, open := withOpenWork(w.Query(), w)
+	return q.
 		Pick(
 			keel.Count(),
-			countIf(zero(openAssignments(w)).Eq(0)),
+			countIf(open.Eq(0)),
 		).
 		Where(driverFilters(filter)...).
 		Where(w.AvailableForDispatch.IsTrue())

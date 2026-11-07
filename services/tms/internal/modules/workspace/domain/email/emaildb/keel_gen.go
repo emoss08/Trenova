@@ -72,15 +72,15 @@ type AttachmentsTable struct {
 // Attachments references the email_message_attachments table.
 var Attachments = &AttachmentsTable{
 	TableBase:      keel.TableBase{Ref: &attachmentsRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &attachmentsRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &attachmentsRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &attachmentsRef, Index: 2}}},
-	MessageID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &attachmentsRef, Index: 3}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &attachmentsRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &attachmentsRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &attachmentsRef, Index: 2}}},
+	MessageID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &attachmentsRef, Index: 3}}},
 	FileName:       keel.StringCol{Col: keel.Col{Ref: &attachmentsRef, Index: 4}},
 	ContentType:    keel.StringCol{Col: keel.Col{Ref: &attachmentsRef, Index: 5}},
 	ObjectKey:      keel.StringCol{Col: keel.Col{Ref: &attachmentsRef, Index: 6}},
 	SizeBytes:      keel.Int64Col{Col: keel.Col{Ref: &attachmentsRef, Index: 7}},
-	Seal:           AttachmentSealCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &attachmentsRef, Index: 8}}},
+	Seal:           AttachmentSealCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &attachmentsRef, Index: 8}}},
 	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &attachmentsRef, Index: 9}},
 }
 
@@ -88,15 +88,15 @@ var Attachments = &AttachmentsTable{
 func BuildAttachments(r *keel.Ref) *AttachmentsTable {
 	return &AttachmentsTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		MessageID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		MessageID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		FileName:       keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		ContentType:    keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		ObjectKey:      keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
 		SizeBytes:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
-		Seal:           AttachmentSealCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		Seal:           AttachmentSealCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
 		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
 	}
 }
@@ -116,8 +116,6 @@ func (t *AttachmentsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (
 
 // AttachmentsQuery is a query over email.Attachment.
 type AttachmentsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*email.Attachment] = (*AttachmentsTable)(nil)
 
 var _ keel.Query[*email.Attachment] = (*AttachmentsQuery)(nil)
 
@@ -233,42 +231,42 @@ func (t *AttachmentsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*ema
 
 // Create inserts row.
 func (t *AttachmentsTable) Create(ctx context.Context, db *keel.DB, row *email.Attachment) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *AttachmentsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*email.Attachment) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *AttachmentsTable) Save(ctx context.Context, db *keel.DB, row *email.Attachment, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *AttachmentsTable) SaveExcept(ctx context.Context, db *keel.DB, row *email.Attachment, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *AttachmentsTable) DeleteRow(ctx context.Context, db *keel.DB, row *email.Attachment) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *AttachmentsTable) Upsert(ctx context.Context, db *keel.DB, rows []*email.Attachment, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *AttachmentsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*email.Attachment, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *AttachmentsTable) Copy(ctx context.Context, db *keel.DB, rows []*email.Attachment) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -440,37 +438,45 @@ func (q *AttachmentsQuery) Clone() keel.Query[*email.Attachment] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *AttachmentsQuery) One(ctx context.Context, db *keel.DB) (*email.Attachment, error) {
-	return keel.One[*email.Attachment](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*email.Attachment)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *AttachmentsQuery) First(ctx context.Context, db *keel.DB) (*email.Attachment, error) {
-	return keel.First[*email.Attachment](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*email.Attachment)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *AttachmentsQuery) List(ctx context.Context, db *keel.DB) ([]*email.Attachment, error) {
-	return keel.List[*email.Attachment](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*email.Attachment)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *AttachmentsQuery) All(ctx context.Context, db *keel.DB) ([]*email.Attachment, error) {
-	return keel.All[*email.Attachment](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*email.Attachment)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *AttachmentsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*email.Attachment, error) {
-	return keel.UpdateReturning[*email.Attachment](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*email.Attachment)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *AttachmentsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*email.Attachment], error) {
-	return keel.PageOf[*email.Attachment](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*email.Attachment])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *AttachmentsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*email.Attachment) error) error {
-	return keel.Each[*email.Attachment](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*email.Attachment)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newAttachment() unsafe.Pointer { return unsafe.Pointer(new(email.Attachment)) }
@@ -596,13 +602,13 @@ type EventsTable struct {
 // Events references the email_events table.
 var Events = &EventsTable{
 	TableBase:       keel.TableBase{Ref: &eventsRef},
-	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eventsRef, Index: 0}}},
-	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eventsRef, Index: 1}}},
-	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eventsRef, Index: 2}}},
-	MessageID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eventsRef, Index: 3}}},
-	Provider:        ProviderCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eventsRef, Index: 4}}},
+	ID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eventsRef, Index: 0}}},
+	BusinessUnitID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eventsRef, Index: 1}}},
+	OrganizationID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eventsRef, Index: 2}}},
+	MessageID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eventsRef, Index: 3}}},
+	Provider:        ProviderCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eventsRef, Index: 4}}},
 	ProviderEventID: keel.StringCol{Col: keel.Col{Ref: &eventsRef, Index: 5}},
-	Type:            EventTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eventsRef, Index: 6}}},
+	Type:            EventTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &eventsRef, Index: 6}}},
 	Recipient:       keel.StringCol{Col: keel.Col{Ref: &eventsRef, Index: 7}},
 	OccurredAt:      keel.Int64Col{Col: keel.Col{Ref: &eventsRef, Index: 8}},
 	Raw:             keel.JSONBCol{Col: keel.Col{Ref: &eventsRef, Index: 9}},
@@ -613,13 +619,13 @@ var Events = &EventsTable{
 func BuildEvents(r *keel.Ref) *EventsTable {
 	return &EventsTable{
 		TableBase:       keel.TableBase{Ref: r},
-		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		MessageID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		Provider:        ProviderCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		MessageID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		Provider:        ProviderCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		ProviderEventID: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
-		Type:            EventTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		Type:            EventTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		Recipient:       keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
 		OccurredAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
 		Raw:             keel.JSONBCol{Col: keel.Col{Ref: r, Index: 9}},
@@ -640,8 +646,6 @@ func (t *EventsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*emai
 
 // EventsQuery is a query over email.Event.
 type EventsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*email.Event] = (*EventsTable)(nil)
 
 var _ keel.Query[*email.Event] = (*EventsQuery)(nil)
 
@@ -757,42 +761,42 @@ func (t *EventsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*email.Ev
 
 // Create inserts row.
 func (t *EventsTable) Create(ctx context.Context, db *keel.DB, row *email.Event) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *EventsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*email.Event) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *EventsTable) Save(ctx context.Context, db *keel.DB, row *email.Event, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *EventsTable) SaveExcept(ctx context.Context, db *keel.DB, row *email.Event, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *EventsTable) DeleteRow(ctx context.Context, db *keel.DB, row *email.Event) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *EventsTable) Upsert(ctx context.Context, db *keel.DB, rows []*email.Event, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *EventsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*email.Event, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *EventsTable) Copy(ctx context.Context, db *keel.DB, rows []*email.Event) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -964,37 +968,45 @@ func (q *EventsQuery) Clone() keel.Query[*email.Event] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *EventsQuery) One(ctx context.Context, db *keel.DB) (*email.Event, error) {
-	return keel.One[*email.Event](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*email.Event)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *EventsQuery) First(ctx context.Context, db *keel.DB) (*email.Event, error) {
-	return keel.First[*email.Event](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*email.Event)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *EventsQuery) List(ctx context.Context, db *keel.DB) ([]*email.Event, error) {
-	return keel.List[*email.Event](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*email.Event)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *EventsQuery) All(ctx context.Context, db *keel.DB) ([]*email.Event, error) {
-	return keel.All[*email.Event](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*email.Event)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *EventsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*email.Event, error) {
-	return keel.UpdateReturning[*email.Event](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*email.Event)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *EventsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*email.Event], error) {
-	return keel.PageOf[*email.Event](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*email.Event])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *EventsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*email.Event) error) error {
-	return keel.Each[*email.Event](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*email.Event)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newEvent() unsafe.Pointer { return unsafe.Pointer(new(email.Event)) }
@@ -1163,15 +1175,15 @@ type MessagesTable struct {
 // Messages references the email_messages table.
 var Messages = &MessagesTable{
 	TableBase:         keel.TableBase{Ref: &messagesRef},
-	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 0}}},
-	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 1}}},
-	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 2}}},
-	ProfileID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 3}}},
-	Purpose:           PurposeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 4}}},
-	Provider:          ProviderCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 5}}},
+	ID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &messagesRef, Index: 0}}},
+	BusinessUnitID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &messagesRef, Index: 1}}},
+	OrganizationID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &messagesRef, Index: 2}}},
+	ProfileID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &messagesRef, Index: 3}}},
+	Purpose:           PurposeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &messagesRef, Index: 4}}},
+	Provider:          ProviderCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &messagesRef, Index: 5}}},
 	IdempotencyKey:    keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 6}},
 	ProviderMessageID: keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 7}},
-	Status:            MessageStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 8}}},
+	Status:            MessageStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &messagesRef, Index: 8}}},
 	Attempts:          keel.Int32Col{Col: keel.Col{Ref: &messagesRef, Index: 9}},
 	FromEmail:         keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 10}},
 	FromName:          keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 11}},
@@ -1195,15 +1207,15 @@ var Messages = &MessagesTable{
 func BuildMessages(r *keel.Ref) *MessagesTable {
 	return &MessagesTable{
 		TableBase:         keel.TableBase{Ref: r},
-		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		ProfileID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		Purpose:           PurposeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		Provider:          ProviderCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		ID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ProfileID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		Purpose:           PurposeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		Provider:          ProviderCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		IdempotencyKey:    keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
 		ProviderMessageID: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
-		Status:            MessageStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		Status:            MessageStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
 		Attempts:          keel.Int32Col{Col: keel.Col{Ref: r, Index: 9}},
 		FromEmail:         keel.StringCol{Col: keel.Col{Ref: r, Index: 10}},
 		FromName:          keel.StringCol{Col: keel.Col{Ref: r, Index: 11}},
@@ -1245,8 +1257,6 @@ func (t *MessagesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*em
 
 // MessagesQuery is a query over email.Message.
 type MessagesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*email.Message] = (*MessagesTable)(nil)
 
 var _ keel.Query[*email.Message] = (*MessagesQuery)(nil)
 
@@ -1362,42 +1372,42 @@ func (t *MessagesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*email.
 
 // Create inserts row.
 func (t *MessagesTable) Create(ctx context.Context, db *keel.DB, row *email.Message) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *MessagesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*email.Message) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *MessagesTable) Save(ctx context.Context, db *keel.DB, row *email.Message, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *MessagesTable) SaveExcept(ctx context.Context, db *keel.DB, row *email.Message, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *MessagesTable) DeleteRow(ctx context.Context, db *keel.DB, row *email.Message) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *MessagesTable) Upsert(ctx context.Context, db *keel.DB, rows []*email.Message, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *MessagesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*email.Message, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *MessagesTable) Copy(ctx context.Context, db *keel.DB, rows []*email.Message) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1569,37 +1579,45 @@ func (q *MessagesQuery) Clone() keel.Query[*email.Message] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *MessagesQuery) One(ctx context.Context, db *keel.DB) (*email.Message, error) {
-	return keel.One[*email.Message](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*email.Message)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *MessagesQuery) First(ctx context.Context, db *keel.DB) (*email.Message, error) {
-	return keel.First[*email.Message](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*email.Message)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *MessagesQuery) List(ctx context.Context, db *keel.DB) ([]*email.Message, error) {
-	return keel.List[*email.Message](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*email.Message)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *MessagesQuery) All(ctx context.Context, db *keel.DB) ([]*email.Message, error) {
-	return keel.All[*email.Message](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*email.Message)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *MessagesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*email.Message, error) {
-	return keel.UpdateReturning[*email.Message](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*email.Message)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *MessagesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*email.Message], error) {
-	return keel.PageOf[*email.Message](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*email.Message])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *MessagesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*email.Message) error) error {
-	return keel.Each[*email.Message](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*email.Message)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newMessage() unsafe.Pointer { return unsafe.Pointer(new(email.Message)) }
@@ -1833,18 +1851,18 @@ type ProfilesTable struct {
 // Profiles references the email_profiles table.
 var Profiles = &ProfilesTable{
 	TableBase:      keel.TableBase{Ref: &profilesRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &profilesRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &profilesRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &profilesRef, Index: 2}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &profilesRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &profilesRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &profilesRef, Index: 2}}},
 	Name:           keel.StringCol{Col: keel.Col{Ref: &profilesRef, Index: 3}},
 	Description:    keel.StringCol{Col: keel.Col{Ref: &profilesRef, Index: 4}},
 	SenderName:     keel.StringCol{Col: keel.Col{Ref: &profilesRef, Index: 5}},
 	SenderEmail:    keel.StringCol{Col: keel.Col{Ref: &profilesRef, Index: 6}},
 	ReplyToEmail:   keel.StringCol{Col: keel.Col{Ref: &profilesRef, Index: 7}},
-	Provider:       ProviderCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &profilesRef, Index: 8}}},
-	AuthType:       AuthTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &profilesRef, Index: 9}}},
-	EncryptionType: EncryptionCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &profilesRef, Index: 10}}},
-	Status:         ProfileStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &profilesRef, Index: 11}}},
+	Provider:       ProviderCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &profilesRef, Index: 8}}},
+	AuthType:       AuthTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &profilesRef, Index: 9}}},
+	EncryptionType: EncryptionCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &profilesRef, Index: 10}}},
+	Status:         ProfileStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &profilesRef, Index: 11}}},
 	Version:        keel.Int64Col{Col: keel.Col{Ref: &profilesRef, Index: 12}},
 	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &profilesRef, Index: 13}},
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &profilesRef, Index: 14}},
@@ -1855,18 +1873,18 @@ var Profiles = &ProfilesTable{
 func BuildProfiles(r *keel.Ref) *ProfilesTable {
 	return &ProfilesTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		Name:           keel.StringCol{Col: keel.Col{Ref: r, Index: 3}},
 		Description:    keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		SenderName:     keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		SenderEmail:    keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
 		ReplyToEmail:   keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
-		Provider:       ProviderCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
-		AuthType:       AuthTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
-		EncryptionType: EncryptionCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
-		Status:         ProfileStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
+		Provider:       ProviderCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		AuthType:       AuthTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		EncryptionType: EncryptionCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		Status:         ProfileStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 11}}},
 		Version:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
 		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
 		UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
@@ -1889,8 +1907,6 @@ func (t *ProfilesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*em
 
 // ProfilesQuery is a query over email.Profile.
 type ProfilesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*email.Profile] = (*ProfilesTable)(nil)
 
 var _ keel.Query[*email.Profile] = (*ProfilesQuery)(nil)
 
@@ -2006,42 +2022,42 @@ func (t *ProfilesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*email.
 
 // Create inserts row.
 func (t *ProfilesTable) Create(ctx context.Context, db *keel.DB, row *email.Profile) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *ProfilesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*email.Profile) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *ProfilesTable) Save(ctx context.Context, db *keel.DB, row *email.Profile, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *ProfilesTable) SaveExcept(ctx context.Context, db *keel.DB, row *email.Profile, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *ProfilesTable) DeleteRow(ctx context.Context, db *keel.DB, row *email.Profile) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *ProfilesTable) Upsert(ctx context.Context, db *keel.DB, rows []*email.Profile, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *ProfilesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*email.Profile, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *ProfilesTable) Copy(ctx context.Context, db *keel.DB, rows []*email.Profile) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -2213,37 +2229,45 @@ func (q *ProfilesQuery) Clone() keel.Query[*email.Profile] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *ProfilesQuery) One(ctx context.Context, db *keel.DB) (*email.Profile, error) {
-	return keel.One[*email.Profile](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*email.Profile)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *ProfilesQuery) First(ctx context.Context, db *keel.DB) (*email.Profile, error) {
-	return keel.First[*email.Profile](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*email.Profile)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *ProfilesQuery) List(ctx context.Context, db *keel.DB) ([]*email.Profile, error) {
-	return keel.List[*email.Profile](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*email.Profile)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *ProfilesQuery) All(ctx context.Context, db *keel.DB) ([]*email.Profile, error) {
-	return keel.All[*email.Profile](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*email.Profile)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *ProfilesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*email.Profile, error) {
-	return keel.UpdateReturning[*email.Profile](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*email.Profile)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *ProfilesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*email.Profile], error) {
-	return keel.PageOf[*email.Profile](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*email.Profile])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *ProfilesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*email.Profile) error) error {
-	return keel.Each[*email.Profile](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*email.Profile)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newProfile() unsafe.Pointer { return unsafe.Pointer(new(email.Profile)) }
@@ -2398,11 +2422,11 @@ type ProfileAssignmentsTable struct {
 // ProfileAssignments references the email_profile_assignments table.
 var ProfileAssignments = &ProfileAssignmentsTable{
 	TableBase:      keel.TableBase{Ref: &profileAssignmentsRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &profileAssignmentsRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &profileAssignmentsRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &profileAssignmentsRef, Index: 2}}},
-	Purpose:        PurposeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &profileAssignmentsRef, Index: 3}}},
-	ProfileID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &profileAssignmentsRef, Index: 4}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &profileAssignmentsRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &profileAssignmentsRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &profileAssignmentsRef, Index: 2}}},
+	Purpose:        PurposeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &profileAssignmentsRef, Index: 3}}},
+	ProfileID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &profileAssignmentsRef, Index: 4}}},
 	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &profileAssignmentsRef, Index: 5}},
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &profileAssignmentsRef, Index: 6}},
 }
@@ -2411,11 +2435,11 @@ var ProfileAssignments = &ProfileAssignmentsTable{
 func BuildProfileAssignments(r *keel.Ref) *ProfileAssignmentsTable {
 	return &ProfileAssignmentsTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		Purpose:        PurposeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		ProfileID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		Purpose:        PurposeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ProfileID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 5}},
 		UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
 	}
@@ -2439,8 +2463,6 @@ func (t *ProfileAssignmentsTable) Get(ctx context.Context, db *keel.DB, key puli
 
 // ProfileAssignmentsQuery is a query over email.ProfileAssignment.
 type ProfileAssignmentsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*email.ProfileAssignment] = (*ProfileAssignmentsTable)(nil)
 
 var _ keel.Query[*email.ProfileAssignment] = (*ProfileAssignmentsQuery)(nil)
 
@@ -2556,42 +2578,42 @@ func (t *ProfileAssignmentsTable) Compute(col keel.Column, e keel.Expr) keel.Que
 
 // Create inserts row.
 func (t *ProfileAssignmentsTable) Create(ctx context.Context, db *keel.DB, row *email.ProfileAssignment) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *ProfileAssignmentsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*email.ProfileAssignment) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *ProfileAssignmentsTable) Save(ctx context.Context, db *keel.DB, row *email.ProfileAssignment, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *ProfileAssignmentsTable) SaveExcept(ctx context.Context, db *keel.DB, row *email.ProfileAssignment, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *ProfileAssignmentsTable) DeleteRow(ctx context.Context, db *keel.DB, row *email.ProfileAssignment) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *ProfileAssignmentsTable) Upsert(ctx context.Context, db *keel.DB, rows []*email.ProfileAssignment, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *ProfileAssignmentsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*email.ProfileAssignment, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *ProfileAssignmentsTable) Copy(ctx context.Context, db *keel.DB, rows []*email.ProfileAssignment) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -2763,37 +2785,45 @@ func (q *ProfileAssignmentsQuery) Clone() keel.Query[*email.ProfileAssignment] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *ProfileAssignmentsQuery) One(ctx context.Context, db *keel.DB) (*email.ProfileAssignment, error) {
-	return keel.One[*email.ProfileAssignment](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*email.ProfileAssignment)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *ProfileAssignmentsQuery) First(ctx context.Context, db *keel.DB) (*email.ProfileAssignment, error) {
-	return keel.First[*email.ProfileAssignment](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*email.ProfileAssignment)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *ProfileAssignmentsQuery) List(ctx context.Context, db *keel.DB) ([]*email.ProfileAssignment, error) {
-	return keel.List[*email.ProfileAssignment](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*email.ProfileAssignment)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *ProfileAssignmentsQuery) All(ctx context.Context, db *keel.DB) ([]*email.ProfileAssignment, error) {
-	return keel.All[*email.ProfileAssignment](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*email.ProfileAssignment)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *ProfileAssignmentsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*email.ProfileAssignment, error) {
-	return keel.UpdateReturning[*email.ProfileAssignment](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*email.ProfileAssignment)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *ProfileAssignmentsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*email.ProfileAssignment], error) {
-	return keel.PageOf[*email.ProfileAssignment](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*email.ProfileAssignment])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *ProfileAssignmentsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*email.ProfileAssignment) error) error {
-	return keel.Each[*email.ProfileAssignment](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*email.ProfileAssignment)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newProfileAssignment() unsafe.Pointer { return unsafe.Pointer(new(email.ProfileAssignment)) }
@@ -2911,15 +2941,15 @@ type SuppressionsTable struct {
 // Suppressions references the email_suppressions table.
 var Suppressions = &SuppressionsTable{
 	TableBase:      keel.TableBase{Ref: &suppressionsRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &suppressionsRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &suppressionsRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &suppressionsRef, Index: 2}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &suppressionsRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &suppressionsRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &suppressionsRef, Index: 2}}},
 	EmailAddress:   keel.StringCol{Col: keel.Col{Ref: &suppressionsRef, Index: 3}},
-	Reason:         SuppressionReasonCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &suppressionsRef, Index: 4}}},
-	Provider:       ProviderCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &suppressionsRef, Index: 5}}},
+	Reason:         SuppressionReasonCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &suppressionsRef, Index: 4}}},
+	Provider:       ProviderCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &suppressionsRef, Index: 5}}},
 	SourceEventID:  keel.StringCol{Col: keel.Col{Ref: &suppressionsRef, Index: 6}},
 	Notes:          keel.StringCol{Col: keel.Col{Ref: &suppressionsRef, Index: 7}},
-	CreatedByID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &suppressionsRef, Index: 8}}},
+	CreatedByID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &suppressionsRef, Index: 8}}},
 	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &suppressionsRef, Index: 9}},
 }
 
@@ -2927,15 +2957,15 @@ var Suppressions = &SuppressionsTable{
 func BuildSuppressions(r *keel.Ref) *SuppressionsTable {
 	return &SuppressionsTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		EmailAddress:   keel.StringCol{Col: keel.Col{Ref: r, Index: 3}},
-		Reason:         SuppressionReasonCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		Provider:       ProviderCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		Reason:         SuppressionReasonCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		Provider:       ProviderCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		SourceEventID:  keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
 		Notes:          keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
-		CreatedByID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		CreatedByID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
 		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
 	}
 }
@@ -2955,8 +2985,6 @@ func (t *SuppressionsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) 
 
 // SuppressionsQuery is a query over email.Suppression.
 type SuppressionsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*email.Suppression] = (*SuppressionsTable)(nil)
 
 var _ keel.Query[*email.Suppression] = (*SuppressionsQuery)(nil)
 
@@ -3072,42 +3100,42 @@ func (t *SuppressionsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*em
 
 // Create inserts row.
 func (t *SuppressionsTable) Create(ctx context.Context, db *keel.DB, row *email.Suppression) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *SuppressionsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*email.Suppression) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *SuppressionsTable) Save(ctx context.Context, db *keel.DB, row *email.Suppression, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *SuppressionsTable) SaveExcept(ctx context.Context, db *keel.DB, row *email.Suppression, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *SuppressionsTable) DeleteRow(ctx context.Context, db *keel.DB, row *email.Suppression) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *SuppressionsTable) Upsert(ctx context.Context, db *keel.DB, rows []*email.Suppression, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *SuppressionsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*email.Suppression, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *SuppressionsTable) Copy(ctx context.Context, db *keel.DB, rows []*email.Suppression) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -3279,37 +3307,45 @@ func (q *SuppressionsQuery) Clone() keel.Query[*email.Suppression] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *SuppressionsQuery) One(ctx context.Context, db *keel.DB) (*email.Suppression, error) {
-	return keel.One[*email.Suppression](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*email.Suppression)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *SuppressionsQuery) First(ctx context.Context, db *keel.DB) (*email.Suppression, error) {
-	return keel.First[*email.Suppression](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*email.Suppression)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *SuppressionsQuery) List(ctx context.Context, db *keel.DB) ([]*email.Suppression, error) {
-	return keel.List[*email.Suppression](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*email.Suppression)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *SuppressionsQuery) All(ctx context.Context, db *keel.DB) ([]*email.Suppression, error) {
-	return keel.All[*email.Suppression](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*email.Suppression)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *SuppressionsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*email.Suppression, error) {
-	return keel.UpdateReturning[*email.Suppression](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*email.Suppression)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *SuppressionsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*email.Suppression], error) {
-	return keel.PageOf[*email.Suppression](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*email.Suppression])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *SuppressionsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*email.Suppression) error) error {
-	return keel.Each[*email.Suppression](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*email.Suppression)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newSuppression() unsafe.Pointer { return unsafe.Pointer(new(email.Suppression)) }
@@ -3457,216 +3493,214 @@ var enumSuppressionReason = [...]schema.EnumValue{
 }
 
 // AttachmentSealCol is a column of email.AttachmentSeal values.
-type AttachmentSealCol struct{ keel.StringCol }
+type AttachmentSealCol struct{ keel.TypedStringCol }
 
-func (c AttachmentSealCol) Eq(v email.AttachmentSeal) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c AttachmentSealCol) Ne(v email.AttachmentSeal) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c AttachmentSealCol) Gt(v email.AttachmentSeal) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c AttachmentSealCol) Gte(v email.AttachmentSeal) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c AttachmentSealCol) Lt(v email.AttachmentSeal) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c AttachmentSealCol) Lte(v email.AttachmentSeal) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c AttachmentSealCol) Eq(v email.AttachmentSeal) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c AttachmentSealCol) Ne(v email.AttachmentSeal) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c AttachmentSealCol) Gt(v email.AttachmentSeal) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c AttachmentSealCol) Gte(v email.AttachmentSeal) keel.Pred { return c.Text().Gte(string(v)) }
+func (c AttachmentSealCol) Lt(v email.AttachmentSeal) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c AttachmentSealCol) Lte(v email.AttachmentSeal) keel.Pred { return c.Text().Lte(string(v)) }
 func (c AttachmentSealCol) IsDistinctFrom(v email.AttachmentSeal) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c AttachmentSealCol) Between(lo, hi email.AttachmentSeal) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c AttachmentSealCol) To(v email.AttachmentSeal) keel.Assignment {
-	return c.StringCol.To(string(v))
-}
+func (c AttachmentSealCol) To(v email.AttachmentSeal) keel.Assignment { return c.Text().To(string(v)) }
 func (c AttachmentSealCol) In(vs ...email.AttachmentSeal) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c AttachmentSealCol) NotIn(vs ...email.AttachmentSeal) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // AuthTypeCol is a column of email.AuthType values.
-type AuthTypeCol struct{ keel.StringCol }
+type AuthTypeCol struct{ keel.TypedStringCol }
 
-func (c AuthTypeCol) Eq(v email.AuthType) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c AuthTypeCol) Ne(v email.AuthType) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c AuthTypeCol) Gt(v email.AuthType) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c AuthTypeCol) Gte(v email.AuthType) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c AuthTypeCol) Lt(v email.AuthType) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c AuthTypeCol) Lte(v email.AuthType) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c AuthTypeCol) Eq(v email.AuthType) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c AuthTypeCol) Ne(v email.AuthType) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c AuthTypeCol) Gt(v email.AuthType) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c AuthTypeCol) Gte(v email.AuthType) keel.Pred { return c.Text().Gte(string(v)) }
+func (c AuthTypeCol) Lt(v email.AuthType) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c AuthTypeCol) Lte(v email.AuthType) keel.Pred { return c.Text().Lte(string(v)) }
 func (c AuthTypeCol) IsDistinctFrom(v email.AuthType) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c AuthTypeCol) Between(lo, hi email.AuthType) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c AuthTypeCol) To(v email.AuthType) keel.Assignment { return c.StringCol.To(string(v)) }
-func (c AuthTypeCol) In(vs ...email.AuthType) keel.Pred   { return c.StringCol.In(keel.Strings(vs)...) }
+func (c AuthTypeCol) To(v email.AuthType) keel.Assignment { return c.Text().To(string(v)) }
+func (c AuthTypeCol) In(vs ...email.AuthType) keel.Pred {
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
+}
 func (c AuthTypeCol) NotIn(vs ...email.AuthType) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // EncryptionCol is a column of email.Encryption values.
-type EncryptionCol struct{ keel.StringCol }
+type EncryptionCol struct{ keel.TypedStringCol }
 
-func (c EncryptionCol) Eq(v email.Encryption) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c EncryptionCol) Ne(v email.Encryption) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c EncryptionCol) Gt(v email.Encryption) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c EncryptionCol) Gte(v email.Encryption) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c EncryptionCol) Lt(v email.Encryption) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c EncryptionCol) Lte(v email.Encryption) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c EncryptionCol) Eq(v email.Encryption) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c EncryptionCol) Ne(v email.Encryption) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c EncryptionCol) Gt(v email.Encryption) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c EncryptionCol) Gte(v email.Encryption) keel.Pred { return c.Text().Gte(string(v)) }
+func (c EncryptionCol) Lt(v email.Encryption) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c EncryptionCol) Lte(v email.Encryption) keel.Pred { return c.Text().Lte(string(v)) }
 func (c EncryptionCol) IsDistinctFrom(v email.Encryption) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c EncryptionCol) Between(lo, hi email.Encryption) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c EncryptionCol) To(v email.Encryption) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c EncryptionCol) To(v email.Encryption) keel.Assignment { return c.Text().To(string(v)) }
 func (c EncryptionCol) In(vs ...email.Encryption) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c EncryptionCol) NotIn(vs ...email.Encryption) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // EventTypeCol is a column of email.EventType values.
-type EventTypeCol struct{ keel.StringCol }
+type EventTypeCol struct{ keel.TypedStringCol }
 
-func (c EventTypeCol) Eq(v email.EventType) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c EventTypeCol) Ne(v email.EventType) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c EventTypeCol) Gt(v email.EventType) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c EventTypeCol) Gte(v email.EventType) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c EventTypeCol) Lt(v email.EventType) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c EventTypeCol) Lte(v email.EventType) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c EventTypeCol) Eq(v email.EventType) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c EventTypeCol) Ne(v email.EventType) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c EventTypeCol) Gt(v email.EventType) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c EventTypeCol) Gte(v email.EventType) keel.Pred { return c.Text().Gte(string(v)) }
+func (c EventTypeCol) Lt(v email.EventType) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c EventTypeCol) Lte(v email.EventType) keel.Pred { return c.Text().Lte(string(v)) }
 func (c EventTypeCol) IsDistinctFrom(v email.EventType) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c EventTypeCol) Between(lo, hi email.EventType) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c EventTypeCol) To(v email.EventType) keel.Assignment { return c.StringCol.To(string(v)) }
-func (c EventTypeCol) In(vs ...email.EventType) keel.Pred   { return c.StringCol.In(keel.Strings(vs)...) }
+func (c EventTypeCol) To(v email.EventType) keel.Assignment { return c.Text().To(string(v)) }
+func (c EventTypeCol) In(vs ...email.EventType) keel.Pred {
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
+}
 func (c EventTypeCol) NotIn(vs ...email.EventType) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // MessageStatusCol is a column of email.MessageStatus values.
-type MessageStatusCol struct{ keel.StringCol }
+type MessageStatusCol struct{ keel.TypedStringCol }
 
-func (c MessageStatusCol) Eq(v email.MessageStatus) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c MessageStatusCol) Ne(v email.MessageStatus) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c MessageStatusCol) Gt(v email.MessageStatus) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c MessageStatusCol) Gte(v email.MessageStatus) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c MessageStatusCol) Lt(v email.MessageStatus) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c MessageStatusCol) Lte(v email.MessageStatus) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c MessageStatusCol) Eq(v email.MessageStatus) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c MessageStatusCol) Ne(v email.MessageStatus) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c MessageStatusCol) Gt(v email.MessageStatus) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c MessageStatusCol) Gte(v email.MessageStatus) keel.Pred { return c.Text().Gte(string(v)) }
+func (c MessageStatusCol) Lt(v email.MessageStatus) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c MessageStatusCol) Lte(v email.MessageStatus) keel.Pred { return c.Text().Lte(string(v)) }
 func (c MessageStatusCol) IsDistinctFrom(v email.MessageStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c MessageStatusCol) Between(lo, hi email.MessageStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c MessageStatusCol) To(v email.MessageStatus) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c MessageStatusCol) To(v email.MessageStatus) keel.Assignment { return c.Text().To(string(v)) }
 func (c MessageStatusCol) In(vs ...email.MessageStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c MessageStatusCol) NotIn(vs ...email.MessageStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // ProfileStatusCol is a column of email.ProfileStatus values.
-type ProfileStatusCol struct{ keel.StringCol }
+type ProfileStatusCol struct{ keel.TypedStringCol }
 
-func (c ProfileStatusCol) Eq(v email.ProfileStatus) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c ProfileStatusCol) Ne(v email.ProfileStatus) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c ProfileStatusCol) Gt(v email.ProfileStatus) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c ProfileStatusCol) Gte(v email.ProfileStatus) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c ProfileStatusCol) Lt(v email.ProfileStatus) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c ProfileStatusCol) Lte(v email.ProfileStatus) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c ProfileStatusCol) Eq(v email.ProfileStatus) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c ProfileStatusCol) Ne(v email.ProfileStatus) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c ProfileStatusCol) Gt(v email.ProfileStatus) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c ProfileStatusCol) Gte(v email.ProfileStatus) keel.Pred { return c.Text().Gte(string(v)) }
+func (c ProfileStatusCol) Lt(v email.ProfileStatus) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c ProfileStatusCol) Lte(v email.ProfileStatus) keel.Pred { return c.Text().Lte(string(v)) }
 func (c ProfileStatusCol) IsDistinctFrom(v email.ProfileStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ProfileStatusCol) Between(lo, hi email.ProfileStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c ProfileStatusCol) To(v email.ProfileStatus) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c ProfileStatusCol) To(v email.ProfileStatus) keel.Assignment { return c.Text().To(string(v)) }
 func (c ProfileStatusCol) In(vs ...email.ProfileStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ProfileStatusCol) NotIn(vs ...email.ProfileStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // ProviderCol is a column of email.Provider values.
-type ProviderCol struct{ keel.StringCol }
+type ProviderCol struct{ keel.TypedStringCol }
 
-func (c ProviderCol) Eq(v email.Provider) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c ProviderCol) Ne(v email.Provider) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c ProviderCol) Gt(v email.Provider) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c ProviderCol) Gte(v email.Provider) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c ProviderCol) Lt(v email.Provider) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c ProviderCol) Lte(v email.Provider) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c ProviderCol) Eq(v email.Provider) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c ProviderCol) Ne(v email.Provider) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c ProviderCol) Gt(v email.Provider) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c ProviderCol) Gte(v email.Provider) keel.Pred { return c.Text().Gte(string(v)) }
+func (c ProviderCol) Lt(v email.Provider) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c ProviderCol) Lte(v email.Provider) keel.Pred { return c.Text().Lte(string(v)) }
 func (c ProviderCol) IsDistinctFrom(v email.Provider) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ProviderCol) Between(lo, hi email.Provider) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c ProviderCol) To(v email.Provider) keel.Assignment { return c.StringCol.To(string(v)) }
-func (c ProviderCol) In(vs ...email.Provider) keel.Pred   { return c.StringCol.In(keel.Strings(vs)...) }
+func (c ProviderCol) To(v email.Provider) keel.Assignment { return c.Text().To(string(v)) }
+func (c ProviderCol) In(vs ...email.Provider) keel.Pred {
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
+}
 func (c ProviderCol) NotIn(vs ...email.Provider) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // PurposeCol is a column of email.Purpose values.
-type PurposeCol struct{ keel.StringCol }
+type PurposeCol struct{ keel.TypedStringCol }
 
-func (c PurposeCol) Eq(v email.Purpose) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c PurposeCol) Ne(v email.Purpose) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c PurposeCol) Gt(v email.Purpose) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c PurposeCol) Gte(v email.Purpose) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c PurposeCol) Lt(v email.Purpose) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c PurposeCol) Lte(v email.Purpose) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c PurposeCol) Eq(v email.Purpose) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c PurposeCol) Ne(v email.Purpose) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c PurposeCol) Gt(v email.Purpose) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c PurposeCol) Gte(v email.Purpose) keel.Pred { return c.Text().Gte(string(v)) }
+func (c PurposeCol) Lt(v email.Purpose) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c PurposeCol) Lte(v email.Purpose) keel.Pred { return c.Text().Lte(string(v)) }
 func (c PurposeCol) IsDistinctFrom(v email.Purpose) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c PurposeCol) Between(lo, hi email.Purpose) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c PurposeCol) To(v email.Purpose) keel.Assignment { return c.StringCol.To(string(v)) }
-func (c PurposeCol) In(vs ...email.Purpose) keel.Pred   { return c.StringCol.In(keel.Strings(vs)...) }
+func (c PurposeCol) To(v email.Purpose) keel.Assignment { return c.Text().To(string(v)) }
+func (c PurposeCol) In(vs ...email.Purpose) keel.Pred {
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
+}
 func (c PurposeCol) NotIn(vs ...email.Purpose) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // SuppressionReasonCol is a column of email.SuppressionReason values.
-type SuppressionReasonCol struct{ keel.StringCol }
+type SuppressionReasonCol struct{ keel.TypedStringCol }
 
-func (c SuppressionReasonCol) Eq(v email.SuppressionReason) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c SuppressionReasonCol) Ne(v email.SuppressionReason) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c SuppressionReasonCol) Gt(v email.SuppressionReason) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
+func (c SuppressionReasonCol) Eq(v email.SuppressionReason) keel.Pred { return c.Text().Eq(string(v)) }
+func (c SuppressionReasonCol) Ne(v email.SuppressionReason) keel.Pred { return c.Text().Ne(string(v)) }
+func (c SuppressionReasonCol) Gt(v email.SuppressionReason) keel.Pred { return c.Text().Gt(string(v)) }
 func (c SuppressionReasonCol) Gte(v email.SuppressionReason) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
-func (c SuppressionReasonCol) Lt(v email.SuppressionReason) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
+func (c SuppressionReasonCol) Lt(v email.SuppressionReason) keel.Pred { return c.Text().Lt(string(v)) }
 func (c SuppressionReasonCol) Lte(v email.SuppressionReason) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c SuppressionReasonCol) IsDistinctFrom(v email.SuppressionReason) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c SuppressionReasonCol) Between(lo, hi email.SuppressionReason) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c SuppressionReasonCol) To(v email.SuppressionReason) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c SuppressionReasonCol) In(vs ...email.SuppressionReason) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c SuppressionReasonCol) NotIn(vs ...email.SuppressionReason) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

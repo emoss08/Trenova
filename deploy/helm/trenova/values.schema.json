@@ -961,6 +961,23 @@
               }
             }
           }
+        },
+        "tls": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "existingServerSecret": {
+              "type": "string"
+            },
+            "existingClientSecret": {
+              "type": "string"
+            },
+            "validityDays": {
+              "type": "integer",
+              "minimum": 30
+            }
+          },
+          "required": []
         }
       },
       "required": []

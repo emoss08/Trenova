@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/geoutils"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -34,6 +35,7 @@ type DispatchBoardFilter struct {
 	Query          string
 	IncludeCovered bool
 	Limit          int
+	DriverLimit    int
 	// LateAt, when set, lists only the moves late at that instant: the pickup
 	// window opened with no arrival, or picked up with the delivery window
 	// closed and no arrival. The summary still counts every move.
@@ -44,6 +46,11 @@ type DispatchBoardFilter struct {
 	DueFirst bool
 	// Offset skips that many moves of the same order, for the page after.
 	Offset int
+	// Near, when set, reads the dispatchable drivers nearest that point first,
+	// by a fresh vehicle position or else the tractor's last drop, so a driver
+	// limit keeps the drivers a move would choose among rather than the first
+	// by name. A driver with neither comes after every driver with one.
+	Near *geoutils.Point
 }
 
 type BoardMove struct {
@@ -106,6 +113,10 @@ type BoardMove struct {
 	AssignedCarrierID   pulid.ID `json:"assignedCarrierId"`
 	AssignedCarrierName string   `json:"assignedCarrierName"`
 	CarrierTotalCost    *float64 `json:"carrierTotalCost"`
+
+	// MoveVersion is the move's row version, which a proposal to cover it is
+	// pinned to: a change approved after the move moved on is refused.
+	MoveVersion int64 `json:"moveVersion"`
 }
 
 type BoardDriver struct {
@@ -133,19 +144,22 @@ type BoardDriver struct {
 }
 
 type WorkerCommitment struct {
-	WorkerID       pulid.ID                 `json:"workerId"`
-	MoveID         pulid.ID                 `json:"moveId"`
-	ShipmentID     pulid.ID                 `json:"shipmentId"`
-	ProNumber      string                   `json:"proNumber"`
-	MoveStatus     shipmentvocab.MoveStatus `json:"moveStatus"`
-	WindowStart    int64                    `json:"windowStart"`
-	WindowEnd      int64                    `json:"windowEnd"`
-	DestinationID  pulid.ID                 `json:"destinationLocationId"`
-	DestinationCty string                   `json:"destinationCity"`
-	DestinationSt  string                   `json:"destinationState"`
-	DestLatitude   *float64                 `json:"destinationLatitude"`
-	DestLongitude  *float64                 `json:"destinationLongitude"`
-	TrailerID      pulid.ID                 `json:"trailerId"`
+	WorkerID              pulid.ID                 `json:"workerId"`
+	MoveID                pulid.ID                 `json:"moveId"`
+	ShipmentID            pulid.ID                 `json:"shipmentId"`
+	ProNumber             string                   `json:"proNumber"`
+	MoveStatus            shipmentvocab.MoveStatus `json:"moveStatus"`
+	WindowStart           int64                    `json:"windowStart"`
+	WindowEnd             int64                    `json:"windowEnd"`
+	DestinationID         pulid.ID                 `json:"destinationLocationId"`
+	DestinationCty        string                   `json:"destinationCity"`
+	DestinationSt         string                   `json:"destinationState"`
+	DestLatitude          *float64                 `json:"destinationLatitude"`
+	DestLongitude         *float64                 `json:"destinationLongitude"`
+	TrailerID             pulid.ID                 `json:"trailerId"`
+	Distance              *float64                 `json:"distance"`
+	ExpectedEnd           int64                    `json:"expectedEnd"`
+	RemainingDriveMinutes int64                    `json:"remainingDriveMinutes"`
 }
 
 type WorkerTimeOff struct {
@@ -184,8 +198,9 @@ type WorkerAcceptanceStats struct {
 }
 
 // BoardSummary counts the moves in the board's window. LateMoves and
-// AtRiskMoves are coverage alarms: uncovered moves whose pickup window has
-// opened, and uncovered moves whose pickup opens within UrgencyNowSeconds.
+// AtRiskMoves are coverage alarms read by each move's urgency: uncovered moves
+// whose window has closed unvisited, and uncovered moves whose window is open
+// or opens within UrgencyNowSeconds. An open window is never late.
 // OverdueMoves, DueNowMoves and DueTodayMoves count every move, covered or
 // not, by its next stop the way each move's urgency reads it: the pickup until
 // it is picked up, then the delivery.
@@ -232,7 +247,7 @@ type ListEquipmentByIDsRequest struct {
 
 type DispatchConsoleRepository interface {
 	ListBoardMoves(ctx context.Context, filter *DispatchBoardFilter) ([]*BoardMove, error)
-	ListBoardDrivers(ctx context.Context, filter *DispatchBoardFilter) ([]*BoardDriver, error)
+	ListBoardDrivers(ctx context.Context, filter *DispatchBoardFilter) (*BoardDriverPage, error)
 	ListWorkerCommitments(
 		ctx context.Context,
 		req *ListWorkerWindowsRequest,
@@ -261,4 +276,9 @@ type DispatchConsoleRepository interface {
 		ctx context.Context,
 		req *ListEquipmentByIDsRequest,
 	) ([]*tractor.Tractor, []*trailer.Trailer, error)
+}
+
+type BoardDriverPage struct {
+	Drivers   []*BoardDriver
+	Truncated bool
 }

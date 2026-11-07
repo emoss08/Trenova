@@ -136,6 +136,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/invoiceadjustmentcontrol/invoiceadjustmentcontroldb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/passwordreset/passwordresetdb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac/rbacdb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/scim/scimdb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/sequenceconfig/sequenceconfigdb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/settlementcontrol/settlementcontroldb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol/shipmentcontroldb"
@@ -147,11 +148,15 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate/usstatedb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall/checkcalldb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/customertracking/customertrackingdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/demandforecast/demandforecastdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention/detentiondb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionevidence/detentionevidencedb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionnotice/detentionnoticedb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy/detentionpolicydb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol/dispatchcontroldb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchlearning/dispatchlearningdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchmarket/dispatchmarketdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchplanprice/dispatchplanpricedb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/documentshipmentdraft/documentshipmentdraftdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order/orderdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/recurringshipment/recurringshipmentdb"
@@ -426,12 +431,19 @@ func All() []*schema.Table {
 		dashcontroldb.DashControlsSchema(),
 		dataentrycontroldb.DataEntryControlsSchema(),
 		dataretentiondb.DataRetentionsSchema(),
+		demandforecastdb.BookingCurvesSchema(),
+		demandforecastdb.AreasSchema(),
+		demandforecastdb.QualitiesSchema(),
+		demandforecastdb.RatesSchema(),
 		detentionevidencedb.DetentionEvidencesSchema(),
 		detentionnoticedb.DetentionNoticesSchema(),
 		detentiondb.DetentionOccurrencesSchema(),
 		detentionpolicydb.DetentionPoliciesSchema(),
 		detentionpolicydb.DetentionPolicyTiersSchema(),
 		dispatchcontroldb.DispatchControlsSchema(),
+		dispatchmarketdb.MarketValuesSchema(),
+		dispatchplanpricedb.DispatchPlanPricesSchema(),
+		dispatchlearningdb.DispatchStylesSchema(),
 		distancecalculationdb.RunsSchema(),
 		distancecontroldb.DistanceControlsSchema(),
 		distanceoverridedb.DistanceOverrideStopsSchema(),
@@ -658,8 +670,12 @@ func All() []*schema.Table {
 		tenderdb.RoutingGuidesSchema(),
 		workersyncdriftdb.WorkerSyncDriftsSchema(),
 		iamdb.SCIMDirectoriesSchema(),
+		scimdb.GroupMembersSchema(),
 		iamdb.SCIMGroupRoleMappingsSchema(),
+		scimdb.GroupsSchema(),
+		scimdb.RoleGrantsSchema(),
 		iamdb.SCIMTokensSchema(),
+		scimdb.UsersSchema(),
 		sequenceconfigdb.SequenceConfigsSchema(),
 		sequenceconfigdb.SequencesSchema(),
 		servicefailuredb.ReasonCodesSchema(),

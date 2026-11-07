@@ -10,9 +10,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchplanports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/geoutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
@@ -20,9 +22,6 @@ import (
 )
 
 const (
-	secondsPerHour = int64(3600)
-	secondsPerDay  = dispatchboardports.UrgencyTodaySeconds
-
 	nowThresholdSeconds = dispatchboardports.UrgencyNowSeconds
 
 	defaultCandidateLimit = 25
@@ -36,6 +35,7 @@ type Params struct {
 	Organizations       tenantports.OrganizationRepository
 	TenderRepo          tenderports.TenderRepository
 	CandidateService    *dispatchcandidateservice.Service
+	PriceRepo           dispatchplanports.PriceRepository
 	Logger              *zap.Logger
 }
 
@@ -45,22 +45,22 @@ type Service struct {
 	organizations       tenantports.OrganizationRepository
 	tenderRepo          tenderports.TenderRepository
 	candidates          *dispatchcandidateservice.Service
+	prices              dispatchplanports.PriceRepository
 	l                   *zap.Logger
 }
 
-func New(p Params) *Service {
+func New(p Params) *Service { //nolint:gocritic // fx requires an fx.In parameter struct by value
 	return &Service{
 		consoleRepo:         p.ConsoleRepo,
 		dispatchControlRepo: p.DispatchControlRepo,
 		organizations:       p.Organizations,
 		tenderRepo:          p.TenderRepo,
 		candidates:          p.CandidateService,
+		prices:              p.PriceRepo,
 		l:                   p.Logger.Named("service.dispatch-console"),
 	}
 }
 
-// attachLiveTenders decorates board cards with the tender chip in one batched
-// query so a large board never fans out per move.
 func (s *Service) attachLiveTenders(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
@@ -199,6 +199,12 @@ func (s *Service) decorateBoardMoves(
 			zap.Error(err),
 		)
 	}
+	if err := s.attachPlanPrices(ctx, tenantInfo, decorated); err != nil {
+		s.l.Warn(
+			"failed to attach plan prices to the dispatch board; rendering without prices",
+			zap.Error(err),
+		)
+	}
 
 	return decorated
 }
@@ -215,6 +221,24 @@ func (s *Service) GetBoardMoves(ctx context.Context, req *GetBoardRequest) ([]*B
 	}
 
 	return s.decorateBoardMoves(ctx, req.TenantInfo, moves, scope.now), nil
+}
+
+func (s *Service) GetMove(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	moveID pulid.ID,
+) (*BoardMove, error) {
+	move, err := s.loadMove(ctx, tenantInfo, moveID)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.decorateBoardMoves(
+		ctx,
+		tenantInfo,
+		[]*dispatchboardports.BoardMove{move},
+		timeutils.NowUnix(),
+	)[0], nil
 }
 
 func (s *Service) GetBoard(ctx context.Context, req *GetBoardRequest) (*Board, error) {
@@ -236,11 +260,13 @@ func (s *Service) GetBoard(ctx context.Context, req *GetBoardRequest) (*Board, e
 	driverFilter.Offset = 0
 
 	snapshot, err := s.candidates.BuildSnapshot(ctx, &dispatchcandidateservice.SnapshotRequest{
-		TenantInfo:  req.TenantInfo,
-		Filter:      &driverFilter,
-		Control:     scope.control,
-		CustomerIDs: dispatchcandidateservice.CustomerIDsOf(moves),
-		TrailerIDs:  dispatchcandidateservice.TrailerIDsOf(moves),
+		TenantInfo:   req.TenantInfo,
+		Filter:       &driverFilter,
+		Control:      scope.control,
+		CustomerIDs:  dispatchcandidateservice.CustomerIDsOf(moves),
+		TrailerIDs:   dispatchcandidateservice.TrailerIDsOf(moves),
+		Destinations: dispatchcandidateservice.DestinationsOf(moves),
+		Solving:      dispatchcandidateservice.SolvingOf(moves),
 	})
 	if err != nil {
 		return nil, err
@@ -251,20 +277,25 @@ func (s *Service) GetBoard(ctx context.Context, req *GetBoardRequest) (*Board, e
 		return nil, err
 	}
 
+	boardMoves := s.decorateBoardMoves(ctx, req.TenantInfo, moves, scope.now)
+	drivers := decorateDrivers(snapshot, scope.control, scope.now)
+	attachPlannedMoves(drivers, boardMoves)
+
 	return &Board{
-		Moves:       s.decorateBoardMoves(ctx, req.TenantInfo, moves, scope.now),
-		Drivers:     decorateDrivers(snapshot, scope.control, scope.now),
-		Summary:     summary,
-		WindowStart: scope.windowStart,
-		WindowEnd:   scope.windowEnd,
-		GeneratedAt: scope.now,
+		Moves:            boardMoves,
+		Drivers:          drivers,
+		DriversTruncated: snapshot.DriversTruncated,
+		Summary:          summary,
+		WindowStart:      scope.windowStart,
+		WindowEnd:        scope.windowEnd,
+		GeneratedAt:      scope.now,
 	}, nil
 }
 
 func (s *Service) GetMoveCandidates(
 	ctx context.Context,
 	req *MoveCandidatesRequest,
-) ([]*dispatchcandidateservice.CandidateScore, error) {
+) ([]*dispatchplanports.CandidateScore, error) {
 	control, err := s.dispatchControlRepo.GetOrCreate(
 		ctx,
 		req.TenantInfo.OrgID,
@@ -338,11 +369,13 @@ func (s *Service) GetDriverMoves(
 	driverFilter.WorkerIDs = []pulid.ID{req.WorkerID}
 
 	snapshot, err := s.candidates.BuildSnapshot(ctx, &dispatchcandidateservice.SnapshotRequest{
-		TenantInfo:  req.TenantInfo,
-		Filter:      &driverFilter,
-		Control:     control,
-		CustomerIDs: dispatchcandidateservice.CustomerIDsOf(moves),
-		TrailerIDs:  dispatchcandidateservice.TrailerIDsOf(moves),
+		TenantInfo:   req.TenantInfo,
+		Filter:       &driverFilter,
+		Control:      control,
+		CustomerIDs:  dispatchcandidateservice.CustomerIDsOf(moves),
+		TrailerIDs:   dispatchcandidateservice.TrailerIDsOf(moves),
+		Destinations: dispatchcandidateservice.DestinationsOf(moves),
+		Solving:      dispatchcandidateservice.SolvingOf(moves),
 	})
 	if err != nil {
 		return nil, err
@@ -402,9 +435,11 @@ func (s *Service) PreviewAssignment(
 			WindowStart: windowStart,
 			WindowEnd:   windowEnd,
 		},
-		Control:     control,
-		CustomerIDs: dispatchcandidateservice.CustomerIDsOf(moves),
-		TrailerIDs:  dispatchcandidateservice.TrailerIDsOf(moves),
+		Control:      control,
+		CustomerIDs:  dispatchcandidateservice.CustomerIDsOf(moves),
+		TrailerIDs:   dispatchcandidateservice.TrailerIDsOf(moves),
+		Destinations: dispatchcandidateservice.DestinationsOf(moves),
+		Solving:      dispatchcandidateservice.SolvingOf(moves),
 	})
 	if err != nil {
 		return nil, err
@@ -476,11 +511,26 @@ func (s *Service) buildSnapshotForMoves(
 			FleetCodeIDs: p.FleetCodeIDs,
 			WindowStart:  windowStart,
 			WindowEnd:    windowEnd,
+			Near:         pickupOf(p.Moves),
 		},
-		Control:     p.Control,
-		CustomerIDs: dispatchcandidateservice.CustomerIDsOf(p.Moves),
-		TrailerIDs:  dispatchcandidateservice.TrailerIDsOf(p.Moves),
+		Control:      p.Control,
+		CustomerIDs:  dispatchcandidateservice.CustomerIDsOf(p.Moves),
+		TrailerIDs:   dispatchcandidateservice.TrailerIDsOf(p.Moves),
+		Destinations: dispatchcandidateservice.DestinationsOf(p.Moves),
+		Solving:      dispatchcandidateservice.SolvingOf(p.Moves),
 	})
+}
+
+func pickupOf(moves []*dispatchboardports.BoardMove) *geoutils.Point {
+	if len(moves) != 1 {
+		return nil
+	}
+	move := moves[0]
+	if move.OriginLatitude == nil || move.OriginLongitude == nil {
+		return nil
+	}
+
+	return &geoutils.Point{Latitude: *move.OriginLatitude, Longitude: *move.OriginLongitude}
 }
 
 func firstNonNil(preferred, fallback pulid.ID) pulid.ID {
@@ -511,7 +561,7 @@ func spanOf(moves []*dispatchboardports.BoardMove, now int64) (spanStart, spanEn
 
 func sortMatches(matches []*DriverMoveMatch) {
 	sort.SliceStable(matches, func(i, j int) bool {
-		if c := dispatchcandidateservice.CompareRank(matches[i].Score, matches[j].Score); c != 0 {
+		if c := dispatchplanports.CompareRank(matches[i].Score, matches[j].Score); c != 0 {
 			return c < 0
 		}
 		return matches[i].Move.OriginWindowStart < matches[j].Move.OriginWindowStart

@@ -23,7 +23,6 @@ type Request struct {
 
 type Item struct {
 	Option *gqlmodel.SelectOption
-	Cursor pagination.PositionCursor
 }
 
 // selectOptionCustomerFilter extracts an optional customerId scope from select-option
@@ -139,27 +138,32 @@ func selectOptionPage(
 ) (*gqlmodel.SelectOptionConnection, error) {
 	edges := make([]*gqlmodel.SelectOptionEdge, len(items))
 	for i, item := range items {
-		cursor, err := pagination.EncodePositionCursor(item.Cursor)
-		if err != nil {
-			return nil, err
-		}
-		edges[i] = &gqlmodel.SelectOptionEdge{
-			Node:   item.Option,
-			Cursor: cursor,
-		}
+		edges[i] = &gqlmodel.SelectOptionEdge{Node: item.Option}
 	}
 
 	return &gqlmodel.SelectOptionConnection{
-		Edges: edges,
-		PageInfo: gqlconnection.PageInfo(
-			total.hasNextPage,
-			gqlconnection.LastEdgeCursor(edges, func(edge *gqlmodel.SelectOptionEdge) string {
-				return edge.Cursor
-			}),
-		),
+		Edges:           edges,
+		PageInfo:        gqlconnection.PageInfo(total.hasNextPage, nil),
 		TotalCount:      new(total.count),
 		TotalCountExact: total.exact,
 	}, nil
+}
+
+func SealCursors(
+	conn *gqlmodel.SelectOptionConnection,
+	binding pagination.CursorBinding,
+	offset int,
+) {
+	for i, edge := range conn.Edges {
+		edge.Cursor = pagination.EncodeOffsetCursor(binding, offset+i+1)
+	}
+
+	conn.PageInfo.EndCursor = gqlconnection.LastEdgeCursor(
+		conn.Edges,
+		func(edge *gqlmodel.SelectOptionEdge) string {
+			return edge.Cursor
+		},
+	)
 }
 
 func OrderedItems[T any](
@@ -190,18 +194,8 @@ func indexByID[T any](entities []T, id func(T) pulid.ID) map[pulid.ID]T {
 	return byID
 }
 
-func ItemFor(
-	option *gqlmodel.SelectOption,
-	createdAt int64,
-	id pulid.ID,
-) Item {
-	return Item{
-		Option: option,
-		Cursor: pagination.PositionCursor{
-			At: createdAt,
-			ID: id,
-		},
-	}
+func ItemFor(option *gqlmodel.SelectOption) Item {
+	return Item{Option: option}
 }
 
 func OptionalIDMeta(id pulid.ID) any {

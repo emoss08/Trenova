@@ -141,47 +141,47 @@ type AccountingControlsTable struct {
 // AccountingControls references the accounting_controls table.
 var AccountingControls = &AccountingControlsTable{
 	TableBase:                               keel.TableBase{Ref: &accountingControlsRef},
-	ID:                                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 0}}},
-	BusinessUnitID:                          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 1}}},
-	OrganizationID:                          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 2}}},
-	AccountingBasis:                         AccountingBasisTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 3}}},
-	RevenueRecognitionPolicy:                RevenueRecognitionPolicyTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 4}}},
-	ExpenseRecognitionPolicy:                ExpenseRecognitionPolicyTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 5}}},
-	JournalPostingMode:                      JournalPostingModeTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 6}}},
+	ID:                                      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 0}}},
+	BusinessUnitID:                          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 1}}},
+	OrganizationID:                          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 2}}},
+	AccountingBasis:                         AccountingBasisTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 3}}},
+	RevenueRecognitionPolicy:                RevenueRecognitionPolicyTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 4}}},
+	ExpenseRecognitionPolicy:                ExpenseRecognitionPolicyTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 5}}},
+	JournalPostingMode:                      JournalPostingModeTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 6}}},
 	AutoPostSourceEvents:                    keel.StringArrayCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 7}},
-	ManualJournalEntryPolicy:                ManualJournalEntryPolicyCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 8}}},
+	ManualJournalEntryPolicy:                ManualJournalEntryPolicyCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 8}}},
 	RequireManualJEApproval:                 keel.BoolCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 9}},
-	JournalReversalPolicy:                   JournalReversalPolicyTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 10}}},
-	PeriodCloseMode:                         PeriodCloseModeTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 11}}},
+	JournalReversalPolicy:                   JournalReversalPolicyTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 10}}},
+	PeriodCloseMode:                         PeriodCloseModeTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 11}}},
 	RequirePeriodCloseApproval:              keel.BoolCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 12}},
-	LockedPeriodPostingPolicy:               LockedPeriodPostingPolicyCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 13}}},
-	ClosedPeriodPostingPolicy:               ClosedPeriodPostingPolicyCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 14}}},
+	LockedPeriodPostingPolicy:               LockedPeriodPostingPolicyCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 13}}},
+	ClosedPeriodPostingPolicy:               ClosedPeriodPostingPolicyCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 14}}},
 	RequireReconciliationToClose:            keel.BoolCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 15}},
-	ReconciliationMode:                      ReconciliationModeTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 16}}},
+	ReconciliationMode:                      ReconciliationModeTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 16}}},
 	ReconciliationToleranceAmount:           keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 17}}},
 	NotifyOnReconciliationException:         keel.BoolCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 18}},
-	CurrencyMode:                            CurrencyModeTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 19}}},
+	CurrencyMode:                            CurrencyModeTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 19}}},
 	FunctionalCurrencyCode:                  keel.StringCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 20}},
-	ExchangeRateDatePolicy:                  ExchangeRateDatePolicyCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 21}}},
-	ExchangeRateOverridePolicy:              ExchangeRateOverrideTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 22}}},
-	DefaultRevenueAccountID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 23}}},
-	DefaultCashAccountID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 24}}},
-	DefaultUnappliedCashAccountID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 25}}},
-	DefaultExpenseAccountID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 26}}},
-	DefaultARAccountID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 27}}},
-	DefaultAPAccountID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 28}}},
-	DefaultTaxLiabilityAccountID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 29}}},
-	DefaultWriteOffAccountID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 30}}},
-	DefaultRetainedEarningsAccountID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 31}}},
-	RealizedFXGainAccountID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 32}}},
-	RealizedFXLossAccountID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 33}}},
-	DefaultDriverPayExpenseAccountID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 34}}},
-	DefaultPurchasedTransportationAccountID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 35}}},
-	DefaultSettlementsPayableAccountID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 36}}},
-	DefaultDriverAdvanceAccountID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 37}}},
-	DefaultEscrowLiabilityAccountID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 38}}},
-	DefaultDriverReimbursementAccountID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 39}}},
-	DefaultEscrowInterestExpenseAccountID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 40}}},
+	ExchangeRateDatePolicy:                  ExchangeRateDatePolicyCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 21}}},
+	ExchangeRateOverridePolicy:              ExchangeRateOverrideTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 22}}},
+	DefaultRevenueAccountID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 23}}},
+	DefaultCashAccountID:                    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 24}}},
+	DefaultUnappliedCashAccountID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 25}}},
+	DefaultExpenseAccountID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 26}}},
+	DefaultARAccountID:                      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 27}}},
+	DefaultAPAccountID:                      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 28}}},
+	DefaultTaxLiabilityAccountID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 29}}},
+	DefaultWriteOffAccountID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 30}}},
+	DefaultRetainedEarningsAccountID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 31}}},
+	RealizedFXGainAccountID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 32}}},
+	RealizedFXLossAccountID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 33}}},
+	DefaultDriverPayExpenseAccountID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 34}}},
+	DefaultPurchasedTransportationAccountID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 35}}},
+	DefaultSettlementsPayableAccountID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 36}}},
+	DefaultDriverAdvanceAccountID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 37}}},
+	DefaultEscrowLiabilityAccountID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 38}}},
+	DefaultDriverReimbursementAccountID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 39}}},
+	DefaultEscrowInterestExpenseAccountID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingControlsRef, Index: 40}}},
 	Version:                                 keel.Int64Col{Col: keel.Col{Ref: &accountingControlsRef, Index: 41}},
 	CreatedAt:                               keel.Int64Col{Col: keel.Col{Ref: &accountingControlsRef, Index: 42}},
 	UpdatedAt:                               keel.Int64Col{Col: keel.Col{Ref: &accountingControlsRef, Index: 43}},
@@ -191,47 +191,47 @@ var AccountingControls = &AccountingControlsTable{
 func BuildAccountingControls(r *keel.Ref) *AccountingControlsTable {
 	return &AccountingControlsTable{
 		TableBase:                               keel.TableBase{Ref: r},
-		ID:                                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:                          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:                          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		AccountingBasis:                         AccountingBasisTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		RevenueRecognitionPolicy:                RevenueRecognitionPolicyTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		ExpenseRecognitionPolicy:                ExpenseRecognitionPolicyTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		JournalPostingMode:                      JournalPostingModeTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		ID:                                      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:                          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:                          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		AccountingBasis:                         AccountingBasisTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		RevenueRecognitionPolicy:                RevenueRecognitionPolicyTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ExpenseRecognitionPolicy:                ExpenseRecognitionPolicyTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		JournalPostingMode:                      JournalPostingModeTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		AutoPostSourceEvents:                    keel.StringArrayCol{Col: keel.Col{Ref: r, Index: 7}},
-		ManualJournalEntryPolicy:                ManualJournalEntryPolicyCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		ManualJournalEntryPolicy:                ManualJournalEntryPolicyCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
 		RequireManualJEApproval:                 keel.BoolCol{Col: keel.Col{Ref: r, Index: 9}},
-		JournalReversalPolicy:                   JournalReversalPolicyTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
-		PeriodCloseMode:                         PeriodCloseModeTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
+		JournalReversalPolicy:                   JournalReversalPolicyTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		PeriodCloseMode:                         PeriodCloseModeTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 11}}},
 		RequirePeriodCloseApproval:              keel.BoolCol{Col: keel.Col{Ref: r, Index: 12}},
-		LockedPeriodPostingPolicy:               LockedPeriodPostingPolicyCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 13}}},
-		ClosedPeriodPostingPolicy:               ClosedPeriodPostingPolicyCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 14}}},
+		LockedPeriodPostingPolicy:               LockedPeriodPostingPolicyCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 13}}},
+		ClosedPeriodPostingPolicy:               ClosedPeriodPostingPolicyCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 14}}},
 		RequireReconciliationToClose:            keel.BoolCol{Col: keel.Col{Ref: r, Index: 15}},
-		ReconciliationMode:                      ReconciliationModeTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 16}}},
+		ReconciliationMode:                      ReconciliationModeTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 16}}},
 		ReconciliationToleranceAmount:           keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 17}}},
 		NotifyOnReconciliationException:         keel.BoolCol{Col: keel.Col{Ref: r, Index: 18}},
-		CurrencyMode:                            CurrencyModeTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 19}}},
+		CurrencyMode:                            CurrencyModeTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 19}}},
 		FunctionalCurrencyCode:                  keel.StringCol{Col: keel.Col{Ref: r, Index: 20}},
-		ExchangeRateDatePolicy:                  ExchangeRateDatePolicyCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 21}}},
-		ExchangeRateOverridePolicy:              ExchangeRateOverrideTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 22}}},
-		DefaultRevenueAccountID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 23}}},
-		DefaultCashAccountID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 24}}},
-		DefaultUnappliedCashAccountID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 25}}},
-		DefaultExpenseAccountID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 26}}},
-		DefaultARAccountID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 27}}},
-		DefaultAPAccountID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 28}}},
-		DefaultTaxLiabilityAccountID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 29}}},
-		DefaultWriteOffAccountID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 30}}},
-		DefaultRetainedEarningsAccountID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 31}}},
-		RealizedFXGainAccountID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 32}}},
-		RealizedFXLossAccountID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 33}}},
-		DefaultDriverPayExpenseAccountID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 34}}},
-		DefaultPurchasedTransportationAccountID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 35}}},
-		DefaultSettlementsPayableAccountID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 36}}},
-		DefaultDriverAdvanceAccountID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 37}}},
-		DefaultEscrowLiabilityAccountID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 38}}},
-		DefaultDriverReimbursementAccountID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 39}}},
-		DefaultEscrowInterestExpenseAccountID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 40}}},
+		ExchangeRateDatePolicy:                  ExchangeRateDatePolicyCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 21}}},
+		ExchangeRateOverridePolicy:              ExchangeRateOverrideTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 22}}},
+		DefaultRevenueAccountID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 23}}},
+		DefaultCashAccountID:                    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 24}}},
+		DefaultUnappliedCashAccountID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 25}}},
+		DefaultExpenseAccountID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 26}}},
+		DefaultARAccountID:                      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 27}}},
+		DefaultAPAccountID:                      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 28}}},
+		DefaultTaxLiabilityAccountID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 29}}},
+		DefaultWriteOffAccountID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 30}}},
+		DefaultRetainedEarningsAccountID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 31}}},
+		RealizedFXGainAccountID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 32}}},
+		RealizedFXLossAccountID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 33}}},
+		DefaultDriverPayExpenseAccountID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 34}}},
+		DefaultPurchasedTransportationAccountID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 35}}},
+		DefaultSettlementsPayableAccountID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 36}}},
+		DefaultDriverAdvanceAccountID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 37}}},
+		DefaultEscrowLiabilityAccountID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 38}}},
+		DefaultDriverReimbursementAccountID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 39}}},
+		DefaultEscrowInterestExpenseAccountID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 40}}},
 		Version:                                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 41}},
 		CreatedAt:                               keel.Int64Col{Col: keel.Col{Ref: r, Index: 42}},
 		UpdatedAt:                               keel.Int64Col{Col: keel.Col{Ref: r, Index: 43}},
@@ -253,8 +253,6 @@ func (t *AccountingControlsTable) Get(ctx context.Context, db *keel.DB, key puli
 
 // AccountingControlsQuery is a query over accountingcontrol.AccountingControl.
 type AccountingControlsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*accountingcontrol.AccountingControl] = (*AccountingControlsTable)(nil)
 
 var _ keel.Query[*accountingcontrol.AccountingControl] = (*AccountingControlsQuery)(nil)
 
@@ -370,42 +368,42 @@ func (t *AccountingControlsTable) Compute(col keel.Column, e keel.Expr) keel.Que
 
 // Create inserts row.
 func (t *AccountingControlsTable) Create(ctx context.Context, db *keel.DB, row *accountingcontrol.AccountingControl) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *AccountingControlsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*accountingcontrol.AccountingControl) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *AccountingControlsTable) Save(ctx context.Context, db *keel.DB, row *accountingcontrol.AccountingControl, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *AccountingControlsTable) SaveExcept(ctx context.Context, db *keel.DB, row *accountingcontrol.AccountingControl, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *AccountingControlsTable) DeleteRow(ctx context.Context, db *keel.DB, row *accountingcontrol.AccountingControl) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *AccountingControlsTable) Upsert(ctx context.Context, db *keel.DB, rows []*accountingcontrol.AccountingControl, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *AccountingControlsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*accountingcontrol.AccountingControl, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *AccountingControlsTable) Copy(ctx context.Context, db *keel.DB, rows []*accountingcontrol.AccountingControl) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -577,37 +575,45 @@ func (q *AccountingControlsQuery) Clone() keel.Query[*accountingcontrol.Accounti
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *AccountingControlsQuery) One(ctx context.Context, db *keel.DB) (*accountingcontrol.AccountingControl, error) {
-	return keel.One[*accountingcontrol.AccountingControl](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*accountingcontrol.AccountingControl)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *AccountingControlsQuery) First(ctx context.Context, db *keel.DB) (*accountingcontrol.AccountingControl, error) {
-	return keel.First[*accountingcontrol.AccountingControl](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*accountingcontrol.AccountingControl)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *AccountingControlsQuery) List(ctx context.Context, db *keel.DB) ([]*accountingcontrol.AccountingControl, error) {
-	return keel.List[*accountingcontrol.AccountingControl](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*accountingcontrol.AccountingControl)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *AccountingControlsQuery) All(ctx context.Context, db *keel.DB) ([]*accountingcontrol.AccountingControl, error) {
-	return keel.All[*accountingcontrol.AccountingControl](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*accountingcontrol.AccountingControl)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *AccountingControlsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*accountingcontrol.AccountingControl, error) {
-	return keel.UpdateReturning[*accountingcontrol.AccountingControl](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*accountingcontrol.AccountingControl)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *AccountingControlsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*accountingcontrol.AccountingControl], error) {
-	return keel.PageOf[*accountingcontrol.AccountingControl](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*accountingcontrol.AccountingControl])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *AccountingControlsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*accountingcontrol.AccountingControl) error) error {
-	return keel.Each[*accountingcontrol.AccountingControl](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*accountingcontrol.AccountingControl)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newAccountingControl() unsafe.Pointer {
@@ -937,482 +943,482 @@ var enumRevenueRecognitionPolicyType = [...]schema.EnumValue{
 }
 
 // AccountingBasisTypeCol is a column of accountingcontrol.AccountingBasisType values.
-type AccountingBasisTypeCol struct{ keel.StringCol }
+type AccountingBasisTypeCol struct{ keel.TypedStringCol }
 
 func (c AccountingBasisTypeCol) Eq(v accountingcontrol.AccountingBasisType) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c AccountingBasisTypeCol) Ne(v accountingcontrol.AccountingBasisType) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c AccountingBasisTypeCol) Gt(v accountingcontrol.AccountingBasisType) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c AccountingBasisTypeCol) Gte(v accountingcontrol.AccountingBasisType) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c AccountingBasisTypeCol) Lt(v accountingcontrol.AccountingBasisType) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c AccountingBasisTypeCol) Lte(v accountingcontrol.AccountingBasisType) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c AccountingBasisTypeCol) IsDistinctFrom(v accountingcontrol.AccountingBasisType) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c AccountingBasisTypeCol) Between(lo, hi accountingcontrol.AccountingBasisType) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c AccountingBasisTypeCol) To(v accountingcontrol.AccountingBasisType) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c AccountingBasisTypeCol) In(vs ...accountingcontrol.AccountingBasisType) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c AccountingBasisTypeCol) NotIn(vs ...accountingcontrol.AccountingBasisType) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // ClosedPeriodPostingPolicyCol is a column of accountingcontrol.ClosedPeriodPostingPolicy values.
-type ClosedPeriodPostingPolicyCol struct{ keel.StringCol }
+type ClosedPeriodPostingPolicyCol struct{ keel.TypedStringCol }
 
 func (c ClosedPeriodPostingPolicyCol) Eq(v accountingcontrol.ClosedPeriodPostingPolicy) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c ClosedPeriodPostingPolicyCol) Ne(v accountingcontrol.ClosedPeriodPostingPolicy) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c ClosedPeriodPostingPolicyCol) Gt(v accountingcontrol.ClosedPeriodPostingPolicy) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c ClosedPeriodPostingPolicyCol) Gte(v accountingcontrol.ClosedPeriodPostingPolicy) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c ClosedPeriodPostingPolicyCol) Lt(v accountingcontrol.ClosedPeriodPostingPolicy) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c ClosedPeriodPostingPolicyCol) Lte(v accountingcontrol.ClosedPeriodPostingPolicy) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c ClosedPeriodPostingPolicyCol) IsDistinctFrom(v accountingcontrol.ClosedPeriodPostingPolicy) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ClosedPeriodPostingPolicyCol) Between(lo, hi accountingcontrol.ClosedPeriodPostingPolicy) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c ClosedPeriodPostingPolicyCol) To(v accountingcontrol.ClosedPeriodPostingPolicy) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c ClosedPeriodPostingPolicyCol) In(vs ...accountingcontrol.ClosedPeriodPostingPolicy) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ClosedPeriodPostingPolicyCol) NotIn(vs ...accountingcontrol.ClosedPeriodPostingPolicy) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // CurrencyModeTypeCol is a column of accountingcontrol.CurrencyModeType values.
-type CurrencyModeTypeCol struct{ keel.StringCol }
+type CurrencyModeTypeCol struct{ keel.TypedStringCol }
 
 func (c CurrencyModeTypeCol) Eq(v accountingcontrol.CurrencyModeType) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c CurrencyModeTypeCol) Ne(v accountingcontrol.CurrencyModeType) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c CurrencyModeTypeCol) Gt(v accountingcontrol.CurrencyModeType) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c CurrencyModeTypeCol) Gte(v accountingcontrol.CurrencyModeType) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c CurrencyModeTypeCol) Lt(v accountingcontrol.CurrencyModeType) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c CurrencyModeTypeCol) Lte(v accountingcontrol.CurrencyModeType) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c CurrencyModeTypeCol) IsDistinctFrom(v accountingcontrol.CurrencyModeType) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c CurrencyModeTypeCol) Between(lo, hi accountingcontrol.CurrencyModeType) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c CurrencyModeTypeCol) To(v accountingcontrol.CurrencyModeType) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c CurrencyModeTypeCol) In(vs ...accountingcontrol.CurrencyModeType) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c CurrencyModeTypeCol) NotIn(vs ...accountingcontrol.CurrencyModeType) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // ExchangeRateDatePolicyCol is a column of accountingcontrol.ExchangeRateDatePolicy values.
-type ExchangeRateDatePolicyCol struct{ keel.StringCol }
+type ExchangeRateDatePolicyCol struct{ keel.TypedStringCol }
 
 func (c ExchangeRateDatePolicyCol) Eq(v accountingcontrol.ExchangeRateDatePolicy) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c ExchangeRateDatePolicyCol) Ne(v accountingcontrol.ExchangeRateDatePolicy) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c ExchangeRateDatePolicyCol) Gt(v accountingcontrol.ExchangeRateDatePolicy) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c ExchangeRateDatePolicyCol) Gte(v accountingcontrol.ExchangeRateDatePolicy) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c ExchangeRateDatePolicyCol) Lt(v accountingcontrol.ExchangeRateDatePolicy) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c ExchangeRateDatePolicyCol) Lte(v accountingcontrol.ExchangeRateDatePolicy) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c ExchangeRateDatePolicyCol) IsDistinctFrom(v accountingcontrol.ExchangeRateDatePolicy) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ExchangeRateDatePolicyCol) Between(lo, hi accountingcontrol.ExchangeRateDatePolicy) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c ExchangeRateDatePolicyCol) To(v accountingcontrol.ExchangeRateDatePolicy) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c ExchangeRateDatePolicyCol) In(vs ...accountingcontrol.ExchangeRateDatePolicy) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ExchangeRateDatePolicyCol) NotIn(vs ...accountingcontrol.ExchangeRateDatePolicy) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // ExchangeRateOverrideTypeCol is a column of accountingcontrol.ExchangeRateOverrideType values.
-type ExchangeRateOverrideTypeCol struct{ keel.StringCol }
+type ExchangeRateOverrideTypeCol struct{ keel.TypedStringCol }
 
 func (c ExchangeRateOverrideTypeCol) Eq(v accountingcontrol.ExchangeRateOverrideType) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c ExchangeRateOverrideTypeCol) Ne(v accountingcontrol.ExchangeRateOverrideType) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c ExchangeRateOverrideTypeCol) Gt(v accountingcontrol.ExchangeRateOverrideType) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c ExchangeRateOverrideTypeCol) Gte(v accountingcontrol.ExchangeRateOverrideType) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c ExchangeRateOverrideTypeCol) Lt(v accountingcontrol.ExchangeRateOverrideType) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c ExchangeRateOverrideTypeCol) Lte(v accountingcontrol.ExchangeRateOverrideType) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c ExchangeRateOverrideTypeCol) IsDistinctFrom(v accountingcontrol.ExchangeRateOverrideType) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ExchangeRateOverrideTypeCol) Between(lo, hi accountingcontrol.ExchangeRateOverrideType) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c ExchangeRateOverrideTypeCol) To(v accountingcontrol.ExchangeRateOverrideType) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c ExchangeRateOverrideTypeCol) In(vs ...accountingcontrol.ExchangeRateOverrideType) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ExchangeRateOverrideTypeCol) NotIn(vs ...accountingcontrol.ExchangeRateOverrideType) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // ExpenseRecognitionPolicyTypeCol is a column of accountingcontrol.ExpenseRecognitionPolicyType values.
-type ExpenseRecognitionPolicyTypeCol struct{ keel.StringCol }
+type ExpenseRecognitionPolicyTypeCol struct{ keel.TypedStringCol }
 
 func (c ExpenseRecognitionPolicyTypeCol) Eq(v accountingcontrol.ExpenseRecognitionPolicyType) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c ExpenseRecognitionPolicyTypeCol) Ne(v accountingcontrol.ExpenseRecognitionPolicyType) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c ExpenseRecognitionPolicyTypeCol) Gt(v accountingcontrol.ExpenseRecognitionPolicyType) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c ExpenseRecognitionPolicyTypeCol) Gte(v accountingcontrol.ExpenseRecognitionPolicyType) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c ExpenseRecognitionPolicyTypeCol) Lt(v accountingcontrol.ExpenseRecognitionPolicyType) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c ExpenseRecognitionPolicyTypeCol) Lte(v accountingcontrol.ExpenseRecognitionPolicyType) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c ExpenseRecognitionPolicyTypeCol) IsDistinctFrom(v accountingcontrol.ExpenseRecognitionPolicyType) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ExpenseRecognitionPolicyTypeCol) Between(lo, hi accountingcontrol.ExpenseRecognitionPolicyType) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c ExpenseRecognitionPolicyTypeCol) To(v accountingcontrol.ExpenseRecognitionPolicyType) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c ExpenseRecognitionPolicyTypeCol) In(vs ...accountingcontrol.ExpenseRecognitionPolicyType) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ExpenseRecognitionPolicyTypeCol) NotIn(vs ...accountingcontrol.ExpenseRecognitionPolicyType) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // JournalPostingModeTypeCol is a column of accountingcontrol.JournalPostingModeType values.
-type JournalPostingModeTypeCol struct{ keel.StringCol }
+type JournalPostingModeTypeCol struct{ keel.TypedStringCol }
 
 func (c JournalPostingModeTypeCol) Eq(v accountingcontrol.JournalPostingModeType) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c JournalPostingModeTypeCol) Ne(v accountingcontrol.JournalPostingModeType) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c JournalPostingModeTypeCol) Gt(v accountingcontrol.JournalPostingModeType) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c JournalPostingModeTypeCol) Gte(v accountingcontrol.JournalPostingModeType) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c JournalPostingModeTypeCol) Lt(v accountingcontrol.JournalPostingModeType) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c JournalPostingModeTypeCol) Lte(v accountingcontrol.JournalPostingModeType) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c JournalPostingModeTypeCol) IsDistinctFrom(v accountingcontrol.JournalPostingModeType) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c JournalPostingModeTypeCol) Between(lo, hi accountingcontrol.JournalPostingModeType) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c JournalPostingModeTypeCol) To(v accountingcontrol.JournalPostingModeType) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c JournalPostingModeTypeCol) In(vs ...accountingcontrol.JournalPostingModeType) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c JournalPostingModeTypeCol) NotIn(vs ...accountingcontrol.JournalPostingModeType) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // JournalReversalPolicyTypeCol is a column of accountingcontrol.JournalReversalPolicyType values.
-type JournalReversalPolicyTypeCol struct{ keel.StringCol }
+type JournalReversalPolicyTypeCol struct{ keel.TypedStringCol }
 
 func (c JournalReversalPolicyTypeCol) Eq(v accountingcontrol.JournalReversalPolicyType) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c JournalReversalPolicyTypeCol) Ne(v accountingcontrol.JournalReversalPolicyType) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c JournalReversalPolicyTypeCol) Gt(v accountingcontrol.JournalReversalPolicyType) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c JournalReversalPolicyTypeCol) Gte(v accountingcontrol.JournalReversalPolicyType) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c JournalReversalPolicyTypeCol) Lt(v accountingcontrol.JournalReversalPolicyType) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c JournalReversalPolicyTypeCol) Lte(v accountingcontrol.JournalReversalPolicyType) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c JournalReversalPolicyTypeCol) IsDistinctFrom(v accountingcontrol.JournalReversalPolicyType) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c JournalReversalPolicyTypeCol) Between(lo, hi accountingcontrol.JournalReversalPolicyType) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c JournalReversalPolicyTypeCol) To(v accountingcontrol.JournalReversalPolicyType) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c JournalReversalPolicyTypeCol) In(vs ...accountingcontrol.JournalReversalPolicyType) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c JournalReversalPolicyTypeCol) NotIn(vs ...accountingcontrol.JournalReversalPolicyType) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // LockedPeriodPostingPolicyCol is a column of accountingcontrol.LockedPeriodPostingPolicy values.
-type LockedPeriodPostingPolicyCol struct{ keel.StringCol }
+type LockedPeriodPostingPolicyCol struct{ keel.TypedStringCol }
 
 func (c LockedPeriodPostingPolicyCol) Eq(v accountingcontrol.LockedPeriodPostingPolicy) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c LockedPeriodPostingPolicyCol) Ne(v accountingcontrol.LockedPeriodPostingPolicy) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c LockedPeriodPostingPolicyCol) Gt(v accountingcontrol.LockedPeriodPostingPolicy) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c LockedPeriodPostingPolicyCol) Gte(v accountingcontrol.LockedPeriodPostingPolicy) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c LockedPeriodPostingPolicyCol) Lt(v accountingcontrol.LockedPeriodPostingPolicy) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c LockedPeriodPostingPolicyCol) Lte(v accountingcontrol.LockedPeriodPostingPolicy) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c LockedPeriodPostingPolicyCol) IsDistinctFrom(v accountingcontrol.LockedPeriodPostingPolicy) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c LockedPeriodPostingPolicyCol) Between(lo, hi accountingcontrol.LockedPeriodPostingPolicy) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c LockedPeriodPostingPolicyCol) To(v accountingcontrol.LockedPeriodPostingPolicy) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c LockedPeriodPostingPolicyCol) In(vs ...accountingcontrol.LockedPeriodPostingPolicy) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c LockedPeriodPostingPolicyCol) NotIn(vs ...accountingcontrol.LockedPeriodPostingPolicy) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // ManualJournalEntryPolicyCol is a column of accountingcontrol.ManualJournalEntryPolicy values.
-type ManualJournalEntryPolicyCol struct{ keel.StringCol }
+type ManualJournalEntryPolicyCol struct{ keel.TypedStringCol }
 
 func (c ManualJournalEntryPolicyCol) Eq(v accountingcontrol.ManualJournalEntryPolicy) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c ManualJournalEntryPolicyCol) Ne(v accountingcontrol.ManualJournalEntryPolicy) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c ManualJournalEntryPolicyCol) Gt(v accountingcontrol.ManualJournalEntryPolicy) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c ManualJournalEntryPolicyCol) Gte(v accountingcontrol.ManualJournalEntryPolicy) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c ManualJournalEntryPolicyCol) Lt(v accountingcontrol.ManualJournalEntryPolicy) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c ManualJournalEntryPolicyCol) Lte(v accountingcontrol.ManualJournalEntryPolicy) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c ManualJournalEntryPolicyCol) IsDistinctFrom(v accountingcontrol.ManualJournalEntryPolicy) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ManualJournalEntryPolicyCol) Between(lo, hi accountingcontrol.ManualJournalEntryPolicy) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c ManualJournalEntryPolicyCol) To(v accountingcontrol.ManualJournalEntryPolicy) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c ManualJournalEntryPolicyCol) In(vs ...accountingcontrol.ManualJournalEntryPolicy) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ManualJournalEntryPolicyCol) NotIn(vs ...accountingcontrol.ManualJournalEntryPolicy) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // PeriodCloseModeTypeCol is a column of accountingcontrol.PeriodCloseModeType values.
-type PeriodCloseModeTypeCol struct{ keel.StringCol }
+type PeriodCloseModeTypeCol struct{ keel.TypedStringCol }
 
 func (c PeriodCloseModeTypeCol) Eq(v accountingcontrol.PeriodCloseModeType) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c PeriodCloseModeTypeCol) Ne(v accountingcontrol.PeriodCloseModeType) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c PeriodCloseModeTypeCol) Gt(v accountingcontrol.PeriodCloseModeType) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c PeriodCloseModeTypeCol) Gte(v accountingcontrol.PeriodCloseModeType) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c PeriodCloseModeTypeCol) Lt(v accountingcontrol.PeriodCloseModeType) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c PeriodCloseModeTypeCol) Lte(v accountingcontrol.PeriodCloseModeType) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c PeriodCloseModeTypeCol) IsDistinctFrom(v accountingcontrol.PeriodCloseModeType) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c PeriodCloseModeTypeCol) Between(lo, hi accountingcontrol.PeriodCloseModeType) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c PeriodCloseModeTypeCol) To(v accountingcontrol.PeriodCloseModeType) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c PeriodCloseModeTypeCol) In(vs ...accountingcontrol.PeriodCloseModeType) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c PeriodCloseModeTypeCol) NotIn(vs ...accountingcontrol.PeriodCloseModeType) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // ReconciliationModeTypeCol is a column of accountingcontrol.ReconciliationModeType values.
-type ReconciliationModeTypeCol struct{ keel.StringCol }
+type ReconciliationModeTypeCol struct{ keel.TypedStringCol }
 
 func (c ReconciliationModeTypeCol) Eq(v accountingcontrol.ReconciliationModeType) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c ReconciliationModeTypeCol) Ne(v accountingcontrol.ReconciliationModeType) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c ReconciliationModeTypeCol) Gt(v accountingcontrol.ReconciliationModeType) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c ReconciliationModeTypeCol) Gte(v accountingcontrol.ReconciliationModeType) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c ReconciliationModeTypeCol) Lt(v accountingcontrol.ReconciliationModeType) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c ReconciliationModeTypeCol) Lte(v accountingcontrol.ReconciliationModeType) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c ReconciliationModeTypeCol) IsDistinctFrom(v accountingcontrol.ReconciliationModeType) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ReconciliationModeTypeCol) Between(lo, hi accountingcontrol.ReconciliationModeType) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c ReconciliationModeTypeCol) To(v accountingcontrol.ReconciliationModeType) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c ReconciliationModeTypeCol) In(vs ...accountingcontrol.ReconciliationModeType) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ReconciliationModeTypeCol) NotIn(vs ...accountingcontrol.ReconciliationModeType) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // RevenueRecognitionPolicyTypeCol is a column of accountingcontrol.RevenueRecognitionPolicyType values.
-type RevenueRecognitionPolicyTypeCol struct{ keel.StringCol }
+type RevenueRecognitionPolicyTypeCol struct{ keel.TypedStringCol }
 
 func (c RevenueRecognitionPolicyTypeCol) Eq(v accountingcontrol.RevenueRecognitionPolicyType) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c RevenueRecognitionPolicyTypeCol) Ne(v accountingcontrol.RevenueRecognitionPolicyType) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c RevenueRecognitionPolicyTypeCol) Gt(v accountingcontrol.RevenueRecognitionPolicyType) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c RevenueRecognitionPolicyTypeCol) Gte(v accountingcontrol.RevenueRecognitionPolicyType) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c RevenueRecognitionPolicyTypeCol) Lt(v accountingcontrol.RevenueRecognitionPolicyType) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c RevenueRecognitionPolicyTypeCol) Lte(v accountingcontrol.RevenueRecognitionPolicyType) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c RevenueRecognitionPolicyTypeCol) IsDistinctFrom(v accountingcontrol.RevenueRecognitionPolicyType) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c RevenueRecognitionPolicyTypeCol) Between(lo, hi accountingcontrol.RevenueRecognitionPolicyType) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c RevenueRecognitionPolicyTypeCol) To(v accountingcontrol.RevenueRecognitionPolicyType) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c RevenueRecognitionPolicyTypeCol) In(vs ...accountingcontrol.RevenueRecognitionPolicyType) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c RevenueRecognitionPolicyTypeCol) NotIn(vs ...accountingcontrol.RevenueRecognitionPolicyType) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

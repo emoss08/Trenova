@@ -248,7 +248,7 @@ func (r *mappingRepository) ApplyScoring(
 				keelassign.StringOrNull(am.ExternalID, entity.ExternalID),
 				keelassign.StringOrNull(am.ExternalName, entity.ExternalName),
 				am.State.To(entity.State),
-				keelassign.StringOrNull(am.Source.StringCol, string(entity.Source)),
+				keelassign.StringOrNull(am.Source.Text(), string(entity.Source)),
 				float64OrNull(am.Confidence, entity.Confidence),
 				keelassign.StringOrNull(am.Reason, entity.Reason),
 				am.Signals.To(entity.Signals),

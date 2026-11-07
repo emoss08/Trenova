@@ -9,6 +9,8 @@ import (
 	"github.com/shopspring/decimal"
 )
 
+const poissonNormalMean = 500
+
 type Faker struct {
 	r *rand.Rand
 }
@@ -46,6 +48,23 @@ func (f *Faker) Chance(p float64) bool {
 
 func (f *Faker) Float() float64 {
 	return f.r.Float64()
+}
+
+func (f *Faker) Poisson(mean float64) int {
+	if mean <= 0 {
+		return 0
+	}
+	if mean > poissonNormalMean {
+		return max(0, int(math.Round(mean+math.Sqrt(mean)*f.r.NormFloat64())))
+	}
+	limit, k, p := math.Exp(-mean), 0, 1.0
+	for {
+		p *= f.r.Float64()
+		if p <= limit {
+			return k
+		}
+		k++
+	}
 }
 
 func (f *Faker) Weighted(weights []int) int {

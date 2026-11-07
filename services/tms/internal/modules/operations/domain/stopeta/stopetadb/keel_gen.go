@@ -100,12 +100,12 @@ type StopETAsTable struct {
 // StopETAs references the stop_etas table.
 var StopETAs = &StopETAsTable{
 	TableBase:          keel.TableBase{Ref: &stopETAsRef},
-	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &stopETAsRef, Index: 0}}},
-	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &stopETAsRef, Index: 1}}},
-	BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &stopETAsRef, Index: 2}}},
-	ShipmentID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &stopETAsRef, Index: 3}}},
-	ShipmentMoveID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &stopETAsRef, Index: 4}}},
-	StopID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &stopETAsRef, Index: 5}}},
+	ID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &stopETAsRef, Index: 0}}},
+	OrganizationID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &stopETAsRef, Index: 1}}},
+	BusinessUnitID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &stopETAsRef, Index: 2}}},
+	ShipmentID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &stopETAsRef, Index: 3}}},
+	ShipmentMoveID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &stopETAsRef, Index: 4}}},
+	StopID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &stopETAsRef, Index: 5}}},
 	MoveSequence:       keel.Int64Col{Col: keel.Col{Ref: &stopETAsRef, Index: 6}},
 	StopSequence:       keel.Int64Col{Col: keel.Col{Ref: &stopETAsRef, Index: 7}},
 	Arrived:            keel.BoolCol{Col: keel.Col{Ref: &stopETAsRef, Index: 8}},
@@ -113,9 +113,9 @@ var StopETAs = &StopETAsTable{
 	EstimatedDeparture: keel.Int64Col{Col: keel.Col{Ref: &stopETAsRef, Index: 10}},
 	WindowEnd:          keel.Int64Col{Col: keel.Col{Ref: &stopETAsRef, Index: 11}},
 	SlackMinutes:       keel.Int64Col{Col: keel.Col{Ref: &stopETAsRef, Index: 12}},
-	Verdict:            VerdictCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &stopETAsRef, Index: 13}}},
-	Basis:              BasisCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &stopETAsRef, Index: 14}}},
-	DriveMethod:        DriveMethodCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &stopETAsRef, Index: 15}}},
+	Verdict:            VerdictCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &stopETAsRef, Index: 13}}},
+	Basis:              BasisCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &stopETAsRef, Index: 14}}},
+	DriveMethod:        DriveMethodCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &stopETAsRef, Index: 15}}},
 	MilesRemaining:     keel.Float64Col{Col: keel.Col{Ref: &stopETAsRef, Index: 16}},
 	DriveMinutes:       keel.Int64Col{Col: keel.Col{Ref: &stopETAsRef, Index: 17}},
 	RestMinutes:        keel.Int64Col{Col: keel.Col{Ref: &stopETAsRef, Index: 18}},
@@ -130,12 +130,12 @@ var StopETAs = &StopETAsTable{
 func BuildStopETAs(r *keel.Ref) *StopETAsTable {
 	return &StopETAsTable{
 		TableBase:          keel.TableBase{Ref: r},
-		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		ShipmentID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		ShipmentMoveID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		StopID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		ID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		OrganizationID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		BusinessUnitID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ShipmentID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ShipmentMoveID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		StopID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		MoveSequence:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
 		StopSequence:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
 		Arrived:            keel.BoolCol{Col: keel.Col{Ref: r, Index: 8}},
@@ -143,9 +143,9 @@ func BuildStopETAs(r *keel.Ref) *StopETAsTable {
 		EstimatedDeparture: keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
 		WindowEnd:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
 		SlackMinutes:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
-		Verdict:            VerdictCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 13}}},
-		Basis:              BasisCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 14}}},
-		DriveMethod:        DriveMethodCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 15}}},
+		Verdict:            VerdictCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 13}}},
+		Basis:              BasisCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 14}}},
+		DriveMethod:        DriveMethodCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 15}}},
 		MilesRemaining:     keel.Float64Col{Col: keel.Col{Ref: r, Index: 16}},
 		DriveMinutes:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
 		RestMinutes:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
@@ -172,8 +172,6 @@ func (t *StopETAsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*st
 
 // StopETAsQuery is a query over stopeta.StopETA.
 type StopETAsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*stopeta.StopETA] = (*StopETAsTable)(nil)
 
 var _ keel.Query[*stopeta.StopETA] = (*StopETAsQuery)(nil)
 
@@ -289,42 +287,42 @@ func (t *StopETAsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*stopet
 
 // Create inserts row.
 func (t *StopETAsTable) Create(ctx context.Context, db *keel.DB, row *stopeta.StopETA) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *StopETAsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*stopeta.StopETA) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *StopETAsTable) Save(ctx context.Context, db *keel.DB, row *stopeta.StopETA, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *StopETAsTable) SaveExcept(ctx context.Context, db *keel.DB, row *stopeta.StopETA, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *StopETAsTable) DeleteRow(ctx context.Context, db *keel.DB, row *stopeta.StopETA) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *StopETAsTable) Upsert(ctx context.Context, db *keel.DB, rows []*stopeta.StopETA, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *StopETAsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*stopeta.StopETA, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *StopETAsTable) Copy(ctx context.Context, db *keel.DB, rows []*stopeta.StopETA) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -496,37 +494,45 @@ func (q *StopETAsQuery) Clone() keel.Query[*stopeta.StopETA] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *StopETAsQuery) One(ctx context.Context, db *keel.DB) (*stopeta.StopETA, error) {
-	return keel.One[*stopeta.StopETA](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*stopeta.StopETA)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *StopETAsQuery) First(ctx context.Context, db *keel.DB) (*stopeta.StopETA, error) {
-	return keel.First[*stopeta.StopETA](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*stopeta.StopETA)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *StopETAsQuery) List(ctx context.Context, db *keel.DB) ([]*stopeta.StopETA, error) {
-	return keel.List[*stopeta.StopETA](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*stopeta.StopETA)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *StopETAsQuery) All(ctx context.Context, db *keel.DB) ([]*stopeta.StopETA, error) {
-	return keel.All[*stopeta.StopETA](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*stopeta.StopETA)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *StopETAsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*stopeta.StopETA, error) {
-	return keel.UpdateReturning[*stopeta.StopETA](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*stopeta.StopETA)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *StopETAsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*stopeta.StopETA], error) {
-	return keel.PageOf[*stopeta.StopETA](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*stopeta.StopETA])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *StopETAsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*stopeta.StopETA) error) error {
-	return keel.Each[*stopeta.StopETA](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*stopeta.StopETA)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newStopETA() unsafe.Pointer { return unsafe.Pointer(new(stopeta.StopETA)) }
@@ -687,64 +693,70 @@ var enumVerdict = [...]schema.EnumValue{
 }
 
 // BasisCol is a column of stopeta.Basis values.
-type BasisCol struct{ keel.StringCol }
+type BasisCol struct{ keel.TypedStringCol }
 
-func (c BasisCol) Eq(v stopeta.Basis) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c BasisCol) Ne(v stopeta.Basis) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c BasisCol) Gt(v stopeta.Basis) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c BasisCol) Gte(v stopeta.Basis) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c BasisCol) Lt(v stopeta.Basis) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c BasisCol) Lte(v stopeta.Basis) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c BasisCol) Eq(v stopeta.Basis) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c BasisCol) Ne(v stopeta.Basis) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c BasisCol) Gt(v stopeta.Basis) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c BasisCol) Gte(v stopeta.Basis) keel.Pred { return c.Text().Gte(string(v)) }
+func (c BasisCol) Lt(v stopeta.Basis) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c BasisCol) Lte(v stopeta.Basis) keel.Pred { return c.Text().Lte(string(v)) }
 func (c BasisCol) IsDistinctFrom(v stopeta.Basis) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c BasisCol) Between(lo, hi stopeta.Basis) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c BasisCol) To(v stopeta.Basis) keel.Assignment  { return c.StringCol.To(string(v)) }
-func (c BasisCol) In(vs ...stopeta.Basis) keel.Pred    { return c.StringCol.In(keel.Strings(vs)...) }
-func (c BasisCol) NotIn(vs ...stopeta.Basis) keel.Pred { return c.StringCol.NotIn(keel.Strings(vs)...) }
+func (c BasisCol) To(v stopeta.Basis) keel.Assignment { return c.Text().To(string(v)) }
+func (c BasisCol) In(vs ...stopeta.Basis) keel.Pred {
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
+}
+func (c BasisCol) NotIn(vs ...stopeta.Basis) keel.Pred {
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
+}
 
 // DriveMethodCol is a column of stopeta.DriveMethod values.
-type DriveMethodCol struct{ keel.StringCol }
+type DriveMethodCol struct{ keel.TypedStringCol }
 
-func (c DriveMethodCol) Eq(v stopeta.DriveMethod) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c DriveMethodCol) Ne(v stopeta.DriveMethod) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c DriveMethodCol) Gt(v stopeta.DriveMethod) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c DriveMethodCol) Gte(v stopeta.DriveMethod) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c DriveMethodCol) Lt(v stopeta.DriveMethod) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c DriveMethodCol) Lte(v stopeta.DriveMethod) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c DriveMethodCol) Eq(v stopeta.DriveMethod) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c DriveMethodCol) Ne(v stopeta.DriveMethod) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c DriveMethodCol) Gt(v stopeta.DriveMethod) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c DriveMethodCol) Gte(v stopeta.DriveMethod) keel.Pred { return c.Text().Gte(string(v)) }
+func (c DriveMethodCol) Lt(v stopeta.DriveMethod) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c DriveMethodCol) Lte(v stopeta.DriveMethod) keel.Pred { return c.Text().Lte(string(v)) }
 func (c DriveMethodCol) IsDistinctFrom(v stopeta.DriveMethod) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c DriveMethodCol) Between(lo, hi stopeta.DriveMethod) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c DriveMethodCol) To(v stopeta.DriveMethod) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c DriveMethodCol) To(v stopeta.DriveMethod) keel.Assignment { return c.Text().To(string(v)) }
 func (c DriveMethodCol) In(vs ...stopeta.DriveMethod) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c DriveMethodCol) NotIn(vs ...stopeta.DriveMethod) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // VerdictCol is a column of stopeta.Verdict values.
-type VerdictCol struct{ keel.StringCol }
+type VerdictCol struct{ keel.TypedStringCol }
 
-func (c VerdictCol) Eq(v stopeta.Verdict) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c VerdictCol) Ne(v stopeta.Verdict) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c VerdictCol) Gt(v stopeta.Verdict) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c VerdictCol) Gte(v stopeta.Verdict) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c VerdictCol) Lt(v stopeta.Verdict) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c VerdictCol) Lte(v stopeta.Verdict) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c VerdictCol) Eq(v stopeta.Verdict) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c VerdictCol) Ne(v stopeta.Verdict) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c VerdictCol) Gt(v stopeta.Verdict) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c VerdictCol) Gte(v stopeta.Verdict) keel.Pred { return c.Text().Gte(string(v)) }
+func (c VerdictCol) Lt(v stopeta.Verdict) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c VerdictCol) Lte(v stopeta.Verdict) keel.Pred { return c.Text().Lte(string(v)) }
 func (c VerdictCol) IsDistinctFrom(v stopeta.Verdict) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c VerdictCol) Between(lo, hi stopeta.Verdict) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c VerdictCol) To(v stopeta.Verdict) keel.Assignment { return c.StringCol.To(string(v)) }
-func (c VerdictCol) In(vs ...stopeta.Verdict) keel.Pred   { return c.StringCol.In(keel.Strings(vs)...) }
+func (c VerdictCol) To(v stopeta.Verdict) keel.Assignment { return c.Text().To(string(v)) }
+func (c VerdictCol) In(vs ...stopeta.Verdict) keel.Pred {
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
+}
 func (c VerdictCol) NotIn(vs ...stopeta.Verdict) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

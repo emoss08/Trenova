@@ -108,16 +108,16 @@ type WebWatchesTable struct {
 // WebWatches references the agent_web_watches table.
 var WebWatches = &WebWatchesTable{
 	TableBase:         keel.TableBase{Ref: &webWatchesRef},
-	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &webWatchesRef, Index: 0}}},
-	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &webWatchesRef, Index: 1}}},
-	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &webWatchesRef, Index: 2}}},
-	ExtensionType:     agentextensiondb.TypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &webWatchesRef, Index: 3}}},
+	ID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &webWatchesRef, Index: 0}}},
+	BusinessUnitID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &webWatchesRef, Index: 1}}},
+	OrganizationID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &webWatchesRef, Index: 2}}},
+	ExtensionType:     agentextensiondb.TypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &webWatchesRef, Index: 3}}},
 	VendorMonitorID:   keel.StringCol{Col: keel.Col{Ref: &webWatchesRef, Index: 4}},
 	QueryCol:          keel.StringCol{Col: keel.Col{Ref: &webWatchesRef, Index: 5}},
 	Purpose:           keel.StringCol{Col: keel.Col{Ref: &webWatchesRef, Index: 6}},
 	IncludeDomains:    keel.JSONBCol{Col: keel.Col{Ref: &webWatchesRef, Index: 7}},
-	Cadence:           WebWatchCadenceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &webWatchesRef, Index: 8}}},
-	Status:            WebWatchStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &webWatchesRef, Index: 9}}},
+	Cadence:           WebWatchCadenceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &webWatchesRef, Index: 8}}},
+	Status:            WebWatchStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &webWatchesRef, Index: 9}}},
 	Secrets:           keel.JSONBCol{Col: keel.Col{Ref: &webWatchesRef, Index: 10}},
 	EndsAt:            keel.Int64Col{Col: keel.Col{Ref: &webWatchesRef, Index: 11}},
 	LastCheckedAt:     keel.Int64Col{Col: keel.Col{Ref: &webWatchesRef, Index: 12}},
@@ -126,11 +126,11 @@ var WebWatches = &WebWatchesTable{
 	FindingCount:      keel.Int64Col{Col: keel.Col{Ref: &webWatchesRef, Index: 15}},
 	CostUSD:           keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &webWatchesRef, Index: 16}}},
 	Failure:           keel.StringCol{Col: keel.Col{Ref: &webWatchesRef, Index: 17}},
-	AgentDefinitionID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &webWatchesRef, Index: 18}}},
-	AgentRunID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &webWatchesRef, Index: 19}}},
-	ThreadID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &webWatchesRef, Index: 20}}},
-	RequestedByID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &webWatchesRef, Index: 21}}},
-	StoppedByID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &webWatchesRef, Index: 22}}},
+	AgentDefinitionID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &webWatchesRef, Index: 18}}},
+	AgentRunID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &webWatchesRef, Index: 19}}},
+	ThreadID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &webWatchesRef, Index: 20}}},
+	RequestedByID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &webWatchesRef, Index: 21}}},
+	StoppedByID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &webWatchesRef, Index: 22}}},
 	FinishedAt:        keel.Int64Col{Col: keel.Col{Ref: &webWatchesRef, Index: 23}},
 	Version:           keel.Int64Col{Col: keel.Col{Ref: &webWatchesRef, Index: 24}},
 	CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: &webWatchesRef, Index: 25}},
@@ -141,16 +141,16 @@ var WebWatches = &WebWatchesTable{
 func BuildWebWatches(r *keel.Ref) *WebWatchesTable {
 	return &WebWatchesTable{
 		TableBase:         keel.TableBase{Ref: r},
-		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		ExtensionType:     agentextensiondb.TypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ExtensionType:     agentextensiondb.TypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		VendorMonitorID:   keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		QueryCol:          keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		Purpose:           keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
 		IncludeDomains:    keel.JSONBCol{Col: keel.Col{Ref: r, Index: 7}},
-		Cadence:           WebWatchCadenceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
-		Status:            WebWatchStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		Cadence:           WebWatchCadenceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		Status:            WebWatchStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
 		Secrets:           keel.JSONBCol{Col: keel.Col{Ref: r, Index: 10}},
 		EndsAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
 		LastCheckedAt:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
@@ -159,11 +159,11 @@ func BuildWebWatches(r *keel.Ref) *WebWatchesTable {
 		FindingCount:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
 		CostUSD:           keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 16}}},
 		Failure:           keel.StringCol{Col: keel.Col{Ref: r, Index: 17}},
-		AgentDefinitionID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 18}}},
-		AgentRunID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 19}}},
-		ThreadID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 20}}},
-		RequestedByID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 21}}},
-		StoppedByID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 22}}},
+		AgentDefinitionID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 18}}},
+		AgentRunID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 19}}},
+		ThreadID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 20}}},
+		RequestedByID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 21}}},
+		StoppedByID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 22}}},
 		FinishedAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 23}},
 		Version:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 24}},
 		CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 25}},
@@ -186,8 +186,6 @@ func (t *WebWatchesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*
 
 // WebWatchesQuery is a query over extensionwebwatch.WebWatch.
 type WebWatchesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*extensionwebwatch.WebWatch] = (*WebWatchesTable)(nil)
 
 var _ keel.Query[*extensionwebwatch.WebWatch] = (*WebWatchesQuery)(nil)
 
@@ -303,42 +301,42 @@ func (t *WebWatchesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*exte
 
 // Create inserts row.
 func (t *WebWatchesTable) Create(ctx context.Context, db *keel.DB, row *extensionwebwatch.WebWatch) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *WebWatchesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*extensionwebwatch.WebWatch) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *WebWatchesTable) Save(ctx context.Context, db *keel.DB, row *extensionwebwatch.WebWatch, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *WebWatchesTable) SaveExcept(ctx context.Context, db *keel.DB, row *extensionwebwatch.WebWatch, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *WebWatchesTable) DeleteRow(ctx context.Context, db *keel.DB, row *extensionwebwatch.WebWatch) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *WebWatchesTable) Upsert(ctx context.Context, db *keel.DB, rows []*extensionwebwatch.WebWatch, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *WebWatchesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*extensionwebwatch.WebWatch, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *WebWatchesTable) Copy(ctx context.Context, db *keel.DB, rows []*extensionwebwatch.WebWatch) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -510,37 +508,45 @@ func (q *WebWatchesQuery) Clone() keel.Query[*extensionwebwatch.WebWatch] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *WebWatchesQuery) One(ctx context.Context, db *keel.DB) (*extensionwebwatch.WebWatch, error) {
-	return keel.One[*extensionwebwatch.WebWatch](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*extensionwebwatch.WebWatch)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *WebWatchesQuery) First(ctx context.Context, db *keel.DB) (*extensionwebwatch.WebWatch, error) {
-	return keel.First[*extensionwebwatch.WebWatch](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*extensionwebwatch.WebWatch)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *WebWatchesQuery) List(ctx context.Context, db *keel.DB) ([]*extensionwebwatch.WebWatch, error) {
-	return keel.List[*extensionwebwatch.WebWatch](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*extensionwebwatch.WebWatch)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *WebWatchesQuery) All(ctx context.Context, db *keel.DB) ([]*extensionwebwatch.WebWatch, error) {
-	return keel.All[*extensionwebwatch.WebWatch](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*extensionwebwatch.WebWatch)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *WebWatchesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*extensionwebwatch.WebWatch, error) {
-	return keel.UpdateReturning[*extensionwebwatch.WebWatch](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*extensionwebwatch.WebWatch)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *WebWatchesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*extensionwebwatch.WebWatch], error) {
-	return keel.PageOf[*extensionwebwatch.WebWatch](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*extensionwebwatch.WebWatch])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *WebWatchesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*extensionwebwatch.WebWatch) error) error {
-	return keel.Each[*extensionwebwatch.WebWatch](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*extensionwebwatch.WebWatch)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newWebWatch() unsafe.Pointer { return unsafe.Pointer(new(extensionwebwatch.WebWatch)) }
@@ -760,10 +766,10 @@ type WebWatchFindingsTable struct {
 // WebWatchFindings references the agent_web_watch_findings table.
 var WebWatchFindings = &WebWatchFindingsTable{
 	TableBase:      keel.TableBase{Ref: &webWatchFindingsRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &webWatchFindingsRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &webWatchFindingsRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &webWatchFindingsRef, Index: 2}}},
-	WatchID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &webWatchFindingsRef, Index: 3}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &webWatchFindingsRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &webWatchFindingsRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &webWatchFindingsRef, Index: 2}}},
+	WatchID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &webWatchFindingsRef, Index: 3}}},
 	VendorRunID:    keel.StringCol{Col: keel.Col{Ref: &webWatchFindingsRef, Index: 4}},
 	Summary:        keel.StringCol{Col: keel.Col{Ref: &webWatchFindingsRef, Index: 5}},
 	Results:        keel.JSONBCol{Col: keel.Col{Ref: &webWatchFindingsRef, Index: 6}},
@@ -776,10 +782,10 @@ var WebWatchFindings = &WebWatchFindingsTable{
 func BuildWebWatchFindings(r *keel.Ref) *WebWatchFindingsTable {
 	return &WebWatchFindingsTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		WatchID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		WatchID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		VendorRunID:    keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		Summary:        keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		Results:        keel.JSONBCol{Col: keel.Col{Ref: r, Index: 6}},
@@ -804,8 +810,6 @@ func (t *WebWatchFindingsTable) Get(ctx context.Context, db *keel.DB, key pulid.
 
 // WebWatchFindingsQuery is a query over extensionwebwatch.WebWatchFinding.
 type WebWatchFindingsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*extensionwebwatch.WebWatchFinding] = (*WebWatchFindingsTable)(nil)
 
 var _ keel.Query[*extensionwebwatch.WebWatchFinding] = (*WebWatchFindingsQuery)(nil)
 
@@ -921,42 +925,42 @@ func (t *WebWatchFindingsTable) Compute(col keel.Column, e keel.Expr) keel.Query
 
 // Create inserts row.
 func (t *WebWatchFindingsTable) Create(ctx context.Context, db *keel.DB, row *extensionwebwatch.WebWatchFinding) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *WebWatchFindingsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*extensionwebwatch.WebWatchFinding) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *WebWatchFindingsTable) Save(ctx context.Context, db *keel.DB, row *extensionwebwatch.WebWatchFinding, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *WebWatchFindingsTable) SaveExcept(ctx context.Context, db *keel.DB, row *extensionwebwatch.WebWatchFinding, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *WebWatchFindingsTable) DeleteRow(ctx context.Context, db *keel.DB, row *extensionwebwatch.WebWatchFinding) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *WebWatchFindingsTable) Upsert(ctx context.Context, db *keel.DB, rows []*extensionwebwatch.WebWatchFinding, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *WebWatchFindingsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*extensionwebwatch.WebWatchFinding, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *WebWatchFindingsTable) Copy(ctx context.Context, db *keel.DB, rows []*extensionwebwatch.WebWatchFinding) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1128,37 +1132,45 @@ func (q *WebWatchFindingsQuery) Clone() keel.Query[*extensionwebwatch.WebWatchFi
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *WebWatchFindingsQuery) One(ctx context.Context, db *keel.DB) (*extensionwebwatch.WebWatchFinding, error) {
-	return keel.One[*extensionwebwatch.WebWatchFinding](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*extensionwebwatch.WebWatchFinding)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *WebWatchFindingsQuery) First(ctx context.Context, db *keel.DB) (*extensionwebwatch.WebWatchFinding, error) {
-	return keel.First[*extensionwebwatch.WebWatchFinding](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*extensionwebwatch.WebWatchFinding)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *WebWatchFindingsQuery) List(ctx context.Context, db *keel.DB) ([]*extensionwebwatch.WebWatchFinding, error) {
-	return keel.List[*extensionwebwatch.WebWatchFinding](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*extensionwebwatch.WebWatchFinding)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *WebWatchFindingsQuery) All(ctx context.Context, db *keel.DB) ([]*extensionwebwatch.WebWatchFinding, error) {
-	return keel.All[*extensionwebwatch.WebWatchFinding](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*extensionwebwatch.WebWatchFinding)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *WebWatchFindingsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*extensionwebwatch.WebWatchFinding, error) {
-	return keel.UpdateReturning[*extensionwebwatch.WebWatchFinding](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*extensionwebwatch.WebWatchFinding)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *WebWatchFindingsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*extensionwebwatch.WebWatchFinding], error) {
-	return keel.PageOf[*extensionwebwatch.WebWatchFinding](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*extensionwebwatch.WebWatchFinding])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *WebWatchFindingsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*extensionwebwatch.WebWatchFinding) error) error {
-	return keel.Each[*extensionwebwatch.WebWatchFinding](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*extensionwebwatch.WebWatchFinding)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newWebWatchFinding() unsafe.Pointer {
@@ -1252,75 +1264,75 @@ var enumWebWatchStatus = [...]schema.EnumValue{
 }
 
 // WebWatchCadenceCol is a column of extensionwebwatch.WebWatchCadence values.
-type WebWatchCadenceCol struct{ keel.StringCol }
+type WebWatchCadenceCol struct{ keel.TypedStringCol }
 
 func (c WebWatchCadenceCol) Eq(v extensionwebwatch.WebWatchCadence) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c WebWatchCadenceCol) Ne(v extensionwebwatch.WebWatchCadence) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c WebWatchCadenceCol) Gt(v extensionwebwatch.WebWatchCadence) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c WebWatchCadenceCol) Gte(v extensionwebwatch.WebWatchCadence) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c WebWatchCadenceCol) Lt(v extensionwebwatch.WebWatchCadence) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c WebWatchCadenceCol) Lte(v extensionwebwatch.WebWatchCadence) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c WebWatchCadenceCol) IsDistinctFrom(v extensionwebwatch.WebWatchCadence) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c WebWatchCadenceCol) Between(lo, hi extensionwebwatch.WebWatchCadence) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c WebWatchCadenceCol) To(v extensionwebwatch.WebWatchCadence) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c WebWatchCadenceCol) In(vs ...extensionwebwatch.WebWatchCadence) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c WebWatchCadenceCol) NotIn(vs ...extensionwebwatch.WebWatchCadence) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // WebWatchStatusCol is a column of extensionwebwatch.WebWatchStatus values.
-type WebWatchStatusCol struct{ keel.StringCol }
+type WebWatchStatusCol struct{ keel.TypedStringCol }
 
 func (c WebWatchStatusCol) Eq(v extensionwebwatch.WebWatchStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c WebWatchStatusCol) Ne(v extensionwebwatch.WebWatchStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c WebWatchStatusCol) Gt(v extensionwebwatch.WebWatchStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c WebWatchStatusCol) Gte(v extensionwebwatch.WebWatchStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c WebWatchStatusCol) Lt(v extensionwebwatch.WebWatchStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c WebWatchStatusCol) Lte(v extensionwebwatch.WebWatchStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c WebWatchStatusCol) IsDistinctFrom(v extensionwebwatch.WebWatchStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c WebWatchStatusCol) Between(lo, hi extensionwebwatch.WebWatchStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c WebWatchStatusCol) To(v extensionwebwatch.WebWatchStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c WebWatchStatusCol) In(vs ...extensionwebwatch.WebWatchStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c WebWatchStatusCol) NotIn(vs ...extensionwebwatch.WebWatchStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

@@ -1,5 +1,5 @@
 {
-  "version": "sha256:bfb1d1d1e7411e06845573b4c31fbc430a3a6ab7a9fdbb8d05c8960664469285",
+  "version": "sha256:2fa463561c818c5b7aae457fd05a0a1b3ab7c702eef7ae3551cc255776b91235",
   "modules": [
     {
       "id": "home",
@@ -3063,49 +3063,6 @@
           ]
         },
         {
-          "title": "Try a new document extraction model on real documents",
-          "keywords": [
-            "shadow traffic",
-            "shadow model",
-            "candidate model",
-            "fine-tuned model",
-            "compare extraction models",
-            "A/B test extraction",
-            "new extraction provider",
-            "model rollout"
-          ],
-          "steps": [
-            "Register the new model as an AI provider assigned to **Document extraction**, with a priority after the provider that extracts documents today, so nothing is routed to it.",
-            "Open [AI control](/admin/agent-control), select **Quality**, then **Document extraction**, and choose **Shadow**.",
-            "Select **Edit settings**, turn on **Shadow production extraction**, choose the **Candidate provider**, and set the **Share of extractions (%)** and the **Most per 24 hours**. Select **Save**. From then on that share of documents is also read by the candidate; its answer is kept but never used, and the calls spend from the evaluation budget.",
-            "When someone creates a shipment from a shadowed document's draft, both answers are scored against what they confirmed. Read the figures: **Candidate accuracy** against **Production accuracy** on the same documents, how often the candidate did **Better or worse**, how many documents were **Shadowed**, and the **Cost**. **Accuracy by field** puts the candidate's biggest shortfall first.",
-            "Select a row in the table to read one document field by field: what a person confirmed, what the candidate read, and what production read.",
-            "To stop, select **Edit settings**, turn **Shadow production extraction** off and select **Save**. Move the candidate ahead of the current provider only when it beats production here and in an evaluation run."
-          ]
-        },
-        {
-          "title": "Roll out a new document extraction model gradually",
-          "keywords": [
-            "gradual rollout",
-            "canary",
-            "promote extraction model",
-            "serve new model",
-            "fine-tuned model in production",
-            "stop rollout",
-            "rollout guard",
-            "rollback extraction model"
-          ],
-          "steps": [
-            "Try the model first under **Shadow** (see above), and roll it out only once it reads at least as well as production there.",
-            "Open [AI control](/admin/agent-control), select **Quality**, then **Document extraction**, and choose **Rollout**. Changing the rollout needs permission to update AI providers.",
-            "Select **Edit settings**, turn on **Serve the candidate**, choose the **Candidate provider**, and set the **Share of documents (%)**. Start small, such as 5 percent. The two guard allowances say how far the candidate may fall behind production before the rollout stops on its own: **Stop below production's accuracy by (pts)** and **Stop above production's unusable answers by (pts)**. Select **Save**. From then on the candidate reads that share of documents and its answers fill their shipment drafts; when it cannot answer, production reads the document instead.",
-            "Read the figures: **Candidate accuracy** on the documents it read against **Production accuracy** on the rest, how often its answers were **Unusable answers** beside production's, and how many documents were **Sent to the candidate** and **Kept on production**. **Guards** says how much evidence each guard still needs before it can act. **Accuracy by field** puts the candidate's biggest shortfall first.",
-            "Raise the share in steps while the candidate holds up. The same documents stay with the candidate, so each step adds documents.",
-            "To stop at any time, select **Stop rollout**; every document goes back to production at once. If a guard stops the rollout, the page says which one and why, and the people who can change AI providers are notified. Save the settings with the rollout on to start a new comparison.",
-            "Once the candidate has served a large share without a guard stopping it, give it the highest document extraction priority in **Providers** and turn the rollout off."
-          ]
-        },
-        {
           "title": "Check whether a document extraction model is getting worse",
           "keywords": [
             "extraction accuracy over time",
@@ -3120,7 +3077,7 @@
             "Open [AI control](/admin/agent-control), select **Quality**, then **Document extraction**, and choose **Accuracy**.",
             "Scroll to **Accuracy by provider over time**. Each AI provider that read documents in the last 12 weeks has a row: its **Weekly accuracy** line, **Last week**, the four weeks before it, the **Change** between them, and a **Status**.",
             "**Drifting** means last week's accuracy fell more than the allowed points below that provider's own previous four weeks. **Not enough data** means too few fields were confirmed to judge; the help on the panel says how many are needed.",
-            "When a provider drifts, the people who can update AI providers are notified on Monday. To respond, compare it with another provider under **Shadow**, or lower its document extraction priority in **Providers** so another provider reads documents first."
+            "When a provider drifts, the people who can update AI providers are notified on Monday. To respond, lower its document extraction priority in **Providers** so another provider reads documents first."
           ]
         },
         {
@@ -4208,7 +4165,7 @@
         "Dispatch controls"
       ],
       "description": "Configure and manage your dispatch control settings",
-      "summary": "Dispatch control holds the organization-wide rules for assigning and dispatching work. The page is one settings form in up to four cards: **Automated resource assignment** (letting the system assign drivers and equipment), **Candidate scoring weights** (how drivers are ranked), **Service failure monitoring** (which late pickups and deliveries are recorded as service failures) and **DOT compliance enforcement** (checks that run before an assignment goes ahead).\n\nDispatch managers and safety or compliance leads use it.",
+      "summary": "Dispatch control holds the organization-wide rules for assigning and dispatching work. The page is one settings form in up to four cards: **Automated resource assignment** (letting the system assign drivers and equipment), **Costs and prices** (what the planner weighs, in money), **Service failure monitoring** (which late pickups and deliveries are recorded as service failures) and **DOT compliance enforcement** (checks that run before an assignment goes ahead). **Freight forecast** shows whether the organization's freight forecast, learned from its own shipment history, has proven itself well enough for plans to use.\n\nDispatch managers and safety or compliance leads use it.",
       "requires": [
         {
           "resource": "dispatch_control",
@@ -4222,7 +4179,9 @@
         "auto dispatch",
         "DOT compliance checks",
         "service failure settings",
-        "HOS enforcement"
+        "HOS enforcement",
+        "anticipatory dispatch",
+        "demand forecast"
       ],
       "tasks": [
         {
@@ -4236,21 +4195,70 @@
           "steps": [
             "Open [Dispatch controls](/admin/dispatch-controls).",
             "In **Automated resource assignment**, turn on **Enable automated assignment**.",
-            "Choose the **Assignment optimization strategy**: **Proximity**, **Availability**, **Load balancing** or **Performance**.",
+            "Optionally turn on **Learn our dispatch style** (the planner learns how much your dispatchers weigh each preference from the drivers they assign against the plan) and **Plan for where drivers end up** (a move that leaves its driver where drivers have been worth more at that time of the week is credited) and **Anticipate freight** (see below). All three are off by default.",
             "Set the **Auto-execute confidence threshold** (0 to 1), **Maximum deadhead miles**, **Planning horizon (hours)** and **Coverage risk window (hours)**.",
             "Select **Save changes**."
           ]
         },
         {
-          "title": "Tune how drivers are ranked",
+          "title": "Set what the planner weighs",
           "keywords": [
-            "scoring weights",
-            "candidate ranking"
+            "costs",
+            "prices",
+            "empty mile cost",
+            "candidate ranking",
+            "scoring"
           ],
           "steps": [
             "Open [Dispatch controls](/admin/dispatch-controls).",
-            "In **Candidate scoring weights**, enter a weight from 0 to 10 for each factor. A factor set to 0 is ignored; leave a field empty to use the strategy's preset, shown as the placeholder.",
+            "In **Costs and prices**, set what an **Empty mile**, a **Late minute**, a **Driver hour** and a **Day past home time** cost your operation, and what each of the **Preferences** is worth. The planner prices every driver for every move and picks the plan that costs least overall; a cost of $0 is ignored. Home time needs the driver's home address and **Last home** on their worker record. **Changing a planned driver** is what moving a move off the driver the last plan chose costs, so proposals don't change for a few dollars.",
+            "Under **Leaving a move uncovered**, set the **Share of revenue (%)**, the **At least** floor and the **Late premium** and **Due now premium**. When drivers are short, the moves that cost most to leave are covered first.",
             "Select **Save changes**."
+          ]
+        },
+        {
+          "title": "Anticipate freight before it is booked",
+          "keywords": [
+            "anticipatory dispatch",
+            "position drivers ahead of freight",
+            "forecast freight",
+            "likely loads"
+          ],
+          "steps": [
+            "Open [Dispatch controls](/admin/dispatch-controls).",
+            "In **Automated resource assignment**, turn on **Anticipate freight**. Plans then credit a move that leaves its driver near freight your history says is likely to appear in the twelve hours after the driver is free, beyond what other drivers expected there can take, less what the driver was worth staying where they are. A move that takes a driver out of an area about to get busy costs the plan instead. The first extra driver in a busy area is worth much more than the fifth, and two drivers are not both credited for the same likely load.",
+            "In **Costs and prices**, set **Most a likely load is worth**: the most ending near likely freight, or staying near it, can be worth on one move. Leave it empty (it shows **Automatic**) to use what a typical load is worth to you, from its revenue and your share of revenue.",
+            "Select **Save changes**.",
+            "Check **Freight forecast**: plans use the forecast only while it says **Ready**. Until then the card says **Anticipate freight is on, but plans ignore the forecast until it is Ready.** and plans run as if the setting were off.",
+            "On a planned move, the **Where they end up** line of the driver's cost in the [Console](/dispatch/console) says which likely loads the credit is for and, when staying put was worth something, how much the move adds or costs against it."
+          ]
+        },
+        {
+          "title": "Check the freight forecast",
+          "keywords": [
+            "forecast quality",
+            "is the forecast ready",
+            "forecast accuracy",
+            "not enough history"
+          ],
+          "steps": [
+            "Open [Dispatch controls](/admin/dispatch-controls) and find **Freight forecast**.",
+            "The forecast is learned from your shipment history and tested every night on the weeks it has not seen. Its status is one of: - **Ready**: how many actual counts fell inside the forecast range, and how much more accurate it was than repeating last week. Plans use it when **Anticipate freight** is on. - **Not better than last week yet**: it was tested but did not beat repeating last week, so plans ignore it until it does better. - **Not enough history yet**: it needs 8 weeks and 200 loads of history before it can be tested; the card says how much it has. - **Not fitted yet**: it has not been fitted from your history yet.",
+            "**History**, **Average miss** and **Last fitted** give the figures behind the status.",
+            "If the card says **The freight forecast could not be loaded.**, select **Try again**."
+          ]
+        },
+        {
+          "title": "See and reset the learned dispatch style",
+          "keywords": [
+            "learned weights",
+            "dispatcher preferences",
+            "reset learning"
+          ],
+          "steps": [
+            "Open [Dispatch controls](/admin/dispatch-controls).",
+            "Under **Learned dispatch style**, read how much your dispatchers weigh each preference against your costs, for example \"1.6× your cost, learned from 312 decisions\".",
+            "To start over, select **Reset learned style** and confirm. The planner goes back to your own costs; decisions already made are not learned again."
           ]
         },
         {
@@ -4287,7 +4295,7 @@
           ]
         }
       ],
-      "notes": "Opening the page needs read access to dispatch control; saving needs update access. The automated assignment, scoring weights and DOT compliance cards only appear for organizations with asset operations turned on; a brokerage-only organization sees just **Service failure monitoring**. Turning off **Enable DOT compliance enforcement** turns off the four individual checks.",
+      "notes": "Opening the page needs read access to dispatch control; saving needs update access. The automated assignment, costs and prices, learned dispatch style, freight forecast and DOT compliance cards only appear for organizations with asset operations turned on; a brokerage-only organization sees just **Service failure monitoring**. Turning off **Enable DOT compliance enforcement** turns off the four individual checks.",
       "related": [
         "/admin/service-failure-reason-codes",
         "/admin/shipment-controls",
@@ -5708,7 +5716,7 @@
         "Organization"
       ],
       "description": "Manage your organization profile, compliance, and security settings",
-      "summary": "Organization settings holds the organization's profile and sign-in security, in two tabs: - **General**: the logo (**Organization branding**), **Organization details** (name, timezone and tenant login slug), the **Operating model**, **Regulatory compliance** identifiers (SCAC, DOT number and tax ID) and the **Registered address**. - **Security**: five sub-tabs. **Overview** is the security briefing: what needs attention, the members without two-factor, failed sign-ins, API key hygiene, recent activity and the server's session limits. **Sign-in** manages OIDC identity providers for single sign-on, **Provisioning** manages SCIM directories, tokens and group-to-role mappings, **Policies** holds the **Access settings** and priority-ordered access policies, and **Activity** shows sign-ins, risk decisions, external identities and two-factor devices.\n\nAdministrators use it to keep the company's details current and to set up single sign-on and user provisioning.",
+      "summary": "Organization settings holds the organization's profile and sign-in security, in two tabs: - **General**: the logo (**Organization branding**), **Organization details** (name, timezone and tenant login slug), the **Operating model**, **Regulatory compliance** identifiers (SCAC, DOT number and tax ID) and the **Registered address**. - **Security**: five sub-tabs. **Overview** is the security briefing: what needs attention, the members without two-factor, failed sign-ins, API key hygiene, recent activity and the server's session limits. **Sign-in** manages OIDC identity providers for single sign-on, **Provisioning** manages SCIM directories, tokens and group-to-role mappings, **Policies** holds the **Access settings** and priority-ordered access policies, and **Activity** shows sign-ins, risk decisions, external identities and two-factor devices.\n\nAdministrators use it to keep the company's details current and to set up single sign-on and user provisioning.\n\nAn access policy narrows what roles allow, and it binds people, agents and API keys alike. It can ask for proof as well as name who it applies to: a policy that requires two-factor refuses anyone signed in without it, whether the policy allows or denies, and an agent working for them is held to the same sign-in. A policy that denies unless two-factor was used steps aside once it was. API keys and agents working alone have no sign-in to prove anything with, so a two-factor policy does not stop them: add a policy that denies them by principal type.",
       "requires": [
         {
           "resource": "organization",
@@ -5819,17 +5827,23 @@
             "SCIM token",
             "directory sync",
             "group mapping",
-            "user provisioning"
+            "user provisioning",
+            "Okta",
+            "Entra ID",
+            "Azure AD",
+            "deprovision"
           ],
           "steps": [
             "Open [Organization settings](/admin/organization-settings) and select the **Security** tab, then **Provisioning**.",
             "Under **SCIM directories**, select **New directory**, enter the **Tenant slug**, turn on **Enabled** and select **Save**.",
-            "With the directory selected, enter a token name under **SCIM tokens** and select **New token**. Copy the token straight away; it is only shown once.",
-            "Under **Group role mappings**, select **New mapping** and map an **External group ID** to a **Role**, then select **Save**."
+            "With the directory selected, copy the **SCIM base URL** shown under its name.",
+            "Enter a token name under **SCIM tokens** and select **New token**. Copy the token straight away; it is only shown once.",
+            "Under **Group role mappings**, select **New mapping** and map an **External group ID** to a **Role**, then select **Save**. Enter the group's name as your identity provider shows it, or its object ID for Entra ID.",
+            "In your identity provider, set up SCIM provisioning with the base URL and the token: - Okta: in the app's Provisioning settings, choose SCIM 2.0, paste the base URL as the connector base URL, use \"userName\" as the unique identifier, choose HTTP header authentication and paste the token. Turn on creating users, updating user attributes and deactivating users, then push the groups you mapped. - Entra ID: in the enterprise application's Provisioning page, choose automatic provisioning, paste the base URL as the tenant URL and the token as the secret token, select Test Connection, then assign the users and groups to provision."
           ]
         }
       ],
-      "notes": "Opening the page needs read access to the organization; saving the **General** tab needs update access. Each part of the security briefing appears only to people who can read what it is drawn from: member figures need users, two-factor coverage needs MFA authenticators, failed sign-ins need auth events and API key figures need API keys. The operating model only changes what appears in menus and navigation; it does not change permissions, API access or existing records. Revoke a SCIM token with **Revoke** in its row once it is no longer used.",
+      "notes": "SCIM provisioning: people your identity provider assigns are added to this organization. Someone who already belongs to it is linked rather than added again, and someone whose email belongs to another organization must be added here by an administrator first. Group membership grants the mapped roles within a few seconds. Unassigning or deactivating a person in your identity provider ends their access to this organization; if they also belong to other organizations, that access and their profile are left alone.\n\nOpening the page needs read access to the organization; saving the **General** tab needs update access. Each part of the security briefing appears only to people who can read what it is drawn from: member figures need users, two-factor coverage needs MFA authenticators, failed sign-ins need auth events and API key figures need API keys. The operating model only changes what appears in menus and navigation; it does not change permissions, API access or existing records. Revoke a SCIM token with **Revoke** in its row once it is no longer used. A group mapping grants its role only while the person who saved it may still grant that role; if they lose that permission or their account, the role is not granted again and is taken back from each person the next time the directory changes them, until someone who may grant it saves the mapping again. Roles granted through a group are managed by the directory: removing one by hand lasts only until the next sync while the group still grants it.",
       "related": [
         "/admin/users",
         "/admin/roles",
@@ -6578,6 +6592,7 @@
       "capabilities": [],
       "aliases": [
         "users & roles",
+        "give access",
         "user accounts",
         "staff accounts",
         "logins",
@@ -8596,6 +8611,23 @@
           ]
         },
         {
+          "title": "Preview and fix the invoice packet",
+          "keywords": [
+            "invoice packet",
+            "packet preview",
+            "blank page",
+            "missing signature",
+            "reorder documents",
+            "remove document from packet"
+          ],
+          "steps": [
+            "Open [Billing queue](/billing/queue), select the item, open the **Documents** tab and select **Preview packet**. The packet opens as approving would send it: the invoice, then each document, with every page down the left. Scroll the pages, select a page on the left, or select the page count in the toolbar and type a page number to jump to it.",
+            "Pages to look at carry a mark: a page that looks blank, or the first page of a document whose type needs a signature it doesn't have. Select the count of pages to check at the top of the page list to go to the next one.",
+            "While the item can still be approved, hover a document's name on the left to change the packet: drag its handle (or focus it and use the arrow keys) to move it, or select the cross to take it out. The packet is saved and rebuilt straight away, and **Undo** puts a removed document back. The invoice always comes first, and the last document can't be removed.",
+            "Use **Fit width**, **Fit page**, the zoom buttons or Ctrl + scroll to size the pages. To fix a sideways page, hover it and select **Rotate page**: while the item can still be approved, the page is turned in the packet itself, so the invoice's email, its factoring submission and every later preview send it upright. The invoice's own pages don't turn. Once the invoice is made, **Rotate page** and **Rotate all** turn pages only for reading."
+          ]
+        },
+        {
           "title": "Correct charges before approval",
           "keywords": [
             "add accessorial",
@@ -8637,7 +8669,7 @@
             "Open [Billing queue](/billing/queue) and select **Transfer to billing** in the header.",
             "Search or filter the shipment list, then tick the shipments to move, or use the transfer-all button to take everything that matches.",
             "Select **Start transfer**. Each shipment runs the billing readiness check; completed shipments that pass are marked Ready to Invoice and moved into the queue.",
-            "Close with **Run in background** to keep working while it runs, or wait for the results and use **Download report** to get a CSV of what moved and what failed."
+            "Close with **Run in background** to keep working while it runs, or wait for the results. They list what moved and what needs attention, which you can narrow to one reason at a time, and **Download report** gets a CSV of both."
           ]
         },
         {
@@ -9394,7 +9426,7 @@
         "Desk"
       ],
       "description": "The Desk is where you talk to Trenova's AI agents about the work in front of you: a shipment, a driver, a customer, or how to do something in the app.",
-      "summary": "The Desk is where you talk to Trenova's AI agents about the work in front of you: a shipment, a driver, a customer, or how to do something in the app. Its **Today** page greets you with the date and one line on what the day holds (the morning briefing's headline when one was written, otherwise how many decisions are waiting on you), and below it the box you ask in. The box names the agent it will ask and types out that agent's starter questions as its placeholder: press Tab to take the one on screen, or ⌘1–3 (Ctrl+1–3) to ask it outright. The rail down the left holds **New conversation**, search, links to **Today**, **Watchtower** and **Decisions**, every conversation grouped by when it was last used (**Pinned** first, then **Today**, **Yesterday**, **Previous 7 days**, **Previous 30 days** and **Older**), **Desk settings** and **Back to Trenova**. Select a group's heading to fold it away or open it again; a folded group shows how many conversations it holds, and the rail remembers which groups you folded. On a phone the rail slides over the page from the menu button at the top left.\n\nEach conversation opens in the middle, and anything an agent produces (a table, a draft, a document, a plan) opens in the workspace beside it. Changes an agent wants to make to your records are not applied on their own: in a Desk conversation they wait in a card above the message box, and they are also listed on [Decisions](/desk/decisions).\n\nWhile an agent replies you can steer it with a correction or queue the next question. The message box names records with @, takes slash commands, files, scans and dictation, and can share the page you came from. A conversation about a shipment, invoice or dispute becomes a case, with a ready-to-bill or ready-to-close checklist, snoozes and waiting on the customer's or carrier's reply. Conversations can also run a request on a schedule, be handed to another agent, keep pinned facts in mind, and compact themselves when they grow long. Each fact an agent looked up carries a number tying it to the step that found it.",
+      "summary": "The Desk is where you talk to Trenova's AI agents about the work in front of you: a shipment, a driver, a customer, or how to do something in the app. Its **Today** page greets you with the date and one line on what the day holds (the morning briefing's headline when one was written, otherwise how many decisions are waiting on you, which opens them), and below it the box you ask in. The box names the agent it will ask and types out that agent's starter questions as its placeholder: press Tab to take the one on screen, or ⌘1–3 (Ctrl+1–3) to ask it outright. The rail down the left holds **New conversation**, search, links to **Today**, **Watchtower** and **Decisions** (each with a count only while something waits there), every conversation grouped by when it was last used (**Pinned** first, then **Today**, **Yesterday**, **Previous 7 days**, **Previous 30 days** and **Older**), **Keyboard shortcuts**, **Desk settings** and **Back to Trenova**. A conversation that needs you or has an agent at work says so under its name, with the agent: \"Needs your approval\", \"Writing a reply\" or \"Last reply failed\". Press ? anywhere outside a text box to see every Desk shortcut. Select a group's heading to fold it away or open it again; a folded group shows how many conversations it holds, and the rail remembers which groups you folded. On a phone the rail slides over the page from the menu button at the top left.\n\nEach conversation opens in the middle, and anything an agent produces (a table, a draft, a document, a plan) opens in the workspace beside it. Changes an agent wants to make to your records are not applied on their own: in a Desk conversation they wait in a card above the message box, and they are also listed on [Decisions](/desk/decisions).\n\nWhile an agent replies you can steer it with a correction or queue the next question. The message box names records with @, takes slash commands, files, scans and dictation, and can share the page you came from. A conversation about a shipment, invoice or dispute becomes a case, with a ready-to-bill or ready-to-close checklist, snoozes and waiting on the customer's or carrier's reply. Conversations can also run a request on a schedule, be handed to another agent, keep pinned facts in mind, and compact themselves when they grow long. Each fact an agent looked up carries a number tying it to the step that found it.",
       "requires": [
         {
           "resource": "assistant",
@@ -9474,14 +9506,19 @@
             "approve in desk",
             "agent wants to change",
             "review agent change",
+            "decline in desk",
+            "reject agent change",
+            "decide later",
             "not now",
+            "permanent",
             "redraft",
             "out of date"
           ],
           "steps": [
-            "While a change waits on you, a card stands above the message box. It names the change, how many records it touches and the value it would set, and says whether it can be undone.",
-            "Select **Approve** (or press ⌘Enter / Ctrl+Enter) once it has been checked against your records. A plan of several steps approves as one.",
-            "Select **Review** to read the change in full in the workspace, or **Not now** to put it off; it then waits in the workspace and on [Decisions](/desk/decisions), where you can also decline it or change its values first.",
+            "While a change waits on you, a card stands above the message box. It names the change and the record it is for (or how many records it touches), and the value it would set. A change that can't be undone is marked **Permanent**; one that can says reversible.",
+            "Select **Approve** once it has been checked against your records, or press ⌘Enter (Ctrl+Enter on Windows) while the message box is empty. With text in the box the key never approves, so a question about the change is never taken as a yes. A plan of several steps approves as one. For a few seconds after, a bar says when it goes through and **Undo** takes it back; the keyboard lands on **Undo**.",
+            "Select **Decline** to turn it down. Say why: the agent reads it in the conversation, and so does whoever looks after the agent. A declined change never runs.",
+            "Select **Review** to read the change in full in the workspace, or **Decide later** (the clock) to put it off; it then waits in the workspace and on [Decisions](/desk/decisions), where you can also change its values first.",
             "If the card says the change is out of date, what it was drafted against has changed since. Select the redraft button on the card to ask the agent to draft it again with the records as they are now."
           ]
         },
@@ -9493,12 +9530,16 @@
             "preview before approving",
             "what will this change",
             "approval card",
-            "not now"
+            "decline",
+            "decide later",
+            "not now",
+            "permanent"
           ],
           "steps": [
-            "The assistant on every page asks the same way the Desk does: while a change waits on you, a card stands above the message box. It names the change, how many records it touches and the value it would set, and says whether it is reversible or can't be undone.",
-            "Select **Approve** once it has been checked against your records (or press ⌘Enter / Ctrl+Enter; Enter alone never approves). For a few seconds after, a bar says when it goes through: select **Undo** to take it back, or **Do it now** to let it go straight away.",
-            "Select **Review** to read the change in full: the assistant opens the conversation on the [Desk](/desk) with the change beside it, where you can also decline it or change its values first. Select **Not now** to put it off; it waits on [Decisions](/desk/decisions), and a pill above the message box says how many changes wait on you.",
+            "The assistant on every page asks the same way the Desk does: while a change waits on you, a card stands above the message box. It names the change and the record it is for (or how many records it touches), and the value it would set. A change that can't be undone is marked **Permanent**; one that can says reversible.",
+            "Select **Approve** once it has been checked against your records, or press ⌘Enter (Ctrl+Enter on Windows) while the message box is empty; Enter alone never approves. For a few seconds after, a bar says when it goes through: select **Undo** to take it back, or **Do it now** to let it go straight away.",
+            "Select **Decline** to turn it down, and say why; the agent reads your reason.",
+            "Select **Review** to read the change in full: the assistant opens the conversation on the [Desk](/desk) with the change beside it, where you can also change its values first. Select **Decide later** (the clock) to put it off; it waits on [Decisions](/desk/decisions), and a pill above the message box says how many changes wait on you.",
             "If the card says the change is out of date, what it was drafted against has changed since. Select the redraft button on the card to ask the agent to draft it again with the records as they are now."
           ]
         },
@@ -9526,7 +9567,7 @@
             "start over"
           ],
           "steps": [
-            "Select **New conversation** in the rail of [Desk](/desk), or press ⌘N (Ctrl+N).",
+            "Select **New conversation** in the rail of [Desk](/desk), or press ⇧⌘O (Ctrl+Shift+O on Windows).",
             "Pick the agent in the box and ask your question."
           ]
         },
@@ -9612,7 +9653,7 @@
             "While the agent works, a light runs round the message box and a line at its top says what the agent is doing.",
             "Type your correction or extra detail in the box.",
             "Press Enter, or select the round arrow button. The agent reads it at its next step and carries on with it in mind.",
-            "To stop the reply altogether, empty the box and select **Stop** (the square button)."
+            "To stop the reply altogether, select **Stop** (the square button beside the arrow) or press Esc in the box. Whatever you typed stays in the box."
           ]
         },
         {
@@ -10432,12 +10473,12 @@
           ],
           "steps": [
             "On [Desk](/desk), select **Desk settings** at the bottom of the rail.",
-            "Pick a section and change what you need. Every change applies straight away: - **Appearance**: **Theme**, **Conversation width**, **Motion** and **Text size**. - **Conversation**: **Send with** (**Enter** or **⌘ Enter**), **Source numbers**, and **Open Desk to** (**Today** or **Last conversation**). - **Composer**: **Start new conversations with** a chosen agent or **The last one I used**, **Share the page you came from**, **@ mentions**, **Slash commands**, **Dictation** and **Suggested questions**. - **Files & scanning**: **Drop files** (**Anywhere** or **On the composer**), **Scan with** and **Scan settings**. - **Artifacts**: **Open new artifacts** (**Right away** or **When I click**) and **New artifact dot**. - **Agent & approvals**: **Approval celebration** (**Confetti**, **Subtle** or **Off**) and **Working border**.",
+            "Pick a section and change what you need. Every change applies straight away: - **Appearance**: **Theme**, **Conversation width**, **Motion** and **Text size**. - **Conversation**: **Send with** (**Enter**, or ⌘Enter on a Mac and Ctrl+Enter elsewhere), **Source numbers**, and **Open Desk to** (**Today** or **Last conversation**). - **Composer**: **Start new conversations with** a chosen agent or **The last one I used**, **Share the page you came from**, **@ mentions**, **Slash commands**, **Dictation** and **Suggested questions**. - **Files & scanning**: **Drop files** (**Anywhere** or **On the composer**), **Scan with** and **Scan settings**. - **Artifacts**: **Open new artifacts** (**Right away** or **When I click**) and **New artifact dot**. - **Agent & approvals**: **Approval celebration** (**Confetti**, **Subtle** or **Off**) and **Working border**.",
             "Select **Reset to defaults** to put everything back."
           ]
         }
       ],
-      "notes": "Needs read access to the assistant. If no agents are available, an administrator has to connect an AI provider and enable an agent in [AI control](/admin/agent-control); people who can manage agents see **Open AI Control** on the Desk.\n\nWhen an agent in your own conversation proposes a change, the card above the message box shows it the same way on the Desk and in the floating assistant: what it would set and whether it can be undone, checked against your records as they are now. **Approve** waits until that check has loaded. If the change was drafted against records that have changed since, the card says it is out of date and offers to redraft it instead. A plan of several steps, or several changes of one kind, is approved with one answer. You need only access to the assistant and to that agent, and each change still runs only if your own permissions allow it.\n\nThe conversation marks each decided change with a line (\"Approved\"), and deciding on the card or on [Decisions](/desk/decisions) updates both.\n\nA long conversation eventually becomes read-only; select **Start a new conversation** to carry on. A conversation also becomes read-only when its agent is turned off, removed, set to run on its own, or no longer available to you, and the note in place of the message box says which, and whether an administrator can change it.\n\n- Enter sends and Shift+Enter starts a new line. In **Desk settings**, **Send with** can be set to **⌘ Enter** instead. **@ mentions**, **Slash commands** and **Dictation** can each be turned off there. - Only words can steer a reply under way. A message carrying files always waits until the reply finishes. Once a steering message has been handed to the agent, it can't be edited or taken back; stopping the reply is the only way to undo it. Waiting messages are kept with the conversation, so they survive a reload or another tab. - You can't change the agent or the model while an agent is replying. - A message can carry up to 5 files, each up to 25 MB: PDF, PNG, JPG, HEIC, TIFF, CSV, Excel, Word, text and email (.eml) files. Password-protected PDFs and other file types are refused before they upload. Scanning works only inside an open conversation, not from the box on Today. - @ search lists only records you are allowed to read. Dictation isn't available in every browser; where it isn't, the microphone says so. - A conversation keeps up to 12 pinned facts of up to 200 characters each. Compacting keeps pinned facts, pending approvals and, where it can, the latest turns in full. A conversation set to compact itself does so at 85% full. - An agent can wait on up to ten things in one conversation. A wait gives up after a day unless the agent sets a longer limit (at most a week); either way the agent picks the task back up and is told it ran out. If the thing has already happened, the agent acts on it right away. - A case is in one of four states, shown on its card and in its menu. **Working**: nothing is put off. Waiting: on something such as **Waiting on the customer**, **Waiting on the carrier** or **Waiting on a reply**. Snoozed: put away until a time, the next appointment or the ETA. **Settled**: the record is closed. A shipment settles once it is invoiced or canceled, not when it delivers, because the ready-to-bill work comes after delivery; an invoice once it is paid or voided; a dispute once it is resolved or withdrawn. - A case's state is worked out each time you look, so a payment recorded elsewhere settles its invoice's case on its own. In the rail a case stays with the other conversations, grouped by when it was last used; a snoozed case comes back on time, or sooner when something the agent was waiting on arrives. A conversation started from a shipment, invoice or dispute is a case from the start. - Which steps a case checklist shows, their order, and whether each is required or optional, are set in **Settings** › **Case checklists** on the Desk; a customer can have its own. A ticked step belongs to the record, so everyone working a case about the same shipment or invoice sees it. - If a record the agent was working with changes elsewhere during its turn, a note headed **Changed while the agent was working** lists what changed, and the agent reads those records again before relying on them. - An agent can hand a task only to the agents chosen for it in [AI control](/admin/agent-control), and only ones you may use. A case step you hand to another agent with its button needs only that you may use that agent. That agent works as you, its changes still wait for your approval, and it cannot pass the work on again. Hand-off goes to another agent, not to another person. - Anything an agent produces lands in the workspace: tables, reports, record cards, documents, email drafts, plans, read documents, decisions and billing items. With **Open new artifacts** set to **Right away**, a new item opens as it arrives; otherwise a dot on **Workspace** marks something new. - Billing actions on a billing item are your own and need billing queue permissions. The agent never approves or posts an invoice on its own. - Desk settings are kept in this browser; they do not follow you to another browser or computer. Chapters are kept with the conversation and follow you everywhere. - A conversation holds up to 200 chapters. A chapter name is at most 60 characters. Requests the agent runs on a schedule each open a chapter of their own, marked with the date they ran. A downloaded transcript and a compaction summary keep each chapter's name. - The Desk names chapters with a small model, one short call per question. Its cost shows under **Desk chapters** in usage. An administrator can turn it off with **Name Desk chapters** in [AI control](/admin/agent-control); you can still start and name chapters yourself. - Changing what an agent can do needs permission to manage agents.",
+      "notes": "Needs read access to the assistant. If no agents are available, an administrator has to connect an AI provider and enable an agent in [AI control](/admin/agent-control); people who can manage agents see **Open AI Control** on the Desk.\n\nWhen an agent in your own conversation proposes a change, the card above the message box shows it the same way on the Desk and in the floating assistant: what it would set and whether it can be undone, checked against your records as they are now. **Approve** waits until that check has loaded. If the change was drafted against records that have changed since, the card says it is out of date and offers to redraft it instead. A plan of several steps, or several changes of one kind, is approved with one answer. You need only access to the assistant and to that agent, and each change still runs only if your own permissions allow it.\n\nThe conversation marks each decided change with a line (\"Approved\"), and deciding on the card or on [Decisions](/desk/decisions) updates both.\n\nA long conversation eventually becomes read-only; select **Start a new conversation** to carry on. A conversation also becomes read-only when its agent is turned off, removed, set to run on its own, or no longer available to you, and the note in place of the message box says which, and whether an administrator can change it.\n\n- Enter sends and Shift+Enter starts a new line. In **Desk settings**, **Send with** can be set to ⌘Enter (Ctrl+Enter on Windows) instead. **@ mentions**, **Slash commands** and **Dictation** can each be turned off there. - Only words can steer a reply under way. A message carrying files always waits until the reply finishes. Once a steering message has been handed to the agent, it can't be edited or taken back; stopping the reply is the only way to undo it. Waiting messages are kept with the conversation, so they survive a reload or another tab. - You can't change the agent or the model while an agent is replying. - A message can carry up to 5 files, each up to 25 MB: PDF, PNG, JPG, HEIC, TIFF, CSV, Excel, Word, text and email (.eml) files. Password-protected PDFs and other file types are refused before they upload. Scanning works only inside an open conversation, not from the box on Today. - @ search lists only records you are allowed to read. Dictation isn't available in every browser; where it isn't, the microphone says so. - A conversation keeps up to 12 pinned facts of up to 200 characters each. Compacting keeps pinned facts, pending approvals and, where it can, the latest turns in full. A conversation set to compact itself does so at 85% full. - An agent can wait on up to ten things in one conversation. A wait gives up after a day unless the agent sets a longer limit (at most a week); either way the agent picks the task back up and is told it ran out. If the thing has already happened, the agent acts on it right away. - A case is in one of four states, shown on its card and in its menu. **Working**: nothing is put off. Waiting: on something such as **Waiting on the customer**, **Waiting on the carrier** or **Waiting on a reply**. Snoozed: put away until a time, the next appointment or the ETA. **Settled**: the record is closed. A shipment settles once it is invoiced or canceled, not when it delivers, because the ready-to-bill work comes after delivery; an invoice once it is paid or voided; a dispute once it is resolved or withdrawn. - A case's state is worked out each time you look, so a payment recorded elsewhere settles its invoice's case on its own. In the rail a case stays with the other conversations, grouped by when it was last used; a snoozed case comes back on time, or sooner when something the agent was waiting on arrives. A conversation started from a shipment, invoice or dispute is a case from the start. - Which steps a case checklist shows, their order, and whether each is required or optional, are set in **Settings** › **Case checklists** on the Desk; a customer can have its own. A ticked step belongs to the record, so everyone working a case about the same shipment or invoice sees it. - If a record the agent was working with changes elsewhere during its turn, a note headed **Changed while the agent was working** lists what changed, and the agent reads those records again before relying on them. - An agent can hand a task only to the agents chosen for it in [AI control](/admin/agent-control), and only ones you may use. A case step you hand to another agent with its button needs only that you may use that agent. That agent works as you, its changes still wait for your approval, and it cannot pass the work on again. Hand-off goes to another agent, not to another person. - Anything an agent produces lands in the workspace: tables, reports, record cards, documents, email drafts, plans, read documents, decisions and billing items. With **Open new artifacts** set to **Right away**, a new item opens as it arrives; otherwise a dot on **Workspace** marks something new. - Billing actions on a billing item are your own and need billing queue permissions. The agent never approves or posts an invoice on its own. - Desk settings are kept in this browser; they do not follow you to another browser or computer. Chapters are kept with the conversation and follow you everywhere. - A conversation holds up to 200 chapters. A chapter name is at most 60 characters. Requests the agent runs on a schedule each open a chapter of their own, marked with the date they ran. A downloaded transcript and a compaction summary keep each chapter's name. - The Desk names chapters with a small model, one short call per question. Its cost shows under **Desk chapters** in usage. An administrator can turn it off with **Name Desk chapters** in [AI control](/admin/agent-control); you can still start and name chapters yourself. - Changing what an agent can do needs permission to manage agents.",
       "related": [
         "/desk/decisions",
         "/desk/watchtower",
@@ -11389,8 +11430,8 @@
         "Detention management",
         "Intelligence"
       ],
-      "description": "Which facilities cost the most, which customers are unprofitable once driver pay is netted off, and where discretionary revenue is going",
-      "summary": "Detention intelligence looks back over settled detention and answers three questions: which facilities cost the most, which customers lose money on detention once driver pay is netted off, and where revenue is being forgiven through waivers. It is for billing managers, controllers and operations leads deciding which facilities to raise with customers and which contract terms to renegotiate.\n\nThe page opens with a ledger of what was **Billed**, paid out as **Driver pay**, **Forgiven** and **Kept**, and the **Net detention margin**. Below it are three panels: **Facility profiles**, **Customer margin** and **Waiver leakage**. Nothing on this page changes a charge; charges are worked on the [Detention desk](/detention/desk).",
+      "description": "Where trucks wait past free time, who caused it, when it happens, how much of the money is recovered and what to do next",
+      "summary": "Detention intelligence answers what an organization needs to know to lower detention: where trucks wait past free time, who caused the wait, when it happens, how much of the money is recovered, whether it is getting better, and what to do next. It is for operations leads, billing managers and controllers deciding which facilities to raise with shippers, which free-time terms to change, and where billing loses money.\n\nThe page opens with Nova's summary and five figures: **Hours past free time**, **Stops detained** (beside the industry rate, 39% of stops in ATRI's 2023 survey), **The dock's share**, **Recovered** and **Kept after driver pay**. Under them, **What to do next** ranks up to four moves by the hours or dollars each would recover. The sections below are **Where to focus**, **Why trucks wait**, **When they wait**, **Getting paid for it** and **Is it getting better**. Nothing on this page changes a charge; charges are worked on the [Detention desk](/detention/desk).\n\nEvery wait is put down to one cause, the first of: **Arrived late** (the truck missed its appointment, so free time was forfeited), **No appointment** (an open dock), **Arrived early** (the truck waited for its slot), or **On time, the dock was slow** (the facility's wait).",
       "requires": [
         {
           "resource": "detention",
@@ -11405,7 +11446,12 @@
         "facility dwell",
         "detention margin",
         "waived detention",
-        "worst facilities"
+        "worst facilities",
+        "facility scorecard",
+        "lower detention",
+        "reduce detention",
+        "detention by hour",
+        "detention collection"
       ],
       "tasks": [
         {
@@ -11418,50 +11464,98 @@
           ],
           "steps": [
             "Open [Detention intelligence](/detention/intelligence).",
-            "Pick **30d**, **90d** or **180d** in the page header. The page starts on **90d**.",
-            "Select **Refresh** to recalculate the figures."
+            "Pick **30d**, **90d** or **180d** in the page header. The page starts on **90d**, and every figure is compared with the window of the same length before it."
           ]
         },
         {
-          "title": "Find the facilities that cost the most",
+          "title": "Find the facilities that cause most of the wait",
           "keywords": [
             "worst facilities",
             "long dwell",
             "shipper dwell",
-            "receiver detention"
+            "receiver detention",
+            "where to focus"
           ],
           "steps": [
-            "Open [Detention intelligence](/detention/intelligence) and go to **Facility profiles**.",
-            "Rank facilities by **Billed**, **Margin**, **Breach** or p90 (the long tail of dwell).",
-            "Select a facility to see its **Average dwell**, **Driver pay**, **Margin per stop** and **Leakage**."
+            "Open [Detention intelligence](/detention/intelligence) and go to **Where to focus**.",
+            "Read **Hours past free time, by facility**: each column is a facility, split by who caused the wait. The strip under it shows how few facilities cause most of the hours.",
+            "Use **Rank by** to order the facilities by **Hours past free time**, **On-time waiting**, **Share of stops detained**, **Slowest one in ten**, **Billed** or **Net margin**. The figure over each column follows the ranking; the columns still show hours.",
+            "Select a facility to open its scorecard."
           ]
         },
         {
-          "title": "Find customers who lose money on detention",
+          "title": "Bring a facility's scorecard to a shipper review",
           "keywords": [
-            "unprofitable customers",
-            "negative detention margin"
+            "facility scorecard",
+            "quarterly review",
+            "export scorecard",
+            "shipper meeting"
           ],
           "steps": [
-            "Open [Detention intelligence](/detention/intelligence) and go to **Customer margin**.",
-            "Rank customers by **Worst margin** or **Most billed**. Customers whose detention costs more in driver pay than it brings in are marked as a loss."
+            "Open [Detention intelligence](/detention/intelligence) and select a facility in any chart, or **Open scorecard** on a next step.",
+            "Read its hours past free time, stops detained, median stop against its free time, who caused the wait, when it happens and what it cost.",
+            "Select **Export scorecard** to download it as a CSV file."
           ]
         },
         {
-          "title": "See where waived detention is going",
+          "title": "See whether free time matches how long a dock really takes",
           "keywords": [
+            "free time too short",
+            "median dwell",
+            "detention built into the schedule"
+          ],
+          "steps": [
+            "Open [Detention intelligence](/detention/intelligence) and go to **Why trucks wait**.",
+            "Read **Free time against how long the dock takes**. A facility whose median stop runs past its free time is detained before anyone is late.",
+            "Select **Backtest a policy** on the next step, or open [Detention policies](/detention/configuration-files/detention-policies) to try more free time."
+          ]
+        },
+        {
+          "title": "Find the hours when trucks wait",
+          "keywords": [
+            "arrival hour",
+            "day of week",
+            "appointment times",
+            "detention by hour"
+          ],
+          "steps": [
+            "Open [Detention intelligence](/detention/intelligence) and go to **When they wait**.",
+            "Read **Share of stops detained, by arrival**: weekday against the hour the truck arrived, in your organization's time zone. Pick a facility above the grid to see only its stops.",
+            "**Which stops wait** compares pickups with deliveries, appointments with open docks, and live loads with dropped trailers."
+          ]
+        },
+        {
+          "title": "Find where detention money is lost",
+          "keywords": [
+            "collected detention",
+            "late notice",
             "forgiven detention",
             "waivers",
-            "discretionary revenue",
+            "unprofitable customers",
             "leakage"
           ],
           "steps": [
-            "Open [Detention intelligence](/detention/intelligence) and go to **Waiver leakage**.",
-            "Read the forgiven amount grouped by the coded reason given when each charge was waived, and each reason's share of the total."
+            "Open [Detention intelligence](/detention/intelligence) and go to **Getting paid for it**.",
+            "**From accrued to kept** follows the money from what the clock accrued, through what arrived late, missed its notice deadline, was forgiven, disputed or is not yet billed, to what was billed, invoiced and collected on paid invoices. Each leak floats where its money left and links to the screen that fixes it. Driver pay comes out of what was billed, and **Kept** is what remains: the same figure as **Kept after driver pay** at the top of the page.",
+            "**Customers whose terms cost us** lists customers whose detention costs more in driver pay than it is billed, with how often notice went out on time. **What was forgiven, and why** groups waivers by their coded reason."
+          ]
+        },
+        {
+          "title": "Mark a stop as a drop trailer",
+          "keywords": [
+            "drop and hook",
+            "live load",
+            "drop trailer",
+            "live unload"
+          ],
+          "steps": [
+            "Open the shipment and edit its move.",
+            "On the stop, set **Live or drop** to **Drop trailer** when a trailer is left or taken, or **Live load** when the truck waits while the facility loads or unloads.",
+            "Detention intelligence then compares live stops with drops under **Which stops wait**."
           ]
         }
       ],
-      "notes": "Opening the page needs read access to detention policies.\n\nThe figures cover stops in the chosen window only. If there is no detention in the window, the page says so and offers a wider window. Waiver reasons come from the coded **Reason** picked when a charge is waived on the detention desk.",
+      "notes": "Opening the page needs read access to detention. Driver pay, net margin and the customer steps built on them are hidden from anyone without access to margins.\n\nThe figures cover stops whose detention clock started in the chosen window: whole days in your organization's time zone, ending today. They are kept up as stops settle and trail them by about a minute. **Collected** counts a billed charge only when its invoice is posted and paid in full. A facility's policy change is marked on **Hours past free time, weekly** where it took effect. If there is no detention in the window, the page says so and offers a wider window.",
       "related": [
         "/detention/desk",
         "/detention/configuration-files/detention-policies",
@@ -11926,7 +12020,7 @@
         "Console"
       ],
       "description": "Cover open moves against available capacity without opening a shipment",
-      "summary": "The dispatch console is where dispatchers cover open moves against available capacity without opening each shipment. The strip at the top shows **Needs coverage**, **Late**, **At risk**, **Open drivers**, **Utilization** and **Assigned today**. The center shows open moves either as a **Board** grouped by urgency (Late, Next 4 hours, Today, Tomorrow, Planned: a move is Late once its next stop's window has closed with no arrival, and in Next 4 hours while that window is open) or as a **Timeline**; the **Capacity** rail lists drivers by availability (Open, Finishing, Working, Blocked, Time off); and the inspector on the right ranks drivers for the selected move or finds work for the selected driver.",
+      "summary": "The dispatch console is where dispatchers cover open moves against available capacity without opening each shipment. A status line at the top left says whether the board is **Live**, **Reconnecting**, **Offline** or **Not updated**, and when it was last read. The strip under it shows **Needs a driver**, **Late**, **Due now**, **Proposals waiting**, **Exceptions** and **Open drivers**.\n\nThe **Queue** lists the moves that need a decision in three tabs: **Needs a driver**, **Exceptions** and **Drivers**. A fourth tab, **Outlook**, looks ahead instead: where freight is likely to appear in the next 48 hours, before it is booked, against the drivers expected there. Moves are grouped by when their window is: **Late** (the window closed with no arrival), **Due now** (the window is open or opens within 4 hours), **Within 24 hours**, **Within 48 hours** and **Later**. An open window is never shown as late. Each row shows the next step: the driver Nova proposed, a tender in progress, a hold, or **No proposal yet**. The **Timeline** is the same sheet as the timeline on Shipments: the moves that need a driver as rows under the same groups, then a lane per driver showing the work they hold, their time off and their free time. Selecting a move or a driver opens the inspector on the right.",
       "requires": [
         {
           "resource": "shipment_move",
@@ -11936,27 +12030,127 @@
       "capabilities": [],
       "aliases": [
         "dispatch board",
+        "dispatch queue",
         "planning board",
         "cover loads",
         "driver assignment",
         "load coverage",
         "dispatch desk",
-        "tender board"
+        "tender board",
+        "nova proposals",
+        "freight outlook",
+        "where to send trucks"
       ],
       "tasks": [
         {
-          "title": "Assign a driver to an open move",
+          "title": "Approve or decline Nova's proposal",
+          "keywords": [
+            "approve proposal",
+            "nova picked a driver",
+            "decline proposal",
+            "proposed driver"
+          ],
+          "steps": [
+            "Open [Console](/dispatch/console) and select a move whose next step names a driver with the Nova badge.",
+            "Under **Nova proposes**, read the driver, the reason and the dry run line. **Dry run: would go through as shown** means the move has not changed since it was proposed.",
+            "Select **Approve** (A) to assign that driver. The same proposal leaves Decisions too.",
+            "Or select **Decline** (D), write why in the box, and select **Decline proposal**. Nova and whoever looks after it see the reason.",
+            "If an approval can't be carried out, the move stays in the queue marked as approved for the driver but not assigned, with the reason, such as which stop's times conflict. Open it to see the same under the move's details, select **Open shipment** to fix what was refused, then assign a driver or select **Propose coverage** again. The note goes away once the move changes or a newer proposal replaces it."
+          ]
+        },
+        {
+          "title": "Assign a driver yourself",
           "keywords": [
             "cover a load",
             "dispatch a driver",
             "assign truck",
-            "rank drivers"
+            "rank drivers",
+            "pre-flight",
+            "driver cost"
           ],
           "steps": [
-            "Open [Console](/dispatch/console) and select a move on the board or timeline.",
-            "In the inspector, review the ranked drivers. Select **Why this score** to see how a driver was scored, or **Show ineligible** to see drivers who cannot take it and why.",
-            "Select **Assign** on the driver you want.",
-            "Check the preflight summary (empty miles, drive time left, any findings) and select **Assign driver** (or **Reassign driver** on a covered move)."
+            "Open [Console](/dispatch/console) and select a move, or walk the queue with J and K.",
+            "Under **Drivers for this move**, review the drivers, cheapest first. Each shows what they cost on this move in dollars: empty miles, lateness, waiting and rest first, then preferences such as home time and fairness. Select **Why this cost** to see each part, or **Show ineligible** to see drivers who cannot take it and why. The **Where they end up** line credits a move that leaves the driver somewhere useful, and says why. Where the freight forecast is in use (**Anticipate freight** is on and the forecast is **Ready**), it names the loads that usually appear near the drop after the driver is free, who usually books them, how many are already booked and how many other drivers are expected there. The credit is what the driver is worth at the drop less what they were worth staying where they are, so when staying was worth something the line says how much and what the move adds; a move that pulls a driver out of a busier area costs the plan instead of earning a credit. Elsewhere it is what drivers free there have been worth to past plans.",
+            "Press the driver's number (1–9) or select **Assign**. The pre-flight opens under the driver.",
+            "When it has loaded, check the empty miles, drive time left, pickup margin and any findings, then press Enter or select **Assign driver** (**Reassign driver** on a covered move, which names who it replaces). Nothing is written until you confirm."
+          ]
+        },
+        {
+          "title": "Propose coverage for the window",
+          "keywords": [
+            "auto dispatch",
+            "optimize assignments",
+            "propose drivers",
+            "auto assign"
+          ],
+          "steps": [
+            "Open [Console](/dispatch/console) and select **Propose coverage**.",
+            "Nova plans the whole window at once, at the lowest total cost. A move is covered when a driver costs less than leaving it uncovered, which depends on its revenue and how urgent it is; the rates come from **Costs and prices** in [Dispatch control](/admin/dispatch-controls). Each proposal waits on its move in the queue and in Decisions; nothing is assigned until someone approves it.",
+            "The plan prices every move. Select a move to see what covering it is worth, what the planned driver is worth to the plan, and how much more each other driver would cost the plan. A move the plan left uncovered says why: no driver costs less than leaving it, its drivers are worth more on other moves, or the nearest driver can't take it.",
+            "With shadow mode on, a dialog shows what Nova would have proposed instead, and nothing is written.",
+            "To have proposals waiting without pressing the button, turn on **Keep coverage proposed** under **Enable automated assignment** in [Dispatch control](/admin/dispatch-controls). Nova then plans again when loads are created or lose their driver, and every hour."
+          ]
+        },
+        {
+          "title": "Plan on the timeline",
+          "keywords": [
+            "drag a load onto a driver",
+            "driver lanes",
+            "free time",
+            "gantt",
+            "plan relays"
+          ],
+          "steps": [
+            "Open [Console](/dispatch/console) and select **Timeline**. Pick **Day**, **2 Days** or **3 Days** for the window.",
+            "The moves that need a driver come first, one row each, grouped by when their window is. Under **Drivers**, each lane shows the moves the driver holds, time off in its own band, and free time labeled with when it starts or how long it lasts. A red dot on a driver means two of their moves overlap.",
+            "Hover a bar to see its stops and times. Select a bar or a row to open it in the inspector.",
+            "Drag a move's bar onto a driver (or focus it, press Space, move with the arrow keys and press Space again). The pre-flight for that pairing opens; nothing is assigned until you confirm it. A lane turns red under the bar when the driver is blocked or has no tractor, and the pre-flight says why."
+          ]
+        },
+        {
+          "title": "See where freight is likely to appear",
+          "keywords": [
+            "freight forecast",
+            "where to send trucks",
+            "position drivers",
+            "busy areas",
+            "short of drivers",
+            "likely loads"
+          ],
+          "steps": [
+            "Open [Console](/dispatch/console) and select the **Outlook** tab.",
+            "Each row is an area and a twelve-hour window in the next 48 hours, the most short of drivers first: - **Area**: the area, named for its busiest pickup city, with the customers who usually bring freight there. - **Window**: when the twelve hours start and end, and how soon they start. - **Likely loads**: how many loads usually appear there in that window, and how many are already booked. - **Drivers expected**: drivers expected to be free in the area by the end of the window. - **Short by**: loads expected beyond those drivers, highlighted when the area is likely to miss a driver. - **One more driver**: what one more driver ending there is worth to the plan.",
+            "Select a row to read it as a sentence, with who usually books there and how many loads are still expected to be booked.",
+            "When the drivers expected cover everything likely, the tab says **Drivers cover the freight ahead**. If it can't be read, it says **The outlook didn't load**; select **Try again**.",
+            "To have plans position drivers for this freight, turn on **Anticipate freight** in [Dispatch control](/admin/dispatch-controls)."
+          ]
+        },
+        {
+          "title": "When the outlook says the forecast isn't ready",
+          "keywords": [
+            "forecast not ready",
+            "not enough history",
+            "outlook empty",
+            "forecast not better than last week"
+          ],
+          "steps": [
+            "Open [Console](/dispatch/console) and select the **Outlook** tab.",
+            "The forecast is learned from your own shipment history and tested every night. Until it has proven itself, the tab shows why instead of rows: **Not fitted yet**, **Not enough history yet** (it needs 8 weeks and 200 loads of history) or **Not better than last week yet** (it has not yet beaten repeating the same time last week).",
+            "Select **See the forecast in Dispatch controls** to see how it was tested. The outlook and **Anticipate freight** use the forecast only once it is **Ready**, so drivers are not moved for freight it cannot yet predict."
+          ]
+        },
+        {
+          "title": "Work the exceptions",
+          "keywords": [
+            "late delivery",
+            "missed stop",
+            "no check call",
+            "tender exhausted",
+            "covered move slipping"
+          ],
+          "steps": [
+            "Open [Console](/dispatch/console) and select the **Exceptions** tab, or the **Exceptions** figure.",
+            "The list comes from the Watchtower, soonest due first. Select a row to open the record it is about."
           ]
         },
         {
@@ -11967,22 +12161,9 @@
             "open drivers"
           ],
           "steps": [
-            "Open [Console](/dispatch/console).",
-            "In the **Capacity** rail, search with **Search drivers** (by name, tractor code or fleet) or filter by availability, and select a driver.",
-            "The inspector lists the driver's best-fit open moves. Select one and assign it."
-          ]
-        },
-        {
-          "title": "Let the console propose assignments",
-          "keywords": [
-            "auto dispatch",
-            "optimize assignments",
-            "bulk assign"
-          ],
-          "steps": [
-            "Open [Console](/dispatch/console) and select **Auto-assign**.",
-            "Review the **Auto-assign proposal**. Nothing is written until you apply it.",
-            "Untick any pairings you do not want and select the assign button, or **Discard plan**."
+            "Open [Console](/dispatch/console) and select the **Drivers** tab, or the **Open drivers** figure.",
+            "Drivers are grouped by availability, open capacity first. Find one with **Search drivers** in the toolbar (by name, tractor code or fleet) and select them. A large fleet lists its first drivers only, available ones first: the tab's count ends in \"+\" and the list says so at the bottom. Filter the board by fleet to see the rest.",
+            "The inspector shows when they are free, their hours, what they hold, the move the last plan put them on and what they are worth to it, and the open moves under **Best fit in this window**. Select a move to open it and assign the driver from its pre-flight."
           ]
         },
         {
@@ -12001,27 +12182,29 @@
           ]
         },
         {
-          "title": "Move around the plan",
+          "title": "Move around and undo",
           "keywords": [
             "change date",
             "show tomorrow",
             "covered moves",
-            "undo assignment"
+            "undo assignment",
+            "search moves"
           ],
           "steps": [
             "Open [Console](/dispatch/console).",
-            "Use the arrows or **Today** (T) to move the time window, and switch between **Board** and **Timeline**.",
-            "Turn on **Show covered** to include moves that already have coverage.",
-            "Select **Undo** (u) to reverse the last assignment."
+            "Use the arrows (← →) or **Today** (T) to move the window, and switch between **Queue** and **Timeline**.",
+            "Search by PRO, customer or city (/), narrow by **Fleet** or **Customer**, and turn on **Show covered** to include moves that already have coverage.",
+            "Select **Undo** (U) to take back the last assignment or approval. Undoing a reassign puts the previous driver back."
           ]
         }
       ],
-      "notes": "Needs read access to shipment moves. Ranking drivers and **Auto-assign** need the Asset operations capability. **Assign to carrier** and **Tender to carriers** need the Brokerage capability; **Assign to carrier** also needs assign permission on shipment moves, and **Tender to carriers** needs create permission on tenders.\n\nA driver with no tractor cannot be assigned until one is set, and an assignment the organization's policy blocks shows **Blocked by policy**.",
+      "notes": "Needs read access to shipment moves and workers. **See the forecast in Dispatch controls** shows only to people who can read dispatch control. Assigning, approving with a pre-flight and **Propose coverage** need assign permission on shipment moves and the Asset operations capability. Approving and declining Nova's proposals needs update permission on agent proposals. **Assign to carrier** and **Tender to carriers** need the Brokerage capability; **Tender to carriers** also needs create permission on tenders.\n\nA driver with no tractor cannot be assigned until one is set, and a pairing the organization's policy blocks cannot be assigned from the pre-flight. When the board cannot be read, the queue says so and offers **Try again** instead of showing an empty board.",
       "related": [
         "/shipment-management/shipments",
         "/dispatch/routing-guides",
         "/dispatch/carriers",
-        "/hr/workers"
+        "/hr/workers",
+        "/desk/watchtower"
       ],
       "covers": [],
       "createAction": null,
@@ -12242,7 +12425,9 @@
         "EDI connection settings",
         "ISA IDs",
         "EDI credentials",
-        "EDI endpoint"
+        "EDI endpoint",
+        "AS2 inbound URL",
+        "AS2 receiving URL"
       ],
       "tasks": [
         {
@@ -12258,8 +12443,23 @@
             "On the **Overview** tab, enter a **Name**, choose the **Method** and **Status**, and pick the **Partner** this profile delivers for.",
             "On the **Transport** tab, fill in the connection details for the method: for AS2 the **Local AS2 ID**, **Partner AS2 ID**, **Endpoint URL** and certificates; for SFTP the **Host**, **Port**, **Username**, **Authentication** and directories; for VAN the mailbox and gateway details. Set **Max attempts** and the backoff under **Delivery retry** if the defaults do not suit.",
             "On the **Envelope** tab, pick the **Environment**.",
-            "On the **Secrets** tab, enter the password or private key the method needs.",
+            "On the **Secrets** tab, enter the password or private key the method needs. For AS2 you can keep decryption apart from signing: add an encryption certificate on the **Transport** tab, give it to your partner to encrypt to, and enter its decryption key here. **Test connection** warns when one key does both.",
             "Select **Save** (or **Save & close**)."
+          ]
+        },
+        {
+          "title": "Give a partner your AS2 inbound URL",
+          "keywords": [
+            "AS2 receiving URL",
+            "where partner sends AS2",
+            "our AS2 endpoint",
+            "rotate AS2 URL"
+          ],
+          "steps": [
+            "Open [Communication profiles](/edi/communication-profiles) and select the AS2 profile's row.",
+            "On the **Transport** tab, find **Inbound URL** and select **Copy**. Each AS2 profile has its own URL, and Trenova accepts the partner's messages only at the URL of their profile, so send this one to the partner with your AS2 ID and certificate.",
+            "If the partner returns receipts asynchronously, enter the same URL as the **Async MDN return URL**.",
+            "To retire a URL that has been shared too widely, select **Rotate URL** and confirm. The old URL stops working at once; give the partner the new one."
           ]
         },
         {
@@ -12290,7 +12490,7 @@
           ]
         }
       ],
-      "notes": "Viewing profiles needs read access to EDI; creating needs create access and editing needs update access to EDI. **Test connection** is not offered for Internal profiles. Internal profiles route through an accepted organization connection, chosen under **Connection** and **Connected organization**, and do not use X12 envelope IDs or stored credentials. Deliveries that use up all retry attempts are dead-lettered and show on [Messages](/edi/messages).",
+      "notes": "Viewing profiles needs read access to EDI; creating needs create access and editing needs update access to EDI. **Test connection** is not offered for Internal profiles. Rotating an AS2 inbound URL needs update access to EDI. An AS2 ID pair can be used by only one active profile in your organization. Internal profiles route through an accepted organization connection, chosen under **Connection** and **Connected organization**, and do not use X12 envelope IDs or stored credentials. Deliveries that use up all retry attempts are dead-lettered and show on [Messages](/edi/messages).",
       "related": [
         "/edi/partners",
         "/edi/messages",
@@ -15607,7 +15807,7 @@
           "steps": [
             "Open [Workers](/hr/workers).",
             "Select **New worker**.",
-            "On **General information**, fill in **Status**, **Worker type**, **First name**, **Last name**, **Driver type**, the address and **Phone number**.",
+            "On **General information**, fill in **Status**, **Worker type**, **First name**, **Last name**, **Driver type**, the address and **Phone number**. With Google Maps connected, pick the address from the list under **Address Line 1**: that records where home is, so dispatch can favour moves that head a driver home.",
             "On **Employment information**, enter the **Date of birth**, **Hire date**, **License number** and **License expiry**, plus any CDL and medical details.",
             "On **Compliance status**, set the compliance and availability fields if you know them.",
             "Select **Create worker**."
@@ -15626,6 +15826,7 @@
             "Find the worker with the search box or **Filter**, then select their row.",
             "Go to **General information**, **Employment information** or **Compliance status** and change the fields.",
             "Select **Save** or **Save & close**.",
+            "When a driver was home and dispatch would not otherwise know, set **Last home**. Dispatch also counts the end of approved time off, and telematics seeing the driver's tractor within 25 miles of home, as a day at home.",
             "To change several workers at once, tick their rows and use **Update status**, **Update type** or **Update driver type** in the bar at the bottom of the table."
           ]
         },
@@ -18462,7 +18663,6 @@
         "BOL",
         "command center",
         "trips",
-        "dispatch board",
         "capacity",
         "suggested actions"
       ],
@@ -18497,6 +18697,42 @@
             "Type in the search field. Focusing it while it is empty (or pressing /) lists the quick filters, such as late, uncovered, moving and delivering today, each with its count; a chosen quick filter shows as a chip under the toolbar, beside the other filters.",
             "Narrow further with **Filter** (status, tender, billing, PRO number, customer, pickup and delivery dates, and revenue), order with **Sort**, and switch between **Table**, **Timeline** and **Map**. **Group** opens a menu to group the table by status, ship date, delivery date, customer or owner, or not at all; dates are the day of the first pickup or last delivery, and each group's header shows its loads and revenue and collapses it. The **Lane** column stays pinned while the table scrolls sideways.",
             "Select a row (or move to it with J and K and press Enter) to expand it, or choose **Edit** from its row menu to open the full shipment."
+          ]
+        },
+        {
+          "title": "Watch loads on the live map",
+          "keywords": [
+            "live map",
+            "shipment map",
+            "where are my loads",
+            "route on map",
+            "lanes",
+            "weather on route",
+            "weather alerts"
+          ],
+          "steps": [
+            "Open [Shipments](/shipment-management/shipments) and switch to **Map**. Each active shipment is one mark at the stop it is at or heading to. Late loads pulse and always stand alone; loads close together fold into a count, and selecting the count zooms in, or lists them when they are all at one place.",
+            "The list beside the map groups the shipments by stage, most urgent first. Hover a shipment there or on the map to preview its route, and select it to open its stops, driver and ETA. Driven legs are solid and legs still to drive are dotted. Select a stage chip above the map to hide that stage, or choose **Lanes** to see one arc per lane, sized by how many loads run it.",
+            "Turn on weather alerts from the map's options. The **Weather alerts** tab lists the alerts on your routes first, with how many shipments each one affects, and selecting one zooms to its area and lists those shipments. A shipment whose next stop or route ahead is inside an alert says so in its row and its details."
+          ]
+        },
+        {
+          "title": "Plan the day on the timeline",
+          "keywords": [
+            "timeline",
+            "gantt",
+            "schedule",
+            "dispatch board by driver",
+            "double-booked driver",
+            "free drivers",
+            "drag to assign",
+            "late loads"
+          ],
+          "steps": [
+            "Open [Shipments](/shipment-management/shipments) and switch to **Timeline**. Every load active in the range is a bar from its first appointment to its last, grouped by stage, with the board's search, filters and quick filters still applied. Choose **Day**, **3 days** or **Week**, step earlier or later with the arrows, and select **Now** to come back to today.",
+            "Each stop's appointment window is a strip along the bottom of the bar; the driven part is a deeper fill, and the ETA is a diamond. When the ETA lands past the window, the overrun is hatched red and the bar says how late. Hover a bar to see every stop's time, and select it to open its stops and next step: choosing coverage, telling the customer about a delay, or seeing who has it. **Show on map** opens it on the live map; **Open shipment** opens it in the table.",
+            "Switch to **Drivers & carriers** for one lane per driver and carrier. Free time between loads is labeled, a double-booked driver's overlapping loads are outlined in red, and each driver shows the drive time left today. Drivers with nothing booked still get a lane.",
+            "Uncovered loads sit in the Needs coverage lane on top. Drag one onto a driver: the timeline checks it against their other loads and drive time, then **Assign** (or **Assign anyway** when something needs a second look) puts it on them. A driver without a tractor can't take a load. The button beside the lane's header auto-assigns every open load in it."
           ]
         },
         {

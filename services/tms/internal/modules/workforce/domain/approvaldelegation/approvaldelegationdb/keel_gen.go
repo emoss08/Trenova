@@ -91,18 +91,18 @@ type ApprovalDelegationsTable struct {
 // ApprovalDelegations references the approval_delegations table.
 var ApprovalDelegations = &ApprovalDelegationsTable{
 	TableBase:      keel.TableBase{Ref: &approvalDelegationsRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &approvalDelegationsRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &approvalDelegationsRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &approvalDelegationsRef, Index: 2}}},
-	DelegatorID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &approvalDelegationsRef, Index: 3}}},
-	DelegateID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &approvalDelegationsRef, Index: 4}}},
-	Scope:          ApprovalScopeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &approvalDelegationsRef, Index: 5}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &approvalDelegationsRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &approvalDelegationsRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &approvalDelegationsRef, Index: 2}}},
+	DelegatorID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &approvalDelegationsRef, Index: 3}}},
+	DelegateID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &approvalDelegationsRef, Index: 4}}},
+	Scope:          ApprovalScopeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &approvalDelegationsRef, Index: 5}}},
 	StartsAt:       keel.Int64Col{Col: keel.Col{Ref: &approvalDelegationsRef, Index: 6}},
 	EndsAt:         keel.Int64Col{Col: keel.Col{Ref: &approvalDelegationsRef, Index: 7}},
 	Reason:         keel.StringCol{Col: keel.Col{Ref: &approvalDelegationsRef, Index: 8}},
 	RevokedAt:      keel.Int64Col{Col: keel.Col{Ref: &approvalDelegationsRef, Index: 9}},
-	RevokedByID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &approvalDelegationsRef, Index: 10}}},
-	CreatedByID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &approvalDelegationsRef, Index: 11}}},
+	RevokedByID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &approvalDelegationsRef, Index: 10}}},
+	CreatedByID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &approvalDelegationsRef, Index: 11}}},
 	Version:        keel.Int64Col{Col: keel.Col{Ref: &approvalDelegationsRef, Index: 12}},
 	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &approvalDelegationsRef, Index: 13}},
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &approvalDelegationsRef, Index: 14}},
@@ -112,18 +112,18 @@ var ApprovalDelegations = &ApprovalDelegationsTable{
 func BuildApprovalDelegations(r *keel.Ref) *ApprovalDelegationsTable {
 	return &ApprovalDelegationsTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		DelegatorID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		DelegateID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		Scope:          ApprovalScopeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		DelegatorID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		DelegateID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		Scope:          ApprovalScopeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		StartsAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
 		EndsAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
 		Reason:         keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
 		RevokedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
-		RevokedByID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
-		CreatedByID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
+		RevokedByID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		CreatedByID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 11}}},
 		Version:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
 		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
 		UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
@@ -155,8 +155,6 @@ func (t *ApprovalDelegationsTable) Get(ctx context.Context, db *keel.DB, key pul
 
 // ApprovalDelegationsQuery is a query over approvaldelegation.ApprovalDelegation.
 type ApprovalDelegationsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*approvaldelegation.ApprovalDelegation] = (*ApprovalDelegationsTable)(nil)
 
 var _ keel.Query[*approvaldelegation.ApprovalDelegation] = (*ApprovalDelegationsQuery)(nil)
 
@@ -272,42 +270,42 @@ func (t *ApprovalDelegationsTable) Compute(col keel.Column, e keel.Expr) keel.Qu
 
 // Create inserts row.
 func (t *ApprovalDelegationsTable) Create(ctx context.Context, db *keel.DB, row *approvaldelegation.ApprovalDelegation) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *ApprovalDelegationsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*approvaldelegation.ApprovalDelegation) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *ApprovalDelegationsTable) Save(ctx context.Context, db *keel.DB, row *approvaldelegation.ApprovalDelegation, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *ApprovalDelegationsTable) SaveExcept(ctx context.Context, db *keel.DB, row *approvaldelegation.ApprovalDelegation, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *ApprovalDelegationsTable) DeleteRow(ctx context.Context, db *keel.DB, row *approvaldelegation.ApprovalDelegation) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *ApprovalDelegationsTable) Upsert(ctx context.Context, db *keel.DB, rows []*approvaldelegation.ApprovalDelegation, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *ApprovalDelegationsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*approvaldelegation.ApprovalDelegation, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *ApprovalDelegationsTable) Copy(ctx context.Context, db *keel.DB, rows []*approvaldelegation.ApprovalDelegation) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -479,37 +477,45 @@ func (q *ApprovalDelegationsQuery) Clone() keel.Query[*approvaldelegation.Approv
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *ApprovalDelegationsQuery) One(ctx context.Context, db *keel.DB) (*approvaldelegation.ApprovalDelegation, error) {
-	return keel.One[*approvaldelegation.ApprovalDelegation](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*approvaldelegation.ApprovalDelegation)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *ApprovalDelegationsQuery) First(ctx context.Context, db *keel.DB) (*approvaldelegation.ApprovalDelegation, error) {
-	return keel.First[*approvaldelegation.ApprovalDelegation](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*approvaldelegation.ApprovalDelegation)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *ApprovalDelegationsQuery) List(ctx context.Context, db *keel.DB) ([]*approvaldelegation.ApprovalDelegation, error) {
-	return keel.List[*approvaldelegation.ApprovalDelegation](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*approvaldelegation.ApprovalDelegation)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *ApprovalDelegationsQuery) All(ctx context.Context, db *keel.DB) ([]*approvaldelegation.ApprovalDelegation, error) {
-	return keel.All[*approvaldelegation.ApprovalDelegation](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*approvaldelegation.ApprovalDelegation)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *ApprovalDelegationsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*approvaldelegation.ApprovalDelegation, error) {
-	return keel.UpdateReturning[*approvaldelegation.ApprovalDelegation](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*approvaldelegation.ApprovalDelegation)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *ApprovalDelegationsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*approvaldelegation.ApprovalDelegation], error) {
-	return keel.PageOf[*approvaldelegation.ApprovalDelegation](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*approvaldelegation.ApprovalDelegation])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *ApprovalDelegationsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*approvaldelegation.ApprovalDelegation) error) error {
-	return keel.Each[*approvaldelegation.ApprovalDelegation](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*approvaldelegation.ApprovalDelegation)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newApprovalDelegation() unsafe.Pointer {
@@ -635,38 +641,38 @@ var enumApprovalScope = [...]schema.EnumValue{
 }
 
 // ApprovalScopeCol is a column of approvaldelegation.ApprovalScope values.
-type ApprovalScopeCol struct{ keel.StringCol }
+type ApprovalScopeCol struct{ keel.TypedStringCol }
 
 func (c ApprovalScopeCol) Eq(v approvaldelegation.ApprovalScope) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c ApprovalScopeCol) Ne(v approvaldelegation.ApprovalScope) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c ApprovalScopeCol) Gt(v approvaldelegation.ApprovalScope) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c ApprovalScopeCol) Gte(v approvaldelegation.ApprovalScope) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c ApprovalScopeCol) Lt(v approvaldelegation.ApprovalScope) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c ApprovalScopeCol) Lte(v approvaldelegation.ApprovalScope) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c ApprovalScopeCol) IsDistinctFrom(v approvaldelegation.ApprovalScope) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ApprovalScopeCol) Between(lo, hi approvaldelegation.ApprovalScope) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c ApprovalScopeCol) To(v approvaldelegation.ApprovalScope) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c ApprovalScopeCol) In(vs ...approvaldelegation.ApprovalScope) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ApprovalScopeCol) NotIn(vs ...approvaldelegation.ApprovalScope) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

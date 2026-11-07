@@ -9,6 +9,11 @@ func (w *Worker) WithholdFields(visible protectedfield.GroupSet) {
 		return
 	}
 	w.Profile.WithholdFields(visible)
+	if !visible.Has(protectedfield.Personal) {
+		w.HomeLatitude = nil
+		w.HomeLongitude = nil
+		w.HomePlaceID = ""
+	}
 }
 
 func (w *Worker) KeepFields(stored *Worker, visible protectedfield.GroupSet) {
@@ -16,6 +21,11 @@ func (w *Worker) KeepFields(stored *Worker, visible protectedfield.GroupSet) {
 		return
 	}
 	w.Profile.KeepFields(stored.Profile, visible)
+	if !visible.Has(protectedfield.Personal) {
+		w.HomeLatitude = stored.HomeLatitude
+		w.HomeLongitude = stored.HomeLongitude
+		w.HomePlaceID = stored.HomePlaceID
+	}
 }
 
 func (wp *WorkerProfile) WithholdFields(visible protectedfield.GroupSet) {

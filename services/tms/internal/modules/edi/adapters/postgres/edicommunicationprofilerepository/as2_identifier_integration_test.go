@@ -50,7 +50,7 @@ func newAS2Profile(
 	}
 }
 
-func TestAS2IdentifierPairsAreUniqueAcrossTenants(t *testing.T) {
+func TestAS2IdentifierPairsAreUniqueWithinATenant(t *testing.T) {
 	ctx, db, cleanup := seedtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
@@ -60,28 +60,22 @@ func TestAS2IdentifierPairsAreUniqueAcrossTenants(t *testing.T) {
 
 	repo := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
 
-	owned, err := repo.CreateProfile(ctxA, newAS2Profile(t, ctxA, db, "AS2-A"))
+	ownedA, err := repo.CreateProfile(ctxA, newAS2Profile(t, ctxA, db, "AS2-A"))
 	require.NoError(t, err)
+	ownedB, err := repo.CreateProfile(ctxB, newAS2Profile(t, ctxB, db, "AS2-B"))
+	require.NoError(t, err)
+	require.NotEmpty(t, ownedA.AS2InboundToken)
+	require.NotEmpty(t, ownedB.AS2InboundToken)
+	assert.NotEqual(t, ownedA.AS2InboundToken, ownedB.AS2InboundToken)
 
-	_, err = repo.CreateProfile(ctxB, newAS2Profile(t, ctxB, db, "AS2-B"))
+	_, err = repo.CreateProfile(ctxA, newAS2Profile(t, ctxA, db, "AS2-A2"))
 	require.Error(t, err)
 	assert.True(t, dberror.IsUniqueConstraintViolation(err))
 	assert.Equal(
 		t,
-		"uq_edi_communication_profiles_active_as2_identifiers",
+		"uq_edi_communication_profiles_tenant_as2_identifiers",
 		dberror.ExtractConstraintName(err),
 	)
-
-	routed, err := repo.GetActiveAS2ProfileByIdentifiers(
-		ctx,
-		edipartnerports.GetActiveAS2ProfileByIdentifiersRequest{
-			LocalAS2ID:   "SHIPPER-AS2",
-			PartnerAS2ID: "CARRIER-AS2",
-		},
-	)
-	require.NoError(t, err)
-	assert.Equal(t, owned.ID, routed.ID)
-	assert.Equal(t, tenantA.Organization.ID, routed.OrganizationID)
 
 	inactive := newAS2Profile(t, ctxB, db, "AS2-C")
 	inactive.Status = domaintypes.StatusInactive
@@ -90,8 +84,111 @@ func TestAS2IdentifierPairsAreUniqueAcrossTenants(t *testing.T) {
 
 	_, err = repo.GetProfileByID(
 		ctxB,
-		edipartnerports.GetEDICommunicationProfileByIDRequest{ID: owned.ID},
+		edipartnerports.GetEDICommunicationProfileByIDRequest{ID: ownedA.ID},
 	)
+	require.True(t, errortypes.IsNotFoundError(err))
+}
+
+func TestInboundAS2AddressResolvesOnlyItsOwnProfile(t *testing.T) {
+	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	t.Cleanup(cleanup)
+
+	tenantA := seedtest.SeedFullTestData(t, ctx, db)
+	tenantB := seedtest.SeedAdditionalTenant(t, ctx, db, "AS")
+	ctxA, ctxB := tenantA.Ctx(ctx), tenantB.Ctx(ctx)
+
+	repo := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
+
+	ownedA, err := repo.CreateProfile(ctxA, newAS2Profile(t, ctxA, db, "AS2-A"))
+	require.NoError(t, err)
+	ownedB, err := repo.CreateProfile(ctxB, newAS2Profile(t, ctxB, db, "AS2-B"))
+	require.NoError(t, err)
+
+	address := func(token string) edipartnerports.GetActiveAS2ProfileForInboundURLRequest {
+		return edipartnerports.GetActiveAS2ProfileForInboundURLRequest{
+			InboundToken: token,
+			LocalAS2ID:   "SHIPPER-AS2",
+			PartnerAS2ID: "CARRIER-AS2",
+		}
+	}
+
+	routedA, err := repo.GetActiveAS2ProfileForInboundURL(ctx, address(ownedA.AS2InboundToken))
+	require.NoError(t, err)
+	assert.Equal(t, ownedA.ID, routedA.ID)
+	assert.Equal(t, tenantA.Organization.ID, routedA.OrganizationID)
+
+	routedB, err := repo.GetActiveAS2ProfileForInboundURL(ctx, address(ownedB.AS2InboundToken))
+	require.NoError(t, err)
+	assert.Equal(t, ownedB.ID, routedB.ID)
+	assert.Equal(t, tenantB.Organization.ID, routedB.OrganizationID)
+
+	_, err = repo.GetActiveAS2ProfileForInboundURL(ctx, address("UNKNOWN"))
+	require.True(t, errortypes.IsNotFoundError(err))
+
+	otherPair := address(ownedA.AS2InboundToken)
+	otherPair.PartnerAS2ID = "SOMEONE-ELSE"
+	_, err = repo.GetActiveAS2ProfileForInboundURL(ctx, otherPair)
+	require.True(t, errortypes.IsNotFoundError(err))
+
+	routedA.Status = domaintypes.StatusInactive
+	_, err = repo.UpdateProfile(ctxA, routedA)
+	require.NoError(t, err)
+	_, err = repo.GetActiveAS2ProfileForInboundURL(ctx, address(ownedA.AS2InboundToken))
+	require.True(t, errortypes.IsNotFoundError(err))
+}
+
+func TestRotatedInboundAS2AddressReplacesTheOldOne(t *testing.T) {
+	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	t.Cleanup(cleanup)
+
+	tenant := seedtest.SeedFullTestData(t, ctx, db)
+	tctx := tenant.Ctx(ctx)
+	repo := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
+
+	created, err := repo.CreateProfile(tctx, newAS2Profile(t, tctx, db, "AS2-R"))
+	require.NoError(t, err)
+	previous := created.AS2InboundToken
+	rotated := edi.NewAS2InboundToken()
+
+	require.NoError(
+		t,
+		repo.RotateAS2InboundToken(tctx, edipartnerports.RotateAS2InboundTokenRequest{
+			ProfileID:    created.ID,
+			InboundToken: rotated,
+		}),
+	)
+
+	address := edipartnerports.GetActiveAS2ProfileForInboundURLRequest{
+		InboundToken: previous,
+		LocalAS2ID:   "SHIPPER-AS2",
+		PartnerAS2ID: "CARRIER-AS2",
+	}
+	_, err = repo.GetActiveAS2ProfileForInboundURL(ctx, address)
+	require.True(t, errortypes.IsNotFoundError(err))
+
+	address.InboundToken = rotated
+	routed, err := repo.GetActiveAS2ProfileForInboundURL(ctx, address)
+	require.NoError(t, err)
+	assert.Equal(t, created.ID, routed.ID)
+}
+
+func TestRotatingAnInboundAS2AddressStaysInsideTheTenant(t *testing.T) {
+	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	t.Cleanup(cleanup)
+
+	tenantA := seedtest.SeedFullTestData(t, ctx, db)
+	tenantB := seedtest.SeedAdditionalTenant(t, ctx, db, "AS")
+	ctxA, ctxB := tenantA.Ctx(ctx), tenantB.Ctx(ctx)
+
+	repo := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
+
+	created, err := repo.CreateProfile(ctxA, newAS2Profile(t, ctxA, db, "AS2-A"))
+	require.NoError(t, err)
+
+	err = repo.RotateAS2InboundToken(ctxB, edipartnerports.RotateAS2InboundTokenRequest{
+		ProfileID:    created.ID,
+		InboundToken: edi.NewAS2InboundToken(),
+	})
 	require.True(t, errortypes.IsNotFoundError(err))
 }
 

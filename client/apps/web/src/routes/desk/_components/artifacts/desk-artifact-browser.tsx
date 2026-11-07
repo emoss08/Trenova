@@ -17,6 +17,7 @@ import {
 import { artifactPreview } from "./artifact-preview";
 import { groupLineages, type ArtifactLineage } from "./desk-lineage";
 import { NO_PENDING_LOOKUPS, withoutPendingLookups } from "./pending-lookups";
+import { formatShortcut } from "@trenova/shared/lib/shortcuts";
 
 /** How many lineages each page the browser reads holds. */
 const PAGE = 60;
@@ -243,7 +244,7 @@ export function DeskArtifactBrowser({
           }}
         />
         <span className="dk-kbd" aria-hidden>
-          ⌘J
+          {formatShortcut("J")}
         </span>
       </div>
       <div className="dk-axb-f" role="group" aria-label={t("Filter artifacts")}>

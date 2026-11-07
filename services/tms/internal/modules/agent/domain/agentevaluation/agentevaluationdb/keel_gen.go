@@ -123,21 +123,21 @@ type EvaluationsTable struct {
 // Evaluations references the agent_evaluations table.
 var Evaluations = &EvaluationsTable{
 	TableBase:         keel.TableBase{Ref: &evaluationsRef},
-	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &evaluationsRef, Index: 0}}},
-	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &evaluationsRef, Index: 1}}},
-	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &evaluationsRef, Index: 2}}},
-	AgentDefinitionID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &evaluationsRef, Index: 3}}},
-	SourceRunID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &evaluationsRef, Index: 4}}},
-	EvalCaseID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &evaluationsRef, Index: 5}}},
-	Status:            EvaluationStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &evaluationsRef, Index: 6}}},
-	Trigger:           agentdb.RunTriggerCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &evaluationsRef, Index: 7}}},
-	SubjectType:       agentdb.SubjectTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &evaluationsRef, Index: 8}}},
-	SubjectID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &evaluationsRef, Index: 9}}},
+	ID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &evaluationsRef, Index: 0}}},
+	BusinessUnitID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &evaluationsRef, Index: 1}}},
+	OrganizationID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &evaluationsRef, Index: 2}}},
+	AgentDefinitionID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &evaluationsRef, Index: 3}}},
+	SourceRunID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &evaluationsRef, Index: 4}}},
+	EvalCaseID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &evaluationsRef, Index: 5}}},
+	Status:            EvaluationStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &evaluationsRef, Index: 6}}},
+	Trigger:           agentdb.RunTriggerCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &evaluationsRef, Index: 7}}},
+	SubjectType:       agentdb.SubjectTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &evaluationsRef, Index: 8}}},
+	SubjectID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &evaluationsRef, Index: 9}}},
 	Input:             keel.StringCol{Col: keel.Col{Ref: &evaluationsRef, Index: 10}},
 	DefinitionVersion: keel.Int64Col{Col: keel.Col{Ref: &evaluationsRef, Index: 11}},
 	PromptVersion:     keel.StringCol{Col: keel.Col{Ref: &evaluationsRef, Index: 12}},
 	Model:             keel.StringCol{Col: keel.Col{Ref: &evaluationsRef, Index: 13}},
-	ProviderID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &evaluationsRef, Index: 14}}},
+	ProviderID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &evaluationsRef, Index: 14}}},
 	Reply:             keel.StringCol{Col: keel.Col{Ref: &evaluationsRef, Index: 15}},
 	Actions:           keel.JSONBCol{Col: keel.Col{Ref: &evaluationsRef, Index: 16}},
 	Comparison:        keel.JSONBCol{Col: keel.Col{Ref: &evaluationsRef, Index: 17}},
@@ -147,11 +147,11 @@ var Evaluations = &EvaluationsTable{
 	Judge:             keel.JSONBCol{Col: keel.Col{Ref: &evaluationsRef, Index: 21}},
 	CaseScore:         keel.Float64Col{Col: keel.Col{Ref: &evaluationsRef, Index: 22}},
 	Fingerprint:       keel.JSONBCol{Col: keel.Col{Ref: &evaluationsRef, Index: 23}},
-	SuiteRunID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &evaluationsRef, Index: 24}}},
+	SuiteRunID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &evaluationsRef, Index: 24}}},
 	SuiteOrdinal:      keel.Int64Col{Col: keel.Col{Ref: &evaluationsRef, Index: 25}},
 	WorkflowID:        keel.StringCol{Col: keel.Col{Ref: &evaluationsRef, Index: 26}},
 	ErrorMessage:      keel.StringCol{Col: keel.Col{Ref: &evaluationsRef, Index: 27}},
-	RequestedByUserID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &evaluationsRef, Index: 28}}},
+	RequestedByUserID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &evaluationsRef, Index: 28}}},
 	StartedAt:         keel.Int64Col{Col: keel.Col{Ref: &evaluationsRef, Index: 29}},
 	CompletedAt:       keel.Int64Col{Col: keel.Col{Ref: &evaluationsRef, Index: 30}},
 	Version:           keel.Int64Col{Col: keel.Col{Ref: &evaluationsRef, Index: 31}},
@@ -163,21 +163,21 @@ var Evaluations = &EvaluationsTable{
 func BuildEvaluations(r *keel.Ref) *EvaluationsTable {
 	return &EvaluationsTable{
 		TableBase:         keel.TableBase{Ref: r},
-		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		AgentDefinitionID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		SourceRunID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		EvalCaseID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		Status:            EvaluationStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		Trigger:           agentdb.RunTriggerCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
-		SubjectType:       agentdb.SubjectTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
-		SubjectID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		ID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		AgentDefinitionID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		SourceRunID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		EvalCaseID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		Status:            EvaluationStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		Trigger:           agentdb.RunTriggerCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		SubjectType:       agentdb.SubjectTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		SubjectID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
 		Input:             keel.StringCol{Col: keel.Col{Ref: r, Index: 10}},
 		DefinitionVersion: keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
 		PromptVersion:     keel.StringCol{Col: keel.Col{Ref: r, Index: 12}},
 		Model:             keel.StringCol{Col: keel.Col{Ref: r, Index: 13}},
-		ProviderID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 14}}},
+		ProviderID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 14}}},
 		Reply:             keel.StringCol{Col: keel.Col{Ref: r, Index: 15}},
 		Actions:           keel.JSONBCol{Col: keel.Col{Ref: r, Index: 16}},
 		Comparison:        keel.JSONBCol{Col: keel.Col{Ref: r, Index: 17}},
@@ -187,11 +187,11 @@ func BuildEvaluations(r *keel.Ref) *EvaluationsTable {
 		Judge:             keel.JSONBCol{Col: keel.Col{Ref: r, Index: 21}},
 		CaseScore:         keel.Float64Col{Col: keel.Col{Ref: r, Index: 22}},
 		Fingerprint:       keel.JSONBCol{Col: keel.Col{Ref: r, Index: 23}},
-		SuiteRunID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 24}}},
+		SuiteRunID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 24}}},
 		SuiteOrdinal:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 25}},
 		WorkflowID:        keel.StringCol{Col: keel.Col{Ref: r, Index: 26}},
 		ErrorMessage:      keel.StringCol{Col: keel.Col{Ref: r, Index: 27}},
-		RequestedByUserID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 28}}},
+		RequestedByUserID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 28}}},
 		StartedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 29}},
 		CompletedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 30}},
 		Version:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 31}},
@@ -215,8 +215,6 @@ func (t *EvaluationsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (
 
 // EvaluationsQuery is a query over agentevaluation.Evaluation.
 type EvaluationsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*agentevaluation.Evaluation] = (*EvaluationsTable)(nil)
 
 var _ keel.Query[*agentevaluation.Evaluation] = (*EvaluationsQuery)(nil)
 
@@ -332,42 +330,42 @@ func (t *EvaluationsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*age
 
 // Create inserts row.
 func (t *EvaluationsTable) Create(ctx context.Context, db *keel.DB, row *agentevaluation.Evaluation) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *EvaluationsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*agentevaluation.Evaluation) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *EvaluationsTable) Save(ctx context.Context, db *keel.DB, row *agentevaluation.Evaluation, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *EvaluationsTable) SaveExcept(ctx context.Context, db *keel.DB, row *agentevaluation.Evaluation, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *EvaluationsTable) DeleteRow(ctx context.Context, db *keel.DB, row *agentevaluation.Evaluation) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *EvaluationsTable) Upsert(ctx context.Context, db *keel.DB, rows []*agentevaluation.Evaluation, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *EvaluationsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*agentevaluation.Evaluation, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *EvaluationsTable) Copy(ctx context.Context, db *keel.DB, rows []*agentevaluation.Evaluation) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -539,37 +537,45 @@ func (q *EvaluationsQuery) Clone() keel.Query[*agentevaluation.Evaluation] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *EvaluationsQuery) One(ctx context.Context, db *keel.DB) (*agentevaluation.Evaluation, error) {
-	return keel.One[*agentevaluation.Evaluation](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*agentevaluation.Evaluation)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *EvaluationsQuery) First(ctx context.Context, db *keel.DB) (*agentevaluation.Evaluation, error) {
-	return keel.First[*agentevaluation.Evaluation](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*agentevaluation.Evaluation)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *EvaluationsQuery) List(ctx context.Context, db *keel.DB) ([]*agentevaluation.Evaluation, error) {
-	return keel.List[*agentevaluation.Evaluation](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*agentevaluation.Evaluation)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *EvaluationsQuery) All(ctx context.Context, db *keel.DB) ([]*agentevaluation.Evaluation, error) {
-	return keel.All[*agentevaluation.Evaluation](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*agentevaluation.Evaluation)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *EvaluationsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*agentevaluation.Evaluation, error) {
-	return keel.UpdateReturning[*agentevaluation.Evaluation](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*agentevaluation.Evaluation)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *EvaluationsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*agentevaluation.Evaluation], error) {
-	return keel.PageOf[*agentevaluation.Evaluation](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*agentevaluation.Evaluation])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *EvaluationsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*agentevaluation.Evaluation) error) error {
-	return keel.Each[*agentevaluation.Evaluation](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*agentevaluation.Evaluation)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newEvaluation() unsafe.Pointer { return unsafe.Pointer(new(agentevaluation.Evaluation)) }
@@ -848,38 +854,38 @@ var enumEvaluationStatus = [...]schema.EnumValue{
 }
 
 // EvaluationStatusCol is a column of agentevaluation.EvaluationStatus values.
-type EvaluationStatusCol struct{ keel.StringCol }
+type EvaluationStatusCol struct{ keel.TypedStringCol }
 
 func (c EvaluationStatusCol) Eq(v agentevaluation.EvaluationStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c EvaluationStatusCol) Ne(v agentevaluation.EvaluationStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c EvaluationStatusCol) Gt(v agentevaluation.EvaluationStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c EvaluationStatusCol) Gte(v agentevaluation.EvaluationStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c EvaluationStatusCol) Lt(v agentevaluation.EvaluationStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c EvaluationStatusCol) Lte(v agentevaluation.EvaluationStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c EvaluationStatusCol) IsDistinctFrom(v agentevaluation.EvaluationStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c EvaluationStatusCol) Between(lo, hi agentevaluation.EvaluationStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c EvaluationStatusCol) To(v agentevaluation.EvaluationStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c EvaluationStatusCol) In(vs ...agentevaluation.EvaluationStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c EvaluationStatusCol) NotIn(vs ...agentevaluation.EvaluationStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

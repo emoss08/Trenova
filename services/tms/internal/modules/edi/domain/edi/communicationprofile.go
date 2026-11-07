@@ -2,6 +2,7 @@ package edi
 
 import (
 	"context"
+	"crypto/rand"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -10,6 +11,12 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
+)
+
+const (
+	AS2InboundRoot = "/edi/as2/inbound/"
+
+	as2InboundAPIPrefix = "/api/v1"
 )
 
 var _ domaintypes.PostgresSearchable = (*EDICommunicationProfile)(nil)
@@ -22,26 +29,28 @@ type CommunicationProfileSecretState struct {
 type EDICommunicationProfile struct {
 	keel.Table `keel:"edi_communication_profiles"`
 
-	ID                pulid.ID                          `json:"id"                keel:"id,pk,autoid:edicp_"`
-	BusinessUnitID    pulid.ID                          `json:"businessUnitId"    keel:"business_unit_id,pk,tenant"`
-	OrganizationID    pulid.ID                          `json:"organizationId"    keel:"organization_id,pk,tenant"`
-	EDIConnectionID   pulid.ID                          `json:"ediConnectionId"   keel:"edi_connection_id,nullzero"`
-	EDIPartnerID      pulid.ID                          `json:"ediPartnerId"      keel:"edi_partner_id,nullzero"`
-	Method            ConnectionMethod                  `json:"method"            keel:"method"`
-	Status            domaintypes.Status                `json:"status"            keel:"status"`
-	Name              string                            `json:"name"              keel:"name"`
-	Description       string                            `json:"description"       keel:"description,nullzero"`
-	Config            map[string]any                    `json:"config"            keel:"config,jsonb"`
-	EncryptedSecrets  map[string]string                 `json:"-"                 keel:"encrypted_secrets,jsonb"`
+	ID                pulid.ID                          `json:"id"                       keel:"id,pk,autoid:edicp_"`
+	BusinessUnitID    pulid.ID                          `json:"businessUnitId"           keel:"business_unit_id,pk,tenant"`
+	OrganizationID    pulid.ID                          `json:"organizationId"           keel:"organization_id,pk,tenant"`
+	EDIConnectionID   pulid.ID                          `json:"ediConnectionId"          keel:"edi_connection_id,nullzero"`
+	EDIPartnerID      pulid.ID                          `json:"ediPartnerId"             keel:"edi_partner_id,nullzero"`
+	Method            ConnectionMethod                  `json:"method"                   keel:"method"`
+	Status            domaintypes.Status                `json:"status"                   keel:"status"`
+	Name              string                            `json:"name"                     keel:"name"`
+	Description       string                            `json:"description"              keel:"description,nullzero"`
+	Config            map[string]any                    `json:"config"                   keel:"config,jsonb"`
+	EncryptedSecrets  map[string]string                 `json:"-"                        keel:"encrypted_secrets,jsonb"`
 	SecretState       []CommunicationProfileSecretState `json:"secretState"`
-	LastPollAttemptAt *int64                            `json:"lastPollAttemptAt" keel:"last_poll_attempt_at"`
-	LastPollSuccessAt *int64                            `json:"lastPollSuccessAt" keel:"last_poll_success_at"`
-	LastPollError     string                            `json:"lastPollError"     keel:"last_poll_error,nullzero"`
-	SearchVector      string                            `json:"-"                 keel:"search_vector,tsvector,readonly,noselect"`
-	Rank              string                            `json:"-"                 keel:"rank,computed"`
-	Version           int64                             `json:"version"           keel:"version,version"`
-	CreatedAt         int64                             `json:"createdAt"         keel:"created_at,autocreate"`
-	UpdatedAt         int64                             `json:"updatedAt"         keel:"updated_at,autoupdate"`
+	AS2InboundPath    string                            `json:"as2InboundPath,omitempty"`
+	LastPollAttemptAt *int64                            `json:"lastPollAttemptAt"        keel:"last_poll_attempt_at"`
+	LastPollSuccessAt *int64                            `json:"lastPollSuccessAt"        keel:"last_poll_success_at"`
+	LastPollError     string                            `json:"lastPollError"            keel:"last_poll_error,nullzero"`
+	SearchVector      string                            `json:"-"                        keel:"search_vector,tsvector,readonly,noselect"`
+	Rank              string                            `json:"-"                        keel:"rank,computed"`
+	Version           int64                             `json:"version"                  keel:"version,version"`
+	CreatedAt         int64                             `json:"createdAt"                keel:"created_at,autocreate"`
+	UpdatedAt         int64                             `json:"updatedAt"                keel:"updated_at,autoupdate"`
+	AS2InboundToken   string                            `json:"-"                        keel:"as2_inbound_token,readonly"`
 
 	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty"`
 	Organization *tenant.Organization `json:"organization,omitempty"`
@@ -76,6 +85,18 @@ func (p *EDICommunicationProfile) BeforeSave(_ context.Context) error {
 		p.EncryptedSecrets = map[string]string{}
 	}
 	return nil
+}
+
+func NewAS2InboundToken() string {
+	return rand.Text() + rand.Text()
+}
+
+func (p *EDICommunicationProfile) InboundPath() string {
+	if p.Method != ConnectionMethodAS2 || p.AS2InboundToken == "" {
+		return ""
+	}
+
+	return as2InboundAPIPrefix + AS2InboundRoot + p.AS2InboundToken + "/"
 }
 
 func (p *EDICommunicationProfile) GetID() pulid.ID {
@@ -150,7 +171,7 @@ func (p *EDICommunicationProfile) Validate(multiErr *errortypes.MultiError) {
 func (EDICommunicationProfile) Constraints() []keel.Constraint {
 	return []keel.Constraint{
 		{
-			Name:    "uq_edi_communication_profiles_active_as2_identifiers",
+			Name:    "uq_edi_communication_profiles_tenant_as2_identifiers",
 			Message: "Another active AS2 profile already uses this local and partner AS2 ID pair",
 		},
 		{

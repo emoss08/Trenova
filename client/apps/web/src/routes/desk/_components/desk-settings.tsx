@@ -16,6 +16,7 @@ import { Resource } from "@trenova/shared/types/permission";
 import { CaseChecklistsSection } from "./settings/case-checklists/case-checklists-section";
 import { Seg } from "./settings/desk-seg";
 import { onRadioArrows, useModalFocus } from "./use-modal-focus";
+import { formatShortcut } from "@trenova/shared/lib/shortcuts";
 
 type PersonalSection = "appearance" | "conversation" | "composer" | "files" | "artifacts" | "agent";
 
@@ -354,7 +355,7 @@ export function DeskSettingsDialog({
                     onChange={(value) => set("send", value)}
                     options={[
                       ["enter", t("Enter")],
-                      ["mod", t("⌘ Enter")],
+                      ["mod", formatShortcut("Enter")],
                     ]}
                   />
                 </Row>

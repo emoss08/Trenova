@@ -84,13 +84,13 @@ type ExchangeRatesTable struct {
 // ExchangeRates references the exchange_rates table.
 var ExchangeRates = &ExchangeRatesTable{
 	TableBase:          keel.TableBase{Ref: &exchangeRatesRef},
-	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &exchangeRatesRef, Index: 0}}},
-	BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &exchangeRatesRef, Index: 1}}},
-	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &exchangeRatesRef, Index: 2}}},
-	Provider:           ProviderCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &exchangeRatesRef, Index: 3}}},
+	ID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &exchangeRatesRef, Index: 0}}},
+	BusinessUnitID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &exchangeRatesRef, Index: 1}}},
+	OrganizationID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &exchangeRatesRef, Index: 2}}},
+	Provider:           ProviderCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &exchangeRatesRef, Index: 3}}},
 	FromCurrency:       keel.StringCol{Col: keel.Col{Ref: &exchangeRatesRef, Index: 4}},
 	ToCurrency:         keel.StringCol{Col: keel.Col{Ref: &exchangeRatesRef, Index: 5}},
-	RateType:           RateTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &exchangeRatesRef, Index: 6}}},
+	RateType:           RateTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &exchangeRatesRef, Index: 6}}},
 	Bid:                keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &exchangeRatesRef, Index: 7}}},
 	Ask:                keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &exchangeRatesRef, Index: 8}}},
 	Mid:                keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &exchangeRatesRef, Index: 9}}},
@@ -105,13 +105,13 @@ var ExchangeRates = &ExchangeRatesTable{
 func BuildExchangeRates(r *keel.Ref) *ExchangeRatesTable {
 	return &ExchangeRatesTable{
 		TableBase:          keel.TableBase{Ref: r},
-		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		Provider:           ProviderCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		Provider:           ProviderCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		FromCurrency:       keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		ToCurrency:         keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
-		RateType:           RateTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		RateType:           RateTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		Bid:                keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 7}}},
 		Ask:                keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 8}}},
 		Mid:                keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 9}}},
@@ -138,8 +138,6 @@ func (t *ExchangeRatesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID)
 
 // ExchangeRatesQuery is a query over exchangerate.ExchangeRate.
 type ExchangeRatesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*exchangerate.ExchangeRate] = (*ExchangeRatesTable)(nil)
 
 var _ keel.Query[*exchangerate.ExchangeRate] = (*ExchangeRatesQuery)(nil)
 
@@ -255,42 +253,42 @@ func (t *ExchangeRatesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*e
 
 // Create inserts row.
 func (t *ExchangeRatesTable) Create(ctx context.Context, db *keel.DB, row *exchangerate.ExchangeRate) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *ExchangeRatesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*exchangerate.ExchangeRate) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *ExchangeRatesTable) Save(ctx context.Context, db *keel.DB, row *exchangerate.ExchangeRate, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *ExchangeRatesTable) SaveExcept(ctx context.Context, db *keel.DB, row *exchangerate.ExchangeRate, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *ExchangeRatesTable) DeleteRow(ctx context.Context, db *keel.DB, row *exchangerate.ExchangeRate) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *ExchangeRatesTable) Upsert(ctx context.Context, db *keel.DB, rows []*exchangerate.ExchangeRate, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *ExchangeRatesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*exchangerate.ExchangeRate, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *ExchangeRatesTable) Copy(ctx context.Context, db *keel.DB, rows []*exchangerate.ExchangeRate) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -462,37 +460,45 @@ func (q *ExchangeRatesQuery) Clone() keel.Query[*exchangerate.ExchangeRate] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *ExchangeRatesQuery) One(ctx context.Context, db *keel.DB) (*exchangerate.ExchangeRate, error) {
-	return keel.One[*exchangerate.ExchangeRate](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*exchangerate.ExchangeRate)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *ExchangeRatesQuery) First(ctx context.Context, db *keel.DB) (*exchangerate.ExchangeRate, error) {
-	return keel.First[*exchangerate.ExchangeRate](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*exchangerate.ExchangeRate)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *ExchangeRatesQuery) List(ctx context.Context, db *keel.DB) ([]*exchangerate.ExchangeRate, error) {
-	return keel.List[*exchangerate.ExchangeRate](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*exchangerate.ExchangeRate)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *ExchangeRatesQuery) All(ctx context.Context, db *keel.DB) ([]*exchangerate.ExchangeRate, error) {
-	return keel.All[*exchangerate.ExchangeRate](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*exchangerate.ExchangeRate)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *ExchangeRatesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*exchangerate.ExchangeRate, error) {
-	return keel.UpdateReturning[*exchangerate.ExchangeRate](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*exchangerate.ExchangeRate)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *ExchangeRatesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*exchangerate.ExchangeRate], error) {
-	return keel.PageOf[*exchangerate.ExchangeRate](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*exchangerate.ExchangeRate])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *ExchangeRatesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*exchangerate.ExchangeRate) error) error {
-	return keel.Each[*exchangerate.ExchangeRate](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*exchangerate.ExchangeRate)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newExchangeRate() unsafe.Pointer { return unsafe.Pointer(new(exchangerate.ExchangeRate)) }
@@ -648,16 +654,16 @@ type SettlementQuotesTable struct {
 // SettlementQuotes references the exchange_rate_settlement_quotes table.
 var SettlementQuotes = &SettlementQuotesTable{
 	TableBase:       keel.TableBase{Ref: &settlementQuotesRef},
-	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settlementQuotesRef, Index: 0}}},
-	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settlementQuotesRef, Index: 1}}},
-	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settlementQuotesRef, Index: 2}}},
-	Provider:        ProviderCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settlementQuotesRef, Index: 3}}},
+	ID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &settlementQuotesRef, Index: 0}}},
+	BusinessUnitID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &settlementQuotesRef, Index: 1}}},
+	OrganizationID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &settlementQuotesRef, Index: 2}}},
+	Provider:        ProviderCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &settlementQuotesRef, Index: 3}}},
 	FromCurrency:    keel.StringCol{Col: keel.Col{Ref: &settlementQuotesRef, Index: 4}},
 	ToCurrency:      keel.StringCol{Col: keel.Col{Ref: &settlementQuotesRef, Index: 5}},
 	Amount:          keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &settlementQuotesRef, Index: 6}}},
 	Rate:            keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &settlementQuotesRef, Index: 7}}},
 	ConvertedAmount: keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &settlementQuotesRef, Index: 8}}},
-	RateType:        RateTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settlementQuotesRef, Index: 9}}},
+	RateType:        RateTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &settlementQuotesRef, Index: 9}}},
 	SourceTimestamp: keel.TimeCol{Col: keel.Col{Ref: &settlementQuotesRef, Index: 10}},
 	FetchedAt:       keel.TimeCol{Col: keel.Col{Ref: &settlementQuotesRef, Index: 11}},
 	ExpiresAt:       keel.TimeCol{Col: keel.Col{Ref: &settlementQuotesRef, Index: 12}},
@@ -667,16 +673,16 @@ var SettlementQuotes = &SettlementQuotesTable{
 func BuildSettlementQuotes(r *keel.Ref) *SettlementQuotesTable {
 	return &SettlementQuotesTable{
 		TableBase:       keel.TableBase{Ref: r},
-		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		Provider:        ProviderCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		Provider:        ProviderCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		FromCurrency:    keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		ToCurrency:      keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		Amount:          keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 6}}},
 		Rate:            keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 7}}},
 		ConvertedAmount: keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 8}}},
-		RateType:        RateTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		RateType:        RateTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
 		SourceTimestamp: keel.TimeCol{Col: keel.Col{Ref: r, Index: 10}},
 		FetchedAt:       keel.TimeCol{Col: keel.Col{Ref: r, Index: 11}},
 		ExpiresAt:       keel.TimeCol{Col: keel.Col{Ref: r, Index: 12}},
@@ -698,8 +704,6 @@ func (t *SettlementQuotesTable) Get(ctx context.Context, db *keel.DB, key pulid.
 
 // SettlementQuotesQuery is a query over exchangerate.SettlementQuote.
 type SettlementQuotesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*exchangerate.SettlementQuote] = (*SettlementQuotesTable)(nil)
 
 var _ keel.Query[*exchangerate.SettlementQuote] = (*SettlementQuotesQuery)(nil)
 
@@ -815,42 +819,42 @@ func (t *SettlementQuotesTable) Compute(col keel.Column, e keel.Expr) keel.Query
 
 // Create inserts row.
 func (t *SettlementQuotesTable) Create(ctx context.Context, db *keel.DB, row *exchangerate.SettlementQuote) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *SettlementQuotesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*exchangerate.SettlementQuote) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *SettlementQuotesTable) Save(ctx context.Context, db *keel.DB, row *exchangerate.SettlementQuote, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *SettlementQuotesTable) SaveExcept(ctx context.Context, db *keel.DB, row *exchangerate.SettlementQuote, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *SettlementQuotesTable) DeleteRow(ctx context.Context, db *keel.DB, row *exchangerate.SettlementQuote) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *SettlementQuotesTable) Upsert(ctx context.Context, db *keel.DB, rows []*exchangerate.SettlementQuote, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *SettlementQuotesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*exchangerate.SettlementQuote, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *SettlementQuotesTable) Copy(ctx context.Context, db *keel.DB, rows []*exchangerate.SettlementQuote) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1022,37 +1026,45 @@ func (q *SettlementQuotesQuery) Clone() keel.Query[*exchangerate.SettlementQuote
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *SettlementQuotesQuery) One(ctx context.Context, db *keel.DB) (*exchangerate.SettlementQuote, error) {
-	return keel.One[*exchangerate.SettlementQuote](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*exchangerate.SettlementQuote)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *SettlementQuotesQuery) First(ctx context.Context, db *keel.DB) (*exchangerate.SettlementQuote, error) {
-	return keel.First[*exchangerate.SettlementQuote](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*exchangerate.SettlementQuote)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *SettlementQuotesQuery) List(ctx context.Context, db *keel.DB) ([]*exchangerate.SettlementQuote, error) {
-	return keel.List[*exchangerate.SettlementQuote](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*exchangerate.SettlementQuote)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *SettlementQuotesQuery) All(ctx context.Context, db *keel.DB) ([]*exchangerate.SettlementQuote, error) {
-	return keel.All[*exchangerate.SettlementQuote](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*exchangerate.SettlementQuote)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *SettlementQuotesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*exchangerate.SettlementQuote, error) {
-	return keel.UpdateReturning[*exchangerate.SettlementQuote](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*exchangerate.SettlementQuote)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *SettlementQuotesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*exchangerate.SettlementQuote], error) {
-	return keel.PageOf[*exchangerate.SettlementQuote](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*exchangerate.SettlementQuote])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *SettlementQuotesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*exchangerate.SettlementQuote) error) error {
-	return keel.Each[*exchangerate.SettlementQuote](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*exchangerate.SettlementQuote)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newSettlementQuote() unsafe.Pointer { return unsafe.Pointer(new(exchangerate.SettlementQuote)) }
@@ -1142,47 +1154,47 @@ var enumRateType = [...]schema.EnumValue{
 }
 
 // ProviderCol is a column of exchangerate.Provider values.
-type ProviderCol struct{ keel.StringCol }
+type ProviderCol struct{ keel.TypedStringCol }
 
-func (c ProviderCol) Eq(v exchangerate.Provider) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c ProviderCol) Ne(v exchangerate.Provider) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c ProviderCol) Gt(v exchangerate.Provider) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c ProviderCol) Gte(v exchangerate.Provider) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c ProviderCol) Lt(v exchangerate.Provider) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c ProviderCol) Lte(v exchangerate.Provider) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c ProviderCol) Eq(v exchangerate.Provider) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c ProviderCol) Ne(v exchangerate.Provider) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c ProviderCol) Gt(v exchangerate.Provider) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c ProviderCol) Gte(v exchangerate.Provider) keel.Pred { return c.Text().Gte(string(v)) }
+func (c ProviderCol) Lt(v exchangerate.Provider) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c ProviderCol) Lte(v exchangerate.Provider) keel.Pred { return c.Text().Lte(string(v)) }
 func (c ProviderCol) IsDistinctFrom(v exchangerate.Provider) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ProviderCol) Between(lo, hi exchangerate.Provider) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c ProviderCol) To(v exchangerate.Provider) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c ProviderCol) To(v exchangerate.Provider) keel.Assignment { return c.Text().To(string(v)) }
 func (c ProviderCol) In(vs ...exchangerate.Provider) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ProviderCol) NotIn(vs ...exchangerate.Provider) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // RateTypeCol is a column of exchangerate.RateType values.
-type RateTypeCol struct{ keel.StringCol }
+type RateTypeCol struct{ keel.TypedStringCol }
 
-func (c RateTypeCol) Eq(v exchangerate.RateType) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c RateTypeCol) Ne(v exchangerate.RateType) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c RateTypeCol) Gt(v exchangerate.RateType) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c RateTypeCol) Gte(v exchangerate.RateType) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c RateTypeCol) Lt(v exchangerate.RateType) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c RateTypeCol) Lte(v exchangerate.RateType) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c RateTypeCol) Eq(v exchangerate.RateType) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c RateTypeCol) Ne(v exchangerate.RateType) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c RateTypeCol) Gt(v exchangerate.RateType) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c RateTypeCol) Gte(v exchangerate.RateType) keel.Pred { return c.Text().Gte(string(v)) }
+func (c RateTypeCol) Lt(v exchangerate.RateType) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c RateTypeCol) Lte(v exchangerate.RateType) keel.Pred { return c.Text().Lte(string(v)) }
 func (c RateTypeCol) IsDistinctFrom(v exchangerate.RateType) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c RateTypeCol) Between(lo, hi exchangerate.RateType) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c RateTypeCol) To(v exchangerate.RateType) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c RateTypeCol) To(v exchangerate.RateType) keel.Assignment { return c.Text().To(string(v)) }
 func (c RateTypeCol) In(vs ...exchangerate.RateType) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c RateTypeCol) NotIn(vs ...exchangerate.RateType) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

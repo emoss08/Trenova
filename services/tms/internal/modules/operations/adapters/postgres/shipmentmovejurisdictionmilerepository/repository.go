@@ -140,7 +140,7 @@ func (r *repository) ListUnattributedMoves(
 				mc.Col(completedAt).Lt(req.End),
 			}
 
-			totals, err := keel.IntoOne[unattributedTotals](ctx, r.db.Keel(ctx), mc.Query().
+			totals, err := keel.IntoOne[unattributedTotals](ctx, r.db.Keel(ctx), keel.RowsOf(mc.TableRef()).
 				With(mc).
 				Pick(
 					keel.Count(),
@@ -162,7 +162,7 @@ func (r *repository) ListUnattributedMoves(
 				return page, nil
 			}
 
-			ids, err := keel.Into[pulid.ID](ctx, r.db.Keel(ctx), mc.Query().
+			ids, err := keel.Into[pulid.ID](ctx, r.db.Keel(ctx), keel.RowsOf(mc.TableRef()).
 				With(mc).
 				Pick(mc.Col(completedMoveID)).
 				Where(inPeriod...).

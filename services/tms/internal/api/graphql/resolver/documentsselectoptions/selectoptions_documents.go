@@ -120,11 +120,7 @@ func (r *Sources) EmailProfile(
 }
 
 func documentTypeSelectOptionItem(entity *documenttype.DocumentType) selectoption.Item {
-	return selectoption.ItemFor(
-		documentTypeSelectOption(entity),
-		entity.CreatedAt,
-		entity.ID,
-	)
+	return selectoption.ItemFor(documentTypeSelectOption(entity))
 }
 
 func documentTypeSelectOption(entity *documenttype.DocumentType) *gqlmodel.SelectOption {
@@ -141,11 +137,7 @@ func documentTypeSelectOption(entity *documenttype.DocumentType) *gqlmodel.Selec
 }
 
 func emailProfileSelectOptionItem(entity *email.Profile) selectoption.Item {
-	return selectoption.ItemFor(
-		emailProfileSelectOption(entity),
-		entity.CreatedAt,
-		entity.ID,
-	)
+	return selectoption.ItemFor(emailProfileSelectOption(entity))
 }
 
 func emailProfileSelectOption(entity *email.Profile) *gqlmodel.SelectOption {

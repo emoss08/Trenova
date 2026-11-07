@@ -77,14 +77,14 @@ type CaptureCoverSheetsTable struct {
 // CaptureCoverSheets references the capture_cover_sheets table.
 var CaptureCoverSheets = &CaptureCoverSheetsTable{
 	TableBase:      keel.TableBase{Ref: &captureCoverSheetsRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &captureCoverSheetsRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &captureCoverSheetsRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &captureCoverSheetsRef, Index: 2}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &captureCoverSheetsRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &captureCoverSheetsRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &captureCoverSheetsRef, Index: 2}}},
 	TokenHash:      keel.StringCol{Col: keel.Col{Ref: &captureCoverSheetsRef, Index: 3}},
 	TargetType:     keel.StringCol{Col: keel.Col{Ref: &captureCoverSheetsRef, Index: 4}},
-	TargetID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &captureCoverSheetsRef, Index: 5}}},
-	DocumentTypeID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &captureCoverSheetsRef, Index: 6}}},
-	IssuedByID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &captureCoverSheetsRef, Index: 7}}},
+	TargetID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &captureCoverSheetsRef, Index: 5}}},
+	DocumentTypeID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &captureCoverSheetsRef, Index: 6}}},
+	IssuedByID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &captureCoverSheetsRef, Index: 7}}},
 	ExpiresAt:      keel.Int64Col{Col: keel.Col{Ref: &captureCoverSheetsRef, Index: 8}},
 	LastUsedAt:     keel.Int64Col{Col: keel.Col{Ref: &captureCoverSheetsRef, Index: 9}},
 	UseCount:       keel.Int64Col{Col: keel.Col{Ref: &captureCoverSheetsRef, Index: 10}},
@@ -95,14 +95,14 @@ var CaptureCoverSheets = &CaptureCoverSheetsTable{
 func BuildCaptureCoverSheets(r *keel.Ref) *CaptureCoverSheetsTable {
 	return &CaptureCoverSheetsTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		TokenHash:      keel.StringCol{Col: keel.Col{Ref: r, Index: 3}},
 		TargetType:     keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
-		TargetID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		DocumentTypeID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		IssuedByID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		TargetID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		DocumentTypeID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		IssuedByID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
 		ExpiresAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
 		LastUsedAt:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
 		UseCount:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
@@ -125,8 +125,6 @@ func (t *CaptureCoverSheetsTable) Get(ctx context.Context, db *keel.DB, key puli
 
 // CaptureCoverSheetsQuery is a query over capturecoversheet.CaptureCoverSheet.
 type CaptureCoverSheetsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*capturecoversheet.CaptureCoverSheet] = (*CaptureCoverSheetsTable)(nil)
 
 var _ keel.Query[*capturecoversheet.CaptureCoverSheet] = (*CaptureCoverSheetsQuery)(nil)
 
@@ -242,42 +240,42 @@ func (t *CaptureCoverSheetsTable) Compute(col keel.Column, e keel.Expr) keel.Que
 
 // Create inserts row.
 func (t *CaptureCoverSheetsTable) Create(ctx context.Context, db *keel.DB, row *capturecoversheet.CaptureCoverSheet) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *CaptureCoverSheetsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*capturecoversheet.CaptureCoverSheet) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *CaptureCoverSheetsTable) Save(ctx context.Context, db *keel.DB, row *capturecoversheet.CaptureCoverSheet, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *CaptureCoverSheetsTable) SaveExcept(ctx context.Context, db *keel.DB, row *capturecoversheet.CaptureCoverSheet, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *CaptureCoverSheetsTable) DeleteRow(ctx context.Context, db *keel.DB, row *capturecoversheet.CaptureCoverSheet) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *CaptureCoverSheetsTable) Upsert(ctx context.Context, db *keel.DB, rows []*capturecoversheet.CaptureCoverSheet, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *CaptureCoverSheetsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*capturecoversheet.CaptureCoverSheet, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *CaptureCoverSheetsTable) Copy(ctx context.Context, db *keel.DB, rows []*capturecoversheet.CaptureCoverSheet) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -449,37 +447,45 @@ func (q *CaptureCoverSheetsQuery) Clone() keel.Query[*capturecoversheet.CaptureC
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *CaptureCoverSheetsQuery) One(ctx context.Context, db *keel.DB) (*capturecoversheet.CaptureCoverSheet, error) {
-	return keel.One[*capturecoversheet.CaptureCoverSheet](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*capturecoversheet.CaptureCoverSheet)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *CaptureCoverSheetsQuery) First(ctx context.Context, db *keel.DB) (*capturecoversheet.CaptureCoverSheet, error) {
-	return keel.First[*capturecoversheet.CaptureCoverSheet](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*capturecoversheet.CaptureCoverSheet)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *CaptureCoverSheetsQuery) List(ctx context.Context, db *keel.DB) ([]*capturecoversheet.CaptureCoverSheet, error) {
-	return keel.List[*capturecoversheet.CaptureCoverSheet](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*capturecoversheet.CaptureCoverSheet)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *CaptureCoverSheetsQuery) All(ctx context.Context, db *keel.DB) ([]*capturecoversheet.CaptureCoverSheet, error) {
-	return keel.All[*capturecoversheet.CaptureCoverSheet](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*capturecoversheet.CaptureCoverSheet)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *CaptureCoverSheetsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*capturecoversheet.CaptureCoverSheet, error) {
-	return keel.UpdateReturning[*capturecoversheet.CaptureCoverSheet](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*capturecoversheet.CaptureCoverSheet)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *CaptureCoverSheetsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*capturecoversheet.CaptureCoverSheet], error) {
-	return keel.PageOf[*capturecoversheet.CaptureCoverSheet](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*capturecoversheet.CaptureCoverSheet])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *CaptureCoverSheetsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*capturecoversheet.CaptureCoverSheet) error) error {
-	return keel.Each[*capturecoversheet.CaptureCoverSheet](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*capturecoversheet.CaptureCoverSheet)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newCaptureCoverSheet() unsafe.Pointer {

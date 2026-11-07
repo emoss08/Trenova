@@ -97,25 +97,25 @@ type InvoiceAdjustmentControlsTable struct {
 // InvoiceAdjustmentControls references the invoice_adjustment_controls table.
 var InvoiceAdjustmentControls = &InvoiceAdjustmentControlsTable{
 	TableBase:                            keel.TableBase{Ref: &invoiceAdjustmentControlsRef},
-	ID:                                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentControlsRef, Index: 0}}},
-	BusinessUnitID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentControlsRef, Index: 1}}},
-	OrganizationID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentControlsRef, Index: 2}}},
-	PartiallyPaidInvoiceAdjustmentPolicy: AdjustmentEligibilityPolicyCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentControlsRef, Index: 3}}},
-	PaidInvoiceAdjustmentPolicy:          AdjustmentEligibilityPolicyCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentControlsRef, Index: 4}}},
-	DisputedInvoiceAdjustmentPolicy:      AdjustmentEligibilityPolicyCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentControlsRef, Index: 5}}},
-	AdjustmentAccountingDatePolicy:       AdjustmentAccountingDatePolicyCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentControlsRef, Index: 6}}},
-	ClosedPeriodAdjustmentPolicy:         ClosedPeriodAdjustmentPolicyCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentControlsRef, Index: 7}}},
-	AdjustmentReasonRequirement:          RequirementPolicyCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentControlsRef, Index: 8}}},
-	StandardAdjustmentApprovalPolicy:     ApprovalPolicyCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentControlsRef, Index: 9}}},
+	ID:                                   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentControlsRef, Index: 0}}},
+	BusinessUnitID:                       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentControlsRef, Index: 1}}},
+	OrganizationID:                       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentControlsRef, Index: 2}}},
+	PartiallyPaidInvoiceAdjustmentPolicy: AdjustmentEligibilityPolicyCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentControlsRef, Index: 3}}},
+	PaidInvoiceAdjustmentPolicy:          AdjustmentEligibilityPolicyCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentControlsRef, Index: 4}}},
+	DisputedInvoiceAdjustmentPolicy:      AdjustmentEligibilityPolicyCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentControlsRef, Index: 5}}},
+	AdjustmentAccountingDatePolicy:       AdjustmentAccountingDatePolicyCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentControlsRef, Index: 6}}},
+	ClosedPeriodAdjustmentPolicy:         ClosedPeriodAdjustmentPolicyCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentControlsRef, Index: 7}}},
+	AdjustmentReasonRequirement:          RequirementPolicyCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentControlsRef, Index: 8}}},
+	StandardAdjustmentApprovalPolicy:     ApprovalPolicyCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentControlsRef, Index: 9}}},
 	StandardAdjustmentApprovalThreshold:  keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &invoiceAdjustmentControlsRef, Index: 10}}},
-	WriteOffApprovalPolicy:               WriteOffApprovalPolicyCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentControlsRef, Index: 11}}},
+	WriteOffApprovalPolicy:               WriteOffApprovalPolicyCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentControlsRef, Index: 11}}},
 	WriteOffApprovalThreshold:            keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &invoiceAdjustmentControlsRef, Index: 12}}},
 	RequireSeparateApprover:              keel.BoolCol{Col: keel.Col{Ref: &invoiceAdjustmentControlsRef, Index: 13}},
 	RerateVarianceTolerancePercent:       keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &invoiceAdjustmentControlsRef, Index: 14}}},
-	ReplacementInvoiceReviewPolicy:       ReplacementInvoiceReviewPolicyCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentControlsRef, Index: 15}}},
-	CustomerCreditBalancePolicy:          CustomerCreditBalancePolicyCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentControlsRef, Index: 16}}},
-	OverCreditPolicy:                     OverCreditPolicyCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentControlsRef, Index: 17}}},
-	SupersededInvoiceVisibilityPolicy:    SupersededInvoiceVisibilityPolicyCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceAdjustmentControlsRef, Index: 18}}},
+	ReplacementInvoiceReviewPolicy:       ReplacementInvoiceReviewPolicyCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentControlsRef, Index: 15}}},
+	CustomerCreditBalancePolicy:          CustomerCreditBalancePolicyCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentControlsRef, Index: 16}}},
+	OverCreditPolicy:                     OverCreditPolicyCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentControlsRef, Index: 17}}},
+	SupersededInvoiceVisibilityPolicy:    SupersededInvoiceVisibilityPolicyCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceAdjustmentControlsRef, Index: 18}}},
 	Version:                              keel.Int64Col{Col: keel.Col{Ref: &invoiceAdjustmentControlsRef, Index: 19}},
 	CreatedAt:                            keel.Int64Col{Col: keel.Col{Ref: &invoiceAdjustmentControlsRef, Index: 20}},
 	UpdatedAt:                            keel.Int64Col{Col: keel.Col{Ref: &invoiceAdjustmentControlsRef, Index: 21}},
@@ -125,25 +125,25 @@ var InvoiceAdjustmentControls = &InvoiceAdjustmentControlsTable{
 func BuildInvoiceAdjustmentControls(r *keel.Ref) *InvoiceAdjustmentControlsTable {
 	return &InvoiceAdjustmentControlsTable{
 		TableBase:                            keel.TableBase{Ref: r},
-		ID:                                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		PartiallyPaidInvoiceAdjustmentPolicy: AdjustmentEligibilityPolicyCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		PaidInvoiceAdjustmentPolicy:          AdjustmentEligibilityPolicyCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		DisputedInvoiceAdjustmentPolicy:      AdjustmentEligibilityPolicyCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		AdjustmentAccountingDatePolicy:       AdjustmentAccountingDatePolicyCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		ClosedPeriodAdjustmentPolicy:         ClosedPeriodAdjustmentPolicyCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
-		AdjustmentReasonRequirement:          RequirementPolicyCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
-		StandardAdjustmentApprovalPolicy:     ApprovalPolicyCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		ID:                                   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:                       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:                       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		PartiallyPaidInvoiceAdjustmentPolicy: AdjustmentEligibilityPolicyCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		PaidInvoiceAdjustmentPolicy:          AdjustmentEligibilityPolicyCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		DisputedInvoiceAdjustmentPolicy:      AdjustmentEligibilityPolicyCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		AdjustmentAccountingDatePolicy:       AdjustmentAccountingDatePolicyCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		ClosedPeriodAdjustmentPolicy:         ClosedPeriodAdjustmentPolicyCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		AdjustmentReasonRequirement:          RequirementPolicyCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		StandardAdjustmentApprovalPolicy:     ApprovalPolicyCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
 		StandardAdjustmentApprovalThreshold:  keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 10}}},
-		WriteOffApprovalPolicy:               WriteOffApprovalPolicyCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
+		WriteOffApprovalPolicy:               WriteOffApprovalPolicyCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 11}}},
 		WriteOffApprovalThreshold:            keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 12}}},
 		RequireSeparateApprover:              keel.BoolCol{Col: keel.Col{Ref: r, Index: 13}},
 		RerateVarianceTolerancePercent:       keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 14}}},
-		ReplacementInvoiceReviewPolicy:       ReplacementInvoiceReviewPolicyCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 15}}},
-		CustomerCreditBalancePolicy:          CustomerCreditBalancePolicyCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 16}}},
-		OverCreditPolicy:                     OverCreditPolicyCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 17}}},
-		SupersededInvoiceVisibilityPolicy:    SupersededInvoiceVisibilityPolicyCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 18}}},
+		ReplacementInvoiceReviewPolicy:       ReplacementInvoiceReviewPolicyCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 15}}},
+		CustomerCreditBalancePolicy:          CustomerCreditBalancePolicyCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 16}}},
+		OverCreditPolicy:                     OverCreditPolicyCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 17}}},
+		SupersededInvoiceVisibilityPolicy:    SupersededInvoiceVisibilityPolicyCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 18}}},
 		Version:                              keel.Int64Col{Col: keel.Col{Ref: r, Index: 19}},
 		CreatedAt:                            keel.Int64Col{Col: keel.Col{Ref: r, Index: 20}},
 		UpdatedAt:                            keel.Int64Col{Col: keel.Col{Ref: r, Index: 21}},
@@ -165,8 +165,6 @@ func (t *InvoiceAdjustmentControlsTable) Get(ctx context.Context, db *keel.DB, k
 
 // InvoiceAdjustmentControlsQuery is a query over invoiceadjustmentcontrol.InvoiceAdjustmentControl.
 type InvoiceAdjustmentControlsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*invoiceadjustmentcontrol.InvoiceAdjustmentControl] = (*InvoiceAdjustmentControlsTable)(nil)
 
 var _ keel.Query[*invoiceadjustmentcontrol.InvoiceAdjustmentControl] = (*InvoiceAdjustmentControlsQuery)(nil)
 
@@ -282,42 +280,42 @@ func (t *InvoiceAdjustmentControlsTable) Compute(col keel.Column, e keel.Expr) k
 
 // Create inserts row.
 func (t *InvoiceAdjustmentControlsTable) Create(ctx context.Context, db *keel.DB, row *invoiceadjustmentcontrol.InvoiceAdjustmentControl) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *InvoiceAdjustmentControlsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*invoiceadjustmentcontrol.InvoiceAdjustmentControl) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *InvoiceAdjustmentControlsTable) Save(ctx context.Context, db *keel.DB, row *invoiceadjustmentcontrol.InvoiceAdjustmentControl, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *InvoiceAdjustmentControlsTable) SaveExcept(ctx context.Context, db *keel.DB, row *invoiceadjustmentcontrol.InvoiceAdjustmentControl, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *InvoiceAdjustmentControlsTable) DeleteRow(ctx context.Context, db *keel.DB, row *invoiceadjustmentcontrol.InvoiceAdjustmentControl) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *InvoiceAdjustmentControlsTable) Upsert(ctx context.Context, db *keel.DB, rows []*invoiceadjustmentcontrol.InvoiceAdjustmentControl, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *InvoiceAdjustmentControlsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*invoiceadjustmentcontrol.InvoiceAdjustmentControl, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *InvoiceAdjustmentControlsTable) Copy(ctx context.Context, db *keel.DB, rows []*invoiceadjustmentcontrol.InvoiceAdjustmentControl) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -489,37 +487,45 @@ func (q *InvoiceAdjustmentControlsQuery) Clone() keel.Query[*invoiceadjustmentco
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *InvoiceAdjustmentControlsQuery) One(ctx context.Context, db *keel.DB) (*invoiceadjustmentcontrol.InvoiceAdjustmentControl, error) {
-	return keel.One[*invoiceadjustmentcontrol.InvoiceAdjustmentControl](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*invoiceadjustmentcontrol.InvoiceAdjustmentControl)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *InvoiceAdjustmentControlsQuery) First(ctx context.Context, db *keel.DB) (*invoiceadjustmentcontrol.InvoiceAdjustmentControl, error) {
-	return keel.First[*invoiceadjustmentcontrol.InvoiceAdjustmentControl](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*invoiceadjustmentcontrol.InvoiceAdjustmentControl)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *InvoiceAdjustmentControlsQuery) List(ctx context.Context, db *keel.DB) ([]*invoiceadjustmentcontrol.InvoiceAdjustmentControl, error) {
-	return keel.List[*invoiceadjustmentcontrol.InvoiceAdjustmentControl](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*invoiceadjustmentcontrol.InvoiceAdjustmentControl)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *InvoiceAdjustmentControlsQuery) All(ctx context.Context, db *keel.DB) ([]*invoiceadjustmentcontrol.InvoiceAdjustmentControl, error) {
-	return keel.All[*invoiceadjustmentcontrol.InvoiceAdjustmentControl](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*invoiceadjustmentcontrol.InvoiceAdjustmentControl)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *InvoiceAdjustmentControlsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*invoiceadjustmentcontrol.InvoiceAdjustmentControl, error) {
-	return keel.UpdateReturning[*invoiceadjustmentcontrol.InvoiceAdjustmentControl](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*invoiceadjustmentcontrol.InvoiceAdjustmentControl)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *InvoiceAdjustmentControlsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*invoiceadjustmentcontrol.InvoiceAdjustmentControl], error) {
-	return keel.PageOf[*invoiceadjustmentcontrol.InvoiceAdjustmentControl](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*invoiceadjustmentcontrol.InvoiceAdjustmentControl])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *InvoiceAdjustmentControlsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*invoiceadjustmentcontrol.InvoiceAdjustmentControl) error) error {
-	return keel.Each[*invoiceadjustmentcontrol.InvoiceAdjustmentControl](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*invoiceadjustmentcontrol.InvoiceAdjustmentControl)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newInvoiceAdjustmentControl() unsafe.Pointer {
@@ -698,371 +704,371 @@ var enumWriteOffApprovalPolicy = [...]schema.EnumValue{
 }
 
 // AdjustmentAccountingDatePolicyCol is a column of invoiceadjustmentcontrol.AdjustmentAccountingDatePolicy values.
-type AdjustmentAccountingDatePolicyCol struct{ keel.StringCol }
+type AdjustmentAccountingDatePolicyCol struct{ keel.TypedStringCol }
 
 func (c AdjustmentAccountingDatePolicyCol) Eq(v invoiceadjustmentcontrol.AdjustmentAccountingDatePolicy) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c AdjustmentAccountingDatePolicyCol) Ne(v invoiceadjustmentcontrol.AdjustmentAccountingDatePolicy) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c AdjustmentAccountingDatePolicyCol) Gt(v invoiceadjustmentcontrol.AdjustmentAccountingDatePolicy) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c AdjustmentAccountingDatePolicyCol) Gte(v invoiceadjustmentcontrol.AdjustmentAccountingDatePolicy) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c AdjustmentAccountingDatePolicyCol) Lt(v invoiceadjustmentcontrol.AdjustmentAccountingDatePolicy) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c AdjustmentAccountingDatePolicyCol) Lte(v invoiceadjustmentcontrol.AdjustmentAccountingDatePolicy) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c AdjustmentAccountingDatePolicyCol) IsDistinctFrom(v invoiceadjustmentcontrol.AdjustmentAccountingDatePolicy) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c AdjustmentAccountingDatePolicyCol) Between(lo, hi invoiceadjustmentcontrol.AdjustmentAccountingDatePolicy) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c AdjustmentAccountingDatePolicyCol) To(v invoiceadjustmentcontrol.AdjustmentAccountingDatePolicy) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c AdjustmentAccountingDatePolicyCol) In(vs ...invoiceadjustmentcontrol.AdjustmentAccountingDatePolicy) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c AdjustmentAccountingDatePolicyCol) NotIn(vs ...invoiceadjustmentcontrol.AdjustmentAccountingDatePolicy) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // AdjustmentEligibilityPolicyCol is a column of invoiceadjustmentcontrol.AdjustmentEligibilityPolicy values.
-type AdjustmentEligibilityPolicyCol struct{ keel.StringCol }
+type AdjustmentEligibilityPolicyCol struct{ keel.TypedStringCol }
 
 func (c AdjustmentEligibilityPolicyCol) Eq(v invoiceadjustmentcontrol.AdjustmentEligibilityPolicy) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c AdjustmentEligibilityPolicyCol) Ne(v invoiceadjustmentcontrol.AdjustmentEligibilityPolicy) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c AdjustmentEligibilityPolicyCol) Gt(v invoiceadjustmentcontrol.AdjustmentEligibilityPolicy) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c AdjustmentEligibilityPolicyCol) Gte(v invoiceadjustmentcontrol.AdjustmentEligibilityPolicy) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c AdjustmentEligibilityPolicyCol) Lt(v invoiceadjustmentcontrol.AdjustmentEligibilityPolicy) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c AdjustmentEligibilityPolicyCol) Lte(v invoiceadjustmentcontrol.AdjustmentEligibilityPolicy) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c AdjustmentEligibilityPolicyCol) IsDistinctFrom(v invoiceadjustmentcontrol.AdjustmentEligibilityPolicy) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c AdjustmentEligibilityPolicyCol) Between(lo, hi invoiceadjustmentcontrol.AdjustmentEligibilityPolicy) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c AdjustmentEligibilityPolicyCol) To(v invoiceadjustmentcontrol.AdjustmentEligibilityPolicy) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c AdjustmentEligibilityPolicyCol) In(vs ...invoiceadjustmentcontrol.AdjustmentEligibilityPolicy) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c AdjustmentEligibilityPolicyCol) NotIn(vs ...invoiceadjustmentcontrol.AdjustmentEligibilityPolicy) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // ApprovalPolicyCol is a column of invoiceadjustmentcontrol.ApprovalPolicy values.
-type ApprovalPolicyCol struct{ keel.StringCol }
+type ApprovalPolicyCol struct{ keel.TypedStringCol }
 
 func (c ApprovalPolicyCol) Eq(v invoiceadjustmentcontrol.ApprovalPolicy) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c ApprovalPolicyCol) Ne(v invoiceadjustmentcontrol.ApprovalPolicy) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c ApprovalPolicyCol) Gt(v invoiceadjustmentcontrol.ApprovalPolicy) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c ApprovalPolicyCol) Gte(v invoiceadjustmentcontrol.ApprovalPolicy) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c ApprovalPolicyCol) Lt(v invoiceadjustmentcontrol.ApprovalPolicy) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c ApprovalPolicyCol) Lte(v invoiceadjustmentcontrol.ApprovalPolicy) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c ApprovalPolicyCol) IsDistinctFrom(v invoiceadjustmentcontrol.ApprovalPolicy) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ApprovalPolicyCol) Between(lo, hi invoiceadjustmentcontrol.ApprovalPolicy) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c ApprovalPolicyCol) To(v invoiceadjustmentcontrol.ApprovalPolicy) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c ApprovalPolicyCol) In(vs ...invoiceadjustmentcontrol.ApprovalPolicy) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ApprovalPolicyCol) NotIn(vs ...invoiceadjustmentcontrol.ApprovalPolicy) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // ClosedPeriodAdjustmentPolicyCol is a column of invoiceadjustmentcontrol.ClosedPeriodAdjustmentPolicy values.
-type ClosedPeriodAdjustmentPolicyCol struct{ keel.StringCol }
+type ClosedPeriodAdjustmentPolicyCol struct{ keel.TypedStringCol }
 
 func (c ClosedPeriodAdjustmentPolicyCol) Eq(v invoiceadjustmentcontrol.ClosedPeriodAdjustmentPolicy) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c ClosedPeriodAdjustmentPolicyCol) Ne(v invoiceadjustmentcontrol.ClosedPeriodAdjustmentPolicy) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c ClosedPeriodAdjustmentPolicyCol) Gt(v invoiceadjustmentcontrol.ClosedPeriodAdjustmentPolicy) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c ClosedPeriodAdjustmentPolicyCol) Gte(v invoiceadjustmentcontrol.ClosedPeriodAdjustmentPolicy) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c ClosedPeriodAdjustmentPolicyCol) Lt(v invoiceadjustmentcontrol.ClosedPeriodAdjustmentPolicy) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c ClosedPeriodAdjustmentPolicyCol) Lte(v invoiceadjustmentcontrol.ClosedPeriodAdjustmentPolicy) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c ClosedPeriodAdjustmentPolicyCol) IsDistinctFrom(v invoiceadjustmentcontrol.ClosedPeriodAdjustmentPolicy) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ClosedPeriodAdjustmentPolicyCol) Between(lo, hi invoiceadjustmentcontrol.ClosedPeriodAdjustmentPolicy) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c ClosedPeriodAdjustmentPolicyCol) To(v invoiceadjustmentcontrol.ClosedPeriodAdjustmentPolicy) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c ClosedPeriodAdjustmentPolicyCol) In(vs ...invoiceadjustmentcontrol.ClosedPeriodAdjustmentPolicy) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ClosedPeriodAdjustmentPolicyCol) NotIn(vs ...invoiceadjustmentcontrol.ClosedPeriodAdjustmentPolicy) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // CustomerCreditBalancePolicyCol is a column of invoiceadjustmentcontrol.CustomerCreditBalancePolicy values.
-type CustomerCreditBalancePolicyCol struct{ keel.StringCol }
+type CustomerCreditBalancePolicyCol struct{ keel.TypedStringCol }
 
 func (c CustomerCreditBalancePolicyCol) Eq(v invoiceadjustmentcontrol.CustomerCreditBalancePolicy) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c CustomerCreditBalancePolicyCol) Ne(v invoiceadjustmentcontrol.CustomerCreditBalancePolicy) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c CustomerCreditBalancePolicyCol) Gt(v invoiceadjustmentcontrol.CustomerCreditBalancePolicy) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c CustomerCreditBalancePolicyCol) Gte(v invoiceadjustmentcontrol.CustomerCreditBalancePolicy) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c CustomerCreditBalancePolicyCol) Lt(v invoiceadjustmentcontrol.CustomerCreditBalancePolicy) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c CustomerCreditBalancePolicyCol) Lte(v invoiceadjustmentcontrol.CustomerCreditBalancePolicy) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c CustomerCreditBalancePolicyCol) IsDistinctFrom(v invoiceadjustmentcontrol.CustomerCreditBalancePolicy) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c CustomerCreditBalancePolicyCol) Between(lo, hi invoiceadjustmentcontrol.CustomerCreditBalancePolicy) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c CustomerCreditBalancePolicyCol) To(v invoiceadjustmentcontrol.CustomerCreditBalancePolicy) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c CustomerCreditBalancePolicyCol) In(vs ...invoiceadjustmentcontrol.CustomerCreditBalancePolicy) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c CustomerCreditBalancePolicyCol) NotIn(vs ...invoiceadjustmentcontrol.CustomerCreditBalancePolicy) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // OverCreditPolicyCol is a column of invoiceadjustmentcontrol.OverCreditPolicy values.
-type OverCreditPolicyCol struct{ keel.StringCol }
+type OverCreditPolicyCol struct{ keel.TypedStringCol }
 
 func (c OverCreditPolicyCol) Eq(v invoiceadjustmentcontrol.OverCreditPolicy) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c OverCreditPolicyCol) Ne(v invoiceadjustmentcontrol.OverCreditPolicy) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c OverCreditPolicyCol) Gt(v invoiceadjustmentcontrol.OverCreditPolicy) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c OverCreditPolicyCol) Gte(v invoiceadjustmentcontrol.OverCreditPolicy) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c OverCreditPolicyCol) Lt(v invoiceadjustmentcontrol.OverCreditPolicy) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c OverCreditPolicyCol) Lte(v invoiceadjustmentcontrol.OverCreditPolicy) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c OverCreditPolicyCol) IsDistinctFrom(v invoiceadjustmentcontrol.OverCreditPolicy) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c OverCreditPolicyCol) Between(lo, hi invoiceadjustmentcontrol.OverCreditPolicy) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c OverCreditPolicyCol) To(v invoiceadjustmentcontrol.OverCreditPolicy) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c OverCreditPolicyCol) In(vs ...invoiceadjustmentcontrol.OverCreditPolicy) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c OverCreditPolicyCol) NotIn(vs ...invoiceadjustmentcontrol.OverCreditPolicy) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // ReplacementInvoiceReviewPolicyCol is a column of invoiceadjustmentcontrol.ReplacementInvoiceReviewPolicy values.
-type ReplacementInvoiceReviewPolicyCol struct{ keel.StringCol }
+type ReplacementInvoiceReviewPolicyCol struct{ keel.TypedStringCol }
 
 func (c ReplacementInvoiceReviewPolicyCol) Eq(v invoiceadjustmentcontrol.ReplacementInvoiceReviewPolicy) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c ReplacementInvoiceReviewPolicyCol) Ne(v invoiceadjustmentcontrol.ReplacementInvoiceReviewPolicy) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c ReplacementInvoiceReviewPolicyCol) Gt(v invoiceadjustmentcontrol.ReplacementInvoiceReviewPolicy) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c ReplacementInvoiceReviewPolicyCol) Gte(v invoiceadjustmentcontrol.ReplacementInvoiceReviewPolicy) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c ReplacementInvoiceReviewPolicyCol) Lt(v invoiceadjustmentcontrol.ReplacementInvoiceReviewPolicy) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c ReplacementInvoiceReviewPolicyCol) Lte(v invoiceadjustmentcontrol.ReplacementInvoiceReviewPolicy) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c ReplacementInvoiceReviewPolicyCol) IsDistinctFrom(v invoiceadjustmentcontrol.ReplacementInvoiceReviewPolicy) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ReplacementInvoiceReviewPolicyCol) Between(lo, hi invoiceadjustmentcontrol.ReplacementInvoiceReviewPolicy) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c ReplacementInvoiceReviewPolicyCol) To(v invoiceadjustmentcontrol.ReplacementInvoiceReviewPolicy) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c ReplacementInvoiceReviewPolicyCol) In(vs ...invoiceadjustmentcontrol.ReplacementInvoiceReviewPolicy) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ReplacementInvoiceReviewPolicyCol) NotIn(vs ...invoiceadjustmentcontrol.ReplacementInvoiceReviewPolicy) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // RequirementPolicyCol is a column of invoiceadjustmentcontrol.RequirementPolicy values.
-type RequirementPolicyCol struct{ keel.StringCol }
+type RequirementPolicyCol struct{ keel.TypedStringCol }
 
 func (c RequirementPolicyCol) Eq(v invoiceadjustmentcontrol.RequirementPolicy) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c RequirementPolicyCol) Ne(v invoiceadjustmentcontrol.RequirementPolicy) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c RequirementPolicyCol) Gt(v invoiceadjustmentcontrol.RequirementPolicy) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c RequirementPolicyCol) Gte(v invoiceadjustmentcontrol.RequirementPolicy) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c RequirementPolicyCol) Lt(v invoiceadjustmentcontrol.RequirementPolicy) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c RequirementPolicyCol) Lte(v invoiceadjustmentcontrol.RequirementPolicy) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c RequirementPolicyCol) IsDistinctFrom(v invoiceadjustmentcontrol.RequirementPolicy) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c RequirementPolicyCol) Between(lo, hi invoiceadjustmentcontrol.RequirementPolicy) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c RequirementPolicyCol) To(v invoiceadjustmentcontrol.RequirementPolicy) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c RequirementPolicyCol) In(vs ...invoiceadjustmentcontrol.RequirementPolicy) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c RequirementPolicyCol) NotIn(vs ...invoiceadjustmentcontrol.RequirementPolicy) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // SupersededInvoiceVisibilityPolicyCol is a column of invoiceadjustmentcontrol.SupersededInvoiceVisibilityPolicy values.
-type SupersededInvoiceVisibilityPolicyCol struct{ keel.StringCol }
+type SupersededInvoiceVisibilityPolicyCol struct{ keel.TypedStringCol }
 
 func (c SupersededInvoiceVisibilityPolicyCol) Eq(v invoiceadjustmentcontrol.SupersededInvoiceVisibilityPolicy) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c SupersededInvoiceVisibilityPolicyCol) Ne(v invoiceadjustmentcontrol.SupersededInvoiceVisibilityPolicy) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c SupersededInvoiceVisibilityPolicyCol) Gt(v invoiceadjustmentcontrol.SupersededInvoiceVisibilityPolicy) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c SupersededInvoiceVisibilityPolicyCol) Gte(v invoiceadjustmentcontrol.SupersededInvoiceVisibilityPolicy) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c SupersededInvoiceVisibilityPolicyCol) Lt(v invoiceadjustmentcontrol.SupersededInvoiceVisibilityPolicy) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c SupersededInvoiceVisibilityPolicyCol) Lte(v invoiceadjustmentcontrol.SupersededInvoiceVisibilityPolicy) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c SupersededInvoiceVisibilityPolicyCol) IsDistinctFrom(v invoiceadjustmentcontrol.SupersededInvoiceVisibilityPolicy) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c SupersededInvoiceVisibilityPolicyCol) Between(lo, hi invoiceadjustmentcontrol.SupersededInvoiceVisibilityPolicy) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c SupersededInvoiceVisibilityPolicyCol) To(v invoiceadjustmentcontrol.SupersededInvoiceVisibilityPolicy) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c SupersededInvoiceVisibilityPolicyCol) In(vs ...invoiceadjustmentcontrol.SupersededInvoiceVisibilityPolicy) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c SupersededInvoiceVisibilityPolicyCol) NotIn(vs ...invoiceadjustmentcontrol.SupersededInvoiceVisibilityPolicy) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // WriteOffApprovalPolicyCol is a column of invoiceadjustmentcontrol.WriteOffApprovalPolicy values.
-type WriteOffApprovalPolicyCol struct{ keel.StringCol }
+type WriteOffApprovalPolicyCol struct{ keel.TypedStringCol }
 
 func (c WriteOffApprovalPolicyCol) Eq(v invoiceadjustmentcontrol.WriteOffApprovalPolicy) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c WriteOffApprovalPolicyCol) Ne(v invoiceadjustmentcontrol.WriteOffApprovalPolicy) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c WriteOffApprovalPolicyCol) Gt(v invoiceadjustmentcontrol.WriteOffApprovalPolicy) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c WriteOffApprovalPolicyCol) Gte(v invoiceadjustmentcontrol.WriteOffApprovalPolicy) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c WriteOffApprovalPolicyCol) Lt(v invoiceadjustmentcontrol.WriteOffApprovalPolicy) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c WriteOffApprovalPolicyCol) Lte(v invoiceadjustmentcontrol.WriteOffApprovalPolicy) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c WriteOffApprovalPolicyCol) IsDistinctFrom(v invoiceadjustmentcontrol.WriteOffApprovalPolicy) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c WriteOffApprovalPolicyCol) Between(lo, hi invoiceadjustmentcontrol.WriteOffApprovalPolicy) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c WriteOffApprovalPolicyCol) To(v invoiceadjustmentcontrol.WriteOffApprovalPolicy) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c WriteOffApprovalPolicyCol) In(vs ...invoiceadjustmentcontrol.WriteOffApprovalPolicy) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c WriteOffApprovalPolicyCol) NotIn(vs ...invoiceadjustmentcontrol.WriteOffApprovalPolicy) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

@@ -91,15 +91,15 @@ type TableConfigurationsTable struct {
 // TableConfigurations references the table_configurations table.
 var TableConfigurations = &TableConfigurationsTable{
 	TableBase:      keel.TableBase{Ref: &tableConfigurationsRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tableConfigurationsRef, Index: 0}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tableConfigurationsRef, Index: 1}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tableConfigurationsRef, Index: 2}}},
-	UserID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tableConfigurationsRef, Index: 3}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &tableConfigurationsRef, Index: 0}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &tableConfigurationsRef, Index: 1}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &tableConfigurationsRef, Index: 2}}},
+	UserID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &tableConfigurationsRef, Index: 3}}},
 	Name:           keel.StringCol{Col: keel.Col{Ref: &tableConfigurationsRef, Index: 4}},
 	Description:    keel.StringCol{Col: keel.Col{Ref: &tableConfigurationsRef, Index: 5}},
 	Resource:       keel.StringCol{Col: keel.Col{Ref: &tableConfigurationsRef, Index: 6}},
 	TableConfig:    keel.JSONBCol{Col: keel.Col{Ref: &tableConfigurationsRef, Index: 7}},
-	Visibility:     VisibilityCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tableConfigurationsRef, Index: 8}}},
+	Visibility:     VisibilityCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &tableConfigurationsRef, Index: 8}}},
 	SearchVector:   keel.TSVectorCol{Col: keel.Col{Ref: &tableConfigurationsRef, Index: 9}},
 	Rank:           keel.StringCol{Col: keel.Col{Ref: &tableConfigurationsRef, Index: 10}},
 	IsDefault:      keel.BoolCol{Col: keel.Col{Ref: &tableConfigurationsRef, Index: 11}},
@@ -113,15 +113,15 @@ var TableConfigurations = &TableConfigurationsTable{
 func BuildTableConfigurations(r *keel.Ref) *TableConfigurationsTable {
 	return &TableConfigurationsTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		UserID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		UserID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		Name:           keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		Description:    keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		Resource:       keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
 		TableConfig:    keel.JSONBCol{Col: keel.Col{Ref: r, Index: 7}},
-		Visibility:     VisibilityCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		Visibility:     VisibilityCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
 		SearchVector:   keel.TSVectorCol{Col: keel.Col{Ref: r, Index: 9}},
 		Rank:           keel.StringCol{Col: keel.Col{Ref: r, Index: 10}},
 		IsDefault:      keel.BoolCol{Col: keel.Col{Ref: r, Index: 11}},
@@ -152,8 +152,6 @@ func (t *TableConfigurationsTable) Get(ctx context.Context, db *keel.DB, key pul
 
 // TableConfigurationsQuery is a query over tableconfiguration.TableConfiguration.
 type TableConfigurationsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*tableconfiguration.TableConfiguration] = (*TableConfigurationsTable)(nil)
 
 var _ keel.Query[*tableconfiguration.TableConfiguration] = (*TableConfigurationsQuery)(nil)
 
@@ -269,42 +267,42 @@ func (t *TableConfigurationsTable) Compute(col keel.Column, e keel.Expr) keel.Qu
 
 // Create inserts row.
 func (t *TableConfigurationsTable) Create(ctx context.Context, db *keel.DB, row *tableconfiguration.TableConfiguration) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *TableConfigurationsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*tableconfiguration.TableConfiguration) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *TableConfigurationsTable) Save(ctx context.Context, db *keel.DB, row *tableconfiguration.TableConfiguration, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *TableConfigurationsTable) SaveExcept(ctx context.Context, db *keel.DB, row *tableconfiguration.TableConfiguration, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *TableConfigurationsTable) DeleteRow(ctx context.Context, db *keel.DB, row *tableconfiguration.TableConfiguration) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *TableConfigurationsTable) Upsert(ctx context.Context, db *keel.DB, rows []*tableconfiguration.TableConfiguration, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *TableConfigurationsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*tableconfiguration.TableConfiguration, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *TableConfigurationsTable) Copy(ctx context.Context, db *keel.DB, rows []*tableconfiguration.TableConfiguration) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -476,37 +474,45 @@ func (q *TableConfigurationsQuery) Clone() keel.Query[*tableconfiguration.TableC
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *TableConfigurationsQuery) One(ctx context.Context, db *keel.DB) (*tableconfiguration.TableConfiguration, error) {
-	return keel.One[*tableconfiguration.TableConfiguration](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*tableconfiguration.TableConfiguration)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *TableConfigurationsQuery) First(ctx context.Context, db *keel.DB) (*tableconfiguration.TableConfiguration, error) {
-	return keel.First[*tableconfiguration.TableConfiguration](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*tableconfiguration.TableConfiguration)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *TableConfigurationsQuery) List(ctx context.Context, db *keel.DB) ([]*tableconfiguration.TableConfiguration, error) {
-	return keel.List[*tableconfiguration.TableConfiguration](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*tableconfiguration.TableConfiguration)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *TableConfigurationsQuery) All(ctx context.Context, db *keel.DB) ([]*tableconfiguration.TableConfiguration, error) {
-	return keel.All[*tableconfiguration.TableConfiguration](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*tableconfiguration.TableConfiguration)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *TableConfigurationsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*tableconfiguration.TableConfiguration, error) {
-	return keel.UpdateReturning[*tableconfiguration.TableConfiguration](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*tableconfiguration.TableConfiguration)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *TableConfigurationsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*tableconfiguration.TableConfiguration], error) {
-	return keel.PageOf[*tableconfiguration.TableConfiguration](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*tableconfiguration.TableConfiguration])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *TableConfigurationsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*tableconfiguration.TableConfiguration) error) error {
-	return keel.Each[*tableconfiguration.TableConfiguration](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*tableconfiguration.TableConfiguration)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newTableConfiguration() unsafe.Pointer {
@@ -624,38 +630,26 @@ var enumVisibility = [...]schema.EnumValue{
 }
 
 // VisibilityCol is a column of tableconfiguration.Visibility values.
-type VisibilityCol struct{ keel.StringCol }
+type VisibilityCol struct{ keel.TypedStringCol }
 
-func (c VisibilityCol) Eq(v tableconfiguration.Visibility) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c VisibilityCol) Ne(v tableconfiguration.Visibility) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c VisibilityCol) Gt(v tableconfiguration.Visibility) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
-func (c VisibilityCol) Gte(v tableconfiguration.Visibility) keel.Pred {
-	return c.StringCol.Gte(string(v))
-}
-func (c VisibilityCol) Lt(v tableconfiguration.Visibility) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
-func (c VisibilityCol) Lte(v tableconfiguration.Visibility) keel.Pred {
-	return c.StringCol.Lte(string(v))
-}
+func (c VisibilityCol) Eq(v tableconfiguration.Visibility) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c VisibilityCol) Ne(v tableconfiguration.Visibility) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c VisibilityCol) Gt(v tableconfiguration.Visibility) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c VisibilityCol) Gte(v tableconfiguration.Visibility) keel.Pred { return c.Text().Gte(string(v)) }
+func (c VisibilityCol) Lt(v tableconfiguration.Visibility) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c VisibilityCol) Lte(v tableconfiguration.Visibility) keel.Pred { return c.Text().Lte(string(v)) }
 func (c VisibilityCol) IsDistinctFrom(v tableconfiguration.Visibility) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c VisibilityCol) Between(lo, hi tableconfiguration.Visibility) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c VisibilityCol) To(v tableconfiguration.Visibility) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c VisibilityCol) In(vs ...tableconfiguration.Visibility) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c VisibilityCol) NotIn(vs ...tableconfiguration.Visibility) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

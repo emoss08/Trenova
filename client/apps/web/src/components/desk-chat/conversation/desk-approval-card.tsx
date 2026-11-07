@@ -1,4 +1,4 @@
-import { decideBatch } from "@/components/assistant/approval-actions";
+import { CONVERSATION_REJECT_REASON, decideBatch } from "@/components/assistant/approval-actions";
 import { useDecisionFollowUp } from "@/components/assistant/decision-follow-up";
 import {
   holdActionText,
@@ -39,15 +39,24 @@ import {
   markProposalsStatus,
 } from "@/lib/proposal-cache";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { ReasonDialog } from "@/components/reason-dialog";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
+import { formatShortcut } from "@trenova/shared/lib/shortcuts";
 import { cn } from "@trenova/shared/lib/utils";
 import { buttonVariants } from "@trenova/shared/lib/variants/button";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useEffect, useState, type MutableRefObject } from "react";
 import { Link } from "react-router";
 import { toast } from "@trenova/shared/components/ui/toast";
-import { DeskIcon } from "../desk-icons";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@trenova/shared/components/ui/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
+import { DeskIcon, type DeskIconName } from "../desk-icons";
 import {
   approvalFacts,
   recordCount,
@@ -74,7 +83,7 @@ type CardProps = {
    * the server says when it commits, cleared if the server refuses it.
    */
   undo: Pick<UndoController, "start" | "scheduled" | "clear">;
-  /** Kept pointing at this card's approve while it can approve, for ⌘↵. */
+  /** Kept pointing at this card's approve while it can approve, for Cmd/Ctrl+Enter. */
   approveRef: MutableRefObject<(() => void) | null>;
   /** Asks the agent something in the conversation, such as to redraft a stale change. */
   onAsk?: (text: string) => void;
@@ -86,8 +95,9 @@ function hold(undo: CardProps["undo"], held: Held) {
 
 /**
  * The change waiting on the person, as one compact row above the composer:
- * what it does and to how many records, the field it sets from → to, whether
- * it can be undone, and Review, Not now and Approve. ⌘↵ approves.
+ * what it does and to which record or how many, the field it sets from → to,
+ * Permanent when it can't be undone, and Review, Decline, Decide later and
+ * Approve. Cmd/Ctrl+Enter approves from an empty message box.
  */
 export function DeskApprovalCard(props: CardProps) {
   if (props.entry.hold !== null) {
@@ -103,6 +113,41 @@ export function DeskApprovalCard(props: CardProps) {
       return <PlanCard {...props} entry={props.entry} />;
   }
 }
+
+/**
+ * Declining from the card: the reason dialog Decisions uses, required, and the
+ * decision sent with it as the note the agent's follow-up turn reads.
+ */
+function useDecline(count: number, decline: (note: string) => Promise<void>) {
+  const t = useT();
+  const [open, setOpen] = useState(false);
+  const mutation = useMutation({
+    mutationFn: decline,
+    onSuccess: () => setOpen(false),
+    onError: (error) => handleMutationError({ error, resourceName: "Proposal" }),
+  });
+
+  const dialog = (
+    <ReasonDialog
+      open={open}
+      title={count > 1 ? t("Decline {0} changes?", count) : t("Decline this change?")}
+      description={t("Say why. The agent sees it, and so does whoever looks after the agent.")}
+      placeholder={t("What's wrong with it, or what to do instead")}
+      confirmLabel={count > 1 ? t("Decline {0}", count) : t("Decline")}
+      label={t("Reason")}
+      maxLength={DECLINE_NOTE_LENGTH}
+      destructive
+      pending={mutation.isPending}
+      onConfirm={(reason) => mutation.mutate(reason)}
+      onOpenChange={setOpen}
+    />
+  );
+
+  return { open: () => setOpen(true), dialog, pending: mutation.isPending };
+}
+
+/** The longest note the server keeps with a decision. */
+const DECLINE_NOTE_LENGTH = 2000;
 
 function useApproveShortcut(
   approveRef: MutableRefObject<(() => void) | null>,
@@ -205,7 +250,19 @@ function ProposalCard({
     proposal.reviewRequired,
     edits !== null,
   );
-  const approvable = canApprove(approval.gate, reviewRequired) && !mutation.isPending;
+  const decline = useDecline(1, async (note) => {
+    await decideMyProposal(proposal.id, {
+      decision: "Rejected",
+      reasonCode: CONVERSATION_REJECT_REASON,
+      note,
+    });
+    markProposalDecided(queryClient, proposal.id, "Rejected");
+    followUp?.(proposal.id);
+    void invalidateProposalViews(queryClient, threadId);
+    onDecided(entry);
+  });
+  const approvable =
+    canApprove(approval.gate, reviewRequired) && !mutation.isPending && !decline.pending;
   const approve = () => {
     approval.acknowledge();
     mutation.mutate();
@@ -213,23 +270,27 @@ function ProposalCard({
   useApproveShortcut(approveRef, approve, approvable);
 
   return (
-    <CardRow
-      title={view.title}
-      facts={facts}
-      unreviewable={approval.gate.state === "unavailable" && reviewRequired}
-      reversible={view.reversible}
-      changed={approval.changed}
-      stale={approval.gate.state === "stale"}
-      approvable={approvable}
-      onApprove={approve}
-      onReview={() => onReview(entry)}
-      onDefer={onDefer}
-      onRedraft={
-        onAsk
-          ? () => onAsk(t("Draft that change again with the records as they are now."))
-          : undefined
-      }
-    />
+    <>
+      <CardRow
+        title={view.title}
+        facts={facts}
+        onDecline={decline.open}
+        unreviewable={approval.gate.state === "unavailable" && reviewRequired}
+        reversible={view.reversible}
+        changed={approval.changed}
+        stale={approval.gate.state === "stale"}
+        approvable={approvable}
+        onApprove={approve}
+        onReview={() => onReview(entry)}
+        onDefer={onDefer}
+        onRedraft={
+          onAsk
+            ? () => onAsk(t("Draft that change again with the records as they are now."))
+            : undefined
+        }
+      />
+      {decline.dialog}
+    </>
   );
 }
 
@@ -252,6 +313,7 @@ function PlanCard({
   const facts: ApprovalFacts = {
     count: plan.stepCount,
     resource: "",
+    record: "",
     field: null,
     refused: [],
     wouldFail: null,
@@ -315,7 +377,19 @@ function PlanCard({
     steps.length === 0 || steps.some((step) => step.reviewRequired),
     false,
   );
-  const approvable = canApprove(approval.gate, reviewRequired) && !mutation.isPending;
+  const decline = useDecline(1, async (note) => {
+    await decideMyPlan(plan.id, {
+      decision: "Rejected",
+      reasonCode: CONVERSATION_REJECT_REASON,
+      note,
+    });
+    markPlanDecided(queryClient, plan.id, "Rejected");
+    followUp?.(plan.id);
+    void invalidateProposalViews(queryClient, threadId);
+    onDecided(entry);
+  });
+  const approvable =
+    canApprove(approval.gate, reviewRequired) && !mutation.isPending && !decline.pending;
   const approve = () => {
     approval.acknowledge();
     mutation.mutate();
@@ -323,18 +397,22 @@ function PlanCard({
   useApproveShortcut(approveRef, approve, approvable);
 
   return (
-    <CardRow
-      title={title}
-      facts={facts}
-      unreviewable={approval.gate.state === "unavailable" && reviewRequired}
-      countLabel={t("{0, plural, one {# step} other {# steps}}", plan.stepCount)}
-      reversible={reversible}
-      changed={approval.changed}
-      approvable={approvable}
-      onApprove={approve}
-      onReview={() => onReview(entry)}
-      onDefer={onDefer}
-    />
+    <>
+      <CardRow
+        title={title}
+        facts={facts}
+        onDecline={decline.open}
+        unreviewable={approval.gate.state === "unavailable" && reviewRequired}
+        countLabel={t("{0, plural, one {# step} other {# steps}}", plan.stepCount)}
+        reversible={reversible}
+        changed={approval.changed}
+        approvable={approvable}
+        onApprove={approve}
+        onReview={() => onReview(entry)}
+        onDefer={onDefer}
+      />
+      {decline.dialog}
+    </>
   );
 }
 
@@ -405,7 +483,24 @@ function BatchCard({
       void invalidateProposalViews(queryClient, threadId);
     },
   });
-  const approvable = needsReview === 0 && approving.length > 0 && !mutation.isPending;
+  const decline = useDecline(proposals.length, async (note) => {
+    const outcome = await decideBatch(queryClient, proposals, {
+      approving: false,
+      shownDigests: shown,
+      note,
+    });
+    if (outcome.errors.length > 0) {
+      toast.warning(t("{0} of {1} were declined", outcome.approved, outcome.total), {
+        description: outcome.errors.join(" · "),
+      });
+    }
+    void invalidateProposalViews(queryClient, threadId);
+    if (outcome.approved > 0) {
+      onDecided(entry);
+    }
+  });
+  const approvable =
+    needsReview === 0 && approving.length > 0 && !mutation.isPending && !decline.pending;
   const approve = () => mutation.mutate();
   useApproveShortcut(approveRef, approve, approvable);
 
@@ -423,7 +518,9 @@ function BatchCard({
         onApprove={approve}
         onReview={needsReview > 0 && !reviewing ? () => setReviewing(true) : () => onReview(entry)}
         onDefer={onDefer}
+        onDecline={decline.open}
       />
+      {decline.dialog}
       {reviewing && gated.length > 0 && (
         <div
           className="flex min-w-0 flex-col gap-3 px-3 pt-1 pb-2"
@@ -443,7 +540,7 @@ function BatchCard({
 /**
  * A change that waits on the person while a switch keeps anyone from deciding
  * it: what it is, which switch holds it, and where that switch is turned off
- * for someone who may turn it off. There is nothing to approve, so ⌘↵ does
+ * for someone who may turn it off. There is nothing to approve, so Cmd/Ctrl+Enter does
  * nothing; the card takes its buttons once the switch is off and the
  * proposals are read again.
  */
@@ -476,26 +573,23 @@ function HeldCard({ entry, onReview, onDefer }: Pick<CardProps, "entry" | "onRev
           )}
         </span>
       </span>
-      <Button
-        variant="quiet"
-        size="sm"
-        className={cn(plainButton, leadButton)}
-        onClick={() => onReview(entry)}
-      >
-        {t("Review")}
-      </Button>
-      <Button variant="quiet" size="sm" className={plainButton} onClick={onDefer}>
-        {t("Not now")}
-      </Button>
-      {canTurnOff && (
-        <Link
-          to={held.to}
-          data-slot="button"
-          className={cn(buttonVariants({ size: "sm" }), approveButton)}
-        >
-          {holdActionText(held, t)}
-        </Link>
-      )}
+      <div className="dk-dcx-acts">
+        <MoreActions
+          actions={[
+            { label: t("Review the change"), icon: "eye", onSelect: () => onReview(entry) },
+            { label: t("Decide later"), icon: "clock", onSelect: onDefer },
+          ]}
+        />
+        {canTurnOff && (
+          <Link
+            to={held.to}
+            data-slot="button"
+            className={cn(buttonVariants({ size: "sm" }), approveButton)}
+          >
+            {holdActionText(held, t)}
+          </Link>
+        )}
+      </div>
     </div>
   );
 }
@@ -527,8 +621,86 @@ function approvedWhat(title: string, facts: ApprovalFacts, t: TranslateFn): stri
   return scope ? `${shown} ${scope}` : shown;
 }
 
-const cardButton = "rounded-lg in-[.dk-dense]:order-2";
-const leadButton = "in-[.dk-dense]:ml-auto";
+/** Puts the change off: it keeps waiting in the workspace and in Decisions. */
+function DeferButton({ onDefer }: { onDefer: () => void }) {
+  const t = useT();
+  return (
+    <Button
+      variant="quiet"
+      size="icon-sm"
+      className={warnButton}
+      aria-label={t("Decide later")}
+      title={t("Decide later")}
+      onClick={onDefer}
+    >
+      <DeskIcon name="clock" size={15} stroke={2} />
+    </Button>
+  );
+}
+
+/**
+ * Says the change can't be taken back, beside the actions so nothing cuts it off; the
+ * tooltip says what that means for the person about to approve.
+ */
+function PermanentPill() {
+  const t = useT();
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <span className="dk-dcx-perm ui-focus-ring" tabIndex={0}>
+            {t("Permanent")}
+          </span>
+        }
+      />
+      <TooltipContent className="max-w-64">
+        {t(
+          "Once approved, this change can't be undone. Undo and the undo window don't apply to it.",
+        )}
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
+type MoreAction = { label: string; icon: DeskIconName; onSelect: () => void };
+
+/**
+ * The actions a card does not need on its face. The face keeps the decision (Decline and
+ * Approve, or Review first); looking closer and putting it off live here, so the actions
+ * share the title's row instead of taking a row of their own.
+ */
+function MoreActions({ actions }: { actions: readonly MoreAction[] }) {
+  const t = useT();
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        render={
+          <Button
+            variant="quiet"
+            size="icon-sm"
+            className={warnButton}
+            aria-label={t("More actions")}
+            title={t("More actions")}
+          />
+        }
+      >
+        <DeskIcon name="more" size={15} stroke={2} />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" sideOffset={6} className="w-44">
+        {actions.map((action) => (
+          <DropdownMenuItem
+            key={action.label}
+            title={action.label}
+            startContent={<DeskIcon name={action.icon} size={14} />}
+            onClick={action.onSelect}
+          />
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+const cardButton = "rounded-lg";
 const warnButton = cn(cardButton, "text-dsk-warn-fg hover:bg-dsk-warn/18 hover:text-dsk-fg");
 const plainButton = cn(cardButton, "text-dsk-fg2 hover:bg-dsk-warn/18 hover:text-dsk-fg2");
 const approveButton = cn(
@@ -552,6 +724,7 @@ function CardRow({
   onReview,
   onDefer,
   onRedraft,
+  onDecline,
 }: {
   title: string;
   facts: ApprovalFacts;
@@ -574,6 +747,8 @@ function CardRow({
   onReview: () => void;
   onDefer: () => void;
   onRedraft?: () => void;
+  /** Turns the change down with a reason; absent where declining is not offered. */
+  onDecline?: () => void;
 }) {
   const t = useT();
   const scope = countLabel ? t("on {0}", countLabel) : scopePhrase(facts, t);
@@ -600,20 +775,20 @@ function CardRow({
               : t("What it was drafted against has changed since")}
           </span>
         </span>
-        <Button variant="quiet" size="sm" className={cn(plainButton, leadButton)} onClick={onDefer}>
-          {t("Not now")}
-        </Button>
-        {onRedraft ? (
-          <Button size="sm" className={approveButton} onClick={onRedraft}>
-            {facts.changedSince > 0 && going > 0
-              ? t("Redraft with {0}", recordCount(facts.resource, going, t))
-              : t("Redraft")}
-          </Button>
-        ) : (
-          <Button size="sm" className={approveButton} onClick={onReview}>
-            {t("Review")}
-          </Button>
-        )}
+        <div className="dk-dcx-acts">
+          <DeferButton onDefer={onDefer} />
+          {onRedraft ? (
+            <Button size="sm" className={approveButton} onClick={onRedraft}>
+              {facts.changedSince > 0 && going > 0
+                ? t("Redraft with {0}", recordCount(facts.resource, going, t))
+                : t("Redraft")}
+            </Button>
+          ) : (
+            <Button size="sm" className={approveButton} onClick={onReview}>
+              {t("Review")}
+            </Button>
+          )}
+        </div>
       </div>
     );
   }
@@ -641,23 +816,28 @@ function CardRow({
               : (facts.wouldFail ?? "")}
           </span>
         </span>
-        <Button
-          variant="quiet"
-          size="sm"
-          className={cn(plainButton, leadButton)}
-          onClick={onReview}
-        >
-          {refusedCount > 0 ? t("Review {0}", refusedCount) : t("Review")}
-        </Button>
-        {all ? (
-          <Button variant="quiet" size="sm" className={plainButton} onClick={onDefer}>
-            {t("Not now")}
-          </Button>
-        ) : (
-          <Button size="sm" className={approveButton} disabled={!approvable} onClick={onApprove}>
-            {t("Approve {0}, skip {1}", facts.count - refusedCount, refusedCount)}
-          </Button>
-        )}
+        <div className="dk-dcx-acts">
+          <MoreActions
+            actions={[
+              {
+                label: refusedCount > 0 ? t("Review {0}", refusedCount) : t("Review"),
+                icon: "eye",
+                onSelect: onReview,
+              },
+              { label: t("Decide later"), icon: "clock", onSelect: onDefer },
+            ]}
+          />
+          {onDecline && (
+            <Button variant="quiet" size="sm" className={plainButton} onClick={onDecline}>
+              {t("Decline")}
+            </Button>
+          )}
+          {!all && (
+            <Button size="sm" className={approveButton} disabled={!approvable} onClick={onApprove}>
+              {t("Approve {0}, skip {1}", facts.count - refusedCount, refusedCount)}
+            </Button>
+          )}
+        </div>
       </div>
     );
   }
@@ -690,7 +870,7 @@ function CardRow({
               <span className="sr-only">{t("to")}</span> <em>{facts.field.after}</em>
             </>
           ) : null}
-          <span className="dk-dcx-m">· {reversible ? t("reversible") : t("can't be undone")}</span>
+          {reversible && <span className="dk-dcx-m">· {t("reversible")}</span>}
           {leftOut > 0 && (
             <span className="dk-dcx-m">
               ·{" "}
@@ -702,47 +882,53 @@ function CardRow({
           )}
         </span>
       </span>
-      {reviewFirst > 0 ? (
-        <>
-          <Button
-            variant="quiet"
-            size="sm"
-            className={cn(warnButton, leadButton)}
-            onClick={onDefer}
-          >
-            {t("Not now")}
-          </Button>
-          <Button size="sm" className={approveButton} onClick={onReview} aria-expanded={reviewOpen}>
-            {reviewOpen ? t("Open the decision") : t("Review {0}", reviewFirst)}
-          </Button>
-        </>
-      ) : (
-        <>
-          <Button
-            variant="quiet"
-            size="sm"
-            className={cn(warnButton, leadButton)}
-            onClick={onReview}
-          >
-            {t("Review")}
-          </Button>
-          <Button variant="quiet" size="sm" className={warnButton} onClick={onDefer}>
-            {t("Not now")}
-          </Button>
-          <Button
-            size="sm"
-            className={cn("dk-apv-b", approveButton)}
-            disabled={!approvable}
-            aria-keyshortcuts="Meta+Enter"
-            onClick={onApprove}
-          >
-            {t("Approve")}
-            <span className="dk-kbd" aria-hidden>
-              ⌘↵
-            </span>
-          </Button>
-        </>
-      )}
+      <div className="dk-dcx-acts">
+        {!reversible && <PermanentPill />}
+        {reviewFirst > 0 ? (
+          <>
+            <DeferButton onDefer={onDefer} />
+            {onDecline && (
+              <Button variant="quiet" size="sm" className={warnButton} onClick={onDecline}>
+                {t("Decline")}
+              </Button>
+            )}
+            <Button
+              size="sm"
+              className={approveButton}
+              onClick={onReview}
+              aria-expanded={reviewOpen}
+            >
+              {reviewOpen ? t("Open the decision") : t("Review {0}", reviewFirst)}
+            </Button>
+          </>
+        ) : (
+          <>
+            <MoreActions
+              actions={[
+                { label: t("Review the change"), icon: "eye", onSelect: onReview },
+                { label: t("Decide later"), icon: "clock", onSelect: onDefer },
+              ]}
+            />
+            {onDecline && (
+              <Button variant="quiet" size="sm" className={warnButton} onClick={onDecline}>
+                {t("Decline")}
+              </Button>
+            )}
+            <Button
+              size="sm"
+              className={cn("dk-apv-b", approveButton)}
+              disabled={!approvable}
+              aria-keyshortcuts="Meta+Enter Control+Enter"
+              onClick={onApprove}
+            >
+              {t("Approve")}
+              <span className="dk-kbd" aria-hidden>
+                {formatShortcut("↵")}
+              </span>
+            </Button>
+          </>
+        )}
+      </div>
     </div>
   );
 }

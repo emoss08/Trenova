@@ -23,6 +23,7 @@ import {
   type DeskAttachment,
   type DeskAttachments,
 } from "./desk-attachments";
+import { formatShortcut } from "@trenova/shared/lib/shortcuts";
 
 /** A chip's own 18px command: finish a scan, retry, remove. */
 const chipButtonClass =
@@ -424,7 +425,7 @@ function AttachMenuItems({
         </Button>
       )}
       <div className="dk-am-f">
-        <span className="dk-kbd">⌘U</span> {t("or drop files anywhere")}
+        <span className="dk-kbd">{formatShortcut("U")}</span> {t("or drop files anywhere")}
       </div>
     </div>
   );

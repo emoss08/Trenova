@@ -1,3 +1,4 @@
+import { serverBaseUrl } from "@trenova/shared/lib/api-url";
 import type { SCIMDirectory, SCIMGroupRoleMapping } from "@trenova/shared/types/iam";
 
 export const emptyDirectory: SCIMDirectory = {
@@ -28,4 +29,8 @@ export function scimDirectoryPanelQueryKey(organizationId: string) {
 
 export function scimGroupMappingPanelQueryKey(organizationId: string, directoryId: string) {
   return `scim-group-mapping-panel:${organizationId}:${directoryId}`;
+}
+
+export function scimBaseUrl(tenantSlug: string) {
+  return `${serverBaseUrl()}/api/v1/scim/${encodeURIComponent(tenantSlug)}/v2`;
 }

@@ -86,14 +86,14 @@ type AccountTypesTable struct {
 // AccountTypes references the account_types table.
 var AccountTypes = &AccountTypesTable{
 	TableBase:      keel.TableBase{Ref: &accountTypesRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountTypesRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountTypesRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountTypesRef, Index: 2}}},
-	Status:         keelkinds.DomaintypesStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountTypesRef, Index: 3}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountTypesRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountTypesRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountTypesRef, Index: 2}}},
+	Status:         keelkinds.DomaintypesStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountTypesRef, Index: 3}}},
 	Code:           keel.StringCol{Col: keel.Col{Ref: &accountTypesRef, Index: 4}},
 	Name:           keel.StringCol{Col: keel.Col{Ref: &accountTypesRef, Index: 5}},
 	Description:    keel.StringCol{Col: keel.Col{Ref: &accountTypesRef, Index: 6}},
-	Category:       CategoryCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountTypesRef, Index: 7}}},
+	Category:       CategoryCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountTypesRef, Index: 7}}},
 	Color:          keel.StringCol{Col: keel.Col{Ref: &accountTypesRef, Index: 8}},
 	IsSystem:       keel.BoolCol{Col: keel.Col{Ref: &accountTypesRef, Index: 9}},
 	Version:        keel.Int64Col{Col: keel.Col{Ref: &accountTypesRef, Index: 10}},
@@ -107,14 +107,14 @@ var AccountTypes = &AccountTypesTable{
 func BuildAccountTypes(r *keel.Ref) *AccountTypesTable {
 	return &AccountTypesTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		Status:         keelkinds.DomaintypesStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		Status:         keelkinds.DomaintypesStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		Code:           keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		Name:           keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		Description:    keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
-		Category:       CategoryCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		Category:       CategoryCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
 		Color:          keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
 		IsSystem:       keel.BoolCol{Col: keel.Col{Ref: r, Index: 9}},
 		Version:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
@@ -140,8 +140,6 @@ func (t *AccountTypesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) 
 
 // AccountTypesQuery is a query over accounttype.AccountType.
 type AccountTypesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*accounttype.AccountType] = (*AccountTypesTable)(nil)
 
 var _ keel.Query[*accounttype.AccountType] = (*AccountTypesQuery)(nil)
 
@@ -257,42 +255,42 @@ func (t *AccountTypesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*ac
 
 // Create inserts row.
 func (t *AccountTypesTable) Create(ctx context.Context, db *keel.DB, row *accounttype.AccountType) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *AccountTypesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*accounttype.AccountType) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *AccountTypesTable) Save(ctx context.Context, db *keel.DB, row *accounttype.AccountType, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *AccountTypesTable) SaveExcept(ctx context.Context, db *keel.DB, row *accounttype.AccountType, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *AccountTypesTable) DeleteRow(ctx context.Context, db *keel.DB, row *accounttype.AccountType) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *AccountTypesTable) Upsert(ctx context.Context, db *keel.DB, rows []*accounttype.AccountType, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *AccountTypesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*accounttype.AccountType, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *AccountTypesTable) Copy(ctx context.Context, db *keel.DB, rows []*accounttype.AccountType) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -464,37 +462,45 @@ func (q *AccountTypesQuery) Clone() keel.Query[*accounttype.AccountType] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *AccountTypesQuery) One(ctx context.Context, db *keel.DB) (*accounttype.AccountType, error) {
-	return keel.One[*accounttype.AccountType](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*accounttype.AccountType)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *AccountTypesQuery) First(ctx context.Context, db *keel.DB) (*accounttype.AccountType, error) {
-	return keel.First[*accounttype.AccountType](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*accounttype.AccountType)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *AccountTypesQuery) List(ctx context.Context, db *keel.DB) ([]*accounttype.AccountType, error) {
-	return keel.List[*accounttype.AccountType](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*accounttype.AccountType)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *AccountTypesQuery) All(ctx context.Context, db *keel.DB) ([]*accounttype.AccountType, error) {
-	return keel.All[*accounttype.AccountType](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*accounttype.AccountType)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *AccountTypesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*accounttype.AccountType, error) {
-	return keel.UpdateReturning[*accounttype.AccountType](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*accounttype.AccountType)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *AccountTypesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*accounttype.AccountType], error) {
-	return keel.PageOf[*accounttype.AccountType](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*accounttype.AccountType])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *AccountTypesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*accounttype.AccountType) error) error {
-	return keel.Each[*accounttype.AccountType](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*accounttype.AccountType)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newAccountType() unsafe.Pointer { return unsafe.Pointer(new(accounttype.AccountType)) }
@@ -616,24 +622,24 @@ var reportDimTsvectorHidden = schema.ReportInfo{Kind: schema.Dimension, Type: sc
 var reportMeasureIntegerHidden = schema.ReportInfo{Kind: schema.Measure, Type: schema.ValueInt, Aggs: schema.AggsNumeric}
 
 // CategoryCol is a column of accounttype.Category values.
-type CategoryCol struct{ keel.StringCol }
+type CategoryCol struct{ keel.TypedStringCol }
 
-func (c CategoryCol) Eq(v accounttype.Category) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c CategoryCol) Ne(v accounttype.Category) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c CategoryCol) Gt(v accounttype.Category) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c CategoryCol) Gte(v accounttype.Category) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c CategoryCol) Lt(v accounttype.Category) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c CategoryCol) Lte(v accounttype.Category) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c CategoryCol) Eq(v accounttype.Category) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c CategoryCol) Ne(v accounttype.Category) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c CategoryCol) Gt(v accounttype.Category) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c CategoryCol) Gte(v accounttype.Category) keel.Pred { return c.Text().Gte(string(v)) }
+func (c CategoryCol) Lt(v accounttype.Category) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c CategoryCol) Lte(v accounttype.Category) keel.Pred { return c.Text().Lte(string(v)) }
 func (c CategoryCol) IsDistinctFrom(v accounttype.Category) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c CategoryCol) Between(lo, hi accounttype.Category) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c CategoryCol) To(v accounttype.Category) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c CategoryCol) To(v accounttype.Category) keel.Assignment { return c.Text().To(string(v)) }
 func (c CategoryCol) In(vs ...accounttype.Category) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c CategoryCol) NotIn(vs ...accounttype.Category) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

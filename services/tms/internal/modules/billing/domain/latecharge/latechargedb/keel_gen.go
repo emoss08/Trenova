@@ -96,11 +96,11 @@ type LateChargeAssessmentsTable struct {
 // LateChargeAssessments references the late_charge_assessments table.
 var LateChargeAssessments = &LateChargeAssessmentsTable{
 	TableBase:             keel.TableBase{Ref: &lateChargeAssessmentsRef},
-	ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &lateChargeAssessmentsRef, Index: 0}}},
-	OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &lateChargeAssessmentsRef, Index: 1}}},
-	BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &lateChargeAssessmentsRef, Index: 2}}},
-	CustomerID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &lateChargeAssessmentsRef, Index: 3}}},
-	SourceInvoiceID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &lateChargeAssessmentsRef, Index: 4}}},
+	ID:                    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &lateChargeAssessmentsRef, Index: 0}}},
+	OrganizationID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &lateChargeAssessmentsRef, Index: 1}}},
+	BusinessUnitID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &lateChargeAssessmentsRef, Index: 2}}},
+	CustomerID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &lateChargeAssessmentsRef, Index: 3}}},
+	SourceInvoiceID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &lateChargeAssessmentsRef, Index: 4}}},
 	PeriodIndex:           keel.Int64Col{Col: keel.Col{Ref: &lateChargeAssessmentsRef, Index: 5}},
 	PeriodStart:           keel.Int64Col{Col: keel.Col{Ref: &lateChargeAssessmentsRef, Index: 6}},
 	PeriodEnd:             keel.Int64Col{Col: keel.Col{Ref: &lateChargeAssessmentsRef, Index: 7}},
@@ -108,10 +108,10 @@ var LateChargeAssessments = &LateChargeAssessmentsTable{
 	BasisOpenBalanceMinor: keel.Int64Col{Col: keel.Col{Ref: &lateChargeAssessmentsRef, Index: 9}},
 	RatePercent:           keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &lateChargeAssessmentsRef, Index: 10}}},
 	ChargeMinor:           keel.Int64Col{Col: keel.Col{Ref: &lateChargeAssessmentsRef, Index: 11}},
-	DebitMemoInvoiceID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &lateChargeAssessmentsRef, Index: 12}}},
-	DebitMemoLineID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &lateChargeAssessmentsRef, Index: 13}}},
+	DebitMemoInvoiceID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &lateChargeAssessmentsRef, Index: 12}}},
+	DebitMemoLineID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &lateChargeAssessmentsRef, Index: 13}}},
 	RunKey:                keel.StringCol{Col: keel.Col{Ref: &lateChargeAssessmentsRef, Index: 14}},
-	CreatedByID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &lateChargeAssessmentsRef, Index: 15}}},
+	CreatedByID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &lateChargeAssessmentsRef, Index: 15}}},
 	CreatedAt:             keel.Int64Col{Col: keel.Col{Ref: &lateChargeAssessmentsRef, Index: 16}},
 	UpdatedAt:             keel.Int64Col{Col: keel.Col{Ref: &lateChargeAssessmentsRef, Index: 17}},
 }
@@ -120,11 +120,11 @@ var LateChargeAssessments = &LateChargeAssessmentsTable{
 func BuildLateChargeAssessments(r *keel.Ref) *LateChargeAssessmentsTable {
 	return &LateChargeAssessmentsTable{
 		TableBase:             keel.TableBase{Ref: r},
-		ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		CustomerID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		SourceInvoiceID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ID:                    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		OrganizationID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		BusinessUnitID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		CustomerID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		SourceInvoiceID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		PeriodIndex:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 5}},
 		PeriodStart:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
 		PeriodEnd:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
@@ -132,10 +132,10 @@ func BuildLateChargeAssessments(r *keel.Ref) *LateChargeAssessmentsTable {
 		BasisOpenBalanceMinor: keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
 		RatePercent:           keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 10}}},
 		ChargeMinor:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
-		DebitMemoInvoiceID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 12}}},
-		DebitMemoLineID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 13}}},
+		DebitMemoInvoiceID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 12}}},
+		DebitMemoLineID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 13}}},
 		RunKey:                keel.StringCol{Col: keel.Col{Ref: r, Index: 14}},
-		CreatedByID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 15}}},
+		CreatedByID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 15}}},
 		CreatedAt:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
 		UpdatedAt:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
 	}
@@ -166,8 +166,6 @@ func (t *LateChargeAssessmentsTable) Get(ctx context.Context, db *keel.DB, key p
 
 // LateChargeAssessmentsQuery is a query over latecharge.LateChargeAssessment.
 type LateChargeAssessmentsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*latecharge.LateChargeAssessment] = (*LateChargeAssessmentsTable)(nil)
 
 var _ keel.Query[*latecharge.LateChargeAssessment] = (*LateChargeAssessmentsQuery)(nil)
 
@@ -283,42 +281,42 @@ func (t *LateChargeAssessmentsTable) Compute(col keel.Column, e keel.Expr) keel.
 
 // Create inserts row.
 func (t *LateChargeAssessmentsTable) Create(ctx context.Context, db *keel.DB, row *latecharge.LateChargeAssessment) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *LateChargeAssessmentsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*latecharge.LateChargeAssessment) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *LateChargeAssessmentsTable) Save(ctx context.Context, db *keel.DB, row *latecharge.LateChargeAssessment, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *LateChargeAssessmentsTable) SaveExcept(ctx context.Context, db *keel.DB, row *latecharge.LateChargeAssessment, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *LateChargeAssessmentsTable) DeleteRow(ctx context.Context, db *keel.DB, row *latecharge.LateChargeAssessment) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *LateChargeAssessmentsTable) Upsert(ctx context.Context, db *keel.DB, rows []*latecharge.LateChargeAssessment, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *LateChargeAssessmentsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*latecharge.LateChargeAssessment, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *LateChargeAssessmentsTable) Copy(ctx context.Context, db *keel.DB, rows []*latecharge.LateChargeAssessment) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -490,37 +488,45 @@ func (q *LateChargeAssessmentsQuery) Clone() keel.Query[*latecharge.LateChargeAs
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *LateChargeAssessmentsQuery) One(ctx context.Context, db *keel.DB) (*latecharge.LateChargeAssessment, error) {
-	return keel.One[*latecharge.LateChargeAssessment](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*latecharge.LateChargeAssessment)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *LateChargeAssessmentsQuery) First(ctx context.Context, db *keel.DB) (*latecharge.LateChargeAssessment, error) {
-	return keel.First[*latecharge.LateChargeAssessment](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*latecharge.LateChargeAssessment)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *LateChargeAssessmentsQuery) List(ctx context.Context, db *keel.DB) ([]*latecharge.LateChargeAssessment, error) {
-	return keel.List[*latecharge.LateChargeAssessment](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*latecharge.LateChargeAssessment)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *LateChargeAssessmentsQuery) All(ctx context.Context, db *keel.DB) ([]*latecharge.LateChargeAssessment, error) {
-	return keel.All[*latecharge.LateChargeAssessment](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*latecharge.LateChargeAssessment)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *LateChargeAssessmentsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*latecharge.LateChargeAssessment, error) {
-	return keel.UpdateReturning[*latecharge.LateChargeAssessment](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*latecharge.LateChargeAssessment)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *LateChargeAssessmentsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*latecharge.LateChargeAssessment], error) {
-	return keel.PageOf[*latecharge.LateChargeAssessment](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*latecharge.LateChargeAssessment])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *LateChargeAssessmentsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*latecharge.LateChargeAssessment) error) error {
-	return keel.Each[*latecharge.LateChargeAssessment](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*latecharge.LateChargeAssessment)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newLateChargeAssessment() unsafe.Pointer {

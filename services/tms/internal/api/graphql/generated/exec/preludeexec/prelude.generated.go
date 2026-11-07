@@ -67,12 +67,14 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:      "args",
 				NonNull:   true,
+				IsMethod:  true,
 				HasChild:  true,
 				ChildType: "__InputValue",
 				Args:      field___Directive_args_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*introspection.Directive)
-					return obj.Args, nil
+					fc := graphql.GetFieldContext(ctx)
+					return obj.VisibleArgs(fc.Args["includeDeprecated"].(bool)), nil
 				},
 				Marshal: gqlexec.Marshal(marshalN__InputValue2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐInputValueᚄ),
 			},
@@ -144,12 +146,14 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:      "args",
 				NonNull:   true,
+				IsMethod:  true,
 				HasChild:  true,
 				ChildType: "__InputValue",
 				Args:      field___Field_args_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*introspection.Field)
-					return obj.Args, nil
+					fc := graphql.GetFieldContext(ctx)
+					return obj.VisibleArgs(fc.Args["includeDeprecated"].(bool)), nil
 				},
 				Marshal: gqlexec.Marshal(marshalN__InputValue2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐInputValueᚄ),
 			},
@@ -414,9 +418,11 @@ var Shard = &gqlexec.Shard{
 				IsMethod:  true,
 				HasChild:  true,
 				ChildType: "__InputValue",
+				Args:      field___Type_inputFields_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*introspection.Type)
-					return obj.InputFields(), nil
+					fc := graphql.GetFieldContext(ctx)
+					return obj.VisibleInputFields(fc.Args["includeDeprecated"].(bool)), nil
 				},
 				Marshal: gqlexec.Marshal(marshalO__InputValue2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐInputValueᚄ),
 			},
@@ -455,8 +461,8 @@ var (
 func field___Directive_args_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
 	args := make(map[string]any, 1)
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "includeDeprecated",
-		func(ctx context.Context, v any) (*bool, error) {
-			return unmarshalOBoolean2ᚖbool(ctx, ec, v)
+		func(ctx context.Context, v any) (bool, error) {
+			return unmarshalOBoolean2bool(ctx, ec, v)
 		})
 	if err != nil {
 		return nil, err
@@ -468,8 +474,8 @@ func field___Directive_args_args(ctx context.Context, ec *gqlexec.Exec, rawArgs 
 func field___Field_args_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
 	args := make(map[string]any, 1)
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "includeDeprecated",
-		func(ctx context.Context, v any) (*bool, error) {
-			return unmarshalOBoolean2ᚖbool(ctx, ec, v)
+		func(ctx context.Context, v any) (bool, error) {
+			return unmarshalOBoolean2bool(ctx, ec, v)
 		})
 	if err != nil {
 		return nil, err
@@ -504,17 +510,22 @@ func field___Type_enumValues_args(ctx context.Context, ec *gqlexec.Exec, rawArgs
 	return args, nil
 }
 
+func field___Type_inputFields_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "includeDeprecated",
+		func(ctx context.Context, v any) (bool, error) {
+			return unmarshalOBoolean2bool(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["includeDeprecated"] = arg0
+	return args, nil
+}
+
 func unmarshalOBoolean2bool(ctx context.Context, ec *gqlexec.Exec, v any) (bool, error) {
 	res, err := graphql.UnmarshalBoolean(v)
 	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func unmarshalOBoolean2ᚖbool(ctx context.Context, ec *gqlexec.Exec, v any) (*bool, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := graphql.UnmarshalBoolean(v)
-	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v bool) graphql.Marshaler {

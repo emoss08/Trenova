@@ -45,9 +45,10 @@ Three, and each may only reference the one above it.
 Everything coloured in the product resolves to one of eleven hues, declared once
 in layer 1.
 
-The palette is Vercel's Geist, carried into OKLCH and held to the contrast and
-hue floors below. The greys are true neutrals, as Geist's are, and the two
-themes mirror each other step for step:
+The palette began as Vercel's Geist, carried into OKLCH and held to the contrast
+and hue floors below. That is its origin, not a reference: Trenova's own rules
+decide new work, and what Vercel does settles nothing here. The greys are true
+neutrals and the two themes mirror each other step for step:
 
 | Role | Light | Dark |
 |---|---|---|
@@ -70,12 +71,17 @@ colour left on screen mean something: a tone is a severity, an accent is a
 category, and the brand marks place and affordance.
 
 `--hue-brand: 258` is Geist blue, and it is spent sparingly: links, the focus
-ring, selection (a selected row, selected text, a checked box), the first chart
-series. As on Vercel, the active nav row is a neutral fill with the ink on it and
-the active tab is underlined in ink, not blue. It is never the primary button and never a severity.
+ring, selection (a selected row, a checked box), the first chart series. The
+active nav row is a neutral fill with the ink on it and the active tab is
+underlined in ink, not blue, because blue there would stop meaning "you can follow
+this". It is never the primary button and never a severity.
 If you are about to write `bg-brand` on a button, you want `variant="default"`.
 
-Every colour is a step on a Geist ramp, spent the way Geist spends it:
+Selected text is not brand. `::selection` is `--selection`, a solid amber in both
+themes with `--selection-foreground`, dark in both, on it, because near-white text
+on amber reads at under 2:1.
+
+Every colour is a step on a Geist ramp, and each rung has one job:
 
 | Rung | Geist step (light) | Geist step (dark) |
 |---|---|---|
@@ -85,9 +91,9 @@ Every colour is a step on a Geist ramp, spent the way Geist spends it:
 | `--x-foreground`, `--x-subtle-foreground` | 900 | 900 |
 
 Danger is Geist red, warning Geist amber, success Geist green, and **info is Geist
-blue itself**, written against `--hue-brand`, as it is on Vercel. A link and an "In
-transit" badge are told apart by their form (bare text against a tinted label), not
-by a second blue. The categories teal, violet, rose and emerald are Geist's teal,
+blue itself**, written against `--hue-brand`. A link and an "In transit" badge are
+told apart by their form (bare text against a tinted label), not by a second blue.
+The categories teal, violet, rose and emerald are Geist's teal,
 purple, pink and green; sky, indigo and amber have no Geist ramp and take the blue
 ramp's lightness and chroma at their own hue, trimmed to sRGB. The categories in the
 blue arc stay clear of the brand:
@@ -259,7 +265,7 @@ in a cell takes no weight class at all.
 
 ## Radius
 
-Corners are tight, as Vercel's are.
+Corners are tight, so a corner can say something.
 
 | Token | Utility | Value | For |
 |---|---|---|---|
@@ -354,7 +360,7 @@ wrong here even before dark mode is considered.
 
 | State | Treatment |
 |---|---|
-| rest | `--field` fill, `--input` hairline. The fill never shares a value with the canvas. It is Vercel's panel fill in both themes, white in light and #0a0a0a in dark, so on a panel the hairline is what draws the slot |
+| rest | `--field` fill, `--input` hairline. The fill never shares a value with the canvas. It is the panel fill in both themes, white in light and #0a0a0a in dark, so on a panel the hairline is what draws the slot |
 | hover | hairline steps to `--border-strong`; the fill does not change |
 | focus | the one focus ring (`ui-focus-ring`, or `ui-container-focus-ring` when a child takes focus) |
 | open | a trigger whose popup is open holds that same ring (`data-pressed`, `data-popup-open`, `aria-expanded`) |
@@ -433,6 +439,17 @@ and land on a stack per outcome. A scene like that takes four things from it:
 - it checks `useReducedMotionConfig()` itself, because Web Animations ignore the CSS rule,
   and under it the counts change in place.
 
+Things that open on a selection open from where they belong:
+- **A side pane** (the dispatch inspector) opens and closes by width over 320ms on
+  `ease-settle`, so the list beside it gives up and takes back the room rather than being
+  covered. Its content sits in a fixed-width inner box and enters with `animate-panel-in`,
+  keyed by what is selected, so each selection arrives rather than repainting.
+- **Something opened in place** (a pre-flight under the driver it is for, a reason box
+  under the decision it explains) takes `animate-expand-in`.
+- **A row a write takes away** collapses over 200ms (`grid-rows-[1fr]` to `grid-rows-[0fr]`
+  with the content in an `overflow-hidden` box) before it stops being drawn, and the
+  outcome that replaced it rises in place with its Undo.
+
 A keyed list whose items swap what they render (a row turning into its editor) never
 takes `<AnimatePresence initial={false}>`: motion keeps that `false` in the presence of
 every key from the first render, so anything mounted under those keys later skips its
@@ -477,7 +494,9 @@ and the user at the bottom. The tile you are in is filled `--nav-active`; hover 
 `--surface-hover` background per group of tiles that slides from tile to tile
 (`HoverGlideGroup`, `components/hover-glide.tsx`) rather than a hover fill on each. A list
 that should feel the same marks its rows `data-glide-target` and drops their own hover fill;
-a virtual list passes `hoverGlide` to `VirtualRows` (the billing queue's sidebar). A count on a tile's
+a virtual list passes `hoverGlide` to `VirtualRows` (the billing queue's sidebar). In a
+work list the open row wears the glide's own `--surface-hover` fill, so where the pointer is
+and what is open read as one thing (the dispatch queue, `move-queue.tsx`). A count on a tile's
 corner is how much work waits behind that module, in the attention tone. `G` then a module's letter
 (`rail-shortcuts.ts`) jumps there from anywhere; the letter shows in the tile's
 tooltip.
@@ -725,6 +744,26 @@ open as a grid of table rows and then jump into a layout that shared nothing wit
 - **Rows rise once, when a page arrives.** A row a person put there by toggling a group,
   or a table coming back from another view, takes its place at once: a staggered entrance
   costs over half a second, which reads as the table still loading.
+
+### Empty and failed reads
+
+"Nothing here" is a claim about the data, so it is drawn only after a read that worked.
+A failed read is never an empty page: the dispatch console once drew a failed board as
+true columns of "Nothing here" under figures that shimmered forever.
+
+- **Empty after a read** is `EmptySheet` (`@trenova/shared/components/ui/empty-sheet`), a
+  faint sketch of what the place holds fading out under the words; a list or table is
+  `EmptyTable` with its own column headings. A filter that emptied it offers to clear the
+  filter.
+- **A failed read** where the empty sheet would go is `ErrorState` with `layout="sheet"`
+  and the same sketch (`EmptyTableSketch`), which adds the tone well, the classified copy,
+  the reference and Try again. It says what the failure is not ("This isn't an empty
+  board").
+- **Figures** whose read failed say so (a dash and "not updated"), never a skeleton.
+- **A live screen** carries one status line for its freshness (live, reconnecting,
+  offline, or not updated with the last good read and Try again), and a poll that fails
+  keeps the last good data on screen under it rather than blanking it
+  (`console-status-line.tsx`).
 
 `pnpm lint:skeletons` (`scripts/check-loading-skeletons.mjs`) runs in CI. It follows
 each child of a `DataTableLazyComponent` to its module (through `lazy`,
@@ -1179,18 +1218,24 @@ below"). Every record change, money block, record-subset list and the agent's re
 behind one **Details** `Collapsible`, closed by default. What bears on the answer stays in
 view above the buttons, never folded: a would-fail refusal with its ways forward, a warning,
 a record that moved, a preview that could not be read. The answers are one row: Approve is
-the ink button, Reject is outline, "Tell the agent" is ghost, and Modify and "Decide later"
-are ghost icon buttons named by `aria-label` and a tooltip. The note to the agent is a
+the ink button, Decline is quiet and asks for a required reason in the same dialog Decisions
+uses (the reason goes with the decision as the note the agent's follow-up turn reads),
+"Tell the agent" is ghost, and Modify and "Decide later" (a clock) are ghost icon buttons
+named by `aria-label` and a tooltip. **Permanent** stands on its own before the buttons,
+never inside the line an ellipsis or a wrap can cut. The note to the agent is a
 `Textarea`, so it spends `ui-field`. The keys sit inside the buttons they mirror as small
-quiet text, `aria-hidden` with the button carrying `aria-keyshortcuts` (⌘/Ctrl+Enter
-approves, Esc opens the note, Alt+L decides later; Enter alone never approves), and are left
-out in the narrow panel. Decided later, the box folds into a `warning-subtle` pill above the
+quiet text spelled for the person's platform (`formatShortcut`: "⌘↵" on a Mac, "Ctrl+↵"
+elsewhere), `aria-hidden` with the button carrying `aria-keyshortcuts`. Cmd/Ctrl+Enter
+approves only from an empty message box, the card or elsewhere in the stage, and never a key
+something below already handled (`approvesFromKey`): with "Send with ⌘ Enter" chosen, the
+same keystroke in a box holding a question once sent it and approved the change it asked
+about. Enter alone never approves. After an approval the keyboard lands on Undo. Decided later, the box folds into a `warning-subtle` pill above the
 composer that says how many wait and reopens it. One decision at a time, the oldest first.
 A change a switch holds (the organization's pause, or the proposing agent's shadow switch)
 still waits on the person, and the server refuses a decision on it, so the box asks it
-without Approve: a muted pause row naming the switch, with Review, Not now and, for someone
+without Approve: a muted pause row naming the switch, with Review, Decide later and, for someone
 who may turn the switch off, a link to it ("Resume agents" or "Turn off shadow"). A change
-that can be decided is shown before a held one, and ⌘↵ does nothing on a held row. A held
+that can be decided is shown before a held one, and Cmd/Ctrl+Enter does nothing on a held row. A held
 change is never dropped from the box: with the pause on by default, dropping it once left a
 reply saying "it waits on your approval" with nothing to approve anywhere. Decisions lists
 and counts held changes the same way: each row says "held", and the bar names the switch and
@@ -1228,8 +1273,11 @@ and a three-bar level meter that moves only while someone is speaking, so a quie
 still control. Where dictation cannot run the button stays, disabled, and its tooltip says why;
 a refused microphone or a browser without a speech service is said under the box, never
 swallowed. That line under the box says one thing at a time and never wraps — the keys to
-send while typing, the slash and the at-sign on an empty box, what the microphone is doing —
-and the full list is behind the keyboard button at its end.
+send while typing, the slash and the at-sign on an empty box, what the microphone is doing.
+The full list of the Desk's keys is the app's shortcuts dialog, opened with ? anywhere outside
+a text box or from the keyboard button in the rail's foot; its Desk group in
+`keybinds.config.ts` is the one place those keys are written down. While a reply runs, Stop
+stays beside Steer whatever is in the box, and Esc in the box stops it.
 
 **The launcher is a signal, and it says what it means.** At rest the corner mark
 does nothing at all — it is on every page, so anything that moved would be
@@ -1270,11 +1318,14 @@ places (Today, Watchtower, Decisions, each with what is waiting at it), then
 every conversation shelved by when it was last touched — Pinned above the
 calendar, then Today, Yesterday, Previous 7 days, Previous 30 days, Older
 (`groupDeskThreadsByRecency`, counted on the reader's own calendar) — and the
-signed-in person at the foot with the way back to Trenova. Each row carries
-the agent's mark and name under its title, says "Writing a reply" with a still
-`WorkingDot` while a turn runs, and keeps its pin and delete within reach of a
-keyboard though a pointer only sees them on hover. The open row is
-`bg-surface-selected`.
+signed-in person at the foot with the way back to Trenova. Each row is a link
+to its conversation (`aria-current` on the open one), with pin and delete beside
+the link rather than inside it, within reach of a keyboard though a pointer only
+sees them on hover. Its dot says what it waits on, and while the conversation
+needs the person or an agent is at work in it, a second line says so in words
+with the agent's name: "EDI · Needs your approval", "Billing · Writing a reply",
+"Last reply failed". A conversation at rest stays one line. A place shows its
+count only while something waits there.
 
 The rail is the conversation's table of contents, and a table of contents is
 read by glancing at it, which is why it is a column rather than a switcher

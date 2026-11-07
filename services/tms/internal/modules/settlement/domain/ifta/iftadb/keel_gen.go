@@ -85,15 +85,15 @@ type JurisdictionsTable struct {
 // Jurisdictions references the ifta_jurisdictions table.
 var Jurisdictions = &JurisdictionsTable{
 	TableBase:    keel.TableBase{Ref: &jurisdictionsRef},
-	ID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &jurisdictionsRef, Index: 0}}},
+	ID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &jurisdictionsRef, Index: 0}}},
 	CountryCode:  keel.StringCol{Col: keel.Col{Ref: &jurisdictionsRef, Index: 1}},
 	Code:         keel.StringCol{Col: keel.Col{Ref: &jurisdictionsRef, Index: 2}},
 	Name:         keel.StringCol{Col: keel.Col{Ref: &jurisdictionsRef, Index: 3}},
-	UsStateID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &jurisdictionsRef, Index: 4}}},
+	UsStateID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &jurisdictionsRef, Index: 4}}},
 	IsIftaMember: keel.BoolCol{Col: keel.Col{Ref: &jurisdictionsRef, Index: 5}},
 	HasSurcharge: keel.BoolCol{Col: keel.Col{Ref: &jurisdictionsRef, Index: 6}},
 	SortOrder:    keel.Int64Col{Col: keel.Col{Ref: &jurisdictionsRef, Index: 7}},
-	Status:       JurisdictionStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &jurisdictionsRef, Index: 8}}},
+	Status:       JurisdictionStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &jurisdictionsRef, Index: 8}}},
 	CreatedAt:    keel.Int64Col{Col: keel.Col{Ref: &jurisdictionsRef, Index: 9}},
 	UpdatedAt:    keel.Int64Col{Col: keel.Col{Ref: &jurisdictionsRef, Index: 10}},
 }
@@ -102,15 +102,15 @@ var Jurisdictions = &JurisdictionsTable{
 func BuildJurisdictions(r *keel.Ref) *JurisdictionsTable {
 	return &JurisdictionsTable{
 		TableBase:    keel.TableBase{Ref: r},
-		ID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		ID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		CountryCode:  keel.StringCol{Col: keel.Col{Ref: r, Index: 1}},
 		Code:         keel.StringCol{Col: keel.Col{Ref: r, Index: 2}},
 		Name:         keel.StringCol{Col: keel.Col{Ref: r, Index: 3}},
-		UsStateID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		UsStateID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		IsIftaMember: keel.BoolCol{Col: keel.Col{Ref: r, Index: 5}},
 		HasSurcharge: keel.BoolCol{Col: keel.Col{Ref: r, Index: 6}},
 		SortOrder:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
-		Status:       JurisdictionStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		Status:       JurisdictionStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
 		CreatedAt:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
 		UpdatedAt:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
 	}
@@ -136,8 +136,6 @@ func (t *JurisdictionsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID)
 
 // JurisdictionsQuery is a query over ifta.Jurisdiction.
 type JurisdictionsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*ifta.Jurisdiction] = (*JurisdictionsTable)(nil)
 
 var _ keel.Query[*ifta.Jurisdiction] = (*JurisdictionsQuery)(nil)
 
@@ -253,42 +251,42 @@ func (t *JurisdictionsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*i
 
 // Create inserts row.
 func (t *JurisdictionsTable) Create(ctx context.Context, db *keel.DB, row *ifta.Jurisdiction) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *JurisdictionsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*ifta.Jurisdiction) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *JurisdictionsTable) Save(ctx context.Context, db *keel.DB, row *ifta.Jurisdiction, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *JurisdictionsTable) SaveExcept(ctx context.Context, db *keel.DB, row *ifta.Jurisdiction, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *JurisdictionsTable) DeleteRow(ctx context.Context, db *keel.DB, row *ifta.Jurisdiction) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *JurisdictionsTable) Upsert(ctx context.Context, db *keel.DB, rows []*ifta.Jurisdiction, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *JurisdictionsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*ifta.Jurisdiction, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *JurisdictionsTable) Copy(ctx context.Context, db *keel.DB, rows []*ifta.Jurisdiction) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -460,37 +458,45 @@ func (q *JurisdictionsQuery) Clone() keel.Query[*ifta.Jurisdiction] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *JurisdictionsQuery) One(ctx context.Context, db *keel.DB) (*ifta.Jurisdiction, error) {
-	return keel.One[*ifta.Jurisdiction](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*ifta.Jurisdiction)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *JurisdictionsQuery) First(ctx context.Context, db *keel.DB) (*ifta.Jurisdiction, error) {
-	return keel.First[*ifta.Jurisdiction](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*ifta.Jurisdiction)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *JurisdictionsQuery) List(ctx context.Context, db *keel.DB) ([]*ifta.Jurisdiction, error) {
-	return keel.List[*ifta.Jurisdiction](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*ifta.Jurisdiction)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *JurisdictionsQuery) All(ctx context.Context, db *keel.DB) ([]*ifta.Jurisdiction, error) {
-	return keel.All[*ifta.Jurisdiction](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*ifta.Jurisdiction)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *JurisdictionsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*ifta.Jurisdiction, error) {
-	return keel.UpdateReturning[*ifta.Jurisdiction](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*ifta.Jurisdiction)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *JurisdictionsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*ifta.Jurisdiction], error) {
-	return keel.PageOf[*ifta.Jurisdiction](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*ifta.Jurisdiction])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *JurisdictionsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*ifta.Jurisdiction) error) error {
-	return keel.Each[*ifta.Jurisdiction](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*ifta.Jurisdiction)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newJurisdiction() unsafe.Pointer { return unsafe.Pointer(new(ifta.Jurisdiction)) }
@@ -653,20 +659,20 @@ type JurisdictionMileageEntriesTable struct {
 // JurisdictionMileageEntries references the ifta_jurisdiction_mileage_entries table.
 var JurisdictionMileageEntries = &JurisdictionMileageEntriesTable{
 	TableBase:      keel.TableBase{Ref: &jurisdictionMileageEntriesRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &jurisdictionMileageEntriesRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &jurisdictionMileageEntriesRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &jurisdictionMileageEntriesRef, Index: 2}}},
-	TractorID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &jurisdictionMileageEntriesRef, Index: 3}}},
-	JurisdictionID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &jurisdictionMileageEntriesRef, Index: 4}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &jurisdictionMileageEntriesRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &jurisdictionMileageEntriesRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &jurisdictionMileageEntriesRef, Index: 2}}},
+	TractorID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &jurisdictionMileageEntriesRef, Index: 3}}},
+	JurisdictionID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &jurisdictionMileageEntriesRef, Index: 4}}},
 	TraveledAt:     keel.Int64Col{Col: keel.Col{Ref: &jurisdictionMileageEntriesRef, Index: 5}},
 	Year:           keel.Int64Col{Col: keel.Col{Ref: &jurisdictionMileageEntriesRef, Index: 6}},
 	Quarter:        keel.Int64Col{Col: keel.Col{Ref: &jurisdictionMileageEntriesRef, Index: 7}},
 	Miles:          keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &jurisdictionMileageEntriesRef, Index: 8}}},
 	Loaded:         keel.BoolCol{Col: keel.Col{Ref: &jurisdictionMileageEntriesRef, Index: 9}},
-	Source:         MileageSourceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &jurisdictionMileageEntriesRef, Index: 10}}},
-	ShipmentMoveID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &jurisdictionMileageEntriesRef, Index: 11}}},
+	Source:         MileageSourceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &jurisdictionMileageEntriesRef, Index: 10}}},
+	ShipmentMoveID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &jurisdictionMileageEntriesRef, Index: 11}}},
 	Notes:          keel.StringCol{Col: keel.Col{Ref: &jurisdictionMileageEntriesRef, Index: 12}},
-	CreatedByID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &jurisdictionMileageEntriesRef, Index: 13}}},
+	CreatedByID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &jurisdictionMileageEntriesRef, Index: 13}}},
 	Version:        keel.Int64Col{Col: keel.Col{Ref: &jurisdictionMileageEntriesRef, Index: 14}},
 	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &jurisdictionMileageEntriesRef, Index: 15}},
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &jurisdictionMileageEntriesRef, Index: 16}},
@@ -676,20 +682,20 @@ var JurisdictionMileageEntries = &JurisdictionMileageEntriesTable{
 func BuildJurisdictionMileageEntries(r *keel.Ref) *JurisdictionMileageEntriesTable {
 	return &JurisdictionMileageEntriesTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		TractorID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		JurisdictionID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		TractorID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		JurisdictionID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		TraveledAt:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 5}},
 		Year:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
 		Quarter:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
 		Miles:          keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 8}}},
 		Loaded:         keel.BoolCol{Col: keel.Col{Ref: r, Index: 9}},
-		Source:         MileageSourceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
-		ShipmentMoveID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
+		Source:         MileageSourceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		ShipmentMoveID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 11}}},
 		Notes:          keel.StringCol{Col: keel.Col{Ref: r, Index: 12}},
-		CreatedByID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 13}}},
+		CreatedByID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 13}}},
 		Version:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
 		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
 		UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
@@ -726,8 +732,6 @@ func (t *JurisdictionMileageEntriesTable) Get(ctx context.Context, db *keel.DB, 
 
 // JurisdictionMileageEntriesQuery is a query over ifta.JurisdictionMileageEntry.
 type JurisdictionMileageEntriesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*ifta.JurisdictionMileageEntry] = (*JurisdictionMileageEntriesTable)(nil)
 
 var _ keel.Query[*ifta.JurisdictionMileageEntry] = (*JurisdictionMileageEntriesQuery)(nil)
 
@@ -843,42 +847,42 @@ func (t *JurisdictionMileageEntriesTable) Compute(col keel.Column, e keel.Expr) 
 
 // Create inserts row.
 func (t *JurisdictionMileageEntriesTable) Create(ctx context.Context, db *keel.DB, row *ifta.JurisdictionMileageEntry) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *JurisdictionMileageEntriesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*ifta.JurisdictionMileageEntry) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *JurisdictionMileageEntriesTable) Save(ctx context.Context, db *keel.DB, row *ifta.JurisdictionMileageEntry, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *JurisdictionMileageEntriesTable) SaveExcept(ctx context.Context, db *keel.DB, row *ifta.JurisdictionMileageEntry, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *JurisdictionMileageEntriesTable) DeleteRow(ctx context.Context, db *keel.DB, row *ifta.JurisdictionMileageEntry) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *JurisdictionMileageEntriesTable) Upsert(ctx context.Context, db *keel.DB, rows []*ifta.JurisdictionMileageEntry, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *JurisdictionMileageEntriesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*ifta.JurisdictionMileageEntry, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *JurisdictionMileageEntriesTable) Copy(ctx context.Context, db *keel.DB, rows []*ifta.JurisdictionMileageEntry) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1050,37 +1054,45 @@ func (q *JurisdictionMileageEntriesQuery) Clone() keel.Query[*ifta.JurisdictionM
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *JurisdictionMileageEntriesQuery) One(ctx context.Context, db *keel.DB) (*ifta.JurisdictionMileageEntry, error) {
-	return keel.One[*ifta.JurisdictionMileageEntry](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*ifta.JurisdictionMileageEntry)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *JurisdictionMileageEntriesQuery) First(ctx context.Context, db *keel.DB) (*ifta.JurisdictionMileageEntry, error) {
-	return keel.First[*ifta.JurisdictionMileageEntry](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*ifta.JurisdictionMileageEntry)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *JurisdictionMileageEntriesQuery) List(ctx context.Context, db *keel.DB) ([]*ifta.JurisdictionMileageEntry, error) {
-	return keel.List[*ifta.JurisdictionMileageEntry](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*ifta.JurisdictionMileageEntry)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *JurisdictionMileageEntriesQuery) All(ctx context.Context, db *keel.DB) ([]*ifta.JurisdictionMileageEntry, error) {
-	return keel.All[*ifta.JurisdictionMileageEntry](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*ifta.JurisdictionMileageEntry)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *JurisdictionMileageEntriesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*ifta.JurisdictionMileageEntry, error) {
-	return keel.UpdateReturning[*ifta.JurisdictionMileageEntry](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*ifta.JurisdictionMileageEntry)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *JurisdictionMileageEntriesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*ifta.JurisdictionMileageEntry], error) {
-	return keel.PageOf[*ifta.JurisdictionMileageEntry](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*ifta.JurisdictionMileageEntry])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *JurisdictionMileageEntriesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*ifta.JurisdictionMileageEntry) error) error {
-	return keel.Each[*ifta.JurisdictionMileageEntry](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*ifta.JurisdictionMileageEntry)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newJurisdictionMileageEntry() unsafe.Pointer {
@@ -1323,14 +1335,14 @@ type ReturnsTable struct {
 // Returns references the ifta_returns table.
 var Returns = &ReturnsTable{
 	TableBase:             keel.TableBase{Ref: &returnsRef},
-	ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &returnsRef, Index: 0}}},
-	BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &returnsRef, Index: 1}}},
-	OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &returnsRef, Index: 2}}},
+	ID:                    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &returnsRef, Index: 0}}},
+	BusinessUnitID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &returnsRef, Index: 1}}},
+	OrganizationID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &returnsRef, Index: 2}}},
 	Year:                  keel.Int64Col{Col: keel.Col{Ref: &returnsRef, Index: 3}},
 	Quarter:               keel.Int64Col{Col: keel.Col{Ref: &returnsRef, Index: 4}},
 	AmendmentNumber:       keel.Int64Col{Col: keel.Col{Ref: &returnsRef, Index: 5}},
-	AmendsReturnID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &returnsRef, Index: 6}}},
-	Status:                ReturnStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &returnsRef, Index: 7}}},
+	AmendsReturnID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &returnsRef, Index: 6}}},
+	Status:                ReturnStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &returnsRef, Index: 7}}},
 	Timezone:              keel.StringCol{Col: keel.Col{Ref: &returnsRef, Index: 8}},
 	PeriodStart:           keel.Int64Col{Col: keel.Col{Ref: &returnsRef, Index: 9}},
 	PeriodEnd:             keel.Int64Col{Col: keel.Col{Ref: &returnsRef, Index: 10}},
@@ -1351,12 +1363,12 @@ var Returns = &ReturnsTable{
 	Problems:              keel.JSONBCol{Col: keel.Col{Ref: &returnsRef, Index: 25}},
 	ComputedAt:            keel.Int64Col{Col: keel.Col{Ref: &returnsRef, Index: 26}},
 	FinalizedAt:           keel.Int64Col{Col: keel.Col{Ref: &returnsRef, Index: 27}},
-	FinalizedByID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &returnsRef, Index: 28}}},
+	FinalizedByID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &returnsRef, Index: 28}}},
 	FiledAt:               keel.Int64Col{Col: keel.Col{Ref: &returnsRef, Index: 29}},
-	FiledByID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &returnsRef, Index: 30}}},
+	FiledByID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &returnsRef, Index: 30}}},
 	FilingReference:       keel.StringCol{Col: keel.Col{Ref: &returnsRef, Index: 31}},
 	ReopenedAt:            keel.Int64Col{Col: keel.Col{Ref: &returnsRef, Index: 32}},
-	ReopenedByID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &returnsRef, Index: 33}}},
+	ReopenedByID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &returnsRef, Index: 33}}},
 	ReopenReason:          keel.StringCol{Col: keel.Col{Ref: &returnsRef, Index: 34}},
 	Version:               keel.Int64Col{Col: keel.Col{Ref: &returnsRef, Index: 35}},
 	CreatedAt:             keel.Int64Col{Col: keel.Col{Ref: &returnsRef, Index: 36}},
@@ -1367,14 +1379,14 @@ var Returns = &ReturnsTable{
 func BuildReturns(r *keel.Ref) *ReturnsTable {
 	return &ReturnsTable{
 		TableBase:             keel.TableBase{Ref: r},
-		ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ID:                    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		Year:                  keel.Int64Col{Col: keel.Col{Ref: r, Index: 3}},
 		Quarter:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 4}},
 		AmendmentNumber:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 5}},
-		AmendsReturnID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		Status:                ReturnStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		AmendsReturnID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		Status:                ReturnStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
 		Timezone:              keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
 		PeriodStart:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
 		PeriodEnd:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
@@ -1395,12 +1407,12 @@ func BuildReturns(r *keel.Ref) *ReturnsTable {
 		Problems:              keel.JSONBCol{Col: keel.Col{Ref: r, Index: 25}},
 		ComputedAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 26}},
 		FinalizedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 27}},
-		FinalizedByID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 28}}},
+		FinalizedByID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 28}}},
 		FiledAt:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 29}},
-		FiledByID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 30}}},
+		FiledByID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 30}}},
 		FilingReference:       keel.StringCol{Col: keel.Col{Ref: r, Index: 31}},
 		ReopenedAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 32}},
-		ReopenedByID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 33}}},
+		ReopenedByID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 33}}},
 		ReopenReason:          keel.StringCol{Col: keel.Col{Ref: r, Index: 34}},
 		Version:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 35}},
 		CreatedAt:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 36}},
@@ -1442,8 +1454,6 @@ func (t *ReturnsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*ift
 
 // ReturnsQuery is a query over ifta.Return.
 type ReturnsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*ifta.Return] = (*ReturnsTable)(nil)
 
 var _ keel.Query[*ifta.Return] = (*ReturnsQuery)(nil)
 
@@ -1559,42 +1569,42 @@ func (t *ReturnsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*ifta.Re
 
 // Create inserts row.
 func (t *ReturnsTable) Create(ctx context.Context, db *keel.DB, row *ifta.Return) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *ReturnsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*ifta.Return) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *ReturnsTable) Save(ctx context.Context, db *keel.DB, row *ifta.Return, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *ReturnsTable) SaveExcept(ctx context.Context, db *keel.DB, row *ifta.Return, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *ReturnsTable) DeleteRow(ctx context.Context, db *keel.DB, row *ifta.Return) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *ReturnsTable) Upsert(ctx context.Context, db *keel.DB, rows []*ifta.Return, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *ReturnsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*ifta.Return, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *ReturnsTable) Copy(ctx context.Context, db *keel.DB, rows []*ifta.Return) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1766,37 +1776,45 @@ func (q *ReturnsQuery) Clone() keel.Query[*ifta.Return] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *ReturnsQuery) One(ctx context.Context, db *keel.DB) (*ifta.Return, error) {
-	return keel.One[*ifta.Return](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*ifta.Return)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *ReturnsQuery) First(ctx context.Context, db *keel.DB) (*ifta.Return, error) {
-	return keel.First[*ifta.Return](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*ifta.Return)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *ReturnsQuery) List(ctx context.Context, db *keel.DB) ([]*ifta.Return, error) {
-	return keel.List[*ifta.Return](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*ifta.Return)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *ReturnsQuery) All(ctx context.Context, db *keel.DB) ([]*ifta.Return, error) {
-	return keel.All[*ifta.Return](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*ifta.Return)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *ReturnsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*ifta.Return, error) {
-	return keel.UpdateReturning[*ifta.Return](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*ifta.Return)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *ReturnsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*ifta.Return], error) {
-	return keel.PageOf[*ifta.Return](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*ifta.Return])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *ReturnsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*ifta.Return) error) error {
-	return keel.Each[*ifta.Return](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*ifta.Return)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newReturn() unsafe.Pointer { return unsafe.Pointer(new(ifta.Return)) }
@@ -2126,12 +2144,12 @@ type ReturnLinesTable struct {
 // ReturnLines references the ifta_return_lines table.
 var ReturnLines = &ReturnLinesTable{
 	TableBase:              keel.TableBase{Ref: &returnLinesRef},
-	ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &returnLinesRef, Index: 0}}},
-	BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &returnLinesRef, Index: 1}}},
-	OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &returnLinesRef, Index: 2}}},
-	ReturnID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &returnLinesRef, Index: 3}}},
-	JurisdictionID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &returnLinesRef, Index: 4}}},
-	FuelType:               keelkinds.DomaintypesIFTAFuelTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &returnLinesRef, Index: 5}}},
+	ID:                     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &returnLinesRef, Index: 0}}},
+	BusinessUnitID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &returnLinesRef, Index: 1}}},
+	OrganizationID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &returnLinesRef, Index: 2}}},
+	ReturnID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &returnLinesRef, Index: 3}}},
+	JurisdictionID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &returnLinesRef, Index: 4}}},
+	FuelType:               keelkinds.DomaintypesIFTAFuelTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &returnLinesRef, Index: 5}}},
 	IsIftaMember:           keel.BoolCol{Col: keel.Col{Ref: &returnLinesRef, Index: 6}},
 	TotalMiles:             keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &returnLinesRef, Index: 7}}},
 	TaxableMiles:           keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &returnLinesRef, Index: 8}}},
@@ -2159,12 +2177,12 @@ var ReturnLines = &ReturnLinesTable{
 func BuildReturnLines(r *keel.Ref) *ReturnLinesTable {
 	return &ReturnLinesTable{
 		TableBase:              keel.TableBase{Ref: r},
-		ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		ReturnID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		JurisdictionID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		FuelType:               keelkinds.DomaintypesIFTAFuelTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		ID:                     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ReturnID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		JurisdictionID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		FuelType:               keelkinds.DomaintypesIFTAFuelTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		IsIftaMember:           keel.BoolCol{Col: keel.Col{Ref: r, Index: 6}},
 		TotalMiles:             keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 7}}},
 		TaxableMiles:           keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 8}}},
@@ -2212,8 +2230,6 @@ func (t *ReturnLinesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (
 
 // ReturnLinesQuery is a query over ifta.ReturnLine.
 type ReturnLinesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*ifta.ReturnLine] = (*ReturnLinesTable)(nil)
 
 var _ keel.Query[*ifta.ReturnLine] = (*ReturnLinesQuery)(nil)
 
@@ -2329,42 +2345,42 @@ func (t *ReturnLinesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*ift
 
 // Create inserts row.
 func (t *ReturnLinesTable) Create(ctx context.Context, db *keel.DB, row *ifta.ReturnLine) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *ReturnLinesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*ifta.ReturnLine) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *ReturnLinesTable) Save(ctx context.Context, db *keel.DB, row *ifta.ReturnLine, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *ReturnLinesTable) SaveExcept(ctx context.Context, db *keel.DB, row *ifta.ReturnLine, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *ReturnLinesTable) DeleteRow(ctx context.Context, db *keel.DB, row *ifta.ReturnLine) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *ReturnLinesTable) Upsert(ctx context.Context, db *keel.DB, rows []*ifta.ReturnLine, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *ReturnLinesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*ifta.ReturnLine, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *ReturnLinesTable) Copy(ctx context.Context, db *keel.DB, rows []*ifta.ReturnLine) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -2536,37 +2552,45 @@ func (q *ReturnLinesQuery) Clone() keel.Query[*ifta.ReturnLine] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *ReturnLinesQuery) One(ctx context.Context, db *keel.DB) (*ifta.ReturnLine, error) {
-	return keel.One[*ifta.ReturnLine](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*ifta.ReturnLine)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *ReturnLinesQuery) First(ctx context.Context, db *keel.DB) (*ifta.ReturnLine, error) {
-	return keel.First[*ifta.ReturnLine](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*ifta.ReturnLine)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *ReturnLinesQuery) List(ctx context.Context, db *keel.DB) ([]*ifta.ReturnLine, error) {
-	return keel.List[*ifta.ReturnLine](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*ifta.ReturnLine)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *ReturnLinesQuery) All(ctx context.Context, db *keel.DB) ([]*ifta.ReturnLine, error) {
-	return keel.All[*ifta.ReturnLine](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*ifta.ReturnLine)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *ReturnLinesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*ifta.ReturnLine, error) {
-	return keel.UpdateReturning[*ifta.ReturnLine](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*ifta.ReturnLine)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *ReturnLinesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*ifta.ReturnLine], error) {
-	return keel.PageOf[*ifta.ReturnLine](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*ifta.ReturnLine])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *ReturnLinesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*ifta.ReturnLine) error) error {
-	return keel.Each[*ifta.ReturnLine](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*ifta.ReturnLine)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newReturnLine() unsafe.Pointer { return unsafe.Pointer(new(ifta.ReturnLine)) }
@@ -2775,11 +2799,11 @@ type TaxRatesTable struct {
 // TaxRates references the ifta_tax_rates table.
 var TaxRates = &TaxRatesTable{
 	TableBase:              keel.TableBase{Ref: &taxRatesRef},
-	ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &taxRatesRef, Index: 0}}},
-	JurisdictionID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &taxRatesRef, Index: 1}}},
+	ID:                     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &taxRatesRef, Index: 0}}},
+	JurisdictionID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &taxRatesRef, Index: 1}}},
 	Year:                   keel.Int64Col{Col: keel.Col{Ref: &taxRatesRef, Index: 2}},
 	Quarter:                keel.Int64Col{Col: keel.Col{Ref: &taxRatesRef, Index: 3}},
-	FuelType:               keelkinds.DomaintypesIFTAFuelTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &taxRatesRef, Index: 4}}},
+	FuelType:               keelkinds.DomaintypesIFTAFuelTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &taxRatesRef, Index: 4}}},
 	RatePerGallon:          keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &taxRatesRef, Index: 5}}},
 	SurchargeRatePerGallon: keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &taxRatesRef, Index: 6}}},
 	SourceNote:             keel.StringCol{Col: keel.Col{Ref: &taxRatesRef, Index: 7}},
@@ -2794,11 +2818,11 @@ var TaxRates = &TaxRatesTable{
 func BuildTaxRates(r *keel.Ref) *TaxRatesTable {
 	return &TaxRatesTable{
 		TableBase:              keel.TableBase{Ref: r},
-		ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		JurisdictionID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		ID:                     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		JurisdictionID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		Year:                   keel.Int64Col{Col: keel.Col{Ref: r, Index: 2}},
 		Quarter:                keel.Int64Col{Col: keel.Col{Ref: r, Index: 3}},
-		FuelType:               keelkinds.DomaintypesIFTAFuelTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		FuelType:               keelkinds.DomaintypesIFTAFuelTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		RatePerGallon:          keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 5}}},
 		SurchargeRatePerGallon: keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 6}}},
 		SourceNote:             keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
@@ -2830,8 +2854,6 @@ func (t *TaxRatesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*if
 
 // TaxRatesQuery is a query over ifta.TaxRate.
 type TaxRatesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*ifta.TaxRate] = (*TaxRatesTable)(nil)
 
 var _ keel.Query[*ifta.TaxRate] = (*TaxRatesQuery)(nil)
 
@@ -2947,42 +2969,42 @@ func (t *TaxRatesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*ifta.T
 
 // Create inserts row.
 func (t *TaxRatesTable) Create(ctx context.Context, db *keel.DB, row *ifta.TaxRate) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *TaxRatesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*ifta.TaxRate) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *TaxRatesTable) Save(ctx context.Context, db *keel.DB, row *ifta.TaxRate, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *TaxRatesTable) SaveExcept(ctx context.Context, db *keel.DB, row *ifta.TaxRate, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *TaxRatesTable) DeleteRow(ctx context.Context, db *keel.DB, row *ifta.TaxRate) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *TaxRatesTable) Upsert(ctx context.Context, db *keel.DB, rows []*ifta.TaxRate, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *TaxRatesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*ifta.TaxRate, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *TaxRatesTable) Copy(ctx context.Context, db *keel.DB, rows []*ifta.TaxRate) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -3154,37 +3176,45 @@ func (q *TaxRatesQuery) Clone() keel.Query[*ifta.TaxRate] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *TaxRatesQuery) One(ctx context.Context, db *keel.DB) (*ifta.TaxRate, error) {
-	return keel.One[*ifta.TaxRate](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*ifta.TaxRate)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *TaxRatesQuery) First(ctx context.Context, db *keel.DB) (*ifta.TaxRate, error) {
-	return keel.First[*ifta.TaxRate](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*ifta.TaxRate)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *TaxRatesQuery) List(ctx context.Context, db *keel.DB) ([]*ifta.TaxRate, error) {
-	return keel.List[*ifta.TaxRate](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*ifta.TaxRate)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *TaxRatesQuery) All(ctx context.Context, db *keel.DB) ([]*ifta.TaxRate, error) {
-	return keel.All[*ifta.TaxRate](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*ifta.TaxRate)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *TaxRatesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*ifta.TaxRate, error) {
-	return keel.UpdateReturning[*ifta.TaxRate](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*ifta.TaxRate)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *TaxRatesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*ifta.TaxRate], error) {
-	return keel.PageOf[*ifta.TaxRate](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*ifta.TaxRate])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *TaxRatesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*ifta.TaxRate) error) error {
-	return keel.Each[*ifta.TaxRate](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*ifta.TaxRate)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newTaxRate() unsafe.Pointer { return unsafe.Pointer(new(ifta.TaxRate)) }
@@ -3351,84 +3381,76 @@ var reportMeasureInteger = schema.ReportInfo{Included: true, Kind: schema.Measur
 var reportMeasureIntegerHidden = schema.ReportInfo{Kind: schema.Measure, Type: schema.ValueInt, Aggs: schema.AggsNumeric}
 
 // JurisdictionStatusCol is a column of ifta.JurisdictionStatus values.
-type JurisdictionStatusCol struct{ keel.StringCol }
+type JurisdictionStatusCol struct{ keel.TypedStringCol }
 
-func (c JurisdictionStatusCol) Eq(v ifta.JurisdictionStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c JurisdictionStatusCol) Ne(v ifta.JurisdictionStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c JurisdictionStatusCol) Gt(v ifta.JurisdictionStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
+func (c JurisdictionStatusCol) Eq(v ifta.JurisdictionStatus) keel.Pred { return c.Text().Eq(string(v)) }
+func (c JurisdictionStatusCol) Ne(v ifta.JurisdictionStatus) keel.Pred { return c.Text().Ne(string(v)) }
+func (c JurisdictionStatusCol) Gt(v ifta.JurisdictionStatus) keel.Pred { return c.Text().Gt(string(v)) }
 func (c JurisdictionStatusCol) Gte(v ifta.JurisdictionStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
-func (c JurisdictionStatusCol) Lt(v ifta.JurisdictionStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
+func (c JurisdictionStatusCol) Lt(v ifta.JurisdictionStatus) keel.Pred { return c.Text().Lt(string(v)) }
 func (c JurisdictionStatusCol) Lte(v ifta.JurisdictionStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c JurisdictionStatusCol) IsDistinctFrom(v ifta.JurisdictionStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c JurisdictionStatusCol) Between(lo, hi ifta.JurisdictionStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c JurisdictionStatusCol) To(v ifta.JurisdictionStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c JurisdictionStatusCol) In(vs ...ifta.JurisdictionStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c JurisdictionStatusCol) NotIn(vs ...ifta.JurisdictionStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // MileageSourceCol is a column of ifta.MileageSource values.
-type MileageSourceCol struct{ keel.StringCol }
+type MileageSourceCol struct{ keel.TypedStringCol }
 
-func (c MileageSourceCol) Eq(v ifta.MileageSource) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c MileageSourceCol) Ne(v ifta.MileageSource) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c MileageSourceCol) Gt(v ifta.MileageSource) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c MileageSourceCol) Gte(v ifta.MileageSource) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c MileageSourceCol) Lt(v ifta.MileageSource) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c MileageSourceCol) Lte(v ifta.MileageSource) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c MileageSourceCol) Eq(v ifta.MileageSource) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c MileageSourceCol) Ne(v ifta.MileageSource) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c MileageSourceCol) Gt(v ifta.MileageSource) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c MileageSourceCol) Gte(v ifta.MileageSource) keel.Pred { return c.Text().Gte(string(v)) }
+func (c MileageSourceCol) Lt(v ifta.MileageSource) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c MileageSourceCol) Lte(v ifta.MileageSource) keel.Pred { return c.Text().Lte(string(v)) }
 func (c MileageSourceCol) IsDistinctFrom(v ifta.MileageSource) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c MileageSourceCol) Between(lo, hi ifta.MileageSource) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c MileageSourceCol) To(v ifta.MileageSource) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c MileageSourceCol) To(v ifta.MileageSource) keel.Assignment { return c.Text().To(string(v)) }
 func (c MileageSourceCol) In(vs ...ifta.MileageSource) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c MileageSourceCol) NotIn(vs ...ifta.MileageSource) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // ReturnStatusCol is a column of ifta.ReturnStatus values.
-type ReturnStatusCol struct{ keel.StringCol }
+type ReturnStatusCol struct{ keel.TypedStringCol }
 
-func (c ReturnStatusCol) Eq(v ifta.ReturnStatus) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c ReturnStatusCol) Ne(v ifta.ReturnStatus) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c ReturnStatusCol) Gt(v ifta.ReturnStatus) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c ReturnStatusCol) Gte(v ifta.ReturnStatus) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c ReturnStatusCol) Lt(v ifta.ReturnStatus) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c ReturnStatusCol) Lte(v ifta.ReturnStatus) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c ReturnStatusCol) Eq(v ifta.ReturnStatus) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c ReturnStatusCol) Ne(v ifta.ReturnStatus) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c ReturnStatusCol) Gt(v ifta.ReturnStatus) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c ReturnStatusCol) Gte(v ifta.ReturnStatus) keel.Pred { return c.Text().Gte(string(v)) }
+func (c ReturnStatusCol) Lt(v ifta.ReturnStatus) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c ReturnStatusCol) Lte(v ifta.ReturnStatus) keel.Pred { return c.Text().Lte(string(v)) }
 func (c ReturnStatusCol) IsDistinctFrom(v ifta.ReturnStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ReturnStatusCol) Between(lo, hi ifta.ReturnStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c ReturnStatusCol) To(v ifta.ReturnStatus) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c ReturnStatusCol) To(v ifta.ReturnStatus) keel.Assignment { return c.Text().To(string(v)) }
 func (c ReturnStatusCol) In(vs ...ifta.ReturnStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ReturnStatusCol) NotIn(vs ...ifta.ReturnStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

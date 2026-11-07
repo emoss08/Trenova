@@ -223,14 +223,14 @@ func rolesWithInheritance(ctx context.Context, roleIDs []pulid.ID) keel.Query[*r
 		parent.Pick(parent.ID, parent.ParentRoleIDs).
 			Join(
 				closure,
-				parent.ID.InArray(keel.StringArrayOf(closure.Col(roleClosureParentColumn))),
+				parent.ID.Text().InArray(keel.StringArrayOf(closure.Col(roleClosureParentColumn))),
 			),
 	)).Distinct()
 
 	return forTenant(
 		ctx,
 		ro.With(closure),
-		ro.ID.InQuery(closure.Query().Pick(closure.Col(roleClosureRoleColumn))),
+		ro.ID.InQuery(keel.RowsOf(closure.TableRef()).Pick(closure.Col(roleClosureRoleColumn))),
 	).Load(ro.Permissions())
 }
 
@@ -322,6 +322,35 @@ func (r *repository) GetUserRoleAssignments(
 			return assignments, nil
 		},
 	)
+}
+
+func (r *repository) GetMembershipExpiry(
+	ctx context.Context,
+	userID, orgID pulid.ID,
+) (*int64, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*int64, error) {
+		m := tenantdb.OrganizationMemberships
+		membership, err := forTenant(
+			ctx,
+			m.Query(),
+			m.UserID.Eq(userID),
+			m.OrganizationID.Eq(orgID),
+		).First(ctx, r.db.Keel(ctx))
+		if dberror.IsNotFoundError(err) {
+			return nil, nil //nolint:nilnil // no membership row has no expiry to apply
+		}
+		if err != nil {
+			r.l.Error(
+				"failed to get membership expiry",
+				zap.String("userId", userID.String()),
+				zap.String("orgId", orgID.String()),
+				zap.Error(err),
+			)
+			return nil, err
+		}
+
+		return membership.ExpiresAt, nil
+	})
 }
 
 func (r *repository) Create(ctx context.Context, role *rbac.Role) error {
@@ -809,14 +838,14 @@ func usersWithPermissionQuery(
 	)
 	held.Recurse(parent.
 		Pick(held.Col(heldUserColumn), parent.ID, parent.ParentRoleIDs).
-		Join(held, parent.ID.InArray(keel.StringArrayOf(held.Col(heldParentColumn))))).
+		Join(held, parent.ID.Text().InArray(keel.StringArrayOf(held.Col(heldParentColumn))))).
 		Distinct()
 
 	return u.With(held).
 		Pick(u.ID, u.Name, u.Username, u.EmailAddress, u.ProfilePicURL.Coalesce(""), u.Locale).
 		Where(
 			u.Status.Eq(domaintypes.StatusActive),
-			keel.Exists(held.Query().
+			keel.Exists(keel.RowsOf(held.TableRef()).
 				Join(rp, rp.RoleID.EqCol(held.Col(heldRoleColumn))).
 				Where(
 					held.Col(heldUserColumn).EqCol(u.ID),

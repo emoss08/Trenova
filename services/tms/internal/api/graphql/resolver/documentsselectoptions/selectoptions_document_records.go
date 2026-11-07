@@ -51,7 +51,7 @@ func (r *Sources) Document(
 }
 
 func documentSelectOptionItem(entity *document.Document) selectoption.Item {
-	return selectoption.ItemFor(documentSelectOption(entity), entity.CreatedAt, entity.ID)
+	return selectoption.ItemFor(documentSelectOption(entity))
 }
 
 func documentSelectOption(entity *document.Document) *gqlmodel.SelectOption {

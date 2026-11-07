@@ -25,7 +25,8 @@ TMS api / worker ──gRPC, mTLS, streamed──▶ imaging supervisor ──fr
   permissions, the document-view and download audit, Temporal orchestration and caching.
 - **The worker holds** no database access, no object-storage credentials, no key access and no
   outbound network. It receives plaintext over gRPC and returns derived artifacts. It is
-  stateless and tenant-agnostic, so it scales horizontally behind a DNS name.
+  stateless, so it scales horizontally behind a DNS name. The one thing it knows of tenancy is a
+  key on each call, used only to keep tenants off each other's child processes.
 
 ## The API
 
@@ -61,8 +62,9 @@ the last flagged, so neither side holds a whole result set.
 - **NormalizeImage** decodes JPEG, PNG, WebP, TIFF, GIF and HEIC/HEIF, turns the image upright,
   fits it and writes PNG or JPEG. The template asset inliner uses it for WebP and HEIC.
 
-Metadata: `x-trenova-priority: interactive|batch` (anything else is batch) and the caller's
-`grpc-timeout`, capped per operation by the worker. Errors are `google.rpc.Status` with an
+Metadata: `x-trenova-priority: interactive|batch` (anything else is batch),
+`x-trenova-tenant` (see "Tenant isolation") and the caller's `grpc-timeout`, capped per operation
+by the worker. Errors are `google.rpc.Status` with an
 `ErrorInfo` (domain `imaging.trenova.app`, reason one of `INVALID_DOCUMENT`, `ENCRYPTED`,
 `TOO_LARGE`, `PIXEL_BUDGET`, `UNSUPPORTED_FORMAT`, `PAGE_OUT_OF_RANGE`, `INVALID_REQUEST`,
 `TIMEOUT`, `RESOURCE_EXHAUSTED`, `DRAINING`, `WORKER_CRASHED`, `INTERNAL`) and a `RetryInfo` on
@@ -78,7 +80,7 @@ The binary has two roles.
   arrives, runs the job on the `trenova-sandbox` pool, and forwards each encoded response the
   child produces through a bounded channel. It never parses a document.
 - **`trenova-imaging child`** is what the pool runs, one per pool slot (one per CPU the process
-  may use, by default). It loads PDFium (from bblanchon/pdfium-binaries) and libheif, then
+  may use, by default) and as many spares. It loads PDFium (from bblanchon/pdfium-binaries) and libheif, then
   hardens itself and handles one job at a time.
 
 Each child is hardened before it reads untrusted input:
@@ -90,7 +92,13 @@ Each child is hardened before it reads untrusted input:
   identity changes) and an allow list answering `EPERM` to anything else, with thread-only
   `clone` and `clone3` as `ENOSYS`. `tgkill` reaches only the child itself, `prctl` only names
   threads, and no anonymous memory becomes executable, so a library that generates code at run
-  time can't work in a child;
+  time can't work in a child. A file may still be mapped executable, for the dynamic loader;
+  the child keeps no descriptor for its input once mapped, and a child serves one tenant (see
+  "Tenant isolation"). Refusing that too waits on `tests/code_after_hardening.rs`, which runs
+  every operation (HEIC included) under a filter that kills on any executable file mapping
+  after hardening: while it passes in CI and in the image's test stage, drop the `mmap` rule's
+  file case in `trenova-sandbox`'s `seccomp.rs`; a `SIGSYS` there means a library still loads
+  code and the case stays;
 - rlimits set between fork and exec: address space (3 GiB), lifetime CPU (1 hour), no file
   writes, 64 descriptors, no core dumps; `PR_SET_PDEATHSIG`, checked against the parent's pid
   after it is set;
@@ -108,14 +116,39 @@ that long for its first job.
 
 A child is killed through its pidfd at its job's deadline or when the caller goes away. A
 crash, kill or protocol violation fails only that job (`WORKER_CRASHED` or `TIMEOUT`) and the
-slot gets a fresh child. Healthy children retire after 500 jobs, past 768 MiB resident, or near
+pool starts another. Healthy children retire after 500 jobs, past 768 MiB resident, or near
 their CPU limit. An idle child that died anyway is found when it is next taken, reaped and
 replaced, so the job goes to a fresh child. A capture batch is cut into sub-batches of
 `ceil(pages / capture_parallelism)` pages, never more than `capture_batch`, so a small batch
 spreads over every slot; a sub-batch whose child dies is rerun a page at a time, so one hostile
 page fails alone. The containment suite (`services/crates/sandbox/tests/containment.rs`, and the
 hostile PDFs in `services/imaging/tests`) covers aborts, wild writes, spins, allocation bombs,
-socket attempts, reads outside landlock, cancellation and recycling.
+socket attempts, reads outside landlock, cancellation, recycling and tenant binding.
+
+## Tenant isolation
+
+A child is hardened against the host, not against the job after it: a document that took over a
+child would still be running when the next job's bytes arrived. So **a child serves one tenant for
+its whole life**. A call names its tenant in `x-trenova-tenant`; the TMS adapter sets it to the
+organization of the call's `dbscope` tenant, the scope row-level security reads, so no caller
+passes it by hand and it cannot differ from the tenant the document was read under.
+
+- A child's first job binds it. Only that tenant's jobs run on it again, and they find it warm.
+- A job for a tenant with no free child takes a **spare**: a child already started, with PDFium and
+  libheif loaded, that has run nothing. A start costs no job anything unless the spares have run
+  out, when the job starts its own.
+- Children bound or running stay within `pool.size`, so spares are all that idle on top of it. A
+  spare taken pushes the least recently used bound child out (`sandbox_retired_total{reason="Tenant"}`)
+  and a replacement starts off the job's path.
+- A call with no key (a context with no tenant scope, or a system one) runs on a child of its own,
+  retired when it ends (`reason="Unscoped"`). That is safe and slow, so a steady rate of it means a
+  path that lost its scope. The service never refuses such a call.
+
+Warmth survives only for tenants busy enough to stay in the slots. With more active tenants than
+slots most jobs take a spare, so the worker starts about one child per job: the latency stays off
+the request, the CPU of a start does not. Watch `sandbox_spawned_total` against
+`imaging_calls_total`, and size `pool.spare_children` for the burst of new tenants one replica
+sees between refills, since one thread refills them.
 
 ## Admission, priorities and scaling
 
@@ -155,7 +188,8 @@ in-flight calls within `drain_grace` (30 s).
 A record per replica; the client spreads calls over all of them. Autoscale on
 `admission_cost_units_in_use / admission_cost_units_capacity` (scale out above 0.7) or on the
 rate of `admission_decisions_total{outcome="Rejected"}`; CPU alone lags. Give each replica one
-CPU per child and about 1 GiB of memory per child.
+CPU per pool slot and about 1 GiB of memory per slot; a spare has run nothing, so it holds only
+the libraries it loaded.
 
 ## Configuration
 
@@ -171,6 +205,7 @@ CPU per child and about 1 GiB of memory per child.
 | `metrics.listen` | `127.0.0.1:9464`; `0.0.0.0:9464` in the image | `/metrics`, `/livez`, `/readyz` |
 | `telemetry.log_level`, `.log_format`, `.otlp_endpoint`, `.trace_sample_ratio` | `info`, `json`, none, 1.0 | |
 | `pool.size` | CPUs available | |
+| `pool.spare_children` | `pool.size` | started children on top of `pool.size`, ready for a tenant with no child |
 | `pool.max_jobs_per_child`, `.rss_high_water`, `.address_space`, `.cpu_seconds`, `.open_files` | 500, 768 MiB, 3 GiB, 3600, 64 | |
 | `pool.require_hardening` | true | false refused in production |
 | `admission.cost_units`, `.memory_bytes`, `.interactive_reserve`, `.max_wait`, `.max_waiters` | 2 × pool, 75% of the pool's address space, 0.25, 250 ms, 64 | |
@@ -203,7 +238,7 @@ directories (server half, client half, CA key); the self-hosted compose file run
 | `admission_in_flight`, `admission_cost_units_in_use`, `admission_cost_units_capacity`, `admission_memory_bytes_in_use`, `admission_waiting` | |
 | `sandbox_live`, `sandbox_size`, `sandbox_busy`, `sandbox_spawned_total`, `sandbox_spawn_failures_total` | |
 | `sandbox_killed_total` | `reason` (Deadline, Cancelled, Protocol, Crash) |
-| `sandbox_retired_total` | `reason` (Jobs, Rss, Cpu) |
+| `sandbox_retired_total` | `reason` (Jobs, Rss, Cpu, Tenant, Unscoped) |
 | `sandbox_child_rss_bytes` | |
 
 Traces: every call is a `grpc.call` span whose parent is the TMS's `otelgrpc` client span.

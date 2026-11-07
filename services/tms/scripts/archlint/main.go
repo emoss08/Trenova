@@ -38,10 +38,14 @@ type textWarning struct {
 	Text string `json:"Text"`
 }
 
+type fileWarning struct {
+	FileRelativePath string `json:"FileRelativePath"`
+}
+
 type payload struct {
 	ExecutionWarnings      []textWarning `json:"ExecutionWarnings"`
 	ArchWarningsDeps       []depWarning  `json:"ArchWarningsDeps"`
-	ArchWarningsNotMatched []textWarning `json:"ArchWarningsNotMatched"`
+	ArchWarningsNotMatched []fileWarning `json:"ArchWarningsNotMatched"`
 	ArchWarningsDeepScan   []textWarning `json:"ArchWarningsDeepScan"`
 }
 
@@ -90,7 +94,7 @@ func run(ctx context.Context) error {
 		problems = append(problems, "config: "+w.Text)
 	}
 	for _, w := range rep.Payload.ArchWarningsNotMatched {
-		problems = append(problems, "not matched: "+w.Text)
+		problems = append(problems, "not matched: "+strings.TrimPrefix(w.FileRelativePath, "/"))
 	}
 	for _, w := range rep.Payload.ArchWarningsDeepScan {
 		problems = append(problems, "deep scan: "+w.Text)

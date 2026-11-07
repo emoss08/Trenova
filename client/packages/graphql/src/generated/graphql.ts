@@ -4018,6 +4018,26 @@ export type DispatchDriverMovesInput = {
   workerId: string | number;
 };
 
+/**
+ * Where the endMarket credit comes from. Forecast: freight the organization's own history says is
+ * likely to appear near the drop, net of what is booked and of the other drivers expected there.
+ * History: what drivers free there have been worth to past plans.
+ */
+export type DispatchEndMarketSource =
+  | 'Forecast'
+  | 'History';
+
+/**
+ * Whether the organization's freight forecast has proven itself on its own history. Plans use the
+ * forecast only when it is Ready.
+ */
+export type DispatchForecastStatus =
+  /** Fewer than 8 weeks or 200 loads of history. */
+  | 'InsufficientHistory'
+  /** Tested, but not clearly better than repeating last week. */
+  | 'NoSkill'
+  | 'Ready';
+
 export type DispatchMoveCandidatesInput = {
   fleetCodeIds?: Array<string | number> | null | undefined;
   includeBlocked?: boolean | null | undefined;
@@ -4026,16 +4046,37 @@ export type DispatchMoveCandidatesInput = {
 };
 
 export type DispatchPlanInput = {
-  /**
-   * Commit the plan immediately where the organization's autonomy tier allows it. When
-   * false the plan is only proposed, whatever the tier.
-   */
-  apply?: boolean | null | undefined;
   fleetCodeIds?: Array<string | number> | null | undefined;
   moveIds?: Array<string | number> | null | undefined;
   windowEnd?: number | null | undefined;
   windowStart?: number | null | undefined;
 };
+
+/** A soft cost whose weight the planner learns from the organization's dispatchers. */
+export type DispatchStyleComponent =
+  | 'acceptance'
+  | 'customerExperience'
+  | 'fairness'
+  | 'haulFit'
+  | 'homeTime'
+  | 'onTimeHistory'
+  | 'safety'
+  | 'timeOffBuffer'
+  | 'trailerContinuity';
+
+/**
+ * A move the optimizer could not cover. Reporting these matters more than the successes: a
+ * move that silently vanishes from a plan is a load nobody is watching.
+ */
+export type DispatchUncoveredReason =
+  | 'BeyondDeadhead'
+  | 'Disqualified'
+  | 'LocationUnknown'
+  | 'NoCandidate'
+  /** Every driver costs more than leaving the move. */
+  | 'NotWorthIt'
+  /** Its drivers are worth more on other moves. */
+  | 'Outbid';
 
 export type DisputeAdjustmentInput = {
   amountMinor: number;
@@ -8858,6 +8899,7 @@ export type UpdateCarrierSettlementControlInput = {
   payPeriodFrequency: PayPeriodFrequency;
   payTrigger: SettlementPayTrigger;
   periodEndDayOfWeek: number;
+  requireSeparateApprover: boolean;
   varianceToleranceMinor: number;
   version: number;
 };
@@ -9180,6 +9222,7 @@ export type UpdateSettlementControlInput = {
   payPeriodFrequency: PayPeriodFrequency;
   payTrigger: SettlementPayTrigger;
   periodEndDayOfWeek: number;
+  requireSeparateApprover: boolean;
   varianceLookbackWeeks: number;
   varianceThresholdPct: string;
   version: number;
@@ -12083,7 +12126,7 @@ export type CaptureDevicePairingQueryVariables = Exact<{
 }>;
 
 
-export type CaptureDevicePairingQuery = { captureDevicePairing: { userCode: string, machineName: string, windowsUser: string, agentVersion: string, architecture: CaptureArchitecture, osVersion: string, clientIp: string, expiresAt: number } };
+export type CaptureDevicePairingQuery = { captureDevicePairing: { userCode: string, machineName: string, windowsUser: string, agentVersion: string, architecture: CaptureArchitecture, osVersion: string, clientIp: string, sameNetwork: boolean, expiresAt: number } };
 
 export type EditCaptureItemsMutationVariables = Exact<{
   batchId: string | number;
@@ -12616,7 +12659,7 @@ export type CarrierCostEventTableQuery = { carrierCostEvents: { totalCount?: num
 export type CarrierSettlementControlQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type CarrierSettlementControlQuery = { carrierSettlementControl: { id: string, organizationId: string, businessUnitId: string, payTrigger: SettlementPayTrigger, payPeriodFrequency: PayPeriodFrequency, periodEndDayOfWeek: number, payDelayDays: number, autoGenerateBatches: boolean, autoPostOnApprove: boolean, varianceToleranceMinor: number, autoMatchInboundInvoices: boolean, autoAcceptWithinTolerance: boolean, holdUntilInvoiceMatched: boolean, defaultApAccountId: string | null, defaultPurchasedTransportationAccountId: string | null, version: number } };
+export type CarrierSettlementControlQuery = { carrierSettlementControl: { id: string, organizationId: string, businessUnitId: string, payTrigger: SettlementPayTrigger, payPeriodFrequency: PayPeriodFrequency, periodEndDayOfWeek: number, payDelayDays: number, autoGenerateBatches: boolean, autoPostOnApprove: boolean, requireSeparateApprover: boolean, varianceToleranceMinor: number, autoMatchInboundInvoices: boolean, autoAcceptWithinTolerance: boolean, holdUntilInvoiceMatched: boolean, defaultApAccountId: string | null, defaultPurchasedTransportationAccountId: string | null, version: number } };
 
 export type CurrentCarrierSettlementPeriodQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -13195,33 +13238,57 @@ export type DeleteDetentionPolicyMutationVariables = Exact<{
 
 export type DeleteDetentionPolicyMutation = { deleteDetentionPolicy: boolean };
 
+export type DispatchForecastQualityFieldsFragment = { status: DispatchForecastStatus, historyWeeks: number, historyLoads: number, weeksTested: number, loadsTested: number, intervalCoverage: number, meanAbsoluteError: number, naiveMeanAbsoluteError: number, skill: number, fittedAt: number | null } & { ' $fragmentName'?: 'DispatchForecastQualityFieldsFragment' };
+
+export type DispatchFreightOutlookQueryVariables = Exact<{
+  hours?: number | null | undefined;
+  limit?: number | null | undefined;
+}>;
+
+
+export type DispatchFreightOutlookQuery = { dispatchFreightOutlook: { generatedAt: number, quality: { ' $fragmentRefs'?: { 'DispatchForecastQualityFieldsFragment': DispatchForecastQualityFieldsFragment } }, windows: Array<{ areaLabel: string, windowStart: number, windowEnd: number, typicalLow: number, typicalHigh: number, likelyLow: number, likelyHigh: number, booked: number, expectedUnbooked: number, driversExpected: number, shortfall: number, valueCents: number, explanation: string, customers: Array<{ customerId: string, name: string, expectedLoads: number }> }> } };
+
+export type DispatchForecastQualityQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type DispatchForecastQualityQuery = { dispatchForecastQuality: { ' $fragmentRefs'?: { 'DispatchForecastQualityFieldsFragment': DispatchForecastQualityFieldsFragment } } };
+
+export type DispatchBoardMoveFieldsFragment = { moveId: string, shipmentId: string, proNumber: string, bol: string, moveStatus: string, shipmentStatus: string, sequence: number, moveCount: number, loaded: boolean, distance: number | null, revenue: number | null, customerId: string | null, customerName: string, serviceTypeId: string | null, serviceTypeCode: string, requiredTractorTypeId: string | null, requiredTrailerTypeId: string | null, temperatureMin: number | null, temperatureMax: number | null, hasHazmat: boolean, hasActiveHold: boolean, urgency: string, minutesToPickup: number, isCovered: boolean, originStopId: string | null, originLocationId: string | null, originName: string, originCity: string, originState: string, originLatitude: number | null, originLongitude: number | null, originWindowStart: number, originWindowEnd: number | null, originActualArrival: number | null, destinationStopId: string | null, destinationLocationId: string | null, destinationName: string, destinationCity: string, destinationState: string, destinationLatitude: number | null, destinationLongitude: number | null, destinationWindowStart: number, destinationWindowEnd: number | null, assignmentId: string | null, assignedWorkerId: string | null, assignedWorkerName: string, assignedTractorId: string | null, assignedTractorCode: string, assignedTrailerId: string | null, assignedTrailerCode: string, assignmentAckStatus: string, previousMoveTrailerId: string | null, coverageType: string, carrierAssignmentId: string | null, assignedCarrierId: string | null, assignedCarrierName: string, carrierTotalCost: number | null, liveTender: { id: string, status: TenderStatus, mode: TenderMode, currentRank: number, offerCount: number, currentCarrierName: string, currentOfferExpiresAt: number | null } | null, pendingProposal: { id: string, workerId: string, workerName: string, tractorId: string, trailerId: string | null, confidence: number, rationale: string, createdAt: number, expiresAt: number | null, stale: boolean } | null, failedProposal: { id: string, workerId: string, workerName: string, reason: string, failedAt: number } | null, planPrice: { workerId: string | null, workerName: string, costCents: number, preferenceFloorCents: number, coveragePriceCents: number, driverValueCents: number, uncoveredReason: DispatchUncoveredReason | null, generatedAt: number, alternatives: Array<{ workerId: string, workerName: string, extraCents: number }> } | null } & { ' $fragmentName'?: 'DispatchBoardMoveFieldsFragment' };
+
+export type DispatchMoveQueryVariables = Exact<{
+  moveId: string | number;
+}>;
+
+
+export type DispatchMoveQuery = { dispatchMove: { ' $fragmentRefs'?: { 'DispatchBoardMoveFieldsFragment': DispatchBoardMoveFieldsFragment } } };
+
 export type DispatchBoardQueryVariables = Exact<{
   input: DispatchBoardInput;
 }>;
 
 
-export type DispatchBoardQuery = { dispatchBoard: { windowStart: number, windowEnd: number, generatedAt: number, summary: { uncoveredMoves: number, coveredMoves: number, lateMoves: number, atRiskMoves: number, unseatedDrivers: number, availableDrivers: number, assignedToday: number, averageDeadheadMiles: number, utilizationPercent: number }, moves: Array<{ moveId: string, shipmentId: string, proNumber: string, bol: string, moveStatus: string, shipmentStatus: string, sequence: number, moveCount: number, loaded: boolean, distance: number | null, revenue: number | null, customerId: string | null, customerName: string, serviceTypeId: string | null, serviceTypeCode: string, requiredTractorTypeId: string | null, requiredTrailerTypeId: string | null, temperatureMin: number | null, temperatureMax: number | null, hasHazmat: boolean, hasActiveHold: boolean, urgency: string, minutesToPickup: number, isCovered: boolean, originStopId: string | null, originLocationId: string | null, originName: string, originCity: string, originState: string, originLatitude: number | null, originLongitude: number | null, originWindowStart: number, originWindowEnd: number | null, originActualArrival: number | null, destinationStopId: string | null, destinationLocationId: string | null, destinationName: string, destinationCity: string, destinationState: string, destinationLatitude: number | null, destinationLongitude: number | null, destinationWindowStart: number, destinationWindowEnd: number | null, assignmentId: string | null, assignedWorkerId: string | null, assignedWorkerName: string, assignedTractorId: string | null, assignedTractorCode: string, assignedTrailerId: string | null, assignedTrailerCode: string, assignmentAckStatus: string, previousMoveTrailerId: string | null, coverageType: string, carrierAssignmentId: string | null, assignedCarrierId: string | null, assignedCarrierName: string, carrierTotalCost: number | null, liveTender: { id: string, status: TenderStatus, mode: TenderMode, currentRank: number, offerCount: number, currentCarrierName: string, currentOfferExpiresAt: number | null } | null }>, drivers: Array<{ workerId: string, firstName: string, lastName: string, workerType: string, driverType: string, fleetCodeId: string | null, fleetCodeName: string, city: string, stateAbbreviation: string, postalCode: string, profilePicUrl: string, assignmentBlocked: string, availableForDispatch: boolean, tractorId: string | null, tractorCode: string, tractorTypeId: string | null, tractorAvailable: boolean, openAssignments: number, availability: string, dutyStatus: string, driveRemainingMs: number, shiftRemainingMs: number, cycleRemainingMs: number, breakRemainingMs: number, hosRecordedAt: number, hosIsStale: boolean, latitude: number | null, longitude: number | null, formattedLocation: string, positionRecordedAt: number, projectedTimeAvailable: number, committedMiles: number, committedRevenue: number, commitments: Array<{ moveId: string, shipmentId: string, proNumber: string, moveStatus: string, windowStart: number, windowEnd: number, destinationCity: string, destinationState: string, destinationLatitude: number | null, destinationLongitude: number | null, trailerId: string | null }>, timeOff: Array<{ startDate: number, endDate: number, type: string }>, findings: Array<{ code: string, severity: string, field: string, message: string, regulation: string | null }> }> } };
+export type DispatchBoardQuery = { dispatchBoard: { driversTruncated: boolean, windowStart: number, windowEnd: number, generatedAt: number, summary: { uncoveredMoves: number, coveredMoves: number, lateMoves: number, atRiskMoves: number, unseatedDrivers: number, availableDrivers: number, assignedToday: number, averageDeadheadMiles: number, utilizationPercent: number }, moves: Array<{ ' $fragmentRefs'?: { 'DispatchBoardMoveFieldsFragment': DispatchBoardMoveFieldsFragment } }>, drivers: Array<{ workerId: string, firstName: string, lastName: string, workerType: string, driverType: string, fleetCodeId: string | null, fleetCodeName: string, city: string, stateAbbreviation: string, postalCode: string, profilePicUrl: string, assignmentBlocked: string, availableForDispatch: boolean, tractorId: string | null, tractorCode: string, tractorTypeId: string | null, tractorAvailable: boolean, openAssignments: number, availability: string, dutyStatus: string, driveRemainingMs: number, shiftRemainingMs: number, cycleRemainingMs: number, breakRemainingMs: number, hosRecordedAt: number, hosIsStale: boolean, latitude: number | null, longitude: number | null, formattedLocation: string, positionRecordedAt: number, projectedTimeAvailable: number, committedMiles: number, committedRevenue: number, lastHomeAt: number | null, commitments: Array<{ moveId: string, shipmentId: string, proNumber: string, moveStatus: string, windowStart: number, windowEnd: number, destinationCity: string, destinationState: string, destinationLatitude: number | null, destinationLongitude: number | null, trailerId: string | null }>, timeOff: Array<{ startDate: number, endDate: number, type: string }>, findings: Array<{ code: string, severity: string, field: string, message: string, regulation: string | null }>, plannedMove: { moveId: string, proNumber: string, costCents: number, valueCents: number, generatedAt: number } | null }> } };
 
 export type DispatchMoveCandidatesQueryVariables = Exact<{
   input: DispatchMoveCandidatesInput;
 }>;
 
 
-export type DispatchMoveCandidatesQuery = { dispatchMoveCandidates: Array<{ workerId: string, workerName: string, tractorId: string | null, trailerId: string | null, moveId: string, score: number, verdict: string, blocked: boolean, deadheadMiles: number | null, estimatedDriveMs: number, projectedArrival: number, minutesOfSlack: number, driveRemainingMs: number, shiftRemainingMs: number, cycleRemainingMs: number, projectedTimeAvailable: number, hosStrategy: string, hosRestStartDeadline: number, hosProjectedDriveMs: number, hosProjectedShiftMs: number, hosProjectedCycleMs: number, findings: Array<{ code: string, severity: string, field: string, message: string, regulation: string | null }>, factors: Array<{ key: string, label: string, raw: number, weight: number, contribution: number, detail: string }> }> };
+export type DispatchMoveCandidatesQuery = { dispatchMoveCandidates: Array<{ ' $fragmentRefs'?: { 'DispatchCandidateFieldsFragment': DispatchCandidateFieldsFragment } }> };
 
 export type DispatchDriverMovesQueryVariables = Exact<{
   input: DispatchDriverMovesInput;
 }>;
 
 
-export type DispatchDriverMovesQuery = { dispatchDriverMoves: Array<{ move: { moveId: string, shipmentId: string, proNumber: string, bol: string, moveStatus: string, shipmentStatus: string, sequence: number, moveCount: number, loaded: boolean, distance: number | null, revenue: number | null, customerId: string | null, customerName: string, serviceTypeId: string | null, serviceTypeCode: string, requiredTractorTypeId: string | null, requiredTrailerTypeId: string | null, temperatureMin: number | null, temperatureMax: number | null, hasHazmat: boolean, hasActiveHold: boolean, urgency: string, minutesToPickup: number, isCovered: boolean, originStopId: string | null, originLocationId: string | null, originName: string, originCity: string, originState: string, originLatitude: number | null, originLongitude: number | null, originWindowStart: number, originWindowEnd: number | null, originActualArrival: number | null, destinationStopId: string | null, destinationLocationId: string | null, destinationName: string, destinationCity: string, destinationState: string, destinationLatitude: number | null, destinationLongitude: number | null, destinationWindowStart: number, destinationWindowEnd: number | null, assignmentId: string | null, assignedWorkerId: string | null, assignedWorkerName: string, assignedTractorId: string | null, assignedTractorCode: string, assignedTrailerId: string | null, assignedTrailerCode: string, assignmentAckStatus: string, previousMoveTrailerId: string | null, coverageType: string, carrierAssignmentId: string | null, assignedCarrierId: string | null, assignedCarrierName: string, carrierTotalCost: number | null }, score: { workerId: string, workerName: string, tractorId: string | null, trailerId: string | null, moveId: string, score: number, verdict: string, blocked: boolean, deadheadMiles: number | null, estimatedDriveMs: number, projectedArrival: number, minutesOfSlack: number, driveRemainingMs: number, shiftRemainingMs: number, cycleRemainingMs: number, projectedTimeAvailable: number, hosStrategy: string, hosRestStartDeadline: number, hosProjectedDriveMs: number, hosProjectedShiftMs: number, hosProjectedCycleMs: number, findings: Array<{ code: string, severity: string, field: string, message: string, regulation: string | null }>, factors: Array<{ key: string, label: string, raw: number, weight: number, contribution: number, detail: string }> } }> };
+export type DispatchDriverMovesQuery = { dispatchDriverMoves: Array<{ move: { ' $fragmentRefs'?: { 'DispatchBoardMoveFieldsFragment': DispatchBoardMoveFieldsFragment } }, candidate: { ' $fragmentRefs'?: { 'DispatchCandidateFieldsFragment': DispatchCandidateFieldsFragment } } }> };
 
 export type DispatchAssignmentPreviewQueryVariables = Exact<{
   input: DispatchAssignmentPreviewInput;
 }>;
 
 
-export type DispatchAssignmentPreviewQuery = { dispatchAssignmentPreview: { moveId: string, workerId: string, tractorId: string | null, trailerId: string | null, blocked: boolean, requiresOverride: boolean, score: { workerId: string, workerName: string, tractorId: string | null, trailerId: string | null, moveId: string, score: number, verdict: string, blocked: boolean, deadheadMiles: number | null, estimatedDriveMs: number, projectedArrival: number, minutesOfSlack: number, driveRemainingMs: number, shiftRemainingMs: number, cycleRemainingMs: number, projectedTimeAvailable: number, hosStrategy: string, hosRestStartDeadline: number, hosProjectedDriveMs: number, hosProjectedShiftMs: number, hosProjectedCycleMs: number, findings: Array<{ code: string, severity: string, field: string, message: string, regulation: string | null }>, factors: Array<{ key: string, label: string, raw: number, weight: number, contribution: number, detail: string }> } } };
+export type DispatchAssignmentPreviewQuery = { dispatchAssignmentPreview: { moveId: string, workerId: string, tractorId: string | null, trailerId: string | null, blocked: boolean, requiresOverride: boolean, candidate: { ' $fragmentRefs'?: { 'DispatchCandidateFieldsFragment': DispatchCandidateFieldsFragment } } } };
 
 export type DispatchAssignMovesMutationVariables = Exact<{
   input: Array<DispatchAssignMoveInput> | DispatchAssignMoveInput;
@@ -13264,7 +13331,19 @@ export type DispatchPlanAutoAssignMutationVariables = Exact<{
 }>;
 
 
-export type DispatchPlanAutoAssignMutation = { dispatchPlanAutoAssign: { runId: string | null, shadowMode: boolean, autonomyTier: string, totalScore: number, generatedAt: number, assignments: Array<{ moveId: string, proNumber: string, workerId: string, workerName: string, tractorId: string | null, trailerId: string | null, confidence: number, rationale: string, autoExecutable: boolean, proposalId: string | null, score: { workerId: string, workerName: string, tractorId: string | null, trailerId: string | null, moveId: string, score: number, verdict: string, blocked: boolean, deadheadMiles: number | null, estimatedDriveMs: number, projectedArrival: number, minutesOfSlack: number, driveRemainingMs: number, shiftRemainingMs: number, cycleRemainingMs: number, projectedTimeAvailable: number, hosStrategy: string, hosRestStartDeadline: number, hosProjectedDriveMs: number, hosProjectedShiftMs: number, hosProjectedCycleMs: number, findings: Array<{ code: string, severity: string, field: string, message: string, regulation: string | null }>, factors: Array<{ key: string, label: string, raw: number, weight: number, contribution: number, detail: string }> } }>, uncovered: Array<{ moveId: string, proNumber: string, reason: string, bestBlockedFindings: Array<{ code: string, severity: string, field: string, message: string, regulation: string | null }> }> } };
+export type DispatchPlanAutoAssignMutation = { dispatchPlanAutoAssign: { runId: string | null, shadowMode: boolean, autonomyTier: string, planningMode: string, costCents: number, uncoveredCents: number, generatedAt: number, assignments: Array<{ moveId: string, proNumber: string, workerId: string, workerName: string, tractorId: string | null, trailerId: string | null, confidence: number, rationale: string, autoExecutable: boolean, proposalId: string | null, planCostCents: number, coveragePriceCents: number, driverValueCents: number, candidate: { ' $fragmentRefs'?: { 'DispatchCandidateFieldsFragment': DispatchCandidateFieldsFragment } }, alternatives: Array<{ workerId: string, workerName: string, extraCents: number }> }>, uncovered: Array<{ moveId: string, proNumber: string, reason: DispatchUncoveredReason, explanation: string, planCostCents: number, coveragePriceCents: number, bestCandidate: { ' $fragmentRefs'?: { 'DispatchCandidateFieldsFragment': DispatchCandidateFieldsFragment } } | null }> } };
+
+export type DispatchCandidateFieldsFragment = { workerId: string, workerName: string, tractorId: string | null, trailerId: string | null, moveId: string, costCents: number, verdict: string, blocked: boolean, deadheadMiles: number | null, originSource: string, loadedMiles: number, estimatedDriveMs: number, restMs: number, projectedArrival: number, projectedDelivery: number, projectedFreeAt: number, minutesOfSlack: number, slackKnown: boolean, hosKnown: boolean, deliveryLateMinutes: number, driveRemainingMs: number, shiftRemainingMs: number, cycleRemainingMs: number, projectedTimeAvailable: number, hosStrategy: string, hosRestStartDeadline: number, hosProjectedDriveMs: number, hosProjectedShiftMs: number, hosProjectedCycleMs: number, costLines: Array<{ component: string, cents: number, soft: boolean }>, findings: Array<{ code: string, severity: string, field: string, message: string, regulation: string | null }>, endMarket: { source: DispatchEndMarketSource, valueCents: number, dropValueCents: number, stayValueCents: number, stayAreaLabel: string | null, areaLabel: string | null, windowStart: number | null, windowEnd: number | null, typicalLow: number | null, typicalHigh: number | null, booked: number | null, driversExpected: number | null, customers: Array<{ customerId: string, name: string, expectedLoads: number }> } | null } & { ' $fragmentName'?: 'DispatchCandidateFieldsFragment' };
+
+export type DispatchStyleQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type DispatchStyleQuery = { dispatchStyle: { enabled: boolean, decisions: number, approvals: number, overrides: number, declines: number, learningSince: number | null, updatedAt: number | null, weights: Array<{ component: DispatchStyleComponent, multiplier: number, samples: number }> } };
+
+export type ResetDispatchStyleMutationVariables = Exact<{ [key: string]: never; }>;
+
+
+export type ResetDispatchStyleMutation = { resetDispatchStyle: { enabled: boolean, decisions: number, approvals: number, overrides: number, declines: number, learningSince: number | null, updatedAt: number | null, weights: Array<{ component: DispatchStyleComponent, multiplier: number, samples: number }> } };
 
 export type DistanceOverrideLocationFieldsFragment = { id: string, name: string, addressLine1: string, addressLine2: string, city: string, postalCode: string, state: { id: string, abbreviation: string } | null } & { ' $fragmentName'?: 'DistanceOverrideLocationFieldsFragment' };
 
@@ -13335,7 +13414,7 @@ export type InviteWorkerToPortalMutationVariables = Exact<{
 }>;
 
 
-export type InviteWorkerToPortalMutation = { inviteWorkerToPortal: { inviteUrl: string, emailSent: boolean, invitation: { id: string, email: string, status: PortalInvitationStatus, expiresAt: number } } };
+export type InviteWorkerToPortalMutation = { inviteWorkerToPortal: { inviteUrl: string | null, emailSent: boolean, invitation: { id: string, email: string, status: PortalInvitationStatus, expiresAt: number } } };
 
 export type RevokeWorkerPortalAccessMutationVariables = Exact<{
   workerId: string | number;
@@ -13899,7 +13978,7 @@ export type WorkerYtdPaySummariesQuery = { workerYtdPaySummaries: Array<{ worker
 export type SettlementControlQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type SettlementControlQuery = { settlementControl: { id: string, organizationId: string, businessUnitId: string, payPeriodFrequency: PayPeriodFrequency, periodEndDayOfWeek: number, payDelayDays: number, payTrigger: SettlementPayTrigger, autoGenerateBatches: boolean, autoApproveClean: boolean, autoAttachAccruals: boolean, autoPostOnApprove: boolean, allowNegativeNet: boolean, varianceThresholdPct: string, varianceLookbackWeeks: number, defaultEscrowInterestRate: string, escrowInterestFrequencyMonths: number, version: number } };
+export type SettlementControlQuery = { settlementControl: { id: string, organizationId: string, businessUnitId: string, payPeriodFrequency: PayPeriodFrequency, periodEndDayOfWeek: number, payDelayDays: number, payTrigger: SettlementPayTrigger, autoGenerateBatches: boolean, autoApproveClean: boolean, autoAttachAccruals: boolean, requireSeparateApprover: boolean, autoPostOnApprove: boolean, allowNegativeNet: boolean, varianceThresholdPct: string, varianceLookbackWeeks: number, defaultEscrowInterestRate: string, escrowInterestFrequencyMonths: number, version: number } };
 
 export type SettlementWorkspaceSummaryQueryVariables = Exact<{
   periodStart?: number | null | undefined;
@@ -14332,7 +14411,7 @@ export type EdiPartnerTableQueryVariables = Exact<{
 
 export type EdiPartnerTableQuery = { ediPartners: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'EdiPartnerRowFieldsFragment': EdiPartnerRowFieldsFragment } } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
-export type EdiCommunicationProfileRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, ediPartnerId: string | null, ediConnectionId: string | null, method: EdiConnectionMethod, status: EntityStatus, name: string, description: string | null, config: unknown, version: number, createdAt: number, updatedAt: number, secretState: Array<{ key: string }> | null, partner: { id: string, code: string, name: string } | null } & { ' $fragmentName'?: 'EdiCommunicationProfileRowFieldsFragment' };
+export type EdiCommunicationProfileRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, ediPartnerId: string | null, ediConnectionId: string | null, method: EdiConnectionMethod, status: EntityStatus, name: string, description: string | null, config: unknown, as2InboundPath: string | null, version: number, createdAt: number, updatedAt: number, secretState: Array<{ key: string }> | null, partner: { id: string, code: string, name: string } | null } & { ' $fragmentName'?: 'EdiCommunicationProfileRowFieldsFragment' };
 
 export type EdiCommunicationProfileTableQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -18014,7 +18093,7 @@ export type ExportTableViewMutationVariables = Exact<{
 }>;
 
 
-export type ExportTableViewMutation = { exportTableView: { definitionId: string, skippedColumns: Array<string>, run: { id: string, status: string } | null } };
+export type ExportTableViewMutation = { exportTableView: { definitionId: string, skippedColumns: Array<string>, run: { id: string } | null } };
 
 export type ScheduleTableViewMutationVariables = Exact<{
   input: ScheduleTableViewInput;
@@ -18407,14 +18486,14 @@ export type CapacityUnitMatchesQueryVariables = Exact<{
 }>;
 
 
-export type CapacityUnitMatchesQuery = { capacityUnitMatches: Array<{ shipmentId: string, moveId: string, proNumber: string | null, originCity: string, destinationCity: string, pickupAt: number | null, revenue: string, deadheadMiles: number | null, quote: string | null, marginPercent: number | null, fitPercent: number | null }> };
+export type CapacityUnitMatchesQuery = { capacityUnitMatches: Array<{ shipmentId: string, moveId: string, proNumber: string | null, originCity: string, destinationCity: string, pickupAt: number | null, revenue: string, deadheadMiles: number | null, quote: string | null, marginPercent: number | null, fitPercent: number | null, costCents: number | null }> };
 
 export type ShipmentCoverageSuggestionsQueryVariables = Exact<{
   shipmentId: string | number;
 }>;
 
 
-export type ShipmentCoverageSuggestionsQuery = { shipmentCoverageSuggestions: { drivers: Array<{ workerId: string, tractorId: string | null, moveId: string, name: string, initials: string, unitLabel: string | null, distanceMiles: number | null, driveRemainingMs: number | null, fitPercent: number | null }>, carriers: Array<{ carrierId: string, moveId: string, name: string, initials: string, mcNumber: string | null, quote: string, ratePerMile: string, acceptancePercent: number | null, posted: boolean }> } };
+export type ShipmentCoverageSuggestionsQuery = { shipmentCoverageSuggestions: { drivers: Array<{ workerId: string, tractorId: string | null, moveId: string, name: string, initials: string, unitLabel: string | null, distanceMiles: number | null, driveRemainingMs: number | null, costCents: number | null }>, carriers: Array<{ carrierId: string, moveId: string, name: string, initials: string, mcNumber: string | null, quote: string, ratePerMile: string, acceptancePercent: number | null, posted: boolean }> } };
 
 export type ShipmentSuggestionsQueryVariables = Exact<{
   timezone: string;
@@ -19389,7 +19468,7 @@ export type HandOffWatchtowerItemMutationVariables = Exact<{
 }>;
 
 
-export type HandOffWatchtowerItemMutation = { handOffWatchtowerItem: { templates: Array<string>, item: { ' $fragmentRefs'?: { 'WatchtowerItemFieldsFragment': WatchtowerItemFieldsFragment } }, run: { id: string, status: AgentRunStatus } | null, subscribers: Array<{ id: string, name: string, icon: string, accent: string, template: AgentTemplate | null }>, candidates: Array<{ id: string, name: string, icon: string, accent: string, template: AgentTemplate | null }> } };
+export type HandOffWatchtowerItemMutation = { handOffWatchtowerItem: { templates: Array<string>, item: { ' $fragmentRefs'?: { 'WatchtowerItemFieldsFragment': WatchtowerItemFieldsFragment } }, run: { id: string } | null, subscribers: Array<{ id: string, name: string, icon: string, accent: string, template: AgentTemplate | null }>, candidates: Array<{ id: string, name: string, icon: string, accent: string, template: AgentTemplate | null }> } };
 
 export type WatchtowerItemDetailQueryVariables = Exact<{
   id: string | number;
@@ -20242,7 +20321,7 @@ export type IssueDisciplinaryActionMutationVariables = Exact<{
 }>;
 
 
-export type IssueDisciplinaryActionMutation = { issueDisciplinaryAction: { action: { ' $fragmentRefs'?: { 'WorkerDisciplinaryActionFieldsFragment': WorkerDisciplinaryActionFieldsFragment } }, employmentEvent: { id: string, kind: WorkerEmploymentEventKind, effectiveAt: number } | null } };
+export type IssueDisciplinaryActionMutation = { issueDisciplinaryAction: { action: { ' $fragmentRefs'?: { 'WorkerDisciplinaryActionFieldsFragment': WorkerDisciplinaryActionFieldsFragment } }, employmentEvent: { id: string } | null } };
 
 export type RescindDisciplinaryActionMutationVariables = Exact<{
   input: RescindDisciplinaryActionInput;
@@ -20391,7 +20470,7 @@ export type WorkerUsStateFieldsFragment = { id: string, name: string, abbreviati
 
 export type WorkerProfileTableFieldsFragment = { id: string, workerId: string, businessUnitId: string, organizationId: string, licenseStateId: string | null, dob: number | null, licenseNumber: string | null, cdlClass: CdlClass, cdlRestrictions: string, endorsement: EndorsementType, hazmatExpiry: number | null, licenseExpiry: number, medicalCardExpiry: number | null, medicalExaminerName: string, medicalExaminerNpi: string, twicCardNumber: string | null, twicExpiry: number | null, hireDate: number, terminationDate: number | null, physicalDueDate: number | null, mvrDueDate: number | null, complianceStatus: ComplianceStatus, trainingHealth: WorkerTrainingHealth, safetyRating: SafetyRating, safetyScore: number, nextCredentialExpiry: number | null, nextTrainingDue: number | null, drugAlcoholStatus: DrugAlcoholStatus, isQualified: boolean, disqualificationReason: string, lastComplianceCheck: number, lastMvrCheck: number, lastDrugTest: number | null, eldExempt: boolean, shortHaulExempt: boolean, version: number, createdAt: number, updatedAt: number, licenseState: { ' $fragmentRefs'?: { 'WorkerUsStateFieldsFragment': WorkerUsStateFieldsFragment } } | null } & { ' $fragmentName'?: 'WorkerProfileTableFieldsFragment' };
 
-export type WorkerTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, stateId: string, fleetCodeId: string | null, managerId: string | null, status: EntityStatus, type: WorkerType, driverType: DriverType, leaveType: WorkerLeaveType | null, profilePicUrl: string, firstName: string, lastName: string, wholeName: string, addressLine1: string, addressLine2: string, city: string, postalCode: string, email: string, phoneNumber: string, emergencyContactName: string, emergencyContactPhone: string, externalId: string, assignmentBlocked: string, gender: WorkerGender, canBeAssigned: boolean, availableForDispatch: boolean, version: number, createdAt: number, updatedAt: number, customFields: unknown, fleetCode: { ' $fragmentRefs'?: { 'WorkerFleetCodeFieldsFragment': WorkerFleetCodeFieldsFragment } } | null, state: { ' $fragmentRefs'?: { 'WorkerUsStateFieldsFragment': WorkerUsStateFieldsFragment } } | null, profile: { ' $fragmentRefs'?: { 'WorkerProfileTableFieldsFragment': WorkerProfileTableFieldsFragment } } | null } & { ' $fragmentName'?: 'WorkerTableRowFieldsFragment' };
+export type WorkerTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, stateId: string, fleetCodeId: string | null, managerId: string | null, positionId: string | null, status: EntityStatus, type: WorkerType, driverType: DriverType, leaveType: WorkerLeaveType | null, profilePicUrl: string, firstName: string, lastName: string, wholeName: string, addressLine1: string, addressLine2: string, city: string, postalCode: string, email: string, phoneNumber: string, emergencyContactName: string, emergencyContactPhone: string, externalId: string, assignmentBlocked: string, gender: WorkerGender, canBeAssigned: boolean, availableForDispatch: boolean, homeLatitude: number | null, homeLongitude: number | null, homePlaceId: string | null, lastHomeAt: number | null, version: number, createdAt: number, updatedAt: number, customFields: unknown, fleetCode: { ' $fragmentRefs'?: { 'WorkerFleetCodeFieldsFragment': WorkerFleetCodeFieldsFragment } } | null, state: { ' $fragmentRefs'?: { 'WorkerUsStateFieldsFragment': WorkerUsStateFieldsFragment } } | null, profile: { ' $fragmentRefs'?: { 'WorkerProfileTableFieldsFragment': WorkerProfileTableFieldsFragment } } | null } & { ' $fragmentName'?: 'WorkerTableRowFieldsFragment' };
 
 export type WorkerPtoWorkerFieldsFragment = { id: string, firstName: string, lastName: string, wholeName: string, profilePicUrl: string } & { ' $fragmentName'?: 'WorkerPtoWorkerFieldsFragment' };
 
@@ -20579,7 +20658,9 @@ export { DeskDetentionCardDocument } from "./documents/detention/card";
 export { DetentionOccurrenceFieldsFragmentDoc, DetentionEvidenceFieldsFragmentDoc, DetentionNoticeFieldsFragmentDoc, DetentionCollectabilityFieldsFragmentDoc, DetentionDeskDocument, DetentionOccurrenceDetailDocument, ShipmentDetentionDocument, DetentionDisputePacketDocument, WaiveDetentionOccurrenceDocument, ApproveDetentionOccurrenceDocument, DisputeDetentionOccurrenceDocument, SendDetentionNoticeDocument } from "./documents/detention/desk";
 export { DeskDetentionOccurrencesDocument } from "./documents/detention/desk-board";
 export { DetentionPolicyTierFieldsFragmentDoc, DetentionPolicyRowFieldsFragmentDoc, DetentionPolicyTableDocument, DetentionPolicyDocument, CreateDetentionPolicyDocument, UpdateDetentionPolicyDocument, DeleteDetentionPolicyDocument } from "./documents/detention/table";
-export { DispatchBoardDocument, DispatchMoveCandidatesDocument, DispatchDriverMovesDocument, DispatchAssignmentPreviewDocument, DispatchAssignMovesDocument, DispatchUnassignMovesDocument, DispatchCarrierAssignmentPreviewDocument, DispatchAssignMoveToCarrierDocument, DispatchCancelCarrierAssignmentDocument, DispatchPlanAutoAssignDocument } from "./documents/dispatch-console/page";
+export { DispatchForecastQualityFieldsFragmentDoc, DispatchFreightOutlookDocument, DispatchForecastQualityDocument } from "./documents/dispatch-console/freight-forecast";
+export { DispatchBoardMoveFieldsFragmentDoc, DispatchCandidateFieldsFragmentDoc, DispatchMoveDocument, DispatchBoardDocument, DispatchMoveCandidatesDocument, DispatchDriverMovesDocument, DispatchAssignmentPreviewDocument, DispatchAssignMovesDocument, DispatchUnassignMovesDocument, DispatchCarrierAssignmentPreviewDocument, DispatchAssignMoveToCarrierDocument, DispatchCancelCarrierAssignmentDocument, DispatchPlanAutoAssignDocument } from "./documents/dispatch-console/page";
+export { DispatchStyleDocument, ResetDispatchStyleDocument } from "./documents/dispatch-control/dispatch-style";
 export { DistanceOverrideLocationFieldsFragmentDoc, DistanceOverrideTableRowFieldsFragmentDoc, DistanceOverrideTableDocument } from "./documents/distance-override/table";
 export { DistanceProfileTableRowFieldsFragmentDoc, DistanceProfileTableDocument } from "./documents/distance-profile/table";
 export { DocumentPacketRuleTableRowFieldsFragmentDoc, DocumentPacketRuleTableDocument } from "./documents/document-packet-rule/table";

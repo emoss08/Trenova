@@ -235,7 +235,10 @@ the console instead of as a service, for development. The printer listens on
 Only the print spooler may send a job or read one. The service asks Windows which process owns
 each loopback connection and compares it to the Spooler service's process; every print goes through
 `spoolsv.exe`, and the job's owner comes from its queue, so nothing else could say whose document
-it is. Any other local process, Windows' own device discovery included, may only read what the
+it is. The queue names the user without a domain, so the owner is the signed-in session with that
+name, as `DOMAIN\user`; a name no session carries is kept only when Windows resolves it to one of
+the signed-in accounts, so a print never lands with a same-named account nobody is signed in to.
+Any other local process, Windows' own device discovery included, may only read what the
 printer is. `installer/verify-install.ps1` checks all of this on a real install in CI.
 
 The service keeps its logs in `%ProgramData%\Trenova\Capture\logs\service.<date>.log`, and
@@ -308,6 +311,19 @@ Servers read the `capture-stable` manifest (`update.captureManifestUrl`, verifie
 where the web app's Download button and the agent's update check look. A server with no key
 configured mirrors nothing; the web app then points at the GitHub releases instead.
 
+A manifest expires 14 days after it is signed (`expiresAt`, signed with the rest), and the
+agent and the updater refuse one past its expiry or without one. The `capture-manifest.yml`
+workflow signs the current release's manifest again every day at 04:23 UTC with a fresh
+expiry (`trenova-capture-release resign`, the same key and tool as the release) and puts it on
+`capture-stable`; nothing else in it changes. So a mirror that keeps serving an old manifest
+cannot hold computers on an old release without notice: once it expires, the agent and the
+updater log that the server's manifest is out of date, and the installed release goes on
+scanning and printing as before; only updating stops. Thirteen missed runs in a row still leave
+a valid manifest, and running the workflow by hand (Actions → Trenova Capture manifest) renews
+a lapsed one. The current release is the highest `capture-vX.Y.Z` release carrying a
+manifest; the workflow renews any manifest the release key signed, including one from before
+manifests carried an expiry.
+
 Signing is used when its secrets exist, and a release is published either way:
 
 | Secret | What it signs | Without it |
@@ -323,6 +339,17 @@ the agent starts the updater service, which verifies everything itself (the mani
 signature, the download's size and SHA-256, the MSI's Authenticode signature and that its
 signer is the same publisher as the running updater) before running the installer. Otherwise
 the tray says a version is available for IT to install.
+
+The same publisher means the same certificate subject (name, organization and country) and, when
+the running updater's certificate carries one, the same Trusted Signing durable identity (the
+extended key usage under `1.3.6.1.4.1.311.97.` tied to the signing profile's verified identity).
+Trusted Signing's certificates last days and its intermediates change, so neither a thumbprint
+nor an issuer is pinned. Revocation is checked for the whole chain: a revoked certificate is
+refused, and when the revocation servers cannot be reached the signature is accepted on its own
+and the updater's log says so. A new identity validation, or a move to another signing service,
+breaks automatic updates for computers on older releases: they need that release installed by
+hand. `verify-install.ps1` runs the installed updater against the release's own MSI, so a
+release whose own updater cannot verify it is never published.
 
 To make a key pair once:
 

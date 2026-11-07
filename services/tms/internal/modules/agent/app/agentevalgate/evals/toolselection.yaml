@@ -48,6 +48,14 @@ cases:
     expect: [dispatch_assign_move]
   - request: tender the load to carriers
     expect: [dispatch_create_tender, dispatch_create_tender_from_routing_guide]
+  - request: is freight coming into Houston this weekend
+    expect: [dispatch_forecast_demand]
+  - request: forecast freight by area for the next two days against the drivers we will have
+    expect: [dispatch_forecast_demand]
+  - request: which areas will be short of drivers in the next two days
+    expect: [dispatch_forecast_demand]
+  - request: how many loads usually appear near Atlanta on Monday mornings
+    expect: [dispatch_forecast_demand]
   - request: shop carriers for a rate on this lane
     expect: [carrier_shop]
   - request: put the shipment on hold

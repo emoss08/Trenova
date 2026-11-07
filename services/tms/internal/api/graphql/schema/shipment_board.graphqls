@@ -274,7 +274,10 @@ type CapacityMatch {
   quote: Decimal @protected(group: Margins)
   "Null to a reader without the margins field group."
   marginPercent: Float @protected(group: Margins)
+  "How well a carrier fits the lane, 0 to 100. Null for a driver's match."
   fitPercent: Float
+  "What the driver taking this move costs the plan, in cents. Null for a carrier's match."
+  costCents: Int
 }
 
 type DriverCoverageSuggestion {
@@ -286,7 +289,8 @@ type DriverCoverageSuggestion {
   unitLabel: String
   distanceMiles: Float
   driveRemainingMs: Int
-  fitPercent: Float
+  "What this driver taking the move costs the plan, in cents: empty miles, lateness, waiting and preferences."
+  costCents: Int
 }
 
 type CarrierCoverageSuggestion {

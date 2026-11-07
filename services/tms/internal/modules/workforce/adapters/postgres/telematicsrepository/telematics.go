@@ -87,7 +87,7 @@ func positionConflict() keel.Conflict {
 		vp.Longitude.ToExpr(newerFloat(vp.Longitude)),
 		vp.HeadingDegrees.ToExpr(newerFloat(vp.HeadingDegrees)),
 		vp.SpeedMph.ToExpr(newerFloat(vp.SpeedMph)),
-		vp.EngineState.ToExpr(newerText(vp.EngineState.StringCol)),
+		vp.EngineState.ToExpr(newerText(vp.EngineState.Text())),
 		vp.FuelPercent.ToExpr(newerFloat(vp.FuelPercent)),
 		vp.OdometerMeters.ToExpr(newerInt64(vp.OdometerMeters)),
 		vp.FormattedLocation.ToExpr(newerText(vp.FormattedLocation)),

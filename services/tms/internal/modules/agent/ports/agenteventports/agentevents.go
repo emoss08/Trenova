@@ -25,6 +25,13 @@ type AgentEventPublisher interface {
 	Publish(ctx context.Context, event *AgentEvent)
 }
 
+// AgentEventObserver is told of every event an organization's plan lets
+// automation act on, for work that follows an event without being an agent
+// run, such as planning dispatch coverage again.
+type AgentEventObserver interface {
+	ObserveAgentEvent(ctx context.Context, event *AgentEvent)
+}
+
 // AttachmentExtractionObserver is told when a document's extraction is saved,
 // so a file a person attached in a conversation has its card shown there.
 type AttachmentExtractionObserver interface {

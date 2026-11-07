@@ -104,27 +104,27 @@ type CarrierEquipmentVerificationsTable struct {
 // CarrierEquipmentVerifications references the carrier_equipment_verifications table.
 var CarrierEquipmentVerifications = &CarrierEquipmentVerificationsTable{
 	TableBase:           keel.TableBase{Ref: &carrierEquipmentVerificationsRef},
-	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierEquipmentVerificationsRef, Index: 0}}},
-	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierEquipmentVerificationsRef, Index: 1}}},
-	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierEquipmentVerificationsRef, Index: 2}}},
-	CarrierAssignmentID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierEquipmentVerificationsRef, Index: 3}}},
-	ShipmentMoveID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierEquipmentVerificationsRef, Index: 4}}},
-	CarrierID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierEquipmentVerificationsRef, Index: 5}}},
+	ID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierEquipmentVerificationsRef, Index: 0}}},
+	BusinessUnitID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierEquipmentVerificationsRef, Index: 1}}},
+	OrganizationID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierEquipmentVerificationsRef, Index: 2}}},
+	CarrierAssignmentID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierEquipmentVerificationsRef, Index: 3}}},
+	ShipmentMoveID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierEquipmentVerificationsRef, Index: 4}}},
+	CarrierID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierEquipmentVerificationsRef, Index: 5}}},
 	ExpectedDOTNumber:   keel.StringCol{Col: keel.Col{Ref: &carrierEquipmentVerificationsRef, Index: 6}},
-	UnitType:            keelkinds.CarrierintelUnitTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierEquipmentVerificationsRef, Index: 7}}},
+	UnitType:            keelkinds.CarrierintelUnitTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierEquipmentVerificationsRef, Index: 7}}},
 	VIN:                 keel.StringCol{Col: keel.Col{Ref: &carrierEquipmentVerificationsRef, Index: 8}},
 	PlateNumber:         keel.StringCol{Col: keel.Col{Ref: &carrierEquipmentVerificationsRef, Index: 9}},
 	PlateState:          keel.StringCol{Col: keel.Col{Ref: &carrierEquipmentVerificationsRef, Index: 10}},
 	UnitNumber:          keel.StringCol{Col: keel.Col{Ref: &carrierEquipmentVerificationsRef, Index: 11}},
-	Result:              VerificationResultCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierEquipmentVerificationsRef, Index: 12}}},
+	Result:              VerificationResultCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierEquipmentVerificationsRef, Index: 12}}},
 	MatchedDOTNumbers:   keel.StringArrayCol{Col: keel.Col{Ref: &carrierEquipmentVerificationsRef, Index: 13}},
 	MatchedLegalName:    keel.StringCol{Col: keel.Col{Ref: &carrierEquipmentVerificationsRef, Index: 14}},
 	Detail:              keel.JSONBCol{Col: keel.Col{Ref: &carrierEquipmentVerificationsRef, Index: 15}},
 	MismatchReason:      keel.StringCol{Col: keel.Col{Ref: &carrierEquipmentVerificationsRef, Index: 16}},
-	Provider:            integrationdb.TypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierEquipmentVerificationsRef, Index: 17}}},
-	VerifiedByID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierEquipmentVerificationsRef, Index: 18}}},
+	Provider:            integrationdb.TypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierEquipmentVerificationsRef, Index: 17}}},
+	VerifiedByID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierEquipmentVerificationsRef, Index: 18}}},
 	VerifiedAt:          keel.Int64Col{Col: keel.Col{Ref: &carrierEquipmentVerificationsRef, Index: 19}},
-	OverrideByID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierEquipmentVerificationsRef, Index: 20}}},
+	OverrideByID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &carrierEquipmentVerificationsRef, Index: 20}}},
 	OverrideReason:      keel.StringCol{Col: keel.Col{Ref: &carrierEquipmentVerificationsRef, Index: 21}},
 	OverriddenAt:        keel.Int64Col{Col: keel.Col{Ref: &carrierEquipmentVerificationsRef, Index: 22}},
 	CreatedAt:           keel.Int64Col{Col: keel.Col{Ref: &carrierEquipmentVerificationsRef, Index: 23}},
@@ -135,27 +135,27 @@ var CarrierEquipmentVerifications = &CarrierEquipmentVerificationsTable{
 func BuildCarrierEquipmentVerifications(r *keel.Ref) *CarrierEquipmentVerificationsTable {
 	return &CarrierEquipmentVerificationsTable{
 		TableBase:           keel.TableBase{Ref: r},
-		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		CarrierAssignmentID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		ShipmentMoveID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		CarrierID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		ID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		CarrierAssignmentID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ShipmentMoveID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		CarrierID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		ExpectedDOTNumber:   keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
-		UnitType:            keelkinds.CarrierintelUnitTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		UnitType:            keelkinds.CarrierintelUnitTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
 		VIN:                 keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
 		PlateNumber:         keel.StringCol{Col: keel.Col{Ref: r, Index: 9}},
 		PlateState:          keel.StringCol{Col: keel.Col{Ref: r, Index: 10}},
 		UnitNumber:          keel.StringCol{Col: keel.Col{Ref: r, Index: 11}},
-		Result:              VerificationResultCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 12}}},
+		Result:              VerificationResultCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 12}}},
 		MatchedDOTNumbers:   keel.StringArrayCol{Col: keel.Col{Ref: r, Index: 13}},
 		MatchedLegalName:    keel.StringCol{Col: keel.Col{Ref: r, Index: 14}},
 		Detail:              keel.JSONBCol{Col: keel.Col{Ref: r, Index: 15}},
 		MismatchReason:      keel.StringCol{Col: keel.Col{Ref: r, Index: 16}},
-		Provider:            integrationdb.TypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 17}}},
-		VerifiedByID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 18}}},
+		Provider:            integrationdb.TypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 17}}},
+		VerifiedByID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 18}}},
 		VerifiedAt:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 19}},
-		OverrideByID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 20}}},
+		OverrideByID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 20}}},
 		OverrideReason:      keel.StringCol{Col: keel.Col{Ref: r, Index: 21}},
 		OverriddenAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 22}},
 		CreatedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 23}},
@@ -178,8 +178,6 @@ func (t *CarrierEquipmentVerificationsTable) Get(ctx context.Context, db *keel.D
 
 // CarrierEquipmentVerificationsQuery is a query over carrierintelverification.CarrierEquipmentVerification.
 type CarrierEquipmentVerificationsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*carrierintelverification.CarrierEquipmentVerification] = (*CarrierEquipmentVerificationsTable)(nil)
 
 var _ keel.Query[*carrierintelverification.CarrierEquipmentVerification] = (*CarrierEquipmentVerificationsQuery)(nil)
 
@@ -295,42 +293,42 @@ func (t *CarrierEquipmentVerificationsTable) Compute(col keel.Column, e keel.Exp
 
 // Create inserts row.
 func (t *CarrierEquipmentVerificationsTable) Create(ctx context.Context, db *keel.DB, row *carrierintelverification.CarrierEquipmentVerification) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *CarrierEquipmentVerificationsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*carrierintelverification.CarrierEquipmentVerification) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *CarrierEquipmentVerificationsTable) Save(ctx context.Context, db *keel.DB, row *carrierintelverification.CarrierEquipmentVerification, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *CarrierEquipmentVerificationsTable) SaveExcept(ctx context.Context, db *keel.DB, row *carrierintelverification.CarrierEquipmentVerification, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *CarrierEquipmentVerificationsTable) DeleteRow(ctx context.Context, db *keel.DB, row *carrierintelverification.CarrierEquipmentVerification) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *CarrierEquipmentVerificationsTable) Upsert(ctx context.Context, db *keel.DB, rows []*carrierintelverification.CarrierEquipmentVerification, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *CarrierEquipmentVerificationsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*carrierintelverification.CarrierEquipmentVerification, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *CarrierEquipmentVerificationsTable) Copy(ctx context.Context, db *keel.DB, rows []*carrierintelverification.CarrierEquipmentVerification) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -502,37 +500,45 @@ func (q *CarrierEquipmentVerificationsQuery) Clone() keel.Query[*carrierintelver
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *CarrierEquipmentVerificationsQuery) One(ctx context.Context, db *keel.DB) (*carrierintelverification.CarrierEquipmentVerification, error) {
-	return keel.One[*carrierintelverification.CarrierEquipmentVerification](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*carrierintelverification.CarrierEquipmentVerification)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *CarrierEquipmentVerificationsQuery) First(ctx context.Context, db *keel.DB) (*carrierintelverification.CarrierEquipmentVerification, error) {
-	return keel.First[*carrierintelverification.CarrierEquipmentVerification](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*carrierintelverification.CarrierEquipmentVerification)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *CarrierEquipmentVerificationsQuery) List(ctx context.Context, db *keel.DB) ([]*carrierintelverification.CarrierEquipmentVerification, error) {
-	return keel.List[*carrierintelverification.CarrierEquipmentVerification](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*carrierintelverification.CarrierEquipmentVerification)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *CarrierEquipmentVerificationsQuery) All(ctx context.Context, db *keel.DB) ([]*carrierintelverification.CarrierEquipmentVerification, error) {
-	return keel.All[*carrierintelverification.CarrierEquipmentVerification](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*carrierintelverification.CarrierEquipmentVerification)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *CarrierEquipmentVerificationsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*carrierintelverification.CarrierEquipmentVerification, error) {
-	return keel.UpdateReturning[*carrierintelverification.CarrierEquipmentVerification](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*carrierintelverification.CarrierEquipmentVerification)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *CarrierEquipmentVerificationsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*carrierintelverification.CarrierEquipmentVerification], error) {
-	return keel.PageOf[*carrierintelverification.CarrierEquipmentVerification](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*carrierintelverification.CarrierEquipmentVerification])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *CarrierEquipmentVerificationsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*carrierintelverification.CarrierEquipmentVerification) error) error {
-	return keel.Each[*carrierintelverification.CarrierEquipmentVerification](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*carrierintelverification.CarrierEquipmentVerification)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newCarrierEquipmentVerification() unsafe.Pointer {
@@ -742,38 +748,38 @@ var enumVerificationResult = [...]schema.EnumValue{
 }
 
 // VerificationResultCol is a column of carrierintelverification.VerificationResult values.
-type VerificationResultCol struct{ keel.StringCol }
+type VerificationResultCol struct{ keel.TypedStringCol }
 
 func (c VerificationResultCol) Eq(v carrierintelverification.VerificationResult) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c VerificationResultCol) Ne(v carrierintelverification.VerificationResult) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c VerificationResultCol) Gt(v carrierintelverification.VerificationResult) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c VerificationResultCol) Gte(v carrierintelverification.VerificationResult) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c VerificationResultCol) Lt(v carrierintelverification.VerificationResult) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c VerificationResultCol) Lte(v carrierintelverification.VerificationResult) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c VerificationResultCol) IsDistinctFrom(v carrierintelverification.VerificationResult) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c VerificationResultCol) Between(lo, hi carrierintelverification.VerificationResult) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c VerificationResultCol) To(v carrierintelverification.VerificationResult) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c VerificationResultCol) In(vs ...carrierintelverification.VerificationResult) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c VerificationResultCol) NotIn(vs ...carrierintelverification.VerificationResult) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

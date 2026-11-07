@@ -8,7 +8,7 @@ import (
 
 const redactedTokenPlaceholder = "REDACTED"
 
-var redactedPathParams = [...]string{"token", "webhookToken", "mailboxToken"}
+var redactedPathParams = [...]string{"token", "webhookToken", "mailboxToken", "as2InboundToken"}
 
 func NewTokenRedactionMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {

@@ -128,32 +128,32 @@ type MemoriesTable struct {
 // Memories references the agent_memories table.
 var Memories = &MemoriesTable{
 	TableBase:         keel.TableBase{Ref: &memoriesRef},
-	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &memoriesRef, Index: 0}}},
-	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &memoriesRef, Index: 1}}},
-	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &memoriesRef, Index: 2}}},
-	Kind:              MemoryKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &memoriesRef, Index: 3}}},
-	Source:            MemorySourceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &memoriesRef, Index: 4}}},
-	Status:            MemoryStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &memoriesRef, Index: 5}}},
-	SubjectType:       MemorySubjectTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &memoriesRef, Index: 6}}},
-	SubjectID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &memoriesRef, Index: 7}}},
+	ID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &memoriesRef, Index: 0}}},
+	BusinessUnitID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &memoriesRef, Index: 1}}},
+	OrganizationID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &memoriesRef, Index: 2}}},
+	Kind:              MemoryKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &memoriesRef, Index: 3}}},
+	Source:            MemorySourceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &memoriesRef, Index: 4}}},
+	Status:            MemoryStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &memoriesRef, Index: 5}}},
+	SubjectType:       MemorySubjectTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &memoriesRef, Index: 6}}},
+	SubjectID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &memoriesRef, Index: 7}}},
 	SubjectLabel:      keel.StringCol{Col: keel.Col{Ref: &memoriesRef, Index: 8}},
 	ToolName:          keel.StringCol{Col: keel.Col{Ref: &memoriesRef, Index: 9}},
 	Content:           keel.StringCol{Col: keel.Col{Ref: &memoriesRef, Index: 10}},
-	AgentDefinitionID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &memoriesRef, Index: 11}}},
-	Scope:             MemoryScopeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &memoriesRef, Index: 12}}},
-	OwnerUserID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &memoriesRef, Index: 13}}},
-	RoleID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &memoriesRef, Index: 14}}},
-	SourceThreadID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &memoriesRef, Index: 15}}},
+	AgentDefinitionID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &memoriesRef, Index: 11}}},
+	Scope:             MemoryScopeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &memoriesRef, Index: 12}}},
+	OwnerUserID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &memoriesRef, Index: 13}}},
+	RoleID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &memoriesRef, Index: 14}}},
+	SourceThreadID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &memoriesRef, Index: 15}}},
 	Tainted:           keel.BoolCol{Col: keel.Col{Ref: &memoriesRef, Index: 16}},
-	TaintRunID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &memoriesRef, Index: 17}}},
-	SourceRunID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &memoriesRef, Index: 18}}},
-	SourceProposalID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &memoriesRef, Index: 19}}},
-	ReflectionID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &memoriesRef, Index: 20}}},
-	SupersedesID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &memoriesRef, Index: 21}}},
-	CreatedByUserID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &memoriesRef, Index: 22}}},
-	RetiredByUserID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &memoriesRef, Index: 23}}},
+	TaintRunID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &memoriesRef, Index: 17}}},
+	SourceRunID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &memoriesRef, Index: 18}}},
+	SourceProposalID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &memoriesRef, Index: 19}}},
+	ReflectionID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &memoriesRef, Index: 20}}},
+	SupersedesID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &memoriesRef, Index: 21}}},
+	CreatedByUserID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &memoriesRef, Index: 22}}},
+	RetiredByUserID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &memoriesRef, Index: 23}}},
 	RetiredAt:         keel.Int64Col{Col: keel.Col{Ref: &memoriesRef, Index: 24}},
-	ReviewedByUserID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &memoriesRef, Index: 25}}},
+	ReviewedByUserID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &memoriesRef, Index: 25}}},
 	ReviewedAt:        keel.Int64Col{Col: keel.Col{Ref: &memoriesRef, Index: 26}},
 	ExpiresAt:         keel.Int64Col{Col: keel.Col{Ref: &memoriesRef, Index: 27}},
 	UseCount:          keel.Int64Col{Col: keel.Col{Ref: &memoriesRef, Index: 28}},
@@ -171,32 +171,32 @@ var Memories = &MemoriesTable{
 func BuildMemories(r *keel.Ref) *MemoriesTable {
 	return &MemoriesTable{
 		TableBase:         keel.TableBase{Ref: r},
-		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		Kind:              MemoryKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		Source:            MemorySourceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		Status:            MemoryStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		SubjectType:       MemorySubjectTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		SubjectID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		ID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		Kind:              MemoryKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		Source:            MemorySourceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		Status:            MemoryStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		SubjectType:       MemorySubjectTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		SubjectID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
 		SubjectLabel:      keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
 		ToolName:          keel.StringCol{Col: keel.Col{Ref: r, Index: 9}},
 		Content:           keel.StringCol{Col: keel.Col{Ref: r, Index: 10}},
-		AgentDefinitionID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
-		Scope:             MemoryScopeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 12}}},
-		OwnerUserID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 13}}},
-		RoleID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 14}}},
-		SourceThreadID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 15}}},
+		AgentDefinitionID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 11}}},
+		Scope:             MemoryScopeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 12}}},
+		OwnerUserID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 13}}},
+		RoleID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 14}}},
+		SourceThreadID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 15}}},
 		Tainted:           keel.BoolCol{Col: keel.Col{Ref: r, Index: 16}},
-		TaintRunID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 17}}},
-		SourceRunID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 18}}},
-		SourceProposalID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 19}}},
-		ReflectionID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 20}}},
-		SupersedesID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 21}}},
-		CreatedByUserID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 22}}},
-		RetiredByUserID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 23}}},
+		TaintRunID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 17}}},
+		SourceRunID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 18}}},
+		SourceProposalID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 19}}},
+		ReflectionID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 20}}},
+		SupersedesID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 21}}},
+		CreatedByUserID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 22}}},
+		RetiredByUserID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 23}}},
 		RetiredAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 24}},
-		ReviewedByUserID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 25}}},
+		ReviewedByUserID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 25}}},
 		ReviewedAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 26}},
 		ExpiresAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 27}},
 		UseCount:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 28}},
@@ -226,8 +226,6 @@ func (t *MemoriesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*ag
 
 // MemoriesQuery is a query over agentmemory.Memory.
 type MemoriesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*agentmemory.Memory] = (*MemoriesTable)(nil)
 
 var _ keel.Query[*agentmemory.Memory] = (*MemoriesQuery)(nil)
 
@@ -343,42 +341,42 @@ func (t *MemoriesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*agentm
 
 // Create inserts row.
 func (t *MemoriesTable) Create(ctx context.Context, db *keel.DB, row *agentmemory.Memory) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *MemoriesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*agentmemory.Memory) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *MemoriesTable) Save(ctx context.Context, db *keel.DB, row *agentmemory.Memory, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *MemoriesTable) SaveExcept(ctx context.Context, db *keel.DB, row *agentmemory.Memory, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *MemoriesTable) DeleteRow(ctx context.Context, db *keel.DB, row *agentmemory.Memory) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *MemoriesTable) Upsert(ctx context.Context, db *keel.DB, rows []*agentmemory.Memory, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *MemoriesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*agentmemory.Memory, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *MemoriesTable) Copy(ctx context.Context, db *keel.DB, rows []*agentmemory.Memory) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -550,37 +548,45 @@ func (q *MemoriesQuery) Clone() keel.Query[*agentmemory.Memory] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *MemoriesQuery) One(ctx context.Context, db *keel.DB) (*agentmemory.Memory, error) {
-	return keel.One[*agentmemory.Memory](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*agentmemory.Memory)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *MemoriesQuery) First(ctx context.Context, db *keel.DB) (*agentmemory.Memory, error) {
-	return keel.First[*agentmemory.Memory](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*agentmemory.Memory)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *MemoriesQuery) List(ctx context.Context, db *keel.DB) ([]*agentmemory.Memory, error) {
-	return keel.List[*agentmemory.Memory](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*agentmemory.Memory)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *MemoriesQuery) All(ctx context.Context, db *keel.DB) ([]*agentmemory.Memory, error) {
-	return keel.All[*agentmemory.Memory](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*agentmemory.Memory)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *MemoriesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*agentmemory.Memory, error) {
-	return keel.UpdateReturning[*agentmemory.Memory](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*agentmemory.Memory)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *MemoriesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*agentmemory.Memory], error) {
-	return keel.PageOf[*agentmemory.Memory](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*agentmemory.Memory])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *MemoriesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*agentmemory.Memory) error) error {
-	return keel.Each[*agentmemory.Memory](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*agentmemory.Memory)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newMemory() unsafe.Pointer { return unsafe.Pointer(new(agentmemory.Memory)) }
@@ -880,11 +886,11 @@ type MemoryPreferencesTable struct {
 // MemoryPreferences references the agent_memory_preferences table.
 var MemoryPreferences = &MemoryPreferencesTable{
 	TableBase:      keel.TableBase{Ref: &memoryPreferencesRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &memoryPreferencesRef, Index: 0}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &memoryPreferencesRef, Index: 1}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &memoryPreferencesRef, Index: 2}}},
-	UserID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &memoryPreferencesRef, Index: 3}}},
-	SavingMode:     MemorySavingModeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &memoryPreferencesRef, Index: 4}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &memoryPreferencesRef, Index: 0}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &memoryPreferencesRef, Index: 1}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &memoryPreferencesRef, Index: 2}}},
+	UserID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &memoryPreferencesRef, Index: 3}}},
+	SavingMode:     MemorySavingModeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &memoryPreferencesRef, Index: 4}}},
 	Version:        keel.Int64Col{Col: keel.Col{Ref: &memoryPreferencesRef, Index: 5}},
 	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &memoryPreferencesRef, Index: 6}},
 	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &memoryPreferencesRef, Index: 7}},
@@ -894,11 +900,11 @@ var MemoryPreferences = &MemoryPreferencesTable{
 func BuildMemoryPreferences(r *keel.Ref) *MemoryPreferencesTable {
 	return &MemoryPreferencesTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		UserID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		SavingMode:     MemorySavingModeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		UserID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		SavingMode:     MemorySavingModeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		Version:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 5}},
 		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
 		UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
@@ -920,8 +926,6 @@ func (t *MemoryPreferencesTable) Get(ctx context.Context, db *keel.DB, key pulid
 
 // MemoryPreferencesQuery is a query over agentmemory.MemoryPreference.
 type MemoryPreferencesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*agentmemory.MemoryPreference] = (*MemoryPreferencesTable)(nil)
 
 var _ keel.Query[*agentmemory.MemoryPreference] = (*MemoryPreferencesQuery)(nil)
 
@@ -1037,42 +1041,42 @@ func (t *MemoryPreferencesTable) Compute(col keel.Column, e keel.Expr) keel.Quer
 
 // Create inserts row.
 func (t *MemoryPreferencesTable) Create(ctx context.Context, db *keel.DB, row *agentmemory.MemoryPreference) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *MemoryPreferencesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*agentmemory.MemoryPreference) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *MemoryPreferencesTable) Save(ctx context.Context, db *keel.DB, row *agentmemory.MemoryPreference, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *MemoryPreferencesTable) SaveExcept(ctx context.Context, db *keel.DB, row *agentmemory.MemoryPreference, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *MemoryPreferencesTable) DeleteRow(ctx context.Context, db *keel.DB, row *agentmemory.MemoryPreference) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *MemoryPreferencesTable) Upsert(ctx context.Context, db *keel.DB, rows []*agentmemory.MemoryPreference, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *MemoryPreferencesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*agentmemory.MemoryPreference, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *MemoryPreferencesTable) Copy(ctx context.Context, db *keel.DB, rows []*agentmemory.MemoryPreference) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1244,37 +1248,45 @@ func (q *MemoryPreferencesQuery) Clone() keel.Query[*agentmemory.MemoryPreferenc
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *MemoryPreferencesQuery) One(ctx context.Context, db *keel.DB) (*agentmemory.MemoryPreference, error) {
-	return keel.One[*agentmemory.MemoryPreference](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*agentmemory.MemoryPreference)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *MemoryPreferencesQuery) First(ctx context.Context, db *keel.DB) (*agentmemory.MemoryPreference, error) {
-	return keel.First[*agentmemory.MemoryPreference](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*agentmemory.MemoryPreference)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *MemoryPreferencesQuery) List(ctx context.Context, db *keel.DB) ([]*agentmemory.MemoryPreference, error) {
-	return keel.List[*agentmemory.MemoryPreference](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*agentmemory.MemoryPreference)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *MemoryPreferencesQuery) All(ctx context.Context, db *keel.DB) ([]*agentmemory.MemoryPreference, error) {
-	return keel.All[*agentmemory.MemoryPreference](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*agentmemory.MemoryPreference)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *MemoryPreferencesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*agentmemory.MemoryPreference, error) {
-	return keel.UpdateReturning[*agentmemory.MemoryPreference](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*agentmemory.MemoryPreference)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *MemoryPreferencesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*agentmemory.MemoryPreference], error) {
-	return keel.PageOf[*agentmemory.MemoryPreference](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*agentmemory.MemoryPreference])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *MemoryPreferencesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*agentmemory.MemoryPreference) error) error {
-	return keel.Each[*agentmemory.MemoryPreference](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*agentmemory.MemoryPreference)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newMemoryPreference() unsafe.Pointer { return unsafe.Pointer(new(agentmemory.MemoryPreference)) }
@@ -1379,173 +1391,171 @@ var enumMemorySubjectType = [...]schema.EnumValue{
 }
 
 // MemoryKindCol is a column of agentmemory.MemoryKind values.
-type MemoryKindCol struct{ keel.StringCol }
+type MemoryKindCol struct{ keel.TypedStringCol }
 
-func (c MemoryKindCol) Eq(v agentmemory.MemoryKind) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c MemoryKindCol) Ne(v agentmemory.MemoryKind) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c MemoryKindCol) Gt(v agentmemory.MemoryKind) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c MemoryKindCol) Gte(v agentmemory.MemoryKind) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c MemoryKindCol) Lt(v agentmemory.MemoryKind) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c MemoryKindCol) Lte(v agentmemory.MemoryKind) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c MemoryKindCol) Eq(v agentmemory.MemoryKind) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c MemoryKindCol) Ne(v agentmemory.MemoryKind) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c MemoryKindCol) Gt(v agentmemory.MemoryKind) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c MemoryKindCol) Gte(v agentmemory.MemoryKind) keel.Pred { return c.Text().Gte(string(v)) }
+func (c MemoryKindCol) Lt(v agentmemory.MemoryKind) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c MemoryKindCol) Lte(v agentmemory.MemoryKind) keel.Pred { return c.Text().Lte(string(v)) }
 func (c MemoryKindCol) IsDistinctFrom(v agentmemory.MemoryKind) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c MemoryKindCol) Between(lo, hi agentmemory.MemoryKind) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c MemoryKindCol) To(v agentmemory.MemoryKind) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c MemoryKindCol) To(v agentmemory.MemoryKind) keel.Assignment { return c.Text().To(string(v)) }
 func (c MemoryKindCol) In(vs ...agentmemory.MemoryKind) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c MemoryKindCol) NotIn(vs ...agentmemory.MemoryKind) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // MemorySavingModeCol is a column of agentmemory.MemorySavingMode values.
-type MemorySavingModeCol struct{ keel.StringCol }
+type MemorySavingModeCol struct{ keel.TypedStringCol }
 
 func (c MemorySavingModeCol) Eq(v agentmemory.MemorySavingMode) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c MemorySavingModeCol) Ne(v agentmemory.MemorySavingMode) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c MemorySavingModeCol) Gt(v agentmemory.MemorySavingMode) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c MemorySavingModeCol) Gte(v agentmemory.MemorySavingMode) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c MemorySavingModeCol) Lt(v agentmemory.MemorySavingMode) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c MemorySavingModeCol) Lte(v agentmemory.MemorySavingMode) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c MemorySavingModeCol) IsDistinctFrom(v agentmemory.MemorySavingMode) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c MemorySavingModeCol) Between(lo, hi agentmemory.MemorySavingMode) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c MemorySavingModeCol) To(v agentmemory.MemorySavingMode) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c MemorySavingModeCol) In(vs ...agentmemory.MemorySavingMode) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c MemorySavingModeCol) NotIn(vs ...agentmemory.MemorySavingMode) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // MemoryScopeCol is a column of agentmemory.MemoryScope values.
-type MemoryScopeCol struct{ keel.StringCol }
+type MemoryScopeCol struct{ keel.TypedStringCol }
 
-func (c MemoryScopeCol) Eq(v agentmemory.MemoryScope) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c MemoryScopeCol) Ne(v agentmemory.MemoryScope) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c MemoryScopeCol) Gt(v agentmemory.MemoryScope) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c MemoryScopeCol) Gte(v agentmemory.MemoryScope) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c MemoryScopeCol) Lt(v agentmemory.MemoryScope) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c MemoryScopeCol) Lte(v agentmemory.MemoryScope) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c MemoryScopeCol) Eq(v agentmemory.MemoryScope) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c MemoryScopeCol) Ne(v agentmemory.MemoryScope) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c MemoryScopeCol) Gt(v agentmemory.MemoryScope) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c MemoryScopeCol) Gte(v agentmemory.MemoryScope) keel.Pred { return c.Text().Gte(string(v)) }
+func (c MemoryScopeCol) Lt(v agentmemory.MemoryScope) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c MemoryScopeCol) Lte(v agentmemory.MemoryScope) keel.Pred { return c.Text().Lte(string(v)) }
 func (c MemoryScopeCol) IsDistinctFrom(v agentmemory.MemoryScope) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c MemoryScopeCol) Between(lo, hi agentmemory.MemoryScope) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c MemoryScopeCol) To(v agentmemory.MemoryScope) keel.Assignment {
-	return c.StringCol.To(string(v))
-}
+func (c MemoryScopeCol) To(v agentmemory.MemoryScope) keel.Assignment { return c.Text().To(string(v)) }
 func (c MemoryScopeCol) In(vs ...agentmemory.MemoryScope) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c MemoryScopeCol) NotIn(vs ...agentmemory.MemoryScope) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // MemorySourceCol is a column of agentmemory.MemorySource values.
-type MemorySourceCol struct{ keel.StringCol }
+type MemorySourceCol struct{ keel.TypedStringCol }
 
-func (c MemorySourceCol) Eq(v agentmemory.MemorySource) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c MemorySourceCol) Ne(v agentmemory.MemorySource) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c MemorySourceCol) Gt(v agentmemory.MemorySource) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c MemorySourceCol) Gte(v agentmemory.MemorySource) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c MemorySourceCol) Lt(v agentmemory.MemorySource) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c MemorySourceCol) Lte(v agentmemory.MemorySource) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c MemorySourceCol) Eq(v agentmemory.MemorySource) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c MemorySourceCol) Ne(v agentmemory.MemorySource) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c MemorySourceCol) Gt(v agentmemory.MemorySource) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c MemorySourceCol) Gte(v agentmemory.MemorySource) keel.Pred { return c.Text().Gte(string(v)) }
+func (c MemorySourceCol) Lt(v agentmemory.MemorySource) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c MemorySourceCol) Lte(v agentmemory.MemorySource) keel.Pred { return c.Text().Lte(string(v)) }
 func (c MemorySourceCol) IsDistinctFrom(v agentmemory.MemorySource) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c MemorySourceCol) Between(lo, hi agentmemory.MemorySource) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c MemorySourceCol) To(v agentmemory.MemorySource) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c MemorySourceCol) In(vs ...agentmemory.MemorySource) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c MemorySourceCol) NotIn(vs ...agentmemory.MemorySource) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // MemoryStatusCol is a column of agentmemory.MemoryStatus values.
-type MemoryStatusCol struct{ keel.StringCol }
+type MemoryStatusCol struct{ keel.TypedStringCol }
 
-func (c MemoryStatusCol) Eq(v agentmemory.MemoryStatus) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c MemoryStatusCol) Ne(v agentmemory.MemoryStatus) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c MemoryStatusCol) Gt(v agentmemory.MemoryStatus) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c MemoryStatusCol) Gte(v agentmemory.MemoryStatus) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c MemoryStatusCol) Lt(v agentmemory.MemoryStatus) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c MemoryStatusCol) Lte(v agentmemory.MemoryStatus) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c MemoryStatusCol) Eq(v agentmemory.MemoryStatus) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c MemoryStatusCol) Ne(v agentmemory.MemoryStatus) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c MemoryStatusCol) Gt(v agentmemory.MemoryStatus) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c MemoryStatusCol) Gte(v agentmemory.MemoryStatus) keel.Pred { return c.Text().Gte(string(v)) }
+func (c MemoryStatusCol) Lt(v agentmemory.MemoryStatus) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c MemoryStatusCol) Lte(v agentmemory.MemoryStatus) keel.Pred { return c.Text().Lte(string(v)) }
 func (c MemoryStatusCol) IsDistinctFrom(v agentmemory.MemoryStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c MemoryStatusCol) Between(lo, hi agentmemory.MemoryStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c MemoryStatusCol) To(v agentmemory.MemoryStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c MemoryStatusCol) In(vs ...agentmemory.MemoryStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c MemoryStatusCol) NotIn(vs ...agentmemory.MemoryStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // MemorySubjectTypeCol is a column of agentmemory.MemorySubjectType values.
-type MemorySubjectTypeCol struct{ keel.StringCol }
+type MemorySubjectTypeCol struct{ keel.TypedStringCol }
 
 func (c MemorySubjectTypeCol) Eq(v agentmemory.MemorySubjectType) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c MemorySubjectTypeCol) Ne(v agentmemory.MemorySubjectType) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c MemorySubjectTypeCol) Gt(v agentmemory.MemorySubjectType) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c MemorySubjectTypeCol) Gte(v agentmemory.MemorySubjectType) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c MemorySubjectTypeCol) Lt(v agentmemory.MemorySubjectType) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c MemorySubjectTypeCol) Lte(v agentmemory.MemorySubjectType) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c MemorySubjectTypeCol) IsDistinctFrom(v agentmemory.MemorySubjectType) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c MemorySubjectTypeCol) Between(lo, hi agentmemory.MemorySubjectType) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c MemorySubjectTypeCol) To(v agentmemory.MemorySubjectType) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c MemorySubjectTypeCol) In(vs ...agentmemory.MemorySubjectType) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c MemorySubjectTypeCol) NotIn(vs ...agentmemory.MemorySubjectType) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

@@ -10,11 +10,7 @@ import (
 func serviceFailureReasonCodeSelectOptionItem(
 	entity *servicefailure.ReasonCode,
 ) selectoption.Item {
-	return selectoption.ItemFor(
-		serviceFailureReasonCodeSelectOption(entity),
-		entity.CreatedAt,
-		entity.ID,
-	)
+	return selectoption.ItemFor(serviceFailureReasonCodeSelectOption(entity))
 }
 
 func serviceFailureReasonCodeSelectOption(

@@ -420,7 +420,7 @@ func candidateMatch(invoices []string, amounts []int64) (invoiceMatch, amountMat
 	near := func(target keel.Int64Value) keel.Pred {
 		return amount.Sub(target).Abs().LteExpr(tolerance)
 	}
-	amountMatch = keel.Exists(amt.Query().With(amt).Where(keel.Or(
+	amountMatch = keel.Exists(keel.RowsOf(amt.TableRef()).With(amt).Where(keel.Or(
 		near(item.ExpectedAdvanceMinor),
 		near(item.FaceMinor),
 		near(item.ReserveMinor.Coalesce(-1)),
@@ -432,7 +432,7 @@ func candidateMatch(invoices []string, amounts []int64) (invoiceMatch, amountMat
 	contains := func(needle keel.StringValue) keel.StringExpr {
 		return keel.ConstText("%").Cat(needle, keel.ConstText("%"))
 	}
-	invoiceMatch = keel.Exists(ref.Query().With(ref).Where(keel.Or(
+	invoiceMatch = keel.Exists(keel.RowsOf(ref.TableRef()).With(ref).Where(keel.Or(
 		normalized.EqExpr(text),
 		keel.And(
 			text.Length().Gte(4),

@@ -104,22 +104,22 @@ type InvoiceDisputesTable struct {
 // InvoiceDisputes references the invoice_disputes table.
 var InvoiceDisputes = &InvoiceDisputesTable{
 	TableBase:              keel.TableBase{Ref: &invoiceDisputesRef},
-	ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceDisputesRef, Index: 0}}},
-	OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceDisputesRef, Index: 1}}},
-	BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceDisputesRef, Index: 2}}},
-	InvoiceID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceDisputesRef, Index: 3}}},
-	CustomerID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceDisputesRef, Index: 4}}},
-	Status:                 DisputeCaseStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceDisputesRef, Index: 5}}},
-	ReasonCode:             DisputeReasonCodeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceDisputesRef, Index: 6}}},
+	ID:                     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceDisputesRef, Index: 0}}},
+	OrganizationID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceDisputesRef, Index: 1}}},
+	BusinessUnitID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceDisputesRef, Index: 2}}},
+	InvoiceID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceDisputesRef, Index: 3}}},
+	CustomerID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceDisputesRef, Index: 4}}},
+	Status:                 DisputeCaseStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceDisputesRef, Index: 5}}},
+	ReasonCode:             DisputeReasonCodeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceDisputesRef, Index: 6}}},
 	DisputedAmount:         keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &invoiceDisputesRef, Index: 7}}},
 	DisputedAmountMinor:    keel.Int64Col{Col: keel.Col{Ref: &invoiceDisputesRef, Index: 8}},
 	Notes:                  keel.StringCol{Col: keel.Col{Ref: &invoiceDisputesRef, Index: 9}},
-	OpenedByID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceDisputesRef, Index: 10}}},
+	OpenedByID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceDisputesRef, Index: 10}}},
 	OpenedAt:               keel.Int64Col{Col: keel.Col{Ref: &invoiceDisputesRef, Index: 11}},
-	ResolvedByID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceDisputesRef, Index: 12}}},
+	ResolvedByID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceDisputesRef, Index: 12}}},
 	ResolvedAt:             keel.Int64Col{Col: keel.Col{Ref: &invoiceDisputesRef, Index: 13}},
-	Resolution:             DisputeResolutionCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceDisputesRef, Index: 14}}},
-	ResolutionAdjustmentID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceDisputesRef, Index: 15}}},
+	Resolution:             DisputeResolutionCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceDisputesRef, Index: 14}}},
+	ResolutionAdjustmentID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceDisputesRef, Index: 15}}},
 	ResolutionNotes:        keel.StringCol{Col: keel.Col{Ref: &invoiceDisputesRef, Index: 16}},
 	Version:                keel.Int64Col{Col: keel.Col{Ref: &invoiceDisputesRef, Index: 17}},
 	CreatedAt:              keel.Int64Col{Col: keel.Col{Ref: &invoiceDisputesRef, Index: 18}},
@@ -130,22 +130,22 @@ var InvoiceDisputes = &InvoiceDisputesTable{
 func BuildInvoiceDisputes(r *keel.Ref) *InvoiceDisputesTable {
 	return &InvoiceDisputesTable{
 		TableBase:              keel.TableBase{Ref: r},
-		ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		InvoiceID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		CustomerID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		Status:                 DisputeCaseStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		ReasonCode:             DisputeReasonCodeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		ID:                     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		OrganizationID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		BusinessUnitID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		InvoiceID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		CustomerID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		Status:                 DisputeCaseStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		ReasonCode:             DisputeReasonCodeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		DisputedAmount:         keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 7}}},
 		DisputedAmountMinor:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
 		Notes:                  keel.StringCol{Col: keel.Col{Ref: r, Index: 9}},
-		OpenedByID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		OpenedByID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
 		OpenedAt:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
-		ResolvedByID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 12}}},
+		ResolvedByID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 12}}},
 		ResolvedAt:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
-		Resolution:             DisputeResolutionCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 14}}},
-		ResolutionAdjustmentID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 15}}},
+		Resolution:             DisputeResolutionCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 14}}},
+		ResolutionAdjustmentID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 15}}},
 		ResolutionNotes:        keel.StringCol{Col: keel.Col{Ref: r, Index: 16}},
 		Version:                keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
 		CreatedAt:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
@@ -178,8 +178,6 @@ func (t *InvoiceDisputesTable) Get(ctx context.Context, db *keel.DB, key pulid.I
 
 // InvoiceDisputesQuery is a query over invoicedispute.InvoiceDispute.
 type InvoiceDisputesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*invoicedispute.InvoiceDispute] = (*InvoiceDisputesTable)(nil)
 
 var _ keel.Query[*invoicedispute.InvoiceDispute] = (*InvoiceDisputesQuery)(nil)
 
@@ -295,42 +293,42 @@ func (t *InvoiceDisputesTable) Compute(col keel.Column, e keel.Expr) keel.Query[
 
 // Create inserts row.
 func (t *InvoiceDisputesTable) Create(ctx context.Context, db *keel.DB, row *invoicedispute.InvoiceDispute) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *InvoiceDisputesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*invoicedispute.InvoiceDispute) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *InvoiceDisputesTable) Save(ctx context.Context, db *keel.DB, row *invoicedispute.InvoiceDispute, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *InvoiceDisputesTable) SaveExcept(ctx context.Context, db *keel.DB, row *invoicedispute.InvoiceDispute, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *InvoiceDisputesTable) DeleteRow(ctx context.Context, db *keel.DB, row *invoicedispute.InvoiceDispute) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *InvoiceDisputesTable) Upsert(ctx context.Context, db *keel.DB, rows []*invoicedispute.InvoiceDispute, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *InvoiceDisputesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*invoicedispute.InvoiceDispute, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *InvoiceDisputesTable) Copy(ctx context.Context, db *keel.DB, rows []*invoicedispute.InvoiceDispute) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -502,37 +500,45 @@ func (q *InvoiceDisputesQuery) Clone() keel.Query[*invoicedispute.InvoiceDispute
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *InvoiceDisputesQuery) One(ctx context.Context, db *keel.DB) (*invoicedispute.InvoiceDispute, error) {
-	return keel.One[*invoicedispute.InvoiceDispute](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*invoicedispute.InvoiceDispute)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *InvoiceDisputesQuery) First(ctx context.Context, db *keel.DB) (*invoicedispute.InvoiceDispute, error) {
-	return keel.First[*invoicedispute.InvoiceDispute](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*invoicedispute.InvoiceDispute)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *InvoiceDisputesQuery) List(ctx context.Context, db *keel.DB) ([]*invoicedispute.InvoiceDispute, error) {
-	return keel.List[*invoicedispute.InvoiceDispute](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*invoicedispute.InvoiceDispute)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *InvoiceDisputesQuery) All(ctx context.Context, db *keel.DB) ([]*invoicedispute.InvoiceDispute, error) {
-	return keel.All[*invoicedispute.InvoiceDispute](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*invoicedispute.InvoiceDispute)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *InvoiceDisputesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*invoicedispute.InvoiceDispute, error) {
-	return keel.UpdateReturning[*invoicedispute.InvoiceDispute](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*invoicedispute.InvoiceDispute)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *InvoiceDisputesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*invoicedispute.InvoiceDispute], error) {
-	return keel.PageOf[*invoicedispute.InvoiceDispute](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*invoicedispute.InvoiceDispute])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *InvoiceDisputesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*invoicedispute.InvoiceDispute) error) error {
-	return keel.Each[*invoicedispute.InvoiceDispute](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*invoicedispute.InvoiceDispute)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newInvoiceDispute() unsafe.Pointer { return unsafe.Pointer(new(invoicedispute.InvoiceDispute)) }
@@ -697,112 +703,112 @@ var enumDisputeResolution = [...]schema.EnumValue{
 }
 
 // DisputeCaseStatusCol is a column of invoicedispute.DisputeCaseStatus values.
-type DisputeCaseStatusCol struct{ keel.StringCol }
+type DisputeCaseStatusCol struct{ keel.TypedStringCol }
 
 func (c DisputeCaseStatusCol) Eq(v invoicedispute.DisputeCaseStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c DisputeCaseStatusCol) Ne(v invoicedispute.DisputeCaseStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c DisputeCaseStatusCol) Gt(v invoicedispute.DisputeCaseStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c DisputeCaseStatusCol) Gte(v invoicedispute.DisputeCaseStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c DisputeCaseStatusCol) Lt(v invoicedispute.DisputeCaseStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c DisputeCaseStatusCol) Lte(v invoicedispute.DisputeCaseStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c DisputeCaseStatusCol) IsDistinctFrom(v invoicedispute.DisputeCaseStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c DisputeCaseStatusCol) Between(lo, hi invoicedispute.DisputeCaseStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c DisputeCaseStatusCol) To(v invoicedispute.DisputeCaseStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c DisputeCaseStatusCol) In(vs ...invoicedispute.DisputeCaseStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c DisputeCaseStatusCol) NotIn(vs ...invoicedispute.DisputeCaseStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // DisputeReasonCodeCol is a column of invoicedispute.DisputeReasonCode values.
-type DisputeReasonCodeCol struct{ keel.StringCol }
+type DisputeReasonCodeCol struct{ keel.TypedStringCol }
 
 func (c DisputeReasonCodeCol) Eq(v invoicedispute.DisputeReasonCode) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c DisputeReasonCodeCol) Ne(v invoicedispute.DisputeReasonCode) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c DisputeReasonCodeCol) Gt(v invoicedispute.DisputeReasonCode) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c DisputeReasonCodeCol) Gte(v invoicedispute.DisputeReasonCode) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c DisputeReasonCodeCol) Lt(v invoicedispute.DisputeReasonCode) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c DisputeReasonCodeCol) Lte(v invoicedispute.DisputeReasonCode) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c DisputeReasonCodeCol) IsDistinctFrom(v invoicedispute.DisputeReasonCode) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c DisputeReasonCodeCol) Between(lo, hi invoicedispute.DisputeReasonCode) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c DisputeReasonCodeCol) To(v invoicedispute.DisputeReasonCode) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c DisputeReasonCodeCol) In(vs ...invoicedispute.DisputeReasonCode) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c DisputeReasonCodeCol) NotIn(vs ...invoicedispute.DisputeReasonCode) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // DisputeResolutionCol is a column of invoicedispute.DisputeResolution values.
-type DisputeResolutionCol struct{ keel.StringCol }
+type DisputeResolutionCol struct{ keel.TypedStringCol }
 
 func (c DisputeResolutionCol) Eq(v invoicedispute.DisputeResolution) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c DisputeResolutionCol) Ne(v invoicedispute.DisputeResolution) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c DisputeResolutionCol) Gt(v invoicedispute.DisputeResolution) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c DisputeResolutionCol) Gte(v invoicedispute.DisputeResolution) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c DisputeResolutionCol) Lt(v invoicedispute.DisputeResolution) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c DisputeResolutionCol) Lte(v invoicedispute.DisputeResolution) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c DisputeResolutionCol) IsDistinctFrom(v invoicedispute.DisputeResolution) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c DisputeResolutionCol) Between(lo, hi invoicedispute.DisputeResolution) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c DisputeResolutionCol) To(v invoicedispute.DisputeResolution) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c DisputeResolutionCol) In(vs ...invoicedispute.DisputeResolution) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c DisputeResolutionCol) NotIn(vs ...invoicedispute.DisputeResolution) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

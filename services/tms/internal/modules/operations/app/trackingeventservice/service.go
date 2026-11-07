@@ -4,6 +4,8 @@ import (
 	"context"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/operations/domain/stopactual"
+
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
@@ -377,7 +379,7 @@ func (s *Service) reconcile(
 			&shipmentmoveports.ReconcileStopActualsRequest{
 				TenantInfo: tenantInfo,
 				MoveID:     moveID,
-				Plan: func(planCtx context.Context, move *shipment.ShipmentMove) ([]shipment.StopActualChange, error) {
+				Plan: func(planCtx context.Context, move *shipment.ShipmentMove) ([]stopactual.Change, error) {
 					if !loaded {
 						var loadErr error
 						events, loadErr = s.repo.ListByMove(planCtx, tenantInfo, moveID)

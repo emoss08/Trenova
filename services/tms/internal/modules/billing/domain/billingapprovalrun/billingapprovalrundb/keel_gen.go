@@ -103,14 +103,14 @@ type ApprovalRunsTable struct {
 // ApprovalRuns references the billingqueue_approval_runs table.
 var ApprovalRuns = &ApprovalRunsTable{
 	TableBase:           keel.TableBase{Ref: &approvalRunsRef},
-	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &approvalRunsRef, Index: 0}}},
-	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &approvalRunsRef, Index: 1}}},
-	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &approvalRunsRef, Index: 2}}},
-	RequestedByID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &approvalRunsRef, Index: 3}}},
+	ID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &approvalRunsRef, Index: 0}}},
+	BusinessUnitID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &approvalRunsRef, Index: 1}}},
+	OrganizationID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &approvalRunsRef, Index: 2}}},
+	RequestedByID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &approvalRunsRef, Index: 3}}},
 	IdempotencyKey:      keel.StringCol{Col: keel.Col{Ref: &approvalRunsRef, Index: 4}},
-	Action:              RunActionCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &approvalRunsRef, Index: 5}}},
+	Action:              RunActionCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &approvalRunsRef, Index: 5}}},
 	Params:              keel.JSONBCol{Col: keel.Col{Ref: &approvalRunsRef, Index: 6}},
-	Status:              ApprovalRunStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &approvalRunsRef, Index: 7}}},
+	Status:              ApprovalRunStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &approvalRunsRef, Index: 7}}},
 	TotalCount:          keel.Int64Col{Col: keel.Col{Ref: &approvalRunsRef, Index: 8}},
 	SucceededCount:      keel.Int64Col{Col: keel.Col{Ref: &approvalRunsRef, Index: 9}},
 	FailedCount:         keel.Int64Col{Col: keel.Col{Ref: &approvalRunsRef, Index: 10}},
@@ -118,7 +118,7 @@ var ApprovalRuns = &ApprovalRunsTable{
 	CommitAt:            keel.Int64Col{Col: keel.Col{Ref: &approvalRunsRef, Index: 12}},
 	FailureMessage:      keel.StringCol{Col: keel.Col{Ref: &approvalRunsRef, Index: 13}},
 	CancelRequestedAt:   keel.Int64Col{Col: keel.Col{Ref: &approvalRunsRef, Index: 14}},
-	CancelRequestedByID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &approvalRunsRef, Index: 15}}},
+	CancelRequestedByID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &approvalRunsRef, Index: 15}}},
 	TemporalWorkflowID:  keel.StringCol{Col: keel.Col{Ref: &approvalRunsRef, Index: 16}},
 	TemporalRunID:       keel.StringCol{Col: keel.Col{Ref: &approvalRunsRef, Index: 17}},
 	StartedAt:           keel.Int64Col{Col: keel.Col{Ref: &approvalRunsRef, Index: 18}},
@@ -132,14 +132,14 @@ var ApprovalRuns = &ApprovalRunsTable{
 func BuildApprovalRuns(r *keel.Ref) *ApprovalRunsTable {
 	return &ApprovalRunsTable{
 		TableBase:           keel.TableBase{Ref: r},
-		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		RequestedByID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		RequestedByID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		IdempotencyKey:      keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
-		Action:              RunActionCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		Action:              RunActionCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		Params:              keel.JSONBCol{Col: keel.Col{Ref: r, Index: 6}},
-		Status:              ApprovalRunStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		Status:              ApprovalRunStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
 		TotalCount:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
 		SucceededCount:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
 		FailedCount:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
@@ -147,7 +147,7 @@ func BuildApprovalRuns(r *keel.Ref) *ApprovalRunsTable {
 		CommitAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
 		FailureMessage:      keel.StringCol{Col: keel.Col{Ref: r, Index: 13}},
 		CancelRequestedAt:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
-		CancelRequestedByID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 15}}},
+		CancelRequestedByID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 15}}},
 		TemporalWorkflowID:  keel.StringCol{Col: keel.Col{Ref: r, Index: 16}},
 		TemporalRunID:       keel.StringCol{Col: keel.Col{Ref: r, Index: 17}},
 		StartedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
@@ -178,8 +178,6 @@ func (t *ApprovalRunsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) 
 
 // ApprovalRunsQuery is a query over billingapprovalrun.ApprovalRun.
 type ApprovalRunsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*billingapprovalrun.ApprovalRun] = (*ApprovalRunsTable)(nil)
 
 var _ keel.Query[*billingapprovalrun.ApprovalRun] = (*ApprovalRunsQuery)(nil)
 
@@ -295,42 +293,42 @@ func (t *ApprovalRunsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*bi
 
 // Create inserts row.
 func (t *ApprovalRunsTable) Create(ctx context.Context, db *keel.DB, row *billingapprovalrun.ApprovalRun) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *ApprovalRunsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*billingapprovalrun.ApprovalRun) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *ApprovalRunsTable) Save(ctx context.Context, db *keel.DB, row *billingapprovalrun.ApprovalRun, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *ApprovalRunsTable) SaveExcept(ctx context.Context, db *keel.DB, row *billingapprovalrun.ApprovalRun, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *ApprovalRunsTable) DeleteRow(ctx context.Context, db *keel.DB, row *billingapprovalrun.ApprovalRun) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *ApprovalRunsTable) Upsert(ctx context.Context, db *keel.DB, rows []*billingapprovalrun.ApprovalRun, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *ApprovalRunsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*billingapprovalrun.ApprovalRun, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *ApprovalRunsTable) Copy(ctx context.Context, db *keel.DB, rows []*billingapprovalrun.ApprovalRun) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -502,37 +500,45 @@ func (q *ApprovalRunsQuery) Clone() keel.Query[*billingapprovalrun.ApprovalRun] 
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *ApprovalRunsQuery) One(ctx context.Context, db *keel.DB) (*billingapprovalrun.ApprovalRun, error) {
-	return keel.One[*billingapprovalrun.ApprovalRun](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*billingapprovalrun.ApprovalRun)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *ApprovalRunsQuery) First(ctx context.Context, db *keel.DB) (*billingapprovalrun.ApprovalRun, error) {
-	return keel.First[*billingapprovalrun.ApprovalRun](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*billingapprovalrun.ApprovalRun)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *ApprovalRunsQuery) List(ctx context.Context, db *keel.DB) ([]*billingapprovalrun.ApprovalRun, error) {
-	return keel.List[*billingapprovalrun.ApprovalRun](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*billingapprovalrun.ApprovalRun)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *ApprovalRunsQuery) All(ctx context.Context, db *keel.DB) ([]*billingapprovalrun.ApprovalRun, error) {
-	return keel.All[*billingapprovalrun.ApprovalRun](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*billingapprovalrun.ApprovalRun)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *ApprovalRunsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*billingapprovalrun.ApprovalRun, error) {
-	return keel.UpdateReturning[*billingapprovalrun.ApprovalRun](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*billingapprovalrun.ApprovalRun)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *ApprovalRunsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*billingapprovalrun.ApprovalRun], error) {
-	return keel.PageOf[*billingapprovalrun.ApprovalRun](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*billingapprovalrun.ApprovalRun])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *ApprovalRunsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*billingapprovalrun.ApprovalRun) error) error {
-	return keel.Each[*billingapprovalrun.ApprovalRun](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*billingapprovalrun.ApprovalRun)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newApprovalRun() unsafe.Pointer { return unsafe.Pointer(new(billingapprovalrun.ApprovalRun)) }
@@ -743,16 +749,16 @@ type ApprovalRunItemsTable struct {
 // ApprovalRunItems references the billingqueue_approval_run_items table.
 var ApprovalRunItems = &ApprovalRunItemsTable{
 	TableBase:      keel.TableBase{Ref: &approvalRunItemsRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &approvalRunItemsRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &approvalRunItemsRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &approvalRunItemsRef, Index: 2}}},
-	RunID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &approvalRunItemsRef, Index: 3}}},
-	ItemID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &approvalRunItemsRef, Index: 4}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &approvalRunItemsRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &approvalRunItemsRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &approvalRunItemsRef, Index: 2}}},
+	RunID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &approvalRunItemsRef, Index: 3}}},
+	ItemID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &approvalRunItemsRef, Index: 4}}},
 	Sequence:       keel.Int64Col{Col: keel.Col{Ref: &approvalRunItemsRef, Index: 5}},
-	Status:         ApprovalItemStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &approvalRunItemsRef, Index: 6}}},
-	FailureCode:    ApprovalFailureCodeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &approvalRunItemsRef, Index: 7}}},
+	Status:         ApprovalItemStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &approvalRunItemsRef, Index: 6}}},
+	FailureCode:    ApprovalFailureCodeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &approvalRunItemsRef, Index: 7}}},
 	ErrorMessage:   keel.StringCol{Col: keel.Col{Ref: &approvalRunItemsRef, Index: 8}},
-	InvoiceID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &approvalRunItemsRef, Index: 9}}},
+	InvoiceID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &approvalRunItemsRef, Index: 9}}},
 	InvoiceNumber:  keel.StringCol{Col: keel.Col{Ref: &approvalRunItemsRef, Index: 10}},
 	ProcessedAt:    keel.Int64Col{Col: keel.Col{Ref: &approvalRunItemsRef, Index: 11}},
 	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &approvalRunItemsRef, Index: 12}},
@@ -763,16 +769,16 @@ var ApprovalRunItems = &ApprovalRunItemsTable{
 func BuildApprovalRunItems(r *keel.Ref) *ApprovalRunItemsTable {
 	return &ApprovalRunItemsTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		RunID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		ItemID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		RunID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ItemID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		Sequence:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 5}},
-		Status:         ApprovalItemStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		FailureCode:    ApprovalFailureCodeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		Status:         ApprovalItemStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		FailureCode:    ApprovalFailureCodeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
 		ErrorMessage:   keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
-		InvoiceID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		InvoiceID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
 		InvoiceNumber:  keel.StringCol{Col: keel.Col{Ref: r, Index: 10}},
 		ProcessedAt:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
 		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
@@ -795,8 +801,6 @@ func (t *ApprovalRunItemsTable) Get(ctx context.Context, db *keel.DB, key pulid.
 
 // ApprovalRunItemsQuery is a query over billingapprovalrun.ApprovalRunItem.
 type ApprovalRunItemsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*billingapprovalrun.ApprovalRunItem] = (*ApprovalRunItemsTable)(nil)
 
 var _ keel.Query[*billingapprovalrun.ApprovalRunItem] = (*ApprovalRunItemsQuery)(nil)
 
@@ -912,42 +916,42 @@ func (t *ApprovalRunItemsTable) Compute(col keel.Column, e keel.Expr) keel.Query
 
 // Create inserts row.
 func (t *ApprovalRunItemsTable) Create(ctx context.Context, db *keel.DB, row *billingapprovalrun.ApprovalRunItem) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *ApprovalRunItemsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*billingapprovalrun.ApprovalRunItem) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *ApprovalRunItemsTable) Save(ctx context.Context, db *keel.DB, row *billingapprovalrun.ApprovalRunItem, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *ApprovalRunItemsTable) SaveExcept(ctx context.Context, db *keel.DB, row *billingapprovalrun.ApprovalRunItem, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *ApprovalRunItemsTable) DeleteRow(ctx context.Context, db *keel.DB, row *billingapprovalrun.ApprovalRunItem) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *ApprovalRunItemsTable) Upsert(ctx context.Context, db *keel.DB, rows []*billingapprovalrun.ApprovalRunItem, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *ApprovalRunItemsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*billingapprovalrun.ApprovalRunItem, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *ApprovalRunItemsTable) Copy(ctx context.Context, db *keel.DB, rows []*billingapprovalrun.ApprovalRunItem) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1119,37 +1123,45 @@ func (q *ApprovalRunItemsQuery) Clone() keel.Query[*billingapprovalrun.ApprovalR
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *ApprovalRunItemsQuery) One(ctx context.Context, db *keel.DB) (*billingapprovalrun.ApprovalRunItem, error) {
-	return keel.One[*billingapprovalrun.ApprovalRunItem](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*billingapprovalrun.ApprovalRunItem)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *ApprovalRunItemsQuery) First(ctx context.Context, db *keel.DB) (*billingapprovalrun.ApprovalRunItem, error) {
-	return keel.First[*billingapprovalrun.ApprovalRunItem](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*billingapprovalrun.ApprovalRunItem)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *ApprovalRunItemsQuery) List(ctx context.Context, db *keel.DB) ([]*billingapprovalrun.ApprovalRunItem, error) {
-	return keel.List[*billingapprovalrun.ApprovalRunItem](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*billingapprovalrun.ApprovalRunItem)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *ApprovalRunItemsQuery) All(ctx context.Context, db *keel.DB) ([]*billingapprovalrun.ApprovalRunItem, error) {
-	return keel.All[*billingapprovalrun.ApprovalRunItem](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*billingapprovalrun.ApprovalRunItem)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *ApprovalRunItemsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*billingapprovalrun.ApprovalRunItem, error) {
-	return keel.UpdateReturning[*billingapprovalrun.ApprovalRunItem](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*billingapprovalrun.ApprovalRunItem)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *ApprovalRunItemsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*billingapprovalrun.ApprovalRunItem], error) {
-	return keel.PageOf[*billingapprovalrun.ApprovalRunItem](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*billingapprovalrun.ApprovalRunItem])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *ApprovalRunItemsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*billingapprovalrun.ApprovalRunItem) error) error {
-	return keel.Each[*billingapprovalrun.ApprovalRunItem](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*billingapprovalrun.ApprovalRunItem)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newApprovalRunItem() unsafe.Pointer {
@@ -1287,141 +1299,137 @@ var enumRunAction = [...]schema.EnumValue{
 }
 
 // ApprovalFailureCodeCol is a column of billingapprovalrun.ApprovalFailureCode values.
-type ApprovalFailureCodeCol struct{ keel.StringCol }
+type ApprovalFailureCodeCol struct{ keel.TypedStringCol }
 
 func (c ApprovalFailureCodeCol) Eq(v billingapprovalrun.ApprovalFailureCode) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c ApprovalFailureCodeCol) Ne(v billingapprovalrun.ApprovalFailureCode) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c ApprovalFailureCodeCol) Gt(v billingapprovalrun.ApprovalFailureCode) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c ApprovalFailureCodeCol) Gte(v billingapprovalrun.ApprovalFailureCode) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c ApprovalFailureCodeCol) Lt(v billingapprovalrun.ApprovalFailureCode) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c ApprovalFailureCodeCol) Lte(v billingapprovalrun.ApprovalFailureCode) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c ApprovalFailureCodeCol) IsDistinctFrom(v billingapprovalrun.ApprovalFailureCode) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ApprovalFailureCodeCol) Between(lo, hi billingapprovalrun.ApprovalFailureCode) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c ApprovalFailureCodeCol) To(v billingapprovalrun.ApprovalFailureCode) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c ApprovalFailureCodeCol) In(vs ...billingapprovalrun.ApprovalFailureCode) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ApprovalFailureCodeCol) NotIn(vs ...billingapprovalrun.ApprovalFailureCode) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // ApprovalItemStatusCol is a column of billingapprovalrun.ApprovalItemStatus values.
-type ApprovalItemStatusCol struct{ keel.StringCol }
+type ApprovalItemStatusCol struct{ keel.TypedStringCol }
 
 func (c ApprovalItemStatusCol) Eq(v billingapprovalrun.ApprovalItemStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c ApprovalItemStatusCol) Ne(v billingapprovalrun.ApprovalItemStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c ApprovalItemStatusCol) Gt(v billingapprovalrun.ApprovalItemStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c ApprovalItemStatusCol) Gte(v billingapprovalrun.ApprovalItemStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c ApprovalItemStatusCol) Lt(v billingapprovalrun.ApprovalItemStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c ApprovalItemStatusCol) Lte(v billingapprovalrun.ApprovalItemStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c ApprovalItemStatusCol) IsDistinctFrom(v billingapprovalrun.ApprovalItemStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ApprovalItemStatusCol) Between(lo, hi billingapprovalrun.ApprovalItemStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c ApprovalItemStatusCol) To(v billingapprovalrun.ApprovalItemStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c ApprovalItemStatusCol) In(vs ...billingapprovalrun.ApprovalItemStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ApprovalItemStatusCol) NotIn(vs ...billingapprovalrun.ApprovalItemStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // ApprovalRunStatusCol is a column of billingapprovalrun.ApprovalRunStatus values.
-type ApprovalRunStatusCol struct{ keel.StringCol }
+type ApprovalRunStatusCol struct{ keel.TypedStringCol }
 
 func (c ApprovalRunStatusCol) Eq(v billingapprovalrun.ApprovalRunStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c ApprovalRunStatusCol) Ne(v billingapprovalrun.ApprovalRunStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c ApprovalRunStatusCol) Gt(v billingapprovalrun.ApprovalRunStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c ApprovalRunStatusCol) Gte(v billingapprovalrun.ApprovalRunStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c ApprovalRunStatusCol) Lt(v billingapprovalrun.ApprovalRunStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c ApprovalRunStatusCol) Lte(v billingapprovalrun.ApprovalRunStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c ApprovalRunStatusCol) IsDistinctFrom(v billingapprovalrun.ApprovalRunStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ApprovalRunStatusCol) Between(lo, hi billingapprovalrun.ApprovalRunStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c ApprovalRunStatusCol) To(v billingapprovalrun.ApprovalRunStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c ApprovalRunStatusCol) In(vs ...billingapprovalrun.ApprovalRunStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ApprovalRunStatusCol) NotIn(vs ...billingapprovalrun.ApprovalRunStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // RunActionCol is a column of billingapprovalrun.RunAction values.
-type RunActionCol struct{ keel.StringCol }
+type RunActionCol struct{ keel.TypedStringCol }
 
-func (c RunActionCol) Eq(v billingapprovalrun.RunAction) keel.Pred { return c.StringCol.Eq(string(v)) }
-func (c RunActionCol) Ne(v billingapprovalrun.RunAction) keel.Pred { return c.StringCol.Ne(string(v)) }
-func (c RunActionCol) Gt(v billingapprovalrun.RunAction) keel.Pred { return c.StringCol.Gt(string(v)) }
-func (c RunActionCol) Gte(v billingapprovalrun.RunAction) keel.Pred {
-	return c.StringCol.Gte(string(v))
-}
-func (c RunActionCol) Lt(v billingapprovalrun.RunAction) keel.Pred { return c.StringCol.Lt(string(v)) }
-func (c RunActionCol) Lte(v billingapprovalrun.RunAction) keel.Pred {
-	return c.StringCol.Lte(string(v))
-}
+func (c RunActionCol) Eq(v billingapprovalrun.RunAction) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c RunActionCol) Ne(v billingapprovalrun.RunAction) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c RunActionCol) Gt(v billingapprovalrun.RunAction) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c RunActionCol) Gte(v billingapprovalrun.RunAction) keel.Pred { return c.Text().Gte(string(v)) }
+func (c RunActionCol) Lt(v billingapprovalrun.RunAction) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c RunActionCol) Lte(v billingapprovalrun.RunAction) keel.Pred { return c.Text().Lte(string(v)) }
 func (c RunActionCol) IsDistinctFrom(v billingapprovalrun.RunAction) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c RunActionCol) Between(lo, hi billingapprovalrun.RunAction) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c RunActionCol) To(v billingapprovalrun.RunAction) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c RunActionCol) In(vs ...billingapprovalrun.RunAction) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c RunActionCol) NotIn(vs ...billingapprovalrun.RunAction) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

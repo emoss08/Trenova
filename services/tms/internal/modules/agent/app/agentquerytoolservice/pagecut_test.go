@@ -76,9 +76,9 @@ func TestGraphQLListOutcome_ACutPageResumesAfterItsLastRow(t *testing.T) {
 	assert.Len(t, short.Items, 2)
 	assert.True(t, short.HasMore, "a cut page always has more")
 
-	scope, err := querytool.CursorScope("worker_list", call.Params)
+	binding, err := querytool.BindCall(querytool.CallOf("worker_list", call))
 	require.NoError(t, err)
-	resumed, err := pagination.DecodeKeyCursor(scope, short.NextCursor)
+	resumed, err := pagination.DecodeKeyCursor(binding, short.NextCursor)
 	require.NoError(t, err)
 	assert.Equal(t, "c2", resumed, "the next page starts after the second row, not the third")
 
@@ -130,12 +130,12 @@ func TestGraphQLList_FieldsLeaveTheListWhole(t *testing.T) {
 	assert.Equal(t, "Dallas", page.Items[0]["city"], "the table keeps every column")
 	assert.Contains(t, page.Columns, "city")
 
-	plain, err := querytool.CursorScope("worker_list", map[string]any{})
+	plain, err := querytool.BindCall(querytool.CursorCall{Tool: "worker_list"})
 	require.NoError(t, err)
-	narrowed, err := querytool.CursorScope(
-		"worker_list",
-		map[string]any{agenttoolports.ListFieldsParam: []any{"wholeName"}},
-	)
+	narrowed, err := querytool.BindCall(querytool.CursorCall{
+		Tool:   "worker_list",
+		Params: map[string]any{agenttoolports.ListFieldsParam: []any{"wholeName"}},
+	})
 	require.NoError(t, err)
 	assert.Equal(t, plain, narrowed, "the columns read never change which rows a page holds")
 }
@@ -156,20 +156,22 @@ func TestGraphQLList_WithoutCredentialReachesTheRoot(t *testing.T) {
 	assert.Equal(t, "ROAD_TEST", sent.Variables["withoutCredential"])
 }
 
+var cutBinding = pagination.BindCursor(pagination.TenantInfo{}, "scope", nil)
+
 func TestSearchOutcome_ACutResumesByCursorOrOffset(t *testing.T) {
 	t.Parallel()
 
 	rows := []shipmentquerytools.Row{{ID: "shp_1"}, {ID: "shp_2"}, {ID: "shp_3"}}
 	byCursor := querytool.SearchOutcome{
 		Count: 3, Items: rows,
-		Resume: &querytool.PageResume{Scope: "scope", Cursors: []string{"k1", "k2", "k3"}},
+		Resume: &querytool.PageResume{Binding: cutBinding, Cursors: []string{"k1", "k2", "k3"}},
 	}
 	cut, ok := byCursor.CutPage(1)
 	require.True(t, ok)
 	short, _ := cut.(querytool.SearchOutcome)
 	assert.Equal(t, 1, short.Count)
 	assert.True(t, short.HasMore)
-	key, err := pagination.DecodeKeyCursor("scope", short.NextCursor)
+	key, err := pagination.DecodeKeyCursor(cutBinding, short.NextCursor)
 	require.NoError(t, err)
 	assert.Equal(t, "k1", key)
 
@@ -208,7 +210,7 @@ func TestOffsetPage_ACutResumesAtTheRowAfter(t *testing.T) {
 		Record:    map[string]any{graphqlread.OutcomeItems: items, graphqlread.OutcomeCount: 3},
 		Outside:   []agentrecord.RecordRef{{EntityType: "x", ID: "d"}},
 		Positions: []int{0, 2, 3},
-		Window:    querytool.OffsetWindow{Scope: "scope", Offset: 10, Limit: 4},
+		Window:    querytool.OffsetWindow{Binding: cutBinding, Offset: 10, Limit: 4},
 	}
 
 	cut, ok := page.CutPage(2)
@@ -216,12 +218,12 @@ func TestOffsetPage_ACutResumesAtTheRowAfter(t *testing.T) {
 	short, _ := cut.(*graphqllisttool.OffsetPage)
 	assert.Equal(t, 2, short.Record[graphqlread.OutcomeCount])
 	assert.Equal(t, true, short.Record[graphqllisttool.OutcomeHasMore])
-	key, err := pagination.DecodeKeyCursor(
-		"scope",
+	offset, err := pagination.DecodeOffsetCursor(
+		cutBinding,
 		short.Record[graphqllisttool.OutcomeNextCursor].(string),
 	)
 	require.NoError(t, err)
-	assert.Equal(t, "13", key)
+	assert.Equal(t, 13, offset)
 	assert.Empty(t, short.TaintedRecords(), "a marked row the cut left out is not in the page")
 	assert.Len(t, page.Items(), 3, "the page cut from is unchanged")
 }

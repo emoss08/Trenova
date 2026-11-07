@@ -121,13 +121,13 @@ type InvoiceRunsTable struct {
 // InvoiceRuns references the invoice_runs table.
 var InvoiceRuns = &InvoiceRunsTable{
 	TableBase:        keel.TableBase{Ref: &invoiceRunsRef},
-	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceRunsRef, Index: 0}}},
-	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceRunsRef, Index: 1}}},
-	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceRunsRef, Index: 2}}},
+	ID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceRunsRef, Index: 0}}},
+	BusinessUnitID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceRunsRef, Index: 1}}},
+	OrganizationID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceRunsRef, Index: 2}}},
 	Number:           keel.StringCol{Col: keel.Col{Ref: &invoiceRunsRef, Index: 3}},
-	Status:           StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceRunsRef, Index: 4}}},
-	Source:           SourceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceRunsRef, Index: 5}}},
-	Cycle:            customerdb.BillingCycleCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceRunsRef, Index: 6}}},
+	Status:           StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceRunsRef, Index: 4}}},
+	Source:           SourceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceRunsRef, Index: 5}}},
+	Cycle:            customerdb.BillingCycleCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceRunsRef, Index: 6}}},
 	PeriodStart:      keel.Int64Col{Col: keel.Col{Ref: &invoiceRunsRef, Index: 7}},
 	PeriodEnd:        keel.Int64Col{Col: keel.Col{Ref: &invoiceRunsRef, Index: 8}},
 	InvoiceDate:      keel.Int64Col{Col: keel.Col{Ref: &invoiceRunsRef, Index: 9}},
@@ -141,11 +141,11 @@ var InvoiceRuns = &InvoiceRunsTable{
 	TotalAmountMinor: keel.Int64Col{Col: keel.Col{Ref: &invoiceRunsRef, Index: 17}},
 	FailureReason:    keel.StringCol{Col: keel.Col{Ref: &invoiceRunsRef, Index: 18}},
 	OffCycleReason:   keel.StringCol{Col: keel.Col{Ref: &invoiceRunsRef, Index: 19}},
-	BuiltByID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceRunsRef, Index: 20}}},
+	BuiltByID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceRunsRef, Index: 20}}},
 	BuiltAt:          keel.Int64Col{Col: keel.Col{Ref: &invoiceRunsRef, Index: 21}},
-	CommittedByID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceRunsRef, Index: 22}}},
+	CommittedByID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceRunsRef, Index: 22}}},
 	CommittedAt:      keel.Int64Col{Col: keel.Col{Ref: &invoiceRunsRef, Index: 23}},
-	CanceledByID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceRunsRef, Index: 24}}},
+	CanceledByID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceRunsRef, Index: 24}}},
 	CanceledAt:       keel.Int64Col{Col: keel.Col{Ref: &invoiceRunsRef, Index: 25}},
 	Version:          keel.Int64Col{Col: keel.Col{Ref: &invoiceRunsRef, Index: 26}},
 	CreatedAt:        keel.Int64Col{Col: keel.Col{Ref: &invoiceRunsRef, Index: 27}},
@@ -156,13 +156,13 @@ var InvoiceRuns = &InvoiceRunsTable{
 func BuildInvoiceRuns(r *keel.Ref) *InvoiceRunsTable {
 	return &InvoiceRunsTable{
 		TableBase:        keel.TableBase{Ref: r},
-		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		Number:           keel.StringCol{Col: keel.Col{Ref: r, Index: 3}},
-		Status:           StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		Source:           SourceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		Cycle:            customerdb.BillingCycleCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		Status:           StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		Source:           SourceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		Cycle:            customerdb.BillingCycleCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		PeriodStart:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
 		PeriodEnd:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
 		InvoiceDate:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
@@ -176,11 +176,11 @@ func BuildInvoiceRuns(r *keel.Ref) *InvoiceRunsTable {
 		TotalAmountMinor: keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
 		FailureReason:    keel.StringCol{Col: keel.Col{Ref: r, Index: 18}},
 		OffCycleReason:   keel.StringCol{Col: keel.Col{Ref: r, Index: 19}},
-		BuiltByID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 20}}},
+		BuiltByID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 20}}},
 		BuiltAt:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 21}},
-		CommittedByID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 22}}},
+		CommittedByID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 22}}},
 		CommittedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 23}},
-		CanceledByID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 24}}},
+		CanceledByID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 24}}},
 		CanceledAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 25}},
 		Version:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 26}},
 		CreatedAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 27}},
@@ -208,8 +208,6 @@ func (t *InvoiceRunsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (
 
 // InvoiceRunsQuery is a query over invoicerun.InvoiceRun.
 type InvoiceRunsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*invoicerun.InvoiceRun] = (*InvoiceRunsTable)(nil)
 
 var _ keel.Query[*invoicerun.InvoiceRun] = (*InvoiceRunsQuery)(nil)
 
@@ -325,42 +323,42 @@ func (t *InvoiceRunsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*inv
 
 // Create inserts row.
 func (t *InvoiceRunsTable) Create(ctx context.Context, db *keel.DB, row *invoicerun.InvoiceRun) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *InvoiceRunsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*invoicerun.InvoiceRun) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *InvoiceRunsTable) Save(ctx context.Context, db *keel.DB, row *invoicerun.InvoiceRun, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *InvoiceRunsTable) SaveExcept(ctx context.Context, db *keel.DB, row *invoicerun.InvoiceRun, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *InvoiceRunsTable) DeleteRow(ctx context.Context, db *keel.DB, row *invoicerun.InvoiceRun) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *InvoiceRunsTable) Upsert(ctx context.Context, db *keel.DB, rows []*invoicerun.InvoiceRun, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *InvoiceRunsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*invoicerun.InvoiceRun, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *InvoiceRunsTable) Copy(ctx context.Context, db *keel.DB, rows []*invoicerun.InvoiceRun) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -532,37 +530,45 @@ func (q *InvoiceRunsQuery) Clone() keel.Query[*invoicerun.InvoiceRun] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *InvoiceRunsQuery) One(ctx context.Context, db *keel.DB) (*invoicerun.InvoiceRun, error) {
-	return keel.One[*invoicerun.InvoiceRun](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*invoicerun.InvoiceRun)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *InvoiceRunsQuery) First(ctx context.Context, db *keel.DB) (*invoicerun.InvoiceRun, error) {
-	return keel.First[*invoicerun.InvoiceRun](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*invoicerun.InvoiceRun)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *InvoiceRunsQuery) List(ctx context.Context, db *keel.DB) ([]*invoicerun.InvoiceRun, error) {
-	return keel.List[*invoicerun.InvoiceRun](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*invoicerun.InvoiceRun)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *InvoiceRunsQuery) All(ctx context.Context, db *keel.DB) ([]*invoicerun.InvoiceRun, error) {
-	return keel.All[*invoicerun.InvoiceRun](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*invoicerun.InvoiceRun)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *InvoiceRunsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*invoicerun.InvoiceRun, error) {
-	return keel.UpdateReturning[*invoicerun.InvoiceRun](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*invoicerun.InvoiceRun)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *InvoiceRunsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*invoicerun.InvoiceRun], error) {
-	return keel.PageOf[*invoicerun.InvoiceRun](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*invoicerun.InvoiceRun])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *InvoiceRunsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*invoicerun.InvoiceRun) error) error {
-	return keel.Each[*invoicerun.InvoiceRun](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*invoicerun.InvoiceRun)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newInvoiceRun() unsafe.Pointer { return unsafe.Pointer(new(invoicerun.InvoiceRun)) }
@@ -834,15 +840,15 @@ type InvoiceRunGroupsTable struct {
 // InvoiceRunGroups references the invoice_run_groups table.
 var InvoiceRunGroups = &InvoiceRunGroupsTable{
 	TableBase:           keel.TableBase{Ref: &invoiceRunGroupsRef},
-	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceRunGroupsRef, Index: 0}}},
-	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceRunGroupsRef, Index: 1}}},
-	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceRunGroupsRef, Index: 2}}},
-	RunID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceRunGroupsRef, Index: 3}}},
-	CustomerID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceRunGroupsRef, Index: 4}}},
+	ID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceRunGroupsRef, Index: 0}}},
+	BusinessUnitID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceRunGroupsRef, Index: 1}}},
+	OrganizationID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceRunGroupsRef, Index: 2}}},
+	RunID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceRunGroupsRef, Index: 3}}},
+	CustomerID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceRunGroupsRef, Index: 4}}},
 	GroupKey:            keel.StringCol{Col: keel.Col{Ref: &invoiceRunGroupsRef, Index: 5}},
 	GroupLabel:          keel.StringCol{Col: keel.Col{Ref: &invoiceRunGroupsRef, Index: 6}},
-	SplitBy:             customerdb.InvoiceSplitKeyCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceRunGroupsRef, Index: 7}}},
-	Status:              GroupStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceRunGroupsRef, Index: 8}}},
+	SplitBy:             customerdb.InvoiceSplitKeyCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceRunGroupsRef, Index: 7}}},
+	Status:              GroupStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceRunGroupsRef, Index: 8}}},
 	ItemCount:           keel.Int64Col{Col: keel.Col{Ref: &invoiceRunGroupsRef, Index: 9}},
 	SubtotalAmount:      keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &invoiceRunGroupsRef, Index: 10}}},
 	SubtotalAmountMinor: keel.Int64Col{Col: keel.Col{Ref: &invoiceRunGroupsRef, Index: 11}},
@@ -851,7 +857,7 @@ var InvoiceRunGroups = &InvoiceRunGroupsTable{
 	CurrencyCode:        keel.StringCol{Col: keel.Col{Ref: &invoiceRunGroupsRef, Index: 14}},
 	MinimumAmount:       keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &invoiceRunGroupsRef, Index: 15}}},
 	AutoBill:            keel.BoolCol{Col: keel.Col{Ref: &invoiceRunGroupsRef, Index: 16}},
-	InvoiceID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceRunGroupsRef, Index: 17}}},
+	InvoiceID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceRunGroupsRef, Index: 17}}},
 	SkipReason:          keel.StringCol{Col: keel.Col{Ref: &invoiceRunGroupsRef, Index: 18}},
 	Version:             keel.Int64Col{Col: keel.Col{Ref: &invoiceRunGroupsRef, Index: 19}},
 	CreatedAt:           keel.Int64Col{Col: keel.Col{Ref: &invoiceRunGroupsRef, Index: 20}},
@@ -862,15 +868,15 @@ var InvoiceRunGroups = &InvoiceRunGroupsTable{
 func BuildInvoiceRunGroups(r *keel.Ref) *InvoiceRunGroupsTable {
 	return &InvoiceRunGroupsTable{
 		TableBase:           keel.TableBase{Ref: r},
-		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		RunID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		CustomerID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		RunID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		CustomerID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		GroupKey:            keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		GroupLabel:          keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
-		SplitBy:             customerdb.InvoiceSplitKeyCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
-		Status:              GroupStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		SplitBy:             customerdb.InvoiceSplitKeyCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		Status:              GroupStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
 		ItemCount:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
 		SubtotalAmount:      keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 10}}},
 		SubtotalAmountMinor: keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
@@ -879,7 +885,7 @@ func BuildInvoiceRunGroups(r *keel.Ref) *InvoiceRunGroupsTable {
 		CurrencyCode:        keel.StringCol{Col: keel.Col{Ref: r, Index: 14}},
 		MinimumAmount:       keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 15}}},
 		AutoBill:            keel.BoolCol{Col: keel.Col{Ref: r, Index: 16}},
-		InvoiceID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 17}}},
+		InvoiceID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 17}}},
 		SkipReason:          keel.StringCol{Col: keel.Col{Ref: r, Index: 18}},
 		Version:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 19}},
 		CreatedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 20}},
@@ -920,8 +926,6 @@ func (t *InvoiceRunGroupsTable) Get(ctx context.Context, db *keel.DB, key pulid.
 
 // InvoiceRunGroupsQuery is a query over invoicerun.InvoiceRunGroup.
 type InvoiceRunGroupsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*invoicerun.InvoiceRunGroup] = (*InvoiceRunGroupsTable)(nil)
 
 var _ keel.Query[*invoicerun.InvoiceRunGroup] = (*InvoiceRunGroupsQuery)(nil)
 
@@ -1037,42 +1041,42 @@ func (t *InvoiceRunGroupsTable) Compute(col keel.Column, e keel.Expr) keel.Query
 
 // Create inserts row.
 func (t *InvoiceRunGroupsTable) Create(ctx context.Context, db *keel.DB, row *invoicerun.InvoiceRunGroup) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *InvoiceRunGroupsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*invoicerun.InvoiceRunGroup) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *InvoiceRunGroupsTable) Save(ctx context.Context, db *keel.DB, row *invoicerun.InvoiceRunGroup, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *InvoiceRunGroupsTable) SaveExcept(ctx context.Context, db *keel.DB, row *invoicerun.InvoiceRunGroup, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *InvoiceRunGroupsTable) DeleteRow(ctx context.Context, db *keel.DB, row *invoicerun.InvoiceRunGroup) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *InvoiceRunGroupsTable) Upsert(ctx context.Context, db *keel.DB, rows []*invoicerun.InvoiceRunGroup, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *InvoiceRunGroupsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*invoicerun.InvoiceRunGroup, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *InvoiceRunGroupsTable) Copy(ctx context.Context, db *keel.DB, rows []*invoicerun.InvoiceRunGroup) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1244,37 +1248,45 @@ func (q *InvoiceRunGroupsQuery) Clone() keel.Query[*invoicerun.InvoiceRunGroup] 
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *InvoiceRunGroupsQuery) One(ctx context.Context, db *keel.DB) (*invoicerun.InvoiceRunGroup, error) {
-	return keel.One[*invoicerun.InvoiceRunGroup](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*invoicerun.InvoiceRunGroup)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *InvoiceRunGroupsQuery) First(ctx context.Context, db *keel.DB) (*invoicerun.InvoiceRunGroup, error) {
-	return keel.First[*invoicerun.InvoiceRunGroup](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*invoicerun.InvoiceRunGroup)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *InvoiceRunGroupsQuery) List(ctx context.Context, db *keel.DB) ([]*invoicerun.InvoiceRunGroup, error) {
-	return keel.List[*invoicerun.InvoiceRunGroup](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*invoicerun.InvoiceRunGroup)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *InvoiceRunGroupsQuery) All(ctx context.Context, db *keel.DB) ([]*invoicerun.InvoiceRunGroup, error) {
-	return keel.All[*invoicerun.InvoiceRunGroup](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*invoicerun.InvoiceRunGroup)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *InvoiceRunGroupsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*invoicerun.InvoiceRunGroup, error) {
-	return keel.UpdateReturning[*invoicerun.InvoiceRunGroup](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*invoicerun.InvoiceRunGroup)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *InvoiceRunGroupsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*invoicerun.InvoiceRunGroup], error) {
-	return keel.PageOf[*invoicerun.InvoiceRunGroup](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*invoicerun.InvoiceRunGroup])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *InvoiceRunGroupsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*invoicerun.InvoiceRunGroup) error) error {
-	return keel.Each[*invoicerun.InvoiceRunGroup](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*invoicerun.InvoiceRunGroup)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newInvoiceRunGroup() unsafe.Pointer { return unsafe.Pointer(new(invoicerun.InvoiceRunGroup)) }
@@ -1492,14 +1504,14 @@ type InvoiceRunGroupItemsTable struct {
 // InvoiceRunGroupItems references the invoice_run_group_items table.
 var InvoiceRunGroupItems = &InvoiceRunGroupItemsTable{
 	TableBase:          keel.TableBase{Ref: &invoiceRunGroupItemsRef},
-	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceRunGroupItemsRef, Index: 0}}},
-	BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceRunGroupItemsRef, Index: 1}}},
-	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceRunGroupItemsRef, Index: 2}}},
-	RunID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceRunGroupItemsRef, Index: 3}}},
-	GroupID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceRunGroupItemsRef, Index: 4}}},
-	BillingQueueItemID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceRunGroupItemsRef, Index: 5}}},
-	ShipmentID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceRunGroupItemsRef, Index: 6}}},
-	OrderID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &invoiceRunGroupItemsRef, Index: 7}}},
+	ID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceRunGroupItemsRef, Index: 0}}},
+	BusinessUnitID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceRunGroupItemsRef, Index: 1}}},
+	OrganizationID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceRunGroupItemsRef, Index: 2}}},
+	RunID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceRunGroupItemsRef, Index: 3}}},
+	GroupID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceRunGroupItemsRef, Index: 4}}},
+	BillingQueueItemID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceRunGroupItemsRef, Index: 5}}},
+	ShipmentID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceRunGroupItemsRef, Index: 6}}},
+	OrderID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &invoiceRunGroupItemsRef, Index: 7}}},
 	ProNumber:          keel.StringCol{Col: keel.Col{Ref: &invoiceRunGroupItemsRef, Index: 8}},
 	BOL:                keel.StringCol{Col: keel.Col{Ref: &invoiceRunGroupItemsRef, Index: 9}},
 	PONumber:           keel.StringCol{Col: keel.Col{Ref: &invoiceRunGroupItemsRef, Index: 10}},
@@ -1518,14 +1530,14 @@ var InvoiceRunGroupItems = &InvoiceRunGroupItemsTable{
 func BuildInvoiceRunGroupItems(r *keel.Ref) *InvoiceRunGroupItemsTable {
 	return &InvoiceRunGroupItemsTable{
 		TableBase:          keel.TableBase{Ref: r},
-		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		RunID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		GroupID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		BillingQueueItemID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		ShipmentID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		OrderID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		ID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		RunID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		GroupID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		BillingQueueItemID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		ShipmentID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		OrderID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
 		ProNumber:          keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
 		BOL:                keel.StringCol{Col: keel.Col{Ref: r, Index: 9}},
 		PONumber:           keel.StringCol{Col: keel.Col{Ref: r, Index: 10}},
@@ -1561,8 +1573,6 @@ func (t *InvoiceRunGroupItemsTable) Get(ctx context.Context, db *keel.DB, key pu
 
 // InvoiceRunGroupItemsQuery is a query over invoicerun.InvoiceRunGroupItem.
 type InvoiceRunGroupItemsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*invoicerun.InvoiceRunGroupItem] = (*InvoiceRunGroupItemsTable)(nil)
 
 var _ keel.Query[*invoicerun.InvoiceRunGroupItem] = (*InvoiceRunGroupItemsQuery)(nil)
 
@@ -1678,42 +1688,42 @@ func (t *InvoiceRunGroupItemsTable) Compute(col keel.Column, e keel.Expr) keel.Q
 
 // Create inserts row.
 func (t *InvoiceRunGroupItemsTable) Create(ctx context.Context, db *keel.DB, row *invoicerun.InvoiceRunGroupItem) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *InvoiceRunGroupItemsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*invoicerun.InvoiceRunGroupItem) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *InvoiceRunGroupItemsTable) Save(ctx context.Context, db *keel.DB, row *invoicerun.InvoiceRunGroupItem, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *InvoiceRunGroupItemsTable) SaveExcept(ctx context.Context, db *keel.DB, row *invoicerun.InvoiceRunGroupItem, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *InvoiceRunGroupItemsTable) DeleteRow(ctx context.Context, db *keel.DB, row *invoicerun.InvoiceRunGroupItem) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *InvoiceRunGroupItemsTable) Upsert(ctx context.Context, db *keel.DB, rows []*invoicerun.InvoiceRunGroupItem, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *InvoiceRunGroupItemsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*invoicerun.InvoiceRunGroupItem, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *InvoiceRunGroupItemsTable) Copy(ctx context.Context, db *keel.DB, rows []*invoicerun.InvoiceRunGroupItem) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1885,37 +1895,45 @@ func (q *InvoiceRunGroupItemsQuery) Clone() keel.Query[*invoicerun.InvoiceRunGro
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *InvoiceRunGroupItemsQuery) One(ctx context.Context, db *keel.DB) (*invoicerun.InvoiceRunGroupItem, error) {
-	return keel.One[*invoicerun.InvoiceRunGroupItem](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*invoicerun.InvoiceRunGroupItem)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *InvoiceRunGroupItemsQuery) First(ctx context.Context, db *keel.DB) (*invoicerun.InvoiceRunGroupItem, error) {
-	return keel.First[*invoicerun.InvoiceRunGroupItem](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*invoicerun.InvoiceRunGroupItem)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *InvoiceRunGroupItemsQuery) List(ctx context.Context, db *keel.DB) ([]*invoicerun.InvoiceRunGroupItem, error) {
-	return keel.List[*invoicerun.InvoiceRunGroupItem](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*invoicerun.InvoiceRunGroupItem)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *InvoiceRunGroupItemsQuery) All(ctx context.Context, db *keel.DB) ([]*invoicerun.InvoiceRunGroupItem, error) {
-	return keel.All[*invoicerun.InvoiceRunGroupItem](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*invoicerun.InvoiceRunGroupItem)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *InvoiceRunGroupItemsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*invoicerun.InvoiceRunGroupItem, error) {
-	return keel.UpdateReturning[*invoicerun.InvoiceRunGroupItem](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*invoicerun.InvoiceRunGroupItem)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *InvoiceRunGroupItemsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*invoicerun.InvoiceRunGroupItem], error) {
-	return keel.PageOf[*invoicerun.InvoiceRunGroupItem](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*invoicerun.InvoiceRunGroupItem])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *InvoiceRunGroupItemsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*invoicerun.InvoiceRunGroupItem) error) error {
-	return keel.Each[*invoicerun.InvoiceRunGroupItem](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*invoicerun.InvoiceRunGroupItem)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newInvoiceRunGroupItem() unsafe.Pointer {
@@ -2100,68 +2118,70 @@ var enumStatus = [...]schema.EnumValue{
 }
 
 // GroupStatusCol is a column of invoicerun.GroupStatus values.
-type GroupStatusCol struct{ keel.StringCol }
+type GroupStatusCol struct{ keel.TypedStringCol }
 
-func (c GroupStatusCol) Eq(v invoicerun.GroupStatus) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c GroupStatusCol) Ne(v invoicerun.GroupStatus) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c GroupStatusCol) Gt(v invoicerun.GroupStatus) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c GroupStatusCol) Gte(v invoicerun.GroupStatus) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c GroupStatusCol) Lt(v invoicerun.GroupStatus) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c GroupStatusCol) Lte(v invoicerun.GroupStatus) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c GroupStatusCol) Eq(v invoicerun.GroupStatus) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c GroupStatusCol) Ne(v invoicerun.GroupStatus) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c GroupStatusCol) Gt(v invoicerun.GroupStatus) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c GroupStatusCol) Gte(v invoicerun.GroupStatus) keel.Pred { return c.Text().Gte(string(v)) }
+func (c GroupStatusCol) Lt(v invoicerun.GroupStatus) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c GroupStatusCol) Lte(v invoicerun.GroupStatus) keel.Pred { return c.Text().Lte(string(v)) }
 func (c GroupStatusCol) IsDistinctFrom(v invoicerun.GroupStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c GroupStatusCol) Between(lo, hi invoicerun.GroupStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c GroupStatusCol) To(v invoicerun.GroupStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
-}
+func (c GroupStatusCol) To(v invoicerun.GroupStatus) keel.Assignment { return c.Text().To(string(v)) }
 func (c GroupStatusCol) In(vs ...invoicerun.GroupStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c GroupStatusCol) NotIn(vs ...invoicerun.GroupStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // SourceCol is a column of invoicerun.Source values.
-type SourceCol struct{ keel.StringCol }
+type SourceCol struct{ keel.TypedStringCol }
 
-func (c SourceCol) Eq(v invoicerun.Source) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c SourceCol) Ne(v invoicerun.Source) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c SourceCol) Gt(v invoicerun.Source) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c SourceCol) Gte(v invoicerun.Source) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c SourceCol) Lt(v invoicerun.Source) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c SourceCol) Lte(v invoicerun.Source) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c SourceCol) Eq(v invoicerun.Source) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c SourceCol) Ne(v invoicerun.Source) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c SourceCol) Gt(v invoicerun.Source) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c SourceCol) Gte(v invoicerun.Source) keel.Pred { return c.Text().Gte(string(v)) }
+func (c SourceCol) Lt(v invoicerun.Source) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c SourceCol) Lte(v invoicerun.Source) keel.Pred { return c.Text().Lte(string(v)) }
 func (c SourceCol) IsDistinctFrom(v invoicerun.Source) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c SourceCol) Between(lo, hi invoicerun.Source) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c SourceCol) To(v invoicerun.Source) keel.Assignment { return c.StringCol.To(string(v)) }
-func (c SourceCol) In(vs ...invoicerun.Source) keel.Pred   { return c.StringCol.In(keel.Strings(vs)...) }
+func (c SourceCol) To(v invoicerun.Source) keel.Assignment { return c.Text().To(string(v)) }
+func (c SourceCol) In(vs ...invoicerun.Source) keel.Pred {
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
+}
 func (c SourceCol) NotIn(vs ...invoicerun.Source) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // StatusCol is a column of invoicerun.Status values.
-type StatusCol struct{ keel.StringCol }
+type StatusCol struct{ keel.TypedStringCol }
 
-func (c StatusCol) Eq(v invoicerun.Status) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c StatusCol) Ne(v invoicerun.Status) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c StatusCol) Gt(v invoicerun.Status) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c StatusCol) Gte(v invoicerun.Status) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c StatusCol) Lt(v invoicerun.Status) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c StatusCol) Lte(v invoicerun.Status) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c StatusCol) Eq(v invoicerun.Status) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c StatusCol) Ne(v invoicerun.Status) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c StatusCol) Gt(v invoicerun.Status) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c StatusCol) Gte(v invoicerun.Status) keel.Pred { return c.Text().Gte(string(v)) }
+func (c StatusCol) Lt(v invoicerun.Status) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c StatusCol) Lte(v invoicerun.Status) keel.Pred { return c.Text().Lte(string(v)) }
 func (c StatusCol) IsDistinctFrom(v invoicerun.Status) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c StatusCol) Between(lo, hi invoicerun.Status) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c StatusCol) To(v invoicerun.Status) keel.Assignment { return c.StringCol.To(string(v)) }
-func (c StatusCol) In(vs ...invoicerun.Status) keel.Pred   { return c.StringCol.In(keel.Strings(vs)...) }
+func (c StatusCol) To(v invoicerun.Status) keel.Assignment { return c.Text().To(string(v)) }
+func (c StatusCol) In(vs ...invoicerun.Status) keel.Pred {
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
+}
 func (c StatusCol) NotIn(vs ...invoicerun.Status) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

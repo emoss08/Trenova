@@ -133,7 +133,7 @@ func candidateShipmentsQuery(since int64, limit int) keel.Query[*keel.Row] {
 	)
 	id := candidates.Col(candidateID)
 
-	return candidates.Query().
+	return keel.RowsOf(candidates.TableRef()).
 		With(candidates).
 		Pick(id).
 		Order(candidates.Col(candidateUpdatedAt).Desc(), id.Desc()).

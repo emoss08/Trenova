@@ -85,15 +85,15 @@ type DashboardsTable struct {
 // Dashboards references the report_dashboards table.
 var Dashboards = &DashboardsTable{
 	TableBase:      keel.TableBase{Ref: &dashboardsRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dashboardsRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dashboardsRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dashboardsRef, Index: 2}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &dashboardsRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &dashboardsRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &dashboardsRef, Index: 2}}},
 	Name:           keel.StringCol{Col: keel.Col{Ref: &dashboardsRef, Index: 3}},
 	Description:    keel.StringCol{Col: keel.Col{Ref: &dashboardsRef, Index: 4}},
 	Category:       keel.StringCol{Col: keel.Col{Ref: &dashboardsRef, Index: 5}},
 	Tags:           keel.StringArrayCol{Col: keel.Col{Ref: &dashboardsRef, Index: 6}},
-	OwnerID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dashboardsRef, Index: 7}}},
-	Visibility:     VisibilityCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &dashboardsRef, Index: 8}}},
+	OwnerID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &dashboardsRef, Index: 7}}},
+	Visibility:     VisibilityCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &dashboardsRef, Index: 8}}},
 	Layout:         keel.JSONBCol{Col: keel.Col{Ref: &dashboardsRef, Index: 9}},
 	Version:        keel.Int64Col{Col: keel.Col{Ref: &dashboardsRef, Index: 10}},
 	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &dashboardsRef, Index: 11}},
@@ -104,15 +104,15 @@ var Dashboards = &DashboardsTable{
 func BuildDashboards(r *keel.Ref) *DashboardsTable {
 	return &DashboardsTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		Name:           keel.StringCol{Col: keel.Col{Ref: r, Index: 3}},
 		Description:    keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		Category:       keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		Tags:           keel.StringArrayCol{Col: keel.Col{Ref: r, Index: 6}},
-		OwnerID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
-		Visibility:     VisibilityCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		OwnerID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		Visibility:     VisibilityCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
 		Layout:         keel.JSONBCol{Col: keel.Col{Ref: r, Index: 9}},
 		Version:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
 		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
@@ -140,8 +140,6 @@ func (t *DashboardsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*
 
 // DashboardsQuery is a query over report.Dashboard.
 type DashboardsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*report.Dashboard] = (*DashboardsTable)(nil)
 
 var _ keel.Query[*report.Dashboard] = (*DashboardsQuery)(nil)
 
@@ -257,42 +255,42 @@ func (t *DashboardsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*repo
 
 // Create inserts row.
 func (t *DashboardsTable) Create(ctx context.Context, db *keel.DB, row *report.Dashboard) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *DashboardsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*report.Dashboard) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *DashboardsTable) Save(ctx context.Context, db *keel.DB, row *report.Dashboard, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *DashboardsTable) SaveExcept(ctx context.Context, db *keel.DB, row *report.Dashboard, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *DashboardsTable) DeleteRow(ctx context.Context, db *keel.DB, row *report.Dashboard) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *DashboardsTable) Upsert(ctx context.Context, db *keel.DB, rows []*report.Dashboard, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *DashboardsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*report.Dashboard, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *DashboardsTable) Copy(ctx context.Context, db *keel.DB, rows []*report.Dashboard) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -464,37 +462,45 @@ func (q *DashboardsQuery) Clone() keel.Query[*report.Dashboard] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *DashboardsQuery) One(ctx context.Context, db *keel.DB) (*report.Dashboard, error) {
-	return keel.One[*report.Dashboard](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*report.Dashboard)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *DashboardsQuery) First(ctx context.Context, db *keel.DB) (*report.Dashboard, error) {
-	return keel.First[*report.Dashboard](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*report.Dashboard)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *DashboardsQuery) List(ctx context.Context, db *keel.DB) ([]*report.Dashboard, error) {
-	return keel.List[*report.Dashboard](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*report.Dashboard)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *DashboardsQuery) All(ctx context.Context, db *keel.DB) ([]*report.Dashboard, error) {
-	return keel.All[*report.Dashboard](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*report.Dashboard)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *DashboardsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*report.Dashboard, error) {
-	return keel.UpdateReturning[*report.Dashboard](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*report.Dashboard)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *DashboardsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*report.Dashboard], error) {
-	return keel.PageOf[*report.Dashboard](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*report.Dashboard])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *DashboardsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*report.Dashboard) error) error {
-	return keel.Each[*report.Dashboard](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*report.Dashboard)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newDashboard() unsafe.Pointer { return unsafe.Pointer(new(report.Dashboard)) }
@@ -668,8 +674,6 @@ func (t *ReportCatalogVersionsTable) Get(ctx context.Context, db *keel.DB, key s
 // ReportCatalogVersionsQuery is a query over report.ReportCatalogVersion.
 type ReportCatalogVersionsQuery struct{ keel.QueryCore }
 
-var _ keel.Handle[*report.ReportCatalogVersion] = (*ReportCatalogVersionsTable)(nil)
-
 var _ keel.Query[*report.ReportCatalogVersion] = (*ReportCatalogVersionsQuery)(nil)
 
 // Query starts a query over the table.
@@ -784,42 +788,42 @@ func (t *ReportCatalogVersionsTable) Compute(col keel.Column, e keel.Expr) keel.
 
 // Create inserts row.
 func (t *ReportCatalogVersionsTable) Create(ctx context.Context, db *keel.DB, row *report.ReportCatalogVersion) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *ReportCatalogVersionsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*report.ReportCatalogVersion) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *ReportCatalogVersionsTable) Save(ctx context.Context, db *keel.DB, row *report.ReportCatalogVersion, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *ReportCatalogVersionsTable) SaveExcept(ctx context.Context, db *keel.DB, row *report.ReportCatalogVersion, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *ReportCatalogVersionsTable) DeleteRow(ctx context.Context, db *keel.DB, row *report.ReportCatalogVersion) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *ReportCatalogVersionsTable) Upsert(ctx context.Context, db *keel.DB, rows []*report.ReportCatalogVersion, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *ReportCatalogVersionsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*report.ReportCatalogVersion, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *ReportCatalogVersionsTable) Copy(ctx context.Context, db *keel.DB, rows []*report.ReportCatalogVersion) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -991,37 +995,45 @@ func (q *ReportCatalogVersionsQuery) Clone() keel.Query[*report.ReportCatalogVer
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *ReportCatalogVersionsQuery) One(ctx context.Context, db *keel.DB) (*report.ReportCatalogVersion, error) {
-	return keel.One[*report.ReportCatalogVersion](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*report.ReportCatalogVersion)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *ReportCatalogVersionsQuery) First(ctx context.Context, db *keel.DB) (*report.ReportCatalogVersion, error) {
-	return keel.First[*report.ReportCatalogVersion](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*report.ReportCatalogVersion)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *ReportCatalogVersionsQuery) List(ctx context.Context, db *keel.DB) ([]*report.ReportCatalogVersion, error) {
-	return keel.List[*report.ReportCatalogVersion](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*report.ReportCatalogVersion)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *ReportCatalogVersionsQuery) All(ctx context.Context, db *keel.DB) ([]*report.ReportCatalogVersion, error) {
-	return keel.All[*report.ReportCatalogVersion](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*report.ReportCatalogVersion)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *ReportCatalogVersionsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*report.ReportCatalogVersion, error) {
-	return keel.UpdateReturning[*report.ReportCatalogVersion](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*report.ReportCatalogVersion)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *ReportCatalogVersionsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*report.ReportCatalogVersion], error) {
-	return keel.PageOf[*report.ReportCatalogVersion](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*report.ReportCatalogVersion])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *ReportCatalogVersionsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*report.ReportCatalogVersion) error) error {
-	return keel.Each[*report.ReportCatalogVersion](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*report.ReportCatalogVersion)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newReportCatalogVersion() unsafe.Pointer {
@@ -1147,23 +1159,23 @@ type ReportDefinitionsTable struct {
 // ReportDefinitions references the report_definitions table.
 var ReportDefinitions = &ReportDefinitionsTable{
 	TableBase:       keel.TableBase{Ref: &reportDefinitionsRef},
-	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reportDefinitionsRef, Index: 0}}},
-	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reportDefinitionsRef, Index: 1}}},
-	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reportDefinitionsRef, Index: 2}}},
+	ID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reportDefinitionsRef, Index: 0}}},
+	BusinessUnitID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reportDefinitionsRef, Index: 1}}},
+	OrganizationID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reportDefinitionsRef, Index: 2}}},
 	Name:            keel.StringCol{Col: keel.Col{Ref: &reportDefinitionsRef, Index: 3}},
 	Description:     keel.StringCol{Col: keel.Col{Ref: &reportDefinitionsRef, Index: 4}},
 	Category:        keel.StringCol{Col: keel.Col{Ref: &reportDefinitionsRef, Index: 5}},
 	Tags:            keel.StringArrayCol{Col: keel.Col{Ref: &reportDefinitionsRef, Index: 6}},
-	Kind:            DefinitionKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reportDefinitionsRef, Index: 7}}},
+	Kind:            DefinitionKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reportDefinitionsRef, Index: 7}}},
 	CannedKey:       keel.StringCol{Col: keel.Col{Ref: &reportDefinitionsRef, Index: 8}},
 	CannedVersion:   keel.StringCol{Col: keel.Col{Ref: &reportDefinitionsRef, Index: 9}},
-	OwnerID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reportDefinitionsRef, Index: 10}}},
-	Visibility:      VisibilityCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reportDefinitionsRef, Index: 11}}},
-	Status:          DefinitionStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reportDefinitionsRef, Index: 12}}},
+	OwnerID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reportDefinitionsRef, Index: 10}}},
+	Visibility:      VisibilityCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reportDefinitionsRef, Index: 11}}},
+	Status:          DefinitionStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reportDefinitionsRef, Index: 12}}},
 	Diagnostics:     keel.StringArrayCol{Col: keel.Col{Ref: &reportDefinitionsRef, Index: 13}},
 	CatalogVersion:  keel.StringCol{Col: keel.Col{Ref: &reportDefinitionsRef, Index: 14}},
 	Definition:      keel.JSONBCol{Col: keel.Col{Ref: &reportDefinitionsRef, Index: 15}},
-	DefaultFormat:   FormatCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reportDefinitionsRef, Index: 16}}},
+	DefaultFormat:   FormatCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reportDefinitionsRef, Index: 16}}},
 	CurrentRevision: keel.Int64Col{Col: keel.Col{Ref: &reportDefinitionsRef, Index: 17}},
 	LastRunAt:       keel.Int64Col{Col: keel.Col{Ref: &reportDefinitionsRef, Index: 18}},
 	Version:         keel.Int64Col{Col: keel.Col{Ref: &reportDefinitionsRef, Index: 19}},
@@ -1175,23 +1187,23 @@ var ReportDefinitions = &ReportDefinitionsTable{
 func BuildReportDefinitions(r *keel.Ref) *ReportDefinitionsTable {
 	return &ReportDefinitionsTable{
 		TableBase:       keel.TableBase{Ref: r},
-		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		Name:            keel.StringCol{Col: keel.Col{Ref: r, Index: 3}},
 		Description:     keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		Category:        keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		Tags:            keel.StringArrayCol{Col: keel.Col{Ref: r, Index: 6}},
-		Kind:            DefinitionKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		Kind:            DefinitionKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
 		CannedKey:       keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
 		CannedVersion:   keel.StringCol{Col: keel.Col{Ref: r, Index: 9}},
-		OwnerID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
-		Visibility:      VisibilityCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
-		Status:          DefinitionStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 12}}},
+		OwnerID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		Visibility:      VisibilityCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 11}}},
+		Status:          DefinitionStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 12}}},
 		Diagnostics:     keel.StringArrayCol{Col: keel.Col{Ref: r, Index: 13}},
 		CatalogVersion:  keel.StringCol{Col: keel.Col{Ref: r, Index: 14}},
 		Definition:      keel.JSONBCol{Col: keel.Col{Ref: r, Index: 15}},
-		DefaultFormat:   FormatCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 16}}},
+		DefaultFormat:   FormatCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 16}}},
 		CurrentRevision: keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
 		LastRunAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
 		Version:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 19}},
@@ -1220,8 +1232,6 @@ func (t *ReportDefinitionsTable) Get(ctx context.Context, db *keel.DB, key pulid
 
 // ReportDefinitionsQuery is a query over report.ReportDefinition.
 type ReportDefinitionsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*report.ReportDefinition] = (*ReportDefinitionsTable)(nil)
 
 var _ keel.Query[*report.ReportDefinition] = (*ReportDefinitionsQuery)(nil)
 
@@ -1337,42 +1347,42 @@ func (t *ReportDefinitionsTable) Compute(col keel.Column, e keel.Expr) keel.Quer
 
 // Create inserts row.
 func (t *ReportDefinitionsTable) Create(ctx context.Context, db *keel.DB, row *report.ReportDefinition) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *ReportDefinitionsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*report.ReportDefinition) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *ReportDefinitionsTable) Save(ctx context.Context, db *keel.DB, row *report.ReportDefinition, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *ReportDefinitionsTable) SaveExcept(ctx context.Context, db *keel.DB, row *report.ReportDefinition, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *ReportDefinitionsTable) DeleteRow(ctx context.Context, db *keel.DB, row *report.ReportDefinition) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *ReportDefinitionsTable) Upsert(ctx context.Context, db *keel.DB, rows []*report.ReportDefinition, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *ReportDefinitionsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*report.ReportDefinition, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *ReportDefinitionsTable) Copy(ctx context.Context, db *keel.DB, rows []*report.ReportDefinition) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1544,37 +1554,45 @@ func (q *ReportDefinitionsQuery) Clone() keel.Query[*report.ReportDefinition] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *ReportDefinitionsQuery) One(ctx context.Context, db *keel.DB) (*report.ReportDefinition, error) {
-	return keel.One[*report.ReportDefinition](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*report.ReportDefinition)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *ReportDefinitionsQuery) First(ctx context.Context, db *keel.DB) (*report.ReportDefinition, error) {
-	return keel.First[*report.ReportDefinition](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*report.ReportDefinition)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *ReportDefinitionsQuery) List(ctx context.Context, db *keel.DB) ([]*report.ReportDefinition, error) {
-	return keel.List[*report.ReportDefinition](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*report.ReportDefinition)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *ReportDefinitionsQuery) All(ctx context.Context, db *keel.DB) ([]*report.ReportDefinition, error) {
-	return keel.All[*report.ReportDefinition](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*report.ReportDefinition)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *ReportDefinitionsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*report.ReportDefinition, error) {
-	return keel.UpdateReturning[*report.ReportDefinition](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*report.ReportDefinition)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *ReportDefinitionsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*report.ReportDefinition], error) {
-	return keel.PageOf[*report.ReportDefinition](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*report.ReportDefinition])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *ReportDefinitionsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*report.ReportDefinition) error) error {
-	return keel.Each[*report.ReportDefinition](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*report.ReportDefinition)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newReportDefinition() unsafe.Pointer { return unsafe.Pointer(new(report.ReportDefinition)) }
@@ -1781,14 +1799,14 @@ type ReportDefinitionRevisionsTable struct {
 // ReportDefinitionRevisions references the report_definition_revisions table.
 var ReportDefinitionRevisions = &ReportDefinitionRevisionsTable{
 	TableBase:      keel.TableBase{Ref: &reportDefinitionRevisionsRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reportDefinitionRevisionsRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reportDefinitionRevisionsRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reportDefinitionRevisionsRef, Index: 2}}},
-	DefinitionID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reportDefinitionRevisionsRef, Index: 3}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reportDefinitionRevisionsRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reportDefinitionRevisionsRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reportDefinitionRevisionsRef, Index: 2}}},
+	DefinitionID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reportDefinitionRevisionsRef, Index: 3}}},
 	RevisionNumber: keel.Int64Col{Col: keel.Col{Ref: &reportDefinitionRevisionsRef, Index: 4}},
 	CatalogVersion: keel.StringCol{Col: keel.Col{Ref: &reportDefinitionRevisionsRef, Index: 5}},
 	Definition:     keel.JSONBCol{Col: keel.Col{Ref: &reportDefinitionRevisionsRef, Index: 6}},
-	CreatedByID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reportDefinitionRevisionsRef, Index: 7}}},
+	CreatedByID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reportDefinitionRevisionsRef, Index: 7}}},
 	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &reportDefinitionRevisionsRef, Index: 8}},
 }
 
@@ -1796,14 +1814,14 @@ var ReportDefinitionRevisions = &ReportDefinitionRevisionsTable{
 func BuildReportDefinitionRevisions(r *keel.Ref) *ReportDefinitionRevisionsTable {
 	return &ReportDefinitionRevisionsTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		DefinitionID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		DefinitionID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		RevisionNumber: keel.Int64Col{Col: keel.Col{Ref: r, Index: 4}},
 		CatalogVersion: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		Definition:     keel.JSONBCol{Col: keel.Col{Ref: r, Index: 6}},
-		CreatedByID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		CreatedByID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
 		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
 	}
 }
@@ -1828,8 +1846,6 @@ func (t *ReportDefinitionRevisionsTable) Get(ctx context.Context, db *keel.DB, k
 
 // ReportDefinitionRevisionsQuery is a query over report.ReportDefinitionRevision.
 type ReportDefinitionRevisionsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*report.ReportDefinitionRevision] = (*ReportDefinitionRevisionsTable)(nil)
 
 var _ keel.Query[*report.ReportDefinitionRevision] = (*ReportDefinitionRevisionsQuery)(nil)
 
@@ -1945,42 +1961,42 @@ func (t *ReportDefinitionRevisionsTable) Compute(col keel.Column, e keel.Expr) k
 
 // Create inserts row.
 func (t *ReportDefinitionRevisionsTable) Create(ctx context.Context, db *keel.DB, row *report.ReportDefinitionRevision) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *ReportDefinitionRevisionsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*report.ReportDefinitionRevision) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *ReportDefinitionRevisionsTable) Save(ctx context.Context, db *keel.DB, row *report.ReportDefinitionRevision, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *ReportDefinitionRevisionsTable) SaveExcept(ctx context.Context, db *keel.DB, row *report.ReportDefinitionRevision, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *ReportDefinitionRevisionsTable) DeleteRow(ctx context.Context, db *keel.DB, row *report.ReportDefinitionRevision) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *ReportDefinitionRevisionsTable) Upsert(ctx context.Context, db *keel.DB, rows []*report.ReportDefinitionRevision, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *ReportDefinitionRevisionsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*report.ReportDefinitionRevision, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *ReportDefinitionRevisionsTable) Copy(ctx context.Context, db *keel.DB, rows []*report.ReportDefinitionRevision) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -2152,37 +2168,45 @@ func (q *ReportDefinitionRevisionsQuery) Clone() keel.Query[*report.ReportDefini
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *ReportDefinitionRevisionsQuery) One(ctx context.Context, db *keel.DB) (*report.ReportDefinitionRevision, error) {
-	return keel.One[*report.ReportDefinitionRevision](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*report.ReportDefinitionRevision)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *ReportDefinitionRevisionsQuery) First(ctx context.Context, db *keel.DB) (*report.ReportDefinitionRevision, error) {
-	return keel.First[*report.ReportDefinitionRevision](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*report.ReportDefinitionRevision)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *ReportDefinitionRevisionsQuery) List(ctx context.Context, db *keel.DB) ([]*report.ReportDefinitionRevision, error) {
-	return keel.List[*report.ReportDefinitionRevision](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*report.ReportDefinitionRevision)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *ReportDefinitionRevisionsQuery) All(ctx context.Context, db *keel.DB) ([]*report.ReportDefinitionRevision, error) {
-	return keel.All[*report.ReportDefinitionRevision](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*report.ReportDefinitionRevision)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *ReportDefinitionRevisionsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*report.ReportDefinitionRevision, error) {
-	return keel.UpdateReturning[*report.ReportDefinitionRevision](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*report.ReportDefinitionRevision)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *ReportDefinitionRevisionsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*report.ReportDefinitionRevision], error) {
-	return keel.PageOf[*report.ReportDefinitionRevision](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*report.ReportDefinitionRevision])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *ReportDefinitionRevisionsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*report.ReportDefinitionRevision) error) error {
-	return keel.Each[*report.ReportDefinitionRevision](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*report.ReportDefinitionRevision)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newReportDefinitionRevision() unsafe.Pointer {
@@ -2363,19 +2387,19 @@ type ReportRunsTable struct {
 // ReportRuns references the report_runs table.
 var ReportRuns = &ReportRunsTable{
 	TableBase:          keel.TableBase{Ref: &reportRunsRef},
-	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reportRunsRef, Index: 0}}},
-	BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reportRunsRef, Index: 1}}},
-	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reportRunsRef, Index: 2}}},
-	DefinitionID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reportRunsRef, Index: 3}}},
-	RevisionID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reportRunsRef, Index: 4}}},
+	ID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reportRunsRef, Index: 0}}},
+	BusinessUnitID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reportRunsRef, Index: 1}}},
+	OrganizationID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reportRunsRef, Index: 2}}},
+	DefinitionID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reportRunsRef, Index: 3}}},
+	RevisionID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reportRunsRef, Index: 4}}},
 	CannedKey:          keel.StringCol{Col: keel.Col{Ref: &reportRunsRef, Index: 5}},
 	CannedVersion:      keel.StringCol{Col: keel.Col{Ref: &reportRunsRef, Index: 6}},
-	ScheduleID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reportRunsRef, Index: 7}}},
-	RequestedByID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reportRunsRef, Index: 8}}},
-	Trigger:            RunTriggerCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reportRunsRef, Index: 9}}},
+	ScheduleID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reportRunsRef, Index: 7}}},
+	RequestedByID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reportRunsRef, Index: 8}}},
+	Trigger:            RunTriggerCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reportRunsRef, Index: 9}}},
 	Params:             keel.JSONBCol{Col: keel.Col{Ref: &reportRunsRef, Index: 10}},
-	Format:             FormatCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reportRunsRef, Index: 11}}},
-	Status:             RunStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reportRunsRef, Index: 12}}},
+	Format:             FormatCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reportRunsRef, Index: 11}}},
+	Status:             RunStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reportRunsRef, Index: 12}}},
 	RowCount:           keel.Int64Col{Col: keel.Col{Ref: &reportRunsRef, Index: 13}},
 	ByteSize:           keel.Int64Col{Col: keel.Col{Ref: &reportRunsRef, Index: 14}},
 	DurationMs:         keel.Int64Col{Col: keel.Col{Ref: &reportRunsRef, Index: 15}},
@@ -2400,19 +2424,19 @@ var ReportRuns = &ReportRunsTable{
 func BuildReportRuns(r *keel.Ref) *ReportRunsTable {
 	return &ReportRunsTable{
 		TableBase:          keel.TableBase{Ref: r},
-		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		DefinitionID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		RevisionID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		DefinitionID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		RevisionID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		CannedKey:          keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		CannedVersion:      keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
-		ScheduleID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
-		RequestedByID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
-		Trigger:            RunTriggerCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		ScheduleID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		RequestedByID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		Trigger:            RunTriggerCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
 		Params:             keel.JSONBCol{Col: keel.Col{Ref: r, Index: 10}},
-		Format:             FormatCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
-		Status:             RunStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 12}}},
+		Format:             FormatCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 11}}},
+		Status:             RunStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 12}}},
 		RowCount:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
 		ByteSize:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
 		DurationMs:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
@@ -2464,8 +2488,6 @@ func (t *ReportRunsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*
 
 // ReportRunsQuery is a query over report.ReportRun.
 type ReportRunsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*report.ReportRun] = (*ReportRunsTable)(nil)
 
 var _ keel.Query[*report.ReportRun] = (*ReportRunsQuery)(nil)
 
@@ -2581,42 +2603,42 @@ func (t *ReportRunsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*repo
 
 // Create inserts row.
 func (t *ReportRunsTable) Create(ctx context.Context, db *keel.DB, row *report.ReportRun) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *ReportRunsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*report.ReportRun) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *ReportRunsTable) Save(ctx context.Context, db *keel.DB, row *report.ReportRun, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *ReportRunsTable) SaveExcept(ctx context.Context, db *keel.DB, row *report.ReportRun, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *ReportRunsTable) DeleteRow(ctx context.Context, db *keel.DB, row *report.ReportRun) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *ReportRunsTable) Upsert(ctx context.Context, db *keel.DB, rows []*report.ReportRun, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *ReportRunsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*report.ReportRun, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *ReportRunsTable) Copy(ctx context.Context, db *keel.DB, rows []*report.ReportRun) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -2788,37 +2810,45 @@ func (q *ReportRunsQuery) Clone() keel.Query[*report.ReportRun] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *ReportRunsQuery) One(ctx context.Context, db *keel.DB) (*report.ReportRun, error) {
-	return keel.One[*report.ReportRun](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*report.ReportRun)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *ReportRunsQuery) First(ctx context.Context, db *keel.DB) (*report.ReportRun, error) {
-	return keel.First[*report.ReportRun](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*report.ReportRun)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *ReportRunsQuery) List(ctx context.Context, db *keel.DB) ([]*report.ReportRun, error) {
-	return keel.List[*report.ReportRun](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*report.ReportRun)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *ReportRunsQuery) All(ctx context.Context, db *keel.DB) ([]*report.ReportRun, error) {
-	return keel.All[*report.ReportRun](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*report.ReportRun)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *ReportRunsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*report.ReportRun, error) {
-	return keel.UpdateReturning[*report.ReportRun](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*report.ReportRun)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *ReportRunsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*report.ReportRun], error) {
-	return keel.PageOf[*report.ReportRun](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*report.ReportRun])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *ReportRunsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*report.ReportRun) error) error {
-	return keel.Each[*report.ReportRun](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*report.ReportRun)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newReportRun() unsafe.Pointer { return unsafe.Pointer(new(report.ReportRun)) }
@@ -3114,10 +3144,10 @@ type ReportSchedulesTable struct {
 // ReportSchedules references the report_schedules table.
 var ReportSchedules = &ReportSchedulesTable{
 	TableBase:           keel.TableBase{Ref: &reportSchedulesRef},
-	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reportSchedulesRef, Index: 0}}},
-	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reportSchedulesRef, Index: 1}}},
-	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reportSchedulesRef, Index: 2}}},
-	DefinitionID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reportSchedulesRef, Index: 3}}},
+	ID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reportSchedulesRef, Index: 0}}},
+	BusinessUnitID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reportSchedulesRef, Index: 1}}},
+	OrganizationID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reportSchedulesRef, Index: 2}}},
+	DefinitionID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reportSchedulesRef, Index: 3}}},
 	CronExpression:      keel.StringCol{Col: keel.Col{Ref: &reportSchedulesRef, Index: 4}},
 	Timezone:            keel.StringCol{Col: keel.Col{Ref: &reportSchedulesRef, Index: 5}},
 	Formats:             keel.StringArrayCol{Col: keel.Col{Ref: &reportSchedulesRef, Index: 6}},
@@ -3125,8 +3155,8 @@ var ReportSchedules = &ReportSchedulesTable{
 	Alert:               keel.JSONBCol{Col: keel.Col{Ref: &reportSchedulesRef, Index: 8}},
 	AlertFiring:         keel.BoolCol{Col: keel.Col{Ref: &reportSchedulesRef, Index: 9}},
 	Enabled:             keel.BoolCol{Col: keel.Col{Ref: &reportSchedulesRef, Index: 10}},
-	RunAsID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reportSchedulesRef, Index: 11}}},
-	LastRunID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reportSchedulesRef, Index: 12}}},
+	RunAsID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reportSchedulesRef, Index: 11}}},
+	LastRunID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reportSchedulesRef, Index: 12}}},
 	NextRunAt:           keel.Int64Col{Col: keel.Col{Ref: &reportSchedulesRef, Index: 13}},
 	ConsecutiveFailures: keel.Int64Col{Col: keel.Col{Ref: &reportSchedulesRef, Index: 14}},
 	Version:             keel.Int64Col{Col: keel.Col{Ref: &reportSchedulesRef, Index: 15}},
@@ -3138,10 +3168,10 @@ var ReportSchedules = &ReportSchedulesTable{
 func BuildReportSchedules(r *keel.Ref) *ReportSchedulesTable {
 	return &ReportSchedulesTable{
 		TableBase:           keel.TableBase{Ref: r},
-		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		DefinitionID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		DefinitionID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		CronExpression:      keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		Timezone:            keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		Formats:             keel.StringArrayCol{Col: keel.Col{Ref: r, Index: 6}},
@@ -3149,8 +3179,8 @@ func BuildReportSchedules(r *keel.Ref) *ReportSchedulesTable {
 		Alert:               keel.JSONBCol{Col: keel.Col{Ref: r, Index: 8}},
 		AlertFiring:         keel.BoolCol{Col: keel.Col{Ref: r, Index: 9}},
 		Enabled:             keel.BoolCol{Col: keel.Col{Ref: r, Index: 10}},
-		RunAsID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
-		LastRunID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 12}}},
+		RunAsID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 11}}},
+		LastRunID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 12}}},
 		NextRunAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
 		ConsecutiveFailures: keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
 		Version:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
@@ -3184,8 +3214,6 @@ func (t *ReportSchedulesTable) Get(ctx context.Context, db *keel.DB, key pulid.I
 
 // ReportSchedulesQuery is a query over report.ReportSchedule.
 type ReportSchedulesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*report.ReportSchedule] = (*ReportSchedulesTable)(nil)
 
 var _ keel.Query[*report.ReportSchedule] = (*ReportSchedulesQuery)(nil)
 
@@ -3301,42 +3329,42 @@ func (t *ReportSchedulesTable) Compute(col keel.Column, e keel.Expr) keel.Query[
 
 // Create inserts row.
 func (t *ReportSchedulesTable) Create(ctx context.Context, db *keel.DB, row *report.ReportSchedule) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *ReportSchedulesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*report.ReportSchedule) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *ReportSchedulesTable) Save(ctx context.Context, db *keel.DB, row *report.ReportSchedule, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *ReportSchedulesTable) SaveExcept(ctx context.Context, db *keel.DB, row *report.ReportSchedule, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *ReportSchedulesTable) DeleteRow(ctx context.Context, db *keel.DB, row *report.ReportSchedule) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *ReportSchedulesTable) Upsert(ctx context.Context, db *keel.DB, rows []*report.ReportSchedule, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *ReportSchedulesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*report.ReportSchedule, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *ReportSchedulesTable) Copy(ctx context.Context, db *keel.DB, rows []*report.ReportSchedule) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -3508,37 +3536,45 @@ func (q *ReportSchedulesQuery) Clone() keel.Query[*report.ReportSchedule] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *ReportSchedulesQuery) One(ctx context.Context, db *keel.DB) (*report.ReportSchedule, error) {
-	return keel.One[*report.ReportSchedule](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*report.ReportSchedule)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *ReportSchedulesQuery) First(ctx context.Context, db *keel.DB) (*report.ReportSchedule, error) {
-	return keel.First[*report.ReportSchedule](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*report.ReportSchedule)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *ReportSchedulesQuery) List(ctx context.Context, db *keel.DB) ([]*report.ReportSchedule, error) {
-	return keel.List[*report.ReportSchedule](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*report.ReportSchedule)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *ReportSchedulesQuery) All(ctx context.Context, db *keel.DB) ([]*report.ReportSchedule, error) {
-	return keel.All[*report.ReportSchedule](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*report.ReportSchedule)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *ReportSchedulesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*report.ReportSchedule, error) {
-	return keel.UpdateReturning[*report.ReportSchedule](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*report.ReportSchedule)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *ReportSchedulesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*report.ReportSchedule], error) {
-	return keel.PageOf[*report.ReportSchedule](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*report.ReportSchedule])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *ReportSchedulesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*report.ReportSchedule) error) error {
-	return keel.Each[*report.ReportSchedule](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*report.ReportSchedule)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newReportSchedule() unsafe.Pointer { return unsafe.Pointer(new(report.ReportSchedule)) }
@@ -3734,17 +3770,17 @@ type ReportViewsTable struct {
 // ReportViews references the report_views table.
 var ReportViews = &ReportViewsTable{
 	TableBase:      keel.TableBase{Ref: &reportViewsRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reportViewsRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reportViewsRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reportViewsRef, Index: 2}}},
-	DefinitionID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reportViewsRef, Index: 3}}},
-	OwnerID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reportViewsRef, Index: 4}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reportViewsRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reportViewsRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reportViewsRef, Index: 2}}},
+	DefinitionID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reportViewsRef, Index: 3}}},
+	OwnerID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reportViewsRef, Index: 4}}},
 	Name:           keel.StringCol{Col: keel.Col{Ref: &reportViewsRef, Index: 5}},
 	Description:    keel.StringCol{Col: keel.Col{Ref: &reportViewsRef, Index: 6}},
 	Params:         keel.JSONBCol{Col: keel.Col{Ref: &reportViewsRef, Index: 7}},
 	Shared:         keel.BoolCol{Col: keel.Col{Ref: &reportViewsRef, Index: 8}},
 	Pinned:         keel.BoolCol{Col: keel.Col{Ref: &reportViewsRef, Index: 9}},
-	Format:         FormatCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reportViewsRef, Index: 10}}},
+	Format:         FormatCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reportViewsRef, Index: 10}}},
 	LastRunAt:      keel.Int64Col{Col: keel.Col{Ref: &reportViewsRef, Index: 11}},
 	RunCount:       keel.Int64Col{Col: keel.Col{Ref: &reportViewsRef, Index: 12}},
 	Version:        keel.Int64Col{Col: keel.Col{Ref: &reportViewsRef, Index: 13}},
@@ -3756,17 +3792,17 @@ var ReportViews = &ReportViewsTable{
 func BuildReportViews(r *keel.Ref) *ReportViewsTable {
 	return &ReportViewsTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		DefinitionID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		OwnerID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		DefinitionID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		OwnerID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		Name:           keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		Description:    keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
 		Params:         keel.JSONBCol{Col: keel.Col{Ref: r, Index: 7}},
 		Shared:         keel.BoolCol{Col: keel.Col{Ref: r, Index: 8}},
 		Pinned:         keel.BoolCol{Col: keel.Col{Ref: r, Index: 9}},
-		Format:         FormatCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		Format:         FormatCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
 		LastRunAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
 		RunCount:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
 		Version:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
@@ -3800,8 +3836,6 @@ func (t *ReportViewsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (
 
 // ReportViewsQuery is a query over report.ReportView.
 type ReportViewsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*report.ReportView] = (*ReportViewsTable)(nil)
 
 var _ keel.Query[*report.ReportView] = (*ReportViewsQuery)(nil)
 
@@ -3917,42 +3951,42 @@ func (t *ReportViewsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*rep
 
 // Create inserts row.
 func (t *ReportViewsTable) Create(ctx context.Context, db *keel.DB, row *report.ReportView) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *ReportViewsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*report.ReportView) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *ReportViewsTable) Save(ctx context.Context, db *keel.DB, row *report.ReportView, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *ReportViewsTable) SaveExcept(ctx context.Context, db *keel.DB, row *report.ReportView, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *ReportViewsTable) DeleteRow(ctx context.Context, db *keel.DB, row *report.ReportView) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *ReportViewsTable) Upsert(ctx context.Context, db *keel.DB, rows []*report.ReportView, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *ReportViewsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*report.ReportView, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *ReportViewsTable) Copy(ctx context.Context, db *keel.DB, rows []*report.ReportView) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -4124,37 +4158,45 @@ func (q *ReportViewsQuery) Clone() keel.Query[*report.ReportView] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *ReportViewsQuery) One(ctx context.Context, db *keel.DB) (*report.ReportView, error) {
-	return keel.One[*report.ReportView](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*report.ReportView)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *ReportViewsQuery) First(ctx context.Context, db *keel.DB) (*report.ReportView, error) {
-	return keel.First[*report.ReportView](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*report.ReportView)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *ReportViewsQuery) List(ctx context.Context, db *keel.DB) ([]*report.ReportView, error) {
-	return keel.List[*report.ReportView](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*report.ReportView)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *ReportViewsQuery) All(ctx context.Context, db *keel.DB) ([]*report.ReportView, error) {
-	return keel.All[*report.ReportView](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*report.ReportView)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *ReportViewsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*report.ReportView, error) {
-	return keel.UpdateReturning[*report.ReportView](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*report.ReportView)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *ReportViewsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*report.ReportView], error) {
-	return keel.PageOf[*report.ReportView](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*report.ReportView])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *ReportViewsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*report.ReportView) error) error {
-	return keel.Each[*report.ReportView](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*report.ReportView)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newReportView() unsafe.Pointer { return unsafe.Pointer(new(report.ReportView)) }
@@ -4343,153 +4385,141 @@ var reportMeasureIntegerCount = schema.ReportInfo{Included: true, Kind: schema.M
 var reportMeasureIntegerHidden = schema.ReportInfo{Kind: schema.Measure, Type: schema.ValueInt, Aggs: schema.AggsNumeric}
 
 // DefinitionKindCol is a column of report.DefinitionKind values.
-type DefinitionKindCol struct{ keel.StringCol }
+type DefinitionKindCol struct{ keel.TypedStringCol }
 
-func (c DefinitionKindCol) Eq(v report.DefinitionKind) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c DefinitionKindCol) Ne(v report.DefinitionKind) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c DefinitionKindCol) Gt(v report.DefinitionKind) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c DefinitionKindCol) Gte(v report.DefinitionKind) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c DefinitionKindCol) Lt(v report.DefinitionKind) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c DefinitionKindCol) Lte(v report.DefinitionKind) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c DefinitionKindCol) Eq(v report.DefinitionKind) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c DefinitionKindCol) Ne(v report.DefinitionKind) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c DefinitionKindCol) Gt(v report.DefinitionKind) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c DefinitionKindCol) Gte(v report.DefinitionKind) keel.Pred { return c.Text().Gte(string(v)) }
+func (c DefinitionKindCol) Lt(v report.DefinitionKind) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c DefinitionKindCol) Lte(v report.DefinitionKind) keel.Pred { return c.Text().Lte(string(v)) }
 func (c DefinitionKindCol) IsDistinctFrom(v report.DefinitionKind) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c DefinitionKindCol) Between(lo, hi report.DefinitionKind) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c DefinitionKindCol) To(v report.DefinitionKind) keel.Assignment {
-	return c.StringCol.To(string(v))
-}
+func (c DefinitionKindCol) To(v report.DefinitionKind) keel.Assignment { return c.Text().To(string(v)) }
 func (c DefinitionKindCol) In(vs ...report.DefinitionKind) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c DefinitionKindCol) NotIn(vs ...report.DefinitionKind) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // DefinitionStatusCol is a column of report.DefinitionStatus values.
-type DefinitionStatusCol struct{ keel.StringCol }
+type DefinitionStatusCol struct{ keel.TypedStringCol }
 
-func (c DefinitionStatusCol) Eq(v report.DefinitionStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c DefinitionStatusCol) Ne(v report.DefinitionStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c DefinitionStatusCol) Gt(v report.DefinitionStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
-func (c DefinitionStatusCol) Gte(v report.DefinitionStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
-}
-func (c DefinitionStatusCol) Lt(v report.DefinitionStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
-func (c DefinitionStatusCol) Lte(v report.DefinitionStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
-}
+func (c DefinitionStatusCol) Eq(v report.DefinitionStatus) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c DefinitionStatusCol) Ne(v report.DefinitionStatus) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c DefinitionStatusCol) Gt(v report.DefinitionStatus) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c DefinitionStatusCol) Gte(v report.DefinitionStatus) keel.Pred { return c.Text().Gte(string(v)) }
+func (c DefinitionStatusCol) Lt(v report.DefinitionStatus) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c DefinitionStatusCol) Lte(v report.DefinitionStatus) keel.Pred { return c.Text().Lte(string(v)) }
 func (c DefinitionStatusCol) IsDistinctFrom(v report.DefinitionStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c DefinitionStatusCol) Between(lo, hi report.DefinitionStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c DefinitionStatusCol) To(v report.DefinitionStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c DefinitionStatusCol) In(vs ...report.DefinitionStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c DefinitionStatusCol) NotIn(vs ...report.DefinitionStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // FormatCol is a column of report.Format values.
-type FormatCol struct{ keel.StringCol }
+type FormatCol struct{ keel.TypedStringCol }
 
-func (c FormatCol) Eq(v report.Format) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c FormatCol) Ne(v report.Format) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c FormatCol) Gt(v report.Format) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c FormatCol) Gte(v report.Format) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c FormatCol) Lt(v report.Format) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c FormatCol) Lte(v report.Format) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c FormatCol) Eq(v report.Format) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c FormatCol) Ne(v report.Format) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c FormatCol) Gt(v report.Format) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c FormatCol) Gte(v report.Format) keel.Pred { return c.Text().Gte(string(v)) }
+func (c FormatCol) Lt(v report.Format) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c FormatCol) Lte(v report.Format) keel.Pred { return c.Text().Lte(string(v)) }
 func (c FormatCol) IsDistinctFrom(v report.Format) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c FormatCol) Between(lo, hi report.Format) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c FormatCol) To(v report.Format) keel.Assignment { return c.StringCol.To(string(v)) }
-func (c FormatCol) In(vs ...report.Format) keel.Pred   { return c.StringCol.In(keel.Strings(vs)...) }
+func (c FormatCol) To(v report.Format) keel.Assignment { return c.Text().To(string(v)) }
+func (c FormatCol) In(vs ...report.Format) keel.Pred {
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
+}
 func (c FormatCol) NotIn(vs ...report.Format) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // RunStatusCol is a column of report.RunStatus values.
-type RunStatusCol struct{ keel.StringCol }
+type RunStatusCol struct{ keel.TypedStringCol }
 
-func (c RunStatusCol) Eq(v report.RunStatus) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c RunStatusCol) Ne(v report.RunStatus) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c RunStatusCol) Gt(v report.RunStatus) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c RunStatusCol) Gte(v report.RunStatus) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c RunStatusCol) Lt(v report.RunStatus) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c RunStatusCol) Lte(v report.RunStatus) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c RunStatusCol) Eq(v report.RunStatus) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c RunStatusCol) Ne(v report.RunStatus) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c RunStatusCol) Gt(v report.RunStatus) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c RunStatusCol) Gte(v report.RunStatus) keel.Pred { return c.Text().Gte(string(v)) }
+func (c RunStatusCol) Lt(v report.RunStatus) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c RunStatusCol) Lte(v report.RunStatus) keel.Pred { return c.Text().Lte(string(v)) }
 func (c RunStatusCol) IsDistinctFrom(v report.RunStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c RunStatusCol) Between(lo, hi report.RunStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c RunStatusCol) To(v report.RunStatus) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c RunStatusCol) To(v report.RunStatus) keel.Assignment { return c.Text().To(string(v)) }
 func (c RunStatusCol) In(vs ...report.RunStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c RunStatusCol) NotIn(vs ...report.RunStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // RunTriggerCol is a column of report.RunTrigger values.
-type RunTriggerCol struct{ keel.StringCol }
+type RunTriggerCol struct{ keel.TypedStringCol }
 
-func (c RunTriggerCol) Eq(v report.RunTrigger) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c RunTriggerCol) Ne(v report.RunTrigger) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c RunTriggerCol) Gt(v report.RunTrigger) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c RunTriggerCol) Gte(v report.RunTrigger) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c RunTriggerCol) Lt(v report.RunTrigger) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c RunTriggerCol) Lte(v report.RunTrigger) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c RunTriggerCol) Eq(v report.RunTrigger) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c RunTriggerCol) Ne(v report.RunTrigger) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c RunTriggerCol) Gt(v report.RunTrigger) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c RunTriggerCol) Gte(v report.RunTrigger) keel.Pred { return c.Text().Gte(string(v)) }
+func (c RunTriggerCol) Lt(v report.RunTrigger) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c RunTriggerCol) Lte(v report.RunTrigger) keel.Pred { return c.Text().Lte(string(v)) }
 func (c RunTriggerCol) IsDistinctFrom(v report.RunTrigger) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c RunTriggerCol) Between(lo, hi report.RunTrigger) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c RunTriggerCol) To(v report.RunTrigger) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c RunTriggerCol) To(v report.RunTrigger) keel.Assignment { return c.Text().To(string(v)) }
 func (c RunTriggerCol) In(vs ...report.RunTrigger) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c RunTriggerCol) NotIn(vs ...report.RunTrigger) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // VisibilityCol is a column of report.Visibility values.
-type VisibilityCol struct{ keel.StringCol }
+type VisibilityCol struct{ keel.TypedStringCol }
 
-func (c VisibilityCol) Eq(v report.Visibility) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c VisibilityCol) Ne(v report.Visibility) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c VisibilityCol) Gt(v report.Visibility) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c VisibilityCol) Gte(v report.Visibility) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c VisibilityCol) Lt(v report.Visibility) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c VisibilityCol) Lte(v report.Visibility) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c VisibilityCol) Eq(v report.Visibility) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c VisibilityCol) Ne(v report.Visibility) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c VisibilityCol) Gt(v report.Visibility) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c VisibilityCol) Gte(v report.Visibility) keel.Pred { return c.Text().Gte(string(v)) }
+func (c VisibilityCol) Lt(v report.Visibility) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c VisibilityCol) Lte(v report.Visibility) keel.Pred { return c.Text().Lte(string(v)) }
 func (c VisibilityCol) IsDistinctFrom(v report.Visibility) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c VisibilityCol) Between(lo, hi report.Visibility) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c VisibilityCol) To(v report.Visibility) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c VisibilityCol) To(v report.Visibility) keel.Assignment { return c.Text().To(string(v)) }
 func (c VisibilityCol) In(vs ...report.Visibility) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c VisibilityCol) NotIn(vs ...report.Visibility) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

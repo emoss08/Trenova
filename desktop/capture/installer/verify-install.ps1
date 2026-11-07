@@ -56,6 +56,13 @@ do {
   $delivered = Select-String -Path (Join-Path $logs 'service.*') -Pattern 'handed a print to its owner' -ErrorAction SilentlyContinue
 } until ($delivered -or (Get-Date) -gt $deadline)
 Check ([bool]$delivered) 'a print through the spooler reaches its owner under LocalService'
+if ($delivered) {
+  # The owner is the signed-in session's account, named with its domain, never a bare name.
+  $handed = ($delivered | Select-Object -Last 1).Line
+  $me = [System.Security.Principal.WindowsIdentity]::GetCurrent()
+  Check ($handed -match "\bsid=$([regex]::Escape($me.User.Value))(\s|$)") "the print is in the inbox of the account that printed it, $($me.User.Value) ($handed)"
+  Check ($handed -match "\baccount=$([regex]::Escape($me.Name))(\s|$)") "the print is attributed to the domain-qualified account $($me.Name) ($handed)"
+}
 if (-not $delivered) {
   Get-PrintJob -PrinterName Trenova -ErrorAction SilentlyContinue | Format-Table Id,UserName,DocumentName,JobStatus -AutoSize
   Get-ChildItem $logs -ErrorAction SilentlyContinue | ForEach-Object { Get-Content $_.FullName -Tail 30 }
@@ -92,6 +99,35 @@ function Ipp([byte]$operation) {
 Check ((Ipp 0x0B) -eq 0) 'a local process may read the printer attributes'
 Check ((Ipp 0x02) -eq 0x0403) 'a local process cannot send a job'
 Check ((Ipp 0x0A) -eq 0x0403) 'a local process cannot list jobs'
+
+# The updater takes an installer only when it is validly signed, nothing in its chain is revoked,
+# and its signer is the publisher the installed updater was signed by. A signed release must pass
+# with its own installer (so computers can update to it), with revocation checked from here; an
+# unsigned build, and a file another publisher signed, must be refused.
+$updater = Join-Path $env:ProgramFiles 'Trenova\Capture\trenova-capture-update.exe'
+function Test-Publisher([string]$file) {
+  $ErrorActionPreference = 'Continue'
+  $output = (& $updater verify-publisher $file 2>&1 | Out-String).Trim()
+  $passed = $LASTEXITCODE -eq 0
+  # A refusal is an expected answer here, not the script's own exit code.
+  $global:LASTEXITCODE = 0
+  [pscustomobject]@{ Passed = $passed; Output = $output }
+}
+$own = Test-Publisher $msiPath
+if ((Get-AuthenticodeSignature $msiPath).Status -eq 'Valid') {
+  Check $own.Passed "the installed updater accepts this release's own installer ($($own.Output))"
+  Check ($own.Output -match 'No certificate in its chain is revoked') "the updater checked revocation for this release's installer ($($own.Output))"
+} else {
+  Check (-not $own.Passed) "the installed updater refuses an unsigned installer ($($own.Output))"
+}
+$foreign = Join-Path $PSHOME 'pwsh.exe'
+$foreignSignature = Get-AuthenticodeSignature $foreign
+if ($foreignSignature.Status -eq 'Valid' -and "$($foreignSignature.SignatureType)" -eq 'Authenticode') {
+  $other = Test-Publisher $foreign
+  Check (-not $other.Passed) "the installed updater refuses a file another publisher signed ($($other.Output))"
+} else {
+  Write-Host "skip no embedded-signed file from another publisher at $foreign"
+}
 
 $recorded = Get-ItemProperty $key
 Install-Msi @('/fa', $msiPath, 'TRENOVAURL=https://evil.example', 'AUTOUPDATE=1', 'PRINTPORT=9999') "$env:TEMP\capture-repair.log"

@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -49,12 +50,17 @@ func Connection[T any](
 		return nil, err
 	}
 
-	after, err := keysetAfter(&req.Cursor, shape)
+	binding := pagination.BindCursor(
+		cursorTenant(ctx, req.Filter),
+		q.TableRef().Table.Name,
+		shape,
+	)
+	after, err := keysetAfter(&req.Cursor, binding)
 	if err != nil {
 		return nil, err
 	}
 
-	page := keysetPage{orders: orders, shape: shape, after: after}
+	page := keysetPage{orders: orders, binding: binding, after: after}
 	var matched keel.Query[*T]
 	if read != nil && after != "" {
 		matched = q.Clone()
@@ -101,9 +107,9 @@ func narrow[T any](p *plan, q keel.Query[*T], req *Request[T]) *fuzzyRead[T] {
 }
 
 type keysetPage struct {
-	orders []keel.Order
-	shape  []pagination.CursorSortField
-	after  string
+	orders  []keel.Order
+	binding pagination.CursorBinding
+	after   string
 }
 
 func connectionPage[T any](
@@ -133,7 +139,7 @@ func connectionPage[T any](
 		return nil, err
 	}
 
-	result, err := connectionResult(&page, kp.shape)
+	result, err := connectionResult(&page, kp.binding)
 	if err != nil {
 		return nil, err
 	}
@@ -311,32 +317,43 @@ func shapeRows[T any](q keel.Query[*T], req *Request[T]) (keel.Query[*T], error)
 	return rows, nil
 }
 
+func cursorTenant(ctx context.Context, filter *pagination.QueryOptions) pagination.TenantInfo {
+	if filter != nil && filter.TenantInfo.OrgID.IsNotNil() {
+		return filter.TenantInfo
+	}
+
+	tenant, _ := dbscope.TenantFrom(ctx)
+
+	return pagination.TenantInfo{OrgID: tenant.OrganizationID, BuID: tenant.BusinessUnitID}
+}
+
 func keysetAfter(
 	cursor *pagination.CursorInfo,
-	shape []pagination.CursorSortField,
+	binding pagination.CursorBinding,
 ) (string, error) {
 	if cursor.After == "" {
 		return "", nil
 	}
 
-	if !cursor.Cursor.MatchesSort(shape) {
+	keyset, err := pagination.DecodeKeysetCursor(binding, cursor.After)
+	if err != nil {
 		return "", errortypes.NewValidationError(
 			"after",
-			errortypes.ErrInvalid,
-			"Cursor sort does not match request sort",
+			errortypes.ErrInvalidFormat,
+			"Cursor is invalid",
 		)
 	}
 
-	return cursor.Cursor.Keyset, nil
+	return keyset, nil
 }
 
 func connectionResult[T any](
 	page *keel.Page[*T],
-	shape []pagination.CursorSortField,
+	binding pagination.CursorBinding,
 ) (*pagination.CursorListResult[*T], error) {
 	cursors := make([]string, len(page.Items))
 	for i := range page.Items {
-		cursor, err := pagination.EncodeKeysetCursor(shape, keel.CursorAt(*page, i))
+		cursor, err := pagination.EncodeKeysetCursor(binding, keel.CursorAt(*page, i))
 		if err != nil {
 			return nil, err
 		}

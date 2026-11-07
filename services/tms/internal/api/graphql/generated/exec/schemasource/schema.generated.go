@@ -8045,6 +8045,8 @@ type CapturePairingPreview {
   osVersion: String!
   "The address the request came from."
   clientIp: String!
+  "Whether that request reached Trenova from the network the person reading this is on."
+  sameNetwork: Boolean!
   expiresAt: Timestamp!
 }
 
@@ -10075,6 +10077,8 @@ type CarrierSettlementControl {
   autoGenerateBatches: Boolean!
   "When on, approving a carrier settlement immediately posts it to the general ledger."
   autoPostOnApprove: Boolean!
+  "When on, whoever submits a carrier settlement cannot also approve it."
+  requireSeparateApprover: Boolean!
   "Invoice totals within this many minor units of the buy rate auto-match; larger gaps flag a variance."
   varianceToleranceMinor: Int!
   "When on, inbound EDI 210 invoices that resolve to an accepted tender offer are matched to their carrier assignment automatically."
@@ -10239,6 +10243,7 @@ input UpdateCarrierSettlementControlInput {
   payDelayDays: Int!
   autoGenerateBatches: Boolean!
   autoPostOnApprove: Boolean!
+  requireSeparateApprover: Boolean!
   varianceToleranceMinor: Int!
   autoMatchInboundInvoices: Boolean!
   autoAcceptWithinTolerance: Boolean!
@@ -13140,16 +13145,15 @@ type DispatchFinding {
 }
 
 """
-One weighted dimension of a candidate's score, carrying both its numeric contribution and
-the sentence a dispatcher reads to understand it.
+One part of what a pairing costs, in cents. A negative line is a credit, such as a move that
+leaves the driver where drivers are worth more.
 """
-type DispatchScoreFactor {
-  key: String!
-  label: String!
-  raw: Float!
-  weight: Float!
-  contribution: Float!
-  detail: String!
+type DispatchCostLine {
+  "emptyMiles, lateness, idleWait, rest, homeTime, fairness, customerExperience, onTimeHistory, safety, acceptance, trailerContinuity, haulFit, timeOffBuffer or endMarket."
+  component: String!
+  cents: Int!
+  "True for a preference that chooses between drivers without deciding whether a move is worth covering."
+  soft: Boolean!
 }
 
 """
@@ -13161,13 +13165,28 @@ type DispatchCandidate {
   tractorId: ID
   trailerId: ID
   moveId: ID!
-  score: Int!
+  "What this driver taking the move costs, in cents: the sum of its cost lines."
+  costCents: Int!
+  costLines: [DispatchCostLine!]!
   verdict: String!
   blocked: Boolean!
+  "Empty miles to the pickup; null when where the driver is is unknown."
   deadheadMiles: Float
+  "Where the empty miles start: commitment (the end of the driver's last load), position (live GPS) or lastDrop (where the tractor was last left). Empty when unknown."
+  originSource: String!
+  loadedMiles: Float!
   estimatedDriveMs: Int!
+  "Rest the driver needs on the way, from the hours-of-service projection."
+  restMs: Int!
   projectedArrival: Timestamp!
+  projectedDelivery: Timestamp!
+  projectedFreeAt: Timestamp!
   minutesOfSlack: Int!
+  "False when the move has no pickup appointment still ahead to measure margin against."
+  slackKnown: Boolean!
+  deliveryLateMinutes: Int!
+  "False when the driver's hours of service are not known or are too old to trust."
+  hosKnown: Boolean!
   driveRemainingMs: Int!
   shiftRemainingMs: Int!
   cycleRemainingMs: Int!
@@ -13183,7 +13202,54 @@ type DispatchCandidate {
   hosProjectedShiftMs: Int!
   hosProjectedCycleMs: Int!
   findings: [DispatchFinding!]!
-  factors: [DispatchScoreFactor!]!
+  "Why the endMarket cost line is what it is; null when the move leaves the driver nowhere the plan values."
+  endMarket: DispatchEndMarket
+}
+
+"""
+Where the endMarket credit comes from. Forecast: freight the organization's own history says is
+likely to appear near the drop, net of what is booked and of the other drivers expected there.
+History: what drivers free there have been worth to past plans.
+"""
+enum DispatchEndMarketSource {
+  Forecast
+  History
+}
+
+"One customer behind a freight forecast, with the loads it usually brings in the window."
+type DispatchForecastCustomer {
+  customerId: ID!
+  name: String!
+  expectedLoads: Float!
+}
+
+"""
+The reason behind a candidate's endMarket credit. The forecast fields are set only when the
+source is Forecast.
+"""
+type DispatchEndMarket {
+  source: DispatchEndMarketSource!
+  "The credit, in cents: the negative of the endMarket cost line. Negative when the move takes the driver from somewhere worth more than where it leaves them."
+  valueCents: Int!
+  "What the driver is worth where the move leaves them, in cents."
+  dropValueCents: Int!
+  "What the driver was worth staying where they are, in cents; the credit is the drop value less this."
+  stayValueCents: Int!
+  "The area the driver would leave, when the forecast values it."
+  stayAreaLabel: String
+  "The area the drop is in, named for its busiest origin, such as Dallas, TX."
+  areaLabel: String
+  "The twelve hours after the driver is free in which the forecast looks for freight."
+  windowStart: Timestamp
+  windowEnd: Timestamp
+  "The usual range of loads in the window (10th to 90th percentile)."
+  typicalLow: Int
+  typicalHigh: Int
+  "Loads already booked for the window."
+  booked: Int
+  "Other drivers expected to be free in the area by the end of the window."
+  driversExpected: Int
+  customers: [DispatchForecastCustomer!]!
 }
 
 """
@@ -13265,6 +13331,90 @@ type DispatchBoardMove {
   carrierTotalCost: Float
 
   liveTender: DispatchBoardTenderSummary
+  """
+  The coverage the dispatch agent proposed for this move and is waiting on a decision.
+  Present on dispatchBoard and dispatchMove for a caller who may see agent proposals;
+  absent everywhere else, and when nothing is waiting.
+  """
+  pendingProposal: DispatchMoveProposal
+  failedProposal: DispatchMoveFailedProposal
+  """
+  What the last plan said this move is worth and who should take it. Absent on a covered
+  move and on one no plan has priced yet.
+  """
+  planPrice: DispatchMovePlanPrice
+}
+
+"""
+The price the last plan put on an uncovered move. The coverage price is what leaving it
+uncovered costs; the plan covers it when a driver costs less. Plan again to refresh it.
+"""
+type DispatchMovePlanPrice {
+  "The driver the plan put on the move; absent when the plan left it uncovered."
+  workerId: ID
+  "The planned driver, or for an uncovered move the cheapest driver the plan considered."
+  workerName: String!
+  "What the named driver costs the plan on this move, in cents."
+  costCents: Int!
+  """
+  What the best driver for this move pays in preferences, in cents. A candidate costs the
+  plan its own cost less this, which is what the plan weighed against the coverage price.
+  """
+  preferenceFloorCents: Int!
+  coveragePriceCents: Int!
+  "How much more the plan costs without the planned driver, in cents."
+  driverValueCents: Int!
+  "Why the plan left the move uncovered; absent when it is covered."
+  uncoveredReason: DispatchUncoveredReason
+  alternatives: [DispatchPlanAlternative!]!
+  generatedAt: Timestamp!
+}
+
+"The move the last plan put a driver on, and what the driver is worth to it."
+type DispatchDriverPlannedMove {
+  moveId: ID!
+  proNumber: String!
+  costCents: Int!
+  "How much more the plan costs without this driver, in cents."
+  valueCents: Int!
+  generatedAt: Timestamp!
+}
+
+"""
+A coverage proposal waiting on a move: the driver, tractor and trailer the dispatch agent
+would put on it, how sure it is and why. Decide it with decideAgentProposals.
+"""
+type DispatchMoveProposal {
+  id: ID!
+  workerId: ID!
+  workerName: String!
+  tractorId: ID!
+  trailerId: ID
+  "The agent's confidence, from 0 to 1."
+  confidence: Float!
+  rationale: String!
+  createdAt: Timestamp!
+  "When the proposal stops being decidable; absent when it does not expire."
+  expiresAt: Timestamp
+  """
+  The move changed after the proposal was planned, so approving it would be refused.
+  The next plan replaces it.
+  """
+  stale: Boolean!
+}
+
+"""
+A coverage proposal someone approved whose assignment was refused. It stays on its move
+until the move changes or a newer proposal replaces it, so the board says why the move is
+still uncovered instead of showing it as never proposed.
+"""
+type DispatchMoveFailedProposal {
+  id: ID!
+  workerId: ID!
+  workerName: String!
+  "Why the assignment was refused, worded for the dispatcher, with the stop it is about."
+  reason: String!
+  failedAt: Timestamp!
 }
 
 """
@@ -13332,6 +13482,12 @@ type DispatchBoardDriver {
   commitments: [DispatchCommitment!]!
   timeOff: [DispatchTimeOff!]!
   findings: [DispatchFinding!]!
+  plannedMove: DispatchDriverPlannedMove
+  """
+  When the driver was last home: recorded on the worker, seen by telematics near home, or the
+  end of approved time off. Absent when nothing says.
+  """
+  lastHomeAt: Timestamp
 }
 
 """
@@ -13340,7 +13496,9 @@ The metrics strip at the top of the console: the numbers a dispatcher is measure
 type DispatchBoardSummary {
   uncoveredMoves: Int!
   coveredMoves: Int!
+  "Uncovered moves whose window closed unvisited: the board's Late group."
   lateMoves: Int!
+  "Uncovered moves whose window is open or opens within four hours: the board's Due now group."
   atRiskMoves: Int!
   unseatedDrivers: Int!
   availableDrivers: Int!
@@ -13352,6 +13510,8 @@ type DispatchBoardSummary {
 type DispatchBoard {
   moves: [DispatchBoardMove!]!
   drivers: [DispatchBoardDriver!]!
+  "True when more drivers match than the board lists; drivers available for dispatch come first."
+  driversTruncated: Boolean!
   summary: DispatchBoardSummary!
   windowStart: Timestamp!
   windowEnd: Timestamp!
@@ -13360,7 +13520,7 @@ type DispatchBoard {
 
 type DispatchDriverMoveMatch {
   move: DispatchBoardMove!
-  score: DispatchCandidate!
+  candidate: DispatchCandidate!
 }
 
 """
@@ -13375,7 +13535,7 @@ type DispatchAssignmentPreview {
   trailerId: ID
   blocked: Boolean!
   requiresOverride: Boolean!
-  score: DispatchCandidate!
+  candidate: DispatchCandidate!
 }
 
 """
@@ -13483,6 +13643,11 @@ type DispatchCarrierEligibility {
 
 extend type Query {
   dispatchBoard(input: DispatchBoardInput!): DispatchBoard!
+  """
+  One move as the board draws it, whatever window it falls in, so a selection that points
+  outside the window on screen still opens. Carries its pending proposal like the board.
+  """
+  dispatchMove(moveId: ID!): DispatchBoardMove!
   dispatchMoveCandidates(input: DispatchMoveCandidatesInput!): [DispatchCandidate!]!
   dispatchDriverMoves(input: DispatchDriverMovesInput!): [DispatchDriverMoveMatch!]!
   dispatchAssignmentPreview(
@@ -13522,7 +13687,19 @@ type DispatchPlannedAssignment {
   """
   autoExecutable: Boolean!
   proposalId: ID
-  score: DispatchCandidate!
+  candidate: DispatchCandidate!
+  """
+  What this driver costs the plan on the move, in cents: the candidate's cost less what the
+  best driver for the move pays in preferences too. This is what was weighed against the
+  coverage price.
+  """
+  planCostCents: Int!
+  "What leaving the move uncovered would cost, in cents: its share of revenue plus any urgency premium."
+  coveragePriceCents: Int!
+  "What this driver is worth to the plan, in cents: how much more the plan costs without them."
+  driverValueCents: Int!
+  "The next cheapest drivers and exactly how much more the whole plan costs if each takes the move instead."
+  alternatives: [DispatchPlanAlternative!]!
   """
   Set only under Horizon planning: the tour this move belongs to and its position
   within that tour. Immediate planning leaves both empty.
@@ -13535,7 +13712,13 @@ type DispatchPlannedAssignment {
   """
   projectedStartAt: Timestamp!
   projectedCompleteAt: Timestamp!
-  projectedDriveRemainingMs: Int!
+}
+
+type DispatchPlanAlternative {
+  workerId: ID!
+  workerName: String!
+  "How much more the whole plan costs, in cents, when this driver takes the move and the rest re-plan around it."
+  extraCents: Int!
 }
 
 """
@@ -13550,19 +13733,36 @@ type DispatchTour {
   moveIds: [ID!]!
   startsAt: Timestamp!
   endsAt: Timestamp!
-  totalScore: Int!
-  totalDeadheadMiles: Float!
+  costCents: Int!
+  emptyMiles: Float!
 }
 
 """
 A move the optimizer could not cover. Reporting these matters more than the successes: a
 move that silently vanishes from a plan is a load nobody is watching.
 """
+enum DispatchUncoveredReason {
+  NoCandidate
+  Disqualified
+  BeyondDeadhead
+  LocationUnknown
+  "Every driver costs more than leaving the move."
+  NotWorthIt
+  "Its drivers are worth more on other moves."
+  Outbid
+}
+
 type DispatchUncoveredMove {
   moveId: ID!
   proNumber: String!
-  reason: String!
-  bestBlockedFindings: [DispatchFinding!]!
+  reason: DispatchUncoveredReason!
+  "The reason in a sentence, with the driver it is about."
+  explanation: String!
+  "What the cheapest driver would have cost the plan, in cents; zero when none could take it."
+  planCostCents: Int!
+  coveragePriceCents: Int!
+  "The nearest driver who could not take it, or the cheapest who was outbid."
+  bestCandidate: DispatchCandidate
 }
 
 type DispatchPlan {
@@ -13581,7 +13781,10 @@ type DispatchPlan {
   """
   shadowMode: Boolean!
   autonomyTier: String!
-  totalScore: Int!
+  "What the covered moves cost, in cents."
+  costCents: Int!
+  "What the uncovered moves cost by being left, in cents."
+  uncoveredCents: Int!
   generatedAt: Timestamp!
 }
 
@@ -13590,15 +13793,150 @@ input DispatchPlanInput {
   windowEnd: Timestamp
   fleetCodeIds: [ID!]
   moveIds: [ID!]
-  """
-  Commit the plan immediately where the organization's autonomy tier allows it. When
-  false the plan is only proposed, whatever the tier.
-  """
-  apply: Boolean
 }
 
 extend type Mutation {
   dispatchPlanAutoAssign(input: DispatchPlanInput!): DispatchPlan!
+}
+
+"""
+Whether the organization's freight forecast has proven itself on its own history. Plans use the
+forecast only when it is Ready.
+"""
+enum DispatchForecastStatus {
+  "Fewer than 8 weeks or 200 loads of history."
+  InsufficientHistory
+  "Tested, but not clearly better than repeating last week."
+  NoSkill
+  Ready
+}
+
+"""
+How the freight forecast did when it was tested on the last weeks of the organization's own
+history: each week forecast from the weeks before it, then compared with what came.
+"""
+type DispatchForecastQuality {
+  status: DispatchForecastStatus!
+  "Weeks of history the forecast learns from."
+  historyWeeks: Int!
+  historyLoads: Int!
+  weeksTested: Int!
+  loadsTested: Int!
+  "Share of actual counts that fell inside the forecast's 80% range."
+  intervalCoverage: Float!
+  "Average miss per area and four-hour slot, in loads."
+  meanAbsoluteError: Float!
+  "The same average miss for repeating the same slot of the week before."
+  naiveMeanAbsoluteError: Float!
+  "How much better than repeating last week the forecast is: 0.3 is 30% smaller misses."
+  skill: Float!
+  "When it was last fitted; null before the first fit."
+  fittedAt: Timestamp
+}
+
+"""
+Freight likely to appear in one area in a twelve-hour window, set against the drivers expected
+there.
+"""
+type DispatchFreightWindow {
+  areaLabel: String!
+  windowStart: Timestamp!
+  windowEnd: Timestamp!
+  "The usual range of loads in the window (10th to 90th percentile)."
+  typicalLow: Int!
+  typicalHigh: Int!
+  "The loads this window is likely to bring: what is booked plus what is still expected (10th to 90th percentile); never below booked."
+  likelyLow: Int!
+  likelyHigh: Int!
+  "Loads already booked for the window."
+  booked: Int!
+  "Loads still expected to be booked for the window."
+  expectedUnbooked: Float!
+  "Drivers expected to be free in the area by the end of the window."
+  driversExpected: Int!
+  "Expected loads beyond the drivers expected; zero when the area is covered."
+  shortfall: Float!
+  "What one more driver ending there is worth to the plan, in cents."
+  valueCents: Int!
+  customers: [DispatchForecastCustomer!]!
+  "The same window in a sentence."
+  explanation: String!
+}
+
+type DispatchFreightOutlook {
+  quality: DispatchForecastQuality!
+  generatedAt: Timestamp!
+  "The windows ahead, most short of drivers first."
+  windows: [DispatchFreightWindow!]!
+}
+
+extend type Query {
+  "Freight likely to appear in the hours ahead, by area, against the drivers expected there."
+  dispatchFreightOutlook(hours: Int, limit: Int): DispatchFreightOutlook!
+  dispatchForecastQuality: DispatchForecastQuality!
+}
+`, BuiltIn: false},
+	{Name: "../schema/dispatch_style.graphqls", Input: `"A soft cost whose weight the planner learns from the organization's dispatchers."
+enum DispatchStyleComponent {
+  homeTime
+  fairness
+  customerExperience
+  onTimeHistory
+  safety
+  acceptance
+  trailerContinuity
+  haulFit
+  timeOffBuffer
+}
+
+"""
+How much the organization's dispatchers weigh one cost against what dispatch control
+says it costs, learned from the drivers they assign.
+"""
+type DispatchStyleWeight {
+  component: DispatchStyleComponent!
+  """
+  1 is the organization's own cost; 1.6 means dispatchers choose as if it cost 60%
+  more. Between 0.25 and 4.
+  """
+  multiplier: Float!
+  "Decisions that moved this weight."
+  samples: Int!
+}
+
+"""
+The organization's learned dispatch style: from each driver a person assigns against
+the standing plan, whether they took the planned driver, a priced alternative, or a
+driver the plan did not price.
+"""
+type DispatchStyle {
+  "Learning is on in dispatch control, and the planner uses the weights."
+  enabled: Boolean!
+  decisions: Int!
+  "The planned driver was assigned."
+  approvals: Int!
+  "An alternative the plan priced was assigned instead."
+  overrides: Int!
+  "A driver the plan did not price was assigned instead."
+  declines: Int!
+  "When learning began or was last reset; null before it ever ran."
+  learningSince: Timestamp
+  "When a decision last moved the weights."
+  updatedAt: Timestamp
+  "The weights decisions have moved, the one furthest from the default first."
+  weights: [DispatchStyleWeight!]!
+}
+
+extend type Query {
+  dispatchStyle: DispatchStyle!
+}
+
+extend type Mutation {
+  """
+  Forgets the learned weights: the planner goes back to the organization's own costs
+  and learning starts again from the next decision.
+  """
+  resetDispatchStyle: DispatchStyle!
 }
 `, BuiltIn: false},
 	{Name: "../schema/distance_override.graphqls", Input: `type DistanceOverrideStop {
@@ -14209,10 +14547,10 @@ type WorkerPortalStatus {
 type InviteWorkerToPortalResult {
   invitation: PortalInvitation!
   """
-  Shareable invitation link. Also emailed to the driver when an email provider
-  is configured; surface this so dispatch can text it manually if needed.
+  The invitation link, given only when the email could not be sent, so someone
+  can pass it to the driver by hand. Once emailed it is the driver's alone.
   """
-  inviteUrl: String!
+  inviteUrl: String
   emailSent: Boolean!
 }
 
@@ -15852,6 +16190,8 @@ type SettlementControl {
   autoApproveClean: Boolean!
   "When on, newly accrued pay events flow into the driver's open draft settlement automatically."
   autoAttachAccruals: Boolean!
+  "When on, whoever submits a settlement cannot also approve it. Auto-approving clean settlements is unaffected."
+  requireSeparateApprover: Boolean!
   "When on, approving a settlement immediately posts it to the general ledger."
   autoPostOnApprove: Boolean!
   allowNegativeNet: Boolean!
@@ -16237,6 +16577,7 @@ input UpdateSettlementControlInput {
   autoGenerateBatches: Boolean!
   autoApproveClean: Boolean!
   autoAttachAccruals: Boolean!
+  requireSeparateApprover: Boolean!
   autoPostOnApprove: Boolean!
   allowNegativeNet: Boolean!
   varianceThresholdPct: Decimal!
@@ -16494,6 +16835,11 @@ type EdiCommunicationProfile @kind(resource: "edi") {
   """
   config: JSON!
   secretState: [EdiCommunicationProfileSecretState!]
+  """
+  The path a partner posts AS2 messages to for this profile, on the origin the
+  API is served from. Set only on an AS2 profile.
+  """
+  as2InboundPath: String
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -20191,7 +20537,7 @@ extend type Mutation {
   statement being fetched a second time. Rows that already became purchases are
   left alone.
   """
-  resolveFuelPurchaseImportRows(id: ID!, version: Int!): FuelPurchaseImportResolveResult!
+  resolveFuelPurchaseImportRows(id: ID!, version: Int!): FuelPurchaseImportResolveResult! @authorizes(resource: "fuel_purchase_import")
   discardFuelPurchaseImport(id: ID!, version: Int!, reason: String): FuelPurchaseImportBatch!
 }
 `, BuiltIn: false},
@@ -22103,23 +22449,23 @@ extend type Mutation {
   "Says what a message is about, by hand, when the reading did not work it out."
   linkInboundMessage(id: ID!, input: LinkInboundMessageInput!): InboundMessage!
   "Creates a mailbox and returns its webhook token, once."
-  createInboundMailbox(input: InboundMailboxInput!, signingSecret: String, apiKey: String): InboundMailboxCredentials!
+  createInboundMailbox(input: InboundMailboxInput!, signingSecret: String, apiKey: String): InboundMailboxCredentials! @authorizes(resource: "inbound_mailbox")
   "Changes a mailbox's settings. Changing its provider clears the signing secret and the API key."
   updateInboundMailbox(id: ID!, version: Int!, input: InboundMailboxInput!): InboundMailbox!
   "Replaces the webhook token. The old URL stops working at once."
-  rotateInboundMailboxToken(id: ID!): InboundMailboxCredentials!
+  rotateInboundMailboxToken(id: ID!): InboundMailboxCredentials! @authorizes(resource: "inbound_mailbox")
   "Seals and stores the provider's secret: a Resend whsec_ key, or Postmark's user:password."
   setInboundMailboxSigningSecret(id: ID!, secret: String!): InboundMailbox!
   "Seals and stores the key a Resend mailbox reads message bodies and attachments with: a full access re_ key."
   setInboundMailboxApiKey(id: ID!, apiKey: String!): InboundMailbox!
   "Settles several messages, or a whole folder, at once."
-  reviewInboundMessages(selection: TriageSelectionInput!, input: BulkReviewInboundMessagesInput!): TriageBulkResult!
+  reviewInboundMessages(selection: TriageSelectionInput!, input: BulkReviewInboundMessagesInput!): TriageBulkResult! @authorizes(resource: "inbound_message")
   "Puts settled messages back in the queue."
-  reopenInboundMessages(selection: TriageSelectionInput!): TriageBulkResult!
+  reopenInboundMessages(selection: TriageSelectionInput!): TriageBulkResult! @authorizes(resource: "inbound_message")
   "Assigns messages to a person, or unassigns them when ownerId is null."
-  assignInboundMessages(selection: TriageSelectionInput!, ownerId: ID): TriageBulkResult!
+  assignInboundMessages(selection: TriageSelectionInput!, ownerId: ID): TriageBulkResult! @authorizes(resource: "inbound_message")
   "Takes messages out of the queue until a time or an event."
-  snoozeInboundMessages(selection: TriageSelectionInput!, input: SnoozeInboundMessagesInput!): TriageBulkResult!
+  snoozeInboundMessages(selection: TriageSelectionInput!, input: SnoozeInboundMessagesInput!): TriageBulkResult! @authorizes(resource: "inbound_message")
   "Brings a snoozed message back now."
   wakeInboundMessage(id: ID!): InboundMessage!
   "Parks a message until the sender replies on its thread, or until a time."
@@ -22485,7 +22831,7 @@ extend type Mutation {
   "Files an attachment on a shipment, whole or split into page ranges."
   fileInboundAttachment(input: FileInboundAttachmentInput!): InboundMessage!
   "Files every readable attachment of each message on its matched shipment."
-  fileInboundMany(messageIds: [ID!]!): TriageBulkResult!
+  fileInboundMany(messageIds: [ID!]!): TriageBulkResult! @authorizes(resource: "inbound_message")
   unfileInboundAttachment(attachmentId: ID!): InboundMessage!
   "Adds a shortage, overage or damage exception to the matched shipment."
   logInboundException(messageId: ID!, input: LogInboundExceptionInput!): InboundMessage!
@@ -25130,7 +25476,7 @@ extend type Mutation {
   archivePtoPolicy(id: ID!, version: Int): PTOPolicy!
   restorePtoPolicy(id: ID!, version: Int): PTOPolicy!
   assignWorkerPtoPolicy(input: AssignWorkerPTOPolicyInput!): AssignWorkerPTOPolicyPayload! @authorizes(resource: "pto_policy")
-  endWorkerPtoPolicyAssignment(input: EndWorkerPTOPolicyAssignmentInput!): WorkerPTOPolicyAssignment!
+  endWorkerPtoPolicyAssignment(input: EndWorkerPTOPolicyAssignmentInput!): WorkerPTOPolicyAssignment! @authorizes(resource: "pto_policy")
   adjustWorkerPtoBalance(input: AdjustWorkerPTOBalanceInput!): WorkerPTOLedgerEntry!
   runPtoAccrual(input: RunPTOAccrualInput!): PTOAccrualRunPayload!
 }
@@ -30001,7 +30347,10 @@ type CapacityMatch {
   quote: Decimal @protected(group: Margins)
   "Null to a reader without the margins field group."
   marginPercent: Float @protected(group: Margins)
+  "How well a carrier fits the lane, 0 to 100. Null for a driver's match."
   fitPercent: Float
+  "What the driver taking this move costs the plan, in cents. Null for a carrier's match."
+  costCents: Int
 }
 
 type DriverCoverageSuggestion {
@@ -30013,7 +30362,8 @@ type DriverCoverageSuggestion {
   unitLabel: String
   distanceMiles: Float
   driveRemainingMs: Int
-  fitPercent: Float
+  "What this driver taking the move costs the plan, in cents: empty miles, lateness, waiting and preferences."
+  costCents: Int
 }
 
 type CarrierCoverageSuggestion {
@@ -32627,6 +32977,14 @@ type Worker {
   gender: WorkerGender!
   canBeAssigned: Boolean!
   availableForDispatch: Boolean!
+  "Where the worker lives, from the address the worker form looked up; absent until one is."
+  homeLatitude: Float @protected(group: Personal)
+  homeLongitude: Float @protected(group: Personal)
+  homePlaceId: String @protected(group: Personal)
+  """
+  When the driver was last at home, as a dispatcher recorded it or as telematics saw them there.
+  """
+  lastHomeAt: Timestamp
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -34152,7 +34510,7 @@ extend type Query {
 extend type Mutation {
   recordWorkerEmploymentEvent(
     input: RecordWorkerEmploymentEventInput!
-  ): RecordWorkerEmploymentEventPayload!
+  ): RecordWorkerEmploymentEventPayload! @authorizes(resource: "worker_employment_event")
   amendWorkerEmploymentEvent(input: AmendWorkerEmploymentEventInput!): WorkerEmploymentEvent!
 }
 `, BuiltIn: false},
@@ -35112,7 +35470,7 @@ extend type Mutation {
   reviewWorkerSafetyEvent(input: SafetyEventStatusInput!): WorkerSafetyEvent!
   reopenWorkerSafetyEvent(input: SafetyEventStatusInput!): WorkerSafetyEvent!
   deleteWorkerSafetyEvent(id: ID!): Boolean!
-  issueDisciplinaryAction(input: IssueDisciplinaryActionInput!): IssueDisciplinaryActionPayload!
+  issueDisciplinaryAction(input: IssueDisciplinaryActionInput!): IssueDisciplinaryActionPayload! @authorizes(resource: "worker_disciplinary_action")
   rescindDisciplinaryAction(input: RescindDisciplinaryActionInput!): WorkerDisciplinaryAction!
   giveWorkerRecognition(input: WorkerRecognitionInput!): WorkerRecognition!
   deleteWorkerRecognition(id: ID!): Boolean!

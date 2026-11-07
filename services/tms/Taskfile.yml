@@ -48,6 +48,23 @@ vars:
   GO_TEST_JOBS: '{{.GO_JOBS | default "4"}}'
   AIR_FLAGS: '{{if .GO_JOBS}}--build.delay 2000{{end}}'
   GOCUT_WATCH_FLAGS: '{{if .GO_JOBS}}--delay 2000{{end}}'
+  # GO_REMOTE_CACHE=on reads compiled packages from the shared build cache on
+  # R2, which CI fills on every push to master for linux/amd64 and darwin/arm64
+  # with the watch flags (docs/engineering/go-build-cache.md). Read-only; needs
+  # gobuildcache (task go-remote-cache-install) and a read token in
+  # ~/.config/trenova/go-remote-cache.env, or a cloud session's R2_* variables.
+  GO_REMOTE_CACHE: '{{.GO_REMOTE_CACHE | default "off"}}'
+  # A remote hit costs a round trip (about 100 ms p50 from a cloud session), and
+  # the go command looks up only as many actions at once as it runs (-p, one
+  # per core), so the watch builds run GO_REMOTE_CACHE_JOBS at once while it is
+  # on. A fresh cloud session's cmd/api build read the cache in 267 s at -p 4,
+  # 71 s at -p 16 and 43 s at -p 32; a rebuild that misses 791 packages took
+  # 76 s at -p 4 and 67 s at -p 32 (3 GB peak). LOW_RESOURCE keeps its own -p.
+  GO_REMOTE_CACHE_JOBS: '{{.GO_REMOTE_CACHE_JOBS | default "32"}}'
+  GO_REMOTE_CACHE_JOBS_FLAG: '{{if and (eq .GO_REMOTE_CACHE "on") (not .GO_JOBS)}} -p={{.GO_REMOTE_CACHE_JOBS}}{{end}}'
+  GOCACHEPROG_SCRIPT: "{{.TASKFILE_DIR}}/scripts/gocacheprog/gocacheprog.sh"
+  GOBUILDCACHE_VERSION:
+    sh: cat "{{.TASKFILE_DIR}}/scripts/gocacheprog/version"
   # gocut builds the local binaries (the watch tasks and build-cli, so run,
   # run-worker and every task that runs the CLI) through -toolexec. gocut
   # reuses a package's previous compile when nothing the package uses from a
@@ -73,13 +90,21 @@ vars:
   # included), keeps the server running when the new binary is identical, and
   # restarts it without a build when config/ changes (--restart).
   GOCUT_WATCH: '{{if and .GOCUT (ne .GOCUT "off")}}true{{end}}'
-  # The one build command of every hot-reload task (run-watch, watch,
-  # run-worker-watch). Each task appends -o and its main package.
+  # The one build command of every local binary (run-watch, watch,
+  # run-worker-watch, build-cli and the tasks that run the CLI). Each task
+  # appends -o and its main package, and sets WATCH_CGO.
+  # build-watch-targets builds all three mains with it, which is how CI fills
+  # the shared cache, so a change here changes what developers hit.
   WATCH_BUILD: >-
-    go build {{.GO_TAG_FLAG}}{{.GOCUT_FLAG}}
+    go build {{.GO_TAG_FLAG}}{{.GOCUT_FLAG}}{{.GO_REMOTE_CACHE_JOBS_FLAG}}
     -gcflags=all=-dwarf=false
     -gcflags='github.com/emoss08/trenova/...=-N -l -dwarf=false'
     -ldflags='-s -w'
+  # cgo off, as in deploy/Dockerfile.tms: nothing in the module uses it, and a
+  # package with cgo files hashes the local C compiler into its cache key, so
+  # with it on no machine shares objects with another, and linux CI cannot
+  # fill a Mac's cache.
+  WATCH_CGO: "0"
   # Search is off by default, Gotenberg only renders PDFs, and Redis Insight and
   # the Samsara simulator are debugging aids, so the API starts without them.
   # Temporal stays: every AI feature and background job runs on it. The imaging
@@ -96,10 +121,25 @@ vars:
 # empty GOMAXPROCS or GOGC as unset. A value already exported in your shell
 # takes precedence over these. They also reach the API process that `run` and
 # `run-watch` start, which keeps a local server from competing with the build.
+#
+# GOCACHEPROG is empty, which Go treats as unset, unless GO_REMOTE_CACHE=on.
+# CI exports its own, which takes precedence. With a cache program the go
+# command's module index, which it keeps in the build cache under each
+# package's absolute path and file times, is one remote miss per first-party
+# package on every new checkout; goindex=0 reads the directories instead
+# (a warm cmd/api build: 158 s with the index, 9 s without).
+#
+# GOTOOLCHAIN pins the exact Go release, because the go directive in go.work is
+# only a minimum and gocut reads that one release's export data: on any other
+# Go it reuses nothing and the watch builds lose their early cutoff (S4: 18 s on
+# go1.27.1, 64 s on go1.26.10). Move it with go.work, and gocut with both.
 env:
+  GOTOOLCHAIN: go1.27.1
   GOFLAGS: '-trimpath {{if .GO_TAGS}}-tags={{.GO_TAGS}}{{end}}{{if .GO_JOBS}} -p={{.GO_JOBS}}{{end}}'
   GOMAXPROCS: '{{.GO_JOBS}}'
   GOGC: '{{if .GO_JOBS}}50{{end}}'
+  GOCACHEPROG: '{{if eq .GO_REMOTE_CACHE "on"}}{{.GOCACHEPROG_SCRIPT}}{{end}}'
+  GODEBUG: '{{if eq .GO_REMOTE_CACHE "on"}}goindex=0{{end}}'
 
 tasks:
   default:
@@ -117,9 +157,11 @@ tasks:
 
   build-cli:
     desc: Build the unified CLI tool
+    env:
+      CGO_ENABLED: "{{.WATCH_CGO}}"
     cmds:
       - mkdir -p {{.BUILD_DIR}}
-      - go build -buildvcs=false {{.GO_TAG_FLAG}}{{.GOCUT_FLAG}} -o {{.CLI_PATH}} ./cmd/cli
+      - "{{.WATCH_BUILD}} -buildvcs=false -o {{.CLI_PATH}} ./cmd/cli"
 
   build-devdb:
     desc: Build trenova-devdb, the development database tool (migrations, seeds, templates, volume data, reset)
@@ -135,6 +177,8 @@ tasks:
 
   run-watch:
     desc: Run the API server with hot reload, through gocut watch when gocut is found (GOCUT=off for air)
+    env:
+      CGO_ENABLED: "{{.WATCH_CGO}}"
     cmds:
       - >-
         {{if .GOCUT_WATCH}}
@@ -146,6 +190,27 @@ tasks:
         --build.cmd "{{.WATCH_BUILD}} -o ./tmp/trenova-api ./cmd/api"
         {{end}}
 
+  build-watch-targets:
+    desc: "Build cmd/api, cmd/worker and cmd/cli with the watch flags (GOOS/GOARCH from the environment); CI fills the shared cache with it"
+    env:
+      CGO_ENABLED: "{{.WATCH_CGO}}"
+    cmds:
+      - mkdir -p {{.BUILD_DIR}}/watch-targets
+      - "{{.WATCH_BUILD}} -buildvcs=false -o {{.BUILD_DIR}}/watch-targets/ ./cmd/api ./cmd/worker ./cmd/cli"
+
+  go-remote-cache-install:
+    desc: Install the pinned gobuildcache that GO_REMOTE_CACHE=on runs
+    dir: "{{.TASKFILE_DIR}}/scripts/gocacheprog"
+    cmds:
+      # Its go.mod needs a newer Go than GOTOOLCHAIN pins; the binary does not
+      # depend on the toolchain the builds use.
+      - env -u GOCACHEPROG GOTOOLCHAIN=auto GOFLAGS= GOWORK=off go install github.com/richardartoul/gobuildcache@{{.GOBUILDCACHE_VERSION}}
+
+  go-remote-cache-clear:
+    desc: Empty the local directory of the shared build cache, which gobuildcache never trims
+    cmds:
+      - "{{.GOCACHEPROG_SCRIPT}} clear-local"
+
   build-bench:
     desc: "Measure rebuild times after representative edits (task build-bench -- --target cli --mode air)"
     cmds:
@@ -153,6 +218,8 @@ tasks:
 
   run-worker-watch:
     desc: Run the worker service with hot reload, through gocut watch when gocut is found (GOCUT=off for air)
+    env:
+      CGO_ENABLED: "{{.WATCH_CGO}}"
     cmds:
       - >-
         {{if .GOCUT_WATCH}}
@@ -531,10 +598,10 @@ tasks:
       - "{{.DEVDB_PATH}} seed apply{{if .name}} {{.name}}{{end}}"
 
   db-seed-volume:
-    desc: "Fill the development organization with volume data (shipments=10000 months=12 seed=0)"
+    desc: "Fill the development organization with volume data (shipments=10000 months=12 lanes=40 seed=0)"
     deps: [build-devdb]
     cmds:
-      - "{{.DEVDB_PATH}} volume -shipments {{.shipments | default 10000}} -months {{.months | default 12}} -seed {{.seed | default 0}}"
+      - "{{.DEVDB_PATH}} volume -shipments {{.shipments | default 10000}} -months {{.months | default 12}} -lanes {{.lanes | default 40}} -seed {{.seed | default 0}}"
 
   db-reset:
     desc: Recreate the database from the migrated template, then apply the fixtures

@@ -92,10 +92,10 @@ type PayrollExportsTable struct {
 // PayrollExports references the payroll_exports table.
 var PayrollExports = &PayrollExportsTable{
 	TableBase:        keel.TableBase{Ref: &payrollExportsRef},
-	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payrollExportsRef, Index: 0}}},
-	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payrollExportsRef, Index: 1}}},
-	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payrollExportsRef, Index: 2}}},
-	Status:           PayrollExportStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payrollExportsRef, Index: 3}}},
+	ID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &payrollExportsRef, Index: 0}}},
+	BusinessUnitID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &payrollExportsRef, Index: 1}}},
+	OrganizationID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &payrollExportsRef, Index: 2}}},
+	Status:           PayrollExportStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &payrollExportsRef, Index: 3}}},
 	PeriodStart:      keel.Int64Col{Col: keel.Col{Ref: &payrollExportsRef, Index: 4}},
 	PeriodEnd:        keel.Int64Col{Col: keel.Col{Ref: &payrollExportsRef, Index: 5}},
 	TimesheetCount:   keel.Int32Col{Col: keel.Col{Ref: &payrollExportsRef, Index: 6}},
@@ -103,7 +103,7 @@ var PayrollExports = &PayrollExportsTable{
 	OvertimeMinutes:  keel.Int32Col{Col: keel.Col{Ref: &payrollExportsRef, Index: 8}},
 	PaidLeaveMinutes: keel.Int32Col{Col: keel.Col{Ref: &payrollExportsRef, Index: 9}},
 	GeneratedAt:      keel.Int64Col{Col: keel.Col{Ref: &payrollExportsRef, Index: 10}},
-	GeneratedByID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payrollExportsRef, Index: 11}}},
+	GeneratedByID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &payrollExportsRef, Index: 11}}},
 	VoidedAt:         keel.Int64Col{Col: keel.Col{Ref: &payrollExportsRef, Index: 12}},
 	VoidReason:       keel.StringCol{Col: keel.Col{Ref: &payrollExportsRef, Index: 13}},
 	Note:             keel.StringCol{Col: keel.Col{Ref: &payrollExportsRef, Index: 14}},
@@ -116,10 +116,10 @@ var PayrollExports = &PayrollExportsTable{
 func BuildPayrollExports(r *keel.Ref) *PayrollExportsTable {
 	return &PayrollExportsTable{
 		TableBase:        keel.TableBase{Ref: r},
-		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		Status:           PayrollExportStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		Status:           PayrollExportStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		PeriodStart:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 4}},
 		PeriodEnd:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 5}},
 		TimesheetCount:   keel.Int32Col{Col: keel.Col{Ref: r, Index: 6}},
@@ -127,7 +127,7 @@ func BuildPayrollExports(r *keel.Ref) *PayrollExportsTable {
 		OvertimeMinutes:  keel.Int32Col{Col: keel.Col{Ref: r, Index: 8}},
 		PaidLeaveMinutes: keel.Int32Col{Col: keel.Col{Ref: r, Index: 9}},
 		GeneratedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
-		GeneratedByID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
+		GeneratedByID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 11}}},
 		VoidedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
 		VoidReason:       keel.StringCol{Col: keel.Col{Ref: r, Index: 13}},
 		Note:             keel.StringCol{Col: keel.Col{Ref: r, Index: 14}},
@@ -152,8 +152,6 @@ func (t *PayrollExportsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID
 
 // PayrollExportsQuery is a query over timesheet.PayrollExport.
 type PayrollExportsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*timesheet.PayrollExport] = (*PayrollExportsTable)(nil)
 
 var _ keel.Query[*timesheet.PayrollExport] = (*PayrollExportsQuery)(nil)
 
@@ -269,42 +267,42 @@ func (t *PayrollExportsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*
 
 // Create inserts row.
 func (t *PayrollExportsTable) Create(ctx context.Context, db *keel.DB, row *timesheet.PayrollExport) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *PayrollExportsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*timesheet.PayrollExport) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *PayrollExportsTable) Save(ctx context.Context, db *keel.DB, row *timesheet.PayrollExport, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *PayrollExportsTable) SaveExcept(ctx context.Context, db *keel.DB, row *timesheet.PayrollExport, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *PayrollExportsTable) DeleteRow(ctx context.Context, db *keel.DB, row *timesheet.PayrollExport) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *PayrollExportsTable) Upsert(ctx context.Context, db *keel.DB, rows []*timesheet.PayrollExport, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *PayrollExportsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*timesheet.PayrollExport, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *PayrollExportsTable) Copy(ctx context.Context, db *keel.DB, rows []*timesheet.PayrollExport) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -476,37 +474,45 @@ func (q *PayrollExportsQuery) Clone() keel.Query[*timesheet.PayrollExport] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *PayrollExportsQuery) One(ctx context.Context, db *keel.DB) (*timesheet.PayrollExport, error) {
-	return keel.One[*timesheet.PayrollExport](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*timesheet.PayrollExport)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *PayrollExportsQuery) First(ctx context.Context, db *keel.DB) (*timesheet.PayrollExport, error) {
-	return keel.First[*timesheet.PayrollExport](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*timesheet.PayrollExport)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *PayrollExportsQuery) List(ctx context.Context, db *keel.DB) ([]*timesheet.PayrollExport, error) {
-	return keel.List[*timesheet.PayrollExport](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*timesheet.PayrollExport)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *PayrollExportsQuery) All(ctx context.Context, db *keel.DB) ([]*timesheet.PayrollExport, error) {
-	return keel.All[*timesheet.PayrollExport](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*timesheet.PayrollExport)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *PayrollExportsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*timesheet.PayrollExport, error) {
-	return keel.UpdateReturning[*timesheet.PayrollExport](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*timesheet.PayrollExport)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *PayrollExportsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*timesheet.PayrollExport], error) {
-	return keel.PageOf[*timesheet.PayrollExport](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*timesheet.PayrollExport])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *PayrollExportsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*timesheet.PayrollExport) error) error {
-	return keel.Each[*timesheet.PayrollExport](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*timesheet.PayrollExport)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newPayrollExport() unsafe.Pointer { return unsafe.Pointer(new(timesheet.PayrollExport)) }
@@ -697,18 +703,18 @@ type TimeClockEntriesTable struct {
 // TimeClockEntries references the time_clock_entries table.
 var TimeClockEntries = &TimeClockEntriesTable{
 	TableBase:      keel.TableBase{Ref: &timeClockEntriesRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &timeClockEntriesRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &timeClockEntriesRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &timeClockEntriesRef, Index: 2}}},
-	WorkerID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &timeClockEntriesRef, Index: 3}}},
-	TimesheetID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &timeClockEntriesRef, Index: 4}}},
-	Source:         TimeEntrySourceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &timeClockEntriesRef, Index: 5}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &timeClockEntriesRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &timeClockEntriesRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &timeClockEntriesRef, Index: 2}}},
+	WorkerID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &timeClockEntriesRef, Index: 3}}},
+	TimesheetID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &timeClockEntriesRef, Index: 4}}},
+	Source:         TimeEntrySourceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &timeClockEntriesRef, Index: 5}}},
 	ClockedInAt:    keel.Int64Col{Col: keel.Col{Ref: &timeClockEntriesRef, Index: 6}},
 	ClockedOutAt:   keel.Int64Col{Col: keel.Col{Ref: &timeClockEntriesRef, Index: 7}},
 	BreakMinutes:   keel.Int32Col{Col: keel.Col{Ref: &timeClockEntriesRef, Index: 8}},
-	PayCodeID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &timeClockEntriesRef, Index: 9}}},
+	PayCodeID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &timeClockEntriesRef, Index: 9}}},
 	Note:           keel.StringCol{Col: keel.Col{Ref: &timeClockEntriesRef, Index: 10}},
-	EditedByID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &timeClockEntriesRef, Index: 11}}},
+	EditedByID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &timeClockEntriesRef, Index: 11}}},
 	EditReason:     keel.StringCol{Col: keel.Col{Ref: &timeClockEntriesRef, Index: 12}},
 	Version:        keel.Int64Col{Col: keel.Col{Ref: &timeClockEntriesRef, Index: 13}},
 	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &timeClockEntriesRef, Index: 14}},
@@ -719,18 +725,18 @@ var TimeClockEntries = &TimeClockEntriesTable{
 func BuildTimeClockEntries(r *keel.Ref) *TimeClockEntriesTable {
 	return &TimeClockEntriesTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		WorkerID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		TimesheetID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		Source:         TimeEntrySourceCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		WorkerID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		TimesheetID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		Source:         TimeEntrySourceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		ClockedInAt:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
 		ClockedOutAt:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
 		BreakMinutes:   keel.Int32Col{Col: keel.Col{Ref: r, Index: 8}},
-		PayCodeID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		PayCodeID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
 		Note:           keel.StringCol{Col: keel.Col{Ref: r, Index: 10}},
-		EditedByID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
+		EditedByID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 11}}},
 		EditReason:     keel.StringCol{Col: keel.Col{Ref: r, Index: 12}},
 		Version:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
 		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
@@ -758,8 +764,6 @@ func (t *TimeClockEntriesTable) Get(ctx context.Context, db *keel.DB, key pulid.
 
 // TimeClockEntriesQuery is a query over timesheet.TimeClockEntry.
 type TimeClockEntriesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*timesheet.TimeClockEntry] = (*TimeClockEntriesTable)(nil)
 
 var _ keel.Query[*timesheet.TimeClockEntry] = (*TimeClockEntriesQuery)(nil)
 
@@ -875,42 +879,42 @@ func (t *TimeClockEntriesTable) Compute(col keel.Column, e keel.Expr) keel.Query
 
 // Create inserts row.
 func (t *TimeClockEntriesTable) Create(ctx context.Context, db *keel.DB, row *timesheet.TimeClockEntry) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *TimeClockEntriesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*timesheet.TimeClockEntry) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *TimeClockEntriesTable) Save(ctx context.Context, db *keel.DB, row *timesheet.TimeClockEntry, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *TimeClockEntriesTable) SaveExcept(ctx context.Context, db *keel.DB, row *timesheet.TimeClockEntry, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *TimeClockEntriesTable) DeleteRow(ctx context.Context, db *keel.DB, row *timesheet.TimeClockEntry) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *TimeClockEntriesTable) Upsert(ctx context.Context, db *keel.DB, rows []*timesheet.TimeClockEntry, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *TimeClockEntriesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*timesheet.TimeClockEntry, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *TimeClockEntriesTable) Copy(ctx context.Context, db *keel.DB, rows []*timesheet.TimeClockEntry) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1082,37 +1086,45 @@ func (q *TimeClockEntriesQuery) Clone() keel.Query[*timesheet.TimeClockEntry] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *TimeClockEntriesQuery) One(ctx context.Context, db *keel.DB) (*timesheet.TimeClockEntry, error) {
-	return keel.One[*timesheet.TimeClockEntry](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*timesheet.TimeClockEntry)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *TimeClockEntriesQuery) First(ctx context.Context, db *keel.DB) (*timesheet.TimeClockEntry, error) {
-	return keel.First[*timesheet.TimeClockEntry](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*timesheet.TimeClockEntry)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *TimeClockEntriesQuery) List(ctx context.Context, db *keel.DB) ([]*timesheet.TimeClockEntry, error) {
-	return keel.List[*timesheet.TimeClockEntry](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*timesheet.TimeClockEntry)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *TimeClockEntriesQuery) All(ctx context.Context, db *keel.DB) ([]*timesheet.TimeClockEntry, error) {
-	return keel.All[*timesheet.TimeClockEntry](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*timesheet.TimeClockEntry)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *TimeClockEntriesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*timesheet.TimeClockEntry, error) {
-	return keel.UpdateReturning[*timesheet.TimeClockEntry](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*timesheet.TimeClockEntry)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *TimeClockEntriesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*timesheet.TimeClockEntry], error) {
-	return keel.PageOf[*timesheet.TimeClockEntry](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*timesheet.TimeClockEntry])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *TimeClockEntriesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*timesheet.TimeClockEntry) error) error {
-	return keel.Each[*timesheet.TimeClockEntry](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*timesheet.TimeClockEntry)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newTimeClockEntry() unsafe.Pointer { return unsafe.Pointer(new(timesheet.TimeClockEntry)) }
@@ -1316,11 +1328,11 @@ type TimesheetsTable struct {
 // Timesheets references the timesheets table.
 var Timesheets = &TimesheetsTable{
 	TableBase:                keel.TableBase{Ref: &timesheetsRef},
-	ID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &timesheetsRef, Index: 0}}},
-	BusinessUnitID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &timesheetsRef, Index: 1}}},
-	OrganizationID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &timesheetsRef, Index: 2}}},
-	WorkerID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &timesheetsRef, Index: 3}}},
-	Status:                   TimesheetStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &timesheetsRef, Index: 4}}},
+	ID:                       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &timesheetsRef, Index: 0}}},
+	BusinessUnitID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &timesheetsRef, Index: 1}}},
+	OrganizationID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &timesheetsRef, Index: 2}}},
+	WorkerID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &timesheetsRef, Index: 3}}},
+	Status:                   TimesheetStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &timesheetsRef, Index: 4}}},
 	PeriodStart:              keel.Int64Col{Col: keel.Col{Ref: &timesheetsRef, Index: 5}},
 	PeriodEnd:                keel.Int64Col{Col: keel.Col{Ref: &timesheetsRef, Index: 6}},
 	RegularMinutes:           keel.Int32Col{Col: keel.Col{Ref: &timesheetsRef, Index: 7}},
@@ -1329,11 +1341,11 @@ var Timesheets = &TimesheetsTable{
 	EntryCount:               keel.Int32Col{Col: keel.Col{Ref: &timesheetsRef, Index: 10}},
 	OvertimeThresholdMinutes: keel.Int32Col{Col: keel.Col{Ref: &timesheetsRef, Index: 11}},
 	SubmittedAt:              keel.Int64Col{Col: keel.Col{Ref: &timesheetsRef, Index: 12}},
-	SubmittedByID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &timesheetsRef, Index: 13}}},
+	SubmittedByID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &timesheetsRef, Index: 13}}},
 	ApprovedAt:               keel.Int64Col{Col: keel.Col{Ref: &timesheetsRef, Index: 14}},
-	ApprovedByID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &timesheetsRef, Index: 15}}},
+	ApprovedByID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &timesheetsRef, Index: 15}}},
 	DecisionNote:             keel.StringCol{Col: keel.Col{Ref: &timesheetsRef, Index: 16}},
-	PayrollExportID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &timesheetsRef, Index: 17}}},
+	PayrollExportID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &timesheetsRef, Index: 17}}},
 	Version:                  keel.Int64Col{Col: keel.Col{Ref: &timesheetsRef, Index: 18}},
 	CreatedAt:                keel.Int64Col{Col: keel.Col{Ref: &timesheetsRef, Index: 19}},
 	UpdatedAt:                keel.Int64Col{Col: keel.Col{Ref: &timesheetsRef, Index: 20}},
@@ -1343,11 +1355,11 @@ var Timesheets = &TimesheetsTable{
 func BuildTimesheets(r *keel.Ref) *TimesheetsTable {
 	return &TimesheetsTable{
 		TableBase:                keel.TableBase{Ref: r},
-		ID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		WorkerID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		Status:                   TimesheetStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ID:                       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		WorkerID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		Status:                   TimesheetStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		PeriodStart:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 5}},
 		PeriodEnd:                keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
 		RegularMinutes:           keel.Int32Col{Col: keel.Col{Ref: r, Index: 7}},
@@ -1356,11 +1368,11 @@ func BuildTimesheets(r *keel.Ref) *TimesheetsTable {
 		EntryCount:               keel.Int32Col{Col: keel.Col{Ref: r, Index: 10}},
 		OvertimeThresholdMinutes: keel.Int32Col{Col: keel.Col{Ref: r, Index: 11}},
 		SubmittedAt:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
-		SubmittedByID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 13}}},
+		SubmittedByID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 13}}},
 		ApprovedAt:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
-		ApprovedByID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 15}}},
+		ApprovedByID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 15}}},
 		DecisionNote:             keel.StringCol{Col: keel.Col{Ref: r, Index: 16}},
-		PayrollExportID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 17}}},
+		PayrollExportID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 17}}},
 		Version:                  keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
 		CreatedAt:                keel.Int64Col{Col: keel.Col{Ref: r, Index: 19}},
 		UpdatedAt:                keel.Int64Col{Col: keel.Col{Ref: r, Index: 20}},
@@ -1387,8 +1399,6 @@ func (t *TimesheetsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*
 
 // TimesheetsQuery is a query over timesheet.Timesheet.
 type TimesheetsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*timesheet.Timesheet] = (*TimesheetsTable)(nil)
 
 var _ keel.Query[*timesheet.Timesheet] = (*TimesheetsQuery)(nil)
 
@@ -1504,42 +1514,42 @@ func (t *TimesheetsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*time
 
 // Create inserts row.
 func (t *TimesheetsTable) Create(ctx context.Context, db *keel.DB, row *timesheet.Timesheet) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *TimesheetsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*timesheet.Timesheet) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *TimesheetsTable) Save(ctx context.Context, db *keel.DB, row *timesheet.Timesheet, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *TimesheetsTable) SaveExcept(ctx context.Context, db *keel.DB, row *timesheet.Timesheet, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *TimesheetsTable) DeleteRow(ctx context.Context, db *keel.DB, row *timesheet.Timesheet) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *TimesheetsTable) Upsert(ctx context.Context, db *keel.DB, rows []*timesheet.Timesheet, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *TimesheetsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*timesheet.Timesheet, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *TimesheetsTable) Copy(ctx context.Context, db *keel.DB, rows []*timesheet.Timesheet) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1711,37 +1721,45 @@ func (q *TimesheetsQuery) Clone() keel.Query[*timesheet.Timesheet] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *TimesheetsQuery) One(ctx context.Context, db *keel.DB) (*timesheet.Timesheet, error) {
-	return keel.One[*timesheet.Timesheet](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*timesheet.Timesheet)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *TimesheetsQuery) First(ctx context.Context, db *keel.DB) (*timesheet.Timesheet, error) {
-	return keel.First[*timesheet.Timesheet](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*timesheet.Timesheet)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *TimesheetsQuery) List(ctx context.Context, db *keel.DB) ([]*timesheet.Timesheet, error) {
-	return keel.List[*timesheet.Timesheet](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*timesheet.Timesheet)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *TimesheetsQuery) All(ctx context.Context, db *keel.DB) ([]*timesheet.Timesheet, error) {
-	return keel.All[*timesheet.Timesheet](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*timesheet.Timesheet)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *TimesheetsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*timesheet.Timesheet, error) {
-	return keel.UpdateReturning[*timesheet.Timesheet](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*timesheet.Timesheet)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *TimesheetsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*timesheet.Timesheet], error) {
-	return keel.PageOf[*timesheet.Timesheet](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*timesheet.Timesheet])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *TimesheetsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*timesheet.Timesheet) error) error {
-	return keel.Each[*timesheet.Timesheet](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*timesheet.Timesheet)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newTimesheet() unsafe.Pointer { return unsafe.Pointer(new(timesheet.Timesheet)) }
@@ -1905,112 +1923,96 @@ var enumTimesheetStatus = [...]schema.EnumValue{
 }
 
 // PayrollExportStatusCol is a column of timesheet.PayrollExportStatus values.
-type PayrollExportStatusCol struct{ keel.StringCol }
+type PayrollExportStatusCol struct{ keel.TypedStringCol }
 
 func (c PayrollExportStatusCol) Eq(v timesheet.PayrollExportStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c PayrollExportStatusCol) Ne(v timesheet.PayrollExportStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c PayrollExportStatusCol) Gt(v timesheet.PayrollExportStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c PayrollExportStatusCol) Gte(v timesheet.PayrollExportStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c PayrollExportStatusCol) Lt(v timesheet.PayrollExportStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c PayrollExportStatusCol) Lte(v timesheet.PayrollExportStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c PayrollExportStatusCol) IsDistinctFrom(v timesheet.PayrollExportStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c PayrollExportStatusCol) Between(lo, hi timesheet.PayrollExportStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c PayrollExportStatusCol) To(v timesheet.PayrollExportStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c PayrollExportStatusCol) In(vs ...timesheet.PayrollExportStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c PayrollExportStatusCol) NotIn(vs ...timesheet.PayrollExportStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // TimeEntrySourceCol is a column of timesheet.TimeEntrySource values.
-type TimeEntrySourceCol struct{ keel.StringCol }
+type TimeEntrySourceCol struct{ keel.TypedStringCol }
 
-func (c TimeEntrySourceCol) Eq(v timesheet.TimeEntrySource) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c TimeEntrySourceCol) Ne(v timesheet.TimeEntrySource) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c TimeEntrySourceCol) Gt(v timesheet.TimeEntrySource) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
+func (c TimeEntrySourceCol) Eq(v timesheet.TimeEntrySource) keel.Pred { return c.Text().Eq(string(v)) }
+func (c TimeEntrySourceCol) Ne(v timesheet.TimeEntrySource) keel.Pred { return c.Text().Ne(string(v)) }
+func (c TimeEntrySourceCol) Gt(v timesheet.TimeEntrySource) keel.Pred { return c.Text().Gt(string(v)) }
 func (c TimeEntrySourceCol) Gte(v timesheet.TimeEntrySource) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
-func (c TimeEntrySourceCol) Lt(v timesheet.TimeEntrySource) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
+func (c TimeEntrySourceCol) Lt(v timesheet.TimeEntrySource) keel.Pred { return c.Text().Lt(string(v)) }
 func (c TimeEntrySourceCol) Lte(v timesheet.TimeEntrySource) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c TimeEntrySourceCol) IsDistinctFrom(v timesheet.TimeEntrySource) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c TimeEntrySourceCol) Between(lo, hi timesheet.TimeEntrySource) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c TimeEntrySourceCol) To(v timesheet.TimeEntrySource) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c TimeEntrySourceCol) In(vs ...timesheet.TimeEntrySource) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c TimeEntrySourceCol) NotIn(vs ...timesheet.TimeEntrySource) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // TimesheetStatusCol is a column of timesheet.TimesheetStatus values.
-type TimesheetStatusCol struct{ keel.StringCol }
+type TimesheetStatusCol struct{ keel.TypedStringCol }
 
-func (c TimesheetStatusCol) Eq(v timesheet.TimesheetStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c TimesheetStatusCol) Ne(v timesheet.TimesheetStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c TimesheetStatusCol) Gt(v timesheet.TimesheetStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
+func (c TimesheetStatusCol) Eq(v timesheet.TimesheetStatus) keel.Pred { return c.Text().Eq(string(v)) }
+func (c TimesheetStatusCol) Ne(v timesheet.TimesheetStatus) keel.Pred { return c.Text().Ne(string(v)) }
+func (c TimesheetStatusCol) Gt(v timesheet.TimesheetStatus) keel.Pred { return c.Text().Gt(string(v)) }
 func (c TimesheetStatusCol) Gte(v timesheet.TimesheetStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
-func (c TimesheetStatusCol) Lt(v timesheet.TimesheetStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
+func (c TimesheetStatusCol) Lt(v timesheet.TimesheetStatus) keel.Pred { return c.Text().Lt(string(v)) }
 func (c TimesheetStatusCol) Lte(v timesheet.TimesheetStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c TimesheetStatusCol) IsDistinctFrom(v timesheet.TimesheetStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c TimesheetStatusCol) Between(lo, hi timesheet.TimesheetStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c TimesheetStatusCol) To(v timesheet.TimesheetStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c TimesheetStatusCol) In(vs ...timesheet.TimesheetStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c TimesheetStatusCol) NotIn(vs ...timesheet.TimesheetStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

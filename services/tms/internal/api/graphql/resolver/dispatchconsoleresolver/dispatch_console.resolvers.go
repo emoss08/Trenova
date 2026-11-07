@@ -9,6 +9,8 @@ import (
 	"context"
 	"strconv"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlid"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlscalar"
@@ -19,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/carrierassignmentports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/demandforecastports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -174,7 +177,7 @@ func (r *MutationResolver) DispatchPlanAutoAssign(ctx context.Context, input gql
 		TenantInfo:  resolvercore.TenantInfo(authCtx),
 		WindowStart: int64(gqlscalar.IntValue(input.WindowStart)),
 		WindowEnd:   int64(gqlscalar.IntValue(input.WindowEnd)),
-		Apply:       input.Apply != nil && *input.Apply,
+		Trigger:     agent.RunTriggerManual,
 	}
 
 	if req.FleetCodeIDs, err = gqlid.ParseIDs(input.FleetCodeIds); err != nil {
@@ -232,7 +235,15 @@ func (r *QueryResolver) DispatchBoard(ctx context.Context, input gqlmodel.Dispat
 		return nil, err
 	}
 
-	return mapDispatchBoard(board), nil
+	mapped := mapDispatchBoard(board)
+	if mapped == nil {
+		return nil, nil
+	}
+	if err = r.attachCoverageProposals(ctx, authCtx, board.Moves, mapped.Moves); err != nil {
+		return nil, err
+	}
+
+	return mapped, nil
 }
 
 func (r *QueryResolver) DispatchMoveCandidates(ctx context.Context, input gqlmodel.DispatchMoveCandidatesInput) ([]*gqlmodel.DispatchCandidate, error) {
@@ -312,8 +323,8 @@ func (r *QueryResolver) DispatchDriverMoves(ctx context.Context, input gqlmodel.
 	mapped := make([]*gqlmodel.DispatchDriverMoveMatch, 0, len(matches))
 	for _, match := range matches {
 		mapped = append(mapped, &gqlmodel.DispatchDriverMoveMatch{
-			Move:  mapDispatchBoardMove(match.Move),
-			Score: mapDispatchCandidate(match.Score),
+			Move:      mapDispatchBoardMove(match.Move),
+			Candidate: mapDispatchCandidate(match.Score),
 		})
 	}
 
@@ -368,7 +379,7 @@ func (r *QueryResolver) DispatchAssignmentPreview(ctx context.Context, input gql
 		TrailerID:        gqlid.IDPtr(preview.TrailerID),
 		Blocked:          preview.Blocked,
 		RequiresOverride: preview.RequiresOverride,
-		Score:            mapDispatchCandidate(preview.Score),
+		Candidate:        mapDispatchCandidate(preview.Score),
 	}, nil
 }
 
@@ -401,4 +412,77 @@ func (r *QueryResolver) DispatchCarrierAssignmentPreview(ctx context.Context, in
 	}
 
 	return dispatchCarrierEligibilityToModel(result), nil
+}
+
+func (r *QueryResolver) DispatchMove(ctx context.Context, moveID string) (*gqlmodel.DispatchBoardMove, error) {
+	authCtx, err := r.RequirePermission(
+		ctx,
+		permission.ResourceShipmentMove,
+		permission.OpRead,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	id, err := pulid.Parse(moveID)
+	if err != nil {
+		return nil, err
+	}
+
+	move, err := r.DispatchConsoleService.GetMove(ctx, resolvercore.TenantInfo(authCtx), id)
+	if err != nil {
+		return nil, err
+	}
+
+	mapped := mapDispatchBoardMove(move)
+	if err = r.attachCoverageProposals(
+		ctx,
+		authCtx,
+		[]*dispatchconsoleservice.BoardMove{move},
+		[]*gqlmodel.DispatchBoardMove{mapped},
+	); err != nil {
+		return nil, err
+	}
+
+	return mapped, nil
+}
+
+func (r *QueryResolver) DispatchFreightOutlook(ctx context.Context, hours *int, limit *int) (*gqlmodel.DispatchFreightOutlook, error) {
+	authCtx, err := r.RequirePermission(
+		ctx,
+		permission.ResourceShipmentMove,
+		permission.OpRead,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	outlook, err := r.DemandForecastService.Outlook(ctx, &demandforecastports.OutlookRequest{
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+		Hours:      gqlscalar.IntValue(hours),
+		Limit:      gqlscalar.IntValue(limit),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return mapDispatchFreightOutlook(outlook), nil
+}
+
+func (r *QueryResolver) DispatchForecastQuality(ctx context.Context) (*gqlmodel.DispatchForecastQuality, error) {
+	authCtx, err := r.RequirePermission(
+		ctx,
+		permission.ResourceShipmentMove,
+		permission.OpRead,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	quality, err := r.DemandForecastService.Quality(ctx, resolvercore.TenantInfo(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	return mapDispatchForecastQuality(quality), nil
 }

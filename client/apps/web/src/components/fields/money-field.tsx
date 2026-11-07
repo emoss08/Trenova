@@ -14,6 +14,8 @@ type BaseMoneyFieldProps = {
   disabled?: boolean;
   readOnly?: boolean;
   allowNegative?: boolean;
+  /** Shows a stored 0 as an empty field, so the placeholder can say what 0 means ("Automatic"). */
+  blankZero?: boolean;
   "aria-label"?: string;
   onValueCommit?: (cents: number) => void;
 };
@@ -30,6 +32,7 @@ export function MoneyField<T extends FieldValues>({
   placeholder = "0.00",
   tabIndex,
   allowNegative = false,
+  blankZero = false,
   onValueCommit,
   ...props
 }: MoneyFieldProps<T>) {
@@ -51,7 +54,11 @@ export function MoneyField<T extends FieldValues>({
           error={fieldState.error?.message}
         >
           <NumericFormat
-            value={typeof field.value === "number" ? field.value / 100 : ""}
+            value={
+              typeof field.value === "number" && !(blankZero && field.value === 0)
+                ? field.value / 100
+                : ""
+            }
             onValueChange={(values, sourceInfo) => {
               if (sourceInfo.source !== "event") return;
               const cents = values.floatValue == null ? 0 : Math.round(values.floatValue * 100);
@@ -78,10 +85,9 @@ export function MoneyField<T extends FieldValues>({
               "placeholder:text-muted-foreground",
               "disabled:cursor-not-allowed disabled:opacity-50",
               "read-only:text-muted-foreground read-only:cursor-default",
-"ui-focus-ring",
+              "ui-focus-ring",
               props.readOnly && "pointer-events-none cursor-not-allowed opacity-60",
-              fieldState.invalid &&
-fieldInvalidClass,
+              fieldState.invalid && fieldInvalidClass,
               className,
             )}
           />

@@ -943,7 +943,7 @@ writes:
     tools: [dispatch_cancel_carrier_assignment]
   "mutation dispatchPlanAutoAssign":
     exempt: read-only
-    reason: "Plans automatic assignments for review and saves nothing."
+    reason: "Plans coverage for review: it files pending proposals a person decides with decideAgentProposal and refreshes the stored plan prices, and assigns nothing."
   "mutation dispatchUnassignMoves":
     tools: [dispatch_unassign_move]
 
@@ -951,6 +951,11 @@ writes:
   "PUT /api/v1/dispatch-controls/":
     exempt: configuration
     reason: "An organization-wide control an administrator sets once; every later write depends on it."
+
+  # dispatchstyle
+  "mutation resetDispatchStyle":
+    exempt: configuration
+    reason: "Forgets the dispatch style the planner learned for the whole organization; an administrator decides when the planner starts over, alongside the dispatch control setting that turns learning on."
 
   # distancecontrol
   "PATCH /api/v1/distance-controls/":
@@ -1273,7 +1278,7 @@ writes:
   "DELETE /api/v1/edi/partners/:partnerID/mapping-profile/items/:mappingItemID/":
     exempt: configuration
     reason: "Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains."
-  "POST /api/v1/edi/as2/inbound/":
+  "POST /api/v1/edi/as2/inbound/:as2InboundToken/":
     exempt: infrastructure
     reason: "Receives AS2 messages a trading partner sends; no person makes this call."
   "POST /api/v1/edi/communication-profiles/":
@@ -1281,6 +1286,9 @@ writes:
   "POST /api/v1/edi/communication-profiles/:profileID/poll/":
     exempt: infrastructure
     reason: "Polls a partner mailbox now; the scheduler polls on its own."
+  "POST /api/v1/edi/communication-profiles/:profileID/rotate-inbound-url/":
+    exempt: configuration
+    reason: "Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains."
   "POST /api/v1/edi/communication-profiles/:profileID/test-connection/":
     exempt: read-only
     reason: "Validates, inspects, previews or tests EDI setup and saves nothing."
@@ -2562,6 +2570,32 @@ writes:
   "mutation updateShiftTemplate":
     exempt: configuration
     reason: "Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced."
+
+  # scim
+  "DELETE /api/v1/scim/:tenantSlug/v2/Groups/:id":
+    exempt: security
+    reason: "An identity provider provisions people and groups with its directory's SCIM token; no person makes this call, and an agent must not change who can sign in."
+  "DELETE /api/v1/scim/:tenantSlug/v2/Users/:id":
+    exempt: security
+    reason: "An identity provider provisions people and groups with its directory's SCIM token; no person makes this call, and an agent must not change who can sign in."
+  "PATCH /api/v1/scim/:tenantSlug/v2/Groups/:id":
+    exempt: security
+    reason: "An identity provider provisions people and groups with its directory's SCIM token; no person makes this call, and an agent must not change who can sign in."
+  "PATCH /api/v1/scim/:tenantSlug/v2/Users/:id":
+    exempt: security
+    reason: "An identity provider provisions people and groups with its directory's SCIM token; no person makes this call, and an agent must not change who can sign in."
+  "POST /api/v1/scim/:tenantSlug/v2/Groups":
+    exempt: security
+    reason: "An identity provider provisions people and groups with its directory's SCIM token; no person makes this call, and an agent must not change who can sign in."
+  "POST /api/v1/scim/:tenantSlug/v2/Users":
+    exempt: security
+    reason: "An identity provider provisions people and groups with its directory's SCIM token; no person makes this call, and an agent must not change who can sign in."
+  "PUT /api/v1/scim/:tenantSlug/v2/Groups/:id":
+    exempt: security
+    reason: "An identity provider provisions people and groups with its directory's SCIM token; no person makes this call, and an agent must not change who can sign in."
+  "PUT /api/v1/scim/:tenantSlug/v2/Users/:id":
+    exempt: security
+    reason: "An identity provider provisions people and groups with its directory's SCIM token; no person makes this call, and an agent must not change who can sign in."
 
   # selfservice
   "mutation createWorkerPolicy":

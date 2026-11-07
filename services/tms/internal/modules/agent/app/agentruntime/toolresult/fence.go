@@ -25,6 +25,22 @@ func FenceFailure(toolName, message string) string {
 	return FenceUntrusted(fmt.Sprintf("Tool %q failed:", toolName), truncateToolResult(message))
 }
 
+func FenceInline(text string) string {
+	return UntrustedOpenTag + textfence.FenceText(text, UntrustedCloseTag) + UntrustedCloseTag
+}
+
+func UnfenceInline(line string) string {
+	start := strings.Index(line, UntrustedOpenTag)
+	end := strings.LastIndex(line, UntrustedCloseTag)
+	if start < 0 || end < start {
+		return line
+	}
+	body := line[start+len(UntrustedOpenTag) : end]
+
+	return line[:start] + textfence.RestoreCloseTag(body, UntrustedCloseTag) +
+		line[end+len(UntrustedCloseTag):]
+}
+
 func FenceUntrusted(header, payload string) string {
 	var builder strings.Builder
 	builder.WriteString(header)

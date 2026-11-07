@@ -1,237 +1,152 @@
 package dispatchplanner
 
-import "math"
+import (
+	"context"
+	"errors"
+	"time"
 
-const Unassigned = -1
+	"github.com/emoss08/trenova/shared/assignmentsolver"
+)
 
-const Forbidden = math.MaxFloat64 / 1e6
+const (
+	Unassigned = -1
+	Root       = int32(-1)
 
-type Oracle interface {
-	Cost(task, resource int) float64
-	Commit(task, resource int)
+	defaultNeighbors  = 8
+	defaultCacheNodes = 1 << 18
+	minCacheNodes     = 1 << 10
+	maxCacheNodes     = 1 << 24
+)
+
+var (
+	ErrShape = errors.New(
+		"dispatchplanner: problem inputs disagree on the number of tasks",
+	)
+	ErrMissingTimeline = errors.New(
+		"dispatchplanner: a problem with tasks and resources needs a timeline",
+	)
+)
+
+type Step struct {
+	Cost     int64
+	Feasible bool
+}
+
+type Extension struct {
+	Resource int
+	Task     int
+	Parent   int32
+	Node     int32
+}
+
+type Timeline interface {
+	Extend(ext Extension) Step
+	Reset()
 }
 
 type Options struct {
 	MaxPerResource int
+	Iterations     int
+	Budget         time.Duration
+	RandomSeed     uint64
+	StabilityCents int64
+	Neighbors      int
+	Alternatives   int
+	CacheNodes     int
+	Clock          func() time.Time
+}
+
+type Problem struct {
+	Resources  int
+	Arcs       [][]assignmentsolver.Arc
+	Coverage   []int64
+	Opens      []int64
+	Successors [][]int
+	Incumbent  []int
+	Timeline   Timeline
+	Options    Options
+}
+
+type Alternative struct {
+	Resource  int
+	ExtraCost int64
 }
 
 type Assignment struct {
-	Task     int
-	Resource int
-	Sequence int
-	Cost     float64
+	Task         int
+	Resource     int
+	Sequence     int
+	Cost         int64
+	Alternatives []Alternative
+}
+
+type Stats struct {
+	Iterations   int
+	Accepted     int
+	Improved     int
+	Restarts     int
+	CacheHits    int64
+	CacheMisses  int64
+	CacheFlushes int
+	Elapsed      time.Duration
 }
 
 type Result struct {
-	Assignments []Assignment
-	Unassigned  []int
-	TotalCost   float64
+	Assignments   []Assignment
+	Unassigned    []int
+	ResourceValue []int64
+	Objective     int64
+	SeedObjective int64
+	Stats         Stats
 }
 
-type SolveParams struct {
-	Tasks     int
-	Resources int
-	Oracle    Oracle
-	Options   Options
-}
-
-func Solve(params SolveParams) Result {
-	if params.Tasks <= 0 || params.Resources <= 0 || params.Oracle == nil {
-		unassigned := make([]int, 0, max(params.Tasks, 0))
-		for task := range params.Tasks {
-			unassigned = append(unassigned, task)
-		}
-		return Result{Assignments: make([]Assignment, 0), Unassigned: unassigned}
+func Solve(ctx context.Context, p *Problem) (Result, error) {
+	if err := p.validate(); err != nil {
+		return Result{}, err
 	}
 
-	pending := make([]int, params.Tasks)
-	for task := range pending {
-		pending[task] = task
-	}
+	s := newSearch(p)
+	s.seed()
+	seeded := s.cur.objective
+	s.construct(ctx)
+	s.anneal(ctx)
+	s.settle()
+	s.price(ctx)
 
-	return insertGreedy(insertParams{
-		Pending:   pending,
-		Resources: params.Resources,
-		Oracle:    params.Oracle,
-		Options:   params.Options,
-		State:     newSearchState(params.Resources),
-	})
+	return s.result(seeded), nil
 }
 
-type searchState struct {
-	committed []int
-	sequence  []int
-}
-
-func newSearchState(resources int) *searchState {
-	return &searchState{
-		committed: make([]int, resources),
-		sequence:  make([]int, resources),
+func (p *Problem) validate() error {
+	tasks := len(p.Arcs)
+	switch {
+	case p.Resources < 0, len(p.Coverage) != tasks:
+		return ErrShape
+	case p.Opens != nil && len(p.Opens) != tasks:
+		return ErrShape
+	case p.Successors != nil && len(p.Successors) != tasks:
+		return ErrShape
+	case p.Incumbent != nil && len(p.Incumbent) != tasks:
+		return ErrShape
+	case tasks > 0 && p.Resources > 0 && p.Timeline == nil:
+		return ErrMissingTimeline
+	default:
+		return nil
 	}
 }
 
-func (s *searchState) apply(assignments []Assignment) {
-	for _, assignment := range assignments {
-		if assignment.Resource < 0 || assignment.Resource >= len(s.committed) {
-			continue
-		}
-		s.committed[assignment.Resource]++
-		s.sequence[assignment.Resource]++
+func (o Options) normalized() Options {
+	if o.Neighbors <= 0 {
+		o.Neighbors = defaultNeighbors
 	}
-}
-
-type insertParams struct {
-	Pending   []int
-	Resources int
-	Oracle    Oracle
-	Options   Options
-	State     *searchState
-}
-
-type chooser func(
-	cost [][]float64,
-	placed []bool,
-	committed []int,
-	opts Options,
-) (index, resource int, best float64)
-
-func insertGreedy(params insertParams) Result {
-	return insertWith(params, cheapest)
-}
-
-func insertRegret(params insertParams) Result {
-	return insertWith(params, mostRegret)
-}
-
-func insertWith(params insertParams, choose chooser) Result {
-	result := Result{
-		Assignments: make([]Assignment, 0, len(params.Pending)),
-		Unassigned:  make([]int, 0, len(params.Pending)),
+	if o.CacheNodes <= 0 {
+		o.CacheNodes = defaultCacheNodes
+	}
+	o.CacheNodes = min(max(o.CacheNodes, minCacheNodes), maxCacheNodes)
+	o.Alternatives = max(o.Alternatives, 0)
+	o.StabilityCents = max(o.StabilityCents, 0)
+	if o.Clock == nil {
+		o.Clock = time.Now
 	}
 
-	cost := make([][]float64, len(params.Pending))
-	for index, task := range params.Pending {
-		cost[index] = make([]float64, params.Resources)
-		for resource := range cost[index] {
-			cost[index][resource] = params.Oracle.Cost(task, resource)
-		}
-	}
-
-	placed := make([]bool, len(params.Pending))
-
-	for {
-		index, resource, taskCost := choose(cost, placed, params.State.committed, params.Options)
-		if index == Unassigned {
-			break
-		}
-
-		task := params.Pending[index]
-		params.Oracle.Commit(task, resource)
-
-		placed[index] = true
-		params.State.committed[resource]++
-		result.Assignments = append(result.Assignments, Assignment{
-			Task:     task,
-			Resource: resource,
-			Sequence: params.State.sequence[resource],
-			Cost:     taskCost,
-		})
-		params.State.sequence[resource]++
-		result.TotalCost += taskCost
-
-		for remaining := range params.Pending {
-			if placed[remaining] {
-				continue
-			}
-			cost[remaining][resource] = params.Oracle.Cost(params.Pending[remaining], resource)
-		}
-	}
-
-	for index, task := range params.Pending {
-		if !placed[index] {
-			result.Unassigned = append(result.Unassigned, task)
-		}
-	}
-
-	return result
-}
-
-func cheapest(
-	cost [][]float64,
-	placed []bool,
-	committed []int,
-	opts Options,
-) (index, resource int, best float64) {
-	index, resource, best = Unassigned, Unassigned, Forbidden
-
-	for candidateIndex := range cost {
-		if placed[candidateIndex] {
-			continue
-		}
-		for candidateResource, candidateCost := range cost[candidateIndex] {
-			if opts.MaxPerResource > 0 && committed[candidateResource] >= opts.MaxPerResource {
-				continue
-			}
-			if candidateCost >= Forbidden {
-				continue
-			}
-			if index == Unassigned || candidateCost < best {
-				index = candidateIndex
-				resource = candidateResource
-				best = candidateCost
-			}
-		}
-	}
-
-	return index, resource, best
-}
-
-func mostRegret(
-	cost [][]float64,
-	placed []bool,
-	committed []int,
-	opts Options,
-) (index, resource int, best float64) {
-	index, resource, best = Unassigned, Unassigned, Forbidden
-	highest := math.Inf(-1)
-
-	for candidateIndex := range cost {
-		if placed[candidateIndex] {
-			continue
-		}
-
-		firstCost, firstResource, secondCost := Forbidden, Unassigned, Forbidden
-		for candidateResource, candidateCost := range cost[candidateIndex] {
-			if opts.MaxPerResource > 0 && committed[candidateResource] >= opts.MaxPerResource {
-				continue
-			}
-			if candidateCost >= Forbidden {
-				continue
-			}
-			if firstResource == Unassigned || candidateCost < firstCost {
-				secondCost = firstCost
-				firstCost, firstResource = candidateCost, candidateResource
-				continue
-			}
-			if candidateCost < secondCost {
-				secondCost = candidateCost
-			}
-		}
-
-		if firstResource == Unassigned {
-			continue
-		}
-
-		regret := math.Inf(1)
-		if secondCost < Forbidden {
-			regret = secondCost - firstCost
-		}
-
-		if regret > highest {
-			highest = regret
-			index, resource, best = candidateIndex, firstResource, firstCost
-		}
-	}
-
-	return index, resource, best
+	return o
 }

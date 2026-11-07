@@ -109,7 +109,14 @@ Optional: permissions a task needs, what happens after, common mistakes.
 
 **Frontmatter**
 - `path` (required): the page's route.
-- `aliases`: the words people use for this page that aren't in its name.
+- `aliases`: the words people use for this page that aren't in its name. An
+  alias claims a phrase for this page: give a phrase to the one page it means
+  (the dispatch console is the "dispatch board", not Shipments).
+  `agent_find_page` weighs each word by how few pages name, alias, describe or
+  title a task with it (notes and steps are left out of that count, since they
+  share "Needs read access to …"), so a word on many pages counts for little
+  and a long guide cannot win questions that belong to another page. Guard it
+  with `evals/guideselection.yaml` and its floors.
 - `related`: other pages with guides.
 - `covers`: other routes this guide documents (a `/new` page, a `:id` detail
   route) that don't get their own guide.

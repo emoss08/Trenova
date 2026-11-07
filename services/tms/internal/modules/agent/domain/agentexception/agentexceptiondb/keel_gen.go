@@ -91,18 +91,18 @@ type AgentExceptionsTable struct {
 // AgentExceptions references the agent_exceptions table.
 var AgentExceptions = &AgentExceptionsTable{
 	TableBase:       keel.TableBase{Ref: &agentExceptionsRef},
-	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agentExceptionsRef, Index: 0}}},
-	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agentExceptionsRef, Index: 1}}},
-	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agentExceptionsRef, Index: 2}}},
-	RunID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agentExceptionsRef, Index: 3}}},
-	Category:        ExceptionCategoryCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agentExceptionsRef, Index: 4}}},
-	Severity:        SeverityCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agentExceptionsRef, Index: 5}}},
-	SubjectType:     agentdb.SubjectTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agentExceptionsRef, Index: 6}}},
-	SubjectID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agentExceptionsRef, Index: 7}}},
+	ID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &agentExceptionsRef, Index: 0}}},
+	BusinessUnitID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &agentExceptionsRef, Index: 1}}},
+	OrganizationID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &agentExceptionsRef, Index: 2}}},
+	RunID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &agentExceptionsRef, Index: 3}}},
+	Category:        ExceptionCategoryCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &agentExceptionsRef, Index: 4}}},
+	Severity:        SeverityCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &agentExceptionsRef, Index: 5}}},
+	SubjectType:     agentdb.SubjectTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &agentExceptionsRef, Index: 6}}},
+	SubjectID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &agentExceptionsRef, Index: 7}}},
 	AttemptSummary:  keel.StringCol{Col: keel.Col{Ref: &agentExceptionsRef, Index: 8}},
 	Evidence:        keel.JSONBCol{Col: keel.Col{Ref: &agentExceptionsRef, Index: 9}},
 	BlastRadius:     keel.Int64Col{Col: keel.Col{Ref: &agentExceptionsRef, Index: 10}},
-	ResolutionState: ResolutionStateCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &agentExceptionsRef, Index: 11}}},
+	ResolutionState: ResolutionStateCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &agentExceptionsRef, Index: 11}}},
 	ResolutionNotes: keel.StringCol{Col: keel.Col{Ref: &agentExceptionsRef, Index: 12}},
 	Version:         keel.Int64Col{Col: keel.Col{Ref: &agentExceptionsRef, Index: 13}},
 	CreatedAt:       keel.Int64Col{Col: keel.Col{Ref: &agentExceptionsRef, Index: 14}},
@@ -113,18 +113,18 @@ var AgentExceptions = &AgentExceptionsTable{
 func BuildAgentExceptions(r *keel.Ref) *AgentExceptionsTable {
 	return &AgentExceptionsTable{
 		TableBase:       keel.TableBase{Ref: r},
-		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		RunID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		Category:        ExceptionCategoryCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		Severity:        SeverityCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		SubjectType:     agentdb.SubjectTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		SubjectID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		ID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		RunID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		Category:        ExceptionCategoryCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		Severity:        SeverityCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		SubjectType:     agentdb.SubjectTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		SubjectID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
 		AttemptSummary:  keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
 		Evidence:        keel.JSONBCol{Col: keel.Col{Ref: r, Index: 9}},
 		BlastRadius:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
-		ResolutionState: ResolutionStateCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
+		ResolutionState: ResolutionStateCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 11}}},
 		ResolutionNotes: keel.StringCol{Col: keel.Col{Ref: r, Index: 12}},
 		Version:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
 		CreatedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
@@ -152,8 +152,6 @@ func (t *AgentExceptionsTable) Get(ctx context.Context, db *keel.DB, key pulid.I
 
 // AgentExceptionsQuery is a query over agentexception.AgentException.
 type AgentExceptionsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*agentexception.AgentException] = (*AgentExceptionsTable)(nil)
 
 var _ keel.Query[*agentexception.AgentException] = (*AgentExceptionsQuery)(nil)
 
@@ -269,42 +267,42 @@ func (t *AgentExceptionsTable) Compute(col keel.Column, e keel.Expr) keel.Query[
 
 // Create inserts row.
 func (t *AgentExceptionsTable) Create(ctx context.Context, db *keel.DB, row *agentexception.AgentException) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *AgentExceptionsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*agentexception.AgentException) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *AgentExceptionsTable) Save(ctx context.Context, db *keel.DB, row *agentexception.AgentException, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *AgentExceptionsTable) SaveExcept(ctx context.Context, db *keel.DB, row *agentexception.AgentException, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *AgentExceptionsTable) DeleteRow(ctx context.Context, db *keel.DB, row *agentexception.AgentException) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *AgentExceptionsTable) Upsert(ctx context.Context, db *keel.DB, rows []*agentexception.AgentException, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *AgentExceptionsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*agentexception.AgentException, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *AgentExceptionsTable) Copy(ctx context.Context, db *keel.DB, rows []*agentexception.AgentException) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -476,37 +474,45 @@ func (q *AgentExceptionsQuery) Clone() keel.Query[*agentexception.AgentException
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *AgentExceptionsQuery) One(ctx context.Context, db *keel.DB) (*agentexception.AgentException, error) {
-	return keel.One[*agentexception.AgentException](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*agentexception.AgentException)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *AgentExceptionsQuery) First(ctx context.Context, db *keel.DB) (*agentexception.AgentException, error) {
-	return keel.First[*agentexception.AgentException](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*agentexception.AgentException)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *AgentExceptionsQuery) List(ctx context.Context, db *keel.DB) ([]*agentexception.AgentException, error) {
-	return keel.List[*agentexception.AgentException](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*agentexception.AgentException)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *AgentExceptionsQuery) All(ctx context.Context, db *keel.DB) ([]*agentexception.AgentException, error) {
-	return keel.All[*agentexception.AgentException](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*agentexception.AgentException)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *AgentExceptionsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*agentexception.AgentException, error) {
-	return keel.UpdateReturning[*agentexception.AgentException](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*agentexception.AgentException)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *AgentExceptionsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*agentexception.AgentException], error) {
-	return keel.PageOf[*agentexception.AgentException](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*agentexception.AgentException])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *AgentExceptionsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*agentexception.AgentException) error) error {
-	return keel.Each[*agentexception.AgentException](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*agentexception.AgentException)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newAgentException() unsafe.Pointer { return unsafe.Pointer(new(agentexception.AgentException)) }
@@ -682,98 +688,98 @@ var enumSeverity = [...]schema.EnumValue{
 }
 
 // ExceptionCategoryCol is a column of agentexception.ExceptionCategory values.
-type ExceptionCategoryCol struct{ keel.StringCol }
+type ExceptionCategoryCol struct{ keel.TypedStringCol }
 
 func (c ExceptionCategoryCol) Eq(v agentexception.ExceptionCategory) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c ExceptionCategoryCol) Ne(v agentexception.ExceptionCategory) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c ExceptionCategoryCol) Gt(v agentexception.ExceptionCategory) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c ExceptionCategoryCol) Gte(v agentexception.ExceptionCategory) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c ExceptionCategoryCol) Lt(v agentexception.ExceptionCategory) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c ExceptionCategoryCol) Lte(v agentexception.ExceptionCategory) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c ExceptionCategoryCol) IsDistinctFrom(v agentexception.ExceptionCategory) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ExceptionCategoryCol) Between(lo, hi agentexception.ExceptionCategory) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c ExceptionCategoryCol) To(v agentexception.ExceptionCategory) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c ExceptionCategoryCol) In(vs ...agentexception.ExceptionCategory) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ExceptionCategoryCol) NotIn(vs ...agentexception.ExceptionCategory) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // ResolutionStateCol is a column of agentexception.ResolutionState values.
-type ResolutionStateCol struct{ keel.StringCol }
+type ResolutionStateCol struct{ keel.TypedStringCol }
 
 func (c ResolutionStateCol) Eq(v agentexception.ResolutionState) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c ResolutionStateCol) Ne(v agentexception.ResolutionState) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c ResolutionStateCol) Gt(v agentexception.ResolutionState) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c ResolutionStateCol) Gte(v agentexception.ResolutionState) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c ResolutionStateCol) Lt(v agentexception.ResolutionState) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c ResolutionStateCol) Lte(v agentexception.ResolutionState) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c ResolutionStateCol) IsDistinctFrom(v agentexception.ResolutionState) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ResolutionStateCol) Between(lo, hi agentexception.ResolutionState) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c ResolutionStateCol) To(v agentexception.ResolutionState) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c ResolutionStateCol) In(vs ...agentexception.ResolutionState) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ResolutionStateCol) NotIn(vs ...agentexception.ResolutionState) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // SeverityCol is a column of agentexception.Severity values.
-type SeverityCol struct{ keel.StringCol }
+type SeverityCol struct{ keel.TypedStringCol }
 
-func (c SeverityCol) Eq(v agentexception.Severity) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c SeverityCol) Ne(v agentexception.Severity) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c SeverityCol) Gt(v agentexception.Severity) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c SeverityCol) Gte(v agentexception.Severity) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c SeverityCol) Lt(v agentexception.Severity) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c SeverityCol) Lte(v agentexception.Severity) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c SeverityCol) Eq(v agentexception.Severity) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c SeverityCol) Ne(v agentexception.Severity) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c SeverityCol) Gt(v agentexception.Severity) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c SeverityCol) Gte(v agentexception.Severity) keel.Pred { return c.Text().Gte(string(v)) }
+func (c SeverityCol) Lt(v agentexception.Severity) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c SeverityCol) Lte(v agentexception.Severity) keel.Pred { return c.Text().Lte(string(v)) }
 func (c SeverityCol) IsDistinctFrom(v agentexception.Severity) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c SeverityCol) Between(lo, hi agentexception.Severity) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c SeverityCol) To(v agentexception.Severity) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c SeverityCol) To(v agentexception.Severity) keel.Assignment { return c.Text().To(string(v)) }
 func (c SeverityCol) In(vs ...agentexception.Severity) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c SeverityCol) NotIn(vs ...agentexception.Severity) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

@@ -1,4 +1,4 @@
-//! The imaging worker: stateless, tenant-agnostic document and image compute
+//! The imaging worker: stateless document and image compute
 //! for the TMS, behind the `trenova.imaging.v1` gRPC contract.
 //!
 //! The binary is two programs. `serve` is the supervisor: tokio and tonic

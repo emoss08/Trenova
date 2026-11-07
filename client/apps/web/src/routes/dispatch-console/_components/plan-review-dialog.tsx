@@ -1,13 +1,12 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import type {
+  DispatchFinding,
   DispatchPlan,
   DispatchPlannedAssignment,
   DispatchUncoveredMove,
 } from "@/lib/graphql/dispatch-console";
-import type { DispatchAssignMoveInput } from "@trenova/graphql/generated/graphql";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
-import { Checkbox } from "@trenova/shared/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -17,109 +16,86 @@ import {
   DialogTitle,
 } from "@trenova/shared/components/ui/dialog";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
-import { cn } from "@trenova/shared/lib/utils";
 import { AlertTriangleIcon, SearchXIcon } from "@trenova/shared/components/icons";
 import { useMemo, useState } from "react";
-import { formatMiles, scoreTone, verdictMeta } from "./dispatch-vocabulary";
+import { verdictMeta } from "./dispatch-vocabulary";
+import { formatCents, UNCOVERED_REASON_LABELS } from "./cost-vocabulary";
 import { FindingList } from "./finding-list";
-import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
+import { NovaBadge } from "@trenova/shared/components/ui/nova-badge";
 
-function assignable(assignment: DispatchPlannedAssignment): boolean {
-  return Boolean(assignment.tractorId) && !assignment.score.blocked;
-}
-
-function assignableMoveIds(plan: DispatchPlan): ReadonlySet<string> {
-  return new Set(plan.assignments.filter(assignable).map((assignment) => assignment.moveId));
-}
-
-function PlannedAssignmentRow({
-  assignment,
-  checked,
-  onCheckedChange,
-}: {
-  assignment: DispatchPlannedAssignment;
-  checked: boolean;
-  onCheckedChange: (checked: boolean) => void;
-}) {
+function PlannedAssignmentRow({ assignment }: { assignment: DispatchPlannedAssignment }) {
   const t = useT();
 
-  const verdict = verdictMeta(assignment.score.verdict);
-  const canAssign = assignable(assignment);
+  const candidate = assignment.candidate;
+  const verdict = verdictMeta(candidate.verdict);
+  const next = assignment.alternatives[0];
 
   return (
-    <label
-      className={cn(
-        "flex cursor-pointer items-start gap-2 border-b px-3 py-2 transition-colors last:border-b-0",
-        checked ? "bg-brand/[4%]" : "hover:bg-muted/50",
-        !canAssign && "cursor-not-allowed opacity-60",
-      )}
-    >
-      <Checkbox
-        className="mt-0.5"
-        checked={checked}
-        disabled={!canAssign}
-        onCheckedChange={(value) => onCheckedChange(value === true)}
-        aria-label={t("Include {0} → {1}", assignment.proNumber, assignment.workerName)}
-      />
+    <div className="flex items-start gap-2 border-b px-3 py-2 last:border-b-0">
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         <div className="flex items-center gap-1.5">
           <span className="truncate font-mono text-xs font-semibold">{assignment.proNumber}</span>
-          <span className="text-muted-foreground text-xs">→</span>
+          <span className="text-muted-foreground text-xs" aria-hidden>
+            →
+          </span>
           <span className="truncate text-xs">{assignment.workerName}</span>
-          <span
-            className={cn(
-              "ml-auto shrink-0 text-xs font-semibold tabular-nums",
-              scoreTone(assignment.score.score),
-            )}
-          >
-            {assignment.score.score}
+          <span className="ml-auto shrink-0 font-mono text-xs tabular-nums">
+            {formatCents(assignment.planCostCents)}
           </span>
           <Badge variant={verdict.variant} className="h-4 shrink-0 rounded-md px-1 text-3xs">
             {t(verdict.label)}
           </Badge>
         </div>
         <span className="text-muted-foreground text-2xs">
-          {assignment.rationale}
-          {assignment.score.deadheadMiles != null &&
-            ` ${t("· {0} empty", formatMiles(assignment.score.deadheadMiles))}`}
-          {` ${t("· {0}% confidence", Math.round(assignment.confidence * 100))}`}
+          {next
+            ? t(
+                "Worth {0} to cover · {1} instead adds {2} · {3}% confidence",
+                formatCents(assignment.coveragePriceCents),
+                next.workerName,
+                formatCents(next.extraCents),
+                Math.round(assignment.confidence * 100),
+              )
+            : t(
+                "Worth {0} to cover · {1}% confidence",
+                formatCents(assignment.coveragePriceCents),
+                Math.round(assignment.confidence * 100),
+              )}
         </span>
-        {!assignment.tractorId && (
-          <span className="text-2xs text-danger-foreground">
-            {t("No tractor available for this driver — cannot be applied.")}
-          </span>
-        )}
-        {assignment.score.blocked && <FindingList findings={assignment.score.findings} limit={2} />}
+        {candidate.blocked && <FindingList findings={candidate.findings} limit={2} />}
       </div>
-    </label>
+    </div>
   );
 }
 
 type UncoveredGroup = {
-  reason: string;
-  findings: DispatchUncoveredMove["bestBlockedFindings"];
+  reason: DispatchUncoveredMove["reason"];
+  findings: DispatchFinding[];
   proNumbers: string[];
 };
 
 /**
  * Twenty moves blocked by the same exhausted driver is one problem, not twenty. Uncovered
- * moves are grouped by their shared cause so the dispatcher reads each reason once and
+ * moves are grouped by why they went uncovered so the dispatcher reads each reason once and
  * sees exactly which freight it strands.
  */
 function groupUncovered(uncovered: readonly DispatchUncoveredMove[]): UncoveredGroup[] {
   const groups = new Map<string, UncoveredGroup>();
   for (const move of uncovered) {
-    const signature =
-      move.reason +
-      "|" +
-      move.bestBlockedFindings.map((finding) => `${finding.code}:${finding.message}`).join("|");
-    const existing = groups.get(signature);
+    const blocking = (move.bestCandidate?.findings ?? []).filter(
+      (finding) => finding.severity === "Block",
+    );
+    const existing = groups.get(move.reason);
     if (existing) {
       existing.proNumbers.push(move.proNumber);
+      for (const finding of blocking) {
+        if (!existing.findings.some((known) => known.code === finding.code)) {
+          existing.findings.push(finding);
+        }
+      }
     } else {
-      groups.set(signature, {
+      groups.set(move.reason, {
         reason: move.reason,
-        findings: move.bestBlockedFindings,
+        findings: [...blocking],
         proNumbers: [move.proNumber],
       });
     }
@@ -139,7 +115,7 @@ function UncoveredGroupCard({ group }: { group: UncoveredGroup }) {
   return (
     <div className="flex flex-col gap-1.5 px-3 py-2.5">
       <div className="flex items-baseline justify-between gap-2">
-        <span className="text-xs font-medium">{group.reason}</span>
+        <span className="text-xs font-medium">{UNCOVERED_REASON_LABELS[group.reason]}</span>
         <span className="text-muted-foreground shrink-0 text-2xs tabular-nums">
           {t("{0, plural, one {# move} other {# moves}}", group.proNumbers.length)}
         </span>
@@ -169,73 +145,22 @@ function UncoveredGroupCard({ group }: { group: UncoveredGroup }) {
 }
 
 /**
- * The optimizer's plan is a proposal, never a fait accompli: every pairing is reviewed,
- * individually deselectable, and applied through the same bulk-assign path a manual
- * assignment uses.
+ * A shadow plan: what Nova would have proposed while the organization watches it without
+ * letting it act. Nothing was written, so nothing here writes; it is kept for review rather
+ * than reduced to a toast, so the dispatcher can judge the pairings before trusting them.
  */
-export function PlanReviewDialog({
-  plan,
-  onClose,
-  onApply,
-  isAssigning,
-}: {
-  plan: DispatchPlan;
-  onClose: () => void;
-  onApply: (input: DispatchAssignMoveInput[]) => void;
-  isAssigning: boolean;
-}) {
+export function PlanReviewDialog({ plan, onClose }: { plan: DispatchPlan; onClose: () => void }) {
   const t = useT();
 
-  const [checkedMoveIds, setCheckedMoveIds] = useState(() => assignableMoveIds(plan));
-  const [prevPlan, setPrevPlan] = useState(plan);
-  if (prevPlan !== plan) {
-    setPrevPlan(plan);
-    setCheckedMoveIds(assignableMoveIds(plan));
-  }
-
-  const selected = useMemo(
-    () => plan.assignments.filter((assignment) => checkedMoveIds.has(assignment.moveId)),
-    [plan, checkedMoveIds],
-  );
-
   const uncoveredGroups = useMemo(() => groupUncovered(plan.uncovered), [plan]);
-
-  if (plan.shadowMode) return null;
-  if (plan.assignments.length === 0 && plan.uncovered.length === 0) return null;
-
-  const nothingToApply = !plan.assignments.some(assignable);
-
-  const toggle = (moveId: string, checked: boolean) => {
-    setCheckedMoveIds((previous) => {
-      const next = new Set(previous);
-      if (checked) {
-        next.add(moveId);
-      } else {
-        next.delete(moveId);
-      }
-      return next;
-    });
-  };
-
-  const apply = () => {
-    onApply(
-      selected.map((assignment) => ({
-        moveId: assignment.moveId,
-        primaryWorkerId: assignment.workerId,
-        tractorId: assignment.tractorId as string,
-        trailerId: assignment.trailerId ?? undefined,
-        reassign: false,
-      })),
-    );
-  };
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent size="lg" className="flex max-h-[80vh] flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-1.5">
-            <AssistMark className="text-brand size-4" aria-hidden />
-            {t("Auto-assign proposal")}
+            <NovaBadge size="md" />
+            {t("What Nova would have proposed")}
           </DialogTitle>
           <DialogDescription className="flex flex-wrap items-center gap-x-1.5">
             <span className="text-foreground font-medium tabular-nums">
@@ -248,7 +173,7 @@ export function PlanReviewDialog({
               </>
             )}
             <span aria-hidden>·</span>
-            <span>{t("Nothing is written until you apply.")}</span>
+            <span>{t("Shadow mode is on, so nothing was proposed or assigned.")}</span>
           </DialogDescription>
         </DialogHeader>
 
@@ -258,19 +183,16 @@ export function PlanReviewDialog({
               <SearchXIcon className="text-muted-foreground size-5" aria-hidden />
               <span className="text-xs font-medium">{t("No pairings to propose")}</span>
               <span className="text-muted-foreground max-w-sm text-xs leading-snug">
-                {t(
-                  "Every candidate was blocked or out of range for the moves in this window. The reasons are grouped below.",
-                )}
+                {plan.uncovered.length > 0
+                  ? t(
+                      "Every candidate was blocked or out of range for the moves in this window. The reasons are grouped below.",
+                    )
+                  : t("No uncovered moves in this window.")}
               </span>
             </div>
           ) : (
             plan.assignments.map((assignment) => (
-              <PlannedAssignmentRow
-                key={assignment.moveId}
-                assignment={assignment}
-                checked={checkedMoveIds.has(assignment.moveId)}
-                onCheckedChange={(checked) => toggle(assignment.moveId, checked)}
-              />
+              <PlannedAssignmentRow key={assignment.moveId} assignment={assignment} />
             ))
           )}
           {uncoveredGroups.length > 0 && (
@@ -289,18 +211,7 @@ export function PlanReviewDialog({
         </ScrollArea>
 
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            {nothingToApply ? t("Close") : t("Discard plan")}
-          </Button>
-          {!nothingToApply && (
-            <Button
-              disabled={selected.length === 0 || isAssigning}
-              onClick={apply}
-              isLoading={isAssigning}
-            >
-              {t("Assign {0, plural, one {# move} other {# moves}}", selected.length)}
-            </Button>
-          )}
+          <Button onClick={onClose}>{t("Close")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

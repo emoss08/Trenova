@@ -74,7 +74,13 @@ var table = memtable.New(memtable.Config[row]{
 
 func rows() []row {
 	return []row{
-		{name: "delta", status: "delivered", tags: []string{"hazmat"}, active: true, score: score(3)},
+		{
+			name:   "delta",
+			status: "delivered",
+			tags:   []string{"hazmat"},
+			active: true,
+			score:  score(3),
+		},
 		{name: "alpha", status: "in_transit", tags: []string{"team", "hazmat"}, score: score(9)},
 		{name: "charlie", status: "in_transit", active: true},
 		{name: "bravo", status: "delivered", tags: []string{"team"}, score: score(5)},
@@ -117,6 +123,23 @@ func TestListOrdersPagesAndCounts(t *testing.T) {
 	assert.Equal(t, []string{"delta"}, names(second))
 	assert.False(t, second.HasNextPage)
 	assert.Nil(t, second.TotalCount)
+}
+
+var otherTenant = pagination.TenantInfo{
+	OrgID: "org_0000000000000000000000000",
+	BuID:  "bu_00000000000000000000000000",
+}
+
+func TestListPagesOnlyWithinTheTenantACursorWasIssuedTo(t *testing.T) {
+	t.Parallel()
+
+	first := list(t, memtable.Request{Tenant: otherTenant, First: 3})
+	second := list(t, memtable.Request{Tenant: otherTenant, First: 3, After: first.Cursors[2]})
+	assert.Equal(t, []string{"delta"}, names(second))
+
+	_, err := table.List(rows(), &memtable.Request{First: 3, After: first.Cursors[2]})
+	require.Error(t, err)
+	assert.True(t, errortypes.IsError(err))
 }
 
 func TestListMatchesEnumsInEitherSpelling(t *testing.T) {
@@ -203,7 +226,25 @@ func TestListRefusesWhatItCannotAnswer(t *testing.T) {
 		"unsortable field": {
 			Sort: []domaintypes.SortField{{Field: "tags", Direction: dbtype.SortDirectionAsc}},
 		},
-		"foreign cursor":  {After: pagination.EncodeOffsetCursor("other_rows", 1)},
+		"foreign cursor": {
+			After: pagination.EncodeOffsetCursor(
+				pagination.BindCursor(pagination.TenantInfo{}, "other_rows", nil),
+				1,
+			),
+		},
+		"other tenant's cursor": {
+			After: pagination.EncodeOffsetCursor(
+				pagination.BindCursor(otherTenant, "test_rows", nil),
+				1,
+			),
+		},
+		"cursor of another sort": {
+			Sort: []domaintypes.SortField{{Field: "name", Direction: dbtype.SortDirectionDesc}},
+			After: pagination.EncodeOffsetCursor(
+				pagination.BindCursor(pagination.TenantInfo{}, "test_rows", nil),
+				1,
+			),
+		},
 		"search too long": {Query: string(make([]byte, memtable.MaxQueryLength+1))},
 	} {
 		_, err := table.List(rows(), &req)

@@ -8,7 +8,7 @@ import { type ReactNode, useEffect, useId, useMemo, useRef, useState } from "rea
 import { ERROR_ICONS, ERROR_TONE_WELL, errorCopy } from "./error-copy";
 import { ErrorDetails, ErrorReference } from "./error-details";
 
-export type ErrorStateLayout = "section" | "compact" | "screen";
+export type ErrorStateLayout = "section" | "compact" | "screen" | "sheet";
 
 export type ErrorStateProps = {
   error: unknown;
@@ -24,6 +24,9 @@ export type ErrorStateProps = {
   description?: string;
   // actions render after the built-in ones, for a way forward only the caller knows.
   actions?: ReactNode;
+  // sketch is the "sheet" layout's faint drawing of what the surface holds (EmptyTableSketch
+  // for a list), so a failed read sits where the empty one would and reads as that place.
+  sketch?: ReactNode;
   className?: string;
 };
 
@@ -137,6 +140,7 @@ export function ErrorState({
   title,
   description: descriptionOverride,
   actions,
+  sketch,
   className,
 }: ErrorStateProps) {
   const t = useT();
@@ -193,6 +197,46 @@ export function ErrorState({
           componentStack={componentStack}
           className="pl-9"
         />
+      </section>
+    );
+  }
+
+  if (layout === "sheet") {
+    return (
+      <section
+        role="alert"
+        aria-labelledby={titleId}
+        data-slot="error-state"
+        data-kind={resolved.kind}
+        className={cn(
+          "cc-fade-in flex w-full flex-col items-center gap-5 px-4 py-8 text-center",
+          className,
+        )}
+      >
+        {sketch ? (
+          <div
+            aria-hidden
+            className="w-full max-w-2xl [mask-image:linear-gradient(to_bottom,black_35%,transparent)]"
+          >
+            {sketch}
+          </div>
+        ) : null}
+        <div className="flex max-w-md flex-col items-center gap-1.5">
+          <span
+            aria-hidden
+            className={cn("mb-1 flex size-8 items-center justify-center rounded-md border", well)}
+          >
+            <Icon className="size-4" />
+          </span>
+          <h3 id={titleId} className="text-sm font-medium">
+            {heading}
+          </h3>
+          <p className="text-muted-foreground text-xs leading-relaxed text-pretty">{body}</p>
+          {resolved.traceId ? <ErrorReference traceId={resolved.traceId} className="mt-1" /> : null}
+          <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
+            <ErrorActions description={resolved} onRetry={onRetry} size="sm" extra={actions} />
+          </div>
+        </div>
       </section>
     );
   }

@@ -77,14 +77,14 @@ type SettingVersionsTable struct {
 // SettingVersions references the ai_setting_versions table.
 var SettingVersions = &SettingVersionsTable{
 	TableBase:      keel.TableBase{Ref: &settingVersionsRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settingVersionsRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settingVersionsRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settingVersionsRef, Index: 2}}},
-	Kind:           KindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settingVersionsRef, Index: 3}}},
-	SubjectID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settingVersionsRef, Index: 4}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &settingVersionsRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &settingVersionsRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &settingVersionsRef, Index: 2}}},
+	Kind:           KindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &settingVersionsRef, Index: 3}}},
+	SubjectID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &settingVersionsRef, Index: 4}}},
 	Version:        keel.Int64Col{Col: keel.Col{Ref: &settingVersionsRef, Index: 5}},
 	Snapshot:       keel.JSONBCol{Col: keel.Col{Ref: &settingVersionsRef, Index: 6}},
-	AuthorID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settingVersionsRef, Index: 7}}},
+	AuthorID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &settingVersionsRef, Index: 7}}},
 	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &settingVersionsRef, Index: 8}},
 }
 
@@ -92,14 +92,14 @@ var SettingVersions = &SettingVersionsTable{
 func BuildSettingVersions(r *keel.Ref) *SettingVersionsTable {
 	return &SettingVersionsTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		Kind:           KindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		SubjectID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		Kind:           KindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		SubjectID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		Version:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 5}},
 		Snapshot:       keel.JSONBCol{Col: keel.Col{Ref: r, Index: 6}},
-		AuthorID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		AuthorID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
 		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
 	}
 }
@@ -124,8 +124,6 @@ func (t *SettingVersionsTable) Get(ctx context.Context, db *keel.DB, key pulid.I
 
 // SettingVersionsQuery is a query over settingversion.SettingVersion.
 type SettingVersionsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*settingversion.SettingVersion] = (*SettingVersionsTable)(nil)
 
 var _ keel.Query[*settingversion.SettingVersion] = (*SettingVersionsQuery)(nil)
 
@@ -241,42 +239,42 @@ func (t *SettingVersionsTable) Compute(col keel.Column, e keel.Expr) keel.Query[
 
 // Create inserts row.
 func (t *SettingVersionsTable) Create(ctx context.Context, db *keel.DB, row *settingversion.SettingVersion) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *SettingVersionsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*settingversion.SettingVersion) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *SettingVersionsTable) Save(ctx context.Context, db *keel.DB, row *settingversion.SettingVersion, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *SettingVersionsTable) SaveExcept(ctx context.Context, db *keel.DB, row *settingversion.SettingVersion, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *SettingVersionsTable) DeleteRow(ctx context.Context, db *keel.DB, row *settingversion.SettingVersion) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *SettingVersionsTable) Upsert(ctx context.Context, db *keel.DB, rows []*settingversion.SettingVersion, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *SettingVersionsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*settingversion.SettingVersion, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *SettingVersionsTable) Copy(ctx context.Context, db *keel.DB, rows []*settingversion.SettingVersion) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -448,37 +446,45 @@ func (q *SettingVersionsQuery) Clone() keel.Query[*settingversion.SettingVersion
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *SettingVersionsQuery) One(ctx context.Context, db *keel.DB) (*settingversion.SettingVersion, error) {
-	return keel.One[*settingversion.SettingVersion](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*settingversion.SettingVersion)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *SettingVersionsQuery) First(ctx context.Context, db *keel.DB) (*settingversion.SettingVersion, error) {
-	return keel.First[*settingversion.SettingVersion](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*settingversion.SettingVersion)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *SettingVersionsQuery) List(ctx context.Context, db *keel.DB) ([]*settingversion.SettingVersion, error) {
-	return keel.List[*settingversion.SettingVersion](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*settingversion.SettingVersion)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *SettingVersionsQuery) All(ctx context.Context, db *keel.DB) ([]*settingversion.SettingVersion, error) {
-	return keel.All[*settingversion.SettingVersion](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*settingversion.SettingVersion)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *SettingVersionsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*settingversion.SettingVersion, error) {
-	return keel.UpdateReturning[*settingversion.SettingVersion](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*settingversion.SettingVersion)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *SettingVersionsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*settingversion.SettingVersion], error) {
-	return keel.PageOf[*settingversion.SettingVersion](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*settingversion.SettingVersion])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *SettingVersionsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*settingversion.SettingVersion) error) error {
-	return keel.Each[*settingversion.SettingVersion](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*settingversion.SettingVersion)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newSettingVersion() unsafe.Pointer { return unsafe.Pointer(new(settingversion.SettingVersion)) }
@@ -561,22 +567,24 @@ var enumKind = [...]schema.EnumValue{
 }
 
 // KindCol is a column of settingversion.Kind values.
-type KindCol struct{ keel.StringCol }
+type KindCol struct{ keel.TypedStringCol }
 
-func (c KindCol) Eq(v settingversion.Kind) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c KindCol) Ne(v settingversion.Kind) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c KindCol) Gt(v settingversion.Kind) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c KindCol) Gte(v settingversion.Kind) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c KindCol) Lt(v settingversion.Kind) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c KindCol) Lte(v settingversion.Kind) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c KindCol) Eq(v settingversion.Kind) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c KindCol) Ne(v settingversion.Kind) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c KindCol) Gt(v settingversion.Kind) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c KindCol) Gte(v settingversion.Kind) keel.Pred { return c.Text().Gte(string(v)) }
+func (c KindCol) Lt(v settingversion.Kind) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c KindCol) Lte(v settingversion.Kind) keel.Pred { return c.Text().Lte(string(v)) }
 func (c KindCol) IsDistinctFrom(v settingversion.Kind) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c KindCol) Between(lo, hi settingversion.Kind) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c KindCol) To(v settingversion.Kind) keel.Assignment { return c.StringCol.To(string(v)) }
-func (c KindCol) In(vs ...settingversion.Kind) keel.Pred   { return c.StringCol.In(keel.Strings(vs)...) }
+func (c KindCol) To(v settingversion.Kind) keel.Assignment { return c.Text().To(string(v)) }
+func (c KindCol) In(vs ...settingversion.Kind) keel.Pred {
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
+}
 func (c KindCol) NotIn(vs ...settingversion.Kind) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

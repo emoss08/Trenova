@@ -9,6 +9,7 @@ import (
 	agentextensioninfra "github.com/emoss08/trenova/internal/infrastructure/agentextension"
 	carrierintelinfra "github.com/emoss08/trenova/internal/infrastructure/carrierintel"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/config/securityconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/fuelcard"
 	"github.com/emoss08/trenova/internal/infrastructure/reportengine"
 	reportingrender "github.com/emoss08/trenova/internal/infrastructure/reporting/render"
@@ -31,6 +32,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement"
 	"github.com/emoss08/trenova/internal/modules/workforce"
 	"github.com/emoss08/trenova/internal/modules/workspace"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/fx"
 )
 
@@ -38,6 +40,7 @@ func Options() fx.Option {
 	return fx.Options(
 		config.Module,
 		config.Hooks(),
+		fx.Invoke(installCursorKey),
 		infrastructure.ObservabilityModule,
 		infrastructure.WasmModulesModule,
 		infrastructure.RedisModule,
@@ -80,4 +83,8 @@ func Options() fx.Option {
 		turnstream.Module,
 		completionrouter.Module,
 	)
+}
+
+func installCursorKey(security *securityconfig.Config) {
+	pagination.InstallCursorKey(security.Session.Secret)
 }

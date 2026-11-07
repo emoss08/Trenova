@@ -175,8 +175,14 @@ struct.
   one. The order is the request's sorts (relation paths included, through a queryable to-one or
   pick relation), `createdAt desc` when there are none, then `id`; keel appends the rest of the
   primary key, and nullable or joined sort keys put NULLs last. The cursor
-  (`pagination.EncodeKeysetCursor`) carries keel's page cursor and the sort shape; a cursor read
-  under another sort is a validation error on `after`. Every edge gets its own cursor
+  (`pagination.EncodeKeysetCursor`) carries keel's page cursor sealed with a truncated HMAC over
+  the tenant, the table and the sort shape (`pagination.BindCursor`); a cursor that does not verify
+  under the request's own binding, edited or read under another sort, is a validation error on
+  `after`. Every cursor the server issues is sealed this way, whatever it carries: an offset
+  (`EncodeOffsetCursor`), an agent tool's key (`EncodeKeyCursor`), a position
+  (`EncodePositionCursor`) or a repository's own payload (`SealCursor`). The key derives from
+  `security.session.secret` (`InstallCursorKey`, called at startup), so rotating that secret
+  invalidates open cursors. Never hand out a cursor through `base64` alone. Every edge gets its own cursor
   (`Page.CursorAt`, surfaced as `CursorListResult.EdgeCursors`). The page and its count share one
   round trip, and the count runs only when `IncludeTotalCount` is set. The count is exact up to
   `pagination.ExactTotalUpTo` (10,000) rows and the planner's estimate above
@@ -750,7 +756,7 @@ domain package it fills), name its `After` dependencies, and list any data file 
 so editing the file reruns it.
 
 Volume data for load and UI testing is not a seed: `task db-seed-volume [shipments=N months=M
-seed=S]` (`trenova-devdb volume`, package `internal/seeds/volume`) adds a large, consistent data
+lanes=P seed=S]` (`trenova-devdb volume`, package `internal/seeds/volume`) adds a large, consistent data
 set to the development organization on top of the fixtures, in a tenant scope, and refuses a
 database not marked development or test. It streams rows with `COPY` (`Handle.Copy`), numbers
 records through `pkg/seqgen` like the application (over keel-backed sequence and format ports),
@@ -775,7 +781,12 @@ and the intelligence page agree. The rest are approved, waived for a coded reaso
 people, disputed or still waiting, by age. A stop's dwell comes from its facility's dock pace
 (fixed by a hash of the location code, a sixth of docks slow, some drifting worse or better over
 the history), early-morning and Friday arrivals, and drop handling on about a sixth of deliveries.
-`billingvolume` settles invoices the way a
+A share of shipments (`lanes`, 40% by default) comes from lane programs
+(`volumegen.PlanLanePrograms`): a handful of anchor customers, each shipping from one origin in its
+own map area to a few destinations with a known weekly rhythm (weekday × 4-hour UTC slot weights,
+a month-end push on one) and a booking-lead mix, picked from the faker stream so a seed reproduces
+them; the phase logs each program. They give the demand forecast and the dispatch optimizer
+strong, known patterns to find. `billingvolume` settles invoices the way a
 carrier's receivables age (most paid by 30 days past due, under 2% left after 90) and holds a
 quarter of those still unpaid two weeks past due under an open dispute. A new phase is appended after its dependencies,
 so the faker stream, and with it every earlier table, stays the same for a seed. When an entity

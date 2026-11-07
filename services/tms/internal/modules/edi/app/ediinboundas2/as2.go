@@ -36,6 +36,7 @@ const (
 )
 
 type ReceiveAS2MessageRequest struct {
+	InboundToken                   string
 	From                           string
 	To                             string
 	MessageID                      string
@@ -82,19 +83,11 @@ func (s *Service) receiveAS2Message(
 			"AS2-From and AS2-To headers are required",
 		)
 	}
-	if as2.IsMDN(req.ContentType, req.Body) {
-		if err := s.delivery.ApplyAS2MDN(ctx, &edidelivery.ApplyAS2MDNRequest{
-			ContentType: req.ContentType,
-			Body:        req.Body,
-		}); err != nil {
-			return nil, err
-		}
-		return &ReceiveAS2MessageResult{IsMDN: true}, nil
-	}
 
-	profile, err := s.profileRepo.GetActiveAS2ProfileByIdentifiers(
+	profile, err := s.profileRepo.GetActiveAS2ProfileForInboundURL(
 		ctx,
-		edipartnerports.GetActiveAS2ProfileByIdentifiersRequest{
+		edipartnerports.GetActiveAS2ProfileForInboundURLRequest{
+			InboundToken: req.InboundToken,
 			LocalAS2ID:   strings.TrimSpace(req.To),
 			PartnerAS2ID: strings.TrimSpace(req.From),
 		},
@@ -114,6 +107,17 @@ func (s *Service) receiveAS2Message(
 		OrganizationID: profile.OrganizationID,
 		BusinessUnitID: profile.BusinessUnitID,
 	})
+	if as2.IsMDN(req.ContentType, req.Body) {
+		if err = s.delivery.ApplyAS2MDN(ctx, &edidelivery.ApplyAS2MDNRequest{
+			PartnerID:   profile.EDIPartnerID,
+			ContentType: req.ContentType,
+			Body:        req.Body,
+		}); err != nil {
+			return nil, err
+		}
+		return &ReceiveAS2MessageResult{IsMDN: true}, nil
+	}
+
 	secrets, err := s.secrets.TransportSecrets(profile)
 	if err != nil {
 		return nil, err

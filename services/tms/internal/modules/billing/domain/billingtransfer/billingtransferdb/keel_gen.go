@@ -122,16 +122,16 @@ type BillingTransferRunsTable struct {
 // BillingTransferRuns references the billing_transfer_runs table.
 var BillingTransferRuns = &BillingTransferRunsTable{
 	TableBase:                   keel.TableBase{Ref: &billingTransferRunsRef},
-	ID:                          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 0}}},
-	BusinessUnitID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 1}}},
-	OrganizationID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 2}}},
-	RequestedByID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 3}}},
-	SourceRunID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 4}}},
-	Status:                      RunStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 5}}},
-	Scope:                       RunScopeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 6}}},
+	ID:                          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 0}}},
+	BusinessUnitID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 1}}},
+	OrganizationID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 2}}},
+	RequestedByID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 3}}},
+	SourceRunID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 4}}},
+	Status:                      RunStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 5}}},
+	Scope:                       RunScopeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 6}}},
 	SearchQuery:                 keel.StringCol{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 7}},
-	ShipmentStatus:              keelkinds.ShipmentvocabStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 8}}},
-	BillType:                    keelkinds.BillingvocabBillTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 9}}},
+	ShipmentStatus:              keelkinds.ShipmentvocabStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 8}}},
+	BillType:                    keelkinds.BillingvocabBillTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 9}}},
 	MarkCompletedReadyToInvoice: keel.BoolCol{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 10}},
 	TotalCount:                  keel.Int64Col{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 11}},
 	ProcessedCount:              keel.Int64Col{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 12}},
@@ -144,7 +144,7 @@ var BillingTransferRuns = &BillingTransferRunsTable{
 	FailureCounts:               keel.JSONBCol{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 19}},
 	FailureMessage:              keel.StringCol{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 20}},
 	CancelRequestedAt:           keel.Int64Col{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 21}},
-	CancelRequestedByID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 22}}},
+	CancelRequestedByID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 22}}},
 	TemporalWorkflowID:          keel.StringCol{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 23}},
 	TemporalRunID:               keel.StringCol{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 24}},
 	QueuedAt:                    keel.Int64Col{Col: keel.Col{Ref: &billingTransferRunsRef, Index: 25}},
@@ -159,16 +159,16 @@ var BillingTransferRuns = &BillingTransferRunsTable{
 func BuildBillingTransferRuns(r *keel.Ref) *BillingTransferRunsTable {
 	return &BillingTransferRunsTable{
 		TableBase:                   keel.TableBase{Ref: r},
-		ID:                          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		RequestedByID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		SourceRunID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		Status:                      RunStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		Scope:                       RunScopeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		ID:                          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		RequestedByID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		SourceRunID:                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		Status:                      RunStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		Scope:                       RunScopeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		SearchQuery:                 keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
-		ShipmentStatus:              keelkinds.ShipmentvocabStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
-		BillType:                    keelkinds.BillingvocabBillTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		ShipmentStatus:              keelkinds.ShipmentvocabStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		BillType:                    keelkinds.BillingvocabBillTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
 		MarkCompletedReadyToInvoice: keel.BoolCol{Col: keel.Col{Ref: r, Index: 10}},
 		TotalCount:                  keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
 		ProcessedCount:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
@@ -181,7 +181,7 @@ func BuildBillingTransferRuns(r *keel.Ref) *BillingTransferRunsTable {
 		FailureCounts:               keel.JSONBCol{Col: keel.Col{Ref: r, Index: 19}},
 		FailureMessage:              keel.StringCol{Col: keel.Col{Ref: r, Index: 20}},
 		CancelRequestedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 21}},
-		CancelRequestedByID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 22}}},
+		CancelRequestedByID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 22}}},
 		TemporalWorkflowID:          keel.StringCol{Col: keel.Col{Ref: r, Index: 23}},
 		TemporalRunID:               keel.StringCol{Col: keel.Col{Ref: r, Index: 24}},
 		QueuedAt:                    keel.Int64Col{Col: keel.Col{Ref: r, Index: 25}},
@@ -213,8 +213,6 @@ func (t *BillingTransferRunsTable) Get(ctx context.Context, db *keel.DB, key pul
 
 // BillingTransferRunsQuery is a query over billingtransfer.BillingTransferRun.
 type BillingTransferRunsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*billingtransfer.BillingTransferRun] = (*BillingTransferRunsTable)(nil)
 
 var _ keel.Query[*billingtransfer.BillingTransferRun] = (*BillingTransferRunsQuery)(nil)
 
@@ -330,42 +328,42 @@ func (t *BillingTransferRunsTable) Compute(col keel.Column, e keel.Expr) keel.Qu
 
 // Create inserts row.
 func (t *BillingTransferRunsTable) Create(ctx context.Context, db *keel.DB, row *billingtransfer.BillingTransferRun) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *BillingTransferRunsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*billingtransfer.BillingTransferRun) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *BillingTransferRunsTable) Save(ctx context.Context, db *keel.DB, row *billingtransfer.BillingTransferRun, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *BillingTransferRunsTable) SaveExcept(ctx context.Context, db *keel.DB, row *billingtransfer.BillingTransferRun, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *BillingTransferRunsTable) DeleteRow(ctx context.Context, db *keel.DB, row *billingtransfer.BillingTransferRun) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *BillingTransferRunsTable) Upsert(ctx context.Context, db *keel.DB, rows []*billingtransfer.BillingTransferRun, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *BillingTransferRunsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*billingtransfer.BillingTransferRun, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *BillingTransferRunsTable) Copy(ctx context.Context, db *keel.DB, rows []*billingtransfer.BillingTransferRun) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -537,37 +535,45 @@ func (q *BillingTransferRunsQuery) Clone() keel.Query[*billingtransfer.BillingTr
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *BillingTransferRunsQuery) One(ctx context.Context, db *keel.DB) (*billingtransfer.BillingTransferRun, error) {
-	return keel.One[*billingtransfer.BillingTransferRun](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*billingtransfer.BillingTransferRun)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *BillingTransferRunsQuery) First(ctx context.Context, db *keel.DB) (*billingtransfer.BillingTransferRun, error) {
-	return keel.First[*billingtransfer.BillingTransferRun](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*billingtransfer.BillingTransferRun)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *BillingTransferRunsQuery) List(ctx context.Context, db *keel.DB) ([]*billingtransfer.BillingTransferRun, error) {
-	return keel.List[*billingtransfer.BillingTransferRun](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*billingtransfer.BillingTransferRun)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *BillingTransferRunsQuery) All(ctx context.Context, db *keel.DB) ([]*billingtransfer.BillingTransferRun, error) {
-	return keel.All[*billingtransfer.BillingTransferRun](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*billingtransfer.BillingTransferRun)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *BillingTransferRunsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*billingtransfer.BillingTransferRun, error) {
-	return keel.UpdateReturning[*billingtransfer.BillingTransferRun](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*billingtransfer.BillingTransferRun)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *BillingTransferRunsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*billingtransfer.BillingTransferRun], error) {
-	return keel.PageOf[*billingtransfer.BillingTransferRun](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*billingtransfer.BillingTransferRun])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *BillingTransferRunsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*billingtransfer.BillingTransferRun) error) error {
-	return keel.Each[*billingtransfer.BillingTransferRun](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*billingtransfer.BillingTransferRun)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newBillingTransferRun() unsafe.Pointer {
@@ -838,20 +844,20 @@ type BillingTransferRunItemsTable struct {
 // BillingTransferRunItems references the billing_transfer_run_items table.
 var BillingTransferRunItems = &BillingTransferRunItemsTable{
 	TableBase:            keel.TableBase{Ref: &billingTransferRunItemsRef},
-	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingTransferRunItemsRef, Index: 0}}},
-	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingTransferRunItemsRef, Index: 1}}},
-	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingTransferRunItemsRef, Index: 2}}},
-	RunID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingTransferRunItemsRef, Index: 3}}},
-	ShipmentID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingTransferRunItemsRef, Index: 4}}},
+	ID:                   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &billingTransferRunItemsRef, Index: 0}}},
+	BusinessUnitID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &billingTransferRunItemsRef, Index: 1}}},
+	OrganizationID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &billingTransferRunItemsRef, Index: 2}}},
+	RunID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &billingTransferRunItemsRef, Index: 3}}},
+	ShipmentID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &billingTransferRunItemsRef, Index: 4}}},
 	Sequence:             keel.Int64Col{Col: keel.Col{Ref: &billingTransferRunItemsRef, Index: 5}},
 	ProNumber:            keel.StringCol{Col: keel.Col{Ref: &billingTransferRunItemsRef, Index: 6}},
-	Status:               ItemStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingTransferRunItemsRef, Index: 7}}},
-	FailureCode:          FailureCodeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingTransferRunItemsRef, Index: 8}}},
+	Status:               ItemStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &billingTransferRunItemsRef, Index: 7}}},
+	FailureCode:          FailureCodeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &billingTransferRunItemsRef, Index: 8}}},
 	ErrorMessage:         keel.StringCol{Col: keel.Col{Ref: &billingTransferRunItemsRef, Index: 9}},
 	MarkedReadyToInvoice: keel.BoolCol{Col: keel.Col{Ref: &billingTransferRunItemsRef, Index: 10}},
-	BillingQueueItemID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingTransferRunItemsRef, Index: 11}}},
+	BillingQueueItemID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &billingTransferRunItemsRef, Index: 11}}},
 	BillingQueueNumber:   keel.StringCol{Col: keel.Col{Ref: &billingTransferRunItemsRef, Index: 12}},
-	BillingQueueStatus:   billingqueuedb.StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingTransferRunItemsRef, Index: 13}}},
+	BillingQueueStatus:   billingqueuedb.StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &billingTransferRunItemsRef, Index: 13}}},
 	MissingRequirements:  keel.JSONBCol{Col: keel.Col{Ref: &billingTransferRunItemsRef, Index: 14}},
 	ValidationFailures:   keel.JSONBCol{Col: keel.Col{Ref: &billingTransferRunItemsRef, Index: 15}},
 	ProcessedAt:          keel.Int64Col{Col: keel.Col{Ref: &billingTransferRunItemsRef, Index: 16}},
@@ -863,20 +869,20 @@ var BillingTransferRunItems = &BillingTransferRunItemsTable{
 func BuildBillingTransferRunItems(r *keel.Ref) *BillingTransferRunItemsTable {
 	return &BillingTransferRunItemsTable{
 		TableBase:            keel.TableBase{Ref: r},
-		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		RunID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		ShipmentID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ID:                   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		RunID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ShipmentID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		Sequence:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 5}},
 		ProNumber:            keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
-		Status:               ItemStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
-		FailureCode:          FailureCodeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		Status:               ItemStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		FailureCode:          FailureCodeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
 		ErrorMessage:         keel.StringCol{Col: keel.Col{Ref: r, Index: 9}},
 		MarkedReadyToInvoice: keel.BoolCol{Col: keel.Col{Ref: r, Index: 10}},
-		BillingQueueItemID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
+		BillingQueueItemID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 11}}},
 		BillingQueueNumber:   keel.StringCol{Col: keel.Col{Ref: r, Index: 12}},
-		BillingQueueStatus:   billingqueuedb.StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 13}}},
+		BillingQueueStatus:   billingqueuedb.StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 13}}},
 		MissingRequirements:  keel.JSONBCol{Col: keel.Col{Ref: r, Index: 14}},
 		ValidationFailures:   keel.JSONBCol{Col: keel.Col{Ref: r, Index: 15}},
 		ProcessedAt:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
@@ -900,8 +906,6 @@ func (t *BillingTransferRunItemsTable) Get(ctx context.Context, db *keel.DB, key
 
 // BillingTransferRunItemsQuery is a query over billingtransfer.BillingTransferRunItem.
 type BillingTransferRunItemsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*billingtransfer.BillingTransferRunItem] = (*BillingTransferRunItemsTable)(nil)
 
 var _ keel.Query[*billingtransfer.BillingTransferRunItem] = (*BillingTransferRunItemsQuery)(nil)
 
@@ -1017,42 +1021,42 @@ func (t *BillingTransferRunItemsTable) Compute(col keel.Column, e keel.Expr) kee
 
 // Create inserts row.
 func (t *BillingTransferRunItemsTable) Create(ctx context.Context, db *keel.DB, row *billingtransfer.BillingTransferRunItem) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *BillingTransferRunItemsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*billingtransfer.BillingTransferRunItem) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *BillingTransferRunItemsTable) Save(ctx context.Context, db *keel.DB, row *billingtransfer.BillingTransferRunItem, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *BillingTransferRunItemsTable) SaveExcept(ctx context.Context, db *keel.DB, row *billingtransfer.BillingTransferRunItem, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *BillingTransferRunItemsTable) DeleteRow(ctx context.Context, db *keel.DB, row *billingtransfer.BillingTransferRunItem) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *BillingTransferRunItemsTable) Upsert(ctx context.Context, db *keel.DB, rows []*billingtransfer.BillingTransferRunItem, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *BillingTransferRunItemsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*billingtransfer.BillingTransferRunItem, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *BillingTransferRunItemsTable) Copy(ctx context.Context, db *keel.DB, rows []*billingtransfer.BillingTransferRunItem) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1224,37 +1228,45 @@ func (q *BillingTransferRunItemsQuery) Clone() keel.Query[*billingtransfer.Billi
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *BillingTransferRunItemsQuery) One(ctx context.Context, db *keel.DB) (*billingtransfer.BillingTransferRunItem, error) {
-	return keel.One[*billingtransfer.BillingTransferRunItem](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*billingtransfer.BillingTransferRunItem)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *BillingTransferRunItemsQuery) First(ctx context.Context, db *keel.DB) (*billingtransfer.BillingTransferRunItem, error) {
-	return keel.First[*billingtransfer.BillingTransferRunItem](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*billingtransfer.BillingTransferRunItem)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *BillingTransferRunItemsQuery) List(ctx context.Context, db *keel.DB) ([]*billingtransfer.BillingTransferRunItem, error) {
-	return keel.List[*billingtransfer.BillingTransferRunItem](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*billingtransfer.BillingTransferRunItem)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *BillingTransferRunItemsQuery) All(ctx context.Context, db *keel.DB) ([]*billingtransfer.BillingTransferRunItem, error) {
-	return keel.All[*billingtransfer.BillingTransferRunItem](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*billingtransfer.BillingTransferRunItem)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *BillingTransferRunItemsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*billingtransfer.BillingTransferRunItem, error) {
-	return keel.UpdateReturning[*billingtransfer.BillingTransferRunItem](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*billingtransfer.BillingTransferRunItem)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *BillingTransferRunItemsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*billingtransfer.BillingTransferRunItem], error) {
-	return keel.PageOf[*billingtransfer.BillingTransferRunItem](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*billingtransfer.BillingTransferRunItem])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *BillingTransferRunItemsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*billingtransfer.BillingTransferRunItem) error) error {
-	return keel.Each[*billingtransfer.BillingTransferRunItem](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*billingtransfer.BillingTransferRunItem)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newBillingTransferRunItem() unsafe.Pointer {
@@ -1456,103 +1468,97 @@ var enumShipmentvocabStatus = [...]schema.EnumValue{
 }
 
 // FailureCodeCol is a column of billingtransfer.FailureCode values.
-type FailureCodeCol struct{ keel.StringCol }
+type FailureCodeCol struct{ keel.TypedStringCol }
 
-func (c FailureCodeCol) Eq(v billingtransfer.FailureCode) keel.Pred { return c.StringCol.Eq(string(v)) }
-func (c FailureCodeCol) Ne(v billingtransfer.FailureCode) keel.Pred { return c.StringCol.Ne(string(v)) }
-func (c FailureCodeCol) Gt(v billingtransfer.FailureCode) keel.Pred { return c.StringCol.Gt(string(v)) }
-func (c FailureCodeCol) Gte(v billingtransfer.FailureCode) keel.Pred {
-	return c.StringCol.Gte(string(v))
-}
-func (c FailureCodeCol) Lt(v billingtransfer.FailureCode) keel.Pred { return c.StringCol.Lt(string(v)) }
-func (c FailureCodeCol) Lte(v billingtransfer.FailureCode) keel.Pred {
-	return c.StringCol.Lte(string(v))
-}
+func (c FailureCodeCol) Eq(v billingtransfer.FailureCode) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c FailureCodeCol) Ne(v billingtransfer.FailureCode) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c FailureCodeCol) Gt(v billingtransfer.FailureCode) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c FailureCodeCol) Gte(v billingtransfer.FailureCode) keel.Pred { return c.Text().Gte(string(v)) }
+func (c FailureCodeCol) Lt(v billingtransfer.FailureCode) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c FailureCodeCol) Lte(v billingtransfer.FailureCode) keel.Pred { return c.Text().Lte(string(v)) }
 func (c FailureCodeCol) IsDistinctFrom(v billingtransfer.FailureCode) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c FailureCodeCol) Between(lo, hi billingtransfer.FailureCode) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c FailureCodeCol) To(v billingtransfer.FailureCode) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c FailureCodeCol) In(vs ...billingtransfer.FailureCode) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c FailureCodeCol) NotIn(vs ...billingtransfer.FailureCode) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // ItemStatusCol is a column of billingtransfer.ItemStatus values.
-type ItemStatusCol struct{ keel.StringCol }
+type ItemStatusCol struct{ keel.TypedStringCol }
 
-func (c ItemStatusCol) Eq(v billingtransfer.ItemStatus) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c ItemStatusCol) Ne(v billingtransfer.ItemStatus) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c ItemStatusCol) Gt(v billingtransfer.ItemStatus) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c ItemStatusCol) Gte(v billingtransfer.ItemStatus) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c ItemStatusCol) Lt(v billingtransfer.ItemStatus) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c ItemStatusCol) Lte(v billingtransfer.ItemStatus) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c ItemStatusCol) Eq(v billingtransfer.ItemStatus) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c ItemStatusCol) Ne(v billingtransfer.ItemStatus) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c ItemStatusCol) Gt(v billingtransfer.ItemStatus) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c ItemStatusCol) Gte(v billingtransfer.ItemStatus) keel.Pred { return c.Text().Gte(string(v)) }
+func (c ItemStatusCol) Lt(v billingtransfer.ItemStatus) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c ItemStatusCol) Lte(v billingtransfer.ItemStatus) keel.Pred { return c.Text().Lte(string(v)) }
 func (c ItemStatusCol) IsDistinctFrom(v billingtransfer.ItemStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ItemStatusCol) Between(lo, hi billingtransfer.ItemStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c ItemStatusCol) To(v billingtransfer.ItemStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c ItemStatusCol) In(vs ...billingtransfer.ItemStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ItemStatusCol) NotIn(vs ...billingtransfer.ItemStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // RunScopeCol is a column of billingtransfer.RunScope values.
-type RunScopeCol struct{ keel.StringCol }
+type RunScopeCol struct{ keel.TypedStringCol }
 
-func (c RunScopeCol) Eq(v billingtransfer.RunScope) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c RunScopeCol) Ne(v billingtransfer.RunScope) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c RunScopeCol) Gt(v billingtransfer.RunScope) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c RunScopeCol) Gte(v billingtransfer.RunScope) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c RunScopeCol) Lt(v billingtransfer.RunScope) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c RunScopeCol) Lte(v billingtransfer.RunScope) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c RunScopeCol) Eq(v billingtransfer.RunScope) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c RunScopeCol) Ne(v billingtransfer.RunScope) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c RunScopeCol) Gt(v billingtransfer.RunScope) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c RunScopeCol) Gte(v billingtransfer.RunScope) keel.Pred { return c.Text().Gte(string(v)) }
+func (c RunScopeCol) Lt(v billingtransfer.RunScope) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c RunScopeCol) Lte(v billingtransfer.RunScope) keel.Pred { return c.Text().Lte(string(v)) }
 func (c RunScopeCol) IsDistinctFrom(v billingtransfer.RunScope) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c RunScopeCol) Between(lo, hi billingtransfer.RunScope) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c RunScopeCol) To(v billingtransfer.RunScope) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c RunScopeCol) To(v billingtransfer.RunScope) keel.Assignment { return c.Text().To(string(v)) }
 func (c RunScopeCol) In(vs ...billingtransfer.RunScope) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c RunScopeCol) NotIn(vs ...billingtransfer.RunScope) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // RunStatusCol is a column of billingtransfer.RunStatus values.
-type RunStatusCol struct{ keel.StringCol }
+type RunStatusCol struct{ keel.TypedStringCol }
 
-func (c RunStatusCol) Eq(v billingtransfer.RunStatus) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c RunStatusCol) Ne(v billingtransfer.RunStatus) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c RunStatusCol) Gt(v billingtransfer.RunStatus) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c RunStatusCol) Gte(v billingtransfer.RunStatus) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c RunStatusCol) Lt(v billingtransfer.RunStatus) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c RunStatusCol) Lte(v billingtransfer.RunStatus) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c RunStatusCol) Eq(v billingtransfer.RunStatus) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c RunStatusCol) Ne(v billingtransfer.RunStatus) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c RunStatusCol) Gt(v billingtransfer.RunStatus) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c RunStatusCol) Gte(v billingtransfer.RunStatus) keel.Pred { return c.Text().Gte(string(v)) }
+func (c RunStatusCol) Lt(v billingtransfer.RunStatus) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c RunStatusCol) Lte(v billingtransfer.RunStatus) keel.Pred { return c.Text().Lte(string(v)) }
 func (c RunStatusCol) IsDistinctFrom(v billingtransfer.RunStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c RunStatusCol) Between(lo, hi billingtransfer.RunStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c RunStatusCol) To(v billingtransfer.RunStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
-}
+func (c RunStatusCol) To(v billingtransfer.RunStatus) keel.Assignment { return c.Text().To(string(v)) }
 func (c RunStatusCol) In(vs ...billingtransfer.RunStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c RunStatusCol) NotIn(vs ...billingtransfer.RunStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

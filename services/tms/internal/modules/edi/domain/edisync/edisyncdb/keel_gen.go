@@ -83,17 +83,17 @@ type ShipmentLinksTable struct {
 // ShipmentLinks references the edi_shipment_links table.
 var ShipmentLinks = &ShipmentLinksTable{
 	TableBase:            keel.TableBase{Ref: &shipmentLinksRef},
-	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shipmentLinksRef, Index: 0}}},
-	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shipmentLinksRef, Index: 1}}},
-	SourceOrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shipmentLinksRef, Index: 2}}},
-	TargetOrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shipmentLinksRef, Index: 3}}},
-	SourceShipmentID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shipmentLinksRef, Index: 4}}},
-	TargetShipmentID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shipmentLinksRef, Index: 5}}},
-	TenderTransferID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shipmentLinksRef, Index: 6}}},
-	OriginatingMessageID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shipmentLinksRef, Index: 7}}},
-	SyncPolicy:           ShipmentSyncPolicyCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shipmentLinksRef, Index: 8}}},
+	ID:                   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &shipmentLinksRef, Index: 0}}},
+	BusinessUnitID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &shipmentLinksRef, Index: 1}}},
+	SourceOrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &shipmentLinksRef, Index: 2}}},
+	TargetOrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &shipmentLinksRef, Index: 3}}},
+	SourceShipmentID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &shipmentLinksRef, Index: 4}}},
+	TargetShipmentID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &shipmentLinksRef, Index: 5}}},
+	TenderTransferID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &shipmentLinksRef, Index: 6}}},
+	OriginatingMessageID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &shipmentLinksRef, Index: 7}}},
+	SyncPolicy:           ShipmentSyncPolicyCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &shipmentLinksRef, Index: 8}}},
 	FieldOwnership:       keel.JSONBCol{Col: keel.Col{Ref: &shipmentLinksRef, Index: 9}},
-	Status:               ShipmentLinkStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &shipmentLinksRef, Index: 10}}},
+	Status:               ShipmentLinkStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &shipmentLinksRef, Index: 10}}},
 	Version:              keel.Int64Col{Col: keel.Col{Ref: &shipmentLinksRef, Index: 11}},
 	CreatedAt:            keel.Int64Col{Col: keel.Col{Ref: &shipmentLinksRef, Index: 12}},
 	UpdatedAt:            keel.Int64Col{Col: keel.Col{Ref: &shipmentLinksRef, Index: 13}},
@@ -103,17 +103,17 @@ var ShipmentLinks = &ShipmentLinksTable{
 func BuildShipmentLinks(r *keel.Ref) *ShipmentLinksTable {
 	return &ShipmentLinksTable{
 		TableBase:            keel.TableBase{Ref: r},
-		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		SourceOrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		TargetOrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		SourceShipmentID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		TargetShipmentID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		TenderTransferID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		OriginatingMessageID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
-		SyncPolicy:           ShipmentSyncPolicyCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		ID:                   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		SourceOrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		TargetOrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		SourceShipmentID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		TargetShipmentID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		TenderTransferID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		OriginatingMessageID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		SyncPolicy:           ShipmentSyncPolicyCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
 		FieldOwnership:       keel.JSONBCol{Col: keel.Col{Ref: r, Index: 9}},
-		Status:               ShipmentLinkStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		Status:               ShipmentLinkStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
 		Version:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
 		CreatedAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
 		UpdatedAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
@@ -135,8 +135,6 @@ func (t *ShipmentLinksTable) Get(ctx context.Context, db *keel.DB, key pulid.ID)
 
 // ShipmentLinksQuery is a query over edisync.ShipmentLink.
 type ShipmentLinksQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*edisync.ShipmentLink] = (*ShipmentLinksTable)(nil)
 
 var _ keel.Query[*edisync.ShipmentLink] = (*ShipmentLinksQuery)(nil)
 
@@ -252,42 +250,42 @@ func (t *ShipmentLinksTable) Compute(col keel.Column, e keel.Expr) keel.Query[*e
 
 // Create inserts row.
 func (t *ShipmentLinksTable) Create(ctx context.Context, db *keel.DB, row *edisync.ShipmentLink) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *ShipmentLinksTable) CreateMany(ctx context.Context, db *keel.DB, rows []*edisync.ShipmentLink) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *ShipmentLinksTable) Save(ctx context.Context, db *keel.DB, row *edisync.ShipmentLink, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *ShipmentLinksTable) SaveExcept(ctx context.Context, db *keel.DB, row *edisync.ShipmentLink, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *ShipmentLinksTable) DeleteRow(ctx context.Context, db *keel.DB, row *edisync.ShipmentLink) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *ShipmentLinksTable) Upsert(ctx context.Context, db *keel.DB, rows []*edisync.ShipmentLink, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *ShipmentLinksTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*edisync.ShipmentLink, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *ShipmentLinksTable) Copy(ctx context.Context, db *keel.DB, rows []*edisync.ShipmentLink) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -459,37 +457,45 @@ func (q *ShipmentLinksQuery) Clone() keel.Query[*edisync.ShipmentLink] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *ShipmentLinksQuery) One(ctx context.Context, db *keel.DB) (*edisync.ShipmentLink, error) {
-	return keel.One[*edisync.ShipmentLink](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*edisync.ShipmentLink)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *ShipmentLinksQuery) First(ctx context.Context, db *keel.DB) (*edisync.ShipmentLink, error) {
-	return keel.First[*edisync.ShipmentLink](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*edisync.ShipmentLink)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *ShipmentLinksQuery) List(ctx context.Context, db *keel.DB) ([]*edisync.ShipmentLink, error) {
-	return keel.List[*edisync.ShipmentLink](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*edisync.ShipmentLink)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *ShipmentLinksQuery) All(ctx context.Context, db *keel.DB) ([]*edisync.ShipmentLink, error) {
-	return keel.All[*edisync.ShipmentLink](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*edisync.ShipmentLink)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *ShipmentLinksQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*edisync.ShipmentLink, error) {
-	return keel.UpdateReturning[*edisync.ShipmentLink](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*edisync.ShipmentLink)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *ShipmentLinksQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*edisync.ShipmentLink], error) {
-	return keel.PageOf[*edisync.ShipmentLink](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*edisync.ShipmentLink])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *ShipmentLinksQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*edisync.ShipmentLink) error) error {
-	return keel.Each[*edisync.ShipmentLink](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*edisync.ShipmentLink)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newShipmentLink() unsafe.Pointer { return unsafe.Pointer(new(edisync.ShipmentLink)) }
@@ -673,22 +679,22 @@ type TransferChangesTable struct {
 // TransferChanges references the edi_transfer_changes table.
 var TransferChanges = &TransferChangesTable{
 	TableBase:             keel.TableBase{Ref: &transferChangesRef},
-	ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &transferChangesRef, Index: 0}}},
-	BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &transferChangesRef, Index: 1}}},
-	ShipmentLinkID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &transferChangesRef, Index: 2}}},
-	Direction:             TransferChangeDirectionCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &transferChangesRef, Index: 3}}},
+	ID:                    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &transferChangesRef, Index: 0}}},
+	BusinessUnitID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &transferChangesRef, Index: 1}}},
+	ShipmentLinkID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &transferChangesRef, Index: 2}}},
+	Direction:             TransferChangeDirectionCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &transferChangesRef, Index: 3}}},
 	ChangeType:            keel.StringCol{Col: keel.Col{Ref: &transferChangesRef, Index: 4}},
-	Status:                TransferChangeStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &transferChangesRef, Index: 5}}},
-	ConflictStatus:        TransferChangeConflictStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &transferChangesRef, Index: 6}}},
+	Status:                TransferChangeStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &transferChangesRef, Index: 5}}},
+	ConflictStatus:        TransferChangeConflictStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &transferChangesRef, Index: 6}}},
 	ConflictReason:        keel.StringCol{Col: keel.Col{Ref: &transferChangesRef, Index: 7}},
 	IdempotencyKey:        keel.StringCol{Col: keel.Col{Ref: &transferChangesRef, Index: 8}},
 	SourceShipmentVersion: keel.Int64Col{Col: keel.Col{Ref: &transferChangesRef, Index: 9}},
 	TargetShipmentVersion: keel.Int64Col{Col: keel.Col{Ref: &transferChangesRef, Index: 10}},
 	Payload:               keel.JSONBCol{Col: keel.Col{Ref: &transferChangesRef, Index: 11}},
 	Diff:                  keel.JSONBCol{Col: keel.Col{Ref: &transferChangesRef, Index: 12}},
-	ReviewedByID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &transferChangesRef, Index: 13}}},
+	ReviewedByID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &transferChangesRef, Index: 13}}},
 	ReviewedAt:            keel.Int64Col{Col: keel.Col{Ref: &transferChangesRef, Index: 14}},
-	AppliedByID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &transferChangesRef, Index: 15}}},
+	AppliedByID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &transferChangesRef, Index: 15}}},
 	AppliedAt:             keel.Int64Col{Col: keel.Col{Ref: &transferChangesRef, Index: 16}},
 	FailureReason:         keel.StringCol{Col: keel.Col{Ref: &transferChangesRef, Index: 17}},
 	SearchVector:          keel.TSVectorCol{Col: keel.Col{Ref: &transferChangesRef, Index: 18}},
@@ -702,22 +708,22 @@ var TransferChanges = &TransferChangesTable{
 func BuildTransferChanges(r *keel.Ref) *TransferChangesTable {
 	return &TransferChangesTable{
 		TableBase:             keel.TableBase{Ref: r},
-		ID:                    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		ShipmentLinkID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		Direction:             TransferChangeDirectionCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:                    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		ShipmentLinkID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		Direction:             TransferChangeDirectionCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		ChangeType:            keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
-		Status:                TransferChangeStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		ConflictStatus:        TransferChangeConflictStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		Status:                TransferChangeStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		ConflictStatus:        TransferChangeConflictStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		ConflictReason:        keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
 		IdempotencyKey:        keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
 		SourceShipmentVersion: keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
 		TargetShipmentVersion: keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
 		Payload:               keel.JSONBCol{Col: keel.Col{Ref: r, Index: 11}},
 		Diff:                  keel.JSONBCol{Col: keel.Col{Ref: r, Index: 12}},
-		ReviewedByID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 13}}},
+		ReviewedByID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 13}}},
 		ReviewedAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
-		AppliedByID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 15}}},
+		AppliedByID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 15}}},
 		AppliedAt:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
 		FailureReason:         keel.StringCol{Col: keel.Col{Ref: r, Index: 17}},
 		SearchVector:          keel.TSVectorCol{Col: keel.Col{Ref: r, Index: 18}},
@@ -743,8 +749,6 @@ func (t *TransferChangesTable) Get(ctx context.Context, db *keel.DB, key pulid.I
 
 // TransferChangesQuery is a query over edisync.TransferChange.
 type TransferChangesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*edisync.TransferChange] = (*TransferChangesTable)(nil)
 
 var _ keel.Query[*edisync.TransferChange] = (*TransferChangesQuery)(nil)
 
@@ -860,42 +864,42 @@ func (t *TransferChangesTable) Compute(col keel.Column, e keel.Expr) keel.Query[
 
 // Create inserts row.
 func (t *TransferChangesTable) Create(ctx context.Context, db *keel.DB, row *edisync.TransferChange) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *TransferChangesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*edisync.TransferChange) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *TransferChangesTable) Save(ctx context.Context, db *keel.DB, row *edisync.TransferChange, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *TransferChangesTable) SaveExcept(ctx context.Context, db *keel.DB, row *edisync.TransferChange, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *TransferChangesTable) DeleteRow(ctx context.Context, db *keel.DB, row *edisync.TransferChange) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *TransferChangesTable) Upsert(ctx context.Context, db *keel.DB, rows []*edisync.TransferChange, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *TransferChangesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*edisync.TransferChange, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *TransferChangesTable) Copy(ctx context.Context, db *keel.DB, rows []*edisync.TransferChange) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1067,37 +1071,45 @@ func (q *TransferChangesQuery) Clone() keel.Query[*edisync.TransferChange] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *TransferChangesQuery) One(ctx context.Context, db *keel.DB) (*edisync.TransferChange, error) {
-	return keel.One[*edisync.TransferChange](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*edisync.TransferChange)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *TransferChangesQuery) First(ctx context.Context, db *keel.DB) (*edisync.TransferChange, error) {
-	return keel.First[*edisync.TransferChange](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*edisync.TransferChange)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *TransferChangesQuery) List(ctx context.Context, db *keel.DB) ([]*edisync.TransferChange, error) {
-	return keel.List[*edisync.TransferChange](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*edisync.TransferChange)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *TransferChangesQuery) All(ctx context.Context, db *keel.DB) ([]*edisync.TransferChange, error) {
-	return keel.All[*edisync.TransferChange](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*edisync.TransferChange)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *TransferChangesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*edisync.TransferChange, error) {
-	return keel.UpdateReturning[*edisync.TransferChange](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*edisync.TransferChange)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *TransferChangesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*edisync.TransferChange], error) {
-	return keel.PageOf[*edisync.TransferChange](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*edisync.TransferChange])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *TransferChangesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*edisync.TransferChange) error) error {
-	return keel.Each[*edisync.TransferChange](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*edisync.TransferChange)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newTransferChange() unsafe.Pointer { return unsafe.Pointer(new(edisync.TransferChange)) }
@@ -1281,186 +1293,186 @@ var enumTransferChangeStatus = [...]schema.EnumValue{
 }
 
 // ShipmentLinkStatusCol is a column of edisync.ShipmentLinkStatus values.
-type ShipmentLinkStatusCol struct{ keel.StringCol }
+type ShipmentLinkStatusCol struct{ keel.TypedStringCol }
 
 func (c ShipmentLinkStatusCol) Eq(v edisync.ShipmentLinkStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c ShipmentLinkStatusCol) Ne(v edisync.ShipmentLinkStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c ShipmentLinkStatusCol) Gt(v edisync.ShipmentLinkStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c ShipmentLinkStatusCol) Gte(v edisync.ShipmentLinkStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c ShipmentLinkStatusCol) Lt(v edisync.ShipmentLinkStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c ShipmentLinkStatusCol) Lte(v edisync.ShipmentLinkStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c ShipmentLinkStatusCol) IsDistinctFrom(v edisync.ShipmentLinkStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ShipmentLinkStatusCol) Between(lo, hi edisync.ShipmentLinkStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c ShipmentLinkStatusCol) To(v edisync.ShipmentLinkStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c ShipmentLinkStatusCol) In(vs ...edisync.ShipmentLinkStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ShipmentLinkStatusCol) NotIn(vs ...edisync.ShipmentLinkStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // ShipmentSyncPolicyCol is a column of edisync.ShipmentSyncPolicy values.
-type ShipmentSyncPolicyCol struct{ keel.StringCol }
+type ShipmentSyncPolicyCol struct{ keel.TypedStringCol }
 
 func (c ShipmentSyncPolicyCol) Eq(v edisync.ShipmentSyncPolicy) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c ShipmentSyncPolicyCol) Ne(v edisync.ShipmentSyncPolicy) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c ShipmentSyncPolicyCol) Gt(v edisync.ShipmentSyncPolicy) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c ShipmentSyncPolicyCol) Gte(v edisync.ShipmentSyncPolicy) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c ShipmentSyncPolicyCol) Lt(v edisync.ShipmentSyncPolicy) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c ShipmentSyncPolicyCol) Lte(v edisync.ShipmentSyncPolicy) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c ShipmentSyncPolicyCol) IsDistinctFrom(v edisync.ShipmentSyncPolicy) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ShipmentSyncPolicyCol) Between(lo, hi edisync.ShipmentSyncPolicy) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c ShipmentSyncPolicyCol) To(v edisync.ShipmentSyncPolicy) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c ShipmentSyncPolicyCol) In(vs ...edisync.ShipmentSyncPolicy) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ShipmentSyncPolicyCol) NotIn(vs ...edisync.ShipmentSyncPolicy) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // TransferChangeConflictStatusCol is a column of edisync.TransferChangeConflictStatus values.
-type TransferChangeConflictStatusCol struct{ keel.StringCol }
+type TransferChangeConflictStatusCol struct{ keel.TypedStringCol }
 
 func (c TransferChangeConflictStatusCol) Eq(v edisync.TransferChangeConflictStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c TransferChangeConflictStatusCol) Ne(v edisync.TransferChangeConflictStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c TransferChangeConflictStatusCol) Gt(v edisync.TransferChangeConflictStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c TransferChangeConflictStatusCol) Gte(v edisync.TransferChangeConflictStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c TransferChangeConflictStatusCol) Lt(v edisync.TransferChangeConflictStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c TransferChangeConflictStatusCol) Lte(v edisync.TransferChangeConflictStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c TransferChangeConflictStatusCol) IsDistinctFrom(v edisync.TransferChangeConflictStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c TransferChangeConflictStatusCol) Between(lo, hi edisync.TransferChangeConflictStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c TransferChangeConflictStatusCol) To(v edisync.TransferChangeConflictStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c TransferChangeConflictStatusCol) In(vs ...edisync.TransferChangeConflictStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c TransferChangeConflictStatusCol) NotIn(vs ...edisync.TransferChangeConflictStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // TransferChangeDirectionCol is a column of edisync.TransferChangeDirection values.
-type TransferChangeDirectionCol struct{ keel.StringCol }
+type TransferChangeDirectionCol struct{ keel.TypedStringCol }
 
 func (c TransferChangeDirectionCol) Eq(v edisync.TransferChangeDirection) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c TransferChangeDirectionCol) Ne(v edisync.TransferChangeDirection) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c TransferChangeDirectionCol) Gt(v edisync.TransferChangeDirection) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c TransferChangeDirectionCol) Gte(v edisync.TransferChangeDirection) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c TransferChangeDirectionCol) Lt(v edisync.TransferChangeDirection) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c TransferChangeDirectionCol) Lte(v edisync.TransferChangeDirection) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c TransferChangeDirectionCol) IsDistinctFrom(v edisync.TransferChangeDirection) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c TransferChangeDirectionCol) Between(lo, hi edisync.TransferChangeDirection) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c TransferChangeDirectionCol) To(v edisync.TransferChangeDirection) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c TransferChangeDirectionCol) In(vs ...edisync.TransferChangeDirection) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c TransferChangeDirectionCol) NotIn(vs ...edisync.TransferChangeDirection) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // TransferChangeStatusCol is a column of edisync.TransferChangeStatus values.
-type TransferChangeStatusCol struct{ keel.StringCol }
+type TransferChangeStatusCol struct{ keel.TypedStringCol }
 
 func (c TransferChangeStatusCol) Eq(v edisync.TransferChangeStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c TransferChangeStatusCol) Ne(v edisync.TransferChangeStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c TransferChangeStatusCol) Gt(v edisync.TransferChangeStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c TransferChangeStatusCol) Gte(v edisync.TransferChangeStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c TransferChangeStatusCol) Lt(v edisync.TransferChangeStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c TransferChangeStatusCol) Lte(v edisync.TransferChangeStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c TransferChangeStatusCol) IsDistinctFrom(v edisync.TransferChangeStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c TransferChangeStatusCol) Between(lo, hi edisync.TransferChangeStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c TransferChangeStatusCol) To(v edisync.TransferChangeStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c TransferChangeStatusCol) In(vs ...edisync.TransferChangeStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c TransferChangeStatusCol) NotIn(vs ...edisync.TransferChangeStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

@@ -101,23 +101,23 @@ type CapturePairingsTable struct {
 // CapturePairings references the capture_pairings table.
 var CapturePairings = &CapturePairingsTable{
 	TableBase:      keel.TableBase{Ref: &capturePairingsRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &capturePairingsRef, Index: 0}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &capturePairingsRef, Index: 0}}},
 	DeviceCodeHash: keel.StringCol{Col: keel.Col{Ref: &capturePairingsRef, Index: 1}},
 	UserCode:       keel.StringCol{Col: keel.Col{Ref: &capturePairingsRef, Index: 2}},
-	Status:         PairingStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &capturePairingsRef, Index: 3}}},
+	Status:         PairingStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &capturePairingsRef, Index: 3}}},
 	MachineName:    keel.StringCol{Col: keel.Col{Ref: &capturePairingsRef, Index: 4}},
 	WindowsUser:    keel.StringCol{Col: keel.Col{Ref: &capturePairingsRef, Index: 5}},
 	AgentVersion:   keel.StringCol{Col: keel.Col{Ref: &capturePairingsRef, Index: 6}},
-	Architecture:   capturedb.ArchitectureCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &capturePairingsRef, Index: 7}}},
+	Architecture:   capturedb.ArchitectureCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &capturePairingsRef, Index: 7}}},
 	OSVersion:      keel.StringCol{Col: keel.Col{Ref: &capturePairingsRef, Index: 8}},
 	ClientIP:       keel.StringCol{Col: keel.Col{Ref: &capturePairingsRef, Index: 9}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &capturePairingsRef, Index: 10}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &capturePairingsRef, Index: 11}}},
-	ApprovedByID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &capturePairingsRef, Index: 12}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &capturePairingsRef, Index: 10}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &capturePairingsRef, Index: 11}}},
+	ApprovedByID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &capturePairingsRef, Index: 12}}},
 	DeviceName:     keel.StringCol{Col: keel.Col{Ref: &capturePairingsRef, Index: 13}},
 	ActiveRoleIDs:  keel.JSONBCol{Col: keel.Col{Ref: &capturePairingsRef, Index: 14}},
 	SessionEpoch:   keel.Int64Col{Col: keel.Col{Ref: &capturePairingsRef, Index: 15}},
-	DeviceID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &capturePairingsRef, Index: 16}}},
+	DeviceID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &capturePairingsRef, Index: 16}}},
 	LastPolledAt:   keel.Int64Col{Col: keel.Col{Ref: &capturePairingsRef, Index: 17}},
 	ExpiresAt:      keel.Int64Col{Col: keel.Col{Ref: &capturePairingsRef, Index: 18}},
 	DecidedAt:      keel.Int64Col{Col: keel.Col{Ref: &capturePairingsRef, Index: 19}},
@@ -130,23 +130,23 @@ var CapturePairings = &CapturePairingsTable{
 func BuildCapturePairings(r *keel.Ref) *CapturePairingsTable {
 	return &CapturePairingsTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		DeviceCodeHash: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}},
 		UserCode:       keel.StringCol{Col: keel.Col{Ref: r, Index: 2}},
-		Status:         PairingStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		Status:         PairingStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		MachineName:    keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		WindowsUser:    keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		AgentVersion:   keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
-		Architecture:   capturedb.ArchitectureCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		Architecture:   capturedb.ArchitectureCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
 		OSVersion:      keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
 		ClientIP:       keel.StringCol{Col: keel.Col{Ref: r, Index: 9}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
-		ApprovedByID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 12}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 11}}},
+		ApprovedByID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 12}}},
 		DeviceName:     keel.StringCol{Col: keel.Col{Ref: r, Index: 13}},
 		ActiveRoleIDs:  keel.JSONBCol{Col: keel.Col{Ref: r, Index: 14}},
 		SessionEpoch:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
-		DeviceID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 16}}},
+		DeviceID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 16}}},
 		LastPolledAt:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
 		ExpiresAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
 		DecidedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 19}},
@@ -171,8 +171,6 @@ func (t *CapturePairingsTable) Get(ctx context.Context, db *keel.DB, key pulid.I
 
 // CapturePairingsQuery is a query over capturepairing.CapturePairing.
 type CapturePairingsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*capturepairing.CapturePairing] = (*CapturePairingsTable)(nil)
 
 var _ keel.Query[*capturepairing.CapturePairing] = (*CapturePairingsQuery)(nil)
 
@@ -288,42 +286,42 @@ func (t *CapturePairingsTable) Compute(col keel.Column, e keel.Expr) keel.Query[
 
 // Create inserts row.
 func (t *CapturePairingsTable) Create(ctx context.Context, db *keel.DB, row *capturepairing.CapturePairing) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *CapturePairingsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*capturepairing.CapturePairing) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *CapturePairingsTable) Save(ctx context.Context, db *keel.DB, row *capturepairing.CapturePairing, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *CapturePairingsTable) SaveExcept(ctx context.Context, db *keel.DB, row *capturepairing.CapturePairing, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *CapturePairingsTable) DeleteRow(ctx context.Context, db *keel.DB, row *capturepairing.CapturePairing) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *CapturePairingsTable) Upsert(ctx context.Context, db *keel.DB, rows []*capturepairing.CapturePairing, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *CapturePairingsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*capturepairing.CapturePairing, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *CapturePairingsTable) Copy(ctx context.Context, db *keel.DB, rows []*capturepairing.CapturePairing) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -495,37 +493,45 @@ func (q *CapturePairingsQuery) Clone() keel.Query[*capturepairing.CapturePairing
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *CapturePairingsQuery) One(ctx context.Context, db *keel.DB) (*capturepairing.CapturePairing, error) {
-	return keel.One[*capturepairing.CapturePairing](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*capturepairing.CapturePairing)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *CapturePairingsQuery) First(ctx context.Context, db *keel.DB) (*capturepairing.CapturePairing, error) {
-	return keel.First[*capturepairing.CapturePairing](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*capturepairing.CapturePairing)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *CapturePairingsQuery) List(ctx context.Context, db *keel.DB) ([]*capturepairing.CapturePairing, error) {
-	return keel.List[*capturepairing.CapturePairing](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*capturepairing.CapturePairing)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *CapturePairingsQuery) All(ctx context.Context, db *keel.DB) ([]*capturepairing.CapturePairing, error) {
-	return keel.All[*capturepairing.CapturePairing](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*capturepairing.CapturePairing)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *CapturePairingsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*capturepairing.CapturePairing, error) {
-	return keel.UpdateReturning[*capturepairing.CapturePairing](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*capturepairing.CapturePairing)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *CapturePairingsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*capturepairing.CapturePairing], error) {
-	return keel.PageOf[*capturepairing.CapturePairing](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*capturepairing.CapturePairing])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *CapturePairingsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*capturepairing.CapturePairing) error) error {
-	return keel.Each[*capturepairing.CapturePairing](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*capturepairing.CapturePairing)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newCapturePairing() unsafe.Pointer { return unsafe.Pointer(new(capturepairing.CapturePairing)) }
@@ -690,38 +696,30 @@ var enumPairingStatus = [...]schema.EnumValue{
 }
 
 // PairingStatusCol is a column of capturepairing.PairingStatus values.
-type PairingStatusCol struct{ keel.StringCol }
+type PairingStatusCol struct{ keel.TypedStringCol }
 
-func (c PairingStatusCol) Eq(v capturepairing.PairingStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c PairingStatusCol) Ne(v capturepairing.PairingStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c PairingStatusCol) Gt(v capturepairing.PairingStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
+func (c PairingStatusCol) Eq(v capturepairing.PairingStatus) keel.Pred { return c.Text().Eq(string(v)) }
+func (c PairingStatusCol) Ne(v capturepairing.PairingStatus) keel.Pred { return c.Text().Ne(string(v)) }
+func (c PairingStatusCol) Gt(v capturepairing.PairingStatus) keel.Pred { return c.Text().Gt(string(v)) }
 func (c PairingStatusCol) Gte(v capturepairing.PairingStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
-func (c PairingStatusCol) Lt(v capturepairing.PairingStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
+func (c PairingStatusCol) Lt(v capturepairing.PairingStatus) keel.Pred { return c.Text().Lt(string(v)) }
 func (c PairingStatusCol) Lte(v capturepairing.PairingStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c PairingStatusCol) IsDistinctFrom(v capturepairing.PairingStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c PairingStatusCol) Between(lo, hi capturepairing.PairingStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c PairingStatusCol) To(v capturepairing.PairingStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c PairingStatusCol) In(vs ...capturepairing.PairingStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c PairingStatusCol) NotIn(vs ...capturepairing.PairingStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

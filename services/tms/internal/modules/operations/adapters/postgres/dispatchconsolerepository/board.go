@@ -20,6 +20,8 @@ const defaultBoardLimit = 500
 
 const maxBoardLimit = 2000
 
+const maxDriverLimit = 10_000
+
 type Params struct {
 	fx.In
 
@@ -36,6 +38,17 @@ func New(p Params) dispatchboardports.DispatchConsoleRepository {
 	return &repository{
 		db: p.DB,
 		l:  p.Logger.Named("postgres.dispatch-console-repository"),
+	}
+}
+
+func driverLimit(requested int) int {
+	switch {
+	case requested <= 0:
+		return defaultBoardLimit
+	case requested > maxDriverLimit:
+		return maxDriverLimit
+	default:
+		return requested
 	}
 }
 
@@ -126,6 +139,7 @@ func (r *repository) ListBoardMoves(
 				text(ca.CarrierID),
 				text(assignedCarriers.Name),
 				keel.CastFloat64(ca.TotalCost),
+				sm.Version,
 			).
 			Where(moveFilters(filter)...).
 			Where(

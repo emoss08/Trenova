@@ -104,19 +104,19 @@ type DisputesTable struct {
 // Disputes references the settlement_disputes table.
 var Disputes = &DisputesTable{
 	TableBase:         keel.TableBase{Ref: &disputesRef},
-	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &disputesRef, Index: 0}}},
-	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &disputesRef, Index: 1}}},
-	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &disputesRef, Index: 2}}},
-	SettlementID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &disputesRef, Index: 3}}},
-	SettlementLineID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &disputesRef, Index: 4}}},
-	WorkerID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &disputesRef, Index: 5}}},
-	Status:            DisputeStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &disputesRef, Index: 6}}},
-	Category:          DisputeCategoryCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &disputesRef, Index: 7}}},
+	ID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &disputesRef, Index: 0}}},
+	BusinessUnitID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &disputesRef, Index: 1}}},
+	OrganizationID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &disputesRef, Index: 2}}},
+	SettlementID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &disputesRef, Index: 3}}},
+	SettlementLineID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &disputesRef, Index: 4}}},
+	WorkerID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &disputesRef, Index: 5}}},
+	Status:            DisputeStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &disputesRef, Index: 6}}},
+	Category:          DisputeCategoryCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &disputesRef, Index: 7}}},
 	Description:       keel.StringCol{Col: keel.Col{Ref: &disputesRef, Index: 8}},
-	SubmittedByUserID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &disputesRef, Index: 9}}},
+	SubmittedByUserID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &disputesRef, Index: 9}}},
 	ResolutionNote:    keel.StringCol{Col: keel.Col{Ref: &disputesRef, Index: 10}},
-	ResolutionLineID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &disputesRef, Index: 11}}},
-	ResolvedByID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &disputesRef, Index: 12}}},
+	ResolutionLineID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &disputesRef, Index: 11}}},
+	ResolvedByID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &disputesRef, Index: 12}}},
 	ResolvedAt:        keel.Int64Col{Col: keel.Col{Ref: &disputesRef, Index: 13}},
 	Version:           keel.Int64Col{Col: keel.Col{Ref: &disputesRef, Index: 14}},
 	CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: &disputesRef, Index: 15}},
@@ -127,19 +127,19 @@ var Disputes = &DisputesTable{
 func BuildDisputes(r *keel.Ref) *DisputesTable {
 	return &DisputesTable{
 		TableBase:         keel.TableBase{Ref: r},
-		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		SettlementID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		SettlementLineID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		WorkerID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		Status:            DisputeStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		Category:          DisputeCategoryCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		ID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		SettlementID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		SettlementLineID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		WorkerID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		Status:            DisputeStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		Category:          DisputeCategoryCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
 		Description:       keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
-		SubmittedByUserID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		SubmittedByUserID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
 		ResolutionNote:    keel.StringCol{Col: keel.Col{Ref: r, Index: 10}},
-		ResolutionLineID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
-		ResolvedByID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 12}}},
+		ResolutionLineID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 11}}},
+		ResolvedByID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 12}}},
 		ResolvedAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
 		Version:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
 		CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
@@ -180,8 +180,6 @@ func (t *DisputesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*dr
 
 // DisputesQuery is a query over driversettlement.Dispute.
 type DisputesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*driversettlement.Dispute] = (*DisputesTable)(nil)
 
 var _ keel.Query[*driversettlement.Dispute] = (*DisputesQuery)(nil)
 
@@ -297,42 +295,42 @@ func (t *DisputesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*driver
 
 // Create inserts row.
 func (t *DisputesTable) Create(ctx context.Context, db *keel.DB, row *driversettlement.Dispute) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *DisputesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*driversettlement.Dispute) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *DisputesTable) Save(ctx context.Context, db *keel.DB, row *driversettlement.Dispute, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *DisputesTable) SaveExcept(ctx context.Context, db *keel.DB, row *driversettlement.Dispute, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *DisputesTable) DeleteRow(ctx context.Context, db *keel.DB, row *driversettlement.Dispute) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *DisputesTable) Upsert(ctx context.Context, db *keel.DB, rows []*driversettlement.Dispute, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *DisputesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*driversettlement.Dispute, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *DisputesTable) Copy(ctx context.Context, db *keel.DB, rows []*driversettlement.Dispute) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -504,37 +502,45 @@ func (q *DisputesQuery) Clone() keel.Query[*driversettlement.Dispute] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *DisputesQuery) One(ctx context.Context, db *keel.DB) (*driversettlement.Dispute, error) {
-	return keel.One[*driversettlement.Dispute](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*driversettlement.Dispute)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *DisputesQuery) First(ctx context.Context, db *keel.DB) (*driversettlement.Dispute, error) {
-	return keel.First[*driversettlement.Dispute](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*driversettlement.Dispute)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *DisputesQuery) List(ctx context.Context, db *keel.DB) ([]*driversettlement.Dispute, error) {
-	return keel.List[*driversettlement.Dispute](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*driversettlement.Dispute)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *DisputesQuery) All(ctx context.Context, db *keel.DB) ([]*driversettlement.Dispute, error) {
-	return keel.All[*driversettlement.Dispute](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*driversettlement.Dispute)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *DisputesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*driversettlement.Dispute, error) {
-	return keel.UpdateReturning[*driversettlement.Dispute](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*driversettlement.Dispute)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *DisputesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*driversettlement.Dispute], error) {
-	return keel.PageOf[*driversettlement.Dispute](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*driversettlement.Dispute])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *DisputesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*driversettlement.Dispute) error) error {
-	return keel.Each[*driversettlement.Dispute](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*driversettlement.Dispute)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newDispute() unsafe.Pointer { return unsafe.Pointer(new(driversettlement.Dispute)) }
@@ -756,18 +762,18 @@ type PayEventsTable struct {
 // PayEvents references the driver_pay_events table.
 var PayEvents = &PayEventsTable{
 	TableBase:        keel.TableBase{Ref: &payEventsRef},
-	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payEventsRef, Index: 0}}},
-	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payEventsRef, Index: 1}}},
-	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payEventsRef, Index: 2}}},
-	WorkerID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payEventsRef, Index: 3}}},
-	ShipmentID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payEventsRef, Index: 4}}},
-	MoveID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payEventsRef, Index: 5}}},
-	AssignmentID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payEventsRef, Index: 6}}},
-	PayProfileID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payEventsRef, Index: 7}}},
-	SettlementID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payEventsRef, Index: 8}}},
-	SettlementLineID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payEventsRef, Index: 9}}},
+	ID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &payEventsRef, Index: 0}}},
+	BusinessUnitID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &payEventsRef, Index: 1}}},
+	OrganizationID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &payEventsRef, Index: 2}}},
+	WorkerID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &payEventsRef, Index: 3}}},
+	ShipmentID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &payEventsRef, Index: 4}}},
+	MoveID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &payEventsRef, Index: 5}}},
+	AssignmentID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &payEventsRef, Index: 6}}},
+	PayProfileID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &payEventsRef, Index: 7}}},
+	SettlementID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &payEventsRef, Index: 8}}},
+	SettlementLineID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &payEventsRef, Index: 9}}},
 	IdempotencyKey:   keel.StringCol{Col: keel.Col{Ref: &payEventsRef, Index: 10}},
-	Status:           PayEventStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &payEventsRef, Index: 11}}},
+	Status:           PayEventStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &payEventsRef, Index: 11}}},
 	EventDate:        keel.Int64Col{Col: keel.Col{Ref: &payEventsRef, Index: 12}},
 	GrossAmountMinor: keel.Int64Col{Col: keel.Col{Ref: &payEventsRef, Index: 13}},
 	TotalMiles:       keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &payEventsRef, Index: 14}}},
@@ -787,18 +793,18 @@ var PayEvents = &PayEventsTable{
 func BuildPayEvents(r *keel.Ref) *PayEventsTable {
 	return &PayEventsTable{
 		TableBase:        keel.TableBase{Ref: r},
-		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		WorkerID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		ShipmentID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		MoveID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		AssignmentID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		PayProfileID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
-		SettlementID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
-		SettlementLineID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		ID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		WorkerID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ShipmentID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		MoveID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		AssignmentID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		PayProfileID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		SettlementID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		SettlementLineID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
 		IdempotencyKey:   keel.StringCol{Col: keel.Col{Ref: r, Index: 10}},
-		Status:           PayEventStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
+		Status:           PayEventStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 11}}},
 		EventDate:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
 		GrossAmountMinor: keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
 		TotalMiles:       keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 14}}},
@@ -843,8 +849,6 @@ func (t *PayEventsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*d
 
 // PayEventsQuery is a query over driversettlement.PayEvent.
 type PayEventsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*driversettlement.PayEvent] = (*PayEventsTable)(nil)
 
 var _ keel.Query[*driversettlement.PayEvent] = (*PayEventsQuery)(nil)
 
@@ -960,42 +964,42 @@ func (t *PayEventsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*drive
 
 // Create inserts row.
 func (t *PayEventsTable) Create(ctx context.Context, db *keel.DB, row *driversettlement.PayEvent) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *PayEventsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*driversettlement.PayEvent) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *PayEventsTable) Save(ctx context.Context, db *keel.DB, row *driversettlement.PayEvent, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *PayEventsTable) SaveExcept(ctx context.Context, db *keel.DB, row *driversettlement.PayEvent, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *PayEventsTable) DeleteRow(ctx context.Context, db *keel.DB, row *driversettlement.PayEvent) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *PayEventsTable) Upsert(ctx context.Context, db *keel.DB, rows []*driversettlement.PayEvent, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *PayEventsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*driversettlement.PayEvent, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *PayEventsTable) Copy(ctx context.Context, db *keel.DB, rows []*driversettlement.PayEvent) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1167,37 +1171,45 @@ func (q *PayEventsQuery) Clone() keel.Query[*driversettlement.PayEvent] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *PayEventsQuery) One(ctx context.Context, db *keel.DB) (*driversettlement.PayEvent, error) {
-	return keel.One[*driversettlement.PayEvent](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*driversettlement.PayEvent)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *PayEventsQuery) First(ctx context.Context, db *keel.DB) (*driversettlement.PayEvent, error) {
-	return keel.First[*driversettlement.PayEvent](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*driversettlement.PayEvent)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *PayEventsQuery) List(ctx context.Context, db *keel.DB) ([]*driversettlement.PayEvent, error) {
-	return keel.List[*driversettlement.PayEvent](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*driversettlement.PayEvent)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *PayEventsQuery) All(ctx context.Context, db *keel.DB) ([]*driversettlement.PayEvent, error) {
-	return keel.All[*driversettlement.PayEvent](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*driversettlement.PayEvent)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *PayEventsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*driversettlement.PayEvent, error) {
-	return keel.UpdateReturning[*driversettlement.PayEvent](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*driversettlement.PayEvent)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *PayEventsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*driversettlement.PayEvent], error) {
-	return keel.PageOf[*driversettlement.PayEvent](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*driversettlement.PayEvent])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *PayEventsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*driversettlement.PayEvent) error) error {
-	return keel.Each[*driversettlement.PayEvent](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*driversettlement.PayEvent)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newPayEvent() unsafe.Pointer { return unsafe.Pointer(new(driversettlement.PayEvent)) }
@@ -1513,15 +1525,15 @@ type SettlementsTable struct {
 // Settlements references the driver_settlements table.
 var Settlements = &SettlementsTable{
 	TableBase:              keel.TableBase{Ref: &settlementsRef},
-	ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settlementsRef, Index: 0}}},
-	BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settlementsRef, Index: 1}}},
-	OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settlementsRef, Index: 2}}},
-	WorkerID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settlementsRef, Index: 3}}},
-	BatchID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settlementsRef, Index: 4}}},
-	PayProfileID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settlementsRef, Index: 5}}},
+	ID:                     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &settlementsRef, Index: 0}}},
+	BusinessUnitID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &settlementsRef, Index: 1}}},
+	OrganizationID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &settlementsRef, Index: 2}}},
+	WorkerID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &settlementsRef, Index: 3}}},
+	BatchID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &settlementsRef, Index: 4}}},
+	PayProfileID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &settlementsRef, Index: 5}}},
 	SettlementNumber:       keel.StringCol{Col: keel.Col{Ref: &settlementsRef, Index: 6}},
-	Status:                 StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settlementsRef, Index: 7}}},
-	Classification:         driverpaydb.PayeeClassificationCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settlementsRef, Index: 8}}},
+	Status:                 StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &settlementsRef, Index: 7}}},
+	Classification:         driverpaydb.PayeeClassificationCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &settlementsRef, Index: 8}}},
 	PayProfileName:         keel.StringCol{Col: keel.Col{Ref: &settlementsRef, Index: 9}},
 	PeriodStart:            keel.Int64Col{Col: keel.Col{Ref: &settlementsRef, Index: 10}},
 	PeriodEnd:              keel.Int64Col{Col: keel.Col{Ref: &settlementsRef, Index: 11}},
@@ -1540,25 +1552,25 @@ var Settlements = &SettlementsTable{
 	HasExceptions:          keel.BoolCol{Col: keel.Col{Ref: &settlementsRef, Index: 24}},
 	Exceptions:             keel.JSONBCol{Col: keel.Col{Ref: &settlementsRef, Index: 25}},
 	Notes:                  keel.StringCol{Col: keel.Col{Ref: &settlementsRef, Index: 26}},
-	SubmittedByID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settlementsRef, Index: 27}}},
+	SubmittedByID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &settlementsRef, Index: 27}}},
 	SubmittedAt:            keel.Int64Col{Col: keel.Col{Ref: &settlementsRef, Index: 28}},
-	ApprovedByID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settlementsRef, Index: 29}}},
+	ApprovedByID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &settlementsRef, Index: 29}}},
 	ApprovedAt:             keel.Int64Col{Col: keel.Col{Ref: &settlementsRef, Index: 30}},
-	PostedByID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settlementsRef, Index: 31}}},
+	PostedByID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &settlementsRef, Index: 31}}},
 	PostedAt:               keel.Int64Col{Col: keel.Col{Ref: &settlementsRef, Index: 32}},
-	PostedJournalBatchID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settlementsRef, Index: 33}}},
-	PostedPayableAccountID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settlementsRef, Index: 34}}},
+	PostedJournalBatchID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &settlementsRef, Index: 33}}},
+	PostedPayableAccountID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &settlementsRef, Index: 34}}},
 	PaidAt:                 keel.Int64Col{Col: keel.Col{Ref: &settlementsRef, Index: 35}},
-	PaidByID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settlementsRef, Index: 36}}},
+	PaidByID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &settlementsRef, Index: 36}}},
 	PaymentMethod:          keel.StringCol{Col: keel.Col{Ref: &settlementsRef, Index: 37}},
 	PaymentReference:       keel.StringCol{Col: keel.Col{Ref: &settlementsRef, Index: 38}},
-	PaidJournalBatchID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settlementsRef, Index: 39}}},
+	PaidJournalBatchID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &settlementsRef, Index: 39}}},
 	PaidExchangeRate:       keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &settlementsRef, Index: 40}}},
 	PaidExchangeRateDate:   keel.Int64Col{Col: keel.Col{Ref: &settlementsRef, Index: 41}},
-	VoidedByID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settlementsRef, Index: 42}}},
+	VoidedByID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &settlementsRef, Index: 42}}},
 	VoidedAt:               keel.Int64Col{Col: keel.Col{Ref: &settlementsRef, Index: 43}},
 	VoidReason:             keel.StringCol{Col: keel.Col{Ref: &settlementsRef, Index: 44}},
-	VoidJournalBatchID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settlementsRef, Index: 45}}},
+	VoidJournalBatchID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &settlementsRef, Index: 45}}},
 	Version:                keel.Int64Col{Col: keel.Col{Ref: &settlementsRef, Index: 46}},
 	CreatedAt:              keel.Int64Col{Col: keel.Col{Ref: &settlementsRef, Index: 47}},
 	UpdatedAt:              keel.Int64Col{Col: keel.Col{Ref: &settlementsRef, Index: 48}},
@@ -1568,15 +1580,15 @@ var Settlements = &SettlementsTable{
 func BuildSettlements(r *keel.Ref) *SettlementsTable {
 	return &SettlementsTable{
 		TableBase:              keel.TableBase{Ref: r},
-		ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		WorkerID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		BatchID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		PayProfileID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		ID:                     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		WorkerID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		BatchID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		PayProfileID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		SettlementNumber:       keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
-		Status:                 StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
-		Classification:         driverpaydb.PayeeClassificationCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		Status:                 StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		Classification:         driverpaydb.PayeeClassificationCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
 		PayProfileName:         keel.StringCol{Col: keel.Col{Ref: r, Index: 9}},
 		PeriodStart:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
 		PeriodEnd:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
@@ -1595,25 +1607,25 @@ func BuildSettlements(r *keel.Ref) *SettlementsTable {
 		HasExceptions:          keel.BoolCol{Col: keel.Col{Ref: r, Index: 24}},
 		Exceptions:             keel.JSONBCol{Col: keel.Col{Ref: r, Index: 25}},
 		Notes:                  keel.StringCol{Col: keel.Col{Ref: r, Index: 26}},
-		SubmittedByID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 27}}},
+		SubmittedByID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 27}}},
 		SubmittedAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 28}},
-		ApprovedByID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 29}}},
+		ApprovedByID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 29}}},
 		ApprovedAt:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 30}},
-		PostedByID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 31}}},
+		PostedByID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 31}}},
 		PostedAt:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 32}},
-		PostedJournalBatchID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 33}}},
-		PostedPayableAccountID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 34}}},
+		PostedJournalBatchID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 33}}},
+		PostedPayableAccountID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 34}}},
 		PaidAt:                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 35}},
-		PaidByID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 36}}},
+		PaidByID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 36}}},
 		PaymentMethod:          keel.StringCol{Col: keel.Col{Ref: r, Index: 37}},
 		PaymentReference:       keel.StringCol{Col: keel.Col{Ref: r, Index: 38}},
-		PaidJournalBatchID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 39}}},
+		PaidJournalBatchID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 39}}},
 		PaidExchangeRate:       keelkinds.DecimalNullDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 40}}},
 		PaidExchangeRateDate:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 41}},
-		VoidedByID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 42}}},
+		VoidedByID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 42}}},
 		VoidedAt:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 43}},
 		VoidReason:             keel.StringCol{Col: keel.Col{Ref: r, Index: 44}},
-		VoidJournalBatchID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 45}}},
+		VoidJournalBatchID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 45}}},
 		Version:                keel.Int64Col{Col: keel.Col{Ref: r, Index: 46}},
 		CreatedAt:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 47}},
 		UpdatedAt:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 48}},
@@ -1655,8 +1667,6 @@ func (t *SettlementsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (
 
 // SettlementsQuery is a query over driversettlement.Settlement.
 type SettlementsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*driversettlement.Settlement] = (*SettlementsTable)(nil)
 
 var _ keel.Query[*driversettlement.Settlement] = (*SettlementsQuery)(nil)
 
@@ -1772,42 +1782,42 @@ func (t *SettlementsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*dri
 
 // Create inserts row.
 func (t *SettlementsTable) Create(ctx context.Context, db *keel.DB, row *driversettlement.Settlement) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *SettlementsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*driversettlement.Settlement) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *SettlementsTable) Save(ctx context.Context, db *keel.DB, row *driversettlement.Settlement, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *SettlementsTable) SaveExcept(ctx context.Context, db *keel.DB, row *driversettlement.Settlement, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *SettlementsTable) DeleteRow(ctx context.Context, db *keel.DB, row *driversettlement.Settlement) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *SettlementsTable) Upsert(ctx context.Context, db *keel.DB, rows []*driversettlement.Settlement, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *SettlementsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*driversettlement.Settlement, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *SettlementsTable) Copy(ctx context.Context, db *keel.DB, rows []*driversettlement.Settlement) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1979,37 +1989,45 @@ func (q *SettlementsQuery) Clone() keel.Query[*driversettlement.Settlement] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *SettlementsQuery) One(ctx context.Context, db *keel.DB) (*driversettlement.Settlement, error) {
-	return keel.One[*driversettlement.Settlement](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*driversettlement.Settlement)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *SettlementsQuery) First(ctx context.Context, db *keel.DB) (*driversettlement.Settlement, error) {
-	return keel.First[*driversettlement.Settlement](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*driversettlement.Settlement)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *SettlementsQuery) List(ctx context.Context, db *keel.DB) ([]*driversettlement.Settlement, error) {
-	return keel.List[*driversettlement.Settlement](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*driversettlement.Settlement)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *SettlementsQuery) All(ctx context.Context, db *keel.DB) ([]*driversettlement.Settlement, error) {
-	return keel.All[*driversettlement.Settlement](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*driversettlement.Settlement)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *SettlementsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*driversettlement.Settlement, error) {
-	return keel.UpdateReturning[*driversettlement.Settlement](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*driversettlement.Settlement)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *SettlementsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*driversettlement.Settlement], error) {
-	return keel.PageOf[*driversettlement.Settlement](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*driversettlement.Settlement])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *SettlementsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*driversettlement.Settlement) error) error {
-	return keel.Each[*driversettlement.Settlement](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*driversettlement.Settlement)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newSettlement() unsafe.Pointer { return unsafe.Pointer(new(driversettlement.Settlement)) }
@@ -2407,10 +2425,10 @@ type SettlementBatchesTable struct {
 // SettlementBatches references the driver_settlement_batches table.
 var SettlementBatches = &SettlementBatchesTable{
 	TableBase:       keel.TableBase{Ref: &settlementBatchesRef},
-	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settlementBatchesRef, Index: 0}}},
-	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settlementBatchesRef, Index: 1}}},
-	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settlementBatchesRef, Index: 2}}},
-	Status:          BatchStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settlementBatchesRef, Index: 3}}},
+	ID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &settlementBatchesRef, Index: 0}}},
+	BusinessUnitID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &settlementBatchesRef, Index: 1}}},
+	OrganizationID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &settlementBatchesRef, Index: 2}}},
+	Status:          BatchStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &settlementBatchesRef, Index: 3}}},
 	Name:            keel.StringCol{Col: keel.Col{Ref: &settlementBatchesRef, Index: 4}},
 	PeriodStart:     keel.Int64Col{Col: keel.Col{Ref: &settlementBatchesRef, Index: 5}},
 	PeriodEnd:       keel.Int64Col{Col: keel.Col{Ref: &settlementBatchesRef, Index: 6}},
@@ -2421,10 +2439,10 @@ var SettlementBatches = &SettlementBatchesTable{
 	TotalNetMinor:   keel.Int64Col{Col: keel.Col{Ref: &settlementBatchesRef, Index: 11}},
 	CurrencyCode:    keel.StringCol{Col: keel.Col{Ref: &settlementBatchesRef, Index: 12}},
 	Notes:           keel.StringCol{Col: keel.Col{Ref: &settlementBatchesRef, Index: 13}},
-	GeneratedByID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settlementBatchesRef, Index: 14}}},
+	GeneratedByID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &settlementBatchesRef, Index: 14}}},
 	GeneratedAt:     keel.Int64Col{Col: keel.Col{Ref: &settlementBatchesRef, Index: 15}},
 	CompletedAt:     keel.Int64Col{Col: keel.Col{Ref: &settlementBatchesRef, Index: 16}},
-	CanceledByID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settlementBatchesRef, Index: 17}}},
+	CanceledByID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &settlementBatchesRef, Index: 17}}},
 	CanceledAt:      keel.Int64Col{Col: keel.Col{Ref: &settlementBatchesRef, Index: 18}},
 	Version:         keel.Int64Col{Col: keel.Col{Ref: &settlementBatchesRef, Index: 19}},
 	CreatedAt:       keel.Int64Col{Col: keel.Col{Ref: &settlementBatchesRef, Index: 20}},
@@ -2435,10 +2453,10 @@ var SettlementBatches = &SettlementBatchesTable{
 func BuildSettlementBatches(r *keel.Ref) *SettlementBatchesTable {
 	return &SettlementBatchesTable{
 		TableBase:       keel.TableBase{Ref: r},
-		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		Status:          BatchStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		Status:          BatchStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		Name:            keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		PeriodStart:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 5}},
 		PeriodEnd:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
@@ -2449,10 +2467,10 @@ func BuildSettlementBatches(r *keel.Ref) *SettlementBatchesTable {
 		TotalNetMinor:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
 		CurrencyCode:    keel.StringCol{Col: keel.Col{Ref: r, Index: 12}},
 		Notes:           keel.StringCol{Col: keel.Col{Ref: r, Index: 13}},
-		GeneratedByID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 14}}},
+		GeneratedByID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 14}}},
 		GeneratedAt:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
 		CompletedAt:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
-		CanceledByID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 17}}},
+		CanceledByID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 17}}},
 		CanceledAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
 		Version:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 19}},
 		CreatedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 20}},
@@ -2480,8 +2498,6 @@ func (t *SettlementBatchesTable) Get(ctx context.Context, db *keel.DB, key pulid
 
 // SettlementBatchesQuery is a query over driversettlement.SettlementBatch.
 type SettlementBatchesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*driversettlement.SettlementBatch] = (*SettlementBatchesTable)(nil)
 
 var _ keel.Query[*driversettlement.SettlementBatch] = (*SettlementBatchesQuery)(nil)
 
@@ -2597,42 +2613,42 @@ func (t *SettlementBatchesTable) Compute(col keel.Column, e keel.Expr) keel.Quer
 
 // Create inserts row.
 func (t *SettlementBatchesTable) Create(ctx context.Context, db *keel.DB, row *driversettlement.SettlementBatch) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *SettlementBatchesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*driversettlement.SettlementBatch) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *SettlementBatchesTable) Save(ctx context.Context, db *keel.DB, row *driversettlement.SettlementBatch, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *SettlementBatchesTable) SaveExcept(ctx context.Context, db *keel.DB, row *driversettlement.SettlementBatch, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *SettlementBatchesTable) DeleteRow(ctx context.Context, db *keel.DB, row *driversettlement.SettlementBatch) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *SettlementBatchesTable) Upsert(ctx context.Context, db *keel.DB, rows []*driversettlement.SettlementBatch, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *SettlementBatchesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*driversettlement.SettlementBatch, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *SettlementBatchesTable) Copy(ctx context.Context, db *keel.DB, rows []*driversettlement.SettlementBatch) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -2804,37 +2820,45 @@ func (q *SettlementBatchesQuery) Clone() keel.Query[*driversettlement.Settlement
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *SettlementBatchesQuery) One(ctx context.Context, db *keel.DB) (*driversettlement.SettlementBatch, error) {
-	return keel.One[*driversettlement.SettlementBatch](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*driversettlement.SettlementBatch)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *SettlementBatchesQuery) First(ctx context.Context, db *keel.DB) (*driversettlement.SettlementBatch, error) {
-	return keel.First[*driversettlement.SettlementBatch](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*driversettlement.SettlementBatch)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *SettlementBatchesQuery) List(ctx context.Context, db *keel.DB) ([]*driversettlement.SettlementBatch, error) {
-	return keel.List[*driversettlement.SettlementBatch](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*driversettlement.SettlementBatch)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *SettlementBatchesQuery) All(ctx context.Context, db *keel.DB) ([]*driversettlement.SettlementBatch, error) {
-	return keel.All[*driversettlement.SettlementBatch](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*driversettlement.SettlementBatch)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *SettlementBatchesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*driversettlement.SettlementBatch, error) {
-	return keel.UpdateReturning[*driversettlement.SettlementBatch](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*driversettlement.SettlementBatch)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *SettlementBatchesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*driversettlement.SettlementBatch], error) {
-	return keel.PageOf[*driversettlement.SettlementBatch](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*driversettlement.SettlementBatch])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *SettlementBatchesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*driversettlement.SettlementBatch) error) error {
-	return keel.Each[*driversettlement.SettlementBatch](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*driversettlement.SettlementBatch)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newSettlementBatch() unsafe.Pointer {
@@ -3072,26 +3096,26 @@ type SettlementLinesTable struct {
 // SettlementLines references the driver_settlement_lines table.
 var SettlementLines = &SettlementLinesTable{
 	TableBase:            keel.TableBase{Ref: &settlementLinesRef},
-	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settlementLinesRef, Index: 0}}},
-	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settlementLinesRef, Index: 1}}},
-	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settlementLinesRef, Index: 2}}},
-	SettlementID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settlementLinesRef, Index: 3}}},
+	ID:                   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &settlementLinesRef, Index: 0}}},
+	BusinessUnitID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &settlementLinesRef, Index: 1}}},
+	OrganizationID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &settlementLinesRef, Index: 2}}},
+	SettlementID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &settlementLinesRef, Index: 3}}},
 	LineNumber:           keel.Int64Col{Col: keel.Col{Ref: &settlementLinesRef, Index: 4}},
-	Category:             LineCategoryCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settlementLinesRef, Index: 5}}},
-	ComponentKind:        driverpaydb.ComponentKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settlementLinesRef, Index: 6}}},
-	Method:               driverpaydb.CalcMethodCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settlementLinesRef, Index: 7}}},
+	Category:             LineCategoryCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &settlementLinesRef, Index: 5}}},
+	ComponentKind:        driverpaydb.ComponentKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &settlementLinesRef, Index: 6}}},
+	Method:               driverpaydb.CalcMethodCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &settlementLinesRef, Index: 7}}},
 	Description:          keel.StringCol{Col: keel.Col{Ref: &settlementLinesRef, Index: 8}},
 	Quantity:             keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &settlementLinesRef, Index: 9}}},
 	Rate:                 keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &settlementLinesRef, Index: 10}}},
 	AmountMinor:          keel.Int64Col{Col: keel.Col{Ref: &settlementLinesRef, Index: 11}},
-	ShipmentID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settlementLinesRef, Index: 12}}},
-	MoveID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settlementLinesRef, Index: 13}}},
-	PayEventID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settlementLinesRef, Index: 14}}},
-	RecurringDeductionID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settlementLinesRef, Index: 15}}},
-	RecurringEarningID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settlementLinesRef, Index: 16}}},
-	PayCodeID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settlementLinesRef, Index: 17}}},
-	AdvanceID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settlementLinesRef, Index: 18}}},
-	EscrowAccountID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &settlementLinesRef, Index: 19}}},
+	ShipmentID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &settlementLinesRef, Index: 12}}},
+	MoveID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &settlementLinesRef, Index: 13}}},
+	PayEventID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &settlementLinesRef, Index: 14}}},
+	RecurringDeductionID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &settlementLinesRef, Index: 15}}},
+	RecurringEarningID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &settlementLinesRef, Index: 16}}},
+	PayCodeID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &settlementLinesRef, Index: 17}}},
+	AdvanceID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &settlementLinesRef, Index: 18}}},
+	EscrowAccountID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &settlementLinesRef, Index: 19}}},
 	ProNumber:            keel.StringCol{Col: keel.Col{Ref: &settlementLinesRef, Index: 20}},
 	AddedByAgent:         keel.BoolCol{Col: keel.Col{Ref: &settlementLinesRef, Index: 21}},
 	CreatedAt:            keel.Int64Col{Col: keel.Col{Ref: &settlementLinesRef, Index: 22}},
@@ -3102,26 +3126,26 @@ var SettlementLines = &SettlementLinesTable{
 func BuildSettlementLines(r *keel.Ref) *SettlementLinesTable {
 	return &SettlementLinesTable{
 		TableBase:            keel.TableBase{Ref: r},
-		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		SettlementID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:                   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		SettlementID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		LineNumber:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 4}},
-		Category:             LineCategoryCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		ComponentKind:        driverpaydb.ComponentKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		Method:               driverpaydb.CalcMethodCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		Category:             LineCategoryCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		ComponentKind:        driverpaydb.ComponentKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		Method:               driverpaydb.CalcMethodCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
 		Description:          keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
 		Quantity:             keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 9}}},
 		Rate:                 keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 10}}},
 		AmountMinor:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
-		ShipmentID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 12}}},
-		MoveID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 13}}},
-		PayEventID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 14}}},
-		RecurringDeductionID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 15}}},
-		RecurringEarningID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 16}}},
-		PayCodeID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 17}}},
-		AdvanceID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 18}}},
-		EscrowAccountID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 19}}},
+		ShipmentID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 12}}},
+		MoveID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 13}}},
+		PayEventID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 14}}},
+		RecurringDeductionID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 15}}},
+		RecurringEarningID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 16}}},
+		PayCodeID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 17}}},
+		AdvanceID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 18}}},
+		EscrowAccountID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 19}}},
 		ProNumber:            keel.StringCol{Col: keel.Col{Ref: r, Index: 20}},
 		AddedByAgent:         keel.BoolCol{Col: keel.Col{Ref: r, Index: 21}},
 		CreatedAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 22}},
@@ -3159,8 +3183,6 @@ func (t *SettlementLinesTable) Get(ctx context.Context, db *keel.DB, key pulid.I
 
 // SettlementLinesQuery is a query over driversettlement.SettlementLine.
 type SettlementLinesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*driversettlement.SettlementLine] = (*SettlementLinesTable)(nil)
 
 var _ keel.Query[*driversettlement.SettlementLine] = (*SettlementLinesQuery)(nil)
 
@@ -3276,42 +3298,42 @@ func (t *SettlementLinesTable) Compute(col keel.Column, e keel.Expr) keel.Query[
 
 // Create inserts row.
 func (t *SettlementLinesTable) Create(ctx context.Context, db *keel.DB, row *driversettlement.SettlementLine) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *SettlementLinesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*driversettlement.SettlementLine) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *SettlementLinesTable) Save(ctx context.Context, db *keel.DB, row *driversettlement.SettlementLine, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *SettlementLinesTable) SaveExcept(ctx context.Context, db *keel.DB, row *driversettlement.SettlementLine, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *SettlementLinesTable) DeleteRow(ctx context.Context, db *keel.DB, row *driversettlement.SettlementLine) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *SettlementLinesTable) Upsert(ctx context.Context, db *keel.DB, rows []*driversettlement.SettlementLine, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *SettlementLinesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*driversettlement.SettlementLine, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *SettlementLinesTable) Copy(ctx context.Context, db *keel.DB, rows []*driversettlement.SettlementLine) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -3483,37 +3505,45 @@ func (q *SettlementLinesQuery) Clone() keel.Query[*driversettlement.SettlementLi
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *SettlementLinesQuery) One(ctx context.Context, db *keel.DB) (*driversettlement.SettlementLine, error) {
-	return keel.One[*driversettlement.SettlementLine](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*driversettlement.SettlementLine)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *SettlementLinesQuery) First(ctx context.Context, db *keel.DB) (*driversettlement.SettlementLine, error) {
-	return keel.First[*driversettlement.SettlementLine](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*driversettlement.SettlementLine)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *SettlementLinesQuery) List(ctx context.Context, db *keel.DB) ([]*driversettlement.SettlementLine, error) {
-	return keel.List[*driversettlement.SettlementLine](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*driversettlement.SettlementLine)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *SettlementLinesQuery) All(ctx context.Context, db *keel.DB) ([]*driversettlement.SettlementLine, error) {
-	return keel.All[*driversettlement.SettlementLine](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*driversettlement.SettlementLine)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *SettlementLinesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*driversettlement.SettlementLine, error) {
-	return keel.UpdateReturning[*driversettlement.SettlementLine](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*driversettlement.SettlementLine)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *SettlementLinesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*driversettlement.SettlementLine], error) {
-	return keel.PageOf[*driversettlement.SettlementLine](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*driversettlement.SettlementLine])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *SettlementLinesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*driversettlement.SettlementLine) error) error {
-	return keel.Each[*driversettlement.SettlementLine](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*driversettlement.SettlementLine)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newSettlementLine() unsafe.Pointer { return unsafe.Pointer(new(driversettlement.SettlementLine)) }
@@ -3801,209 +3831,189 @@ var reportMeasureIntegerCount = schema.ReportInfo{Included: true, Kind: schema.M
 var reportMeasureIntegerHidden = schema.ReportInfo{Kind: schema.Measure, Type: schema.ValueInt, Aggs: schema.AggsNumeric}
 
 // BatchStatusCol is a column of driversettlement.BatchStatus values.
-type BatchStatusCol struct{ keel.StringCol }
+type BatchStatusCol struct{ keel.TypedStringCol }
 
-func (c BatchStatusCol) Eq(v driversettlement.BatchStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c BatchStatusCol) Ne(v driversettlement.BatchStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c BatchStatusCol) Gt(v driversettlement.BatchStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
-func (c BatchStatusCol) Gte(v driversettlement.BatchStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
-}
-func (c BatchStatusCol) Lt(v driversettlement.BatchStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
-func (c BatchStatusCol) Lte(v driversettlement.BatchStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
-}
+func (c BatchStatusCol) Eq(v driversettlement.BatchStatus) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c BatchStatusCol) Ne(v driversettlement.BatchStatus) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c BatchStatusCol) Gt(v driversettlement.BatchStatus) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c BatchStatusCol) Gte(v driversettlement.BatchStatus) keel.Pred { return c.Text().Gte(string(v)) }
+func (c BatchStatusCol) Lt(v driversettlement.BatchStatus) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c BatchStatusCol) Lte(v driversettlement.BatchStatus) keel.Pred { return c.Text().Lte(string(v)) }
 func (c BatchStatusCol) IsDistinctFrom(v driversettlement.BatchStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c BatchStatusCol) Between(lo, hi driversettlement.BatchStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c BatchStatusCol) To(v driversettlement.BatchStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c BatchStatusCol) In(vs ...driversettlement.BatchStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c BatchStatusCol) NotIn(vs ...driversettlement.BatchStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // DisputeCategoryCol is a column of driversettlement.DisputeCategory values.
-type DisputeCategoryCol struct{ keel.StringCol }
+type DisputeCategoryCol struct{ keel.TypedStringCol }
 
 func (c DisputeCategoryCol) Eq(v driversettlement.DisputeCategory) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c DisputeCategoryCol) Ne(v driversettlement.DisputeCategory) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c DisputeCategoryCol) Gt(v driversettlement.DisputeCategory) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c DisputeCategoryCol) Gte(v driversettlement.DisputeCategory) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c DisputeCategoryCol) Lt(v driversettlement.DisputeCategory) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c DisputeCategoryCol) Lte(v driversettlement.DisputeCategory) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c DisputeCategoryCol) IsDistinctFrom(v driversettlement.DisputeCategory) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c DisputeCategoryCol) Between(lo, hi driversettlement.DisputeCategory) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c DisputeCategoryCol) To(v driversettlement.DisputeCategory) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c DisputeCategoryCol) In(vs ...driversettlement.DisputeCategory) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c DisputeCategoryCol) NotIn(vs ...driversettlement.DisputeCategory) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // DisputeStatusCol is a column of driversettlement.DisputeStatus values.
-type DisputeStatusCol struct{ keel.StringCol }
+type DisputeStatusCol struct{ keel.TypedStringCol }
 
 func (c DisputeStatusCol) Eq(v driversettlement.DisputeStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c DisputeStatusCol) Ne(v driversettlement.DisputeStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c DisputeStatusCol) Gt(v driversettlement.DisputeStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c DisputeStatusCol) Gte(v driversettlement.DisputeStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c DisputeStatusCol) Lt(v driversettlement.DisputeStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c DisputeStatusCol) Lte(v driversettlement.DisputeStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c DisputeStatusCol) IsDistinctFrom(v driversettlement.DisputeStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c DisputeStatusCol) Between(lo, hi driversettlement.DisputeStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c DisputeStatusCol) To(v driversettlement.DisputeStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c DisputeStatusCol) In(vs ...driversettlement.DisputeStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c DisputeStatusCol) NotIn(vs ...driversettlement.DisputeStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // LineCategoryCol is a column of driversettlement.LineCategory values.
-type LineCategoryCol struct{ keel.StringCol }
+type LineCategoryCol struct{ keel.TypedStringCol }
 
-func (c LineCategoryCol) Eq(v driversettlement.LineCategory) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c LineCategoryCol) Ne(v driversettlement.LineCategory) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c LineCategoryCol) Gt(v driversettlement.LineCategory) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
+func (c LineCategoryCol) Eq(v driversettlement.LineCategory) keel.Pred { return c.Text().Eq(string(v)) }
+func (c LineCategoryCol) Ne(v driversettlement.LineCategory) keel.Pred { return c.Text().Ne(string(v)) }
+func (c LineCategoryCol) Gt(v driversettlement.LineCategory) keel.Pred { return c.Text().Gt(string(v)) }
 func (c LineCategoryCol) Gte(v driversettlement.LineCategory) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
-func (c LineCategoryCol) Lt(v driversettlement.LineCategory) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
+func (c LineCategoryCol) Lt(v driversettlement.LineCategory) keel.Pred { return c.Text().Lt(string(v)) }
 func (c LineCategoryCol) Lte(v driversettlement.LineCategory) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c LineCategoryCol) IsDistinctFrom(v driversettlement.LineCategory) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c LineCategoryCol) Between(lo, hi driversettlement.LineCategory) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c LineCategoryCol) To(v driversettlement.LineCategory) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c LineCategoryCol) In(vs ...driversettlement.LineCategory) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c LineCategoryCol) NotIn(vs ...driversettlement.LineCategory) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // PayEventStatusCol is a column of driversettlement.PayEventStatus values.
-type PayEventStatusCol struct{ keel.StringCol }
+type PayEventStatusCol struct{ keel.TypedStringCol }
 
 func (c PayEventStatusCol) Eq(v driversettlement.PayEventStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c PayEventStatusCol) Ne(v driversettlement.PayEventStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c PayEventStatusCol) Gt(v driversettlement.PayEventStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c PayEventStatusCol) Gte(v driversettlement.PayEventStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c PayEventStatusCol) Lt(v driversettlement.PayEventStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c PayEventStatusCol) Lte(v driversettlement.PayEventStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c PayEventStatusCol) IsDistinctFrom(v driversettlement.PayEventStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c PayEventStatusCol) Between(lo, hi driversettlement.PayEventStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c PayEventStatusCol) To(v driversettlement.PayEventStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c PayEventStatusCol) In(vs ...driversettlement.PayEventStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c PayEventStatusCol) NotIn(vs ...driversettlement.PayEventStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // StatusCol is a column of driversettlement.Status values.
-type StatusCol struct{ keel.StringCol }
+type StatusCol struct{ keel.TypedStringCol }
 
-func (c StatusCol) Eq(v driversettlement.Status) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c StatusCol) Ne(v driversettlement.Status) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c StatusCol) Gt(v driversettlement.Status) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c StatusCol) Gte(v driversettlement.Status) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c StatusCol) Lt(v driversettlement.Status) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c StatusCol) Lte(v driversettlement.Status) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c StatusCol) Eq(v driversettlement.Status) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c StatusCol) Ne(v driversettlement.Status) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c StatusCol) Gt(v driversettlement.Status) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c StatusCol) Gte(v driversettlement.Status) keel.Pred { return c.Text().Gte(string(v)) }
+func (c StatusCol) Lt(v driversettlement.Status) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c StatusCol) Lte(v driversettlement.Status) keel.Pred { return c.Text().Lte(string(v)) }
 func (c StatusCol) IsDistinctFrom(v driversettlement.Status) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c StatusCol) Between(lo, hi driversettlement.Status) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c StatusCol) To(v driversettlement.Status) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c StatusCol) To(v driversettlement.Status) keel.Assignment { return c.Text().To(string(v)) }
 func (c StatusCol) In(vs ...driversettlement.Status) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c StatusCol) NotIn(vs ...driversettlement.Status) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

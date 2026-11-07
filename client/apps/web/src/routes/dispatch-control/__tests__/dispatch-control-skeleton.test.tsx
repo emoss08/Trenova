@@ -14,8 +14,7 @@ const control = {
   organizationId: "org_01",
   businessUnitId: "bu_01",
   enableAutoAssignment: false,
-  autoAssignmentStrategy: "Proximity",
-  scoringWeights: {},
+  autoProposeCoverage: false,
   enforceHosCompliance: false,
   recordServiceFailures: "Never",
   enableCheckCallMonitoring: false,
@@ -24,6 +23,44 @@ const control = {
 vi.mock("@/lib/queries/dispatch-control", () => ({
   dispatchControl: {
     get: () => ({ queryKey: ["dispatch-control"], queryFn: async () => control }),
+  },
+}));
+
+vi.mock("@/lib/queries/dispatch-style", () => ({
+  dispatchStyle: {
+    get: () => ({
+      queryKey: ["dispatch-style"],
+      queryFn: async () => ({
+        enabled: false,
+        decisions: 0,
+        approvals: 0,
+        overrides: 0,
+        declines: 0,
+        learningSince: null,
+        updatedAt: null,
+        weights: [],
+      }),
+    }),
+  },
+}));
+
+vi.mock("@/lib/queries/dispatch-console", () => ({
+  dispatchConsoleQueries: {
+    forecastQuality: () => ({
+      queryKey: ["dispatch-forecast-quality"],
+      queryFn: async () => ({
+        status: "InsufficientHistory",
+        historyWeeks: 3,
+        historyLoads: 41,
+        weeksTested: 0,
+        loadsTested: 0,
+        intervalCoverage: 0,
+        meanAbsoluteError: 0,
+        naiveMeanAbsoluteError: 0,
+        skill: 0,
+        fittedAt: 1_793_577_600,
+      }),
+    }),
   },
 }));
 
@@ -76,10 +113,10 @@ describe("DispatchControlSkeleton", () => {
     signIn({ brokerageEnabled: true, assetOperationsEnabled: true });
 
     const { container: skeleton } = render(<DispatchControlSkeleton />);
-    expect(cardCount(skeleton)).toBe(8);
+    expect(cardCount(skeleton)).toBe(10);
     cleanup();
 
-    expect(await loadedFormCardCount()).toBe(8);
+    expect(await loadedFormCardCount()).toBe(10);
   });
 
   it("leaves out the fleet's cards for a brokerage, as the form does", async () => {
@@ -96,10 +133,10 @@ describe("DispatchControlSkeleton", () => {
     signIn({ brokerageEnabled: false, assetOperationsEnabled: true });
 
     const { container: skeleton } = render(<DispatchControlSkeleton />);
-    expect(cardCount(skeleton)).toBe(7);
+    expect(cardCount(skeleton)).toBe(9);
     cleanup();
 
-    expect(await loadedFormCardCount()).toBe(7);
+    expect(await loadedFormCardCount()).toBe(9);
   });
 
   it("is announced once as loading", () => {

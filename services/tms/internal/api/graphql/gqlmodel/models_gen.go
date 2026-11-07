@@ -2216,7 +2216,10 @@ type CapacityMatch struct {
 	Quote *string `json:"quote,omitempty"`
 	// Null to a reader without the margins field group.
 	MarginPercent *float64 `json:"marginPercent,omitempty"`
-	FitPercent    *float64 `json:"fitPercent,omitempty"`
+	// How well a carrier fits the lane, 0 to 100. Null for a driver's match.
+	FitPercent *float64 `json:"fitPercent,omitempty"`
+	// What the driver taking this move costs the plan, in cents. Null for a carrier's match.
+	CostCents *int `json:"costCents,omitempty"`
 }
 
 // The ring drawn around a capacity avatar: hours of service left for a driver, acceptance for a carrier.
@@ -4456,7 +4459,7 @@ type DispatchAssignmentPreview struct {
 	TrailerID        *string            `json:"trailerId,omitempty"`
 	Blocked          bool               `json:"blocked"`
 	RequiresOverride bool               `json:"requiresOverride"`
-	Score            *DispatchCandidate `json:"score"`
+	Candidate        *DispatchCandidate `json:"candidate"`
 }
 
 type DispatchAssignmentPreviewInput struct {
@@ -4467,51 +4470,57 @@ type DispatchAssignmentPreviewInput struct {
 }
 
 type DispatchBoard struct {
-	Moves       []*DispatchBoardMove   `json:"moves"`
-	Drivers     []*DispatchBoardDriver `json:"drivers"`
-	Summary     *DispatchBoardSummary  `json:"summary"`
-	WindowStart int                    `json:"windowStart"`
-	WindowEnd   int                    `json:"windowEnd"`
-	GeneratedAt int                    `json:"generatedAt"`
+	Moves   []*DispatchBoardMove   `json:"moves"`
+	Drivers []*DispatchBoardDriver `json:"drivers"`
+	// True when more drivers match than the board lists; drivers available for dispatch come first.
+	DriversTruncated bool                  `json:"driversTruncated"`
+	Summary          *DispatchBoardSummary `json:"summary"`
+	WindowStart      int                   `json:"windowStart"`
+	WindowEnd        int                   `json:"windowEnd"`
+	GeneratedAt      int                   `json:"generatedAt"`
 }
 
 type DispatchBoardDriver struct {
-	WorkerID               string                `json:"workerId"`
-	FirstName              string                `json:"firstName"`
-	LastName               string                `json:"lastName"`
-	WorkerType             string                `json:"workerType"`
-	DriverType             string                `json:"driverType"`
-	FleetCodeID            *string               `json:"fleetCodeId,omitempty"`
-	FleetCodeName          string                `json:"fleetCodeName"`
-	City                   string                `json:"city"`
-	StateAbbreviation      string                `json:"stateAbbreviation"`
-	PostalCode             string                `json:"postalCode"`
-	ProfilePicURL          string                `json:"profilePicUrl"`
-	AssignmentBlocked      string                `json:"assignmentBlocked"`
-	AvailableForDispatch   bool                  `json:"availableForDispatch"`
-	TractorID              *string               `json:"tractorId,omitempty"`
-	TractorCode            string                `json:"tractorCode"`
-	TractorTypeID          *string               `json:"tractorTypeId,omitempty"`
-	TractorAvailable       bool                  `json:"tractorAvailable"`
-	OpenAssignments        int                   `json:"openAssignments"`
-	Availability           string                `json:"availability"`
-	DutyStatus             string                `json:"dutyStatus"`
-	DriveRemainingMs       int                   `json:"driveRemainingMs"`
-	ShiftRemainingMs       int                   `json:"shiftRemainingMs"`
-	CycleRemainingMs       int                   `json:"cycleRemainingMs"`
-	BreakRemainingMs       int                   `json:"breakRemainingMs"`
-	HosRecordedAt          int                   `json:"hosRecordedAt"`
-	HosIsStale             bool                  `json:"hosIsStale"`
-	Latitude               *float64              `json:"latitude,omitempty"`
-	Longitude              *float64              `json:"longitude,omitempty"`
-	FormattedLocation      string                `json:"formattedLocation"`
-	PositionRecordedAt     int                   `json:"positionRecordedAt"`
-	ProjectedTimeAvailable int                   `json:"projectedTimeAvailable"`
-	CommittedMiles         float64               `json:"committedMiles"`
-	CommittedRevenue       float64               `json:"committedRevenue"`
-	Commitments            []*DispatchCommitment `json:"commitments"`
-	TimeOff                []*DispatchTimeOff    `json:"timeOff"`
-	Findings               []*DispatchFinding    `json:"findings"`
+	WorkerID               string                     `json:"workerId"`
+	FirstName              string                     `json:"firstName"`
+	LastName               string                     `json:"lastName"`
+	WorkerType             string                     `json:"workerType"`
+	DriverType             string                     `json:"driverType"`
+	FleetCodeID            *string                    `json:"fleetCodeId,omitempty"`
+	FleetCodeName          string                     `json:"fleetCodeName"`
+	City                   string                     `json:"city"`
+	StateAbbreviation      string                     `json:"stateAbbreviation"`
+	PostalCode             string                     `json:"postalCode"`
+	ProfilePicURL          string                     `json:"profilePicUrl"`
+	AssignmentBlocked      string                     `json:"assignmentBlocked"`
+	AvailableForDispatch   bool                       `json:"availableForDispatch"`
+	TractorID              *string                    `json:"tractorId,omitempty"`
+	TractorCode            string                     `json:"tractorCode"`
+	TractorTypeID          *string                    `json:"tractorTypeId,omitempty"`
+	TractorAvailable       bool                       `json:"tractorAvailable"`
+	OpenAssignments        int                        `json:"openAssignments"`
+	Availability           string                     `json:"availability"`
+	DutyStatus             string                     `json:"dutyStatus"`
+	DriveRemainingMs       int                        `json:"driveRemainingMs"`
+	ShiftRemainingMs       int                        `json:"shiftRemainingMs"`
+	CycleRemainingMs       int                        `json:"cycleRemainingMs"`
+	BreakRemainingMs       int                        `json:"breakRemainingMs"`
+	HosRecordedAt          int                        `json:"hosRecordedAt"`
+	HosIsStale             bool                       `json:"hosIsStale"`
+	Latitude               *float64                   `json:"latitude,omitempty"`
+	Longitude              *float64                   `json:"longitude,omitempty"`
+	FormattedLocation      string                     `json:"formattedLocation"`
+	PositionRecordedAt     int                        `json:"positionRecordedAt"`
+	ProjectedTimeAvailable int                        `json:"projectedTimeAvailable"`
+	CommittedMiles         float64                    `json:"committedMiles"`
+	CommittedRevenue       float64                    `json:"committedRevenue"`
+	Commitments            []*DispatchCommitment      `json:"commitments"`
+	TimeOff                []*DispatchTimeOff         `json:"timeOff"`
+	Findings               []*DispatchFinding         `json:"findings"`
+	PlannedMove            *DispatchDriverPlannedMove `json:"plannedMove,omitempty"`
+	// When the driver was last home: recorded on the worker, seen by telematics near home, or the
+	// end of approved time off. Absent when nothing says.
+	LastHomeAt *int `json:"lastHomeAt,omitempty"`
 }
 
 type DispatchBoardInput struct {
@@ -4585,13 +4594,23 @@ type DispatchBoardMove struct {
 	AssignedCarrierName    string                      `json:"assignedCarrierName"`
 	CarrierTotalCost       *float64                    `json:"carrierTotalCost,omitempty"`
 	LiveTender             *DispatchBoardTenderSummary `json:"liveTender,omitempty"`
+	// The coverage the dispatch agent proposed for this move and is waiting on a decision.
+	// Present on dispatchBoard and dispatchMove for a caller who may see agent proposals;
+	// absent everywhere else, and when nothing is waiting.
+	PendingProposal *DispatchMoveProposal       `json:"pendingProposal,omitempty"`
+	FailedProposal  *DispatchMoveFailedProposal `json:"failedProposal,omitempty"`
+	// What the last plan said this move is worth and who should take it. Absent on a covered
+	// move and on one no plan has priced yet.
+	PlanPrice *DispatchMovePlanPrice `json:"planPrice,omitempty"`
 }
 
 // The metrics strip at the top of the console: the numbers a dispatcher is measured on.
 type DispatchBoardSummary struct {
-	UncoveredMoves       int     `json:"uncoveredMoves"`
-	CoveredMoves         int     `json:"coveredMoves"`
-	LateMoves            int     `json:"lateMoves"`
+	UncoveredMoves int `json:"uncoveredMoves"`
+	CoveredMoves   int `json:"coveredMoves"`
+	// Uncovered moves whose window closed unvisited: the board's Late group.
+	LateMoves int `json:"lateMoves"`
+	// Uncovered moves whose window is open or opens within four hours: the board's Due now group.
 	AtRiskMoves          int     `json:"atRiskMoves"`
 	UnseatedDrivers      int     `json:"unseatedDrivers"`
 	AvailableDrivers     int     `json:"availableDrivers"`
@@ -4620,32 +4639,48 @@ type DispatchBulkAssignResult struct {
 
 // A driver-and-equipment pairing judged against one move.
 type DispatchCandidate struct {
-	WorkerID               string   `json:"workerId"`
-	WorkerName             string   `json:"workerName"`
-	TractorID              *string  `json:"tractorId,omitempty"`
-	TrailerID              *string  `json:"trailerId,omitempty"`
-	MoveID                 string   `json:"moveId"`
-	Score                  int      `json:"score"`
-	Verdict                string   `json:"verdict"`
-	Blocked                bool     `json:"blocked"`
-	DeadheadMiles          *float64 `json:"deadheadMiles,omitempty"`
-	EstimatedDriveMs       int      `json:"estimatedDriveMs"`
-	ProjectedArrival       int      `json:"projectedArrival"`
-	MinutesOfSlack         int      `json:"minutesOfSlack"`
-	DriveRemainingMs       int      `json:"driveRemainingMs"`
-	ShiftRemainingMs       int      `json:"shiftRemainingMs"`
-	CycleRemainingMs       int      `json:"cycleRemainingMs"`
-	ProjectedTimeAvailable int      `json:"projectedTimeAvailable"`
+	WorkerID   string  `json:"workerId"`
+	WorkerName string  `json:"workerName"`
+	TractorID  *string `json:"tractorId,omitempty"`
+	TrailerID  *string `json:"trailerId,omitempty"`
+	MoveID     string  `json:"moveId"`
+	// What this driver taking the move costs, in cents: the sum of its cost lines.
+	CostCents int                 `json:"costCents"`
+	CostLines []*DispatchCostLine `json:"costLines"`
+	Verdict   string              `json:"verdict"`
+	Blocked   bool                `json:"blocked"`
+	// Empty miles to the pickup; null when where the driver is is unknown.
+	DeadheadMiles *float64 `json:"deadheadMiles,omitempty"`
+	// Where the empty miles start: commitment (the end of the driver's last load), position (live GPS) or lastDrop (where the tractor was last left). Empty when unknown.
+	OriginSource     string  `json:"originSource"`
+	LoadedMiles      float64 `json:"loadedMiles"`
+	EstimatedDriveMs int     `json:"estimatedDriveMs"`
+	// Rest the driver needs on the way, from the hours-of-service projection.
+	RestMs            int `json:"restMs"`
+	ProjectedArrival  int `json:"projectedArrival"`
+	ProjectedDelivery int `json:"projectedDelivery"`
+	ProjectedFreeAt   int `json:"projectedFreeAt"`
+	MinutesOfSlack    int `json:"minutesOfSlack"`
+	// False when the move has no pickup appointment still ahead to measure margin against.
+	SlackKnown          bool `json:"slackKnown"`
+	DeliveryLateMinutes int  `json:"deliveryLateMinutes"`
+	// False when the driver's hours of service are not known or are too old to trust.
+	HosKnown               bool `json:"hosKnown"`
+	DriveRemainingMs       int  `json:"driveRemainingMs"`
+	ShiftRemainingMs       int  `json:"shiftRemainingMs"`
+	CycleRemainingMs       int  `json:"cycleRemainingMs"`
+	ProjectedTimeAvailable int  `json:"projectedTimeAvailable"`
 	// Rest strategy that makes this trip legal: currentClocks, splitSleeper,
 	// tenHourReset, or restart34. Empty when no projection ran.
 	HosStrategy string `json:"hosStrategy"`
 	// Latest unix time the required pre-departure rest must start; 0 when none is needed.
-	HosRestStartDeadline int                    `json:"hosRestStartDeadline"`
-	HosProjectedDriveMs  int                    `json:"hosProjectedDriveMs"`
-	HosProjectedShiftMs  int                    `json:"hosProjectedShiftMs"`
-	HosProjectedCycleMs  int                    `json:"hosProjectedCycleMs"`
-	Findings             []*DispatchFinding     `json:"findings"`
-	Factors              []*DispatchScoreFactor `json:"factors"`
+	HosRestStartDeadline int                `json:"hosRestStartDeadline"`
+	HosProjectedDriveMs  int                `json:"hosProjectedDriveMs"`
+	HosProjectedShiftMs  int                `json:"hosProjectedShiftMs"`
+	HosProjectedCycleMs  int                `json:"hosProjectedCycleMs"`
+	Findings             []*DispatchFinding `json:"findings"`
+	// Why the endMarket cost line is what it is; null when the move leaves the driver nowhere the plan values.
+	EndMarket *DispatchEndMarket `json:"endMarket,omitempty"`
 }
 
 type DispatchCarrierAccessorialInput struct {
@@ -4689,9 +4724,19 @@ type DispatchCommitment struct {
 	TrailerID            *string  `json:"trailerId,omitempty"`
 }
 
+// One part of what a pairing costs, in cents. A negative line is a credit, such as a move that
+// leaves the driver where drivers are worth more.
+type DispatchCostLine struct {
+	// emptyMiles, lateness, idleWait, rest, homeTime, fairness, customerExperience, onTimeHistory, safety, acceptance, trailerContinuity, haulFit, timeOffBuffer or endMarket.
+	Component string `json:"component"`
+	Cents     int    `json:"cents"`
+	// True for a preference that chooses between drivers without deciding whether a move is worth covering.
+	Soft bool `json:"soft"`
+}
+
 type DispatchDriverMoveMatch struct {
-	Move  *DispatchBoardMove `json:"move"`
-	Score *DispatchCandidate `json:"score"`
+	Move      *DispatchBoardMove `json:"move"`
+	Candidate *DispatchCandidate `json:"candidate"`
 }
 
 type DispatchDriverMovesInput struct {
@@ -4699,6 +4744,43 @@ type DispatchDriverMovesInput struct {
 	WindowStart *int   `json:"windowStart,omitempty"`
 	WindowEnd   *int   `json:"windowEnd,omitempty"`
 	Limit       *int   `json:"limit,omitempty"`
+}
+
+// The move the last plan put a driver on, and what the driver is worth to it.
+type DispatchDriverPlannedMove struct {
+	MoveID    string `json:"moveId"`
+	ProNumber string `json:"proNumber"`
+	CostCents int    `json:"costCents"`
+	// How much more the plan costs without this driver, in cents.
+	ValueCents  int `json:"valueCents"`
+	GeneratedAt int `json:"generatedAt"`
+}
+
+// The reason behind a candidate's endMarket credit. The forecast fields are set only when the
+// source is Forecast.
+type DispatchEndMarket struct {
+	Source DispatchEndMarketSource `json:"source"`
+	// The credit, in cents: the negative of the endMarket cost line. Negative when the move takes the driver from somewhere worth more than where it leaves them.
+	ValueCents int `json:"valueCents"`
+	// What the driver is worth where the move leaves them, in cents.
+	DropValueCents int `json:"dropValueCents"`
+	// What the driver was worth staying where they are, in cents; the credit is the drop value less this.
+	StayValueCents int `json:"stayValueCents"`
+	// The area the driver would leave, when the forecast values it.
+	StayAreaLabel *string `json:"stayAreaLabel,omitempty"`
+	// The area the drop is in, named for its busiest origin, such as Dallas, TX.
+	AreaLabel *string `json:"areaLabel,omitempty"`
+	// The twelve hours after the driver is free in which the forecast looks for freight.
+	WindowStart *int `json:"windowStart,omitempty"`
+	WindowEnd   *int `json:"windowEnd,omitempty"`
+	// The usual range of loads in the window (10th to 90th percentile).
+	TypicalLow  *int `json:"typicalLow,omitempty"`
+	TypicalHigh *int `json:"typicalHigh,omitempty"`
+	// Loads already booked for the window.
+	Booked *int `json:"booked,omitempty"`
+	// Other drivers expected to be free in the area by the end of the window.
+	DriversExpected *int                        `json:"driversExpected,omitempty"`
+	Customers       []*DispatchForecastCustomer `json:"customers"`
 }
 
 // A single eligibility observation about pairing a driver with a move. Block findings
@@ -4712,11 +4794,125 @@ type DispatchFinding struct {
 	Regulation *string `json:"regulation,omitempty"`
 }
 
+// One customer behind a freight forecast, with the loads it usually brings in the window.
+type DispatchForecastCustomer struct {
+	CustomerID    string  `json:"customerId"`
+	Name          string  `json:"name"`
+	ExpectedLoads float64 `json:"expectedLoads"`
+}
+
+// How the freight forecast did when it was tested on the last weeks of the organization's own
+// history: each week forecast from the weeks before it, then compared with what came.
+type DispatchForecastQuality struct {
+	Status DispatchForecastStatus `json:"status"`
+	// Weeks of history the forecast learns from.
+	HistoryWeeks int `json:"historyWeeks"`
+	HistoryLoads int `json:"historyLoads"`
+	WeeksTested  int `json:"weeksTested"`
+	LoadsTested  int `json:"loadsTested"`
+	// Share of actual counts that fell inside the forecast's 80% range.
+	IntervalCoverage float64 `json:"intervalCoverage"`
+	// Average miss per area and four-hour slot, in loads.
+	MeanAbsoluteError float64 `json:"meanAbsoluteError"`
+	// The same average miss for repeating the same slot of the week before.
+	NaiveMeanAbsoluteError float64 `json:"naiveMeanAbsoluteError"`
+	// How much better than repeating last week the forecast is: 0.3 is 30% smaller misses.
+	Skill float64 `json:"skill"`
+	// When it was last fitted; null before the first fit.
+	FittedAt *int `json:"fittedAt,omitempty"`
+}
+
+type DispatchFreightOutlook struct {
+	Quality     *DispatchForecastQuality `json:"quality"`
+	GeneratedAt int                      `json:"generatedAt"`
+	// The windows ahead, most short of drivers first.
+	Windows []*DispatchFreightWindow `json:"windows"`
+}
+
+// Freight likely to appear in one area in a twelve-hour window, set against the drivers expected
+// there.
+type DispatchFreightWindow struct {
+	AreaLabel   string `json:"areaLabel"`
+	WindowStart int    `json:"windowStart"`
+	WindowEnd   int    `json:"windowEnd"`
+	// The usual range of loads in the window (10th to 90th percentile).
+	TypicalLow  int `json:"typicalLow"`
+	TypicalHigh int `json:"typicalHigh"`
+	// The loads this window is likely to bring: what is booked plus what is still expected (10th to 90th percentile); never below booked.
+	LikelyLow  int `json:"likelyLow"`
+	LikelyHigh int `json:"likelyHigh"`
+	// Loads already booked for the window.
+	Booked int `json:"booked"`
+	// Loads still expected to be booked for the window.
+	ExpectedUnbooked float64 `json:"expectedUnbooked"`
+	// Drivers expected to be free in the area by the end of the window.
+	DriversExpected int `json:"driversExpected"`
+	// Expected loads beyond the drivers expected; zero when the area is covered.
+	Shortfall float64 `json:"shortfall"`
+	// What one more driver ending there is worth to the plan, in cents.
+	ValueCents int                         `json:"valueCents"`
+	Customers  []*DispatchForecastCustomer `json:"customers"`
+	// The same window in a sentence.
+	Explanation string `json:"explanation"`
+}
+
 type DispatchMoveCandidatesInput struct {
 	MoveID         string   `json:"moveId"`
 	FleetCodeIds   []string `json:"fleetCodeIds,omitempty"`
 	Limit          *int     `json:"limit,omitempty"`
 	IncludeBlocked *bool    `json:"includeBlocked,omitempty"`
+}
+
+// A coverage proposal someone approved whose assignment was refused. It stays on its move
+// until the move changes or a newer proposal replaces it, so the board says why the move is
+// still uncovered instead of showing it as never proposed.
+type DispatchMoveFailedProposal struct {
+	ID         string `json:"id"`
+	WorkerID   string `json:"workerId"`
+	WorkerName string `json:"workerName"`
+	// Why the assignment was refused, worded for the dispatcher, with the stop it is about.
+	Reason   string `json:"reason"`
+	FailedAt int    `json:"failedAt"`
+}
+
+// The price the last plan put on an uncovered move. The coverage price is what leaving it
+// uncovered costs; the plan covers it when a driver costs less. Plan again to refresh it.
+type DispatchMovePlanPrice struct {
+	// The driver the plan put on the move; absent when the plan left it uncovered.
+	WorkerID *string `json:"workerId,omitempty"`
+	// The planned driver, or for an uncovered move the cheapest driver the plan considered.
+	WorkerName string `json:"workerName"`
+	// What the named driver costs the plan on this move, in cents.
+	CostCents int `json:"costCents"`
+	// What the best driver for this move pays in preferences, in cents. A candidate costs the
+	// plan its own cost less this, which is what the plan weighed against the coverage price.
+	PreferenceFloorCents int `json:"preferenceFloorCents"`
+	CoveragePriceCents   int `json:"coveragePriceCents"`
+	// How much more the plan costs without the planned driver, in cents.
+	DriverValueCents int `json:"driverValueCents"`
+	// Why the plan left the move uncovered; absent when it is covered.
+	UncoveredReason *DispatchUncoveredReason   `json:"uncoveredReason,omitempty"`
+	Alternatives    []*DispatchPlanAlternative `json:"alternatives"`
+	GeneratedAt     int                        `json:"generatedAt"`
+}
+
+// A coverage proposal waiting on a move: the driver, tractor and trailer the dispatch agent
+// would put on it, how sure it is and why. Decide it with decideAgentProposals.
+type DispatchMoveProposal struct {
+	ID         string  `json:"id"`
+	WorkerID   string  `json:"workerId"`
+	WorkerName string  `json:"workerName"`
+	TractorID  string  `json:"tractorId"`
+	TrailerID  *string `json:"trailerId,omitempty"`
+	// The agent's confidence, from 0 to 1.
+	Confidence float64 `json:"confidence"`
+	Rationale  string  `json:"rationale"`
+	CreatedAt  int     `json:"createdAt"`
+	// When the proposal stops being decidable; absent when it does not expire.
+	ExpiresAt *int `json:"expiresAt,omitempty"`
+	// The move changed after the proposal was planned, so approving it would be refused.
+	// The next plan replaces it.
+	Stale bool `json:"stale"`
 }
 
 type DispatchPlan struct {
@@ -4731,8 +4927,18 @@ type DispatchPlan struct {
 	// nothing was written.
 	ShadowMode   bool   `json:"shadowMode"`
 	AutonomyTier string `json:"autonomyTier"`
-	TotalScore   int    `json:"totalScore"`
-	GeneratedAt  int    `json:"generatedAt"`
+	// What the covered moves cost, in cents.
+	CostCents int `json:"costCents"`
+	// What the uncovered moves cost by being left, in cents.
+	UncoveredCents int `json:"uncoveredCents"`
+	GeneratedAt    int `json:"generatedAt"`
+}
+
+type DispatchPlanAlternative struct {
+	WorkerID   string `json:"workerId"`
+	WorkerName string `json:"workerName"`
+	// How much more the whole plan costs, in cents, when this driver takes the move and the rest re-plan around it.
+	ExtraCents int `json:"extraCents"`
 }
 
 type DispatchPlanInput struct {
@@ -4740,9 +4946,6 @@ type DispatchPlanInput struct {
 	WindowEnd    *int     `json:"windowEnd,omitempty"`
 	FleetCodeIds []string `json:"fleetCodeIds,omitempty"`
 	MoveIds      []string `json:"moveIds,omitempty"`
-	// Commit the plan immediately where the organization's autonomy tier allows it. When
-	// false the plan is only proposed, whatever the tier.
-	Apply *bool `json:"apply,omitempty"`
 }
 
 // One move-to-driver pairing the optimizer chose, carrying the same explainable score a
@@ -4760,27 +4963,25 @@ type DispatchPlannedAssignment struct {
 	// its confidence threshold with no blocking findings.
 	AutoExecutable bool               `json:"autoExecutable"`
 	ProposalID     *string            `json:"proposalId,omitempty"`
-	Score          *DispatchCandidate `json:"score"`
+	Candidate      *DispatchCandidate `json:"candidate"`
+	// What this driver costs the plan on the move, in cents: the candidate's cost less what the
+	// best driver for the move pays in preferences too. This is what was weighed against the
+	// coverage price.
+	PlanCostCents int `json:"planCostCents"`
+	// What leaving the move uncovered would cost, in cents: its share of revenue plus any urgency premium.
+	CoveragePriceCents int `json:"coveragePriceCents"`
+	// What this driver is worth to the plan, in cents: how much more the plan costs without them.
+	DriverValueCents int `json:"driverValueCents"`
+	// The next cheapest drivers and exactly how much more the whole plan costs if each takes the move instead.
+	Alternatives []*DispatchPlanAlternative `json:"alternatives"`
 	// Set only under Horizon planning: the tour this move belongs to and its position
 	// within that tour. Immediate planning leaves both empty.
 	TourID        *string `json:"tourId,omitempty"`
 	SequenceIndex int     `json:"sequenceIndex"`
 	// When the driver is projected to start and finish this move, and the drive time left
 	// on their clock afterwards. These are projections from the plan, not commitments.
-	ProjectedStartAt          int `json:"projectedStartAt"`
-	ProjectedCompleteAt       int `json:"projectedCompleteAt"`
-	ProjectedDriveRemainingMs int `json:"projectedDriveRemainingMs"`
-}
-
-// One weighted dimension of a candidate's score, carrying both its numeric contribution and
-// the sentence a dispatcher reads to understand it.
-type DispatchScoreFactor struct {
-	Key          string  `json:"key"`
-	Label        string  `json:"label"`
-	Raw          float64 `json:"raw"`
-	Weight       float64 `json:"weight"`
-	Contribution float64 `json:"contribution"`
-	Detail       string  `json:"detail"`
+	ProjectedStartAt    int `json:"projectedStartAt"`
+	ProjectedCompleteAt int `json:"projectedCompleteAt"`
 }
 
 type DispatchTimeOff struct {
@@ -4793,23 +4994,27 @@ type DispatchTimeOff struct {
 // are measured from where the previous move ends, which is what makes the chain worth
 // more than the same moves assigned independently.
 type DispatchTour struct {
-	TourID             string   `json:"tourId"`
-	WorkerID           string   `json:"workerId"`
-	WorkerName         string   `json:"workerName"`
-	MoveIds            []string `json:"moveIds"`
-	StartsAt           int      `json:"startsAt"`
-	EndsAt             int      `json:"endsAt"`
-	TotalScore         int      `json:"totalScore"`
-	TotalDeadheadMiles float64  `json:"totalDeadheadMiles"`
+	TourID     string   `json:"tourId"`
+	WorkerID   string   `json:"workerId"`
+	WorkerName string   `json:"workerName"`
+	MoveIds    []string `json:"moveIds"`
+	StartsAt   int      `json:"startsAt"`
+	EndsAt     int      `json:"endsAt"`
+	CostCents  int      `json:"costCents"`
+	EmptyMiles float64  `json:"emptyMiles"`
 }
 
-// A move the optimizer could not cover. Reporting these matters more than the successes: a
-// move that silently vanishes from a plan is a load nobody is watching.
 type DispatchUncoveredMove struct {
-	MoveID              string             `json:"moveId"`
-	ProNumber           string             `json:"proNumber"`
-	Reason              string             `json:"reason"`
-	BestBlockedFindings []*DispatchFinding `json:"bestBlockedFindings"`
+	MoveID    string                  `json:"moveId"`
+	ProNumber string                  `json:"proNumber"`
+	Reason    DispatchUncoveredReason `json:"reason"`
+	// The reason in a sentence, with the driver it is about.
+	Explanation string `json:"explanation"`
+	// What the cheapest driver would have cost the plan, in cents; zero when none could take it.
+	PlanCostCents      int `json:"planCostCents"`
+	CoveragePriceCents int `json:"coveragePriceCents"`
+	// The nearest driver who could not take it, or the cheapest who was outbid.
+	BestCandidate *DispatchCandidate `json:"bestCandidate,omitempty"`
 }
 
 type DisputeAdjustmentInput struct {
@@ -5021,7 +5226,8 @@ type DriverCoverageSuggestion struct {
 	UnitLabel        *string  `json:"unitLabel,omitempty"`
 	DistanceMiles    *float64 `json:"distanceMiles,omitempty"`
 	DriveRemainingMs *int     `json:"driveRemainingMs,omitempty"`
-	FitPercent       *float64 `json:"fitPercent,omitempty"`
+	// What this driver taking the move costs the plan, in cents: empty miles, lateness, waiting and preferences.
+	CostCents *int `json:"costCents,omitempty"`
 }
 
 type DriverExpenseConnection struct {
@@ -12404,6 +12610,7 @@ type UpdateCarrierSettlementControlInput struct {
 	PayDelayDays              int                                  `json:"payDelayDays"`
 	AutoGenerateBatches       bool                                 `json:"autoGenerateBatches"`
 	AutoPostOnApprove         bool                                 `json:"autoPostOnApprove"`
+	RequireSeparateApprover   bool                                 `json:"requireSeparateApprover"`
 	VarianceToleranceMinor    int                                  `json:"varianceToleranceMinor"`
 	AutoMatchInboundInvoices  bool                                 `json:"autoMatchInboundInvoices"`
 	AutoAcceptWithinTolerance bool                                 `json:"autoAcceptWithinTolerance"`
@@ -14297,6 +14504,192 @@ func (e *DetentionSegmentTarget) UnmarshalJSON(b []byte) error {
 }
 
 func (e DetentionSegmentTarget) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+// Where the endMarket credit comes from. Forecast: freight the organization's own history says is
+// likely to appear near the drop, net of what is booked and of the other drivers expected there.
+// History: what drivers free there have been worth to past plans.
+type DispatchEndMarketSource string
+
+const (
+	DispatchEndMarketSourceForecast DispatchEndMarketSource = "Forecast"
+	DispatchEndMarketSourceHistory  DispatchEndMarketSource = "History"
+)
+
+var AllDispatchEndMarketSource = []DispatchEndMarketSource{
+	DispatchEndMarketSourceForecast,
+	DispatchEndMarketSourceHistory,
+}
+
+func (e DispatchEndMarketSource) IsValid() bool {
+	switch e {
+	case DispatchEndMarketSourceForecast, DispatchEndMarketSourceHistory:
+		return true
+	}
+	return false
+}
+
+func (e DispatchEndMarketSource) String() string {
+	return string(e)
+}
+
+func (e *DispatchEndMarketSource) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = DispatchEndMarketSource(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid DispatchEndMarketSource", str)
+	}
+	return nil
+}
+
+func (e DispatchEndMarketSource) MarshalGQL(w io.Writer) {
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *DispatchEndMarketSource) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e DispatchEndMarketSource) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+// Whether the organization's freight forecast has proven itself on its own history. Plans use the
+// forecast only when it is Ready.
+type DispatchForecastStatus string
+
+const (
+	// Fewer than 8 weeks or 200 loads of history.
+	DispatchForecastStatusInsufficientHistory DispatchForecastStatus = "InsufficientHistory"
+	// Tested, but not clearly better than repeating last week.
+	DispatchForecastStatusNoSkill DispatchForecastStatus = "NoSkill"
+	DispatchForecastStatusReady   DispatchForecastStatus = "Ready"
+)
+
+var AllDispatchForecastStatus = []DispatchForecastStatus{
+	DispatchForecastStatusInsufficientHistory,
+	DispatchForecastStatusNoSkill,
+	DispatchForecastStatusReady,
+}
+
+func (e DispatchForecastStatus) IsValid() bool {
+	switch e {
+	case DispatchForecastStatusInsufficientHistory, DispatchForecastStatusNoSkill, DispatchForecastStatusReady:
+		return true
+	}
+	return false
+}
+
+func (e DispatchForecastStatus) String() string {
+	return string(e)
+}
+
+func (e *DispatchForecastStatus) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = DispatchForecastStatus(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid DispatchForecastStatus", str)
+	}
+	return nil
+}
+
+func (e DispatchForecastStatus) MarshalGQL(w io.Writer) {
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *DispatchForecastStatus) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e DispatchForecastStatus) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+// A move the optimizer could not cover. Reporting these matters more than the successes: a
+// move that silently vanishes from a plan is a load nobody is watching.
+type DispatchUncoveredReason string
+
+const (
+	DispatchUncoveredReasonNoCandidate     DispatchUncoveredReason = "NoCandidate"
+	DispatchUncoveredReasonDisqualified    DispatchUncoveredReason = "Disqualified"
+	DispatchUncoveredReasonBeyondDeadhead  DispatchUncoveredReason = "BeyondDeadhead"
+	DispatchUncoveredReasonLocationUnknown DispatchUncoveredReason = "LocationUnknown"
+	// Every driver costs more than leaving the move.
+	DispatchUncoveredReasonNotWorthIt DispatchUncoveredReason = "NotWorthIt"
+	// Its drivers are worth more on other moves.
+	DispatchUncoveredReasonOutbid DispatchUncoveredReason = "Outbid"
+)
+
+var AllDispatchUncoveredReason = []DispatchUncoveredReason{
+	DispatchUncoveredReasonNoCandidate,
+	DispatchUncoveredReasonDisqualified,
+	DispatchUncoveredReasonBeyondDeadhead,
+	DispatchUncoveredReasonLocationUnknown,
+	DispatchUncoveredReasonNotWorthIt,
+	DispatchUncoveredReasonOutbid,
+}
+
+func (e DispatchUncoveredReason) IsValid() bool {
+	switch e {
+	case DispatchUncoveredReasonNoCandidate, DispatchUncoveredReasonDisqualified, DispatchUncoveredReasonBeyondDeadhead, DispatchUncoveredReasonLocationUnknown, DispatchUncoveredReasonNotWorthIt, DispatchUncoveredReasonOutbid:
+		return true
+	}
+	return false
+}
+
+func (e DispatchUncoveredReason) String() string {
+	return string(e)
+}
+
+func (e *DispatchUncoveredReason) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = DispatchUncoveredReason(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid DispatchUncoveredReason", str)
+	}
+	return nil
+}
+
+func (e DispatchUncoveredReason) MarshalGQL(w io.Writer) {
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *DispatchUncoveredReason) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e DispatchUncoveredReason) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil

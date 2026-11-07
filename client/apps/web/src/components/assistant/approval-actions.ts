@@ -15,7 +15,8 @@ import { batchPreviewDigests } from "./proposal-preview/preview-gate";
 import { presentProposal } from "./proposal-presenters";
 
 /** Why a batch was turned down in a conversation, as the server records it. */
-const BATCH_REJECT_REASON = "rejected_in_conversation";
+/** Why a change declined from a conversation's card is recorded as declined. */
+export const CONVERSATION_REJECT_REASON = "rejected_in_conversation";
 
 /**
  * How a batch went: how many of its changes the server took, and why the rest
@@ -75,7 +76,7 @@ export async function decideBatch(
   const ids = proposals.map((proposal) => proposal.id);
   const results = await decideMyProposals(ids, {
     decision: approving ? "Accepted" : "Rejected",
-    reasonCode: approving ? undefined : BATCH_REJECT_REASON,
+    reasonCode: approving ? undefined : CONVERSATION_REJECT_REASON,
     previewDigests: approving ? batchPreviewDigests(ids, shownDigests) : undefined,
     note: approving ? undefined : note,
   });

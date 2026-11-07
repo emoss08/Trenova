@@ -34,6 +34,7 @@ const GENERAL_FIELDS = [
   "city",
   "stateId",
   "postalCode",
+  "lastHomeAt",
   "email",
   "phoneNumber",
   "emergencyContactName",

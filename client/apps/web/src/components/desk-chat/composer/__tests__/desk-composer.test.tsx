@@ -100,6 +100,31 @@ describe("DeskComposer while a reply is being written", () => {
     expect(onStop).toHaveBeenCalledTimes(1);
   });
 
+  it("stops the reply on Esc, even with a correction half typed, and keeps what was typed", () => {
+    const onStop = vi.fn();
+    const box = renderComposer({
+      busy: true,
+      initial: "Skip anyone without a reefer",
+      onSend: vi.fn(),
+      onSteer: vi.fn(),
+      onStop,
+    });
+
+    fireEvent.keyDown(box, { key: "Escape" });
+
+    expect(onStop).toHaveBeenCalledTimes(1);
+    expect(box).toHaveValue("Skip anyone without a reefer");
+  });
+
+  it("leaves Esc alone when nothing is under way", () => {
+    const onStop = vi.fn();
+    const box = renderComposer({ busy: false, initial: "", onSend: vi.fn(), onStop });
+
+    fireEvent.keyDown(box, { key: "Escape" });
+
+    expect(onStop).not.toHaveBeenCalled();
+  });
+
   it("holds Enter, keeping what was typed for when the reply is done", () => {
     const onSend = vi.fn();
     const box = renderComposer({ busy: true, initial: "And the next one?", onSend });
@@ -125,7 +150,7 @@ describe("DeskComposer steering while a reply is being written", () => {
     expect(screen.queryByRole("button", { name: "Steer the reply" })).toBeNull();
   });
 
-  it("puts steer in Stop's place once something is typed, and steers on Enter", () => {
+  it("keeps Stop beside Steer once something is typed, and steers on Enter", () => {
     const onSteer = vi.fn();
     const onSend = vi.fn();
     const box = renderComposer({
@@ -133,9 +158,10 @@ describe("DeskComposer steering while a reply is being written", () => {
       initial: "Actually the carrier is Werner",
       onSend,
       onSteer,
+      onStop: vi.fn(),
     });
 
-    expect(screen.queryByRole("button", { name: "Stop the reply" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Stop the reply" })).toBeInTheDocument();
     expect(screen.getAllByRole("button", { name: "Steer the reply" })).toHaveLength(1);
     fireEvent.keyDown(box, { key: "Enter" });
 

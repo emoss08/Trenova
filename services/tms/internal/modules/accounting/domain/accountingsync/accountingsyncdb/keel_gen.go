@@ -80,13 +80,13 @@ type AccountingSyncAttemptsTable struct {
 // AccountingSyncAttempts references the accounting_sync_attempts table.
 var AccountingSyncAttempts = &AccountingSyncAttemptsTable{
 	TableBase:      keel.TableBase{Ref: &accountingSyncAttemptsRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingSyncAttemptsRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingSyncAttemptsRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingSyncAttemptsRef, Index: 2}}},
-	SyncRecordID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingSyncAttemptsRef, Index: 3}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingSyncAttemptsRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingSyncAttemptsRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingSyncAttemptsRef, Index: 2}}},
+	SyncRecordID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingSyncAttemptsRef, Index: 3}}},
 	AttemptNumber:  keel.Int64Col{Col: keel.Col{Ref: &accountingSyncAttemptsRef, Index: 4}},
-	Outcome:        SyncAttemptOutcomeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingSyncAttemptsRef, Index: 5}}},
-	ErrorCategory:  SyncErrorCategoryCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingSyncAttemptsRef, Index: 6}}},
+	Outcome:        SyncAttemptOutcomeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingSyncAttemptsRef, Index: 5}}},
+	ErrorCategory:  SyncErrorCategoryCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingSyncAttemptsRef, Index: 6}}},
 	ErrorCode:      keel.StringCol{Col: keel.Col{Ref: &accountingSyncAttemptsRef, Index: 7}},
 	ErrorMessage:   keel.StringCol{Col: keel.Col{Ref: &accountingSyncAttemptsRef, Index: 8}},
 	StartedAt:      keel.Int64Col{Col: keel.Col{Ref: &accountingSyncAttemptsRef, Index: 9}},
@@ -99,13 +99,13 @@ var AccountingSyncAttempts = &AccountingSyncAttemptsTable{
 func BuildAccountingSyncAttempts(r *keel.Ref) *AccountingSyncAttemptsTable {
 	return &AccountingSyncAttemptsTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		SyncRecordID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		SyncRecordID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		AttemptNumber:  keel.Int64Col{Col: keel.Col{Ref: r, Index: 4}},
-		Outcome:        SyncAttemptOutcomeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		ErrorCategory:  SyncErrorCategoryCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		Outcome:        SyncAttemptOutcomeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		ErrorCategory:  SyncErrorCategoryCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		ErrorCode:      keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
 		ErrorMessage:   keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
 		StartedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
@@ -130,8 +130,6 @@ func (t *AccountingSyncAttemptsTable) Get(ctx context.Context, db *keel.DB, key 
 
 // AccountingSyncAttemptsQuery is a query over accountingsync.AccountingSyncAttempt.
 type AccountingSyncAttemptsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*accountingsync.AccountingSyncAttempt] = (*AccountingSyncAttemptsTable)(nil)
 
 var _ keel.Query[*accountingsync.AccountingSyncAttempt] = (*AccountingSyncAttemptsQuery)(nil)
 
@@ -247,42 +245,42 @@ func (t *AccountingSyncAttemptsTable) Compute(col keel.Column, e keel.Expr) keel
 
 // Create inserts row.
 func (t *AccountingSyncAttemptsTable) Create(ctx context.Context, db *keel.DB, row *accountingsync.AccountingSyncAttempt) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *AccountingSyncAttemptsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*accountingsync.AccountingSyncAttempt) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *AccountingSyncAttemptsTable) Save(ctx context.Context, db *keel.DB, row *accountingsync.AccountingSyncAttempt, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *AccountingSyncAttemptsTable) SaveExcept(ctx context.Context, db *keel.DB, row *accountingsync.AccountingSyncAttempt, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *AccountingSyncAttemptsTable) DeleteRow(ctx context.Context, db *keel.DB, row *accountingsync.AccountingSyncAttempt) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *AccountingSyncAttemptsTable) Upsert(ctx context.Context, db *keel.DB, rows []*accountingsync.AccountingSyncAttempt, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *AccountingSyncAttemptsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*accountingsync.AccountingSyncAttempt, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *AccountingSyncAttemptsTable) Copy(ctx context.Context, db *keel.DB, rows []*accountingsync.AccountingSyncAttempt) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -454,37 +452,45 @@ func (q *AccountingSyncAttemptsQuery) Clone() keel.Query[*accountingsync.Account
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *AccountingSyncAttemptsQuery) One(ctx context.Context, db *keel.DB) (*accountingsync.AccountingSyncAttempt, error) {
-	return keel.One[*accountingsync.AccountingSyncAttempt](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*accountingsync.AccountingSyncAttempt)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *AccountingSyncAttemptsQuery) First(ctx context.Context, db *keel.DB) (*accountingsync.AccountingSyncAttempt, error) {
-	return keel.First[*accountingsync.AccountingSyncAttempt](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*accountingsync.AccountingSyncAttempt)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *AccountingSyncAttemptsQuery) List(ctx context.Context, db *keel.DB) ([]*accountingsync.AccountingSyncAttempt, error) {
-	return keel.List[*accountingsync.AccountingSyncAttempt](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*accountingsync.AccountingSyncAttempt)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *AccountingSyncAttemptsQuery) All(ctx context.Context, db *keel.DB) ([]*accountingsync.AccountingSyncAttempt, error) {
-	return keel.All[*accountingsync.AccountingSyncAttempt](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*accountingsync.AccountingSyncAttempt)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *AccountingSyncAttemptsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*accountingsync.AccountingSyncAttempt, error) {
-	return keel.UpdateReturning[*accountingsync.AccountingSyncAttempt](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*accountingsync.AccountingSyncAttempt)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *AccountingSyncAttemptsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*accountingsync.AccountingSyncAttempt], error) {
-	return keel.PageOf[*accountingsync.AccountingSyncAttempt](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*accountingsync.AccountingSyncAttempt])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *AccountingSyncAttemptsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*accountingsync.AccountingSyncAttempt) error) error {
-	return keel.Each[*accountingsync.AccountingSyncAttempt](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*accountingsync.AccountingSyncAttempt)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newAccountingSyncAttempt() unsafe.Pointer {
@@ -698,21 +704,21 @@ type AccountingSyncRecordsTable struct {
 // AccountingSyncRecords references the accounting_sync_records table.
 var AccountingSyncRecords = &AccountingSyncRecordsTable{
 	TableBase:         keel.TableBase{Ref: &accountingSyncRecordsRef},
-	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingSyncRecordsRef, Index: 0}}},
-	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingSyncRecordsRef, Index: 1}}},
-	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingSyncRecordsRef, Index: 2}}},
-	ConnectionID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingSyncRecordsRef, Index: 3}}},
-	ObjectType:        SyncObjectTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingSyncRecordsRef, Index: 4}}},
-	ObjectID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingSyncRecordsRef, Index: 5}}},
+	ID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingSyncRecordsRef, Index: 0}}},
+	BusinessUnitID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingSyncRecordsRef, Index: 1}}},
+	OrganizationID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingSyncRecordsRef, Index: 2}}},
+	ConnectionID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingSyncRecordsRef, Index: 3}}},
+	ObjectType:        SyncObjectTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingSyncRecordsRef, Index: 4}}},
+	ObjectID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingSyncRecordsRef, Index: 5}}},
 	ObjectNumber:      keel.StringCol{Col: keel.Col{Ref: &accountingSyncRecordsRef, Index: 6}},
-	Operation:         SyncOperationCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingSyncRecordsRef, Index: 7}}},
-	SourceEvent:       SyncSourceEventCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingSyncRecordsRef, Index: 8}}},
+	Operation:         SyncOperationCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingSyncRecordsRef, Index: 7}}},
+	SourceEvent:       SyncSourceEventCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingSyncRecordsRef, Index: 8}}},
 	IdempotencyKey:    keel.StringCol{Col: keel.Col{Ref: &accountingSyncRecordsRef, Index: 9}},
 	RequestID:         keel.StringCol{Col: keel.Col{Ref: &accountingSyncRecordsRef, Index: 10}},
 	Revision:          keel.Int64Col{Col: keel.Col{Ref: &accountingSyncRecordsRef, Index: 11}},
 	DocumentDate:      keel.Int64Col{Col: keel.Col{Ref: &accountingSyncRecordsRef, Index: 12}},
-	DependsOnRecordID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingSyncRecordsRef, Index: 13}}},
-	Status:            SyncStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingSyncRecordsRef, Index: 14}}},
+	DependsOnRecordID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingSyncRecordsRef, Index: 13}}},
+	Status:            SyncStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingSyncRecordsRef, Index: 14}}},
 	AttemptCount:      keel.Int64Col{Col: keel.Col{Ref: &accountingSyncRecordsRef, Index: 15}},
 	NextAttemptAt:     keel.Int64Col{Col: keel.Col{Ref: &accountingSyncRecordsRef, Index: 16}},
 	LeaseExpiresAt:    keel.Int64Col{Col: keel.Col{Ref: &accountingSyncRecordsRef, Index: 17}},
@@ -723,18 +729,18 @@ var AccountingSyncRecords = &AccountingSyncRecordsTable{
 	PayloadHash:       keel.StringCol{Col: keel.Col{Ref: &accountingSyncRecordsRef, Index: 22}},
 	Payload:           keel.JSONBCol{Col: keel.Col{Ref: &accountingSyncRecordsRef, Index: 23}},
 	MappingIDs:        keel.StringArrayCol{Col: keel.Col{Ref: &accountingSyncRecordsRef, Index: 24}},
-	ErrorCategory:     SyncErrorCategoryCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingSyncRecordsRef, Index: 25}}},
+	ErrorCategory:     SyncErrorCategoryCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingSyncRecordsRef, Index: 25}}},
 	ErrorCode:         keel.StringCol{Col: keel.Col{Ref: &accountingSyncRecordsRef, Index: 26}},
 	ErrorMessage:      keel.StringCol{Col: keel.Col{Ref: &accountingSyncRecordsRef, Index: 27}},
 	Resolution:        keel.StringCol{Col: keel.Col{Ref: &accountingSyncRecordsRef, Index: 28}},
 	QueuedAt:          keel.Int64Col{Col: keel.Col{Ref: &accountingSyncRecordsRef, Index: 29}},
 	StartedAt:         keel.Int64Col{Col: keel.Col{Ref: &accountingSyncRecordsRef, Index: 30}},
 	SyncedAt:          keel.Int64Col{Col: keel.Col{Ref: &accountingSyncRecordsRef, Index: 31}},
-	ReleasedByID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingSyncRecordsRef, Index: 32}}},
-	SkippedByID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingSyncRecordsRef, Index: 33}}},
+	ReleasedByID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingSyncRecordsRef, Index: 32}}},
+	SkippedByID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingSyncRecordsRef, Index: 33}}},
 	SkippedReason:     keel.StringCol{Col: keel.Col{Ref: &accountingSyncRecordsRef, Index: 34}},
 	RedatedTo:         keel.Int64Col{Col: keel.Col{Ref: &accountingSyncRecordsRef, Index: 35}},
-	RedatedByID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &accountingSyncRecordsRef, Index: 36}}},
+	RedatedByID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &accountingSyncRecordsRef, Index: 36}}},
 	Version:           keel.Int64Col{Col: keel.Col{Ref: &accountingSyncRecordsRef, Index: 37}},
 	CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: &accountingSyncRecordsRef, Index: 38}},
 	UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: &accountingSyncRecordsRef, Index: 39}},
@@ -744,21 +750,21 @@ var AccountingSyncRecords = &AccountingSyncRecordsTable{
 func BuildAccountingSyncRecords(r *keel.Ref) *AccountingSyncRecordsTable {
 	return &AccountingSyncRecordsTable{
 		TableBase:         keel.TableBase{Ref: r},
-		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		ConnectionID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		ObjectType:        SyncObjectTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		ObjectID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		ID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ConnectionID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ObjectType:        SyncObjectTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ObjectID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		ObjectNumber:      keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
-		Operation:         SyncOperationCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
-		SourceEvent:       SyncSourceEventCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		Operation:         SyncOperationCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		SourceEvent:       SyncSourceEventCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
 		IdempotencyKey:    keel.StringCol{Col: keel.Col{Ref: r, Index: 9}},
 		RequestID:         keel.StringCol{Col: keel.Col{Ref: r, Index: 10}},
 		Revision:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
 		DocumentDate:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
-		DependsOnRecordID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 13}}},
-		Status:            SyncStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 14}}},
+		DependsOnRecordID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 13}}},
+		Status:            SyncStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 14}}},
 		AttemptCount:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
 		NextAttemptAt:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
 		LeaseExpiresAt:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
@@ -769,18 +775,18 @@ func BuildAccountingSyncRecords(r *keel.Ref) *AccountingSyncRecordsTable {
 		PayloadHash:       keel.StringCol{Col: keel.Col{Ref: r, Index: 22}},
 		Payload:           keel.JSONBCol{Col: keel.Col{Ref: r, Index: 23}},
 		MappingIDs:        keel.StringArrayCol{Col: keel.Col{Ref: r, Index: 24}},
-		ErrorCategory:     SyncErrorCategoryCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 25}}},
+		ErrorCategory:     SyncErrorCategoryCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 25}}},
 		ErrorCode:         keel.StringCol{Col: keel.Col{Ref: r, Index: 26}},
 		ErrorMessage:      keel.StringCol{Col: keel.Col{Ref: r, Index: 27}},
 		Resolution:        keel.StringCol{Col: keel.Col{Ref: r, Index: 28}},
 		QueuedAt:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 29}},
 		StartedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 30}},
 		SyncedAt:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 31}},
-		ReleasedByID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 32}}},
-		SkippedByID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 33}}},
+		ReleasedByID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 32}}},
+		SkippedByID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 33}}},
 		SkippedReason:     keel.StringCol{Col: keel.Col{Ref: r, Index: 34}},
 		RedatedTo:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 35}},
-		RedatedByID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 36}}},
+		RedatedByID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 36}}},
 		Version:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 37}},
 		CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 38}},
 		UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 39}},
@@ -812,8 +818,6 @@ func (t *AccountingSyncRecordsTable) Get(ctx context.Context, db *keel.DB, key p
 
 // AccountingSyncRecordsQuery is a query over accountingsync.AccountingSyncRecord.
 type AccountingSyncRecordsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*accountingsync.AccountingSyncRecord] = (*AccountingSyncRecordsTable)(nil)
 
 var _ keel.Query[*accountingsync.AccountingSyncRecord] = (*AccountingSyncRecordsQuery)(nil)
 
@@ -929,42 +933,42 @@ func (t *AccountingSyncRecordsTable) Compute(col keel.Column, e keel.Expr) keel.
 
 // Create inserts row.
 func (t *AccountingSyncRecordsTable) Create(ctx context.Context, db *keel.DB, row *accountingsync.AccountingSyncRecord) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *AccountingSyncRecordsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*accountingsync.AccountingSyncRecord) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *AccountingSyncRecordsTable) Save(ctx context.Context, db *keel.DB, row *accountingsync.AccountingSyncRecord, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *AccountingSyncRecordsTable) SaveExcept(ctx context.Context, db *keel.DB, row *accountingsync.AccountingSyncRecord, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *AccountingSyncRecordsTable) DeleteRow(ctx context.Context, db *keel.DB, row *accountingsync.AccountingSyncRecord) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *AccountingSyncRecordsTable) Upsert(ctx context.Context, db *keel.DB, rows []*accountingsync.AccountingSyncRecord, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *AccountingSyncRecordsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*accountingsync.AccountingSyncRecord, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *AccountingSyncRecordsTable) Copy(ctx context.Context, db *keel.DB, rows []*accountingsync.AccountingSyncRecord) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1136,37 +1140,45 @@ func (q *AccountingSyncRecordsQuery) Clone() keel.Query[*accountingsync.Accounti
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *AccountingSyncRecordsQuery) One(ctx context.Context, db *keel.DB) (*accountingsync.AccountingSyncRecord, error) {
-	return keel.One[*accountingsync.AccountingSyncRecord](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*accountingsync.AccountingSyncRecord)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *AccountingSyncRecordsQuery) First(ctx context.Context, db *keel.DB) (*accountingsync.AccountingSyncRecord, error) {
-	return keel.First[*accountingsync.AccountingSyncRecord](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*accountingsync.AccountingSyncRecord)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *AccountingSyncRecordsQuery) List(ctx context.Context, db *keel.DB) ([]*accountingsync.AccountingSyncRecord, error) {
-	return keel.List[*accountingsync.AccountingSyncRecord](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*accountingsync.AccountingSyncRecord)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *AccountingSyncRecordsQuery) All(ctx context.Context, db *keel.DB) ([]*accountingsync.AccountingSyncRecord, error) {
-	return keel.All[*accountingsync.AccountingSyncRecord](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*accountingsync.AccountingSyncRecord)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *AccountingSyncRecordsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*accountingsync.AccountingSyncRecord, error) {
-	return keel.UpdateReturning[*accountingsync.AccountingSyncRecord](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*accountingsync.AccountingSyncRecord)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *AccountingSyncRecordsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*accountingsync.AccountingSyncRecord], error) {
-	return keel.PageOf[*accountingsync.AccountingSyncRecord](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*accountingsync.AccountingSyncRecord])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *AccountingSyncRecordsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*accountingsync.AccountingSyncRecord) error) error {
-	return keel.Each[*accountingsync.AccountingSyncRecord](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*accountingsync.AccountingSyncRecord)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newAccountingSyncRecord() unsafe.Pointer {
@@ -1557,285 +1569,267 @@ var reportDimStringHidden = schema.ReportInfo{Kind: schema.Dimension, Type: sche
 var reportMeasureIntegerHidden = schema.ReportInfo{Kind: schema.Measure, Type: schema.ValueInt, Aggs: schema.AggsNumeric}
 
 // ErrorCategoryCol is a column of accountingsync.ErrorCategory values.
-type ErrorCategoryCol struct{ keel.StringCol }
+type ErrorCategoryCol struct{ keel.TypedStringCol }
 
-func (c ErrorCategoryCol) Eq(v accountingsync.ErrorCategory) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c ErrorCategoryCol) Ne(v accountingsync.ErrorCategory) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c ErrorCategoryCol) Gt(v accountingsync.ErrorCategory) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
+func (c ErrorCategoryCol) Eq(v accountingsync.ErrorCategory) keel.Pred { return c.Text().Eq(string(v)) }
+func (c ErrorCategoryCol) Ne(v accountingsync.ErrorCategory) keel.Pred { return c.Text().Ne(string(v)) }
+func (c ErrorCategoryCol) Gt(v accountingsync.ErrorCategory) keel.Pred { return c.Text().Gt(string(v)) }
 func (c ErrorCategoryCol) Gte(v accountingsync.ErrorCategory) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
-func (c ErrorCategoryCol) Lt(v accountingsync.ErrorCategory) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
+func (c ErrorCategoryCol) Lt(v accountingsync.ErrorCategory) keel.Pred { return c.Text().Lt(string(v)) }
 func (c ErrorCategoryCol) Lte(v accountingsync.ErrorCategory) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c ErrorCategoryCol) IsDistinctFrom(v accountingsync.ErrorCategory) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c ErrorCategoryCol) Between(lo, hi accountingsync.ErrorCategory) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c ErrorCategoryCol) To(v accountingsync.ErrorCategory) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c ErrorCategoryCol) In(vs ...accountingsync.ErrorCategory) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ErrorCategoryCol) NotIn(vs ...accountingsync.ErrorCategory) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // MappingTargetTypeCol is a column of accountingsync.MappingTargetType values.
-type MappingTargetTypeCol struct{ keel.StringCol }
+type MappingTargetTypeCol struct{ keel.TypedStringCol }
 
 func (c MappingTargetTypeCol) Eq(v accountingsync.MappingTargetType) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c MappingTargetTypeCol) Ne(v accountingsync.MappingTargetType) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c MappingTargetTypeCol) Gt(v accountingsync.MappingTargetType) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c MappingTargetTypeCol) Gte(v accountingsync.MappingTargetType) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c MappingTargetTypeCol) Lt(v accountingsync.MappingTargetType) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c MappingTargetTypeCol) Lte(v accountingsync.MappingTargetType) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c MappingTargetTypeCol) IsDistinctFrom(v accountingsync.MappingTargetType) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c MappingTargetTypeCol) Between(lo, hi accountingsync.MappingTargetType) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c MappingTargetTypeCol) To(v accountingsync.MappingTargetType) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c MappingTargetTypeCol) In(vs ...accountingsync.MappingTargetType) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c MappingTargetTypeCol) NotIn(vs ...accountingsync.MappingTargetType) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // SyncAttemptOutcomeCol is a column of accountingsync.SyncAttemptOutcome values.
-type SyncAttemptOutcomeCol struct{ keel.StringCol }
+type SyncAttemptOutcomeCol struct{ keel.TypedStringCol }
 
 func (c SyncAttemptOutcomeCol) Eq(v accountingsync.SyncAttemptOutcome) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c SyncAttemptOutcomeCol) Ne(v accountingsync.SyncAttemptOutcome) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c SyncAttemptOutcomeCol) Gt(v accountingsync.SyncAttemptOutcome) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c SyncAttemptOutcomeCol) Gte(v accountingsync.SyncAttemptOutcome) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c SyncAttemptOutcomeCol) Lt(v accountingsync.SyncAttemptOutcome) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c SyncAttemptOutcomeCol) Lte(v accountingsync.SyncAttemptOutcome) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c SyncAttemptOutcomeCol) IsDistinctFrom(v accountingsync.SyncAttemptOutcome) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c SyncAttemptOutcomeCol) Between(lo, hi accountingsync.SyncAttemptOutcome) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c SyncAttemptOutcomeCol) To(v accountingsync.SyncAttemptOutcome) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c SyncAttemptOutcomeCol) In(vs ...accountingsync.SyncAttemptOutcome) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c SyncAttemptOutcomeCol) NotIn(vs ...accountingsync.SyncAttemptOutcome) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // SyncErrorCategoryCol is a column of accountingsync.SyncErrorCategory values.
-type SyncErrorCategoryCol struct{ keel.StringCol }
+type SyncErrorCategoryCol struct{ keel.TypedStringCol }
 
 func (c SyncErrorCategoryCol) Eq(v accountingsync.SyncErrorCategory) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c SyncErrorCategoryCol) Ne(v accountingsync.SyncErrorCategory) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c SyncErrorCategoryCol) Gt(v accountingsync.SyncErrorCategory) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c SyncErrorCategoryCol) Gte(v accountingsync.SyncErrorCategory) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c SyncErrorCategoryCol) Lt(v accountingsync.SyncErrorCategory) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c SyncErrorCategoryCol) Lte(v accountingsync.SyncErrorCategory) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c SyncErrorCategoryCol) IsDistinctFrom(v accountingsync.SyncErrorCategory) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c SyncErrorCategoryCol) Between(lo, hi accountingsync.SyncErrorCategory) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c SyncErrorCategoryCol) To(v accountingsync.SyncErrorCategory) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c SyncErrorCategoryCol) In(vs ...accountingsync.SyncErrorCategory) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c SyncErrorCategoryCol) NotIn(vs ...accountingsync.SyncErrorCategory) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // SyncObjectTypeCol is a column of accountingsync.SyncObjectType values.
-type SyncObjectTypeCol struct{ keel.StringCol }
+type SyncObjectTypeCol struct{ keel.TypedStringCol }
 
 func (c SyncObjectTypeCol) Eq(v accountingsync.SyncObjectType) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c SyncObjectTypeCol) Ne(v accountingsync.SyncObjectType) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c SyncObjectTypeCol) Gt(v accountingsync.SyncObjectType) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c SyncObjectTypeCol) Gte(v accountingsync.SyncObjectType) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c SyncObjectTypeCol) Lt(v accountingsync.SyncObjectType) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c SyncObjectTypeCol) Lte(v accountingsync.SyncObjectType) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c SyncObjectTypeCol) IsDistinctFrom(v accountingsync.SyncObjectType) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c SyncObjectTypeCol) Between(lo, hi accountingsync.SyncObjectType) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c SyncObjectTypeCol) To(v accountingsync.SyncObjectType) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c SyncObjectTypeCol) In(vs ...accountingsync.SyncObjectType) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c SyncObjectTypeCol) NotIn(vs ...accountingsync.SyncObjectType) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // SyncOperationCol is a column of accountingsync.SyncOperation values.
-type SyncOperationCol struct{ keel.StringCol }
+type SyncOperationCol struct{ keel.TypedStringCol }
 
-func (c SyncOperationCol) Eq(v accountingsync.SyncOperation) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c SyncOperationCol) Ne(v accountingsync.SyncOperation) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c SyncOperationCol) Gt(v accountingsync.SyncOperation) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
+func (c SyncOperationCol) Eq(v accountingsync.SyncOperation) keel.Pred { return c.Text().Eq(string(v)) }
+func (c SyncOperationCol) Ne(v accountingsync.SyncOperation) keel.Pred { return c.Text().Ne(string(v)) }
+func (c SyncOperationCol) Gt(v accountingsync.SyncOperation) keel.Pred { return c.Text().Gt(string(v)) }
 func (c SyncOperationCol) Gte(v accountingsync.SyncOperation) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
-func (c SyncOperationCol) Lt(v accountingsync.SyncOperation) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
+func (c SyncOperationCol) Lt(v accountingsync.SyncOperation) keel.Pred { return c.Text().Lt(string(v)) }
 func (c SyncOperationCol) Lte(v accountingsync.SyncOperation) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c SyncOperationCol) IsDistinctFrom(v accountingsync.SyncOperation) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c SyncOperationCol) Between(lo, hi accountingsync.SyncOperation) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c SyncOperationCol) To(v accountingsync.SyncOperation) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c SyncOperationCol) In(vs ...accountingsync.SyncOperation) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c SyncOperationCol) NotIn(vs ...accountingsync.SyncOperation) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // SyncSourceEventCol is a column of accountingsync.SyncSourceEvent values.
-type SyncSourceEventCol struct{ keel.StringCol }
+type SyncSourceEventCol struct{ keel.TypedStringCol }
 
 func (c SyncSourceEventCol) Eq(v accountingsync.SyncSourceEvent) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c SyncSourceEventCol) Ne(v accountingsync.SyncSourceEvent) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c SyncSourceEventCol) Gt(v accountingsync.SyncSourceEvent) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c SyncSourceEventCol) Gte(v accountingsync.SyncSourceEvent) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c SyncSourceEventCol) Lt(v accountingsync.SyncSourceEvent) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c SyncSourceEventCol) Lte(v accountingsync.SyncSourceEvent) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c SyncSourceEventCol) IsDistinctFrom(v accountingsync.SyncSourceEvent) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c SyncSourceEventCol) Between(lo, hi accountingsync.SyncSourceEvent) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c SyncSourceEventCol) To(v accountingsync.SyncSourceEvent) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c SyncSourceEventCol) In(vs ...accountingsync.SyncSourceEvent) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c SyncSourceEventCol) NotIn(vs ...accountingsync.SyncSourceEvent) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // SyncStatusCol is a column of accountingsync.SyncStatus values.
-type SyncStatusCol struct{ keel.StringCol }
+type SyncStatusCol struct{ keel.TypedStringCol }
 
-func (c SyncStatusCol) Eq(v accountingsync.SyncStatus) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c SyncStatusCol) Ne(v accountingsync.SyncStatus) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c SyncStatusCol) Gt(v accountingsync.SyncStatus) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c SyncStatusCol) Gte(v accountingsync.SyncStatus) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c SyncStatusCol) Lt(v accountingsync.SyncStatus) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c SyncStatusCol) Lte(v accountingsync.SyncStatus) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c SyncStatusCol) Eq(v accountingsync.SyncStatus) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c SyncStatusCol) Ne(v accountingsync.SyncStatus) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c SyncStatusCol) Gt(v accountingsync.SyncStatus) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c SyncStatusCol) Gte(v accountingsync.SyncStatus) keel.Pred { return c.Text().Gte(string(v)) }
+func (c SyncStatusCol) Lt(v accountingsync.SyncStatus) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c SyncStatusCol) Lte(v accountingsync.SyncStatus) keel.Pred { return c.Text().Lte(string(v)) }
 func (c SyncStatusCol) IsDistinctFrom(v accountingsync.SyncStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c SyncStatusCol) Between(lo, hi accountingsync.SyncStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c SyncStatusCol) To(v accountingsync.SyncStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
-}
+func (c SyncStatusCol) To(v accountingsync.SyncStatus) keel.Assignment { return c.Text().To(string(v)) }
 func (c SyncStatusCol) In(vs ...accountingsync.SyncStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c SyncStatusCol) NotIn(vs ...accountingsync.SyncStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

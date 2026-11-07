@@ -772,8 +772,7 @@ func (t *shipmentListTool) searchWords(
 		defaultLimit = listtool.DefaultLimit
 	}
 	window, err := querytool.ReadCursorWindow(
-		t.Name(),
-		params.Params,
+		querytool.CallOf(t.Name(), params),
 		defaultLimit,
 		listtool.MaxLimit,
 	)
@@ -856,7 +855,10 @@ func (t *shipmentListTool) wordOutcome(
 		}
 	}
 	if !found.byParty && len(sampled) == 0 {
-		outcome.Resume = &querytool.PageResume{Scope: search.window.Scope, Cursors: found.cursors}
+		outcome.Resume = &querytool.PageResume{
+			Binding: search.window.Binding,
+			Cursors: found.cursors,
+		}
 	}
 	if len(sampled) > 0 {
 		outcome.HasMore = true

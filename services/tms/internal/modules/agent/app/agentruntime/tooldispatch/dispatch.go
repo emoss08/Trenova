@@ -324,7 +324,7 @@ func pendingAction(
 			Narration: p.completionText,
 			ToolName:  call.Name,
 			Arguments: call.Arguments,
-			Input:     p.req.Input,
+			Ask:       p.req.Ask(),
 		}),
 		Tier:          hold.tier,
 		ToolCallID:    call.ID,
@@ -382,7 +382,7 @@ func validateCall(
 		vErr.Error(),
 		"Tool %q was not %s, because it would fail as called: %s\n"+
 			"Fix the call and try again.",
-		p.call.Name, verb, vErr.Error(),
+		p.call.Name, verb, toolresult.FenceInline(vErr.Error()),
 	), true
 }
 
@@ -482,7 +482,7 @@ func unresolvedSelection(toolName, verb string, err error) toolcall.Result {
 		err.Error(),
 		"Tool %q was not %s: its selection could not be resolved to records: %s\n"+
 			"Fix the call and try again.",
-		toolName, verb, err.Error(),
+		toolName, verb, toolresult.FenceInline(err.Error()),
 	)
 }
 
@@ -816,12 +816,8 @@ func (s *Dispatcher) runQueryToolWith(
 		)
 	}
 	if err != nil {
-		failed := toolcall.Refused(aitrace.OutcomeFailed, err.Error(),
+		return toolcall.Refused(aitrace.OutcomeFailed, err.Error(),
 			"%s", toolresult.FenceFailure(call.Name, err.Error()))
-		policy := s.Ruled(ctx, req, new(tool.Policy()))
-		failed.Taint = turntaint.Call(&policy, call, nil, timeutils.NowUnix())
-
-		return failed
 	}
 
 	now := timeutils.NowUnix()
@@ -908,13 +904,11 @@ func (s *Dispatcher) executeAction(ctx context.Context, a *actionParams) toolcal
 		aitrace.MarkFailed(write, aitrace.OutcomeFailed)
 		write.End()
 		action.ExecutionError = err.Error()
-		policy := s.Ruled(ctx, a.req, new(a.tool.Policy()))
 
 		return toolcall.Result{
 			Content: toolresult.FenceFailure(call.Name, err.Error()),
 			Failed:  true,
 			Action:  action,
-			Taint:   turntaint.Call(&policy, &call, nil, timeutils.NowUnix()),
 			Verdict: aitrace.OutcomeFailed,
 			Reason:  err.Error(),
 		}

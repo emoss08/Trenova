@@ -1311,6 +1311,7 @@ func TestProductionConfigFileLoads(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, cfg)
 	assert.Equal(t, appconfig.EnvProduction, cfg.App.Env)
+	assert.Equal(t, "/certs/temporal/client.pem", cfg.Temporal.TLS.ClientCertPath)
 	assert.Equal(t, "__Host-trenova_session", cfg.Security.Session.Name)
 	assert.Equal(t, "enforce", cfg.Security.CSRF.BrowserGuard.Mode)
 	assert.Contains(t, cfg.Server.CORS.AllowedHeaders, "X-CSRF-Token")
@@ -1342,6 +1343,7 @@ func TestProductionConfigFileLoads(t *testing.T) {
 const (
 	stagedRecoveryCodePepper = "4d1f8a2b6c9e3071a5b8c2d4e6f8091a3b5c7d9e"
 	stagedCachePassword      = "7a3c9e1f5b8d2a4c6e0f9b3d5a7c1e82"
+	stagedGotenbergPassword  = "c2e8a4f6b1d3907e5c8a2f4d6b0e1937"
 )
 
 func stageProductionBase(t *testing.T, path string) {
@@ -1355,6 +1357,7 @@ func stageProductionBase(t *testing.T, path string) {
 
 	mergeInto(staged, map[string]any{
 		"temporal": map[string]any{"hostPort": "temporal:7233"},
+		"renderer": map[string]any{"gotenbergPassword": stagedGotenbergPassword},
 		"cache":    map[string]any{"password": stagedCachePassword},
 		"security": map[string]any{
 			"mfa": map[string]any{"recoveryCodePepper": stagedRecoveryCodePepper},

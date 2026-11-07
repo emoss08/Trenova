@@ -74,10 +74,10 @@ type SequencesTable struct {
 // Sequences references the sequences table.
 var Sequences = &SequencesTable{
 	TableBase:       keel.TableBase{Ref: &sequencesRef},
-	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sequencesRef, Index: 0}}},
-	SequenceType:    SequenceTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sequencesRef, Index: 1}}},
-	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sequencesRef, Index: 2}}},
-	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sequencesRef, Index: 3}}},
+	ID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &sequencesRef, Index: 0}}},
+	SequenceType:    SequenceTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &sequencesRef, Index: 1}}},
+	OrganizationID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &sequencesRef, Index: 2}}},
+	BusinessUnitID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &sequencesRef, Index: 3}}},
 	Year:            keel.Int16Col{Col: keel.Col{Ref: &sequencesRef, Index: 4}},
 	Month:           keel.Int16Col{Col: keel.Col{Ref: &sequencesRef, Index: 5}},
 	CurrentSequence: keel.Int64Col{Col: keel.Col{Ref: &sequencesRef, Index: 6}},
@@ -91,10 +91,10 @@ var Sequences = &SequencesTable{
 func BuildSequences(r *keel.Ref) *SequencesTable {
 	return &SequencesTable{
 		TableBase:       keel.TableBase{Ref: r},
-		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		SequenceType:    SequenceTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		SequenceType:    SequenceTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		BusinessUnitID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		Year:            keel.Int16Col{Col: keel.Col{Ref: r, Index: 4}},
 		Month:           keel.Int16Col{Col: keel.Col{Ref: r, Index: 5}},
 		CurrentSequence: keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
@@ -120,8 +120,6 @@ func (t *SequencesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*s
 
 // SequencesQuery is a query over sequenceconfig.Sequence.
 type SequencesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*sequenceconfig.Sequence] = (*SequencesTable)(nil)
 
 var _ keel.Query[*sequenceconfig.Sequence] = (*SequencesQuery)(nil)
 
@@ -237,42 +235,42 @@ func (t *SequencesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*seque
 
 // Create inserts row.
 func (t *SequencesTable) Create(ctx context.Context, db *keel.DB, row *sequenceconfig.Sequence) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *SequencesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*sequenceconfig.Sequence) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *SequencesTable) Save(ctx context.Context, db *keel.DB, row *sequenceconfig.Sequence, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *SequencesTable) SaveExcept(ctx context.Context, db *keel.DB, row *sequenceconfig.Sequence, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *SequencesTable) DeleteRow(ctx context.Context, db *keel.DB, row *sequenceconfig.Sequence) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *SequencesTable) Upsert(ctx context.Context, db *keel.DB, rows []*sequenceconfig.Sequence, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *SequencesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*sequenceconfig.Sequence, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *SequencesTable) Copy(ctx context.Context, db *keel.DB, rows []*sequenceconfig.Sequence) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -444,37 +442,45 @@ func (q *SequencesQuery) Clone() keel.Query[*sequenceconfig.Sequence] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *SequencesQuery) One(ctx context.Context, db *keel.DB) (*sequenceconfig.Sequence, error) {
-	return keel.One[*sequenceconfig.Sequence](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*sequenceconfig.Sequence)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *SequencesQuery) First(ctx context.Context, db *keel.DB) (*sequenceconfig.Sequence, error) {
-	return keel.First[*sequenceconfig.Sequence](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*sequenceconfig.Sequence)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *SequencesQuery) List(ctx context.Context, db *keel.DB) ([]*sequenceconfig.Sequence, error) {
-	return keel.List[*sequenceconfig.Sequence](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*sequenceconfig.Sequence)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *SequencesQuery) All(ctx context.Context, db *keel.DB) ([]*sequenceconfig.Sequence, error) {
-	return keel.All[*sequenceconfig.Sequence](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*sequenceconfig.Sequence)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *SequencesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*sequenceconfig.Sequence, error) {
-	return keel.UpdateReturning[*sequenceconfig.Sequence](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*sequenceconfig.Sequence)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *SequencesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*sequenceconfig.Sequence], error) {
-	return keel.PageOf[*sequenceconfig.Sequence](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*sequenceconfig.Sequence])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *SequencesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*sequenceconfig.Sequence) error) error {
-	return keel.Each[*sequenceconfig.Sequence](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*sequenceconfig.Sequence)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newSequence() unsafe.Pointer { return unsafe.Pointer(new(sequenceconfig.Sequence)) }
@@ -627,10 +633,10 @@ type SequenceConfigsTable struct {
 // SequenceConfigs references the sequence_configs table.
 var SequenceConfigs = &SequenceConfigsTable{
 	TableBase:               keel.TableBase{Ref: &sequenceConfigsRef},
-	ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sequenceConfigsRef, Index: 0}}},
-	OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sequenceConfigsRef, Index: 1}}},
-	BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sequenceConfigsRef, Index: 2}}},
-	SequenceType:            SequenceTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sequenceConfigsRef, Index: 3}}},
+	ID:                      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &sequenceConfigsRef, Index: 0}}},
+	OrganizationID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &sequenceConfigsRef, Index: 1}}},
+	BusinessUnitID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &sequenceConfigsRef, Index: 2}}},
+	SequenceType:            SequenceTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &sequenceConfigsRef, Index: 3}}},
 	Prefix:                  keel.StringCol{Col: keel.Col{Ref: &sequenceConfigsRef, Index: 4}},
 	IncludeYear:             keel.BoolCol{Col: keel.Col{Ref: &sequenceConfigsRef, Index: 5}},
 	YearDigits:              keel.Int16Col{Col: keel.Col{Ref: &sequenceConfigsRef, Index: 6}},
@@ -657,10 +663,10 @@ var SequenceConfigs = &SequenceConfigsTable{
 func BuildSequenceConfigs(r *keel.Ref) *SequenceConfigsTable {
 	return &SequenceConfigsTable{
 		TableBase:               keel.TableBase{Ref: r},
-		ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		SequenceType:            SequenceTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:                      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		OrganizationID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		BusinessUnitID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		SequenceType:            SequenceTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		Prefix:                  keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		IncludeYear:             keel.BoolCol{Col: keel.Col{Ref: r, Index: 5}},
 		YearDigits:              keel.Int16Col{Col: keel.Col{Ref: r, Index: 6}},
@@ -699,8 +705,6 @@ func (t *SequenceConfigsTable) Get(ctx context.Context, db *keel.DB, key pulid.I
 
 // SequenceConfigsQuery is a query over sequenceconfig.SequenceConfig.
 type SequenceConfigsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*sequenceconfig.SequenceConfig] = (*SequenceConfigsTable)(nil)
 
 var _ keel.Query[*sequenceconfig.SequenceConfig] = (*SequenceConfigsQuery)(nil)
 
@@ -816,42 +820,42 @@ func (t *SequenceConfigsTable) Compute(col keel.Column, e keel.Expr) keel.Query[
 
 // Create inserts row.
 func (t *SequenceConfigsTable) Create(ctx context.Context, db *keel.DB, row *sequenceconfig.SequenceConfig) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *SequenceConfigsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*sequenceconfig.SequenceConfig) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *SequenceConfigsTable) Save(ctx context.Context, db *keel.DB, row *sequenceconfig.SequenceConfig, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *SequenceConfigsTable) SaveExcept(ctx context.Context, db *keel.DB, row *sequenceconfig.SequenceConfig, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *SequenceConfigsTable) DeleteRow(ctx context.Context, db *keel.DB, row *sequenceconfig.SequenceConfig) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *SequenceConfigsTable) Upsert(ctx context.Context, db *keel.DB, rows []*sequenceconfig.SequenceConfig, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *SequenceConfigsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*sequenceconfig.SequenceConfig, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *SequenceConfigsTable) Copy(ctx context.Context, db *keel.DB, rows []*sequenceconfig.SequenceConfig) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1023,37 +1027,45 @@ func (q *SequenceConfigsQuery) Clone() keel.Query[*sequenceconfig.SequenceConfig
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *SequenceConfigsQuery) One(ctx context.Context, db *keel.DB) (*sequenceconfig.SequenceConfig, error) {
-	return keel.One[*sequenceconfig.SequenceConfig](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*sequenceconfig.SequenceConfig)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *SequenceConfigsQuery) First(ctx context.Context, db *keel.DB) (*sequenceconfig.SequenceConfig, error) {
-	return keel.First[*sequenceconfig.SequenceConfig](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*sequenceconfig.SequenceConfig)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *SequenceConfigsQuery) List(ctx context.Context, db *keel.DB) ([]*sequenceconfig.SequenceConfig, error) {
-	return keel.List[*sequenceconfig.SequenceConfig](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*sequenceconfig.SequenceConfig)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *SequenceConfigsQuery) All(ctx context.Context, db *keel.DB) ([]*sequenceconfig.SequenceConfig, error) {
-	return keel.All[*sequenceconfig.SequenceConfig](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*sequenceconfig.SequenceConfig)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *SequenceConfigsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*sequenceconfig.SequenceConfig, error) {
-	return keel.UpdateReturning[*sequenceconfig.SequenceConfig](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*sequenceconfig.SequenceConfig)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *SequenceConfigsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*sequenceconfig.SequenceConfig], error) {
-	return keel.PageOf[*sequenceconfig.SequenceConfig](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*sequenceconfig.SequenceConfig])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *SequenceConfigsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*sequenceconfig.SequenceConfig) error) error {
-	return keel.Each[*sequenceconfig.SequenceConfig](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*sequenceconfig.SequenceConfig)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newSequenceConfig() unsafe.Pointer { return unsafe.Pointer(new(sequenceconfig.SequenceConfig)) }
@@ -1194,38 +1206,26 @@ var enumSequenceType = [...]schema.EnumValue{
 }
 
 // SequenceTypeCol is a column of sequenceconfig.SequenceType values.
-type SequenceTypeCol struct{ keel.StringCol }
+type SequenceTypeCol struct{ keel.TypedStringCol }
 
-func (c SequenceTypeCol) Eq(v sequenceconfig.SequenceType) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c SequenceTypeCol) Ne(v sequenceconfig.SequenceType) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c SequenceTypeCol) Gt(v sequenceconfig.SequenceType) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
-func (c SequenceTypeCol) Gte(v sequenceconfig.SequenceType) keel.Pred {
-	return c.StringCol.Gte(string(v))
-}
-func (c SequenceTypeCol) Lt(v sequenceconfig.SequenceType) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
-func (c SequenceTypeCol) Lte(v sequenceconfig.SequenceType) keel.Pred {
-	return c.StringCol.Lte(string(v))
-}
+func (c SequenceTypeCol) Eq(v sequenceconfig.SequenceType) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c SequenceTypeCol) Ne(v sequenceconfig.SequenceType) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c SequenceTypeCol) Gt(v sequenceconfig.SequenceType) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c SequenceTypeCol) Gte(v sequenceconfig.SequenceType) keel.Pred { return c.Text().Gte(string(v)) }
+func (c SequenceTypeCol) Lt(v sequenceconfig.SequenceType) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c SequenceTypeCol) Lte(v sequenceconfig.SequenceType) keel.Pred { return c.Text().Lte(string(v)) }
 func (c SequenceTypeCol) IsDistinctFrom(v sequenceconfig.SequenceType) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c SequenceTypeCol) Between(lo, hi sequenceconfig.SequenceType) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c SequenceTypeCol) To(v sequenceconfig.SequenceType) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c SequenceTypeCol) In(vs ...sequenceconfig.SequenceType) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c SequenceTypeCol) NotIn(vs ...sequenceconfig.SequenceType) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

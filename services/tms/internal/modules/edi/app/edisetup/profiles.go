@@ -200,6 +200,56 @@ func (s *Service) UpdateCommunicationProfile(
 	return ediprofilesecret.WithSecretState(updated), nil
 }
 
+type RotateAS2InboundURLRequest struct {
+	ProfileID  pulid.ID              `json:"-"`
+	TenantInfo pagination.TenantInfo `json:"-"`
+}
+
+func (s *Service) RotateAS2InboundURL(
+	ctx context.Context,
+	req *RotateAS2InboundURLRequest,
+	actor *permissionports.RequestActor,
+) (*edi.EDICommunicationProfile, error) {
+	byID := edipartnerports.GetEDICommunicationProfileByIDRequest{
+		ID:         req.ProfileID,
+		TenantInfo: req.TenantInfo,
+	}
+	existing, err := s.profileRepo.GetProfileByID(ctx, byID)
+	if err != nil {
+		return nil, err
+	}
+	if existing.Method != edi.ConnectionMethodAS2 {
+		return nil, errortypes.NewValidationError(
+			"method",
+			errortypes.ErrInvalidOperation,
+			"Only AS2 communication profiles have an inbound URL",
+		)
+	}
+
+	if err = s.profileRepo.RotateAS2InboundToken(ctx, edipartnerports.RotateAS2InboundTokenRequest{
+		ProfileID:    req.ProfileID,
+		TenantInfo:   req.TenantInfo,
+		InboundToken: edi.NewAS2InboundToken(),
+	}); err != nil {
+		return nil, err
+	}
+
+	rotated, err := s.profileRepo.GetProfileByID(ctx, byID)
+	if err != nil {
+		return nil, err
+	}
+
+	s.logAction(
+		rotated,
+		actor,
+		permission.OpUpdate,
+		existing,
+		rotated,
+		"EDI communication profile inbound URL rotated",
+	)
+	return ediprofilesecret.WithSecretState(rotated), nil
+}
+
 func (s *Service) buildCommunicationProfile(
 	ctx context.Context,
 	req *UpsertEDICommunicationProfileRequest,
@@ -271,6 +321,7 @@ func (s *Service) buildCommunicationProfile(
 	if existing != nil {
 		entity.ID = existing.ID
 		entity.Version = existing.Version
+		entity.AS2InboundToken = existing.AS2InboundToken
 		if entity.EDIConnectionID.IsNil() {
 			entity.EDIConnectionID = existing.EDIConnectionID
 		}

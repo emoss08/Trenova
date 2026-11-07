@@ -128,7 +128,7 @@ func TestGetOrCreateConcurrentCreatesSingleTenantControl(t *testing.T) {
 	assert.Equal(t, int64(1), count)
 }
 
-func TestListHorizonPlanningTenantsReturnsHorizonTenants(t *testing.T) {
+func TestListCoveragePlanningTenantsReturnsHorizonTenants(t *testing.T) {
 	ctx, db, cleanup := seedtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
@@ -145,7 +145,7 @@ func TestListHorizonPlanningTenantsReturnsHorizonTenants(t *testing.T) {
 		BuID:  data.BusinessUnit.ID,
 	}
 
-	before, err := repo.ListHorizonPlanningTenants(ctx)
+	before, err := repo.ListCoveragePlanningTenants(ctx)
 	require.NoError(t, err)
 	assert.NotContains(t, before, tenant)
 
@@ -157,7 +157,7 @@ func TestListHorizonPlanningTenantsReturnsHorizonTenants(t *testing.T) {
 	_, err = repo.Update(ctx, control)
 	require.NoError(t, err)
 
-	after, err := repo.ListHorizonPlanningTenants(ctx)
+	after, err := repo.ListCoveragePlanningTenants(ctx)
 	require.NoError(t, err)
 	assert.Contains(t, after, tenant)
 }

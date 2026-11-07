@@ -43,6 +43,16 @@ func amount(value string) decimal.NullDecimal {
 
 func protectedTypes() map[string]protectedType {
 	return map[string]protectedType{
+		"Worker": {
+			resource: permission.ResourceWorker,
+			entity: func() protectedfield.Withholder {
+				return &worker.Worker{
+					HomeLatitude:  new(41.52),
+					HomeLongitude: new(-88.08),
+					HomePlaceID:   "place_home",
+				}
+			},
+		},
 		"WorkerProfile": {
 			resource: permission.ResourceWorker,
 			entity: func() protectedfield.Withholder {

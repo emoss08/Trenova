@@ -85,17 +85,17 @@ type SourcesTable struct {
 // Sources references the journal_sources table.
 var Sources = &SourcesTable{
 	TableBase:            keel.TableBase{Ref: &sourcesRef},
-	ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sourcesRef, Index: 0}}},
-	BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sourcesRef, Index: 1}}},
-	OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sourcesRef, Index: 2}}},
+	ID:                   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &sourcesRef, Index: 0}}},
+	BusinessUnitID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &sourcesRef, Index: 1}}},
+	OrganizationID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &sourcesRef, Index: 2}}},
 	SourceObjectType:     keel.StringCol{Col: keel.Col{Ref: &sourcesRef, Index: 3}},
 	SourceObjectID:       keel.StringCol{Col: keel.Col{Ref: &sourcesRef, Index: 4}},
 	SourceEventType:      keel.StringCol{Col: keel.Col{Ref: &sourcesRef, Index: 5}},
 	SourceDocumentNumber: keel.StringCol{Col: keel.Col{Ref: &sourcesRef, Index: 6}},
 	Status:               keel.StringCol{Col: keel.Col{Ref: &sourcesRef, Index: 7}},
 	IdempotencyKey:       keel.StringCol{Col: keel.Col{Ref: &sourcesRef, Index: 8}},
-	JournalBatchID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sourcesRef, Index: 9}}},
-	JournalEntryID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sourcesRef, Index: 10}}},
+	JournalBatchID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &sourcesRef, Index: 9}}},
+	JournalEntryID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &sourcesRef, Index: 10}}},
 	CreatedAt:            keel.Int64Col{Col: keel.Col{Ref: &sourcesRef, Index: 11}},
 }
 
@@ -103,17 +103,17 @@ var Sources = &SourcesTable{
 func BuildSources(r *keel.Ref) *SourcesTable {
 	return &SourcesTable{
 		TableBase:            keel.TableBase{Ref: r},
-		ID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ID:                   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		SourceObjectType:     keel.StringCol{Col: keel.Col{Ref: r, Index: 3}},
 		SourceObjectID:       keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		SourceEventType:      keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		SourceDocumentNumber: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
 		Status:               keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
 		IdempotencyKey:       keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
-		JournalBatchID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
-		JournalEntryID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		JournalBatchID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		JournalEntryID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
 		CreatedAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
 	}
 }
@@ -141,8 +141,6 @@ func (t *SourcesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*jou
 
 // SourcesQuery is a query over journalsource.Source.
 type SourcesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*journalsource.Source] = (*SourcesTable)(nil)
 
 var _ keel.Query[*journalsource.Source] = (*SourcesQuery)(nil)
 
@@ -258,42 +256,42 @@ func (t *SourcesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*journal
 
 // Create inserts row.
 func (t *SourcesTable) Create(ctx context.Context, db *keel.DB, row *journalsource.Source) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *SourcesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*journalsource.Source) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *SourcesTable) Save(ctx context.Context, db *keel.DB, row *journalsource.Source, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *SourcesTable) SaveExcept(ctx context.Context, db *keel.DB, row *journalsource.Source, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *SourcesTable) DeleteRow(ctx context.Context, db *keel.DB, row *journalsource.Source) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *SourcesTable) Upsert(ctx context.Context, db *keel.DB, rows []*journalsource.Source, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *SourcesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*journalsource.Source, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *SourcesTable) Copy(ctx context.Context, db *keel.DB, rows []*journalsource.Source) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -465,37 +463,45 @@ func (q *SourcesQuery) Clone() keel.Query[*journalsource.Source] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *SourcesQuery) One(ctx context.Context, db *keel.DB) (*journalsource.Source, error) {
-	return keel.One[*journalsource.Source](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*journalsource.Source)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *SourcesQuery) First(ctx context.Context, db *keel.DB) (*journalsource.Source, error) {
-	return keel.First[*journalsource.Source](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*journalsource.Source)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *SourcesQuery) List(ctx context.Context, db *keel.DB) ([]*journalsource.Source, error) {
-	return keel.List[*journalsource.Source](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*journalsource.Source)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *SourcesQuery) All(ctx context.Context, db *keel.DB) ([]*journalsource.Source, error) {
-	return keel.All[*journalsource.Source](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*journalsource.Source)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *SourcesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*journalsource.Source, error) {
-	return keel.UpdateReturning[*journalsource.Source](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*journalsource.Source)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *SourcesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*journalsource.Source], error) {
-	return keel.PageOf[*journalsource.Source](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*journalsource.Source])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *SourcesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*journalsource.Source) error) error {
-	return keel.Each[*journalsource.Source](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*journalsource.Source)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newSource() unsafe.Pointer { return unsafe.Pointer(new(journalsource.Source)) }
@@ -636,12 +642,12 @@ type SourceJournalLinksTable struct {
 // SourceJournalLinks references the source_journal_links table.
 var SourceJournalLinks = &SourceJournalLinksTable{
 	TableBase:       keel.TableBase{Ref: &sourceJournalLinksRef},
-	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sourceJournalLinksRef, Index: 0}}},
-	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sourceJournalLinksRef, Index: 1}}},
-	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sourceJournalLinksRef, Index: 2}}},
-	JournalSourceID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sourceJournalLinksRef, Index: 3}}},
-	JournalBatchID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sourceJournalLinksRef, Index: 4}}},
-	JournalEntryID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &sourceJournalLinksRef, Index: 5}}},
+	ID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &sourceJournalLinksRef, Index: 0}}},
+	BusinessUnitID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &sourceJournalLinksRef, Index: 1}}},
+	OrganizationID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &sourceJournalLinksRef, Index: 2}}},
+	JournalSourceID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &sourceJournalLinksRef, Index: 3}}},
+	JournalBatchID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &sourceJournalLinksRef, Index: 4}}},
+	JournalEntryID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &sourceJournalLinksRef, Index: 5}}},
 	LinkRole:        keel.StringCol{Col: keel.Col{Ref: &sourceJournalLinksRef, Index: 6}},
 	CreatedAt:       keel.Int64Col{Col: keel.Col{Ref: &sourceJournalLinksRef, Index: 7}},
 }
@@ -650,12 +656,12 @@ var SourceJournalLinks = &SourceJournalLinksTable{
 func BuildSourceJournalLinks(r *keel.Ref) *SourceJournalLinksTable {
 	return &SourceJournalLinksTable{
 		TableBase:       keel.TableBase{Ref: r},
-		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		JournalSourceID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		JournalBatchID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		JournalEntryID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		ID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		JournalSourceID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		JournalBatchID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		JournalEntryID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		LinkRole:        keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
 		CreatedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
 	}
@@ -676,8 +682,6 @@ func (t *SourceJournalLinksTable) Get(ctx context.Context, db *keel.DB, key puli
 
 // SourceJournalLinksQuery is a query over journalsource.SourceJournalLink.
 type SourceJournalLinksQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*journalsource.SourceJournalLink] = (*SourceJournalLinksTable)(nil)
 
 var _ keel.Query[*journalsource.SourceJournalLink] = (*SourceJournalLinksQuery)(nil)
 
@@ -793,42 +797,42 @@ func (t *SourceJournalLinksTable) Compute(col keel.Column, e keel.Expr) keel.Que
 
 // Create inserts row.
 func (t *SourceJournalLinksTable) Create(ctx context.Context, db *keel.DB, row *journalsource.SourceJournalLink) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *SourceJournalLinksTable) CreateMany(ctx context.Context, db *keel.DB, rows []*journalsource.SourceJournalLink) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *SourceJournalLinksTable) Save(ctx context.Context, db *keel.DB, row *journalsource.SourceJournalLink, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *SourceJournalLinksTable) SaveExcept(ctx context.Context, db *keel.DB, row *journalsource.SourceJournalLink, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *SourceJournalLinksTable) DeleteRow(ctx context.Context, db *keel.DB, row *journalsource.SourceJournalLink) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *SourceJournalLinksTable) Upsert(ctx context.Context, db *keel.DB, rows []*journalsource.SourceJournalLink, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *SourceJournalLinksTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*journalsource.SourceJournalLink, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *SourceJournalLinksTable) Copy(ctx context.Context, db *keel.DB, rows []*journalsource.SourceJournalLink) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1000,37 +1004,45 @@ func (q *SourceJournalLinksQuery) Clone() keel.Query[*journalsource.SourceJourna
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *SourceJournalLinksQuery) One(ctx context.Context, db *keel.DB) (*journalsource.SourceJournalLink, error) {
-	return keel.One[*journalsource.SourceJournalLink](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*journalsource.SourceJournalLink)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *SourceJournalLinksQuery) First(ctx context.Context, db *keel.DB) (*journalsource.SourceJournalLink, error) {
-	return keel.First[*journalsource.SourceJournalLink](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*journalsource.SourceJournalLink)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *SourceJournalLinksQuery) List(ctx context.Context, db *keel.DB) ([]*journalsource.SourceJournalLink, error) {
-	return keel.List[*journalsource.SourceJournalLink](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*journalsource.SourceJournalLink)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *SourceJournalLinksQuery) All(ctx context.Context, db *keel.DB) ([]*journalsource.SourceJournalLink, error) {
-	return keel.All[*journalsource.SourceJournalLink](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*journalsource.SourceJournalLink)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *SourceJournalLinksQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*journalsource.SourceJournalLink, error) {
-	return keel.UpdateReturning[*journalsource.SourceJournalLink](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*journalsource.SourceJournalLink)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *SourceJournalLinksQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*journalsource.SourceJournalLink], error) {
-	return keel.PageOf[*journalsource.SourceJournalLink](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*journalsource.SourceJournalLink])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *SourceJournalLinksQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*journalsource.SourceJournalLink) error) error {
-	return keel.Each[*journalsource.SourceJournalLink](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*journalsource.SourceJournalLink)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newSourceJournalLink() unsafe.Pointer {

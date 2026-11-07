@@ -111,28 +111,28 @@ type ReversalsTable struct {
 // Reversals references the journal_reversals table.
 var Reversals = &ReversalsTable{
 	TableBase:               keel.TableBase{Ref: &reversalsRef},
-	ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reversalsRef, Index: 0}}},
-	OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reversalsRef, Index: 1}}},
-	BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reversalsRef, Index: 2}}},
-	OriginalJournalEntryID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reversalsRef, Index: 3}}},
-	ReversalJournalEntryID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reversalsRef, Index: 4}}},
-	PostedBatchID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reversalsRef, Index: 5}}},
-	Status:                  StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reversalsRef, Index: 6}}},
+	ID:                      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reversalsRef, Index: 0}}},
+	OrganizationID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reversalsRef, Index: 1}}},
+	BusinessUnitID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reversalsRef, Index: 2}}},
+	OriginalJournalEntryID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reversalsRef, Index: 3}}},
+	ReversalJournalEntryID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reversalsRef, Index: 4}}},
+	PostedBatchID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reversalsRef, Index: 5}}},
+	Status:                  StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reversalsRef, Index: 6}}},
 	RequestedAccountingDate: keel.Int64Col{Col: keel.Col{Ref: &reversalsRef, Index: 7}},
-	ResolvedFiscalYearID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reversalsRef, Index: 8}}},
-	ResolvedFiscalPeriodID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reversalsRef, Index: 9}}},
+	ResolvedFiscalYearID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reversalsRef, Index: 8}}},
+	ResolvedFiscalPeriodID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reversalsRef, Index: 9}}},
 	ReasonCode:              keel.StringCol{Col: keel.Col{Ref: &reversalsRef, Index: 10}},
 	ReasonText:              keel.StringCol{Col: keel.Col{Ref: &reversalsRef, Index: 11}},
-	RequestedByID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reversalsRef, Index: 12}}},
-	ApprovedByID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reversalsRef, Index: 13}}},
+	RequestedByID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reversalsRef, Index: 12}}},
+	ApprovedByID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reversalsRef, Index: 13}}},
 	ApprovedAt:              keel.Int64Col{Col: keel.Col{Ref: &reversalsRef, Index: 14}},
-	RejectedByID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reversalsRef, Index: 15}}},
+	RejectedByID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reversalsRef, Index: 15}}},
 	RejectedAt:              keel.Int64Col{Col: keel.Col{Ref: &reversalsRef, Index: 16}},
 	RejectionReason:         keel.StringCol{Col: keel.Col{Ref: &reversalsRef, Index: 17}},
-	CancelledByID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reversalsRef, Index: 18}}},
+	CancelledByID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reversalsRef, Index: 18}}},
 	CancelledAt:             keel.Int64Col{Col: keel.Col{Ref: &reversalsRef, Index: 19}},
 	CancelReason:            keel.StringCol{Col: keel.Col{Ref: &reversalsRef, Index: 20}},
-	PostedByID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &reversalsRef, Index: 21}}},
+	PostedByID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reversalsRef, Index: 21}}},
 	PostedAt:                keel.Int64Col{Col: keel.Col{Ref: &reversalsRef, Index: 22}},
 	CreatedAt:               keel.Int64Col{Col: keel.Col{Ref: &reversalsRef, Index: 23}},
 	UpdatedAt:               keel.Int64Col{Col: keel.Col{Ref: &reversalsRef, Index: 24}},
@@ -143,28 +143,28 @@ var Reversals = &ReversalsTable{
 func BuildReversals(r *keel.Ref) *ReversalsTable {
 	return &ReversalsTable{
 		TableBase:               keel.TableBase{Ref: r},
-		ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		OrganizationID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		OriginalJournalEntryID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		ReversalJournalEntryID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		PostedBatchID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		Status:                  StatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		ID:                      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		OrganizationID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		BusinessUnitID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		OriginalJournalEntryID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ReversalJournalEntryID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		PostedBatchID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		Status:                  StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		RequestedAccountingDate: keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
-		ResolvedFiscalYearID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
-		ResolvedFiscalPeriodID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		ResolvedFiscalYearID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		ResolvedFiscalPeriodID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
 		ReasonCode:              keel.StringCol{Col: keel.Col{Ref: r, Index: 10}},
 		ReasonText:              keel.StringCol{Col: keel.Col{Ref: r, Index: 11}},
-		RequestedByID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 12}}},
-		ApprovedByID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 13}}},
+		RequestedByID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 12}}},
+		ApprovedByID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 13}}},
 		ApprovedAt:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
-		RejectedByID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 15}}},
+		RejectedByID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 15}}},
 		RejectedAt:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
 		RejectionReason:         keel.StringCol{Col: keel.Col{Ref: r, Index: 17}},
-		CancelledByID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 18}}},
+		CancelledByID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 18}}},
 		CancelledAt:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 19}},
 		CancelReason:            keel.StringCol{Col: keel.Col{Ref: r, Index: 20}},
-		PostedByID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 21}}},
+		PostedByID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 21}}},
 		PostedAt:                keel.Int64Col{Col: keel.Col{Ref: r, Index: 22}},
 		CreatedAt:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 23}},
 		UpdatedAt:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 24}},
@@ -197,8 +197,6 @@ func (t *ReversalsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*j
 
 // ReversalsQuery is a query over journalreversal.Reversal.
 type ReversalsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*journalreversal.Reversal] = (*ReversalsTable)(nil)
 
 var _ keel.Query[*journalreversal.Reversal] = (*ReversalsQuery)(nil)
 
@@ -314,42 +312,42 @@ func (t *ReversalsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*journ
 
 // Create inserts row.
 func (t *ReversalsTable) Create(ctx context.Context, db *keel.DB, row *journalreversal.Reversal) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *ReversalsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*journalreversal.Reversal) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *ReversalsTable) Save(ctx context.Context, db *keel.DB, row *journalreversal.Reversal, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *ReversalsTable) SaveExcept(ctx context.Context, db *keel.DB, row *journalreversal.Reversal, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *ReversalsTable) DeleteRow(ctx context.Context, db *keel.DB, row *journalreversal.Reversal) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *ReversalsTable) Upsert(ctx context.Context, db *keel.DB, rows []*journalreversal.Reversal, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *ReversalsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*journalreversal.Reversal, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *ReversalsTable) Copy(ctx context.Context, db *keel.DB, rows []*journalreversal.Reversal) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -521,37 +519,45 @@ func (q *ReversalsQuery) Clone() keel.Query[*journalreversal.Reversal] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *ReversalsQuery) One(ctx context.Context, db *keel.DB) (*journalreversal.Reversal, error) {
-	return keel.One[*journalreversal.Reversal](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*journalreversal.Reversal)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *ReversalsQuery) First(ctx context.Context, db *keel.DB) (*journalreversal.Reversal, error) {
-	return keel.First[*journalreversal.Reversal](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*journalreversal.Reversal)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *ReversalsQuery) List(ctx context.Context, db *keel.DB) ([]*journalreversal.Reversal, error) {
-	return keel.List[*journalreversal.Reversal](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*journalreversal.Reversal)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *ReversalsQuery) All(ctx context.Context, db *keel.DB) ([]*journalreversal.Reversal, error) {
-	return keel.All[*journalreversal.Reversal](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*journalreversal.Reversal)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *ReversalsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*journalreversal.Reversal, error) {
-	return keel.UpdateReturning[*journalreversal.Reversal](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*journalreversal.Reversal)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *ReversalsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*journalreversal.Reversal], error) {
-	return keel.PageOf[*journalreversal.Reversal](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*journalreversal.Reversal])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *ReversalsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*journalreversal.Reversal) error) error {
-	return keel.Each[*journalreversal.Reversal](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*journalreversal.Reversal)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newReversal() unsafe.Pointer { return unsafe.Pointer(new(journalreversal.Reversal)) }
@@ -739,24 +745,24 @@ var enumStatus = [...]schema.EnumValue{
 }
 
 // StatusCol is a column of journalreversal.Status values.
-type StatusCol struct{ keel.StringCol }
+type StatusCol struct{ keel.TypedStringCol }
 
-func (c StatusCol) Eq(v journalreversal.Status) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c StatusCol) Ne(v journalreversal.Status) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c StatusCol) Gt(v journalreversal.Status) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c StatusCol) Gte(v journalreversal.Status) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c StatusCol) Lt(v journalreversal.Status) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c StatusCol) Lte(v journalreversal.Status) keel.Pred { return c.StringCol.Lte(string(v)) }
+func (c StatusCol) Eq(v journalreversal.Status) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c StatusCol) Ne(v journalreversal.Status) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c StatusCol) Gt(v journalreversal.Status) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c StatusCol) Gte(v journalreversal.Status) keel.Pred { return c.Text().Gte(string(v)) }
+func (c StatusCol) Lt(v journalreversal.Status) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c StatusCol) Lte(v journalreversal.Status) keel.Pred { return c.Text().Lte(string(v)) }
 func (c StatusCol) IsDistinctFrom(v journalreversal.Status) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c StatusCol) Between(lo, hi journalreversal.Status) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
-func (c StatusCol) To(v journalreversal.Status) keel.Assignment { return c.StringCol.To(string(v)) }
+func (c StatusCol) To(v journalreversal.Status) keel.Assignment { return c.Text().To(string(v)) }
 func (c StatusCol) In(vs ...journalreversal.Status) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c StatusCol) NotIn(vs ...journalreversal.Status) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

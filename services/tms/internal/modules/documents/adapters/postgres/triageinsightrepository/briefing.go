@@ -114,7 +114,7 @@ func handledQuery(req triageports.BriefingWindow) keel.Query[*keel.Row] {
 			Where(m.HandledByRuleID.IsNotNull(), m.ReceivedAt.Gte(req.DayStart)),
 	)
 
-	return ranked.Query().
+	return keel.RowsOf(ranked.TableRef()).
 		With(ranked).
 		Pick(rankedColumns(ranked, "group_count")...).
 		Where(ranked.Col("sample_rank").Lte(handledSamplesPerGroup)).
@@ -205,7 +205,7 @@ func riverQuery(req triageports.BriefingWindow) keel.Query[*keel.Row] {
 				keel.Or(nova, m.Status.In(needsReview...), settledByPerson()),
 			))
 
-	return ranked.Query().
+	return keel.RowsOf(ranked.TableRef()).
 		With(ranked).
 		Pick(rankedColumns(ranked, "nova")...).
 		Where(ranked.Col("lane_rank").Lte(req.Limit)).

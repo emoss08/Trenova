@@ -241,3 +241,20 @@ func TestFormatQuoting(t *testing.T) {
 		})
 	}
 }
+
+/*
+Messages such as "{0, plural, =0 {No blockers} one {# blocker} other {# blockers}}" read
+"0 blockers": the formatter knew only the one and other categories and skipped the exact
+branch. An exact =N branch wins over the category, as ICU defines it.
+*/
+func TestFormat_PrefersAnExactPluralBranch(t *testing.T) {
+	t.Parallel()
+
+	message := "{0, plural, =0 {No blockers} one {# blocker} other {# blockers}}"
+
+	assert.Equal(t, "No blockers", format(EN, message, []any{0}))
+	assert.Equal(t, "1 blocker", format(EN, message, []any{1}))
+	assert.Equal(t, "3 blockers", format(EN, message, []any{3}))
+	assert.Equal(t, "No blockers", format(ZhCN, message, []any{0}))
+	assert.Equal(t, "0 items", format(EN, "{0, plural, one {# item} other {# items}}", []any{0}))
+}

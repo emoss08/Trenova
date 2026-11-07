@@ -77,11 +77,17 @@ func (t *AssignMoveTool) ParamSchema() map[string]any {
 				permission.ResourceWorker,
 				"A second driver for a team move, from worker_list.",
 			),
+			toolparams.ParamReason: agenttoolschema.Reason(
+				"Why this driver, in one or two sentences the dispatcher reads with the " +
+					"proposal: the cost, empty miles, hours or fit that decided it over the " +
+					"others ranked. The driver never sees it.",
+			),
 		},
 		"required": []string{
 			toolparams.ParamShipmentMoveID,
 			"primaryWorkerId",
 			"tractorId",
+			toolparams.ParamReason,
 		},
 		"additionalProperties": false,
 	}

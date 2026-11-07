@@ -117,13 +117,13 @@ type PortalRunsTable struct {
 // PortalRuns references the agent_portal_runs table.
 var PortalRuns = &PortalRunsTable{
 	TableBase:         keel.TableBase{Ref: &portalRunsRef},
-	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &portalRunsRef, Index: 0}}},
-	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &portalRunsRef, Index: 1}}},
-	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &portalRunsRef, Index: 2}}},
-	SiteID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &portalRunsRef, Index: 3}}},
-	ExtensionType:     agentextensiondb.TypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &portalRunsRef, Index: 4}}},
-	Mode:              PortalRunModeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &portalRunsRef, Index: 5}}},
-	Status:            PortalRunStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &portalRunsRef, Index: 6}}},
+	ID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &portalRunsRef, Index: 0}}},
+	BusinessUnitID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &portalRunsRef, Index: 1}}},
+	OrganizationID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &portalRunsRef, Index: 2}}},
+	SiteID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &portalRunsRef, Index: 3}}},
+	ExtensionType:     agentextensiondb.TypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &portalRunsRef, Index: 4}}},
+	Mode:              PortalRunModeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &portalRunsRef, Index: 5}}},
+	Status:            PortalRunStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &portalRunsRef, Index: 6}}},
 	Instruction:       keel.StringCol{Col: keel.Col{Ref: &portalRunsRef, Index: 7}},
 	Details:           keel.JSONBCol{Col: keel.Col{Ref: &portalRunsRef, Index: 8}},
 	UsedSignIn:        keel.BoolCol{Col: keel.Col{Ref: &portalRunsRef, Index: 9}},
@@ -139,11 +139,11 @@ var PortalRuns = &PortalRunsTable{
 	CodeRequestedAt:   keel.Int64Col{Col: keel.Col{Ref: &portalRunsRef, Index: 19}},
 	CodeAttempts:      keel.Int64Col{Col: keel.Col{Ref: &portalRunsRef, Index: 20}},
 	IdempotencyKey:    keel.StringCol{Col: keel.Col{Ref: &portalRunsRef, Index: 21}},
-	AgentDefinitionID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &portalRunsRef, Index: 22}}},
-	AgentRunID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &portalRunsRef, Index: 23}}},
-	ThreadID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &portalRunsRef, Index: 24}}},
-	ProposalID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &portalRunsRef, Index: 25}}},
-	RequestedByID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &portalRunsRef, Index: 26}}},
+	AgentDefinitionID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &portalRunsRef, Index: 22}}},
+	AgentRunID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &portalRunsRef, Index: 23}}},
+	ThreadID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &portalRunsRef, Index: 24}}},
+	ProposalID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &portalRunsRef, Index: 25}}},
+	RequestedByID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &portalRunsRef, Index: 26}}},
 	StartedAt:         keel.Int64Col{Col: keel.Col{Ref: &portalRunsRef, Index: 27}},
 	FinishedAt:        keel.Int64Col{Col: keel.Col{Ref: &portalRunsRef, Index: 28}},
 	Version:           keel.Int64Col{Col: keel.Col{Ref: &portalRunsRef, Index: 29}},
@@ -155,13 +155,13 @@ var PortalRuns = &PortalRunsTable{
 func BuildPortalRuns(r *keel.Ref) *PortalRunsTable {
 	return &PortalRunsTable{
 		TableBase:         keel.TableBase{Ref: r},
-		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		SiteID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		ExtensionType:     agentextensiondb.TypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		Mode:              PortalRunModeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		Status:            PortalRunStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		ID:                keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		SiteID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ExtensionType:     agentextensiondb.TypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		Mode:              PortalRunModeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		Status:            PortalRunStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		Instruction:       keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
 		Details:           keel.JSONBCol{Col: keel.Col{Ref: r, Index: 8}},
 		UsedSignIn:        keel.BoolCol{Col: keel.Col{Ref: r, Index: 9}},
@@ -177,11 +177,11 @@ func BuildPortalRuns(r *keel.Ref) *PortalRunsTable {
 		CodeRequestedAt:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 19}},
 		CodeAttempts:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 20}},
 		IdempotencyKey:    keel.StringCol{Col: keel.Col{Ref: r, Index: 21}},
-		AgentDefinitionID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 22}}},
-		AgentRunID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 23}}},
-		ThreadID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 24}}},
-		ProposalID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 25}}},
-		RequestedByID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 26}}},
+		AgentDefinitionID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 22}}},
+		AgentRunID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 23}}},
+		ThreadID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 24}}},
+		ProposalID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 25}}},
+		RequestedByID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 26}}},
 		StartedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 27}},
 		FinishedAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 28}},
 		Version:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 29}},
@@ -205,8 +205,6 @@ func (t *PortalRunsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*
 
 // PortalRunsQuery is a query over extensionportal.PortalRun.
 type PortalRunsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*extensionportal.PortalRun] = (*PortalRunsTable)(nil)
 
 var _ keel.Query[*extensionportal.PortalRun] = (*PortalRunsQuery)(nil)
 
@@ -322,42 +320,42 @@ func (t *PortalRunsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*exte
 
 // Create inserts row.
 func (t *PortalRunsTable) Create(ctx context.Context, db *keel.DB, row *extensionportal.PortalRun) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *PortalRunsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*extensionportal.PortalRun) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *PortalRunsTable) Save(ctx context.Context, db *keel.DB, row *extensionportal.PortalRun, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *PortalRunsTable) SaveExcept(ctx context.Context, db *keel.DB, row *extensionportal.PortalRun, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *PortalRunsTable) DeleteRow(ctx context.Context, db *keel.DB, row *extensionportal.PortalRun) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *PortalRunsTable) Upsert(ctx context.Context, db *keel.DB, rows []*extensionportal.PortalRun, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *PortalRunsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*extensionportal.PortalRun, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *PortalRunsTable) Copy(ctx context.Context, db *keel.DB, rows []*extensionportal.PortalRun) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -529,37 +527,45 @@ func (q *PortalRunsQuery) Clone() keel.Query[*extensionportal.PortalRun] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *PortalRunsQuery) One(ctx context.Context, db *keel.DB) (*extensionportal.PortalRun, error) {
-	return keel.One[*extensionportal.PortalRun](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*extensionportal.PortalRun)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *PortalRunsQuery) First(ctx context.Context, db *keel.DB) (*extensionportal.PortalRun, error) {
-	return keel.First[*extensionportal.PortalRun](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*extensionportal.PortalRun)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *PortalRunsQuery) List(ctx context.Context, db *keel.DB) ([]*extensionportal.PortalRun, error) {
-	return keel.List[*extensionportal.PortalRun](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*extensionportal.PortalRun)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *PortalRunsQuery) All(ctx context.Context, db *keel.DB) ([]*extensionportal.PortalRun, error) {
-	return keel.All[*extensionportal.PortalRun](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*extensionportal.PortalRun)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *PortalRunsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*extensionportal.PortalRun, error) {
-	return keel.UpdateReturning[*extensionportal.PortalRun](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*extensionportal.PortalRun)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *PortalRunsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*extensionportal.PortalRun], error) {
-	return keel.PageOf[*extensionportal.PortalRun](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*extensionportal.PortalRun])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *PortalRunsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*extensionportal.PortalRun) error) error {
-	return keel.Each[*extensionportal.PortalRun](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*extensionportal.PortalRun)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newPortalRun() unsafe.Pointer { return unsafe.Pointer(new(extensionportal.PortalRun)) }
@@ -813,9 +819,9 @@ type PortalSitesTable struct {
 // PortalSites references the agent_portal_sites table.
 var PortalSites = &PortalSitesTable{
 	TableBase:        keel.TableBase{Ref: &portalSitesRef},
-	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &portalSitesRef, Index: 0}}},
-	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &portalSitesRef, Index: 1}}},
-	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &portalSitesRef, Index: 2}}},
+	ID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &portalSitesRef, Index: 0}}},
+	BusinessUnitID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &portalSitesRef, Index: 1}}},
+	OrganizationID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &portalSitesRef, Index: 2}}},
 	Name:             keel.StringCol{Col: keel.Col{Ref: &portalSitesRef, Index: 3}},
 	Purpose:          keel.StringCol{Col: keel.Col{Ref: &portalSitesRef, Index: 4}},
 	Domains:          keel.JSONBCol{Col: keel.Col{Ref: &portalSitesRef, Index: 5}},
@@ -825,7 +831,7 @@ var PortalSites = &PortalSitesTable{
 	AllowActions:     keel.BoolCol{Col: keel.Col{Ref: &portalSitesRef, Index: 9}},
 	ViewOnlyAccount:  keel.BoolCol{Col: keel.Col{Ref: &portalSitesRef, Index: 10}},
 	Enabled:          keel.BoolCol{Col: keel.Col{Ref: &portalSitesRef, Index: 11}},
-	CreatedByID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &portalSitesRef, Index: 12}}},
+	CreatedByID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &portalSitesRef, Index: 12}}},
 	Version:          keel.Int64Col{Col: keel.Col{Ref: &portalSitesRef, Index: 13}},
 	CreatedAt:        keel.Int64Col{Col: keel.Col{Ref: &portalSitesRef, Index: 14}},
 	UpdatedAt:        keel.Int64Col{Col: keel.Col{Ref: &portalSitesRef, Index: 15}},
@@ -835,9 +841,9 @@ var PortalSites = &PortalSitesTable{
 func BuildPortalSites(r *keel.Ref) *PortalSitesTable {
 	return &PortalSitesTable{
 		TableBase:        keel.TableBase{Ref: r},
-		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ID:               keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		Name:             keel.StringCol{Col: keel.Col{Ref: r, Index: 3}},
 		Purpose:          keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		Domains:          keel.JSONBCol{Col: keel.Col{Ref: r, Index: 5}},
@@ -847,7 +853,7 @@ func BuildPortalSites(r *keel.Ref) *PortalSitesTable {
 		AllowActions:     keel.BoolCol{Col: keel.Col{Ref: r, Index: 9}},
 		ViewOnlyAccount:  keel.BoolCol{Col: keel.Col{Ref: r, Index: 10}},
 		Enabled:          keel.BoolCol{Col: keel.Col{Ref: r, Index: 11}},
-		CreatedByID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 12}}},
+		CreatedByID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 12}}},
 		Version:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
 		CreatedAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
 		UpdatedAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
@@ -869,8 +875,6 @@ func (t *PortalSitesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (
 
 // PortalSitesQuery is a query over extensionportal.PortalSite.
 type PortalSitesQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*extensionportal.PortalSite] = (*PortalSitesTable)(nil)
 
 var _ keel.Query[*extensionportal.PortalSite] = (*PortalSitesQuery)(nil)
 
@@ -986,42 +990,42 @@ func (t *PortalSitesTable) Compute(col keel.Column, e keel.Expr) keel.Query[*ext
 
 // Create inserts row.
 func (t *PortalSitesTable) Create(ctx context.Context, db *keel.DB, row *extensionportal.PortalSite) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *PortalSitesTable) CreateMany(ctx context.Context, db *keel.DB, rows []*extensionportal.PortalSite) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *PortalSitesTable) Save(ctx context.Context, db *keel.DB, row *extensionportal.PortalSite, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *PortalSitesTable) SaveExcept(ctx context.Context, db *keel.DB, row *extensionportal.PortalSite, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *PortalSitesTable) DeleteRow(ctx context.Context, db *keel.DB, row *extensionportal.PortalSite) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *PortalSitesTable) Upsert(ctx context.Context, db *keel.DB, rows []*extensionportal.PortalSite, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *PortalSitesTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*extensionportal.PortalSite, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *PortalSitesTable) Copy(ctx context.Context, db *keel.DB, rows []*extensionportal.PortalSite) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -1193,37 +1197,45 @@ func (q *PortalSitesQuery) Clone() keel.Query[*extensionportal.PortalSite] {
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *PortalSitesQuery) One(ctx context.Context, db *keel.DB) (*extensionportal.PortalSite, error) {
-	return keel.One[*extensionportal.PortalSite](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*extensionportal.PortalSite)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *PortalSitesQuery) First(ctx context.Context, db *keel.DB) (*extensionportal.PortalSite, error) {
-	return keel.First[*extensionportal.PortalSite](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*extensionportal.PortalSite)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *PortalSitesQuery) List(ctx context.Context, db *keel.DB) ([]*extensionportal.PortalSite, error) {
-	return keel.List[*extensionportal.PortalSite](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*extensionportal.PortalSite)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *PortalSitesQuery) All(ctx context.Context, db *keel.DB) ([]*extensionportal.PortalSite, error) {
-	return keel.All[*extensionportal.PortalSite](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*extensionportal.PortalSite)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *PortalSitesQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*extensionportal.PortalSite, error) {
-	return keel.UpdateReturning[*extensionportal.PortalSite](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*extensionportal.PortalSite)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *PortalSitesQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*extensionportal.PortalSite], error) {
-	return keel.PageOf[*extensionportal.PortalSite](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*extensionportal.PortalSite])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *PortalSitesQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*extensionportal.PortalSite) error) error {
-	return keel.Each[*extensionportal.PortalSite](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*extensionportal.PortalSite)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newPortalSite() unsafe.Pointer { return unsafe.Pointer(new(extensionportal.PortalSite)) }
@@ -1344,75 +1356,75 @@ var enumPortalRunStatus = [...]schema.EnumValue{
 }
 
 // PortalRunModeCol is a column of extensionportal.PortalRunMode values.
-type PortalRunModeCol struct{ keel.StringCol }
+type PortalRunModeCol struct{ keel.TypedStringCol }
 
 func (c PortalRunModeCol) Eq(v extensionportal.PortalRunMode) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c PortalRunModeCol) Ne(v extensionportal.PortalRunMode) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c PortalRunModeCol) Gt(v extensionportal.PortalRunMode) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c PortalRunModeCol) Gte(v extensionportal.PortalRunMode) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c PortalRunModeCol) Lt(v extensionportal.PortalRunMode) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c PortalRunModeCol) Lte(v extensionportal.PortalRunMode) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c PortalRunModeCol) IsDistinctFrom(v extensionportal.PortalRunMode) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c PortalRunModeCol) Between(lo, hi extensionportal.PortalRunMode) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c PortalRunModeCol) To(v extensionportal.PortalRunMode) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c PortalRunModeCol) In(vs ...extensionportal.PortalRunMode) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c PortalRunModeCol) NotIn(vs ...extensionportal.PortalRunMode) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 
 // PortalRunStatusCol is a column of extensionportal.PortalRunStatus values.
-type PortalRunStatusCol struct{ keel.StringCol }
+type PortalRunStatusCol struct{ keel.TypedStringCol }
 
 func (c PortalRunStatusCol) Eq(v extensionportal.PortalRunStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
+	return c.Text().Eq(string(v))
 }
 func (c PortalRunStatusCol) Ne(v extensionportal.PortalRunStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
+	return c.Text().Ne(string(v))
 }
 func (c PortalRunStatusCol) Gt(v extensionportal.PortalRunStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
+	return c.Text().Gt(string(v))
 }
 func (c PortalRunStatusCol) Gte(v extensionportal.PortalRunStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
+	return c.Text().Gte(string(v))
 }
 func (c PortalRunStatusCol) Lt(v extensionportal.PortalRunStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
+	return c.Text().Lt(string(v))
 }
 func (c PortalRunStatusCol) Lte(v extensionportal.PortalRunStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
+	return c.Text().Lte(string(v))
 }
 func (c PortalRunStatusCol) IsDistinctFrom(v extensionportal.PortalRunStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
+	return c.Text().IsDistinctFrom(string(v))
 }
 func (c PortalRunStatusCol) Between(lo, hi extensionportal.PortalRunStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
+	return c.Text().Between(string(lo), string(hi))
 }
 func (c PortalRunStatusCol) To(v extensionportal.PortalRunStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
+	return c.Text().To(string(v))
 }
 func (c PortalRunStatusCol) In(vs ...extensionportal.PortalRunStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c PortalRunStatusCol) NotIn(vs ...extensionportal.PortalRunStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

@@ -10,6 +10,7 @@ import {
   formatUnixDateTimeMedium,
   formatUnixDateTimeOrDash,
   formatUnixDateTimeShort,
+  formatUnixDayTimeRange,
   formatUnixTime,
   formatUnixTimeWithSeconds,
   fromUserWallClock,
@@ -102,6 +103,34 @@ describe("unix display helpers", () => {
     expect(formatUnixDateTimeOrDash(JAN_15_2024_UTC)).not.toBe("-");
     expect(formatUnixDateMedium(null, { fallback: "—" })).toBe("—");
     expect(formatUnixDateTimeOrDash(null, { fallback: "Not recorded" })).toBe("Not recorded");
+  });
+});
+
+describe("formatUnixDayTimeRange", () => {
+  const HOUR = 3_600;
+
+  it("names the weekday once for hours within one day of the user's timezone", () => {
+    setUserDatePreferences({ timezone: "America/Denver", timeFormat: "24-hour" });
+
+    const text = formatUnixDayTimeRange(JAN_15_2024_UTC - 11 * HOUR, JAN_15_2024_UTC + HOUR);
+
+    expect(text.match(/Sun/g)).toHaveLength(1);
+    expect(text).toMatch(/0?6:00/);
+    expect(text).toMatch(/18:00/);
+    expect(text).not.toMatch(/Mon/);
+  });
+
+  it("names both weekdays when the hours cross midnight there", () => {
+    setUserDatePreferences({ timezone: "America/Denver", timeFormat: "24-hour" });
+
+    const text = formatUnixDayTimeRange(JAN_15_2024_UTC + HOUR, JAN_15_2024_UTC + 13 * HOUR);
+
+    expect(text).toBe("Sun 18:00 – Mon 06:00");
+  });
+
+  it("treats an unset end of the span as unset", () => {
+    expect(formatUnixDayTimeRange(JAN_15_2024_UTC, null)).toBe("N/A");
+    expect(formatUnixDayTimeRange(0, JAN_15_2024_UTC, { fallback: "—" })).toBe("—");
   });
 });
 

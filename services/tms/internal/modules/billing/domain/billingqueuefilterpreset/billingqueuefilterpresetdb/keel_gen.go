@@ -72,10 +72,10 @@ type BillingQueueFilterPresetsTable struct {
 // BillingQueueFilterPresets references the billing_queue_filter_presets table.
 var BillingQueueFilterPresets = &BillingQueueFilterPresetsTable{
 	TableBase:      keel.TableBase{Ref: &billingQueueFilterPresetsRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingQueueFilterPresetsRef, Index: 0}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingQueueFilterPresetsRef, Index: 1}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingQueueFilterPresetsRef, Index: 2}}},
-	UserID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &billingQueueFilterPresetsRef, Index: 3}}},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &billingQueueFilterPresetsRef, Index: 0}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &billingQueueFilterPresetsRef, Index: 1}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &billingQueueFilterPresetsRef, Index: 2}}},
+	UserID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &billingQueueFilterPresetsRef, Index: 3}}},
 	Name:           keel.StringCol{Col: keel.Col{Ref: &billingQueueFilterPresetsRef, Index: 4}},
 	Filters:        keel.JSONBCol{Col: keel.Col{Ref: &billingQueueFilterPresetsRef, Index: 5}},
 	IsDefault:      keel.BoolCol{Col: keel.Col{Ref: &billingQueueFilterPresetsRef, Index: 6}},
@@ -88,10 +88,10 @@ var BillingQueueFilterPresets = &BillingQueueFilterPresetsTable{
 func BuildBillingQueueFilterPresets(r *keel.Ref) *BillingQueueFilterPresetsTable {
 	return &BillingQueueFilterPresetsTable{
 		TableBase:      keel.TableBase{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		UserID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		UserID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		Name:           keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		Filters:        keel.JSONBCol{Col: keel.Col{Ref: r, Index: 5}},
 		IsDefault:      keel.BoolCol{Col: keel.Col{Ref: r, Index: 6}},
@@ -116,8 +116,6 @@ func (t *BillingQueueFilterPresetsTable) Get(ctx context.Context, db *keel.DB, k
 
 // BillingQueueFilterPresetsQuery is a query over billingqueuefilterpreset.BillingQueueFilterPreset.
 type BillingQueueFilterPresetsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*billingqueuefilterpreset.BillingQueueFilterPreset] = (*BillingQueueFilterPresetsTable)(nil)
 
 var _ keel.Query[*billingqueuefilterpreset.BillingQueueFilterPreset] = (*BillingQueueFilterPresetsQuery)(nil)
 
@@ -233,42 +231,42 @@ func (t *BillingQueueFilterPresetsTable) Compute(col keel.Column, e keel.Expr) k
 
 // Create inserts row.
 func (t *BillingQueueFilterPresetsTable) Create(ctx context.Context, db *keel.DB, row *billingqueuefilterpreset.BillingQueueFilterPreset) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *BillingQueueFilterPresetsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*billingqueuefilterpreset.BillingQueueFilterPreset) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *BillingQueueFilterPresetsTable) Save(ctx context.Context, db *keel.DB, row *billingqueuefilterpreset.BillingQueueFilterPreset, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *BillingQueueFilterPresetsTable) SaveExcept(ctx context.Context, db *keel.DB, row *billingqueuefilterpreset.BillingQueueFilterPreset, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *BillingQueueFilterPresetsTable) DeleteRow(ctx context.Context, db *keel.DB, row *billingqueuefilterpreset.BillingQueueFilterPreset) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *BillingQueueFilterPresetsTable) Upsert(ctx context.Context, db *keel.DB, rows []*billingqueuefilterpreset.BillingQueueFilterPreset, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *BillingQueueFilterPresetsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*billingqueuefilterpreset.BillingQueueFilterPreset, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *BillingQueueFilterPresetsTable) Copy(ctx context.Context, db *keel.DB, rows []*billingqueuefilterpreset.BillingQueueFilterPreset) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -440,37 +438,45 @@ func (q *BillingQueueFilterPresetsQuery) Clone() keel.Query[*billingqueuefilterp
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *BillingQueueFilterPresetsQuery) One(ctx context.Context, db *keel.DB) (*billingqueuefilterpreset.BillingQueueFilterPreset, error) {
-	return keel.One[*billingqueuefilterpreset.BillingQueueFilterPreset](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*billingqueuefilterpreset.BillingQueueFilterPreset)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *BillingQueueFilterPresetsQuery) First(ctx context.Context, db *keel.DB) (*billingqueuefilterpreset.BillingQueueFilterPreset, error) {
-	return keel.First[*billingqueuefilterpreset.BillingQueueFilterPreset](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*billingqueuefilterpreset.BillingQueueFilterPreset)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *BillingQueueFilterPresetsQuery) List(ctx context.Context, db *keel.DB) ([]*billingqueuefilterpreset.BillingQueueFilterPreset, error) {
-	return keel.List[*billingqueuefilterpreset.BillingQueueFilterPreset](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*billingqueuefilterpreset.BillingQueueFilterPreset)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *BillingQueueFilterPresetsQuery) All(ctx context.Context, db *keel.DB) ([]*billingqueuefilterpreset.BillingQueueFilterPreset, error) {
-	return keel.All[*billingqueuefilterpreset.BillingQueueFilterPreset](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*billingqueuefilterpreset.BillingQueueFilterPreset)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *BillingQueueFilterPresetsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*billingqueuefilterpreset.BillingQueueFilterPreset, error) {
-	return keel.UpdateReturning[*billingqueuefilterpreset.BillingQueueFilterPreset](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*billingqueuefilterpreset.BillingQueueFilterPreset)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *BillingQueueFilterPresetsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*billingqueuefilterpreset.BillingQueueFilterPreset], error) {
-	return keel.PageOf[*billingqueuefilterpreset.BillingQueueFilterPreset](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*billingqueuefilterpreset.BillingQueueFilterPreset])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *BillingQueueFilterPresetsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*billingqueuefilterpreset.BillingQueueFilterPreset) error) error {
-	return keel.Each[*billingqueuefilterpreset.BillingQueueFilterPreset](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*billingqueuefilterpreset.BillingQueueFilterPreset)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newBillingQueueFilterPreset() unsafe.Pointer {

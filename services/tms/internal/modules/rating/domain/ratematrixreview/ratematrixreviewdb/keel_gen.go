@@ -84,16 +84,16 @@ type RateMatrixReviewsTable struct {
 // RateMatrixReviews references the rate_matrix_reviews table.
 var RateMatrixReviews = &RateMatrixReviewsTable{
 	TableBase:           keel.TableBase{Ref: &rateMatrixReviewsRef},
-	ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateMatrixReviewsRef, Index: 0}}},
-	OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateMatrixReviewsRef, Index: 1}}},
-	BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateMatrixReviewsRef, Index: 2}}},
-	RateMatrixID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateMatrixReviewsRef, Index: 3}}},
+	ID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateMatrixReviewsRef, Index: 0}}},
+	OrganizationID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateMatrixReviewsRef, Index: 1}}},
+	BusinessUnitID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateMatrixReviewsRef, Index: 2}}},
+	RateMatrixID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateMatrixReviewsRef, Index: 3}}},
 	Round:               keel.Int32Col{Col: keel.Col{Ref: &rateMatrixReviewsRef, Index: 4}},
-	Decision:            formulatemplatedb.ReviewDecisionCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateMatrixReviewsRef, Index: 5}}},
-	ActorID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateMatrixReviewsRef, Index: 6}}},
+	Decision:            formulatemplatedb.ReviewDecisionCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateMatrixReviewsRef, Index: 5}}},
+	ActorID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateMatrixReviewsRef, Index: 6}}},
 	Comment:             keel.StringCol{Col: keel.Col{Ref: &rateMatrixReviewsRef, Index: 7}},
 	BaseVersionNumber:   keel.Int64Col{Col: keel.Col{Ref: &rateMatrixReviewsRef, Index: 8}},
-	RequestedReviewerID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &rateMatrixReviewsRef, Index: 9}}},
+	RequestedReviewerID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &rateMatrixReviewsRef, Index: 9}}},
 	ReviewerNote:        keel.StringCol{Col: keel.Col{Ref: &rateMatrixReviewsRef, Index: 10}},
 	CreatedAt:           keel.Int64Col{Col: keel.Col{Ref: &rateMatrixReviewsRef, Index: 11}},
 }
@@ -102,16 +102,16 @@ var RateMatrixReviews = &RateMatrixReviewsTable{
 func BuildRateMatrixReviews(r *keel.Ref) *RateMatrixReviewsTable {
 	return &RateMatrixReviewsTable{
 		TableBase:           keel.TableBase{Ref: r},
-		ID:                  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		OrganizationID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		BusinessUnitID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		RateMatrixID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ID:                  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		OrganizationID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		BusinessUnitID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		RateMatrixID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		Round:               keel.Int32Col{Col: keel.Col{Ref: r, Index: 4}},
-		Decision:            formulatemplatedb.ReviewDecisionCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		ActorID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		Decision:            formulatemplatedb.ReviewDecisionCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		ActorID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		Comment:             keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
 		BaseVersionNumber:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
-		RequestedReviewerID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		RequestedReviewerID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
 		ReviewerNote:        keel.StringCol{Col: keel.Col{Ref: r, Index: 10}},
 		CreatedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
 	}
@@ -142,8 +142,6 @@ func (t *RateMatrixReviewsTable) Get(ctx context.Context, db *keel.DB, key pulid
 
 // RateMatrixReviewsQuery is a query over ratematrixreview.RateMatrixReview.
 type RateMatrixReviewsQuery struct{ keel.QueryCore }
-
-var _ keel.Handle[*ratematrixreview.RateMatrixReview] = (*RateMatrixReviewsTable)(nil)
 
 var _ keel.Query[*ratematrixreview.RateMatrixReview] = (*RateMatrixReviewsQuery)(nil)
 
@@ -259,42 +257,42 @@ func (t *RateMatrixReviewsTable) Compute(col keel.Column, e keel.Expr) keel.Quer
 
 // Create inserts row.
 func (t *RateMatrixReviewsTable) Create(ctx context.Context, db *keel.DB, row *ratematrixreview.RateMatrixReview) error {
-	return keel.Create(ctx, db, &t.TableBase, row)
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
 func (t *RateMatrixReviewsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*ratematrixreview.RateMatrixReview) error {
-	return keel.CreateMany(ctx, db, &t.TableBase, rows)
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Save updates row by its primary key.
 func (t *RateMatrixReviewsTable) Save(ctx context.Context, db *keel.DB, row *ratematrixreview.RateMatrixReview, cols ...keel.Column) error {
-	return keel.Save(ctx, db, &t.TableBase, row, cols...)
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // SaveExcept is Save writing every updatable column except cols.
 func (t *RateMatrixReviewsTable) SaveExcept(ctx context.Context, db *keel.DB, row *ratematrixreview.RateMatrixReview, cols ...keel.Column) error {
-	return keel.SaveExcept(ctx, db, &t.TableBase, row, cols...)
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
 }
 
 // DeleteRow deletes row by its primary key.
 func (t *RateMatrixReviewsTable) DeleteRow(ctx context.Context, db *keel.DB, row *ratematrixreview.RateMatrixReview) error {
-	return keel.DeleteRow(ctx, db, &t.TableBase, row)
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
 }
 
 // Upsert inserts rows, updating the existing row on conflict.
 func (t *RateMatrixReviewsTable) Upsert(ctx context.Context, db *keel.DB, rows []*ratematrixreview.RateMatrixReview, c keel.Conflict) ([]bool, error) {
-	return keel.Upsert(ctx, db, &t.TableBase, rows, c)
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
 }
 
 // CreateOrSkip inserts rows, skipping those that conflict on targets.
 func (t *RateMatrixReviewsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*ratematrixreview.RateMatrixReview, targets ...keel.Expr) (int64, error) {
-	return keel.CreateOrSkip(ctx, db, &t.TableBase, rows, targets...)
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
 }
 
 // Copy inserts rows through Postgres's binary COPY protocol.
 func (t *RateMatrixReviewsTable) Copy(ctx context.Context, db *keel.DB, rows []*ratematrixreview.RateMatrixReview) (int64, error) {
-	return keel.Copy(ctx, db, &t.TableBase, rows)
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
 }
 
 // Where adds predicates, joined by AND. Nil predicates are skipped.
@@ -466,37 +464,45 @@ func (q *RateMatrixReviewsQuery) Clone() keel.Query[*ratematrixreview.RateMatrix
 
 // One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
 func (q *RateMatrixReviewsQuery) One(ctx context.Context, db *keel.DB) (*ratematrixreview.RateMatrixReview, error) {
-	return keel.One[*ratematrixreview.RateMatrixReview](ctx, db, &q.QueryCore)
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*ratematrixreview.RateMatrixReview)(row), err
 }
 
 // First returns the first row in the query's order, or keel.ErrNotFound.
 func (q *RateMatrixReviewsQuery) First(ctx context.Context, db *keel.DB) (*ratematrixreview.RateMatrixReview, error) {
-	return keel.First[*ratematrixreview.RateMatrixReview](ctx, db, &q.QueryCore)
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*ratematrixreview.RateMatrixReview)(row), err
 }
 
 // List returns the matching rows. The query must have a Limit.
 func (q *RateMatrixReviewsQuery) List(ctx context.Context, db *keel.DB) ([]*ratematrixreview.RateMatrixReview, error) {
-	return keel.List[*ratematrixreview.RateMatrixReview](ctx, db, &q.QueryCore)
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*ratematrixreview.RateMatrixReview)(unsafe.Pointer(&rows)), err
 }
 
 // All returns every matching row. Use it only for sets known to be small.
 func (q *RateMatrixReviewsQuery) All(ctx context.Context, db *keel.DB) ([]*ratematrixreview.RateMatrixReview, error) {
-	return keel.All[*ratematrixreview.RateMatrixReview](ctx, db, &q.QueryCore)
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*ratematrixreview.RateMatrixReview)(unsafe.Pointer(&rows)), err
 }
 
 // UpdateReturning sets columns on every matching row and returns the updated rows.
 func (q *RateMatrixReviewsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*ratematrixreview.RateMatrixReview, error) {
-	return keel.UpdateReturning[*ratematrixreview.RateMatrixReview](ctx, db, &q.QueryCore, sets...)
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*ratematrixreview.RateMatrixReview)(unsafe.Pointer(&rows)), err
 }
 
 // Page returns the page of rows after the request's cursor.
 func (q *RateMatrixReviewsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*ratematrixreview.RateMatrixReview], error) {
-	return keel.PageOf[*ratematrixreview.RateMatrixReview](ctx, db, &q.QueryCore, p)
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*ratematrixreview.RateMatrixReview])(unsafe.Pointer(&page)), err
 }
 
 // Each runs the query page by page and calls fn with each batch of at most size rows.
 func (q *RateMatrixReviewsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*ratematrixreview.RateMatrixReview) error) error {
-	return keel.Each[*ratematrixreview.RateMatrixReview](ctx, db, &q.QueryCore, size, fn)
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*ratematrixreview.RateMatrixReview)(unsafe.Pointer(&rows)))
+	})
 }
 
 func newRateMatrixReview() unsafe.Pointer {

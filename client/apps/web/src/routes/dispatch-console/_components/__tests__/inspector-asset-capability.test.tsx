@@ -1,7 +1,6 @@
 import type { DispatchBoardMove, DispatchCandidate } from "@/lib/graphql/dispatch-console";
-import { stubLayout } from "@/test/layout";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
@@ -10,6 +9,7 @@ import { Operation, Resource, type PermissionManifest } from "@trenova/shared/ty
 import type { User } from "@trenova/shared/types/user";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { useDispatchConsoleStore } from "@/stores/dispatch-console-store";
 import { Inspector } from "../inspector";
 import type { DispatchActions } from "../use-dispatch-actions";
 
@@ -40,13 +40,22 @@ function candidate(index: number, workerName: string): DispatchCandidate {
     tractorId: `trc_${index}`,
     trailerId: null,
     moveId: "smv_1",
-    score: 82,
+    costCents: 2_800,
+    costLines: [{ component: "emptyMiles", cents: 2_800, soft: false }],
     verdict: "feasible",
     blocked: false,
     deadheadMiles: 14,
+    originSource: "position",
+    loadedMiles: 120,
     estimatedDriveMs: 9_000_000,
+    restMs: 0,
     projectedArrival: 1_720_003_600,
+    projectedDelivery: 1_720_014_400,
+    projectedFreeAt: 1_720_018_000,
     minutesOfSlack: 45,
+    slackKnown: true,
+    hosKnown: true,
+    deliveryLateMinutes: 0,
     driveRemainingMs: 28_800_000,
     shiftRemainingMs: 36_000_000,
     cycleRemainingMs: 180_000_000,
@@ -57,24 +66,8 @@ function candidate(index: number, workerName: string): DispatchCandidate {
     hosProjectedShiftMs: 27_000_000,
     hosProjectedCycleMs: 171_000_000,
     findings: [],
-    factors: [],
+    endMarket: null,
   } as DispatchCandidate;
-}
-
-// The virtual list's scroll element: row wrapper, then the sized body, then the list
-// wrapper, then the viewport that scrolls.
-function scrollerOf(rowText: string): HTMLElement {
-  const row = screen.getByText(rowText).closest<HTMLElement>("[data-index]");
-  const scroller = row?.parentElement?.parentElement?.parentElement;
-  if (!scroller) throw new Error(`no scroll element above ${rowText}`);
-  return scroller;
-}
-
-function scrollTo(scroller: HTMLElement, top: number) {
-  act(() => {
-    scroller.scrollTop = top;
-    scroller.dispatchEvent(new Event("scroll"));
-  });
 }
 
 const hybrid: OrganizationCapabilities = {
@@ -164,12 +157,18 @@ function renderInspector() {
     <QueryClientProvider client={queryClient}>
       <MemoryRouter>
         <Inspector
-          selectedMove={move}
-          selectedDriver={null}
-          onAssign={vi.fn()}
-          onSelectMove={vi.fn()}
-          isAssigning={false}
+          move={move}
+          moveRead={null}
+          outsideWindow={false}
+          driver={null}
+          range={{ start: 0, end: 86_400 }}
           hotkeysEnabled={false}
+          queueScope={null}
+          onClose={vi.fn()}
+          onSelectMove={vi.fn()}
+          onNextMove={vi.fn()}
+          onCovered={vi.fn()}
+          onJumpTo={vi.fn()}
           actions={actions}
         />
       </MemoryRouter>
@@ -177,20 +176,15 @@ function renderInspector() {
   );
 }
 
-// The candidate list is virtualized, and jsdom lays nothing out: without a size no row
-// would mount.
-let restoreLayout = () => {};
-
 describe("Inspector driver ranking is hidden when the organization owns no trucks", () => {
   beforeEach(() => {
-    restoreLayout = stubLayout(320);
     candidatesQueryFn.mockClear();
+    useDispatchConsoleStore.getState().reset();
     usePermissionStore.getState().clearPermissions();
     useAuthStore.setState({ user: null, isAuthenticated: false });
   });
 
   afterEach(() => {
-    restoreLayout();
     cleanup();
     usePermissionStore.getState().clearPermissions();
     useAuthStore.setState({ user: null, isAuthenticated: false });
@@ -201,9 +195,8 @@ describe("Inspector driver ranking is hidden when the organization owns no truck
 
     renderInspector();
 
-    expect(await screen.findByText("0 candidates")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Show ineligible" })).toBeInTheDocument();
-    expect(await screen.findByText(/No eligible driver for this move/)).toBeInTheDocument();
+    expect(await screen.findByText("No eligible driver")).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: "Show ineligible" }).length).toBeGreaterThan(0);
   });
 
   it("counts a single ranked driver in the singular", async () => {
@@ -212,32 +205,65 @@ describe("Inspector driver ranking is hidden when the organization owns no truck
 
     renderInspector();
 
-    expect(await screen.findByText("1 candidate")).toBeInTheDocument();
+    expect(await screen.findByText("1 eligible")).toBeInTheDocument();
     expect(screen.getByText("Ana Ruiz")).toBeInTheDocument();
   });
 
-  it("keeps a candidate's score detail open after it scrolls out of view and back", async () => {
+  it("folds the ranked drivers away and back from the heading's button", async () => {
+    signIn(hybrid);
+    candidatesQueryFn.mockResolvedValueOnce([candidate(1, "Ana Ruiz")]);
+    const user = userEvent.setup();
+
+    renderInspector();
+    await screen.findByText("Ana Ruiz");
+
+    await user.click(screen.getByRole("button", { name: "Hide the drivers" }));
+
+    const show = screen.getByRole("button", { name: "Show the drivers" });
+    expect(show).toHaveAttribute("aria-expanded", "false");
+    // Folded, the list is inert: its drivers take no focus and no clicks.
+    expect(document.getElementById(show.getAttribute("aria-controls") ?? "")).toHaveAttribute(
+      "inert",
+    );
+    expect(useDispatchConsoleStore.getState().candidatesOpen).toBe(false);
+
+    await user.click(show);
+
+    expect(screen.getByRole("button", { name: "Hide the drivers" })).toHaveAttribute(
+      "aria-expanded",
+      "true",
+    );
+  });
+
+  it("opens the rest of the drivers on request and folds them back", async () => {
     signIn(hybrid);
     candidatesQueryFn.mockResolvedValueOnce(
-      Array.from({ length: 30 }, (_, index) =>
-        candidate(index, `Driver ${String(index).padStart(2, "0")}`),
-      ),
+      Array.from({ length: 9 }, (_, index) => candidate(index, `Driver ${index + 1}`)),
     );
     const user = userEvent.setup();
 
     renderInspector();
+    await screen.findByText("Driver 6");
 
-    await screen.findByText("Driver 00");
-    await user.click(screen.getAllByRole("button", { name: "Why this score" })[0]);
-    expect(screen.getAllByRole("button", { name: "Hide detail" })).toHaveLength(1);
+    const more = screen.getByRole("button", { name: "3 more drivers" });
+    const rest = () => document.getElementById(more.getAttribute("aria-controls") ?? "");
+    expect(more).toHaveAttribute("aria-expanded", "false");
+    expect(rest()).toHaveAttribute("inert");
+    expect(rest()).toHaveTextContent("Driver 7");
+    expect(rest()).not.toHaveTextContent("Driver 6");
 
-    const scroller = scrollerOf("Driver 00");
-    scrollTo(scroller, 25 * 320);
-    await waitFor(() => expect(screen.queryByText("Driver 00")).toBeNull());
+    await user.click(more);
 
-    scrollTo(scroller, 0);
-    await screen.findByText("Driver 00");
-    expect(screen.getAllByRole("button", { name: "Hide detail" })).toHaveLength(1);
+    expect(more).toHaveAttribute("aria-expanded", "true");
+    expect(rest()).not.toHaveAttribute("inert");
+
+    await user.click(screen.getByRole("button", { name: "Show fewer" }));
+
+    expect(screen.getByRole("button", { name: "3 more drivers" })).toHaveAttribute(
+      "aria-expanded",
+      "false",
+    );
+    expect(rest()).toHaveAttribute("inert");
   });
 
   it("hides the candidate list and its controls from a brokerage", () => {
@@ -245,9 +271,8 @@ describe("Inspector driver ranking is hidden when the organization owns no truck
 
     renderInspector();
 
-    expect(screen.queryByText("0 candidates")).toBeNull();
+    expect(screen.queryByText("No eligible driver")).toBeNull();
     expect(screen.queryByRole("button", { name: "Show ineligible" })).toBeNull();
-    expect(screen.queryByText(/No eligible driver for this move/)).toBeNull();
   });
 
   it("does not ask the server to rank drivers it will never show", async () => {
