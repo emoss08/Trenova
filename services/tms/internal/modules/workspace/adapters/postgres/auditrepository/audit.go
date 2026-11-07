@@ -313,37 +313,23 @@ func (r *repository) DeleteExpired(
 	)
 }
 
-func (r *repository) EnsurePartitions(ctx context.Context, monthsAhead int) (int, error) {
-	ctx = dbscope.WithSystem(ctx, "create the audit trail's monthly partitions ahead of the clock")
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
-		created, err := keel.QueryAll(
-			ctx, r.db.Keel(ctx), pgx.RowTo[int32],
-			"SELECT audit_partitions.ensure_partitions(NULL, $1)", monthsAhead,
-		)
+func (r *repository) PartitionHorizon(ctx context.Context) (int64, error) {
+	ctx = dbscope.WithSystem(ctx, "read how far ahead the audit trail's shared monthly partitions reach")
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int64, error) {
+		horizon, err := keel.QueryAll(ctx, r.db.Keel(ctx), pgx.RowTo[int64], `
+			SELECT COALESCE(max(
+				(regexp_match(pg_get_expr(c.relpartbound, c.oid), 'TO \(''?(-?\d+)''?\)'))[1]::BIGINT
+			), 0)
+			FROM pg_inherits i
+			JOIN pg_class c ON c.oid = i.inhrelid
+			WHERE i.inhparent = 'public.audit_entries'::regclass`)
 		if err != nil {
-			return 0, fmt.Errorf("ensure audit partitions: %w", err)
+			return 0, fmt.Errorf("read audit partition horizon: %w", err)
 		}
-		if len(created) == 0 {
+		if len(horizon) == 0 {
 			return 0, nil
 		}
-		return int(created[0]), nil
-	})
-}
-
-func (r *repository) DropExpiredPartitions(ctx context.Context, before int64) (int, error) {
-	ctx = dbscope.WithSystem(ctx, "drop audit partitions older than the longest retention")
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
-		dropped, err := keel.QueryAll(
-			ctx, r.db.Keel(ctx), pgx.RowTo[int32],
-			"SELECT audit_partitions.drop_expired_partitions($1)", before,
-		)
-		if err != nil {
-			return 0, fmt.Errorf("drop expired audit partitions: %w", err)
-		}
-		if len(dropped) == 0 {
-			return 0, nil
-		}
-		return int(dropped[0]), nil
+		return horizon[0], nil
 	})
 }
 

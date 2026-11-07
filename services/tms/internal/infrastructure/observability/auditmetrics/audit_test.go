@@ -21,7 +21,7 @@ func TestNewAudit_DisabledRecordsNothingAndDoesNotPanic(t *testing.T) {
 	m.RecordWrite(map[string]int{"Operational": 1}, true, time.Millisecond)
 	m.RecordSecurityEvent("auth_event", false)
 	m.RecordRetentionDeleted("Access", 3)
-	m.RecordPartitions("created", 1)
+	m.RecordPartitionMonthsAhead(20)
 	m.RecordSeal(true)
 	m.RecordVerification("Verified")
 	m.RecordAlert("RoleChanged")
@@ -48,10 +48,10 @@ func TestNewAudit_CountsMaintenance(t *testing.T) {
 
 	m := NewAudit(prometheus.NewRegistry(), zap.NewNop(), true)
 	m.RecordRetentionDeleted("Access", 5)
-	m.RecordPartitions("dropped", 2)
+	m.RecordPartitionMonthsAhead(23)
 	m.RecordAlert("BulkDelete")
 
 	assert.InDelta(t, 5, testutil.ToFloat64(m.retentionDeleted.WithLabelValues("Access")), 0)
-	assert.InDelta(t, 2, testutil.ToFloat64(m.partitions.WithLabelValues("dropped")), 0)
+	assert.InDelta(t, 23, testutil.ToFloat64(m.partitionsAhead), 0)
 	assert.InDelta(t, 1, testutil.ToFloat64(m.alerts.WithLabelValues("BulkDelete")), 0)
 }

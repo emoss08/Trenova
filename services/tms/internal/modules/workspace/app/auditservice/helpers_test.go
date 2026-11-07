@@ -61,9 +61,8 @@ func (r *fakeRepo) DeleteExpired(context.Context, auditports.DeleteExpiredAuditE
 	return 0, nil
 }
 
-func (r *fakeRepo) EnsurePartitions(context.Context, int) (int, error) { return 0, nil }
+func (r *fakeRepo) PartitionHorizon(context.Context) (int64, error) { return 0, nil }
 
-func (r *fakeRepo) DropExpiredPartitions(context.Context, int64) (int, error) { return 0, nil }
 
 func (r *fakeRepo) TenantsWithEntries(context.Context, int64, int64) ([]auditports.TenantKey, error) {
 	return nil, nil

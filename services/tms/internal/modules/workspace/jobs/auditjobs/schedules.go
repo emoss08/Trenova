@@ -17,10 +17,10 @@ func NewScheduleProvider() *ScheduleProvider {
 func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 	return []*schedule.Schedule{
 		{
-			ID:            "audit-partition-maintenance",
-			Description:   "Create audit partitions three months ahead and drop those past ten years",
+			ID:            "audit-partition-check",
+			Description:   "Report how many months of audit partitions remain; deploys create them",
 			Spec:          schedule.Cron("17 1 * * *"),
-			Workflow:      AuditPartitionWorkflow,
+			Workflow:      AuditPartitionCheckWorkflow,
 			TaskQueue:     temporaltype.AuditTaskQueue,
 			OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,
 		},

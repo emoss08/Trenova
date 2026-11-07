@@ -16,10 +16,10 @@ import (
 )
 
 const (
-	deleteBatchSize      = 5000
-	maxBatchesPerClass   = 200
-	partitionMonthsAhead = 3
-	day                  = 24 * time.Hour
+	deleteBatchSize    = 5000
+	maxBatchesPerClass = 200
+	minPartitionMonths = 3
+	day                = 24 * time.Hour
 )
 
 type Params struct {
@@ -151,23 +151,37 @@ func (r *Retention) sweepClass(
 }
 
 type PartitionResult struct {
-	Created int `json:"created"`
-	Dropped int `json:"dropped"`
+	Horizon     int64 `json:"horizon"`
+	MonthsAhead int   `json:"monthsAhead"`
+	Short       bool  `json:"short"`
 }
 
-func (r *Retention) MaintainPartitions(ctx context.Context) (*PartitionResult, error) {
-	created, err := r.entries.EnsurePartitions(ctx, partitionMonthsAhead)
+func (r *Retention) CheckPartitions(ctx context.Context) (*PartitionResult, error) {
+	horizon, err := r.entries.PartitionHorizon(ctx)
 	if err != nil {
 		return nil, err
 	}
-	r.metrics.Audit.RecordPartitions("created", created)
-
-	before := r.now().Add(-time.Duration(audit.MaxRetentionDays+1) * day).Unix()
-	dropped, err := r.entries.DropExpiredPartitions(ctx, before)
-	if err != nil {
-		return nil, err
+	result := &PartitionResult{Horizon: horizon, MonthsAhead: monthsAhead(r.now(), horizon)}
+	r.metrics.Audit.RecordPartitionMonthsAhead(result.MonthsAhead)
+	if result.MonthsAhead < minPartitionMonths {
+		result.Short = true
+		r.l.Error("audit partitions run out soon; deploy, or run trenova-db, to create more",
+			zap.Int("monthsAhead", result.MonthsAhead),
+			zap.Time("partitionsEnd", time.Unix(horizon, 0).UTC()))
 	}
-	r.metrics.Audit.RecordPartitions("dropped", dropped)
+	return result, nil
+}
 
-	return &PartitionResult{Created: created, Dropped: dropped}, nil
+func monthsAhead(now time.Time, horizon int64) int {
+	if horizon <= 0 {
+		return 0
+	}
+	now = now.UTC()
+	end := time.Unix(horizon, 0).UTC()
+	nextMonth := time.Date(now.Year(), now.Month()+1, 1, 0, 0, 0, 0, time.UTC)
+	months := 0
+	for start := nextMonth; !start.AddDate(0, 1, 0).After(end); start = start.AddDate(0, 1, 0) {
+		months++
+	}
+	return months
 }

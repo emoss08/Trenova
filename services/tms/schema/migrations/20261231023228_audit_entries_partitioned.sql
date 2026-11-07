@@ -233,7 +233,6 @@ CREATE TRIGGER "enforce_audit_no_truncate"
 CREATE OR REPLACE FUNCTION "audit_entries_actor_name"()
     RETURNS TRIGGER
     LANGUAGE plpgsql
-    SECURITY DEFINER
     SET search_path = pg_catalog, pg_temp
 AS $$
 BEGIN
@@ -269,7 +268,6 @@ CREATE TRIGGER "set_audit_entries_actor_name"
 CREATE OR REPLACE FUNCTION "audit_partitions"."ensure_partitions"("p_from" BIGINT, "p_months_ahead" INTEGER)
     RETURNS INTEGER
     LANGUAGE plpgsql
-    SECURITY DEFINER
     SET search_path = pg_catalog, pg_temp
 AS $$
 DECLARE
@@ -314,12 +312,11 @@ BEGIN
 END
 $$;
 
-COMMENT ON FUNCTION "audit_partitions"."ensure_partitions"(BIGINT, INTEGER) IS 'Creates every missing monthly audit_entries partition from the month of p_from (or this month) through p_months_ahead months ahead; every deploy and a daily schedule run it';
+COMMENT ON FUNCTION "audit_partitions"."ensure_partitions"(BIGINT, INTEGER) IS 'Creates every missing monthly audit_entries partition from the month of p_from (or this month) through p_months_ahead months ahead; trenova-db runs it as the table owner on every deploy';
 
 CREATE OR REPLACE FUNCTION "audit_partitions"."drop_expired_partitions"("p_before" BIGINT)
     RETURNS INTEGER
     LANGUAGE plpgsql
-    SECURITY DEFINER
     SET search_path = pg_catalog, pg_temp
 AS $$
 DECLARE
@@ -360,19 +357,13 @@ BEGIN
 END
 $$;
 
-COMMENT ON FUNCTION "audit_partitions"."drop_expired_partitions"(BIGINT) IS 'Drops whole monthly audit_entries partitions that end before p_before (at least ten years ago) and hold no entry under a legal hold';
+COMMENT ON FUNCTION "audit_partitions"."drop_expired_partitions"(BIGINT) IS 'Drops whole monthly audit_entries partitions that end before p_before (at least ten years ago) and hold no entry under a legal hold; trenova-db runs it as the table owner on every deploy';
 
 REVOKE ALL ON FUNCTION "audit_partitions"."ensure_partitions"(BIGINT, INTEGER) FROM PUBLIC;
 
 REVOKE ALL ON FUNCTION "audit_partitions"."drop_expired_partitions"(BIGINT) FROM PUBLIC;
 
-GRANT USAGE ON SCHEMA "audit_partitions" TO trenova_rls_bypass;
-
-GRANT EXECUTE ON FUNCTION "audit_partitions"."ensure_partitions"(BIGINT, INTEGER) TO trenova_rls_bypass;
-
-GRANT EXECUTE ON FUNCTION "audit_partitions"."drop_expired_partitions"(BIGINT) TO trenova_rls_bypass;
-
-SELECT "audit_partitions"."ensure_partitions"((SELECT min("timestamp") FROM "audit_entries_legacy"), 3);
+SELECT "audit_partitions"."ensure_partitions"((SELECT min("timestamp") FROM "audit_entries_legacy"), 24);
 
 INSERT INTO "audit_entries"(
     "id", "business_unit_id", "organization_id", "timestamp", "resource", "resource_id", "operation",

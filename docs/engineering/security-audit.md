@@ -464,8 +464,13 @@ AI audit trail; the audit log links to both rather than merging them.
 ## Storage
 
 `audit_entries` is range-partitioned by month on `timestamp`, with partitions in the
-`audit_partitions` schema, which the application role has no privileges on. Every deploy and a
-daily schedule (`AuditPartitionWorkflow`, 01:17) run `ensure_partitions` three months ahead.
+`audit_partitions` schema, which the application role has no privileges on. Creating or dropping
+a partition needs the table's owner, and no function here runs as its owner (`SECURITY DEFINER`
+is refused by `schemalint`), so `trenova-db` does both on every deploy as the migrator: its
+Ensure step runs `ensure_partitions` 24 months ahead and `drop_expired_partitions` past ten
+years. A daily check (`AuditPartitionCheckWorkflow`, 01:17) reads how far the partitions reach,
+records `trenova_audit_partition_months_ahead`, and logs an error when fewer than three months
+remain, long before an insert could find no partition.
 The tenant indexes cover time, record, principal, resource, correlation ID and security
 entries; trigram indexes back search over the record reference and comment; a BRIN index covers
 time. States and metadata use lz4 compression.
@@ -489,5 +494,5 @@ The retention sweep (`AuditRetentionWorkflow`, daily 02:43, `auditretention.Swee
 each organization's entries past each class's window in batches of 5,000, deletes
 authentication events past 365 days, and removes seals whose hours have aged out. Deletes go
 through `postgres.DeleteUnderAuditRetention`, which opens a transaction on the system pool and
-opts in. Past ten years whole monthly partitions are dropped instead. Nothing else may delete
+opts in. Past ten years whole monthly partitions are dropped on deploy instead. Nothing else may delete
 from either table; a sweep that asks for a row the trigger protects fails as a whole.

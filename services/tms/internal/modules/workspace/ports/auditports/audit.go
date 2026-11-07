@@ -60,8 +60,7 @@ type AuditRepository interface {
 	GetByID(ctx context.Context, req *GetAuditEntryByIDOptions) (*audit.Entry, error)
 	ExportPage(ctx context.Context, req *ExportPageRequest) ([]*audit.Entry, error)
 	DeleteExpired(ctx context.Context, req DeleteExpiredAuditEntriesRequest) (int64, error)
-	EnsurePartitions(ctx context.Context, monthsAhead int) (int, error)
-	DropExpiredPartitions(ctx context.Context, before int64) (int, error)
+	PartitionHorizon(ctx context.Context) (int64, error)
 	TenantsWithEntries(ctx context.Context, from, to int64) ([]TenantKey, error)
 }
 

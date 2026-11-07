@@ -174,17 +174,16 @@ func TestListConnection_FieldHistoryKeepsOnlyEntriesThatChangedTheField(t *testi
 	assert.Equal(t, weight.ID, items[0].ID)
 }
 
-func TestEnsurePartitions_IsIdempotentAndCoversTheMonthsAhead(t *testing.T) {
+func TestPartitionHorizon_ReachesTwoYearsPastTheMigration(t *testing.T) {
 	f := newFixture(t)
 
-	_, err := f.repo.EnsurePartitions(f.ctx, 3)
+	horizon, err := f.repo.PartitionHorizon(f.ctx)
 	require.NoError(t, err)
-	created, err := f.repo.EnsurePartitions(f.ctx, 3)
-	require.NoError(t, err)
-	assert.Zero(t, created, "a second run finds every partition in place")
+	assert.Greater(t, horizon, time.Now().AddDate(1, 11, 0).Unix(),
+		"the migration creates partitions 24 months ahead")
 
 	future := f.entry(permission.ResourceShipment, "shp_future", audit.CategoryUser)
-	future.Timestamp = time.Now().AddDate(0, 2, 0).Unix()
+	future.Timestamp = time.Now().AddDate(1, 6, 0).Unix()
 	require.NoError(t, f.repo.Insert(f.ctx, []*audit.Entry{future}))
 }
 

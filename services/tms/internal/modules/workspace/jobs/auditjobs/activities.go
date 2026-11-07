@@ -61,11 +61,11 @@ func (a *Activities) SweepRetentionActivity(
 	return result, retryable("Failed to apply audit retention", err)
 }
 
-func (a *Activities) MaintainPartitionsActivity(
+func (a *Activities) CheckPartitionsActivity(
 	ctx context.Context,
 ) (*auditretention.PartitionResult, error) {
-	result, err := a.retention.MaintainPartitions(ctx)
-	return result, retryable("Failed to maintain audit partitions", err)
+	result, err := a.retention.CheckPartitions(ctx)
+	return result, retryable("Failed to check audit partitions", err)
 }
 
 func (a *Activities) SealActivity(ctx context.Context) (*SealResult, error) {

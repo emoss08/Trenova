@@ -13,7 +13,7 @@ import (
 
 const (
 	RetentionWorkflowName     = "AuditRetentionWorkflow"
-	PartitionWorkflowName     = "AuditPartitionWorkflow"
+	PartitionWorkflowName     = "AuditPartitionCheckWorkflow"
 	SealWorkflowName          = "AuditSealWorkflow"
 	VerifyWorkflowName        = "AuditVerifyWorkflow"
 	ExportCleanupWorkflowName = "AuditExportCleanupWorkflow"
@@ -56,7 +56,7 @@ func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 		},
 		{
 			Name:        PartitionWorkflowName,
-			Fn:          AuditPartitionWorkflow,
+			Fn:          AuditPartitionCheckWorkflow,
 			TaskQueue:   temporaltype.AuditTaskQueue,
 			Description: "Create the audit trail's monthly partitions ahead and drop those past ten years",
 		},
@@ -100,10 +100,10 @@ func AuditRetentionWorkflow(ctx workflow.Context) (*auditretention.SweepResult, 
 	return result, err
 }
 
-func AuditPartitionWorkflow(ctx workflow.Context) (*auditretention.PartitionResult, error) {
+func AuditPartitionCheckWorkflow(ctx workflow.Context) (*auditretention.PartitionResult, error) {
 	var a *Activities
 	result := new(auditretention.PartitionResult)
-	err := workflow.ExecuteActivity(shortActivity(ctx), a.MaintainPartitionsActivity).
+	err := workflow.ExecuteActivity(shortActivity(ctx), a.CheckPartitionsActivity).
 		Get(ctx, result)
 	return result, err
 }

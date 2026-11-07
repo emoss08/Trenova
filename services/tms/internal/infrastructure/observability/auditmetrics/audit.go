@@ -16,7 +16,7 @@ type Audit struct {
 	writeDuration    prometheus.Histogram
 	securityEvents   *prometheus.CounterVec
 	retentionDeleted *prometheus.CounterVec
-	partitions       *prometheus.CounterVec
+	partitionsAhead  prometheus.Gauge
 	seals            *prometheus.CounterVec
 	verifications    *prometheus.CounterVec
 	alerts           *prometheus.CounterVec
@@ -40,7 +40,7 @@ func NewAudit(registry *prometheus.Registry, logger *zap.Logger, enabled bool) *
 		m.writeDuration,
 		m.securityEvents,
 		m.retentionDeleted,
-		m.partitions,
+		m.partitionsAhead,
 		m.seals,
 		m.verifications,
 		m.alerts,
@@ -82,12 +82,12 @@ func (m *Audit) newMaintenanceMetrics() {
 		Help:      "Audit entries deleted by the retention sweep, by retention class",
 	}, []string{metricbase.LabelKind})
 
-	m.partitions = prometheus.NewCounterVec(prometheus.CounterOpts{
+	m.partitionsAhead = prometheus.NewGauge(prometheus.GaugeOpts{
 		Namespace: metricbase.Namespace,
 		Subsystem: auditSubsystem,
-		Name:      "partitions_total",
-		Help:      "Monthly audit partitions created or dropped",
-	}, []string{metricbase.LabelOperation})
+		Name:      "partition_months_ahead",
+		Help:      "Whole months of audit partitions that exist past the current month",
+	})
 
 	m.seals = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: metricbase.Namespace,
@@ -152,11 +152,11 @@ func (m *Audit) RecordRetentionDeleted(class string, count int64) {
 	m.IfEnabled(func() { m.retentionDeleted.WithLabelValues(class).Add(float64(count)) })
 }
 
-func (m *Audit) RecordPartitions(operation string, count int) {
+func (m *Audit) RecordPartitionMonthsAhead(months int) {
 	if m == nil {
 		return
 	}
-	m.IfEnabled(func() { m.partitions.WithLabelValues(operation).Add(float64(count)) })
+	m.IfEnabled(func() { m.partitionsAhead.Set(float64(months)) })
 }
 
 func (m *Audit) RecordSeal(success bool) {
