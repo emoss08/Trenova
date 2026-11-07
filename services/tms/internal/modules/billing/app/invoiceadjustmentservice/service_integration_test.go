@@ -164,6 +164,13 @@ func (g *fakeGenerator) GenerateCreditMemoNumber(
 
 type fakeAccessorialRepo struct{}
 
+func (fakeAccessorialRepo) List(
+	context.Context,
+	*accessorialchargeports.ListAccessorialChargeRequest,
+) (*pagination.ListResult[*accessorialcharge.AccessorialCharge], error) {
+	return nil, nil
+}
+
 func (fakeAccessorialRepo) ListConnection(
 	context.Context,
 	*accessorialchargeports.ListAccessorialChargeConnectionRequest,
