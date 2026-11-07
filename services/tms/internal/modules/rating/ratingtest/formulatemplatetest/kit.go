@@ -287,14 +287,19 @@ func (l *AuditLog) Last(t *testing.T) *audit.Entry {
 
 func CaptureAudit(audits *auditportsmock.MockAuditService) *AuditLog {
 	log := &AuditLog{}
-	audits.On("LogAction", mock.Anything, mock.Anything).
+	audits.On("LogAction", mock.Anything, mock.Anything, mock.Anything).
 		Run(func(args mock.Arguments) {
-			params := args.Get(0).(*auditports.LogActionParams)
+			params := args.Get(1).(*auditports.LogActionParams)
 			entry := &audit.Entry{
 				ResourceID: params.ResourceID,
 				Operation:  params.Operation,
 			}
-			if opts, ok := args.Get(1).([]auditports.LogOption); ok {
+			if meta, ok := requestmeta.From(args.Get(0).(context.Context)); ok {
+				entry.CorrelationID = meta.RequestID
+				entry.IPAddress = meta.ClientIP
+				entry.UserAgent = meta.UserAgent
+			}
+			if opts, ok := args.Get(2).([]auditports.LogOption); ok {
 				for _, opt := range opts {
 					_ = opt(entry)
 				}

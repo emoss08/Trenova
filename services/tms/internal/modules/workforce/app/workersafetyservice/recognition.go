@@ -54,7 +54,7 @@ func (s *Service) GiveRecognition(
 		return nil, err
 	}
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resource: permission.ResourceWorkerRecognition, resourceID: created.GetResourceID(),
 		operation: permission.OpCreate, userID: userID, tenant: recognitionTenant(created),
 		current: created, comment: "Recognition given: " + created.Title, log: log,
@@ -129,7 +129,7 @@ func (s *Service) DeleteRecognition(
 		return err
 	}
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resource: permission.ResourceWorkerRecognition, resourceID: original.GetResourceID(),
 		operation: permission.OpDelete, userID: userID, tenant: tenantInfo,
 		current: original, comment: "Recognition removed", log: log,

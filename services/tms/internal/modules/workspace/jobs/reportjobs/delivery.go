@@ -106,7 +106,7 @@ func (a *Activities) DeliverScheduledRunActivity(
 		a.deliverRunNotifications(ctx, run, schedule, title, result)
 	}
 
-	a.auditDelivery(run, schedule, result)
+	a.auditDelivery(ctx, run, schedule, result)
 
 	return result, nil
 }
@@ -479,11 +479,12 @@ func (a *Activities) deliverRunNotifications(
 }
 
 func (a *Activities) auditDelivery(
+	ctx context.Context,
 	run *report.ReportRun,
 	schedule *report.ReportSchedule,
 	result *DeliverRunResult,
 ) {
-	if err := a.audit.LogAction(&auditports.LogActionParams{
+	if err := a.audit.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceReport,
 		ResourceID:     run.ID.String(),
 		Operation:      permission.OpExport,

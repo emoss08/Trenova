@@ -66,7 +66,7 @@ func (s *Service) RecordQuery(
 		return nil, err
 	}
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resource:   permission.ResourceWorkerDOTTest,
 		resourceID: created.ID.String(),
 		operation:  permission.OpCreate,
@@ -151,7 +151,7 @@ func (s *Service) CompleteQuery(
 		return nil, err
 	}
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resource:   permission.ResourceWorkerDOTTest,
 		resourceID: updated.ID.String(),
 		operation:  permission.OpUpdate,

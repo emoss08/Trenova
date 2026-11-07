@@ -10,12 +10,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/bootstrap/infrastructure"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/config/appconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
-	"github.com/emoss08/trenova/internal/infrastructure/redis/writebuffer"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/instancebootstraprepository"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/tenantbootstraprepository"
 	"github.com/emoss08/trenova/internal/modules/identity/app/instancebootstrapservice"
@@ -26,9 +24,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/fatih/color"
-	goredis "github.com/redis/go-redis/v9"
 	"github.com/spf13/cobra"
-	"go.uber.org/fx"
 	"go.uber.org/zap"
 	"golang.org/x/term"
 )
@@ -205,7 +201,7 @@ func runBootstrap(cmd *cobra.Command, _ []string) error {
 
 	deps := bootstrapDeps{
 		conn:    postgres.WrapDB(maint),
-		auditor: redisSecurityAuditor,
+		auditor: cliSecurityAuditor,
 		cfg:     cfg,
 		logger:  logger,
 		out:     cmd.OutOrStdout(),
@@ -313,51 +309,22 @@ func newInstanceBootstrapService(
 	})
 }
 
-func redisSecurityAuditor(
-	ctx context.Context,
+func cliSecurityAuditor(
+	_ context.Context,
 	conn *postgres.Connection,
 ) (permissionports.SecurityAuditor, func(), error) {
 	logger := zap.L()
 
-	var client *goredis.Client
-	app := fx.New(
-		fx.NopLogger,
-		fx.Supply(cfg),
-		config.SectionProviders,
-		fx.Supply(logger),
-		infrastructure.RedisModule,
-		fx.Populate(&client),
-	)
-
-	startCtx, cancel := context.WithTimeout(ctx, bootstrapStartTimeout)
-	defer cancel()
-	if err := app.Start(startCtx); err != nil {
-		return nil, nil, fmt.Errorf("connect to Redis for the audit buffer: %w", err)
-	}
-
-	stop := func() {
-		stopCtx, stopCancel := context.WithTimeout(context.Background(), bootstrapStartTimeout)
-		defer stopCancel()
-		if err := app.Stop(stopCtx); err != nil {
-			logger.Warn("failed to close the Redis connection", zap.Error(err))
-		}
-	}
-
 	registry, err := metrics.NewRegistry(&cfg.Monitoring, logger)
 	if err != nil {
-		stop()
 		return nil, nil, fmt.Errorf("create metrics registry: %w", err)
 	}
 
 	audit := auditservice.New(auditservice.Params{
 		AuditRepository: auditrepository.New(auditrepository.Params{DB: conn, Logger: logger}),
-		AuditBufferRepository: writebuffer.NewAuditBufferRepository(
-			writebuffer.AuditBufferRepositoryParams{Client: client, Logger: logger},
-		),
-		Logger:         logger,
-		AppConfig:      &cfg.App,
-		SecurityConfig: &cfg.Security,
-		Metrics:        registry,
+		Logger:          logger,
+		Config:          &cfg.Audit,
+		Metrics:         registry,
 	})
 
 	auditor := auditservice.NewSecurityAuditor(auditservice.SecurityAuditorParams{
@@ -366,7 +333,7 @@ func redisSecurityAuditor(
 		Logger:       logger,
 	})
 
-	return auditor, stop, nil
+	return auditor, func() {}, nil
 }
 
 func passwordFrom(stdin io.Reader) passwordSource {

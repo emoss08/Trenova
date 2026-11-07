@@ -107,7 +107,7 @@ func (s *Service) Create(
 	if err != nil {
 		return nil, err
 	}
-	s.logAudit(
+	s.logAudit(ctx,
 		permission.OpCreate,
 		created,
 		nil,
@@ -230,7 +230,7 @@ func (s *Service) Approve(
 	if err != nil {
 		return nil, err
 	}
-	s.logAudit(permission.OpApprove, updated, &original, userID, "Journal reversal approved")
+	s.logAudit(ctx, permission.OpApprove, updated, &original, userID, "Journal reversal approved")
 	return updated, nil
 }
 
@@ -266,7 +266,7 @@ func (s *Service) Reject(
 	if err != nil {
 		return nil, err
 	}
-	s.logAudit(permission.OpReject, updated, &original, userID, "Journal reversal rejected")
+	s.logAudit(ctx, permission.OpReject, updated, &original, userID, "Journal reversal rejected")
 	return updated, nil
 }
 
@@ -314,7 +314,7 @@ func (s *Service) Cancel(
 	if err != nil {
 		return nil, err
 	}
-	s.logAudit(
+	s.logAudit(ctx,
 		permission.OpCancel,
 		updated,
 		change.Before,
@@ -538,7 +538,7 @@ func (s *Service) Post(
 	if err != nil {
 		return nil, err
 	}
-	s.logAudit(permission.OpApprove, entity, &original, userID, "Journal reversal posted")
+	s.logAudit(ctx, permission.OpApprove, entity, &original, userID, "Journal reversal posted")
 	return entity, nil
 }
 
@@ -578,6 +578,7 @@ func reversalJournal(
 }
 
 func (s *Service) logAudit(
+	ctx context.Context,
 	op permission.Operation,
 	current *journalreversal.Reversal,
 	previous *journalreversal.Reversal,
@@ -600,7 +601,7 @@ func (s *Service) logAudit(
 	if previous != nil {
 		options = append(options, auditservice.WithDiff(previous, current))
 	}
-	if err := s.auditService.LogAction(params, options...); err != nil {
+	if err := s.auditService.LogAction(ctx, params, options...); err != nil {
 		s.l.Error(
 			"failed to log journal reversal audit action",
 			zap.Error(err),

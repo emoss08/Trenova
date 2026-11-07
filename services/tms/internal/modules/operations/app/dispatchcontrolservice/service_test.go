@@ -86,7 +86,7 @@ func newService(
 		}).
 		Once()
 	audit := auditportsmock.NewMockAuditService(t)
-	audit.EXPECT().LogAction(mock.Anything, mock.Anything).Return(nil).Once()
+	audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 	learning := &fakeLearning{}
 
 	return New(Params{

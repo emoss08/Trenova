@@ -93,7 +93,7 @@ func (s *Service) CreatePayCode(
 	if err != nil {
 		return nil, err
 	}
-	s.logPayCodeAudit(created, nil, actor.UserID, permission.OpCreate, "Pay code created")
+	s.logPayCodeAudit(ctx, created, nil, actor.UserID, permission.OpCreate, "Pay code created")
 	return created, nil
 }
 
@@ -135,7 +135,7 @@ func (s *Service) UpdatePayCode(
 	if err != nil {
 		return nil, err
 	}
-	s.logPayCodeAudit(updated, previous, actor.UserID, permission.OpUpdate, "Pay code updated")
+	s.logPayCodeAudit(ctx, updated, previous, actor.UserID, permission.OpUpdate, "Pay code updated")
 	return updated, nil
 }
 
@@ -165,6 +165,7 @@ func (s *Service) resolvePayCode(
 }
 
 func (s *Service) logPayCodeAudit(
+	ctx context.Context,
 	current, previous *paycode.PayCode,
 	userID pulid.ID,
 	operation permission.Operation,
@@ -184,7 +185,7 @@ func (s *Service) logPayCodeAudit(
 		params.PreviousState = jsonutils.MustToJSON(previous)
 		options = append(options, auditservice.WithDiff(previous, current))
 	}
-	if err := s.auditService.LogAction(params, options...); err != nil {
+	if err := s.auditService.LogAction(ctx, params, options...); err != nil {
 		s.l.Error("failed to log pay code audit action", zap.Error(err))
 	}
 }

@@ -110,7 +110,7 @@ func (s *Service) Open(
 		return nil, err
 	}
 
-	s.logAudit(created, actor, permission.OpCreate, nil, "Invoice dispute opened")
+	s.logAudit(ctx, created, actor, permission.OpCreate, nil, "Invoice dispute opened")
 	s.publish(ctx, created, actor, "created")
 
 	return created, nil
@@ -167,7 +167,7 @@ func (s *Service) Resolve(
 		return nil, err
 	}
 
-	s.logAudit(updated, actor, permission.OpApprove, previous, "Invoice dispute resolved")
+	s.logAudit(ctx, updated, actor, permission.OpApprove, previous, "Invoice dispute resolved")
 	s.publish(ctx, updated, actor, "updated")
 
 	return updated, nil
@@ -217,7 +217,7 @@ func (s *Service) Withdraw(
 		return nil, err
 	}
 
-	s.logAudit(updated, actor, permission.OpCancel, previous, "Invoice dispute withdrawn")
+	s.logAudit(ctx, updated, actor, permission.OpCancel, previous, "Invoice dispute withdrawn")
 	s.publish(ctx, updated, actor, "updated")
 
 	return updated, nil
@@ -301,7 +301,7 @@ func (s *Service) setInvoiceDisputeFlag(
 		CurrentState:   jsonutils.MustToJSON(updated),
 		PreviousState:  jsonutils.MustToJSON(&previous),
 	}
-	if logErr := s.auditService.LogAction(
+	if logErr := s.auditService.LogAction(ctx,
 		params,
 		auditservice.WithComment("Invoice dispute status changed to "+string(status)),
 		auditservice.WithDiff(&previous, updated),
@@ -327,6 +327,7 @@ func (s *Service) setInvoiceDisputeFlag(
 }
 
 func (s *Service) logAudit(
+	ctx context.Context,
 	entity *invoicedispute.InvoiceDispute,
 	actor *permissionports.RequestActor,
 	op permission.Operation,
@@ -353,7 +354,7 @@ func (s *Service) logAudit(
 		params.PreviousState = jsonutils.MustToJSON(previous)
 		opts = append(opts, auditservice.WithDiff(previous, entity))
 	}
-	if err := s.auditService.LogAction(params, opts...); err != nil {
+	if err := s.auditService.LogAction(ctx, params, opts...); err != nil {
 		s.l.Warn("failed to log invoice dispute audit", zap.Error(err))
 	}
 }

@@ -439,7 +439,7 @@ func (s *Service) ReleaseFlowInstance(
 	if err != nil {
 		return nil, err
 	}
-	s.logAction(
+	s.logAction(ctx,
 		released,
 		actor,
 		permission.OpUpdate,

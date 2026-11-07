@@ -65,7 +65,7 @@ type auditParams struct {
 	comment    string
 }
 
-func (s *Service) audit(p auditParams) {
+func (s *Service) audit(ctx context.Context, p *auditParams) {
 	if p.userID.IsNil() {
 		return
 	}
@@ -83,7 +83,7 @@ func (s *Service) audit(p auditParams) {
 		params.PreviousState = jsonutils.MustToJSON(p.previous)
 		opts = append(opts, auditservice.WithDiff(p.previous, p.current))
 	}
-	if err := s.auditService.LogAction(params, opts...); err != nil {
+	if err := s.auditService.LogAction(ctx, params, opts...); err != nil {
 		s.l.Error("failed to log audit action", zap.Error(err))
 	}
 }
@@ -144,7 +144,7 @@ func (s *Service) CreateTemplate(
 		return nil, err
 	}
 
-	s.audit(auditParams{
+	s.audit(ctx, &auditParams{
 		resource:   permission.ResourceShiftTemplate,
 		resourceID: created.ID.String(),
 		operation:  permission.OpCreate,
@@ -209,7 +209,7 @@ func (s *Service) UpdateTemplate(
 		return nil, err
 	}
 
-	s.audit(auditParams{
+	s.audit(ctx, &auditParams{
 		resource:   permission.ResourceShiftTemplate,
 		resourceID: updated.ID.String(),
 		operation:  permission.OpUpdate,
@@ -297,7 +297,7 @@ func (s *Service) AssignShift(
 		return nil, err
 	}
 
-	s.audit(auditParams{
+	s.audit(ctx, &auditParams{
 		resource:   permission.ResourceWorkerSchedule,
 		resourceID: created.ID.String(),
 		operation:  permission.OpAssign,
@@ -330,7 +330,7 @@ func (s *Service) closeOpenAssignment(ctx context.Context, p closeAssignmentPara
 		if _, err = s.repo.UpdateAssignment(ctx, assignment); err != nil {
 			return err
 		}
-		s.audit(auditParams{
+		s.audit(ctx, &auditParams{
 			resource:   permission.ResourceWorkerSchedule,
 			resourceID: assignment.ID.String(),
 			operation:  permission.OpUnassign,
@@ -367,7 +367,7 @@ func (s *Service) EndAssignment(
 		return nil, err
 	}
 
-	s.audit(auditParams{
+	s.audit(ctx, &auditParams{
 		resource:   permission.ResourceWorkerSchedule,
 		resourceID: updated.ID.String(),
 		operation:  permission.OpUnassign,
@@ -409,7 +409,7 @@ func (s *Service) SetPreference(
 		return nil, err
 	}
 
-	s.audit(auditParams{
+	s.audit(ctx, &auditParams{
 		resource:   permission.ResourceWorkerSchedule,
 		resourceID: saved.ID.String(),
 		operation:  permission.OpUpdate,
@@ -461,7 +461,7 @@ func (s *Service) ProposeSwap(
 		return nil, err
 	}
 
-	s.audit(auditParams{
+	s.audit(ctx, &auditParams{
 		resource:   permission.ResourceShiftSwap,
 		resourceID: created.ID.String(),
 		operation:  permission.OpCreate,
@@ -504,7 +504,7 @@ func (s *Service) TransitionSwap(
 		return nil, err
 	}
 
-	s.audit(auditParams{
+	s.audit(ctx, &auditParams{
 		resource:   permission.ResourceShiftSwap,
 		resourceID: updated.ID.String(),
 		operation:  swapOperation(req.Status),

@@ -62,7 +62,7 @@ func (s *Service) CreatePartner(
 		return nil, mapEDIPartnerConstraint(err)
 	}
 
-	s.logAction(created, actor, permission.OpCreate, nil, created, "EDI partner created")
+	s.logAction(ctx, created, actor, permission.OpCreate, nil, created, "EDI partner created")
 	return created, nil
 }
 
@@ -91,7 +91,7 @@ func (s *Service) UpdatePartner(
 		return nil, mapEDIPartnerConstraint(err)
 	}
 
-	s.logAction(updated, actor, permission.OpUpdate, original, updated, "EDI partner updated")
+	s.logAction(ctx, updated, actor, permission.OpUpdate, original, updated, "EDI partner updated")
 	return updated, nil
 }
 

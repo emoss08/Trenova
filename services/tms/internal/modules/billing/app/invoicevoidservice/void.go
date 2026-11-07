@@ -206,7 +206,7 @@ func (s *Service) voidLockedDraft(
 		return nil, err
 	}
 
-	s.rec.LogAction(updated, auditActor, permission.OpCancel, &previous, updated, message)
+	s.rec.LogAction(ctx, updated, auditActor, permission.OpCancel, &previous, updated, message)
 	s.rec.PublishInvalidation(ctx, updated, auditActor, "updated", updated)
 
 	return &invoiceports.VoidInvoiceResult{
@@ -271,7 +271,7 @@ func (s *Service) voidPosted(
 	if !result.PendingApproval {
 		comment = "Invoice voided by full reversal"
 	}
-	s.rec.LogAction(reloaded, auditActor, permission.OpCancel, &previous, reloaded, comment)
+	s.rec.LogAction(ctx, reloaded, auditActor, permission.OpCancel, &previous, reloaded, comment)
 	s.rec.PublishInvalidation(ctx, reloaded, auditActor, "updated", reloaded)
 
 	return result, nil

@@ -47,12 +47,10 @@ vi.mock("@/hooks/use-document-upload", () => ({
     clearCompleted: vi.fn(),
   }),
 }));
-vi.mock("@/hooks/data-table/use-data-table-query", () => ({ fetchGraphQLData: mocks.audit }));
-vi.mock("@/lib/graphql/audit-log-table", () => ({ auditLogTableGraphQLConfig: {} }));
+vi.mock("@/lib/graphql/record-activity", () => ({ fetchRecordActivity: mocks.audit }));
 vi.mock("@/hooks/use-permission", () => ({
   usePermission: () => ({ allowed: true, isLoading: false }),
 }));
-vi.mock("@/components/audit-alert", () => ({ AuditAlert: () => null }));
 vi.mock("@/components/image", () => ({
   LazyImage: ({ src, alt }: { src: string; alt: string }) => <img src={src} alt={alt} />,
 }));
@@ -187,7 +185,7 @@ describe("comments tab", () => {
 
 describe("activity tab", () => {
   it("says what the history will hold when nothing has been recorded", async () => {
-    mocks.audit.mockResolvedValue({ results: [], pageInfo: { hasNextPage: false } });
+    mocks.audit.mockResolvedValue({ rows: [], total: 0, endCursor: null, hasNextPage: false });
     renderWithin(<AuditTab resourceId="shp_1" />);
 
     expect(await heading("No activity yet")).toBeInTheDocument();
@@ -195,7 +193,7 @@ describe("activity tab", () => {
   });
 
   it("renders in the reader's language", async () => {
-    mocks.audit.mockResolvedValue({ results: [], pageInfo: { hasNextPage: false } });
+    mocks.audit.mockResolvedValue({ rows: [], total: 0, endCursor: null, hasNextPage: false });
     await act(() => setLocale("zh-CN"));
     renderWithin(<AuditTab resourceId="shp_1" />);
 

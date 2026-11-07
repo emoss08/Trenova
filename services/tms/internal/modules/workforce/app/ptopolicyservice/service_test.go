@@ -89,7 +89,7 @@ type fakeAudit struct {
 	ops []permission.Operation
 }
 
-func (f *fakeAudit) LogAction(
+func (f *fakeAudit) LogAction(_ context.Context,
 	params *auditports.LogActionParams,
 	_ ...auditports.LogOption,
 ) error {

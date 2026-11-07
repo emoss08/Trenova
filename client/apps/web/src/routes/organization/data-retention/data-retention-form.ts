@@ -13,6 +13,14 @@ export const AI_AUDIT_RETENTION_MIN_DAYS = 365;
 export const AI_CORRECTION_RETENTION_MIN_DAYS = 30;
 export const AI_CORRECTION_RETENTION_DEFAULT_DAYS = 730;
 
+/** The fewest days the server keeps each class of audit entry; it refuses less. */
+export const AUDIT_ACCESS_RETENTION_MIN_DAYS = 90;
+export const AUDIT_OPERATIONAL_RETENTION_MIN_DAYS = 730;
+export const AUDIT_FINANCIAL_RETENTION_MIN_DAYS = 2555;
+export const AUDIT_SECURITY_RETENTION_MIN_DAYS = 730;
+/** The most days any audit entry is kept, after which its month's partition is dropped. */
+export const AUDIT_RETENTION_MAX_DAYS = 3650;
+
 /** What a window that kept everything starts at when someone gives it a limit. */
 export const EDI_RETENTION_LIMIT_DAYS = 90;
 export const AGENT_EVAL_CASE_RETENTION_LIMIT_DAYS = 365;
@@ -32,10 +40,42 @@ export function retentionCutoff(days: number, now: number): number | null {
 }
 
 export const dataRetentionFormSchema = z.object({
-  auditRetentionPeriod: z
+  auditAccessRetentionDays: z
     .number()
     .int()
-    .min(1, { error: () => translate("Audit retention must be at least 1 day") }),
+    .min(AUDIT_ACCESS_RETENTION_MIN_DAYS, {
+      error: () => translate("Reads and downloads are kept for at least 90 days"),
+    })
+    .max(AUDIT_RETENTION_MAX_DAYS, {
+      error: () => translate("Audit entries are kept for at most 3,650 days"),
+    }),
+  auditOperationalRetentionDays: z
+    .number()
+    .int()
+    .min(AUDIT_OPERATIONAL_RETENTION_MIN_DAYS, {
+      error: () => translate("Operational changes are kept for at least 730 days"),
+    })
+    .max(AUDIT_RETENTION_MAX_DAYS, {
+      error: () => translate("Audit entries are kept for at most 3,650 days"),
+    }),
+  auditFinancialRetentionDays: z
+    .number()
+    .int()
+    .min(AUDIT_FINANCIAL_RETENTION_MIN_DAYS, {
+      error: () => translate("Financial changes are kept for at least 2,555 days"),
+    })
+    .max(AUDIT_RETENTION_MAX_DAYS, {
+      error: () => translate("Audit entries are kept for at most 3,650 days"),
+    }),
+  auditSecurityRetentionDays: z
+    .number()
+    .int()
+    .min(AUDIT_SECURITY_RETENTION_MIN_DAYS, {
+      error: () => translate("Security entries are kept for at least 730 days"),
+    })
+    .max(AUDIT_RETENTION_MAX_DAYS, {
+      error: () => translate("Audit entries are kept for at most 3,650 days"),
+    }),
   ediInboundFileRetentionPeriod: z
     .number()
     .int()
@@ -71,7 +111,10 @@ export const dataRetentionFormSchema = z.object({
 export type DataRetentionFormValues = z.infer<typeof dataRetentionFormSchema>;
 
 export const DATA_RETENTION_FORM_DEFAULTS: DataRetentionFormValues = {
-  auditRetentionPeriod: 120,
+  auditAccessRetentionDays: AUDIT_ACCESS_RETENTION_MIN_DAYS,
+  auditOperationalRetentionDays: AUDIT_OPERATIONAL_RETENTION_MIN_DAYS,
+  auditFinancialRetentionDays: AUDIT_FINANCIAL_RETENTION_MIN_DAYS,
+  auditSecurityRetentionDays: AUDIT_SECURITY_RETENTION_MIN_DAYS,
   ediInboundFileRetentionPeriod: 0,
   ediMessageRetentionPeriod: 0,
   aiFeedbackRetentionPeriod: AI_FEEDBACK_RETENTION_DEFAULT_DAYS,
@@ -87,7 +130,22 @@ export const DATA_RETENTION_FORM_DEFAULTS: DataRetentionFormValues = {
  */
 export function dataRetentionFormValues(data: DataRetention): DataRetentionFormValues {
   return {
-    auditRetentionPeriod: data.auditRetentionPeriod,
+    auditAccessRetentionDays: Math.max(
+      data.auditAccessRetentionDays,
+      AUDIT_ACCESS_RETENTION_MIN_DAYS,
+    ),
+    auditOperationalRetentionDays: Math.max(
+      data.auditOperationalRetentionDays,
+      AUDIT_OPERATIONAL_RETENTION_MIN_DAYS,
+    ),
+    auditFinancialRetentionDays: Math.max(
+      data.auditFinancialRetentionDays,
+      AUDIT_FINANCIAL_RETENTION_MIN_DAYS,
+    ),
+    auditSecurityRetentionDays: Math.max(
+      data.auditSecurityRetentionDays,
+      AUDIT_SECURITY_RETENTION_MIN_DAYS,
+    ),
     ediInboundFileRetentionPeriod: data.ediInboundFileRetentionPeriod,
     ediMessageRetentionPeriod: data.ediMessageRetentionPeriod,
     aiFeedbackRetentionPeriod:

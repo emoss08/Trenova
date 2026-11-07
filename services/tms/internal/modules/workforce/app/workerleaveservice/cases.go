@@ -99,7 +99,7 @@ func (s *Service) OpenCase(
 		return nil, err
 	}
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resourceID: created.ID.String(),
 		operation:  permission.OpCreate,
 		userID:     userID,
@@ -144,7 +144,7 @@ func (s *Service) UpdateCase(
 		return nil, err
 	}
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resourceID: updated.ID.String(),
 		operation:  permission.OpUpdate,
 		userID:     req.UserID,
@@ -247,7 +247,7 @@ func (s *Service) DecideCase(
 		return nil, err
 	}
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resourceID: updated.ID.String(),
 		operation:  permission.OpApprove,
 		userID:     req.UserID,
@@ -283,7 +283,7 @@ func (s *Service) CloseCase(
 		return nil, err
 	}
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resourceID: updated.ID.String(),
 		operation:  permission.OpApprove,
 		userID:     userID,
@@ -322,7 +322,7 @@ func (s *Service) RequestCertification(
 		return nil, err
 	}
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resourceID: updated.ID.String(),
 		operation:  permission.OpUpdate,
 		userID:     req.UserID,
@@ -385,7 +385,7 @@ func (s *Service) RecordCertification(
 		return nil, err
 	}
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resourceID: updated.ID.String(),
 		operation:  permission.OpUpdate,
 		userID:     req.UserID,
@@ -442,7 +442,7 @@ func (s *Service) RecordDay(
 		return nil, err
 	}
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resourceID: created.ID.String(),
 		operation:  permission.OpCreate,
 		userID:     req.UserID,
@@ -483,7 +483,7 @@ func (s *Service) UpdateDay(
 		return nil, err
 	}
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resourceID: updated.ID.String(),
 		operation:  permission.OpUpdate,
 		userID:     req.UserID,
@@ -517,7 +517,7 @@ func (s *Service) DeleteDay(
 		return err
 	}
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resourceID: id.String(),
 		operation:  permission.OpDelete,
 		userID:     userID,

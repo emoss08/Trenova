@@ -20,10 +20,19 @@ func NewMockNotificationRepository(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockNotificationRepository {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockNotificationRepository{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -76,6 +85,7 @@ type MockNotificationRepository_CountUnread_Call struct {
 //   - ctx context.Context
 //   - userID pulid.ID
 //   - tenantInfo pagination.TenantInfo
+//   - personalOnly bool
 func (_e *MockNotificationRepository_Expecter) CountUnread(ctx any, userID any, tenantInfo any, personalOnly any) *MockNotificationRepository_CountUnread_Call {
 	return &MockNotificationRepository_CountUnread_Call{Call: _e.mock.On("CountUnread", ctx, userID, tenantInfo, personalOnly)}
 }
@@ -186,6 +196,63 @@ func (_c *MockNotificationRepository_Create_Call) RunAndReturn(run func(ctx cont
 	return _c
 }
 
+// Dismiss provides a mock function for the type MockNotificationRepository
+func (_mock *MockNotificationRepository) Dismiss(ctx context.Context, req notificationports.NotificationActionRequest) error {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Dismiss")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, notificationports.NotificationActionRequest) error); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockNotificationRepository_Dismiss_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Dismiss'
+type MockNotificationRepository_Dismiss_Call struct {
+	*mock.Call
+}
+
+// Dismiss is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req notificationports.NotificationActionRequest
+func (_e *MockNotificationRepository_Expecter) Dismiss(ctx any, req any) *MockNotificationRepository_Dismiss_Call {
+	return &MockNotificationRepository_Dismiss_Call{Call: _e.mock.On("Dismiss", ctx, req)}
+}
+
+func (_c *MockNotificationRepository_Dismiss_Call) Run(run func(ctx context.Context, req notificationports.NotificationActionRequest)) *MockNotificationRepository_Dismiss_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 notificationports.NotificationActionRequest
+		if args[1] != nil {
+			arg1 = args[1].(notificationports.NotificationActionRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockNotificationRepository_Dismiss_Call) Return(err error) *MockNotificationRepository_Dismiss_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockNotificationRepository_Dismiss_Call) RunAndReturn(run func(ctx context.Context, req notificationports.NotificationActionRequest) error) *MockNotificationRepository_Dismiss_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ExistsRecent provides a mock function for the type MockNotificationRepository
 func (_mock *MockNotificationRepository) ExistsRecent(ctx context.Context, req notificationports.ExistsRecentNotificationRequest) (bool, error) {
 	ret := _mock.Called(ctx, req)
@@ -219,7 +286,7 @@ type MockNotificationRepository_ExistsRecent_Call struct {
 
 // ExistsRecent is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req repositories.ExistsRecentNotificationRequest
+//   - req notificationports.ExistsRecentNotificationRequest
 func (_e *MockNotificationRepository_Expecter) ExistsRecent(ctx any, req any) *MockNotificationRepository_ExistsRecent_Call {
 	return &MockNotificationRepository_ExistsRecent_Call{Call: _e.mock.On("ExistsRecent", ctx, req)}
 }
@@ -287,7 +354,7 @@ type MockNotificationRepository_List_Call struct {
 
 // List is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *repositories.ListNotificationsRequest
+//   - req *notificationports.ListNotificationsRequest
 func (_e *MockNotificationRepository_Expecter) List(ctx any, req any) *MockNotificationRepository_List_Call {
 	return &MockNotificationRepository_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
@@ -355,7 +422,7 @@ type MockNotificationRepository_ListConnection_Call struct {
 
 // ListConnection is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *repositories.ListNotificationConnectionRequest
+//   - req *notificationports.ListNotificationConnectionRequest
 func (_e *MockNotificationRepository_Expecter) ListConnection(ctx any, req any) *MockNotificationRepository_ListConnection_Call {
 	return &MockNotificationRepository_ListConnection_Call{Call: _e.mock.On("ListConnection", ctx, req)}
 }
@@ -414,6 +481,7 @@ type MockNotificationRepository_MarkAllAsRead_Call struct {
 //   - ctx context.Context
 //   - userID pulid.ID
 //   - tenantInfo pagination.TenantInfo
+//   - personalOnly bool
 func (_e *MockNotificationRepository_Expecter) MarkAllAsRead(ctx any, userID any, tenantInfo any, personalOnly any) *MockNotificationRepository_MarkAllAsRead_Call {
 	return &MockNotificationRepository_MarkAllAsRead_Call{Call: _e.mock.On("MarkAllAsRead", ctx, userID, tenantInfo, personalOnly)}
 }
@@ -480,7 +548,7 @@ type MockNotificationRepository_MarkAsRead_Call struct {
 
 // MarkAsRead is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req repositories.NotificationActionRequest
+//   - req notificationports.NotificationActionRequest
 func (_e *MockNotificationRepository_Expecter) MarkAsRead(ctx any, req any) *MockNotificationRepository_MarkAsRead_Call {
 	return &MockNotificationRepository_MarkAsRead_Call{Call: _e.mock.On("MarkAsRead", ctx, req)}
 }
@@ -537,7 +605,7 @@ type MockNotificationRepository_MarkAsUnread_Call struct {
 
 // MarkAsUnread is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req repositories.NotificationActionRequest
+//   - req notificationports.NotificationActionRequest
 func (_e *MockNotificationRepository_Expecter) MarkAsUnread(ctx any, req any) *MockNotificationRepository_MarkAsUnread_Call {
 	return &MockNotificationRepository_MarkAsUnread_Call{Call: _e.mock.On("MarkAsUnread", ctx, req)}
 }
@@ -570,44 +638,55 @@ func (_c *MockNotificationRepository_MarkAsUnread_Call) RunAndReturn(run func(ct
 	return _c
 }
 
-// Dismiss provides a mock function for the type MockNotificationRepository
-func (_mock *MockNotificationRepository) Dismiss(ctx context.Context, req notificationports.NotificationActionRequest) error {
+// NotifiedUsers provides a mock function for the type MockNotificationRepository
+func (_mock *MockNotificationRepository) NotifiedUsers(ctx context.Context, req notificationports.ExistsRecentNotificationRequest) ([]pulid.ID, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
-		panic("no return value specified for Dismiss")
+		panic("no return value specified for NotifiedUsers")
 	}
 
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, notificationports.NotificationActionRequest) error); ok {
+	var r0 []pulid.ID
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, notificationports.ExistsRecentNotificationRequest) ([]pulid.ID, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, notificationports.ExistsRecentNotificationRequest) []pulid.ID); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
-		r0 = ret.Error(0)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]pulid.ID)
+		}
 	}
-	return r0
+	if returnFunc, ok := ret.Get(1).(func(context.Context, notificationports.ExistsRecentNotificationRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
 }
 
-// MockNotificationRepository_Dismiss_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Dismiss'
-type MockNotificationRepository_Dismiss_Call struct {
+// MockNotificationRepository_NotifiedUsers_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'NotifiedUsers'
+type MockNotificationRepository_NotifiedUsers_Call struct {
 	*mock.Call
 }
 
-// Dismiss is a helper method to define mock.On call
+// NotifiedUsers is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req repositories.NotificationActionRequest
-func (_e *MockNotificationRepository_Expecter) Dismiss(ctx any, req any) *MockNotificationRepository_Dismiss_Call {
-	return &MockNotificationRepository_Dismiss_Call{Call: _e.mock.On("Dismiss", ctx, req)}
+//   - req notificationports.ExistsRecentNotificationRequest
+func (_e *MockNotificationRepository_Expecter) NotifiedUsers(ctx any, req any) *MockNotificationRepository_NotifiedUsers_Call {
+	return &MockNotificationRepository_NotifiedUsers_Call{Call: _e.mock.On("NotifiedUsers", ctx, req)}
 }
 
-func (_c *MockNotificationRepository_Dismiss_Call) Run(run func(ctx context.Context, req notificationports.NotificationActionRequest)) *MockNotificationRepository_Dismiss_Call {
+func (_c *MockNotificationRepository_NotifiedUsers_Call) Run(run func(ctx context.Context, req notificationports.ExistsRecentNotificationRequest)) *MockNotificationRepository_NotifiedUsers_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 notificationports.NotificationActionRequest
+		var arg1 notificationports.ExistsRecentNotificationRequest
 		if args[1] != nil {
-			arg1 = args[1].(notificationports.NotificationActionRequest)
+			arg1 = args[1].(notificationports.ExistsRecentNotificationRequest)
 		}
 		run(
 			arg0,
@@ -617,12 +696,12 @@ func (_c *MockNotificationRepository_Dismiss_Call) Run(run func(ctx context.Cont
 	return _c
 }
 
-func (_c *MockNotificationRepository_Dismiss_Call) Return(err error) *MockNotificationRepository_Dismiss_Call {
-	_c.Call.Return(err)
+func (_c *MockNotificationRepository_NotifiedUsers_Call) Return(iDs []pulid.ID, err error) *MockNotificationRepository_NotifiedUsers_Call {
+	_c.Call.Return(iDs, err)
 	return _c
 }
 
-func (_c *MockNotificationRepository_Dismiss_Call) RunAndReturn(run func(ctx context.Context, req notificationports.NotificationActionRequest) error) *MockNotificationRepository_Dismiss_Call {
+func (_c *MockNotificationRepository_NotifiedUsers_Call) RunAndReturn(run func(ctx context.Context, req notificationports.ExistsRecentNotificationRequest) ([]pulid.ID, error)) *MockNotificationRepository_NotifiedUsers_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -651,7 +730,7 @@ type MockNotificationRepository_Restore_Call struct {
 
 // Restore is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req repositories.NotificationActionRequest
+//   - req notificationports.NotificationActionRequest
 func (_e *MockNotificationRepository_Expecter) Restore(ctx any, req any) *MockNotificationRepository_Restore_Call {
 	return &MockNotificationRepository_Restore_Call{Call: _e.mock.On("Restore", ctx, req)}
 }

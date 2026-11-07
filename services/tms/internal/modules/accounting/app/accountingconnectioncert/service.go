@@ -324,7 +324,7 @@ func (s *Service) RenewCertificate(
 	}
 	conn := renewed.conn
 
-	s.kit.LogAudit(conn, req.UserID, renewed.previous, "Renewed the "+name+" certificate")
+	s.kit.LogAudit(ctx, conn, req.UserID, renewed.previous, "Renewed the "+name+" certificate")
 	s.kit.AfterHealthChange(ctx, renewed.before, conn, now)
 	s.kit.PublishInvalidation(ctx, conn, req.UserID)
 	return conn, nil

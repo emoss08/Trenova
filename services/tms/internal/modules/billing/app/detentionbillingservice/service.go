@@ -243,7 +243,7 @@ func (s *Service) settle(ctx context.Context, p settleParams) error {
 
 	updated := *saved
 	kernelports.AfterCommit(ctx, func(runCtx context.Context) {
-		s.audit(&original, &updated, p.req.ActorUserID, comment)
+		s.audit(ctx, &original, &updated, p.req.ActorUserID, comment)
 		if updated.Status == detention.OccurrenceStatusBilled {
 			s.watchtower.Resolve(
 				runCtx,
@@ -320,11 +320,12 @@ func invoiceLabel(number string) string {
 }
 
 func (s *Service) audit(
+	ctx context.Context,
 	original, updated *detention.DetentionOccurrence,
 	userID pulid.ID,
 	comment string,
 ) {
-	if err := s.auditService.LogAction(&auditports.LogActionParams{
+	if err := s.auditService.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceDetention,
 		ResourceID:     updated.ID.String(),
 		Operation:      permission.OpUpdate,

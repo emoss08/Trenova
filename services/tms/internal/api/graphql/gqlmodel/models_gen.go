@@ -1767,6 +1767,39 @@ type AuditEntryEdge struct {
 	Cursor string       `json:"cursor"`
 }
 
+type AuditExportConnection struct {
+	Edges           []*AuditExportEdge `json:"edges"`
+	PageInfo        *PageInfo          `json:"pageInfo"`
+	TotalCount      *int               `json:"totalCount,omitempty"`
+	TotalCountExact bool               `json:"totalCountExact"`
+}
+
+type AuditExportEdge struct {
+	Node   *audit.Export `json:"node"`
+	Cursor string        `json:"cursor"`
+}
+
+type AuditExportFiltersInput struct {
+	Resources   []string         `json:"resources,omitempty"`
+	Operations  []string         `json:"operations,omitempty"`
+	Categories  []audit.Category `json:"categories,omitempty"`
+	Channels    []string         `json:"channels,omitempty"`
+	PrincipalID *string          `json:"principalId,omitempty"`
+	ResourceID  *string          `json:"resourceId,omitempty"`
+}
+
+type AuditLegalHoldConnection struct {
+	Edges           []*AuditLegalHoldEdge `json:"edges"`
+	PageInfo        *PageInfo             `json:"pageInfo"`
+	TotalCount      *int                  `json:"totalCount,omitempty"`
+	TotalCountExact bool                  `json:"totalCountExact"`
+}
+
+type AuditLegalHoldEdge struct {
+	Node   *audit.LegalHold `json:"node"`
+	Cursor string           `json:"cursor"`
+}
+
 type AuthEventConnection struct {
 	Edges      []*AuthEventEdge `json:"edges"`
 	PageInfo   *PageInfo        `json:"pageInfo"`
@@ -8162,6 +8195,15 @@ type PerformanceReviewTemplatesInput struct {
 	Status       *domaintypes.Status `json:"status,omitempty"`
 }
 
+type PlaceAuditLegalHoldInput struct {
+	Name   string `json:"name"`
+	Reason string `json:"reason"`
+	// Leave empty to hold every entry; name a kind of record to hold only its entries.
+	Resource *string `json:"resource,omitempty"`
+	// With resource, hold only one record's entries.
+	ResourceID *string `json:"resourceId,omitempty"`
+}
+
 type PolicyCompliance struct {
 	Policy      *workerpolicy.WorkerPolicy `json:"policy"`
 	Signed      int                        `json:"signed"`
@@ -9301,6 +9343,14 @@ type RequestAccountingBackfillInput struct {
 	RangeEnd *int `json:"rangeEnd,omitempty"`
 	// Defaults to every kind of document.
 	ObjectTypes []accountingsync.SyncObjectType `json:"objectTypes,omitempty"`
+}
+
+type RequestAuditExportInput struct {
+	Format          audit.ExportFormat       `json:"format"`
+	RangeFrom       int                      `json:"rangeFrom"`
+	RangeTo         int                      `json:"rangeTo"`
+	IncludeSecurity *bool                    `json:"includeSecurity,omitempty"`
+	Filters         *AuditExportFiltersInput `json:"filters,omitempty"`
 }
 
 type RequestMissingFactoringDocumentsInput struct {
@@ -12583,6 +12633,13 @@ type UpdateAgentQualityControlInput struct {
 	RegressionThreshold float64 `json:"regressionThreshold"`
 	MinCases            int     `json:"minCases"`
 	ForceRerunDays      int     `json:"forceRerunDays"`
+}
+
+type UpdateAuditAlertPolicyInput struct {
+	Kind          audit.AlertKind `json:"kind"`
+	Enabled       bool            `json:"enabled"`
+	Threshold     *int            `json:"threshold,omitempty"`
+	WindowMinutes *int            `json:"windowMinutes,omitempty"`
 }
 
 type UpdateBenefitPlanInput struct {

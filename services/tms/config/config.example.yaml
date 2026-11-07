@@ -331,6 +331,14 @@ security:
       timeout: 10s
       retryAttempts: 3
 
+# Audit trail. Seals over the audit log are signed with the aiAudit.chain keys below.
+audit:
+  # Keys fingerprints of sensitive identifiers (tax IDs, bank and card numbers) so
+  # a change shows "…6789 #ab12cd34" without storing the number. At least 32 characters;
+  # leave empty to record only the last four characters. Never change it once set.
+  fingerprintPepper: change-me-local-audit-fingerprint-pepper-32chars
+  exportTtl: 168h # How long an audit log export can be downloaded
+
 # AI audit trail. Each row is chained to the one before it with HMAC-SHA256
 # under a key kept outside the database, so an edit or a deleted row breaks the
 # chain. Keep every key that ever signed a row: old rows are verified with the

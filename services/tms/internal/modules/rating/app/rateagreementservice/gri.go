@@ -151,8 +151,8 @@ type RateIncreasePlan struct {
 // agreementIncreasePlan is one agreement's slice of the GRI: what to show, what
 // to close out, and the successors to insert.
 type agreementIncreasePlan struct {
-	Lines         []*RateIncreaseLine
-	Clones        []*rateagreement.RateAgreementRule
+	Lines          []*RateIncreaseLine
+	Clones         []*rateagreement.RateAgreementRule
 	SupersededIDs  []pulid.ID
 	SkippedNoMoney int
 	AmendAt        int64
@@ -287,7 +287,7 @@ func (s *Service) ApplyRateIncrease(
 			return nil, err
 		}
 
-		s.audit(
+		s.audit(ctx,
 			log, slice.agreement, nil, permission.OpUpdate, userID,
 			"General rate increase applied to "+slice.agreement.Code,
 		)

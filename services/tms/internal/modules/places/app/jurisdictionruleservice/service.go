@@ -99,7 +99,7 @@ func (s *service) Create(
 		return nil, err
 	}
 
-	s.logAction(&auditParams{
+	s.logAction(ctx, &auditParams{
 		Rule:      created,
 		Operation: permission.OpCreate,
 		Actor:     actor,
@@ -149,7 +149,7 @@ func (s *service) Update(
 		return nil, err
 	}
 
-	s.logAction(&auditParams{
+	s.logAction(ctx, &auditParams{
 		Rule:      updated,
 		Operation: permission.OpUpdate,
 		Actor:     actor,
@@ -239,7 +239,7 @@ func (s *service) Verify(
 		return nil, err
 	}
 
-	s.logAction(&auditParams{
+	s.logAction(ctx, &auditParams{
 		Rule:      verified,
 		Operation: permission.OpApprove,
 		Actor:     req.Actor,
@@ -268,12 +268,12 @@ type auditParams struct {
 // The organization and business unit are deliberately left zero — this table has
 // no tenant columns, and stamping the acting user's tenant onto a global change
 // would imply it was scoped to them.
-func (s *service) logAction(params *auditParams) {
+func (s *service) logAction(ctx context.Context, params *auditParams) {
 	if params.Rule == nil {
 		return
 	}
 
-	auditservice.Record(s.auditService, s.l, &auditservice.RecordParams{
+	auditservice.Record(ctx, s.auditService, s.l, &auditservice.RecordParams{
 		Resource:   permission.ResourceJurisdictionRule,
 		ResourceID: params.Rule.ID.String(),
 		Operation:  params.Operation,

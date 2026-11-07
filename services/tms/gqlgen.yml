@@ -5006,6 +5006,71 @@ models:
         resolver: true
       operation:
         resolver: true
+  AuditRetentionClass:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workspace/domain/audit.RetentionClass
+  AuditVerificationStatus:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workspace/domain/audit.VerificationStatus
+  AuditChainStatus:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workspace/app/auditintegrity.ChainStatus
+    fields:
+      sealedThrough:
+        resolver: true
+      lastVerificationStatus:
+        resolver: true
+  AuditLegalHold:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workspace/domain/audit.LegalHold
+    fields:
+      resource:
+        resolver: true
+      active:
+        resolver: true
+      placedBy:
+        resolver: true
+      releasedBy:
+        resolver: true
+  AuditExportFormat:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workspace/domain/audit.ExportFormat
+  AuditExportStatus:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workspace/domain/audit.ExportStatus
+  AuditExportFilters:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workspace/domain/audit.ExportFilters
+  AuditExport:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workspace/domain/audit.Export
+    fields:
+      downloadable:
+        resolver: true
+  AuditExportDownload:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workspace/app/auditexportservice.Download
+  AuditAlertKind:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workspace/domain/audit.AlertKind
+  AuditAlertPolicy:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workspace/app/auditalertservice.PolicyView
+    fields:
+      kind:
+        resolver: true
+      title:
+        resolver: true
+      description:
+        resolver: true
+      counted:
+        resolver: true
+      enabled:
+        resolver: true
+      threshold:
+        resolver: true
+      windowMinutes:
+        resolver: true
   NotificationPriority:
     model:
       - github.com/emoss08/trenova/internal/modules/workspace/domain/notification.Priority

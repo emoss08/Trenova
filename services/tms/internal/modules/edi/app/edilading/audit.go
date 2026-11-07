@@ -1,6 +1,8 @@
 package edilading
 
 import (
+	"context"
+
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
@@ -25,7 +27,12 @@ type AuditEntry struct {
 	Comment   string
 }
 
-func LogAction(service auditports.AuditService, logger *zap.Logger, entry *AuditEntry) {
+func LogAction(
+	ctx context.Context,
+	service auditports.AuditService,
+	logger *zap.Logger,
+	entry *AuditEntry,
+) {
 	if service == nil || entry.Actor == nil || entry.Entity == nil {
 		return
 	}
@@ -45,7 +52,7 @@ func LogAction(service auditports.AuditService, logger *zap.Logger, entry *Audit
 	if entry.Previous != nil {
 		params.PreviousState = jsonutils.MustToJSON(entry.Previous)
 	}
-	if err := service.LogAction(params, auditservice.WithComment(entry.Comment)); err != nil {
+	if err := service.LogAction(ctx, params, auditservice.WithComment(entry.Comment)); err != nil {
 		logger.Warn("failed to log EDI audit action", zap.Error(err))
 	}
 }

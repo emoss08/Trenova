@@ -73,6 +73,7 @@ export const REFERENCE_VIEWS = {
     "updatedAt",
     "version",
   ],
+  audit_legal_hold: ["businessUnitId", "createdAt", "id", "organizationId", "updatedAt", "version"],
   auth_event: ["businessUnitId", "createdAt", "id", "organizationId", "updatedAt", "version"],
   benefit_plan: [
     "businessUnitId",
@@ -1085,6 +1086,7 @@ export const KIND_OF_TYPE: Readonly<Record<string, ReferenceKind>> = {
   AgentRun: "agent_run",
   ApiKey: "api_key",
   ApprovalDelegation: "approval_delegation",
+  AuditLegalHold: "audit_legal_hold",
   AuthEvent: "auth_event",
   BenefitPlan: "benefit_plan",
   Briefing: "briefing",

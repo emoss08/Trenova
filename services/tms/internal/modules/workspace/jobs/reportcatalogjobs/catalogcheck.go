@@ -134,7 +134,7 @@ func (a *Activities) checkAgainstCatalog(
 	} else {
 		result.Restored++
 	}
-	a.auditCatalogCheck(def, status, version, diagnostics)
+	a.auditCatalogCheck(ctx, def, status, version, diagnostics)
 
 	return true
 }
@@ -161,12 +161,13 @@ func catalogCheckStatus(
 }
 
 func (a *Activities) auditCatalogCheck(
+	ctx context.Context,
 	def *report.ReportDefinition,
 	status report.DefinitionStatus,
 	version string,
 	diagnostics []string,
 ) {
-	if err := a.audit.LogAction(&auditports.LogActionParams{
+	if err := a.audit.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceReport,
 		ResourceID:     def.ID.String(),
 		Operation:      permission.OpUpdate,

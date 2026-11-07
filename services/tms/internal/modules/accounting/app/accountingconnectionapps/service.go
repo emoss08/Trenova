@@ -262,7 +262,7 @@ func (s *Service) SaveApp(
 		return nil, err
 	}
 
-	s.logAppAudit(saved, req.UserID, previous, "Saved the "+name+" app keys ("+
+	s.logAppAudit(ctx, saved, req.UserID, previous, "Saved the "+name+" app keys ("+
 		string(saved.Environment)+", client "+saved.ClientID+")")
 	s.publishAppInvalidation(ctx, saved.OrganizationID, saved.BusinessUnitID, saved.ID, req.UserID)
 	return s.status.Status(ctx, req.TenantInfo, req.IntegrationType)
@@ -310,7 +310,7 @@ func (s *Service) RemoveApp(
 	}
 
 	if removed != nil {
-		s.logAppAudit(removed, req.UserID, jsonutils.MustToJSON(removed),
+		s.logAppAudit(ctx, removed, req.UserID, jsonutils.MustToJSON(removed),
 			"Removed the "+name+" app keys (client "+removed.ClientID+")")
 		s.publishAppInvalidation(
 			ctx,
@@ -324,6 +324,7 @@ func (s *Service) RemoveApp(
 }
 
 func (s *Service) logAppAudit(
+	ctx context.Context,
 	cred *accountingconnection.AccountingAppCredential,
 	userID pulid.ID,
 	previous map[string]any,
@@ -340,7 +341,7 @@ func (s *Service) logAppAudit(
 		BusinessUnitID: cred.BusinessUnitID,
 		Critical:       true,
 	}
-	if err := s.audit.LogAction(params, auditservice.WithComment(comment)); err != nil {
+	if err := s.audit.LogAction(ctx, params, auditservice.WithComment(comment)); err != nil {
 		s.l.Error("failed to log accounting app audit", zap.Error(err))
 	}
 }

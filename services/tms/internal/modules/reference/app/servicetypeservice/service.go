@@ -114,7 +114,7 @@ func (s *Service) BulkUpdateStatus(
 		auditservice.WithComment("Service type status updated"),
 	)
 
-	if err = s.auditService.LogActions(entries); err != nil {
+	if err = s.auditService.LogActions(ctx, entries); err != nil {
 		log.Error("failed to log audit actions", zap.Error(err))
 	}
 
@@ -142,7 +142,7 @@ func (s *Service) Create(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&auditports.LogActionParams{
+	if err = s.auditService.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceServiceType,
 		ResourceID:     createdEntity.GetID().String(),
 		Operation:      permission.OpCreate,
@@ -195,7 +195,7 @@ func (s *Service) Update(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&auditports.LogActionParams{
+	if err = s.auditService.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceServiceType,
 		ResourceID:     updatedEntity.GetID().String(),
 		Operation:      permission.OpUpdate,

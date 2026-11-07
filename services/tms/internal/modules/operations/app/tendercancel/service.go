@@ -189,7 +189,7 @@ func (s *Service) CancelDirect(
 		shipmenteventservice.ActorFor(tenantInfo),
 	))
 
-	s.effects.LogAudit(&tendereffects.AuditParams{
+	s.effects.LogAudit(ctx, &tendereffects.AuditParams{
 		TenantInfo: tenantInfo,
 		TenderID:   entity.ID,
 		Operation:  permission.OpCancel,

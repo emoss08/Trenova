@@ -1,6 +1,8 @@
 package auditmetrics
 
 import (
+	"time"
+
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metricbase"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap"
@@ -10,18 +12,15 @@ const auditSubsystem = "audit"
 
 type Audit struct {
 	metricbase.Base
-	bufferSize        prometheus.Gauge
-	dlqSize           prometheus.Gauge
-	bufferPushTotal   *prometheus.CounterVec
-	bufferFlushTotal  *prometheus.CounterVec
-	dlqPushTotal      prometheus.Counter
-	dlqRetryTotal     *prometheus.CounterVec
-	directInsertTotal prometheus.Counter
-	fallbackTotal     prometheus.Counter
-	criticalBuffered  prometheus.Counter
-	securityEvents    *prometheus.CounterVec
-	flushDuration     prometheus.Histogram
-	batchSize         prometheus.Histogram
+	entriesWritten   *prometheus.CounterVec
+	writeDuration    prometheus.Histogram
+	securityEvents   *prometheus.CounterVec
+	retentionDeleted *prometheus.CounterVec
+	partitions       *prometheus.CounterVec
+	seals            *prometheus.CounterVec
+	verifications    *prometheus.CounterVec
+	alerts           *prometheus.CounterVec
+	exports          *prometheus.CounterVec
 }
 
 func NewAudit(registry *prometheus.Registry, logger *zap.Logger, enabled bool) *Audit {
@@ -33,91 +32,38 @@ func NewAudit(registry *prometheus.Registry, logger *zap.Logger, enabled bool) *
 		return m
 	}
 
-	m.newBufferMetrics()
 	m.newWriteMetrics()
+	m.newMaintenanceMetrics()
 
 	m.MustRegister(
-		m.bufferSize,
-		m.dlqSize,
-		m.bufferPushTotal,
-		m.bufferFlushTotal,
-		m.dlqPushTotal,
-		m.dlqRetryTotal,
-		m.directInsertTotal,
-		m.fallbackTotal,
-		m.criticalBuffered,
+		m.entriesWritten,
+		m.writeDuration,
 		m.securityEvents,
-		m.flushDuration,
-		m.batchSize,
+		m.retentionDeleted,
+		m.partitions,
+		m.seals,
+		m.verifications,
+		m.alerts,
+		m.exports,
 	)
 
 	return m
 }
 
-func (m *Audit) newBufferMetrics() {
-	m.bufferSize = prometheus.NewGauge(prometheus.GaugeOpts{
-		Namespace: metricbase.Namespace,
-		Subsystem: auditSubsystem,
-		Name:      "buffer_size",
-		Help:      "Current number of entries in the Redis audit buffer",
-	})
-
-	m.dlqSize = prometheus.NewGauge(prometheus.GaugeOpts{
-		Namespace: metricbase.Namespace,
-		Subsystem: auditSubsystem,
-		Name:      "dlq_size",
-		Help:      "Current number of entries in the audit dead-letter queue",
-	})
-
-	m.bufferPushTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
-		Namespace: metricbase.Namespace,
-		Subsystem: auditSubsystem,
-		Name:      "buffer_push_total",
-		Help:      "Total number of audit entries pushed to buffer",
-	}, []string{metricbase.LabelStatus})
-
-	m.bufferFlushTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
-		Namespace: metricbase.Namespace,
-		Subsystem: auditSubsystem,
-		Name:      "buffer_flush_total",
-		Help:      "Total number of audit buffer flushes",
-	}, []string{metricbase.LabelStatus})
-
-	m.dlqPushTotal = prometheus.NewCounter(prometheus.CounterOpts{
-		Namespace: metricbase.Namespace,
-		Subsystem: auditSubsystem,
-		Name:      "dlq_push_total",
-		Help:      "Total number of audit entries pushed to dead-letter queue",
-	})
-
-	m.dlqRetryTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
-		Namespace: metricbase.Namespace,
-		Subsystem: auditSubsystem,
-		Name:      "dlq_retry_total",
-		Help:      "Total number of DLQ entry retry attempts",
-	}, []string{metricbase.LabelStatus})
-}
-
 func (m *Audit) newWriteMetrics() {
-	m.directInsertTotal = prometheus.NewCounter(prometheus.CounterOpts{
+	m.entriesWritten = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: metricbase.Namespace,
 		Subsystem: auditSubsystem,
-		Name:      "direct_insert_total",
-		Help:      "Total number of critical audit entries inserted directly",
-	})
+		Name:      "entries_written_total",
+		Help:      "Audit entries written, by retention class and outcome of the insert",
+	}, []string{metricbase.LabelKind, metricbase.LabelStatus})
 
-	m.fallbackTotal = prometheus.NewCounter(prometheus.CounterOpts{
+	m.writeDuration = prometheus.NewHistogram(prometheus.HistogramOpts{
 		Namespace: metricbase.Namespace,
 		Subsystem: auditSubsystem,
-		Name:      "fallback_insert_total",
-		Help:      "Total number of audit entries inserted via fallback (buffer push failed)",
-	})
-
-	m.criticalBuffered = prometheus.NewCounter(prometheus.CounterOpts{
-		Namespace: metricbase.Namespace,
-		Subsystem: auditSubsystem,
-		Name:      "critical_buffered_total",
-		Help:      "Total number of critical audit entries buffered because the direct insert failed",
+		Name:      "write_duration_seconds",
+		Help:      "Time to insert one batch of audit entries",
+		Buckets:   []float64{.0005, .001, .0025, .005, .01, .025, .05, .1, .25, .5, 1},
 	})
 
 	m.securityEvents = prometheus.NewCounterVec(prometheus.CounterOpts{
@@ -126,88 +72,117 @@ func (m *Audit) newWriteMetrics() {
 		Name:      "security_event_total",
 		Help:      "Total number of security events recorded, by kind and outcome of the write",
 	}, []string{metricbase.LabelKind, metricbase.LabelStatus})
+}
 
-	m.flushDuration = prometheus.NewHistogram(prometheus.HistogramOpts{
+func (m *Audit) newMaintenanceMetrics() {
+	m.retentionDeleted = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: metricbase.Namespace,
 		Subsystem: auditSubsystem,
-		Name:      "flush_duration_seconds",
-		Help:      "Duration of audit buffer flush operations in seconds",
-		Buckets:   []float64{.01, .05, .1, .25, .5, 1, 2.5, 5, 10},
-	})
+		Name:      "retention_deleted_total",
+		Help:      "Audit entries deleted by the retention sweep, by retention class",
+	}, []string{metricbase.LabelKind})
 
-	m.batchSize = prometheus.NewHistogram(prometheus.HistogramOpts{
+	m.partitions = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: metricbase.Namespace,
 		Subsystem: auditSubsystem,
-		Name:      "batch_size",
-		Help:      "Size of audit batches processed",
-		Buckets:   []float64{1, 10, 50, 100, 250, 500, 1000},
-	})
+		Name:      "partitions_total",
+		Help:      "Monthly audit partitions created or dropped",
+	}, []string{metricbase.LabelOperation})
+
+	m.seals = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: metricbase.Namespace,
+		Subsystem: auditSubsystem,
+		Name:      "seals_total",
+		Help:      "Hourly audit seals written, by outcome",
+	}, []string{metricbase.LabelStatus})
+
+	m.verifications = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: metricbase.Namespace,
+		Subsystem: auditSubsystem,
+		Name:      "verifications_total",
+		Help:      "Audit chain verifications, by what they found",
+	}, []string{metricbase.LabelOutcome})
+
+	m.alerts = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: metricbase.Namespace,
+		Subsystem: auditSubsystem,
+		Name:      "alerts_total",
+		Help:      "Security alerts raised from the audit trail, by kind",
+	}, []string{metricbase.LabelKind})
+
+	m.exports = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: metricbase.Namespace,
+		Subsystem: auditSubsystem,
+		Name:      "exports_total",
+		Help:      "Audit log exports finished, by format and outcome",
+	}, []string{metricbase.LabelKind, metricbase.LabelStatus})
 }
 
-func (m *Audit) RecordBufferPush() {
-	m.IfEnabled(func() { m.bufferPushTotal.WithLabelValues(metricbase.StatusSuccess).Inc() })
+func statusOf(success bool) string {
+	if success {
+		return metricbase.StatusSuccess
+	}
+	return metricbase.StatusFailure
 }
 
-func (m *Audit) RecordBufferPushFailure() {
-	m.IfEnabled(func() { m.bufferPushTotal.WithLabelValues(metricbase.StatusFailure).Inc() })
-}
-
-func (m *Audit) RecordBufferFlush(success bool, duration float64, batchSize int) {
+func (m *Audit) RecordWrite(classes map[string]int, success bool, duration time.Duration) {
+	if m == nil {
+		return
+	}
 	m.IfEnabled(func() {
-		status := metricbase.StatusSuccess
-		if !success {
-			status = metricbase.StatusFailure
+		status := statusOf(success)
+		for class, count := range classes {
+			m.entriesWritten.WithLabelValues(class, status).Add(float64(count))
 		}
-		m.bufferFlushTotal.WithLabelValues(status).Inc()
-		m.flushDuration.Observe(duration)
-		m.batchSize.Observe(float64(batchSize))
+		m.writeDuration.Observe(duration.Seconds())
 	})
-}
-
-func (m *Audit) RecordDLQPush(count int) {
-	m.IfEnabled(func() {
-		for range count {
-			m.dlqPushTotal.Inc()
-		}
-	})
-}
-
-func (m *Audit) RecordDLQRetry(success bool) {
-	m.IfEnabled(func() {
-		status := metricbase.StatusSuccess
-		if !success {
-			status = metricbase.StatusFailure
-		}
-		m.dlqRetryTotal.WithLabelValues(status).Inc()
-	})
-}
-
-func (m *Audit) RecordDirectInsert() {
-	m.IfEnabled(func() { m.directInsertTotal.Inc() })
-}
-
-func (m *Audit) RecordFallbackInsert() {
-	m.IfEnabled(func() { m.fallbackTotal.Inc() })
-}
-
-func (m *Audit) SetBufferSize(size int64) {
-	m.IfEnabled(func() { m.bufferSize.Set(float64(size)) })
-}
-
-func (m *Audit) SetDLQSize(size int64) {
-	m.IfEnabled(func() { m.dlqSize.Set(float64(size)) })
-}
-
-func (m *Audit) RecordCriticalBuffered(count int) {
-	m.IfEnabled(func() { m.criticalBuffered.Add(float64(count)) })
 }
 
 func (m *Audit) RecordSecurityEvent(kind string, success bool) {
-	m.IfEnabled(func() {
-		status := metricbase.StatusSuccess
-		if !success {
-			status = metricbase.StatusFailure
-		}
-		m.securityEvents.WithLabelValues(kind, status).Inc()
-	})
+	if m == nil {
+		return
+	}
+	m.IfEnabled(func() { m.securityEvents.WithLabelValues(kind, statusOf(success)).Inc() })
+}
+
+func (m *Audit) RecordRetentionDeleted(class string, count int64) {
+	if m == nil {
+		return
+	}
+	m.IfEnabled(func() { m.retentionDeleted.WithLabelValues(class).Add(float64(count)) })
+}
+
+func (m *Audit) RecordPartitions(operation string, count int) {
+	if m == nil {
+		return
+	}
+	m.IfEnabled(func() { m.partitions.WithLabelValues(operation).Add(float64(count)) })
+}
+
+func (m *Audit) RecordSeal(success bool) {
+	if m == nil {
+		return
+	}
+	m.IfEnabled(func() { m.seals.WithLabelValues(statusOf(success)).Inc() })
+}
+
+func (m *Audit) RecordVerification(outcome string) {
+	if m == nil {
+		return
+	}
+	m.IfEnabled(func() { m.verifications.WithLabelValues(outcome).Inc() })
+}
+
+func (m *Audit) RecordAlert(kind string) {
+	if m == nil {
+		return
+	}
+	m.IfEnabled(func() { m.alerts.WithLabelValues(kind).Inc() })
+}
+
+func (m *Audit) RecordExport(format string, success bool) {
+	if m == nil {
+		return
+	}
+	m.IfEnabled(func() { m.exports.WithLabelValues(format, statusOf(success)).Inc() })
 }

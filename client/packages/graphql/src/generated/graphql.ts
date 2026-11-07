@@ -1801,9 +1801,52 @@ export type AttachWorkerTrainingDocumentInput = {
   id: string | number;
 };
 
+export type AuditAlertKind =
+  | 'APIKeyChanged'
+  | 'BulkDelete'
+  | 'BulkExport'
+  | 'CrossTenantRefused'
+  | 'IdentityConfigChanged'
+  | 'LegalHoldChanged'
+  | 'MFAReset'
+  | 'MalwareRefused'
+  | 'RoleChanged';
+
 export type AuditCategory =
+  | 'Security'
   | 'System'
   | 'User';
+
+export type AuditExportFiltersInput = {
+  categories?: Array<AuditCategory> | null | undefined;
+  channels?: Array<string> | null | undefined;
+  operations?: Array<string> | null | undefined;
+  principalId?: string | number | null | undefined;
+  resourceId?: string | null | undefined;
+  resources?: Array<string> | null | undefined;
+};
+
+export type AuditExportFormat =
+  | 'CSV'
+  | 'JSONL';
+
+export type AuditExportStatus =
+  | 'Expired'
+  | 'Failed'
+  | 'Pending'
+  | 'Running'
+  | 'Succeeded';
+
+export type AuditRetentionClass =
+  | 'Access'
+  | 'Financial'
+  | 'Operational'
+  | 'Security';
+
+export type AuditVerificationStatus =
+  | 'Broken'
+  | 'KeyMissing'
+  | 'Verified';
 
 /**
  * What a driver would rather work on a weekday. It is a statement, never a
@@ -6660,6 +6703,15 @@ export type PeriodType =
   | 'Quarter'
   | 'Week';
 
+export type PlaceAuditLegalHoldInput = {
+  name: string;
+  reason: string;
+  /** Leave empty to hold every entry; name a kind of record to hold only its entries. */
+  resource?: string | null | undefined;
+  /** With resource, hold only one record's entries. */
+  resourceId?: string | null | undefined;
+};
+
 /**
  * Who a policy binds. A handbook for employees is not a contract term for an
  * owner-operator, and asking a contractor to sign one blurs a line the carrier's
@@ -7208,6 +7260,14 @@ export type RequestAccountingBackfillInput = {
   rangeEnd?: number | null | undefined;
   /** Defaults to the start date. */
   rangeStart?: number | null | undefined;
+};
+
+export type RequestAuditExportInput = {
+  filters?: AuditExportFiltersInput | null | undefined;
+  format: AuditExportFormat;
+  includeSecurity?: boolean | null | undefined;
+  rangeFrom: number;
+  rangeTo: number;
 };
 
 export type RequestMissingFactoringDocumentsInput = {
@@ -8868,6 +8928,13 @@ export type UpdateAgentQualityControlInput = {
   timezone?: string | null | undefined;
   /** The version read; a save over a newer one is refused. */
   version: number;
+};
+
+export type UpdateAuditAlertPolicyInput = {
+  enabled: boolean;
+  kind: AuditAlertKind;
+  threshold?: number | null | undefined;
+  windowMinutes?: number | null | undefined;
 };
 
 export type UpdateBenefitPlanInput = {
@@ -11768,6 +11835,72 @@ export type AttentionSummaryQueryVariables = Exact<{ [key: string]: never; }>;
 
 export type AttentionSummaryQuery = { attentionSummary: { billingQueue: number | null, pendingApprovals: number | null, reconciliationExceptions: number | null, serviceFailures: number | null, ediAttention: number | null, agentDecisions: number | null } };
 
+export type AuditChainStatusQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type AuditChainStatusQuery = { auditChainStatus: { signed: boolean, lastSeq: number, sealedThrough: number | null, lastVerifiedAt: number | null, lastVerificationStatus: AuditVerificationStatus | null, lastVerificationDetail: string | null } };
+
+export type AuditLegalHoldRowFieldsFragment = { id: string, name: string, reason: string, resource: string | null, resourceId: string | null, placedAt: number, releasedAt: number | null, releaseReason: string | null, active: boolean, placedBy: { id: string, name: string } | null, releasedBy: { id: string, name: string } | null } & { ' $fragmentName'?: 'AuditLegalHoldRowFieldsFragment' };
+
+export type AuditLegalHoldTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+  includeTotalCount?: boolean | null | undefined;
+}>;
+
+
+export type AuditLegalHoldTableQuery = { auditLegalHolds: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'AuditLegalHoldRowFieldsFragment': AuditLegalHoldRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type PlaceAuditLegalHoldMutationVariables = Exact<{
+  input: PlaceAuditLegalHoldInput;
+}>;
+
+
+export type PlaceAuditLegalHoldMutation = { placeAuditLegalHold: { ' $fragmentRefs'?: { 'AuditLegalHoldRowFieldsFragment': AuditLegalHoldRowFieldsFragment } } };
+
+export type ReleaseAuditLegalHoldMutationVariables = Exact<{
+  id: string | number;
+  reason: string;
+}>;
+
+
+export type ReleaseAuditLegalHoldMutation = { releaseAuditLegalHold: { ' $fragmentRefs'?: { 'AuditLegalHoldRowFieldsFragment': AuditLegalHoldRowFieldsFragment } } };
+
+export type AuditExportRowFieldsFragment = { id: string, format: AuditExportFormat, rangeFrom: number, rangeTo: number, includeSecurity: boolean, status: AuditExportStatus, rowCount: number, byteSize: number, sha256: string | null, artifactExpiresAt: number | null, errorMessage: string | null, completedAt: number | null, createdAt: number, downloadable: boolean } & { ' $fragmentName'?: 'AuditExportRowFieldsFragment' };
+
+export type AuditExportTableQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+  includeTotalCount?: boolean | null | undefined;
+}>;
+
+
+export type AuditExportTableQuery = { auditExports: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'AuditExportRowFieldsFragment': AuditExportRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type RequestAuditExportMutationVariables = Exact<{
+  input: RequestAuditExportInput;
+}>;
+
+
+export type RequestAuditExportMutation = { requestAuditExport: { ' $fragmentRefs'?: { 'AuditExportRowFieldsFragment': AuditExportRowFieldsFragment } } };
+
+export type AuditExportDownloadMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type AuditExportDownloadMutation = { auditExportDownload: { url: string, fileName: string, expiresAt: number, sha256: string | null } };
+
+export type AuditAlertPoliciesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type AuditAlertPoliciesQuery = { auditAlertPolicies: Array<{ kind: AuditAlertKind, title: string, description: string, counted: boolean, enabled: boolean, threshold: number, windowMinutes: number }> };
+
+export type UpdateAuditAlertPolicyMutationVariables = Exact<{
+  input: UpdateAuditAlertPolicyInput;
+}>;
+
+
+export type UpdateAuditAlertPolicyMutation = { updateAuditAlertPolicy: { kind: AuditAlertKind, title: string, description: string, counted: boolean, enabled: boolean, threshold: number, windowMinutes: number } };
+
 export type RecentActivityQueryVariables = Exact<{
   first: number;
   after?: string | null | undefined;
@@ -11776,7 +11909,7 @@ export type RecentActivityQueryVariables = Exact<{
 
 export type RecentActivityQuery = { auditEntries: { edges: Array<{ node: { id: string, resource: string, operation: string, resourceId: string, timestamp: number, comment: string | null, entityRef: string | null, user: { id: string, name: string, username: string, profilePicUrl: string, thumbnailUrl: string } | null } }>, pageInfo: { endCursor: string | null, hasNextPage: boolean } } };
 
-export type AuditLogTableRowFieldsFragment = { id: string, userId: string | null, businessUnitId: string, organizationId: string, timestamp: number, changes: unknown, previousState: unknown, currentState: unknown, metadata: unknown, resource: string, operation: string, resourceId: string, correlationId: string | null, userAgent: string | null, comment: string | null, ipAddress: string | null, category: AuditCategory, sensitiveData: boolean, critical: boolean, user: { id: string, name: string, username: string, emailAddress: string | null, profilePicUrl: string, thumbnailUrl: string } | null } & { ' $fragmentName'?: 'AuditLogTableRowFieldsFragment' };
+export type AuditLogTableRowFieldsFragment = { id: string, userId: string | null, timestamp: number, resource: string, operation: string, action: string, resourceId: string, entityRef: string | null, correlationId: string | null, comment: string | null, ipAddress: string | null, category: AuditCategory, retentionClass: AuditRetentionClass, channel: string, principalType: string, principalId: string, actorName: string | null, aiRunId: string | null, sensitiveData: boolean, critical: boolean, user: { id: string, name: string, username: string, emailAddress: string | null, profilePicUrl: string, thumbnailUrl: string } | null } & { ' $fragmentName'?: 'AuditLogTableRowFieldsFragment' };
 
 export type AuditLogTableQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -11785,6 +11918,32 @@ export type AuditLogTableQueryVariables = Exact<{
 
 
 export type AuditLogTableQuery = { auditEntries: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'AuditLogTableRowFieldsFragment': AuditLogTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type AuditEntryDetailQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type AuditEntryDetailQuery = { auditEntry: (
+    { userAgent: string | null, traceId: string | null, apiKeyId: string | null, changes: unknown, previousState: unknown, currentState: unknown, metadata: unknown }
+    & { ' $fragmentRefs'?: { 'AuditLogTableRowFieldsFragment': AuditLogTableRowFieldsFragment } }
+  ) | null };
+
+export type AuditRequestEntriesQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type AuditRequestEntriesQuery = { auditEntries: { edges: Array<{ node: { id: string, timestamp: number, resource: string, operation: string, action: string, resourceId: string, entityRef: string | null, comment: string | null } }> } };
+
+export type AuditFieldHistoryQueryVariables = Exact<{
+  resourceId: string | number;
+  field: string;
+  input: DataTableConnectionInput;
+}>;
+
+
+export type AuditFieldHistoryQuery = { auditEntriesByResourceId: { edges: Array<{ node: { id: string, timestamp: number, actorName: string | null, changes: unknown } }> } };
 
 export type BenefitPlansQueryVariables = Exact<{
   activeOnly?: boolean | null | undefined;
@@ -17679,7 +17838,7 @@ export type DeskRecordActivityQueryVariables = Exact<{
 }>;
 
 
-export type DeskRecordActivityQuery = { auditEntriesByResourceId: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { id: string, operation: string, timestamp: number, changes: unknown, comment: string | null, principalType: string, user: { id: string, name: string } | null } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
+export type DeskRecordActivityQuery = { auditEntriesByResourceId: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { id: string, operation: string, timestamp: number, changes: unknown, comment: string | null, principalType: string, actorName: string | null, channel: string, user: { id: string, name: string } | null } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
 export type DeskRecurringShipmentsQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -20623,8 +20782,9 @@ export { AiProviderCardFieldsFragmentDoc, AiProviderLimitFieldsFragmentDoc, AiPr
 export { AiUsageSummaryDocument } from "./documents/ai-provider/usage-summary";
 export { ApiKeyTableRowFieldsFragmentDoc, ApiKeyTableDocument } from "./documents/api-key/table";
 export { AttentionSummaryDocument } from "./documents/attention/summary";
+export { AuditLegalHoldRowFieldsFragmentDoc, AuditExportRowFieldsFragmentDoc, AuditChainStatusDocument, AuditLegalHoldTableDocument, PlaceAuditLegalHoldDocument, ReleaseAuditLegalHoldDocument, AuditExportTableDocument, RequestAuditExportDocument, AuditExportDownloadDocument, AuditAlertPoliciesDocument, UpdateAuditAlertPolicyDocument } from "./documents/audit-log/admin";
 export { RecentActivityDocument } from "./documents/audit-log/recent-activity";
-export { AuditLogTableRowFieldsFragmentDoc, AuditLogTableDocument } from "./documents/audit-log/table";
+export { AuditLogTableRowFieldsFragmentDoc, AuditLogTableDocument, AuditEntryDetailDocument, AuditRequestEntriesDocument, AuditFieldHistoryDocument } from "./documents/audit-log/table";
 export { BenefitPlansDocument, WorkerBenefitEnrollmentsDocument, BenefitEnrollmentsDocument, BenefitCostsDocument, WorkerTotalCompensationDocument, MyTotalCompensationDocument, CreateBenefitPlanDocument, UpdateBenefitPlanDocument, EnrollBenefitDocument, EndBenefitEnrollmentDocument } from "./documents/benefits/operations";
 export { BillingQueueActionFieldsFragmentDoc, UpdateBillingQueueStatusDocument, AssignBillingQueueBillerDocument } from "./documents/billing-queue/mutations";
 export { BillingQueueItemsDocument } from "./documents/billing-queue/queue";

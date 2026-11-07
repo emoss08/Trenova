@@ -24,7 +24,7 @@ func (s *Service) ResetControlNumber(
 	if err != nil {
 		return nil, err
 	}
-	s.logAction(
+	s.logAction(ctx,
 		sequence,
 		actor,
 		permission.OpUpdate,
@@ -52,7 +52,7 @@ func (s *Service) StartControlNumber(
 	if err != nil {
 		return nil, err
 	}
-	s.logAction(
+	s.logAction(ctx,
 		sequence,
 		actor,
 		permission.OpUpdate,

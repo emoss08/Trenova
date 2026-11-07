@@ -263,12 +263,11 @@ temporal:
     enableCompression: false
     compressionThreshold: 0
 
+# Audit entries are written in the transaction of the change they record, so there is
+# no buffer to tune. compose.yml passes TRENOVA_AUDIT_FINGERPRINTPEPPER from .env; it keys
+# the fingerprints that stand in for tax IDs and bank or card numbers in the audit log.
 audit:
-  bufferFlushInterval: 1m
-  batchSize: 500
-  maxEntriesPerFlush: 5000
-  dlqRetryInterval: 5m
-  dlqMaxRetries: 5
+  exportTtl: 168h
 
 # The AI audit trail is signed with keys kept outside the database. compose.yml
 # passes TRENOVA_AI_AUDIT_CHAIN_KEYS and TRENOVA_AI_AUDIT_CHAIN_ACTIVE_KEY_ID

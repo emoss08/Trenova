@@ -1,47 +1,29 @@
 package auditjobs
 
 import (
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
-	"github.com/emoss08/trenova/pkg/temporaltype"
-	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditintegrity"
 )
 
-type ProcessAuditBatchPayload struct {
-	temporaltype.BasePayload
-	Entries []*audit.Entry `json:"entries"`
-	BatchID pulid.ID       `json:"batchId"`
+type SealResult struct {
+	Tenants int `json:"tenants"`
+	Seals   int `json:"seals"`
+	Failed  int `json:"failed"`
 }
 
-type ProcessAuditBatchResult struct {
-	ProcessedCount int            `json:"processedCount"`
-	FailedCount    int            `json:"failedCount"`
-	BatchID        pulid.ID       `json:"batchId"`
-	ProcessedAt    int64          `json:"processedAt"`
-	Errors         []string       `json:"errors,omitempty"`
-	Metadata       map[string]any `json:"metadata,omitempty"`
+type VerifyResult struct {
+	Tenants int `json:"tenants"`
+	Broken  int `json:"broken"`
 }
 
-type DeleteAuditEntriesResult struct {
-	TotalDeleted      int    `json:"totalDeleted,omitempty"`
-	AuthEventsDeleted int    `json:"authEventsDeleted,omitempty"`
-	Result            string `json:"result,omitempty"`
+type ExportResult struct {
+	Status   string `json:"status"`
+	RowCount int64  `json:"rowCount"`
 }
 
-type FlushFromRedisResult struct {
-	Batches    [][]*audit.Entry `json:"batches"`
-	EntryCount int              `json:"entryCount"`
+func sealResult(r *auditintegrity.SealResult) *SealResult {
+	return &SealResult{Tenants: r.Tenants, Seals: r.Seals, Failed: r.Failed}
 }
 
-type MoveToDLQPayload struct {
-	Entries      []*audit.Entry `json:"entries"`
-	ErrorMessage string         `json:"errorMessage"`
-}
-
-type DLQRetryResult struct {
-	RetryCount     int        `json:"retryCount"`
-	SuccessCount   int        `json:"successCount"`
-	FailedCount    int        `json:"failedCount"`
-	ExhaustedCount int        `json:"exhaustedCount"`
-	RecoveredIDs   []pulid.ID `json:"recoveredIds,omitempty"`
-	FailedIDs      []pulid.ID `json:"failedIds,omitempty"`
+func verifyResult(r *auditintegrity.VerifyResult) *VerifyResult {
+	return &VerifyResult{Tenants: r.Tenants, Broken: r.Broken}
 }

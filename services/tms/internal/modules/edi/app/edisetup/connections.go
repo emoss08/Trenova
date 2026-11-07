@@ -84,7 +84,7 @@ func (s *Service) CreateConnection(
 		return nil, mapEDIConnectionConstraint(err)
 	}
 
-	s.logAction(created, actor, permission.OpCreate, nil, created, "EDI connection requested")
+	s.logAction(ctx, created, actor, permission.OpCreate, nil, created, "EDI connection requested")
 	return created, nil
 }
 
@@ -159,7 +159,7 @@ func (s *Service) AcceptConnection(
 		return nil, mapEDIPartnerConstraint(mapEDIConnectionConstraint(err))
 	}
 
-	s.logAction(
+	s.logAction(ctx,
 		accepted,
 		actor,
 		permission.OpUpdate,
@@ -297,7 +297,7 @@ func (s *Service) transitionConnection(
 		return nil, mapEDIConnectionConstraint(err)
 	}
 
-	s.logAction(updated, actor, permission.OpUpdate, &original, updated, comment)
+	s.logAction(ctx, updated, actor, permission.OpUpdate, &original, updated, comment)
 	return updated, nil
 }
 

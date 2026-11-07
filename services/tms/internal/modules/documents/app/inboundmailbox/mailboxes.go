@@ -274,7 +274,7 @@ func (s *Service) CreateMailbox(
 		return nil, addressTaken(err)
 	}
 
-	s.auditMailbox(req.Actor, permission.OpCreate, nil, created, "Mailbox created")
+	s.auditMailbox(ctx, req.Actor, permission.OpCreate, nil, created, "Mailbox created")
 
 	return &MailboxCredentials{Mailbox: created, Token: token}, nil
 }
@@ -310,7 +310,7 @@ func (s *Service) UpdateMailbox(
 		return nil, addressTaken(err)
 	}
 
-	s.auditMailbox(req.Actor, permission.OpUpdate, original, updated, "Mailbox updated")
+	s.auditMailbox(ctx, req.Actor, permission.OpUpdate, original, updated, "Mailbox updated")
 
 	return updated, nil
 }
@@ -340,7 +340,7 @@ func (s *Service) RotateMailboxToken(
 		return nil, err
 	}
 
-	s.auditMailbox(
+	s.auditMailbox(ctx,
 		req.Actor,
 		permission.OpUpdate,
 		original,
@@ -375,7 +375,14 @@ func (s *Service) SetMailboxSigningSecret(
 		return nil, err
 	}
 
-	s.auditMailbox(req.Actor, permission.OpUpdate, original, updated, "Mailbox signing secret set")
+	s.auditMailbox(
+		ctx,
+		req.Actor,
+		permission.OpUpdate,
+		original,
+		updated,
+		"Mailbox signing secret set",
+	)
 
 	return updated, nil
 }
@@ -404,7 +411,7 @@ func (s *Service) SetMailboxAPIKey(
 		return nil, err
 	}
 
-	s.auditMailbox(req.Actor, permission.OpUpdate, original, updated, "Mailbox API key set")
+	s.auditMailbox(ctx, req.Actor, permission.OpUpdate, original, updated, "Mailbox API key set")
 
 	return updated, nil
 }
@@ -412,6 +419,7 @@ func (s *Service) SetMailboxAPIKey(
 // auditMailbox records a configuration change. The token hash, the sealed
 // secret and the sealed API key are not serialised with the mailbox, so neither reaches the log.
 func (s *Service) auditMailbox(
+	ctx context.Context,
 	actor *permissionports.RequestActor,
 	op permission.Operation,
 	before, after *inboundmessage.Mailbox,
@@ -436,7 +444,7 @@ func (s *Service) auditMailbox(
 		options = append(options, auditservice.WithDiff(before, after))
 	}
 
-	if err := s.audit.LogAction(params, options...); err != nil {
+	if err := s.audit.LogAction(ctx, params, options...); err != nil {
 		s.l.Error("failed to log mailbox audit action",
 			zap.String("mailboxId", after.ID.String()), zap.Error(err))
 	}

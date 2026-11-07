@@ -4,14 +4,32 @@ package auditlogresolver
 
 import (
 	resolvercore "github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	auditalertservice "github.com/emoss08/trenova/internal/modules/workspace/app/auditalertservice"
+	auditexportservice "github.com/emoss08/trenova/internal/modules/workspace/app/auditexportservice"
+	auditintegrity "github.com/emoss08/trenova/internal/modules/workspace/app/auditintegrity"
+	auditlegalholdservice "github.com/emoss08/trenova/internal/modules/workspace/app/auditlegalholdservice"
 	auditports "github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 )
 
 type Deps struct {
 	*resolvercore.Core
-	AuditService auditports.AuditService
+	AuditService          auditports.AuditService
+	AuditLegalHoldService *auditlegalholdservice.Service
+	AuditExportService    *auditexportservice.Service
+	AuditAlertService     *auditalertservice.Service
+	AuditIntegrity        *auditintegrity.Status
 }
 
+type AuditAlertPolicyResolver struct{ *Deps }
+
+type AuditChainStatusResolver struct{ *Deps }
+
 type AuditEntryResolver struct{ *Deps }
+
+type AuditExportResolver struct{ *Deps }
+
+type AuditLegalHoldResolver struct{ *Deps }
+
+type MutationResolver struct{ *Deps }
 
 type QueryResolver struct{ *Deps }

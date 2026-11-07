@@ -54,6 +54,7 @@ func New(p Params) *Kit {
 var _ accountingmappingports.AccountingMappingHistoryGuard = (*Kit)(nil)
 
 func (k *Kit) LogAudit(
+	ctx context.Context,
 	row *accountingmapping.AccountingMapping,
 	userID pulid.ID,
 	previous map[string]any,
@@ -69,7 +70,7 @@ func (k *Kit) LogAudit(
 		OrganizationID: row.OrganizationID,
 		BusinessUnitID: row.BusinessUnitID,
 	}
-	if err := k.audit.LogAction(params, auditservice.WithComment(comment)); err != nil {
+	if err := k.audit.LogAction(ctx, params, auditservice.WithComment(comment)); err != nil {
 		k.l.Error("failed to log accounting mapping audit", zap.Error(err))
 	}
 }

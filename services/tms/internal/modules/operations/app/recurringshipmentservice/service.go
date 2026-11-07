@@ -103,7 +103,7 @@ func (s *Service) Create(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&auditports.LogActionParams{
+	if err = s.auditService.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceRecurringShipment,
 		ResourceID:     createdEntity.GetID().String(),
 		Operation:      permission.OpCreate,
@@ -144,7 +144,7 @@ func (s *Service) Update(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&auditports.LogActionParams{
+	if err = s.auditService.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceRecurringShipment,
 		ResourceID:     updatedEntity.GetID().String(),
 		Operation:      permission.OpUpdate,
@@ -181,7 +181,7 @@ func (s *Service) UpdateStatus(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&auditports.LogActionParams{
+	if err = s.auditService.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceRecurringShipment,
 		ResourceID:     updatedEntity.GetID().String(),
 		Operation:      permission.OpUpdate,
@@ -263,7 +263,7 @@ func (s *Service) Generate(
 	}
 
 	if result.Shipment != nil {
-		if err = s.auditService.LogAction(&auditports.LogActionParams{
+		if err = s.auditService.LogAction(ctx, &auditports.LogActionParams{
 			Resource:       permission.ResourceShipment,
 			ResourceID:     result.Shipment.GetID().String(),
 			Operation:      permission.OpCreate,

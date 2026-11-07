@@ -87,7 +87,7 @@ func TestCreate_Success(t *testing.T) {
 
 	deps.transformer.On("TransformEquipmentType", mock.Anything, mock.Anything).Return(nil)
 	deps.repo.On("Create", mock.Anything, mock.Anything).Return(created, nil)
-	deps.audit.On("LogAction", mock.Anything, mock.Anything).Return(nil)
+	deps.audit.On("LogAction", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 	result, err := deps.svc.Create(
 		ctx,
@@ -193,7 +193,7 @@ func TestBulkUpdateStatus_Success(t *testing.T) {
 		Return([]*equipmenttype.EquipmentType{original1, original2}, nil)
 	deps.repo.On("BulkUpdateStatus", mock.Anything, req).
 		Return([]*equipmenttype.EquipmentType{entity1, entity2}, nil)
-	deps.audit.On("LogActions", mock.Anything).Return(nil)
+	deps.audit.On("LogActions", mock.Anything, mock.Anything).Return(nil)
 
 	result, err := deps.svc.BulkUpdateStatus(ctx, req)
 

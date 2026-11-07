@@ -372,7 +372,7 @@ func (s *Service) recordMailed(
 	}
 
 	for _, doc := range docs {
-		if err := s.audit.LogAction(&auditports.LogActionParams{
+		if err := s.audit.LogAction(ctx, &auditports.LogActionParams{
 			Resource:       permission.ResourceDocument,
 			ResourceID:     doc.ID.String(),
 			Operation:      permission.OpRead,
@@ -385,7 +385,6 @@ func (s *Service) recordMailed(
 		},
 			auditservice.WithComment(mailedComment),
 			auditservice.WithCategory(audit.CategoryUser),
-			auditservice.WithRequest(ctx),
 			auditservice.WithMetadata(map[string]any{
 				"access":       mailedAccess,
 				"channel":      mailedChannel,

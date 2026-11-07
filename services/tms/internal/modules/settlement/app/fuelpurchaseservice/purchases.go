@@ -59,7 +59,7 @@ func (s *Service) CreatePurchase(
 		return nil, err
 	}
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resource:   permission.ResourceFuelPurchase,
 		resourceID: created.ID.String(),
 		operation:  permission.OpCreate,
@@ -96,7 +96,7 @@ func (s *Service) UpdatePurchase(
 		return nil, err
 	}
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resource:   permission.ResourceFuelPurchase,
 		resourceID: updated.ID.String(),
 		operation:  permission.OpUpdate,
@@ -132,7 +132,7 @@ func (s *Service) DeletePurchase(ctx context.Context, req *DeletePurchaseRequest
 		return err
 	}
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resource:   permission.ResourceFuelPurchase,
 		resourceID: stored.ID.String(),
 		operation:  permission.OpDelete,

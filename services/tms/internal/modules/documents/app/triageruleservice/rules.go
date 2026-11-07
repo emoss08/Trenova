@@ -376,7 +376,7 @@ type auditEntry struct {
 	previous   *triage.Rule
 }
 
-func (s *Service) logAudit(_ context.Context, entry *auditEntry) {
+func (s *Service) logAudit(ctx context.Context, entry *auditEntry) {
 	params := &auditports.LogActionParams{
 		Resource:       permission.ResourceInboundMessage,
 		Operation:      entry.operation,
@@ -393,7 +393,7 @@ func (s *Service) logAudit(_ context.Context, entry *auditEntry) {
 		params.PreviousState = jsonutils.MustToJSON(entry.previous)
 	}
 
-	if err := s.audit.LogAction(params); err != nil {
+	if err := s.audit.LogAction(ctx, params); err != nil {
 		s.l.Warn("could not audit a triage rule change",
 			zap.String("ruleId", params.ResourceID), zap.Error(err))
 	}

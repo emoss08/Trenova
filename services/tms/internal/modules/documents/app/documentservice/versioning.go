@@ -187,7 +187,7 @@ func (s *Service) RestoreVersion(
 	}
 	s.syncSearchProjection(ctx, s.l, target, contentText)
 
-	if err := s.auditService.LogAction(&auditports.LogActionParams{
+	if err := s.auditService.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceDocument,
 		ResourceID:     target.ID.String(),
 		Operation:      permission.OpUpdate,
@@ -431,7 +431,7 @@ func (s *Service) AttachLineageToResource(
 	s.syncSearchProjection(ctx, s.l, updated, contentText)
 	inboundmessageports.AnnounceDocumentAttached(ctx, s.triage, updated)
 
-	if err = s.auditService.LogAction(&auditports.LogActionParams{
+	if err = s.auditService.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceDocument,
 		ResourceID:     updated.ID.String(),
 		Operation:      permission.OpUpdate,

@@ -53,6 +53,7 @@ func New(p Params) *Service {
 }
 
 func (s *Service) audit(
+	ctx context.Context,
 	resourceID string,
 	operation permission.Operation,
 	userID pulid.ID,
@@ -77,7 +78,7 @@ func (s *Service) audit(
 		params.PreviousState = jsonutils.MustToJSON(previous)
 		opts = append(opts, auditservice.WithDiff(previous, current))
 	}
-	if err := s.auditService.LogAction(params, opts...); err != nil {
+	if err := s.auditService.LogAction(ctx, params, opts...); err != nil {
 		s.l.Error("failed to log audit action", zap.Error(err))
 	}
 }
@@ -138,7 +139,7 @@ func (s *Service) CreatePlan(
 	}
 
 	tenantInfo := planTenant(created)
-	s.audit(
+	s.audit(ctx,
 		created.GetResourceID(), permission.OpCreate, userID, tenantInfo,
 		created, nil, "Benefit plan created: "+created.Name,
 	)
@@ -198,7 +199,7 @@ func (s *Service) UpdatePlan(
 		return nil, err
 	}
 
-	s.audit(
+	s.audit(ctx,
 		updated.GetResourceID(), permission.OpUpdate, userID, tenantInfo,
 		updated, original, "Benefit plan updated",
 	)

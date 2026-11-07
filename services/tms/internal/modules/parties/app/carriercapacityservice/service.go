@@ -129,7 +129,7 @@ func (s *Service) Create(
 		return nil, err
 	}
 
-	s.audit(actor, created, nil, permission.OpCreate, "Carrier capacity posted")
+	s.audit(ctx, actor, created, nil, permission.OpCreate, "Carrier capacity posted")
 	s.invalidate(ctx, created, actor)
 
 	return created, nil
@@ -150,7 +150,14 @@ func (s *Service) Update(
 		return nil, err
 	}
 
-	s.audit(actor, updated, change.Before, permission.OpUpdate, "Carrier capacity posting updated")
+	s.audit(
+		ctx,
+		actor,
+		updated,
+		change.Before,
+		permission.OpUpdate,
+		"Carrier capacity posting updated",
+	)
 	s.invalidate(ctx, updated, actor)
 
 	return updated, nil
@@ -170,13 +177,14 @@ func (s *Service) Delete(
 		return err
 	}
 
-	s.audit(actor, nil, original, permission.OpDelete, "Carrier capacity posting removed")
+	s.audit(ctx, actor, nil, original, permission.OpDelete, "Carrier capacity posting removed")
 	s.invalidate(ctx, original, actor)
 
 	return nil
 }
 
 func (s *Service) audit(
+	ctx context.Context,
 	actor *permissionports.RequestActor,
 	current, previous *carriercapacity.Posting,
 	operation permission.Operation,
@@ -210,7 +218,7 @@ func (s *Service) audit(
 		options = append(options, auditservice.WithDiff(previous, current))
 	}
 
-	if err := s.auditService.LogAction(params, options...); err != nil {
+	if err := s.auditService.LogAction(ctx, params, options...); err != nil {
 		s.l.Error("failed to log carrier capacity audit action", zap.Error(err))
 	}
 }

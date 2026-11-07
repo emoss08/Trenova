@@ -144,7 +144,7 @@ func (s *TransportService) Save(
 		return nil, err
 	}
 
-	s.rec.Log(actor, &factoringaction.AuditEntry{
+	s.rec.Log(ctx, actor, &factoringaction.AuditEntry{
 		Resource: permission.ResourceFactoringCompany,
 		Entity:   redacted(saved),
 		Previous: redacted(previous),

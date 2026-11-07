@@ -79,11 +79,11 @@ func TestEntry_Validate(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "missing category fails",
+			name: "missing category defaults to system",
 			modify: func(e *Entry) {
 				e.Category = Category("")
 			},
-			wantErr: true,
+			wantErr: false,
 		},
 		{
 			name: "system principal allows null user",
@@ -229,225 +229,17 @@ func TestEntry_GetTableName(t *testing.T) {
 	assert.Equal(t, "audit_entries", e.GetTableName())
 }
 
-func TestDLQEntry_Validate(t *testing.T) {
+func TestEntry_SearchesTheEntityReferenceAndComment(t *testing.T) {
 	t.Parallel()
 
-	tests := []struct {
-		name    string
-		entry   DLQEntry
-		wantErr bool
-	}{
-		{
-			name: "valid entity passes",
-			entry: DLQEntry{
-				OriginalEntryID: pulid.MustNew("ae_"),
-				EntryData:       map[string]any{"key": "value"},
-				FailureTime:     1234567890,
-				OrganizationID:  pulid.MustNew("org_"),
-				BusinessUnitID:  pulid.MustNew("bu_"),
-			},
-			wantErr: false,
-		},
-		{
-			name: "missing original entry ID fails",
-			entry: DLQEntry{
-				OriginalEntryID: pulid.ID(""),
-				EntryData:       map[string]any{"key": "value"},
-				FailureTime:     1234567890,
-				OrganizationID:  pulid.MustNew("org_"),
-				BusinessUnitID:  pulid.MustNew("bu_"),
-			},
-			wantErr: true,
-		},
-		{
-			name: "missing entry data fails",
-			entry: DLQEntry{
-				OriginalEntryID: pulid.MustNew("ae_"),
-				EntryData:       nil,
-				FailureTime:     1234567890,
-				OrganizationID:  pulid.MustNew("org_"),
-				BusinessUnitID:  pulid.MustNew("bu_"),
-			},
-			wantErr: true,
-		},
-		{
-			name: "zero failure time fails",
-			entry: DLQEntry{
-				OriginalEntryID: pulid.MustNew("ae_"),
-				EntryData:       map[string]any{"key": "value"},
-				FailureTime:     0,
-				OrganizationID:  pulid.MustNew("org_"),
-				BusinessUnitID:  pulid.MustNew("bu_"),
-			},
-			wantErr: true,
-		},
-		{
-			name: "missing organization ID fails",
-			entry: DLQEntry{
-				OriginalEntryID: pulid.MustNew("ae_"),
-				EntryData:       map[string]any{"key": "value"},
-				FailureTime:     1234567890,
-				OrganizationID:  pulid.ID(""),
-				BusinessUnitID:  pulid.MustNew("bu_"),
-			},
-			wantErr: true,
-		},
-		{
-			name: "missing business unit ID fails",
-			entry: DLQEntry{
-				OriginalEntryID: pulid.MustNew("ae_"),
-				EntryData:       map[string]any{"key": "value"},
-				FailureTime:     1234567890,
-				OrganizationID:  pulid.MustNew("org_"),
-				BusinessUnitID:  pulid.ID(""),
-			},
-			wantErr: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			err := tt.entry.Validate()
-			if tt.wantErr {
-				assert.Error(t, err)
-			} else {
-				assert.NoError(t, err)
-			}
-		})
-	}
-}
-
-func TestDLQEntry_BeforeCreate(t *testing.T) {
-	t.Parallel()
-
-	t.Run("insert sets default status if empty", func(t *testing.T) {
-		t.Parallel()
-
-		e := &DLQEntry{}
-
-		err := e.BeforeCreate(t.Context())
-		require.NoError(t, err)
-
-		assert.Equal(t, DLQStatusPending, e.Status)
-	})
-
-	t.Run("insert does not overwrite existing status", func(t *testing.T) {
-		t.Parallel()
-
-		e := &DLQEntry{Status: DLQStatusRetrying}
-
-		err := e.BeforeCreate(t.Context())
-		require.NoError(t, err)
-
-		assert.Equal(t, DLQStatusRetrying, e.Status)
-	})
-}
-
-func TestDLQEntry_CanRetry(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name       string
-		entry      DLQEntry
-		maxRetries int
-		want       bool
-	}{
-		{
-			name:       "pending with retries remaining returns true",
-			entry:      DLQEntry{RetryCount: 0, Status: DLQStatusPending},
-			maxRetries: 3,
-			want:       true,
-		},
-		{
-			name:       "retrying with retries remaining returns true",
-			entry:      DLQEntry{RetryCount: 1, Status: DLQStatusRetrying},
-			maxRetries: 3,
-			want:       true,
-		},
-		{
-			name:       "retry count at max returns false",
-			entry:      DLQEntry{RetryCount: 3, Status: DLQStatusPending},
-			maxRetries: 3,
-			want:       false,
-		},
-		{
-			name:       "recovered status returns false",
-			entry:      DLQEntry{RetryCount: 0, Status: DLQStatusRecovered},
-			maxRetries: 3,
-			want:       false,
-		},
-		{
-			name:       "failed status returns false",
-			entry:      DLQEntry{RetryCount: 0, Status: DLQStatusFailed},
-			maxRetries: 3,
-			want:       false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			assert.Equal(t, tt.want, tt.entry.CanRetry(tt.maxRetries))
-		})
-	}
-}
-
-func TestDLQEntry_IncrementRetry(t *testing.T) {
-	t.Parallel()
-
-	e := &DLQEntry{RetryCount: 0, Status: DLQStatusPending}
-	e.IncrementRetry()
-
-	assert.Equal(t, 1, e.RetryCount)
-	assert.Equal(t, DLQStatusRetrying, e.Status)
-
-	e.IncrementRetry()
-	assert.Equal(t, 2, e.RetryCount)
-}
-
-func TestDLQEntry_MarkRecovered(t *testing.T) {
-	t.Parallel()
-
-	e := &DLQEntry{Status: DLQStatusRetrying}
-	e.MarkRecovered()
-
-	assert.Equal(t, DLQStatusRecovered, e.Status)
-}
-
-func TestDLQEntry_MarkFailed(t *testing.T) {
-	t.Parallel()
-
-	e := &DLQEntry{Status: DLQStatusRetrying}
-	e.MarkFailed("connection timeout")
-
-	assert.Equal(t, DLQStatusFailed, e.Status)
-	assert.Equal(t, "connection timeout", e.LastError)
-}
-
-func TestEntry_GetPostgresSearchConfig(t *testing.T) {
-	t.Parallel()
-
-	e := &Entry{}
-	config := e.GetPostgresSearchConfig()
+	config := (&Entry{}).GetPostgresSearchConfig()
 
 	assert.Equal(t, "ae", config.TableAlias)
 	assert.False(t, config.UseSearchVector)
-	assert.Len(t, config.SearchableFields, 10)
-	assert.Equal(t, "comment", config.SearchableFields[0].Name)
-	assert.Equal(t, "ip_address", config.SearchableFields[1].Name)
-	assert.Equal(t, "user_agent", config.SearchableFields[2].Name)
-	assert.Equal(t, "correlation_id", config.SearchableFields[3].Name)
-	assert.Equal(t, "resource", config.SearchableFields[4].Name)
-	assert.Equal(t, domaintypes.FieldTypeText, config.SearchableFields[4].Type)
-	assert.Equal(t, "resource_id", config.SearchableFields[5].Name)
-	assert.Equal(t, "operation", config.SearchableFields[6].Name)
-	assert.Equal(t, domaintypes.FieldTypeText, config.SearchableFields[6].Type)
-	assert.Equal(t, "category", config.SearchableFields[7].Name)
-	assert.Equal(t, "critical", config.SearchableFields[8].Name)
-	assert.Equal(t, "sensitive_data", config.SearchableFields[9].Name)
+	require.Len(t, config.SearchableFields, 2)
+	assert.Equal(t, "entity_ref", config.SearchableFields[0].Name)
+	assert.Equal(t, "comment", config.SearchableFields[1].Name)
+	assert.Equal(t, domaintypes.FieldTypeText, config.SearchableFields[0].Type)
 }
 
 func TestEntry_EntityReference(t *testing.T) {
@@ -516,4 +308,92 @@ func TestEntry_EntityReference(t *testing.T) {
 			assert.Equal(t, tt.want, tt.entry.EntityReference())
 		})
 	}
+}
+
+func TestEntry_NormalizeDerivesActionClassChannelAndReference(t *testing.T) {
+	t.Parallel()
+
+	e := &Entry{
+		Resource:      permission.ResourceInvoice,
+		Operation:     permission.OpUpdate,
+		PrincipalType: "api_key",
+		CurrentState:  map[string]any{"invoiceNumber": " INV-42 "},
+	}
+	e.Normalize()
+
+	assert.Equal(t, "invoice.update", e.Action)
+	assert.Equal(t, RetentionFinancial, e.RetentionClass)
+	assert.Equal(t, ChannelAPI, e.Channel)
+	assert.Equal(t, "INV-42", e.EntityRef)
+}
+
+func TestEntry_ValidateRefusesAnUnknownChannelOrMalformedAction(t *testing.T) {
+	t.Parallel()
+
+	e := validEntry()
+	e.Channel = Channel("fax")
+	require.Error(t, e.Validate())
+
+	e = validEntry()
+	e.Action = "Shipment Created"
+	require.Error(t, e.Validate())
+}
+
+func TestDefaultAction_MakesEachSegmentAValidCode(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, "shipment_move.update", DefaultAction("shipment-move", "Update"))
+	assert.Equal(t, "x3pl.create", DefaultAction("3pl", "create"))
+	assert.True(t, ValidAction(DefaultAction("", "")))
+}
+
+func TestRetentionClass_FloorDaysMatchTheDatabase(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, 90, RetentionAccess.FloorDays())
+	assert.Equal(t, 730, RetentionOperational.FloorDays())
+	assert.Equal(t, 2555, RetentionFinancial.FloorDays())
+	assert.Equal(t, 730, RetentionSecurity.FloorDays())
+}
+
+func TestLegalHold_CoversItsScopeOnlyWhileActive(t *testing.T) {
+	t.Parallel()
+
+	org := &LegalHold{}
+	assert.True(t, org.Covers(permission.ResourceShipment, "shp_1"))
+
+	kind := &LegalHold{Resource: permission.ResourceShipment}
+	assert.True(t, kind.Covers(permission.ResourceShipment, "shp_2"))
+	assert.False(t, kind.Covers(permission.ResourceInvoice, "inv_1"))
+
+	record := &LegalHold{Resource: permission.ResourceShipment, ResourceID: "shp_1"}
+	assert.True(t, record.Covers(permission.ResourceShipment, "shp_1"))
+	assert.False(t, record.Covers(permission.ResourceShipment, "shp_2"))
+
+	released := int64(1)
+	record.ReleasedAt = &released
+	assert.False(t, record.Covers(permission.ResourceShipment, "shp_1"))
+}
+
+func TestAlertKindOf_RaisesSecurityEntriesOnly(t *testing.T) {
+	t.Parallel()
+
+	role := &Entry{Category: CategorySecurity, Resource: permission.ResourceRole, Operation: permission.OpUpdate}
+	kind, ok := AlertKindOf(role)
+	require.True(t, ok)
+	assert.Equal(t, AlertRoleChanged, kind)
+
+	_, ok = AlertKindOf(&Entry{Category: CategoryUser, Resource: permission.ResourceRole})
+	assert.False(t, ok, "only security entries raise an alert on their own")
+
+	malware := &Entry{Category: CategorySecurity, Action: ActionMalwareRefused}
+	kind, ok = AlertKindOf(malware)
+	require.True(t, ok)
+	assert.Equal(t, AlertMalwareRefused, kind)
+
+	counted, ok := CountedAlertKindOf(&Entry{Operation: permission.OpDelete})
+	require.True(t, ok)
+	assert.Equal(t, AlertBulkDelete, counted)
+	_, ok = CountedAlertKindOf(&Entry{Operation: permission.OpUpdate})
+	assert.False(t, ok)
 }

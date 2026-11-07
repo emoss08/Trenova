@@ -122,7 +122,7 @@ func (s *Service) UpsertTaxRates(
 	}
 
 	for _, rate := range saved {
-		s.audit(&auditParams{
+		s.audit(ctx, &auditParams{
 			resource:   permission.ResourceIFTATaxRate,
 			resourceID: rate.ID.String(),
 			operation:  permission.OpManage,
@@ -155,7 +155,7 @@ func (s *Service) DeleteTaxRate(ctx context.Context, req *DeleteTaxRateRequest) 
 		return err
 	}
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resource:   permission.ResourceIFTATaxRate,
 		resourceID: existing.ID.String(),
 		operation:  permission.OpDelete,

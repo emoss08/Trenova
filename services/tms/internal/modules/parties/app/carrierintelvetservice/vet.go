@@ -226,7 +226,7 @@ func (s *Service) ApplySuggestions(
 		return 0, err
 	}
 
-	if err = s.auditService.LogAction(&auditports.LogActionParams{
+	if err = s.auditService.LogAction(ctx, &auditports.LogActionParams{
 		Resource:      permission.ResourceCarrierIntelligence,
 		ResourceID:    req.CarrierID.String(),
 		Operation:     permission.OpUpdate,

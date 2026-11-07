@@ -98,7 +98,7 @@ func (s *Service) Update(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(
+	if err = s.auditService.LogAction(ctx,
 		&auditports.LogActionParams{
 			Resource:       permission.ResourceCostingControl,
 			ResourceID:     updatedEntity.GetID().String(),
@@ -157,7 +157,7 @@ func (s *Service) UpdateCategory(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(
+	if err = s.auditService.LogAction(ctx,
 		&auditports.LogActionParams{
 			Resource:       permission.ResourceCostingControl,
 			ResourceID:     updatedCategory.GetID().String(),

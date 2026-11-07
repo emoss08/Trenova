@@ -59,7 +59,11 @@ type notifier interface {
 }
 
 type actionLogger interface {
-	LogAction(params *auditports.LogActionParams, opts ...auditports.LogOption) error
+	LogAction(
+		ctx context.Context,
+		params *auditports.LogActionParams,
+		opts ...auditports.LogOption,
+	) error
 }
 
 type Params struct {
@@ -260,7 +264,7 @@ func (s *Service) promote(
 		zap.Int("streak", change.row.Streak),
 	)
 
-	s.logTierChange(change, next, "Tool promoted after a streak of clean approvals")
+	s.logTierChange(ctx, &change, next, "Tool promoted after a streak of clean approvals")
 	s.notify(ctx, change, next, tierNotice{
 		eventType: EventToolPromoted,
 		priority:  notification.PriorityMedium,
@@ -298,7 +302,12 @@ func (s *Service) demote(ctx context.Context, change tierChange) error {
 		zap.String("to", string(previous)),
 	)
 
-	s.logTierChange(change, previous, "Earned tool tier taken back after a rejection or failed run")
+	s.logTierChange(
+		ctx,
+		&change,
+		previous,
+		"Earned tool tier taken back after a rejection or failed run",
+	)
 	s.notify(ctx, change, previous, tierNotice{
 		eventType: EventToolDemoted,
 		priority:  notification.PriorityHigh,
@@ -417,7 +426,12 @@ func (s *Service) policyOf(toolName string) (agenttoolports.ToolPolicy, bool) {
 	return tool.Policy(), true
 }
 
-func (s *Service) logTierChange(change tierChange, to agent.AutonomyTier, comment string) {
+func (s *Service) logTierChange(
+	ctx context.Context,
+	change *tierChange,
+	to agent.AutonomyTier,
+	comment string,
+) {
 	actor := permissionports.SystemAuditActor()
 	if change.decidedBy.IsNotNil() {
 		actor = kernelports.AuditActor{
@@ -427,7 +441,7 @@ func (s *Service) logTierChange(change tierChange, to agent.AutonomyTier, commen
 		}
 	}
 
-	if err := s.audit.LogAction(&auditports.LogActionParams{
+	if err := s.audit.LogAction(ctx, &auditports.LogActionParams{
 		Resource:      permission.ResourceAgentDefinition,
 		ResourceID:    change.definition.ID.String(),
 		Operation:     permission.OpUpdate,

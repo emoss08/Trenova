@@ -76,7 +76,7 @@ func (s *Service) UpdateInvoiceDetails(
 	}
 
 	auditActor := actor.AuditActor()
-	s.logAction(
+	s.logAction(ctx,
 		updated,
 		auditActor,
 		permission.OpUpdate,

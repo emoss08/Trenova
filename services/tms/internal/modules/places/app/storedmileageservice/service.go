@@ -72,11 +72,12 @@ func (s *Service) Deactivate(
 	}
 	current := *existing
 	current.Status = storedmileage.StatusInactive
-	s.logAudit(&current, existing, userID)
+	s.logAudit(ctx, &current, existing, userID)
 	return nil
 }
 
 func (s *Service) logAudit(
+	ctx context.Context,
 	current *storedmileage.StoredMileage,
 	previous *storedmileage.StoredMileage,
 	userID pulid.ID,
@@ -100,7 +101,7 @@ func (s *Service) logAudit(
 	if previous != nil {
 		opts = append(opts, auditservice.WithDiff(previous, current))
 	}
-	if err := s.auditService.LogAction(params, opts...); err != nil {
+	if err := s.auditService.LogAction(ctx, params, opts...); err != nil {
 		s.l.Error("failed to log stored mileage audit action", zap.Error(err))
 	}
 }

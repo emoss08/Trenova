@@ -17,7 +17,15 @@ import (
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
 
-const principalSessionUser = "session_user"
+const (
+	principalSessionUser = "session_user"
+	principalAPIKey      = "api_key"
+	principalAgent       = "agent"
+	principalSystem      = "system"
+	maxEntityRefLength   = 255
+	maxActorNameLength   = 255
+	maxUserAgentLength   = 255
+)
 
 var (
 	_ domaintypes.PostgresSearchable = (*Entry)(nil)
@@ -28,25 +36,32 @@ type Entry struct {
 	keel.Table `keel:"audit_entries"`
 
 	ID             pulid.ID             `json:"id"                      keel:"id,pk,autoid:ae_"`
-	UserID         pulid.ID             `json:"userId,omitempty"        keel:"user_id,nullzero"`
-	PrincipalType  string               `json:"principalType"           keel:"principal_type"`
-	PrincipalID    pulid.ID             `json:"principalId"             keel:"principal_id"`
-	APIKeyID       pulid.ID             `json:"apiKeyId,omitempty"      keel:"api_key_id,nullzero"`
 	BusinessUnitID pulid.ID             `json:"businessUnitId"          keel:"business_unit_id,pk,tenant"`
 	OrganizationID pulid.ID             `json:"organizationId"          keel:"organization_id,pk,tenant"`
-	Timestamp      int64                `json:"timestamp"               keel:"timestamp"`
+	Timestamp      int64                `json:"timestamp"               keel:"timestamp,pk"`
+	Resource       permission.Resource  `json:"resource"                keel:"resource"`
+	ResourceID     string               `json:"resourceId"              keel:"resource_id"`
+	Operation      permission.Operation `json:"operation"               keel:"operation"`
+	Action         string               `json:"action"                  keel:"action"`
+	Category       Category             `json:"category"                keel:"category"`
+	RetentionClass RetentionClass       `json:"retentionClass"          keel:"retention_class"`
+	Channel        Channel              `json:"channel"                 keel:"channel"`
+	PrincipalType  string               `json:"principalType"           keel:"principal_type"`
+	PrincipalID    pulid.ID             `json:"principalId"             keel:"principal_id"`
+	UserID         pulid.ID             `json:"userId,omitempty"        keel:"user_id,nullzero"`
+	APIKeyID       pulid.ID             `json:"apiKeyId,omitempty"      keel:"api_key_id,nullzero"`
+	ActorName      string               `json:"actorName,omitempty"     keel:"actor_name,nullzero"`
+	AIRunID        string               `json:"aiRunId,omitempty"       keel:"ai_run_id,nullzero"`
+	EntityRef      string               `json:"entityRef,omitempty"     keel:"entity_ref,nullzero"`
+	CorrelationID  string               `json:"correlationId,omitempty" keel:"correlation_id,nullzero"`
+	TraceID        string               `json:"traceId,omitempty"       keel:"trace_id,nullzero"`
+	IPAddress      string               `json:"ipAddress,omitempty"     keel:"ip_address,nullzero"`
+	UserAgent      string               `json:"userAgent,omitempty"     keel:"user_agent,nullzero"`
+	Comment        string               `json:"comment,omitempty"       keel:"comment,nullzero"`
 	Changes        map[string]any       `json:"changes,omitempty"       keel:"changes,jsonb"`
 	PreviousState  map[string]any       `json:"previousState,omitempty" keel:"previous_state,jsonb"`
 	CurrentState   map[string]any       `json:"currentState,omitempty"  keel:"current_state,jsonb"`
 	Metadata       map[string]any       `json:"metadata,omitempty"      keel:"metadata,jsonb"`
-	Resource       permission.Resource  `json:"resource"                keel:"resource"`  // Should be the same as the resource in the permission service
-	Operation      permission.Operation `json:"operation"               keel:"operation"` // Should be the same as the operation in the permission service
-	ResourceID     string               `json:"resourceId"              keel:"resource_id"`
-	CorrelationID  string               `json:"correlationId,omitempty" keel:"correlation_id,nullzero"`
-	UserAgent      string               `json:"userAgent,omitempty"     keel:"user_agent,nullzero"`
-	Comment        string               `json:"comment,omitempty"       keel:"comment,nullzero"`
-	IPAddress      string               `json:"ipAddress,omitempty"     keel:"ip_address,nullzero"` // IPv6 addresses need space
-	Category       Category             `json:"category"                keel:"category"`
 	SensitiveData  bool                 `json:"sensitiveData"           keel:"sensitive_data"`
 	Critical       bool                 `json:"critical"                keel:"critical"`
 	User           *tenant.User         `json:"user,omitempty"          keel:"belongs:user_id"`
@@ -56,6 +71,11 @@ type Entry struct {
 }
 
 func (e *Entry) BeforeCreate(_ context.Context) error {
+	e.Normalize()
+	return nil
+}
+
+func (e *Entry) Normalize() {
 	if e.Category == "" {
 		e.Category = CategorySystem
 	}
@@ -65,11 +85,49 @@ func (e *Entry) BeforeCreate(_ context.Context) error {
 	if e.Timestamp == 0 {
 		e.Timestamp = timeutils.NowUnix()
 	}
+	if e.Action == "" {
+		e.Action = DefaultAction(string(e.Resource), string(e.Operation))
+	}
+	if e.RetentionClass == "" {
+		e.RetentionClass = ClassifyRetention(e.Resource, e.Operation, e.Category)
+	}
+	if e.Channel == "" {
+		e.Channel = defaultChannel(e.PrincipalType)
+	}
+	if e.EntityRef == "" {
+		e.EntityRef = truncate(e.EntityReference(), maxEntityRefLength)
+	}
+	e.ActorName = truncate(e.ActorName, maxActorNameLength)
+	e.UserAgent = truncate(e.UserAgent, maxUserAgentLength)
+}
 
-	return nil
+func defaultChannel(principalType string) Channel {
+	switch principalType {
+	case principalAPIKey:
+		return ChannelAPI
+	case principalAgent:
+		return ChannelAgentRun
+	case principalSystem:
+		return ChannelSystem
+	default:
+		return ChannelWeb
+	}
+}
+
+func truncate(value string, limit int) string {
+	value = strings.TrimSpace(value)
+	if len(value) <= limit {
+		return value
+	}
+	runes := []rune(value)
+	if len(runes) <= limit {
+		return value
+	}
+	return string(runes[:limit])
 }
 
 func (e *Entry) Validate() error {
+	e.Normalize()
 	if e.PrincipalType == "" && e.UserID.IsNotNil() {
 		e.PrincipalType = principalSessionUser
 	}
@@ -78,7 +136,7 @@ func (e *Entry) Validate() error {
 		e.PrincipalID = e.UserID
 	}
 
-	if e.PrincipalType == "api_key" {
+	if e.PrincipalType == principalAPIKey {
 		if e.APIKeyID.IsNil() {
 			e.APIKeyID = e.PrincipalID
 		}
@@ -108,8 +166,22 @@ func (e *Entry) Validate() error {
 		validation.Field(&e.PrincipalType, validation.Required.Error("Principal type is required")),
 		validation.Field(&e.PrincipalID, validation.Required.Error("Principal ID is required")),
 		validation.Field(&e.Category, validation.Required.Error("Category is required")),
+		validation.Field(&e.Timestamp, validation.Required.Error("Timestamp is required")),
 	); err != nil {
 		return err
+	}
+
+	if !e.Category.Valid() {
+		return fmt.Errorf("unsupported audit category %q", e.Category)
+	}
+	if !e.RetentionClass.Valid() {
+		return fmt.Errorf("unsupported audit retention class %q", e.RetentionClass)
+	}
+	if !e.Channel.Valid() {
+		return fmt.Errorf("unsupported audit channel %q", e.Channel)
+	}
+	if !ValidAction(e.Action) {
+		return fmt.Errorf("audit action %q is not a dotted lower-case code", e.Action)
 	}
 
 	switch e.PrincipalType {
@@ -123,7 +195,7 @@ func (e *Entry) Validate() error {
 		if e.PrincipalID != e.UserID {
 			return errors.New("user audit entries must use user ID as principal ID")
 		}
-	case "api_key":
+	case principalAPIKey:
 		if e.APIKeyID.IsNil() {
 			return errors.New("api key audit entries require an api key ID")
 		}
@@ -133,14 +205,14 @@ func (e *Entry) Validate() error {
 		if e.PrincipalID != e.APIKeyID {
 			return errors.New("api key audit entries must use api key ID as principal ID")
 		}
-	case "system":
+	case principalSystem:
 		if e.UserID.IsNotNil() {
 			return errors.New("system audit entries cannot include a user ID")
 		}
 		if e.APIKeyID.IsNotNil() {
 			return errors.New("system audit entries cannot include an api key ID")
 		}
-	case "agent":
+	case principalAgent:
 		if e.APIKeyID.IsNotNil() {
 			return errors.New("agent audit entries cannot include an api key ID")
 		}
@@ -204,16 +276,8 @@ func (e *Entry) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 		TableAlias:      "ae",
 		UseSearchVector: false,
 		SearchableFields: []domaintypes.SearchableField{
+			{Name: "entity_ref", Type: domaintypes.FieldTypeText},
 			{Name: "comment", Type: domaintypes.FieldTypeText},
-			{Name: "ip_address", Type: domaintypes.FieldTypeText},
-			{Name: "user_agent", Type: domaintypes.FieldTypeText},
-			{Name: "correlation_id", Type: domaintypes.FieldTypeText},
-			{Name: "resource", Type: domaintypes.FieldTypeText},
-			{Name: "resource_id", Type: domaintypes.FieldTypeText},
-			{Name: "operation", Type: domaintypes.FieldTypeText},
-			{Name: "category", Type: domaintypes.FieldTypeEnum},
-			{Name: "critical", Type: domaintypes.FieldTypeBoolean},
-			{Name: "sensitive_data", Type: domaintypes.FieldTypeBoolean},
 		},
 	}
 }

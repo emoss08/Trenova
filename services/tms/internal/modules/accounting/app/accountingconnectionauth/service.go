@@ -378,7 +378,7 @@ func (s *Service) ConnectCompany(
 	}
 
 	s.kit.SyncIntegrationFlag(ctx, conn)
-	s.kit.LogAudit(
+	s.kit.LogAudit(ctx,
 		conn,
 		in.Owner.UserID,
 		previous,
@@ -757,7 +757,7 @@ func (s *Service) Disconnect(
 	}
 
 	s.kit.SyncIntegrationFlag(ctx, conn)
-	s.kit.LogAudit(
+	s.kit.LogAudit(ctx,
 		conn,
 		req.UserID,
 		previous,

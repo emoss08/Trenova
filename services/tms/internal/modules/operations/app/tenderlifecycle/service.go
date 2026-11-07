@@ -226,7 +226,7 @@ func (s *Service) DeclineOffer(
 		source,
 		shipmenteventservice.ActorFor(tenantInfo),
 	))
-	s.effects.LogAudit(&tendereffects.AuditParams{
+	s.effects.LogAudit(ctx, &tendereffects.AuditParams{
 		TenantInfo: tenantInfo,
 		TenderID:   offer.TenderID,
 		Operation:  permission.OpUpdate,
@@ -400,7 +400,7 @@ func (s *Service) AcceptOffer(
 		CorrelationID: offer.TenderID.String(),
 		Link:          tendereffects.DispatchConsoleOfferLink(offer),
 	})
-	s.effects.LogAudit(&tendereffects.AuditParams{
+	s.effects.LogAudit(ctx, &tendereffects.AuditParams{
 		TenantInfo: tenantInfo,
 		TenderID:   offer.TenderID,
 		Operation:  permission.OpUpdate,
@@ -609,7 +609,7 @@ func (s *Service) MarkNeedsReview(
 		CorrelationID: tenderID.String(),
 		Link:          tendereffects.DispatchConsoleOfferLink(offer),
 	})
-	s.effects.LogAudit(&tendereffects.AuditParams{
+	s.effects.LogAudit(ctx, &tendereffects.AuditParams{
 		TenantInfo: tenantInfo,
 		TenderID:   tenderID,
 		Operation:  permission.OpUpdate,
@@ -681,7 +681,7 @@ func (s *Service) MarkExhausted(
 		CorrelationID: entity.ID.String(),
 		Link:          tendereffects.DispatchConsoleMoveLink(entity.ShipmentMoveID),
 	})
-	s.effects.LogAudit(&tendereffects.AuditParams{
+	s.effects.LogAudit(ctx, &tendereffects.AuditParams{
 		TenantInfo: tenantInfo,
 		TenderID:   entity.ID,
 		Operation:  permission.OpUpdate,

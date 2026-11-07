@@ -305,7 +305,7 @@ func (s *Service) commitOne(
 	}
 	if verdict.Shadow() {
 		s.reopen(ctx, tenant, pending.ID)
-		s.logHeld(pending, verdict, actor.AuditActor())
+		s.logHeld(ctx, pending, verdict, actor.AuditActor())
 
 		return
 	}
@@ -410,7 +410,7 @@ func (s *Service) UndoOwnApproval(
 			continue
 		}
 		s.reopen(ctx, req.TenantInfo, *decision.ProposalID)
-		s.logUndo(decision, auditActor)
+		s.logUndo(ctx, decision, auditActor)
 		if proposal, getErr := s.proposalRepo.GetByID(
 			ctx,
 			agentproposalports.GetAgentProposalByIDRequest{
@@ -530,12 +530,16 @@ func errAlreadyCommitted() error {
 	)
 }
 
-func (s *Service) logUndo(decision *agentdecision.AgentDecision, actor kernelports.AuditActor) {
+func (s *Service) logUndo(
+	ctx context.Context,
+	decision *agentdecision.AgentDecision,
+	actor kernelports.AuditActor,
+) {
 	if decision.ProposalID == nil {
 		return
 	}
 
-	if err := s.audit.LogAction(&auditports.LogActionParams{
+	if err := s.audit.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceAgentProposal,
 		ResourceID:     decision.ProposalID.String(),
 		Operation:      permission.OpUpdate,

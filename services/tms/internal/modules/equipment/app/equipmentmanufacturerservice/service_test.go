@@ -80,7 +80,7 @@ func TestCreate_Success(t *testing.T) {
 	created.OrganizationID = entity.OrganizationID
 
 	deps.repo.On("Create", mock.Anything, mock.Anything).Return(created, nil)
-	deps.audit.On("LogAction", mock.Anything, mock.Anything).Return(nil)
+	deps.audit.On("LogAction", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 	result, err := deps.svc.Create(
 		ctx,
@@ -182,7 +182,7 @@ func TestBulkUpdateStatus_Success(t *testing.T) {
 		Return([]*equipmentmanufacturer.EquipmentManufacturer{original1, original2}, nil)
 	deps.repo.On("BulkUpdateStatus", mock.Anything, req).
 		Return([]*equipmentmanufacturer.EquipmentManufacturer{entity1, entity2}, nil)
-	deps.audit.On("LogActions", mock.Anything).Return(nil)
+	deps.audit.On("LogActions", mock.Anything, mock.Anything).Return(nil)
 
 	result, err := deps.svc.BulkUpdateStatus(ctx, req)
 

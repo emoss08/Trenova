@@ -336,7 +336,7 @@ func (s *Service) profileChanged(
 		pulid.Nil,
 		nil,
 	)
-	s.support.LogAudit(&auditports.LogActionParams{
+	s.support.LogAudit(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceCaptureProfile,
 		ResourceID:     profile.ID.String(),
 		Operation:      op,

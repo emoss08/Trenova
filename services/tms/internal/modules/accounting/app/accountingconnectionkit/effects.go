@@ -144,6 +144,7 @@ func (k *Kit) SyncIntegrationFlag(
 }
 
 func (k *Kit) LogAudit(
+	ctx context.Context,
 	conn *accountingconnection.AccountingConnection,
 	userID pulid.ID,
 	previous map[string]any,
@@ -160,7 +161,7 @@ func (k *Kit) LogAudit(
 		BusinessUnitID: conn.BusinessUnitID,
 		Critical:       true,
 	}
-	if err := k.audit.LogAction(params, auditservice.WithComment(comment)); err != nil {
+	if err := k.audit.LogAction(ctx, params, auditservice.WithComment(comment)); err != nil {
 		k.l.Error("failed to log accounting connection audit", zap.Error(err))
 	}
 }

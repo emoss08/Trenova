@@ -713,7 +713,7 @@ func (s *RemittanceService) record(
 		if before != nil {
 			entry.Previous = withoutLines(before)
 		}
-		s.rec.Log(actor, entry)
+		s.rec.Log(ctx, actor, entry)
 		s.rec.Publish(committedCtx, remittanceResource, withoutLines(updated), actor,
 			remittanceRealtimeEvent)
 	})

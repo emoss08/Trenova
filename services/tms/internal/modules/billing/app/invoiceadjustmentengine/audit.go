@@ -1,6 +1,8 @@
 package invoiceadjustmentengine
 
 import (
+	"context"
+
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -12,6 +14,7 @@ import (
 )
 
 func (s *Engine) LogAudit(
+	ctx context.Context,
 	entity *invoiceadjustment.InvoiceAdjustment,
 	actor *permissionports.RequestActor,
 	op permission.Operation,
@@ -20,7 +23,7 @@ func (s *Engine) LogAudit(
 	if entity == nil {
 		return
 	}
-	if err := s.auditService.LogAction(
+	if err := s.auditService.LogAction(ctx,
 		&auditports.LogActionParams{
 			Resource:       permission.ResourceInvoice,
 			ResourceID:     entity.ID.String(),

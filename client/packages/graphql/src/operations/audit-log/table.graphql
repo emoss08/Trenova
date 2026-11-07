@@ -1,21 +1,22 @@
 fragment AuditLogTableRowFields on AuditEntry {
   id
   userId
-  businessUnitId
-  organizationId
   timestamp
-  changes
-  previousState
-  currentState
-  metadata
   resource
   operation
+  action
   resourceId
+  entityRef
   correlationId
-  userAgent
   comment
   ipAddress
   category
+  retentionClass
+  channel
+  principalType
+  principalId
+  actorName
+  aiRunId
   sensitiveData
   critical
   user {
@@ -39,6 +40,49 @@ query AuditLogTable($input: DataTableConnectionInput!, $includeTotalCount: Boole
     totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
+    }
+  }
+}
+
+query AuditEntryDetail($id: ID!) @requiresRead(kind: "user") {
+  auditEntry(id: $id) {
+    ...AuditLogTableRowFields
+    userAgent
+    traceId
+    apiKeyId
+    changes
+    previousState
+    currentState
+    metadata
+  }
+}
+
+query AuditRequestEntries($input: DataTableConnectionInput!) @requiresRead(kind: "user") {
+  auditEntries(input: $input) {
+    edges {
+      node {
+        id
+        timestamp
+        resource
+        operation
+        action
+        resourceId
+        entityRef
+        comment
+      }
+    }
+  }
+}
+
+query AuditFieldHistory($resourceId: ID!, $field: String!, $input: DataTableConnectionInput!) @requiresRead(kind: "user") {
+  auditEntriesByResourceId(resourceId: $resourceId, field: $field, input: $input) {
+    edges {
+      node {
+        id
+        timestamp
+        actorName
+        changes
+      }
     }
   }
 }

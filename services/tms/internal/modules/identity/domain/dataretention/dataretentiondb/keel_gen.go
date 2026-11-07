@@ -26,7 +26,10 @@ var dataRetentionsTable = schema.Table{
 		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
 		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},
-		{Name: "audit_retention_period", Quoted: `"audit_retention_period"`, Field: "AuditRetentionPeriod", Kind: schema.KindInt64, Flags: 0, Label: `Audit Retention Period`, Doc: `In days`, JSON: `auditRetentionPeriod`},
+		{Name: "audit_access_retention_days", Quoted: `"audit_access_retention_days"`, Field: "AuditAccessRetentionDays", Kind: schema.KindInt64, Flags: 0, Label: `Audit Access Retention Days`, JSON: `auditAccessRetentionDays`},
+		{Name: "audit_operational_retention_days", Quoted: `"audit_operational_retention_days"`, Field: "AuditOperationalRetentionDays", Kind: schema.KindInt64, Flags: 0, Label: `Audit Operational Retention Days`, JSON: `auditOperationalRetentionDays`},
+		{Name: "audit_financial_retention_days", Quoted: `"audit_financial_retention_days"`, Field: "AuditFinancialRetentionDays", Kind: schema.KindInt64, Flags: 0, Label: `Audit Financial Retention Days`, JSON: `auditFinancialRetentionDays`},
+		{Name: "audit_security_retention_days", Quoted: `"audit_security_retention_days"`, Field: "AuditSecurityRetentionDays", Kind: schema.KindInt64, Flags: 0, Label: `Audit Security Retention Days`, JSON: `auditSecurityRetentionDays`},
 		{Name: "edi_inbound_file_retention_period", Quoted: `"edi_inbound_file_retention_period"`, Field: "EDIInboundFileRetentionPeriod", Kind: schema.KindInt64, Flags: 0, Label: `EDI Inbound File Retention Period`, Doc: `In days, 0 disables purging`, JSON: `ediInboundFileRetentionPeriod`},
 		{Name: "edi_message_retention_period", Quoted: `"edi_message_retention_period"`, Field: "EDIMessageRetentionPeriod", Kind: schema.KindInt64, Flags: 0, Label: `EDI Message Retention Period`, Doc: `In days, 0 disables purging`, JSON: `ediMessageRetentionPeriod`},
 		{Name: "driver_qualification_retention_period", Quoted: `"driver_qualification_retention_period"`, Field: "DriverQualificationRetentionPeriod", Kind: schema.KindInt64, Flags: 0, Label: `Driver Qualification Retention Period`, Doc: `DriverQualificationRetentionPeriod is how long a driver qualification file is held past termination before it is eligible for purge, in days. 1095 is the three years 49 CFR 391.51(d) requires; zero means the reader falls back to that, so an unset value can never make every terminated file look purgeable. Files are only ever flagged; nothing deletes one.`, JSON: `driverQualificationRetentionPeriod`},
@@ -40,14 +43,14 @@ var dataRetentionsTable = schema.Table{
 	},
 	PK:           []int32{0, 1, 2},
 	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 13},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 16},
 	Returning:    nil,
-	Version:      11,
+	Version:      14,
 	AutoID:       0,
-	AutoCreate:   12,
-	AutoUpdate:   13,
+	AutoCreate:   15,
+	AutoUpdate:   16,
 	IDPrefix:     "dr_",
 	New:          newDataRetention,
 	NewN:         newNDataRetention,
@@ -65,7 +68,10 @@ type DataRetentionsTable struct {
 	ID                                 keelkinds.PulidIDCol
 	BusinessUnitID                     keelkinds.PulidIDCol
 	OrganizationID                     keelkinds.PulidIDCol
-	AuditRetentionPeriod               keel.Int64Col
+	AuditAccessRetentionDays           keel.Int64Col
+	AuditOperationalRetentionDays      keel.Int64Col
+	AuditFinancialRetentionDays        keel.Int64Col
+	AuditSecurityRetentionDays         keel.Int64Col
 	EDIInboundFileRetentionPeriod      keel.Int64Col
 	EDIMessageRetentionPeriod          keel.Int64Col
 	DriverQualificationRetentionPeriod keel.Int64Col
@@ -84,17 +90,20 @@ var DataRetentions = &DataRetentionsTable{
 	ID:                                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &dataRetentionsRef, Index: 0}}},
 	BusinessUnitID:                     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &dataRetentionsRef, Index: 1}}},
 	OrganizationID:                     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &dataRetentionsRef, Index: 2}}},
-	AuditRetentionPeriod:               keel.Int64Col{Col: keel.Col{Ref: &dataRetentionsRef, Index: 3}},
-	EDIInboundFileRetentionPeriod:      keel.Int64Col{Col: keel.Col{Ref: &dataRetentionsRef, Index: 4}},
-	EDIMessageRetentionPeriod:          keel.Int64Col{Col: keel.Col{Ref: &dataRetentionsRef, Index: 5}},
-	DriverQualificationRetentionPeriod: keel.Int64Col{Col: keel.Col{Ref: &dataRetentionsRef, Index: 6}},
-	AgentEvalCaseRetentionPeriod:       keel.Int64Col{Col: keel.Col{Ref: &dataRetentionsRef, Index: 7}},
-	AIFeedbackRetentionPeriod:          keel.Int64Col{Col: keel.Col{Ref: &dataRetentionsRef, Index: 8}},
-	AIAuditRetentionPeriod:             keel.Int64Col{Col: keel.Col{Ref: &dataRetentionsRef, Index: 9}},
-	AICorrectionRetentionPeriod:        keel.Int64Col{Col: keel.Col{Ref: &dataRetentionsRef, Index: 10}},
-	Version:                            keel.Int64Col{Col: keel.Col{Ref: &dataRetentionsRef, Index: 11}},
-	CreatedAt:                          keel.Int64Col{Col: keel.Col{Ref: &dataRetentionsRef, Index: 12}},
-	UpdatedAt:                          keel.Int64Col{Col: keel.Col{Ref: &dataRetentionsRef, Index: 13}},
+	AuditAccessRetentionDays:           keel.Int64Col{Col: keel.Col{Ref: &dataRetentionsRef, Index: 3}},
+	AuditOperationalRetentionDays:      keel.Int64Col{Col: keel.Col{Ref: &dataRetentionsRef, Index: 4}},
+	AuditFinancialRetentionDays:        keel.Int64Col{Col: keel.Col{Ref: &dataRetentionsRef, Index: 5}},
+	AuditSecurityRetentionDays:         keel.Int64Col{Col: keel.Col{Ref: &dataRetentionsRef, Index: 6}},
+	EDIInboundFileRetentionPeriod:      keel.Int64Col{Col: keel.Col{Ref: &dataRetentionsRef, Index: 7}},
+	EDIMessageRetentionPeriod:          keel.Int64Col{Col: keel.Col{Ref: &dataRetentionsRef, Index: 8}},
+	DriverQualificationRetentionPeriod: keel.Int64Col{Col: keel.Col{Ref: &dataRetentionsRef, Index: 9}},
+	AgentEvalCaseRetentionPeriod:       keel.Int64Col{Col: keel.Col{Ref: &dataRetentionsRef, Index: 10}},
+	AIFeedbackRetentionPeriod:          keel.Int64Col{Col: keel.Col{Ref: &dataRetentionsRef, Index: 11}},
+	AIAuditRetentionPeriod:             keel.Int64Col{Col: keel.Col{Ref: &dataRetentionsRef, Index: 12}},
+	AICorrectionRetentionPeriod:        keel.Int64Col{Col: keel.Col{Ref: &dataRetentionsRef, Index: 13}},
+	Version:                            keel.Int64Col{Col: keel.Col{Ref: &dataRetentionsRef, Index: 14}},
+	CreatedAt:                          keel.Int64Col{Col: keel.Col{Ref: &dataRetentionsRef, Index: 15}},
+	UpdatedAt:                          keel.Int64Col{Col: keel.Col{Ref: &dataRetentionsRef, Index: 16}},
 }
 
 // BuildDataRetentions builds the table of data_retention for ref. Generated relation and alias methods call it.
@@ -104,17 +113,20 @@ func BuildDataRetentions(r *keel.Ref) *DataRetentionsTable {
 		ID:                                 keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
 		BusinessUnitID:                     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
 		OrganizationID:                     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		AuditRetentionPeriod:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 3}},
-		EDIInboundFileRetentionPeriod:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 4}},
-		EDIMessageRetentionPeriod:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 5}},
-		DriverQualificationRetentionPeriod: keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
-		AgentEvalCaseRetentionPeriod:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
-		AIFeedbackRetentionPeriod:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
-		AIAuditRetentionPeriod:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
-		AICorrectionRetentionPeriod:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
-		Version:                            keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
-		CreatedAt:                          keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
-		UpdatedAt:                          keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
+		AuditAccessRetentionDays:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 3}},
+		AuditOperationalRetentionDays:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 4}},
+		AuditFinancialRetentionDays:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 5}},
+		AuditSecurityRetentionDays:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
+		EDIInboundFileRetentionPeriod:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
+		EDIMessageRetentionPeriod:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
+		DriverQualificationRetentionPeriod: keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
+		AgentEvalCaseRetentionPeriod:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
+		AIFeedbackRetentionPeriod:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
+		AIAuditRetentionPeriod:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
+		AICorrectionRetentionPeriod:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
+		Version:                            keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
+		CreatedAt:                          keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
+		UpdatedAt:                          keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
 	}
 }
 
@@ -512,26 +524,32 @@ func ptrDataRetention(p unsafe.Pointer, c int32) any {
 	case 2:
 		return (*string)(unsafe.Pointer(&r.OrganizationID))
 	case 3:
-		return (*int64)(unsafe.Pointer(&r.AuditRetentionPeriod))
+		return (*int64)(unsafe.Pointer(&r.AuditAccessRetentionDays))
 	case 4:
-		return (*int64)(unsafe.Pointer(&r.EDIInboundFileRetentionPeriod))
+		return (*int64)(unsafe.Pointer(&r.AuditOperationalRetentionDays))
 	case 5:
-		return (*int64)(unsafe.Pointer(&r.EDIMessageRetentionPeriod))
+		return (*int64)(unsafe.Pointer(&r.AuditFinancialRetentionDays))
 	case 6:
-		return (*int64)(unsafe.Pointer(&r.DriverQualificationRetentionPeriod))
+		return (*int64)(unsafe.Pointer(&r.AuditSecurityRetentionDays))
 	case 7:
-		return (*int64)(unsafe.Pointer(&r.AgentEvalCaseRetentionPeriod))
+		return (*int64)(unsafe.Pointer(&r.EDIInboundFileRetentionPeriod))
 	case 8:
-		return (*int64)(unsafe.Pointer(&r.AIFeedbackRetentionPeriod))
+		return (*int64)(unsafe.Pointer(&r.EDIMessageRetentionPeriod))
 	case 9:
-		return (*int64)(unsafe.Pointer(&r.AIAuditRetentionPeriod))
+		return (*int64)(unsafe.Pointer(&r.DriverQualificationRetentionPeriod))
 	case 10:
-		return (*int64)(unsafe.Pointer(&r.AICorrectionRetentionPeriod))
+		return (*int64)(unsafe.Pointer(&r.AgentEvalCaseRetentionPeriod))
 	case 11:
-		return &r.Version
+		return (*int64)(unsafe.Pointer(&r.AIFeedbackRetentionPeriod))
 	case 12:
-		return &r.CreatedAt
+		return (*int64)(unsafe.Pointer(&r.AIAuditRetentionPeriod))
 	case 13:
+		return (*int64)(unsafe.Pointer(&r.AICorrectionRetentionPeriod))
+	case 14:
+		return &r.Version
+	case 15:
+		return &r.CreatedAt
+	case 16:
 		return &r.UpdatedAt
 	}
 	return nil
@@ -547,26 +565,32 @@ func valueDataRetention(p unsafe.Pointer, c int32) any {
 	case 2:
 		return string(r.OrganizationID)
 	case 3:
-		return int64(r.AuditRetentionPeriod)
+		return int64(r.AuditAccessRetentionDays)
 	case 4:
-		return int64(r.EDIInboundFileRetentionPeriod)
+		return int64(r.AuditOperationalRetentionDays)
 	case 5:
-		return int64(r.EDIMessageRetentionPeriod)
+		return int64(r.AuditFinancialRetentionDays)
 	case 6:
-		return int64(r.DriverQualificationRetentionPeriod)
+		return int64(r.AuditSecurityRetentionDays)
 	case 7:
-		return int64(r.AgentEvalCaseRetentionPeriod)
+		return int64(r.EDIInboundFileRetentionPeriod)
 	case 8:
-		return int64(r.AIFeedbackRetentionPeriod)
+		return int64(r.EDIMessageRetentionPeriod)
 	case 9:
-		return int64(r.AIAuditRetentionPeriod)
+		return int64(r.DriverQualificationRetentionPeriod)
 	case 10:
-		return int64(r.AICorrectionRetentionPeriod)
+		return int64(r.AgentEvalCaseRetentionPeriod)
 	case 11:
-		return r.Version
+		return int64(r.AIFeedbackRetentionPeriod)
 	case 12:
-		return r.CreatedAt
+		return int64(r.AIAuditRetentionPeriod)
 	case 13:
+		return int64(r.AICorrectionRetentionPeriod)
+	case 14:
+		return r.Version
+	case 15:
+		return r.CreatedAt
+	case 16:
 		return r.UpdatedAt
 	}
 	return nil

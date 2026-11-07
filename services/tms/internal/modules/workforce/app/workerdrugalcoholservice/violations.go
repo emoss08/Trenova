@@ -84,7 +84,7 @@ func (s *Service) RecordViolation(
 		return nil, err
 	}
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resource:   permission.ResourceWorkerDOTTest,
 		resourceID: created.ID.String(),
 		operation:  permission.OpCreate,
@@ -168,7 +168,7 @@ func (s *Service) UpdateViolation(
 		return nil, err
 	}
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resource:   permission.ResourceWorkerDOTTest,
 		resourceID: updated.ID.String(),
 		operation:  permission.OpUpdate,
@@ -224,7 +224,7 @@ func (s *Service) openViolationFor(
 		return err
 	}
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resource:   permission.ResourceWorkerDOTTest,
 		resourceID: created.ID.String(),
 		operation:  permission.OpCreate,
@@ -267,7 +267,7 @@ func (s *Service) applyReturnToDuty(
 	}
 
 	tenantInfo := violationTenant(updated)
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resource:   permission.ResourceWorkerDOTTest,
 		resourceID: updated.ID.String(),
 		operation:  permission.OpUpdate,
@@ -305,7 +305,7 @@ func (s *Service) applyFollowUp(
 	}
 
 	tenantInfo := violationTenant(updated)
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resource:   permission.ResourceWorkerDOTTest,
 		resourceID: updated.ID.String(),
 		operation:  permission.OpUpdate,

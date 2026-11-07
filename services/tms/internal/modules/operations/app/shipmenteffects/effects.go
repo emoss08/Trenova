@@ -244,6 +244,7 @@ func (s *Effects) CheckDuplicateBOLsWithControl(
 }
 
 func (s *Effects) LogShipmentAction(
+	ctx context.Context,
 	entity shipmentTenantResource,
 	actor kernelports.AuditActor,
 	operation permission.Operation,
@@ -269,7 +270,7 @@ func (s *Effects) LogShipmentAction(
 		params.PreviousState = jsonutils.MustToJSON(previous)
 	}
 
-	return s.auditService.LogAction(params, opts...)
+	return s.auditService.LogAction(ctx, params, opts...)
 }
 
 func (s *Effects) RecordShipmentEvent(

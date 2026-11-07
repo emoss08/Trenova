@@ -131,7 +131,7 @@ func (s *Service) announceEscalation(
 		CorrelationID: created.ID.String(),
 		Link:          tendereffects.DispatchConsoleMoveLink(created.ShipmentMoveID),
 	})
-	s.effects.LogAudit(&tendereffects.AuditParams{
+	s.effects.LogAudit(ctx, &tendereffects.AuditParams{
 		TenantInfo: tenantInfo,
 		TenderID:   created.ID,
 		Operation:  permission.OpCreate,

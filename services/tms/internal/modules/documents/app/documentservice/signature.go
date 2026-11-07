@@ -96,7 +96,7 @@ func (s *Service) SetSignature(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&auditports.LogActionParams{
+	if err = s.auditService.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceDocument,
 		ResourceID:     updated.ID.String(),
 		Operation:      permission.OpUpdate,
@@ -108,7 +108,6 @@ func (s *Service) SetSignature(
 	},
 		auditservice.WithComment(signatureAuditComments[updated.SignatureStatus]),
 		auditservice.WithDiff(current, updated),
-		auditservice.WithRequest(ctx),
 		auditservice.WithMetadata(map[string]any{
 			metadataResourceID:   updated.ResourceID,
 			metadataResourceType: updated.ResourceType,

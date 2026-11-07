@@ -80,7 +80,7 @@ func (s *Service) Update(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(
+	if err = s.auditService.LogAction(ctx,
 		&auditports.LogActionParams{
 			Resource:       permission.ResourceDataEntryControl,
 			ResourceID:     updatedEntity.GetID().String(),
