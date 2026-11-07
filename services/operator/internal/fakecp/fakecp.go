@@ -27,6 +27,13 @@ import (
 	"github.com/emoss08/trenova/operator/internal/instanceapi"
 )
 
+const maxReadings = 1000
+
+type usageKey struct {
+	meter string
+	hour  time.Time
+}
+
 type Server struct {
 	InstanceID uuid.UUID
 
@@ -41,6 +48,14 @@ type Server struct {
 	revision    int64
 	spec        instanceapi.InstanceSpec
 	reports     []instanceapi.StatusReport
+	usage       []instanceapi.UsageReport
+	readings    map[usageKey]int64
+	ack         *instanceapi.UsageAck
+	usageFail   int
+	escrowed    instanceapi.InstanceSecrets
+	secretCalls int
+	secretsFail int
+	failStatus  int
 	renewals    int
 	limited     int
 	unavailable int
@@ -83,8 +98,10 @@ func New(p *Params) (*Server, error) {
 		url:        p.URL,
 		valid:      map[string]bool{},
 		used:       map[string]bool{},
+		readings:   map[usageKey]int64{},
 		revision:   1,
 		spec:       p.Spec,
+		escrowed:   Secrets(),
 		lifetime:   30 * 24 * time.Hour,
 	}
 	if s.server, err = s.serverCertificate(p.Hosts); err != nil {
@@ -136,6 +153,8 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /v1/spec", s.getSpec)
 	mux.HandleFunc("PUT /v1/status", s.putStatus)
 	mux.HandleFunc("POST /v1/certificate", s.renew)
+	mux.HandleFunc("POST /v1/usage", s.reportUsage)
+	mux.HandleFunc("GET /v1/secrets", s.getSecrets)
 	return s.authenticate(mux)
 }
 
@@ -216,6 +235,42 @@ func (s *Server) Reports() []instanceapi.StatusReport {
 	return append([]instanceapi.StatusReport(nil), s.reports...)
 }
 
+func (s *Server) UsageReports() []instanceapi.UsageReport {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return append([]instanceapi.UsageReport(nil), s.usage...)
+}
+
+func (s *Server) SetUsageAck(ack *instanceapi.UsageAck) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.ack = ack
+}
+
+func (s *Server) FailUsageNext(n int) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.usageFail = n
+}
+
+func (s *Server) SetSecrets(v instanceapi.InstanceSecrets) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.escrowed = v
+}
+
+func (s *Server) FailSecretsNext(n, status int) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.secretsFail, s.failStatus = n, status
+}
+
+func (s *Server) SecretCalls() int {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.secretCalls
+}
+
 func (s *Server) Renewals() int {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -290,7 +345,36 @@ func (s *Server) getSpec(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("ETag", etag)
-	write(w, http.StatusOK, instanceapi.DesiredSpec{Revision: rev, Spec: spec})
+	write(w, instanceapi.DesiredSpec{Revision: rev, Spec: spec})
+}
+
+func (s *Server) getSecrets(w http.ResponseWriter, _ *http.Request) {
+	s.mu.Lock()
+	s.secretCalls++
+	escrowed, status := s.escrowed, s.failStatus
+	fail := s.secretsFail > 0
+	if fail {
+		s.secretsFail--
+	}
+	s.mu.Unlock()
+	if fail {
+		failSecrets(w, status)
+		return
+	}
+	w.Header().Set("Cache-Control", "no-store")
+	write(w, escrowed)
+}
+
+func failSecrets(w http.ResponseWriter, status int) {
+	switch status {
+	case http.StatusUnauthorized:
+		problem(w, status, "unauthenticated")
+	case http.StatusTooManyRequests:
+		w.Header().Set("Retry-After", "1")
+		problem(w, status, "rate_limited")
+	default:
+		problem(w, status, "internal")
+	}
 }
 
 func (s *Server) putStatus(w http.ResponseWriter, r *http.Request) {
@@ -303,6 +387,66 @@ func (s *Server) putStatus(w http.ResponseWriter, r *http.Request) {
 	s.reports = append(s.reports, report)
 	s.mu.Unlock()
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (s *Server) reportUsage(w http.ResponseWriter, r *http.Request) {
+	var report instanceapi.UsageReport
+	if err := sonic.ConfigDefault.NewDecoder(r.Body).Decode(&report); err != nil ||
+		len(report.Readings) > maxReadings {
+		problem(w, http.StatusBadRequest, "invalid_request")
+		return
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.usageFail > 0 {
+		s.usageFail--
+		problem(w, http.StatusInternalServerError, "internal")
+		return
+	}
+	s.usage = append(s.usage, report)
+	for _, rd := range report.Readings {
+		s.readings[usageKey{meter: rd.Meter, hour: rd.Hour.UTC()}] = rd.Quantity
+	}
+	if s.ack != nil {
+		write(w, s.ack)
+		return
+	}
+	write(w, s.defaultAck(time.Now().UTC()))
+}
+
+func (s *Server) defaultAck(now time.Time) instanceapi.UsageAck {
+	start := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, time.UTC)
+	window := instanceapi.UsageWindow{Start: start, End: start.AddDate(0, 1, 0)}
+	ack := instanceapi.UsageAck{
+		Window:  &window,
+		Overage: true,
+		Meters:  make([]instanceapi.MeterUsage, 0, len(s.spec.Allowances)),
+	}
+	for _, a := range s.spec.Allowances {
+		var quantity int64
+		var latest time.Time
+		for k, q := range s.readings {
+			if k.meter != a.Meter || k.hour.Before(window.Start) || !k.hour.Before(window.End) {
+				continue
+			}
+			if a.Unit != instanceapi.SpecAllowanceUnitBytes {
+				quantity += q
+				continue
+			}
+			if !k.hour.Before(latest) {
+				quantity, latest = q, k.hour
+			}
+		}
+		ack.Meters = append(ack.Meters, instanceapi.MeterUsage{
+			Meter:     a.Meter,
+			Unit:      instanceapi.MeterUsageUnit(a.Unit),
+			Quantity:  quantity,
+			Allowance: a.Quantity,
+			HardCap:   a.HardCap,
+			Stopped:   a.HardCap && quantity >= a.Quantity,
+		})
+	}
+	return ack
 }
 
 func (s *Server) renew(w http.ResponseWriter, r *http.Request) {
@@ -326,7 +470,7 @@ func (s *Server) renew(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.markValid(certPEM)
-	write(w, http.StatusOK, instanceapi.IssuedCertificate{
+	write(w, instanceapi.IssuedCertificate{
 		Certificate: string(certPEM),
 		CaBundle:    string(s.caPEM),
 		NotAfter:    time.Now().Add(lifetime),
@@ -377,14 +521,14 @@ func (s *Server) sign(pub *ecdsa.PublicKey, lifetime time.Duration) ([]byte, err
 	return pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: der}), nil
 }
 
-func write(w http.ResponseWriter, status int, body any) {
+func write(w http.ResponseWriter, body any) {
 	out, err := sonic.Marshal(body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
+	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write(out)
 }
 
@@ -398,6 +542,15 @@ func problem(w http.ResponseWriter, status int, code string) {
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(status)
 	_, _ = w.Write(out)
+}
+
+func Secrets() instanceapi.InstanceSecrets {
+	return instanceapi.InstanceSecrets{
+		EncryptionKey:         "fake-encryption-key-0123456789abcdefghijklmnopqrstuvwxyz",
+		RlsScopeKeyId:         "k20261107",
+		RlsScopeKey:           "ZmFrZS1zY29wZS1rZXktMDEyMzQ1Njc4OWFiY2RlZmdoaWprbG1ub3A=",
+		MfaRecoveryCodePepper: "fake-recovery-code-pepper-0123456789abcdefghijklmnop",
+	}
 }
 
 func Spec(instanceID uuid.UUID) instanceapi.InstanceSpec {

@@ -17,6 +17,16 @@ storageDomain: ""
 # Cloud's operator stops a suspended or decommissioned instance this way.
 stopped: false
 
+# Trenova Cloud's managed mode: the API serves the operator's usage API on port
+# 8090, behind a bearer token the chart generates into the app Secret
+# (managedToken; with secrets.existingSecret, put it there). The operator turns
+# it on; leave it off on a self-hosted install.
+managed:
+  enabled: false
+  # Who may reach port 8090, as NetworkPolicy peers: the operator's namespace.
+  # Required while enabled; the chart refuses to open the port to everyone.
+  from: []
+
 # Applied to every pod the chart makes.
 imagePullSecrets: []
 nodeSelector: {}
@@ -49,6 +59,12 @@ secrets:
   #   gotenbergPassword        what the TMS and Gotenberg authenticate with
   #   bootstrapAdminPassword   while bootstrap.adminEmail is set
   existingSecret: ""
+  # The Secret holding the four escrowed keys (encryptionKey, rlsScopeKeyId,
+  # rlsScopeKey, mfaRecoveryCodePepper), set by the Trenova Cloud operator,
+  # which fetches them from the control plane before it installs. While set,
+  # the TMS reads those four from it and the app Secret leaves them out. Empty:
+  # they come from the app Secret, and the chart generates them as above.
+  escrowSecret: ""
 
 tms:
   image:

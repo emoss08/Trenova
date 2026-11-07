@@ -36,6 +36,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/aiproviderrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/airetrievalrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/aituneuprepository"
+	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/aiusagemeter"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/aiusagerepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/analysisrunrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/assistantartifactrepository"
@@ -269,6 +270,7 @@ func SharedOptions() fx.Option {
 				fx.As(new(assistantports.BoardFiller)),
 			),
 			aiusagerepository.New,
+			aiusagemeter.New,
 			aiauditrepository.New,
 			aiauditrepository.NewSource,
 			aiauditrepository.NewExport,

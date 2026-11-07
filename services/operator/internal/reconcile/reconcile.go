@@ -16,12 +16,16 @@ import (
 	"github.com/emoss08/trenova/operator/internal/health"
 	"github.com/emoss08/trenova/operator/internal/instanceapi"
 	"github.com/emoss08/trenova/operator/internal/release"
+	"github.com/emoss08/trenova/operator/internal/usage"
 	"github.com/emoss08/trenova/operator/internal/values"
 )
 
 const (
 	maxComponents = 50
 	maxMessage    = 500
+	usageRetry    = time.Minute
+	usageTimeout  = time.Minute
+	defaultUsage  = 15 * time.Minute
 )
 
 type ControlPlane interface {
@@ -49,18 +53,31 @@ type Health interface {
 	Check(ctx context.Context, p health.CheckParams) ([]health.Component, error)
 }
 
+type Escrow interface {
+	Ensure(ctx context.Context) error
+}
+
+type Usage interface {
+	Run(ctx context.Context, allowances []instanceapi.SpecAllowance) (usage.Result, error)
+}
+
 type Loop struct {
 	cp       ControlPlane
 	creds    Credentials
 	charts   Charts
 	releases Releases
 	health   Health
+	escrow   Escrow
+	usage    Usage
 	base     map[string]any
+	ownNS    string
 	logger   *slog.Logger
 	now      func() time.Time
 	poll     time.Duration
 	report   time.Duration
+	every    time.Duration
 
+	usageNext  time.Time
 	etag       string
 	desired    *controlplane.Desired
 	applied    int64
@@ -78,11 +95,15 @@ type Params struct {
 	Charts       Charts
 	Releases     Releases
 	Health       Health
+	Escrow       Escrow
+	Usage        Usage
 	Base         map[string]any
+	Namespace    string
 	Logger       *slog.Logger
 	Now          func() time.Time
 	Poll         time.Duration
 	Report       time.Duration
+	UsageEvery   time.Duration
 }
 
 func New(p *Params) *Loop {
@@ -90,17 +111,25 @@ func New(p *Params) *Loop {
 	if now == nil {
 		now = time.Now
 	}
+	every := p.UsageEvery
+	if every <= 0 {
+		every = defaultUsage
+	}
 	return &Loop{
 		cp:       p.ControlPlane,
 		creds:    p.Credentials,
 		charts:   p.Charts,
 		releases: p.Releases,
 		health:   p.Health,
+		escrow:   p.Escrow,
+		usage:    p.Usage,
 		base:     p.Base,
+		ownNS:    p.Namespace,
 		logger:   p.Logger,
 		now:      now,
 		poll:     p.Poll,
 		report:   p.Report,
+		every:    every,
 	}
 }
 
@@ -173,7 +202,10 @@ func (l *Loop) Tick(ctx context.Context) {
 	if l.desired == nil {
 		return
 	}
-	report := l.converge(ctx)
+	report, ok := l.converge(ctx)
+	if !ok {
+		return
+	}
 	l.heartbeat.Store(l.now().UnixNano())
 	if l.shouldReport(report) {
 		if err = l.cp.ReportStatus(ctx, report); err != nil {
@@ -184,21 +216,75 @@ func (l *Loop) Tick(ctx context.Context) {
 		}
 		l.last, l.lastSent, l.reported = report, l.now(), true
 	}
+	l.relayUsage(ctx, report.Ready)
 }
 
-func (l *Loop) converge(ctx context.Context) instanceapi.StatusReport {
+func (l *Loop) relayUsage(ctx context.Context, ready bool) {
+	if l.usage == nil || !ready || l.desired.Spec.Lifecycle != instanceapi.Active ||
+		l.now().Before(l.usageNext) {
+		return
+	}
+	run, cancel := context.WithTimeout(ctx, usageTimeout)
+	defer cancel()
+	res, err := l.usage.Run(run, l.desired.Spec.Allowances)
+	if err == nil {
+		l.usageNext = l.now().Add(l.every)
+		l.logger.Debug(
+			"usage relayed",
+			"readings", res.Readings,
+			"dropped", res.Dropped,
+			"meters", res.Meters,
+		)
+		return
+	}
+	l.usageNext = l.now().Add(usageRetry)
+	var later *controlplane.RetryLaterError
+	switch {
+	case errors.As(err, &later):
+		l.usageNext = l.now().Add(max(later.RetryAfter, usageRetry))
+		l.logger.Warn(
+			"the control plane asks to wait before the next usage report",
+			"reason", later.Reason,
+			"retryAfter", later.RetryAfter,
+		)
+	case errors.Is(err, controlplane.ErrUnauthenticated):
+		l.handle(ctx, err)
+	default:
+		l.logger.Warn("cannot relay usage; retrying in a minute", "error", err)
+	}
+}
+
+func (l *Loop) converge(ctx context.Context) (instanceapi.StatusReport, bool) {
 	report := instanceapi.StatusReport{Components: []instanceapi.ComponentStatus{}}
 	if own := l.creds.InstanceID(); l.desired.Spec.InstanceId != own {
 		return l.notReady(report, fmt.Sprintf(
 			"the spec is for instance %s and this operator is instance %s",
 			l.desired.Spec.InstanceId,
 			own,
-		))
+		)), true
 	}
-	rendered, err := values.Render(&l.desired.Spec, l.base)
+	rendered, err := values.Render(&l.desired.Spec, l.base, l.ownNS)
 	if err != nil {
-		return l.notReady(report, err.Error())
+		return l.notReady(report, err.Error()), true
 	}
+	if err = l.escrow.Ensure(ctx); err != nil {
+		if l.handle(ctx, err) {
+			return report, false
+		}
+		l.logger.Error("cannot keep the escrowed secrets; nothing is applied", "error", err)
+		return l.notReady(
+			report,
+			"nothing is applied without the escrowed secrets: "+err.Error(),
+		), true
+	}
+	return l.apply(ctx, report, rendered), true
+}
+
+func (l *Loop) apply(
+	ctx context.Context,
+	report instanceapi.StatusReport,
+	rendered values.Rendered,
+) instanceapi.StatusReport {
 	ch, err := l.charts.Load(rendered.Version)
 	if err != nil {
 		return l.notReady(report, err.Error())

@@ -166,6 +166,11 @@ Supply your own Secrets (`secrets.existingSecret`, `postgres.existingSecret`,
   nothing back there and would generate new values on every render;
 - the secrets are held elsewhere: a vault, External Secrets, or Trenova Cloud's control plane.
 
+Trenova Cloud's operator sets `secrets.escrowSecret` as well: the encryption key, the row-level
+security scope key and its ID, and the MFA recovery code pepper are then read from that Secret,
+which the operator restores from the control plane's escrow before it installs, and the app
+Secret leaves them out. Leave it empty on a self-hosted install.
+
 `values.yaml` lists the keys each Secret must hold. A key a new release adds is generated on the
 upgrade that adds it, but a Secret you manage has to gain it first: until it does, the pods that
 read the key don't start.
@@ -202,6 +207,10 @@ and ClamAV keep outbound access for AI providers, email, integrations and signat
 
 `networkPolicy.apiFrom` narrows who may reach the API (by default, any pod in the cluster),
 and `networkPolicy.metricsFrom` admits a Prometheus to port 9090 on the API and worker.
+
+`managed.enabled` is for Trenova Cloud's operator, which turns it on: the API then serves a
+usage API on port 8090 behind a generated token, reachable only from the peers in
+`managed.from`. Leave it off on a self-hosted install.
 
 ## Upgrades
 

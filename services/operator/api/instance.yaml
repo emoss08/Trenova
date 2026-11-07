@@ -152,6 +152,34 @@ paths:
         "429":
           $ref: "#/components/responses/RateLimited"
 
+  /v1/secrets:
+    get:
+      operationId: getSecrets
+      summary: The instance's escrowed secrets
+      description: |
+        The secrets that make the instance's data readable, which the control plane keeps in escrow:
+        the TMS encryption key, the row-level security scope key and its ID, and the MFA recovery
+        code pepper. The answer is the same every time, so an instance that is reinstalled, or
+        restored from a backup onto new infrastructure, still reads its data. Fetch them when the
+        cluster holds no copy, keep them only in a Secret, and never log them. The first fetch makes
+        them.
+      responses:
+        "200":
+          description: The secrets.
+          headers:
+            Cache-Control:
+              description: Always `no-store`.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InstanceSecrets"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
 components:
   responses:
     Invalid:
@@ -518,6 +546,32 @@ components:
           type: string
           maxLength: 8192
           description: A PEM certificate request, signed by the new key.
+
+    InstanceSecrets:
+      type: object
+      required: [encryptionKey, rlsScopeKeyId, rlsScopeKey, mfaRecoveryCodePepper]
+      properties:
+        encryptionKey:
+          type: string
+          minLength: 32
+          maxLength: 128
+          description: The TMS's `security.encryption.key`.
+        rlsScopeKeyId:
+          type: string
+          minLength: 1
+          maxLength: 32
+          pattern: "^[A-Za-z0-9_-]{1,32}$"
+          description: The TMS's `database.rls.scopeKeyId`.
+        rlsScopeKey:
+          type: string
+          minLength: 44
+          maxLength: 128
+          description: The TMS's `database.rls.scopeKey`, standard base64 of at least 32 random bytes.
+        mfaRecoveryCodePepper:
+          type: string
+          minLength: 32
+          maxLength: 128
+          description: The TMS's `security.mfa.recoveryCodePepper`.
 
     IssuedCertificate:
       type: object

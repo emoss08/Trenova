@@ -2,17 +2,21 @@ package kernel
 
 import (
 	"github.com/emoss08/trenova/internal/infrastructure/config/importsconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/managedconfig"
+	"github.com/emoss08/trenova/internal/modules/kernel/adapters/postgres/managedusagerepository"
 	"github.com/emoss08/trenova/internal/modules/kernel/adapters/postgres/recordvisibilityrepository"
 	"github.com/emoss08/trenova/internal/modules/kernel/adapters/postgres/settingversionrepository"
 	"github.com/emoss08/trenova/internal/modules/kernel/adapters/postgres/usstaterepository"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/editioninfo"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/entitlementservice"
+	"github.com/emoss08/trenova/internal/modules/kernel/app/managedusageservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/platformbillingservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/realtimeservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/usageservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/usstateservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/versionservice"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/managedusageports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/platformcatalogports"
 	"github.com/emoss08/trenova/pkg/rateimport"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -38,10 +42,10 @@ func SharedOptions() fx.Option {
 				platformbillingservice.NewLocalBillingProvider,
 				fx.As(new(platformcatalogports.BillingProvider)),
 			),
-			fx.Annotate(
-				usageservice.NewNoopUsageProvider,
-				fx.As(new(platformcatalogports.UsageProvider)),
-			),
+			managedusagerepository.New,
+			managedusageservice.New,
+			func(s *managedusageservice.Service) managedusageports.Gate { return s },
+			usageProvider,
 			usstateservice.New,
 			spreadsheetLimits,
 			timeutils.SystemClock,
@@ -51,6 +55,16 @@ func SharedOptions() fx.Option {
 
 func APIOptions() fx.Option {
 	return fx.Options()
+}
+
+func usageProvider(
+	cfg *managedconfig.Config,
+	gate managedusageports.Gate,
+) platformcatalogports.UsageProvider {
+	if cfg.Enabled {
+		return usageservice.NewManagedUsageProvider(gate)
+	}
+	return usageservice.NewNoopUsageProvider()
 }
 
 func spreadsheetLimits(cfg *importsconfig.Config) rateimport.Limits {

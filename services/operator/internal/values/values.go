@@ -14,6 +14,13 @@ import (
 const SchemaVersion = 1
 
 const (
+	chartName   = "trenova"
+	maxFullname = 40
+)
+
+const EscrowSecret = "trenova-escrow"
+
+const (
 	keyPostgres = "postgres"
 	keyTMS      = "tms"
 	keyRedis    = "redis"
@@ -36,7 +43,14 @@ type Rendered struct {
 	Values  map[string]any
 }
 
-func Render(spec *instanceapi.InstanceSpec, base map[string]any) (Rendered, error) {
+func Render(
+	spec *instanceapi.InstanceSpec,
+	base map[string]any,
+	operatorNamespace string,
+) (Rendered, error) {
+	if operatorNamespace == "" {
+		return Rendered{}, errors.New("the operator's namespace is needed to admit it to the TMS")
+	}
 	if int(spec.SchemaVersion) != SchemaVersion {
 		return Rendered{}, fmt.Errorf(
 			"%w: %d (it knows %d)",
@@ -68,6 +82,8 @@ func Render(spec *instanceapi.InstanceSpec, base map[string]any) (Rendered, erro
 		keyTMS:          map[string]any{"instanceId": spec.InstanceId.String()},
 		"docling":       map[string]any{"enabled": docling},
 		keyPostgres:     map[string]any{"hibernate": hibernate},
+		"managed":       managed(operatorNamespace),
+		"secrets":       map[string]any{"escrowSecret": EscrowSecret},
 	})
 	sized, err := size(sizeInput{
 		vcpu:      spec.Plan.Vcpu,
@@ -82,6 +98,45 @@ func Render(spec *instanceapi.InstanceSpec, base map[string]any) (Rendered, erro
 	}
 	merge(out, sized)
 	return Rendered{Version: spec.Release.Version, Values: out}, nil
+}
+
+func managed(operatorNamespace string) map[string]any {
+	return map[string]any{
+		"enabled": true,
+		"from": []any{
+			map[string]any{
+				"namespaceSelector": map[string]any{
+					"matchLabels": map[string]any{
+						"kubernetes.io/metadata.name": operatorNamespace,
+					},
+				},
+			},
+		},
+	}
+}
+
+func Fullname(release string) string {
+	name := release + "-" + chartName
+	if strings.Contains(release, chartName) {
+		name = release
+	}
+	if len(name) > maxFullname {
+		name = name[:maxFullname]
+	}
+	return strings.TrimSuffix(name, "-")
+}
+
+func AppSecret(release string, base map[string]any) string {
+	if secrets, ok := base["secrets"].(map[string]any); ok {
+		if name, isString := secrets["existingSecret"].(string); isString && name != "" {
+			return name
+		}
+	}
+	return Fullname(release) + "-secrets"
+}
+
+func APIService(release string) string {
+	return Fullname(release) + "-api"
 }
 
 func lifecycle(l instanceapi.InstanceSpecLifecycle) (stopped, hibernate bool, err error) {

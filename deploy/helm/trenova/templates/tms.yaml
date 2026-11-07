@@ -15,6 +15,11 @@ spec:
     - name: http
       port: 8080
       targetPort: http
+    {{- if $.Values.managed.enabled }}
+    - name: managed
+      port: 8090
+      targetPort: managed
+    {{- end }}
 ---
 {{- end }}
 apiVersion: apps/v1
@@ -61,6 +66,10 @@ spec:
             {{- if eq $role "api" }}
             - name: http
               containerPort: 8080
+            {{- if $.Values.managed.enabled }}
+            - name: managed
+              containerPort: 8090
+            {{- end }}
             {{- end }}
             - name: monitoring
               containerPort: 9090

@@ -7,6 +7,7 @@ type PlanKey string
 const (
 	PlanKeyFreeDemo  = PlanKey("free_demo")
 	PlanKeyUnlimited = PlanKey("unlimited")
+	PlanKeyManaged   = PlanKey("managed")
 )
 
 func AllPlanKeys() []PlanKey {
@@ -109,6 +110,7 @@ const (
 	OriginSelfHosted   = Origin("self_hosted")
 	OriginInternal     = Origin("internal")
 	OriginSubscription = Origin("subscription")
+	OriginManaged      = Origin("managed")
 )
 
 const (

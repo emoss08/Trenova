@@ -52,6 +52,9 @@ trenovaValues:
 pollInterval: 15s
 # At most 1m: the control plane expects a report every minute.
 reportInterval: 1m
+# How often usage is relayed from the TMS to the control plane, and its answer
+# back; at most 15m: a usage window is billed 30 minutes after it ends.
+usageInterval: 15m
 logLevel: info
 
 resources:

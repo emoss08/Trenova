@@ -105,3 +105,108 @@ func TestAnUnreadySpecAsksToRetry(t *testing.T) {
 	require.NoError(t, err)
 	require.True(t, changed)
 }
+
+func TestReportUsageReturnsTheAck(t *testing.T) {
+	t.Parallel()
+	cp, c := client(t)
+	hour := time.Now().UTC().Truncate(time.Hour)
+	window := instanceapi.UsageWindow{Start: hour.Add(-time.Hour), End: hour.Add(time.Hour)}
+	cp.SetUsageAck(&instanceapi.UsageAck{
+		Window:  &window,
+		Overage: true,
+		Meters: []instanceapi.MeterUsage{{
+			Meter: "shipments", Unit: instanceapi.MeterUsageUnitCount, Quantity: 3, Allowance: 10,
+		}},
+	})
+
+	ack, err := c.ReportUsage(t.Context(), instanceapi.UsageReport{
+		Readings: []instanceapi.UsageReading{{Meter: "shipments", Hour: hour, Quantity: 3}},
+	})
+	require.NoError(t, err)
+	require.True(t, ack.Overage)
+	require.NotNil(t, ack.Window)
+	require.True(t, ack.Window.Start.Equal(window.Start))
+	require.Equal(t, int64(3), ack.Meters[0].Quantity)
+	require.Len(t, cp.UsageReports(), 1)
+
+	empty := instanceapi.UsageReport{Readings: []instanceapi.UsageReading{}}
+	cp.RateLimitNext(1)
+	_, err = c.ReportUsage(t.Context(), empty)
+	var later *controlplane.RetryLaterError
+	require.ErrorAs(t, err, &later)
+
+	cp.FailUsageNext(1)
+	_, err = c.ReportUsage(t.Context(), empty)
+	var pe *controlplane.ProblemError
+	require.ErrorAs(t, err, &pe)
+	require.Equal(t, http.StatusInternalServerError, pe.Status)
+
+	cp.RevokeAll()
+	_, err = c.ReportUsage(t.Context(), empty)
+	require.ErrorIs(t, err, controlplane.ErrUnauthenticated)
+}
+
+func TestSecretsAreTheSameOnEveryCall(t *testing.T) {
+	t.Parallel()
+	cp, c := client(t)
+	first, err := c.Secrets(t.Context())
+	require.NoError(t, err)
+	require.Equal(t, controlplanetest.Secrets(), first)
+	second, err := c.Secrets(t.Context())
+	require.NoError(t, err)
+	require.Equal(t, first, second)
+	require.Equal(t, 2, cp.SecretCalls())
+}
+
+func TestSecretsFailures(t *testing.T) {
+	t.Parallel()
+	cases := []struct {
+		name   string
+		status int
+		check  func(t *testing.T, err error)
+	}{
+		{
+			name:   "rate limited",
+			status: http.StatusTooManyRequests,
+			check: func(t *testing.T, err error) {
+				var later *controlplane.RetryLaterError
+				require.ErrorAs(t, err, &later)
+				require.Equal(t, time.Second, later.RetryAfter)
+			},
+		},
+		{
+			name:   "refused certificate",
+			status: http.StatusUnauthorized,
+			check: func(t *testing.T, err error) {
+				require.ErrorIs(t, err, controlplane.ErrUnauthenticated)
+			},
+		},
+		{
+			name:   "server error",
+			status: http.StatusInternalServerError,
+			check: func(t *testing.T, err error) {
+				var pe *controlplane.ProblemError
+				require.ErrorAs(t, err, &pe)
+				require.Equal(t, http.StatusInternalServerError, pe.Status)
+			},
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			cp, c := client(t)
+			cp.FailSecretsNext(1, tc.status)
+			_, err := c.Secrets(t.Context())
+			tc.check(t, err)
+			for _, v := range []string{
+				controlplanetest.Secrets().EncryptionKey,
+				controlplanetest.Secrets().RlsScopeKey,
+			} {
+				require.NotContains(t, err.Error(), v)
+			}
+			got, err := c.Secrets(t.Context())
+			require.NoError(t, err)
+			require.Equal(t, controlplanetest.Secrets(), got)
+		})
+	}
+}

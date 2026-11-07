@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config/importsconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/integrationconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/loggingconfig"
+	"github.com/emoss08/trenova/internal/infrastructure/config/managedconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/monitoringconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/platformconfig"
 	"github.com/emoss08/trenova/internal/infrastructure/config/portalconfig"
@@ -67,4 +68,5 @@ var SectionProviders = fx.Provide(
 	func(c *Config) *integrationconfig.Config { return &c.Integrations },
 	func(c *Config) *importsconfig.Config { return &c.Imports },
 	func(c *Config) *contentscanconfig.Config { return &c.ContentScan },
+	func(c *Config) *managedconfig.Config { return &c.Managed },
 )

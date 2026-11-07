@@ -1,6 +1,12 @@
 package rlslint
 
 var allowed = map[string]string{
+	"internal/modules/kernel/adapters/postgres/managedusagerepository/state.go:repository.Get": "read the usage state the control plane set for this instance",
+	"internal/modules/kernel/adapters/postgres/managedusagerepository/state.go:repository.Save": "record the usage state the control plane set for this instance",
+	"internal/modules/operations/adapters/postgres/shipmentmeter/shipmentmeter.go:counter.CountByHour": "count the shipments created each hour on this managed instance",
+	"internal/modules/agent/adapters/postgres/aiusagemeter/aiusagemeter.go:spend.CountByHour": "add up the AI spend of each hour on this managed instance",
+	"internal/modules/agent/adapters/postgres/aiusagemeter/aiusagemeter.go:extractions.CountByHour": "count the Document Intelligence extractions of each hour on this managed instance",
+	"internal/modules/documents/adapters/postgres/documentmeter/documentmeter.go:storage.Level": "add up the bytes of every stored document on this managed instance",
 	"internal/modules/documents/adapters/postgres/capturerepository/device.go:deviceRepository.ListActiveByUser":                                                "find a person's active capture devices in every organization when they lose access",
 	"internal/modules/documents/app/capturedevices/pairing.go:Service.ExchangePairing":                                                                          "exchange an approved pairing, which belongs to no organization until now, for its device",
 	"internal/modules/edi/app/editransferchangeservice/transfer_changes.go:Service.reviewTransferChange":                                                        "apply a reviewed transfer change to the linked shipments of both organizations in one transaction",
