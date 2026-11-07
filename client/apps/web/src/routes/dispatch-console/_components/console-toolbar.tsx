@@ -89,9 +89,9 @@ export function ConsoleToolbar({ freshness }: { freshness: BoardFreshness }) {
 
   return (
     // One line on a wide screen, the search giving up width first; it wraps only when it must.
-    <div className="border-border bg-card flex flex-wrap items-center gap-x-2 gap-y-1.5 border-b px-4 py-2 xl:flex-nowrap">
+    <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 border-b border-border bg-background px-4 py-2 xl:flex-nowrap">
       <ConsoleStatusLine freshness={freshness} />
-      <span className="bg-border h-4 w-px shrink-0" aria-hidden />
+      <span className="h-4 w-px shrink-0 bg-border" aria-hidden />
 
       <div className="flex shrink-0 items-center gap-1">
         <Button
@@ -128,10 +128,10 @@ export function ConsoleToolbar({ freshness }: { freshness: BoardFreshness }) {
 
       <Popover>
         <PopoverTrigger
-          className="hover:bg-surface-hover ui-focus-ring flex shrink-0 items-center gap-1.5 rounded-md px-1.5 py-0.5 text-xs font-medium whitespace-nowrap transition-colors"
+          className="flex shrink-0 items-center gap-1.5 rounded-md ui-focus-ring px-1.5 py-0.5 text-xs font-medium whitespace-nowrap transition-colors hover:bg-surface-hover"
           aria-label={t("Jump to date")}
         >
-          <CalendarIcon className="text-muted-foreground size-3" />
+          <CalendarIcon className="size-3 text-muted-foreground" />
           {formatRangeLabelForDays(anchor, zoom, locale)}
         </PopoverTrigger>
         <PopoverContent align="start" className="w-auto p-0">
@@ -147,7 +147,7 @@ export function ConsoleToolbar({ freshness }: { freshness: BoardFreshness }) {
       <div
         role="group"
         aria-label={t("Window length")}
-        className="border-border inline-flex shrink-0 overflow-hidden rounded-md border whitespace-nowrap"
+        className="inline-flex shrink-0 overflow-hidden rounded-md border border-border whitespace-nowrap"
       >
         {TIMELINE_ZOOM_OPTIONS.map((option, index) => (
           <button
@@ -156,8 +156,8 @@ export function ConsoleToolbar({ freshness }: { freshness: BoardFreshness }) {
             onClick={() => setZoom(option.id)}
             aria-pressed={zoom === option.id}
             className={cn(
-              "ui-inset-focus-ring px-2 py-1 text-xs transition-colors",
-              index > 0 && "border-border border-l",
+              "px-2 py-1 text-xs ui-inset-focus-ring transition-colors",
+              index > 0 && "border-l border-border",
               zoom === option.id
                 ? "bg-muted text-foreground"
                 : "bg-background text-muted-foreground hover:text-foreground",
@@ -168,7 +168,7 @@ export function ConsoleToolbar({ freshness }: { freshness: BoardFreshness }) {
         ))}
       </div>
 
-      <span className="bg-border h-4 w-px shrink-0" aria-hidden />
+      <span className="h-4 w-px shrink-0 bg-border" aria-hidden />
 
       <Input
         ref={searchRef}
@@ -190,7 +190,7 @@ export function ConsoleToolbar({ freshness }: { freshness: BoardFreshness }) {
             ? t("Search drivers by name, tractor code, or fleet")
             : t("Search moves by PRO, customer or city")
         }
-        leftElement={<SearchLgIcon className="text-muted-foreground size-3.5" />}
+        leftElement={<SearchLgIcon className="size-3.5 text-muted-foreground" />}
         rightElement={<Kbd className="h-4 min-w-4 text-3xs">/</Kbd>}
         inputContainerClassName="w-60 min-w-40 shrink"
         className="h-7 text-xs md:text-xs"
@@ -225,7 +225,7 @@ export function ConsoleToolbar({ freshness }: { freshness: BoardFreshness }) {
         />
       </div>
 
-      <label className="text-muted-foreground ml-auto flex shrink-0 items-center gap-1.5 text-xs whitespace-nowrap">
+      <label className="ml-auto flex shrink-0 items-center gap-1.5 text-xs whitespace-nowrap text-muted-foreground">
         <Switch checked={includeCovered} onCheckedChange={setIncludeCovered} />
         {t("Show covered")}
       </label>

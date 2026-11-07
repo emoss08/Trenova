@@ -12,7 +12,6 @@ import { DRIVER_GRID_CLASS, DriverQueue } from "./driver-queue";
 import { QUEUE_GRID_CLASS } from "./console-skeletons";
 import { ExceptionList } from "./exception-list";
 import { MoveQueue, QUEUE_COLUMNS, QueueEmpty, QueueOutcome, type QueueRead } from "./move-queue";
-import { OutlookList } from "./outlook-list";
 import type { DispatchOutcome } from "./use-dispatch-actions";
 import { useDispatchRail, type QueueTab } from "./url-state";
 
@@ -43,15 +42,15 @@ function TabButton({
       tabIndex={active ? 0 : -1}
       onClick={() => onSelect(id)}
       className={cn(
-        "ui-inset-focus-ring -mb-px inline-flex h-10 items-center gap-1.5 border-b-2 text-xs font-medium transition-colors",
+        "-mb-px inline-flex h-10 items-center gap-1.5 border-b-2 text-xs font-medium ui-inset-focus-ring transition-colors",
         active
           ? "border-foreground text-foreground"
-          : "text-muted-foreground hover:text-foreground border-transparent",
+          : "border-transparent text-muted-foreground hover:text-foreground",
       )}
     >
       {label}
       {count !== null ? (
-        <span className="text-muted-foreground font-normal tabular-nums">{count}</span>
+        <span className="font-normal text-muted-foreground tabular-nums">{count}</span>
       ) : null}
     </button>
   );
@@ -62,7 +61,7 @@ function KeyLegend() {
   const key = (label: string) => <Kbd className="h-4 min-w-4 text-3xs">{label}</Kbd>;
 
   return (
-    <div className="border-border text-muted-foreground bg-card flex flex-wrap gap-x-4 gap-y-1 border-t px-3.5 py-2 text-2xs">
+    <div className="flex flex-wrap gap-x-4 gap-y-1 border-t border-border bg-card px-3.5 py-2 text-2xs text-muted-foreground">
       <span className="inline-flex items-center gap-1">
         {key("J")}
         {key("K")}
@@ -152,9 +151,8 @@ export function QueuePane({
 }) {
   const t = useT();
 
-  // Drivers and the freight outlook are about employed drivers, so only a fleet sees them.
-  const activeTab: QueueTab =
-    (tab === "drivers" || tab === "outlook") && !showsDrivers ? "moves" : tab;
+  // Drivers are employed drivers, so only a fleet sees them.
+  const activeTab: QueueTab = tab === "drivers" && !showsDrivers ? "moves" : tab;
   const { capacityFilter, driverSearch, setCapacityFilter, setDriverSearch } = useDispatchRail();
   // The column heading and the key legend belong to rows; the skeleton, the error sheet
   // and the empty sheet draw their own.
@@ -168,11 +166,11 @@ export function QueuePane({
 
   return (
     <section
-      className="bg-card flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
+      className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-background"
       aria-label={t("Dispatch queue")}
     >
       <div
-        className="border-border flex h-10 shrink-0 items-end gap-4.5 border-b px-3.5"
+        className="flex h-10 shrink-0 items-end gap-4.5 border-b border-border px-3.5"
         role="tablist"
         aria-label={t("Queue")}
       >
@@ -205,22 +203,11 @@ export function QueuePane({
             onSelect={onTab}
           />
         ) : null}
-        {showsDrivers ? (
-          <TabButton
-            id="outlook"
-            active={activeTab === "outlook"}
-            label={t("Outlook")}
-            count={null}
-            onSelect={onTab}
-          />
-        ) : null}
-        <span className="text-muted-foreground mb-3 ml-auto flex items-center gap-1.5 text-2xs">
+        <span className="mb-3 ml-auto flex items-center gap-1.5 text-2xs text-muted-foreground">
           {activeTab === "moves" ? (
             t("Ordered by the next decision")
           ) : activeTab === "exceptions" ? (
             t("Soonest due first, from the Watchtower")
-          ) : activeTab === "outlook" ? (
-            t("Next 48 hours, most short of drivers first")
           ) : capacityFilter !== "all" ? (
             <>
               {t("Showing {0} only", t(capacityLabel(capacityFilter)))}
@@ -249,7 +236,7 @@ export function QueuePane({
                 aria-hidden
                 className={cn(
                   QUEUE_GRID_CLASS,
-                  "bg-muted/40 border-border text-muted-foreground h-7.5 shrink-0 items-center border-b pr-5.5 pl-3.5 text-2xs font-medium",
+                  "h-7.5 shrink-0 items-center border-b border-border bg-background uppercase pr-5.5 pl-3.5 text-2xs font-medium text-muted-foreground",
                 )}
               >
                 <span>{t("Pickup")}</span>
@@ -287,8 +274,6 @@ export function QueuePane({
           </>
         ) : activeTab === "exceptions" ? (
           <ExceptionList items={exceptions} hasMore={exceptionsMore} read={exceptionsRead} />
-        ) : activeTab === "outlook" ? (
-          <OutlookList />
         ) : (
           <>
             {!read.isPending && drivers.length > 0 ? (
@@ -296,7 +281,7 @@ export function QueuePane({
                 aria-hidden
                 className={cn(
                   DRIVER_GRID_CLASS,
-                  "bg-muted/40 border-border text-muted-foreground h-7.5 shrink-0 items-center border-b pr-5.5 pl-3.5 text-2xs font-medium",
+                  "h-7.5 shrink-0 items-center border-b border-border bg-muted/40 pr-5.5 pl-3.5 text-2xs font-medium text-muted-foreground",
                 )}
               >
                 <span>{t("Driver")}</span>

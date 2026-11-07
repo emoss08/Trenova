@@ -79,11 +79,11 @@ function NextStep({ move }: { move: DispatchBoardMove }) {
     return (
       <>
         <div className="flex min-w-0 items-center gap-1.5">
-          <span className="text-muted-foreground truncate">
+          <span className="truncate text-muted-foreground">
             {t("Can't dispatch until the hold is released")}
           </span>
         </div>
-        <div className="text-muted-foreground truncate text-2xs">{t("Shipment on hold")}</div>
+        <div className="truncate text-2xs text-muted-foreground">{t("Shipment on hold")}</div>
       </>
     );
   }
@@ -104,7 +104,7 @@ function NextStep({ move }: { move: DispatchBoardMove }) {
           </Badge>
           <span className="truncate">{meta.label}</span>
         </div>
-        <div className="text-muted-foreground truncate text-2xs">
+        <div className="truncate text-2xs text-muted-foreground">
           {t(
             "{0, plural, one {# carrier offered} other {# carriers offered}}",
             move.liveTender.offerCount,
@@ -118,10 +118,10 @@ function NextStep({ move }: { move: DispatchBoardMove }) {
     return move.coverageType === "carrier" ? (
       <>
         <div className="flex min-w-0 items-center gap-1.5">
-          <Building07Icon className="text-muted-foreground size-3 shrink-0" aria-hidden />
+          <Building07Icon className="size-3 shrink-0 text-muted-foreground" aria-hidden />
           <span className="truncate font-medium">{move.assignedCarrierName}</span>
         </div>
-        <div className="text-muted-foreground truncate text-2xs">
+        <div className="truncate text-2xs text-muted-foreground">
           {move.carrierTotalCost != null
             ? t("Covered by carrier · {0}", formatCompactCurrency(move.carrierTotalCost))
             : t("Covered by carrier")}
@@ -130,14 +130,14 @@ function NextStep({ move }: { move: DispatchBoardMove }) {
     ) : (
       <>
         <div className="flex min-w-0 items-center gap-1.5">
-          <CheckCircleIcon className="text-success-foreground size-3 shrink-0" aria-hidden />
+          <CheckCircleIcon className="size-3 shrink-0 text-success-foreground" aria-hidden />
           <span className="truncate font-medium">
             {move.assignedTractorCode
               ? t("{0} · {1}", move.assignedWorkerName, move.assignedTractorCode)
               : move.assignedWorkerName}
           </span>
         </div>
-        <div className="text-muted-foreground truncate text-2xs">{t("Covered")}</div>
+        <div className="truncate text-2xs text-muted-foreground">{t("Covered")}</div>
       </>
     );
   }
@@ -151,11 +151,11 @@ function NextStep({ move }: { move: DispatchBoardMove }) {
           <span className={cn("truncate font-medium", proposal.stale && "text-muted-foreground")}>
             {proposal.workerName || t("A driver")}
           </span>
-          <span className="text-muted-foreground ml-auto shrink-0 font-mono text-xs tabular-nums">
+          <span className="ml-auto shrink-0 font-mono text-xs text-muted-foreground tabular-nums">
             {t("{0}%", Math.round(proposal.confidence * 100))}
           </span>
         </div>
-        <div className="text-muted-foreground truncate text-2xs">
+        <div className="truncate text-2xs text-muted-foreground">
           {proposal.stale
             ? t("The move changed since this was proposed; the next plan replaces it")
             : proposal.rationale}
@@ -169,14 +169,14 @@ function NextStep({ move }: { move: DispatchBoardMove }) {
     return (
       <>
         <div className="flex min-w-0 items-center gap-1.5">
-          <AlertTriangleIcon className="text-warning-foreground size-3 shrink-0" aria-hidden />
+          <AlertTriangleIcon className="size-3 shrink-0 text-warning-foreground" aria-hidden />
           <span className="truncate font-medium">
             {failed.workerName
               ? t("Approved {0}; not assigned", failed.workerName)
               : t("Approved; not assigned")}
           </span>
         </div>
-        <div className="text-muted-foreground truncate text-2xs" title={failed.reason}>
+        <div className="truncate text-2xs text-muted-foreground" title={failed.reason}>
           {failed.reason}
         </div>
       </>
@@ -186,9 +186,9 @@ function NextStep({ move }: { move: DispatchBoardMove }) {
   return (
     <>
       <div className="flex min-w-0 items-center gap-1.5">
-        <span className="text-muted-foreground truncate">{t("No proposal yet")}</span>
+        <span className="truncate text-muted-foreground">{t("No proposal yet")}</span>
       </div>
-      <div className="text-muted-foreground truncate text-2xs">{t("Open it to rank drivers")}</div>
+      <div className="truncate text-2xs text-muted-foreground">{t("Open it to rank drivers")}</div>
     </>
   );
 }
@@ -273,7 +273,7 @@ function QueueRow({
           }}
           className={cn(
             QUEUE_GRID_CLASS,
-            "ui-focus-ring relative mx-1.5 cursor-pointer items-center rounded-md px-2 py-1.75 text-xs",
+            "relative mx-1.5 cursor-pointer items-center rounded-md ui-focus-ring px-2 py-1.75 text-xs",
             isSelected && "bg-surface-hover",
           )}
         >
@@ -281,7 +281,7 @@ function QueueRow({
             <span className={cn("block truncate font-medium", PICKUP_TONE_CLASS[pickup.tone])}>
               {pickup.headline}
             </span>
-            <span className="text-muted-foreground block truncate text-2xs">{pickup.window}</span>
+            <span className="block truncate text-2xs text-muted-foreground">{pickup.window}</span>
           </div>
           <div className="min-w-0">
             <div className="flex min-w-0 items-center gap-2">
@@ -289,7 +289,7 @@ function QueueRow({
               <span className="truncate">{lane(move)}</span>
               <MoveFlags move={move} />
             </div>
-            <div className="text-muted-foreground truncate text-2xs">{moveFacts(move)}</div>
+            <div className="truncate text-2xs text-muted-foreground">{moveFacts(move)}</div>
           </div>
           <div className="min-w-0">
             <NextStep move={move} />
@@ -316,12 +316,12 @@ export function GroupHeading({
     // groups; once rows scroll under it, its rule eases in with the scroll area's top fade.
     <div
       role="presentation"
-      className="bg-background flex h-7 items-center gap-2 border-y border-transparent px-3.5 text-2xs font-medium transition-[border-color] duration-300 ease-settle group-data-stuck/vrow:border-b-border"
+      className="flex h-7 items-center gap-2 border-y border-transparent bg-card px-3.5 text-2xs font-medium transition-[border-color] duration-300 ease-settle group-data-stuck/vrow:border-b-border"
     >
       <span className={cn("size-1.5 rounded-full", dotClass)} aria-hidden />
       <span>{label}</span>
-      <span className="text-muted-foreground font-normal">{description}</span>
-      <span className="text-muted-foreground ml-auto font-normal tabular-nums">{count}</span>
+      <span className="font-normal text-muted-foreground">{description}</span>
+      <span className="ml-auto font-normal text-muted-foreground tabular-nums">{count}</span>
     </div>
   );
 }
@@ -486,7 +486,7 @@ export function MoveQueue({
       role="listbox"
       aria-label={t("Moves that need a decision")}
       hoverGlide
-      mask="card"
+      mask="background"
       maskClassName="top-7"
       maskHeight={18}
       className="min-h-0 flex-1"
