@@ -2,6 +2,7 @@ package agentruntime
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/modelstream"
@@ -182,4 +183,52 @@ func TestOpenTurn_DelegatedTurnWatchesNothing(t *testing.T) {
 	})
 
 	assert.Nil(t, turn.world)
+}
+
+func TestDrive_AChangeToARefusedRecordLetsTheSameCallRunAgain(t *testing.T) {
+	t.Parallel()
+
+	const invoiceID = "inv_01J9BLOCKEDBLOCKEDBLOCKED0"
+	feed := &fakeChangeFeed{head: "0.1-0", changes: []realtimeports.WatchedRecordChange{{
+		RecordID:    invoiceID,
+		Resource:    "audited:invoice",
+		Action:      "updated",
+		ActorType:   string(permissionports.PrincipalTypeUser),
+		ActorUserID: pulid.MustNew("usr_").String(),
+	}}}
+	check := queryTool("billing_check_posting", nil, errors.New("the shipment has no POD"))
+	arguments := map[string]any{"invoiceId": invoiceID}
+	completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
+		runtimetest.ToolTurn("billing_check_posting", arguments),
+		runtimetest.ToolTurn("billing_check_posting", arguments),
+		runtimetest.TextTurn("It is still blocked."),
+	}}
+	rt := newRuntime(completion,
+		&stubQueryRegistry{Tools: []agenttoolports.AgentQueryTool{check}},
+		&stubActionRegistry{}, nil)
+	rt.changes = feed
+
+	turn := rt.OpenTurn(t.Context(), &agentruntimeports.RunRequest{
+		Definition: runtimetest.Definition("billing_check_posting"),
+		Actor:      runtimetest.Actor(),
+		Input:      "Post INV-1001.",
+	})
+	require.NotNil(t, turn.world)
+	fx := &clockedEffects{
+		localEffects: &localEffects{
+			s:    rt,
+			ctx:  t.Context(),
+			emit: func(kernelports.StreamEvent) {},
+		},
+		now: turn.world.CheckedAt,
+	}
+
+	_, err := rt.Drive(turn, fx)
+	require.NoError(t, err)
+
+	require.NotEmpty(t, feed.asked, "the refused call's record is watched")
+	assert.Contains(t, feed.asked[0].Records, invoiceID)
+	assert.Equal(t, 2, check.Calls,
+		"once the record changed, the identical call runs instead of being answered "+
+			"with the earlier failure")
 }

@@ -1,5 +1,6 @@
 const googleMapsPinLogo = "/integrations/logos/googleMaps.svg";
 import { useT } from "@trenova/shared/i18n/use-t";
+import { InputField } from "@/components/fields/input-field";
 import { SensitiveField } from "@/components/fields/sensitive-field";
 import { ExternalLink } from "@/components/link";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -31,6 +32,7 @@ export function GoogleMapsForm({ open, onClose }: { open: boolean; onClose: () =
       enabled: false,
       configuration: {
         apiKey: "",
+        mapId: "",
       },
     },
   });
@@ -48,6 +50,7 @@ export function GoogleMapsForm({ open, onClose }: { open: boolean; onClose: () =
       enabled: response.enabled,
       configuration: {
         apiKey: "",
+        mapId: response.fields?.find((field) => field.key === "mapId")?.value ?? "",
       },
     });
   }, [open, response, reset]);
@@ -64,6 +67,9 @@ export function GoogleMapsForm({ open, onClose }: { open: boolean; onClose: () =
         }),
         queryClient.invalidateQueries({
           queryKey: integration.catalog().queryKey,
+        }),
+        queryClient.invalidateQueries({
+          queryKey: integration.runtimeConfig("GoogleMaps").queryKey,
         }),
       ]);
     },
@@ -102,6 +108,17 @@ export function GoogleMapsForm({ open, onClose }: { open: boolean; onClose: () =
               label={hasApiKey ? t("API Key (leave blank to keep existing key)") : t("API Key")}
               autoComplete="off"
               placeholder={hasApiKey ? "********" : "Enter your Google Maps API Key"}
+            />
+          </FormControl>
+          <FormControl cols="full">
+            <InputField
+              name="configuration.mapId"
+              control={control}
+              label={t("Map ID")}
+              autoComplete="off"
+              description={t(
+                "Styles every map in light and dark. Create it in the same Google Cloud project as the key, under Map management, with a light and a dark style.",
+              )}
             />
           </FormControl>
         </FormGroup>

@@ -1,4 +1,4 @@
-import { useMapId } from "@/hooks/use-map-id";
+import { useMapStyle } from "@/hooks/use-map-style";
 import { integration } from "@/lib/queries/integration";
 import { useQuery } from "@tanstack/react-query";
 import { AdvancedMarker, APIProvider, Map } from "@vis.gl/react-google-maps";
@@ -9,11 +9,11 @@ interface LazyMapProps {
 }
 
 export default function LazyMap({ apiKey, position }: LazyMapProps) {
-  const mapId = useMapId();
+  const { mapId, colorScheme } = useMapStyle();
 
   return (
     <APIProvider apiKey={apiKey}>
-      <Map defaultCenter={position} defaultZoom={17} mapId={mapId}>
+      <Map defaultCenter={position} defaultZoom={17} mapId={mapId} colorScheme={colorScheme}>
         <AdvancedMarker position={position} />
       </Map>
     </APIProvider>

@@ -1,7 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import googleMapsEmptyState from "@/assets/integrations/empty-state/map-preview.webp";
 import { Button } from "@trenova/shared/components/ui/button";
-import { useMapId } from "@/hooks/use-map-id";
+import { useMapStyle } from "@/hooks/use-map-style";
 import { locationGeofenceTypeChoices } from "@/lib/choices";
 import { DEFAULT_ZOOM, US_CENTER } from "@trenova/shared/lib/constants";
 import { integration } from "@/lib/queries/integration";
@@ -229,7 +229,7 @@ export function LocationGeofenceMap({ className }: { className?: string }) {
     state.hasPermission(Resource.Integration, Operation.Create),
   );
 
-  const mapId = useMapId();
+  const { mapId, colorScheme } = useMapStyle();
   const {
     geofenceType,
     geofenceRadiusMeters,
@@ -280,6 +280,7 @@ export function LocationGeofenceMap({ className }: { className?: string }) {
         <APIProvider apiKey={googleMapsQuery.data.config.apiKey}>
           <Map
             mapId={mapId}
+            colorScheme={colorScheme}
             defaultCenter={center}
             defaultZoom={latitude != null && longitude != null ? LOCATION_ZOOM : DEFAULT_ZOOM}
             gestureHandling="greedy"

@@ -18,6 +18,8 @@ const KIND_ICONS: Record<AgentWaitKind, DeskIconName> = {
   PortalRun: "globe",
   DocumentRead: "file",
   WebWatch: "radar",
+  RecordChanged: "edit",
+  ReportRun: "table",
 };
 
 /**
@@ -26,7 +28,9 @@ const KIND_ICONS: Record<AgentWaitKind, DeskIconName> = {
  * it. Nothing is running while these wait; the agent comes back on its own.
  * A portal task stopped at a sign-in code the portal sent the person shows
  * where to enter it. A web watch's wait ends only with its watch, so its
- * action stops the watch rather than cancelling the wait.
+ * action stops the watch rather than cancelling the wait. A record change
+ * picks up once someone has changed the record the agent was held up on,
+ * and a report once the run it started finishes.
  */
 export function DeskWaits({ waits, timezone }: { waits: ConversationWaits; timezone: string }) {
   const t = useT();
@@ -121,6 +125,10 @@ function kindLabel(kind: AgentWaitKind, t: TranslateFn): string {
       return t("A file");
     case "WebWatch":
       return t("A web watch");
+    case "RecordChanged":
+      return t("A record change");
+    case "ReportRun":
+      return t("A report");
   }
 }
 
@@ -129,6 +137,15 @@ function whenText(wait: AgentWait, timezone: string, t: TranslateFn): string {
   // back the moment the reading finishes, not at that time.
   if (wait.kind === "DocumentRead") {
     return t("Being read");
+  }
+  // A report's wait comes due only to look at the run again, and a record's
+  // never comes due: each picks up the moment its run finishes or its record
+  // changes.
+  if (wait.kind === "ReportRun") {
+    return t("Running");
+  }
+  if (wait.kind === "RecordChanged") {
+    return t("Picks up when it changes; gives up {0}", turnTime(wait.expiresAt, timezone, t));
   }
   if (wait.signInCode) {
     return t("Waiting for your sign-in code");

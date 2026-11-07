@@ -463,6 +463,7 @@ export type AiUsageFeature =
   | 'AgentRecommendation'
   | 'AgentReflection'
   | 'AgentTurn'
+  | 'AgentWakeUp'
   | 'BillingQueueBrief'
   | 'BillingQueueReview'
   | 'BillingQueueSearch'
@@ -13287,7 +13288,7 @@ export type DispatchFreightAreaQueryVariables = Exact<{
 }>;
 
 
-export type DispatchFreightAreaQuery = { dispatchFreightArea: { generatedAt: number, slotStart: number, recent: Array<number>, recentLow: number, recentHigh: number, deliveryLocationIds: Array<string>, quality: { ' $fragmentRefs'?: { 'DispatchForecastQualityFieldsFragment': DispatchForecastQualityFieldsFragment } }, area: { ' $fragmentRefs'?: { 'DispatchFreightAreaFieldsFragment': DispatchFreightAreaFieldsFragment } }, reach: Array<{ workerId: string, workerName: string, label: string, latitude: number, longitude: number, freeAt: number, arriveAt: number, miles: number, netCents: number, reach: DispatchFreightReachKind }>, moves: Array<{ ' $fragmentRefs'?: { 'DispatchFreightMoveFieldsFragment': DispatchFreightMoveFieldsFragment } }>, pace: Array<{ ' $fragmentRefs'?: { 'DispatchFreightPaceFieldsFragment': DispatchFreightPaceFieldsFragment } }>, positionings: Array<{ ' $fragmentRefs'?: { 'DispatchPositioningFieldsFragment': DispatchPositioningFieldsFragment } }> } };
+export type DispatchFreightAreaQuery = { dispatchFreightArea: { generatedAt: number, slotStart: number, recent: Array<number>, recentLow: number, recentHigh: number, deliveryLocationIds: Array<string>, quality: { ' $fragmentRefs'?: { 'DispatchForecastQualityFieldsFragment': DispatchForecastQualityFieldsFragment } }, area: { ' $fragmentRefs'?: { 'DispatchFreightAreaFieldsFragment': DispatchFreightAreaFieldsFragment } }, bounds: { south: number, west: number, north: number, east: number }, reach: Array<{ workerId: string, workerName: string, label: string, latitude: number, longitude: number, freeAt: number, arriveAt: number, miles: number, netCents: number, reach: DispatchFreightReachKind }>, moves: Array<{ ' $fragmentRefs'?: { 'DispatchFreightMoveFieldsFragment': DispatchFreightMoveFieldsFragment } }>, pace: Array<{ ' $fragmentRefs'?: { 'DispatchFreightPaceFieldsFragment': DispatchFreightPaceFieldsFragment } }>, positionings: Array<{ ' $fragmentRefs'?: { 'DispatchPositioningFieldsFragment': DispatchPositioningFieldsFragment } }> } };
 
 export type DispatchForecastQualityQueryVariables = Exact<{ [key: string]: never; }>;
 

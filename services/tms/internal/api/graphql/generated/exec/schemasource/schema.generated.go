@@ -6956,6 +6956,7 @@ The product feature that made a model call.
 """
 enum AIUsageFeature {
   AgentTurn
+  AgentWakeUp
   AgentEvaluation
   TableQuery
   FormulaGenerate
@@ -14039,10 +14040,19 @@ type DispatchFreightReach {
   reach: DispatchFreightReachKind!
 }
 
+"The map tile an area counts its loads and drivers in, in degrees."
+type DispatchFreightAreaBounds {
+  south: Float!
+  west: Float!
+  north: Float!
+  east: Float!
+}
+
 type DispatchFreightAreaDetail {
   quality: DispatchForecastQuality!
   generatedAt: Timestamp!
   area: DispatchFreightArea!
+  bounds: DispatchFreightAreaBounds!
   "The window the sheet reads: the one asked for, or the area's worst."
   slotStart: Timestamp!
   reach: [DispatchFreightReach!]!

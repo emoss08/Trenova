@@ -397,6 +397,7 @@ func TestGetClientRuntimeConfigAllowsBrowserSafeIntegrations(t *testing.T) {
 			Enabled: true,
 			Configuration: map[string]any{
 				"apiKey": apiKey,
+				"mapId":  "a797a39c14d41cfbdaa213c5",
 			},
 		},
 	}
@@ -417,7 +418,12 @@ func TestGetClientRuntimeConfigAllowsBrowserSafeIntegrations(t *testing.T) {
 	require.True(t, resp.Configured)
 	require.True(t, resp.Ready)
 	require.Empty(t, resp.MissingRequiredFields)
-	require.Equal(t, map[string]string{"apiKey": "browser-map-key"}, resp.Config)
+	require.Equal(
+		t,
+		map[string]string{"apiKey": "browser-map-key", "mapId": "a797a39c14d41cfbdaa213c5"},
+		resp.Config,
+		"the browser gets the key and the Map ID that styles its maps",
+	)
 }
 
 func testEncryptionService() *encryptionservice.Service {

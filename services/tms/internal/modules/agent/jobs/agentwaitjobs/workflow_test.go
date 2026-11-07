@@ -230,3 +230,91 @@ func TestAgentWaitWorkflow_AMovedDueTimeIsReadAgain(t *testing.T) {
 	assert.Equal(t, agentwait.StatusMet, worker.finished[0].Status)
 	assert.Equal(t, "Drive time left: about 1h 59m.", worker.finished[0].Outcome)
 }
+
+func settling(env *testsuite.TestWorkflowEnvironment) agentwaitcontract.Schedule {
+	return agentwaitcontract.Schedule{
+		Open:             true,
+		ExpiresAt:        clock(env, 24*time.Hour),
+		SettleSeconds:    30,
+		SettleMaxSeconds: 120,
+	}
+}
+
+func TestAgentWaitWorkflow_ARecordEditedInABurstIsPickedUpOnceAfterTheLastEdit(t *testing.T) {
+	t.Parallel()
+
+	worker := &scriptedWorker{}
+	var firstAt, lastAt time.Time
+	run(t, worker, func(env *testsuite.TestWorkflowEnvironment) {
+		worker.now = env.Now
+		worker.schedule = settling(env)
+		edit := func(after time.Duration, detail string, first bool) {
+			env.RegisterDelayedCallback(func() {
+				if first {
+					firstAt = env.Now()
+				}
+				lastAt = env.Now()
+				env.SignalWorkflow(agentwaitcontract.MetSignal, agentwaitcontract.Met{
+					Key: "shp_1", Detail: detail, At: env.Now().Unix(),
+				})
+			}, after)
+		}
+		edit(time.Hour, "S-1042 was changed by someone else: status.", true)
+		edit(time.Hour+10*time.Second, "S-1042 was changed by someone else: documents.", false)
+		edit(time.Hour+25*time.Second, "S-1042 was changed by someone else: documents, pod.", false)
+	})
+
+	require.Len(t, worker.finished, 1, "three edits pick the work up once")
+	assert.Equal(t, agentwait.StatusMet, worker.finished[0].Status)
+	assert.Equal(t, "S-1042 was changed by someone else: documents, pod.",
+		worker.finished[0].Outcome, "the latest notice per record is kept")
+	assert.Equal(t, firstAt.Unix(), worker.finished[0].FirstMetAt)
+	require.Len(t, worker.attempts, 1)
+	assert.Equal(t, 30*time.Second, worker.attempts[0].Sub(lastAt),
+		"picked up once the record has been quiet for the settle period")
+}
+
+func TestAgentWaitWorkflow_ARecordEditedWithoutPauseIsPickedUpAtTheLimit(t *testing.T) {
+	t.Parallel()
+
+	worker := &scriptedWorker{}
+	var firstAt time.Time
+	run(t, worker, func(env *testsuite.TestWorkflowEnvironment) {
+		worker.now = env.Now
+		worker.schedule = settling(env)
+		for i := range 20 {
+			env.RegisterDelayedCallback(func() {
+				if i == 0 {
+					firstAt = env.Now()
+				}
+				env.SignalWorkflow(agentwaitcontract.MetSignal, agentwaitcontract.Met{
+					Key: "shp_1", Detail: "changed", At: env.Now().Unix(),
+				})
+			}, time.Hour+time.Duration(i)*10*time.Second)
+		}
+	})
+
+	require.Len(t, worker.finished, 1)
+	require.Len(t, worker.attempts, 1)
+	assert.Equal(t, 120*time.Second, worker.attempts[0].Sub(firstAt),
+		"a record never quiet still picks the work up at the settle limit")
+}
+
+func TestAgentWaitWorkflow_AKindThatDoesNotSettleIsPickedUpAtOnce(t *testing.T) {
+	t.Parallel()
+
+	worker := &scriptedWorker{}
+	var metAt time.Time
+	run(t, worker, func(env *testsuite.TestWorkflowEnvironment) {
+		worker.now = env.Now
+		worker.schedule = agentwaitcontract.Schedule{Open: true, ExpiresAt: clock(env, 24*time.Hour)}
+		env.RegisterDelayedCallback(func() {
+			metAt = env.Now()
+			env.SignalWorkflow(agentwaitcontract.MetSignal, agentwaitcontract.Met{Detail: "Arrived."})
+		}, time.Hour)
+	})
+
+	require.Len(t, worker.attempts, 1)
+	assert.Equal(t, metAt, worker.attempts[0])
+	assert.Zero(t, worker.finished[0].FirstMetAt)
+}

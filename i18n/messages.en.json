@@ -10679,6 +10679,15 @@
       "routes/desk"
     ]
   },
+  "A record change": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "A record changed after it was written; the evidence chain no longer verifies": {
     "sites": 1,
     "scope": [
@@ -11019,11 +11028,12 @@
     ]
   },
   "A report": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/agent-control"
     ]
   },
@@ -11082,6 +11092,15 @@
     ]
   },
   "A report run is read by the person who ran it, and this request has no person": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "A report run is waited on by the conversation that started it": {
     "sites": 1,
     "scope": [
       "go"
@@ -80983,6 +81002,15 @@
       "go/other"
     ]
   },
+  "Desk picking work back up": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "Desk settings": {
     "sites": 1,
     "scope": [
@@ -119752,6 +119780,15 @@
       "routes/shipment"
     ]
   },
+  "Google Maps isn't connected, so the drivers are listed without a map.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
   "Google Vertex AI": {
     "sites": 1,
     "scope": [
@@ -150740,6 +150777,17 @@
       "routes/desk",
       "routes/edi",
       "routes/shipment"
+    ]
+  },
+  "Map ID": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "go/other",
+      "routes/admin"
     ]
   },
   "Map a driver form's fields onto shipment data.": {
@@ -200105,6 +200153,15 @@
       "routes/desk"
     ]
   },
+  "Picks up when it changes; gives up {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Pickup": {
     "sites": 26,
     "scope": [
@@ -232742,7 +232799,7 @@
     ]
   },
   "Running": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "go",
       "ts"
@@ -259844,6 +259901,15 @@
       "routes/formula-template"
     ]
   },
+  "Styles every map in light and dark. Create it in the same Google Cloud project as the key, under Map management, with a light and a dark style.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/admin"
+    ]
+  },
   "Subject": {
     "sites": 16,
     "scope": [
@@ -277429,6 +277495,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "The map didn't load, so the drivers are listed without it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "The map writes no guide": {
@@ -331835,10 +331910,10 @@
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/billing-queue",
       "routes/desk",
-      "routes/intake",
-      "routes/shipment"
+      "routes/intake"
     ]
   },
   "Zoom out": {
@@ -331847,10 +331922,10 @@
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/billing-queue",
       "routes/desk",
-      "routes/intake",
-      "routes/shipment"
+      "routes/intake"
     ]
   },
   "Zoom to fit": {
@@ -341178,6 +341253,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "recordId does not name a kind of record Trenova keeps. Use the id a tool returned.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "reference": {

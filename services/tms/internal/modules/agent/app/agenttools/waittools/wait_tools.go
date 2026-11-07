@@ -1,4 +1,6 @@
-package carriertools
+// Package waittools parks an agent's own work until something happens and
+// hands it back then: agent_create_wait and agent_cancel_wait.
+package waittools
 
 import (
 	"context"
@@ -88,7 +90,11 @@ func (t *waitUntilTool) ParamSchema() map[string]any {
 	return map[string]any{
 		toolschema.KeyType: toolschema.TypeObject,
 		toolschema.KeyProperties: map[string]any{
-			"until": agenttoolschema.Enum("What to wait for.", waitKinds),
+			"until": agenttoolschema.Enum("What to wait for. RecordChanged waits for any record "+
+				"to be changed by a person or the system: use it when a person must fix "+
+				"something on a record before you can go on (a missing POD on the shipment an "+
+				"invoice bills), naming it in recordId, so you pick the work up once they have "+
+				"changed it rather than asking them to come back and tell you.", waitKinds),
 			toolparams.ParamDescription: map[string]any{
 				toolschema.KeyType: toolschema.TypeString,
 				toolschema.KeyDescription: "What you are waiting for, in a few words a person reads " +
@@ -118,6 +124,9 @@ func (t *waitUntilTool) ParamSchema() map[string]any {
 				"For Reply: a reply from this customer, from customer_list."),
 			toolparams.ParamWorkerID: agenttoolschema.RecordIDText(permission.ResourceWorker,
 				"For HOSDriveBelow: the driver, from worker_list."),
+			"recordId": agenttoolschema.IDText("For RecordChanged: the record that holds what " +
+				"must be fixed, by the id shipment_get, invoice_get, billing_get_queue_item or " +
+				"another tool returned, not the record you will change afterwards."),
 			"detentionOccurrenceId": agenttoolschema.KindID(
 				"For FreeTimeEnding: the detention record, from detention_list_occurrences or the "+
 					"run subject (detention.occurrence_opened names it).",
@@ -286,6 +295,7 @@ func waitCondition(
 		{toolparams.ParamCustomerID, &condition.CustomerID},
 		{toolparams.ParamWorkerID, &condition.WorkerID},
 		{"detentionOccurrenceId", &condition.DetentionOccurrenceID},
+		{"recordId", &condition.RecordID},
 	}
 	for _, field := range ids {
 		id, given, err := toolparams.OptionalPulid(params.Params, field.key)

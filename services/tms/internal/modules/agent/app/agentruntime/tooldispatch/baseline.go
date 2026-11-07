@@ -88,10 +88,29 @@ func dependsOnEarlierStep(
 	return false
 }
 
+// personFixNote tells a conversation's agent how to pick refused work up on
+// its own once a person has fixed what refused it, rather than ending on
+// "tell me when it is done". A delegated task cannot park on a wait.
+func personFixNote(req *agentruntimeports.RunRequest) string {
+	if req == nil || req.Delegation != nil {
+		return ""
+	}
+
+	return "\nIf what refuses it is something a person has to fix on a record (missing " +
+		"paperwork, a hold, a value on the shipment or the queue item), tell them exactly " +
+		"what to fix, then call agent_create_wait with until RecordChanged and recordId set " +
+		"to the record that holds the problem, so you pick this up again once they have " +
+		"changed it."
+}
+
 // refusedBeforeFiling is what the model is told when a write it proposed
 // would be refused as it stands: each reason and the parameter it is about,
 // and what to do instead of proposing the same call again.
-func refusedBeforeFiling(toolName string, refusal *agentpreview.PreviewWarning) toolcall.Result {
+func refusedBeforeFiling(
+	toolName string,
+	refusal *agentpreview.PreviewWarning,
+	req *agentruntimeports.RunRequest,
+) toolcall.Result {
 	var b strings.Builder
 	fmt.Fprintf(&b, "Tool %q was not proposed, because it would be refused as it stands:\n",
 		toolName)
@@ -103,6 +122,7 @@ func refusedBeforeFiling(toolName string, refusal *agentpreview.PreviewWarning) 
 	b.WriteString("Ask the person for the value(s) needed, or look one up with a query tool " +
 		"where a valid one can be found, then propose again with the corrected call. " +
 		"Do not propose the same call again.")
+	b.WriteString(personFixNote(req))
 
 	return toolcall.Refused(
 		aitrace.OutcomeInvalid,

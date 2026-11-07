@@ -463,6 +463,7 @@ type RuntimeConfig struct {
 var clientRuntimeConfigFields = map[integration.Type]map[string]struct{}{
 	integration.TypeGoogleMaps: {
 		"apiKey": {},
+		"mapId":  {},
 	},
 	integration.TypeOpenWeatherMap: {
 		"apiKey": {},

@@ -6,7 +6,7 @@ export function ReachMapSkeleton() {
     <div
       aria-busy
       aria-label={t("Loading the map")}
-      className="aspect-[2/1] w-full ui-shimmer rounded-lg"
+      className="aspect-[3/2] w-full ui-shimmer rounded-lg"
     />
   );
 }

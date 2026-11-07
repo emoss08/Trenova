@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/loopguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolcall"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/worldwatch"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
@@ -41,6 +42,16 @@ func (t *Turn) noteWorld(fx TurnEffects, call *llmports.ToolCall, outcome *toolc
 	if outcome.Action != nil && outcome.Action.Executed {
 		t.world.Wrote(outcome.Action, fx.Now())
 	}
+}
+
+// noteRefusedWrite watches the records a write that failed named, so a
+// person fixing what refused it reaches the turn as a change and the retry
+// is not answered from the repeat guard.
+func (t *Turn) noteRefusedWrite(call *llmports.ToolCall) {
+	if t.world == nil || loopguard.IsRead(call.Name) {
+		return
+	}
+	t.world.Refused(call)
 }
 
 func (s *Service) interject(t *Turn, fx TurnEffects) {
@@ -102,7 +113,7 @@ func (t *Turn) steer(fx TurnEffects, steer worldwatch.Steer) {
 
 func (t *Turn) worldChanged(fx TurnEffects, changes []realtimeports.WatchedRecordChange) {
 	notice := worldwatch.ChangeNotice(changes, t.req.Actor)
-	clear(t.repeats.Reads)
+	t.repeats.Forget()
 
 	t.messages = append(t.messages, llmports.NoticeMessage(notice))
 	t.result.Messages = append(t.result.Messages, conversation.Message{

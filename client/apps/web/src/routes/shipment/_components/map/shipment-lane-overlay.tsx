@@ -3,7 +3,7 @@ import { AdvancedMarker } from "@vis.gl/react-google-maps";
 import { useMapFocusStore } from "./map-focus-store";
 import { groupLanes, laneArcPath, laneWeight, type MapLane } from "./map-lanes";
 import type { MapShipment } from "./map-shipment-model";
-import { MapPolyline } from "./map-polyline";
+import { MapPolyline } from "@/components/map/map-polyline";
 
 /** Lanes this busy carry their count at the middle of the arc. */
 const LABELED_LANE_MIN = 3;

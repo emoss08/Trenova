@@ -492,7 +492,9 @@ none of them builds a query or decides access.
   list is unwrapped, a scalar becomes a one-item list for a multi-valued parameter and a
   one-item list a scalar for a single-valued one; a value is never changed), refuses a missing
   required parameter with its allowed values, and waits a few seconds for a quick run before it
-  returns.
+  returns. A run still going when the person asked something of its rows comes back as a
+  conversation turn when it finishes: the agent says in `then` what it will do with them, and
+  the tool parks the conversation on a `ReportRun` wait ([agent-waits.md](agent-waits.md)).
 - **`report_preview`** returns at most 20 rows.
 - The `report_*_table_change_alert` tools belong to table change alerts, a separate feature
   ([agent-master-data-tools.md](agent-master-data-tools.md)). Each tool's class and default are in

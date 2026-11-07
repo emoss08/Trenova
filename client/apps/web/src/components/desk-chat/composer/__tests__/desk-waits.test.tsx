@@ -72,6 +72,33 @@ describe("DeskWaits", () => {
     expect(waits.cancel).toHaveBeenCalledWith(first);
   });
 
+  it("shows a record change as picked up when it changes, and a report as running", () => {
+    const record = wait({
+      id: "awt_3",
+      kind: "RecordChanged",
+      description: "The POD on S-1042 to be attached",
+      expiresAt: 1_800_086_400,
+    });
+    const run = wait({
+      id: "awt_4",
+      kind: "ReportRun",
+      description: "AR Aging by Customer to finish running",
+      dueAt: 1_800_000_120,
+    });
+    const waits = waitsOf([record, run]);
+    render(<DeskWaits waits={waits} timezone="UTC" />);
+
+    expect(screen.getByText("A record change")).toBeInTheDocument();
+    expect(screen.getByText("The POD on S-1042 to be attached")).toBeInTheDocument();
+    expect(screen.getByText(/^Picks up when it changes; gives up /u)).toBeInTheDocument();
+    expect(screen.getByText("A report")).toBeInTheDocument();
+    expect(screen.getByText("Running")).toBeInTheDocument();
+    expect(screen.queryByText(/^Due /u)).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getAllByRole("button", { name: "Cancel the wait" })[0]);
+    expect(waits.cancel).toHaveBeenCalledWith(record);
+  });
+
   it("asks for the sign-in code a portal sent and sends it only to the portal", async () => {
     vi.mocked(api.post).mockResolvedValue({
       id: "aprn_1",

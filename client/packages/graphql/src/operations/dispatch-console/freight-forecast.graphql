@@ -149,6 +149,12 @@ query DispatchFreightArea($cell: Int!, $slotStart: Timestamp) {
     area {
       ...DispatchFreightAreaFields
     }
+    bounds {
+      south
+      west
+      north
+      east
+    }
     slotStart
     reach {
       workerId

@@ -3,7 +3,7 @@ import { integration } from "@/lib/queries/integration";
 import type { ReportChartSpec } from "@/types/report";
 import { useQuery } from "@tanstack/react-query";
 import { AdvancedMarker, APIProvider, Map } from "@vis.gl/react-google-maps";
-import { useMapId } from "@/hooks/use-map-id";
+import { useMapStyle } from "@/hooks/use-map-style";
 import { cn } from "@trenova/shared/lib/utils";
 import { useMemo } from "react";
 
@@ -50,7 +50,7 @@ function pinLabel(value: unknown): string {
 export function ReportMap({ chart, columns, rows, className }: ReportMapProps) {
   const t = useT();
 
-  const mapId = useMapId();
+  const { mapId, colorScheme } = useMapStyle();
   const { data: googleMaps } = useQuery({
     ...integration.runtimeConfig("GoogleMaps"),
   });
@@ -112,6 +112,7 @@ export function ReportMap({ chart, columns, rows, className }: ReportMapProps) {
             defaultCenter={center}
             defaultZoom={points.length === 1 ? 9 : 4}
             mapId={mapId}
+            colorScheme={colorScheme}
             gestureHandling="cooperative"
             disableDefaultUI
           >
