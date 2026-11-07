@@ -156,6 +156,83 @@ func RecordsRead(
 	return records
 }
 
+// Refused watches the records a write that failed named by id: the invoice
+// a post was refused for, the move an assignment could not take. What refused
+// it often lives on that record, and a person may fix it while the turn runs.
+func (w *State) Refused(call *llmports.ToolCall) {
+	if w == nil {
+		return
+	}
+	for _, key := range slices.Sorted(maps.Keys(call.Arguments)) {
+		kind, named := idKind(key)
+		if !named {
+			continue
+		}
+		for _, id := range idValues(call.Arguments[key]) {
+			w.Watch(agentpagecontext.EntityRef{Type: kind, ID: id})
+		}
+	}
+}
+
+// maxRefusedIDs bounds how many records one refused bulk write adds.
+const maxRefusedIDs = 8
+
+// idKind is the record kind an argument names by id, from its key:
+// invoiceId and invoiceIds name invoices, shipmentMoveId a shipment move.
+func idKind(key string) (string, bool) {
+	stem := strings.TrimSuffix(key, "s")
+	switch {
+	case strings.HasSuffix(stem, "Id"):
+		stem = strings.TrimSuffix(stem, "Id")
+	case strings.HasSuffix(stem, "ID"):
+		stem = strings.TrimSuffix(stem, "ID")
+	default:
+		return "", false
+	}
+	if stem == "" {
+		return "", false
+	}
+	var b strings.Builder
+	for i, r := range stem {
+		if r >= 'A' && r <= 'Z' {
+			if i > 0 {
+				b.WriteByte('_')
+			}
+			r += 'a' - 'A'
+		}
+		b.WriteRune(r)
+	}
+
+	return b.String(), true
+}
+
+func idValues(value any) []string {
+	switch v := value.(type) {
+	case string:
+		if recordID(v) {
+			return []string{v}
+		}
+	case []any:
+		ids := make([]string, 0, min(len(v), maxRefusedIDs))
+		for _, item := range v {
+			if id, ok := item.(string); ok && recordID(id) && len(ids) < maxRefusedIDs {
+				ids = append(ids, id)
+			}
+		}
+		return ids
+	case []string:
+		ids := make([]string, 0, min(len(v), maxRefusedIDs))
+		for _, id := range v {
+			if recordID(id) && len(ids) < maxRefusedIDs {
+				ids = append(ids, id)
+			}
+		}
+		return ids
+	}
+
+	return nil
+}
+
 func (w *State) Wrote(action *agentruntimeports.PendingAction, at int64) {
 	if w == nil || action == nil || !action.Executed || action.Target == nil ||
 		action.Target.ID.IsNil() {

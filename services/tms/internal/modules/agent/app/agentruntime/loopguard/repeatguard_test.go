@@ -76,3 +76,23 @@ func TestRepeatGuard_AnswersARepeatedReadUntilSomethingWrites(t *testing.T) {
 	)
 	assert.False(t, guard.ReadBefore(&write), "a write is never answered from an earlier one")
 }
+
+func TestRepeatGuard_ForgetLetsAFailedCallRunAgain(t *testing.T) {
+	t.Parallel()
+
+	guard := NewRepeatGuard()
+	call := &llmports.ToolCall{Name: "invoice_post", Arguments: map[string]any{"invoiceId": "inv_1"}}
+	read := &llmports.ToolCall{Name: "invoice_get", Arguments: map[string]any{"invoiceId": "inv_1"}}
+	guard.Record(call, "the shipment has no POD")
+	guard.Ran(read)
+
+	_, seen := guard.Seen(call)
+	require.True(t, seen)
+	require.True(t, guard.ReadBefore(read))
+
+	guard.Forget()
+
+	_, seen = guard.Seen(call)
+	assert.False(t, seen, "a changed record may now take the call")
+	assert.False(t, guard.ReadBefore(read))
+}
