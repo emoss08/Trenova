@@ -9,13 +9,13 @@ import { Kbd } from "@trenova/shared/components/ui/kbd";
 import { NovaBadge } from "@trenova/shared/components/ui/nova-badge";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatClockDurationMs, formatMinutesSpan } from "@trenova/shared/lib/date";
-import { cn } from "@trenova/shared/lib/utils";
+import { cn, formatCentsWhole } from "@trenova/shared/lib/utils";
 import { useId, useState } from "react";
 import { ArmedPreflight } from "./armed-preflight";
+import { CostBreakdown } from "./cost-breakdown";
+import { preferenceFloorOf } from "./cost-vocabulary";
 import { formatMiles } from "./dispatch-vocabulary";
 import { FindingList, FindingSummary, findingKey } from "./finding-list";
-import { CostBreakdown } from "./cost-breakdown";
-import { formatCents, preferenceFloorOf } from "./cost-vocabulary";
 
 export const MAX_HOTKEY_RANK = 9;
 const INITIAL_VISIBLE = 6;
@@ -141,7 +141,7 @@ function CandidateRow({
               </span>
             ) : (
               <span className="text-muted-foreground shrink-0 text-2xs font-normal tabular-nums">
-                {t("+{0} to the plan", formatCents(plan.extraCents))}
+                {t("+{0} to the plan", formatCentsWhole(plan.extraCents))}
               </span>
             )}
           </div>
@@ -151,7 +151,7 @@ function CandidateRow({
         </div>
         <div className="flex items-center gap-2.5">
           <span className="text-right font-mono text-xs tabular-nums" title={t("Cost to cover")}>
-            {formatCents(candidate.costCents - preferenceFloorCents)}
+            {formatCentsWhole(candidate.costCents - preferenceFloorCents)}
           </span>
           {canAssign ? (
             <Button

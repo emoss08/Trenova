@@ -1,9 +1,9 @@
+import { formatCentsWhole } from "@trenova/shared/lib/utils";
 import type { DispatchCandidate, DispatchEndMarket } from "@/lib/graphql/dispatch-console";
 import { cleanup, render, screen } from "@testing-library/react";
 import { formatUnixDayTimeRange, setUserDatePreferences } from "@trenova/shared/lib/date";
 import { afterEach, describe, expect, it } from "vitest";
 import { CostBreakdown } from "../cost-breakdown";
-import { formatCents } from "../cost-vocabulary";
 
 afterEach(() => {
   cleanup();
@@ -78,7 +78,7 @@ describe("CostBreakdown", () => {
       screen.getByText("Less what the best driver pays in preferences").nextElementSibling,
     ).toHaveTextContent("−$25");
     expect(screen.getByText("Cost to cover").nextElementSibling).toHaveTextContent(
-      formatCents(candidate().costCents - 2_500),
+      formatCentsWhole(candidate().costCents - 2_500),
     );
   });
 

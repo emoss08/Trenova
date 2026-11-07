@@ -4,7 +4,8 @@ import { formatTimeAgo } from "@/lib/time-utils";
 import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 import { DescriptionItem, DescriptionList } from "@trenova/shared/components/ui/description-list";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
-import { formatCents, UNCOVERED_REASON_LABELS } from "./cost-vocabulary";
+import { formatCentsWhole } from "@trenova/shared/lib/utils";
+import { UNCOVERED_REASON_LABELS } from "./cost-vocabulary";
 
 /**
  * Why the plan left a move uncovered, in one sentence with the driver and the money it is
@@ -13,8 +14,8 @@ import { formatCents, UNCOVERED_REASON_LABELS } from "./cost-vocabulary";
  */
 export function uncoveredSentence(price: DispatchMovePlanPrice, t: TranslateFn): string {
   const name = price.workerName.trim();
-  const cost = formatCents(price.costCents);
-  const coverage = formatCents(price.coveragePriceCents);
+  const cost = formatCentsWhole(price.costCents);
+  const coverage = formatCentsWhole(price.coveragePriceCents);
 
   switch (price.uncoveredReason) {
     case "NotWorthIt":
@@ -62,11 +63,11 @@ function Alternatives({ alternatives }: { alternatives: DispatchMovePlanPrice["a
   return (
     <ul className="flex flex-col gap-1" aria-label={t("Other drivers")}>
       {alternatives.map((alternative) => (
-        <li key={alternative.workerId} className="text-muted-foreground text-xs tabular-nums">
+        <li key={alternative.workerId} className="text-xs text-muted-foreground tabular-nums">
           {t(
             "Choosing {0} instead adds {1}",
             alternative.workerName,
-            formatCents(alternative.extraCents),
+            formatCentsWhole(alternative.extraCents),
           )}
         </li>
       ))}
@@ -101,12 +102,12 @@ export function PlanPricePanel({
         {price.workerId ? (
           <>
             <p className="text-sm font-semibold tabular-nums">
-              {t("Worth {0} to cover", formatCents(price.coveragePriceCents))}
+              {t("Worth {0} to cover", formatCentsWhole(price.coveragePriceCents))}
             </p>
             <DescriptionList layout="inline" className="text-xs">
               <DescriptionItem label={t("Planned driver")}>{price.workerName}</DescriptionItem>
               <DescriptionItem label={t("Cost to cover")} numeric>
-                {formatCents(price.costCents)}
+                {formatCentsWhole(price.costCents)}
               </DescriptionItem>
             </DescriptionList>
             {price.driverValueCents > 0 ? (
@@ -114,14 +115,14 @@ export function PlanPricePanel({
                 {t(
                   "{0} is worth {1} to the plan",
                   price.workerName,
-                  formatCents(price.driverValueCents),
+                  formatCentsWhole(price.driverValueCents),
                 )}
               </p>
             ) : null}
           </>
         ) : (
           <>
-            <p className="text-warning-foreground text-sm font-semibold">
+            <p className="text-sm font-semibold text-warning-foreground">
               {price.uncoveredReason
                 ? UNCOVERED_REASON_LABELS[price.uncoveredReason]
                 : t("Left uncovered")}

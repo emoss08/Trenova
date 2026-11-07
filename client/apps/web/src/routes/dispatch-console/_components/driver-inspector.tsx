@@ -11,11 +11,10 @@ import { DescriptionItem, DescriptionList } from "@trenova/shared/components/ui/
 import { useNow } from "@trenova/shared/hooks/use-now";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateMedium, formatUnixTime } from "@trenova/shared/lib/date";
-import { cn, formatCompactCurrency } from "@trenova/shared/lib/utils";
+import { cn, formatCompactCurrency, formatCentsWhole } from "@trenova/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { availabilityMeta, formatMiles, pickupState } from "./dispatch-vocabulary";
-import { formatCents } from "./cost-vocabulary";
 import { hoursLeft, whenFree } from "./driver-queue";
 import { FindingList } from "./finding-list";
 import { formatWhen } from "./format-when";
@@ -86,7 +85,7 @@ function MatchRow({
           )}
         </span>
         <span className="ml-auto shrink-0 font-mono tabular-nums">
-          {formatCents(candidate.costCents)}
+          {formatCentsWhole(candidate.costCents)}
         </span>
       </span>
       <span className="text-muted-foreground truncate text-2xs">
@@ -195,11 +194,15 @@ export function DriverInspector({
                     )}
                     onClick={() => onSelectMove(planned.moveId)}
                   >
-                    {t("Planned on {0} for {1}", planned.proNumber, formatCents(planned.costCents))}
+                    {t(
+                      "Planned on {0} for {1}",
+                      planned.proNumber,
+                      formatCentsWhole(planned.costCents),
+                    )}
                   </Button>
                   {planned.valueCents > 0 ? (
                     <span className="text-muted-foreground tabular-nums">
-                      {t("Worth {0} to the plan", formatCents(planned.valueCents))}
+                      {t("Worth {0} to the plan", formatCentsWhole(planned.valueCents))}
                     </span>
                   ) : null}
                 </span>

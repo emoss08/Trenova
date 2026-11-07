@@ -9,7 +9,7 @@ import { formatList, formatNumber } from "@trenova/shared/i18n/format";
 import { defineLabels, type LabelMap } from "@trenova/shared/i18n/labels";
 import { translate, type TranslateFn } from "@trenova/shared/i18n/runtime";
 import { formatClockDurationMs, formatUnixDayTimeRange } from "@trenova/shared/lib/date";
-import { formatCurrencyWhole } from "@trenova/shared/lib/utils";
+import { formatCentsWhole } from "@trenova/shared/lib/utils";
 
 /** What each part of a pairing's cost is called, as the server's cost components name them. */
 export const COST_COMPONENT_LABELS = defineLabels({
@@ -58,12 +58,6 @@ export const UNCOVERED_REASON_LABELS: LabelMap<Record<DispatchUncoveredReason, s
  */
 export function preferenceFloorOf(move: DispatchBoardMove): number {
   return move.isCovered ? 0 : (move.planPrice?.preferenceFloorCents ?? 0);
-}
-
-/** Cents as whole dollars, with a sign for a credit: "$142", "−$15". */
-export function formatCents(cents: number): string {
-  const dollars = formatCurrencyWhole(Math.round(Math.abs(cents) / 100));
-  return cents < 0 ? `−${dollars}` : dollars;
 }
 
 /** The fact behind a cost line, from the candidate it belongs to, when there is one to show. */
@@ -147,8 +141,8 @@ export function endMarketReason(endMarket: DispatchEndMarket, t: TranslateFn): s
 function staySentence(endMarket: DispatchEndMarket, t: TranslateFn): string | null {
   if (endMarket.stayValueCents <= 0) return null;
 
-  const stay = formatCents(endMarket.stayValueCents);
-  const net = formatCents(Math.abs(endMarket.valueCents));
+  const stay = formatCentsWhole(endMarket.stayValueCents);
+  const net = formatCentsWhole(Math.abs(endMarket.valueCents));
   const netDollars = Math.round(endMarket.valueCents / 100);
   const area = endMarket.stayAreaLabel;
 
