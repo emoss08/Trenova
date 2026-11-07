@@ -23,6 +23,13 @@ spec:
           body="$(wget -q -O - -T 10 "http://$API/api/v1/system/version")"
           echo "$body"
           echo "$body" | grep -q '"version"'
+          {{- if .Values.managed.enabled }}
+          if out="$(wget -q -O /dev/null -T 10 "http://$MANAGED/managed/v1/readings" 2>&1)"; then
+            echo "the managed API answered a request without its token"
+            exit 1
+          fi
+          echo "$out" | grep -q 401
+          {{- end }}
           {{- if .Values.client.enabled }}
           wget -q -O /dev/null -T 10 --header "Host: {{ .Values.domain }}" "http://$CLIENT/"
           wget -q -O /dev/null -T 10 --header "Host: {{ .Values.domain }}" "http://$CLIENT/api/v1/system/version"
@@ -32,6 +39,10 @@ spec:
           value: {{ printf "%s:8080" (include "trenova.name" (dict "root" . "component" "api")) }}
         - name: CLIENT
           value: {{ printf "%s:80" (include "trenova.name" (dict "root" . "component" "client")) }}
+        {{- if .Values.managed.enabled }}
+        - name: MANAGED
+          value: {{ printf "%s:8090" (include "trenova.name" (dict "root" . "component" "api")) }}
+        {{- end }}
       {{- include "trenova.containerSecurity" (dict "readOnly" true) | nindent 6 }}
       resources:
         requests: { cpu: 10m, memory: 16Mi }

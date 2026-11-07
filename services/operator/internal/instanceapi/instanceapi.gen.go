@@ -216,6 +216,16 @@ func (e SpecReleaseChannel) Valid() bool {
 	}
 }
 
+// AdministratorStatus Where the first administrator's handoff stands on the instance, reported once the spec has
+// an `invite` and the instance answered for it.
+type AdministratorStatus struct {
+	// InviteTokenSha256 The invite the instance holds and will redeem; absent when it holds none that works.
+	InviteTokenSha256 *string `json:"inviteTokenSha256,omitempty"`
+
+	// SetUp Whether the first administrator has chosen a password or signed in.
+	SetUp bool `json:"setUp"`
+}
+
 // ComponentStatus defines model for ComponentStatus.
 type ComponentStatus struct {
 	Message *string `json:"message,omitempty"`
@@ -248,6 +258,21 @@ type FinalBackup struct {
 	SizeBytes int64  `json:"sizeBytes"`
 }
 
+// InstanceSecrets defines model for InstanceSecrets.
+type InstanceSecrets struct {
+	// EncryptionKey The TMS's `security.encryption.key`.
+	EncryptionKey string `json:"encryptionKey"`
+
+	// MfaRecoveryCodePepper The TMS's `security.mfa.recoveryCodePepper`.
+	MfaRecoveryCodePepper string `json:"mfaRecoveryCodePepper"`
+
+	// RlsScopeKey The TMS's `database.rls.scopeKey`, standard base64 of at least 32 random bytes.
+	RlsScopeKey string `json:"rlsScopeKey"`
+
+	// RlsScopeKeyId The TMS's `database.rls.scopeKeyId`.
+	RlsScopeKeyId string `json:"rlsScopeKeyId"`
+}
+
 // InstanceSpec What the instance should be. `schemaVersion` changes when a field's meaning changes; an
 // operator refuses a version it does not know.
 type InstanceSpec struct {
@@ -263,6 +288,12 @@ type InstanceSpec struct {
 
 	// Features The TMS catalog features to turn on.
 	Features []string `json:"features"`
+
+	// FirstAdministrator The instance's first organization and its administrator: the person who ordered it, and
+	// their organization's name, as they were when it was ordered. The first install creates
+	// them, with no usable password; the administrator chooses one through `invite`. Later
+	// revisions carry the same values, so they never conflict with what was installed.
+	FirstAdministrator SpecFirstAdministrator `json:"firstAdministrator"`
 
 	// Hostname Where the instance is served, at the root path.
 	Hostname   string             `json:"hostname"`
@@ -344,6 +375,19 @@ type RenewCertificateRequest struct {
 	Csr string `json:"csr"`
 }
 
+// SpecAdministratorInvite A one-time link for the first administrator to choose their password. The control plane
+// holds the token and emails the link, `https://<hostname>/auth/reset?token=<token>&purpose=invite`;
+// the instance holds only its SHA-256, as an account invite for the administrator, and
+// reports it as `administrator.inviteTokenSha256` once it does. A new invite replaces the
+// one before. Absent until the instance first runs, and once the administrator is set up.
+type SpecAdministratorInvite struct {
+	// ExpiresAt When the link stops working; at most 7 days after it was made.
+	ExpiresAt time.Time `json:"expiresAt"`
+
+	// TokenSha256 The lowercase hex SHA-256 of the token's text.
+	TokenSha256 string `json:"tokenSha256"`
+}
+
 // SpecAllowance defines model for SpecAllowance.
 type SpecAllowance struct {
 	// AppMeter The TMS meter this allowance limits; absent for an instance counter.
@@ -358,6 +402,23 @@ type SpecAllowance struct {
 
 // SpecAllowanceUnit defines model for SpecAllowance.Unit.
 type SpecAllowanceUnit string
+
+// SpecFirstAdministrator The instance's first organization and its administrator: the person who ordered it, and
+// their organization's name, as they were when it was ordered. The first install creates
+// them, with no usable password; the administrator chooses one through `invite`. Later
+// revisions carry the same values, so they never conflict with what was installed.
+type SpecFirstAdministrator struct {
+	Email openapi_types.Email `json:"email"`
+
+	// Invite A one-time link for the first administrator to choose their password. The control plane
+	// holds the token and emails the link, `https://<hostname>/auth/reset?token=<token>&purpose=invite`;
+	// the instance holds only its SHA-256, as an account invite for the administrator, and
+	// reports it as `administrator.inviteTokenSha256` once it does. A new invite replaces the
+	// one before. Absent until the instance first runs, and once the administrator is set up.
+	Invite           *SpecAdministratorInvite `json:"invite,omitempty"`
+	Name             string                   `json:"name"`
+	OrganizationName string                   `json:"organizationName"`
+}
 
 // SpecPlacement defines model for SpecPlacement.
 type SpecPlacement struct {
@@ -412,6 +473,10 @@ type SpecReleaseChannel string
 
 // StatusReport defines model for StatusReport.
 type StatusReport struct {
+	// Administrator Where the first administrator's handoff stands on the instance, reported once the spec has
+	// an `invite` and the instance answered for it.
+	Administrator *AdministratorStatus `json:"administrator,omitempty"`
+
 	// AppliedRevision The spec revision the instance runs; absent before the first converge.
 	AppliedRevision *int64            `json:"appliedRevision,omitempty"`
 	Components      []ComponentStatus `json:"components"`
@@ -584,6 +649,18 @@ type ClientInterface interface {
 	// Corresponds with POST /v1/certificate (the `RenewCertificate` operationId).
 	RenewCertificate(ctx context.Context, body RenewCertificateJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// GetSecrets The instance's escrowed secrets
+	//
+	// The secrets that make the instance's data readable, which the control plane keeps in escrow:
+	// the TMS encryption key, the row-level security scope key and its ID, and the MFA recovery
+	// code pepper. The answer is the same every time, so an instance that is reinstalled, or
+	// restored from a backup onto new infrastructure, still reads its data. Fetch them when the
+	// cluster holds no copy, keep them only in a Secret, and never log them. The first fetch makes
+	// them.
+	//
+	// Corresponds with GET /v1/secrets (the `GetSecrets` operationId).
+	GetSecrets(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// GetSpec The desired spec
 	//
 	// Corresponds with GET /v1/spec (the `GetSpec` operationId).
@@ -678,6 +755,28 @@ func (c *Client) RenewCertificateWithBody(ctx context.Context, contentType strin
 // Corresponds with POST /v1/certificate (the `RenewCertificate` operationId).
 func (c *Client) RenewCertificate(ctx context.Context, body RenewCertificateJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewRenewCertificateRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetSecrets The instance's escrowed secrets
+//
+// The secrets that make the instance's data readable, which the control plane keeps in escrow:
+// the TMS encryption key, the row-level security scope key and its ID, and the MFA recovery
+// code pepper. The answer is the same every time, so an instance that is reinstalled, or
+// restored from a backup onto new infrastructure, still reads its data. Fetch them when the
+// cluster holds no copy, keep them only in a Secret, and never log them. The first fetch makes
+// them.
+//
+// Corresponds with GET /v1/secrets (the `GetSecrets` operationId).
+func (c *Client) GetSecrets(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetSecretsRequest(c.Server)
 	if err != nil {
 		return nil, err
 	}
@@ -833,6 +932,33 @@ func NewRenewCertificateRequestWithBody(server string, contentType string, body 
 	}
 
 	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewGetSecretsRequest constructs an http.Request for the GetSecrets method
+func NewGetSecretsRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/secrets")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
 
 	return req, nil
 }
@@ -1027,6 +1153,20 @@ type ClientWithResponsesInterface interface {
 	// Corresponds with POST /v1/certificate (the `RenewCertificate` operationId).
 	RenewCertificateWithResponse(ctx context.Context, body RenewCertificateJSONRequestBody, reqEditors ...RequestEditorFn) (*RenewCertificateResponse, error)
 
+	// GetSecretsWithResponse The instance's escrowed secrets
+	//
+	// The secrets that make the instance's data readable, which the control plane keeps in escrow:
+	// the TMS encryption key, the row-level security scope key and its ID, and the MFA recovery
+	// code pepper. The answer is the same every time, so an instance that is reinstalled, or
+	// restored from a backup onto new infrastructure, still reads its data. Fetch them when the
+	// cluster holds no copy, keep them only in a Secret, and never log them. The first fetch makes
+	// them.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v1/secrets (the `GetSecrets` operationId).
+	GetSecretsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetSecretsResponse, error)
+
 	// GetSpecWithResponse The desired spec
 	//
 	// Returns a wrapper object for the known response body format(s).
@@ -1152,6 +1292,75 @@ func (r RenewCertificateResponse) StatusCode() int {
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
 func (r RenewCertificateResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// GetSecretsResponse200Headers the declared response headers of an HTTP 200 response for GetSecrets
+type GetSecretsResponse200Headers struct {
+	CacheControl *string
+}
+
+// GetSecretsResponse429Headers the declared response headers of an HTTP 429 response for GetSecrets
+type GetSecretsResponse429Headers struct {
+	RetryAfter *int
+}
+
+type GetSecretsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *InstanceSecrets
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *Unauthenticated
+	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationproblemJSON429 *RateLimited
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *GetSecretsResponse200Headers
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *GetSecretsResponse429Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetSecretsResponse) GetJSON200() *InstanceSecrets {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r GetSecretsResponse) GetApplicationproblemJSON401() *Unauthenticated {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r GetSecretsResponse) GetApplicationproblemJSON429() *RateLimited {
+	return r.ApplicationproblemJSON429
+}
+
+// GetBody returns the raw response body bytes
+func (r GetSecretsResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetSecretsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetSecretsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetSecretsResponse) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
@@ -1408,6 +1617,26 @@ func (c *ClientWithResponses) RenewCertificateWithResponse(ctx context.Context, 
 	return ParseRenewCertificateResponse(rsp)
 }
 
+// GetSecretsWithResponse The instance's escrowed secrets
+//
+// The secrets that make the instance's data readable, which the control plane keeps in escrow:
+// the TMS encryption key, the row-level security scope key and its ID, and the MFA recovery
+// code pepper. The answer is the same every time, so an instance that is reinstalled, or
+// restored from a backup onto new infrastructure, still reads its data. Fetch them when the
+// cluster holds no copy, keep them only in a Secret, and never log them. The first fetch makes
+// them.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v1/secrets (the `GetSecrets` operationId).
+func (c *ClientWithResponses) GetSecretsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetSecretsResponse, error) {
+	rsp, err := c.GetSecrets(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetSecretsResponse(rsp)
+}
+
 // GetSpecWithResponse The desired spec
 //
 // Returns a wrapper object for the known response body format(s).
@@ -1546,6 +1775,69 @@ func ParseRenewCertificateResponse(rsp *http.Response) (*RenewCertificateRespons
 	switch {
 	case rsp.StatusCode == 429:
 		var headers RenewCertificateResponse429Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers429 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseGetSecretsResponse parses an HTTP response from a GetSecretsWithResponse call
+func ParseGetSecretsResponse(rsp *http.Response) (*GetSecretsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetSecretsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest InstanceSecrets
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON429 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers GetSecretsResponse200Headers
+		if values := rsp.Header.Values("Cache-Control"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Cache-Control", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.CacheControl = &value
+		}
+		response.Headers200 = &headers
+	case rsp.StatusCode == 429:
+		var headers GetSecretsResponse429Headers
 		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
 			var value int
 			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {

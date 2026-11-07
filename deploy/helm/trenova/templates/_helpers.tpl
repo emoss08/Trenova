@@ -55,6 +55,12 @@ trenova
 {{- .Values.secrets.existingSecret | default (printf "%s-secrets" (include "trenova.fullname" .)) -}}
 {{- end -}}
 
+{{/* Where the four escrowed keys are read from: the operator's escrow Secret
+when secrets.escrowSecret is set, the app Secret otherwise. */}}
+{{- define "trenova.escrowSecret" -}}
+{{- .Values.secrets.escrowSecret | default (include "trenova.appSecret" .) -}}
+{{- end -}}
+
 {{- define "trenova.dbSecret" -}}
 {{- .Values.postgres.existingSecret | default (printf "%s-db" (include "trenova.fullname" .)) -}}
 {{- end -}}
@@ -208,13 +214,14 @@ storageClassName: {{ .storageClass | quote }}
 release Job's steps. Secrets only; everything else is in the rendered config. */}}
 {{- define "trenova.tmsEnv" -}}
 {{- $app := include "trenova.appSecret" . -}}
+{{- $escrow := include "trenova.escrowSecret" . -}}
 {{- $db := include "trenova.dbSecret" . -}}
 - name: APP_ENV
   value: production
 {{ include "trenova.secretEnv" (dict "name" "TRENOVA_DATABASE_PASSWORD" "secret" $db "key" "appPassword") }}
 {{ include "trenova.secretEnv" (dict "name" "TRENOVA_DATABASE_SYSTEM_PASSWORD" "secret" $db "key" "systemPassword") }}
-{{ include "trenova.secretEnv" (dict "name" "TRENOVA_DATABASE_RLS_SCOPEKEYID" "secret" $app "key" "rlsScopeKeyId") }}
-{{ include "trenova.secretEnv" (dict "name" "TRENOVA_DATABASE_RLS_SCOPEKEY" "secret" $app "key" "rlsScopeKey") }}
+{{ include "trenova.secretEnv" (dict "name" "TRENOVA_DATABASE_RLS_SCOPEKEYID" "secret" $escrow "key" "rlsScopeKeyId") }}
+{{ include "trenova.secretEnv" (dict "name" "TRENOVA_DATABASE_RLS_SCOPEKEY" "secret" $escrow "key" "rlsScopeKey") }}
 {{ include "trenova.secretEnv" (dict "name" "TRENOVA_CACHE_PASSWORD" "secret" $app "key" "redisPassword") }}
 {{ include "trenova.secretEnv" (dict "name" "TRENOVA_SEARCH_MEILISEARCH_APIKEY" "secret" $app "key" "meiliMasterKey") }}
 {{- if .Values.minio.enabled }}
@@ -225,13 +232,16 @@ release Job's steps. Secrets only; everything else is in the rendered config. */
 {{ include "trenova.secretEnv" (dict "name" "TRENOVA_STORAGE_SECRETKEY" "secret" .Values.storage.external.existingSecret "key" "secretKey") }}
 {{- end }}
 {{ include "trenova.secretEnv" (dict "name" "TRENOVA_SECURITY_SESSION_SECRET" "secret" $app "key" "sessionSecret") }}
-{{ include "trenova.secretEnv" (dict "name" "TRENOVA_SECURITY_ENCRYPTION_KEY" "secret" $app "key" "encryptionKey") }}
+{{ include "trenova.secretEnv" (dict "name" "TRENOVA_SECURITY_ENCRYPTION_KEY" "secret" $escrow "key" "encryptionKey") }}
 {{ include "trenova.secretEnv" (dict "name" "TRENOVA_SECURITY_ENCRYPTION_RETIREDKEYS" "secret" $app "key" "encryptionRetiredKeys" "optional" true) }}
-{{ include "trenova.secretEnv" (dict "name" "TRENOVA_SECURITY_MFA_RECOVERYCODEPEPPER" "secret" $app "key" "mfaRecoveryCodePepper") }}
+{{ include "trenova.secretEnv" (dict "name" "TRENOVA_SECURITY_MFA_RECOVERYCODEPEPPER" "secret" $escrow "key" "mfaRecoveryCodePepper") }}
 {{ include "trenova.secretEnv" (dict "name" "TRENOVA_SYSTEM_SYSTEMUSERPASSWORD" "secret" $app "key" "systemUserPassword") }}
 {{ include "trenova.secretEnv" (dict "name" "TRENOVA_RENDERER_GOTENBERGPASSWORD" "secret" $app "key" "gotenbergPassword") }}
 {{- if .Values.docling.enabled }}
 {{ include "trenova.secretEnv" (dict "name" "TRENOVA_DOCUMENTCONVERSION_APIKEY" "secret" $app "key" "doclingApiKey") }}
+{{- end }}
+{{- if .Values.managed.enabled }}
+{{ include "trenova.secretEnv" (dict "name" "TRENOVA_MANAGED_TOKEN" "secret" $app "key" "managedToken") }}
 {{- end }}
 {{- with .Values.tms.extraEnv }}
 {{ toYaml . }}

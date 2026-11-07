@@ -1,9 +1,16 @@
 package rlslint
 
 var allowed = map[string]string{
+	"internal/modules/kernel/adapters/postgres/managedusagerepository/state.go:repository.Get": "read the usage state the control plane set for this instance",
+	"internal/modules/kernel/adapters/postgres/managedusagerepository/state.go:repository.Save": "record the usage state the control plane set for this instance",
+	"internal/modules/operations/adapters/postgres/shipmentmeter/shipmentmeter.go:counter.CountByHour": "count the shipments created each hour on this managed instance",
+	"internal/modules/agent/adapters/postgres/aiusagemeter/aiusagemeter.go:spend.CountByHour": "add up the AI spend of each hour on this managed instance",
+	"internal/modules/agent/adapters/postgres/aiusagemeter/aiusagemeter.go:extractions.CountByHour": "count the Document Intelligence extractions of each hour on this managed instance",
+	"internal/modules/documents/adapters/postgres/documentmeter/documentmeter.go:storage.Level": "add up the bytes of every stored document on this managed instance",
 	"internal/modules/documents/adapters/postgres/capturerepository/device.go:deviceRepository.ListActiveByUser":                                                "find a person's active capture devices in every organization when they lose access",
 	"internal/modules/documents/app/capturedevices/pairing.go:Service.ExchangePairing":                                                                          "exchange an approved pairing, which belongs to no organization until now, for its device",
 	"internal/modules/edi/app/editransferchangeservice/transfer_changes.go:Service.reviewTransferChange":                                                        "apply a reviewed transfer change to the linked shipments of both organizations in one transaction",
+	"internal/modules/identity/app/firstadmininviteservice/service.go:Service.Install":                                                                          "install the first administrator's account setup invite from the instance's operator, which has no tenant session",
 	"internal/modules/identity/app/instancebootstrapservice/service.go:Service.Bootstrap":                                                                       "create the first business unit, organization, administrator and system user of an instance in one transaction before any tenant exists",
 	"internal/modules/identity/app/organizationservice/validator.go:businessUnitWideScope":                                                                      "check organization names, SCAC and DOT numbers and login slugs across the business unit",
 	"internal/infrastructure/database/dbcli/migrated.go:markMigratedTables":                                                                                     "record every table a migration run changed for every tenant, so cached reads of the old schema are dropped",
@@ -130,6 +137,7 @@ var allowed = map[string]string{
 	"internal/modules/documents/adapters/postgres/inboundmessagerepository/mailbox.go:mailboxRepository.GetByTokenHash":                                         "resolve the inbound mailbox a provider delivered to before its tenant is known",
 	"internal/modules/documents/adapters/postgres/inboundmessagerepository/queue.go:repository.ListOverdueParked":                                               "list snoozed and waiting inbound messages past their wake-up in every organization, so a message whose timer workflow was lost is put back in the queue",
 	"internal/modules/identity/adapters/postgres/instancebootstraprepository/repository.go:repository.Finalize":                                                 "record the instance bootstrap and create the instance-wide system user before any tenant session exists",
+	"internal/modules/identity/adapters/postgres/instancebootstraprepository/repository.go:repository.GetRecord":                                                "read the instance bootstrap record, which names the first administrator, before any tenant session exists",
 	"internal/modules/identity/adapters/postgres/instancebootstraprepository/repository.go:repository.GetState":                                                 "read whether the instance was bootstrapped and count users across every organization",
 	"internal/modules/workspace/adapters/postgres/integrationrepository/integration.go:repository.ListEnabledByType":                                            "list organizations with an integration type enabled",
 	"internal/modules/billing/adapters/postgres/invoicerepository/invoice.go:repository.GetDocumentShareToken":                                                  "resolve a public invoice document link before its tenant is known",

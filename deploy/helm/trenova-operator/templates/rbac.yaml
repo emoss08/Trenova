@@ -44,7 +44,8 @@ subjects:
     namespace: {{ .Release.Namespace }}
 ---
 # The target namespace: exactly the kinds the Trenova chart renders, Helm's
-# release records (Secrets), and what readiness is read from.
+# release records and the escrow Secret the operator keeps (Secrets), and what
+# readiness is read from.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:

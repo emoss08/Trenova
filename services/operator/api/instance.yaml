@@ -152,6 +152,34 @@ paths:
         "429":
           $ref: "#/components/responses/RateLimited"
 
+  /v1/secrets:
+    get:
+      operationId: getSecrets
+      summary: The instance's escrowed secrets
+      description: |
+        The secrets that make the instance's data readable, which the control plane keeps in escrow:
+        the TMS encryption key, the row-level security scope key and its ID, and the MFA recovery
+        code pepper. The answer is the same every time, so an instance that is reinstalled, or
+        restored from a backup onto new infrastructure, still reads its data. Fetch them when the
+        cluster holds no copy, keep them only in a Secret, and never log them. The first fetch makes
+        them.
+      responses:
+        "200":
+          description: The secrets.
+          headers:
+            Cache-Control:
+              description: Always `no-store`.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InstanceSecrets"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
 components:
   responses:
     Invalid:
@@ -230,7 +258,7 @@ components:
         What the instance should be. `schemaVersion` changes when a field's meaning changes; an
         operator refuses a version it does not know.
       required: [schemaVersion, lifecycle, instanceId, organizationId, name, hostname, release, plan, placement,
-                 addons, features, components, aiProvider, allowances]
+                 addons, features, components, aiProvider, allowances, firstAdministrator]
       properties:
         schemaVersion:
           type: integer
@@ -283,6 +311,51 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/SpecAllowance"
+        firstAdministrator:
+          $ref: "#/components/schemas/SpecFirstAdministrator"
+
+    SpecFirstAdministrator:
+      type: object
+      description: |
+        The instance's first organization and its administrator: the person who ordered it, and
+        their organization's name, as they were when it was ordered. The first install creates
+        them, with no usable password; the administrator chooses one through `invite`. Later
+        revisions carry the same values, so they never conflict with what was installed.
+      required: [name, email, organizationName]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        organizationName:
+          type: string
+          minLength: 1
+          maxLength: 100
+        invite:
+          $ref: "#/components/schemas/SpecAdministratorInvite"
+
+    SpecAdministratorInvite:
+      type: object
+      description: |
+        A one-time link for the first administrator to choose their password. The control plane
+        holds the token and emails the link, `https://<hostname>/auth/reset?token=<token>&purpose=invite`;
+        the instance holds only its SHA-256, as an account invite for the administrator, and
+        reports it as `administrator.inviteTokenSha256` once it does. A new invite replaces the
+        one before. Absent until the instance first runs, and once the administrator is set up.
+      required: [tokenSha256, expiresAt]
+      properties:
+        tokenSha256:
+          type: string
+          pattern: '^[0-9a-f]{64}$'
+          description: The lowercase hex SHA-256 of the token's text.
+        expiresAt:
+          type: string
+          format: date-time
+          description: When the link stops working; at most 7 days after it was made.
 
     SpecRelease:
       type: object
@@ -399,6 +472,8 @@ components:
           description: A short explanation when not ready.
         finalBackup:
           $ref: "#/components/schemas/FinalBackup"
+        administrator:
+          $ref: "#/components/schemas/AdministratorStatus"
 
     UsageReport:
       type: object
@@ -477,6 +552,21 @@ components:
           type: boolean
           description: Whether the metered action must stop.
 
+    AdministratorStatus:
+      type: object
+      description: |
+        Where the first administrator's handoff stands on the instance, reported once the spec has
+        an `invite` and the instance answered for it.
+      required: [setUp]
+      properties:
+        inviteTokenSha256:
+          type: string
+          pattern: '^[0-9a-f]{64}$'
+          description: The invite the instance holds and will redeem; absent when it holds none that works.
+        setUp:
+          type: boolean
+          description: Whether the first administrator has chosen a password or signed in.
+
     FinalBackup:
       type: object
       description: |
@@ -518,6 +608,32 @@ components:
           type: string
           maxLength: 8192
           description: A PEM certificate request, signed by the new key.
+
+    InstanceSecrets:
+      type: object
+      required: [encryptionKey, rlsScopeKeyId, rlsScopeKey, mfaRecoveryCodePepper]
+      properties:
+        encryptionKey:
+          type: string
+          minLength: 32
+          maxLength: 128
+          description: The TMS's `security.encryption.key`.
+        rlsScopeKeyId:
+          type: string
+          minLength: 1
+          maxLength: 32
+          pattern: "^[A-Za-z0-9_-]{1,32}$"
+          description: The TMS's `database.rls.scopeKeyId`.
+        rlsScopeKey:
+          type: string
+          minLength: 44
+          maxLength: 128
+          description: The TMS's `database.rls.scopeKey`, standard base64 of at least 32 random bytes.
+        mfaRecoveryCodePepper:
+          type: string
+          minLength: 32
+          maxLength: 128
+          description: The TMS's `security.mfa.recoveryCodePepper`.
 
     IssuedCertificate:
       type: object

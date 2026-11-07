@@ -4,6 +4,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/adapters/postgres/capturerepository"
 	"github.com/emoss08/trenova/internal/modules/documents/adapters/postgres/documentaiextractionrepository"
 	"github.com/emoss08/trenova/internal/modules/documents/adapters/postgres/documentcontentrepository"
+	"github.com/emoss08/trenova/internal/modules/documents/adapters/postgres/documentmeter"
 	"github.com/emoss08/trenova/internal/modules/documents/adapters/postgres/documentpacketrulerepository"
 	"github.com/emoss08/trenova/internal/modules/documents/adapters/postgres/documentrepository"
 	"github.com/emoss08/trenova/internal/modules/documents/adapters/postgres/documentsearchprojectionrepository"
@@ -81,6 +82,7 @@ func SharedOptions() fx.Option {
 			documenttemplaterepository.NewAssignmentRepository,
 			documenttemplaterepository.NewGeneratedRepository,
 			documentrepository.New,
+			documentmeter.New,
 			documentaiextractionrepository.New,
 			documentcontentrepository.New,
 			documentsearchprojectionrepository.New,

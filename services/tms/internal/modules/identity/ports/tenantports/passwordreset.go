@@ -21,6 +21,15 @@ type PasswordResetTokenRepository interface {
 		now int64,
 	) (*passwordreset.PasswordResetToken, error)
 
+	// FindByUserAndHash returns a user's token by its digest in any state, used or not,
+	// or a not-found error. Only the instance's own operator, which holds the digest,
+	// asks this, to learn whether the first administrator's invite is still live.
+	FindByUserAndHash(
+		ctx context.Context,
+		userID pulid.ID,
+		tokenHash string,
+	) (*passwordreset.PasswordResetToken, error)
+
 	// MarkUsed redeems a token, and reports whether it was still redeemable at the
 	// moment of the write. Two requests racing on the same link must not both win, so
 	// the used_at guard lives in the UPDATE rather than in a prior read.

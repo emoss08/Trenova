@@ -113,6 +113,40 @@ func (c *Client) ReportStatus(ctx context.Context, report instanceapi.StatusRepo
 	)
 }
 
+func (c *Client) ReportUsage(
+	ctx context.Context,
+	report instanceapi.UsageReport,
+) (instanceapi.UsageAck, error) {
+	res, err := c.api.ReportUsageWithResponse(ctx, report)
+	if err != nil {
+		return instanceapi.UsageAck{}, fmt.Errorf("report usage: %w", err)
+	}
+	if res.StatusCode() == http.StatusOK && res.JSON200 != nil {
+		return *res.JSON200, nil
+	}
+	return instanceapi.UsageAck{}, failure(
+		res.HTTPResponse,
+		res.ApplicationproblemJSON400,
+		res.ApplicationproblemJSON401,
+		res.ApplicationproblemJSON429,
+	)
+}
+
+func (c *Client) Secrets(ctx context.Context) (instanceapi.InstanceSecrets, error) {
+	res, err := c.api.GetSecretsWithResponse(ctx)
+	if err != nil {
+		return instanceapi.InstanceSecrets{}, fmt.Errorf("get the escrowed secrets: %w", err)
+	}
+	if res.StatusCode() == http.StatusOK && res.JSON200 != nil {
+		return *res.JSON200, nil
+	}
+	return instanceapi.InstanceSecrets{}, failure(
+		res.HTTPResponse,
+		res.ApplicationproblemJSON401,
+		res.ApplicationproblemJSON429,
+	)
+}
+
 func (c *Client) Renew(ctx context.Context, csrPEM []byte) (credential.Issued, error) {
 	res, err := c.api.RenewCertificateWithResponse(
 		ctx,

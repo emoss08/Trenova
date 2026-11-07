@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/shared/passwordutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/emoss08/trenova/shared/tokenutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
 	"golang.org/x/crypto/bcrypt"
@@ -33,7 +34,7 @@ type OrganizationMembership struct {
 	// PositionID is the title the user holds in this organisation. It sits on
 	// the membership rather than the user because a position belongs to one
 	// organisation and the same person may hold different titles in two.
-	PositionID pulid.ID `json:"positionId" keel:"position_id,nullzero"`
+	PositionID pulid.ID `json:"positionId"     keel:"position_id,nullzero"`
 
 	// Relationships
 	User         *User         `json:"user,omitempty"         keel:"belongs:user_id"`
@@ -134,6 +135,15 @@ func (u *User) GeneratePassword(raw string) (string, error) {
 	}
 
 	return string(hashed), nil
+}
+
+func (u *User) GenerateUnusablePassword() (string, error) {
+	secret, _, err := tokenutils.New()
+	if err != nil {
+		return "", err
+	}
+
+	return u.GeneratePassword(secret)
 }
 
 var dummyPasswordHash = sync.OnceValue(func() []byte {

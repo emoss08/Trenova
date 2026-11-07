@@ -22,6 +22,7 @@ import (
 const (
 	stateScopeReason    = "read whether this instance has been bootstrapped and whether any user exists in any organization"
 	finalizeScopeReason = "record the instance bootstrap and create the instance-wide system user before any tenant session exists"
+	recordScopeReason   = "read the instance bootstrap record, which names the first administrator, before any tenant session exists"
 )
 
 type Params struct {
@@ -73,6 +74,23 @@ func (r *repository) GetState(
 			state.UserCount = int(count)
 
 			return state, nil
+		},
+	)
+}
+
+func (r *repository) GetRecord(ctx context.Context) (*instancebootstrap.InstanceBootstrap, error) {
+	ctx = dbscope.WithSystem(ctx, recordScopeReason)
+
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*instancebootstrap.InstanceBootstrap, error) {
+			record, err := instancebootstrapdb.InstanceBootstraps.AllTenants().
+				First(ctx, r.db.Keel(ctx))
+			if err != nil {
+				return nil, err
+			}
+			return record, nil
 		},
 	)
 }

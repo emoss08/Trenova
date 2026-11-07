@@ -231,14 +231,51 @@ jobs:
           sleep 2
           wait_for 1 1800
 
+          # The escrowed keys were fetched once, before the install, into the
+          # operator's Secret, and the chart's app Secret does not hold them.
+          test "$(curl -fsS localhost:18080/secrets | jq .calls)" = 1
+          test "$(kubectl -n trenova get secret trenova-escrow -o jsonpath='{.metadata.labels.app\.kubernetes\.io/managed-by}')" = trenova-operator
+          test -z "$(kubectl -n trenova get secret trenova-secrets -o jsonpath='{.data.encryptionKey}')"
+          kubectl -n trenova get deploy trenova-api -o json |
+            jq -e '[.spec.template.spec.containers[].env[]? | select(.name == "TRENOVA_SECURITY_ENCRYPTION_KEY") | .valueFrom.secretKeyRef.name] == ["trenova-escrow"]' > /dev/null
+
+          # The usage relay runs once the instance is ready: readings from the
+          # TMS's managed API reach the control plane, and its answer goes back.
+          deadline=$(( $(date +%s) + 300 ))
+          until usage="$(curl -fsS localhost:18080/usage 2>/dev/null)"; do
+            if [ "$(date +%s)" -gt "$deadline" ]; then
+              echo "::error::no usage report from the operator"; exit 1
+            fi
+            sleep 10
+          done
+          echo "$usage" | jq .
+
+          # The first administrator was bootstrapped for a setup link, with no
+          # password handed to the release Job; an invite in the spec reaches
+          # the TMS and comes back on the status report.
+          kubectl -n trenova get jobs -o json |
+            jq -e '[.items[].spec.template.spec.containers[] | select(.name == "bootstrap") | .env[] | select(.name == "TRENOVA_BOOTSTRAP_ADMIN_SETUP") | .value] | all(. == "link") and length > 0' > /dev/null
+          test -z "$(kubectl -n trenova get jobs -o json | jq -r '.items[].spec.template.spec.containers[].env[]? | select(.name == "TRENOVA_BOOTSTRAP_ADMIN_PASSWORD") | .name')"
+          invite="$(printf 'e2e-invite' | sha256sum | cut -d' ' -f1)"
+          curl -fsS -X PUT "localhost:18080/invite/$invite"
+          deadline=$(( $(date +%s) + 300 ))
+          until curl -fsS localhost:18080/report 2>/dev/null |
+            jq -e --arg h "$invite" '.report.administrator.inviteTokenSha256 == $h and (.report.administrator.setUp | not)' > /dev/null; do
+            if [ "$(date +%s)" -gt "$deadline" ]; then
+              echo "::error::the first administrator's invite never came back on a report"; curl -fsS localhost:18080/report | jq .; exit 1
+            fi
+            sleep 10
+          done
+
           curl -fsS -X PUT localhost:18080/lifecycle/suspended
-          wait_for 2 600
+          wait_for 3 600
           test "$(kubectl -n trenova get deploy trenova-api -o jsonpath='{.spec.replicas}')" = 0
           test "$(kubectl -n trenova get cluster trenova-postgres -o jsonpath='{.metadata.annotations.cnpg\.io/hibernation}')" = on
 
           curl -fsS -X PUT localhost:18080/lifecycle/active
-          wait_for 3 1200
+          wait_for 4 1200
           test "$(kubectl -n trenova get deploy trenova-api -o jsonpath='{.spec.replicas}')" = 1
+          test "$(curl -fsS localhost:18080/secrets | jq .calls)" = 1
 
       - name: What the cluster looked like
         if: failure()

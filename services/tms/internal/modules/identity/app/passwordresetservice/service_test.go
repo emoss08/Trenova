@@ -60,6 +60,14 @@ func (r *stubTokenRepo) MarkUsed(_ context.Context, _ pulid.ID, _ int64) (bool, 
 	return r.markUsedOK, r.markUsedErr
 }
 
+func (r *stubTokenRepo) FindByUserAndHash(
+	context.Context,
+	pulid.ID,
+	string,
+) (*passwordreset.PasswordResetToken, error) {
+	return nil, errors.New("not used by the password reset service")
+}
+
 func (r *stubTokenRepo) InvalidateOutstanding(
 	_ context.Context,
 	userID pulid.ID,

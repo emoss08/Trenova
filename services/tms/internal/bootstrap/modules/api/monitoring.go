@@ -23,3 +23,7 @@ var WorkerMonitoringServerModule = fx.Module("worker-monitoring-server",
 		}
 	}),
 )
+
+var ManagedServerModule = fx.Module("managed-server",
+	fx.Invoke(api.StartManagedServer),
+)

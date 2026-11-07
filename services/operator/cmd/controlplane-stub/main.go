@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"regexp"
 	"strconv"
 	"strings"
 	"syscall"
@@ -32,6 +33,7 @@ func run(logger *slog.Logger) error {
 	spec := fakecp.Spec(uuid.New())
 	spec.Hostname = env("STUB_HOSTNAME", spec.Hostname)
 	spec.Release.Version = env("STUB_VERSION", spec.Release.Version)
+	spec.Allowances = allowances()
 	var err error
 	if spec.Plan.Vcpu, err = number("STUB_VCPU", spec.Plan.Vcpu); err != nil {
 		return err
@@ -56,14 +58,24 @@ func run(logger *slog.Logger) error {
 		TLSConfig:         fake.TLSConfig(),
 		ReadHeaderTimeout: 5 * time.Second,
 	}
-	admin := &http.Server{Addr: ":8080", Handler: adminHandler(fake), ReadHeaderTimeout: 5 * time.Second}
+	admin := &http.Server{
+		Addr:              ":8080",
+		Handler:           adminHandler(fake),
+		ReadHeaderTimeout: 5 * time.Second,
+	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 	errs := make(chan error, 2)
 	go func() { errs <- api.ListenAndServeTLS("", "") }()
 	go func() { errs <- admin.ListenAndServe() }()
-	logger.Info("control plane stub serving", "instance", fake.InstanceID, "version", spec.Release.Version)
+	logger.Info(
+		"control plane stub serving",
+		"instance",
+		fake.InstanceID,
+		"version",
+		spec.Release.Version,
+	)
 	select {
 	case err = <-errs:
 	case <-ctx.Done():
@@ -93,6 +105,17 @@ func adminHandler(fake *fakecp.Server) http.Handler {
 		}
 		write(w, map[string]any{"revision": fake.Revision(), "report": reports[len(reports)-1]})
 	})
+	mux.HandleFunc("GET /usage", func(w http.ResponseWriter, _ *http.Request) {
+		reports := fake.UsageReports()
+		if len(reports) == 0 {
+			http.Error(w, "no usage report yet", http.StatusNotFound)
+			return
+		}
+		write(w, map[string]any{"reports": len(reports), "last": reports[len(reports)-1]})
+	})
+	mux.HandleFunc("GET /secrets", func(w http.ResponseWriter, _ *http.Request) {
+		write(w, map[string]any{"calls": fake.SecretCalls()})
+	})
 	mux.HandleFunc("PUT /lifecycle/{lifecycle}", func(w http.ResponseWriter, r *http.Request) {
 		lc := instanceapi.InstanceSpecLifecycle(r.PathValue("lifecycle"))
 		switch lc {
@@ -106,7 +129,59 @@ func adminHandler(fake *fakecp.Server) http.Handler {
 		fake.SetSpec(&spec)
 		write(w, map[string]any{"revision": fake.Revision()})
 	})
+	mux.HandleFunc("PUT /invite/{sha256}", func(w http.ResponseWriter, r *http.Request) {
+		hash := r.PathValue("sha256")
+		if !inviteHash.MatchString(hash) {
+			http.Error(w, "the invite is 64 lowercase hex characters", http.StatusBadRequest)
+			return
+		}
+		spec := fake.Spec()
+		spec.FirstAdministrator.Invite = &instanceapi.SpecAdministratorInvite{
+			TokenSha256: hash,
+			ExpiresAt:   time.Now().Add(7 * 24 * time.Hour).UTC().Truncate(time.Second),
+		}
+		fake.SetSpec(&spec)
+		write(w, map[string]any{"revision": fake.Revision()})
+	})
 	return mux
+}
+
+var inviteHash = regexp.MustCompile(`^[0-9a-f]{64}$`)
+
+func allowances() []instanceapi.SpecAllowance {
+	allowance := func(
+		meter, app string,
+		unit instanceapi.SpecAllowanceUnit,
+		quantity int64,
+		hardCap bool,
+	) instanceapi.SpecAllowance {
+		return instanceapi.SpecAllowance{
+			Meter:    meter,
+			AppMeter: &app,
+			Unit:     unit,
+			Quantity: quantity,
+			HardCap:  hardCap,
+		}
+	}
+	return []instanceapi.SpecAllowance{
+		allowance("shipments", "shipments.total", instanceapi.SpecAllowanceUnitCount, 5000, false),
+		allowance("ai_credits", "ai.spend_cents", instanceapi.SpecAllowanceUnitCents, 2000, true),
+		allowance(
+			"document_extractions",
+			"document_intelligence.extractions",
+			instanceapi.SpecAllowanceUnitCount,
+			500,
+			true,
+		),
+		allowance(
+			"document_storage",
+			"documents.storage_bytes",
+			instanceapi.SpecAllowanceUnitBytes,
+			50<<30,
+			false,
+		),
+		{Meter: "users", Unit: instanceapi.SpecAllowanceUnitCount, Quantity: 25},
+	}
 }
 
 func write(w http.ResponseWriter, body any) {

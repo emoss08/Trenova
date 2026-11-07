@@ -23641,6 +23641,10 @@ func init() {
 				Column: "auto_attach_accruals",
 			},
 			{
+				Name:   "requireSeparateApprover",
+				Column: "require_separate_approver",
+			},
+			{
 				Name:   "autoPostOnApprove",
 				Column: "auto_post_on_approve",
 			},

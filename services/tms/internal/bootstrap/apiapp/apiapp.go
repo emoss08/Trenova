@@ -32,6 +32,7 @@ func Options() fx.Option {
 		api.ServerModule,
 		api.PprofServerModule,
 		api.MonitoringServerModule,
+		api.ManagedServerModule,
 		api.RouterModule,
 		modulesinfra.RealtimeGatewayModule,
 		kernel.APIOptions(),

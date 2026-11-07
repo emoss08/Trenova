@@ -90,6 +90,9 @@ jobs:
             [external-storage]="--set minio.enabled=false --set storage.external.endpoint=s3.example.com --set storage.external.publicEndpoint=https://s3.example.com --set storage.external.existingSecret=s3 --set secrets.existingSecret=app --set postgres.existingSecret=db"
             [cloud-edge]="--set client.enabled=false --set networkPolicy.enabled=false --set imaging.tls.existingServerSecret=a --set imaging.tls.existingClientSecret=b"
             [ci]="-f $CHART/ci/install-values.yaml"
+            [managed]="-f $CHART/ci/managed-values.yaml"
+            [escrow]="--set secrets.escrowSecret=trenova-escrow"
+            [setup-link]="--set bootstrap.adminEmail=admin@example.com --set bootstrap.orgName=Acme --set bootstrap.adminName=Dana --set bootstrap.adminSetup=link"
           )
           for shape in "${!shapes[@]}"; do
             echo "::group::$shape"
@@ -109,6 +112,20 @@ jobs:
             echo "::endgroup::"
           done
           ls "$RUNNER_TEMP"/configs/*/config.yaml | paste -sd: > "$RUNNER_TEMP/deploy-configs"
+          # Managed mode never opens port 8090 to every namespace.
+          if helm template trenova "$CHART" -n trenova "${base[@]}" --set managed.enabled=true > /dev/null 2>&1; then
+            echo "::error::managed.enabled rendered without managed.from"
+            exit 1
+          fi
+          # With an escrow Secret, the four escrowed keys are read from it alone
+          # and the app Secret no longer holds them.
+          for shape in escrow managed; do
+            python3 -I tools/helm/check-escrow.py "$RUNNER_TEMP/$shape.yaml" trenova-escrow trenova-secrets
+          done
+          python3 -I tools/helm/check-escrow.py "$RUNNER_TEMP/default.yaml" trenova-secrets trenova-secrets
+          # A first administrator who sets up from a link is never handed a password.
+          python3 -I tools/helm/check-bootstrap.py "$RUNNER_TEMP/setup-link.yaml" link
+          python3 -I tools/helm/check-bootstrap.py "$RUNNER_TEMP/ci.yaml" password
 
       - name: The symlinked files resolve
         run: |

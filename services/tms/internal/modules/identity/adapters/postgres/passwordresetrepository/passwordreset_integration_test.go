@@ -8,6 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/passwordreset"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
+	"github.com/emoss08/trenova/pkg/dbscope"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/emoss08/trenova/shared/tokenutils"
 	"github.com/stretchr/testify/assert"
@@ -56,4 +58,37 @@ func TestInviteTokensKeepTheirPurposeAndStayOutOfTheResetAllowance(t *testing.T)
 	issued, err := repo.CountSince(ctx, data.User.ID, now-60)
 	require.NoError(t, err)
 	assert.Equal(t, 1, issued, "only the reset link counts toward the hourly allowance")
+}
+
+func TestTheOperatorFindsTheFirstAdministratorsInviteByUserAndDigestWithoutATenant(t *testing.T) {
+	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	t.Cleanup(cleanup)
+
+	repo := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
+	data := seedtest.SeedFullTestData(t, ctx, db)
+	now := timeutils.NowUnix()
+	digest := tokenutils.Hash("first-administrator-token")
+
+	system := dbscope.WithSystem(ctx, "test: the operator installs an invite with no tenant session")
+	require.NoError(t, repo.Create(system, &passwordreset.PasswordResetToken{
+		UserID:         data.User.ID,
+		BusinessUnitID: data.BusinessUnit.ID,
+		OrganizationID: data.Organization.ID,
+		TokenHash:      digest,
+		Purpose:        passwordreset.PasswordResetPurposeInvite,
+		ExpiresAt:      now + 3_600,
+	}))
+
+	found, err := repo.FindByUserAndHash(system, data.User.ID, digest)
+	require.NoError(t, err)
+	assert.Equal(t, passwordreset.PasswordResetPurposeInvite, found.Purpose)
+	assert.True(t, found.IsRedeemable(now))
+
+	_, err = repo.FindByUserAndHash(system, pulid.MustNew("usr_"), digest)
+	require.Error(t, err, "another user's invite is not found")
+
+	require.NoError(t, repo.InvalidateOutstanding(system, data.User.ID, now))
+	found, err = repo.FindByUserAndHash(system, data.User.ID, digest)
+	require.NoError(t, err)
+	assert.False(t, found.IsRedeemable(now), "an invalidated invite is found but no longer redeemable")
 }

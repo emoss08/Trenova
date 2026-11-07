@@ -128,6 +128,21 @@ spec:
       ports:
         - port: 8080
           protocol: TCP
+    {{- if .Values.managed.enabled }}
+    {{- if not .Values.managed.from }}
+    {{- fail "managed.enabled needs managed.from: the NetworkPolicy peers (the operator's namespace) that may reach the managed API on port 8090" }}
+    {{- end }}
+    # Trenova Cloud's operator relays usage through the managed API; the
+    # release test checks that it refuses a request without the token.
+    - from:
+        - podSelector:
+            matchLabels:
+              {{- include "trenova.selectorLabels" (dict "root" . "component" "test") | nindent 14 }}
+        {{- toYaml .Values.managed.from | nindent 8 }}
+      ports:
+        - port: 8090
+          protocol: TCP
+    {{- end }}
     {{- with .Values.networkPolicy.metricsFrom }}
     - from:
         {{- toYaml . | nindent 8 }}
