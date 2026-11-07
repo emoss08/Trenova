@@ -754,6 +754,7 @@ func (s *Service) settleDispatched(
 	}
 	if outcome.Failed {
 		t.repeats.Record(&call, outcome.Content)
+		t.noteRefusedWrite(&call)
 	} else {
 		t.repeats.Ran(&call)
 	}
