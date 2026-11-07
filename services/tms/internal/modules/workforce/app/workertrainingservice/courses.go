@@ -94,7 +94,7 @@ func (s *Service) CreateCourse(
 		return nil, err
 	}
 
-	s.auditCourse(created, nil, permission.OpCreate, userID, "Training course created", log)
+	s.auditCourse(ctx, created, nil, permission.OpCreate, userID, "Training course created", log)
 	s.publish(
 		ctx,
 		courseTenant(created),
@@ -136,7 +136,15 @@ func (s *Service) UpdateCourse(
 		return nil, err
 	}
 
-	s.auditCourse(updated, original, permission.OpUpdate, userID, "Training course updated", log)
+	s.auditCourse(
+		ctx,
+		updated,
+		original,
+		permission.OpUpdate,
+		userID,
+		"Training course updated",
+		log,
+	)
 	s.publish(
 		ctx,
 		courseTenant(updated),
@@ -209,7 +217,7 @@ func (s *Service) changeCourseStatus(
 		return nil, err
 	}
 
-	s.auditCourse(
+	s.auditCourse(ctx,
 		saved,
 		original,
 		operation,

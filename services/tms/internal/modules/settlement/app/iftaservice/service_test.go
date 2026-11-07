@@ -413,7 +413,11 @@ type harness struct {
 	ops       []permission.Operation
 }
 
-func (h *harness) recordAudit(params *auditports.LogActionParams, _ ...auditports.LogOption) {
+func (h *harness) recordAudit(
+	_ context.Context,
+	params *auditports.LogActionParams,
+	_ ...auditports.LogOption,
+) {
 	h.ops = append(h.ops, params.Operation)
 }
 
@@ -480,9 +484,9 @@ func newHarness(t *testing.T) *harness {
 		Maybe()
 
 	audit := auditportsmock.NewMockAuditService(t)
-	audit.EXPECT().LogAction(mock.Anything, mock.Anything).Run(h.recordAudit).Return(nil).Maybe()
+	audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Run(h.recordAudit).Return(nil).Maybe()
 	audit.EXPECT().
-		LogAction(mock.Anything, mock.Anything, mock.Anything).
+		LogAction(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Run(h.recordAudit).
 		Return(nil).
 		Maybe()

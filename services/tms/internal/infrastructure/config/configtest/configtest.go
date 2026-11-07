@@ -60,9 +60,8 @@ temporal:
     enableEncryption: false
     encryptionKeyID: "test-key-id"
 audit:
-  batchSize: 500
-  maxEntriesPerFlush: 5000
-  dlqMaxRetries: 5
+  fingerprintPepper: "test-audit-fingerprint-pepper-32-characters"
+  exportTtl: 168h
 storage:
   endpoint: "http://localhost:9000"
   accessKey: "test"

@@ -86,7 +86,7 @@ func TestCreate_Success(t *testing.T) {
 
 	deps.transformer.On("TransformFleetCode", mock.Anything, mock.Anything).Return(nil)
 	deps.repo.On("Create", mock.Anything, mock.Anything).Return(created, nil)
-	deps.audit.On("LogAction", mock.Anything, mock.Anything).Return(nil)
+	deps.audit.On("LogAction", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 	result, err := deps.svc.Create(ctx, entity, userID)
 
@@ -133,7 +133,7 @@ func TestUpdate_Success(t *testing.T) {
 	deps.transformer.On("TransformFleetCode", mock.Anything, mock.Anything).Return(nil)
 	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(original, nil)
 	deps.repo.On("Update", mock.Anything, mock.Anything).Return(entity, nil)
-	deps.audit.On("LogAction", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	deps.audit.On("LogAction", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 	result, err := deps.svc.Update(ctx, entity, userID)
 
@@ -408,7 +408,7 @@ func TestCreate_AuditLogError(t *testing.T) {
 
 	deps.transformer.On("TransformFleetCode", mock.Anything, mock.Anything).Return(nil)
 	deps.repo.On("Create", mock.Anything, mock.Anything).Return(created, nil)
-	deps.audit.On("LogAction", mock.Anything, mock.Anything).Return(errors.New("audit error"))
+	deps.audit.On("LogAction", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("audit error"))
 
 	result, err := deps.svc.Create(ctx, entity, userID)
 
@@ -508,7 +508,7 @@ func TestUpdate_AuditLogError(t *testing.T) {
 	deps.transformer.On("TransformFleetCode", mock.Anything, mock.Anything).Return(nil)
 	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(original, nil)
 	deps.repo.On("Update", mock.Anything, mock.Anything).Return(entity, nil)
-	deps.audit.On("LogAction", mock.Anything, mock.Anything, mock.Anything).
+	deps.audit.On("LogAction", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return(errors.New("audit error"))
 
 	result, err := deps.svc.Update(ctx, entity, userID)
@@ -553,7 +553,7 @@ func TestBulkUpdateStatus_UpdatesAndAuditsEveryFleetCode(t *testing.T) {
 		BulkUpdateStatus(mock.Anything, req).
 		Return([]*fleetcode.FleetCode{&updated1, &updated2}, nil).
 		Once()
-	deps.audit.EXPECT().LogActions(mock.Anything).Return(nil).Once()
+	deps.audit.EXPECT().LogActions(mock.Anything, mock.Anything).Return(nil).Once()
 
 	result, err := deps.svc.BulkUpdateStatus(t.Context(), req)
 

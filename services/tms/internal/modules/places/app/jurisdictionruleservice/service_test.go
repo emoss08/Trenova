@@ -81,7 +81,7 @@ func newService(t *testing.T, repo permitports.JurisdictionRuleRepository) *serv
 
 	auditService := auditportsmock.NewMockAuditService(t)
 	auditService.EXPECT().
-		LogAction(mock.Anything, mock.Anything).
+		LogAction(mock.Anything, mock.Anything, mock.Anything).
 		Return(nil).
 		Maybe()
 
@@ -255,8 +255,8 @@ func TestLogAction_LeavesTenantUnsetForGlobalData(t *testing.T) {
 
 	var captured *auditports.LogActionParams
 	auditService.EXPECT().
-		LogAction(mock.Anything, mock.Anything).
-		RunAndReturn(func(p *auditports.LogActionParams, _ ...auditports.LogOption) error {
+		LogAction(mock.Anything, mock.Anything, mock.Anything).
+		RunAndReturn(func(_ context.Context, p *auditports.LogActionParams, _ ...auditports.LogOption) error {
 			captured = p
 			return nil
 		})

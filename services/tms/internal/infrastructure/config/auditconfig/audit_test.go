@@ -1,88 +1,25 @@
 package auditconfig
 
 import (
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-func TestAuditConfig_GetBufferFlushInterval(t *testing.T) {
+func TestAuditConfig_ExportTTLDefaultsToAWeek(t *testing.T) {
 	t.Parallel()
 
-	t.Run("default", func(t *testing.T) {
-		t.Parallel()
-		c := &Config{}
-		assert.Equal(t, time.Minute, c.GetBufferFlushInterval())
-	})
-
-	t.Run("custom", func(t *testing.T) {
-		t.Parallel()
-		c := &Config{BufferFlushInterval: 20 * time.Second}
-		assert.Equal(t, 20*time.Second, c.GetBufferFlushInterval())
-	})
+	assert.Equal(t, 168*time.Hour, (&Config{}).GetExportTTL())
+	assert.Equal(t, 2*time.Hour, (&Config{ExportTTL: 2 * time.Hour}).GetExportTTL())
 }
 
-func TestAuditConfig_GetBatchSize(t *testing.T) {
+func TestAuditConfig_RefusesAShortFingerprintPepper(t *testing.T) {
 	t.Parallel()
 
-	t.Run("default", func(t *testing.T) {
-		t.Parallel()
-		c := &Config{}
-		assert.Equal(t, 500, c.GetBatchSize())
-	})
-
-	t.Run("custom", func(t *testing.T) {
-		t.Parallel()
-		c := &Config{BatchSize: 1000}
-		assert.Equal(t, 1000, c.GetBatchSize())
-	})
-}
-
-func TestAuditConfig_GetMaxEntriesPerFlush(t *testing.T) {
-	t.Parallel()
-
-	t.Run("default", func(t *testing.T) {
-		t.Parallel()
-		c := &Config{}
-		assert.Equal(t, 5000, c.GetMaxEntriesPerFlush())
-	})
-
-	t.Run("custom", func(t *testing.T) {
-		t.Parallel()
-		c := &Config{MaxEntriesPerFlush: 10000}
-		assert.Equal(t, 10000, c.GetMaxEntriesPerFlush())
-	})
-}
-
-func TestAuditConfig_GetDLQRetryInterval(t *testing.T) {
-	t.Parallel()
-
-	t.Run("default", func(t *testing.T) {
-		t.Parallel()
-		c := &Config{}
-		assert.Equal(t, 5*time.Minute, c.GetDLQRetryInterval())
-	})
-
-	t.Run("custom", func(t *testing.T) {
-		t.Parallel()
-		c := &Config{DLQRetryInterval: 10 * time.Minute}
-		assert.Equal(t, 10*time.Minute, c.GetDLQRetryInterval())
-	})
-}
-
-func TestAuditConfig_GetDLQMaxRetries(t *testing.T) {
-	t.Parallel()
-
-	t.Run("default", func(t *testing.T) {
-		t.Parallel()
-		c := &Config{}
-		assert.Equal(t, 5, c.GetDLQMaxRetries())
-	})
-
-	t.Run("custom", func(t *testing.T) {
-		t.Parallel()
-		c := &Config{DLQMaxRetries: 10}
-		assert.Equal(t, 10, c.GetDLQMaxRetries())
-	})
+	require.NoError(t, (&Config{}).Validate(), "no pepper fingerprints by last four only")
+	require.ErrorIs(t, (&Config{FingerprintPepper: "short"}).Validate(), ErrFingerprintPepperTooShort)
+	require.NoError(t, (&Config{FingerprintPepper: strings.Repeat("p", 32)}).Validate())
 }

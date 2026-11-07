@@ -236,7 +236,7 @@ func (s *Service) announceBounce(
 		CorrelationID: entity.ID.String(),
 		Link:          tendereffects.DispatchConsoleMoveLink(entity.ShipmentMoveID),
 	})
-	s.effects.LogAudit(&tendereffects.AuditParams{
+	s.effects.LogAudit(ctx, &tendereffects.AuditParams{
 		TenantInfo: req.TenantInfo,
 		TenderID:   entity.ID,
 		Operation:  permission.OpUpdate,

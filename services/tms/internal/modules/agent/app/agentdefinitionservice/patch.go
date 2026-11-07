@@ -84,7 +84,7 @@ func (s *Service) Patch(
 	if comment == "" {
 		comment = "Agent updated"
 	}
-	s.logAudit(saved, &previous, permission.OpUpdate, actor, comment)
+	s.logAudit(ctx, saved, &previous, permission.OpUpdate, actor, comment)
 
 	return saved, nil
 }

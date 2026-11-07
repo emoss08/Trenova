@@ -56,7 +56,7 @@ func (s *Service) VerifyEquipment(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&auditports.LogActionParams{
+	if err = s.auditService.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceEquipmentVerification,
 		ResourceID:     created.ID.String(),
 		Operation:      permission.OpCreate,
@@ -283,7 +283,7 @@ func (s *Service) OverrideVerification(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&auditports.LogActionParams{
+	if err = s.auditService.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceEquipmentVerification,
 		ResourceID:     updated.ID.String(),
 		Operation:      permission.OpApprove,

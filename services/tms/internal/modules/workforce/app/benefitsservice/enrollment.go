@@ -126,7 +126,7 @@ func (s *Service) Enroll(
 	if created.Status == paybenefit.EnrollmentWaived {
 		comment = "Declined " + plan.Name
 	}
-	s.audit(
+	s.audit(ctx,
 		created.GetResourceID(), permission.OpCreate, req.UserID, req.TenantInfo,
 		created, nil, comment,
 	)
@@ -234,7 +234,7 @@ func (s *Service) EndEnrollment(
 		return nil, err
 	}
 
-	s.audit(
+	s.audit(ctx,
 		updated.GetResourceID(), permission.OpUpdate, req.UserID, req.TenantInfo,
 		updated, &previous, "Benefit cover ended",
 	)

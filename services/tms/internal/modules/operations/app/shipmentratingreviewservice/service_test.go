@@ -69,7 +69,7 @@ type auditLog struct {
 	entries []*auditports.LogActionParams
 }
 
-func (a *auditLog) LogAction(params *auditports.LogActionParams, _ ...auditports.LogOption) error {
+func (a *auditLog) LogAction(_ context.Context, params *auditports.LogActionParams, _ ...auditports.LogOption) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	a.entries = append(a.entries, params)

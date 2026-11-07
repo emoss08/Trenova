@@ -81,7 +81,7 @@ type auditParams struct {
 	comment    string
 }
 
-func (s *Service) audit(p auditParams) {
+func (s *Service) audit(ctx context.Context, p *auditParams) {
 	if p.userID.IsNil() {
 		return
 	}
@@ -99,7 +99,7 @@ func (s *Service) audit(p auditParams) {
 		params.PreviousState = jsonutils.MustToJSON(p.previous)
 		opts = append(opts, auditservice.WithDiff(p.previous, p.current))
 	}
-	if err := s.auditService.LogAction(params, opts...); err != nil {
+	if err := s.auditService.LogAction(ctx, params, opts...); err != nil {
 		s.l.Error("failed to log audit action", zap.Error(err))
 	}
 }
@@ -249,7 +249,7 @@ func (s *Service) ClockIn(
 		return nil, err
 	}
 
-	s.audit(auditParams{
+	s.audit(ctx, &auditParams{
 		resource:   permission.ResourceTimesheet,
 		resourceID: created.ID.String(),
 		operation:  permission.OpCreate,
@@ -306,7 +306,7 @@ func (s *Service) ClockOut(
 		return nil, err
 	}
 
-	s.audit(auditParams{
+	s.audit(ctx, &auditParams{
 		resource:   permission.ResourceTimesheet,
 		resourceID: updated.ID.String(),
 		operation:  permission.OpUpdate,
@@ -439,7 +439,7 @@ func (s *Service) RecordEntry(
 	if !req.ID.IsNil() {
 		operation = permission.OpUpdate
 	}
-	s.audit(auditParams{
+	s.audit(ctx, &auditParams{
 		resource:   permission.ResourceTimesheet,
 		resourceID: saved.ID.String(),
 		operation:  operation,
@@ -508,7 +508,7 @@ func (s *Service) DeleteEntry(ctx context.Context, req *DeleteEntryRequest) erro
 		}
 	}
 
-	s.audit(auditParams{
+	s.audit(ctx, &auditParams{
 		resource:   permission.ResourceTimesheet,
 		resourceID: req.ID.String(),
 		operation:  permission.OpDelete,

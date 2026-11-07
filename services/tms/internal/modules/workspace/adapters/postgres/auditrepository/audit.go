@@ -2,10 +2,12 @@ package auditrepository
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit/auditdb"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -15,11 +17,21 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/jackc/pgx/v5"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
 var entryErrors = dberror.Mapping{Entity: "Audit Entry"}
+
+var summaryColumns = []string{
+	"id", "business_unit_id", "organization_id", "timestamp", "resource", "resource_id",
+	"operation", "action", "category", "retention_class", "channel", "principal_type",
+	"principal_id", "user_id", "api_key_id", "actor_name", "ai_run_id", "entity_ref",
+	"correlation_id", "trace_id", "ip_address", "user_agent", "comment", "sensitive_data",
+	"critical",
+}
 
 type Params struct {
 	fx.In
@@ -45,38 +57,48 @@ func withPrincipals(q keel.Query[*audit.Entry]) keel.Query[*audit.Entry] {
 	return q.Load(e.User(), e.APIKey())
 }
 
-func (r *repository) List(
-	ctx context.Context,
-	req *auditports.ListAuditEntriesRequest,
-) (*pagination.ListResult[*audit.Entry], error) {
-	return dbtx.Read(
-		ctx,
-		r.db,
-		func(ctx context.Context) (*pagination.ListResult[*audit.Entry], error) {
-			result, err := listquery.List(
-				ctx,
-				r.db.Keel(ctx),
-				auditdb.Entries.Query(),
-				&listquery.Request[audit.Entry]{Filter: req.Filter, Shape: withPrincipals},
-			)
-			if err != nil {
-				r.l.Error("failed to list audit entries", zap.Error(err))
-				return nil, err
-			}
+func accessPreds(access auditports.EntryAccess) ([]keel.Pred, bool) {
+	e := auditdb.Entries
+	preds := make([]keel.Pred, 0, 2)
+	if !access.AllResources {
+		if len(access.Resources) == 0 {
+			return nil, false
+		}
+		names := make([]string, 0, len(access.Resources))
+		for _, resource := range access.Resources {
+			names = append(names, resource.String())
+		}
+		preds = append(preds, e.Resource.In(permissionResources(names)...))
+	}
+	if !access.IncludeSecurity {
+		preds = append(preds, e.Category.Ne(audit.CategorySecurity))
+	}
+	return preds, true
+}
 
-			return result, nil
-		},
-	)
+func permissionResources(names []string) []permission.Resource {
+	out := make([]permission.Resource, 0, len(names))
+	for _, name := range names {
+		out = append(out, permission.Resource(name))
+	}
+	return out
 }
 
 func (r *repository) ListConnection(
 	ctx context.Context,
-	req *auditports.ListAuditEntriesConnectionRequest,
+	req *auditports.ListAuditEntriesRequest,
 ) (*pagination.CursorListResult[*audit.Entry], error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*audit.Entry], error) {
+			preds, allowed := accessPreds(req.Access)
+			if !allowed {
+				return &pagination.CursorListResult[*audit.Entry]{
+					Items: []*audit.Entry{},
+				}, nil
+			}
+
 			if req.Filter != nil && len(req.Filter.Sort) == 0 {
 				req.Filter.Sort = []domaintypes.SortField{
 					{Field: "timestamp", Direction: dbtype.SortDirectionDesc},
@@ -84,18 +106,23 @@ func (r *repository) ListConnection(
 			}
 
 			e := auditdb.Entries
-			result, err := listquery.Connection(
-				ctx,
-				r.db.Keel(ctx),
-				e.Where(
-					keel.When(!req.ResourceID.IsNil(), e.ResourceID.Eq(req.ResourceID.String())),
-				),
-				&listquery.Request[audit.Entry]{
-					Filter: req.Filter,
-					Cursor: req.Cursor,
-					Shape:  withPrincipals,
-				},
-			)
+			if req.ResourceID != "" {
+				preds = append(preds, e.ResourceID.Eq(req.ResourceID))
+			}
+			if req.ChangedField != "" {
+				preds = append(preds, e.Changes.HasKey(req.ChangedField))
+			}
+
+			lq := &listquery.Request[audit.Entry]{
+				Filter: req.Filter,
+				Cursor: req.Cursor,
+				Shape:  withPrincipals,
+			}
+			if !req.IncludeDetail {
+				lq.Columns = summaryColumns
+			}
+
+			result, err := listquery.Connection(ctx, r.db.Keel(ctx), e.Where(preds...), lq)
 			if err != nil {
 				r.l.Error("failed to list audit entry connection", zap.Error(err))
 				return nil, err
@@ -108,17 +135,18 @@ func (r *repository) ListConnection(
 
 func (r *repository) GetByID(
 	ctx context.Context,
-	req auditports.GetAuditEntryByIDOptions,
+	req *auditports.GetAuditEntryByIDOptions,
 ) (*audit.Entry, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*audit.Entry, error) {
+		preds, allowed := accessPreds(req.Access)
+		if !allowed {
+			return nil, entryErrors.Map(keel.ErrNotFound, req.EntryID.String())
+		}
+
 		e := auditdb.Entries
-		entity, err := withPrincipals(e.Where(e.ID.Eq(req.EntryID))).One(ctx, r.db.Keel(ctx))
+		preds = append(preds, e.ID.Eq(req.EntryID))
+		entity, err := withPrincipals(e.Where(preds...)).One(ctx, r.db.Keel(ctx))
 		if err != nil {
-			r.l.Error(
-				"failed to get audit entry",
-				zap.String("entryID", req.EntryID.String()),
-				zap.Error(err),
-			)
 			return nil, entryErrors.Map(err, req.EntryID.String())
 		}
 
@@ -126,43 +154,19 @@ func (r *repository) GetByID(
 	})
 }
 
-func (r *repository) ListByResourceID(
-	ctx context.Context,
-	req *auditports.ListByResourceIDRequest,
-) (*pagination.ListResult[*audit.Entry], error) {
-	return dbtx.Read(
-		ctx,
-		r.db,
-		func(ctx context.Context) (*pagination.ListResult[*audit.Entry], error) {
-			e := auditdb.Entries
-			result, err := listquery.List(
-				ctx,
-				r.db.Keel(ctx),
-				e.Where(e.ResourceID.Eq(req.ResourceID.String())),
-				&listquery.Request[audit.Entry]{Filter: req.Filter, Shape: withPrincipals},
-			)
-			if err != nil {
-				r.l.Error(
-					"failed to list audit entries by resource",
-					zap.String("resourceID", req.ResourceID.String()),
-					zap.Error(err),
-				)
-				return nil, err
-			}
+func (r *repository) Insert(ctx context.Context, entries []*audit.Entry) error {
+	if len(entries) == 0 {
+		return nil
+	}
 
-			return result, nil
-		},
-	)
-}
-
-func (r *repository) InsertAuditEntries(ctx context.Context, entries []*audit.Entry) error {
-	ctx = dbscope.WithSystem(
-		ctx,
-		"flush buffered audit entries, which mix organizations, in one batch",
-	)
+	ctx = insertScope(ctx, entries)
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		if err := auditdb.Entries.CreateMany(ctx, r.db.Keel(ctx), entries); err != nil {
-			r.l.Error("failed to insert audit entries", zap.Error(err))
+			r.l.Error(
+				"failed to insert audit entries",
+				zap.Int("count", len(entries)),
+				zap.Error(err),
+			)
 			return err
 		}
 
@@ -170,9 +174,101 @@ func (r *repository) InsertAuditEntries(ctx context.Context, entries []*audit.En
 	})
 }
 
-func (r *repository) DeleteAuditEntries(
+func insertScope(ctx context.Context, entries []*audit.Entry) context.Context {
+	first := entries[0]
+	for _, entry := range entries[1:] {
+		if entry.OrganizationID != first.OrganizationID ||
+			entry.BusinessUnitID != first.BusinessUnitID {
+			return dbscope.WithSystem(
+				ctx,
+				"record audit entries that span organizations in one statement",
+			)
+		}
+	}
+
+	if current, ok := dbscope.TenantFrom(ctx); ok {
+		if current.OrganizationID == first.OrganizationID &&
+			current.BusinessUnitID == first.BusinessUnitID {
+			return ctx
+		}
+		return dbscope.WithSystem(
+			ctx,
+			"record an audit entry about another organization than the caller's",
+		)
+	}
+
+	return dbscope.WithValidTenant(ctx, dbscope.Tenant{
+		OrganizationID: first.OrganizationID,
+		BusinessUnitID: first.BusinessUnitID,
+	})
+}
+
+func (r *repository) ExportPage(
 	ctx context.Context,
-	req auditports.DeleteAuditEntriesRequest,
+	req *auditports.ExportPageRequest,
+) ([]*audit.Entry, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*audit.Entry, error) {
+		e := auditdb.Entries
+		export := req.Export
+		preds := []keel.Pred{
+			e.Timestamp.Gte(export.RangeFrom),
+			e.Timestamp.Lt(export.RangeTo),
+		}
+		if !export.IncludeSecurity {
+			preds = append(preds, e.Category.Ne(audit.CategorySecurity))
+		}
+		filters := export.Filters
+		if len(filters.Resources) > 0 {
+			preds = append(preds, e.Resource.In(permissionResources(filters.Resources)...))
+		}
+		if len(filters.Operations) > 0 {
+			ops := make([]permission.Operation, 0, len(filters.Operations))
+			for _, op := range filters.Operations {
+				ops = append(ops, permission.Operation(op))
+			}
+			preds = append(preds, e.Operation.In(ops...))
+		}
+		if len(filters.Categories) > 0 {
+			cats := make([]audit.Category, 0, len(filters.Categories))
+			for _, c := range filters.Categories {
+				cats = append(cats, audit.Category(c))
+			}
+			preds = append(preds, e.Category.In(cats...))
+		}
+		if len(filters.Channels) > 0 {
+			chans := make([]audit.Channel, 0, len(filters.Channels))
+			for _, c := range filters.Channels {
+				chans = append(chans, audit.Channel(c))
+			}
+			preds = append(preds, e.Channel.In(chans...))
+		}
+		if filters.PrincipalID != "" {
+			preds = append(preds, e.PrincipalID.Eq(pulid.ID(filters.PrincipalID)))
+		}
+		if filters.ResourceID != "" {
+			preds = append(preds, e.ResourceID.Eq(filters.ResourceID))
+		}
+		if req.AfterID.IsNotNil() {
+			preds = append(preds, keel.Or(
+				e.Timestamp.Gt(req.AfterTS),
+				keel.And(e.Timestamp.Eq(req.AfterTS), e.ID.Gt(req.AfterID)),
+			))
+		}
+
+		rows, err := e.Where(preds...).
+			Order(e.Timestamp.Asc(), e.ID.Asc()).
+			Limit(req.Limit).
+			List(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, fmt.Errorf("read audit export page: %w", err)
+		}
+		return rows, nil
+	})
+}
+
+func (r *repository) DeleteExpired(
+	ctx context.Context,
+	req auditports.DeleteExpiredAuditEntriesRequest,
 ) (int64, error) {
 	ctx = dbscope.WithSystem(
 		ctx,
@@ -182,13 +278,100 @@ func (r *repository) DeleteAuditEntries(
 		ctx,
 		r.db,
 		func(ctx context.Context, db *keel.DB) (int64, error) {
-			e := auditdb.Entries
-			return e.AllTenants().Where(
-				e.OrganizationID.Eq(req.OrgID),
-				e.BusinessUnitID.Eq(req.BuID),
-				e.Timestamp.Lt(req.Before),
-				keel.Or(e.Critical.IsFalse(), e.Timestamp.Lt(req.CriticalBefore)),
-			).Delete(ctx, db)
+			return keel.Exec(ctx, db, `
+				WITH doomed AS (
+					SELECT e.id, e.timestamp
+					FROM audit_entries e
+					WHERE e.organization_id = $1
+						AND e.business_unit_id = $2
+						AND e.retention_class = $3
+						AND e.timestamp < $4
+						AND NOT EXISTS (
+							SELECT 1 FROM audit_legal_holds h
+							WHERE h.organization_id = e.organization_id
+								AND h.business_unit_id = e.business_unit_id
+								AND h.released_at IS NULL
+								AND (h.resource IS NULL OR (h.resource = e.resource
+									AND (h.resource_id IS NULL OR h.resource_id = e.resource_id)))
+						)
+					ORDER BY e.timestamp
+					LIMIT $5
+				)
+				DELETE FROM audit_entries e
+				USING doomed d
+				WHERE e.id = d.id
+					AND e.timestamp = d.timestamp
+					AND e.organization_id = $1
+					AND e.business_unit_id = $2`,
+				req.OrgID.String(),
+				req.BuID.String(),
+				string(req.Class),
+				req.Before,
+				req.Limit,
+			)
 		},
 	)
+}
+
+func (r *repository) EnsurePartitions(ctx context.Context, monthsAhead int) (int, error) {
+	ctx = dbscope.WithSystem(ctx, "create the audit trail's monthly partitions ahead of the clock")
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
+		created, err := keel.QueryAll(
+			ctx, r.db.Keel(ctx), pgx.RowTo[int32],
+			"SELECT audit_partitions.ensure_partitions(NULL, $1)", monthsAhead,
+		)
+		if err != nil {
+			return 0, fmt.Errorf("ensure audit partitions: %w", err)
+		}
+		if len(created) == 0 {
+			return 0, nil
+		}
+		return int(created[0]), nil
+	})
+}
+
+func (r *repository) DropExpiredPartitions(ctx context.Context, before int64) (int, error) {
+	ctx = dbscope.WithSystem(ctx, "drop audit partitions older than the longest retention")
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
+		dropped, err := keel.QueryAll(
+			ctx, r.db.Keel(ctx), pgx.RowTo[int32],
+			"SELECT audit_partitions.drop_expired_partitions($1)", before,
+		)
+		if err != nil {
+			return 0, fmt.Errorf("drop expired audit partitions: %w", err)
+		}
+		if len(dropped) == 0 {
+			return 0, nil
+		}
+		return int(dropped[0]), nil
+	})
+}
+
+func (r *repository) TenantsWithEntries(
+	ctx context.Context,
+	from, to int64,
+) ([]auditports.TenantKey, error) {
+	ctx = dbscope.WithSystem(ctx, "find the organizations with audit entries to seal")
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]auditports.TenantKey, error) {
+		e := auditdb.Entries
+		type row struct {
+			OrganizationID pulid.ID
+			BusinessUnitID pulid.ID
+		}
+		rows, err := keel.Into[row](ctx, r.db.Keel(ctx), e.AllTenants().
+			Distinct().
+			Pick(e.OrganizationID, e.BusinessUnitID).
+			Where(e.Timestamp.Gte(from), e.Timestamp.Lt(to)))
+		if err != nil {
+			return nil, fmt.Errorf("list tenants with audit entries: %w", err)
+		}
+		out := make([]auditports.TenantKey, 0, len(rows))
+		for _, rw := range rows {
+			out = append(out, auditports.TenantKey{
+				OrganizationID: rw.OrganizationID,
+				BusinessUnitID: rw.BusinessUnitID,
+			})
+		}
+		return out, nil
+	})
 }

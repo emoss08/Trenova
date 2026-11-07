@@ -110,7 +110,7 @@ func (s *Service) CreateImport(
 		return nil, err
 	}
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resource:   permission.ResourceFuelPurchaseImport,
 		resourceID: created.ID.String(),
 		operation:  permission.OpCreate,
@@ -266,7 +266,7 @@ func (s *Service) Stage(
 		return nil, err
 	}
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resource:   permission.ResourceFuelPurchaseImport,
 		resourceID: updated.ID.String(),
 		operation:  permission.OpImport,
@@ -365,7 +365,7 @@ func (s *Service) failStage(
 	}
 
 	tenantInfo := batchTenant(updated)
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resource:   permission.ResourceFuelPurchaseImport,
 		resourceID: updated.ID.String(),
 		operation:  permission.OpImport,
@@ -770,7 +770,7 @@ func (s *Service) Commit(
 		return nil, err
 	}
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resource:   permission.ResourceFuelPurchaseImport,
 		resourceID: committed.ID.String(),
 		operation:  permission.OpImport,
@@ -813,7 +813,7 @@ func (s *Service) Discard(
 	if reason := strings.TrimSpace(req.Reason); reason != "" {
 		comment += ": " + reason
 	}
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resource:   permission.ResourceFuelPurchaseImport,
 		resourceID: updated.ID.String(),
 		operation:  permission.OpCancel,

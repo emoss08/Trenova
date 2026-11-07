@@ -257,7 +257,7 @@ func (s *Service) recordCreation(ctx context.Context, record *creationRecord) {
 		},
 	})
 
-	if err := s.auditService.LogAction(&auditports.LogActionParams{
+	if err := s.auditService.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceUser,
 		ResourceID:     record.user.ID.String(),
 		Operation:      permission.OpCreate,
@@ -268,7 +268,6 @@ func (s *Service) recordCreation(ctx context.Context, record *creationRecord) {
 	},
 		auditservice.WithComment("User created"),
 		auditservice.WithCategory(audit.CategoryUser),
-		auditservice.WithRequest(ctx),
 	); err != nil {
 		s.l.Error("failed to log user creation", zap.Error(err))
 	}

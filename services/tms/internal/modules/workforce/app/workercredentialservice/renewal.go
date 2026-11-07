@@ -55,7 +55,7 @@ func (s *Service) RequestRenewal(ctx context.Context, req RenewalRequest) error 
 	}
 
 	s.notifyRenewal(ctx, &req, named)
-	s.auditRenewal(&req, named)
+	s.auditRenewal(ctx, &req, named)
 
 	return nil
 }
@@ -189,13 +189,17 @@ func renewalSubject(named []*workercredential.WorkerCredential) string {
 	return strings.Join(names, ", ")
 }
 
-func (s *Service) auditRenewal(req *RenewalRequest, named []*workercredential.WorkerCredential) {
+func (s *Service) auditRenewal(
+	ctx context.Context,
+	req *RenewalRequest,
+	named []*workercredential.WorkerCredential,
+) {
 	ids := make([]string, 0, len(named))
 	for _, credential := range named {
 		ids = append(ids, credential.ID.String())
 	}
 
-	if err := s.auditService.LogAction(&auditports.LogActionParams{
+	if err := s.auditService.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceWorkerCredential,
 		ResourceID:     req.WorkerID.String(),
 		Operation:      permission.OpUpdate,

@@ -413,7 +413,7 @@ func (s *Service) applyChange(
 		return nil, err
 	}
 
-	s.logAudit(updated, actor.UserID, previous, "Applied a payment recorded in the books")
+	s.logAudit(ctx, updated, actor.UserID, previous, "Applied a payment recorded in the books")
 	s.afterDecision(ctx, updated, actor.UserID)
 	return updated, nil
 }

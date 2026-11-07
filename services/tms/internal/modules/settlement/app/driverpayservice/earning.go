@@ -54,7 +54,7 @@ func (s *Service) CreateEarning(
 	if err != nil {
 		return nil, err
 	}
-	s.logEarningAudit(created, nil, actor.UserID, permission.OpCreate,
+	s.logEarningAudit(ctx, created, nil, actor.UserID, permission.OpCreate,
 		"Recurring earning created")
 	return created, nil
 }
@@ -87,12 +87,13 @@ func (s *Service) UpdateEarning(
 	if err != nil {
 		return nil, err
 	}
-	s.logEarningAudit(updated, previous, actor.UserID, permission.OpUpdate,
+	s.logEarningAudit(ctx, updated, previous, actor.UserID, permission.OpUpdate,
 		"Recurring earning updated")
 	return updated, nil
 }
 
 func (s *Service) logEarningAudit(
+	ctx context.Context,
 	current, previous *recurringpay.RecurringEarning,
 	userID pulid.ID,
 	operation permission.Operation,
@@ -112,7 +113,7 @@ func (s *Service) logEarningAudit(
 		params.PreviousState = jsonutils.MustToJSON(previous)
 		options = append(options, auditservice.WithDiff(previous, current))
 	}
-	if err := s.auditService.LogAction(params, options...); err != nil {
+	if err := s.auditService.LogAction(ctx, params, options...); err != nil {
 		s.l.Error("failed to log recurring earning audit action", zap.Error(err))
 	}
 }

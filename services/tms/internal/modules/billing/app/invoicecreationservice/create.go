@@ -356,7 +356,7 @@ func (s *Service) CreateInvoicesFromOrder(
 	result := &invoiceports.CreateInvoicesResult{}
 	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		var txErr error
-		result, txErr = s.createOrderInvoicesTx(txCtx, req, orderCustomer, number, actor)
+		result, txErr = s.createOrderInvoicesTx(ctx, txCtx, req, orderCustomer, number, actor)
 		return txErr
 	})
 	if err != nil {
@@ -423,6 +423,7 @@ func bucketLegsByPayer(
 }
 
 func (s *Service) createOrderInvoicesTx(
+	ctx context.Context,
 	txCtx context.Context,
 	req *invoiceports.CreateInvoiceFromOrderRequest,
 	orderCustomer *customer.Customer,
@@ -503,7 +504,7 @@ func (s *Service) createOrderInvoicesTx(
 		}
 
 		auditActor := actor.AuditActor()
-		s.rec.LogAction(
+		s.rec.LogAction(ctx,
 			created,
 			auditActor,
 			permission.OpCreate,

@@ -57,7 +57,7 @@ func setupTest(t *testing.T) *testDeps {
 		auditService:  deps.audit,
 		notifications: notificationtest.Discarding(),
 	}
-	deps.audit.EXPECT().LogAction(mock.Anything, mock.Anything).Return(nil).Maybe()
+	deps.audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
 	return deps
 }
 

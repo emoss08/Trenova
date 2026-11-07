@@ -63,7 +63,7 @@ func newBulkHarness(t *testing.T) *bulkHarness {
 		Maybe()
 
 	audit := auditportsmock.NewMockAuditService(t)
-	audit.EXPECT().LogAction(mock.Anything, mock.Anything).Return(nil).Maybe()
+	audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
 
 	h.svc = workertrainingservice.New(workertrainingservice.Params{
 		Logger:       zap.NewNop(),

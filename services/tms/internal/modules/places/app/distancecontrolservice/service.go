@@ -73,7 +73,7 @@ func (s *Service) Update(
 	if err != nil {
 		return nil, err
 	}
-	s.logAudit(updated, original, userID)
+	s.logAudit(ctx, updated, original, userID)
 	return updated, nil
 }
 
@@ -131,6 +131,7 @@ func (s *Service) validate(
 }
 
 func (s *Service) logAudit(
+	ctx context.Context,
 	current *distancecontrol.DistanceControl,
 	previous *distancecontrol.DistanceControl,
 	userID pulid.ID,
@@ -154,7 +155,7 @@ func (s *Service) logAudit(
 	if previous != nil {
 		opts = append(opts, auditservice.WithDiff(previous, current))
 	}
-	if err := s.auditService.LogAction(params, opts...); err != nil {
+	if err := s.auditService.LogAction(ctx, params, opts...); err != nil {
 		s.l.Error("failed to log distance control audit action", zap.Error(err))
 	}
 }

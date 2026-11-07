@@ -226,7 +226,7 @@ func newHarness(t *testing.T) *harness {
 	workerRepo.EXPECT().UpdateProfileSafetyRollup(mock.Anything, mock.Anything).Return(nil).Maybe()
 	docs := documentportsmock.NewMockDocumentRepository(t)
 	audit := auditportsmock.NewMockAuditService(t)
-	audit.EXPECT().LogAction(mock.Anything, mock.Anything).Return(nil).Maybe()
+	audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
 
 	repo := &fakeRepo{}
 	employment := &fakeEmployment{}

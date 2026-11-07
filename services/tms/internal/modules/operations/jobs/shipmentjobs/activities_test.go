@@ -55,7 +55,7 @@ func TestActivitiesBulkDuplicateShipmentsActivity(t *testing.T) {
 		}, nil).
 		Once()
 
-	audit.EXPECT().LogAction(mock.Anything, mock.Anything).Return(nil).Twice()
+	audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil).Twice()
 	realtime.EXPECT().
 		PublishResourceInvalidation(mock.Anything, mock.MatchedBy(func(req *realtimeports.PublishResourceInvalidationRequest) bool {
 			return req.Resource == "shipments" &&

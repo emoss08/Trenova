@@ -461,7 +461,7 @@ func (s *Service) carryOut(
 	s.recordCorrection(ctx, proposal, created)
 
 	auditActor := actor.AuditActor()
-	if err := s.audit.LogAction(&auditports.LogActionParams{
+	if err := s.audit.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceAgentProposal,
 		ResourceID:     proposal.GetID().String(),
 		Operation:      permission.OpUpdate,

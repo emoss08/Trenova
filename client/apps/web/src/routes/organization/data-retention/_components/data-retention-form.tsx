@@ -26,6 +26,10 @@ import {
   AI_AUDIT_RETENTION_MIN_DAYS,
   AI_CORRECTION_RETENTION_MIN_DAYS,
   AI_FEEDBACK_RETENTION_MIN_DAYS,
+  AUDIT_ACCESS_RETENTION_MIN_DAYS,
+  AUDIT_FINANCIAL_RETENTION_MIN_DAYS,
+  AUDIT_OPERATIONAL_RETENTION_MIN_DAYS,
+  AUDIT_SECURITY_RETENTION_MIN_DAYS,
   dataRetentionFormSchema,
   dataRetentionFormValues,
   EDI_RETENTION_LIMIT_DAYS,
@@ -101,12 +105,37 @@ export default function DataRetentionForm({ now: nowProp }: { now?: number }) {
               <TableBody>
                 <GroupHeading title={t("Audit")} />
                 <RetentionPolicyRow
-                  name="auditRetentionPeriod"
-                  label={t("Audit entries")}
-                  description={t(
-                    "The record of who changed what, removed by the nightly audit purge.",
-                  )}
-                  minDays={1}
+                  name="auditAccessRetentionDays"
+                  label={t("Reads and downloads")}
+                  description={t("Who viewed, downloaded or exported a record.")}
+                  minDays={AUDIT_ACCESS_RETENTION_MIN_DAYS}
+                  outcome={deleted}
+                  now={now}
+                  disabled={readOnly}
+                />
+                <RetentionPolicyRow
+                  name="auditOperationalRetentionDays"
+                  label={t("Operational changes")}
+                  description={t("Changes to shipments, equipment, people and settings.")}
+                  minDays={AUDIT_OPERATIONAL_RETENTION_MIN_DAYS}
+                  outcome={deleted}
+                  now={now}
+                  disabled={readOnly}
+                />
+                <RetentionPolicyRow
+                  name="auditFinancialRetentionDays"
+                  label={t("Financial changes")}
+                  description={t("Changes to invoices, rates, accounting and settlements.")}
+                  minDays={AUDIT_FINANCIAL_RETENTION_MIN_DAYS}
+                  outcome={deleted}
+                  now={now}
+                  disabled={readOnly}
+                />
+                <RetentionPolicyRow
+                  name="auditSecurityRetentionDays"
+                  label={t("Security entries")}
+                  description={t("Access changes, refused requests and other security events.")}
+                  minDays={AUDIT_SECURITY_RETENTION_MIN_DAYS}
                   outcome={deleted}
                   now={now}
                   disabled={readOnly}

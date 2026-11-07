@@ -360,6 +360,7 @@ func (l *Loader) validateConfig(config *Config) error {
 		config.Storage.Validate,
 		config.Monitoring.Validate,
 		config.AIAudit.Validate,
+		config.Audit.Validate,
 	}
 	for _, validate := range validators {
 		if err := validate(); err != nil {

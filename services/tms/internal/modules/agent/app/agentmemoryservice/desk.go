@@ -690,7 +690,7 @@ func (s *Service) ReviseDesk(
 		return nil, err
 	}
 
-	s.logChange(
+	s.logChange(ctx,
 		revised,
 		previous,
 		person.Actor,
@@ -858,8 +858,14 @@ func (s *Service) ConfirmDesk(
 	if current.Tainted {
 		s.recordReview(ctx, current, confirmed, person.Actor)
 	} else {
-		s.logChange(confirmed, jsonutils.MustToJSON(current), person.Actor, permission.OpUpdate,
-			"Suggested agent memory saved from the conversation")
+		s.logChange(
+			ctx,
+			confirmed,
+			jsonutils.MustToJSON(current),
+			person.Actor,
+			permission.OpUpdate,
+			"Suggested agent memory saved from the conversation",
+		)
 	}
 	s.queueForRetrieval(ctx, confirmed)
 	s.recordReplaced(ctx, confirmed, person.Actor)
@@ -926,7 +932,7 @@ func (s *Service) DismissDesk(
 		return nil, err
 	}
 
-	s.logChange(dismissed, jsonutils.MustToJSON(current), person.Actor, permission.OpUpdate,
+	s.logChange(ctx, dismissed, jsonutils.MustToJSON(current), person.Actor, permission.OpUpdate,
 		"Suggested agent memory not saved")
 
 	return s.deskOne(ctx, person, dismissed.ID)

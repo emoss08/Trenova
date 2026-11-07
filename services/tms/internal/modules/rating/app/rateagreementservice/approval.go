@@ -192,7 +192,9 @@ func stampReviewComment(
 }
 
 // approvals binds the shared review cycle to this service.
-func (s *Service) approvals() approvalworkflow.Engine[*rateagreement.RateAgreement, rateagreement.Status] {
+func (s *Service) approvals(
+	ctx context.Context,
+) approvalworkflow.Engine[*rateagreement.RateAgreement, rateagreement.Status] {
 	return approvalworkflow.Engine[*rateagreement.RateAgreement, rateagreement.Status]{
 		Label: "rate agreement",
 		Load: func(
@@ -221,7 +223,7 @@ func (s *Service) approvals() approvalworkflow.Engine[*rateagreement.RateAgreeme
 			req *ApprovalActionRequest,
 			comment string,
 		) {
-			s.audit(
+			s.audit(ctx,
 				s.l.With(zap.String("operation", string(operation))),
 				updated,
 				original,

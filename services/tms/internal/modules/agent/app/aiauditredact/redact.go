@@ -24,8 +24,6 @@ const (
 	truncatedField = "_truncated"
 )
 
-// Masker masks sensitive values: a named field's value, and patterns inside
-// free text. auditservice.SensitiveDataManager is the implementation.
 type Masker interface {
 	MaskField(name, value string) (string, bool)
 	MaskText(text string) (string, bool)

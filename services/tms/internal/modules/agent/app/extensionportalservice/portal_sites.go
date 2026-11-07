@@ -85,7 +85,7 @@ func (s *Service) CreateSite(
 	if err != nil {
 		return nil, err
 	}
-	s.logSiteChange(&siteChange{
+	s.logSiteChange(ctx, &siteChange{
 		Tenant:    req.TenantInfo,
 		after:     created,
 		operation: permission.OpCreate,
@@ -118,7 +118,7 @@ func (s *Service) UpdateSite(
 	if err != nil {
 		return nil, err
 	}
-	s.logSiteChange(&siteChange{
+	s.logSiteChange(ctx, &siteChange{
 		Tenant:    req.TenantInfo,
 		before:    &before,
 		after:     updated,
@@ -252,7 +252,7 @@ func (s *Service) DeleteSite(
 	if err = s.sites.Delete(ctx, tenantInfo, id); err != nil {
 		return err
 	}
-	s.logSiteChange(&siteChange{
+	s.logSiteChange(ctx, &siteChange{
 		Tenant:    tenantInfo,
 		before:    site,
 		after:     site,
@@ -383,8 +383,8 @@ type siteChange struct {
 	comment   string
 }
 
-func (s *Service) logSiteChange(change *siteChange) {
-	if err := s.audit.LogAction(&auditports.LogActionParams{
+func (s *Service) logSiteChange(ctx context.Context, change *siteChange) {
+	if err := s.audit.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceAgentExtension,
 		ResourceID:     change.after.ID.String(),
 		Operation:      change.operation,

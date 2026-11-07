@@ -287,7 +287,7 @@ func (s *Service) Update(
 		return nil, duplicateOr(err)
 	}
 
-	s.log(updated, &previous, actor, permission.OpUpdate, "Evaluation case updated")
+	s.log(ctx, updated, &previous, actor, permission.OpUpdate, "Evaluation case updated")
 
 	return updated, nil
 }
@@ -334,7 +334,7 @@ func (s *Service) SetStatus(
 		return nil, err
 	}
 
-	s.log(updated, &previous, actor, permission.OpUpdate,
+	s.log(ctx, updated, &previous, actor, permission.OpUpdate,
 		fmt.Sprintf("Evaluation case moved from %s to %s", previous.Status, updated.Status))
 
 	return updated, nil
@@ -410,7 +410,7 @@ func (s *Service) save(
 		return &agentqualityports.EvalCaseCapture{Case: existing, Duplicate: true}, nil
 	}
 
-	s.log(created, nil, actor, permission.OpCreate,
+	s.log(ctx, created, nil, actor, permission.OpCreate,
 		fmt.Sprintf("Evaluation case captured from %s", created.Source))
 
 	return &agentqualityports.EvalCaseCapture{Case: created}, nil
@@ -437,6 +437,7 @@ func (s *Service) byContent(
 }
 
 func (s *Service) log(
+	ctx context.Context,
 	current *agentquality.EvalCase,
 	previous *agentquality.EvalCase,
 	actor *permissionports.RequestActor,
@@ -459,7 +460,7 @@ func (s *Service) log(
 	if previous != nil {
 		params.PreviousState = jsonutils.MustToJSON(auditSummary(previous))
 	}
-	if err := s.audit.LogAction(params, auditservice.WithComment(comment)); err != nil {
+	if err := s.audit.LogAction(ctx, params, auditservice.WithComment(comment)); err != nil {
 		s.l.Error("failed to log evaluation case audit", zap.Error(err))
 	}
 }

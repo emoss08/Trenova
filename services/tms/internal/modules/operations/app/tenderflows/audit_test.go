@@ -33,7 +33,7 @@ type recordingAuditService struct {
 	entries []auditEntry
 }
 
-func (r *recordingAuditService) LogAction(
+func (r *recordingAuditService) LogAction(_ context.Context,
 	params *auditports.LogActionParams,
 	opts ...auditports.LogOption,
 ) error {

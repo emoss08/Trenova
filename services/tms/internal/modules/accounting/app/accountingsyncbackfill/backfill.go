@@ -107,7 +107,7 @@ func (s *Service) RequestBackfill(
 		return nil, err
 	}
 
-	s.effects.LogAudit(&accountingsynceffects.AuditEntry{
+	s.effects.LogAudit(ctx, &accountingsynceffects.AuditEntry{
 		Resource:   permission.ResourceAccountingSync,
 		ResourceID: backfill.ID,
 		UserID:     req.UserID,
@@ -218,7 +218,7 @@ func (s *Service) ChangeBackfill(
 	if err != nil {
 		return nil, err
 	}
-	s.effects.LogAudit(&accountingsynceffects.AuditEntry{
+	s.effects.LogAudit(ctx, &accountingsynceffects.AuditEntry{
 		Resource:   permission.ResourceAccountingSync,
 		ResourceID: updated.ID,
 		UserID:     req.UserID,

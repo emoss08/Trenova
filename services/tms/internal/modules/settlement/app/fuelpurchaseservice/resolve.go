@@ -99,7 +99,7 @@ func (s *Service) ResolveRows(
 
 	result.Batch = batch
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resource:   permission.ResourceFuelPurchaseImport,
 		resourceID: batch.ID.String(),
 		operation:  permission.OpImport,

@@ -44,7 +44,7 @@ func (s *Service) ApplyCreditMemo(
 			if updateErr != nil {
 				return updateErr
 			}
-			s.logInvoiceAudit(plan.targetsBefore[idx], updatedTarget, actor.UserID)
+			s.logInvoiceAudit(ctx, plan.targetsBefore[idx], updatedTarget, actor.UserID)
 			settled = append(settled, updatedTarget)
 		}
 
@@ -69,7 +69,7 @@ func (s *Service) ApplyCreditMemo(
 				return txErr
 			}
 		}
-		s.logInvoiceAudit(plan.memoBefore, updatedMemo, actor.UserID)
+		s.logInvoiceAudit(ctx, plan.memoBefore, updatedMemo, actor.UserID)
 		applied = plan.applications
 		return nil
 	})
@@ -124,8 +124,8 @@ func (s *Service) UnapplyCreditMemoApplication(
 			return txErr
 		}
 
-		s.logInvoiceAudit(plan.targetsBefore[0], updatedTarget, actor.UserID)
-		s.logInvoiceAudit(plan.memoBefore, updatedMemo, actor.UserID)
+		s.logInvoiceAudit(ctx, plan.targetsBefore[0], updatedTarget, actor.UserID)
+		s.logInvoiceAudit(ctx, plan.memoBefore, updatedMemo, actor.UserID)
 		return nil
 	})
 	if err != nil {

@@ -8,7 +8,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -172,47 +171,18 @@ type noopAuditService struct {
 	*auditportsmock.MockAuditService
 }
 
-func (noopAuditService) List(
-	context.Context,
-	*auditports.ListAuditEntriesRequest,
-) (*pagination.ListResult[*audit.Entry], error) {
-	return &pagination.ListResult[*audit.Entry]{
-		Items:      []*audit.Entry{},
-		Total:      0,
-		TotalExact: true,
-	}, nil
-}
-
-func (noopAuditService) ListByResourceID(
-	context.Context,
-	*auditports.ListByResourceIDRequest,
-) (*pagination.ListResult[*audit.Entry], error) {
-	return &pagination.ListResult[*audit.Entry]{
-		Items:      []*audit.Entry{},
-		Total:      0,
-		TotalExact: true,
-	}, nil
-}
-
 func (noopAuditService) GetByID(
 	context.Context,
-	auditports.GetAuditEntryByIDOptions,
+	*auditports.GetAuditEntryByIDOptions,
 ) (*audit.Entry, error) {
 	return nil, errortypes.NewNotFoundError("AuditEntry not found")
 }
 
-func (noopAuditService) LogAction(*auditports.LogActionParams, ...auditports.LogOption) error {
+func (noopAuditService) LogAction(context.Context, *auditports.LogActionParams, ...auditports.LogOption) error {
 	return nil
 }
 
-func (noopAuditService) LogActions([]auditports.BulkLogEntry) error {
-	return nil
-}
-
-func (noopAuditService) RegisterSensitiveFields(
-	permission.Resource,
-	[]auditports.SensitiveField,
-) error {
+func (noopAuditService) LogActions(context.Context, []auditports.BulkLogEntry) error {
 	return nil
 }
 

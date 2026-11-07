@@ -173,7 +173,6 @@
   "Give this URL to the partner. It is the only address that accepts their AS2 messages for this profile.": "请将此 URL 提供给合作伙伴。这是此配置文件唯一接受其 AS2 消息的地址。",
   "Gone": "已消失",
   "Guide": "指南",
-  "Holds": "保留",
   "How one message becomes a Trenova document, or the reverse": "一条消息如何转为 Trenova 文档，或反之",
   "How this partner narrows a standard X12 guide": "此合作伙伴如何收窄标准 X12 指南",
   "ISA control number": "ISA 控制号码",

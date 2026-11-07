@@ -139,7 +139,15 @@ func (s *service) Create(
 	}
 
 	auditActor := actor.AuditActor()
-	s.logHoldAction(created, auditActor, permission.OpCreate, nil, created, "Shipment hold created")
+	s.logHoldAction(
+		ctx,
+		created,
+		auditActor,
+		permission.OpCreate,
+		nil,
+		created,
+		"Shipment hold created",
+	)
 	s.publishHoldInvalidation(ctx, created, auditActor, "created", created)
 	s.recordHoldEvent(ctx, shipmenteventservice.BuildHoldPlaced(
 		tenantRefForHold(created), created, auditActor,
@@ -164,7 +172,7 @@ func (s *service) Update(
 	}
 
 	auditActor := actor.AuditActor()
-	s.logHoldAction(
+	s.logHoldAction(ctx,
 		saved,
 		auditActor,
 		permission.OpUpdate,
@@ -196,7 +204,7 @@ func (s *service) Release(
 	}
 
 	auditActor := actor.AuditActor()
-	s.logHoldAction(
+	s.logHoldAction(ctx,
 		released,
 		auditActor,
 		permission.OpUpdate,
@@ -248,6 +256,7 @@ func (s *service) getActiveHoldReason(
 }
 
 func (s *service) logHoldAction(
+	ctx context.Context,
 	entity *shipmenthold.ShipmentHold,
 	actor kernelports.AuditActor,
 	op permission.Operation,
@@ -284,7 +293,7 @@ func (s *service) logHoldAction(
 		opts = append(opts, auditservice.WithDiff(previous, current))
 	}
 
-	if err := s.auditService.LogAction(params, opts...); err != nil {
+	if err := s.auditService.LogAction(ctx, params, opts...); err != nil {
 		s.l.Error("failed to log shipment hold action", zap.Error(err))
 	}
 }

@@ -58,7 +58,7 @@ func (s *Service) EnsureSystem(
 		}
 		if found != nil {
 			if created && found.ID == definition.ID {
-				s.logAudit(found, nil, permission.OpCreate, systemActor(req.TenantInfo),
+				s.logAudit(ctx, found, nil, permission.OpCreate, systemActor(req.TenantInfo),
 					"System agent created on first use")
 			}
 

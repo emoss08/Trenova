@@ -171,7 +171,7 @@ func TestWorkerHandler_Create_Success(t *testing.T) {
 		}, nil)
 
 	deps := setupWorkerHandler(t, repo)
-	deps.auditSvc.On("LogAction", mock.Anything, mock.Anything).Return(nil)
+	deps.auditSvc.On("LogAction", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 	ginCtx := testutil.NewGinTestContext().
 		WithMethod(http.MethodPost).

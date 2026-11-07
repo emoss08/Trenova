@@ -52,7 +52,11 @@ type permissionChecker interface {
 }
 
 type actionLogger interface {
-	LogAction(params *auditports.LogActionParams, opts ...auditports.LogOption) error
+	LogAction(
+		ctx context.Context,
+		params *auditports.LogActionParams,
+		opts ...auditports.LogOption,
+	) error
 }
 
 // proposalOutcomeRecorder is the write half of the proposal repository. The
@@ -711,7 +715,7 @@ func (s *Service) simulate(ctx context.Context, r *approvedRun) error {
 	}
 
 	auditActor := actor.AuditActor()
-	if err := s.audit.LogAction(&auditports.LogActionParams{
+	if err := s.audit.LogAction(ctx, &auditports.LogActionParams{
 		Resource:      permission.ResourceAgentProposal,
 		ResourceID:    proposal.ID.String(),
 		Operation:     permission.OpUpdate,
@@ -1015,7 +1019,7 @@ func (s *Service) recordSuccess(ctx context.Context, success executionSuccess) {
 	}
 
 	auditActor := success.actor.AuditActor()
-	if err := s.audit.LogAction(&auditports.LogActionParams{
+	if err := s.audit.LogAction(ctx, &auditports.LogActionParams{
 		Resource:   permission.ResourceAgentProposal,
 		ResourceID: proposal.ID.String(),
 		// Recorded against approval rather than a dedicated execute operation:

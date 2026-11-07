@@ -45,7 +45,7 @@ func (s *Service) recordAccess(
 		actor = permissionports.UserActor(tenantInfo).AuditActor()
 	}
 
-	err := s.auditService.LogAction(&auditports.LogActionParams{
+	err := s.auditService.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceDocument,
 		ResourceID:     doc.ID.String(),
 		Operation:      permission.OpRead,
@@ -58,7 +58,6 @@ func (s *Service) recordAccess(
 	},
 		auditservice.WithComment(documentAccessComments[access]),
 		auditservice.WithCategory(audit.CategoryUser),
-		auditservice.WithRequest(ctx),
 		auditservice.WithMetadata(map[string]any{
 			"access":             string(access),
 			"channel":            string(channel),

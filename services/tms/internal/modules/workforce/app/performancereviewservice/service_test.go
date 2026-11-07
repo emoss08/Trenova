@@ -182,7 +182,7 @@ func newHarness(t *testing.T) *harness {
 	workerRepo := workerportsmock.NewMockWorkerRepository(t)
 	workerRepo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(wrk, nil).Maybe()
 	audit := auditportsmock.NewMockAuditService(t)
-	audit.EXPECT().LogAction(mock.Anything, mock.Anything).Return(nil).Maybe()
+	audit.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
 	reviewers := tenantportsmock.NewMockUserRepository(t)
 	reviewers.EXPECT().GetByID(mock.Anything, mock.Anything).
 		Return(&tenantdomain.User{Name: "Dana Ortiz"}, nil).

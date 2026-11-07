@@ -61,7 +61,11 @@ type runReader interface {
 }
 
 type actionLogger interface {
-	LogAction(params *auditports.LogActionParams, opts ...auditports.LogOption) error
+	LogAction(
+		ctx context.Context,
+		params *auditports.LogActionParams,
+		opts ...auditports.LogOption,
+	) error
 }
 
 type Params struct {
@@ -212,7 +216,7 @@ func (s *Service) remember(
 		return nil, err
 	}
 
-	s.log(created, actor, permission.OpCreate, "Agent memory recorded")
+	s.log(ctx, created, actor, permission.OpCreate, "Agent memory recorded")
 	s.queueForRetrieval(ctx, created)
 	if created.Status == agentmemory.MemoryStatusActive && created.Replaces() {
 		s.recordReplaced(ctx, created, actor)
@@ -460,7 +464,7 @@ func (s *Service) Update(
 		return nil, err
 	}
 
-	s.logChange(updated, previous, actor, permission.OpUpdate, "Agent memory changed")
+	s.logChange(ctx, updated, previous, actor, permission.OpUpdate, "Agent memory changed")
 	s.queueForRetrieval(ctx, updated)
 
 	return updated, nil
@@ -577,7 +581,7 @@ func (s *Service) setStatus(
 	}
 
 	comment := statusComment(current.Status, req.Status)
-	s.log(updated, actor, permission.OpUpdate, comment)
+	s.log(ctx, updated, actor, permission.OpUpdate, comment)
 	s.queueForRetrieval(ctx, updated)
 
 	return updated, nil
@@ -729,7 +733,7 @@ func (s *Service) ApproveSuggestion(
 	if current.Tainted {
 		s.recordReview(ctx, current, approved, actor)
 	} else {
-		s.logChange(
+		s.logChange(ctx,
 			approved,
 			jsonutils.MustToJSON(current),
 			actor,
@@ -799,7 +803,7 @@ func (s *Service) DismissSuggestion(
 		return nil, err
 	}
 
-	s.logChange(
+	s.logChange(ctx,
 		dismissed,
 		jsonutils.MustToJSON(current),
 		actor,
@@ -1250,15 +1254,17 @@ func (s *Service) label(
 }
 
 func (s *Service) log(
+	ctx context.Context,
 	entity *agentmemory.Memory,
 	actor *permissionports.RequestActor,
 	op permission.Operation,
 	comment string,
 ) {
-	s.logChange(entity, nil, actor, op, comment)
+	s.logChange(ctx, entity, nil, actor, op, comment)
 }
 
 func (s *Service) logChange(
+	ctx context.Context,
 	entity *agentmemory.Memory,
 	previous map[string]any,
 	actor *permissionports.RequestActor,
@@ -1266,7 +1272,7 @@ func (s *Service) logChange(
 	comment string,
 ) {
 	auditActor := actor.AuditActorOrSystem()
-	if err := s.audit.LogAction(&auditports.LogActionParams{
+	if err := s.audit.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceAgentMemory,
 		ResourceID:     entity.ID.String(),
 		Operation:      op,

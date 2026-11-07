@@ -94,7 +94,7 @@ func (s *Service) Review(ctx context.Context, req *ReviewRequest) (*document.Doc
 	}
 
 	operation, comment := reviewAuditOperation(req.Decision)
-	if err = s.auditService.LogAction(&auditports.LogActionParams{
+	if err = s.auditService.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceDocument,
 		ResourceID:     reviewed.ID.String(),
 		Operation:      operation,
@@ -106,7 +106,6 @@ func (s *Service) Review(ctx context.Context, req *ReviewRequest) (*document.Doc
 	},
 		auditservice.WithComment(comment),
 		auditservice.WithDiff(plan.Before, reviewed),
-		auditservice.WithRequest(ctx),
 		auditservice.WithMetadata(map[string]any{
 			metadataResourceID:   reviewed.ResourceID,
 			metadataResourceType: reviewed.ResourceType,

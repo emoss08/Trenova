@@ -287,7 +287,7 @@ func (s *Service) UpdateSettings(
 	}
 
 	if changed {
-		s.logSettings(saved, previous, req.Actor)
+		s.logSettings(ctx, saved, previous, req.Actor)
 		if !saved.Paused || saved.PausedByBudget() {
 			s.pipeline.Wake(ctx, req.TenantInfo)
 		}
@@ -402,7 +402,7 @@ func (s *Service) Reindex(
 	if err = s.indexer.Reindex(ctx, req.TenantInfo, req.SourceType); err != nil {
 		return nil, err
 	}
-	s.logReindex(settings, req)
+	s.logReindex(ctx, settings, req)
 
 	return s.Status(ctx, req.TenantInfo)
 }
@@ -480,11 +480,12 @@ func auditResourceID(settings *airetrieval.Settings) string {
 }
 
 func (s *Service) logSettings(
+	ctx context.Context,
 	saved, previous *airetrieval.Settings,
 	actor *permissionports.RequestActor,
 ) {
 	auditActor := actor.AuditActorOrSystem()
-	if err := s.audit.LogAction(&auditports.LogActionParams{
+	if err := s.audit.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceAIProvider,
 		ResourceID:     auditResourceID(saved),
 		Operation:      permission.OpUpdate,
@@ -502,11 +503,12 @@ func (s *Service) logSettings(
 }
 
 func (s *Service) logReindex(
+	ctx context.Context,
 	settings *airetrieval.Settings,
 	req *retrievalports.ReindexAIRetrievalSourceRequest,
 ) {
 	auditActor := req.Actor.AuditActorOrSystem()
-	if err := s.audit.LogAction(&auditports.LogActionParams{
+	if err := s.audit.LogAction(ctx, &auditports.LogActionParams{
 		Resource:      permission.ResourceAIProvider,
 		ResourceID:    auditResourceID(settings),
 		Operation:     permission.OpUpdate,

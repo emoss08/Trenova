@@ -85,7 +85,7 @@ func (s *Service) withdrawHeld(
 		gone[id] = struct{}{}
 		proposal := proposals[id]
 		s.reopen(ctx, tenant, proposal.ID)
-		s.logHeld(proposal, verdicts[id], actor)
+		s.logHeld(ctx, proposal, verdicts[id], actor)
 		s.announce(ctx, proposal, tenant, actor, agentactivityports.ActivityUndone)
 	}
 
@@ -100,6 +100,7 @@ func (s *Service) withdrawHeld(
 }
 
 func (s *Service) logHeld(
+	ctx context.Context,
 	proposal *agent.AgentProposal,
 	verdict agentshadow.Verdict,
 	actor kernelports.AuditActor,
@@ -108,7 +109,7 @@ func (s *Service) logHeld(
 		zap.String("proposal", proposal.ID.String()),
 		zap.String("cause", string(verdict.Cause)))
 
-	if err := s.audit.LogAction(&auditports.LogActionParams{
+	if err := s.audit.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceAgentProposal,
 		ResourceID:     proposal.ID.String(),
 		Operation:      permission.OpUpdate,

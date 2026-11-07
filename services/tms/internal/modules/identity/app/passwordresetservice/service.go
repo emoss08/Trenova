@@ -259,7 +259,7 @@ type adminLinkAudit struct {
 }
 
 func (s *Service) auditAdminLink(ctx context.Context, entry *adminLinkAudit) {
-	if err := s.audit.LogAction(&auditports.LogActionParams{
+	if err := s.audit.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceUser,
 		ResourceID:     entry.user.ID.String(),
 		Operation:      permission.OpUpdate,
@@ -271,7 +271,6 @@ func (s *Service) auditAdminLink(ctx context.Context, entry *adminLinkAudit) {
 		auditservice.WithComment(entry.comment),
 		auditservice.WithCategory(audit.CategoryUser),
 		auditservice.WithMetadata(map[string]any{"linkPurpose": string(entry.purpose)}),
-		auditservice.WithRequest(ctx),
 	); err != nil {
 		s.l.Error("failed to audit the administrator link",
 			zap.String("userId", entry.user.ID.String()),

@@ -113,7 +113,7 @@ func (s *Service) Update(
 		}
 	}
 
-	if err = s.auditService.LogAction(
+	if err = s.auditService.LogAction(ctx,
 		&auditports.LogActionParams{
 			Resource:       permission.ResourceDispatchControl,
 			ResourceID:     updatedEntity.GetID().String(),

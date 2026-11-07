@@ -826,8 +826,8 @@ func newHarness(t *testing.T) *harness {
 	auditLock := &sync.Mutex{}
 	auditService := auditportsmock.NewMockAuditService(t)
 	auditService.EXPECT().
-		LogAction(mock.Anything, mock.Anything).
-		RunAndReturn(func(params *auditports.LogActionParams, _ ...auditports.LogOption) error {
+		LogAction(mock.Anything, mock.Anything, mock.Anything).
+		RunAndReturn(func(_ context.Context, params *auditports.LogActionParams, _ ...auditports.LogOption) error {
 			auditLock.Lock()
 			defer auditLock.Unlock()
 			audits = append(audits, auditRecord{

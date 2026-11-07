@@ -1,6 +1,7 @@
 package agentdecisionservice
 
 import (
+	"context"
 	"strings"
 	"testing"
 
@@ -199,7 +200,7 @@ type capturingAudit struct {
 	logged []*auditports.LogActionParams
 }
 
-func (a *capturingAudit) LogAction(
+func (a *capturingAudit) LogAction(_ context.Context,
 	params *auditports.LogActionParams,
 	_ ...auditports.LogOption,
 ) error {

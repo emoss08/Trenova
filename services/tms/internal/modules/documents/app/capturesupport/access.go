@@ -156,8 +156,12 @@ func (s *Service) Publish(
 
 // logAudit records an action in the audit trail. A failure to record is
 // logged, never returned: the action already happened.
-func (s *Service) LogAudit(params *auditports.LogActionParams, comment string) {
-	if err := s.audit.LogAction(params, auditservice.WithComment(comment)); err != nil {
+func (s *Service) LogAudit(
+	ctx context.Context,
+	params *auditports.LogActionParams,
+	comment string,
+) {
+	if err := s.audit.LogAction(ctx, params, auditservice.WithComment(comment)); err != nil {
 		s.l.Error("failed to record capture audit entry",
 			zap.String("resource", params.Resource.String()),
 			zap.String("resourceId", params.ResourceID),

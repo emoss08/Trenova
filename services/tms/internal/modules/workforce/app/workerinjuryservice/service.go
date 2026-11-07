@@ -73,7 +73,7 @@ type auditParams struct {
 	comment    string
 }
 
-func (s *Service) audit(p *auditParams) {
+func (s *Service) audit(ctx context.Context, p *auditParams) {
 	if p.userID.IsNil() {
 		return
 	}
@@ -91,7 +91,7 @@ func (s *Service) audit(p *auditParams) {
 		params.PreviousState = jsonutils.MustToJSON(p.previous)
 		opts = append(opts, auditservice.WithDiff(p.previous, p.current))
 	}
-	if err := s.auditService.LogAction(params, opts...); err != nil {
+	if err := s.auditService.LogAction(ctx, params, opts...); err != nil {
 		s.l.Error("failed to log audit action", zap.Error(err))
 	}
 }
@@ -205,7 +205,7 @@ func (s *Service) RecordInjury(
 		return nil, err
 	}
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resourceID: created.ID.String(),
 		operation:  permission.OpCreate,
 		userID:     userID,
@@ -264,7 +264,7 @@ func (s *Service) UpdateInjury(
 		return nil, err
 	}
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resourceID: updated.ID.String(),
 		operation:  permission.OpUpdate,
 		userID:     req.UserID,
@@ -298,7 +298,7 @@ func (s *Service) DeleteInjury(
 		return err
 	}
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resourceID: id.String(),
 		operation:  permission.OpDelete,
 		userID:     userID,

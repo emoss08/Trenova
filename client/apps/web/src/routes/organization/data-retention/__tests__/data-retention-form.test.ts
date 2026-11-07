@@ -17,7 +17,10 @@ MinAIAuditRetentionDays 365. The REST field is aiAuditRetentionPeriod.
 */
 
 const valid = {
-  auditRetentionPeriod: 120,
+  auditAccessRetentionDays: 90,
+  auditOperationalRetentionDays: 730,
+  auditFinancialRetentionDays: 2555,
+  auditSecurityRetentionDays: 730,
   ediInboundFileRetentionPeriod: 0,
   ediMessageRetentionPeriod: 0,
   aiFeedbackRetentionPeriod: 730,
@@ -57,7 +60,10 @@ describe("AI audit trail retention", () => {
     const saved = dataRetentionSchema.parse({
       organizationId: "org_1",
       businessUnitId: "bu_1",
-      auditRetentionPeriod: 120,
+      auditAccessRetentionDays: 90,
+      auditOperationalRetentionDays: 730,
+      auditFinancialRetentionDays: 2555,
+      auditSecurityRetentionDays: 730,
       aiAuditRetentionPeriod: 3000,
     });
     expect(dataRetentionFormValues(saved).aiAuditRetentionPeriod).toBe(3000);
@@ -65,14 +71,20 @@ describe("AI audit trail retention", () => {
     const older = dataRetentionSchema.parse({
       organizationId: "org_1",
       businessUnitId: "bu_1",
-      auditRetentionPeriod: 120,
+      auditAccessRetentionDays: 90,
+      auditOperationalRetentionDays: 730,
+      auditFinancialRetentionDays: 2555,
+      auditSecurityRetentionDays: 730,
     });
     expect(dataRetentionFormValues(older).aiAuditRetentionPeriod).toBe(2555);
 
     const zeroed = dataRetentionSchema.parse({
       organizationId: "org_1",
       businessUnitId: "bu_1",
-      auditRetentionPeriod: 120,
+      auditAccessRetentionDays: 90,
+      auditOperationalRetentionDays: 730,
+      auditFinancialRetentionDays: 2555,
+      auditSecurityRetentionDays: 730,
       aiAuditRetentionPeriod: 0,
     });
     expect(dataRetentionFormValues(zeroed).aiAuditRetentionPeriod).toBe(2555);
@@ -103,7 +115,10 @@ describe("AI correction retention", () => {
     const older = dataRetentionSchema.parse({
       organizationId: "org_1",
       businessUnitId: "bu_1",
-      auditRetentionPeriod: 120,
+      auditAccessRetentionDays: 90,
+      auditOperationalRetentionDays: 730,
+      auditFinancialRetentionDays: 2555,
+      auditSecurityRetentionDays: 730,
       aiCorrectionRetentionPeriod: 0,
     });
     expect(dataRetentionFormValues(older).aiCorrectionRetentionPeriod).toBe(730);
@@ -111,7 +126,10 @@ describe("AI correction retention", () => {
     const saved = dataRetentionSchema.parse({
       organizationId: "org_1",
       businessUnitId: "bu_1",
-      auditRetentionPeriod: 120,
+      auditAccessRetentionDays: 90,
+      auditOperationalRetentionDays: 730,
+      auditFinancialRetentionDays: 2555,
+      auditSecurityRetentionDays: 730,
       aiCorrectionRetentionPeriod: 90,
     });
     expect(dataRetentionFormValues(saved).aiCorrectionRetentionPeriod).toBe(90);

@@ -56,7 +56,7 @@ func (s *Service) RecordViolation(
 		return nil, err
 	}
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resource: permission.ResourceWorkerSafetyEvent, resourceID: created.GetResourceID(),
 		operation: permission.OpCreate, userID: req.UserID, tenant: req.TenantInfo,
 		current: created,
@@ -98,7 +98,7 @@ func (s *Service) UpdateViolation(
 		return nil, err
 	}
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resource: permission.ResourceWorkerSafetyEvent, resourceID: updated.GetResourceID(),
 		operation: permission.OpUpdate, userID: req.UserID, tenant: req.TenantInfo,
 		current: updated, previous: change.Before, comment: "Violation corrected", log: log,
@@ -129,7 +129,7 @@ func (s *Service) DeleteViolation(
 		return err
 	}
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resource: permission.ResourceWorkerSafetyEvent, resourceID: original.GetResourceID(),
 		operation: permission.OpDelete, userID: userID, tenant: tenantInfo,
 		current: original, comment: "Violation removed", log: log,

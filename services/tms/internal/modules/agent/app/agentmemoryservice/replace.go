@@ -162,7 +162,7 @@ func (s *Service) retireReplaced(
 		return
 	}
 
-	s.logChange(retired, jsonutils.MustToJSON(replaced), actor, permission.OpUpdate,
+	s.logChange(ctx, retired, jsonutils.MustToJSON(replaced), actor, permission.OpUpdate,
 		"Agent memory replaced by "+replacement.ID.String())
 	s.queueForRetrieval(ctx, retired)
 }
@@ -195,6 +195,12 @@ func (s *Service) recordReplaced(
 		return
 	}
 
-	s.log(retired, actor, permission.OpUpdate, "Agent memory replaced by "+replacement.ID.String())
+	s.log(
+		ctx,
+		retired,
+		actor,
+		permission.OpUpdate,
+		"Agent memory replaced by "+replacement.ID.String(),
+	)
 	s.queueForRetrieval(ctx, retired)
 }

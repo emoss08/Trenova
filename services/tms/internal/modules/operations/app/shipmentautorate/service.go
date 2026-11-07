@@ -112,7 +112,7 @@ func (s *Service) AutoRate(
 		return nil, nil, err
 	}
 
-	if err = s.effects.LogShipmentAction(
+	if err = s.effects.LogShipmentAction(ctx,
 		updatedEntity,
 		auditActor,
 		permission.OpUpdate,

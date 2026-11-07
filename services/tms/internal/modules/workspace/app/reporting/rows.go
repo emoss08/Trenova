@@ -79,7 +79,7 @@ func (s *Service) ReadRunRows(
 		)
 	}
 
-	s.auditRowsRead(run)
+	s.auditRowsRead(ctx, run)
 
 	return envelope, nil
 }
@@ -144,8 +144,8 @@ func (s *Service) downloadRunRows(
 	return data, nil
 }
 
-func (s *Service) auditRowsRead(run *report.ReportRun) {
-	if err := s.audit.LogAction(&auditports.LogActionParams{
+func (s *Service) auditRowsRead(ctx context.Context, run *report.ReportRun) {
+	if err := s.audit.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceReport,
 		ResourceID:     run.ID.String(),
 		Operation:      permission.OpRead,
@@ -153,8 +153,8 @@ func (s *Service) auditRowsRead(run *report.ReportRun) {
 		OrganizationID: run.OrganizationID,
 		BusinessUnitID: run.BusinessUnitID,
 		CurrentState: map[string]any{
-			"event":  "rows_read",
-			"format": string(run.Format),
+			auditEventKey:  "rows_read",
+			auditFormatKey: string(run.Format),
 		},
 	}); err != nil {
 		s.l.Warn("failed to audit report rows read",

@@ -546,7 +546,7 @@ func (s *Service) logAudit(
 		auditservice.WithDiff(previous, current),
 	}, extra...)
 
-	if err := s.auditService.LogAction(&auditports.LogActionParams{
+	if err := s.auditService.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceDocumentTemplate,
 		ResourceID:     resourceID,
 		Operation:      operation,

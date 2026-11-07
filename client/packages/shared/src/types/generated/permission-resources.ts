@@ -13,6 +13,8 @@ export const Resource = {
   User: "user",
   Role: "role",
   AuditLog: "audit_log",
+  SecurityAuditLog: "security_audit_log",
+  AuditLegalHold: "audit_legal_hold",
   TableConfiguration: "table_configuration",
   CustomFieldDefinition: "custom_field_definition",
   SequenceConfig: "sequence_config",

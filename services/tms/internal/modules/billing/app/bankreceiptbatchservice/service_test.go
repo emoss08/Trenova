@@ -84,7 +84,7 @@ func TestImportBatchAggregatesReceiptOutcomes(t *testing.T) {
 			return &receipt, nil
 		}).
 		Twice()
-	auditSvc.EXPECT().LogAction(mock.Anything, mock.Anything).Return(nil).Once()
+	auditSvc.EXPECT().LogAction(mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 	result, err := svc.Import(
 		t.Context(),
@@ -168,7 +168,7 @@ func TestImportBatchReturnsErrorWhenReceiptImportFails(t *testing.T) {
 
 	require.ErrorIs(t, err, assert.AnError)
 	assert.Nil(t, result)
-	auditSvc.AssertNotCalled(t, "LogAction", mock.Anything, mock.Anything)
+	auditSvc.AssertNotCalled(t, "LogAction", mock.Anything, mock.Anything, mock.Anything)
 }
 
 type fakeBatchDB struct{}

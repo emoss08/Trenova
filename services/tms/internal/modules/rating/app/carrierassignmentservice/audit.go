@@ -1,6 +1,8 @@
 package carrierassignmentservice
 
 import (
+	"context"
+
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -22,7 +24,7 @@ type carrierAssignmentAuditParams struct {
 	Previous   *shipment.CarrierAssignment
 }
 
-func (s *Service) logCarrierAssignmentAudit(p *carrierAssignmentAuditParams) {
+func (s *Service) logCarrierAssignmentAudit(ctx context.Context, p *carrierAssignmentAuditParams) {
 	params := &auditports.LogActionParams{
 		Resource:       permission.ResourceShipmentMove,
 		ResourceID:     p.MoveID.String(),
@@ -47,7 +49,7 @@ func (s *Service) logCarrierAssignmentAudit(p *carrierAssignmentAuditParams) {
 		}
 	}
 
-	if err := s.auditService.LogAction(params, options...); err != nil {
+	if err := s.auditService.LogAction(ctx, params, options...); err != nil {
 		s.l.Error("failed to log carrier assignment audit action", zap.Error(err))
 	}
 }

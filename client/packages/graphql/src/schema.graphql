@@ -7205,16 +7205,67 @@ type AttentionSummary {
   serviceFailures: Int
 }
 
+enum AuditAlertKind {
+  APIKeyChanged
+  BulkDelete
+  BulkExport
+  CrossTenantRefused
+  IdentityConfigChanged
+  LegalHoldChanged
+  MFAReset
+  MalwareRefused
+  RoleChanged
+}
+
+type AuditAlertPolicy {
+  """
+  Whether the alert counts entries over a window rather than firing on one.
+  """
+  counted: Boolean!
+  description: String!
+  enabled: Boolean!
+  kind: AuditAlertKind!
+  threshold: Int!
+  title: String!
+  windowMinutes: Int!
+}
+
 enum AuditCategory {
+  Security
   System
   User
 }
 
+type AuditChainStatus {
+  lastSeq: Int!
+  lastVerificationDetail: String
+  lastVerificationStatus: AuditVerificationStatus
+  lastVerifiedAt: Timestamp
+  """Entries written before this moment are sealed."""
+  sealedThrough: Timestamp
+  """
+  Whether seals are signed with a configured key rather than plain SHA-256.
+  """
+  signed: Boolean!
+}
+
 type AuditEntry {
+  """
+  Stable dotted code for what happened, such as shipment.update or role.assigned.
+  """
+  action: String!
+  """Who acted, named as they were when the entry was written."""
+  actorName: String
+  """The agent run or assistant turn that made the change."""
+  aiRunId: String
   apiKeyId: ID
   businessUnitId: ID!
   category: AuditCategory!
   changes: JSON
+  """
+  How the change arrived: web, api, portal, agent_conversation, agent_run, support, scim, job, cli or system.
+  """
+  channel: String!
   comment: String
   correlationId: String
   critical: Boolean!
@@ -7230,8 +7281,10 @@ type AuditEntry {
   principalType: String!
   resource: String!
   resourceId: String!
+  retentionClass: AuditRetentionClass!
   sensitiveData: Boolean!
   timestamp: Timestamp!
+  traceId: String
   user: User
   userAgent: String
   userId: ID
@@ -7250,6 +7303,116 @@ type AuditEntryConnection {
 type AuditEntryEdge {
   cursor: String!
   node: AuditEntry!
+}
+
+type AuditExport {
+  artifactExpiresAt: Timestamp
+  byteSize: Int!
+  completedAt: Timestamp
+  createdAt: Timestamp!
+  downloadable: Boolean!
+  errorMessage: String
+  filters: AuditExportFilters!
+  format: AuditExportFormat!
+  id: ID!
+  includeSecurity: Boolean!
+  rangeFrom: Timestamp!
+  rangeTo: Timestamp!
+  rowCount: Int!
+  sha256: String
+  startedAt: Timestamp
+  status: AuditExportStatus!
+}
+
+type AuditExportConnection {
+  edges: [AuditExportEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+  totalCountExact: Boolean!
+}
+
+type AuditExportDownload {
+  expiresAt: Timestamp!
+  fileName: String!
+  sha256: String
+  url: String!
+}
+
+type AuditExportEdge {
+  cursor: String!
+  node: AuditExport!
+}
+
+type AuditExportFilters {
+  categories: [String!]!
+  channels: [String!]!
+  operations: [String!]!
+  principalId: String
+  resourceId: String
+  resources: [String!]!
+}
+
+input AuditExportFiltersInput {
+  categories: [AuditCategory!]
+  channels: [String!]
+  operations: [String!]
+  principalId: ID
+  resourceId: String
+  resources: [String!]
+}
+
+enum AuditExportFormat {
+  CSV
+  JSONL
+}
+
+enum AuditExportStatus {
+  Expired
+  Failed
+  Pending
+  Running
+  Succeeded
+}
+
+type AuditLegalHold {
+  active: Boolean!
+  id: ID!
+  name: String!
+  placedAt: Timestamp!
+  placedBy: User
+  placedById: ID!
+  reason: String!
+  releaseReason: String
+  releasedAt: Timestamp
+  releasedBy: User
+  releasedById: ID
+  resource: String
+  resourceId: String
+}
+
+type AuditLegalHoldConnection {
+  edges: [AuditLegalHoldEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+  totalCountExact: Boolean!
+}
+
+type AuditLegalHoldEdge {
+  cursor: String!
+  node: AuditLegalHold!
+}
+
+enum AuditRetentionClass {
+  Access
+  Financial
+  Operational
+  Security
+}
+
+enum AuditVerificationStatus {
+  Broken
+  KeyMissing
+  Verified
 }
 
 """
@@ -22997,6 +23160,10 @@ type Mutation {
   attachWorkerCredentialDocument(input: AttachWorkerCredentialDocumentInput!): WorkerCredential!
   attachWorkerTrainingDocument(input: AttachWorkerTrainingDocumentInput!): WorkerTrainingRecord!
   """
+  A short-lived link to download one of the caller's exports; the download is itself audited.
+  """
+  auditExportDownload(id: ID!): AuditExportDownload!
+  """
   Prices a saved shipment from its contract again, overwriting its rating
   method, base rate and contract accessorials.
   """
@@ -23529,6 +23696,7 @@ type Mutation {
   """
   payWorkerNow(input: PayWorkerNowInput!): DriverSettlement!
   pinShipmentComment(commentId: ID!, shipmentId: ID!): ShipmentComment!
+  placeAuditLegalHold(input: PlaceAuditLegalHoldInput!): AuditLegalHold!
   postAndApplyCustomerPayment(input: PostCustomerPaymentInput!): CustomerPayment!
   """Posts an approved item's invoice, which sends it to the customer."""
   postBillingQueueItem(id: ID!): BillingQueuePostResult!
@@ -23627,6 +23795,7 @@ type Mutation {
   rejectWorkerPTO(id: ID!, reason: String!): WorkerPTO!
   """Lets records waiting for approval be sent."""
   releaseAccountingSync(input: ReleaseAccountingSyncInput!): AccountingSyncActionResult!
+  releaseAuditLegalHold(id: ID!, reason: String!): AuditLegalHold!
   """Takes an item off hold and back to the status the hold found it in."""
   releaseBillingQueueItem(id: ID!): BillingQueueItem!
   """Release a held pay event back into the settlement pool."""
@@ -23682,6 +23851,7 @@ type Mutation {
   Queues documents posted before sync was turned on. One backfill runs at a time.
   """
   requestAccountingBackfill(input: RequestAccountingBackfillInput!): AccountingBackfill!
+  requestAuditExport(input: RequestAuditExportInput!): AuditExport!
   requestLeaveCertification(caseId: ID!, dueAt: Timestamp): WorkerLeaveCase!
   requestMissingFactoringDocuments(input: RequestMissingFactoringDocumentsInput!): FactoringDocumentRequestResult!
   requestMyPto(input: RequestMyPtoInput!): PortalPto!
@@ -24008,6 +24178,7 @@ type Mutation {
   updateAgentEvalCase(id: ID!, input: UpdateAgentEvalCaseInput!): AgentEvalCase!
   updateAgentMemory(id: ID!, input: AgentMemoryInput!): AgentMemory!
   updateAgentQualityControl(input: UpdateAgentQualityControlInput!): AgentQualityControl!
+  updateAuditAlertPolicy(input: UpdateAuditAlertPolicyInput!): AuditAlertPolicy!
   updateBenefitPlan(input: UpdateBenefitPlanInput!): BenefitPlan!
   updateBillingQueueStatus(id: ID!, input: BillingQueueUpdateStatusInput!): BillingQueueItem!
   """
@@ -25558,6 +25729,17 @@ enum PeriodType {
   Week
 }
 
+input PlaceAuditLegalHoldInput {
+  name: String!
+  reason: String!
+  """
+  Leave empty to hold every entry; name a kind of record to hold only its entries.
+  """
+  resource: String
+  """With resource, hold only one record's entries."""
+  resourceId: String
+}
+
 type PlannedPTOAccrual {
   deferred: Boolean!
   effectiveAt: Timestamp!
@@ -26410,9 +26592,20 @@ type Query {
   arPaymentStats: ARPaymentStats!
   arTopOverdueCustomers(limit: Int): [ARTopOverdueCustomer!]!
   attentionSummary: AttentionSummary!
+  auditAlertPolicies: [AuditAlertPolicy!]!
+  auditChainStatus: AuditChainStatus!
+  """
+  The organization's audit log, narrowed to the kinds of record the caller can read; security entries need security_audit_log read.
+  """
   auditEntries(input: DataTableConnectionInput!): AuditEntryConnection!
-  auditEntriesByResourceId(input: DataTableConnectionInput!, resourceId: ID!): AuditEntryConnection!
+  """
+  One record's history, for anyone who can read that kind of record organization-wide. field narrows it to the entries that changed that field.
+  """
+  auditEntriesByResourceId(field: String, input: DataTableConnectionInput!, resourceId: ID!): AuditEntryConnection!
   auditEntry(id: ID!): AuditEntry
+  """The caller's own audit log exports."""
+  auditExports(input: DataTableConnectionInput!): AuditExportConnection!
+  auditLegalHolds(activeOnly: Boolean, input: DataTableConnectionInput!): AuditLegalHoldConnection!
   authEvents(input: DataTableConnectionInput!): AuthEventConnection!
   """
   The profiles offered when somebody starts a scan: active ones, default first.
@@ -29054,6 +29247,14 @@ input RequestAccountingBackfillInput {
   rangeEnd: Timestamp
   """Defaults to the start date."""
   rangeStart: Timestamp
+}
+
+input RequestAuditExportInput {
+  filters: AuditExportFiltersInput
+  format: AuditExportFormat!
+  includeSecurity: Boolean
+  rangeFrom: Timestamp!
+  rangeTo: Timestamp!
 }
 
 input RequestMissingFactoringDocumentsInput {
@@ -34659,6 +34860,13 @@ input UpdateAgentQualityControlInput {
   timezone: String
   """The version read; a save over a newer one is refused."""
   version: Int!
+}
+
+input UpdateAuditAlertPolicyInput {
+  enabled: Boolean!
+  kind: AuditAlertKind!
+  threshold: Int
+  windowMinutes: Int
 }
 
 input UpdateBenefitPlanInput {

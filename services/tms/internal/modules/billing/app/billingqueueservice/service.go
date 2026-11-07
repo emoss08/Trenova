@@ -498,7 +498,7 @@ func (s *Service) TransferToBillingItems(
 			s.syncReview(ctx, item.ID, req.TenantInfo)
 		}
 
-		s.logAction(
+		s.logAction(ctx,
 			item,
 			auditActor,
 			permission.OpCreate,
@@ -830,7 +830,7 @@ func (s *Service) AssignBiller(
 	}
 
 	auditActor := actor.AuditActor()
-	s.logAction(
+	s.logAction(ctx,
 		updated,
 		auditActor,
 		permission.OpAssign,
@@ -973,7 +973,7 @@ func (s *Service) announceStatusChange(ctx context.Context, change *statusChange
 	s.enqueueAutoPost(ctx, change)
 
 	auditActor := change.actor.AuditActor()
-	s.logAction(
+	s.logAction(ctx,
 		updated,
 		auditActor,
 		permission.OpUpdate,
@@ -1176,7 +1176,7 @@ func (s *Service) updateCharges(
 	}
 
 	auditActor := actor.AuditActor()
-	s.logAction(
+	s.logAction(ctx,
 		item,
 		auditActor,
 		permission.OpUpdate,
@@ -1237,6 +1237,7 @@ func (s *Service) guardSiblingPayersUnposted(
 }
 
 func (s *Service) logAction(
+	ctx context.Context,
 	entity *billingqueue.BillingQueueItem,
 	actor kernelports.AuditActor,
 	op permission.Operation,
@@ -1274,7 +1275,7 @@ func (s *Service) logAction(
 		opts = append(opts, auditservice.WithDiff(previous, current))
 	}
 
-	if err := s.auditService.LogAction(params, opts...); err != nil {
+	if err := s.auditService.LogAction(ctx, params, opts...); err != nil {
 		s.l.Error("failed to log billing queue action", zap.Error(err))
 	}
 }

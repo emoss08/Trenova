@@ -144,7 +144,7 @@ func (s *Service) InviteWorker(
 		Now:        now,
 	})
 
-	s.logPortalAudit(
+	s.logPortalAudit(ctx,
 		created.ID,
 		req.TenantInfo,
 		actor.UserID,
@@ -247,7 +247,7 @@ func (s *Service) RevokeAccess(
 	if err = s.portalRepo.RevokePortalAccess(ctx, tenantInfo, workerID); err != nil {
 		return err
 	}
-	s.logPortalAudit(
+	s.logPortalAudit(ctx,
 		workerID,
 		tenantInfo,
 		actor.UserID,
@@ -549,6 +549,7 @@ func usernameFromEmail(address string) string {
 }
 
 func (s *Service) logPortalAudit(
+	ctx context.Context,
 	resourceID pulid.ID,
 	tenantInfo pagination.TenantInfo,
 	userID pulid.ID,
@@ -567,7 +568,7 @@ func (s *Service) logPortalAudit(
 	if state != nil {
 		params.CurrentState = jsonutils.MustToJSON(state)
 	}
-	if err := s.auditService.LogAction(params, auditservice.WithComment(comment)); err != nil {
+	if err := s.auditService.LogAction(ctx, params, auditservice.WithComment(comment)); err != nil {
 		s.l.Error("failed to log driver portal audit action", zap.Error(err))
 	}
 }

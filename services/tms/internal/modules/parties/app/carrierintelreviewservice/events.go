@@ -78,7 +78,7 @@ func (s *Service) AcknowledgeEvents(
 		return 0, err
 	}
 
-	if err = s.auditService.LogAction(&auditports.LogActionParams{
+	if err = s.auditService.LogAction(ctx, &auditports.LogActionParams{
 		Resource:      permission.ResourceCarrierIntelligence,
 		ResourceID:    "events",
 		Operation:     permission.OpUpdate,
@@ -154,7 +154,7 @@ func (s *Service) ResolveEvent(
 		return nil, err
 	}
 
-	if err = s.auditService.LogAction(&auditports.LogActionParams{
+	if err = s.auditService.LogAction(ctx, &auditports.LogActionParams{
 		Resource:       permission.ResourceCarrierIntelligence,
 		ResourceID:     updated.ID.String(),
 		Operation:      permission.OpUpdate,
@@ -243,7 +243,7 @@ func (s *Service) MarkReviewed(ctx context.Context, req *MarkReviewedRequest) er
 		}
 	}
 
-	if err = s.auditService.LogAction(&auditports.LogActionParams{
+	if err = s.auditService.LogAction(ctx, &auditports.LogActionParams{
 		Resource:      permission.ResourceCarrierIntelligence,
 		ResourceID:    subjectID,
 		Operation:     permission.OpUpdate,
@@ -353,7 +353,7 @@ func (s *Service) RawPayload(
 		if rawErr != nil {
 			return "", rawErr
 		}
-		if err = s.auditService.LogAction(&auditports.LogActionParams{
+		if err = s.auditService.LogAction(ctx, &auditports.LogActionParams{
 			Resource:       permission.ResourceCarrierIntelligence,
 			ResourceID:     snap.ID.String(),
 			Operation:      permission.OpExport,

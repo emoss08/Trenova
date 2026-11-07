@@ -55,7 +55,7 @@ func (s *Service) IssueAdvance(
 	if err != nil {
 		return nil, err
 	}
-	s.logAdvanceAudit(created, nil, actor.UserID, permission.OpCreate, "Pay advance issued")
+	s.logAdvanceAudit(ctx, created, nil, actor.UserID, permission.OpCreate, "Pay advance issued")
 	return created, nil
 }
 
@@ -99,7 +99,14 @@ func (s *Service) UpdateAdvance(
 	if err != nil {
 		return nil, err
 	}
-	s.logAdvanceAudit(updated, previous, actor.UserID, permission.OpUpdate, "Pay advance updated")
+	s.logAdvanceAudit(
+		ctx,
+		updated,
+		previous,
+		actor.UserID,
+		permission.OpUpdate,
+		"Pay advance updated",
+	)
 	return updated, nil
 }
 
@@ -136,12 +143,13 @@ func (s *Service) WriteOffAdvance(
 	if err != nil {
 		return nil, err
 	}
-	s.logAdvanceAudit(updated, &previous, actor.UserID, permission.OpCancel,
+	s.logAdvanceAudit(ctx, updated, &previous, actor.UserID, permission.OpCancel,
 		"Pay advance written off: "+reason)
 	return updated, nil
 }
 
 func (s *Service) logAdvanceAudit(
+	ctx context.Context,
 	current, previous *payadvance.PayAdvance,
 	userID pulid.ID,
 	operation permission.Operation,
@@ -161,7 +169,7 @@ func (s *Service) logAdvanceAudit(
 		params.PreviousState = jsonutils.MustToJSON(previous)
 		options = append(options, auditservice.WithDiff(previous, current))
 	}
-	if err := s.auditService.LogAction(params, options...); err != nil {
+	if err := s.auditService.LogAction(ctx, params, options...); err != nil {
 		s.l.Error("failed to log pay advance audit action", zap.Error(err))
 	}
 }

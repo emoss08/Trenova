@@ -312,7 +312,7 @@ func TestResolveWithRecipientsRecordsEachDisclosure(t *testing.T) {
 	eld := h.doc("eld.pdf", 10, "shipment")
 	h.stored(eld)
 	h.allow(map[string]bool{"document": true, "shipment": true})
-	h.audit.EXPECT().LogAction(mock.MatchedBy(func(params *auditports.LogActionParams) bool {
+	h.audit.EXPECT().LogAction(mock.Anything, mock.MatchedBy(func(params *auditports.LogActionParams) bool {
 		return params.ResourceID == eld.ID.String() &&
 			params.Resource == permission.ResourceDocument &&
 			params.Operation == permission.OpRead &&

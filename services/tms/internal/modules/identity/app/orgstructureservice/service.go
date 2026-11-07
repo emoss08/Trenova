@@ -68,7 +68,7 @@ type auditParams struct {
 	comment    string
 }
 
-func (s *Service) audit(p *auditParams) {
+func (s *Service) audit(ctx context.Context, p *auditParams) {
 	if p.userID.IsNil() {
 		return
 	}
@@ -86,7 +86,7 @@ func (s *Service) audit(p *auditParams) {
 		params.PreviousState = jsonutils.MustToJSON(p.previous)
 		opts = append(opts, auditservice.WithDiff(p.previous, p.current))
 	}
-	if err := s.auditService.LogAction(params, opts...); err != nil {
+	if err := s.auditService.LogAction(ctx, params, opts...); err != nil {
 		s.l.Error("failed to log audit action", zap.Error(err))
 	}
 }
@@ -275,7 +275,7 @@ func (s *Service) CreatePosition(
 		return nil, err
 	}
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resource: permission.ResourceJobPosition, resourceID: created.GetResourceID(),
 		operation: permission.OpCreate, userID: userID, tenant: tenantInfo,
 		current: created, comment: "Position created: " + created.Title,
@@ -331,7 +331,7 @@ func (s *Service) UpdatePosition(
 		return nil, err
 	}
 
-	s.audit(&auditParams{
+	s.audit(ctx, &auditParams{
 		resource: permission.ResourceJobPosition, resourceID: updated.GetResourceID(),
 		operation: permission.OpUpdate, userID: userID, tenant: tenantInfo,
 		current: updated, previous: original, comment: "Position updated",
