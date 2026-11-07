@@ -141,6 +141,7 @@ func (s *Service) Area(
 		Quality:     snap.quality,
 		GeneratedAt: snap.now,
 		Area:        s.area(snap, balance),
+		Bounds:      dispatchmarket.BoundsOf(req.Cell),
 		SlotStart:   slotStart,
 		Reach:       freightmove.Reach(snap.inputs, req.Cell, slotStart),
 		Steps:       []freightmove.Step{},

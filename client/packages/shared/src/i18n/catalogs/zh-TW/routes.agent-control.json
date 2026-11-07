@@ -88,7 +88,6 @@
   "A proposal was refused": "提議遭到拒絕",
   "A read on judgment, not just completion.": "衡量判斷力，而不只是完成率。",
   "A reply was rated unhelpful": "有回覆被評為沒有幫助",
-  "A report": "一份報告",
   "A role": "某個角色",
   "A row names a signing key that is no longer configured, so the chain cannot be checked past it. Put the key back, then verify again.": "有一列所記載的簽署金鑰已不再設定，因此無法驗證該列之後的雜湊鏈。請將金鑰重新設定後再次驗證。",
   "A run that scored fewer cases is not compared with the median.": "評分案例少於此數的執行不會與中位數比較。",

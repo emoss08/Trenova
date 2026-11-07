@@ -314,7 +314,10 @@ func (r *repository) DeleteExpired(
 }
 
 func (r *repository) PartitionHorizon(ctx context.Context) (int64, error) {
-	ctx = dbscope.WithSystem(ctx, "read how far ahead the audit trail's shared monthly partitions reach")
+	ctx = dbscope.WithSystem(
+		ctx,
+		"read how far ahead the audit trail's shared monthly partitions reach",
+	)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int64, error) {
 		horizon, err := keel.QueryAll(ctx, r.db.Keel(ctx), pgx.RowTo[int64], `
 			SELECT COALESCE(max(

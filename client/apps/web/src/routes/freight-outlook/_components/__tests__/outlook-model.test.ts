@@ -21,6 +21,7 @@ import {
   paceReadings,
   paceStanding,
   peakOf,
+  reachBounds,
   slotIndexOf,
   totalsOf,
   viewIndexes,
@@ -185,5 +186,21 @@ describe("board groups and the record", () => {
         { low: 10, high: 20, actual: 9 },
       ]),
     ).toBe(2);
+  });
+
+  it("frames the area's tile alone when no driver is measured against it", () => {
+    const tile = { south: 32.25, west: -97.03, north: 33.14, east: -95.63 };
+    expect(reachBounds(tile, [])).toEqual(tile);
+  });
+
+  it("widens the view to every driver outside the tile and keeps the tile's own edges otherwise", () => {
+    const tile = { south: 32.25, west: -97.03, north: 33.14, east: -95.63 };
+    expect(
+      reachBounds(tile, [
+        { latitude: 29.76, longitude: -95.37 },
+        { latitude: 35.47, longitude: -97.52 },
+        { latitude: 32.7, longitude: -96.5 },
+      ]),
+    ).toEqual({ south: 29.76, west: -97.52, north: 35.47, east: -95.37 });
   });
 });

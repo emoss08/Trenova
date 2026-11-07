@@ -69,7 +69,7 @@ in [backend/](backend/README.md). Frontend rules are in the `trenova-frontend` s
 | [agent-web-watching](agent-web-watching.md) | `web_watches.go`, `webwatchtools`, `webwatchjobs`, `agentwaitservice/webwatch.go`, `shared/exa/monitors.go` |
 | [agent-code-mode](agent-code-mode.md) ([writes](agent-code-mode-writes.md)) | `domain/codemode`, `domain/analysis`, `aiprovider/agentsettings.go`, `scriptbroker.go`, `scripttool.go`, `script_tool.go`, `script_datasets.go`, `app/scriptrunner`, `analysisrunservice`, `pkg/scriptvm`, `services/crates/scripts` |
 | [agent-profiles](agent-profiles.md) | `agentprofileservice`, `agentprofilejobs`, the writing prompt, profile sections of the prompt |
-| [agent-waits](agent-waits.md) | `agent_create_wait` and the wait kinds |
+| [agent-waits](agent-waits.md) | `agent_create_wait`, the wait kinds, record changes and report runs heard off the realtime stream |
 | [agent-delegation](agent-delegation.md) | `delegate_task` and the per-agent allowlist |
 | [desk-cases](desk-cases.md) | Desk case state, snoozes, waiting on replies, the ready-to-bill checklist |
 | [desk-artifacts](desk-artifacts.md) | a Desk artifact kind or resource card (build one with the `desk-artifact` skill) |

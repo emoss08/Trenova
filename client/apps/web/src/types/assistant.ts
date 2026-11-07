@@ -1448,6 +1448,8 @@ export const agentWaitKindSchema = z.enum([
   "PortalRun",
   "DocumentRead",
   "WebWatch",
+  "RecordChanged",
+  "ReportRun",
 ]);
 
 export const agentWaitStatusSchema = z.enum(["Waiting", "Met", "TimedOut", "Cancelled", "Failed"]);

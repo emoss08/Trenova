@@ -751,6 +751,8 @@ var enumKind = [...]schema.EnumValue{
 	{Value: `PortalRun`, Label: `Portal Run`},
 	{Value: `DocumentRead`, Label: `Document Read`},
 	{Value: `WebWatch`, Label: `Web Watch`},
+	{Value: `RecordChanged`, Label: `Record Changed`},
+	{Value: `ReportRun`, Label: `Report Run`},
 }
 
 var enumStatus = [...]schema.EnumValue{

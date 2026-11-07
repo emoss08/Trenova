@@ -1,6 +1,7 @@
 package worldwatch
 
 import (
+	"cmp"
 	"maps"
 	"slices"
 	"strings"
@@ -156,6 +157,83 @@ func RecordsRead(
 	return records
 }
 
+// Refused watches the records a write that failed named by id: the invoice
+// a post was refused for, the move an assignment could not take. What refused
+// it often lives on that record, and a person may fix it while the turn runs.
+func (w *State) Refused(call *llmports.ToolCall) {
+	if w == nil {
+		return
+	}
+	for _, key := range slices.Sorted(maps.Keys(call.Arguments)) {
+		kind, named := idKind(key)
+		if !named {
+			continue
+		}
+		for _, id := range idValues(call.Arguments[key]) {
+			w.Watch(agentpagecontext.EntityRef{Type: kind, ID: id})
+		}
+	}
+}
+
+// maxRefusedIDs bounds how many records one refused bulk write adds.
+const maxRefusedIDs = 8
+
+// idKind is the record kind an argument names by id, from its key:
+// invoiceId and invoiceIds name invoices, shipmentMoveId a shipment move.
+func idKind(key string) (string, bool) {
+	stem := strings.TrimSuffix(key, "s")
+	switch {
+	case strings.HasSuffix(stem, "Id"):
+		stem = strings.TrimSuffix(stem, "Id")
+	case strings.HasSuffix(stem, "ID"):
+		stem = strings.TrimSuffix(stem, "ID")
+	default:
+		return "", false
+	}
+	if stem == "" {
+		return "", false
+	}
+	var b strings.Builder
+	for i, r := range stem {
+		if r >= 'A' && r <= 'Z' {
+			if i > 0 {
+				b.WriteByte('_')
+			}
+			r += 'a' - 'A'
+		}
+		b.WriteRune(r)
+	}
+
+	return b.String(), true
+}
+
+func idValues(value any) []string {
+	switch v := value.(type) {
+	case string:
+		if recordID(v) {
+			return []string{v}
+		}
+	case []any:
+		ids := make([]string, 0, min(len(v), maxRefusedIDs))
+		for _, item := range v {
+			if id, ok := item.(string); ok && recordID(id) && len(ids) < maxRefusedIDs {
+				ids = append(ids, id)
+			}
+		}
+		return ids
+	case []string:
+		ids := make([]string, 0, min(len(v), maxRefusedIDs))
+		for _, id := range v {
+			if recordID(id) && len(ids) < maxRefusedIDs {
+				ids = append(ids, id)
+			}
+		}
+		return ids
+	}
+
+	return nil
+}
+
 func (w *State) Wrote(action *agentruntimeports.PendingAction, at int64) {
 	if w == nil || action == nil || !action.Executed || action.Target == nil ||
 		action.Target.ID.IsNil() {
@@ -290,26 +368,40 @@ func ChangeNotice(
 	var b strings.Builder
 	b.WriteString(ChangePreamble)
 	for i := range changes {
-		change := &changes[i]
 		b.WriteString("\n- ")
-		b.WriteString(change.Label)
-		if change.Label != change.RecordID {
-			b.WriteString(" (")
-			b.WriteString(change.RecordID)
-			b.WriteString(")")
-		}
-		b.WriteString(" was ")
-		b.WriteString(changeVerb(change.Action))
-		b.WriteString(" ")
-		b.WriteString(changedBy(change, actor))
-		if len(change.Fields) > 0 && change.Action != actionDeleted {
-			b.WriteString(": ")
-			b.WriteString(strings.Join(change.Fields, ", "))
-		}
-		b.WriteString(".")
+		b.WriteString(DescribeChange(&changes[i], actor, nil))
 	}
 	b.WriteString("\n")
 	b.WriteString(worldChangeClosing)
+
+	return b.String()
+}
+
+// DescribeChange is one change in a line: the record, what became of it, who
+// did it and the fields it touched. names, keyed by user id, names someone
+// other than the actor when it is known.
+func DescribeChange(
+	change *realtimeports.WatchedRecordChange,
+	actor *permissionports.RequestActor,
+	names map[string]string,
+) string {
+	var b strings.Builder
+	label := cmp.Or(change.Label, change.RecordID)
+	b.WriteString(label)
+	if label != change.RecordID {
+		b.WriteString(" (")
+		b.WriteString(change.RecordID)
+		b.WriteString(")")
+	}
+	b.WriteString(" was ")
+	b.WriteString(changeVerb(change.Action))
+	b.WriteString(" ")
+	b.WriteString(changedBy(change, actor, names))
+	if len(change.Fields) > 0 && change.Action != actionDeleted {
+		b.WriteString(": ")
+		b.WriteString(strings.Join(change.Fields, ", "))
+	}
+	b.WriteString(".")
 
 	return b.String()
 }
@@ -326,6 +418,7 @@ func changeVerb(action string) string {
 func changedBy(
 	change *realtimeports.WatchedRecordChange,
 	actor *permissionports.RequestActor,
+	names map[string]string,
 ) string {
 	if actor != nil && actor.UserID.IsNotNil() && change.ActorUserID == actor.UserID.String() &&
 		change.ActorType != string(permissionports.PrincipalTypeAgent) {
@@ -339,6 +432,9 @@ func changedBy(
 	case permissionports.PrincipalTypeAPIKey:
 		return "through the API"
 	case permissionports.PrincipalTypeUser:
+		if name := names[change.ActorUserID]; name != "" {
+			return "by " + name
+		}
 		return "by someone else"
 	default:
 		return "elsewhere"

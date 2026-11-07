@@ -4876,6 +4876,14 @@ type DispatchFreightArea struct {
 	Customers  []*DispatchFreightAreaCustomer `json:"customers"`
 }
 
+// The map tile an area counts its loads and drivers in, in degrees.
+type DispatchFreightAreaBounds struct {
+	South float64 `json:"south"`
+	West  float64 `json:"west"`
+	North float64 `json:"north"`
+	East  float64 `json:"east"`
+}
+
 type DispatchFreightAreaCustomer struct {
 	CustomerID string `json:"customerId"`
 	Name       string `json:"name"`
@@ -4884,9 +4892,10 @@ type DispatchFreightAreaCustomer struct {
 }
 
 type DispatchFreightAreaDetail struct {
-	Quality     *DispatchForecastQuality `json:"quality"`
-	GeneratedAt int                      `json:"generatedAt"`
-	Area        *DispatchFreightArea     `json:"area"`
+	Quality     *DispatchForecastQuality   `json:"quality"`
+	GeneratedAt int                        `json:"generatedAt"`
+	Area        *DispatchFreightArea       `json:"area"`
+	Bounds      *DispatchFreightAreaBounds `json:"bounds"`
 	// The window the sheet reads: the one asked for, or the area's worst.
 	SlotStart int                     `json:"slotStart"`
 	Reach     []*DispatchFreightReach `json:"reach"`

@@ -44,6 +44,7 @@ export type FreightOutlook = Omit<
 
 type AreaData = DispatchFreightAreaQuery["dispatchFreightArea"];
 export type FreightReach = AreaData["reach"][number];
+export type FreightAreaBounds = AreaData["bounds"];
 
 export type FreightAreaDetail = Omit<
   AreaData,

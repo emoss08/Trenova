@@ -88,7 +88,6 @@
   "A proposal was refused": "Se rechazó una propuesta",
   "A read on judgment, not just completion.": "Una lectura del criterio, no solo de la finalización.",
   "A reply was rated unhelpful": "Una respuesta se calificó como poco útil",
-  "A report": "Un informe",
   "A role": "Un rol",
   "A row names a signing key that is no longer configured, so the chain cannot be checked past it. Put the key back, then verify again.": "Una fila indica una clave de firma que ya no está configurada, por lo que la cadena no puede verificarse más allá de ella. Vuelva a configurar la clave y verifique de nuevo.",
   "A run that scored fewer cases is not compared with the median.": "Una ejecución que puntuó menos casos no se compara con la mediana.",

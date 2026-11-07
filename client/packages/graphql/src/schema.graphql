@@ -1846,6 +1846,7 @@ enum AIUsageFeature {
   AgentRecommendation
   AgentReflection
   AgentTurn
+  AgentWakeUp
   BillingQueueBrief
   BillingQueueReview
   BillingQueueSearch
@@ -14331,6 +14332,14 @@ type DispatchFreightArea {
   valueCents: Int!
 }
 
+"""The map tile an area counts its loads and drivers in, in degrees."""
+type DispatchFreightAreaBounds {
+  east: Float!
+  north: Float!
+  south: Float!
+  west: Float!
+}
+
 type DispatchFreightAreaCustomer {
   customerId: ID!
   name: String!
@@ -14340,6 +14349,7 @@ type DispatchFreightAreaCustomer {
 
 type DispatchFreightAreaDetail {
   area: DispatchFreightArea!
+  bounds: DispatchFreightAreaBounds!
   """
   The area's active locations (up to 100), to read the loads delivering into it.
   """

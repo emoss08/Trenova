@@ -6407,6 +6407,14 @@
       "rest": [
         {
           "method": "GET",
+          "path": "/api-keys/"
+        },
+        {
+          "method": "GET",
+          "path": "/api-keys/:param/"
+        },
+        {
+          "method": "GET",
           "path": "/billing-queue/"
         },
         {
@@ -6691,7 +6699,27 @@
         },
         {
           "method": "GET",
+          "path": "/integrations/:param/config/"
+        },
+        {
+          "method": "GET",
+          "path": "/integrations/:param/runtime-config/"
+        },
+        {
+          "method": "GET",
+          "path": "/integrations/catalog/"
+        },
+        {
+          "method": "GET",
           "path": "/integrations/GoogleMaps/runtime-config/"
+        },
+        {
+          "method": "GET",
+          "path": "/integrations/samsara/workers/sync/drift/"
+        },
+        {
+          "method": "GET",
+          "path": "/integrations/samsara/workers/sync/readiness/"
         },
         {
           "method": "GET",
@@ -10741,7 +10769,36 @@
         "DispatchFreightOutlook",
         "DispatchPositionDriver"
       ],
-      "rest": []
+      "rest": [
+        {
+          "method": "GET",
+          "path": "/api-keys/"
+        },
+        {
+          "method": "GET",
+          "path": "/api-keys/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/integrations/:param/config/"
+        },
+        {
+          "method": "GET",
+          "path": "/integrations/:param/runtime-config/"
+        },
+        {
+          "method": "GET",
+          "path": "/integrations/catalog/"
+        },
+        {
+          "method": "GET",
+          "path": "/integrations/samsara/workers/sync/drift/"
+        },
+        {
+          "method": "GET",
+          "path": "/integrations/samsara/workers/sync/readiness/"
+        }
+      ]
     },
     {
       "path": "/dispatch/routing-guides",

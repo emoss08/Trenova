@@ -5,6 +5,8 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
+
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/delegation"
@@ -282,6 +284,9 @@ func (s *Service) prepareTurn(
 		runReq.Publishes = true
 		runReq.Directed = checks.directed
 		runReq.Command = command
+		if resumesWait {
+			runReq.UsageFeature = aiusage.FeatureAgentWakeUp
+		}
 		plan.Timezone = runReq.Context.Timezone
 		plan.Records = runReq.Records
 		plan.Turn = s.runtime.OpenTurn(ctx, runReq).State()

@@ -381,8 +381,8 @@ func validateCall(
 		aitrace.OutcomeInvalid,
 		vErr.Error(),
 		"Tool %q was not %s, because it would fail as called: %s\n"+
-			"Fix the call and try again.",
-		p.call.Name, verb, toolresult.FenceInline(vErr.Error()),
+			"Fix the call and try again.%s",
+		p.call.Name, verb, toolresult.FenceInline(vErr.Error()), personFixNote(p.req),
 	), true
 }
 
@@ -423,7 +423,7 @@ func (s *Dispatcher) fileProposal(
 	})
 	if baseline != nil && !dependsOnStep {
 		if refusal := baseline.Preview.Refusal(); refusal != nil {
-			return refusedBeforeFiling(call.Name, refusal)
+			return refusedBeforeFiling(call.Name, refusal, req)
 		}
 	}
 	action.Target = target
@@ -799,6 +799,7 @@ func (s *Dispatcher) runQueryToolWith(
 		DataAccessCeiling: req.Definition.DataAccessSensitivity(),
 		ThreadID:          req.ThreadID,
 		RunID:             req.RunID,
+		Delegated:         req.Delegation != nil,
 		Broker:            extras.broker,
 		StepKey:           extras.stepKey,
 		CallID:            call.ID,

@@ -1,5 +1,5 @@
 {
-  "version": "sha256:ca0647dc967d10ed0ff8e77a1435243e98ea7662d260035e238ec40055a87113",
+  "version": "sha256:82cb022cf07397370ec9d12e53272bb5c6495ca5336d577a751b705c6886edad",
   "modules": [
     {
       "id": "home",
@@ -5132,6 +5132,20 @@
             "Turn on the service's enable switch (for example **Enable Google maps** or **Enable Samsara**) and enter its credentials, such as the API key. When a key is already saved, leave the field blank to keep it.",
             "Where offered, select **Test connection** to check the credentials work.",
             "Select **Save changes** (or **Save configuration** for Samsara)."
+          ]
+        },
+        {
+          "title": "Style Google maps in light and dark",
+          "keywords": [
+            "Google Maps Map ID",
+            "dark mode map",
+            "map style",
+            "map markers"
+          ],
+          "steps": [
+            "In the Google Cloud console, open Map management in the project that holds your Google Maps API key, and create a JavaScript map with a light and a dark style. A Map ID from another project does not work with your key.",
+            "Open [Integrations](/admin/integrations), open the Google Maps card, and paste it into **Map ID**.",
+            "Select **Save changes**. Every map then follows the light or dark theme you use Trenova in. Without a Map ID, maps use Google's default style in both themes."
           ]
         },
         {
@@ -12394,7 +12408,8 @@
           ],
           "steps": [
             "Select an area on the board, or an underlined area name anywhere on the page.",
-            "The panel shows the area: its worst window and what one more driver is worth there, the moves into or out of it, the window by window chart, who books there and whether they are on pace, drivers already on the way, who can get there in time (on a map, with what each would net, including those who arrive too late or are not worth the miles), and the last eight weeks of that window against its usual range.",
+            "The panel shows the area: its worst window and what one more driver is worth there, the moves into or out of it, the window by window chart, who books there and whether they are on pace, drivers already on the way, who can get there in time (on a map that outlines the area and draws a line in from each driver, with what each would net, including those who arrive too late or are not worth the miles), and the last eight weeks of that window against its usual range.",
+            "Scroll over the map to zoom it and drag to move it. Opening another area or window frames that area and its drivers again. The map needs Google Maps connected under Integrations; without it, the panel lists the drivers on their own.",
             "Select the button named for the area (Loads into, then the area) to open the shipments list filtered to the open loads delivering to any of your locations there. When none of your locations are in the area yet, the panel says so instead.",
             "Select **Brief**, **Close** or press Escape to go back."
           ]

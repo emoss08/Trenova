@@ -153,9 +153,15 @@ func mapDispatchFreightAreaDetail(
 	detail *freightoutlookports.AreaDetail,
 ) *gqlmodel.DispatchFreightAreaDetail {
 	mapped := &gqlmodel.DispatchFreightAreaDetail{
-		Quality:             mapDispatchForecastQuality(detail.Quality),
-		GeneratedAt:         int(detail.GeneratedAt),
-		Area:                mapDispatchFreightArea(detail.Area),
+		Quality:     mapDispatchForecastQuality(detail.Quality),
+		GeneratedAt: int(detail.GeneratedAt),
+		Area:        mapDispatchFreightArea(detail.Area),
+		Bounds: &gqlmodel.DispatchFreightAreaBounds{
+			South: detail.Bounds.South,
+			West:  detail.Bounds.West,
+			North: detail.Bounds.North,
+			East:  detail.Bounds.East,
+		},
 		SlotStart:           int(detail.SlotStart),
 		Reach:               make([]*gqlmodel.DispatchFreightReach, 0, len(detail.Reach)),
 		Moves:               mapDispatchFreightMoves(detail.Steps),

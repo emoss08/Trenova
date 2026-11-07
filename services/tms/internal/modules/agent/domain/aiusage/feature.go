@@ -6,6 +6,7 @@ type Feature string
 
 const (
 	FeatureAgentTurn                   = Feature("AgentTurn")
+	FeatureAgentWakeUp                 = Feature("AgentWakeUp")
 	FeatureAgentEvaluation             = Feature("AgentEvaluation")
 	FeatureTableQuery                  = Feature("TableQuery")
 	FeatureFormulaGenerate             = Feature("FormulaGenerate")
@@ -32,6 +33,7 @@ const (
 func AllFeatures() []Feature {
 	return []Feature{
 		FeatureAgentTurn,
+		FeatureAgentWakeUp,
 		FeatureAgentEvaluation,
 		FeatureTableQuery,
 		FeatureFormulaGenerate,

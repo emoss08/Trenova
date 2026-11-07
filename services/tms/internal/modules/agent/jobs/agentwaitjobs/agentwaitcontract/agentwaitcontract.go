@@ -35,18 +35,27 @@ func (p *Payload) Tenant() pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: p.OrganizationID, BuID: p.BusinessUnitID}
 }
 
-// Met is what ended a wait, as the event or poll that ended it said.
+// Met is what ended a wait, as the event or poll that ended it said. Key
+// names what the notice is about, so a settling wait keeps the latest notice
+// per record rather than every edit.
 type Met struct {
 	Detail string `json:"detail"`
 	At     int64  `json:"at"`
+	Key    string `json:"key,omitempty"`
 }
 
 // Schedule is when a wait next needs looking at: when it comes due, and when
 // it runs out. Open is false for one already closed.
+//
+// SettleSeconds and SettleMaxSeconds, for a kind that settles, are how long
+// a met wait gathers further notices before it picks the work up: until it
+// has been quiet that long, and never longer than the limit.
 type Schedule struct {
-	Open      bool   `json:"open"`
-	DueAt     *int64 `json:"dueAt,omitempty"`
-	ExpiresAt int64  `json:"expiresAt"`
+	Open             bool   `json:"open"`
+	DueAt            *int64 `json:"dueAt,omitempty"`
+	ExpiresAt        int64  `json:"expiresAt"`
+	SettleSeconds    int64  `json:"settleSeconds,omitempty"`
+	SettleMaxSeconds int64  `json:"settleMaxSeconds,omitempty"`
 }
 
 // Check is a timed wait read again when it came due: met, due again later
@@ -58,10 +67,13 @@ type Check struct {
 	Closed bool   `json:"closed,omitempty"`
 }
 
+// FinishInput closes a wait. FirstMetAt is when the first notice of a
+// settled wait arrived: what the conversation may already have taken in.
 type FinishInput struct {
-	Payload *Payload         `json:"payload"`
-	Status  agentwait.Status `json:"status"`
-	Outcome string           `json:"outcome"`
+	Payload    *Payload         `json:"payload"`
+	Status     agentwait.Status `json:"status"`
+	Outcome    string           `json:"outcome"`
+	FirstMetAt int64            `json:"firstMetAt,omitempty"`
 }
 
 // Worker is what the workflow asks of the waits.

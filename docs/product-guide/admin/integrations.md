@@ -47,6 +47,16 @@ Keywords: set up integration, add API key, enable integration, turn on mileage
 4. Where offered, select **Test connection** to check the credentials work.
 5. Select **Save changes** (or **Save configuration** for Samsara).
 
+### Style Google maps in light and dark
+Keywords: Google Maps Map ID, dark mode map, map style, map markers
+1. In the Google Cloud console, open Map management in the project that holds your Google Maps
+   API key, and create a JavaScript map with a light and a dark style. A Map ID from another
+   project does not work with your key.
+2. Open [Integrations](/admin/integrations), open the Google Maps card, and paste it into
+   **Map ID**.
+3. Select **Save changes**. Every map then follows the light or dark theme you use Trenova in.
+   Without a Map ID, maps use Google's default style in both themes.
+
 ### Set up Samsara telematics
 Keywords: Samsara webhook, sync drivers to Samsara, worker sync, telematics
 1. Open [Integrations](/admin/integrations) and open the Samsara card.

@@ -464,6 +464,7 @@ function AreaBody({ detail }: { detail: FreightAreaDetail }) {
               label={area.label}
               latitude={area.latitude}
               longitude={area.longitude}
+              bounds={detail.bounds}
               reach={detail.reach}
             />
           </LazyComponent>

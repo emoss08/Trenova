@@ -60,8 +60,8 @@ func NewRepeatGuard() *RepeatGuard {
 	return &RepeatGuard{Failures: make(map[string]string, 4), Reads: make(map[string]bool, 4)}
 }
 
-// isRead is a tool that only looks something up, by the names read tools take.
-func isRead(name string) bool {
+// IsRead is a tool that only looks something up, by the names read tools take.
+func IsRead(name string) bool {
 	reading := agenttoolports.ReadingOrder(name)
 	for _, prefix := range []string{"get_", "list_", "search_"} {
 		if strings.HasPrefix(reading, prefix) {
@@ -75,7 +75,7 @@ func isRead(name string) bool {
 // ReadBefore reports whether this exact read already succeeded since the last
 // call that could have changed anything.
 func (g *RepeatGuard) ReadBefore(call *llmports.ToolCall) bool {
-	if !isRead(call.Name) {
+	if !IsRead(call.Name) {
 		return false
 	}
 	key, ok := CallKey(call)
@@ -86,7 +86,7 @@ func (g *RepeatGuard) ReadBefore(call *llmports.ToolCall) bool {
 // Ran notes a call that succeeded: a read is remembered, and anything else
 // forgets every read, since it may have changed what they returned.
 func (g *RepeatGuard) Ran(call *llmports.ToolCall) {
-	if !isRead(call.Name) {
+	if !IsRead(call.Name) {
 		clear(g.Reads)
 		return
 	}
@@ -103,6 +103,16 @@ func RepeatedRead(name string) string {
 			"Call it again only with different arguments.",
 		name,
 	)
+}
+
+// Forget drops every failure and read the guard remembers. A record the turn
+// is working with changed, so a call that failed against it may now succeed:
+// a person fixing what blocked an invoice's posting while the turn ran got
+// the old refusal back for the identical retry, and the turn ended saying it
+// could not post an invoice that was by then ready.
+func (g *RepeatGuard) Forget() {
+	clear(g.Failures)
+	clear(g.Reads)
 }
 
 // Seen reports the earlier failure for this exact call, if there was one.

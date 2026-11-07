@@ -113,6 +113,8 @@ export function aiUsageFeatureLabel(feature: AiUsageFeature | null, t: Translate
       return t("Agent suggestions");
     case "ConversationChapters":
       return t("Desk chapters");
+    case "AgentWakeUp":
+      return t("Desk picking work back up");
     case "BillingQueueReview":
       return t("Billing queue review");
     case "BillingQueueBrief":

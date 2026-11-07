@@ -1,5 +1,5 @@
 {
-  "version": "sha256:4c268735b858cb2bc99923c225ea9b3e245be7dc771d7677542e6db7e34fee17",
+  "version": "sha256:6e41aeacfb777fae43a2fbb57d27e76c12ecdbb0989675622339e0d46f5cc6f3",
   "screens": [
     {
       "path": "/",
@@ -10897,6 +10897,26 @@
       "endpoints": [
         {
           "method": "GET",
+          "path": "/api-keys/",
+          "requires": [
+            {
+              "resource": "api_key",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/api-keys/:param/",
+          "requires": [
+            {
+              "resource": "api_key",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
           "path": "/billing-queue/",
           "requires": [
             {
@@ -11600,8 +11620,53 @@
         },
         {
           "method": "GET",
+          "path": "/integrations/:param/config/",
+          "requires": [
+            {
+              "resource": "integration",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/integrations/:param/runtime-config/",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/integrations/catalog/",
+          "requires": [
+            {
+              "resource": "integration",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
           "path": "/integrations/GoogleMaps/runtime-config/",
           "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/integrations/samsara/workers/sync/drift/",
+          "requires": [
+            {
+              "resource": "integration",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/integrations/samsara/workers/sync/readiness/",
+          "requires": [
+            {
+              "resource": "integration",
+              "operation": "read"
+            }
+          ]
         },
         {
           "method": "GET",
@@ -19513,7 +19578,73 @@
         "DispatchFreightOutlook",
         "DispatchPositionDriver"
       ],
-      "endpoints": [],
+      "endpoints": [
+        {
+          "method": "GET",
+          "path": "/api-keys/",
+          "requires": [
+            {
+              "resource": "api_key",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/api-keys/:param/",
+          "requires": [
+            {
+              "resource": "api_key",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/integrations/:param/config/",
+          "requires": [
+            {
+              "resource": "integration",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/integrations/:param/runtime-config/",
+          "requires": []
+        },
+        {
+          "method": "GET",
+          "path": "/integrations/catalog/",
+          "requires": [
+            {
+              "resource": "integration",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/integrations/samsara/workers/sync/drift/",
+          "requires": [
+            {
+              "resource": "integration",
+              "operation": "read"
+            }
+          ]
+        },
+        {
+          "method": "GET",
+          "path": "/integrations/samsara/workers/sync/readiness/",
+          "requires": [
+            {
+              "resource": "integration",
+              "operation": "read"
+            }
+          ]
+        }
+      ],
       "reads": [],
       "references": [],
       "declared": []

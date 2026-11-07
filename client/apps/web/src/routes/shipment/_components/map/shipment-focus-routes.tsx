@@ -1,7 +1,7 @@
 import { STAGE_META } from "@/lib/shipment-board/stage";
 import { useShipmentBoardStore } from "../board/store";
 import { isLegDriven, placeLabel, type MapShipment } from "./map-shipment-model";
-import { MapPolyline } from "./map-polyline";
+import { MapPolyline } from "@/components/map/map-polyline";
 import { RouteStopPin } from "./shipment-map-marks";
 
 /**
