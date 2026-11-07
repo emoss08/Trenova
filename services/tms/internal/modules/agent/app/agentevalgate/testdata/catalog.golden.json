@@ -10358,20 +10358,20 @@
     },
     {
       "name": "dispatch_forecast_demand",
-      "description": "Say which areas will be busy in the coming days and where to send trucks, weighing freight customers have not booked yet against the drivers expected. Answers whether freight is coming into a city, how many loads usually appear on a given day and which regions will need more trucks. Learned from this organization's own shipment history, not market data: each twelve-hour window gives the usual range of loads, what is booked, the loads still expected, the drivers expected free there, the shortfall and what one more driver ending there is worth in dollars. Plans use it only once quality.status is Ready; until then it lists no windows, so say it is not proven yet and why, from quality.meaning, rather than guessing. Answer by naming the areas, the windows and the shortfall; act on it through dispatch_plan.",
+      "description": "Say which areas will be busy in the coming days and where to send trucks, weighing freight customers have not booked yet against the drivers expected. Answers whether freight is coming into a city, how many loads usually appear and which regions will need more trucks. Learned from this organization's own shipment history, not market data: for each area and four-hour window it gives loads likely, what is booked, the drivers expected and the loads with no truck nearby, then ranked moves (send an empty driver, book a load that ends there, keep a driver, call a customer behind its usual pace) with what each is worth in dollars. Plans use it only once quality.status is Ready; until then say it is not proven yet and why, from quality.meaning, rather than guessing.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
           "hoursAhead": {
-            "description": "How many hours ahead to look, from now: 48 unless you ask, at most 96. Ask for enough to reach the day in question; a weekend can need all 96.",
-            "maximum": 96,
-            "minimum": 1,
+            "description": "How many hours ahead to look, from now: 24 unless you ask, at most 48.",
+            "maximum": 48,
+            "minimum": 4,
             "type": "integer",
             "x-clamp": true
           },
           "limit": {
-            "description": "How many rows to return: 20 unless you ask, at most 50.",
-            "maximum": 50,
+            "description": "How many rows to return: 8 unless you ask, at most 20.",
+            "maximum": 20,
             "minimum": 1,
             "type": "integer",
             "x-clamp": true

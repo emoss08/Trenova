@@ -11028,11 +11028,12 @@
     ]
   },
   "A report": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/agent-control"
     ]
   },
@@ -88738,15 +88739,6 @@
       "routes/dash-control"
     ]
   },
-  "Drivers cover the freight ahead": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
-    ]
-  },
   "Drivers currently paid under this profile. Overrides show where a driver's rate differs from the template — prefer overrides over cloning profiles.": {
     "sites": 1,
     "scope": [
@@ -142832,15 +142824,6 @@
       "routes/agent-control"
     ]
   },
-  "Likely loads": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
-    ]
-  },
   "Likely range": {
     "sites": 1,
     "scope": [
@@ -165701,15 +165684,6 @@
       "routes/customer-statement"
     ]
   },
-  "No customer stands out": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
-    ]
-  },
   "No customers yet": {
     "sites": 1,
     "scope": [
@@ -167049,15 +167023,6 @@
     ],
     "areas": [
       "routes/freight-outlook"
-    ]
-  },
-  "No freight expected beyond your drivers in the next 48 hours.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
     ]
   },
   "No fuel indices yet": {
@@ -176484,15 +176449,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "Nothing more is expected to be booked; one more driver ending here is worth {0} to the plan.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
     ]
   },
   "Nothing moving right now.": {
@@ -232823,7 +232779,7 @@
     ]
   },
   "Running": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "go",
       "ts"
@@ -250336,15 +250292,6 @@
     ],
     "areas": [
       "routes/customer"
-    ]
-  },
-  "Short by": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
     ]
   },
   "Short context explaining when to apply this reason; use customer-safe wording.": {
@@ -279398,15 +279345,6 @@
       "apps/web/components"
     ]
   },
-  "The outlook didn't load": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
-    ]
-  },
   "The outstanding balance will no longer be recovered from future settlements.": {
     "sites": 1,
     "scope": [
@@ -292951,15 +292889,6 @@
     ]
   },
   "This isn't an empty list: covered moves may still be slipping. The Watchtower has them too.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
-    ]
-  },
-  "This isn't an empty outlook: freight may still be coming where drivers are short.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -310600,33 +310529,6 @@
     ],
     "areas": [
       "routes/inbox"
-    ]
-  },
-  "Usually up to {0, plural, one {# load} other {# loads}} in this window.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
-    ]
-  },
-  "Usually {0, plural, =0 {no loads} one {# load} other {# loads}} in this window.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
-    ]
-  },
-  "Usually {0}–{1} loads in this window.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
     ]
   },
   "Utah (UT)": {
@@ -351539,15 +351441,6 @@
       "routes/dispatch-console"
     ]
   },
-  "{0, plural, other {# booked}}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
-    ]
-  },
   "{0, plural, other {# booked}}; {1, plural, =0 {no other driver expected} one {# other driver expected} other {# other drivers expected}}.": {
     "sites": 1,
     "scope": [
@@ -363779,15 +363672,6 @@
     ],
     "areas": [
       "routes/desk"
-    ]
-  },
-  "{0} still expected to be booked; one more driver ending here is worth {1} to the plan.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/dispatch-console"
     ]
   },
   "{0} still owed": {
