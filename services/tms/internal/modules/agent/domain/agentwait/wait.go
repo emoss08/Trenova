@@ -1,6 +1,7 @@
 // Package agentwait is work an agent parked until something happens in the
 // world: a truck reaching a stop, a reply arriving, an appointment coming
-// round, free time running out, a driver's hours running low, or a time.
+// round, free time running out, a driver's hours running low, a record
+// changing, a report finishing, or a time.
 package agentwait
 
 import (
@@ -50,6 +51,18 @@ const (
 	KindPortalRun       = Kind("PortalRun")
 	KindDocumentRead    = Kind("DocumentRead")
 	KindWebWatch        = Kind("WebWatch")
+	KindRecordChanged   = Kind("RecordChanged")
+	KindReportRun       = Kind("ReportRun")
+)
+
+const (
+	// RecordSettleSeconds is how long a changed record must stay quiet before
+	// the work is picked up: a person fixing what blocked a write makes
+	// several edits, and the agent should read the record once they are done.
+	RecordSettleSeconds int64 = 30
+	// RecordSettleMaxSeconds bounds the settling, so a record edited without
+	// pause still picks the work up.
+	RecordSettleMaxSeconds int64 = 120
 )
 
 func AllKinds() []Kind {
@@ -64,17 +77,21 @@ func AllKinds() []Kind {
 		KindPortalRun,
 		KindDocumentRead,
 		KindWebWatch,
+		KindRecordChanged,
+		KindReportRun,
 	}
 }
 
 // AgentKinds are the kinds an agent asks for with agent_create_wait. A portal run's
 // wait is set by the system when a person approves acting on a portal or a
 // portal read stops for a sign-in code, a file's when the agent finds a file
-// the person attached still being read, and a web watch's when the agent sets
-// the watch.
+// the person attached still being read, a web watch's when the agent sets
+// the watch, and a report run's when report_run hands back a run still going
+// with a next step.
 func AgentKinds() []Kind {
 	return slices.DeleteFunc(AllKinds(), func(kind Kind) bool {
-		return kind == KindPortalRun || kind == KindDocumentRead || kind == KindWebWatch
+		return kind == KindPortalRun || kind == KindDocumentRead || kind == KindWebWatch ||
+			kind == KindReportRun
 	})
 }
 
@@ -91,7 +108,7 @@ func (k Kind) IsValid() bool {
 	switch k {
 	case KindTime, KindStopArrival, KindStopDeparture, KindReply,
 		KindAppointmentNear, KindFreeTimeEnding, KindHOSDriveBelow, KindPortalRun,
-		KindDocumentRead, KindWebWatch:
+		KindDocumentRead, KindWebWatch, KindRecordChanged, KindReportRun:
 		return true
 	default:
 		return false
@@ -104,10 +121,30 @@ func (k Kind) IsValid() bool {
 // moment it crosses is known ahead of the next poll. A file being read is
 // another: its extraction ends the wait as it is saved, and the timer reads
 // the file again for the readings that save no extraction, such as a file
-// that could not be read.
+// that could not be read. A report run is the same: its finish ends the wait
+// as it is recorded, and the timer reads the run again in case that notice
+// was missed.
 func (k Kind) Timed() bool {
 	return k == KindTime || k == KindAppointmentNear || k == KindFreeTimeEnding ||
-		k == KindHOSDriveBelow || k == KindDocumentRead
+		k == KindHOSDriveBelow || k == KindDocumentRead || k == KindReportRun
+}
+
+// Streamed reports a wait whose record's changes reach it from the realtime
+// change stream: the watched id is registered with the stream while the wait
+// is open.
+func (k Kind) Streamed() bool {
+	return k == KindRecordChanged || k == KindReportRun
+}
+
+// Settle is how long a met wait of this kind gathers what else happens
+// before it picks the work up: quiet is the pause that ends it, limit the
+// most it waits from the first notice. Zero picks the work up at once.
+func (k Kind) Settle() (quiet, limit int64) {
+	if k == KindRecordChanged {
+		return RecordSettleSeconds, RecordSettleMaxSeconds
+	}
+
+	return 0, 0
 }
 
 // Visit reports a wait on a truck reaching or leaving a stop.
@@ -145,8 +182,14 @@ type Condition struct {
 	PortalRunID           pulid.ID `json:"portalRunId,omitempty"`
 	DocumentID            pulid.ID `json:"documentId,omitempty"`
 	WebWatchID            pulid.ID `json:"webWatchId,omitempty"`
-	MinutesBefore         int      `json:"minutesBefore,omitempty"`
-	DriveMinutesBelow     int      `json:"driveMinutesBelow,omitempty"`
+	RecordID              pulid.ID `json:"recordId,omitempty"`
+	ReportRunID           pulid.ID `json:"reportRunId,omitempty"`
+	// RecordKind and RecordLabel name the watched record as it was when the
+	// wait was set, for what the work and the Desk say about it.
+	RecordKind        string `json:"recordKind,omitempty"`
+	RecordLabel       string `json:"recordLabel,omitempty"`
+	MinutesBefore     int    `json:"minutesBefore,omitempty"`
+	DriveMinutesBelow int    `json:"driveMinutesBelow,omitempty"`
 	// SeenInsideAt is when the truck was last seen inside the stop's geofence,
 	// for a departure watched from polled positions: leaving is being outside
 	// after being inside.
@@ -259,6 +302,10 @@ func (c *Condition) watched(kind Kind) pulid.ID {
 		return c.DocumentID
 	case KindWebWatch:
 		return c.WebWatchID
+	case KindRecordChanged:
+		return c.RecordID
+	case KindReportRun:
+		return c.ReportRunID
 	case KindTime:
 		return pulid.Nil
 	default:
@@ -340,6 +387,10 @@ func (c *Condition) validate(kind Kind, multiErr *errortypes.MultiError) {
 		require("documentId", c.DocumentID)
 	case KindWebWatch:
 		require("webWatchId", c.WebWatchID)
+	case KindRecordChanged:
+		require("recordId", c.RecordID)
+	case KindReportRun:
+		require("reportRunId", c.ReportRunID)
 	case KindHOSDriveBelow:
 		require("workerId", c.WorkerID)
 		if c.DriveMinutesBelow < 1 || c.DriveMinutesBelow > MaxDriveMinutes {
@@ -378,6 +429,11 @@ func (w *Wait) ResumeNote() string {
 		b.WriteString("When you set it you planned to: ")
 		b.WriteString(w.Then)
 		b.WriteString("\n")
+	}
+	if w.Kind == KindRecordChanged && w.Status == StatusMet {
+		b.WriteString("Read the record again now. If what held the work up is resolved, carry " +
+			"on with it. If it is not, say in one line what is still missing and set the wait " +
+			"again rather than asking the person to tell you when it is done.\n")
 	}
 	b.WriteString("Pick the work up from here. Read the records again before you act, and say " +
 		"what you did. Wait id: ")
