@@ -51,3 +51,45 @@ func TestLiftedHold_TellsTheAgentAnApprovedProposalWasHeldWhenFiled(t *testing.T
 	other.ID = pulid.MustNew("ap_")
 	assert.Empty(t, liftedHold(history, &other), "only the hold on this proposal is read")
 }
+
+/*
+The agent proposed posting an invoice and repeated the card: a Pending
+journal entry booked, no accounting connection. Told only "approved, and it
+ran. Now: Posted, unpaid", it apologised for having "described a journal
+entry that no tool result showed". The note now quotes the card the person
+approved, as what ran.
+*/
+func TestCardNote_QuotesTheCardOfAProposalThatRan(t *testing.T) {
+	t.Parallel()
+
+	proposalID := pulid.MustNew("ap_")
+	history := []conversation.Message{
+		{
+			Role:     conversation.RoleTool,
+			ToolName: "invoice_post",
+			Content: "Recorded a proposal to run \"invoice_post\" (proposal " + proposalID.String() +
+				"). It is awaiting a person's review at the Propose tier and has not run.\n" +
+				"The card shows the person what this proposal would do.\n" +
+				"Summary: Would post Invoice INV2511000148 to Crown Holdings for 2582.22 USD; " +
+				"a Pending journal entry booked.",
+		},
+	}
+	executed := &agent.AgentProposal{
+		ID:       proposalID,
+		ToolName: "invoice_post",
+		Status:   agent.ProposalStatusExecuted,
+	}
+
+	note := cardNote(history, executed)
+	assert.Contains(t, note, "The card the person approved said:")
+	assert.Contains(t, note, "a Pending journal entry booked.")
+	assert.Contains(t, note, "what the card lists was done")
+
+	failed := *executed
+	failed.Status = agent.ProposalStatusExecutionFailed
+	assert.Empty(t, cardNote(history, &failed), "a write that failed did not do what the card said")
+
+	other := *executed
+	other.ID = pulid.MustNew("ap_")
+	assert.Empty(t, cardNote(history, &other), "only this proposal's card is quoted")
+}

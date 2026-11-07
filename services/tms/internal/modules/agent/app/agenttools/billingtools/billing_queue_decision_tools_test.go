@@ -389,6 +389,8 @@ func TestApproveBillingQueueItem_RunsOnlyFromAPersonsApproval(t *testing.T) {
 	assert.Equal(t, made.ID.String(), result.IDs["invoiceId"])
 	require.NotNil(t, result.Record)
 	assert.Equal(t, changepreview.InvoiceRecordEntity, result.Record.EntityType)
+	assert.Equal(t, "Draft, 1650.00 USD to Acme Foods", result.State,
+		"the agent can say what the draft came to without reading it again")
 }
 
 func TestCancelBillingQueueItem_IsProposedAndRunsAsTheApprover(t *testing.T) {

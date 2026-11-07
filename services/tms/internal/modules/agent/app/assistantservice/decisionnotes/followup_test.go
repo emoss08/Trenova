@@ -57,7 +57,9 @@ func TestFollowUpInstruction_KeepsTheReplyToWhatTheNoteAndTheCardHold(t *testing
 	t.Parallel()
 
 	assert.Contains(t, FollowUpInstruction,
-		"Report only what this note and the proposal's card hold")
+		"Report only what this note holds about what ran, the card it quotes included")
+	assert.Contains(t, FollowUpInstruction, saidBefore)
+	assert.Contains(t, notedInstruction, saidBefore)
 	assert.Contains(t, FollowUpInstruction, "Do not propose the same change again.")
 	assert.Contains(t, FollowUpInstruction, continueTheWork,
 		"an approved step toward the person's request is followed by the next one")

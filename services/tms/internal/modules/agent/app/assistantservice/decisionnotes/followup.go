@@ -9,6 +9,7 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/tooldispatch"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolresult"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolsummary"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
@@ -32,10 +33,40 @@ const (
 
 // FollowUpInstruction is what the agent is asked to do with a decision.
 const FollowUpInstruction = "Tell the person in one or two sentences what happened and the " +
-	"most useful next step. Report only what this note and the proposal's card hold about " +
-	"what ran: do not describe a value, a record or an effect of it that neither of them " +
-	"names, and where they do not say, say you do not know. Do not propose the same change " +
-	"again. " + continueTheWork
+	"most useful next step. Report only what this note holds about what ran, the card it " +
+	"quotes included: do not describe a value, a record or an effect of it that the note " +
+	"does not name, and where it does not say, say you do not know. " + saidBefore +
+	" Do not propose the same change again. " + continueTheWork
+
+// saidBefore keeps the agent from taking back what it told the person while
+// the proposal waited. A model told "it has not posted yet; it runs once you
+// approve it" read the approval as proof it had been wrong, and apologised
+// for a true sentence along with the journal entry the card had shown.
+const saidBefore = "What you told the person before they decided, such as that it had not " +
+	"run yet, was true when you said it: do not correct it or apologise for it."
+
+// cardNote quotes, for a proposal that ran, the card the person approved.
+// The note pointed at "the proposal's card" without holding it, so a model
+// that had repeated the card's figures and effects decided no result
+// supported them and took them back.
+func cardNote(history []conversation.Message, proposal *agent.AgentProposal) string {
+	if proposal.Status != agent.ProposalStatusExecuted {
+		return ""
+	}
+	for idx := len(history) - 1; idx >= 0; idx-- {
+		message := &history[idx]
+		if message.Role != conversation.RoleTool {
+			continue
+		}
+		if summary := toolsummary.FiledSummary(message.Content, proposal.ID); summary != "" {
+			return "The card the person approved said: " + toolresult.FenceInline(summary) +
+				" It ran without error, so what the card lists was done; where the first " +
+				"line says otherwise, the first line is right. "
+		}
+	}
+
+	return ""
+}
 
 const continueTheWork = "When what ran was a step toward something the person asked for " +
 	"that is not done yet, such as the records a shipment needs, take the next step now " +
@@ -52,10 +83,10 @@ const (
 		"unchanged. Report only what this note and the proposal's card hold: do not describe " +
 		"a value, a record or an effect that neither of them names."
 	notedInstruction = "Tell the person in one or two sentences what happened, and answer " +
-		"what they said. Report only what this note and the proposal's card hold about what " +
-		"ran: do not describe a value, a record or an effect of it that neither of them names, " +
-		"and where they do not say, say you do not know. Do not propose the same change " +
-		"again. " + continueTheWork
+		"what they said. Report only what this note holds about what ran, the card it quotes " +
+		"included: do not describe a value, a record or an effect of it that the note does " +
+		"not name, and where it does not say, say you do not know. " + saidBefore +
+		" Do not propose the same change again. " + continueTheWork
 )
 
 const refusedInstruction = "A change approved here was refused because its record changed " +

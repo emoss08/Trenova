@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/shared/inflect"
 	"github.com/emoss08/trenova/shared/jsonutils"
+	"github.com/emoss08/trenova/shared/pulid"
 )
 
 const (
@@ -93,4 +94,20 @@ func describeFiledValue(value any) string {
 	}
 
 	return string(encoded)
+}
+
+// FiledSummary is the card summary FilingEcho wrote into the result of the
+// call that filed the proposal, or empty when the result is another call's
+// or carried no card.
+func FiledSummary(toolResult string, proposalID pulid.ID) string {
+	if proposalID.IsNil() || !strings.Contains(toolResult, "(proposal "+proposalID.String()+")") {
+		return ""
+	}
+	_, after, found := strings.Cut(toolResult, "\nSummary: ")
+	if !found {
+		return ""
+	}
+	summary, _, _ := strings.Cut(after, "\n")
+
+	return strings.TrimSpace(summary)
 }

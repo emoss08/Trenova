@@ -102,9 +102,10 @@ func (s *Notes) DecisionNote(
 	}
 
 	return decisionFollowUp{
-		Note: fmt.Sprintf("%s%s\nDecision on proposal %s (%s). %s%s%s",
+		Note: fmt.Sprintf("%s%s\nDecision on proposal %s (%s). %s%s%s%s",
 			decisionLine(proposal), ranWith(proposal, decisions), proposal.ID, proposal.ToolName,
-			liftedHold(p.History, proposal), producedNote(proposal), ask),
+			liftedHold(p.History, proposal), cardNote(p.History, proposal),
+			producedNote(proposal), ask),
 		Decided: []*agent.AgentProposal{proposal},
 		Changed: changedTargets(refused),
 	}, nil

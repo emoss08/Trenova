@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/invoicepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
@@ -235,15 +236,7 @@ func postedInvoiceResult(posted *invoice.Invoice) *agentrecord.ToolExecutionResu
 		ID:         posted.ID.String(),
 	}
 
-	state := string(posted.Status) + ", " + posted.TotalAmount.StringFixed(2) + " " +
-		posted.CurrencyCode
-	if posted.BillToName != "" {
-		state += " to " + posted.BillToName
-	}
-	if posted.SettlementStatus != "" {
-		state += ", " + strings.ToLower(string(posted.SettlementStatus))
-	}
-	result.State = state
+	result.State = invoicepreview.InvoiceState(posted)
 
 	return result
 }

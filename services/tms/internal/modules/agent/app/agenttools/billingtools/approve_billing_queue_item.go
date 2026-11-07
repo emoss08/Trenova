@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/billingqueuepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/invoicepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
@@ -172,6 +173,7 @@ func (t *ApproveBillingQueueItemTool) ExecuteWithResult(
 		Kind:   changepreview.InvoiceRecordEntity,
 		Name:   made.Invoice.Number,
 		IDs:    map[string]string{toolparams.ParamInvoiceID: made.Invoice.ID.String()},
+		State:  invoicepreview.InvoiceState(made.Invoice),
 		Record: &agentrecord.RecordRef{
 			EntityType: changepreview.InvoiceRecordEntity,
 			ID:         made.Invoice.ID.String(),

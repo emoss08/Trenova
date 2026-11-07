@@ -49,3 +49,18 @@ func InvoiceLabel(inv *invoice.Invoice) string {
 
 	return "Invoice"
 }
+
+// InvoiceState is where an invoice stands in a few words, for a write's
+// result: "Draft, 2582.22 USD to Crown Holdings" or "Posted, 2300.00 USD to
+// FreshHaul Foods, unpaid". A draft has no settlement to speak of.
+func InvoiceState(inv *invoice.Invoice) string {
+	state := string(inv.Status) + ", " + inv.TotalAmount.StringFixed(2) + " " + inv.CurrencyCode
+	if inv.BillToName != "" {
+		state += " to " + inv.BillToName
+	}
+	if inv.Status != invoice.StatusDraft && inv.SettlementStatus != "" {
+		state += ", " + strings.ToLower(string(inv.SettlementStatus))
+	}
+
+	return state
+}
