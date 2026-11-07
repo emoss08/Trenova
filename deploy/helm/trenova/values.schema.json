@@ -68,6 +68,9 @@
       "properties": {
         "existingSecret": {
           "type": "string"
+        },
+        "escrowSecret": {
+          "type": "string"
         }
       },
       "required": []

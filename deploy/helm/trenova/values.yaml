@@ -59,6 +59,12 @@ secrets:
   #   gotenbergPassword        what the TMS and Gotenberg authenticate with
   #   bootstrapAdminPassword   while bootstrap.adminEmail is set
   existingSecret: ""
+  # The Secret holding the four escrowed keys (encryptionKey, rlsScopeKeyId,
+  # rlsScopeKey, mfaRecoveryCodePepper), set by the Trenova Cloud operator,
+  # which fetches them from the control plane before it installs. While set,
+  # the TMS reads those four from it and the app Secret leaves them out. Empty:
+  # they come from the app Secret, and the chart generates them as above.
+  escrowSecret: ""
 
 tms:
   image:

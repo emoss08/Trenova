@@ -21,7 +21,12 @@ Sign in as {{ .Values.bootstrap.adminEmail }}. The password:
 
   kubectl -n {{ .Release.Namespace }} get secret {{ include "trenova.appSecret" . }} -o jsonpath='{.data.bootstrapAdminPassword}' | base64 -d
 {{- end }}
-{{- if not .Values.secrets.existingSecret }}
+{{- if .Values.secrets.escrowSecret }}
+
+The encryption key, the row-level security scope key and the MFA recovery code
+pepper are read from the Secret {{ .Values.secrets.escrowSecret }}, which the Trenova Cloud
+operator restores from the control plane's escrow.
+{{- else if not .Values.secrets.existingSecret }}
 
 Back up the Secret {{ include "trenova.appSecret" . }} apart from the cluster: its encryptionKey
 is the only way to read encrypted data, and its other keys sign sessions and
