@@ -128,3 +128,24 @@ func TestIdentityDifferences(t *testing.T) {
 		base.IdentityDifferences(&changed),
 	)
 }
+
+func TestParseAdminSetup(t *testing.T) {
+	t.Parallel()
+
+	tests := map[string]struct {
+		want AdminSetup
+		ok   bool
+	}{
+		"":          {AdminSetupPassword, true},
+		"password":  {AdminSetupPassword, true},
+		" Link ":    {AdminSetupLink, true},
+		"link":      {AdminSetupLink, true},
+		"email":     {"", false},
+		"passwords": {"", false},
+	}
+	for raw, tt := range tests {
+		got, ok := ParseAdminSetup(raw)
+		assert.Equal(t, tt.ok, ok, raw)
+		assert.Equal(t, tt.want, got, raw)
+	}
+}

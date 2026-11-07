@@ -10,9 +10,11 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/api"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/instancebootstrapports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/managedusageservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedusage"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -46,6 +48,41 @@ func (f *fakeManagedUsage) SetState(_ context.Context, s *managedusage.State) er
 	return nil
 }
 
+type fakeInvites struct {
+	got    *instancebootstrapports.FirstAdministratorInvite
+	result *instancebootstrapports.FirstAdministratorInviteResult
+	err    error
+}
+
+func (f *fakeInvites) Install(
+	_ context.Context,
+	invite *instancebootstrapports.FirstAdministratorInvite,
+) (*instancebootstrapports.FirstAdministratorInviteResult, error) {
+	f.got = invite
+	return f.result, f.err
+}
+
+func serveInvite(
+	t *testing.T,
+	invites *fakeInvites,
+	token, body string,
+) *httptest.ResponseRecorder {
+	t.Helper()
+	req := httptest.NewRequestWithContext(
+		t.Context(),
+		http.MethodPut,
+		"/managed/v1/first-administrator/invite",
+		strings.NewReader(body),
+	)
+	if token != "" {
+		req.Header.Set("Authorization", "Bearer "+token)
+	}
+	rec := httptest.NewRecorder()
+	api.NewManagedHandler(&fakeManagedUsage{}, invites, managedToken, zap.NewNop()).
+		ServeHTTP(rec, req)
+	return rec
+}
+
 func serveManaged(
 	t *testing.T,
 	usage *fakeManagedUsage,
@@ -57,7 +94,7 @@ func serveManaged(
 		req.Header.Set("Authorization", "Bearer "+token)
 	}
 	rec := httptest.NewRecorder()
-	api.NewManagedHandler(usage, managedToken, zap.NewNop()).ServeHTTP(rec, req)
+	api.NewManagedHandler(usage, &fakeInvites{}, managedToken, zap.NewNop()).ServeHTTP(rec, req)
 	return rec
 }
 
@@ -187,4 +224,107 @@ func TestManagedRejectsOtherRoutes(t *testing.T) {
 	rec := serveManaged(t, &fakeManagedUsage{}, http.MethodPost, "/managed/v1/state",
 		managedToken, `{}`)
 	assert.Equal(t, http.StatusMethodNotAllowed, rec.Code)
+}
+
+const inviteHash = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+
+func TestManagedInviteInstallsAndAnswers(t *testing.T) {
+	t.Parallel()
+
+	invites := &fakeInvites{result: &instancebootstrapports.FirstAdministratorInviteResult{
+		InviteTokenSHA256: inviteHash,
+	}}
+	rec := serveInvite(t, invites, managedToken,
+		`{"tokenSha256":"`+inviteHash+`","expiresAt":"2026-11-14T10:00:00Z"}`)
+	require.Equal(t, http.StatusOK, rec.Code, rec.Body.String())
+
+	require.NotNil(t, invites.got)
+	assert.Equal(t, inviteHash, invites.got.TokenSHA256)
+	assert.Equal(t, int64(1_794_650_400), invites.got.ExpiresAt)
+
+	var answer map[string]any
+	require.NoError(t, sonic.Unmarshal(rec.Body.Bytes(), &answer))
+	assert.Equal(t, map[string]any{"setUp": false, "inviteTokenSha256": inviteHash}, answer)
+}
+
+func TestManagedInviteReportsASetUpAdministrator(t *testing.T) {
+	t.Parallel()
+
+	invites := &fakeInvites{
+		result: &instancebootstrapports.FirstAdministratorInviteResult{SetUp: true},
+	}
+	rec := serveInvite(t, invites, managedToken,
+		`{"tokenSha256":"`+inviteHash+`","expiresAt":"2026-11-14T10:00:00Z"}`)
+	require.Equal(t, http.StatusOK, rec.Code)
+	assert.JSONEq(t, `{"setUp":true}`, rec.Body.String())
+}
+
+func TestManagedInviteRefuses(t *testing.T) {
+	t.Parallel()
+
+	valid := `{"tokenSha256":"` + inviteHash + `","expiresAt":"2026-11-14T10:00:00Z"}`
+	invalid := errortypes.NewMultiError()
+	invalid.Add("expiresAt", errortypes.ErrInvalid, "expiresAt must be in the future")
+
+	tests := map[string]struct {
+		token  string
+		body   string
+		err    error
+		status int
+	}{
+		"no token":    {"", valid, nil, http.StatusUnauthorized},
+		"wrong token": {"nope", valid, nil, http.StatusUnauthorized},
+		"not json":    {managedToken, "{", nil, http.StatusBadRequest},
+		"unknown field": {
+			managedToken,
+			`{"tokenSha256":"x","expiresAt":"2026-11-14T10:00:00Z","token":"raw"}`,
+			nil,
+			http.StatusBadRequest,
+		},
+		"no expiry": {
+			managedToken,
+			`{"tokenSha256":"` + inviteHash + `"}`,
+			nil,
+			http.StatusBadRequest,
+		},
+		"not rfc 3339": {
+			managedToken,
+			`{"tokenSha256":"` + inviteHash + `","expiresAt":"tomorrow"}`,
+			nil,
+			http.StatusBadRequest,
+		},
+		"invalid": {managedToken, valid, invalid, http.StatusBadRequest},
+		"not bootstrapped": {
+			managedToken,
+			valid,
+			instancebootstrapports.ErrNotBootstrapped,
+			http.StatusConflict,
+		},
+		"store failure": {
+			managedToken,
+			valid,
+			errors.New("pq: connection refused at 10.0.0.5"),
+			http.StatusInternalServerError,
+		},
+		"oversized body": {
+			managedToken,
+			`{"tokenSha256":"` + strings.Repeat("a", 5000) + `"}`,
+			nil,
+			http.StatusRequestEntityTooLarge,
+		},
+	}
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			invites := &fakeInvites{
+				result: &instancebootstrapports.FirstAdministratorInviteResult{},
+				err:    tt.err,
+			}
+			rec := serveInvite(t, invites, tt.token, tt.body)
+			assert.Equal(t, tt.status, rec.Code, rec.Body.String())
+			assert.Equal(t, "application/problem+json", rec.Header().Get("Content-Type"))
+			assert.NotContains(t, rec.Body.String(), "10.0.0.5")
+		})
+	}
 }

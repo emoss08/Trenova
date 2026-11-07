@@ -15,6 +15,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/infrastructure/config/managedconfig"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/instancebootstrapports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/managedusageservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedusage"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -25,7 +26,9 @@ import (
 const (
 	managedReadingsPath = "/managed/v1/readings"
 	managedStatePath    = "/managed/v1/state"
+	managedInvitePath   = "/managed/v1/first-administrator/invite"
 	managedMaxBody      = 1 << 20
+	managedMaxInvite    = 4 << 10
 	managedTimeout      = 30 * time.Second
 	problemJSON         = "application/problem+json"
 )
@@ -38,17 +41,31 @@ type ManagedUsage interface {
 type ManagedServerParams struct {
 	fx.In
 
-	Config *managedconfig.Config
-	Usage  *managedusageservice.Service
-	Logger *zap.Logger
-	LC     fx.Lifecycle
+	Config  *managedconfig.Config
+	Usage   *managedusageservice.Service
+	Invites instancebootstrapports.FirstAdministratorInviteService
+	Logger  *zap.Logger
+	LC      fx.Lifecycle
 }
 
 type managedHandler struct {
-	usage ManagedUsage
-	token []byte
-	l     *zap.Logger
+	usage   ManagedUsage
+	invites instancebootstrapports.FirstAdministratorInviteService
+	token   []byte
+	l       *zap.Logger
 }
+
+type managedInvite struct {
+	TokenSHA256 string    `json:"tokenSha256"`
+	ExpiresAt   time.Time `json:"expiresAt"`
+}
+
+type managedInviteAnswer struct {
+	SetUp             bool   `json:"setUp"`
+	InviteTokenSHA256 string `json:"inviteTokenSha256,omitempty"`
+}
+
+var managedStrictJSON = sonic.Config{DisallowUnknownFields: true}.Froze()
 
 type managedReading struct {
 	Meter    string `json:"meter"`
@@ -78,11 +95,17 @@ type managedProblem struct {
 	Detail string `json:"detail,omitempty"`
 }
 
-func NewManagedHandler(usage ManagedUsage, token string, logger *zap.Logger) http.Handler {
-	h := &managedHandler{usage: usage, token: []byte(token), l: logger}
+func NewManagedHandler(
+	usage ManagedUsage,
+	invites instancebootstrapports.FirstAdministratorInviteService,
+	token string,
+	logger *zap.Logger,
+) http.Handler {
+	h := &managedHandler{usage: usage, invites: invites, token: []byte(token), l: logger}
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET "+managedReadingsPath, h.readings)
 	mux.HandleFunc("PUT "+managedStatePath, h.setState)
+	mux.HandleFunc("PUT "+managedInvitePath, h.installInvite)
 	return h.authenticate(mux)
 }
 
@@ -94,7 +117,7 @@ func StartManagedServer(p ManagedServerParams) {
 	server := &http.Server{
 		Addr: net.JoinHostPort(p.Config.GetHost(), strconv.Itoa(p.Config.GetPort())),
 		Handler: http.TimeoutHandler(
-			NewManagedHandler(p.Usage, p.Config.Token, logger),
+			NewManagedHandler(p.Usage, p.Invites, p.Config.Token, logger),
 			managedTimeout,
 			"",
 		),
@@ -194,6 +217,44 @@ func (h *managedHandler) setState(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *managedHandler) installInvite(w http.ResponseWriter, r *http.Request) {
+	body, err := io.ReadAll(http.MaxBytesReader(w, r.Body, managedMaxInvite))
+	if err != nil {
+		h.problem(w, http.StatusRequestEntityTooLarge, "the body is larger than 4 KiB")
+		return
+	}
+	var in managedInvite
+	if err = managedStrictJSON.Unmarshal(body, &in); err != nil || in.ExpiresAt.IsZero() {
+		h.problem(
+			w,
+			http.StatusBadRequest,
+			"the body must be {tokenSha256, expiresAt} with expiresAt an RFC 3339 time",
+		)
+		return
+	}
+	result, err := h.invites.Install(r.Context(), &instancebootstrapports.FirstAdministratorInvite{
+		TokenSHA256: in.TokenSHA256,
+		ExpiresAt:   in.ExpiresAt.Unix(),
+	})
+	var invalid *errortypes.MultiError
+	switch {
+	case errors.As(err, &invalid):
+		h.problem(w, http.StatusBadRequest, invalid.Error())
+		return
+	case errors.Is(err, instancebootstrapports.ErrNotBootstrapped):
+		h.problem(w, http.StatusConflict, err.Error())
+		return
+	case err != nil:
+		h.l.Error("cannot install the first administrator's invite", zap.Error(err))
+		h.problem(w, http.StatusInternalServerError, "")
+		return
+	}
+	h.json(w, http.StatusOK, managedInviteAnswer{
+		SetUp:             result.SetUp,
+		InviteTokenSHA256: result.InviteTokenSHA256,
+	})
 }
 
 func (h *managedHandler) problem(w http.ResponseWriter, status int, detail string) {

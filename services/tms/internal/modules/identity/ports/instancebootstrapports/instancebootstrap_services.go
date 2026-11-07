@@ -22,8 +22,9 @@ type InstanceBootstrapPlan struct {
 }
 
 type InstanceBootstrapRequest struct {
-	Inputs   instancebootstrap.Inputs
-	Password string
+	Inputs     instancebootstrap.Inputs
+	AdminSetup instancebootstrap.AdminSetup
+	Password   string
 }
 
 type InstanceBootstrapResult struct {

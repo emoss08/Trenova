@@ -39,6 +39,24 @@ const (
 	FieldDOTNumber        = "dotNumber"
 )
 
+type AdminSetup string
+
+const (
+	AdminSetupPassword AdminSetup = "password"
+	AdminSetupLink     AdminSetup = "link"
+)
+
+func ParseAdminSetup(raw string) (AdminSetup, bool) {
+	switch setup := AdminSetup(strings.ToLower(strings.TrimSpace(raw))); setup {
+	case "", AdminSetupPassword:
+		return AdminSetupPassword, true
+	case AdminSetupLink:
+		return AdminSetupLink, true
+	default:
+		return "", false
+	}
+}
+
 var (
 	statePattern      = regexp.MustCompile(`^[A-Z]{2}$`)
 	postalCodePattern = regexp.MustCompile(`^\d{5}(-\d{4})?$`)

@@ -34,9 +34,11 @@ import (
 )
 
 const (
-	bootstrapEnvPassword  = "TRENOVA_BOOTSTRAP_ADMIN_PASSWORD"
-	bootstrapStartTimeout = 30 * time.Second
-	maxPasswordInputBytes = 1024
+	bootstrapEnvPassword   = "TRENOVA_BOOTSTRAP_ADMIN_PASSWORD"
+	bootstrapEnvAdminSetup = "TRENOVA_BOOTSTRAP_ADMIN_SETUP"
+	bootstrapFlagSetup     = "admin-setup"
+	bootstrapStartTimeout  = 30 * time.Second
+	maxPasswordInputBytes  = 1024
 )
 
 var (
@@ -45,6 +47,9 @@ var (
 			", pipe it with --password-stdin, or run in a terminal to be prompted",
 	)
 	errPasswordsDiffer = errors.New("the two passwords did not match")
+	errAdminSetup      = errors.New(
+		"--" + bootstrapFlagSetup + " (" + bootstrapEnvAdminSetup + ") must be password or link",
+	)
 )
 
 type bootstrapInput struct {
@@ -119,7 +124,10 @@ var bootstrapInputs = []*bootstrapInput{
 	},
 }
 
-var bootstrapPasswordStdin bool
+var (
+	bootstrapPasswordStdin bool
+	bootstrapAdminSetup    string
+)
 
 var dbBootstrapCmd = &cobra.Command{
 	Use:   "bootstrap",
@@ -132,6 +140,10 @@ The administrator password is never a flag value. It is read from
 TRENOVA_BOOTSTRAP_ADMIN_PASSWORD, from standard input with --password-stdin, or
 from a prompt when run in a terminal, and must meet the password policy: at
 least 12 characters, not a common password, not containing the email address.
+
+With --admin-setup link the administrator gets no usable password and no
+password is read: they choose one from a one-time account setup link, the way
+an invited user does. Trenova Cloud installs this way and delivers the link.
 
 The address, time zone and identifiers of the organization are starting values;
 placeholders are used for any left out. Change them later in Organization
@@ -167,6 +179,13 @@ func init() {
 		false,
 		"read the administrator password from the first line of standard input",
 	)
+	dbBootstrapCmd.Flags().StringVar(
+		&bootstrapAdminSetup,
+		bootstrapFlagSetup,
+		string(instancebootstrap.AdminSetupPassword),
+		"how the administrator gets a password: password (set now) or link (a one-time setup "+
+			"link sets it) [$"+bootstrapEnvAdminSetup+"]",
+	)
 
 	DbCmd.AddCommand(dbBootstrapCmd)
 }
@@ -191,6 +210,10 @@ func runBootstrap(cmd *cobra.Command, _ []string) error {
 	}
 
 	inputs := resolveBootstrapInputs(cmd)
+	setup, err := resolveAdminSetup(cmd)
+	if err != nil {
+		return err
+	}
 
 	logger, _, err := config.ProvideLogger(&cfg.Logging)
 	if err != nil {
@@ -211,7 +234,24 @@ func runBootstrap(cmd *cobra.Command, _ []string) error {
 		out:     cmd.OutOrStdout(),
 	}
 
-	return bootstrapInstance(ctx, deps, &inputs, passwordFrom(cmd.InOrStdin()), dryRun)
+	return bootstrapInstance(ctx, deps, &bootstrapRun{
+		inputs:   &inputs,
+		setup:    setup,
+		password: passwordFrom(cmd.InOrStdin()),
+		preview:  dryRun,
+	})
+}
+
+func resolveAdminSetup(cmd *cobra.Command) (instancebootstrap.AdminSetup, error) {
+	raw := bootstrapAdminSetup
+	if !cmd.Flags().Changed(bootstrapFlagSetup) {
+		raw = os.Getenv(bootstrapEnvAdminSetup)
+	}
+	setup, ok := instancebootstrap.ParseAdminSetup(raw)
+	if !ok {
+		return "", errAdminSetup
+	}
+	return setup, nil
 }
 
 func resolveBootstrapInputs(cmd *cobra.Command) instancebootstrap.Inputs {
@@ -238,15 +278,16 @@ func resolveBootstrapInputs(cmd *cobra.Command) instancebootstrap.Inputs {
 	}
 }
 
-func bootstrapInstance(
-	ctx context.Context,
-	deps bootstrapDeps,
-	inputs *instancebootstrap.Inputs,
-	password passwordSource,
-	preview bool,
-) error {
+type bootstrapRun struct {
+	inputs   *instancebootstrap.Inputs
+	setup    instancebootstrap.AdminSetup
+	password passwordSource
+	preview  bool
+}
+
+func bootstrapInstance(ctx context.Context, deps bootstrapDeps, run *bootstrapRun) error {
 	planner := newInstanceBootstrapService(deps, nil)
-	plan, err := planner.Plan(ctx, inputs)
+	plan, err := planner.Plan(ctx, run.inputs)
 	if err != nil {
 		return describeBootstrapError(err)
 	}
@@ -255,7 +296,7 @@ func bootstrapInstance(
 	case plan.Status == instancebootstrapports.InstanceBootstrapCompleted:
 		printBootstrapCompleted(deps.out, &plan.Inputs, plan.Record.CompletedAt)
 		return nil
-	case preview:
+	case run.preview:
 		fmt.Fprintf(
 			deps.out,
 			"Dry run: would create organization %q and administrator %s\n",
@@ -265,9 +306,11 @@ func bootstrapInstance(
 		return nil
 	}
 
-	secret, err := password()
-	if err != nil {
-		return err
+	var secret string
+	if run.setup != instancebootstrap.AdminSetupLink {
+		if secret, err = run.password(); err != nil {
+			return err
+		}
 	}
 
 	auditor, closeAuditor, err := deps.auditor(ctx, deps.conn)
@@ -278,7 +321,11 @@ func bootstrapInstance(
 
 	result, err := newInstanceBootstrapService(deps, auditor).Bootstrap(
 		ctx,
-		&instancebootstrapports.InstanceBootstrapRequest{Inputs: plan.Inputs, Password: secret},
+		&instancebootstrapports.InstanceBootstrapRequest{
+			Inputs:     plan.Inputs,
+			AdminSetup: run.setup,
+			Password:   secret,
+		},
 	)
 	if err != nil {
 		return describeBootstrapError(err)
@@ -289,7 +336,7 @@ func bootstrapInstance(
 		return nil
 	}
 
-	printBootstrapCreated(deps.out, &deps.cfg.App, &plan.Inputs, result)
+	printBootstrapCreated(deps.out, &deps.cfg.App, &plan.Inputs, result, run.setup)
 	return nil
 }
 
@@ -480,12 +527,19 @@ func printBootstrapCreated(
 	appCfg *appconfig.Config,
 	inputs *instancebootstrap.Inputs,
 	result *instancebootstrapports.InstanceBootstrapResult,
+	setup instancebootstrap.AdminSetup,
 ) {
 	fmt.Fprintln(out, color.GreenString("Created organization %q", inputs.OrganizationName))
 	fmt.Fprintf(out, "  Administrator: %s <%s>\n", inputs.AdminName, result.AdminEmail)
 	fmt.Fprintf(out, "  Username:      %s\n", result.AdminUsername)
 	fmt.Fprintf(out, "  Sign-in slug:  %s\n", result.LoginSlug)
-	if appCfg != nil && appCfg.GetWebBaseURL() != "" {
+	switch {
+	case setup == instancebootstrap.AdminSetupLink:
+		fmt.Fprintln(
+			out,
+			"The administrator sets their password from a one-time account setup link.",
+		)
+	case appCfg != nil && appCfg.GetWebBaseURL() != "":
 		fmt.Fprintf(
 			out,
 			"Sign in at %s with that email address and password.\n",

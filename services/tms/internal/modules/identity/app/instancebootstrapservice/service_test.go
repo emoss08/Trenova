@@ -49,6 +49,13 @@ func (f *fakeRepo) GetState(
 	return f.state, nil
 }
 
+func (f *fakeRepo) GetRecord(context.Context) (*instancebootstrap.InstanceBootstrap, error) {
+	if f.state == nil || f.state.Record == nil {
+		return nil, errors.New("not bootstrapped")
+	}
+	return f.state.Record, nil
+}
+
 func (f *fakeRepo) Finalize(
 	_ context.Context,
 	req *instancebootstrapports.FinalizeInstanceBootstrapRequest,
@@ -298,6 +305,9 @@ func TestBootstrapCreatesTheOrganizationAndAdministrator(t *testing.T) {
 		t,
 		bcrypt.CompareHashAndPassword([]byte(captured.Owner.Password), []byte(testPassword)),
 	)
+	require.NotNil(t, captured.Owner.PasswordChangedAt)
+	assert.Equal(t, testNow, *captured.Owner.PasswordChangedAt)
+	assert.False(t, captured.Owner.AwaitingAccountSetup())
 
 	require.NotNil(t, d.repo.finalizeReq)
 	assert.Equal(t, testSystemUserPassword, d.repo.finalizeReq.SystemUserPassword)
@@ -386,4 +396,58 @@ func TestBootstrapRecordsNothingWhenFinalizingFails(t *testing.T) {
 	})
 	require.ErrorIs(t, err, boom)
 	assert.Empty(t, d.auditor.Changes())
+}
+
+func TestBootstrapWithALinkGivesTheAdministratorNoUsablePassword(t *testing.T) {
+	t.Parallel()
+
+	d := newDeps(t, emptyState())
+	captured := expectBootstrap(d)
+
+	result, err := d.svc.Bootstrap(t.Context(), &instancebootstrapports.InstanceBootstrapRequest{
+		Inputs:     *validInputs(),
+		AdminSetup: instancebootstrap.AdminSetupLink,
+	})
+	require.NoError(t, err)
+
+	assert.Equal(t, instancebootstrapports.InstanceBootstrapCreated, result.Status)
+	assert.NotEmpty(t, captured.Owner.Password)
+	assert.Nil(t, captured.Owner.PasswordChangedAt)
+	assert.Nil(t, captured.Owner.LastLoginAt)
+	assert.True(t, captured.Owner.AwaitingAccountSetup())
+	assert.False(t, captured.Owner.MustChangePassword)
+	require.Error(t, bcrypt.CompareHashAndPassword([]byte(captured.Owner.Password), []byte("")))
+	assert.Len(t, d.auditor.Changes(), 4)
+}
+
+func TestBootstrapWithALinkRefusesAPassword(t *testing.T) {
+	t.Parallel()
+
+	d := newDeps(t, emptyState())
+	_, err := d.svc.Bootstrap(t.Context(), &instancebootstrapports.InstanceBootstrapRequest{
+		Inputs:     *validInputs(),
+		AdminSetup: instancebootstrap.AdminSetupLink,
+		Password:   testPassword,
+	})
+
+	var multiErr *errortypes.MultiError
+	require.ErrorAs(t, err, &multiErr)
+	require.Len(t, multiErr.Errors, 1)
+	assert.Equal(t, fieldPassword, multiErr.Errors[0].Field)
+	assert.Zero(t, d.repo.getCalls)
+}
+
+func TestBootstrapRefusesAnUnknownAdministratorSetup(t *testing.T) {
+	t.Parallel()
+
+	d := newDeps(t, emptyState())
+	_, err := d.svc.Bootstrap(t.Context(), &instancebootstrapports.InstanceBootstrapRequest{
+		Inputs:     *validInputs(),
+		AdminSetup: instancebootstrap.AdminSetup("email"),
+	})
+
+	var multiErr *errortypes.MultiError
+	require.ErrorAs(t, err, &multiErr)
+	require.Len(t, multiErr.Errors, 1)
+	assert.Equal(t, fieldAdminSetup, multiErr.Errors[0].Field)
 }

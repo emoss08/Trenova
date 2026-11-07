@@ -29,6 +29,7 @@ type FinalizeInstanceBootstrapResult struct {
 
 type InstanceBootstrapRepository interface {
 	GetState(ctx context.Context) (*InstanceBootstrapState, error)
+	GetRecord(ctx context.Context) (*instancebootstrap.InstanceBootstrap, error)
 	Finalize(
 		ctx context.Context,
 		req *FinalizeInstanceBootstrapRequest,

@@ -25,7 +25,6 @@ import (
 	"github.com/emoss08/trenova/shared/mailtext"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/sliceutils"
-	"github.com/emoss08/trenova/shared/tokenutils"
 	"go.uber.org/zap"
 )
 
@@ -62,7 +61,7 @@ func (s *Service) Create(ctx context.Context, req *CreateUserRequest) (*tenant.U
 		return nil, multiErr
 	}
 
-	password, err := unusablePassword(entity)
+	password, err := entity.GenerateUnusablePassword()
 	if err != nil {
 		log.Error("failed to seal the new user's password", zap.Error(err))
 		return nil, err
@@ -147,15 +146,6 @@ func prepareNewUser(entity *tenant.User, tenantInfo pagination.TenantInfo) {
 	if entity.AvailabilityStatus == "" {
 		entity.AvailabilityStatus = tenant.AvailabilityAvailable
 	}
-}
-
-func unusablePassword(entity *tenant.User) (string, error) {
-	secret, _, err := tokenutils.New()
-	if err != nil {
-		return "", err
-	}
-
-	return entity.GeneratePassword(secret)
 }
 
 func (s *Service) assignRoles(

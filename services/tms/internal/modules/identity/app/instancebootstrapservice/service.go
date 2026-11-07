@@ -31,6 +31,7 @@ const (
 	loginSlugBaseLength  = 60
 	auditSource          = "instance_bootstrap"
 	fieldPassword        = "password"
+	fieldAdminSetup      = "adminSetup"
 	keyUserID            = "userId"
 	keyRoleID            = "roleId"
 	keyOrganizationID    = "organizationId"
@@ -148,7 +149,7 @@ func (s *Service) Bootstrap(
 			}
 
 			var createErr error
-			out, createErr = s.create(txCtx, &inputs, req.Password)
+			out, createErr = s.create(txCtx, &inputs, req)
 			return createErr
 		},
 	)
@@ -190,8 +191,9 @@ type created struct {
 func (s *Service) create(
 	ctx context.Context,
 	inputs *instancebootstrap.Inputs,
-	password string,
+	req *instancebootstrapports.InstanceBootstrapRequest,
 ) (*created, error) {
+	now := s.now()
 	owner := &tenant.User{
 		Name:               inputs.AdminName,
 		EmailAddress:       inputs.AdminEmail,
@@ -201,13 +203,10 @@ func (s *Service) create(
 		TimeFormat:         domaintypes.TimeFormat12Hour,
 		MustChangePassword: false,
 	}
-	hashed, err := owner.GeneratePassword(password)
-	if err != nil {
-		return nil, fmt.Errorf("hash administrator password: %w", err)
+	if err := setAdminPassword(owner, req, now); err != nil {
+		return nil, err
 	}
-	owner.Password = hashed
 
-	now := s.now()
 	result, err := s.tenants.Bootstrap(ctx, &tenantports.BootstrapTenantRequest{
 		BusinessUnitName:  inputs.OrganizationName,
 		Organization:      organizationFor(inputs),
@@ -234,6 +233,29 @@ func (s *Service) create(
 	}
 
 	return &created{tenant: result, finalized: finalized, record: finalized.Record}, nil
+}
+
+func setAdminPassword(
+	owner *tenant.User,
+	req *instancebootstrapports.InstanceBootstrapRequest,
+	now int64,
+) error {
+	if req.AdminSetup == instancebootstrap.AdminSetupLink {
+		hashed, err := owner.GenerateUnusablePassword()
+		if err != nil {
+			return fmt.Errorf("hash an unusable administrator password: %w", err)
+		}
+		owner.Password = hashed
+		return nil
+	}
+
+	hashed, err := owner.GeneratePassword(req.Password)
+	if err != nil {
+		return fmt.Errorf("hash administrator password: %w", err)
+	}
+	owner.Password = hashed
+	owner.PasswordChangedAt = &now
+	return nil
 }
 
 func organizationFor(inputs *instancebootstrap.Inputs) *tenant.Organization {
@@ -398,7 +420,24 @@ func validateRequest(
 	multiErr := errortypes.NewMultiError()
 	normalized.Validate(multiErr)
 
-	tenant.ValidateNewPassword(multiErr, fieldPassword, req.Password, normalized.AdminEmail)
+	switch req.AdminSetup {
+	case instancebootstrap.AdminSetupLink:
+		if req.Password != "" {
+			multiErr.Add(
+				fieldPassword,
+				errortypes.ErrInvalid,
+				"No password is set when the administrator sets up their account from a link",
+			)
+		}
+	case instancebootstrap.AdminSetupPassword, "":
+		tenant.ValidateNewPassword(multiErr, fieldPassword, req.Password, normalized.AdminEmail)
+	default:
+		multiErr.Add(
+			fieldAdminSetup,
+			errortypes.ErrInvalid,
+			"Administrator setup must be password or link",
+		)
+	}
 
 	if multiErr.HasErrors() {
 		return normalized, multiErr

@@ -93,6 +93,26 @@ func (r *repository) FindRedeemableByHash(
 	)
 }
 
+func (r *repository) FindByUserAndHash(
+	ctx context.Context,
+	userID pulid.ID,
+	tokenHash string,
+) (*passwordreset.PasswordResetToken, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*passwordreset.PasswordResetToken, error) {
+			prt := passwordresetdb.PasswordResetTokens
+			token, err := tokens(ctx, prt.UserID.Eq(userID), prt.TokenHash.Eq(tokenHash)).
+				One(ctx, r.db.Keel(ctx))
+			if err != nil {
+				return nil, tokenErrors.Map(err, "")
+			}
+			return token, nil
+		},
+	)
+}
+
 // MarkUsed puts the used_at guard in the UPDATE, not in a check before it: two
 // tabs opened from the same email would otherwise both read an unused token and
 // both reset the password. Whichever statement lands first updates a row; the

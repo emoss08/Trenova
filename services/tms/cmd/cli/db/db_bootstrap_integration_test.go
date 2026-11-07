@@ -108,6 +108,23 @@ func fixedPassword(password string) passwordSource {
 	return func() (string, error) { return password, nil }
 }
 
+func passwordRun(inputs *instancebootstrap.Inputs, password string) *bootstrapRun {
+	return &bootstrapRun{
+		inputs:   inputs,
+		setup:    instancebootstrap.AdminSetupPassword,
+		password: fixedPassword(password),
+	}
+}
+
+func unreadRun(t *testing.T, inputs *instancebootstrap.Inputs, preview bool) *bootstrapRun {
+	return &bootstrapRun{
+		inputs:   inputs,
+		setup:    instancebootstrap.AdminSetupPassword,
+		password: unusedPassword(t),
+		preview:  preview,
+	}
+}
+
 func unusedPassword(t *testing.T) passwordSource {
 	return func() (string, error) {
 		t.Fatal("the password must not be read when nothing will be created")
@@ -128,13 +145,7 @@ func TestBootstrapCreatesAnAdministratorWhoCanSignIn(t *testing.T) {
 
 	require.NoError(
 		t,
-		bootstrapInstance(
-			ctx,
-			deps,
-			integrationInputs(),
-			fixedPassword(integrationAdminPassword),
-			false,
-		),
+		bootstrapInstance(ctx, deps, passwordRun(integrationInputs(), integrationAdminPassword)),
 	)
 	assert.Contains(t, out.String(), `Created organization "Acme Freight"`)
 
@@ -144,6 +155,7 @@ func TestBootstrapCreatesAnAdministratorWhoCanSignIn(t *testing.T) {
 	require.NoError(t, admin.VerifyCredentials(integrationAdminPassword))
 	require.Error(t, admin.VerifyCredentials("not-the-password"))
 	assert.False(t, admin.MustChangePassword)
+	assert.False(t, admin.AwaitingAccountSetup(), "a password set at bootstrap counts as chosen")
 	assert.Equal(t, "Dana Whitfield", admin.Name)
 
 	orgID := admin.CurrentOrganizationID
@@ -209,12 +221,12 @@ func TestBootstrapCreatesAnAdministratorWhoCanSignIn(t *testing.T) {
 	again := integrationInputs()
 	again.AdminEmail = "DANA@acme.example"
 	again.Timezone = "America/Chicago"
-	require.NoError(t, bootstrapInstance(ctx, deps, again, unusedPassword(t), false))
+	require.NoError(t, bootstrapInstance(ctx, deps, unreadRun(t, again, false)))
 	assert.Contains(t, out.String(), "Already bootstrapped")
 
 	different := integrationInputs()
 	different.AdminEmail = "someone-else@acme.example"
-	err = bootstrapInstance(ctx, deps, different, unusedPassword(t), false)
+	err = bootstrapInstance(ctx, deps, unreadRun(t, different, false))
 	require.ErrorIs(t, err, instancebootstrapservice.ErrInputsDiffer)
 
 	assert.Equal(t, int64(2), countRows(t, ctx, db, "SELECT count(*) FROM users"))
@@ -230,22 +242,16 @@ func TestBootstrapRefusesADatabaseThatAlreadyHasUsers(t *testing.T) {
 
 	require.NoError(
 		t,
-		bootstrapInstance(
-			ctx,
-			deps,
-			integrationInputs(),
-			fixedPassword(integrationAdminPassword),
-			false,
-		),
+		bootstrapInstance(ctx, deps, passwordRun(integrationInputs(), integrationAdminPassword)),
 	)
 
 	_, err := keel.Exec(ctx, db, "DELETE FROM instance_bootstraps")
 	require.NoError(t, err)
 
-	err = bootstrapInstance(ctx, deps, integrationInputs(), unusedPassword(t), false)
+	err = bootstrapInstance(ctx, deps, unreadRun(t, integrationInputs(), false))
 	require.ErrorIs(t, err, instancebootstrapservice.ErrAlreadyInitialized)
 
-	err = bootstrapInstance(ctx, deps, integrationInputs(), unusedPassword(t), true)
+	err = bootstrapInstance(ctx, deps, unreadRun(t, integrationInputs(), true))
 	require.ErrorIs(t, err, instancebootstrapservice.ErrAlreadyInitialized)
 
 	assert.Equal(t, int64(1), countRows(t, ctx, db, "SELECT count(*) FROM organizations"))
@@ -259,8 +265,43 @@ func TestBootstrapDryRunChangesNothing(t *testing.T) {
 	var out bytes.Buffer
 	deps := integrationBootstrapDeps(t, conn, &out)
 
-	require.NoError(t, bootstrapInstance(ctx, deps, integrationInputs(), unusedPassword(t), true))
+	require.NoError(t, bootstrapInstance(ctx, deps, unreadRun(t, integrationInputs(), true)))
 	assert.Contains(t, out.String(), "Dry run")
 
 	assert.Zero(t, countRows(t, ctx, db, "SELECT count(*) FROM organizations"))
+}
+
+func TestBootstrapWithALinkGivesTheAdministratorNoUsablePassword(t *testing.T) {
+	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	defer cleanup()
+
+	conn := postgres.WrapDB(db)
+	var out bytes.Buffer
+	deps := integrationBootstrapDeps(t, conn, &out)
+
+	run := &bootstrapRun{
+		inputs:   integrationInputs(),
+		setup:    instancebootstrap.AdminSetupLink,
+		password: unusedPassword(t),
+	}
+	require.NoError(t, bootstrapInstance(ctx, deps, run))
+	assert.Contains(t, out.String(), "one-time account setup link")
+
+	users := userrepository.New(userrepository.Params{DB: conn, Logger: zap.NewNop()})
+	admin, err := users.FindByEmail(ctx, "dana@acme.example")
+	require.NoError(t, err)
+	assert.True(t, admin.AwaitingAccountSetup())
+	assert.NotEmpty(t, admin.Password)
+	require.Error(t, admin.VerifyCredentials(""))
+	require.Error(t, admin.VerifyCredentials(integrationAdminPassword))
+	assert.False(t, admin.MustChangePassword)
+
+	out.Reset()
+	require.NoError(t, bootstrapInstance(ctx, deps, &bootstrapRun{
+		inputs:   integrationInputs(),
+		setup:    instancebootstrap.AdminSetupLink,
+		password: unusedPassword(t),
+	}))
+	assert.Contains(t, out.String(), "Already bootstrapped")
+	assert.Equal(t, int64(2), countRows(t, ctx, db, "SELECT count(*) FROM users"))
 }

@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/documentcontrolrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/driverportalrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/iamrepository"
+	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/instancebootstraprepository"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/invoiceadjustmentcontrolrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/organizationrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/orgstructurerepository"
@@ -43,6 +44,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/documentcontrolservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/exchangeratestamp"
 	"github.com/emoss08/trenova/internal/modules/identity/app/fieldsensitivity"
+	"github.com/emoss08/trenova/internal/modules/identity/app/firstadmininviteservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/iamservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/invoiceadjustmentcontrolservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/journalreviewservice"
@@ -76,6 +78,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/jobs/scimjobs/scimcontract"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/apikeyports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/instancebootstrapports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/scimports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/sessionports"
@@ -107,6 +110,7 @@ func SharedOptions() fx.Option {
 			datarententionrepository.New,
 			documentcontrolrepository.New,
 			passwordresetrepository.New,
+			instancebootstraprepository.New,
 			rbacrepository.New,
 			rolerepository.New,
 			roleassignmentrepository.New,
@@ -166,6 +170,10 @@ func SharedOptions() fx.Option {
 			roleassignmentservice.New,
 			tenanttimezone.New,
 			passwordresetservice.New,
+			firstadmininviteservice.New,
+			func(s *firstadmininviteservice.Service) instancebootstrapports.FirstAdministratorInviteService {
+				return s
+			},
 			func(s *roleservice.Service) userservice.RoleAssigner { return s },
 			func(s *roleservice.Service) permissionports.RoleGrantGuard { return s },
 			func(s *passwordresetservice.Service) userservice.AccountInviter { return s },
