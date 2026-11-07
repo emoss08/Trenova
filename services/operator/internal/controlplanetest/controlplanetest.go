@@ -48,3 +48,7 @@ func (s *Server) SetSpec(spec instanceapi.InstanceSpec) {
 func Spec(instanceID uuid.UUID) instanceapi.InstanceSpec {
 	return fakecp.Spec(instanceID)
 }
+
+func Secrets() instanceapi.InstanceSecrets {
+	return fakecp.Secrets()
+}

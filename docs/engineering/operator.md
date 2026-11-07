@@ -13,6 +13,7 @@ control plane (instance API, mutual TLS)
    │                        ▼                               ▼                        ▼ every 15 minutes
 operator ── values.Render(spec, base values) ──▶ Helm SDK: upgrade --install trenova@<version>
    │                                                    │
+   ├── escrow.Ensure: the Secret trenova-escrow, from GET /v1/secrets when missing or incomplete
    ├── health.Check: Deployments, StatefulSets, CNPG Cluster, the revision's release Job
    └── TMS managed API (:8090, bearer token): GET /managed/v1/readings, PUT /managed/v1/state
 ```
@@ -25,7 +26,8 @@ operator ── values.Render(spec, base values) ──▶ Helm SDK: upgrade --i
 | `internal/instanceapi` | the client generated from `api/instance.yaml`, the operator's copy of the control plane's contract |
 | `internal/controlplane` | that client with problem details turned into errors: `ErrUnauthenticated` (never retry with that certificate), `RateLimitedError` (`Retry-After`), `ProblemError` |
 | `internal/credential` | the enrolment bundle, the operator's own key and identity, the Secret store, the transport that swaps certificates, enrolment and renewal (`Manager`) |
-| `internal/values` | the spec turned into chart values: hostname, lifecycle, components, sizing, managed mode; the chart's names (`Fullname`, `AppSecret`, `APIService`) |
+| `internal/values` | the spec turned into chart values: hostname, lifecycle, components, sizing, managed mode, the escrow Secret; the chart's names (`Fullname`, `AppSecret`, `APIService`, `EscrowSecret`) |
+| `internal/escrow` | the escrowed secrets: the Secret in the target namespace, fetched from the control plane when it is missing or incomplete, and the shapes the TMS accepts |
 | `internal/release` | the chart from OCI at the pinned version, `upgrade --install`, recovery of an interrupted release |
 | `internal/health` | each component's readiness, read from the cluster |
 | `internal/tms` | the client of the TMS's managed API, and the token read from the release's app Secret |
@@ -95,7 +97,8 @@ Every 15 seconds (`TRENOVA_OPERATOR_POLL_INTERVAL`):
 
 1. renew the certificate if it is due;
 2. `GET /v1/spec` with the last `ETag`, so an unchanged spec costs a 304;
-3. render the chart values; pull the chart at `release.version` (cached, two versions);
+3. render the chart values; make sure the escrow Secret is there (below), and apply nothing until
+   it is; pull the chart at `release.version` (cached, two versions);
 4. compare with the deployed release: apply only when the chart version or the values differ;
 5. read readiness; report when something changed, and at least every minute
    (`TRENOVA_OPERATOR_REPORT_INTERVAL`, at most 1m);
@@ -122,6 +125,7 @@ first, and what the spec decides is merged over them:
 | `instanceId` | `tms.instanceId` |
 | `components` contains `docling` | `docling.enabled` |
 | (always) | `managed.enabled: true`, `managed.from`: the operator's own namespace |
+| (always) | `secrets.escrowSecret: trenova-escrow` |
 | `lifecycle: active` | `stopped: false`, `postgres.hibernate: false` |
 | `lifecycle: suspended` | `stopped: true`, `postgres.hibernate: true`: nothing runs, every volume is kept |
 | `lifecycle: decommissioned` | `stopped: true`, `postgres.hibernate: false`: PostgreSQL stays up for the final backup |
@@ -142,6 +146,34 @@ plan and lifecycle through the real chart and its schema, and checks the request
 
 Only PostgreSQL's volume follows the plan: a StatefulSet's volume claims cannot change after it
 is created, so Redis, Meilisearch, MinIO and ClamAV keep the chart's sizes.
+
+## Escrowed secrets
+
+Four of the TMS's secrets make its data readable: the encryption key
+(`security.encryption.key`), the row-level security scope key and its ID
+(`database.rls.scopeKey`, `scopeKeyId`) and the MFA recovery code pepper
+(`security.mfa.recoveryCodePepper`). A backup restored without them is unreadable, so the control
+plane keeps them in escrow and hands the same values out on every `GET /v1/secrets`. A Cloud
+instance never lets the chart generate them: a reinstall, or a restore onto new infrastructure,
+would get new keys and lose the data.
+
+**Where.** The Secret `trenova-escrow` (`values.EscrowSecret`) in the target namespace, keys
+`encryptionKey`, `rlsScopeKeyId`, `rlsScopeKey` and `mfaRecoveryCodePepper`, labelled
+`app.kubernetes.io/managed-by: trenova-operator` and `app.kubernetes.io/component: escrow`. It is
+not a Helm resource, so uninstalling the release leaves it. The operator renders
+`secrets.escrowSecret: trenova-escrow`; the chart then reads those four env vars from it and leaves
+them out of its app Secret.
+
+**When.** Every tick, after rendering and before anything is applied, the operator reads the
+Secret. A complete one whose values have the shapes below is used as it is and the control plane
+is not asked: its values are fixed per instance, so a present Secret came from it. A missing one is
+fetched and created; an incomplete or malformed one is fetched and its four keys rewritten. The
+values are checked before they are written: the encryption key and the pepper 32 to 128
+characters, the scope key ID 1 to 32 of `[A-Za-z0-9_-]`, the scope key standard base64 of at least
+32 bytes. Values of any other shape are refused, and the report names the key and the rule, never
+the value. Until the Secret is in place nothing is installed or upgraded and the report says why;
+a 429 waits out `Retry-After` and a 401 goes to credential recovery, as for the spec. The values
+are never logged.
 
 ## Usage relay
 
@@ -207,8 +239,8 @@ helm install trenova-operator oci://ghcr.io/emoss08/charts/trenova-operator \
 Its permissions are two namespaced Roles. In its own namespace it may read the enrolment Secret
 and create and update its identity Secret. In the target namespace (`trenova`) it may manage
 exactly the kinds the Trenova chart renders (Secrets, ConfigMaps, Services, Deployments,
-StatefulSets, Jobs, NetworkPolicies, Ingresses, CloudNativePG Clusters and ImageCatalogs) and
-read Pods, PVCs and Events. It has no cluster-wide permission: the namespace, which it keeps on
+StatefulSets, Jobs, NetworkPolicies, Ingresses, CloudNativePG Clusters and ImageCatalogs; the
+Secrets permission also covers the escrow Secret) and read Pods, PVCs and Events. It has no cluster-wide permission: the namespace, which it keeps on
 uninstall, is created by its chart.
 
 ## Tests
@@ -216,13 +248,16 @@ uninstall, is created by its chart.
 - `go test ./...` in `services/operator`, against the in-process fake control plane, a fake
   Kubernetes, and Helm's memory storage with the real chart: enrolment, renewal, re-enrolment,
   revocation, rate limits, every plan and lifecycle through the chart's schema, install and
-  no-op detection, recovery, readiness, the usage relay (mapping, chunking, scheduling, the
-  token read again on a 401) against an in-process TMS, and the loop end to end.
+  no-op detection, recovery, readiness, the escrowed secrets (fetched once, kept when present,
+  restored when incomplete, refused when malformed, the install held until they are in place),
+  the usage relay (mapping, chunking, scheduling, the token read again on a 401) against an
+  in-process TMS, and the loop end to end.
 - `.github/workflows/operator.yml` installs the operator on k3d against
   `cmd/controlplane-stub`, with every image built from the commit and the Trenova chart pushed
   to a registry in the cluster at the version the stub pins. It waits for a ready report on
-  revision 1 and a usage report relayed from the TMS's managed API, suspends (revision 2:
-  workloads at zero, PostgreSQL hibernated) and resumes (revision 3).
+  revision 1, checks the escrowed secrets were fetched once into `trenova-escrow` and that the
+  TMS reads them from there, waits for a usage report relayed from the TMS's managed API,
+  suspends (revision 2: workloads at zero, PostgreSQL hibernated) and resumes (revision 3).
 - The contract: the operator's `api/instance.yaml` is a copy of the control plane's, and the
   control plane's CI compares the two, so a contract change lands in both.
 
@@ -230,5 +265,3 @@ uninstall, is created by its chart.
 
 - **The final backup.** A decommissioned instance keeps PostgreSQL up, and staff take the final
   backup by hand, as `0008-instances` allows, until the operator takes backups.
-- **Secrets from the control plane.** The Trenova chart generates the instance's secrets in the
-  cluster; escrowing the encryption key with the control plane changes that.

@@ -3,6 +3,7 @@ package values_test
 import (
 	"fmt"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -64,6 +65,9 @@ func TestEveryPlanAndLifecycleRendersThroughTheChart(t *testing.T) {
 					require.NoError(t, chartutil.ValidateAgainstSchema(ch, r.Values))
 					out, err := engine.Render(ch, vals)
 					require.NoError(t, err)
+
+					require.NotContains(t, out["trenova/templates/secrets.yaml"], "encryptionKey:")
+					require.Contains(t, out["trenova/templates/tms.yaml"], "name: "+values.EscrowSecret)
 
 					job := false
 					for name, body := range out {
@@ -182,6 +186,52 @@ func TestManagedModeAdmitsOnlyTheOperatorsNamespace(t *testing.T) {
 
 	_, err = values.Render(&s, base(), "")
 	require.Error(t, err)
+}
+
+func TestTheEscrowedKeysComeFromTheOperatorsSecret(t *testing.T) {
+	t.Parallel()
+	b := base()
+	b["secrets"] = map[string]any{"existingSecret": "app"}
+	r, err := values.Render(ptr(spec(plans[0], instanceapi.Active)), b, operatorNS)
+	require.NoError(t, err)
+	require.Equal(t, map[string]any{
+		"existingSecret": "app",
+		"escrowSecret":   values.EscrowSecret,
+	}, r.Values["secrets"])
+
+	r, err = values.Render(ptr(spec(plans[0], instanceapi.Active)), base(), operatorNS)
+	require.NoError(t, err)
+	ch, err := loader.Load(chartDir)
+	require.NoError(t, err)
+	vals, err := chartutil.ToRenderValues(ch, r.Values, chartutil.ReleaseOptions{
+		Name: "trenova", Namespace: "trenova", Revision: 1, IsInstall: true,
+	}, chartutil.DefaultCapabilities)
+	require.NoError(t, err)
+	out, err := engine.Render(ch, vals)
+	require.NoError(t, err)
+
+	app := out["trenova/templates/secrets.yaml"]
+	for _, key := range []string{
+		"encryptionKey", "rlsScopeKeyId", "rlsScopeKey", "mfaRecoveryCodePepper",
+	} {
+		require.NotContains(t, app, "  "+key+":", "the app Secret leaves %s to the escrow", key)
+	}
+	require.Contains(t, app, "sessionSecret:")
+	for _, file := range []string{"tms.yaml", "release-job.yaml"} {
+		body := out["trenova/templates/"+file]
+		for env, key := range map[string]string{
+			"TRENOVA_SECURITY_ENCRYPTION_KEY":         "encryptionKey",
+			"TRENOVA_DATABASE_RLS_SCOPEKEYID":         "rlsScopeKeyId",
+			"TRENOVA_DATABASE_RLS_SCOPEKEY":           "rlsScopeKey",
+			"TRENOVA_SECURITY_MFA_RECOVERYCODEPEPPER": "mfaRecoveryCodePepper",
+		} {
+			reads := regexp.MustCompile(`- name: ` + env + `\s+valueFrom:\s+secretKeyRef:\s+` +
+				`name: ` + values.EscrowSecret + `\s+key: ` + key + `\s`)
+			uses := strings.Count(body, "- name: "+env+"\n")
+			require.Positive(t, uses, "%s %s", file, env)
+			require.Len(t, reads.FindAllString(body, -1), uses, "%s %s", file, env)
+		}
+	}
 }
 
 func TestNamesFollowTheChart(t *testing.T) {

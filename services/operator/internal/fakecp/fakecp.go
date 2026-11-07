@@ -52,6 +52,10 @@ type Server struct {
 	readings    map[usageKey]int64
 	ack         *instanceapi.UsageAck
 	usageFail   int
+	escrowed    instanceapi.InstanceSecrets
+	secretCalls int
+	secretsFail int
+	failStatus  int
 	renewals    int
 	limited     int
 	unavailable int
@@ -97,6 +101,7 @@ func New(p *Params) (*Server, error) {
 		readings:   map[usageKey]int64{},
 		revision:   1,
 		spec:       p.Spec,
+		escrowed:   Secrets(),
 		lifetime:   30 * 24 * time.Hour,
 	}
 	if s.server, err = s.serverCertificate(p.Hosts); err != nil {
@@ -149,6 +154,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("PUT /v1/status", s.putStatus)
 	mux.HandleFunc("POST /v1/certificate", s.renew)
 	mux.HandleFunc("POST /v1/usage", s.reportUsage)
+	mux.HandleFunc("GET /v1/secrets", s.getSecrets)
 	return s.authenticate(mux)
 }
 
@@ -247,6 +253,24 @@ func (s *Server) FailUsageNext(n int) {
 	s.usageFail = n
 }
 
+func (s *Server) SetSecrets(v instanceapi.InstanceSecrets) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.escrowed = v
+}
+
+func (s *Server) FailSecretsNext(n, status int) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.secretsFail, s.failStatus = n, status
+}
+
+func (s *Server) SecretCalls() int {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.secretCalls
+}
+
 func (s *Server) Renewals() int {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -321,7 +345,36 @@ func (s *Server) getSpec(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("ETag", etag)
-	write(w, http.StatusOK, instanceapi.DesiredSpec{Revision: rev, Spec: spec})
+	write(w, instanceapi.DesiredSpec{Revision: rev, Spec: spec})
+}
+
+func (s *Server) getSecrets(w http.ResponseWriter, _ *http.Request) {
+	s.mu.Lock()
+	s.secretCalls++
+	escrowed, status := s.escrowed, s.failStatus
+	fail := s.secretsFail > 0
+	if fail {
+		s.secretsFail--
+	}
+	s.mu.Unlock()
+	if fail {
+		failSecrets(w, status)
+		return
+	}
+	w.Header().Set("Cache-Control", "no-store")
+	write(w, escrowed)
+}
+
+func failSecrets(w http.ResponseWriter, status int) {
+	switch status {
+	case http.StatusUnauthorized:
+		problem(w, status, "unauthenticated")
+	case http.StatusTooManyRequests:
+		w.Header().Set("Retry-After", "1")
+		problem(w, status, "rate_limited")
+	default:
+		problem(w, status, "internal")
+	}
 }
 
 func (s *Server) putStatus(w http.ResponseWriter, r *http.Request) {
@@ -355,10 +408,10 @@ func (s *Server) reportUsage(w http.ResponseWriter, r *http.Request) {
 		s.readings[usageKey{meter: rd.Meter, hour: rd.Hour.UTC()}] = rd.Quantity
 	}
 	if s.ack != nil {
-		write(w, http.StatusOK, s.ack)
+		write(w, s.ack)
 		return
 	}
-	write(w, http.StatusOK, s.defaultAck(time.Now().UTC()))
+	write(w, s.defaultAck(time.Now().UTC()))
 }
 
 func (s *Server) defaultAck(now time.Time) instanceapi.UsageAck {
@@ -417,7 +470,7 @@ func (s *Server) renew(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.markValid(certPEM)
-	write(w, http.StatusOK, instanceapi.IssuedCertificate{
+	write(w, instanceapi.IssuedCertificate{
 		Certificate: string(certPEM),
 		CaBundle:    string(s.caPEM),
 		NotAfter:    time.Now().Add(lifetime),
@@ -468,14 +521,14 @@ func (s *Server) sign(pub *ecdsa.PublicKey, lifetime time.Duration) ([]byte, err
 	return pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: der}), nil
 }
 
-func write(w http.ResponseWriter, status int, body any) {
+func write(w http.ResponseWriter, body any) {
 	out, err := sonic.Marshal(body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
+	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write(out)
 }
 
@@ -489,6 +542,15 @@ func problem(w http.ResponseWriter, status int, code string) {
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(status)
 	_, _ = w.Write(out)
+}
+
+func Secrets() instanceapi.InstanceSecrets {
+	return instanceapi.InstanceSecrets{
+		EncryptionKey:         "fake-encryption-key-0123456789abcdefghijklmnopqrstuvwxyz",
+		RlsScopeKeyId:         "k20261107",
+		RlsScopeKey:           "ZmFrZS1zY29wZS1rZXktMDEyMzQ1Njc4OWFiY2RlZmdoaWprbG1ub3A=",
+		MfaRecoveryCodePepper: "fake-recovery-code-pepper-0123456789abcdefghijklmnop",
+	}
 }
 
 func Spec(instanceID uuid.UUID) instanceapi.InstanceSpec {

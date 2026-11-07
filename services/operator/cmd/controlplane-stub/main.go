@@ -57,14 +57,24 @@ func run(logger *slog.Logger) error {
 		TLSConfig:         fake.TLSConfig(),
 		ReadHeaderTimeout: 5 * time.Second,
 	}
-	admin := &http.Server{Addr: ":8080", Handler: adminHandler(fake), ReadHeaderTimeout: 5 * time.Second}
+	admin := &http.Server{
+		Addr:              ":8080",
+		Handler:           adminHandler(fake),
+		ReadHeaderTimeout: 5 * time.Second,
+	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 	errs := make(chan error, 2)
 	go func() { errs <- api.ListenAndServeTLS("", "") }()
 	go func() { errs <- admin.ListenAndServe() }()
-	logger.Info("control plane stub serving", "instance", fake.InstanceID, "version", spec.Release.Version)
+	logger.Info(
+		"control plane stub serving",
+		"instance",
+		fake.InstanceID,
+		"version",
+		spec.Release.Version,
+	)
 	select {
 	case err = <-errs:
 	case <-ctx.Done():
@@ -101,6 +111,9 @@ func adminHandler(fake *fakecp.Server) http.Handler {
 			return
 		}
 		write(w, map[string]any{"reports": len(reports), "last": reports[len(reports)-1]})
+	})
+	mux.HandleFunc("GET /secrets", func(w http.ResponseWriter, _ *http.Request) {
+		write(w, map[string]any{"calls": fake.SecretCalls()})
 	})
 	mux.HandleFunc("PUT /lifecycle/{lifecycle}", func(w http.ResponseWriter, r *http.Request) {
 		lc := instanceapi.InstanceSpecLifecycle(r.PathValue("lifecycle"))

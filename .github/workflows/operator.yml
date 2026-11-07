@@ -231,6 +231,14 @@ jobs:
           sleep 2
           wait_for 1 1800
 
+          # The escrowed keys were fetched once, before the install, into the
+          # operator's Secret, and the chart's app Secret does not hold them.
+          test "$(curl -fsS localhost:18080/secrets | jq .calls)" = 1
+          test "$(kubectl -n trenova get secret trenova-escrow -o jsonpath='{.metadata.labels.app\.kubernetes\.io/managed-by}')" = trenova-operator
+          test -z "$(kubectl -n trenova get secret trenova-secrets -o jsonpath='{.data.encryptionKey}')"
+          kubectl -n trenova get deploy trenova-api -o json |
+            jq -e '[.spec.template.spec.containers[].env[]? | select(.name == "TRENOVA_SECURITY_ENCRYPTION_KEY") | .valueFrom.secretKeyRef.name] == ["trenova-escrow"]' > /dev/null
+
           # The usage relay runs once the instance is ready: readings from the
           # TMS's managed API reach the control plane, and its answer goes back.
           deadline=$(( $(date +%s) + 300 ))
@@ -250,6 +258,7 @@ jobs:
           curl -fsS -X PUT localhost:18080/lifecycle/active
           wait_for 3 1200
           test "$(kubectl -n trenova get deploy trenova-api -o jsonpath='{.spec.replicas}')" = 1
+          test "$(curl -fsS localhost:18080/secrets | jq .calls)" = 1
 
       - name: What the cluster looked like
         if: failure()

@@ -53,6 +53,10 @@ type Health interface {
 	Check(ctx context.Context, p health.CheckParams) ([]health.Component, error)
 }
 
+type Escrow interface {
+	Ensure(ctx context.Context) error
+}
+
 type Usage interface {
 	Run(ctx context.Context, allowances []instanceapi.SpecAllowance) (usage.Result, error)
 }
@@ -63,6 +67,7 @@ type Loop struct {
 	charts   Charts
 	releases Releases
 	health   Health
+	escrow   Escrow
 	usage    Usage
 	base     map[string]any
 	ownNS    string
@@ -90,6 +95,7 @@ type Params struct {
 	Charts       Charts
 	Releases     Releases
 	Health       Health
+	Escrow       Escrow
 	Usage        Usage
 	Base         map[string]any
 	Namespace    string
@@ -115,6 +121,7 @@ func New(p *Params) *Loop {
 		charts:   p.Charts,
 		releases: p.Releases,
 		health:   p.Health,
+		escrow:   p.Escrow,
 		usage:    p.Usage,
 		base:     p.Base,
 		ownNS:    p.Namespace,
@@ -195,7 +202,10 @@ func (l *Loop) Tick(ctx context.Context) {
 	if l.desired == nil {
 		return
 	}
-	report := l.converge(ctx)
+	report, ok := l.converge(ctx)
+	if !ok {
+		return
+	}
 	l.heartbeat.Store(l.now().UnixNano())
 	if l.shouldReport(report) {
 		if err = l.cp.ReportStatus(ctx, report); err != nil {
@@ -244,19 +254,37 @@ func (l *Loop) relayUsage(ctx context.Context, ready bool) {
 	}
 }
 
-func (l *Loop) converge(ctx context.Context) instanceapi.StatusReport {
+func (l *Loop) converge(ctx context.Context) (instanceapi.StatusReport, bool) {
 	report := instanceapi.StatusReport{Components: []instanceapi.ComponentStatus{}}
 	if own := l.creds.InstanceID(); l.desired.Spec.InstanceId != own {
 		return l.notReady(report, fmt.Sprintf(
 			"the spec is for instance %s and this operator is instance %s",
 			l.desired.Spec.InstanceId,
 			own,
-		))
+		)), true
 	}
 	rendered, err := values.Render(&l.desired.Spec, l.base, l.ownNS)
 	if err != nil {
-		return l.notReady(report, err.Error())
+		return l.notReady(report, err.Error()), true
 	}
+	if err = l.escrow.Ensure(ctx); err != nil {
+		if l.handle(ctx, err) {
+			return report, false
+		}
+		l.logger.Error("cannot keep the escrowed secrets; nothing is applied", "error", err)
+		return l.notReady(
+			report,
+			"nothing is applied without the escrowed secrets: "+err.Error(),
+		), true
+	}
+	return l.apply(ctx, report, rendered), true
+}
+
+func (l *Loop) apply(
+	ctx context.Context,
+	report instanceapi.StatusReport,
+	rendered values.Rendered,
+) instanceapi.StatusReport {
 	ch, err := l.charts.Load(rendered.Version)
 	if err != nil {
 		return l.notReady(report, err.Error())

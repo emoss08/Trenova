@@ -132,6 +132,21 @@ func (c *Client) ReportUsage(
 	)
 }
 
+func (c *Client) Secrets(ctx context.Context) (instanceapi.InstanceSecrets, error) {
+	res, err := c.api.GetSecretsWithResponse(ctx)
+	if err != nil {
+		return instanceapi.InstanceSecrets{}, fmt.Errorf("get the escrowed secrets: %w", err)
+	}
+	if res.StatusCode() == http.StatusOK && res.JSON200 != nil {
+		return *res.JSON200, nil
+	}
+	return instanceapi.InstanceSecrets{}, failure(
+		res.HTTPResponse,
+		res.ApplicationproblemJSON401,
+		res.ApplicationproblemJSON429,
+	)
+}
+
 func (c *Client) Renew(ctx context.Context, csrPEM []byte) (credential.Issued, error) {
 	res, err := c.api.RenewCertificateWithResponse(
 		ctx,

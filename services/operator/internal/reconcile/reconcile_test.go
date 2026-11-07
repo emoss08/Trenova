@@ -28,6 +28,7 @@ import (
 	"github.com/emoss08/trenova/operator/internal/controlplane"
 	"github.com/emoss08/trenova/operator/internal/controlplanetest"
 	"github.com/emoss08/trenova/operator/internal/credential"
+	"github.com/emoss08/trenova/operator/internal/escrow"
 	"github.com/emoss08/trenova/operator/internal/health"
 	"github.com/emoss08/trenova/operator/internal/instanceapi"
 	"github.com/emoss08/trenova/operator/internal/reconcile"
@@ -35,6 +36,7 @@ import (
 	"github.com/emoss08/trenova/operator/internal/tms"
 	"github.com/emoss08/trenova/operator/internal/tmstest"
 	"github.com/emoss08/trenova/operator/internal/usage"
+	"github.com/emoss08/trenova/operator/internal/values"
 )
 
 var chartDir = filepath.Join("..", "..", "..", "..", "deploy", "helm", "trenova")
@@ -109,6 +111,7 @@ func (f *fakeUsage) fail(err error) {
 
 type world struct {
 	cp       *controlplanetest.Server
+	kube     *fake.Clientset
 	loop     *reconcile.Loop
 	health   *fakeHealth
 	releases *countingReleases
@@ -147,7 +150,7 @@ func newWorldWith(
 	transport := &credential.Transport{}
 	client, err := controlplane.New(cp.URL, &http.Client{Transport: transport, Timeout: 10 * time.Second})
 	require.NoError(t, err)
-	w := &world{cp: cp, health: &fakeHealth{}, now: time.Now()}
+	w := &world{cp: cp, kube: kube, health: &fakeHealth{}, now: time.Now()}
 	w.usage = &fakeUsage{now: func() time.Time { return w.now }}
 	var relayer reconcile.Usage = w.usage
 	if relay != nil {
@@ -181,14 +184,21 @@ func newWorldWith(
 		Charts:       release.NewSource(release.SourceParams{Path: chartDir}),
 		Releases:     w.releases,
 		Health:       w.health,
-		Usage:        relayer,
-		Base:         map[string]any{"clamav": map[string]any{"enabled": true}},
-		Namespace:    "trenova-system",
-		Logger:       logger,
-		Now:          func() time.Time { return w.now },
-		Poll:         15 * time.Second,
-		Report:       time.Minute,
-		UsageEvery:   15 * time.Minute,
+		Escrow: escrow.New(&escrow.Params{
+			Client:       kube,
+			ControlPlane: client,
+			Namespace:    "trenova",
+			Name:         values.EscrowSecret,
+			Logger:       logger,
+		}),
+		Usage:      relayer,
+		Base:       map[string]any{"clamav": map[string]any{"enabled": true}},
+		Namespace:  "trenova-system",
+		Logger:     logger,
+		Now:        func() time.Time { return w.now },
+		Poll:       15 * time.Second,
+		Report:     time.Minute,
+		UsageEvery: 15 * time.Minute,
 	})
 	return w
 }
@@ -528,4 +538,137 @@ func TestRelaysUsageBetweenTheTMSAndTheControlPlane(t *testing.T) {
 	require.Equal(t, []tms.Meter{{
 		Meter: app, Unit: "count", Quantity: 12, Allowance: 10, HardCap: true, Stopped: true,
 	}}, states[0].Meters)
+}
+
+func (w *world) escrowSecret(t *testing.T) (*corev1.Secret, error) {
+	t.Helper()
+	return w.kube.CoreV1().Secrets("trenova").
+		Get(t.Context(), values.EscrowSecret, metav1.GetOptions{})
+}
+
+func TestFetchesTheEscrowedSecretsOnceBeforeInstalling(t *testing.T) {
+	t.Parallel()
+	w := newWorld(t)
+	w.health.set(true)
+	w.loop.Tick(t.Context())
+
+	require.Equal(t, 1, w.cp.SecretCalls())
+	require.Equal(t, 1, w.releases.applies)
+	sec, err := w.escrowSecret(t)
+	require.NoError(t, err)
+	want := controlplanetest.Secrets()
+	require.Equal(t, want.EncryptionKey, string(sec.Data[escrow.KeyEncryptionKey]))
+	require.Equal(t, want.RlsScopeKeyId, string(sec.Data[escrow.KeyRLSScopeKeyID]))
+	require.Equal(t, want.RlsScopeKey, string(sec.Data[escrow.KeyRLSScopeKey]))
+	require.Equal(t, want.MfaRecoveryCodePepper, string(sec.Data[escrow.KeyMFARecoveryCodePepper]))
+	require.True(t, w.lastReport(t).Ready)
+
+	for range 3 {
+		w.now = w.now.Add(15 * time.Second)
+		w.loop.Tick(t.Context())
+	}
+	require.Equal(t, 1, w.cp.SecretCalls(), "a complete Secret is not fetched again")
+
+	require.NoError(t, w.kube.CoreV1().Secrets("trenova").
+		Delete(t.Context(), values.EscrowSecret, metav1.DeleteOptions{}))
+	w.now = w.now.Add(15 * time.Second)
+	w.loop.Tick(t.Context())
+	require.Equal(t, 2, w.cp.SecretCalls(), "a deleted Secret is restored")
+	_, err = w.escrowSecret(t)
+	require.NoError(t, err)
+}
+
+func TestAPresentEscrowSecretIsKept(t *testing.T) {
+	t.Parallel()
+	w := newWorld(t)
+	present := map[string][]byte{
+		escrow.KeyEncryptionKey:         []byte("present-encryption-key-0123456789abcdef"),
+		escrow.KeyRLSScopeKeyID:         []byte("kpresent"),
+		escrow.KeyRLSScopeKey:           []byte("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="),
+		escrow.KeyMFARecoveryCodePepper: []byte("present-pepper-0123456789abcdefghijkl"),
+	}
+	_, err := w.kube.CoreV1().Secrets("trenova").Create(t.Context(), &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{Name: values.EscrowSecret, Namespace: "trenova"},
+		Data:       present,
+	}, metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	w.loop.Tick(t.Context())
+	require.Zero(t, w.cp.SecretCalls())
+	require.Equal(t, 1, w.releases.applies)
+	sec, err := w.escrowSecret(t)
+	require.NoError(t, err)
+	require.Equal(t, present, sec.Data)
+}
+
+func TestInstallWaitsForTheEscrowedSecrets(t *testing.T) {
+	t.Parallel()
+	invalid := controlplanetest.Secrets()
+	invalid.RlsScopeKey = "not base64"
+	cases := []struct {
+		name    string
+		prepare func(w *world)
+		message string
+		report  bool
+	}{
+		{
+			name:    "the control plane fails",
+			prepare: func(w *world) { w.cp.FailSecretsNext(1, http.StatusInternalServerError) },
+			message: "nothing is applied without the escrowed secrets",
+			report:  true,
+		},
+		{
+			name:    "the control plane's values are invalid",
+			prepare: func(w *world) { w.cp.SetSecrets(invalid) },
+			message: "rlsScopeKey must be standard base64",
+			report:  true,
+		},
+		{
+			name:    "rate limited",
+			prepare: func(w *world) { w.cp.FailSecretsNext(1, http.StatusTooManyRequests) },
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			w := newWorld(t)
+			w.health.set(true)
+			tc.prepare(w)
+			w.loop.Tick(t.Context())
+
+			require.Zero(t, w.releases.applies, "nothing is installed without the escrowed secrets")
+			_, err := w.escrowSecret(t)
+			require.Error(t, err)
+			if tc.report {
+				r := w.lastReport(t)
+				require.False(t, r.Ready)
+				require.Nil(t, r.AppliedRevision)
+				require.Contains(t, *r.Message, tc.message)
+				require.NotContains(t, *r.Message, invalid.EncryptionKey)
+				w.cp.SetSecrets(controlplanetest.Secrets())
+			} else {
+				require.Empty(t, w.cp.Reports(), "it waits out Retry-After without reporting")
+				w.loop.Tick(t.Context())
+				require.Equal(t, 1, w.cp.SecretCalls(), "nor calling again before it")
+			}
+
+			w.now = w.now.Add(2 * time.Second)
+			w.loop.Tick(t.Context())
+			require.Equal(t, 1, w.releases.applies)
+			_, err = w.escrowSecret(t)
+			require.NoError(t, err)
+			require.True(t, w.lastReport(t).Ready)
+		})
+	}
+}
+
+func TestARefusedCertificateWhileFetchingSecretsGoesToRecovery(t *testing.T) {
+	t.Parallel()
+	w := newWorld(t)
+	w.cp.FailSecretsNext(1, http.StatusUnauthorized)
+	w.loop.Tick(t.Context())
+
+	require.Zero(t, w.releases.applies)
+	require.Empty(t, w.cp.Reports())
+	require.Error(t, w.loop.Healthy(), "the same bundle cannot enrol again")
 }

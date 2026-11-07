@@ -20,6 +20,7 @@ import (
 
 	"github.com/emoss08/trenova/operator/internal/controlplane"
 	"github.com/emoss08/trenova/operator/internal/credential"
+	"github.com/emoss08/trenova/operator/internal/escrow"
 	"github.com/emoss08/trenova/operator/internal/health"
 	"github.com/emoss08/trenova/operator/internal/instanceapi"
 	"github.com/emoss08/trenova/operator/internal/reconcile"
@@ -140,6 +141,13 @@ func run(logger *slog.Logger) error {
 			Release:   cfg.release,
 			Chart:     chartName,
 		}),
+		Escrow: escrow.New(&escrow.Params{
+			Client:       kube,
+			ControlPlane: cp,
+			Namespace:    cfg.targetNamespace,
+			Name:         values.EscrowSecret,
+			Logger:       logger,
+		}),
 		Usage:      usage.New(usage.Params{ControlPlane: cp, TMS: tmsClient}),
 		Base:       base,
 		Namespace:  cfg.namespace,
@@ -242,6 +250,14 @@ func (c *lazyClient) ReportUsage(
 		return instanceapi.UsageAck{}, err
 	}
 	return api.ReportUsage(ctx, r)
+}
+
+func (c *lazyClient) Secrets(ctx context.Context) (instanceapi.InstanceSecrets, error) {
+	api, err := c.client()
+	if err != nil {
+		return instanceapi.InstanceSecrets{}, err
+	}
+	return api.Secrets(ctx)
 }
 
 func (c *lazyClient) Renew(ctx context.Context, csrPEM []byte) (credential.Issued, error) {

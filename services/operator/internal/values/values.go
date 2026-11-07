@@ -18,6 +18,8 @@ const (
 	maxFullname = 40
 )
 
+const EscrowSecret = "trenova-escrow"
+
 const (
 	keyPostgres = "postgres"
 	keyTMS      = "tms"
@@ -81,6 +83,7 @@ func Render(
 		"docling":       map[string]any{"enabled": docling},
 		keyPostgres:     map[string]any{"hibernate": hibernate},
 		"managed":       managed(operatorNamespace),
+		"secrets":       map[string]any{"escrowSecret": EscrowSecret},
 	})
 	sized, err := size(sizeInput{
 		vcpu:      spec.Plan.Vcpu,
