@@ -289,7 +289,7 @@ func (s *Service) validate(
 	multiErr := errortypes.NewMultiError()
 	rule.Validate(multiErr)
 	if multiErr.HasErrors() {
-		return multiErr
+		return multiErr.Err()
 	}
 
 	if rule.MailboxID.IsNotNil() {
@@ -325,11 +325,7 @@ func (s *Service) validate(
 		multiErr.Add("classification", errortypes.ErrDuplicate, duplicateSentence)
 	}
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 func (s *Service) validateAssignee(

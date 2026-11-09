@@ -3,12 +3,12 @@ package fiscalperiodservice
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod/fiscalperioddb"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalreversal"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalreversal/journalreversaldb"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalsource/journalsourcedb"
@@ -18,14 +18,16 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/keelcheck"
 	"github.com/emoss08/trenova/pkg/tenantedvalidation"
+	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 )
 
 type ValidatorParams struct {
 	fx.In
+
+	Integrity validationframework.IntegrityChecker
 
 	DB             *postgres.Connection
 	InvoiceRepo    invoiceports.InvoiceRepository
@@ -40,12 +42,10 @@ type Validator struct {
 }
 
 func NewValidator(p ValidatorParams) *Validator {
-	checker := keelcheck.NewChecker(p.DB, fiscalperioddb.FiscalPeriodsSchema())
 	return &Validator{
 		validator: tenantedvalidation.NewBuilder[*fiscalperiod.FiscalPeriod]().
 			WithModelName("FiscalPeriod").
-			WithUniquenessChecker(checker).
-			WithReferenceChecker(checker).
+			WithIntegrityChecker(p.Integrity).
 			WithReferenceCheck(
 				"fiscalYearId",
 				"fiscal_years",
@@ -64,14 +64,14 @@ func NewValidator(p ValidatorParams) *Validator {
 func (v *Validator) ValidateCreate(
 	ctx context.Context,
 	entity *fiscalperiod.FiscalPeriod,
-) *errortypes.MultiError {
+) error {
 	return v.validator.ValidateCreate(ctx, entity)
 }
 
 func (v *Validator) ValidateUpdate(
 	ctx context.Context,
 	entity *fiscalperiod.FiscalPeriod,
-) *errortypes.MultiError {
+) error {
 	return v.validator.ValidateUpdate(ctx, entity)
 }
 
@@ -79,11 +79,11 @@ func (v *Validator) ValidateUpdate(
 func (v *Validator) ValidateClose(
 	ctx context.Context,
 	entity *fiscalperiod.FiscalPeriod,
-) *errortypes.MultiError {
+) error {
 	multiErr := errortypes.NewMultiError()
 	v.validateAccountingCloseBlockers(ctx, entity, multiErr)
 	if multiErr.HasErrors() {
-		return multiErr
+		return multiErr.Err()
 	}
 
 	control, err := v.accountingRepo.GetByOrgID(ctx, entity.OrganizationID)
@@ -93,12 +93,8 @@ func (v *Validator) ValidateClose(
 		}
 
 		multiErr := errortypes.NewMultiError()
-		multiErr.Add(
-			"reconciliation",
-			errortypes.ErrSystemError,
-			"Failed to load accounting control",
-		)
-		return multiErr
+		multiErr.AddInternal(fmt.Errorf("failed to load accounting control: %w", err))
+		return multiErr.Err()
 	}
 
 	if !control.RequireReconciliationToClose ||
@@ -118,12 +114,8 @@ func (v *Validator) ValidateClose(
 	)
 	if err != nil {
 		multiErr := errortypes.NewMultiError()
-		multiErr.Add(
-			"reconciliation",
-			errortypes.ErrSystemError,
-			"Failed to validate reconciliation discrepancies",
-		)
-		return multiErr
+		multiErr.AddInternal(fmt.Errorf("failed to validate reconciliation discrepancies: %w", err))
+		return multiErr.Err()
 	}
 
 	if count == 0 {
@@ -137,7 +129,7 @@ func (v *Validator) ValidateClose(
 		"Cannot close fiscal period while {0} posted invoice reconciliation discrepancies remain unresolved",
 		count,
 	)
-	return multiErr
+	return multiErr.Err()
 }
 
 var (
@@ -192,25 +184,13 @@ func (v *Validator) validateAccountingCloseBlockers(
 	})
 	switch {
 	case errors.Is(err, errReversalBlockers):
-		multiErr.Add(
-			"accounting",
-			errortypes.ErrSystemError,
-			"Failed to validate journal reversal close blockers",
-		)
+		multiErr.AddInternal(fmt.Errorf("failed to validate journal reversal close blockers: %w", err))
 		return
 	case errors.Is(err, errJournalSourceBlockers):
-		multiErr.Add(
-			"accounting",
-			errortypes.ErrSystemError,
-			"Failed to validate journal source close blockers",
-		)
+		multiErr.AddInternal(fmt.Errorf("failed to validate journal source close blockers: %w", err))
 		return
 	case err != nil:
-		multiErr.Add(
-			"accounting",
-			errortypes.ErrSystemError,
-			"Failed to validate manual journal close blockers",
-		)
+		multiErr.AddInternal(fmt.Errorf("failed to validate manual journal close blockers: %w", err))
 		return
 	}
 

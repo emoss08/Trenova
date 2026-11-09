@@ -3,55 +3,37 @@ package costingservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/costingcontrol"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/costingcontrol/costingcontroldb"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/keelcheck"
 	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 	"github.com/emoss08/trenova/pkg/validationframework"
-	"go.uber.org/fx"
 )
-
-type ValidatorParams struct {
-	fx.In
-
-	DB *postgres.Connection
-}
 
 type Validator struct {
 	controlValidator  tenantedvalidation.EntityValidator[*costingcontrol.CostingControl]
 	categoryValidator tenantedvalidation.EntityValidator[*costingcontrol.CostCategory]
 }
 
-func NewValidator(p ValidatorParams) *Validator {
-	controls := keelcheck.NewChecker(p.DB, costingcontroldb.CostingControlsSchema())
-	categories := keelcheck.NewChecker(p.DB, costingcontroldb.CostCategoriesSchema())
-
+func NewValidator() *Validator {
 	return &Validator{
 		controlValidator: tenantedvalidation.NewBuilder[*costingcontrol.CostingControl]().
 			WithModelName("CostingControl").
-			WithUniquenessChecker(controls).
-			WithReferenceChecker(controls).
 			WithCustomRule(createGLActualsRule()).
 			Build(),
 		categoryValidator: tenantedvalidation.NewBuilder[*costingcontrol.CostCategory]().
 			WithModelName("CostCategory").
-			WithUniquenessChecker(categories).
-			WithReferenceChecker(categories).
 			Build(),
 	}
 }
 
-func createGLActualsRule() validationframework.TenantedRule[*costingcontrol.CostingControl] {
-	return validationframework.NewTenantedRule[*costingcontrol.CostingControl]("gl_actuals").
+func createGLActualsRule() validationframework.Rule[*costingcontrol.CostingControl] {
+	return validationframework.NewRule[*costingcontrol.CostingControl]("gl_actuals").
 		OnUpdate().
-		WithStage(validationframework.ValidationStageBusinessRules).
-		WithPriority(validationframework.ValidationPriorityHigh).
+		WithStage(validationframework.StageBusinessRules).
 		WithValidation(func(
 			_ context.Context,
 			entity *costingcontrol.CostingControl,
-			_ *validationframework.TenantedValidationContext,
+			_ *validationframework.Context,
 			multiErr *errortypes.MultiError,
 		) error {
 			if !entity.GLActualsEnabled {
@@ -73,13 +55,13 @@ func createGLActualsRule() validationframework.TenantedRule[*costingcontrol.Cost
 func (v *Validator) ValidateUpdate(
 	ctx context.Context,
 	entity *costingcontrol.CostingControl,
-) *errortypes.MultiError {
+) error {
 	return v.controlValidator.ValidateUpdate(ctx, entity)
 }
 
 func (v *Validator) ValidateCategoryUpdate(
 	ctx context.Context,
 	entity *costingcontrol.CostCategory,
-) *errortypes.MultiError {
+) error {
 	return v.categoryValidator.ValidateUpdate(ctx, entity)
 }

@@ -16,9 +16,9 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*ReasonCode)(nil)
-	_ domaintypes.PostgresSearchable     = (*ReasonCode)(nil)
-	_ pagination.CursorEntity            = (*ReasonCode)(nil)
+	_ validationframework.Entity     = (*ReasonCode)(nil)
+	_ domaintypes.PostgresSearchable = (*ReasonCode)(nil)
+	_ pagination.CursorEntity        = (*ReasonCode)(nil)
 )
 
 type ReasonCode struct {

@@ -14,8 +14,8 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*DistanceControl)(nil)
-	_ domaintypes.PostgresSearchable     = (*DistanceControl)(nil)
+	_ validationframework.Entity     = (*DistanceControl)(nil)
+	_ domaintypes.PostgresSearchable = (*DistanceControl)(nil)
 )
 
 const (

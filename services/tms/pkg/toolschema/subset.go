@@ -96,11 +96,7 @@ func CheckSubsets(schema, proposed, changed map[string]any) error {
 		checkSubset(multiErr, name, idsOf(proposed[name]), value)
 	}
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 func checkSubset(multiErr *errortypes.MultiError, name string, proposed []string, value any) {

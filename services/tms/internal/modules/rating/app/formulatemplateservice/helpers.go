@@ -1,20 +1,8 @@
 package formulatemplateservice
 
 import (
-	"context"
-	goErrors "errors"
-
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
-	"github.com/emoss08/trenova/pkg/errortypes"
 )
-
-func expressionErrorMessage(ctx context.Context, err error) string {
-	var multiErr *errortypes.MultiError
-	if goErrors.As(err, &multiErr) && len(multiErr.Errors) > 0 {
-		return errortypes.LocalizedText(ctx, multiErr.Errors[0])
-	}
-	return errortypes.LocalizedText(ctx, err)
-}
 
 func clearApprovalFields(template *formulatemplate.FormulaTemplate) {
 	template.SubmittedByID = nil

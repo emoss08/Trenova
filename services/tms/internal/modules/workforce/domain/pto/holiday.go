@@ -2,7 +2,6 @@ package pto
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	"github.com/emoss08/keel"
@@ -12,8 +11,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
-
-var ErrInvalidHolidayKind = errors.New("invalid holiday kind")
 
 type HolidayKind string
 
@@ -34,7 +31,7 @@ func (k HolidayKind) IsValid() bool {
 }
 
 var (
-	_ validationframework.TenantedEntity = (*OrgHoliday)(nil)
+	_ validationframework.Entity = (*OrgHoliday)(nil)
 )
 
 // OrgHoliday is one calendar date the organisation treats specially. The date

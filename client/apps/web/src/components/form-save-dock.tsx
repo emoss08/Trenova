@@ -143,9 +143,9 @@ function ClosePromptDock({
       pillClassName="w-112.5 gap-x-4"
       indicator={
         <div role="alert" className="flex min-w-0 items-center gap-x-3">
-          <AlertCircleIcon className="bg-warning-subtle text-warning-foreground shrink-0 rounded-full" />
+          <AlertCircleIcon className="shrink-0 rounded-full bg-warning-subtle text-warning-foreground" />
           <span
-            className="text-background min-w-0 truncate text-sm font-medium whitespace-nowrap"
+            className="min-w-0 truncate text-sm font-medium whitespace-nowrap text-background"
             title={
               prompt.count === 1
                 ? t("Discard 1 unsaved change?")

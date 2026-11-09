@@ -250,9 +250,6 @@ func TestConstraintSpecificHelpers(t *testing.T) {
 		IsForeignKeyConstraintViolation(&pgconn.PgError{Code: pgerrcode.UniqueViolation}),
 	)
 
-	assert.True(t, IsNotNullConstraintViolation(&pgconn.PgError{Code: pgerrcode.NotNullViolation}))
-	assert.False(t, IsNotNullConstraintViolation(&pgconn.PgError{Code: pgerrcode.UniqueViolation}))
-
 	assert.True(t, IsCheckConstraintViolation(&pgconn.PgError{Code: pgerrcode.CheckViolation}))
 	assert.False(t, IsCheckConstraintViolation(&pgconn.PgError{Code: pgerrcode.UniqueViolation}))
 }
@@ -423,17 +420,6 @@ func TestExtractCode(t *testing.T) {
 	)
 	assert.Equal(t, "", ExtractCode(errors.New("generic error")))
 	assert.Equal(t, "", ExtractCode(nil))
-}
-
-func TestExtractCodeName(t *testing.T) {
-	t.Parallel()
-
-	assert.Equal(
-		t,
-		"UniqueViolation",
-		ExtractCodeName(&pgconn.PgError{Code: pgerrcode.UniqueViolation}),
-	)
-	assert.Equal(t, "", ExtractCodeName(errors.New("generic error")))
 }
 
 func TestIsRowLevelSecurityViolation(t *testing.T) {

@@ -22,9 +22,9 @@ func HoldSeverityValues() []HoldSeverity {
 }
 
 var (
-	_ validationframework.TenantedEntity = (*HoldReason)(nil)
-	_ domaintypes.PostgresSearchable     = (*HoldReason)(nil)
-	_ pagination.CursorEntity            = (*HoldReason)(nil)
+	_ validationframework.Entity     = (*HoldReason)(nil)
+	_ domaintypes.PostgresSearchable = (*HoldReason)(nil)
+	_ pagination.CursorEntity        = (*HoldReason)(nil)
 )
 
 type HoldReason struct {

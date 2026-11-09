@@ -90,6 +90,8 @@ func Evaluate(in EvaluateInput) *Evaluation {
 		RequiredTractorTypeID: in.Requirements.RequiredTractorTypeID,
 		RequiredTrailerTypeID: in.Requirements.RequiredTrailerTypeID,
 		WorkerFleetCodeID:     workerFleetCodeID(in.Candidate.Worker),
+		MoveID:                in.Requirements.MoveID,
+		MoveWindow:            in.Requirements.Window,
 		Control:               in.Control,
 	}))
 

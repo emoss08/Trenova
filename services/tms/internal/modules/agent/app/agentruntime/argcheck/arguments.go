@@ -1,7 +1,6 @@
 package argcheck
 
 import (
-	"errors"
 	"sort"
 	"strings"
 
@@ -13,34 +12,6 @@ import (
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
-
-// ContractArguments is what a tool receives: the model's arguments with a
-// misnamed required parameter renamed to what it plainly meant, the owner
-// key set aside for the runtime to stamp, and everything else held to the
-// tool's whole schema.
-//
-// The schema used to be checked only on an approver's changes. A model that
-// sent moves[].type, a stop type the domain does not have, or a window as a
-// string had the field dropped or the tool refuse it in its own words, after
-// the call was already a proposal on somebody's card. Now a call that does
-// not fit is refused to the model with each problem named, while it can
-// still fix the call; only an argument that fits reaches a tool, a preview
-// or a card.
-//
-// The model's own call is never changed: the result is a copy where anything
-// was renamed or removed, so the thread records what was sent.
-func ContractArguments(
-	validator *toolschema.Validator,
-	name string,
-	schema, args map[string]any,
-) (map[string]any, []argumentAlias, error) {
-	contract, err := ContractCall(validator, name, schema, args)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return contract.Args, contract.aliases, nil
-}
 
 // Contract is what a tool receives and what was done to get there.
 type Contract struct {
@@ -113,7 +84,7 @@ func aliasNote(aliases []argumentAlias) string {
 func Problems(multiErr *errortypes.MultiError) []string {
 	lines := make([]string, 0, len(multiErr.Errors))
 	for _, entry := range multiErr.Errors {
-		lines = append(lines, entry.Field+": "+entry.Message)
+		lines = append(lines, entry.Field()+": "+entry.Message)
 	}
 	sort.Strings(lines)
 
@@ -129,8 +100,8 @@ func Problems(multiErr *errortypes.MultiError) []string {
 func describedProblems(multiErr *errortypes.MultiError, schema map[string]any) []string {
 	lines := make([]string, 0, len(multiErr.Errors))
 	for _, entry := range multiErr.Errors {
-		line := entry.Field + ": " + entry.Message
-		if expected := expectedAt(schema, entry.Field, entry.Message); expected != "" {
+		line := entry.Field() + ": " + entry.Message
+		if expected := expectedAt(schema, entry.Field(), entry.Message); expected != "" {
 			line += " (" + expected + ")"
 		}
 		lines = append(lines, line)
@@ -225,8 +196,8 @@ func propertyNames(schema map[string]any) []string {
 // fault, not the model's, and is reported as a failure rather than a call
 // to fix.
 func Refusal(name string, schema map[string]any, err error) toolcall.Result {
-	var multiErr *errortypes.MultiError
-	if !errors.As(err, &multiErr) {
+	multiErr, ok := errortypes.RefusalOf(err)
+	if !ok {
 		return toolcall.Refused(
 			aitrace.OutcomeFailed,
 			"its arguments could not be checked",
@@ -244,24 +215,6 @@ func Refusal(name string, schema map[string]any, err error) toolcall.Result {
 	)
 }
 
-// AliasedArguments renames an argument the model sent under the wrong name to
-// the required parameter it plainly meant, and leaves everything else alone.
-//
-// A small model asked for a shipment by {"id": ...} when shipment_get takes
-// shipmentId, and the call failed on a missing parameter it had in fact
-// supplied. Two readings are safe enough to act on: the same name spelled
-// another way (shipment_id, ShipmentID), and a bare "id" when exactly one
-// required *Id parameter is missing. Anything less certain is left for the
-// schema to refuse, which names the parameter it wanted.
-//
-// The model's own call is not changed: the result is a copy, so the thread
-// records what was sent and the tool reads what was meant.
-func AliasedArguments(schema, args map[string]any) map[string]any {
-	aliased, _ := aliasArguments(schema, args)
-
-	return aliased
-}
-
 func aliasArguments(schema, args map[string]any) (map[string]any, []argumentAlias) {
 	if len(args) == 0 {
 		return args, nil
@@ -272,14 +225,20 @@ func aliasArguments(schema, args map[string]any) (map[string]any, []argumentAlia
 	}
 
 	missing := missingRequired(schema, properties, args)
-	if len(missing) == 0 {
+	lists := unsentLists(properties, args)
+	if len(missing) == 0 && len(lists) == 0 {
 		return args, nil
 	}
 
 	renamer := &argumentRenamer{args: args}
-	byShape := make(map[string]string, len(missing))
+	byShape := make(map[string]string, len(missing)+len(lists))
 	for _, name := range missing {
 		byShape[argumentShape(name)] = name
+	}
+	for singular, name := range lists {
+		if _, taken := byShape[singular]; !taken {
+			byShape[singular] = name
+		}
 	}
 	for key := range args {
 		if _, declared := properties[key]; declared {
@@ -331,6 +290,31 @@ func (r *argumentRenamer) result() (map[string]any, []argumentAlias) {
 	sort.Slice(r.aliases, func(i, j int) bool { return r.aliases[i].From < r.aliases[j].From })
 
 	return r.aliased, r.aliases
+}
+
+// unsentLists are the list parameters the call left out, keyed by the shape of
+// their singular name, so invoiceId sent to a tool that takes invoiceIds is
+// read as that list rather than refused.
+func unsentLists(properties, args map[string]any) map[string]string {
+	lists := make(map[string]string)
+	for name, raw := range properties {
+		if _, sent := args[name]; sent {
+			continue
+		}
+		property, _ := raw.(map[string]any)
+		if toolschema.DeclaredType(property) != toolschema.TypeArray {
+			continue
+		}
+		if singular, plural := strings.CutSuffix(
+			argumentShape(name),
+			"s",
+		); plural &&
+			singular != "" {
+			lists[singular] = name
+		}
+	}
+
+	return lists
 }
 
 func loneIDTarget(byShape map[string]string) (string, bool) {

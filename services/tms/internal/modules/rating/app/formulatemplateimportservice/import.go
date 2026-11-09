@@ -7,7 +7,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -159,7 +158,7 @@ func normalizeImportRequest(req *ImportTemplatesRequest) ([]*ImportTemplatePaylo
 	}
 
 	if multiErr.HasErrors() {
-		return nil, multiErr
+		return nil, multiErr.Err()
 	}
 
 	return compact, nil
@@ -309,17 +308,15 @@ func (s *Service) buildImportEntities(
 }
 
 func addIndexedValidationError(indexed *errortypes.MultiError, err error) {
-	var multiErr *errortypes.MultiError
-	if errors.As(err, &multiErr) {
+	if multiErr, ok := errortypes.RefusalOf(err); ok {
 		for _, fieldErr := range multiErr.Errors {
 			indexed.AddError(fieldErr)
 		}
 		return
 	}
-	var fieldErr *errortypes.Error
-	if errors.As(err, &fieldErr) {
+	if fieldErr, ok := errors.AsType[*errortypes.Error](err); ok {
 		indexed.AddError(fieldErr)
 		return
 	}
-	indexed.Add(formulatemplateservice.FieldSource, errortypes.ErrInvalid, err.Error())
+	indexed.AddInternal(err)
 }

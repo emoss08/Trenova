@@ -11,7 +11,7 @@ import type { ReactNode } from "react";
 import type { FactoringCompanyTab } from "../use-factoring-company-state";
 
 const strong = {
-  b: (children: ReactNode) => <b className="text-foreground font-medium">{children}</b>,
+  b: (children: ReactNode) => <b className="font-medium text-foreground">{children}</b>,
 };
 
 /** The agreement in force said the way its contract would: advance, fees, risk and the daily cutoff. */
@@ -50,7 +50,7 @@ export function FactoringTermsSummary({
       action={<FactoringAgreementStatusBadge status={agreement.status} />}
     >
       <div className="flex flex-col gap-2 p-3">
-        <p className="text-muted-foreground text-sm leading-relaxed text-pretty">
+        <p className="text-sm leading-relaxed text-pretty text-muted-foreground">
           {rt(
             "The factor advances <b>{0}</b> of each invoice within <b>{1, plural, one {# business day} other {# business days}}</b>.",
             strong,

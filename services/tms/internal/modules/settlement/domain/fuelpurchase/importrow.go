@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*ImportRow)(nil)
+	_ validationframework.Entity = (*ImportRow)(nil)
 )
 
 type ImportRow struct {

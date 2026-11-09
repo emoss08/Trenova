@@ -254,11 +254,7 @@ func (t *ScheduleReportTool) validateArgs(params map[string]any) error {
 		}
 	}
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 func (t *ScheduleReportTool) Execute(
@@ -485,11 +481,7 @@ func (t *CreateTableChangeAlertTool) validateArgs(params map[string]any) error {
 		}
 	}
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 func alertConditions(params map[string]any) []tablechangealert.Condition {

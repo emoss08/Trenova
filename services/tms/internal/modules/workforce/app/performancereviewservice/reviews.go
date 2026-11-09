@@ -414,9 +414,7 @@ func (s *Service) loadReview(
 		return nil, err
 	}
 	if version > 0 && original.Version != version {
-		return nil, errortypes.NewValidationError(
-			"version",
-			errortypes.ErrVersionMismatch,
+		return nil, errortypes.NewVersionMismatchError(
 			"Review was changed by someone else. Reload and try again",
 		)
 	}

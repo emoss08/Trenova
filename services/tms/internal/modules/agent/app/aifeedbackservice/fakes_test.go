@@ -3,6 +3,7 @@ package aifeedbackservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentmemoryservice"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentexception"
@@ -233,10 +234,12 @@ type fakeMemories struct {
 	asked    []agentmemoryports.ListAgentMemorySuggestionContextRequest
 }
 
-func (f *fakeMemories) Create(
+func (f *fakeMemories) Remember(
 	_ context.Context,
-	entity *agentmemory.Memory,
+	req *agentmemoryports.RememberRequest,
+	actor *permissionports.RequestActor,
 ) (*agentmemory.Memory, error) {
+	entity := agentmemoryservice.NewMemory(req, actor)
 	entity.ID = pulid.MustNew("amem_")
 	f.created = append(f.created, entity)
 
@@ -354,6 +357,7 @@ func newHarness() *harness {
 		exceptions:    h.exceptions,
 		definitions:   h.definitions,
 		memories:      h.memories,
+		keeper:        h.memories,
 		retention:     h.retention,
 		organizations: fakeOrganizations{},
 		permissions:   h.permissions,

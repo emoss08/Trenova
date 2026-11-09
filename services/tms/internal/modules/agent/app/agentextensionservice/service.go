@@ -499,11 +499,7 @@ func validate(
 	}
 	agentextension.ValidateSettings(entity.Type, plain, multiErr)
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 type auditChange struct {

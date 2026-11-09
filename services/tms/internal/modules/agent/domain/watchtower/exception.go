@@ -34,10 +34,6 @@ func (s Status) IsOpen() bool {
 	return s.IsValid() && s != StatusResolved
 }
 
-func OpenStatuses() []Status {
-	return []Status{StatusOpen, StatusAcknowledged, StatusInProgress, StatusSnoozed}
-}
-
 type ResolutionCode string
 
 const (

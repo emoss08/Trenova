@@ -7,7 +7,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentrating"
-	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/places/domain/rategeo"
 	"github.com/emoss08/trenova/internal/modules/rating/app/tariff"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
@@ -208,27 +207,6 @@ func commodityIDs(entity *shipment.Shipment) []pulid.ID {
 
 func requiresTempControl(entity *shipment.Shipment) bool {
 	return entity.TemperatureMin != nil || entity.TemperatureMax != nil
-}
-
-// LocationOf exposes the place a stop describes, for callers that need to build
-// a context without a shipment — a quote for a lane nobody has booked yet.
-func LocationOf(loc *location.Location) rategeo.Place {
-	if loc == nil {
-		return rategeo.Place{}
-	}
-
-	place := rategeo.Place{
-		LocationID: loc.ID,
-		PostalCode: loc.PostalCode,
-		City:       loc.City,
-		StateID:    loc.StateID,
-	}
-
-	if loc.State != nil {
-		place.CountryISO3 = loc.State.CountryIso3
-	}
-
-	return place
 }
 
 func ratedStops(entity *shipment.Shipment) int16 {

@@ -319,11 +319,7 @@ func (s *Service) prepareSummary(entity *workerinjury.OSHAAnnualSummary) error {
 
 	multiErr := errortypes.NewMultiError()
 	entity.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 func applySummaryUpdate(entity *workerinjury.OSHAAnnualSummary, req *SaveSummaryRequest) {

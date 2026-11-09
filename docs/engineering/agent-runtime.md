@@ -901,25 +901,32 @@ the task may depend on one.
 
 **What counts as used.** Carrying a memory and using it are different things.
 `agentmemoryprompt.PlanMemories` returns the carried memories and, separately, those
-that were used (`MemoryFit.Used`): memories about a tool picked for the turn (a
-disclosed turn's loaded tools), and any carried memory that bears on the turn.
+that were used (`MemoryFit.Used`): any carried memory that bears on the turn. A memory
+about a tool waits in `MemoryFit.ByTool` whether the turn disclosed its tools or held
+them all, and counts when the turn calls that tool: counting it whenever the tool was
+loaded put 600 uses on corrections no turn acted on, and use ranks what the next prompt
+carries.
 A memory about a record the turn is about or names is carried whatever was
 asked, so a rule about a shipment's customer is never missed, but it is shown
 and counted only when it bears: asked for a shipment's arrival, the Desk no
 longer says it used the customer's billing rule, each stop's dock note and the
 driver's preference. A standing Instruction that does not bear is likewise
-carried and followed, but is not shown or counted. A memory about a tool that was only on hand (every held tool, when the
-turn disclosed none) waits in `MemoryFit.ByTool`, kept on `TurnState.ToolMemories`,
-and is added to `UsedMemoryIDs` and announced when the turn calls that tool
-(`Turn.noteToolMemories`). A state from before `ToolMemories` existed promotes
-none, so no `GetVersion` gate is needed.
+carried and followed, but is not shown or counted. The `ByTool` memories are kept on
+`TurnState.ToolMemories` and added to `UsedMemoryIDs` and announced when the turn calls
+that tool (`turnmemory.NoteTool`). A delegate's turn keeps its own `UsedMemoryIDs`
+without announcing them (the person's card shows what the conversation's own agent
+used), and they travel on `DelegatedRun.UsedMemoryIDs`.
 
-A memory over 1,200 characters is shown cut short with its id, and the prompt
-tells the model to read the rest with `agent_list_memories`. Only what was used is counted
-(`AgentMemoryService.RecordUse`), so `use_count` measures use rather than how
-often a memory sat in a prompt; only what fits taints the turn. A
-preview built outside a turn (`PreviewPrompt`) applies the same fit and counts
-nothing.
+Every memory line names its id (`- [Instruction · amem_…] …`), so a turn changes a
+memory a person points at with `agent_edit_memory` without listing memories first. A
+memory over 1,200 characters is shown cut short, and the prompt tells the model to read
+the rest with `agent_list_memories` and that id. Use is counted once per turn, when it is
+saved (`agentruntime.Service.RecordMemoryUse`, called from `FinishTurn` and
+`FinishRunActivity`), over the turn's `UsedMemoryIDs` and its delegates': nothing is
+counted when the turn opens or inside a tool, so a retried open counts nothing twice and
+`use_count` measures use rather than how often a memory sat in a prompt. Only what fits
+taints the turn. A preview built outside a turn (`PreviewPrompt`) applies the same fit and
+counts nothing.
 
 **Determinism.** All of it runs in activities: `Build` in the prepare and open
 activities, the fit in `OpenTurn`. The records a delegate inherits travel as
@@ -938,14 +945,51 @@ memories that share most of it, and one common word — or "the" — never match
 every memory on its own. A query with one meaningful word has no looser pass. A
 query with websearch operators (quotes, `or`, `-word`) is taken as written. It
 returns 10 rows by default and at most 50, reads one memory whole by `id`, and
-marks each row a search found `match: "words"`.
+marks each row a search found `match: "words"`. `recordId` takes any record the prompt
+resolves (a shipment, a move, an invoice, a billing queue item, an inbound message, a
+document, or a subject itself) and searches the memories about the subjects it names,
+through the same `SubjectResolver`. A search is not a use: only a memory read whole by
+`id` joins the turn's `UsedMemoryIDs`.
 
-**Limits.** A memory holds at most 4,000 characters
-(`agentmemory.MaxMemoryContentChars`). An organization should keep at most 5,000
+**Limits.** A memory holds at most 4,000 characters, a Procedure 12,000
+(`agentmemory.MemoryKind.MaxContentChars`; the client copy is
+`lib/memory-content-limit.ts`). An organization should keep at most 5,000
 active memories; `agentMemoryUsage` reports the count and AI Control's Memory
 section warns from 4,000. Recording the same sentence again returns the existing
 row only when it is unexpired, kept for the same readers (organization, or the
-same agent) and, for a clean write, not tainted.
+same agent) and, for a clean write, not tainted. The lookup reads the stored
+`content_key` (the words alone, folded), and the partial unique index
+`uq_agent_memories_kept_content` stops two identical saves racing past it: the loser reads
+the winner and refreshes it.
+
+**Keeping memory tidy.** Every save, from every path (the tool, a look back, the Desk,
+AI Control, a decision, the feedback job), runs `agentmemoryservice.consolidate` before it
+keeps anything. It reads up to 16 kept memories for the same readers, subject and tool
+(`ListNeighbors`: ranked by shared words, plus those near in meaning when the
+organization is indexed). One that shares nearly all the new memory's words and is the
+same kind is refreshed, with no model call. Otherwise up to 8 go to `agentmemoryjudge`, one
+structured call (`aiusage.FeatureAgentMemoryConsolidation`, the Desk's route, no reasoning,
+an 8-second deadline) that labels each `same`, `contradicts` or `unrelated`, reading every
+memory as untrusted text and answering only for ids it was shown. `same` refreshes the kept
+memory, unless the new one says it as a stronger kind (an Instruction for a Fact), which
+then replaces it. `contradicts` saves the new memory as the kept one's replacement: it takes
+effect when the writer may replace it (`ReplacedFreely`, the person who owns it, or someone
+who manages shared memory) and the new memory is clean and active; otherwise it waits as a
+suggestion, and approving it retires what it contradicts. A judge that fails or is refused
+leaves the save as it was, and a preview runs only the word check, so an approval card
+spends no model call.
+
+**Editing.** `agent_edit_memory {memoryId, old, new}` changes part of a memory in place:
+`old` must appear in its current text exactly once (that is the guard against editing a
+memory someone else just changed; no version is passed), and `new` may be empty to delete
+it. `AgentMemoryService.PlanEdit` refuses a memory the reader cannot see, a suggestion or
+one no longer kept, then saves the edited text as the memory's replacement through
+`Remember`, so readers, history, review, taint and audit work as replacement does. It holds
+for approval like `agent_create_memory`, and any edit after outside content waits for a
+person. A memory kept for one person is theirs to word: an administrator can read, pause or
+retire it in AI Control, but `Update` and `ApproveSuggestion` refuse to rewrite it
+(`rewritable`). Restoring a retired memory is refused while a newer memory that replaced it
+is kept, so agents are never told both.
 
 **Forgetting.** `agent_retire_memory` retires a memory by id; it stays readable in AI
 Control and can be restored. It is on no starter template: what a memory says
@@ -981,15 +1025,19 @@ worked out, written and steered is in [agent-profiles.md](agent-profiles.md).
 ### Learning from the work
 
 When a conversation goes quiet or a background run settles, its agent looks back
-over what it just did and keeps what the work taught: how to do a task here (a
-Procedure), a Fact it had to work out, or what a person asked for from now on
-(an Instruction, never from a run with nobody in it). Corrections stay with
-`agent_create_memory` and `RecordCorrection`. `agent_create_memory` stays the tool
-for what a person says; the prompt tells the agent to save only that, because
-what it worked out for itself is kept for it by the look back. Both write
-through `AgentMemoryService.Remember`, so dedupe, replacement, taint and the
-saving mode apply to both alike. Nothing here changes `RecordCorrection` or the
-nightly feedback job.
+over what it just did and keeps what the work taught about this organization: how
+a person showed a task is done here (a Procedure), a Fact about one of its customers,
+locations, drivers or carriers, or what a person asked for from now on (an
+Instruction, never from a run with nobody in it). `agent_create_memory` stays the tool
+for what a person says, and the prompt tells the agent never to save how to call a tool.
+Every writer goes through `AgentMemoryService.Remember`: the tools, the look back,
+the Desk, AI Control, `RecordCorrection` and the nightly feedback job
+(`aifeedbackservice`, as the system actor with source Feedback), so dedupe, the
+consolidation check, replacement, taint, audit and the saving mode apply to all alike.
+`RecordCorrection` keeps a person's change to a proposal only with the reason they typed
+(a rejection already needed one); a change without one is a `ProposalModified` signal for
+the look back, which sees why. A correction to a write on a customer, location, driver or
+carrier is about that record.
 
 **When.** `FinishTurnActivity` cues the conversation's look back
 (`AgentReflectionScheduler.AfterTurn`) once a turn is saved, and
@@ -1018,11 +1066,13 @@ row; a Failed row is claimed again) and skip without calling a model when:
 | `NoSignal` | `ReadSignals` finds nothing worth a look |
 | `OverBudget` | the organization's AI budget refuses the call |
 
-`ReadSignals` is cheap and reads only the window: a tool that failed, or failed
-then worked (refusals — `denied`, `duplicate`, `over_budget` — are not lessons);
-a person correcting the agent after it answered; a person saying how they want
-it done from now on; a proposal modified or rejected; a reply rated unhelpful;
-and, in a conversation, a task of six or more successful tool calls. A run with
+`ReadSignals` is cheap and reads only the window: a person correcting the agent
+after it answered; a person saying how they want it done from now on; a proposal
+modified or rejected; a reply rated unhelpful; and, in a conversation, a task of six
+or more successful tool calls. A tool that failed is not a signal: a refused call is a
+defect Trenova fixes in the tool (AI analytics ranks tool failures by cause), and when
+it was one, 35 of the first 40 memories look backs kept described how to call a tool,
+learned again by every organization and kept after the tool was fixed. A run with
 nobody in it reads no person signals, and a long run alone is no signal: one that
 only worked showed it nothing a person corrected or decided.
 
@@ -1039,9 +1089,12 @@ Failed with its message.
 `Remember` with source `Reflection`, `reflection_id`, the signals as evidence,
 and the agent as its actor:
 
-- a lesson is refused, with the reason on the row, when it names a record or
-  a tool the work did not touch, replaces a memory the look back was not shown,
-  or is an Instruction from a run with nobody in it;
+- a lesson is refused, with the reason on the row, when it names a record the
+  work did not touch, replaces a memory the look back was not shown, or is an
+  Instruction from a run with nobody in it; and when no person said or decided
+  anything in the window (`ReflectionSignals.FromPeople`), a Procedure is refused and so
+  is a Fact about no customer, location, driver or carrier (`learnedAlone`). The schema
+  has no `toolName`: a look back never keeps a lesson about a tool;
 - a conversation's lesson is kept for the person (`User`), the agent
   (`Agent`), or offered to the team or organization; who may keep a shared
   lesson at once is the memory service's call (`agent_memory:manage`), the same
@@ -1057,7 +1110,8 @@ and the agent as its actor:
   suggests.
 
 The row records each change (Saved, Suggested, Refreshed, Refused), the
-model's notes and token use. A conversation's kept lessons are attached to the
+model's notes and token use; `input_tokens` is every input token the call read,
+cached or not. A conversation's kept lessons are attached to the
 reply they followed (`ConversationRepository.AddSavedMemories`) and announced on
 the realtime resource `agent_memory`, so the Desk shows "learned" notes the
 person can keep or undo. AI Control's Memory tab lists the look backs

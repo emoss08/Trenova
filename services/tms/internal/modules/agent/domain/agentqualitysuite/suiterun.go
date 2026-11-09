@@ -19,8 +19,8 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*SuiteRun)(nil)
-	_ pagination.CursorEntity            = (*SuiteRun)(nil)
+	_ validationframework.Entity = (*SuiteRun)(nil)
+	_ pagination.CursorEntity    = (*SuiteRun)(nil)
 )
 
 const (

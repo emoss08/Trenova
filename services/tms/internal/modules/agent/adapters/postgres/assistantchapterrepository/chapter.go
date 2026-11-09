@@ -173,9 +173,7 @@ func (r *repository) Retitle(
 			return nil, chapterErrors.Map(err, req.ID.String())
 		}
 		if n == 0 && req.Version != nil {
-			return nil, errortypes.NewValidationError(
-				"version",
-				errortypes.ErrVersionMismatch,
+			return nil, errortypes.NewVersionMismatchError(
 				"This chapter was renamed since you opened it. Read its new title and try again.",
 			)
 		}

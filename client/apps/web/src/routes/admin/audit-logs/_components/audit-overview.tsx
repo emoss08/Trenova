@@ -41,7 +41,7 @@ function UpdatedAgo({ at }: { at: number }) {
   const t = useT();
   const now = useNow("minute");
   return (
-    <span className="text-foreground-subtle text-xs">
+    <span className="text-xs text-foreground-subtle">
       {t("Updated {0}", formatRelativeTime(Math.min(Math.round(at / 1000) - now, 0)))}
     </span>
   );
@@ -186,14 +186,14 @@ export default function AuditOverviewBand({
     >
       <div className="grid items-start gap-x-8 gap-y-3 md:grid-cols-[minmax(0,1fr)_auto]">
         <div className="flex min-w-0 flex-col gap-1.5">
-          <span className="text-muted-foreground flex items-center gap-2 text-xs">
+          <span className="flex items-center gap-2 text-xs text-muted-foreground">
             <NovaBadge size="sm" />
-            <span className="text-foreground font-medium">{t("Nova")}</span>
+            <span className="font-medium text-foreground">{t("Nova")}</span>
             {days === 1
               ? t("Today in the audit log")
               : t("The last {0} days in the audit log", days)}
           </span>
-          <p className="text-muted-foreground max-w-[112ch] text-lg leading-relaxed text-pretty">
+          <p className="max-w-[112ch] text-lg leading-relaxed text-pretty text-muted-foreground">
             <NarrativeSegments
               segments={overview.summary}
               onTarget={(segment, id) => {
@@ -226,11 +226,11 @@ export default function AuditOverviewBand({
       >
         <section
           aria-label={t("When changes happened")}
-          className="bg-card flex min-w-0 flex-col gap-2 rounded-md border px-3 pt-2.5 pb-2"
+          className="flex min-w-0 flex-col gap-2 rounded-md border bg-card px-3 pt-2.5 pb-2"
         >
           <header>
             <h3 className="text-sm font-semibold">{t("When changes happened")}</h3>
-            <p className="text-muted-foreground text-xs">
+            <p className="text-xs text-muted-foreground">
               {overview.unit === "Hour"
                 ? t("Entries per hour. Shaded hours are between 8 PM and 6 AM.")
                 : t("Entries per day.")}

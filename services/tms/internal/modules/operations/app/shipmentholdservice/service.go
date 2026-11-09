@@ -343,14 +343,10 @@ func applyCreateOverrides(
 	}
 }
 
-func validateHold(entity *shipmenthold.ShipmentHold) *errortypes.MultiError {
+func validateHold(entity *shipmenthold.ShipmentHold) error {
 	multiErr := errortypes.NewMultiError()
 	entity.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 func requireHoldUser(actor *permissionports.RequestActor) (pulid.ID, error) {

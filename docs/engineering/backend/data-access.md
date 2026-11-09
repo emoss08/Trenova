@@ -307,23 +307,33 @@ where keel has no typed form: `DynCase`, `DynRow`, arithmetic, text `||`, array 
 
 ### Validators
 
-Validators build one checker over the entity's table:
+A validator declares its uniqueness and reference checks on the builder and takes the one
+`validationframework.IntegrityChecker` fx provides (`integritycheck.New`, in
+`internal/infrastructure/postgres/integritycheck`):
 
 ```go
-checker := keelcheck.NewChecker(p.DB, tractordb.TractorsSchema())
 tenantedvalidation.NewBuilder[*tractor.Tractor]().
-	WithUniquenessChecker(checker).
-	WithReferenceChecker(checker)
+	WithIntegrityChecker(p.Integrity).
+	WithUniqueField("code", "code", "…", func(t *tractor.Tractor) any { return t.Code }).
+	WithReferenceCheck("fleetCodeId", "fleet_codes", "…", func(t *tractor.Tractor) pulid.ID { return t.FleetCodeID })
 ```
 
-The checker answers references to the entity's table and every table it relates to; a table it
-does not relate to gets a `WithCustomReferenceCheck` with `keelcheck.ReferenceCheck`,
-or, when the table belongs to a module this one may not import,
-`keelcheck.TableReferenceCheck(p.DB, "gl_accounts")` (one constant `EXISTS` over the
-table's `id`, `organization_id` and `business_unit_id`). A uniqueness check that must see rows
-row-level security hides (other organizations of the business unit) wraps the checker in a
-`UniquenessChecker` that puts `dbscope.WithSystem` on the context and pins the request's
-`BusinessUnitID` to the caller's (`organizationservice.businessUnitWideChecker`).
+Every check of one validation goes to the database as one `keel.Batch` in one read
+transaction (or the caller's): each uniqueness check is a `SELECT EXISTS`, and references to
+the same table, column and conditions share one `col = ANY($1)` read. A reference that is not
+by `id`, or must match more than existence, says so on `WithReference`
+(`Column: "user_id"`, `Conditions` for an active driving position); a list of references
+(intermediate stops) is a `WithReferenceList`. Tables are named by their keel name and resolved
+through the generated catalog, so a validator imports neither the checker nor another
+module's `*db` package. A field that already failed validation is not checked again: its
+uniqueness and reference reads are skipped.
+
+Under a tenant scope row-level security scopes every check. Under a system scope the checker
+filters each tenant column by the validation's tenant (the request's, else the entity's
+`GetOrganizationID`/`GetBusinessUnitID`) and refuses to run without one, so a check never spans
+tenants by accident. A check that must see rows row-level security hides (other organizations
+of the business unit) gives the builder `WithIntegrityScope` with a function that puts
+`dbscope.WithSystem` on the context (`organizationservice.businessUnitWideScope`).
 
 ## Pools and transactions
 

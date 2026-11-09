@@ -1,8 +1,7 @@
 package errortypes
 
 import (
-	"fmt"
-
+	"github.com/emoss08/trenova/pkg/fieldpath"
 	"github.com/emoss08/trenova/shared/i18n"
 )
 
@@ -25,20 +24,24 @@ func (s Severity) IsValid() bool {
 }
 
 type AdvisoryError struct {
-	Field    string    `json:"field"`
-	Code     ErrorCode `json:"code"`
-	Message  string    `json:"message"`
-	Args     []any     `json:"-"`
-	Severity Severity  `json:"severity"`
-	RuleKey  string    `json:"ruleKey,omitempty"`
+	Path     fieldpath.Path `json:"path"`
+	Code     ErrorCode      `json:"code"`
+	Message  string         `json:"message"`
+	Args     []any          `json:"-"`
+	Severity Severity       `json:"severity"`
+	RuleKey  string         `json:"ruleKey,omitempty"`
+}
+
+func (a *AdvisoryError) Field() string {
+	return a.Path.String()
 }
 
 func (a *AdvisoryError) Error() string {
 	message := i18n.Format(a.Message, a.Args...)
-	if a.Field == "" {
+	if a.Path.IsZero() {
 		return message
 	}
-	return fmt.Sprintf("%s: %s", a.Field, message)
+	return a.Field() + ": " + message
 }
 
 func NewAdvisory(
@@ -49,7 +52,7 @@ func NewAdvisory(
 	args ...any,
 ) *AdvisoryError {
 	return &AdvisoryError{
-		Field:    field,
+		Path:     fieldpath.Parse(field),
 		Code:     code,
 		Message:  message,
 		Args:     args,
@@ -67,26 +70,11 @@ func (m *MultiError) AddAdvisory(advisory *AdvisoryError) {
 		return
 	}
 
-	root := m.root()
+	scoped := *advisory
+	scoped.Path = m.prefix.Join(advisory.Path)
 
-	advisoryCopy := &AdvisoryError{
-		Field:    advisory.Field,
-		Code:     advisory.Code,
-		Message:  advisory.Message,
-		Args:     advisory.Args,
-		Severity: advisory.Severity,
-		RuleKey:  advisory.RuleKey,
-	}
-
-	if prefix := m.getFullPrefix(); prefix != "" {
-		if advisoryCopy.Field != "" {
-			advisoryCopy.Field = prefix + "." + advisoryCopy.Field
-		} else {
-			advisoryCopy.Field = prefix
-		}
-	}
-
-	root.Advisories = append(root.Advisories, advisoryCopy)
+	top := m.top()
+	top.Advisories = append(top.Advisories, &scoped)
 }
 
 func (m *MultiError) Advise(
@@ -98,7 +86,7 @@ func (m *MultiError) Advise(
 	args ...any,
 ) {
 	m.AddAdvisory(&AdvisoryError{
-		Field:    field,
+		Path:     fieldpath.Parse(field),
 		Code:     code,
 		Message:  message,
 		Args:     args,
@@ -111,7 +99,7 @@ func (m *MultiError) HasAdvisories() bool {
 	if m == nil {
 		return false
 	}
-	return len(m.root().Advisories) > 0
+	return len(m.top().Advisories) > 0
 }
 
 func (m *MultiError) RequiresReview() bool {
@@ -119,7 +107,7 @@ func (m *MultiError) RequiresReview() bool {
 		return false
 	}
 
-	for _, advisory := range m.root().Advisories {
+	for _, advisory := range m.top().Advisories {
 		if advisory.Severity == SeverityRequireReview {
 			return true
 		}
@@ -132,7 +120,7 @@ func (m *MultiError) AllAdvisories() []*AdvisoryError {
 	if m == nil {
 		return nil
 	}
-	return m.root().Advisories
+	return m.top().Advisories
 }
 
 func (a *AdvisoryError) LocalizedMessage() (message string, args []any) {

@@ -117,7 +117,7 @@ type CancelShipmentRequest struct {
 	ExpectedVersion int64                 `json:"-"`
 }
 
-func (r *CancelShipmentRequest) Validate() *errortypes.MultiError {
+func (r *CancelShipmentRequest) Validate() error {
 	multiErr := errortypes.NewMultiError()
 
 	multiErr.AddOzzoError(validation.ValidateStruct(
@@ -133,11 +133,7 @@ func (r *CancelShipmentRequest) Validate() *errortypes.MultiError {
 		),
 	))
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 type MoveStatusRestore struct {
@@ -159,7 +155,7 @@ type UncancelShipmentRequest struct {
 	StopStatuses    []StopStatusRestore   `json:"-"`
 }
 
-func (r *UncancelShipmentRequest) Validate() *errortypes.MultiError {
+func (r *UncancelShipmentRequest) Validate() error {
 	multiErr := errortypes.NewMultiError()
 
 	multiErr.AddOzzoError(validation.ValidateStruct(
@@ -175,11 +171,7 @@ func (r *UncancelShipmentRequest) Validate() *errortypes.MultiError {
 		),
 	))
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 type TransferOwnershipRequest struct {
@@ -188,7 +180,7 @@ type TransferOwnershipRequest struct {
 	OwnerID    pulid.ID              `json:"ownerId"`
 }
 
-func (r *TransferOwnershipRequest) Validate() *errortypes.MultiError {
+func (r *TransferOwnershipRequest) Validate() error {
 	multiErr := errortypes.NewMultiError()
 
 	multiErr.AddOzzoError(validation.ValidateStruct(
@@ -205,11 +197,7 @@ func (r *TransferOwnershipRequest) Validate() *errortypes.MultiError {
 		),
 	))
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 type DuplicateBOLCheckRequest struct {
@@ -218,7 +206,7 @@ type DuplicateBOLCheckRequest struct {
 	ShipmentID *pulid.ID             `json:"shipmentId,omitempty"`
 }
 
-func (r *DuplicateBOLCheckRequest) Validate() *errortypes.MultiError {
+func (r *DuplicateBOLCheckRequest) Validate() error {
 	multiErr := errortypes.NewMultiError()
 
 	multiErr.AddOzzoError(validation.ValidateStruct(
@@ -234,11 +222,7 @@ func (r *DuplicateBOLCheckRequest) Validate() *errortypes.MultiError {
 		),
 	))
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 type CheckHazmatSegregationRequest struct {
@@ -246,18 +230,14 @@ type CheckHazmatSegregationRequest struct {
 	CommodityIDs []pulid.ID            `json:"commodityIds"`
 }
 
-func (r *CheckHazmatSegregationRequest) Validate() *errortypes.MultiError {
+func (r *CheckHazmatSegregationRequest) Validate() error {
 	multiErr := errortypes.NewMultiError()
 
 	if len(r.CommodityIDs) < 2 {
 		multiErr.Add("commodityIds", errortypes.ErrInvalid, "At least 2 commodity IDs are required")
 	}
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 type BulkDuplicateShipmentRequest struct {
@@ -268,7 +248,7 @@ type BulkDuplicateShipmentRequest struct {
 	FirstPickupAt *int64                `json:"firstPickupAt,omitempty"`
 }
 
-func (r *BulkDuplicateShipmentRequest) Validate() *errortypes.MultiError {
+func (r *BulkDuplicateShipmentRequest) Validate() error {
 	multiErr := errortypes.NewMultiError()
 
 	if r.ShipmentID.IsNil() {
@@ -296,11 +276,7 @@ func (r *BulkDuplicateShipmentRequest) Validate() *errortypes.MultiError {
 		multiErr.Add("count", errortypes.ErrInvalid, "Count must be at most 20")
 	}
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 func (r *BulkDuplicateShipmentRequest) DateAnchor(now int64) *int64 {
@@ -325,7 +301,7 @@ type GetDelayedShipmentsRequest struct {
 	Limit      int                   `json:"limit"`
 }
 
-func (r *GetDelayedShipmentsRequest) Validate() *errortypes.MultiError {
+func (r *GetDelayedShipmentsRequest) Validate() error {
 	multiErr := errortypes.NewMultiError()
 
 	multiErr.AddOzzoError(validation.ValidateStruct(
@@ -340,11 +316,7 @@ func (r *GetDelayedShipmentsRequest) Validate() *errortypes.MultiError {
 		),
 	))
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 type DelayShipmentsRequest struct {
@@ -352,7 +324,7 @@ type DelayShipmentsRequest struct {
 	Limit      int                   `json:"limit"`
 }
 
-func (r *DelayShipmentsRequest) Validate() *errortypes.MultiError {
+func (r *DelayShipmentsRequest) Validate() error {
 	multiErr := errortypes.NewMultiError()
 
 	multiErr.AddOzzoError(validation.ValidateStruct(
@@ -367,11 +339,7 @@ func (r *DelayShipmentsRequest) Validate() *errortypes.MultiError {
 		),
 	))
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 type GetAutoCancelableShipmentsRequest struct {
@@ -379,7 +347,7 @@ type GetAutoCancelableShipmentsRequest struct {
 	Limit      int                   `json:"limit"`
 }
 
-func (r *GetAutoCancelableShipmentsRequest) Validate() *errortypes.MultiError {
+func (r *GetAutoCancelableShipmentsRequest) Validate() error {
 	multiErr := errortypes.NewMultiError()
 
 	multiErr.AddOzzoError(validation.ValidateStruct(
@@ -394,11 +362,7 @@ func (r *GetAutoCancelableShipmentsRequest) Validate() *errortypes.MultiError {
 		),
 	))
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 type AutoCancelShipmentsRequest struct {
@@ -406,7 +370,7 @@ type AutoCancelShipmentsRequest struct {
 	Limit      int                   `json:"limit"`
 }
 
-func (r *AutoCancelShipmentsRequest) Validate() *errortypes.MultiError {
+func (r *AutoCancelShipmentsRequest) Validate() error {
 	multiErr := errortypes.NewMultiError()
 
 	multiErr.AddOzzoError(validation.ValidateStruct(
@@ -421,11 +385,7 @@ func (r *AutoCancelShipmentsRequest) Validate() *errortypes.MultiError {
 		),
 	))
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 type GetPreviousRatesRequest struct {
@@ -438,7 +398,7 @@ type GetPreviousRatesRequest struct {
 	ExcludeShipmentID     *pulid.ID             `json:"excludeShipmentId,omitempty"`
 }
 
-func (r *GetPreviousRatesRequest) Validate() *errortypes.MultiError {
+func (r *GetPreviousRatesRequest) Validate() error {
 	multiErr := errortypes.NewMultiError()
 
 	if r.OriginLocationID.IsNil() {
@@ -469,11 +429,7 @@ func (r *GetPreviousRatesRequest) Validate() *errortypes.MultiError {
 		multiErr.Add("buId", errortypes.ErrRequired, "Business unit ID is required")
 	}
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 type ShipmentTotalsResponse struct {

@@ -46,7 +46,7 @@ func Plan[T any, S ~string](req *Request[T, S]) ([]kernelports.RecordChange[T], 
 			req.Kind, strings.Join(missing, ", "))
 	}
 	if multiErr.HasErrors() {
-		return nil, multiErr
+		return nil, multiErr.Err()
 	}
 
 	changes := make([]kernelports.RecordChange[T], 0, len(req.Found))

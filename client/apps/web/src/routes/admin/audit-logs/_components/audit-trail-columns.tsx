@@ -145,14 +145,14 @@ function WhatCell({
           {chips.map((chip) => (
             <span
               key={chip.path}
-              className="bg-muted/60 inline-flex h-5.5 max-w-full items-center gap-1.5 rounded-sm border px-1.5 text-xs"
+              className="inline-flex h-5.5 max-w-full items-center gap-1.5 rounded-sm border bg-muted/60 px-1.5 text-xs"
             >
-              <span className="text-foreground-subtle shrink-0">{chip.field}</span>
+              <span className="shrink-0 text-foreground-subtle">{chip.field}</span>
               {chip.from !== null ? (
                 <span
                   className={cn(
-                    "text-muted-foreground truncate",
-                    chip.to !== null && "decoration-muted-foreground/45 line-through",
+                    "truncate text-muted-foreground",
+                    chip.to !== null && "line-through decoration-muted-foreground/45",
                   )}
                 >
                   {chip.from}
@@ -161,14 +161,14 @@ function WhatCell({
               {chip.from !== null && chip.to !== null ? (
                 <ArrowNarrowRightIcon
                   aria-hidden
-                  className="text-foreground-subtle size-3 shrink-0"
+                  className="size-3 shrink-0 text-foreground-subtle"
                 />
               ) : null}
               {chip.to !== null ? <span className="truncate">{chip.to}</span> : null}
             </span>
           ))}
           {more > 0 ? (
-            <span className="text-muted-foreground inline-flex h-5.5 items-center px-1 text-xs">
+            <span className="inline-flex h-5.5 items-center px-1 text-xs text-muted-foreground">
               {t("{0, plural, one {+# field} other {+# fields}}", more)}
             </span>
           ) : null}
@@ -182,7 +182,7 @@ function WhatCell({
             event.stopPropagation();
             onToggleRequest(entry.id);
           }}
-          className="ui-focus-ring text-muted-foreground hover:text-foreground inline-flex h-5.5 items-center gap-1 self-start rounded-sm px-1 text-xs"
+          className="inline-flex h-5.5 items-center gap-1 self-start rounded-sm ui-focus-ring px-1 text-xs text-muted-foreground hover:text-foreground"
         >
           <ChevronRightIcon
             aria-hidden
@@ -228,7 +228,7 @@ export function getTrailColumns(
         <HoverCardTimestamp
           timestamp={row.original.timestamp}
           showDate={false}
-          className="text-muted-foreground pt-0.5 text-sm"
+          className="pt-0.5 text-sm text-muted-foreground"
         />
       ),
       size: 120,
@@ -255,7 +255,7 @@ export function getTrailColumns(
             <ActorMark kind={kind} name={name} user={user} />
             <div className="flex min-w-0 flex-col">
               <span className="truncate font-medium">{name}</span>
-              <span className="text-muted-foreground truncate text-xs">
+              <span className="truncate text-xs text-muted-foreground">
                 {actorSubtitle(t, kind, channel, user?.emailAddress)}
               </span>
             </div>
@@ -304,13 +304,13 @@ export function getTrailColumns(
       header: t("Record"),
       cell: ({ row }) => (
         <div className="flex min-w-0 flex-col py-0.5">
-          <span className="text-foreground-subtle truncate text-xs">
+          <span className="truncate text-xs text-foreground-subtle">
             {resourceLabel(row.original.resource)}
           </span>
           {row.original.entityRef ? (
             <span className="truncate">{row.original.entityRef}</span>
           ) : (
-            <span className="text-muted-foreground truncate font-mono text-xs">
+            <span className="truncate font-mono text-xs text-muted-foreground">
               {row.original.resourceId}
             </span>
           )}
@@ -337,7 +337,7 @@ export function getTrailColumns(
           (CHANNEL_SHORT_LABELS as Record<string, string>)[row.original.channel] ??
           channelLabel(row.original.channel);
         return (
-          <span className="text-muted-foreground flex min-w-0 items-center gap-1.5 py-0.5">
+          <span className="flex min-w-0 items-center gap-1.5 py-0.5 text-muted-foreground">
             <Icon aria-hidden className="size-3.5 shrink-0" />
             <span className="truncate">{label}</span>
           </span>

@@ -353,11 +353,7 @@ func (s *Service) prepare(evalCase *agentquality.EvalCase) error {
 
 	multiErr := errortypes.NewMultiError()
 	evalCase.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 func (s *Service) save(

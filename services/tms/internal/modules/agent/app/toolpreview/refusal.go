@@ -52,7 +52,7 @@ func Reasons(err error) []agentpreview.PreviewReason {
 		return nil
 	}
 
-	if multiErr, ok := errors.AsType[*errortypes.MultiError](err); ok && multiErr.HasErrors() {
+	if multiErr, ok := errortypes.RefusalOf(err); ok && multiErr.HasErrors() {
 		reasons := make(
 			[]agentpreview.PreviewReason,
 			0,
@@ -63,7 +63,7 @@ func Reasons(err error) []agentpreview.PreviewReason {
 				break
 			}
 			if fieldErr != nil {
-				reasons = append(reasons, fieldReason(fieldErr.Field, fieldErr.Error()))
+				reasons = append(reasons, fieldReason(fieldErr.Field(), fieldErr.Error()))
 			}
 		}
 
@@ -71,7 +71,7 @@ func Reasons(err error) []agentpreview.PreviewReason {
 	}
 
 	if fieldErr, ok := errors.AsType[*errortypes.Error](err); ok {
-		return []agentpreview.PreviewReason{fieldReason(fieldErr.Field, fieldErr.Error())}
+		return []agentpreview.PreviewReason{fieldReason(fieldErr.Field(), fieldErr.Error())}
 	}
 
 	if businessErr, ok := errors.AsType[*errortypes.BusinessError](err); ok {

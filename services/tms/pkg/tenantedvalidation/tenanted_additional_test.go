@@ -307,11 +307,11 @@ func TestTenantedValidator_CompositeUniqueness_NilFieldValue(t *testing.T) {
 func TestTenantedValidator_CustomRule_ReturnsError(t *testing.T) {
 	t.Parallel()
 
-	rule := validationframework.NewTenantedRule[*mockTenantedEntity]("error_rule").
+	rule := validationframework.NewRule[*mockTenantedEntity]("error_rule").
 		OnCreate().
 		WithValidation(func(
 			_ context.Context,
-			_ *mockTenantedEntity, _ *validationframework.TenantedValidationContext,
+			_ *mockTenantedEntity, _ *validationframework.Context,
 			_ *errortypes.MultiError,
 		) error {
 			return errors.New("custom rule system error")
@@ -332,11 +332,11 @@ func TestTenantedValidator_CustomRule_OnBoth(t *testing.T) {
 	t.Parallel()
 
 	callCount := 0
-	rule := validationframework.NewTenantedRule[*mockTenantedEntity]("both_rule").
+	rule := validationframework.NewRule[*mockTenantedEntity]("both_rule").
 		OnBoth().
 		WithValidation(func(
 			_ context.Context,
-			_ *mockTenantedEntity, _ *validationframework.TenantedValidationContext,
+			_ *mockTenantedEntity, _ *validationframework.Context,
 			_ *errortypes.MultiError,
 		) error {
 			callCount++
@@ -820,11 +820,11 @@ func TestTenantedValidator_ReferenceCheck_NotFoundDefaultMessage(t *testing.T) {
 func TestTenantedValidator_CustomRule_SkippedOnWrongMode(t *testing.T) {
 	t.Parallel()
 
-	rule := validationframework.NewTenantedRule[*mockTenantedEntity]("update_only_rule").
+	rule := validationframework.NewRule[*mockTenantedEntity]("update_only_rule").
 		OnUpdate().
 		WithValidation(func(
 			_ context.Context,
-			_ *mockTenantedEntity, _ *validationframework.TenantedValidationContext,
+			_ *mockTenantedEntity, _ *validationframework.Context,
 			multiErr *errortypes.MultiError,
 		) error {
 			multiErr.Add("x", errortypes.ErrInvalid, "should not appear")

@@ -23,8 +23,8 @@ const (
 )
 
 var (
-	_ pagination.CursorEntity            = (*Return)(nil)
-	_ validationframework.TenantedEntity = (*Return)(nil)
+	_ pagination.CursorEntity    = (*Return)(nil)
+	_ validationframework.Entity = (*Return)(nil)
 )
 
 // Quarterly fuel tax returns

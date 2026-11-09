@@ -1073,6 +1073,8 @@ var itemsTable = schema.Table{
 		{Name: "due_source", Quoted: `"due_source"`, Field: "DueSource", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Due Source`, JSON: `dueSource`, Enum: enumDueSource[:]},
 		{Name: "record_kind", Quoted: `"record_kind"`, Field: "RecordKind", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Record Kind`, JSON: `recordKind`, Enum: enumRecordkindKind[:]},
 		{Name: "record_label", Quoted: `"record_label"`, Field: "RecordLabel", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Record Label`, JSON: `recordLabel`},
+		{Name: "about_kind", Quoted: `"about_kind"`, Field: "AboutKind", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `About Kind`, Doc: `AboutKind and AboutID name the business record the item is about, which the Desk groups by. Empty when the item is about nothing beyond itself.`, JSON: `aboutKind`, Enum: enumRecordkindKind[:]},
+		{Name: "about_id", Quoted: `"about_id"`, Field: "AboutID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `About ID`, JSON: `aboutId`},
 		{Name: "facts", Quoted: `"facts"`, Field: "Facts", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Facts`, JSON: `facts`},
 		{Name: "impact", Quoted: `"impact"`, Field: "Impact", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Impact`, JSON: `impact`},
 		{Name: "trail", Quoted: `"trail"`, Field: "Trail", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Trail`, JSON: `trail`},
@@ -1088,14 +1090,14 @@ var itemsTable = schema.Table{
 	},
 	PK:           []int32{0, 1, 2},
 	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 38},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 40},
 	Returning:    nil,
-	Version:      36,
+	Version:      38,
 	AutoID:       0,
-	AutoCreate:   37,
-	AutoUpdate:   38,
+	AutoCreate:   39,
+	AutoUpdate:   40,
 	IDPrefix:     "wt_",
 	New:          newItem,
 	NewN:         newNItem,
@@ -1139,6 +1141,8 @@ type ItemsTable struct {
 	DueSource         DueSourceCol
 	RecordKind        keelkinds.RecordkindKindCol
 	RecordLabel       keel.StringCol
+	AboutKind         keelkinds.RecordkindKindCol
+	AboutID           keelkinds.PulidIDCol
 	Facts             keel.JSONBCol
 	Impact            keel.JSONBCol
 	Trail             keel.JSONBCol
@@ -1185,18 +1189,20 @@ var Items = &ItemsTable{
 	DueSource:         DueSourceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &itemsRef, Index: 26}}},
 	RecordKind:        keelkinds.RecordkindKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &itemsRef, Index: 27}}},
 	RecordLabel:       keel.StringCol{Col: keel.Col{Ref: &itemsRef, Index: 28}},
-	Facts:             keel.JSONBCol{Col: keel.Col{Ref: &itemsRef, Index: 29}},
-	Impact:            keel.JSONBCol{Col: keel.Col{Ref: &itemsRef, Index: 30}},
-	Trail:             keel.JSONBCol{Col: keel.Col{Ref: &itemsRef, Index: 31}},
-	AgentDefinitionID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &itemsRef, Index: 32}}},
-	AgentRunID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &itemsRef, Index: 33}}},
-	AgentHandedAt:     keel.Int64Col{Col: keel.Col{Ref: &itemsRef, Index: 34}},
-	AgentHandedByID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &itemsRef, Index: 35}}},
-	Version:           keel.Int64Col{Col: keel.Col{Ref: &itemsRef, Index: 36}},
-	CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: &itemsRef, Index: 37}},
-	UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: &itemsRef, Index: 38}},
-	Inserted:          keel.BoolCol{Col: keel.Col{Ref: &itemsRef, Index: 39}},
-	Reopened:          keel.BoolCol{Col: keel.Col{Ref: &itemsRef, Index: 40}},
+	AboutKind:         keelkinds.RecordkindKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &itemsRef, Index: 29}}},
+	AboutID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &itemsRef, Index: 30}}},
+	Facts:             keel.JSONBCol{Col: keel.Col{Ref: &itemsRef, Index: 31}},
+	Impact:            keel.JSONBCol{Col: keel.Col{Ref: &itemsRef, Index: 32}},
+	Trail:             keel.JSONBCol{Col: keel.Col{Ref: &itemsRef, Index: 33}},
+	AgentDefinitionID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &itemsRef, Index: 34}}},
+	AgentRunID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &itemsRef, Index: 35}}},
+	AgentHandedAt:     keel.Int64Col{Col: keel.Col{Ref: &itemsRef, Index: 36}},
+	AgentHandedByID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &itemsRef, Index: 37}}},
+	Version:           keel.Int64Col{Col: keel.Col{Ref: &itemsRef, Index: 38}},
+	CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: &itemsRef, Index: 39}},
+	UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: &itemsRef, Index: 40}},
+	Inserted:          keel.BoolCol{Col: keel.Col{Ref: &itemsRef, Index: 41}},
+	Reopened:          keel.BoolCol{Col: keel.Col{Ref: &itemsRef, Index: 42}},
 }
 
 // BuildItems builds the table of watchtower_items for ref. Generated relation and alias methods call it.
@@ -1232,18 +1238,20 @@ func BuildItems(r *keel.Ref) *ItemsTable {
 		DueSource:         DueSourceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 26}}},
 		RecordKind:        keelkinds.RecordkindKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 27}}},
 		RecordLabel:       keel.StringCol{Col: keel.Col{Ref: r, Index: 28}},
-		Facts:             keel.JSONBCol{Col: keel.Col{Ref: r, Index: 29}},
-		Impact:            keel.JSONBCol{Col: keel.Col{Ref: r, Index: 30}},
-		Trail:             keel.JSONBCol{Col: keel.Col{Ref: r, Index: 31}},
-		AgentDefinitionID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 32}}},
-		AgentRunID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 33}}},
-		AgentHandedAt:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 34}},
-		AgentHandedByID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 35}}},
-		Version:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 36}},
-		CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 37}},
-		UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 38}},
-		Inserted:          keel.BoolCol{Col: keel.Col{Ref: r, Index: 39}},
-		Reopened:          keel.BoolCol{Col: keel.Col{Ref: r, Index: 40}},
+		AboutKind:         keelkinds.RecordkindKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 29}}},
+		AboutID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 30}}},
+		Facts:             keel.JSONBCol{Col: keel.Col{Ref: r, Index: 31}},
+		Impact:            keel.JSONBCol{Col: keel.Col{Ref: r, Index: 32}},
+		Trail:             keel.JSONBCol{Col: keel.Col{Ref: r, Index: 33}},
+		AgentDefinitionID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 34}}},
+		AgentRunID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 35}}},
+		AgentHandedAt:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 36}},
+		AgentHandedByID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 37}}},
+		Version:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 38}},
+		CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 39}},
+		UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 40}},
+		Inserted:          keel.BoolCol{Col: keel.Col{Ref: r, Index: 41}},
+		Reopened:          keel.BoolCol{Col: keel.Col{Ref: r, Index: 42}},
 	}
 }
 
@@ -1691,28 +1699,32 @@ func ptrItem(p unsafe.Pointer, c int32) any {
 	case 28:
 		return &r.RecordLabel
 	case 29:
-		return &r.Facts
+		return (*string)(unsafe.Pointer(&r.AboutKind))
 	case 30:
-		return &r.Impact
+		return (*string)(unsafe.Pointer(&r.AboutID))
 	case 31:
-		return &r.Trail
+		return &r.Facts
 	case 32:
-		return (*string)(unsafe.Pointer(&r.AgentDefinitionID))
+		return &r.Impact
 	case 33:
-		return (*string)(unsafe.Pointer(&r.AgentRunID))
+		return &r.Trail
 	case 34:
-		return &r.AgentHandedAt
+		return (*string)(unsafe.Pointer(&r.AgentDefinitionID))
 	case 35:
-		return (*string)(unsafe.Pointer(&r.AgentHandedByID))
+		return (*string)(unsafe.Pointer(&r.AgentRunID))
 	case 36:
-		return &r.Version
+		return &r.AgentHandedAt
 	case 37:
-		return &r.CreatedAt
+		return (*string)(unsafe.Pointer(&r.AgentHandedByID))
 	case 38:
-		return &r.UpdatedAt
+		return &r.Version
 	case 39:
-		return &r.Inserted
+		return &r.CreatedAt
 	case 40:
+		return &r.UpdatedAt
+	case 41:
+		return &r.Inserted
+	case 42:
 		return &r.Reopened
 	}
 	return nil
@@ -1837,49 +1849,59 @@ func valueItem(p unsafe.Pointer, c int32) any {
 		}
 		return r.RecordLabel
 	case 29:
+		if r.AboutKind == "" {
+			return nil
+		}
+		return string(r.AboutKind)
+	case 30:
+		if r.AboutID == "" {
+			return nil
+		}
+		return string(r.AboutID)
+	case 31:
 		if r.Facts == nil {
 			return keel.EmptyJSONArray
 		}
 		return r.Facts
-	case 30:
+	case 32:
 		if r.Impact == nil {
 			return keel.EmptyJSONArray
 		}
 		return r.Impact
-	case 31:
+	case 33:
 		if r.Trail == nil {
 			return keel.EmptyJSONArray
 		}
 		return r.Trail
-	case 32:
+	case 34:
 		if r.AgentDefinitionID == "" {
 			return nil
 		}
 		return string(r.AgentDefinitionID)
-	case 33:
+	case 35:
 		if r.AgentRunID == "" {
 			return nil
 		}
 		return string(r.AgentRunID)
-	case 34:
+	case 36:
 		if r.AgentHandedAt == nil {
 			return nil
 		}
 		return *r.AgentHandedAt
-	case 35:
+	case 37:
 		if r.AgentHandedByID == "" {
 			return nil
 		}
 		return string(r.AgentHandedByID)
-	case 36:
-		return r.Version
-	case 37:
-		return r.CreatedAt
 	case 38:
-		return r.UpdatedAt
+		return r.Version
 	case 39:
-		return r.Inserted
+		return r.CreatedAt
 	case 40:
+		return r.UpdatedAt
+	case 41:
+		return r.Inserted
+	case 42:
 		return r.Reopened
 	}
 	return nil

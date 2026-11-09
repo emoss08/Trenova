@@ -17,13 +17,6 @@ func SystemAuditActor() kernelports.AuditActor {
 	}
 }
 
-func AgentAuditActor() kernelports.AuditActor {
-	return kernelports.AuditActor{
-		PrincipalType: PrincipalTypeAgent,
-		PrincipalID:   AgentPrincipalID,
-	}
-}
-
 // UserActor is the person a tenant scope was read for, as an actor: the
 // user named by its UserID, in its organization and business unit. It is
 // for code that holds only the scope, such as a request's loaders or a

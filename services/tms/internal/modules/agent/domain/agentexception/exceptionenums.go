@@ -111,20 +111,3 @@ func (c ExceptionCategory) IsValid() bool {
 		return false
 	}
 }
-
-func ExceptionCategoryFromValidationCode(code string) ExceptionCategory {
-	switch code {
-	case "missing_bol":
-		return CategoryMissingBOL
-	case "rate_missing_basis":
-		return CategoryRateMissingBasis
-	case "rate_variance_requires_action":
-		return CategoryRateVarianceRequiresAction
-	case "unresolved_service_failures":
-		return CategoryUnresolvedServiceFailures
-	case "missing_required_document":
-		return CategoryMissingRequiredDocument
-	default:
-		return CategoryOther
-	}
-}

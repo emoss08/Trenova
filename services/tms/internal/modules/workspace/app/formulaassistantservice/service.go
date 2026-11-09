@@ -354,10 +354,7 @@ func (r *ProposeRequest) validate() error {
 	case utf8.RuneCountInString(explanation) > MaxExplanationRunes:
 		multiErr.Add("explanation", errortypes.ErrInvalid, "The explanation is too long")
 	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }
 
 func (s *Service) Propose(ctx context.Context, req *ProposeRequest) (*Proposed, error) {

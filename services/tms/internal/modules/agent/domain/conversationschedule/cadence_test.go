@@ -168,7 +168,6 @@ func TestParseRequest(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			require.True(t, IsRequest(tt.text))
 			got, err := ParseRequest(tt.text)
 			require.NoError(t, err)
 			assert.Equal(t, tt.cadence, got.Cadence)
@@ -185,7 +184,7 @@ A question that only happens to start with "every" is a question. Only the
 /schedule command insists, and then a cadence it cannot read is an error the
 person can fix rather than a turn the agent answers once.
 */
-func TestIsRequestLeavesOrdinaryQuestionsAlone(t *testing.T) {
+func TestParseRequestLeavesOrdinaryQuestionsAlone(t *testing.T) {
 	t.Parallel()
 
 	for _, text := range []string{
@@ -196,11 +195,10 @@ func TestIsRequestLeavesOrdinaryQuestionsAlone(t *testing.T) {
 		"Daily revenue for last week?",
 		"daily active drivers by terminal",
 	} {
-		assert.False(t, IsRequest(text), text)
+		_, err := ParseRequest(text)
+		require.Error(t, err, text)
 	}
 
-	assert.True(t, IsRequest("/schedule"))
-	assert.True(t, IsRequest("/schedule hourly, check the board"))
 	_, err := ParseRequest("/schedule hourly, check the board")
 	require.Error(t, err)
 }
@@ -345,7 +343,6 @@ func TestParseRequestInSpanish(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			require.True(t, IsRequest(tt.text))
 			got, err := ParseRequest(tt.text)
 			require.NoError(t, err)
 			assert.Equal(t, tt.cadence, got.Cadence)
@@ -446,7 +443,6 @@ func TestParseRequestInChinese(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			require.True(t, IsRequest(tt.text))
 			got, err := ParseRequest(tt.text)
 			require.NoError(t, err)
 			assert.Equal(t, tt.cadence, got.Cadence)
@@ -461,7 +457,7 @@ func TestParseRequestInChinese(t *testing.T) {
 English does; Chinese also needs the /schedule command, a time or a
 separator right after the cadence.
 */
-func TestIsRequestLeavesOrdinaryQuestionsAloneInEveryLanguage(t *testing.T) {
+func TestParseRequestLeavesOrdinaryQuestionsAloneInEveryLanguage(t *testing.T) {
 	t.Parallel()
 
 	for _, text := range []string{
@@ -477,7 +473,6 @@ func TestIsRequestLeavesOrdinaryQuestionsAloneInEveryLanguage(t *testing.T) {
 		"每个司机每天跑多少？",
 		"今天每天8点",
 	} {
-		assert.False(t, IsRequest(text), text)
 		_, err := ParseRequest(text)
 		require.Error(t, err, text)
 	}

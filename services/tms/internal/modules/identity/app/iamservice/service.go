@@ -806,7 +806,7 @@ func (s *service) UpdateAccessPolicy(
 	return updated, nil
 }
 
-func accessPolicyTargetErrors(entity *iam.AccessPolicy) *errortypes.MultiError {
+func accessPolicyTargetErrors(entity *iam.AccessPolicy) error {
 	registry := permissioncatalog.Default()
 	multiErr := errortypes.NewMultiError()
 
@@ -830,11 +830,7 @@ func accessPolicyTargetErrors(entity *iam.AccessPolicy) *errortypes.MultiError {
 		)
 	}
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 func prepareAccessPolicy(entity *iam.AccessPolicy) {

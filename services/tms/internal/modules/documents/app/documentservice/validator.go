@@ -8,6 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/config/storageconfig"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/fieldpath"
 	"github.com/emoss08/trenova/shared/fileutils"
 	"go.uber.org/fx"
 )
@@ -49,6 +50,8 @@ type Validator struct {
 	allowedMIMETypes []string
 }
 
+const fileField = "file"
+
 func NewValidator(p ValidatorParams) *Validator {
 	cfg := p.StorageConfig
 	return &Validator{
@@ -57,62 +60,47 @@ func NewValidator(p ValidatorParams) *Validator {
 	}
 }
 
-func (v *Validator) ValidateFile(file *multipart.FileHeader) *errortypes.MultiError {
-	return v.validateFileMetadata(file.Filename, file.Size, file.Header.Get("Content-Type"))
+func (v *Validator) ValidateFile(file *multipart.FileHeader) error {
+	return v.ValidateUploadMetadata(file.Filename, file.Size, file.Header.Get("Content-Type"))
 }
 
 func (v *Validator) ValidateUploadMetadata(
 	filename string,
 	size int64,
 	contentType string,
-) *errortypes.MultiError {
-	return v.validateFileMetadata(filename, size, contentType)
+) error {
+	multiErr := errortypes.NewMultiError()
+	v.checkFile(multiErr, fieldpath.Of(fieldpath.Key(fileField)), filename, size, contentType)
+
+	return multiErr.Err()
 }
 
-func (v *Validator) validateFileMetadata(
+func (v *Validator) checkFile(
+	multiErr *errortypes.MultiError,
+	path fieldpath.Path,
 	filename string,
 	size int64,
 	contentType string,
-) *errortypes.MultiError {
-	multiErr := errortypes.NewMultiError()
-
+) {
 	if size > v.maxFileSize {
-		multiErr.Add(
-			"file",
-			errortypes.ErrInvalidLength,
-			"File size exceeds maximum allowed size",
-		)
+		multiErr.AddAt(path, errortypes.ErrInvalidLength, "File size exceeds maximum allowed size")
 	}
 
 	if size == 0 {
-		multiErr.Add(
-			"file",
-			errortypes.ErrRequired,
-			"File cannot be empty",
-		)
+		multiErr.AddAt(path, errortypes.ErrRequired, "File cannot be empty")
 	}
 
 	if slices.Contains(dangerousExtensions, fileExtension(filename)) {
-		multiErr.Add(
-			"file",
+		multiErr.AddAt(
+			path,
 			errortypes.ErrInvalidFormat,
 			"File type is not allowed for security reasons",
 		)
 	}
 
 	if !v.allowsContentType(resolvedContentType(filename, contentType)) {
-		multiErr.Add(
-			"file",
-			errortypes.ErrInvalidFormat,
-			"File type is not allowed",
-		)
+		multiErr.AddAt(path, errortypes.ErrInvalidFormat, "File type is not allowed")
 	}
-
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
 }
 
 func fileExtension(filename string) string {
@@ -133,24 +121,18 @@ func (v *Validator) allowsContentType(contentType string) bool {
 	return mediaType != "" && slices.Contains(v.allowedMIMETypes, mediaType)
 }
 
-func (v *Validator) ValidateFiles(files []*multipart.FileHeader) *errortypes.MultiError {
+func (v *Validator) ValidateFiles(files []*multipart.FileHeader) error {
 	multiErr := errortypes.NewMultiError()
 
 	for i, file := range files {
-		if fileErr := v.ValidateFile(file); fileErr != nil {
-			for _, err := range fileErr.Errors {
-				multiErr.Add(
-					err.Field+"["+string(rune('0'+i))+"]",
-					err.Code,
-					err.Message,
-				)
-			}
-		}
+		v.checkFile(
+			multiErr,
+			fieldpath.Of(fieldpath.Key(fileField), fieldpath.Index(i)),
+			file.Filename,
+			file.Size,
+			file.Header.Get("Content-Type"),
+		)
 	}
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }

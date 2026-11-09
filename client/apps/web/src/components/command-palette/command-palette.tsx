@@ -1,3 +1,8 @@
+import { usePermission } from "@/hooks/use-permission";
+import { assistant } from "@/lib/queries/assistant";
+import { Operation, Resource } from "@trenova/shared/types/permission";
+import { useMatch } from "react-router";
+import { conversationPage, type ConversationHits } from "./palette-conversations";
 import { turnFailureDetail } from "@/components/assistant/follow-turn";
 import { useAsk } from "@/components/assistant/use-ask";
 import { usePageContext } from "@/components/assistant/use-page-context";
@@ -15,7 +20,7 @@ import { useLatestCallback } from "@trenova/shared/hooks/use-latest-callback";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { getNameInitials } from "@trenova/shared/lib/utils";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
-import { useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Suspense,
   useCallback,
@@ -189,6 +194,9 @@ export function CommandPalette() {
   const queryClient = useQueryClient();
   const open = useCommandPaletteStore((state) => state.open);
   const setOpen = useCommandPaletteStore((state) => state.setOpen);
+  const takeRequestedScope = useCommandPaletteStore((state) => state.takeRequestedScope);
+  const { allowed: canConverse } = usePermission(Resource.Assistant, Operation.Read);
+  const inDesk = useMatch("/desk/*") !== null;
   const organizationId = useAuthStore((state) => state.user?.currentOrganizationId);
   const recordOpen = useRecentRecordsStore((state) => state.recordOpen);
 
@@ -207,7 +215,10 @@ export function CommandPalette() {
   const unread = useUnreadCount();
   const catalog = usePaletteCatalog(unread);
   const readableTypes = useReadableRecordTypes();
-  const scopes = useMemo(() => paletteScopes(readableTypes), [readableTypes]);
+  const scopes = useMemo(
+    () => paletteScopes(readableTypes, canConverse),
+    [canConverse, readableTypes],
+  );
   const available = useMemo<AvailableScopes>(
     () => new Set(scopes.filter((option): option is SearchableEntityType => option !== "all")),
     [scopes],
@@ -242,7 +253,45 @@ export function CommandPalette() {
     query: debouncedRecordQuery,
     scope: effectiveScope,
   });
+  const searchesConversations =
+    open &&
+    canConverse &&
+    view.askSubject === null &&
+    (effectiveScope === "conversations" ||
+      (inDesk && effectiveScope === "all" && debouncedRecordQuery.trim().length >= 2));
+  const conversationQuery = useQuery({
+    ...assistant.deskSearch(debouncedRecordQuery.trim(), "all"),
+    enabled: searchesConversations,
+    placeholderData: keepPreviousData,
+  });
+  const conversations = useMemo<ConversationHits | null>(
+    () =>
+      searchesConversations
+        ? {
+            pages: (conversationQuery.data ?? []).map((result) => conversationPage(result, t)),
+            loading: conversationQuery.isPending,
+            error: conversationQuery.isError,
+          }
+        : null,
+    [
+      conversationQuery.data,
+      conversationQuery.isError,
+      conversationQuery.isPending,
+      searchesConversations,
+      t,
+    ],
+  );
   const settling = view !== typed || recordQuery !== debouncedRecordQuery || remote.refreshing;
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+    const requested = takeRequestedScope();
+    if (requested !== null) {
+      setScope(requested);
+    }
+  }, [open, takeRequestedScope]);
 
   const getPageContext = usePageContext();
   const {
@@ -355,6 +404,7 @@ export function CommandPalette() {
         remote,
         ranking,
         recentRecords: home.recentRecords,
+        conversations,
       },
       t,
     );
@@ -366,6 +416,7 @@ export function CommandPalette() {
     asked,
     effectiveScope,
     home,
+    conversations,
     question,
     ranking,
     remote,
@@ -379,9 +430,9 @@ export function CommandPalette() {
   const counts = useMemo(
     () =>
       view.askSubject === null && trimmedQuery !== ""
-        ? scopeCounts(ranking, remote, commandText !== null ? "commands" : "search")
+        ? scopeCounts(ranking, remote, commandText !== null ? "commands" : "search", conversations)
         : null,
-    [commandText, ranking, remote, trimmedQuery, view.askSubject],
+    [commandText, conversations, ranking, remote, trimmedQuery, view.askSubject],
   );
 
   const items = useMemo(() => flattenSections(sections), [sections]);

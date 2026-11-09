@@ -567,9 +567,33 @@ describe("scopeCounts", () => {
       customer: 1,
       worker: 0,
       document: 0,
+      invoice: 0,
       pages: 0,
       commands: 0,
+      conversations: 0,
     });
+  });
+
+  it("adds the conversations found to the all count once their search settles", () => {
+    const found = { pages: [page({ title: "Rate for ACME" }), page({ title: "ACME detention" })] };
+
+    const counts = scopeCounts(ranking, settled([SHIPMENT_GROUP]), "search", {
+      ...found,
+      loading: false,
+      error: false,
+    });
+
+    expect(counts.conversations).toBe(2);
+    expect(counts.all).toBe(9);
+  });
+
+  it("counts no conversations while their search runs or in command mode", () => {
+    const hits = { pages: [page({ title: "Rate for ACME" })], loading: false, error: false };
+
+    expect(
+      scopeCounts(ranking, IDLE_REMOTE, "search", { ...hits, loading: true }).conversations,
+    ).toBe(0);
+    expect(scopeCounts(ranking, IDLE_REMOTE, "commands", hits).conversations).toBe(0);
   });
 
   it("leaves record types uncounted while the search is still running", () => {
@@ -595,10 +619,12 @@ describe("scopeCounts", () => {
       all: 1,
       pages: 0,
       commands: 1,
+      conversations: 0,
       shipment: 0,
       customer: 0,
       worker: 0,
       document: 0,
+      invoice: 0,
     });
   });
 

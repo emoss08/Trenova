@@ -287,7 +287,7 @@ func (s *Service) upsertCostEvent(
 	multiErr := errortypes.NewMultiError()
 	event.Validate(multiErr)
 	if multiErr.HasErrors() {
-		return multiErr
+		return multiErr.Err()
 	}
 
 	created, err := s.costEventRepo.Create(ctx, event)

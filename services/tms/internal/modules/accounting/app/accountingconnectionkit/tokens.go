@@ -71,10 +71,7 @@ func (k *Kit) Connect(
 
 	multiErr := errortypes.NewMultiError()
 	conn.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }
 
 func (k *Kit) RevokeStored(

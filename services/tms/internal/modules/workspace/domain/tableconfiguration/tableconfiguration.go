@@ -13,8 +13,8 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*TableConfiguration)(nil)
-	_ domaintypes.PostgresSearchable     = (*TableConfiguration)(nil)
+	_ validationframework.Entity     = (*TableConfiguration)(nil)
+	_ domaintypes.PostgresSearchable = (*TableConfiguration)(nil)
 )
 
 type ColumnPinning struct {

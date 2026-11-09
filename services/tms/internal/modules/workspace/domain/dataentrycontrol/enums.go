@@ -1,9 +1,5 @@
 package dataentrycontrol
 
-import "errors"
-
-var ErrInvalidCaseFormat = errors.New("invalid case format")
-
 type CaseFormat string
 
 const (
@@ -23,20 +19,5 @@ func (c CaseFormat) IsValid() bool {
 		return true
 	default:
 		return false
-	}
-}
-
-func CaseFormatFromString(s string) (CaseFormat, error) {
-	switch s {
-	case "AsEntered":
-		return CaseFormatAsEntered, nil
-	case "Upper":
-		return CaseFormatUpper, nil
-	case "Lower":
-		return CaseFormatLower, nil
-	case "TitleCase":
-		return CaseFormatTitleCase, nil
-	default:
-		return "", ErrInvalidCaseFormat
 	}
 }

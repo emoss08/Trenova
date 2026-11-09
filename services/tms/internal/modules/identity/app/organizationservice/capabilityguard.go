@@ -107,11 +107,7 @@ func (s *service) guardCapabilityDisable(
 		)
 	}
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 func (s *service) describeBrokerageDependencies(

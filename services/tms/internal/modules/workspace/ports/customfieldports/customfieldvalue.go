@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/customfield"
-	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -73,5 +72,5 @@ type NamedValues interface {
 		resourceType string,
 		resourceID string,
 		values map[string]any,
-	) *errortypes.MultiError
+	) error
 }

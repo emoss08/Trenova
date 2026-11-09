@@ -42,7 +42,6 @@ type ReflectionPlan struct {
 	Taint             *agent.RunTaint                       `json:"taint,omitempty"`
 	Signals           agentreflection.ReflectionSignals     `json:"signals"`
 	Subjects          []ReflectionSubjectRef                `json:"subjects,omitempty"`
-	ToolNames         []string                              `json:"toolNames,omitempty"`
 	KnownMemoryIDs    []pulid.ID                            `json:"knownMemoryIds,omitempty"`
 	Request           *llmports.StructuredCompletionRequest `json:"request,omitempty"`
 }

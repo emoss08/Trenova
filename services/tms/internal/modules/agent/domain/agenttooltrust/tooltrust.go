@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*ToolTrust)(nil)
+	_ validationframework.Entity = (*ToolTrust)(nil)
 )
 
 // ToolTrust is the ledger behind earned autonomy: one row per agent and tool,

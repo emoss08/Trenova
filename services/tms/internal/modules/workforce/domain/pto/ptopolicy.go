@@ -2,7 +2,6 @@ package pto
 
 import (
 	"context"
-	"errors"
 	"strconv"
 	"time"
 
@@ -16,12 +15,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/shopspring/decimal"
-)
-
-var (
-	ErrInvalidPTOPolicyStatus  = errors.New("invalid PTO policy status")
-	ErrInvalidPTOYearBasis     = errors.New("invalid PTO year basis")
-	ErrInvalidPTOAccrualMethod = errors.New("invalid PTO accrual method")
 )
 
 type PTOPolicyStatus string
@@ -41,14 +34,6 @@ func (s PTOPolicyStatus) IsValid() bool {
 	default:
 		return false
 	}
-}
-
-func PTOPolicyStatusFromString(s string) (PTOPolicyStatus, error) {
-	status := PTOPolicyStatus(s)
-	if !status.IsValid() {
-		return "", ErrInvalidPTOPolicyStatus
-	}
-	return status, nil
 }
 
 type PTOYearBasis string
@@ -90,8 +75,6 @@ func (m PTOAccrualMethod) IsValid() bool {
 	}
 }
 
-var ErrInvalidPTOTerminationAction = errors.New("invalid PTO termination action")
-
 // PTOTerminationAction decides what happens to a positive balance when the
 // worker's employment ends.
 type PTOTerminationAction string
@@ -122,9 +105,9 @@ type PTOAccrualTier struct {
 }
 
 var (
-	_ domaintypes.PostgresSearchable     = (*PTOPolicy)(nil)
-	_ pagination.CursorEntity            = (*PTOPolicy)(nil)
-	_ validationframework.TenantedEntity = (*PTOPolicy)(nil)
+	_ domaintypes.PostgresSearchable = (*PTOPolicy)(nil)
+	_ pagination.CursorEntity        = (*PTOPolicy)(nil)
+	_ validationframework.Entity     = (*PTOPolicy)(nil)
 )
 
 type PTOPolicy struct {

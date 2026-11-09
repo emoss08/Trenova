@@ -128,6 +128,15 @@ func (q textQuery) fallback() *textMatch {
 	return &textMatch{text: strings.Join(pairs, " | "), mode: keel.TSQuery}
 }
 
+func anyTermMatch(terms []string) *textMatch {
+	prefixes := fallbackTerms(terms)
+	if len(prefixes) == 0 {
+		return nil
+	}
+
+	return &textMatch{text: strings.Join(prefixes, " | "), mode: keel.TSQuery}
+}
+
 func hasWebsearchOperators(query string) bool {
 	if strings.Contains(query, `"`) {
 		return true

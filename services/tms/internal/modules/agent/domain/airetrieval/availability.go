@@ -18,8 +18,6 @@ const (
 
 var allowedDimensions = []int{Dimensions768, Dimensions1024, Dimensions1536}
 
-func AllowedDimensions() []int { return slices.Clone(allowedDimensions) }
-
 func IsAllowedDimension(dimensions int) bool {
 	return slices.Contains(allowedDimensions, dimensions)
 }

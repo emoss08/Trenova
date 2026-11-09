@@ -117,7 +117,7 @@ func CSATimeWeight(occurredAt, now int64) int32 {
 }
 
 var (
-	_ validationframework.TenantedEntity = (*WorkerSafetyViolation)(nil)
+	_ validationframework.Entity = (*WorkerSafetyViolation)(nil)
 )
 
 // WorkerSafetyViolation is one violation cited on a safety event. A roadside

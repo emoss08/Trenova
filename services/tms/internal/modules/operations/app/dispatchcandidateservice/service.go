@@ -325,6 +325,7 @@ func (s *Service) loadWorkersAndEquipment(
 		TractorIDs: tractorIDs,
 		TractorRelationIncludes: tractorports.TractorRelationIncludes{
 			IncludeLastKnownLocation: true,
+			IncludeInProgressMove:    true,
 		},
 	})
 	if err != nil {

@@ -1,10 +1,10 @@
 package errortypes
 
 import (
-	"errors"
 	"strconv"
 	"strings"
 
+	"github.com/emoss08/trenova/pkg/fieldpath"
 	"github.com/emoss08/trenova/shared/inflect"
 	"github.com/emoss08/trenova/shared/textcase"
 )
@@ -13,7 +13,7 @@ func IsRefusal(err error) bool {
 	if err == nil {
 		return false
 	}
-	if _, ok := errors.AsType[*MultiError](err); ok {
+	if IsMultiError(err) {
 		return true
 	}
 	return IsBusinessError(err) || IsError(err) || IsNotFoundError(err) || IsConflictError(err)
@@ -23,10 +23,11 @@ func Summary(err error) string {
 	if err == nil {
 		return ""
 	}
-	if multiErr, ok := errors.AsType[*MultiError](err); ok && len(multiErr.Errors) > 0 {
-		messages := make([]string, 0, len(multiErr.Errors))
-		for _, fieldErr := range multiErr.Errors {
-			messages = append(messages, located(fieldErr.Field, fieldErr.Error()))
+	if multiErr, ok := RefusalOf(err); ok && len(multiErr.top().Errors) > 0 {
+		fieldErrs := multiErr.top().Errors
+		messages := make([]string, 0, len(fieldErrs))
+		for _, fieldErr := range fieldErrs {
+			messages = append(messages, located(fieldErr.Path, fieldErr.Error()))
 		}
 		return strings.Join(messages, "; ")
 	}
@@ -52,7 +53,7 @@ func SummaryOfText(text string) string {
 			messages = append(messages, line)
 			continue
 		}
-		messages = append(messages, located(field, message))
+		messages = append(messages, located(fieldpath.Parse(field), message))
 	}
 	if len(messages) == 0 {
 		return text
@@ -61,8 +62,8 @@ func SummaryOfText(text string) string {
 	return strings.Join(messages, "; ")
 }
 
-func located(field, message string) string {
-	place := fieldPlace(field)
+func located(path fieldpath.Path, message string) string {
+	place := fieldPlace(path)
 	if place == "" {
 		return message
 	}
@@ -70,19 +71,15 @@ func located(field, message string) string {
 	return place + ": " + message
 }
 
-func fieldPlace(field string) string {
+func fieldPlace(path fieldpath.Path) string {
 	parts := make([]string, 0, 2)
-	for segment := range strings.SplitSeq(field, ".") {
-		name, rest, indexed := strings.Cut(segment, "[")
-		if !indexed {
+	for i, segment := range path {
+		if !segment.IsIndex() || i == 0 || path[i-1].IsIndex() || path[i-1].Key() == "" {
 			continue
 		}
-		index, err := strconv.Atoi(strings.TrimSuffix(rest, "]"))
-		if err != nil || name == "" {
-			continue
-		}
+		name := path[i-1].Key()
 		noun := inflect.SingularNoun(strings.ToLower(textcase.HumanizeCamelCaseSentence(name)))
-		parts = append(parts, noun+" "+strconv.Itoa(index+1))
+		parts = append(parts, noun+" "+strconv.Itoa(segment.Index()+1))
 	}
 	if len(parts) == 0 {
 		return ""

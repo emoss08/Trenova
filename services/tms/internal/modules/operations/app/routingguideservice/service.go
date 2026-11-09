@@ -95,7 +95,7 @@ func (s *Service) validateEDIEntries(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	entries []*tender.RoutingGuideEntry,
-) *errortypes.MultiError {
+) error {
 	multiErr := errortypes.NewMultiError()
 	for idx, entry := range entries {
 		if entry == nil || entry.Channel != tender.ChannelEDI {
@@ -124,10 +124,7 @@ func (s *Service) validateEDIEntries(
 		}
 	}
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }
 
 func (s *Service) Create(

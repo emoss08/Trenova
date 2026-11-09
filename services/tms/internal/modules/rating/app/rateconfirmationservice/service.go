@@ -214,7 +214,7 @@ func (s *Service) generate(
 		multiErr := errortypes.NewMultiError()
 		entity.Validate(multiErr)
 		if multiErr.HasErrors() {
-			return multiErr
+			return multiErr.Err()
 		}
 
 		created, txErr = s.repo.Create(txCtx, entity)

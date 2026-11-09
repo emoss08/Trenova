@@ -7,17 +7,33 @@ import (
 )
 
 /*
-show_board refused five figures with "needs 1 to 4 figures" and the agent
-proposed keeping that as a procedure. The refusal says it on every call, so the
-lesson only repeats the tool, and goes stale when the tool changes. The prompt
-rules it out and keeps procedures for what no tool said.
+Of the first 40 memories look backs kept, about 35 described a tool call that
+failed: a wrong argument, a field the tool does not take, an id where a code
+was wanted. Each was a defect in the tool that every organization would learn
+again, and stayed after the tool was fixed. The prompt rules out anything about
+calling a tool, and keeps procedures for how a person showed the work is done.
 */
-func TestSystemPrompt_LeavesOutLessonsAToolsOwnFeedbackAlreadyGives(t *testing.T) {
+func TestSystemPrompt_KeepsNothingAboutHowToCallATool(t *testing.T) {
 	t.Parallel()
 
 	prompt := systemPrompt(&promptInput{HasPerson: true})
 
-	assert.Contains(t, prompt, "what a tool's own refusal, schema or note tells the agent "+
-		"every time it is called")
-	assert.Contains(t, prompt, "when the agent had to find them out and no tool told it")
+	assert.Contains(t, prompt, "anything about how to call a tool")
+	assert.Contains(t, prompt, "A tool that was refused is a defect Trenova fixes in the tool")
+	assert.Contains(t, prompt, "how this organization does a task, as a person showed it")
+	assert.NotContains(t, prompt, "a tool that failed until its input changed")
+	assert.NotContains(t, prompt, "toolName")
+}
+
+func TestOutputSchema_HasNoToolForALessonToBeAbout(t *testing.T) {
+	t.Parallel()
+
+	for _, hasPerson := range []bool{true, false} {
+		schema := outputSchema(hasPerson)
+		lessons := schema["properties"].(map[string]any)["lessons"].(map[string]any)
+		item := lessons["items"].(map[string]any)
+
+		assert.NotContains(t, item["properties"], "toolName")
+		assert.NotContains(t, item["required"], "toolName")
+	}
 }

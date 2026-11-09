@@ -26,7 +26,7 @@ func planRuleAmendment(
 	existing []*rateagreement.RateAgreementRule,
 	submitted []*rateagreement.RateAgreementRule,
 	amendAt int64,
-) (*ruleAmendmentPlan, *errortypes.MultiError) {
+) (*ruleAmendmentPlan, error) {
 	multiErr := errortypes.NewMultiError()
 	plan := &ruleAmendmentPlan{}
 
@@ -92,7 +92,7 @@ func planRuleAmendment(
 	}
 
 	if multiErr.HasErrors() {
-		return nil, multiErr
+		return nil, multiErr.Err()
 	}
 
 	if plan.Empty() {

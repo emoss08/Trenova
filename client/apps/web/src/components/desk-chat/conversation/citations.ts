@@ -21,6 +21,7 @@ const UNCITED = new Set([
   "find_tools",
   "agent_list_memories",
   "agent_create_memory",
+  "agent_edit_memory",
   "publish_artifact",
   "agent_open_page",
   "agent_raise_exception",

@@ -17,9 +17,9 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*AgentRun)(nil)
-	_ pagination.CursorEntity            = (*AgentRun)(nil)
-	_ domaintypes.PostgresSearchable     = (*AgentRun)(nil)
+	_ validationframework.Entity     = (*AgentRun)(nil)
+	_ pagination.CursorEntity        = (*AgentRun)(nil)
+	_ domaintypes.PostgresSearchable = (*AgentRun)(nil)
 )
 
 type AgentRun struct {

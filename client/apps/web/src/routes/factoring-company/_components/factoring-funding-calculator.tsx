@@ -255,7 +255,7 @@ export function FactoringFundingCalculator({
   };
   const figure = (minor: number | undefined) =>
     minor === undefined ? (
-      <span className="ui-shimmer inline-block h-5 w-20 rounded-sm" />
+      <span className="inline-block h-5 w-20 ui-shimmer rounded-sm" />
     ) : (
       formatMinor(minor)
     );
@@ -265,8 +265,8 @@ export function FactoringFundingCalculator({
       <div className="flex flex-col gap-4 border-b p-4 md:border-r md:border-b-0">
         <div className="flex flex-col gap-1.5">
           <Label htmlFor={amountId}>{t("Invoice amount")}</Label>
-          <div className="ui-field ui-container-focus-ring flex h-9 items-center gap-1 px-2.5">
-            <span aria-hidden className="text-foreground-subtle text-base">
+          <div className="flex h-9 items-center gap-1 ui-field ui-container-focus-ring px-2.5">
+            <span aria-hidden className="text-base text-foreground-subtle">
               {currencySymbol()}
             </span>
             <NumericFormat
@@ -280,7 +280,7 @@ export function FactoringFundingCalculator({
               allowNegative={false}
               inputMode="decimal"
               placeholder="0.00"
-              className="placeholder:text-foreground-subtle min-w-0 flex-1 bg-transparent text-lg font-medium tabular-nums outline-none"
+              className="min-w-0 flex-1 bg-transparent text-lg font-medium tabular-nums outline-none placeholder:text-foreground-subtle"
             />
           </div>
         </div>
@@ -301,7 +301,7 @@ export function FactoringFundingCalculator({
               {t("{0, plural, one {# day} other {# days}}", days)}
             </output>
           </div>
-          <p className="text-muted-foreground text-xs">
+          <p className="text-xs text-muted-foreground">
             {t(
               "The days left pick the fee tier. Net 30 submitted the day it's invoiced has 30 left.",
             )}
@@ -330,17 +330,17 @@ export function FactoringFundingCalculator({
           className="flex h-7 gap-0.5 overflow-hidden rounded-sm text-xs font-medium"
         >
           <span
-            className="bg-foreground text-background flex items-center truncate px-2 transition-[flex-grow] duration-200"
+            className="flex items-center truncate bg-foreground px-2 text-background transition-[flex-grow] duration-200"
             style={{ flexGrow: funding ? share(funding.advanceMinor) : 1 }}
           >
             {funding ? t("Advance {0}", formatMinor(funding.advanceMinor)) : null}
           </span>
           <span
-            className="bg-warning min-w-1.5 transition-[flex-grow] duration-200"
+            className="min-w-1.5 bg-warning transition-[flex-grow] duration-200"
             style={{ flexGrow: funding ? share(funding.feeMinor) : 0 }}
           />
           <span
-            className="bg-muted text-foreground flex items-center truncate px-2 transition-[flex-grow] duration-200"
+            className="flex items-center truncate bg-muted px-2 text-foreground transition-[flex-grow] duration-200"
             style={{ flexGrow: funding ? share(funding.restOnReleaseMinor) : 0 }}
           >
             {funding ? t("Release {0}", formatMinor(funding.restOnReleaseMinor)) : null}
@@ -377,7 +377,7 @@ export function FactoringFundingCalculator({
             sub={t("When the customer pays the factor")}
           />
         </KpiStrip>
-        <p className="text-muted-foreground bg-sunken flex items-start gap-2 rounded-md border px-3 py-2.5 text-sm">
+        <p className="flex items-start gap-2 rounded-md border bg-sunken px-3 py-2.5 text-sm text-muted-foreground">
           <InfoCircleIcon className="mt-0.5 size-3.5 shrink-0" />
           <span>
             {faceMinor === 0
@@ -390,7 +390,7 @@ export function FactoringFundingCalculator({
                       "If the customer pays on the due date, the fee costs about <b>{0} a year</b> on the money advanced. Paid sooner, the factor keeps the same fee.",
                       {
                         b: (chunks) => (
-                          <strong className="text-foreground font-medium tabular-nums">
+                          <strong className="font-medium text-foreground tabular-nums">
                             {chunks}
                           </strong>
                         ),

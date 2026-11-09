@@ -13,17 +13,28 @@ function box(width: number | string, height: number) {
  * rows down the left, and the card's clock, title and record in the middle,
  * each where the real one lands, so nothing moves when the queue arrives.
  */
-export function WatchtowerSkeleton() {
+export function WatchtowerSkeleton({ label, lenses = 0 }: { label?: string; lenses?: number }) {
   const t = useT();
 
   return (
-    <div className="dk-dc2 dk-w3" aria-busy="true" aria-label={t("Reading the Watchtower")}>
+    <div
+      className="dk-dc2 dk-w3"
+      aria-busy="true"
+      aria-label={label ?? t("Reading the Watchtower")}
+    >
       <aside className="dk-dc2-q" aria-hidden>
         <div className="dk-dc2-qh">
           <i className="dk-sk" style={box(84, 12)} />
           <i className="dk-sk" style={box(64, 10)} />
         </div>
         <div className="dk-dc2-prog" />
+        {lenses > 0 && (
+          <div className="dk-at-lens">
+            {Array.from({ length: lenses }, (_, index) => (
+              <i key={index} className="dk-sk" style={box("4.5rem", 24)} />
+            ))}
+          </div>
+        )}
         <div className="dk-dc2-ql">
           {LANES.map((rows, lane) => (
             <div key={lane} className="dk-dc2-g">

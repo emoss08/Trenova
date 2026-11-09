@@ -23,9 +23,9 @@ const (
 )
 
 var (
-	MaxMileageEntryMiles                                    = decimal.NewFromInt(100_000)
-	_                    pagination.CursorEntity            = (*JurisdictionMileageEntry)(nil)
-	_                    validationframework.TenantedEntity = (*JurisdictionMileageEntry)(nil)
+	MaxMileageEntryMiles                            = decimal.NewFromInt(100_000)
+	_                    pagination.CursorEntity    = (*JurisdictionMileageEntry)(nil)
+	_                    validationframework.Entity = (*JurisdictionMileageEntry)(nil)
 )
 
 // Miles by state or province recorded outside routed shipment moves

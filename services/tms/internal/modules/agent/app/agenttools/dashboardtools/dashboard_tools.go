@@ -214,11 +214,7 @@ func (t *CreateDashboardTool) validateArgs(params map[string]any) error {
 	}
 	validateTiles(tiles, multiErr)
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 // validateTiles refuses a tile that cannot draw anything.
@@ -413,11 +409,7 @@ func (t *AddDashboardTileTool) validateArgs(params map[string]any) error {
 		validateTiles([]map[string]any{tile}, multiErr)
 	}
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 func (t *AddDashboardTileTool) Execute(
@@ -634,11 +626,7 @@ func checkTileTargets(
 		))
 	}
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 func tilePath(field string, index, count int) string {

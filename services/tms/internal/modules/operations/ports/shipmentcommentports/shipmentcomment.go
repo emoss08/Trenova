@@ -39,7 +39,7 @@ type GetShipmentCommentCountRequest struct {
 	ShipmentID pulid.ID              `json:"shipmentId"`
 }
 
-func (r *GetShipmentCommentCountRequest) Validate() *errortypes.MultiError {
+func (r *GetShipmentCommentCountRequest) Validate() error {
 	multiErr := errortypes.NewMultiError()
 
 	multiErr.AddOzzoError(validation.ValidateStruct(
@@ -55,11 +55,7 @@ func (r *GetShipmentCommentCountRequest) Validate() *errortypes.MultiError {
 		),
 	))
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 type GetShipmentCommentByIDRequest struct {
@@ -68,7 +64,7 @@ type GetShipmentCommentByIDRequest struct {
 	CommentID  pulid.ID              `json:"commentId"`
 }
 
-func (r *GetShipmentCommentByIDRequest) Validate() *errortypes.MultiError {
+func (r *GetShipmentCommentByIDRequest) Validate() error {
 	multiErr := errortypes.NewMultiError()
 
 	multiErr.AddOzzoError(validation.ValidateStruct(
@@ -85,11 +81,7 @@ func (r *GetShipmentCommentByIDRequest) Validate() *errortypes.MultiError {
 		),
 	))
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 type DeleteShipmentCommentQuery struct {
@@ -98,7 +90,7 @@ type DeleteShipmentCommentQuery struct {
 	CommentID  pulid.ID              `json:"commentId"`
 }
 
-func (r *DeleteShipmentCommentQuery) Validate() *errortypes.MultiError {
+func (r *DeleteShipmentCommentQuery) Validate() error {
 	multiErr := errortypes.NewMultiError()
 
 	multiErr.AddOzzoError(validation.ValidateStruct(
@@ -115,11 +107,7 @@ func (r *DeleteShipmentCommentQuery) Validate() *errortypes.MultiError {
 		),
 	))
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 type SetShipmentCommentPinnedRequest struct {
@@ -130,7 +118,7 @@ type SetShipmentCommentPinnedRequest struct {
 	Pinned     bool                  `json:"pinned"`
 }
 
-func (r *SetShipmentCommentPinnedRequest) Validate() *errortypes.MultiError {
+func (r *SetShipmentCommentPinnedRequest) Validate() error {
 	multiErr := errortypes.NewMultiError()
 
 	multiErr.AddOzzoError(validation.ValidateStruct(
@@ -148,11 +136,7 @@ func (r *SetShipmentCommentPinnedRequest) Validate() *errortypes.MultiError {
 		),
 	))
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 type SetShipmentCommentResolvedRequest struct {
@@ -163,7 +147,7 @@ type SetShipmentCommentResolvedRequest struct {
 	Resolved   bool                  `json:"resolved"`
 }
 
-func (r *SetShipmentCommentResolvedRequest) Validate() *errortypes.MultiError {
+func (r *SetShipmentCommentResolvedRequest) Validate() error {
 	multiErr := errortypes.NewMultiError()
 
 	multiErr.AddOzzoError(validation.ValidateStruct(
@@ -181,11 +165,7 @@ func (r *SetShipmentCommentResolvedRequest) Validate() *errortypes.MultiError {
 		),
 	))
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 type AcknowledgeShipmentCommentRequest struct {
@@ -195,7 +175,7 @@ type AcknowledgeShipmentCommentRequest struct {
 	UserID     pulid.ID              `json:"userId"`
 }
 
-func (r *AcknowledgeShipmentCommentRequest) Validate() *errortypes.MultiError {
+func (r *AcknowledgeShipmentCommentRequest) Validate() error {
 	multiErr := errortypes.NewMultiError()
 
 	multiErr.AddOzzoError(validation.ValidateStruct(
@@ -213,11 +193,7 @@ func (r *AcknowledgeShipmentCommentRequest) Validate() *errortypes.MultiError {
 		),
 	))
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 type SoftDeleteShipmentCommentRequest struct {
@@ -227,7 +203,7 @@ type SoftDeleteShipmentCommentRequest struct {
 	ActorID    pulid.ID              `json:"actorId"`
 }
 
-func (r *SoftDeleteShipmentCommentRequest) Validate() *errortypes.MultiError {
+func (r *SoftDeleteShipmentCommentRequest) Validate() error {
 	multiErr := errortypes.NewMultiError()
 
 	multiErr.AddOzzoError(validation.ValidateStruct(
@@ -245,11 +221,7 @@ func (r *SoftDeleteShipmentCommentRequest) Validate() *errortypes.MultiError {
 		),
 	))
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 type ShipmentCommentRepository interface {

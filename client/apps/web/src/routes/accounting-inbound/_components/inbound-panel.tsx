@@ -261,14 +261,14 @@ function InboundChangeDetail({
                       <p className="truncate">
                         {labels.documentKind[line.documentKind]}{" "}
                         {path ? (
-                          <Link to={path} className="text-brand font-medium hover:underline">
+                          <Link to={path} className="font-medium text-brand hover:underline">
                             {line.objectNumber}
                           </Link>
                         ) : (
                           line.objectNumber || line.documentExternalId
                         )}
                       </p>
-                      <p className="text-foreground-muted text-xs">
+                      <p className="text-xs text-foreground-muted">
                         {line.objectId
                           ? t("{0} open in Trenova", formatMinor(line.openMinor, currency))
                           : t("Not a document Trenova sent")}
@@ -280,7 +280,7 @@ function InboundChangeDetail({
               })}
             </ul>
           ) : (
-            <p className="text-foreground-muted text-sm">{t("It does not name any document.")}</p>
+            <p className="text-sm text-foreground-muted">{t("It does not name any document.")}</p>
           )}
         </section>
 
@@ -302,7 +302,7 @@ function InboundChangeDetail({
                 return (
                   <li key={`${object.type}:${object.id}`} className="px-3 py-2 text-sm">
                     {path ? (
-                      <Link to={path} className="text-brand font-medium hover:underline">
+                      <Link to={path} className="font-medium text-brand hover:underline">
                         {labels.appliedObject[object.type]}
                       </Link>
                     ) : (
@@ -362,7 +362,7 @@ function InboundApplyPreview({
               </li>
             ))}
           </ul>
-          <p className="text-foreground-muted text-xs">
+          <p className="text-xs text-foreground-muted">
             {preview.unappliedMinor > 0
               ? t(
                   "Posted on {0}. {1} stays on the account as unapplied cash.",

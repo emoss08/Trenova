@@ -131,11 +131,18 @@ type definitionReader interface {
 }
 
 type memoryStore interface {
-	Create(ctx context.Context, entity *agentmemory.Memory) (*agentmemory.Memory, error)
 	ListSuggestionContext(
 		ctx context.Context,
 		req *agentmemoryports.ListAgentMemorySuggestionContextRequest,
 	) ([]*agentmemory.Memory, error)
+}
+
+type memoryKeeper interface {
+	Remember(
+		ctx context.Context,
+		req *agentmemoryports.RememberRequest,
+		actor *permissionports.RequestActor,
+	) (*agentmemory.Memory, error)
 }
 
 type retentionReader interface {
@@ -167,6 +174,7 @@ type Params struct {
 	Exceptions    agentexceptionports.AgentExceptionRepository
 	Definitions   agentdefinitionports.AgentDefinitionRepository
 	Memories      agentmemoryports.AgentMemoryRepository
+	MemoryService agentmemoryports.AgentMemoryService
 	Retention     tenantports.DataRetentionRepository
 	Organizations tenantports.OrganizationRepository
 	Permissions   permissionports.PermissionEngine
@@ -187,6 +195,7 @@ type Service struct {
 	exceptions    exceptionReader
 	definitions   definitionReader
 	memories      memoryStore
+	keeper        memoryKeeper
 	retention     retentionReader
 	organizations orgzone.OrganizationReader
 	permissions   permissionChecker
@@ -208,6 +217,7 @@ func New(p Params) *Service {
 		exceptions:    p.Exceptions,
 		definitions:   p.Definitions,
 		memories:      p.Memories,
+		keeper:        p.MemoryService,
 		retention:     p.Retention,
 		organizations: p.Organizations,
 		permissions:   p.Permissions,
@@ -355,9 +365,5 @@ func validateTarget(target aifeedbackports.AIFeedbackTargetRef) error {
 	case !target.TargetType.RequiresPart() && target.TargetPart != "":
 		me.Add("targetPart", errortypes.ErrInvalid, "This target has no parts to rate")
 	}
-	if me.HasErrors() {
-		return me
-	}
-
-	return nil
+	return me.Err()
 }

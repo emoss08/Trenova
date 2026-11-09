@@ -1,12 +1,12 @@
 package iam
 
 import (
-	"strings"
-	"strconv"
-	"slices"
 	"context"
 	"fmt"
 	"regexp"
+	"slices"
+	"strconv"
+	"strings"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -20,11 +20,11 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*AccessPolicy)(nil)
-	_ domaintypes.PostgresSearchable     = (*AuthEvent)(nil)
-	_ domaintypes.PostgresSearchable     = (*RiskDecision)(nil)
-	_ domaintypes.PostgresSearchable     = (*ExternalIdentity)(nil)
-	_ domaintypes.PostgresSearchable     = (*MFAAuthenticator)(nil)
+	_ validationframework.Entity     = (*AccessPolicy)(nil)
+	_ domaintypes.PostgresSearchable = (*AuthEvent)(nil)
+	_ domaintypes.PostgresSearchable = (*RiskDecision)(nil)
+	_ domaintypes.PostgresSearchable = (*ExternalIdentity)(nil)
+	_ domaintypes.PostgresSearchable = (*MFAAuthenticator)(nil)
 )
 
 type IdentityProvider struct {

@@ -3,24 +3,15 @@ package routingguideservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
-	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/tenantedvalidation"
-	"go.uber.org/fx"
 )
-
-type ValidatorParams struct {
-	fx.In
-
-	DB *postgres.Connection
-}
 
 type Validator struct {
 	validator tenantedvalidation.EntityValidator[*tender.RoutingGuide]
 }
 
-func NewValidator(p ValidatorParams) *Validator {
+func NewValidator() *Validator {
 	return &Validator{
 		validator: tenantedvalidation.NewBuilder[*tender.RoutingGuide]().
 			WithModelName("RoutingGuide").
@@ -31,13 +22,13 @@ func NewValidator(p ValidatorParams) *Validator {
 func (v *Validator) ValidateCreate(
 	ctx context.Context,
 	entity *tender.RoutingGuide,
-) *errortypes.MultiError {
+) error {
 	return v.validator.ValidateCreate(ctx, entity)
 }
 
 func (v *Validator) ValidateUpdate(
 	ctx context.Context,
 	entity *tender.RoutingGuide,
-) *errortypes.MultiError {
+) error {
 	return v.validator.ValidateUpdate(ctx, entity)
 }

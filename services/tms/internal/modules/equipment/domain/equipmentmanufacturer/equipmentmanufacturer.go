@@ -13,8 +13,8 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*EquipmentManufacturer)(nil)
-	_ domaintypes.PostgresSearchable     = (*EquipmentManufacturer)(nil)
+	_ validationframework.Entity     = (*EquipmentManufacturer)(nil)
+	_ domaintypes.PostgresSearchable = (*EquipmentManufacturer)(nil)
 )
 
 // Equipment manufacturers

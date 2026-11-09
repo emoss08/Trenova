@@ -23,16 +23,15 @@ type stopRuleContext struct {
 	multiErr          *errortypes.MultiError
 }
 
-func createStopValidationRule() validationframework.TenantedRule[*shipment.Shipment] {
+func createStopValidationRule() validationframework.Rule[*shipment.Shipment] {
 	return validationframework.
-		NewTenantedRule[*shipment.Shipment]("shipment_stop_validation").
+		NewRule[*shipment.Shipment]("shipment_stop_validation").
 		OnBoth().
-		WithStage(validationframework.ValidationStageDataIntegrity).
-		WithPriority(validationframework.ValidationPriorityHigh).
+		WithStage(validationframework.StageDataIntegrity).
 		WithValidation(func(
 			_ context.Context,
 			entity *shipment.Shipment,
-			valCtx *validationframework.TenantedValidationContext,
+			valCtx *validationframework.Context,
 			multiErr *errortypes.MultiError,
 		) error {
 			now := timeutils.NowUnix()

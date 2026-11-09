@@ -241,7 +241,7 @@ func (s *Service) AssignToMove(
 		multiErr := errortypes.NewMultiError()
 		entity.Validate(multiErr)
 		if multiErr.HasErrors() {
-			return multiErr
+			return multiErr.Err()
 		}
 
 		saved, txErr := s.repo.Create(txCtx, entity)

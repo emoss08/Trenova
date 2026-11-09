@@ -32,7 +32,7 @@ type CreateManualServiceFailureRequest struct {
 	LateMinutes           *int64                `json:"lateMinutes"`
 }
 
-func (r *CreateManualServiceFailureRequest) Validate() *errortypes.MultiError {
+func (r *CreateManualServiceFailureRequest) Validate() error {
 	multiErr := errortypes.NewMultiError()
 	if r == nil {
 		multiErr.Add(
@@ -40,7 +40,7 @@ func (r *CreateManualServiceFailureRequest) Validate() *errortypes.MultiError {
 			errortypes.ErrRequired,
 			"Manual service failure request is required",
 		)
-		return multiErr
+		return multiErr.Err()
 	}
 	validateServiceTenantInfo(multiErr, r.TenantInfo)
 	if r.ShipmentID.IsNil() {
@@ -82,10 +82,7 @@ func (r *CreateManualServiceFailureRequest) Validate() *errortypes.MultiError {
 	if r.LateMinutes != nil && *r.LateMinutes <= 0 {
 		multiErr.Add("lateMinutes", errortypes.ErrInvalid, "Late minutes must be greater than zero")
 	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }
 
 type EvaluateShipmentServiceFailuresRequest struct {
@@ -94,7 +91,7 @@ type EvaluateShipmentServiceFailuresRequest struct {
 	Force      bool                  `json:"force"`
 }
 
-func (r *EvaluateShipmentServiceFailuresRequest) Validate() *errortypes.MultiError {
+func (r *EvaluateShipmentServiceFailuresRequest) Validate() error {
 	multiErr := errortypes.NewMultiError()
 	if r == nil {
 		multiErr.Add(
@@ -102,16 +99,13 @@ func (r *EvaluateShipmentServiceFailuresRequest) Validate() *errortypes.MultiErr
 			errortypes.ErrRequired,
 			"Service failure evaluation request is required",
 		)
-		return multiErr
+		return multiErr.Err()
 	}
 	validateServiceTenantInfo(multiErr, r.TenantInfo)
 	if r.ShipmentID.IsNil() {
 		multiErr.Add("shipmentId", errortypes.ErrRequired, "Shipment ID is required")
 	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }
 
 type EvaluateStopServiceFailuresRequest struct {
@@ -122,7 +116,7 @@ type EvaluateStopServiceFailuresRequest struct {
 	Force          bool                  `json:"force"`
 }
 
-func (r *EvaluateStopServiceFailuresRequest) Validate() *errortypes.MultiError {
+func (r *EvaluateStopServiceFailuresRequest) Validate() error {
 	multiErr := errortypes.NewMultiError()
 	if r == nil {
 		multiErr.Add(
@@ -130,7 +124,7 @@ func (r *EvaluateStopServiceFailuresRequest) Validate() *errortypes.MultiError {
 			errortypes.ErrRequired,
 			"Service failure stop evaluation request is required",
 		)
-		return multiErr
+		return multiErr.Err()
 	}
 	validateServiceTenantInfo(multiErr, r.TenantInfo)
 	if r.ShipmentID.IsNil() {
@@ -139,10 +133,7 @@ func (r *EvaluateStopServiceFailuresRequest) Validate() *errortypes.MultiError {
 	if r.StopID.IsNil() {
 		multiErr.Add("stopId", errortypes.ErrRequired, "Stop ID is required")
 	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }
 
 type BulkEvaluateServiceFailuresRequest struct {
@@ -151,7 +142,7 @@ type BulkEvaluateServiceFailuresRequest struct {
 	Force       bool                  `json:"force"`
 }
 
-func (r *BulkEvaluateServiceFailuresRequest) Validate() *errortypes.MultiError {
+func (r *BulkEvaluateServiceFailuresRequest) Validate() error {
 	multiErr := errortypes.NewMultiError()
 	if r == nil {
 		multiErr.Add(
@@ -159,16 +150,13 @@ func (r *BulkEvaluateServiceFailuresRequest) Validate() *errortypes.MultiError {
 			errortypes.ErrRequired,
 			"Bulk service failure evaluation request is required",
 		)
-		return multiErr
+		return multiErr.Err()
 	}
 	validateServiceTenantInfo(multiErr, r.TenantInfo)
 	if len(r.ShipmentIDs) == 0 {
 		multiErr.Add("shipmentIds", errortypes.ErrRequired, "Shipment IDs are required")
 	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }
 
 type UpdateServiceFailureRequest struct {
@@ -185,7 +173,7 @@ type UpdateServiceFailureRequest struct {
 	Version               int64                 `json:"version"`
 }
 
-func (r *UpdateServiceFailureRequest) Validate() *errortypes.MultiError {
+func (r *UpdateServiceFailureRequest) Validate() error {
 	multiErr := errortypes.NewMultiError()
 	if r == nil {
 		multiErr.Add(
@@ -193,7 +181,7 @@ func (r *UpdateServiceFailureRequest) Validate() *errortypes.MultiError {
 			errortypes.ErrRequired,
 			"Service failure update request is required",
 		)
-		return multiErr
+		return multiErr.Err()
 	}
 	validateServiceTenantInfo(multiErr, r.TenantInfo)
 	if r.ID.IsNil() {
@@ -205,10 +193,7 @@ func (r *UpdateServiceFailureRequest) Validate() *errortypes.MultiError {
 	if r.Version < 0 {
 		multiErr.Add("version", errortypes.ErrInvalid, "Version is required")
 	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }
 
 type ServiceFailureLifecycleRequest struct {
@@ -220,7 +205,7 @@ type ServiceFailureLifecycleRequest struct {
 	Version      int64                 `json:"version"`
 }
 
-func (r *ServiceFailureLifecycleRequest) Validate() *errortypes.MultiError {
+func (r *ServiceFailureLifecycleRequest) Validate() error {
 	multiErr := errortypes.NewMultiError()
 	if r == nil {
 		multiErr.Add(
@@ -228,7 +213,7 @@ func (r *ServiceFailureLifecycleRequest) Validate() *errortypes.MultiError {
 			errortypes.ErrRequired,
 			"Service failure lifecycle request is required",
 		)
-		return multiErr
+		return multiErr.Err()
 	}
 	validateServiceTenantInfo(multiErr, r.TenantInfo)
 	if r.ID.IsNil() {
@@ -240,10 +225,7 @@ func (r *ServiceFailureLifecycleRequest) Validate() *errortypes.MultiError {
 	if r.Version < 0 {
 		multiErr.Add("version", errortypes.ErrInvalid, "Version is required")
 	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }
 
 type BuildServiceFailureEDIPayloadRequest struct {
@@ -251,7 +233,7 @@ type BuildServiceFailureEDIPayloadRequest struct {
 	ServiceFailureID pulid.ID              `json:"serviceFailureId"`
 }
 
-func (r *BuildServiceFailureEDIPayloadRequest) Validate() *errortypes.MultiError {
+func (r *BuildServiceFailureEDIPayloadRequest) Validate() error {
 	multiErr := errortypes.NewMultiError()
 	if r == nil {
 		multiErr.Add(
@@ -259,16 +241,13 @@ func (r *BuildServiceFailureEDIPayloadRequest) Validate() *errortypes.MultiError
 			errortypes.ErrRequired,
 			"Service failure EDI payload request is required",
 		)
-		return multiErr
+		return multiErr.Err()
 	}
 	validateServiceTenantInfo(multiErr, r.TenantInfo)
 	if r.ServiceFailureID.IsNil() {
 		multiErr.Add("serviceFailureId", errortypes.ErrRequired, "Service failure ID is required")
 	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }
 
 type ServiceFailureEvaluationResult struct {

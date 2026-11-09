@@ -1,9 +1,5 @@
 package worker
 
-import "errors"
-
-var ErrInvalidLeaveType = errors.New("invalid leave type")
-
 // LeaveType classifies a leave of absence. It is stamped on the worker while
 // a LeaveStarted event is open so the board can tell FMLA from a suspension.
 type LeaveType string
@@ -38,12 +34,4 @@ func (l LeaveType) IsValid() bool {
 	default:
 		return false
 	}
-}
-
-func LeaveTypeFromString(s string) (LeaveType, error) {
-	leaveType := LeaveType(s)
-	if !leaveType.IsValid() {
-		return "", ErrInvalidLeaveType
-	}
-	return leaveType, nil
 }

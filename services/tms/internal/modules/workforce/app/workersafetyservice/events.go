@@ -60,7 +60,7 @@ func (s *Service) prepareEvent(ctx context.Context, entity *workersafety.WorkerS
 	multiErr := errortypes.NewMultiError()
 	entity.Validate(multiErr)
 	if multiErr.HasErrors() {
-		return multiErr
+		return multiErr.Err()
 	}
 	if !entity.DocumentID.IsNil() {
 		return s.requireWorkerDocument(
@@ -207,9 +207,7 @@ func (s *Service) planUpdateEvent(
 		return nil, err
 	}
 	if entity.Version > 0 && original.Version != entity.Version {
-		return nil, errortypes.NewValidationError(
-			"version",
-			errortypes.ErrVersionMismatch,
+		return nil, errortypes.NewVersionMismatchError(
 			"Safety event was changed by someone else. Reload and try again",
 		)
 	}
@@ -328,9 +326,7 @@ func (s *Service) planMoveEvent(
 		return nil, err
 	}
 	if req.Version > 0 && original.Version != req.Version {
-		return nil, errortypes.NewValidationError(
-			"version",
-			errortypes.ErrVersionMismatch,
+		return nil, errortypes.NewVersionMismatchError(
 			"Safety event was changed by someone else. Reload and try again",
 		)
 	}

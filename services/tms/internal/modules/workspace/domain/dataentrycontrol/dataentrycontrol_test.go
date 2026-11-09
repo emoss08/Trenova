@@ -6,7 +6,6 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func validDataEntryControl() *DataEntryControl {
@@ -182,38 +181,6 @@ func TestCaseFormat_IsValid(t *testing.T) {
 			t.Parallel()
 
 			assert.Equal(t, tt.want, tt.format.IsValid())
-		})
-	}
-}
-
-func TestCaseFormatFromString(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name    string
-		input   string
-		want    CaseFormat
-		wantErr bool
-	}{
-		{name: "AsEntered", input: "AsEntered", want: CaseFormatAsEntered, wantErr: false},
-		{name: "Upper", input: "Upper", want: CaseFormatUpper, wantErr: false},
-		{name: "Lower", input: "Lower", want: CaseFormatLower, wantErr: false},
-		{name: "TitleCase", input: "TitleCase", want: CaseFormatTitleCase, wantErr: false},
-		{name: "invalid returns error", input: "Invalid", want: CaseFormat(""), wantErr: true},
-		{name: "empty returns error", input: "", want: CaseFormat(""), wantErr: true},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			got, err := CaseFormatFromString(tt.input)
-			if tt.wantErr {
-				assert.ErrorIs(t, err, ErrInvalidCaseFormat)
-			} else {
-				require.NoError(t, err)
-				assert.Equal(t, tt.want, got)
-			}
 		})
 	}
 }

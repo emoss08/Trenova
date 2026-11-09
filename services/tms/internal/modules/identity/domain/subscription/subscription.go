@@ -14,7 +14,7 @@ const (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*Subscription)(nil)
+	_ validationframework.Entity = (*Subscription)(nil)
 )
 
 type Subscription struct {

@@ -46,7 +46,6 @@ const (
 	// failedRunWindow and violationWindow are how long a fact stays on the
 	// tower.
 	failedRunWindow  = 72 * 60 * 60
-	violationWindow  = 7 * 24 * 60 * 60
 	decisionPageSize = 100
 	decisionPages    = 5
 )

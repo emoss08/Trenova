@@ -110,16 +110,6 @@ func SensitiveAs(paths ...string) Option {
 	return func(o *options) { o.sensitiveAs = append(o.sensitiveAs, paths...) }
 }
 
-// WithRegistry classifies sensitivity against a registry other than the
-// process's own.
-func WithRegistry(registry *permissioncatalog.Registry) Option {
-	return func(o *options) {
-		if registry != nil {
-			o.registry = registry
-		}
-	}
-}
-
 func addPaths(set map[string]struct{}, paths []string) map[string]struct{} {
 	if set == nil {
 		set = make(map[string]struct{}, len(paths))

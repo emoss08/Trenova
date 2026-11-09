@@ -3,19 +3,16 @@ package customfieldservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/customfield"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/customfield/customfielddb"
-	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/keelcheck"
 	"github.com/emoss08/trenova/pkg/tenantedvalidation"
+	"github.com/emoss08/trenova/pkg/validationframework"
 	"go.uber.org/fx"
 )
 
 type ValidatorParams struct {
 	fx.In
 
-	DB *postgres.Connection
+	Integrity validationframework.IntegrityChecker
 }
 
 type Validator struct {
@@ -26,8 +23,8 @@ func NewValidator(p ValidatorParams) *Validator {
 	return &Validator{
 		validator: tenantedvalidation.NewBuilder[*customfield.CustomFieldDefinition]().
 			WithModelName("Custom Field Definition").
-			WithUniquenessChecker(
-				keelcheck.NewChecker(p.DB, customfielddb.CustomFieldDefinitionsSchema()),
+			WithIntegrityChecker(
+				p.Integrity,
 			).
 			WithCompositeUniqueFields(
 				"resource_type_name",
@@ -52,13 +49,13 @@ func NewValidator(p ValidatorParams) *Validator {
 func (v *Validator) ValidateCreate(
 	ctx context.Context,
 	entity *customfield.CustomFieldDefinition,
-) *errortypes.MultiError {
+) error {
 	return v.validator.ValidateCreate(ctx, entity)
 }
 
 func (v *Validator) ValidateUpdate(
 	ctx context.Context,
 	entity *customfield.CustomFieldDefinition,
-) *errortypes.MultiError {
+) error {
 	return v.validator.ValidateUpdate(ctx, entity)
 }

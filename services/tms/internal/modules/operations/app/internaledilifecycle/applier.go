@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
@@ -142,17 +143,21 @@ func (a *Applier) PrepareLoaded(req PrepareLoadedRequest) (*Plan, error) {
 		return plan, nil
 	}
 
-	if multiErr := a.coordinator.PrepareForUpdate(
+	if err := a.coordinator.PrepareForUpdate(
 		plan.OppositeOriginal,
 		plan.OppositePrepared,
-	); multiErr != nil {
+	); err != nil {
+		multiErr, refused := errortypes.RefusalOf(err)
+		if !refused {
+			return nil, err
+		}
 		plan.ConflictReason = multiErr.Error()
 		plan.Conflicts = make([]Conflict, 0, len(multiErr.Errors))
-		for _, err := range multiErr.Errors {
+		for _, fieldErr := range multiErr.Errors {
 			plan.Conflicts = append(plan.Conflicts, Conflict{
 				Reason:  "coordinatorValidation",
-				Field:   err.Field,
-				Message: err.Message,
+				Field:   fieldErr.Field(),
+				Message: fieldErr.Message,
 			})
 		}
 	}

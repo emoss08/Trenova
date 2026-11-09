@@ -63,10 +63,7 @@ func previewBounds(source string, inputs tarifftypes.Inputs) error {
 			MaxPreviewInputs,
 		)
 	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }
 
 func timeoutMessage() wasmmodule.Message {

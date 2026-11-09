@@ -86,6 +86,26 @@ type Row struct {
 	Measure  *RowMeasure         `json:"measure,omitempty"`
 }
 
+type WorkSignal struct {
+	Lens  string `json:"lens"`
+	Title string `json:"title"`
+	Tone  Tone   `json:"tone,omitempty"`
+	DueAt *int64 `json:"dueAt,omitempty"`
+}
+
+type WorkRow struct {
+	Row
+	Signals []WorkSignal `json:"signals"`
+	Tone    Tone         `json:"tone,omitempty"`
+	DueAt   *int64       `json:"dueAt,omitempty"`
+}
+
+type FilledAction struct {
+	Label   string `json:"label"`
+	Ask     string `json:"ask"`
+	Records []Row  `json:"records,omitempty"`
+}
+
 type FilledFigure struct {
 	Label string `json:"label"`
 	Value *Value `json:"value,omitempty"`
@@ -165,6 +185,8 @@ type FilledBlock struct {
 	Text     []FilledSegment `json:"text,omitempty"`
 	NoteTone Tone            `json:"noteTone,omitempty"`
 	Chips    []Row           `json:"chips,omitempty"`
+	Work     []WorkRow       `json:"work,omitempty"`
+	Actions  []FilledAction  `json:"actions,omitempty"`
 }
 
 type Filled struct {

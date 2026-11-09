@@ -41,7 +41,12 @@ const showBoardDescription = "Lay out your answer to a question that spans sever
 	"(an analysis chart); timeline (one record's history); checks (up to 12, each with a tone " +
 	"and the records it counts or a metric); meter (the checks of the checks block " +
 	"checksBlock names, or a percentage metric, never both); prose; note (bad, warn, info " +
-	"or ok). To revise a board you showed, " +
+	"or ok); work (up to 12 records of one kind, each with what is open about it: its " +
+	"Watchtower conditions, the messages about it and the changes waiting on a person, " +
+	"read when the board opens); actions (1 to 3 buttons, each a short label and the request " +
+	"it sends as the person's own message, with the records it is about: a button never " +
+	"changes anything itself, it only asks you, and what you then propose waits for " +
+	"approval as usual). Actions and prose cannot be cited. To revise a board you showed, " +
 	"pass its boardId with the whole new board; the earlier one is kept as a version. Write " +
 	"plain sentences: no markdown, no bold, no headings, no lists. A prose block is one " +
 	"paragraph of at most 600 characters; to say more, use another block. A note needs a " +
@@ -174,6 +179,16 @@ func boardCompareRowSchema() map[string]any {
 	}, "column")
 }
 
+func boardActionSchema() map[string]any {
+	return schemaObject(map[string]any{
+		boardPropLabel: schemaWords(board.MaxActionLabelRunes,
+			"What the button says, a few words in sentence case: \"Draft recoveries\"."),
+		"ask": schemaWords(board.MaxActionAskRunes, "The request the button sends as the "+
+			"person's own message, in their voice: \"Draft a recovery for each of these.\""),
+		boardPropRecords: schemaRecordIDs("The records the request is about."),
+	}, boardPropLabel, "ask")
+}
+
 func boardBlockSchema() map[string]any {
 	half := map[string]any{
 		toolschema.KeyType:        toolschema.TypeBoolean,
@@ -186,7 +201,8 @@ func boardBlockSchema() map[string]any {
 			"words: at most 60 characters. A note must have one: what it says, in a line."),
 		"half":           half,
 		"figures":        schemaList(board.MaxFigures, boardFigureSchema()),
-		boardPropRecords: schemaRecordIDs("records, compare and note: the record ids."),
+		boardPropRecords: schemaRecordIDs("records, compare, note and work: the record ids."),
+		"actions":        schemaList(board.MaxActions, boardActionSchema()),
 		boardPropMeasure: boardMeasureSchema(),
 		"order":          schemaEnum(string(board.OrderMeasure), string(board.OrderGiven)),
 		"analysis":       schemaText(boardAnalysisRef),

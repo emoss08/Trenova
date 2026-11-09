@@ -18,7 +18,7 @@ type ListShipmentEventsRequest struct {
 	Before     int64                 `json:"before,omitempty"`
 }
 
-func (r *ListShipmentEventsRequest) Validate() *errortypes.MultiError {
+func (r *ListShipmentEventsRequest) Validate() error {
 	multiErr := errortypes.NewMultiError()
 
 	multiErr.AddOzzoError(validation.ValidateStruct(
@@ -33,11 +33,7 @@ func (r *ListShipmentEventsRequest) Validate() *errortypes.MultiError {
 		),
 	))
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 type GetShipmentEventByIDRequest struct {

@@ -10,7 +10,7 @@ import (
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
 
-var _ validationframework.TenantedEntity = (*ShipmentCommodity)(nil)
+var _ validationframework.Entity = (*ShipmentCommodity)(nil)
 
 // Commodity line items on a shipment
 type ShipmentCommodity struct {

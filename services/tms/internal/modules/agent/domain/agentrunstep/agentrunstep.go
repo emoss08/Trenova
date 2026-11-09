@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*AgentRunStep)(nil)
+	_ validationframework.Entity = (*AgentRunStep)(nil)
 )
 
 // AgentRunStep is one thing a run did, or began to do.

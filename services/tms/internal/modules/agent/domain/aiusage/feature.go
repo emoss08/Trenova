@@ -17,6 +17,7 @@ const (
 	FeatureAccountingMapping           = Feature("AccountingMapping")
 	FeatureFactoringRemittanceExtract  = Feature("FactoringRemittanceExtract")
 	FeatureAgentReflection             = Feature("AgentReflection")
+	FeatureAgentMemoryConsolidation    = Feature("AgentMemoryConsolidation")
 	FeatureAgentDrafting               = Feature("AgentDrafting")
 	FeatureAgentProfile                = Feature("AgentProfile")
 	FeatureAgentRecommendation         = Feature("AgentRecommendation")
@@ -44,6 +45,7 @@ func AllFeatures() []Feature {
 		FeatureAccountingMapping,
 		FeatureFactoringRemittanceExtract,
 		FeatureAgentReflection,
+		FeatureAgentMemoryConsolidation,
 		FeatureAgentDrafting,
 		FeatureAgentProfile,
 		FeatureAgentRecommendation,

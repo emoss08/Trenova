@@ -184,3 +184,10 @@ func TestApproveSuggestion_OfATaintedSuggestionIsItsReview(t *testing.T) {
 	require.Len(t, security.changes, 1)
 	assert.Contains(t, security.changes[0].Comment, "no longer taints")
 }
+
+func (f *reviewRepo) ListNeighbors(
+	context.Context,
+	*agentmemoryports.ListAgentMemoryNeighborsRequest,
+) ([]*agentmemory.Memory, error) {
+	return nil, nil
+}

@@ -120,27 +120,13 @@ export const routes: RouteObject[] = withPathScopedRevalidation([
             },
           },
           {
+            // Triage lives in the Desk now; the links people saved keep working.
             path: "/triage",
-            // Triage is a room inside the app: the module rail stays, and its own folder
-            // rail takes the panel's place and its fold.
-            handle: { frame: "room" } satisfies RouteHandle,
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.InboundMessage, Operation.Read),
-              createPrefetchLoader(lazyPrefetch(() => import("@/routes/inbox/page"))),
-            ),
-            async lazy() {
-              const { TriagePage } = await import("@/routes/inbox/page");
-              return { Component: TriagePage };
-            },
+            loader: ({ request }) => redirect(`/desk/triage${new URL(request.url).search}`),
           },
           {
-            // Triage was the inbox; old links, notifications and bookmarks keep working.
             path: "/inbox",
-            loader: ({ request }) => {
-              const { search } = new URL(request.url);
-              return redirect(`/triage${search}`);
-            },
+            loader: ({ request }) => redirect(`/desk/triage${new URL(request.url).search}`),
           },
           {
             path: "/intake",
@@ -2413,12 +2399,37 @@ export const routes: RouteObject[] = withPathScopedRevalidation([
                 },
               },
               {
-                path: "watchtower",
+                path: "r/:kind/:id",
+                async lazy() {
+                  const { DeskCasePage } = await import("@/routes/desk/case-page");
+                  return { Component: DeskCasePage };
+                },
+              },
+              {
+                path: "triage",
+                loader: combineLoaders(
+                  createPermissionLoader(Resource.InboundMessage, Operation.Read),
+                  createPrefetchLoader(lazyPrefetch(() => import("@/routes/inbox/page"))),
+                ),
+                // Opening a message only changes the query; the guards ran when Triage opened.
+                shouldRevalidate: ({ currentUrl, nextUrl, defaultShouldRevalidate }) =>
+                  currentUrl.pathname === nextUrl.pathname ? false : defaultShouldRevalidate,
+                async lazy() {
+                  const { DeskTriagePage } = await import("@/routes/desk/triage-page");
+                  return { Component: DeskTriagePage };
+                },
+              },
+              {
+                path: "needs",
                 loader: createPermissionLoader(Resource.Watchtower, Operation.Read),
                 async lazy() {
-                  const { DeskWatchtowerPage } = await import("@/routes/desk/watchtower-page");
-                  return { Component: DeskWatchtowerPage };
+                  const { DeskNeedsPage } = await import("@/routes/desk/needs-page");
+                  return { Component: DeskNeedsPage };
                 },
+              },
+              {
+                path: "watchtower",
+                loader: () => redirect("/desk/needs?lens=watchtower"),
               },
               {
                 path: "scheduled",

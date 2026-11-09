@@ -16,19 +16,15 @@ func NewValidator(ValidatorParams) *Validator {
 	return &Validator{}
 }
 
-func (v *Validator) ValidateCreate(entity *invoicerun.InvoiceRun) *errortypes.MultiError {
+func (v *Validator) ValidateCreate(entity *invoicerun.InvoiceRun) error {
 	multiErr := errortypes.NewMultiError()
 	entity.Validate(multiErr)
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 // ValidateCommit guards the one transition that issues money to customers.
-func (v *Validator) ValidateCommit(entity *invoicerun.InvoiceRun) *errortypes.MultiError {
+func (v *Validator) ValidateCommit(entity *invoicerun.InvoiceRun) error {
 	multiErr := errortypes.NewMultiError()
 
 	if !invoicerun.CanTransition(entity.Status, invoicerun.StatusCommitting) {
@@ -46,15 +42,11 @@ func (v *Validator) ValidateCommit(entity *invoicerun.InvoiceRun) *errortypes.Mu
 		)
 	}
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 // ValidateAdjust rejects an edit to a run that is no longer a proposal.
-func (v *Validator) ValidateAdjust(entity *invoicerun.InvoiceRun) *errortypes.MultiError {
+func (v *Validator) ValidateAdjust(entity *invoicerun.InvoiceRun) error {
 	if entity.Status.IsEditable() {
 		return nil
 	}
@@ -66,5 +58,5 @@ func (v *Validator) ValidateAdjust(entity *invoicerun.InvoiceRun) *errortypes.Mu
 		"An invoice run that is {0} can no longer be adjusted", string(entity.Status),
 	)
 
-	return multiErr
+	return multiErr.Err()
 }

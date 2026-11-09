@@ -406,7 +406,7 @@ func validateInputs(inputs *instancebootstrap.Inputs) (instancebootstrap.Inputs,
 	multiErr := errortypes.NewMultiError()
 	normalized.Validate(multiErr)
 	if multiErr.HasErrors() {
-		return normalized, multiErr
+		return normalized, multiErr.Err()
 	}
 
 	return normalized, nil
@@ -440,7 +440,7 @@ func validateRequest(
 	}
 
 	if multiErr.HasErrors() {
-		return normalized, multiErr
+		return normalized, multiErr.Err()
 	}
 
 	return normalized, nil

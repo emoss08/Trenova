@@ -25,15 +25,12 @@ const (
 	SpecificityWeightShipmentType int32 = 2
 	SpecificityWeightStopType     int32 = 1
 
-	MaxFreeMinutes        int32 = 10080
-	DefaultFreeMinutes    int32 = 120
-	DefaultIncrementMins  int16 = 15
-	LayoverBoundaryMinute int32 = 1440
+	MaxFreeMinutes int32 = 10080
 )
 
 var (
-	_ validationframework.TenantedEntity = (*DetentionPolicy)(nil)
-	_ domaintypes.PostgresSearchable     = (*DetentionPolicy)(nil)
+	_ validationframework.Entity     = (*DetentionPolicy)(nil)
+	_ domaintypes.PostgresSearchable = (*DetentionPolicy)(nil)
 )
 
 type DetentionPolicy struct {

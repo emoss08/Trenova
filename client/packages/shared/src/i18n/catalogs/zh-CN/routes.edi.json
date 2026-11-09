@@ -602,6 +602,7 @@
   "such as tender": "例如 tender",
   "to add": "以添加",
   "to choose": "以选择",
+  "to move": "以移动",
   "{0, plural, one {# message differs} other {# messages differ}}": "{0, plural, other {# 条消息不同}}",
   "{0, plural, one {# quick fix} other {# quick fixes}}": "{0, plural, other {# 项快速修复}}",
   "{0, plural, one {# setting needs a valid value} other {# settings need a valid value}}": "{0, plural, other {# 项设置需要有效的值}}",

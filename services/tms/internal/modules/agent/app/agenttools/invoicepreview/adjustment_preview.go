@@ -37,11 +37,7 @@ func FiguresRefusal(figures []*invoiceadjustmentports.InvoiceAdjustmentPreview) 
 			}
 		}
 	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 type AdjustmentView struct {

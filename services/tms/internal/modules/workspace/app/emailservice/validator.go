@@ -19,27 +19,24 @@ func NewValidator() *Validator {
 func (v *Validator) ValidateProfile(
 	_ context.Context,
 	profile *email.Profile,
-) *errortypes.MultiError {
+) error {
 	multiErr := errortypes.NewMultiError()
 	if profile == nil {
 		multiErr.Add("", errortypes.ErrRequired, "Email profile is required")
-		return multiErr
+		return multiErr.Err()
 	}
 	profile.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }
 
 func (v *Validator) ValidateSend(
 	_ context.Context,
 	req *emailports.SendEmailRequest,
-) *errortypes.MultiError {
+) error {
 	multiErr := errortypes.NewMultiError()
 	if req == nil {
 		multiErr.Add("", errortypes.ErrRequired, "Email request is required")
-		return multiErr
+		return multiErr.Err()
 	}
 	if req.Purpose == "" {
 		req.Purpose = email.PurposeGeneral
@@ -67,8 +64,5 @@ func (v *Validator) ValidateSend(
 	if strings.TrimSpace(req.HTML) == "" && strings.TrimSpace(req.Text) == "" {
 		multiErr.Add("body", errortypes.ErrRequired, "HTML or text body is required")
 	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }

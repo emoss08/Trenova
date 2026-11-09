@@ -3,7 +3,7 @@ import { useNavigate } from "react-router";
 import { useAIControlNavigation } from "../../use-ai-control-navigation";
 import type { NovaTarget } from "./use-nova-segments";
 
-const WATCHTOWER_PATH = "/desk/watchtower";
+const WATCHTOWER_PATH = "/desk/needs?lens=watchtower";
 
 /** Goes where a linked part of a Nova sentence leads. */
 export function useNovaTargets(): (target: NovaTarget) => void {

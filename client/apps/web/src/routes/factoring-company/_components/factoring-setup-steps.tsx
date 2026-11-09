@@ -76,10 +76,10 @@ export function FactoringSetupSteps({
   const next = steps.find((step) => !step.done);
 
   return (
-    <section aria-label={t("Setup")} className="bg-card rounded-lg border">
+    <section aria-label={t("Setup")} className="rounded-lg border bg-card">
       <header className="flex min-h-9 items-center justify-between gap-2 border-b px-3 py-1.5">
         <h3 className="text-sm font-semibold">{t("This factor can't take invoices yet")}</h3>
-        <span className="text-muted-foreground text-xs tabular-nums">
+        <span className="text-xs text-muted-foreground tabular-nums">
           {t("{0} of {1} done", setup.done, steps.length)}
         </span>
       </header>
@@ -94,7 +94,7 @@ export function FactoringSetupSteps({
               className={cn(
                 "grid size-5 place-items-center rounded-full border text-2xs font-medium",
                 step.done
-                  ? "bg-success border-success text-foreground-on-solid"
+                  ? "border-success bg-success text-foreground-on-solid"
                   : step === next
                     ? "border-foreground text-foreground"
                     : "border-border-strong text-foreground-faint",
@@ -107,7 +107,7 @@ export function FactoringSetupSteps({
                 {step.title}
                 <span className="sr-only">{step.done ? t("Done") : t("Not done")}</span>
               </span>
-              <span className="text-muted-foreground text-xs">{step.detail}</span>
+              <span className="text-xs text-muted-foreground">{step.detail}</span>
             </span>
             {step.done ? null : (
               <Button

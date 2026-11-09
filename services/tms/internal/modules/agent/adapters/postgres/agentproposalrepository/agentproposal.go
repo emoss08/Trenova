@@ -539,6 +539,36 @@ func (r *repository) ReplacePendingForTargets(
 	})
 }
 
+func settledAt() keel.Int64Expr {
+	p := agentdb.AgentProposals
+
+	return p.ExecutedAt.Coalesce(p.SimulatedAt)
+}
+
+func (r *repository) ListSettled(
+	ctx context.Context,
+	req *agentproposalports.ListSettledProposalsRequest,
+) ([]*agent.AgentProposal, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentProposal, error) {
+		p := agentdb.AgentProposals
+		settled := settledAt()
+		proposals, err := p.Where(
+			keel.Or(p.ExecutedAt.IsNotNull(), p.SimulatedAt.IsNotNull()),
+			settled.Gt(req.Since),
+		).
+			Order(keel.Desc(settled), p.ID.Desc()).
+			Limit(max(req.Limit, 1)).
+			List(ctx, r.db.Keel(ctx))
+		if err != nil {
+			r.l.Error("failed to list settled proposals", zap.Error(err))
+
+			return nil, fmt.Errorf("list settled proposals: %w", err)
+		}
+
+		return proposals, nil
+	})
+}
+
 func (r *repository) ListFailedByTargets(
 	ctx context.Context,
 	req *agentproposalports.ListFailedByTargetsRequest,

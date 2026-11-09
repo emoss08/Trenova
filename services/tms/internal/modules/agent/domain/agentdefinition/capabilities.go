@@ -124,26 +124,6 @@ func (d *Definition) ForgetReheldTools() {
 	}
 }
 
-// FormatMinute is a minute after midnight as a clock time such as "7 AM"
-// or "5:30 PM".
-func FormatMinute(minute int) string {
-	hour := (minute / 60) % 24
-	mins := minute % 60
-	suffix := "AM"
-	if hour >= 12 {
-		suffix = "PM"
-	}
-	display := hour % 12
-	if display == 0 {
-		display = 12
-	}
-	if mins == 0 {
-		return fmt.Sprintf("%d %s", display, suffix)
-	}
-
-	return fmt.Sprintf("%d:%02d %s", display, mins, suffix)
-}
-
 func (d *Definition) validateCapabilities(multiErr *errortypes.MultiError) {
 	if d.MaxChangeItems < 1 || d.MaxChangeItems > maxChangeItemsCeiling {
 		multiErr.Add(

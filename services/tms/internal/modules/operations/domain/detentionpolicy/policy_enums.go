@@ -14,19 +14,6 @@ const (
 
 func (s PolicyStatus) String() string { return string(s) }
 
-func PolicyStatusFromString(v string) (PolicyStatus, error) {
-	switch v {
-	case "Active":
-		return PolicyStatusActive, nil
-	case "Inactive":
-		return PolicyStatusInactive, nil
-	case "Draft":
-		return PolicyStatusDraft, nil
-	default:
-		return "", errors.New("invalid detention policy status")
-	}
-}
-
 type ClockStartBasis string
 
 const (
@@ -37,21 +24,6 @@ const (
 )
 
 func (b ClockStartBasis) String() string { return string(b) }
-
-func ClockStartBasisFromString(v string) (ClockStartBasis, error) {
-	switch v {
-	case "Arrival":
-		return ClockStartBasisArrival, nil
-	case "Appointment":
-		return ClockStartBasisAppointment, nil
-	case "LaterOfArrivalOrAppointment":
-		return ClockStartBasisLaterOfArrivalOrAppointment, nil
-	case "EarlierOfArrivalOrAppointment":
-		return ClockStartBasisEarlierOfArrivalOrAppointment, nil
-	default:
-		return "", errors.New("invalid detention clock start basis")
-	}
-}
 
 type LateArrivalRule string
 
@@ -64,21 +36,6 @@ const (
 
 func (r LateArrivalRule) String() string { return string(r) }
 
-func LateArrivalRuleFromString(v string) (LateArrivalRule, error) {
-	switch v {
-	case "NoEffect":
-		return LateArrivalRuleNoEffect, nil
-	case "Forfeit":
-		return LateArrivalRuleForfeit, nil
-	case "ClockFromAppointment":
-		return LateArrivalRuleClockFromAppointment, nil
-	case "ReduceFreeTime":
-		return LateArrivalRuleReduceFreeTime, nil
-	default:
-		return "", errors.New("invalid detention late arrival rule")
-	}
-}
-
 type RoundingMode string
 
 const (
@@ -89,21 +46,6 @@ const (
 )
 
 func (m RoundingMode) String() string { return string(m) }
-
-func RoundingModeFromString(v string) (RoundingMode, error) {
-	switch v {
-	case "Up":
-		return RoundingModeUp, nil
-	case "Down":
-		return RoundingModeDown, nil
-	case "Nearest":
-		return RoundingModeNearest, nil
-	case "Exact":
-		return RoundingModeExact, nil
-	default:
-		return "", errors.New("invalid detention rounding mode")
-	}
-}
 
 type RateSource string
 
@@ -158,19 +100,6 @@ const (
 
 func (r NotificationRequirement) String() string { return string(r) }
 
-func NotificationRequirementFromString(v string) (NotificationRequirement, error) {
-	switch v {
-	case "None":
-		return NotificationRequirementNone, nil
-	case "Advisory":
-		return NotificationRequirementAdvisory, nil
-	case "Required":
-		return NotificationRequirementRequired, nil
-	default:
-		return "", errors.New("invalid detention notification requirement")
-	}
-}
-
 type UnnotifiedBehavior string
 
 const (
@@ -181,19 +110,6 @@ const (
 
 func (b UnnotifiedBehavior) String() string { return string(b) }
 
-func UnnotifiedBehaviorFromString(v string) (UnnotifiedBehavior, error) {
-	switch v {
-	case "Bill":
-		return UnnotifiedBehaviorBill, nil
-	case "Flag":
-		return UnnotifiedBehaviorFlag, nil
-	case "Suppress":
-		return UnnotifiedBehaviorSuppress, nil
-	default:
-		return "", errors.New("invalid detention unnotified behavior")
-	}
-}
-
 type CapScope string
 
 const (
@@ -203,16 +119,3 @@ const (
 )
 
 func (s CapScope) String() string { return string(s) }
-
-func CapScopeFromString(v string) (CapScope, error) {
-	switch v {
-	case "PerStop":
-		return CapScopePerStop, nil
-	case "PerDay":
-		return CapScopePerDay, nil
-	case "PerShipment":
-		return CapScopePerShipment, nil
-	default:
-		return "", errors.New("invalid detention cap scope")
-	}
-}

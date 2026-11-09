@@ -139,11 +139,7 @@ func (s *Service) checkEditedFields(proposal *agent.AgentProposal, changed map[s
 			me.Add(name, errortypes.ErrInvalid, "This value cannot be changed before approving")
 		}
 	}
-	if me.HasErrors() {
-		return me
-	}
-
-	return nil
+	return me.Err()
 }
 
 // ListThreadProposals returns every proposal raised in a conversation, with the

@@ -69,11 +69,7 @@ func (s *Service) prepare(entity *employment.WorkerEmploymentVerification) error
 
 	multiErr := errortypes.NewMultiError()
 	entity.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 // RecordVerification files a previous employer to investigate.

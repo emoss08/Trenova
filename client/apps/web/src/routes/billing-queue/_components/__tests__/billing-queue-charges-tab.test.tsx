@@ -322,6 +322,7 @@ describe("BillingQueueChargesTab safe edits", () => {
           status: 422,
           errors: [
             {
+              path: ["convertAmountSplitsToPercent"],
               field: "convertAmountSplitsToPercent",
               code: "INVALID_OPERATION",
               message:
@@ -682,6 +683,7 @@ describe("BillingQueueChargesTab adding a line in place", () => {
           status: 422,
           errors: [
             {
+              path: ["convertAmountSplitsToPercent"],
               field: "convertAmountSplitsToPercent",
               code: "INVALID_OPERATION",
               message:

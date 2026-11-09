@@ -3,11 +3,8 @@ package holdreasonservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason/holdreasondb"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/keelcheck"
 	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"go.uber.org/fx"
@@ -16,7 +13,7 @@ import (
 type ValidatorParams struct {
 	fx.In
 
-	DB *postgres.Connection
+	Integrity validationframework.IntegrityChecker
 }
 
 type Validator struct {
@@ -24,12 +21,10 @@ type Validator struct {
 }
 
 func NewValidator(p ValidatorParams) *Validator {
-	checker := keelcheck.NewChecker(p.DB, holdreasondb.HoldReasonsSchema())
-
 	return &Validator{
 		validator: tenantedvalidation.NewBuilder[*holdreason.HoldReason]().
 			WithModelName("HoldReason").
-			WithUniquenessChecker(checker).
+			WithIntegrityChecker(p.Integrity).
 			WithUniqueField(
 				"code",
 				"code",
@@ -44,7 +39,7 @@ func NewValidator(p ValidatorParams) *Validator {
 			).
 			WithCustomRule(
 				validationframework.
-					NewTenantedRule[*holdreason.HoldReason]("severity_validation").
+					NewRule[*holdreason.HoldReason]("severity_validation").
 					OnBoth().
 					WithValidation(validateBlockingSeverity),
 			).
@@ -55,7 +50,7 @@ func NewValidator(p ValidatorParams) *Validator {
 func validateBlockingSeverity(
 	_ context.Context,
 	entity *holdreason.HoldReason,
-	_ *validationframework.TenantedValidationContext,
+	_ *validationframework.Context,
 	multiErr *errortypes.MultiError,
 ) error {
 	if entity.DefaultSeverity == holdreason.HoldSeverityBlocking &&
@@ -72,13 +67,13 @@ func validateBlockingSeverity(
 func (v *Validator) ValidateCreate(
 	ctx context.Context,
 	entity *holdreason.HoldReason,
-) *errortypes.MultiError {
+) error {
 	return v.validator.ValidateCreate(ctx, entity)
 }
 
 func (v *Validator) ValidateUpdate(
 	ctx context.Context,
 	entity *holdreason.HoldReason,
-) *errortypes.MultiError {
+) error {
 	return v.validator.ValidateUpdate(ctx, entity)
 }

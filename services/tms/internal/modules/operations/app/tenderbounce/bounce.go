@@ -26,7 +26,7 @@ type BounceTenderRequest struct {
 	Source  tender.ResponseSource `json:"source"`
 }
 
-func (r *BounceTenderRequest) Validate() *errortypes.MultiError {
+func (r *BounceTenderRequest) Validate() error {
 	multiErr := errortypes.NewMultiError()
 	if r.TenderID.IsNil() && r.OfferID.IsNil() {
 		multiErr.Add("tenderId", errortypes.ErrRequired, "Tender is required")
@@ -42,10 +42,7 @@ func (r *BounceTenderRequest) Validate() *errortypes.MultiError {
 		r.Source != tender.ResponseSourceEDI {
 		multiErr.Add("source", errortypes.ErrInvalid, "Bounce source is invalid")
 	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }
 
 // BouncePreview is what bouncing a tender would do: the tender as it stands

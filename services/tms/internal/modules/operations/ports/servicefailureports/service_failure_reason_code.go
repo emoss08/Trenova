@@ -24,20 +24,17 @@ type GetServiceFailureReasonCodeByIDRequest struct {
 	TenantInfo pagination.TenantInfo `json:"-"`
 }
 
-func (r *GetServiceFailureReasonCodeByIDRequest) Validate() *errortypes.MultiError {
+func (r *GetServiceFailureReasonCodeByIDRequest) Validate() error {
 	multiErr := errortypes.NewMultiError()
 	if r == nil {
 		multiErr.Add("request", errortypes.ErrRequired, "Reason code request is required")
-		return multiErr
+		return multiErr.Err()
 	}
 	if r.ID.IsNil() {
 		multiErr.Add("id", errortypes.ErrRequired, "Reason code ID is required")
 	}
 	validateTenantInfo(multiErr, r.TenantInfo)
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }
 
 type GetServiceFailureReasonCodesByIDsRequest struct {
@@ -45,13 +42,10 @@ type GetServiceFailureReasonCodesByIDsRequest struct {
 	ReasonCodeIDs []pulid.ID            `json:"reasonCodeIds"`
 }
 
-func (r *GetServiceFailureReasonCodesByIDsRequest) Validate() *errortypes.MultiError {
+func (r *GetServiceFailureReasonCodesByIDsRequest) Validate() error {
 	multiErr := errortypes.NewMultiError()
 	validateTenantInfo(multiErr, r.TenantInfo)
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }
 
 type ServiceFailureReasonCodeSelectOptionsRequest struct {
@@ -64,11 +58,11 @@ type ReorderServiceFailureReasonCodesRequest struct {
 	ReasonIDs  []pulid.ID            `json:"reasonIds"`
 }
 
-func (r *ReorderServiceFailureReasonCodesRequest) Validate() *errortypes.MultiError {
+func (r *ReorderServiceFailureReasonCodesRequest) Validate() error {
 	multiErr := errortypes.NewMultiError()
 	if r == nil {
 		multiErr.Add("request", errortypes.ErrRequired, "Reason code reorder request is required")
-		return multiErr
+		return multiErr.Err()
 	}
 	validateTenantInfo(multiErr, r.TenantInfo)
 	if len(r.ReasonIDs) == 0 {
@@ -86,10 +80,7 @@ func (r *ReorderServiceFailureReasonCodesRequest) Validate() *errortypes.MultiEr
 		}
 		seen[id] = struct{}{}
 	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }
 
 type ServiceFailureReasonCodeRepository interface {

@@ -1,13 +1,15 @@
 // Package allocationcheck validates charge allocations before they are written.
-// The shipment form and the billing queue both change who pays for which charge,
-// and both must refuse the same things for the same reasons.
+// The shipment form, the billing queue and order charges all change who pays for
+// which charge, and all must refuse the same things for the same reasons.
 package allocationcheck
 
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/chargeallocationports"
@@ -16,80 +18,153 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"go.uber.org/zap"
 )
 
-const defaultField = "chargeAllocations"
+const (
+	defaultField         = "chargeAllocations"
+	orderAllocationField = "allocations"
+)
 
-// Deps is what validation reads. A nil ChargeAllocationRepo skips the posted
-// invoice lock check. Payers are always checked, so without a CustomerRepo every
-// named payer reads as not found.
-type Deps struct {
-	CustomerRepo         customerports.CustomerRepository
-	ChargeAllocationRepo chargeallocationports.ChargeAllocationRepository
-	Logger               *zap.Logger
+// Readers are the repositories a check reads payers and posted rows through.
+type Readers struct {
+	Customers   customerports.CustomerRepository
+	Allocations chargeallocationports.ChargeAllocationRepository
 }
 
-// Validate checks the shipment's allocations: every payer exists, is active and
-// belongs to the tenant, no row already on a posted invoice changes, and every
-// charge's rows add up. A nil allocation list means the caller did not touch
-// them and passes. Field prefixes every error path.
-func Validate(
+// ValidateShipment checks the shipment's allocations: every payer exists, is active
+// and belongs to the tenant, no row already on a posted invoice changes, and every
+// charge's rows add up. A nil allocation list means the caller did not touch them
+// and passes. Field prefixes every error path.
+func ValidateShipment(
 	ctx context.Context,
-	deps Deps,
+	readers Readers,
 	entity *shipment.Shipment,
 	field string,
-) *errortypes.MultiError {
+) error {
 	if entity == nil || entity.ChargeAllocations == nil {
 		return nil
 	}
 	if field == "" {
 		field = defaultField
 	}
-	tenantInfo := pagination.TenantInfo{
-		OrgID: entity.OrganizationID,
-		BuID:  entity.BusinessUnitID,
-	}
 
-	payerIDs, rowIDs := collectIDs(entity.ChargeAllocations)
-
-	customers, multiErr := loadCustomers(ctx, deps, tenantInfo, payerIDs, field)
-	if multiErr != nil {
-		return multiErr
+	tenantInfo := pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}
+	multiErr, err := checkRows(ctx, readers, tenantInfo, entity.ChargeAllocations, field)
+	if err != nil {
+		return err
 	}
-	locked, multiErr := loadLocked(ctx, deps, tenantInfo, rowIDs, field)
-	if multiErr != nil {
-		return multiErr
-	}
-
-	multiErr = chargeallocation.ValidateAllocations(&chargeallocation.ValidateAllocationsParams{
-		TenantOrgID: entity.OrganizationID,
-		TenantBuID:  entity.BusinessUnitID,
-		Allocations: entity.ChargeAllocations,
-		Customers:   customers,
-		Locked:      locked,
-		Field:       field,
-	})
 	if multiErr.HasErrors() {
-		return multiErr
+		return multiErr.Err()
 	}
 
 	preview := PreviewForResolution(entity)
-	if _, err := chargeallocation.ResolveShares(
-		ctx,
-		preview,
-		preview.ChargeAllocations,
-	); err != nil {
-		var typed *errortypes.Error
-		if errors.As(err, &typed) {
-			multiErr.Add(typed.Field, typed.Code, typed.Message, typed.Args...)
-		} else {
-			multiErr.Add(field, errortypes.ErrInvalid, err.Error())
-		}
-		return multiErr
+	_, err = chargeallocation.ResolveShares(ctx, preview, preview.ChargeAllocations)
+
+	return resolutionError(multiErr, err, "resolve charge shares")
+}
+
+// OrderChargeRequest is one order charge and the allocations that split it.
+type OrderChargeRequest struct {
+	TenantInfo  pagination.TenantInfo
+	Charge      *order.OrderCharge
+	Allocations []*shipment.ChargeAllocation
+}
+
+// ValidateOrderCharge checks an order charge's allocations by the same rules. It
+// marks each row as belonging to the charge; a charge with no id yet is checked
+// against a placeholder that is cleared again before it returns.
+func ValidateOrderCharge(ctx context.Context, readers Readers, req OrderChargeRequest) error {
+	if req.Allocations == nil {
+		return nil
 	}
 
-	return nil
+	chargeID := req.Charge.ID
+	if chargeID.IsNil() {
+		chargeID = pulid.MustNew("ordchg_")
+	}
+	for _, allocation := range req.Allocations {
+		if allocation == nil {
+			continue
+		}
+		id := chargeID
+		allocation.ChargeKind = shipmentvocab.ChargeAllocationKindOrderCharge
+		allocation.OrderChargeID = &id
+	}
+	if req.Charge.ID.IsNil() {
+		defer clearOrderCharge(req.Allocations)
+	}
+
+	multiErr, err := checkRows(ctx, readers, req.TenantInfo, req.Allocations, orderAllocationField)
+	if err != nil {
+		return err
+	}
+	if multiErr.HasErrors() {
+		return multiErr.Err()
+	}
+
+	_, err = chargeallocation.ResolveOrderChargeShares(
+		ctx,
+		[]chargeallocation.OrderChargeRef{
+			{ID: chargeID, Description: req.Charge.Description, Amount: req.Charge.Amount},
+		},
+		req.Allocations,
+		pulid.Nil,
+	)
+
+	return resolutionError(multiErr, err, "split the order charge")
+}
+
+func clearOrderCharge(allocations []*shipment.ChargeAllocation) {
+	for _, allocation := range allocations {
+		if allocation != nil {
+			allocation.OrderChargeID = nil
+		}
+	}
+}
+
+func checkRows(
+	ctx context.Context,
+	readers Readers,
+	tenantInfo pagination.TenantInfo,
+	allocations []*shipment.ChargeAllocation,
+	field string,
+) (*errortypes.MultiError, error) {
+	payerIDs, rowIDs := collectIDs(allocations)
+
+	customers, err := loadCustomers(ctx, readers, tenantInfo, payerIDs)
+	if err != nil {
+		return nil, err
+	}
+	locked, err := loadLocked(ctx, readers, tenantInfo, rowIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	return chargeallocation.ValidateAllocations(&chargeallocation.ValidateAllocationsParams{
+		TenantOrgID: tenantInfo.OrgID,
+		TenantBuID:  tenantInfo.BuID,
+		Allocations: allocations,
+		Customers:   customers,
+		Locked:      locked,
+		Field:       field,
+	}), nil
+}
+
+func resolutionError(multiErr *errortypes.MultiError, err error, action string) error {
+	if err == nil {
+		return nil
+	}
+
+	typed, ok := errors.AsType[*errortypes.Error](err)
+	if !ok {
+		return fmt.Errorf("%s: %w", action, err)
+	}
+	if multiErr == nil {
+		multiErr = errortypes.NewMultiError()
+	}
+	multiErr.AddError(typed)
+
+	return multiErr.Err()
 }
 
 func collectIDs(allocations []*shipment.ChargeAllocation) (payerIDs, rowIDs []pulid.ID) {
@@ -118,24 +193,21 @@ func collectIDs(allocations []*shipment.ChargeAllocation) (payerIDs, rowIDs []pu
 
 func loadCustomers(
 	ctx context.Context,
-	deps Deps,
+	readers Readers,
 	tenantInfo pagination.TenantInfo,
 	payerIDs []pulid.ID,
-	field string,
-) (map[pulid.ID]*customer.Customer, *errortypes.MultiError) {
+) (map[pulid.ID]*customer.Customer, error) {
 	customers := make(map[pulid.ID]*customer.Customer, len(payerIDs))
-	if len(payerIDs) == 0 || deps.CustomerRepo == nil {
+	if len(payerIDs) == 0 {
 		return customers, nil
 	}
-	found, err := deps.CustomerRepo.GetByIDs(ctx, customerports.GetCustomersByIDsRequest{
+
+	found, err := readers.Customers.GetByIDs(ctx, customerports.GetCustomersByIDsRequest{
 		TenantInfo:  tenantInfo,
 		CustomerIDs: payerIDs,
 	})
 	if err != nil {
-		logError(deps, "failed to load bill-to customers for allocation check", err)
-		multiErr := errortypes.NewMultiError()
-		multiErr.Add(field, errortypes.ErrInvalid, "Unable to verify bill-to customers")
-		return nil, multiErr
+		return nil, fmt.Errorf("load bill-to customers: %w", err)
 	}
 	for _, cus := range found {
 		if cus != nil {
@@ -148,29 +220,20 @@ func loadCustomers(
 
 func loadLocked(
 	ctx context.Context,
-	deps Deps,
+	readers Readers,
 	tenantInfo pagination.TenantInfo,
 	rowIDs []pulid.ID,
-	field string,
-) (map[pulid.ID]struct{}, *errortypes.MultiError) {
-	if len(rowIDs) == 0 || deps.ChargeAllocationRepo == nil {
+) (map[pulid.ID]struct{}, error) {
+	if len(rowIDs) == 0 {
 		return map[pulid.ID]struct{}{}, nil
 	}
-	found, err := deps.ChargeAllocationRepo.LockedIDs(ctx, tenantInfo, rowIDs)
+
+	found, err := readers.Allocations.LockedIDs(ctx, tenantInfo, rowIDs)
 	if err != nil {
-		logError(deps, "failed to look up invoiced charge allocations", err)
-		multiErr := errortypes.NewMultiError()
-		multiErr.Add(field, errortypes.ErrInvalid, "Unable to verify invoiced allocations")
-		return nil, multiErr
+		return nil, fmt.Errorf("load invoiced charge allocations: %w", err)
 	}
 
 	return found, nil
-}
-
-func logError(deps Deps, message string, err error) {
-	if deps.Logger != nil {
-		deps.Logger.Error(message, zap.Error(err))
-	}
 }
 
 // PreviewForResolution returns a shallow copy of the shipment whose id-less

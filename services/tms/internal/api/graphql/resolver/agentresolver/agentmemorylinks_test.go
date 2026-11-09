@@ -15,7 +15,7 @@ func TestReflectionSignals_ListsEachSignalTheLookBackRead(t *testing.T) {
 
 	reflection := &agentreflection.Reflection{Signals: agentreflection.ReflectionSignals{
 		{
-			Kind:   agentreflection.ReflectionSignalToolRecovered,
+			Kind:   agentreflection.ReflectionSignalProposalModified,
 			Count:  2,
 			Detail: "dispatch_assign_move",
 		},
@@ -25,7 +25,7 @@ func TestReflectionSignals_ListsEachSignalTheLookBackRead(t *testing.T) {
 	signals := reflectionSignals(reflection)
 
 	require.Len(t, signals, 2)
-	assert.Equal(t, agentreflection.ReflectionSignalToolRecovered, signals[0].Kind)
+	assert.Equal(t, agentreflection.ReflectionSignalProposalModified, signals[0].Kind)
 	assert.Equal(t, 2, signals[0].Count)
 	assert.Equal(t, "dispatch_assign_move", signals[0].Detail)
 	assert.Equal(t, agentreflection.ReflectionSignalLongTask, signals[1].Kind)

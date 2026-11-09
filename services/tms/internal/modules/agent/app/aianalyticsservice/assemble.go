@@ -118,17 +118,6 @@ func deploymentKeyOf(key aianalyticsports.DeploymentKey) string {
 	return key.ModelKey + deploymentSeparator + key.ProviderID
 }
 
-func keyOfGrouping(grouping aianalytics.Grouping) keyFunc {
-	switch grouping {
-	case aianalytics.GroupingProvider:
-		return groupKeyOf(aianalytics.CompareByProvider)
-	case aianalytics.GroupingDeployment:
-		return deploymentKeyOf
-	default:
-		return groupKeyOf(aianalytics.CompareByModel)
-	}
-}
-
 func assemble(a *assembly) *aianalyticsports.Analytics {
 	providers := providerIndex(a.locale, a.data.providers)
 	compareBy := a.request.CompareBy

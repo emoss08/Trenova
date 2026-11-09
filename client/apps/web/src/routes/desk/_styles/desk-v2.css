@@ -18519,3 +18519,597 @@ a.dk-bd-face:hover {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+/* Needs you: one row per record, Watchtower, Triage and Decisions as lenses. */
+.dk-at-lens {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 8px 12px 6px;
+}
+.dk-at-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  padding: 0 8px;
+  border-radius: 6px;
+  border: 1px solid var(--dsk-b);
+  background: var(--dsk-card);
+  font-size: 12px;
+  color: var(--dsk-muted);
+  transition:
+    color 150ms var(--dk-ease),
+    border-color 150ms var(--dk-ease);
+}
+.dk-at-chip:hover {
+  color: var(--dsk-fg);
+  border-color: var(--dsk-b-strong);
+}
+.dk-at-chip.dk-on {
+  background: var(--dsk-hover);
+  border-color: var(--dsk-b-strong);
+  color: var(--dsk-fg);
+}
+.dk-at-chip i {
+  font: 11px/1 var(--font-mono);
+  font-style: normal;
+  font-variant-numeric: tabular-nums;
+  color: var(--dsk-subtle);
+}
+.dk-at-more {
+  display: block;
+  margin: 8px;
+  padding: 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--dsk-subtle);
+  text-align: center;
+}
+.dk-at-more:hover {
+  color: var(--dsk-fg);
+  background: var(--dsk-hover);
+}
+.dk-at-head {
+  width: 100%;
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 20px 32px 12px;
+  border-bottom: 1px solid var(--dsk-b-sub);
+  animation: dk-dcin 360ms var(--dk-settle) both;
+}
+.dk-at-kick {
+  display: flex;
+  gap: 8px;
+  font: 11px var(--dk-plex);
+  color: var(--dsk-subtle);
+}
+.dk-at-kick span + span::before {
+  content: "·";
+  margin-right: 8px;
+  color: var(--dsk-faint);
+}
+.dk-at-name {
+  margin: 4px 0 0;
+  font-size: 15px;
+  line-height: 1.35;
+  font-weight: 600;
+  text-wrap: balance;
+}
+.dk-at-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 6px;
+}
+.dk-at-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 4px;
+  font-size: 12px;
+  color: var(--dsk-blue-fg);
+}
+.dk-at-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.dk-at-sigs {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.dk-at-sig {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 26px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  text-align: left;
+  font-size: 12px;
+  color: var(--dsk-muted);
+}
+.dk-at-sig:hover {
+  background: var(--dsk-hover);
+  color: var(--dsk-fg);
+}
+.dk-at-sig.dk-on {
+  background: var(--dsk-hover);
+  color: var(--dsk-fg);
+}
+.dk-at-src {
+  flex: none;
+  width: 72px;
+  font: 10.5px var(--dk-plex);
+  color: var(--dsk-faint);
+}
+.dk-at-st {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.dk-at-new {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--dsk-blue);
+}
+
+/* Today: the page tells before it asks. The greeting and the box keep their place;
+   the day reads under them and the page scrolls. */
+.dk-home.dk-home-day {
+  place-items: start center;
+  overflow: auto;
+}
+.dk-home.dk-home-day .dk-home-in {
+  margin: clamp(32px, 14vh, 140px) 0 72px;
+}
+.dk-td {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  margin-top: 32px;
+  text-align: left;
+}
+.dk-td-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(104px, 1fr));
+  border: 1px solid var(--dsk-b);
+  border-radius: 6px;
+  background: var(--dsk-card);
+  overflow: hidden;
+}
+.dk-td-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  padding: 10px 12px 11px;
+  border-left: 1px solid var(--dsk-b-sub);
+  margin-left: -1px;
+  color: inherit;
+  transition: background-color 150ms var(--dk-ease);
+}
+a.dk-td-cell:hover {
+  background: var(--dsk-hover);
+}
+.dk-td-l,
+.dk-td-d {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 11px;
+  color: var(--dsk-subtle);
+}
+.dk-td-v {
+  font: 600 17px/1.2 var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--dsk-fg);
+}
+.dk-td-sh {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 0 2px 8px;
+}
+.dk-td-sh h2 {
+  flex: 1;
+  margin: 0;
+  font: 500 10.5px/1 var(--dk-plex);
+  letter-spacing: 0.02em;
+  color: var(--dsk-faint);
+}
+.dk-td-sh h2 b {
+  margin-left: 6px;
+  font-weight: 500;
+  color: var(--dsk-subtle);
+}
+.dk-td-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 4px;
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
+.dk-td-more:hover {
+  color: var(--dsk-fg);
+}
+.dk-td-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.dk-td-quiet {
+  margin: 0;
+  padding: 0 2px;
+  font-size: 12.5px;
+  color: var(--dsk-subtle);
+}
+.dk-td-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dk-td-row,
+.dk-td-run {
+  display: grid;
+  gap: 12px;
+  align-items: start;
+  padding: 9px 10px;
+  border-radius: 8px;
+  color: inherit;
+  transition: background-color 150ms var(--dk-ease);
+}
+.dk-td-row {
+  grid-template-columns: 80px minmax(0, 1fr) auto;
+}
+.dk-td-run {
+  grid-template-columns: 24px minmax(0, 1fr) 150px;
+  align-items: center;
+}
+a.dk-td-row:hover,
+a.dk-td-run:hover {
+  background: var(--dsk-hover);
+}
+.dk-td-tm {
+  font: 11px/18px var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--dsk-faint);
+  text-align: right;
+}
+.dk-td-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.dk-td-ti {
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--dsk-fg);
+}
+.dk-td-mt {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
+.dk-td-mt > span::before {
+  content: "·";
+  margin-right: 6px;
+  color: var(--dsk-faint);
+}
+.dk-td-why {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--danger);
+}
+.dk-td-oc {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+  background: var(--dsk-sunken);
+  color: var(--dsk-muted);
+}
+.dk-td-oc.dk-td-ok {
+  background: var(--dsk-success-sub);
+  color: var(--dsk-success-fg);
+}
+.dk-td-oc.dk-td-bad {
+  background: color-mix(in oklch, var(--danger) 10%, var(--dsk-card));
+  color: var(--danger);
+}
+.dk-td-oc.dk-td-dash {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--dsk-b-strong);
+  color: var(--dsk-subtle);
+}
+.dk-td-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.dk-td-bar {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 3px;
+}
+.dk-td-bar i {
+  height: 3px;
+  border-radius: 2px;
+  background: var(--dsk-b);
+}
+.dk-td-bar i.dk-done,
+.dk-td-bar i.dk-cur {
+  background: var(--dsk-fg2);
+}
+.dk-td-sl {
+  display: flex;
+  justify-content: space-between;
+  font: 10px var(--dk-plex);
+  color: var(--dsk-faint);
+}
+.dk-td-since {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 0 2px;
+}
+.dk-td-since-h {
+  margin: 0 0 2px;
+  font: 11px var(--dk-plex);
+  color: var(--dsk-faint);
+}
+.dk-td-line {
+  border-radius: 4px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--dsk-fg2);
+}
+a.dk-td-line:hover {
+  color: var(--dsk-fg);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.dk-td-line.dk-td-bad {
+  color: var(--danger);
+}
+.dk-td-sk {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.dk-td-sk i {
+  height: 40px;
+}
+@media (max-width: 720px) {
+  .dk-td-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .dk-td-tm {
+    display: none;
+  }
+  .dk-td-run {
+    grid-template-columns: 24px minmax(0, 1fr);
+  }
+  .dk-td-steps {
+    display: none;
+  }
+}
+
+/* A record's case: the record's own card, and beside it what is open about it or Nova. */
+.dk-rc {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
+  height: 100%;
+  min-height: 0;
+}
+.dk-rc-main {
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  padding: 20px 28px 48px;
+}
+.dk-rc-plain {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 680px;
+  margin: 24px auto;
+  font-size: 15px;
+}
+.dk-rc-side {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-width: 0;
+  min-height: 0;
+  border-left: 1px solid var(--dsk-b-sub);
+  background: var(--dsk-canvas);
+}
+.dk-rc-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 12px 12px 8px;
+  border-bottom: 1px solid var(--dsk-b-sub);
+}
+.dk-rc-pad {
+  padding: 16px;
+}
+.dk-rc-open {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: auto;
+}
+.dk-rc-open .dk-dc2-card {
+  flex: none;
+  overflow: visible;
+  padding: 20px 16px 16px;
+}
+.dk-rc-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px;
+  border-bottom: 1px solid var(--dsk-b-sub);
+}
+.dk-rc-nova {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}
+.dk-rc-ask {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px 16px;
+}
+.dk-rc-ask-h {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+.dk-rc-ask-h b {
+  font-weight: 600;
+}
+.dk-rc-ask p {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--dsk-subtle);
+}
+.dk-rc-ask-box {
+  width: 100%;
+  min-height: 76px;
+  padding: 8px 10px;
+  resize: vertical;
+  font: inherit;
+  font-size: 13px;
+}
+.dk-rc-ask-f {
+  display: flex;
+  justify-content: flex-end;
+}
+@media (max-width: 960px) {
+  .dk-rc {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) minmax(0, 45%);
+  }
+  .dk-rc-side {
+    border-left: 0;
+    border-top: 1px solid var(--dsk-b-sub);
+  }
+}
+
+/* A board's work block (what is open about each record) and its actions (requests, never writes). */
+.dk-bd-work {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dk-bd-work li + li {
+  border-top: 1px solid var(--dsk-b-sub);
+}
+.dk-bd-work-row {
+  display: grid;
+  grid-template-columns: 8px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: start;
+  padding: 9px 4px;
+  color: inherit;
+  border-radius: 6px;
+}
+a.dk-bd-work-row:hover {
+  background: var(--dsk-hover);
+}
+.dk-bd-work-tone {
+  width: 8px;
+  height: 8px;
+  margin-top: 5px;
+  border-radius: 2px;
+  background: var(--dsk-b-strong);
+}
+.dk-bd-work-tone.dk-bad {
+  background: var(--danger);
+}
+.dk-bd-work-tone.dk-warn {
+  background: var(--dsk-warn);
+}
+.dk-bd-work-tone.dk-info {
+  background: var(--dsk-blue);
+}
+.dk-bd-work-main {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.dk-bd-work-main b {
+  font-size: 13px;
+  font-weight: 500;
+}
+.dk-bd-work-sigs {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 12px;
+  color: var(--dsk-muted);
+}
+.dk-bd-work-sigs em {
+  display: inline-block;
+  width: 72px;
+  font: 10.5px var(--dk-plex);
+  font-style: normal;
+  color: var(--dsk-faint);
+}
+.dk-bd-work-quiet {
+  font-size: 12px;
+  color: var(--dsk-subtle);
+}
+.dk-bd-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  grid-column: 1 / -1;
+}
+.dk-bd-actions.dk-bd-half {
+  grid-column: auto;
+}
+.dk-bd-actions-note {
+  flex-basis: 100%;
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
+
+/* Triage in the Desk's room: it fills the main column under the strip. */
+.dk-mainc > .dk-tr {
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}

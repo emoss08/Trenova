@@ -2,7 +2,6 @@ package generateddocument
 
 import (
 	"context"
-	"errors"
 	"strings"
 
 	"github.com/emoss08/keel"
@@ -43,21 +42,6 @@ func (s GenerationStatus) IsValid() bool {
 	}
 }
 
-func GenerationStatusFromString(v string) (GenerationStatus, error) {
-	switch v {
-	case "Pending":
-		return GenerationStatusPending, nil
-	case "Processing":
-		return GenerationStatusProcessing, nil
-	case "Completed":
-		return GenerationStatusCompleted, nil
-	case "Failed":
-		return GenerationStatusFailed, nil
-	default:
-		return "", errors.New("invalid generated document status")
-	}
-}
-
 // DeliveryMethod records how a rendered document reached its recipient.
 type DeliveryMethod string
 
@@ -80,24 +64,9 @@ func (m DeliveryMethod) IsValid() bool {
 	}
 }
 
-func DeliveryMethodFromString(v string) (DeliveryMethod, error) {
-	switch v {
-	case "None":
-		return DeliveryMethodNone, nil
-	case "Email":
-		return DeliveryMethodEmail, nil
-	case "Download":
-		return DeliveryMethodDownload, nil
-	case "Portal":
-		return DeliveryMethodPortal, nil
-	default:
-		return "", errors.New("invalid delivery method")
-	}
-}
-
 var (
-	_ validationframework.TenantedEntity = (*GeneratedDocument)(nil)
-	_ domaintypes.PostgresSearchable     = (*GeneratedDocument)(nil)
+	_ validationframework.Entity     = (*GeneratedDocument)(nil)
+	_ domaintypes.PostgresSearchable = (*GeneratedDocument)(nil)
 )
 
 // GeneratedDocument is one rendered artifact and the template version that produced

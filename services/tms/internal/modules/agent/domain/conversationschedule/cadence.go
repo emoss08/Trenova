@@ -54,7 +54,6 @@ var chineseRequestPattern = cadencePattern(
 )
 
 // commandPattern is the /schedule command, whatever follows it.
-var commandPattern = regexp.MustCompile(`(?i)^/schedule(?:\s|$)`)
 
 // leadingFiller is what is dropped from the front of the request: the comma
 // after the time and a polite "please".
@@ -168,20 +167,6 @@ type Request struct {
 	// EST"), as an IANA name, or empty when it named none and the schedule
 	// keeps the person's own.
 	Timezone string
-}
-
-// IsRequest reports whether a message asks for a schedule rather than an
-// answer: the /schedule command, or a message that opens with a cadence the
-// parser reads. "Every time I open this…" is a question, not a schedule.
-func IsRequest(text string) bool {
-	text = strings.TrimSpace(text)
-
-	if commandPattern.MatchString(text) {
-		return true
-	}
-	_, ok := matchCadence(text)
-
-	return ok
 }
 
 // ParseRequest reads a message as a scheduled request.

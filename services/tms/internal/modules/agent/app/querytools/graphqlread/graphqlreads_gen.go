@@ -645,9 +645,11 @@ var Reads = map[string]Read{
 		Resource:  "carrier_capacity_posting",
 		Entity:    func() domaintypes.PostgresSearchable { return new(carriercapacity.Posting) },
 		Variables: []Variable{
+			{Name: "destinationStateCode", Type: "String", NonNull: false, List: false, Kind: "scalar", Description: "Only postings headed to this state, by its two-letter code such as GA."},
 			{Name: "includeTotalCount", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "true also returns totalCountExact: Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."},
 			{Name: "input", Type: "DataTableConnectionInput", NonNull: true, List: false, Kind: "input"},
 			{Name: "openOnly", Type: "Boolean", NonNull: false, List: false, Kind: "scalar", Description: "Only postings whose window has not closed."},
+			{Name: "originStateCode", Type: "String", NonNull: false, List: false, Kind: "scalar", Description: "Only postings picking up in this state, by its two-letter code such as TX."},
 		},
 		Fields: []Field{
 			{Name: "id", Type: "ID", Kind: "scalar", List: false, NonNull: true, Selected: true},

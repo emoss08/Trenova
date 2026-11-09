@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/keel/schema"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
@@ -12,7 +11,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/templatecatalog"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/keelcheck"
 	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -26,15 +24,16 @@ const fieldKind = "kind"
 type ValidatorParams struct {
 	fx.In
 
-	DB       *postgres.Connection
-	Registry *templatecatalog.Registry
+	DB        *postgres.Connection
+	Integrity validationframework.IntegrityChecker
+	Registry  *templatecatalog.Registry
 }
 
 type Validator struct {
 	registry   *templatecatalog.Registry
 	template   tenantedvalidation.EntityValidator[*documenttemplate.DocumentTemplate]
-	version    tenantedvalidation.EntityValidator[*documenttemplate.DocumentTemplateVersion]
-	assignment tenantedvalidation.EntityValidator[*documenttemplate.DocumentTemplateAssignment]
+	version    tenantedvalidation.EntityReporter[*documenttemplate.DocumentTemplateVersion]
+	assignment tenantedvalidation.EntityReporter[*documenttemplate.DocumentTemplateAssignment]
 }
 
 func NewValidator(p ValidatorParams) *Validator {
@@ -44,26 +43,6 @@ func NewValidator(p ValidatorParams) *Validator {
 		version:    buildVersionValidator(p),
 		assignment: buildAssignmentValidator(p),
 	}
-}
-
-// withCheckers attaches the database-backed checkers when a connection is
-// available. Without one the builder still records the field configuration and
-// the framework simply skips those stages, which is what lets the domain rules
-// be exercised without a database.
-func withCheckers[T validationframework.TenantedEntity](
-	builder *tenantedvalidation.Builder[T],
-	db *postgres.Connection,
-	table *schema.Table,
-) *tenantedvalidation.Builder[T] {
-	if db == nil {
-		return builder
-	}
-
-	checker := keelcheck.NewChecker(db, table)
-
-	return builder.
-		WithUniquenessChecker(checker).
-		WithReferenceChecker(checker)
 }
 
 func buildTemplateValidator(
@@ -89,78 +68,74 @@ func buildTemplateValidator(
 
 	builder = builder.WithCustomRule(newSingleOrgDefaultRule(p.DB))
 
-	return withCheckers(builder, p.DB, documenttemplatedb.DocumentTemplatesSchema()).Build()
+	return builder.WithIntegrityChecker(p.Integrity).Build()
 }
 
 func buildVersionValidator(
 	p ValidatorParams,
-) tenantedvalidation.EntityValidator[*documenttemplate.DocumentTemplateVersion] {
-	return withCheckers(
-		tenantedvalidation.NewBuilder[*documenttemplate.DocumentTemplateVersion]().
-			WithModelName("DocumentTemplateVersion").
-			WithReferenceCheck(
-				"templateId",
-				"document_templates",
-				"That template does not exist in your organization",
-				func(v *documenttemplate.DocumentTemplateVersion) pulid.ID { return v.TemplateID },
-			).
-			WithOptionalReferenceCheck(
-				"sourceVersionId",
-				"document_template_versions",
-				"The version this was copied from does not exist in your organization",
-				func(v *documenttemplate.DocumentTemplateVersion) pulid.ID {
-					if v.SourceVersionID == nil {
-						return pulid.Nil
-					}
-					return *v.SourceVersionID
-				},
-			),
-		p.DB,
-		documenttemplatedb.DocumentTemplateVersionsSchema(),
-	).Build()
+) tenantedvalidation.EntityReporter[*documenttemplate.DocumentTemplateVersion] {
+	return tenantedvalidation.NewBuilder[*documenttemplate.DocumentTemplateVersion]().
+		WithModelName("DocumentTemplateVersion").
+		WithIntegrityChecker(p.Integrity).
+		WithReferenceCheck(
+			"templateId",
+			"document_templates",
+			"That template does not exist in your organization",
+			func(v *documenttemplate.DocumentTemplateVersion) pulid.ID { return v.TemplateID },
+		).
+		WithOptionalReferenceCheck(
+			"sourceVersionId",
+			"document_template_versions",
+			"The version this was copied from does not exist in your organization",
+			func(v *documenttemplate.DocumentTemplateVersion) pulid.ID {
+				if v.SourceVersionID == nil {
+					return pulid.Nil
+				}
+				return *v.SourceVersionID
+			},
+		).
+		Build()
 }
 
 func buildAssignmentValidator(
 	p ValidatorParams,
-) tenantedvalidation.EntityValidator[*documenttemplate.DocumentTemplateAssignment] {
-	return withCheckers(
-		tenantedvalidation.NewBuilder[*documenttemplate.DocumentTemplateAssignment]().
-			WithModelName("DocumentTemplateAssignment").
-			WithCompositeUniqueFields(
-				"customerKind",
-				"That customer already has a template assigned for this kind",
-				tenantedvalidation.CompositeField[*documenttemplate.DocumentTemplateAssignment]{
-					FieldName: "customerId",
-					Column:    "customer_id",
-					GetValue: func(a *documenttemplate.DocumentTemplateAssignment) any {
-						return a.CustomerID
-					},
-					CaseSensitive: true,
+) tenantedvalidation.EntityReporter[*documenttemplate.DocumentTemplateAssignment] {
+	return tenantedvalidation.NewBuilder[*documenttemplate.DocumentTemplateAssignment]().
+		WithModelName("DocumentTemplateAssignment").
+		WithIntegrityChecker(p.Integrity).
+		WithCompositeUniqueFields(
+			"customerKind",
+			"That customer already has a template assigned for this kind",
+			tenantedvalidation.CompositeField[*documenttemplate.DocumentTemplateAssignment]{
+				FieldName: "customerId",
+				Column:    "customer_id",
+				GetValue: func(a *documenttemplate.DocumentTemplateAssignment) any {
+					return a.CustomerID
 				},
-				tenantedvalidation.CompositeField[*documenttemplate.DocumentTemplateAssignment]{
-					FieldName: fieldKind,
-					Column:    fieldKind,
-					GetValue: func(a *documenttemplate.DocumentTemplateAssignment) any {
-						return a.Kind
-					},
-					CaseSensitive: true,
+				CaseSensitive: true,
+			},
+			tenantedvalidation.CompositeField[*documenttemplate.DocumentTemplateAssignment]{
+				FieldName: fieldKind,
+				Column:    fieldKind,
+				GetValue: func(a *documenttemplate.DocumentTemplateAssignment) any {
+					return a.Kind
 				},
-			).
-			WithReferenceCheck(
-				"templateId",
-				"document_templates",
-				"That template does not exist in your organization",
-				func(a *documenttemplate.DocumentTemplateAssignment) pulid.ID { return a.TemplateID },
-			).
-			WithReferenceCheck(
-				"customerId",
-				"customers",
-				"That customer does not exist in your organization",
-				func(a *documenttemplate.DocumentTemplateAssignment) pulid.ID { return a.CustomerID },
-			),
-		p.DB,
-		documenttemplatedb.DocumentTemplateAssignmentsSchema(),
-	).Build()
+				CaseSensitive: true,
+			},
+		).
+		WithReferenceCheck(
+			"templateId",
+			"document_templates",
+			"That template does not exist in your organization",
+			func(a *documenttemplate.DocumentTemplateAssignment) pulid.ID { return a.TemplateID },
+		).
+		WithReferenceCheck(
+			"customerId",
+			"customers",
+			"That customer does not exist in your organization",
+			func(a *documenttemplate.DocumentTemplateAssignment) pulid.ID { return a.CustomerID },
+		).
+		Build()
 }
 
 // newKindRegisteredRule refuses a kind the registry does not publish.
@@ -171,16 +146,13 @@ func buildAssignmentValidator(
 // unrenderable from the moment it was saved.
 func newKindRegisteredRule(
 	registry *templatecatalog.Registry,
-) validationframework.TenantedRule[*documenttemplate.DocumentTemplate] {
-	return validationframework.
-		NewTenantedRule[*documenttemplate.DocumentTemplate]("kind_registered").
-		WithStage(validationframework.ValidationStageBusinessRules).
-		WithPriority(validationframework.ValidationPriorityHigh).
-		WithParallelSafeExecution().
+) validationframework.Rule[*documenttemplate.DocumentTemplate] {
+	return validationframework.NewRule[*documenttemplate.DocumentTemplate]("kind_registered").
+		WithStage(validationframework.StageBusinessRules).
 		WithValidation(func(
 			_ context.Context,
 			entity *documenttemplate.DocumentTemplate,
-			_ *validationframework.TenantedValidationContext,
+			_ *validationframework.Context,
 			multiErr *errortypes.MultiError,
 		) error {
 			if entity.Kind == "" {
@@ -205,15 +177,13 @@ func newKindRegisteredRule(
 // caused it rather than a constraint violation.
 func newSingleOrgDefaultRule(
 	db *postgres.Connection,
-) validationframework.TenantedRule[*documenttemplate.DocumentTemplate] {
-	return validationframework.
-		NewTenantedRule[*documenttemplate.DocumentTemplate]("single_org_default").
-		WithStage(validationframework.ValidationStageDataIntegrity).
-		WithPriority(validationframework.ValidationPriorityHigh).
+) validationframework.Rule[*documenttemplate.DocumentTemplate] {
+	return validationframework.NewRule[*documenttemplate.DocumentTemplate]("single_org_default").
+		WithStage(validationframework.StageDataIntegrity).
 		WithValidation(func(
 			ctx context.Context,
 			entity *documenttemplate.DocumentTemplate,
-			valCtx *validationframework.TenantedValidationContext,
+			valCtx *validationframework.Context,
 			multiErr *errortypes.MultiError,
 		) error {
 			if !entity.IsOrgDefault {
@@ -255,7 +225,7 @@ func (v *Validator) ValidateTemplate(
 	ctx context.Context,
 	entity *documenttemplate.DocumentTemplate,
 	original *documenttemplate.DocumentTemplate,
-) *errortypes.MultiError {
+) error {
 	if original == nil {
 		return v.template.ValidateCreate(ctx, entity)
 	}
@@ -272,26 +242,25 @@ func (v *Validator) ValidateVersion(
 	ctx context.Context,
 	entity *documenttemplate.DocumentTemplateVersion,
 	kind documenttemplate.Kind,
-) *errortypes.MultiError {
-	var multiErr *errortypes.MultiError
+) error {
+	var report *errortypes.MultiError
 	if entity.GetID().IsNil() {
-		multiErr = v.version.ValidateCreate(ctx, entity)
+		report = v.version.ReportCreate(ctx, entity)
 	} else {
-		multiErr = v.version.ValidateUpdate(ctx, entity)
+		report = v.version.ReportUpdate(ctx, entity)
 	}
 
 	def, ok := v.registry.Get(kind)
-	if !ok {
-		return multiErr
+	if !ok || report.Internal() != nil {
+		return report.Err()
 	}
 
-	channelErr := errortypes.NewMultiError()
-	v.checkChannelsBelong(entity, def, channelErr)
+	v.checkChannelsBelong(entity, def, report)
 
 	// Page setup on a message is not harmless noise: it would show a page-size
 	// control in the editor for something that is never printed.
 	if !def.Paged && (entity.PageSize != "" || entity.Orientation != "") {
-		channelErr.Add(
+		report.Add(
 			"pageSize",
 			errortypes.ErrInvalid,
 			"{0} is a message, not a document, so it has no page setup",
@@ -300,10 +269,11 @@ func (v *Validator) ValidateVersion(
 	}
 
 	printed := contentFromVersion(entity)
-	return mergeErrors(
-		mergeErrors(multiErr, channelErr),
+
+	return errortypes.MergeMultiErrors(
+		report,
 		diagnosticsToMultiError(printedSourceDiagnostics(&printed)),
-	)
+	).Err()
 }
 
 // checkChannelsBelong refuses content in a slot the kind does not produce.
@@ -360,24 +330,22 @@ func (v *Validator) ValidateAssignment(
 	ctx context.Context,
 	entity *documenttemplate.DocumentTemplateAssignment,
 	template *documenttemplate.DocumentTemplate,
-) *errortypes.MultiError {
-	var multiErr *errortypes.MultiError
+) error {
+	var report *errortypes.MultiError
 	if entity.GetID().IsNil() {
-		multiErr = v.assignment.ValidateCreate(ctx, entity)
+		report = v.assignment.ReportCreate(ctx, entity)
 	} else {
-		multiErr = v.assignment.ValidateUpdate(ctx, entity)
+		report = v.assignment.ReportUpdate(ctx, entity)
 	}
 
-	if template == nil {
-		return multiErr
+	if template == nil || report.Internal() != nil {
+		return report.Err()
 	}
-
-	scopeErr := errortypes.NewMultiError()
 
 	def, ok := v.registry.Get(template.Kind)
 	switch {
 	case !ok:
-		scopeErr.Add(
+		report.Add(
 			"templateId",
 			errortypes.ErrInvalid,
 			"\"{0}\" is not a template kind this system can render",
@@ -386,7 +354,7 @@ func (v *Validator) ValidateAssignment(
 	case !def.CustomerScoped:
 		// Assigning a kind with no customer in scope would look like it worked
 		// and then never fire on any render.
-		scopeErr.Add(
+		report.Add(
 			fieldKind,
 			errortypes.ErrInvalid,
 			"{0} is not sent per customer, so assigning it to one has no effect",
@@ -395,28 +363,10 @@ func (v *Validator) ValidateAssignment(
 	}
 
 	if !template.HasActiveVersion() {
-		scopeErr.Add("templateId", errortypes.ErrInvalid,
+		report.Add("templateId", errortypes.ErrInvalid,
 			"That template has no published version, so the customer would keep "+
 				"receiving the current one. Publish it first.")
 	}
 
-	return mergeErrors(multiErr, scopeErr)
-}
-
-// mergeErrors folds the rules that need context the framework does not carry
-// into the framework's own verdict, so a caller sees one set of field errors.
-func mergeErrors(base, extra *errortypes.MultiError) *errortypes.MultiError {
-	if !extra.HasErrors() {
-		return base
-	}
-
-	if base == nil {
-		return extra
-	}
-
-	for _, err := range extra.Errors {
-		base.AddError(err)
-	}
-
-	return base
+	return report.Err()
 }

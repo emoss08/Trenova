@@ -22,7 +22,7 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*RateImportBatch)(nil)
+	_ validationframework.Entity = (*RateImportBatch)(nil)
 )
 
 const maxFileNameLength = 255

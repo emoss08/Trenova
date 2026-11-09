@@ -85,12 +85,12 @@ export default function AuditTab({ resourceId }: { resourceId: string }) {
 
   if (query.isError) {
     return (
-      <div className="text-muted-foreground flex flex-col items-center justify-center py-12">
+      <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
         <p className="text-sm">{t("Failed to load audit history.")}</p>
         <button
           type="button"
           onClick={() => void query.refetch()}
-          className="text-foreground mt-2 text-xs underline"
+          className="mt-2 text-xs text-foreground underline"
         >
           {t("Retry")}
         </button>
@@ -154,20 +154,20 @@ function AuditCard({ entry, canNavigate }: { entry: ActivityEntry; canNavigate: 
     <Collapsible open={open} onOpenChange={setOpen}>
       <div
         className={cn(
-          "border-border bg-card rounded-lg border",
-          !hasDetails && canNavigate && "hover:bg-muted/50 cursor-pointer transition-colors",
+          "rounded-lg border border-border bg-card",
+          !hasDetails && canNavigate && "cursor-pointer transition-colors hover:bg-muted/50",
         )}
         onClick={handleCardClick}
       >
         <CollapsibleTrigger
           className={cn(
             "flex w-full items-center gap-3 p-3 text-left",
-            hasDetails && "hover:bg-muted/50 cursor-pointer transition-colors",
-            open && "border-border border-b",
+            hasDetails && "cursor-pointer transition-colors hover:bg-muted/50",
+            open && "border-b border-border",
           )}
           disabled={!hasDetails}
         >
-          <span className="bg-muted text-muted-foreground flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-medium">
+          <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-medium text-muted-foreground">
             {userInitials(entry.user?.name)}
           </span>
 
@@ -182,13 +182,13 @@ function AuditCard({ entry, canNavigate }: { entry: ActivityEntry; canNavigate: 
           </div>
 
           <div className="flex shrink-0 items-center gap-2">
-            <span className="text-muted-foreground text-xs" title={fullDate}>
+            <span className="text-xs text-muted-foreground" title={fullDate}>
               {relativeTime}
             </span>
             {hasDetails && (
               <ChevronRightIcon
                 className={cn(
-                  "text-muted-foreground size-4 transition-transform duration-200",
+                  "size-4 text-muted-foreground transition-transform duration-200",
                   open && "rotate-90",
                 )}
               />
@@ -197,7 +197,7 @@ function AuditCard({ entry, canNavigate }: { entry: ActivityEntry; canNavigate: 
         </CollapsibleTrigger>
 
         <CollapsibleContent>
-          <div className="border-border bg-muted flex flex-col gap-px rounded-b-lg border-b p-2">
+          <div className="flex flex-col gap-px rounded-b-lg border-b border-border bg-muted p-2">
             {changes.map((change) => (
               <ChangeItem key={change.path} change={change} />
             ))}
@@ -206,7 +206,7 @@ function AuditCard({ entry, canNavigate }: { entry: ActivityEntry; canNavigate: 
             <div className="justify-left flex px-2 py-1">
               <Link
                 to={auditEntryUrl(entry.id)}
-                className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-xs transition-colors"
+                className="inline-flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
               >
                 {t("View full record")}
                 <LinkExternal01Icon className="size-3" />
@@ -223,23 +223,23 @@ function OperationSummary({ operation, changeCount }: { operation: string; chang
   const t = useT();
 
   if (operation === "create") {
-    return <p className="text-muted-foreground text-xs">{t("Created this resource")}</p>;
+    return <p className="text-xs text-muted-foreground">{t("Created this resource")}</p>;
   }
 
   if (operation === "delete") {
-    return <p className="text-muted-foreground text-xs">{t("Deleted this resource")}</p>;
+    return <p className="text-xs text-muted-foreground">{t("Deleted this resource")}</p>;
   }
 
   if (operation === "update" && changeCount > 0) {
     return (
-      <p className="text-muted-foreground text-xs">
+      <p className="text-xs text-muted-foreground">
         {t("{0, plural, one {# field} other {# fields}} changed", changeCount)}
       </p>
     );
   }
 
   return (
-    <p className="text-muted-foreground text-xs">
+    <p className="text-xs text-muted-foreground">
       {t("{0} this resource", operationLabel(operation))}
     </p>
   );
@@ -253,7 +253,7 @@ function ChangeItem({ change }: { change: NormalizedAuditChange }) {
 
   return (
     <div className="flex items-start gap-3 rounded-md px-3 py-2">
-      <span className="text-foreground shrink-0 pt-px text-xs font-medium">
+      <span className="shrink-0 pt-px text-xs font-medium text-foreground">
         {formatFieldLabel(change.path)}
       </span>
       <div className="flex min-w-0 flex-1 items-center justify-end gap-1.5 text-xs">
@@ -283,7 +283,7 @@ function AuditCardsSkeleton() {
   return (
     <div className="flex flex-col gap-2">
       {Array.from({ length: 4 }).map((_, i) => (
-        <div key={i} className="border-border bg-card rounded-lg border p-3">
+        <div key={i} className="rounded-lg border border-border bg-card p-3">
           <div className="flex items-center gap-3">
             <Skeleton className="size-7 rounded-full" />
             <div className="flex flex-1 flex-col gap-1.5">

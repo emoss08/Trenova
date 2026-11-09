@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*ShipmentControl)(nil)
+	_ validationframework.Entity = (*ShipmentControl)(nil)
 )
 
 type ShipmentControl struct {

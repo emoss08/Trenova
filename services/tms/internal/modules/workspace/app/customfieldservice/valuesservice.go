@@ -2,6 +2,7 @@ package customfieldservice
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/customfieldports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -112,12 +113,12 @@ func (s *ValuesService) ValidateAndSave(
 	resourceType string,
 	resourceID string,
 	values map[string]any,
-) *errortypes.MultiError {
+) error {
 	multiErr := errortypes.NewMultiError()
 
 	s.validator.Validate(ctx, tenantInfo, resourceType, values, multiErr)
 	if multiErr.HasErrors() {
-		return multiErr
+		return multiErr.Err()
 	}
 
 	if err := s.valueRepo.Upsert(ctx, &customfieldports.UpsertCustomFieldValuesRequest{
@@ -132,12 +133,8 @@ func (s *ValuesService) ValidateAndSave(
 			zap.String("resourceType", resourceType),
 			zap.String("resourceID", resourceID),
 		)
-		multiErr.Add(
-			"customFields",
-			errortypes.ErrSystemError,
-			"Failed to save custom field values",
-		)
-		return multiErr
+		multiErr.AddInternal(fmt.Errorf("failed to save custom field values: %w", err))
+		return multiErr.Err()
 	}
 
 	return nil

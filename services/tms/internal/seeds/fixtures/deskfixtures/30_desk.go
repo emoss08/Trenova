@@ -397,14 +397,14 @@ func briefingFor(refs *deskSeedRefs) *briefing.Briefing {
 				Title:   "Needs attention",
 				Summary: "1 hours-of-service violation and 1 open service failure.",
 				Items: []briefing.Item{
-					{Label: "HOS violations", Value: "1", Path: "/desk/watchtower"},
+					{Label: "HOS violations", Value: "1", Path: "/desk/needs"},
 					{
 						Label: "Open service failures",
 						Value: "1",
 						Path:  "/shipment-management/service-failures",
 					},
 				},
-				Path: "/desk/watchtower",
+				Path: "/desk/needs",
 			},
 			{
 				Key:   briefing.SectionDecisions,
@@ -414,7 +414,7 @@ func briefingFor(refs *deskSeedRefs) *briefing.Briefing {
 					waiting, decisions,
 				),
 				Items: []briefing.Item{
-					{Label: "Messages in review", Value: fmt.Sprint(waiting), Path: "/inbox"},
+					{Label: "Messages in review", Value: fmt.Sprint(waiting), Path: "/desk/triage"},
 					{
 						Label: "Decisions pending",
 						Value: fmt.Sprint(decisions),

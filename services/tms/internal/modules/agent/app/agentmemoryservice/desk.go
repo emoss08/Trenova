@@ -286,7 +286,7 @@ func (p *deskPerson) desk(row *agentmemoryports.DeskMemoryRow) *agentmemoryports
 	}
 }
 
-func checkDeskContent(content string) (string, error) {
+func checkDeskContent(content string, kind agentmemory.MemoryKind) (string, error) {
 	content = strings.TrimSpace(content)
 	if content == "" {
 		return "", errortypes.NewValidationError(
@@ -295,10 +295,10 @@ func checkDeskContent(content string) (string, error) {
 			"Say what to remember",
 		)
 	}
-	if utf8.RuneCountInString(content) > agentmemory.MaxMemoryContentChars {
+	if limit := kind.MaxContentChars(); utf8.RuneCountInString(content) > limit {
 		return "", errortypes.NewValidationError(
 			"content", errortypes.ErrInvalid,
-			"A memory is at most {0} characters", agentmemory.MaxMemoryContentChars,
+			"A memory is at most {0} characters", limit,
 		)
 	}
 
@@ -600,7 +600,7 @@ func (s *Service) CreateDesk(
 	if err != nil {
 		return nil, err
 	}
-	content, err := checkDeskContent(req.Content)
+	content, err := checkDeskContent(req.Content, agentmemory.MemoryKindInstruction)
 	if err != nil {
 		return nil, err
 	}
@@ -643,7 +643,7 @@ func (s *Service) ReviseDesk(
 
 	content := current.Content
 	if strings.TrimSpace(req.Content) != "" {
-		if content, err = checkDeskContent(req.Content); err != nil {
+		if content, err = checkDeskContent(req.Content, current.Kind); err != nil {
 			return nil, err
 		}
 	}
@@ -808,13 +808,16 @@ func (s *Service) ConfirmDesk(
 			"You offered this memory for others; an administrator decides whether it is kept",
 		)
 	}
-	content, err := checkDeskContent(req.Content)
+	content, err := checkDeskContent(req.Content, current.Kind)
 	if err != nil {
 		return nil, err
 	}
 	scope := req.Scope
 	if scope == "" {
 		scope = current.Scope
+	}
+	if current.Scope.Shared() && scope == agentmemory.MemoryScopeUser && !person.MayManageShared {
+		return s.keepCopy(ctx, person, current, content)
 	}
 	if scope == agentmemory.MemoryScopeAgent && current.Scope != agentmemory.MemoryScopeAgent {
 		return nil, errortypes.NewValidationError(
@@ -871,6 +874,30 @@ func (s *Service) ConfirmDesk(
 	s.recordReplaced(ctx, confirmed, person.Actor)
 
 	return s.deskOne(ctx, person, confirmed.ID)
+}
+
+func (s *Service) keepCopy(
+	ctx context.Context,
+	person *deskPerson,
+	offer *agentmemory.Memory,
+	content string,
+) (*agentmemoryports.DeskMemory, error) {
+	created, err := s.remember(ctx, &agentmemoryports.RememberRequest{
+		TenantInfo:  person.tenant,
+		Kind:        offer.Kind,
+		Content:     content,
+		SubjectType: offer.SubjectType,
+		SubjectID:   pulid.ConvertFromPtr(offer.SubjectID),
+		ToolName:    offer.ToolName,
+		ExpiresAt:   offer.ExpiresAt,
+		Scope:       agentmemory.MemoryScopeUser,
+		OwnerUserID: person.userID,
+	}, person.Actor, person.MayManageShared)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.deskOne(ctx, person, created.ID)
 }
 
 func (s *Service) mayReplace(

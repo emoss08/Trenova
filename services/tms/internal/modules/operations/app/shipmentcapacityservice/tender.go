@@ -186,8 +186,7 @@ func failureMessage(err error) string {
 	if errors.As(err, &business) {
 		return business.Message
 	}
-	var multi *errortypes.MultiError
-	if errors.As(err, &multi) {
+	if multi, ok := errortypes.RefusalOf(err); ok {
 		return multi.Error()
 	}
 	if errors.Is(err, errAlreadyCovered) || errors.Is(err, errNoPricedRate) {

@@ -21,11 +21,11 @@ func NewValidator() *Validator {
 func (v *Validator) ValidateUpdate( //nolint:cyclop,funlen,gocognit // legacy workflow
 	_ context.Context,
 	doc *sequenceconfig.SequenceConfigDocument,
-) *errortypes.MultiError {
+) error {
 	multiErr := errortypes.NewMultiError()
 	if doc == nil {
 		multiErr.Add("", errortypes.ErrRequired, "Sequence configuration payload is required")
-		return multiErr
+		return multiErr.Err()
 	}
 
 	if doc.OrganizationID.IsNil() {
@@ -158,9 +158,5 @@ func (v *Validator) ValidateUpdate( //nolint:cyclop,funlen,gocognit // legacy wo
 		}
 	}
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }

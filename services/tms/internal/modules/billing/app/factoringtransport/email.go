@@ -95,10 +95,7 @@ func (t *Email) Test(_ context.Context, req *factoringsubmissionports.TransportT
 	}
 	multiErr := errortypes.NewMultiError()
 	req.Transport.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }
 
 func PackAttachments(

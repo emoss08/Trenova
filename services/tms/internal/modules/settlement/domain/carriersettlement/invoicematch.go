@@ -16,8 +16,8 @@ import (
 )
 
 var (
-	_ pagination.CursorEntity            = (*InvoiceMatch)(nil)
-	_ validationframework.TenantedEntity = (*InvoiceMatch)(nil)
+	_ pagination.CursorEntity    = (*InvoiceMatch)(nil)
+	_ validationframework.Entity = (*InvoiceMatch)(nil)
 )
 
 type InvoiceMatch struct {

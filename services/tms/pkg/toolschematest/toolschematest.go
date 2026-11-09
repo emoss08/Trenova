@@ -16,7 +16,7 @@ func FieldErrors(t *testing.T, err error) map[string]string {
 
 	out := make(map[string]string, len(multiErr.Errors))
 	for _, entry := range multiErr.Errors {
-		out[entry.Field] = entry.Message
+		out[entry.Field()] = entry.Message
 	}
 
 	return out

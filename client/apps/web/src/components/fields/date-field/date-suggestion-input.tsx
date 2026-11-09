@@ -1,4 +1,12 @@
-import { autoUpdate, flip, hide, offset, size, useFloating } from "@floating-ui/react-dom";
+import {
+  autoUpdate,
+  flip,
+  hide,
+  offset,
+  size,
+  useFloating,
+  type Middleware,
+} from "@floating-ui/react-dom";
 import { XCloseIcon } from "@trenova/shared/components/icons";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Input } from "@trenova/shared/components/ui/input";
@@ -6,6 +14,19 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { useEffect, useId, useImperativeHandle, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+
+/**
+ * floating-ui's `hide`, except for a field that has no size: one that is not laid out (a
+ * collapsed container, a test document) is not scrolled out of view, so its list stays shown.
+ */
+const hideWhenScrolledAway: Middleware = {
+  name: "hide",
+  async fn(state) {
+    const { width, height } = state.rects.reference;
+    if (width === 0 && height === 0) return { data: { referenceHidden: false } };
+    return hide().fn(state);
+  },
+};
 
 export type Suggestion = {
   date: Date;
@@ -112,7 +133,11 @@ export function DateSuggestionInput({
   const showClear = !!clearable && !isLocked && displayValue.length > 0;
   const invalid = isInvalid || rejected !== null;
 
-  const { refs, floatingStyles, middlewareData } = useFloating({
+  const {
+    refs: { setReference, setFloating },
+    floatingStyles,
+    middlewareData,
+  } = useFloating({
     open: dropdownVisible,
     placement: "bottom-start",
     strategy: "fixed",
@@ -125,7 +150,7 @@ export function DateSuggestionInput({
           elements.floating.style.width = `${rects.reference.width}px`;
         },
       }),
-      hide(),
+      hideWhenScrolledAway,
     ],
   });
   const anchorHidden = middlewareData.hide?.referenceHidden ?? false;
@@ -246,7 +271,7 @@ export function DateSuggestionInput({
   const listed = dropdownVisible && suggestions.length > 0;
 
   return (
-    <div ref={refs.setReference} className="relative">
+    <div ref={setReference} className="relative">
       <div className="relative">
         <Input
           placeholder={placeholder ?? t("Tomorrow")}
@@ -281,7 +306,7 @@ export function DateSuggestionInput({
             variant="ghost"
             onMouseDown={(e) => e.preventDefault()}
             onClick={handleClear}
-            className="text-muted-foreground absolute top-1/2 right-8 size-5 -translate-y-1/2 [&>svg]:size-3"
+            className="absolute top-1/2 right-8 size-5 -translate-y-1/2 text-muted-foreground [&>svg]:size-3"
           >
             <span className="sr-only">{t("Clear date")}</span>
             <XCloseIcon className="size-4" />
@@ -290,7 +315,7 @@ export function DateSuggestionInput({
         {picker}
       </div>
       {rejected !== null && !focused ? (
-        <p id={hintId} className="text-danger-foreground mt-1 text-2xs">
+        <p id={hintId} className="mt-1 text-2xs text-danger-foreground">
           {t('"{0}" is not a date. Try "t+2", "next friday", or "07/15".', rejected)}
         </p>
       ) : null}
@@ -298,12 +323,12 @@ export function DateSuggestionInput({
       {dropdownVisible &&
         createPortal(
           <div
-            ref={refs.setFloating}
+            ref={setFloating}
             style={{ ...floatingStyles, visibility: anchorHidden ? "hidden" : undefined }}
             className="dark isolate z-50"
           >
             <div
-              className="bg-popover text-popover-foreground animate-in fade-in-0 rounded-lg p-0 ring-1 ring-foreground/10"
+              className="animate-in rounded-lg bg-popover p-0 text-popover-foreground ring-1 ring-foreground/10 fade-in-0"
               tabIndex={-1}
             >
               {suggestions.length > 0 ? (
@@ -328,14 +353,14 @@ export function DateSuggestionInput({
                       onMouseEnter={() => setSelectedIndex(index)}
                     >
                       <span className="xs:w-auto w-[110px] truncate">{suggestion.inputString}</span>
-                      <span className="text-muted-foreground shrink-0 text-xs">
+                      <span className="shrink-0 text-xs text-muted-foreground">
                         {formatValue(suggestion.date)}
                       </span>
                     </li>
                   ))}
                 </ul>
               ) : (
-                <p className="text-muted-foreground px-3 py-1.5 text-xs">
+                <p className="px-3 py-1.5 text-xs text-muted-foreground">
                   {t('No matching date. Try "t+2", "next friday", or "07/15".')}
                 </p>
               )}

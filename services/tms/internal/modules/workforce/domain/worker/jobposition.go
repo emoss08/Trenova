@@ -2,7 +2,6 @@ package worker
 
 import (
 	"context"
-	"errors"
 	"strings"
 
 	"github.com/emoss08/keel"
@@ -13,8 +12,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
-
-var ErrInvalidJobDepartment = errors.New("invalid job department")
 
 // JobDepartment is the part of the business a position sits in. Headcount is
 // read by department at least as often as by terminal, which is why it is an
@@ -46,22 +43,8 @@ func (d JobDepartment) IsValid() bool {
 	}
 }
 
-func AllJobDepartments() []JobDepartment {
-	return []JobDepartment{
-		DepartmentOperations,
-		DepartmentSafety,
-		DepartmentMaintenance,
-		DepartmentBilling,
-		DepartmentAdministration,
-		DepartmentSales,
-		DepartmentHumanResources,
-		DepartmentExecutive,
-		DepartmentOther,
-	}
-}
-
 var (
-	_ validationframework.TenantedEntity = (*JobPosition)(nil)
+	_ validationframework.Entity = (*JobPosition)(nil)
 )
 
 // Job titles the roster is counted by, and the reporting lines between them

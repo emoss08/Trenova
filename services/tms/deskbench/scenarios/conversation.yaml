@@ -91,6 +91,57 @@ scenarios:
             Records the rule against Acme Manufacturing (not as a general instruction), and says
             whether it is kept now or waits for approval.
 
+  - name: edit-a-customer-rule
+    description: >
+      A person corrects part of a standing rule. The agent changes the kept rule as its
+      replacement, in place with agent_edit_memory or rewritten with replacesMemoryId; either way
+      it waits for approval, because a replacement reaches the old rule's readers, and once
+      approved the old rule is retired, never kept beside one that contradicts it. The rule is
+      planted fresh, and anything an earlier run made of it removed.
+    agent: Dispatch desk
+    tags: [memory]
+    exclusive: acme-memory
+    setup:
+      - >
+        DELETE FROM agent_memories
+        WHERE id = 'amem_01M6BENCHACMEQ0TE000000000'
+           OR supersedes_id = 'amem_01M6BENCHACMEQ0TE000000000'
+           OR (content ILIKE '%acme%' AND content ILIKE '%dollars%')
+      - >
+        INSERT INTO agent_memories
+          (id, business_unit_id, organization_id, kind, source, status, scope, subject_type,
+           subject_id, subject_label, content)
+        SELECT 'amem_01M6BENCHACMEQ0TE000000000', c.business_unit_id, c.organization_id,
+               'Instruction', 'User', 'Active', 'Organization', 'Customer', c.id, c.name,
+               'Quote Acme Manufacturing in US dollars, and copy their AP desk on every quote.'
+        FROM customers AS c
+        WHERE c.name ILIKE 'Acme Manufacturing%'
+        ORDER BY c.created_at
+        LIMIT 1
+    steps:
+      - say: "acme quotes should be in canadian dollars now, not US. keep copying their AP desk"
+        expect:
+          proposals: [{ tool: "agent_edit_memory|agent_create_memory" }]
+          rubric: >
+            Changes the kept Acme rule from US to Canadian dollars, keeping the part about copying
+            the AP desk, as that rule's replacement (an edit, or a rewrite naming it in
+            replacesMemoryId) rather than a second rule beside it; says the change waits for
+            approval.
+      - decide: approve
+        expect:
+          executed: true
+          db:
+            - sql: >
+                SELECT count(*) FROM agent_memories
+                WHERE supersedes_id = 'amem_01M6BENCHACMEQ0TE000000000' AND status = 'Active'
+                  AND content ILIKE '%canadian%' AND content ILIKE '%AP desk%'
+              equals: "1"
+              note: the approved edit replaced the planted rule, in Canadian dollars, still copying the AP desk
+            - sql: >
+                SELECT status FROM agent_memories WHERE id = 'amem_01M6BENCHACMEQ0TE000000000'
+              equals: "Retired"
+              note: the old rule is retired, so agents are never told both
+
   - name: wait-for-delivery
     description: Parking work until something happens on the road.
     agent: Dispatch desk

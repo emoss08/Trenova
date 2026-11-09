@@ -181,11 +181,7 @@ func (s *Service) prepare(entity *workerinjury.WorkerInjury) error {
 
 	multiErr := errortypes.NewMultiError()
 	entity.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 // RecordInjury files a case and gives it the next line on the year's log.

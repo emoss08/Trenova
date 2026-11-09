@@ -78,7 +78,7 @@ function OverviewLine({ days, onUnfold }: { days: number; onUnfold: () => void }
   const t = useT();
   const { data } = useAuditOverview(days);
   return (
-    <div className="text-muted-foreground animate-rise flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+    <div className="flex animate-rise flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
       {data ? (
         <>
           <span>
@@ -244,7 +244,7 @@ export function AuditLogsPage() {
               </Button>
             ) : null}
             {canSeeHolds || canSeeSecurity || canExport ? (
-              <span aria-hidden className="bg-border mx-1 h-4.5 w-px" />
+              <span aria-hidden className="mx-1 h-4.5 w-px bg-border" />
             ) : null}
             {canSeeHolds ? headerButton("holds", t("Legal holds"), Lock01Icon) : null}
             {canSeeSecurity ? headerButton("alerts", t("Alert rules"), ShieldAlertIcon) : null}

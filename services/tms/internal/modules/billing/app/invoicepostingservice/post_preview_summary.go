@@ -2,7 +2,6 @@ package invoicepostingservice
 
 import (
 	"context"
-	"errors"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
@@ -153,7 +152,7 @@ func refusalMessages(err error) []string {
 		return []string{}
 	}
 
-	if multiErr, ok := errors.AsType[*errortypes.MultiError](err); ok && multiErr.HasErrors() {
+	if multiErr, ok := errortypes.RefusalOf(err); ok && multiErr.HasErrors() {
 		messages := make([]string, 0, len(multiErr.Errors))
 		for _, fieldErr := range multiErr.Errors {
 			if fieldErr != nil {

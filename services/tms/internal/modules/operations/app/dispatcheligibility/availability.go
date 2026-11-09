@@ -156,6 +156,8 @@ type EquipmentInput struct {
 	RequiredTractorTypeID pulid.ID
 	RequiredTrailerTypeID pulid.ID
 	WorkerFleetCodeID     pulid.ID
+	MoveID                pulid.ID
+	MoveWindow            TimeWindow
 	Control               *dispatchcontrol.DispatchControl
 }
 
@@ -196,6 +198,8 @@ func evaluateTractor(in EquipmentInput, eval *Evaluation) {
 		})
 	}
 
+	evaluateTractorInUse(in, eval)
+
 	if !in.RequiredTractorTypeID.IsNil() &&
 		in.Tractor.EquipmentTypeID != in.RequiredTractorTypeID {
 		eval.Add(&dispatchfinding.Finding{
@@ -208,6 +212,47 @@ func evaluateTractor(in EquipmentInput, eval *Evaluation) {
 			),
 		})
 	}
+}
+
+func evaluateTractorInUse(in EquipmentInput, eval *Evaluation) {
+	t := in.Tractor
+	if t.InProgressMoveID.IsNil() || t.InProgressMoveID == in.MoveID {
+		return
+	}
+
+	onMove := t.InProgressProNumber
+	if onMove == "" {
+		onMove = t.InProgressMoveID.String()
+	}
+	if t.InProgressDueAt == nil || in.MoveWindow.Start <= 0 {
+		eval.Add(&dispatchfinding.Finding{
+			Code:     dispatchfinding.CodeTractorInUse,
+			Severity: dispatchfinding.SeverityWarn,
+			Field:    "tractorId",
+			Message: fmt.Sprintf(
+				"Tractor %s is on %s, still in progress; this move's stops cannot start until it is done",
+				t.Code,
+				onMove,
+			),
+		})
+
+		return
+	}
+	if *t.InProgressDueAt <= in.MoveWindow.Start {
+		return
+	}
+
+	eval.Add(&dispatchfinding.Finding{
+		Code:     dispatchfinding.CodeTractorInUse,
+		Severity: dispatchfinding.SeverityBlock,
+		Field:    "tractorId",
+		Message: fmt.Sprintf(
+			"Tractor %s is on %s, in progress and due %s, after this move has to start",
+			t.Code,
+			onMove,
+			timeutils.FormatInstantUTC(*t.InProgressDueAt),
+		),
+	})
 }
 
 func evaluateTrailer(in EquipmentInput, eval *Evaluation) {

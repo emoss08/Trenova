@@ -4,6 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
+	"strings"
+
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
@@ -18,8 +21,6 @@ import (
 	"github.com/shopspring/decimal"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
-	"slices"
-	"strings"
 )
 
 const (
@@ -425,7 +426,7 @@ func executionFailure(adjustment *invoiceadjustment.InvoiceAdjustment) string {
 }
 
 func refusal(source *invoice.Invoice, err error) error {
-	if multiErr, ok := errors.AsType[*errortypes.MultiError](err); ok && multiErr.HasErrors() {
+	if multiErr, ok := errortypes.RefusalOf(err); ok && multiErr.HasErrors() {
 		messages := make([]string, 0, len(multiErr.Errors))
 		for _, fieldErr := range multiErr.Errors {
 			messages = append(messages, fieldErr.Error())

@@ -9,8 +9,13 @@ describe("describeApiError", () => {
       title: "Validation failed",
       status: 400,
       errors: [
-        { field: "approvedById", code: "INVALID", message: "You cannot approve your own template" },
-        { field: "testCases", code: "INVALID", message: "2 scenarios fail" },
+        {
+          path: ["approvedById"],
+          field: "approvedById",
+          code: "INVALID",
+          message: "You cannot approve your own template",
+        },
+        { path: ["testCases"], field: "testCases", code: "INVALID", message: "2 scenarios fail" },
       ],
     });
 

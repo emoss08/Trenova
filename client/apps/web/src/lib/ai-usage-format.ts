@@ -105,6 +105,8 @@ export function aiUsageFeatureLabel(feature: AiUsageFeature | null, t: Translate
       return t("Factor remittance reading");
     case "AgentReflection":
       return t("Agents learning from their work");
+    case "AgentMemoryConsolidation":
+      return t("Keeping agent memory tidy");
     case "AgentDrafting":
       return t("Agent drafting");
     case "AgentProfile":

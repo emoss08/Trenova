@@ -33,6 +33,7 @@ var agentPlansTable = schema.Table{
 		{Name: "title", Quoted: `"title"`, Field: "Title", Kind: schema.KindString, Flags: 0, Label: `Title`, JSON: `title`},
 		{Name: "summary", Quoted: `"summary"`, Field: "Summary", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Summary`, JSON: `summary`},
 		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, JSON: `status`, Enum: enumPlanStatus[:]},
+		{Name: "target_id", Quoted: `"target_id"`, Field: "TargetID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Target ID`, JSON: `targetId`},
 		{Name: "step_count", Quoted: `"step_count"`, Field: "StepCount", Kind: schema.KindInt64, Flags: 0, Label: `Step Count`, JSON: `stepCount`},
 		{Name: "completed_steps", Quoted: `"completed_steps"`, Field: "CompletedSteps", Kind: schema.KindInt64, Flags: 0, Label: `Completed Steps`, JSON: `completedSteps`},
 		{Name: "failed_step", Quoted: `"failed_step"`, Field: "FailedStep", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Failed Step`, JSON: `failedStep`},
@@ -57,14 +58,14 @@ var agentPlansTable = schema.Table{
 	},
 	PK:           []int32{0, 1, 2},
 	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 24},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 25},
 	Returning:    nil,
-	Version:      22,
+	Version:      23,
 	AutoID:       0,
-	AutoCreate:   23,
-	AutoUpdate:   24,
+	AutoCreate:   24,
+	AutoUpdate:   25,
 	IDPrefix:     "apl_",
 	New:          newAgentPlan,
 	NewN:         newNAgentPlan,
@@ -87,6 +88,7 @@ type AgentPlansTable struct {
 	Title                 keel.StringCol
 	Summary               keel.StringCol
 	Status                PlanStatusCol
+	TargetID              keelkinds.PulidIDCol
 	StepCount             keel.Int64Col
 	CompletedSteps        keel.Int64Col
 	FailedStep            keel.Int64Col
@@ -117,24 +119,25 @@ var AgentPlans = &AgentPlansTable{
 	Title:                 keel.StringCol{Col: keel.Col{Ref: &agentPlansRef, Index: 4}},
 	Summary:               keel.StringCol{Col: keel.Col{Ref: &agentPlansRef, Index: 5}},
 	Status:                PlanStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &agentPlansRef, Index: 6}}},
-	StepCount:             keel.Int64Col{Col: keel.Col{Ref: &agentPlansRef, Index: 7}},
-	CompletedSteps:        keel.Int64Col{Col: keel.Col{Ref: &agentPlansRef, Index: 8}},
-	FailedStep:            keel.Int64Col{Col: keel.Col{Ref: &agentPlansRef, Index: 9}},
-	FailureError:          keel.StringCol{Col: keel.Col{Ref: &agentPlansRef, Index: 10}},
-	DecidedByUserID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &agentPlansRef, Index: 11}}},
-	DecidedAt:             keel.Int64Col{Col: keel.Col{Ref: &agentPlansRef, Index: 12}},
-	ExpiresAt:             keel.Int64Col{Col: keel.Col{Ref: &agentPlansRef, Index: 13}},
-	CommitsAt:             keel.Int64Col{Col: keel.Col{Ref: &agentPlansRef, Index: 14}},
-	UndoneAt:              keel.Int64Col{Col: keel.Col{Ref: &agentPlansRef, Index: 15}},
-	UndoneByUserID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &agentPlansRef, Index: 16}}},
-	ApprovalReasonCode:    keel.StringCol{Col: keel.Col{Ref: &agentPlansRef, Index: 17}},
-	ApprovalNote:          keel.StringCol{Col: keel.Col{Ref: &agentPlansRef, Index: 18}},
-	ApprovalPreviewDigest: keel.StringCol{Col: keel.Col{Ref: &agentPlansRef, Index: 19}},
-	ScriptStepKey:         keel.StringCol{Col: keel.Col{Ref: &agentPlansRef, Index: 20}},
-	Script:                keel.JSONBCol{Col: keel.Col{Ref: &agentPlansRef, Index: 21}},
-	Version:               keel.Int64Col{Col: keel.Col{Ref: &agentPlansRef, Index: 22}},
-	CreatedAt:             keel.Int64Col{Col: keel.Col{Ref: &agentPlansRef, Index: 23}},
-	UpdatedAt:             keel.Int64Col{Col: keel.Col{Ref: &agentPlansRef, Index: 24}},
+	TargetID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &agentPlansRef, Index: 7}}},
+	StepCount:             keel.Int64Col{Col: keel.Col{Ref: &agentPlansRef, Index: 8}},
+	CompletedSteps:        keel.Int64Col{Col: keel.Col{Ref: &agentPlansRef, Index: 9}},
+	FailedStep:            keel.Int64Col{Col: keel.Col{Ref: &agentPlansRef, Index: 10}},
+	FailureError:          keel.StringCol{Col: keel.Col{Ref: &agentPlansRef, Index: 11}},
+	DecidedByUserID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &agentPlansRef, Index: 12}}},
+	DecidedAt:             keel.Int64Col{Col: keel.Col{Ref: &agentPlansRef, Index: 13}},
+	ExpiresAt:             keel.Int64Col{Col: keel.Col{Ref: &agentPlansRef, Index: 14}},
+	CommitsAt:             keel.Int64Col{Col: keel.Col{Ref: &agentPlansRef, Index: 15}},
+	UndoneAt:              keel.Int64Col{Col: keel.Col{Ref: &agentPlansRef, Index: 16}},
+	UndoneByUserID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &agentPlansRef, Index: 17}}},
+	ApprovalReasonCode:    keel.StringCol{Col: keel.Col{Ref: &agentPlansRef, Index: 18}},
+	ApprovalNote:          keel.StringCol{Col: keel.Col{Ref: &agentPlansRef, Index: 19}},
+	ApprovalPreviewDigest: keel.StringCol{Col: keel.Col{Ref: &agentPlansRef, Index: 20}},
+	ScriptStepKey:         keel.StringCol{Col: keel.Col{Ref: &agentPlansRef, Index: 21}},
+	Script:                keel.JSONBCol{Col: keel.Col{Ref: &agentPlansRef, Index: 22}},
+	Version:               keel.Int64Col{Col: keel.Col{Ref: &agentPlansRef, Index: 23}},
+	CreatedAt:             keel.Int64Col{Col: keel.Col{Ref: &agentPlansRef, Index: 24}},
+	UpdatedAt:             keel.Int64Col{Col: keel.Col{Ref: &agentPlansRef, Index: 25}},
 }
 
 // BuildAgentPlans builds the table of agent_plans for ref. Generated relation and alias methods call it.
@@ -148,24 +151,25 @@ func BuildAgentPlans(r *keel.Ref) *AgentPlansTable {
 		Title:                 keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		Summary:               keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
 		Status:                PlanStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		StepCount:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
-		CompletedSteps:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
-		FailedStep:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
-		FailureError:          keel.StringCol{Col: keel.Col{Ref: r, Index: 10}},
-		DecidedByUserID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 11}}},
-		DecidedAt:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
-		ExpiresAt:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
-		CommitsAt:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
-		UndoneAt:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
-		UndoneByUserID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 16}}},
-		ApprovalReasonCode:    keel.StringCol{Col: keel.Col{Ref: r, Index: 17}},
-		ApprovalNote:          keel.StringCol{Col: keel.Col{Ref: r, Index: 18}},
-		ApprovalPreviewDigest: keel.StringCol{Col: keel.Col{Ref: r, Index: 19}},
-		ScriptStepKey:         keel.StringCol{Col: keel.Col{Ref: r, Index: 20}},
-		Script:                keel.JSONBCol{Col: keel.Col{Ref: r, Index: 21}},
-		Version:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 22}},
-		CreatedAt:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 23}},
-		UpdatedAt:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 24}},
+		TargetID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		StepCount:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
+		CompletedSteps:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
+		FailedStep:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
+		FailureError:          keel.StringCol{Col: keel.Col{Ref: r, Index: 11}},
+		DecidedByUserID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 12}}},
+		DecidedAt:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
+		ExpiresAt:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
+		CommitsAt:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
+		UndoneAt:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
+		UndoneByUserID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 17}}},
+		ApprovalReasonCode:    keel.StringCol{Col: keel.Col{Ref: r, Index: 18}},
+		ApprovalNote:          keel.StringCol{Col: keel.Col{Ref: r, Index: 19}},
+		ApprovalPreviewDigest: keel.StringCol{Col: keel.Col{Ref: r, Index: 20}},
+		ScriptStepKey:         keel.StringCol{Col: keel.Col{Ref: r, Index: 21}},
+		Script:                keel.JSONBCol{Col: keel.Col{Ref: r, Index: 22}},
+		Version:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 23}},
+		CreatedAt:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 24}},
+		UpdatedAt:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 25}},
 	}
 }
 
@@ -576,40 +580,42 @@ func ptrAgentPlan(p unsafe.Pointer, c int32) any {
 	case 6:
 		return (*string)(unsafe.Pointer(&r.Status))
 	case 7:
-		return (*int64)(unsafe.Pointer(&r.StepCount))
+		return (*string)(unsafe.Pointer(&r.TargetID))
 	case 8:
-		return (*int64)(unsafe.Pointer(&r.CompletedSteps))
+		return (*int64)(unsafe.Pointer(&r.StepCount))
 	case 9:
-		return (**int64)(unsafe.Pointer(&r.FailedStep))
+		return (*int64)(unsafe.Pointer(&r.CompletedSteps))
 	case 10:
-		return &r.FailureError
+		return (**int64)(unsafe.Pointer(&r.FailedStep))
 	case 11:
-		return (**string)(unsafe.Pointer(&r.DecidedByUserID))
+		return &r.FailureError
 	case 12:
-		return &r.DecidedAt
+		return (**string)(unsafe.Pointer(&r.DecidedByUserID))
 	case 13:
-		return &r.ExpiresAt
+		return &r.DecidedAt
 	case 14:
-		return &r.CommitsAt
+		return &r.ExpiresAt
 	case 15:
-		return &r.UndoneAt
+		return &r.CommitsAt
 	case 16:
-		return (**string)(unsafe.Pointer(&r.UndoneByUserID))
+		return &r.UndoneAt
 	case 17:
-		return &r.ApprovalReasonCode
+		return (**string)(unsafe.Pointer(&r.UndoneByUserID))
 	case 18:
-		return &r.ApprovalNote
+		return &r.ApprovalReasonCode
 	case 19:
-		return &r.ApprovalPreviewDigest
+		return &r.ApprovalNote
 	case 20:
-		return &r.ScriptStepKey
+		return &r.ApprovalPreviewDigest
 	case 21:
-		return &r.Script
+		return &r.ScriptStepKey
 	case 22:
-		return &r.Version
+		return &r.Script
 	case 23:
-		return &r.CreatedAt
+		return &r.Version
 	case 24:
+		return &r.CreatedAt
+	case 25:
 		return &r.UpdatedAt
 	}
 	return nil
@@ -636,79 +642,84 @@ func valueAgentPlan(p unsafe.Pointer, c int32) any {
 	case 6:
 		return string(r.Status)
 	case 7:
-		return int64(r.StepCount)
+		if r.TargetID == "" {
+			return nil
+		}
+		return string(r.TargetID)
 	case 8:
-		return int64(r.CompletedSteps)
+		return int64(r.StepCount)
 	case 9:
+		return int64(r.CompletedSteps)
+	case 10:
 		if r.FailedStep == nil {
 			return nil
 		}
 		return int64(*r.FailedStep)
-	case 10:
+	case 11:
 		if r.FailureError == "" {
 			return nil
 		}
 		return r.FailureError
-	case 11:
+	case 12:
 		if r.DecidedByUserID == nil {
 			return nil
 		}
 		return string(*r.DecidedByUserID)
-	case 12:
+	case 13:
 		if r.DecidedAt == nil {
 			return nil
 		}
 		return *r.DecidedAt
-	case 13:
+	case 14:
 		if r.ExpiresAt == 0 {
 			return nil
 		}
 		return r.ExpiresAt
-	case 14:
+	case 15:
 		if r.CommitsAt == nil {
 			return nil
 		}
 		return *r.CommitsAt
-	case 15:
+	case 16:
 		if r.UndoneAt == nil {
 			return nil
 		}
 		return *r.UndoneAt
-	case 16:
+	case 17:
 		if r.UndoneByUserID == nil {
 			return nil
 		}
 		return string(*r.UndoneByUserID)
-	case 17:
+	case 18:
 		if r.ApprovalReasonCode == "" {
 			return nil
 		}
 		return r.ApprovalReasonCode
-	case 18:
+	case 19:
 		if r.ApprovalNote == "" {
 			return nil
 		}
 		return r.ApprovalNote
-	case 19:
+	case 20:
 		if r.ApprovalPreviewDigest == "" {
 			return nil
 		}
 		return r.ApprovalPreviewDigest
-	case 20:
+	case 21:
 		if r.ScriptStepKey == "" {
 			return nil
 		}
 		return r.ScriptStepKey
-	case 21:
+	case 22:
 		if r.Script == nil {
 			return nil
 		}
 		return *r.Script
-	case 22:
-		return r.Version
 	case 23:
-		return r.CreatedAt
+		return r.Version
 	case 24:
+		return r.CreatedAt
+	case 25:
 		return r.UpdatedAt
 	}
 	return nil

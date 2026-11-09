@@ -17,9 +17,9 @@ import (
 )
 
 var (
-	_ pagination.CursorEntity            = (*Expense)(nil)
-	_ validationframework.TenantedEntity = (*Expense)(nil)
-	_ domaintypes.PostgresSearchable     = (*Expense)(nil)
+	_ pagination.CursorEntity        = (*Expense)(nil)
+	_ validationframework.Entity     = (*Expense)(nil)
+	_ domaintypes.PostgresSearchable = (*Expense)(nil)
 )
 
 type ExpenseStatus string

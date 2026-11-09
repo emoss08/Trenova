@@ -32,14 +32,13 @@ func NewValidator(p ValidatorParams) *Validator {
 
 func identityUniquenessRule(
 	users tenantports.UserRepository,
-) validationframework.TenantedRule[*tenant.User] {
-	return validationframework.NewTenantedRule[*tenant.User]("identity_uniqueness").
-		WithStage(validationframework.ValidationStageDataIntegrity).
-		WithPriority(validationframework.ValidationPriorityHigh).
+) validationframework.Rule[*tenant.User] {
+	return validationframework.NewRule[*tenant.User]("identity_uniqueness").
+		WithStage(validationframework.StageDataIntegrity).
 		WithValidation(func(
 			ctx context.Context,
 			entity *tenant.User,
-			valCtx *validationframework.TenantedValidationContext,
+			valCtx *validationframework.Context,
 			multiErr *errortypes.MultiError,
 		) error {
 			conflicts, err := users.FindIdentityConflicts(
@@ -68,13 +67,13 @@ func identityUniquenessRule(
 func (v *Validator) ValidateCreate(
 	ctx context.Context,
 	entity *tenant.User,
-) *errortypes.MultiError {
+) error {
 	return v.validator.ValidateCreate(ctx, entity)
 }
 
 func (v *Validator) ValidateUpdate(
 	ctx context.Context,
 	entity *tenant.User,
-) *errortypes.MultiError {
+) error {
 	return v.validator.ValidateUpdate(ctx, entity)
 }

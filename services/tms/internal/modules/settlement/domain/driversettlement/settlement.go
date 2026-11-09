@@ -20,9 +20,9 @@ import (
 )
 
 var (
-	_ domaintypes.PostgresSearchable     = (*Settlement)(nil)
-	_ pagination.CursorEntity            = (*Settlement)(nil)
-	_ validationframework.TenantedEntity = (*Settlement)(nil)
+	_ domaintypes.PostgresSearchable = (*Settlement)(nil)
+	_ pagination.CursorEntity        = (*Settlement)(nil)
+	_ validationframework.Entity     = (*Settlement)(nil)
 )
 
 type Exception struct {

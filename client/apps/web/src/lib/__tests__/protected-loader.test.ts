@@ -319,12 +319,12 @@ describe("signed-in route revalidation", () => {
       .flatMap(function flatten(entry): RouteObject[] {
         return [entry, ...(entry.children ?? []).flatMap(flatten)];
       })
-      .find((entry) => entry.path === "/triage");
+      .find((entry) => entry.path === "triage");
 
     expect(
       triage?.shouldRevalidate?.({
-        currentUrl: new URL("http://localhost/triage?message=msg_1"),
-        nextUrl: new URL("http://localhost/triage?message=msg_2"),
+        currentUrl: new URL("http://localhost/desk/triage?message=msg_1"),
+        nextUrl: new URL("http://localhost/desk/triage?message=msg_2"),
         currentParams: {},
         nextParams: {},
         defaultShouldRevalidate: true,

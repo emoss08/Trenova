@@ -15,10 +15,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/documentshipmentdraft"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
@@ -685,7 +687,15 @@ func quoteViewOf(rated *ratequoteports.RatedShipment, lane []string) *quoteView 
 type shopCarriersTool struct {
 	shopper  carrierShopper
 	carriers shopCarrierReader
+	moves    shopMoveReader
 	access   fieldgate.Access
+}
+
+type shopMoveReader interface {
+	GetByID(
+		ctx context.Context,
+		req *shipmentmoveports.GetMoveByIDRequest,
+	) (*shipment.ShipmentMove, error)
 }
 
 // shopCarrierReader reads the shopped carriers' standing, so "the cheapest
@@ -701,11 +711,13 @@ type shopCarrierReader interface {
 func NewShopCarriersTool(
 	shopper carrierShopper,
 	carriers shopCarrierReader,
+	moves shopMoveReader,
 	permissions permissionports.PermissionEngine,
 ) agenttoolports.AgentQueryTool {
 	return &shopCarriersTool{
 		shopper:  shopper,
 		carriers: carriers,
+		moves:    moves,
 		access:   fieldgate.NewAccess(permissions),
 	}
 }
@@ -726,7 +738,7 @@ func (t *shopCarriersTool) ParamSchema() map[string]any {
 		toolschema.KeyProperties: map[string]any{
 			"shipmentId": agenttoolschema.RecordIDText(permission.ResourceShipment,
 				"The saved shipment to price, from shipment_list or "+
-					"the page you are on."),
+					"the page you are on. One of its moves' ids prices the move's shipment."),
 			"strategy": agenttoolschema.Enum(
 				"How to rank the options. Defaults to the organization's own choice.",
 				shopStrategies,
@@ -789,6 +801,9 @@ func (t *shopCarriersTool) Query(
 	if err != nil {
 		return nil, err
 	}
+	if shipmentID, err = t.shipmentOf(ctx, querytool.TenantOf(params), shipmentID); err != nil {
+		return nil, err
+	}
 
 	limit := querytool.ReadLimit(params.Params, defaultShopMax, maxShopOptions)
 
@@ -833,6 +848,27 @@ func (t *shopCarriersTool) Query(
 	t.standing(ctx, req.TenantInfo, view)
 
 	return view, nil
+}
+
+func (t *shopCarriersTool) shipmentOf(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	id pulid.ID,
+) (pulid.ID, error) {
+	kind, ok := recordkind.OfIDPrefix(id.Prefix())
+	if !ok || kind != recordkind.Kind(permission.ResourceShipmentMove) {
+		return id, nil
+	}
+
+	move, err := t.moves.GetByID(ctx, &shipmentmoveports.GetMoveByIDRequest{
+		MoveID:     id,
+		TenantInfo: tenant,
+	})
+	if err != nil {
+		return pulid.Nil, err
+	}
+
+	return move.ShipmentID, nil
 }
 
 // standing adds each shopped carrier's status and compliance. A carrier that

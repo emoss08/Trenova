@@ -22,8 +22,8 @@ var (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*Carrier)(nil)
-	_ domaintypes.PostgresSearchable     = (*Carrier)(nil)
+	_ validationframework.Entity     = (*Carrier)(nil)
+	_ domaintypes.PostgresSearchable = (*Carrier)(nil)
 )
 
 // External carriers that cover brokered freight

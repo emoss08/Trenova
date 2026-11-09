@@ -285,11 +285,7 @@ func (s *service) ensureParties(
 			return err
 		}
 	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 func (s *service) projectAssignment(

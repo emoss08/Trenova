@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*ReturnLine)(nil)
+	_ validationframework.Entity = (*ReturnLine)(nil)
 )
 
 // One return line per jurisdiction and fuel type

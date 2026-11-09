@@ -48,7 +48,7 @@ export function NarrativeSegments<S extends NarrativeSegment>({
               onClick={open}
               onKeyDown={onKeyDown}
               className={cn(
-                "ui-focus-ring decoration-border-strong hover:decoration-foreground cursor-pointer rounded-sm underline underline-offset-4",
+                "cursor-pointer rounded-sm ui-focus-ring underline decoration-border-strong underline-offset-4 hover:decoration-foreground",
                 toneClass(segment.tone),
               )}
             >

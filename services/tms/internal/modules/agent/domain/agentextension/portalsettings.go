@@ -73,7 +73,7 @@ func ParsePortalAutomationSettings(values map[string]string) (PortalAutomationSe
 	multiErr := errortypes.NewMultiError()
 	settings := parsePortalAutomationSettings(values, multiErr)
 	if multiErr.HasErrors() {
-		return PortalAutomationSettings{}, multiErr
+		return PortalAutomationSettings{}, multiErr.Err()
 	}
 
 	return settings, nil

@@ -3,7 +3,11 @@ import type { TurnState } from "@/components/assistant/turn-stream";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import type { DeskComposerStatus } from "../composer/desk-composer";
 
-const MEMORY_TOOLS: ReadonlySet<string> = new Set(["agent_list_memories", "agent_create_memory"]);
+const MEMORY_TOOLS: ReadonlySet<string> = new Set([
+  "agent_list_memories",
+  "agent_create_memory",
+  "agent_edit_memory",
+]);
 
 /**
  * What the composer says while a reply is being made, the one place the Desk

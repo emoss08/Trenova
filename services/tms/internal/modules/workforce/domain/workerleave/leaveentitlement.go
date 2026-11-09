@@ -66,7 +66,7 @@ func (m LeaveMeasurementMethod) Label() string {
 }
 
 var (
-	_ validationframework.TenantedEntity = (*LeaveControl)(nil)
+	_ validationframework.Entity = (*LeaveControl)(nil)
 )
 
 // LeaveControl is the organisation's leave settings. There is exactly one row

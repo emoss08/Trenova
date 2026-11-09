@@ -1,0 +1,69 @@
+fragment DeskRecordFields on DeskRecord {
+  kind
+  noun
+  id
+  label
+  subtitle
+  status
+  readable
+}
+
+fragment DeskAttentionGroupFields on DeskAttentionGroup {
+  key
+  record {
+    ...DeskRecordFields
+  }
+  severity
+  dueAt
+  dueLabel
+  unseen
+  items {
+    ...WatchtowerItemFields
+    deskLens
+    aboutId
+  }
+}
+
+query DeskAttention($input: DeskAttentionInput!) {
+  deskAttention(input: $input) {
+    groups {
+      ...DeskAttentionGroupFields
+    }
+    counts {
+      everything
+      watchtower
+      triage
+      decisions
+    }
+    hasMore
+    seenAt
+  }
+}
+
+query DeskActivity($since: Timestamp!, $first: Int) {
+  deskActivity(since: $since, first: $first) {
+    entries {
+      id
+      outcome
+      at
+      agent {
+        ...WatchtowerAgentFields
+      }
+      runId
+      planId
+      title
+      detail
+      count
+      records {
+        ...DeskRecordFields
+      }
+      recordsMore
+      decidedBy {
+        id
+        name
+      }
+      proposalIds
+    }
+    hasMore
+  }
+}

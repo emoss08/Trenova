@@ -164,10 +164,10 @@ export interface PaletteAction {
  * commands. The record scopes are the global search's entity types, so the
  * tab strip and an `@` mention set the same thing.
  */
-export type PaletteScope = "all" | GlobalSearchEntityType | "pages" | "commands";
+export type PaletteScope = "all" | GlobalSearchEntityType | "conversations" | "pages" | "commands";
 
 export function isRecordScope(scope: PaletteScope): scope is GlobalSearchEntityType {
-  return scope !== "all" && scope !== "pages" && scope !== "commands";
+  return scope !== "all" && scope !== "conversations" && scope !== "pages" && scope !== "commands";
 }
 
 export function recordItemKey(entityType: PaletteRecordType, id: string): string {

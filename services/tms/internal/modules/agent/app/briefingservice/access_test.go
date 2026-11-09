@@ -85,9 +85,9 @@ func everySectionPage() *briefing.Briefing {
 		Sections: []briefing.Section{
 			section(briefing.SectionAttention, "Needs attention",
 				briefing.Item{Label: "Service failure", Value: "4",
-					Path: "/desk/watchtower?kinds=ServiceFailure"},
+					Path: "/desk/needs?kinds=ServiceFailure"},
 				briefing.Item{Label: "EDI quarantined", Value: "8",
-					Path: "/desk/watchtower?kinds=EDIInboundQuarantined"},
+					Path: "/desk/needs?kinds=EDIInboundQuarantined"},
 			),
 			section(briefing.SectionToday, "Today"),
 			section(briefing.SectionCoverage, "The next day"),
@@ -97,7 +97,7 @@ func everySectionPage() *briefing.Briefing {
 			section(briefing.SectionCash, "Cash received yesterday"),
 			section(briefing.SectionExceptions, "Critical",
 				briefing.Item{Label: "Tender exhausted", Value: "1",
-					Path: "/desk/watchtower?kinds=TenderExhausted"},
+					Path: "/desk/needs?kinds=TenderExhausted"},
 			),
 		},
 	}
@@ -237,7 +237,7 @@ func TestToday_AWatchtowerLineNamingNoKindIsWithheld(t *testing.T) {
 
 	source := everySectionPage()
 	source.Sections[7].Items = append(source.Sections[7].Items, briefing.Item{
-		Label: "Something", Value: "2", Path: "/desk/watchtower",
+		Label: "Something", Value: "2", Path: "/desk/needs",
 	})
 
 	page := today(t, gatedService(source))

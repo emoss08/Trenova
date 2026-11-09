@@ -147,9 +147,7 @@ func (s *Service) loadItem(
 		return nil, nil, err
 	}
 	if req.Version > 0 && item.Version != req.Version {
-		return nil, nil, errortypes.NewValidationError(
-			"version",
-			errortypes.ErrVersionMismatch,
+		return nil, nil, errortypes.NewVersionMismatchError(
 			"Checklist item was changed by someone else. Reload and try again",
 		)
 	}
@@ -254,9 +252,7 @@ func (s *Service) PlanCancel(ctx context.Context, req *CancelRequest) (*Checklis
 		return nil, err
 	}
 	if req.Version > 0 && original.Version != req.Version {
-		return nil, errortypes.NewValidationError(
-			"version",
-			errortypes.ErrVersionMismatch,
+		return nil, errortypes.NewVersionMismatchError(
 			"Checklist was changed by someone else. Reload and try again",
 		)
 	}

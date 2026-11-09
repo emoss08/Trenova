@@ -469,7 +469,7 @@ func (s *service) Delete(
 func (s *service) prepareCommentUpdate(
 	entity *shipment.ShipmentComment,
 	original *shipment.ShipmentComment,
-) *errortypes.MultiError {
+) error {
 	entity.UserID = original.UserID
 	entity.ParentCommentID = original.ParentCommentID
 	entity.Source = original.Source
@@ -529,14 +529,10 @@ func (s *service) tombstoneComment(
 	return nil
 }
 
-func (s *service) validateComment(entity *shipment.ShipmentComment) *errortypes.MultiError {
+func (s *service) validateComment(entity *shipment.ShipmentComment) error {
 	multiErr := errortypes.NewMultiError()
 	entity.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 func (s *service) ensureShipmentExists(

@@ -6,7 +6,7 @@ import { checkCallPostFailure, nextStopAction } from "../carrier-tracking";
 function problem(
   status: number,
   type: string,
-  errors?: Array<{ field: string; message: string }>,
+  errors?: Array<{ path: (string | number)[]; field: string; message: string }>,
   detail?: string,
 ): ApiRequestError {
   return new ApiRequestError(status, {
@@ -39,7 +39,7 @@ describe("checkCallPostFailure", () => {
     expect(
       checkCallPostFailure(
         problem(400, "validation-error", [
-          { field: "token", message: "This tracking link is no longer valid" },
+          { path: ["token"], field: "token", message: "This tracking link is no longer valid" },
         ]),
       ),
     ).toEqual({ kind: "invalid" });
@@ -49,8 +49,12 @@ describe("checkCallPostFailure", () => {
     expect(
       checkCallPostFailure(
         problem(400, "validation-error", [
-          { field: "delayReason", message: "Say why the load is delayed" },
-          { field: "reportedAt", message: "The reported time cannot be in the future" },
+          { path: ["delayReason"], field: "delayReason", message: "Say why the load is delayed" },
+          {
+            path: ["reportedAt"],
+            field: "reportedAt",
+            message: "The reported time cannot be in the future",
+          },
         ]),
       ),
     ).toEqual({

@@ -221,7 +221,7 @@ function ArtStack({
           <span>{t("Search everything this conversation made")}</span>
         </span>
         <span className="dk-kbd" aria-hidden>
-          {formatShortcut("J")}
+          {formatShortcut("\\")}
         </span>
       </Button>
     </div>
@@ -502,7 +502,7 @@ function shapeOf(artifact: AssistantArtifact): DeskArtifactShape {
  * Everything a conversation made, beside it.
  *
  * The open artifact sits in front of a small stack of the others: the newest,
- * the pinned and the ones opened lately. A click on it fans them out, and ⌘J
+ * the pinned and the ones opened lately. A click on it fans them out, and ⌘\
  * opens all of them to search. Under the stack is where the artifact came
  * from, then the artifact itself drawn for its kind, then a line to link,
  * pin, export or open it on its own page. A table read again later in the

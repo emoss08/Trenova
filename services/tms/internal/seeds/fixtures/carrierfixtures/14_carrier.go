@@ -95,7 +95,7 @@ func validCargoLiabilityPolicy(number string) carrierPolicyDef {
 }
 
 // carrierDefs deliberately spans every branch of
-// carrier.EvaluateCarrierEligibility: two blocker classes per required policy
+// carrier.EvaluateEligibility: two blocker classes per required policy
 // type, the unqualified and inactive blockers, the 30-day expiry warning
 // window, and enough clean carriers for a three-deep waterfall.
 func carrierDefs() []carrierDef {

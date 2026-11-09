@@ -219,6 +219,7 @@ func (a *Activities) raiseCoverageRisk(
 		item := watchtowersources.UncoveredMove{
 			TenantInfo: tenant,
 			MoveID:     move.MoveID,
+			ShipmentID: move.ShipmentID,
 			ProNumber:  move.ProNumber,
 			Reason:     move.Explanation(),
 			StartsAt:   move.StartsAt,

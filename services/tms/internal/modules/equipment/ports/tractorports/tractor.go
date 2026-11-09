@@ -42,33 +42,6 @@ type TractorRelationIncludes struct {
 	OwnerWorkerColumns            []string `json:"-"`
 }
 
-func FullTractorRelationIncludes() TractorRelationIncludes {
-	return TractorRelationIncludes{
-		IncludeTenantDetails:          true,
-		IncludeEquipmentDetails:       true,
-		IncludeFleetDetails:           true,
-		IncludeWorkerDetails:          true,
-		IncludeBusinessUnit:           true,
-		IncludeOrganization:           true,
-		IncludeEquipmentType:          true,
-		IncludeEquipmentManufacturer:  true,
-		IncludeFleetCode:              true,
-		IncludeState:                  true,
-		IncludePrimaryWorker:          true,
-		IncludePrimaryWorkerState:     true,
-		IncludePrimaryWorkerFleet:     true,
-		IncludePrimaryWorkerManager:   true,
-		IncludeSecondaryWorker:        true,
-		IncludeSecondaryWorkerState:   true,
-		IncludeSecondaryWorkerFleet:   true,
-		IncludeSecondaryWorkerManager: true,
-		IncludeOwnerWorker:            true,
-		IncludeLastKnownLocation:      true,
-		IncludeInProgressMove:         true,
-		IncludeCustomFields:           true,
-	}
-}
-
 type ListTractorsRequest struct {
 	Filter *pagination.QueryOptions `json:"filter"`
 	Cursor pagination.CursorInfo    `json:"cursor"`
@@ -110,12 +83,12 @@ type LocateTractorRequest struct {
 	NewLocationID pulid.ID              `json:"newLocationId"`
 }
 
-func (r *LocateTractorRequest) Validate() *errortypes.MultiError {
+func (r *LocateTractorRequest) Validate() error {
 	me := errortypes.NewMultiError()
 
 	if r == nil {
 		me.Add("", errortypes.ErrInvalid, "Request is required")
-		return me
+		return me.Err()
 	}
 
 	if r.TenantInfo.OrgID.IsNil() {
@@ -130,11 +103,7 @@ func (r *LocateTractorRequest) Validate() *errortypes.MultiError {
 	if r.NewLocationID.IsNil() {
 		me.Add("newLocationId", errortypes.ErrRequired, "New location ID is required")
 	}
-	if me.HasErrors() {
-		return me
-	}
-
-	return nil
+	return me.Err()
 }
 
 type TractorRepository interface {

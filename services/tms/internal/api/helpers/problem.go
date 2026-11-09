@@ -2,8 +2,10 @@ package helpers
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/fieldpath"
 	"github.com/emoss08/trenova/shared/i18n"
 )
 
@@ -15,8 +17,10 @@ type ProblemDetail struct {
 	Status   int    `json:"status"`
 	Detail   string `json:"detail,omitempty"`
 	Instance string `json:"instance,omitempty"`
+	Code     string `json:"code,omitempty"`
 
 	Errors     []ValidationError        `json:"errors,omitempty"`
+	Advisories []Advisory               `json:"advisories,omitempty"`
 	TraceID    string                   `json:"traceId,omitempty"`
 	UsageStats any                      `json:"usageStats,omitempty"`
 	Conflict   *errortypes.EditConflict `json:"conflict,omitempty"`
@@ -24,7 +28,7 @@ type ProblemDetail struct {
 }
 
 type ValidationError struct {
-	Field    string                  `json:"field"`
+	Path     fieldpath.Path          `json:"path"`
 	Message  string                  `json:"message"`
 	Code     string                  `json:"code,omitempty"`
 	Location string                  `json:"location,omitempty"`
@@ -33,13 +37,31 @@ type ValidationError struct {
 	Details  string                  `json:"-"`
 }
 
+type Advisory struct {
+	Path     fieldpath.Path      `json:"path"`
+	Code     string              `json:"code"`
+	Message  string              `json:"message"`
+	Severity errortypes.Severity `json:"severity"`
+	RuleKey  string              `json:"ruleKey,omitempty"`
+	Args     []any               `json:"-"`
+}
+
 type Message struct {
 	Text    string
 	Args    []any
 	Details string
+	Parts   []Message
 }
 
 func (m Message) Localize(locale i18n.Locale) string {
+	if len(m.Parts) > 0 {
+		parts := make([]string, 0, len(m.Parts))
+		for _, part := range m.Parts {
+			parts = append(parts, part.Localize(locale))
+		}
+		return strings.Join(parts, " ")
+	}
+
 	text := i18n.Translate(locale, m.Text, m.Args...)
 	if m.Details == "" {
 		return text
@@ -63,13 +85,30 @@ func LocalizeErrors(locale i18n.Locale, errs []ValidationError) []ValidationErro
 	return localized
 }
 
+func LocalizeAdvisories(locale i18n.Locale, advisories []Advisory) []Advisory {
+	if len(advisories) == 0 {
+		return advisories
+	}
+
+	localized := make([]Advisory, len(advisories))
+	for i, advisory := range advisories {
+		localized[i] = advisory
+		localized[i].Message = i18n.Translate(locale, advisory.Message, advisory.Args...)
+		localized[i].Args = nil
+	}
+
+	return localized
+}
+
 type ProblemBuilder struct {
 	baseURI     string
 	problemType ProblemType
 	detail      Message
 	instance    string
 	traceID     string
+	code        errortypes.ErrorCode
 	errors      []ValidationError
+	advisories  []Advisory
 	usageStats  any
 	conflict    *errortypes.EditConflict
 	params      map[string]string
@@ -107,8 +146,18 @@ func (b *ProblemBuilder) WithTraceID(id string) *ProblemBuilder {
 	return b
 }
 
+func (b *ProblemBuilder) WithCode(code errortypes.ErrorCode) *ProblemBuilder {
+	b.code = code
+	return b
+}
+
 func (b *ProblemBuilder) WithErrors(errors []ValidationError) *ProblemBuilder {
 	b.errors = errors
+	return b
+}
+
+func (b *ProblemBuilder) WithAdvisories(advisories []Advisory) *ProblemBuilder {
+	b.advisories = advisories
 	return b
 }
 
@@ -150,8 +199,10 @@ func (b *ProblemBuilder) Build() *ProblemDetail {
 		Status:     info.StatusCode,
 		Detail:     b.detail.Localize(b.locale),
 		Instance:   b.instance,
+		Code:       string(b.code),
 		TraceID:    b.traceID,
 		Errors:     b.translatedErrors(),
+		Advisories: LocalizeAdvisories(b.locale, b.advisories),
 		UsageStats: b.usageStats,
 		Conflict:   b.conflict,
 		Params:     b.params,

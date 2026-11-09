@@ -42,6 +42,7 @@ type Pairing struct {
 
 type Uncovered struct {
 	MoveID               pulid.ID                          `json:"moveId"`
+	ShipmentID           pulid.ID                          `json:"shipmentId"`
 	ProNumber            string                            `json:"proNumber"`
 	StartsAt             int64                             `json:"startsAt"`
 	Reason               dispatchplanprice.UncoveredReason `json:"reason"`

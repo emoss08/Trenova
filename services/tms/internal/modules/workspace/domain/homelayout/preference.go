@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*Preference)(nil)
+	_ validationframework.Entity = (*Preference)(nil)
 )
 
 // Preference is one user's home screen document. A row exists only once the

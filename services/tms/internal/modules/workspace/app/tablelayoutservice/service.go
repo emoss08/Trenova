@@ -148,9 +148,5 @@ func validateRequest(req *Request) error {
 		Resource:       req.Resource,
 	}
 	probe.ValidateKey(multiErr)
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }

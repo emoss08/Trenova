@@ -23,7 +23,7 @@ type GetShipmentHoldByIDRequest struct {
 	HoldID     pulid.ID              `json:"holdId"`
 }
 
-func (r *GetShipmentHoldByIDRequest) Validate() *errortypes.MultiError {
+func (r *GetShipmentHoldByIDRequest) Validate() error {
 	multiErr := errortypes.NewMultiError()
 
 	multiErr.AddOzzoError(validation.ValidateStruct(
@@ -40,11 +40,7 @@ func (r *GetShipmentHoldByIDRequest) Validate() *errortypes.MultiError {
 		),
 	))
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 type CreateShipmentHoldRequest struct {
@@ -60,7 +56,7 @@ type CreateShipmentHoldRequest struct {
 	StartedAt         *int64                   `json:"startedAt,omitempty"`
 }
 
-func (r *CreateShipmentHoldRequest) Validate() *errortypes.MultiError {
+func (r *CreateShipmentHoldRequest) Validate() error {
 	multiErr := errortypes.NewMultiError()
 
 	multiErr.AddOzzoError(validation.ValidateStruct(
@@ -84,11 +80,7 @@ func (r *CreateShipmentHoldRequest) Validate() *errortypes.MultiError {
 		})),
 	))
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 type UpdateShipmentHoldRequest struct {
@@ -105,7 +97,7 @@ type UpdateShipmentHoldRequest struct {
 	Version           int64                   `json:"version"`
 }
 
-func (r *UpdateShipmentHoldRequest) Validate() *errortypes.MultiError {
+func (r *UpdateShipmentHoldRequest) Validate() error {
 	multiErr := errortypes.NewMultiError()
 
 	multiErr.AddOzzoError(validation.ValidateStruct(
@@ -135,11 +127,7 @@ func (r *UpdateShipmentHoldRequest) Validate() *errortypes.MultiError {
 		),
 	))
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 type ReleaseShipmentHoldRequest struct {
@@ -148,7 +136,7 @@ type ReleaseShipmentHoldRequest struct {
 	HoldID     pulid.ID              `json:"holdId"`
 }
 
-func (r *ReleaseShipmentHoldRequest) Validate() *errortypes.MultiError {
+func (r *ReleaseShipmentHoldRequest) Validate() error {
 	multiErr := errortypes.NewMultiError()
 
 	multiErr.AddOzzoError(validation.ValidateStruct(
@@ -165,11 +153,7 @@ func (r *ReleaseShipmentHoldRequest) Validate() *errortypes.MultiError {
 		),
 	))
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 type ActiveShipmentHoldRequest struct {
@@ -177,7 +161,7 @@ type ActiveShipmentHoldRequest struct {
 	ShipmentID pulid.ID              `json:"shipmentId"`
 }
 
-func (r *ActiveShipmentHoldRequest) Validate() *errortypes.MultiError {
+func (r *ActiveShipmentHoldRequest) Validate() error {
 	multiErr := errortypes.NewMultiError()
 
 	multiErr.AddOzzoError(validation.ValidateStruct(
@@ -193,11 +177,7 @@ func (r *ActiveShipmentHoldRequest) Validate() *errortypes.MultiError {
 		),
 	))
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 type ShipmentHoldRepository interface {

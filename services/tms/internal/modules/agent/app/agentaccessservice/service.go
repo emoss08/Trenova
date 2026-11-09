@@ -464,7 +464,7 @@ func validateIDs(list idList) ([]pulid.ID, error) {
 		out = append(out, id)
 	}
 	if multiErr.HasErrors() {
-		return nil, multiErr
+		return nil, multiErr.Err()
 	}
 
 	return out, nil
@@ -484,11 +484,7 @@ func validateAgentAccess(
 			"A system agent is open to everyone who can use the assistant and is granted "+
 				"to no role")
 	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 func (s *Service) tenantRoles(

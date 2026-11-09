@@ -10,8 +10,7 @@ import (
 )
 
 const (
-	ToolRuleOverrideIDPrefix = "atro_"
-	MaxToolRuleReasonLength  = 500
+	MaxToolRuleReasonLength = 500
 )
 
 type ToolRuleOverride struct {

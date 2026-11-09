@@ -20,30 +20,19 @@ func createHazmatSegregationRule(
 	controlRepo tenantports.ShipmentControlRepository,
 	commodityRepo commodityports.CommodityRepository,
 	hazmatRuleRepo hazmatsegregationruleports.HazmatSegregationRuleRepository,
-) validationframework.TenantedRule[*shipment.Shipment] {
-	return validationframework.NewTenantedRule[*shipment.Shipment]("hazmat_segregation").
+) validationframework.Rule[*shipment.Shipment] {
+	return validationframework.NewRule[*shipment.Shipment]("hazmat_segregation").
 		OnBoth().
-		WithStage(validationframework.ValidationStageBusinessRules).
-		WithPriority(validationframework.ValidationPriorityHigh).
+		WithStage(validationframework.StageBusinessRules).
 		WithValidation(func(
 			ctx context.Context,
 			entity *shipment.Shipment,
-			_ *validationframework.TenantedValidationContext,
+			valCtx *validationframework.Context,
 			multiErr *errortypes.MultiError,
 		) error {
-			control, err := controlRepo.Get(ctx, tenantports.GetShipmentControlRequest{
-				TenantInfo: pagination.TenantInfo{
-					OrgID: entity.OrganizationID,
-					BuID:  entity.BusinessUnitID,
-				},
-			})
+			control, err := loadShipmentControlForValidation(ctx, controlRepo, valCtx)
 			if err != nil {
-				multiErr.Add(
-					"shipmentControl",
-					errortypes.ErrInvalid,
-					"Unable to load shipment control",
-				)
-				return nil //nolint:nilerr // validation callbacks collect field errors and intentionally continue
+				return err
 			}
 
 			if !control.CheckHazmatSegregation || len(entity.Commodities) < 2 {
@@ -66,12 +55,7 @@ func createHazmatSegregationRule(
 				},
 			)
 			if err != nil {
-				multiErr.Add(
-					"commodities",
-					errortypes.ErrInvalid,
-					"Unable to load commodity hazmat data",
-				)
-				return nil //nolint:nilerr // validation callbacks collect field errors and intentionally continue
+				return err
 			}
 
 			hazmatCommodities := MapHazmatCommodities(commodities)
@@ -84,12 +68,7 @@ func createHazmatSegregationRule(
 				BuID:  entity.BusinessUnitID,
 			})
 			if err != nil {
-				multiErr.Add(
-					"commodities",
-					errortypes.ErrInvalid,
-					"Unable to load hazmat segregation rules",
-				)
-				return nil //nolint:nilerr // validation callbacks collect field errors and intentionally continue
+				return err
 			}
 
 			AddHazmatConflictsToMultiError(

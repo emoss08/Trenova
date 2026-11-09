@@ -22,6 +22,7 @@ const FEATURES: AiUsageFeature[] = [
   "AccountingMapping",
   "FactoringRemittanceExtract",
   "AgentReflection",
+  "AgentMemoryConsolidation",
   "AgentDrafting",
   "AgentProfile",
   "AgentRecommendation",

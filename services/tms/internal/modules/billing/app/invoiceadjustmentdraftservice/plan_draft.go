@@ -36,11 +36,7 @@ func validateSaveDraftRequest(req *invoiceadjustmentports.SaveInvoiceAdjustmentD
 	if req.RebillStrategy != "" && !req.RebillStrategy.IsValid() {
 		multiErr.Add("rebillStrategy", errortypes.ErrInvalid, "Rebill strategy is invalid")
 	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 func draftAfter(

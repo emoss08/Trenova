@@ -80,7 +80,7 @@ func (s *Service) Update(
 func (s *Service) validate(
 	ctx context.Context,
 	entity *distancecontrol.DistanceControl,
-) *errortypes.MultiError {
+) error {
 	multiErr := errortypes.NewMultiError()
 	entity.Validate(multiErr)
 	profileFields := map[string]pulid.ID{
@@ -124,10 +124,7 @@ func (s *Service) validate(
 			)
 		}
 	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }
 
 func (s *Service) logAudit(

@@ -33,6 +33,7 @@ enum AIUsageFeature {
   AccountingMapping
   FactoringRemittanceExtract
   AgentReflection
+  AgentMemoryConsolidation
   AgentDrafting
   AgentProfile
   AgentRecommendation

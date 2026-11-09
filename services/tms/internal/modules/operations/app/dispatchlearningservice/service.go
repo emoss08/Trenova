@@ -249,11 +249,7 @@ func ViewOf(style *dispatchlearning.DispatchStyle, enabled bool) *dispatchlearni
 func validate(style *dispatchlearning.DispatchStyle) error {
 	multiErr := errortypes.NewMultiError()
 	style.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 func tally(result *dispatchlearningports.LearnResult, outcome dispatchlearning.Outcome) {

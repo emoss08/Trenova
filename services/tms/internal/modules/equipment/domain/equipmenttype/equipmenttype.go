@@ -21,9 +21,9 @@ const (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*EquipmentType)(nil)
-	_ domaintypes.PostgresSearchable     = (*EquipmentType)(nil)
-	_ pagination.CursorEntity            = (*EquipmentType)(nil)
+	_ validationframework.Entity     = (*EquipmentType)(nil)
+	_ domaintypes.PostgresSearchable = (*EquipmentType)(nil)
+	_ pagination.CursorEntity        = (*EquipmentType)(nil)
 )
 
 // Equipment classification

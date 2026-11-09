@@ -16,22 +16,21 @@ import (
 )
 
 var messageArgs = map[string]int{
-	"Add":                            2,
-	"AddWithPriority":                2,
-	"Advise":                         2,
-	"NewAdvisory":                    2,
-	"NewValidationError":             2,
-	"NewValidationErrorWithPriority": 2,
-	"NewBusinessError":               0,
-	"NewDatabaseError":               0,
-	"NewAuthenticationError":         0,
-	"NewAuthorizationError":          0,
-	"NewNotFoundError":               0,
-	"NewNotImplementedError":         0,
-	"NewConflictError":               0,
-	"NewRateLimitError":              1,
-	"NewUserError":                   0,
-	"Error":                          0,
+	"Add":                     2,
+	"AddAt":                   2,
+	"Advise":                  2,
+	"NewAdvisory":             2,
+	"NewValidationError":      2,
+	"NewVersionMismatchError": 0,
+	"NewBusinessError":        0,
+	"NewDatabaseError":        0,
+	"NewAuthenticationError":  0,
+	"NewAuthorizationError":   0,
+	"NewNotFoundError":        0,
+	"NewConflictError":        0,
+	"NewRateLimitError":       1,
+	"NewUserError":            0,
+	"Error":                   0,
 }
 
 var messageFields = map[string]struct{}{
@@ -73,7 +72,6 @@ var labelMethods = map[string]struct{}{
 
 var noMessage = map[string]struct{}{
 	"NewMultiError":                     {},
-	"NewMultiErrorWithLimit":            {},
 	"NewError":                          {},
 	"NewRequestTimeoutError":            {},
 	"NewTransportError":                 {},

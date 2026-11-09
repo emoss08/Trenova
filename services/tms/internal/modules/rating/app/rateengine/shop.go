@@ -64,7 +64,9 @@ func (s *Service) Shop(
 	candidates := s.shopCandidates(ctx, req, result)
 	if len(candidates) == 0 {
 		result.Warnings = append(result.Warnings,
-			"No carriers to shop: this lane has no routing guide and no carriers were named")
+			"No carriers to shop: this lane has no routing guide and no carriers were named. "+
+				"Name carriers to price (carrierIds), or set up a routing guide for the lane; "+
+				"shopping again as it stands finds the same nothing")
 
 		return result, nil
 	}

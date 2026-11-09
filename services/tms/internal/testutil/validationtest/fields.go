@@ -15,7 +15,7 @@ func FieldCodes(multiErr *errortypes.MultiError, field string) []string {
 
 	codes := make([]string, 0, len(multiErr.Errors))
 	for _, err := range multiErr.Errors {
-		if err.Field == field {
+		if err.Field() == field {
 			codes = append(codes, string(err.Code))
 		}
 	}

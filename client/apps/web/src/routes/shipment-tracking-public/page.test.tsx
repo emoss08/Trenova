@@ -161,7 +161,9 @@ describe("ShipmentTrackingPublicPage", () => {
         type: "https://trenova.app/problems/validation-error",
         title: "Error",
         status: 400,
-        errors: [{ field: "token", message: "This tracking link is no longer valid" }],
+        errors: [
+          { path: ["token"], field: "token", message: "This tracking link is no longer valid" },
+        ],
       }),
     );
     renderPage();

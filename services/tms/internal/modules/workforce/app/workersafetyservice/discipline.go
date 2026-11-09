@@ -319,9 +319,7 @@ func (s *Service) loadAction(
 		return nil, err
 	}
 	if version > 0 && original.Version != version {
-		return nil, errortypes.NewValidationError(
-			"version",
-			errortypes.ErrVersionMismatch,
+		return nil, errortypes.NewVersionMismatchError(
 			"Disciplinary action was changed by someone else. Reload and try again",
 		)
 	}

@@ -34,7 +34,6 @@ type lesson struct {
 	Audience    string `json:"audience"`
 	SubjectType string `json:"subjectType"`
 	SubjectID   string `json:"subjectId"`
-	ToolName    string `json:"toolName"`
 	Replaces    string `json:"replaces"`
 	Evidence    string `json:"evidence"`
 	Why         string `json:"why"`
@@ -84,7 +83,8 @@ func (s *Service) Finish(
 	if result != nil {
 		reflection.Model = result.ModelIdentifier
 		reflection.ProviderID = result.ProviderID
-		reflection.InputTokens = result.InputTokens
+		reflection.InputTokens = result.InputTokens + result.CacheReadTokens +
+			result.CacheWriteTokens
 		reflection.OutputTokens = result.OutputTokens
 	}
 
@@ -223,11 +223,8 @@ func (s *Service) lessonRequest(
 	if reason := subjectOf(plan, in, req); reason != "" {
 		return nil, reason, nil
 	}
-	if tool := strings.TrimSpace(in.ToolName); tool != "" {
-		if !slices.Contains(plan.ToolNames, tool) {
-			return nil, "It names a tool the work did not use", nil
-		}
-		req.ToolName = tool
+	if reason := learnedAlone(plan, kind, req); reason != "" {
+		return nil, reason, nil
 	}
 	if raw := strings.TrimSpace(in.Replaces); raw != "" {
 		replaces, err := pulid.Parse(raw)
@@ -243,6 +240,26 @@ func (s *Service) lessonRequest(
 	}
 
 	return req, "", nil
+}
+
+func learnedAlone(
+	plan *agentreflectionports.ReflectionPlan,
+	kind agentmemory.MemoryKind,
+	req *agentmemoryports.RememberRequest,
+) string {
+	if plan.Signals.FromPeople() {
+		return ""
+	}
+	switch {
+	case kind == agentmemory.MemoryKindProcedure:
+		return "A procedure is kept only from what a person said or decided; how to call a " +
+			"tool is the tool's to say"
+	case kind == agentmemory.MemoryKindFact && req.SubjectID.IsNil():
+		return "A fact nobody told the agent is kept only about a customer, location, " +
+			"driver or carrier"
+	default:
+		return ""
+	}
 }
 
 func subjectOf(

@@ -80,7 +80,7 @@ function dayGroups(t: TranslateFn, timezone: string, entries: ReadonlyMap<string
       label: back === 0 ? t("Today · {0}", date) : back === 1 ? t("Yesterday · {0}", date) : date,
       aggregate:
         count === undefined ? undefined : (
-          <span className="text-muted-foreground text-xs font-normal">
+          <span className="text-xs font-normal text-muted-foreground">
             {t("{0, plural, one {# entry} other {# entries}}", count)}
           </span>
         ),
@@ -193,7 +193,7 @@ export default function AuditTrail({
           </div>
           <div className="ml-auto flex items-center gap-2">
             {onePerRequest && narrowed ? (
-              <span className="text-foreground-subtle text-xs">
+              <span className="text-xs text-foreground-subtle">
                 {t("Every match is shown while you search or filter")}
               </span>
             ) : null}
@@ -203,7 +203,7 @@ export default function AuditTrail({
               checked={onePerRequest}
               onCheckedChange={(checked) => setOnePerRequest(checked)}
             />
-            <label htmlFor={switchId} className="text-muted-foreground text-sm">
+            <label htmlFor={switchId} className="text-sm text-muted-foreground">
               {t("One row per request")}
             </label>
             {headerActions}
@@ -251,7 +251,7 @@ export default function AuditTrail({
             onExpandedRowIdChange: setExpandedId,
             renderExpandedRow: (row) =>
               row.original.correlationId ? (
-                <div className="border-l-border ml-28 border-l py-1 pl-3">
+                <div className="ml-28 border-l border-l-border py-1 pl-3">
                   <RequestEntries
                     correlationId={row.original.correlationId}
                     entryId={row.original.id}

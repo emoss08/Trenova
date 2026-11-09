@@ -281,6 +281,17 @@ describe("DeskPlanBody while the plan waits", () => {
     expect(declineButton()).toBeEnabled();
   });
 
+  it("names each step in words and never shows the tool behind it", async () => {
+    listedPlans = [plan()];
+    listedSteps = steps(["Pending", "Pending"]);
+    renderPlan();
+
+    await screen.findByText("Awaiting your approval");
+    expect(screen.getByText("Move the delivery to tomorrow")).toBeInTheDocument();
+    expect(screen.queryByText("stop_update_appointment")).toBeNull();
+    expect(screen.queryByText("email_send")).toBeNull();
+  });
+
   it("approves against the digest of the preview it shows, with no toast", async () => {
     listedPlans = [plan()];
     listedSteps = steps(["Pending", "Pending"]);

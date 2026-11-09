@@ -33,20 +33,17 @@ type GetServiceFailureByIDRequest struct {
 	TenantInfo pagination.TenantInfo `json:"-"`
 }
 
-func (r *GetServiceFailureByIDRequest) Validate() *errortypes.MultiError {
+func (r *GetServiceFailureByIDRequest) Validate() error {
 	multiErr := errortypes.NewMultiError()
 	if r == nil {
 		multiErr.Add("request", errortypes.ErrRequired, "Service failure request is required")
-		return multiErr
+		return multiErr.Err()
 	}
 	if r.ID.IsNil() {
 		multiErr.Add("id", errortypes.ErrRequired, "Service failure ID is required")
 	}
 	validateTenantInfo(multiErr, r.TenantInfo)
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }
 
 type GetServiceFailureByShipmentRequest struct {
@@ -55,11 +52,11 @@ type GetServiceFailureByShipmentRequest struct {
 	TenantInfo pagination.TenantInfo `json:"-"`
 }
 
-func (r *GetServiceFailureByShipmentRequest) Validate() *errortypes.MultiError {
+func (r *GetServiceFailureByShipmentRequest) Validate() error {
 	multiErr := errortypes.NewMultiError()
 	if r == nil {
 		multiErr.Add("request", errortypes.ErrRequired, "Service failure request is required")
-		return multiErr
+		return multiErr.Err()
 	}
 	if r.ID.IsNil() {
 		multiErr.Add("id", errortypes.ErrRequired, "Service failure ID is required")
@@ -68,10 +65,7 @@ func (r *GetServiceFailureByShipmentRequest) Validate() *errortypes.MultiError {
 		multiErr.Add("shipmentId", errortypes.ErrRequired, "Shipment ID is required")
 	}
 	validateTenantInfo(multiErr, r.TenantInfo)
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }
 
 type ServiceFailureActiveStopRequest struct {
@@ -82,11 +76,11 @@ type ServiceFailureActiveStopRequest struct {
 	Type           servicefailure.Type   `json:"type"`
 }
 
-func (r *ServiceFailureActiveStopRequest) Validate() *errortypes.MultiError {
+func (r *ServiceFailureActiveStopRequest) Validate() error {
 	multiErr := errortypes.NewMultiError()
 	if r == nil {
 		multiErr.Add("request", errortypes.ErrRequired, "Service failure stop request is required")
-		return multiErr
+		return multiErr.Err()
 	}
 	validateTenantInfo(multiErr, r.TenantInfo)
 	if r.ShipmentID.IsNil() {
@@ -101,10 +95,7 @@ func (r *ServiceFailureActiveStopRequest) Validate() *errortypes.MultiError {
 	if !r.Type.IsValid() {
 		multiErr.Add("type", errortypes.ErrInvalid, "Service failure type is invalid")
 	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }
 
 type ServiceFailuresByShipmentRequest struct {
@@ -112,7 +103,7 @@ type ServiceFailuresByShipmentRequest struct {
 	ShipmentID pulid.ID              `json:"shipmentId"`
 }
 
-func (r *ServiceFailuresByShipmentRequest) Validate() *errortypes.MultiError {
+func (r *ServiceFailuresByShipmentRequest) Validate() error {
 	multiErr := errortypes.NewMultiError()
 	if r == nil {
 		multiErr.Add(
@@ -120,16 +111,13 @@ func (r *ServiceFailuresByShipmentRequest) Validate() *errortypes.MultiError {
 			errortypes.ErrRequired,
 			"Service failures by shipment request is required",
 		)
-		return multiErr
+		return multiErr.Err()
 	}
 	validateTenantInfo(multiErr, r.TenantInfo)
 	if r.ShipmentID.IsNil() {
 		multiErr.Add("shipmentId", errortypes.ErrRequired, "Shipment ID is required")
 	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }
 
 type ServiceFailuresByShipmentIDsRequest struct {
@@ -141,7 +129,7 @@ type CountUnresolvedServiceFailuresRequest struct {
 	TenantInfo pagination.TenantInfo `json:"-"`
 }
 
-func (r *CountUnresolvedServiceFailuresRequest) Validate() *errortypes.MultiError {
+func (r *CountUnresolvedServiceFailuresRequest) Validate() error {
 	multiErr := errortypes.NewMultiError()
 	if r == nil {
 		multiErr.Add(
@@ -149,13 +137,10 @@ func (r *CountUnresolvedServiceFailuresRequest) Validate() *errortypes.MultiErro
 			errortypes.ErrRequired,
 			"Count unresolved service failures request is required",
 		)
-		return multiErr
+		return multiErr.Err()
 	}
 	validateTenantInfo(multiErr, r.TenantInfo)
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }
 
 type ServiceFailureRepository interface {

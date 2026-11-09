@@ -50,12 +50,6 @@ func (c ExceptionReasonCode) IsValid() bool {
 // a biller gives in practice; the free-text review notes say the rest.
 type HoldReasonCode string
 
-const (
-	HoldReasonWaitingOnPaperwork = HoldReasonCode("WaitingOnPaperwork")
-	HoldReasonCustomerDispute    = HoldReasonCode("CustomerDispute")
-	HoldReasonRateQuestion       = HoldReasonCode("RateQuestion")
-)
-
 func AllHoldReasonCodes() []HoldReasonCode {
 	return []HoldReasonCode{
 		HoldReasonWaitingOnPaperwork,
@@ -63,6 +57,12 @@ func AllHoldReasonCodes() []HoldReasonCode {
 		HoldReasonRateQuestion,
 	}
 }
+
+const (
+	HoldReasonWaitingOnPaperwork = HoldReasonCode("WaitingOnPaperwork")
+	HoldReasonCustomerDispute    = HoldReasonCode("CustomerDispute")
+	HoldReasonRateQuestion       = HoldReasonCode("RateQuestion")
+)
 
 func (c HoldReasonCode) IsValid() bool {
 	switch c {

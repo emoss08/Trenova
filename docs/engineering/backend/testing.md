@@ -20,6 +20,17 @@ yet (absent vs null vs empty, many where every fixture has one, a second tenant)
   through the real constructor (`dbtest.CapabilityProbe`), never a cut-down twin.
 - Domain-specific helpers live in the module's `<module>test/` package or `internal/testutil/*test`
   (`permtest`, `validationtest`, `imagingtest`, …); look there before writing a fixture.
+- Validation results go through `internal/testutil/validationtest`, never a local `fieldsOf` or
+  `errors.As` into a `MultiError`. `Refused(t, err)` (or `Outcome` when no error is also fine,
+  `Report` for a `*MultiError`, `Validate(t, entity)` for an entity's own rules) returns a
+  `Result`; assert the exact refusals with `Exactly(validationtest.At("stops[1].name",
+  errortypes.ErrRequired), …)` or one with `Refuses`, never `HasErrors`, which passes when the
+  rule under test is deleted. `Failed` asserts a run that could not complete (a 500, not a
+  refusal) and `VersionMismatch` an edit conflict. `RunRule` runs one rule against the context
+  the validator would build (`Update`, `UpdateFrom(original)`, `InTenant`), and
+  `NewIntegrity()` is the integrity checker a validator test hands its builder: every check
+  passes until the test declares `Taken`, `TakenBy(owner, …)`, `Missing` or `FailWith`, and
+  `Requests()` shows what was asked (one batch per validation).
 
 ## Integration tests
 

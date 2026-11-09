@@ -16,8 +16,8 @@ import (
 )
 
 var (
-	_ pagination.CursorEntity            = (*CostEvent)(nil)
-	_ validationframework.TenantedEntity = (*CostEvent)(nil)
+	_ pagination.CursorEntity    = (*CostEvent)(nil)
+	_ validationframework.Entity = (*CostEvent)(nil)
 )
 
 // Purchased transportation cost accruals from carrier assignments

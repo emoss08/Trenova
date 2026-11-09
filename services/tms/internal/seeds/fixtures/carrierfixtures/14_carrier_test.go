@@ -71,7 +71,7 @@ func TestCarrierSeed_EligibilityMatrix(t *testing.T) {
 			t.Parallel()
 
 			entity := buildSeededCarrier(t, carrierDefByCode(t, tt.code), now)
-			result := carrier.EvaluateCarrierEligibility(entity, now)
+			result := carrier.EvaluateEligibility(carrier.EligibilityInput{Carrier: entity, Now: now})
 
 			assert.Equal(t, tt.blocked, result.IsBlocked(), "blockers: %v", result.Blockers)
 			assert.Equal(t, tt.warned, result.HasWarnings(), "warnings: %v", result.Warnings)

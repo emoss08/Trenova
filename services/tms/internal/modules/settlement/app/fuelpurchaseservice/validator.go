@@ -3,12 +3,9 @@ package fuelpurchaseservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase/fuelpurchasedb"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/fuelpurchaseports"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/keelcheck"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -20,8 +17,8 @@ import (
 type ValidatorParams struct {
 	fx.In
 
-	DB   *postgres.Connection
-	Repo fuelpurchaseports.FuelPurchaseRepository
+	Integrity validationframework.IntegrityChecker
+	Repo      fuelpurchaseports.FuelPurchaseRepository
 }
 
 type CardFinder interface {
@@ -36,25 +33,9 @@ type Validator struct {
 }
 
 func NewValidator(p ValidatorParams) *Validator {
-	return newValidator(
-		keelcheck.NewChecker(p.DB, fuelpurchasedb.FuelCardsSchema()),
-		p.Repo,
-	)
-}
-
-func NewValidatorWithDeps(
-	references validationframework.ReferenceChecker,
-	cards CardFinder,
-) *Validator {
-	return newValidator(references, cards)
-}
-
-func newValidator(
-	references validationframework.ReferenceChecker,
-	cards CardFinder,
-) *Validator {
-	builder := tenantedvalidation.NewBuilder[*fuelpurchase.FuelCard]().
+	cards := tenantedvalidation.NewBuilder[*fuelpurchase.FuelCard]().
 		WithModelName("FuelCard").
+		WithIntegrityChecker(p.Integrity).
 		WithOptionalReferenceCheck(
 			"assignedWorkerId",
 			"workers",
@@ -67,28 +48,25 @@ func newValidator(
 			"Assigned tractor does not exist in your organization",
 			func(c *fuelpurchase.FuelCard) pulid.ID { return typeutils.DerefID(c.AssignedTractorID) },
 		).
-		WithCustomRule(uniqueCardRule(cards))
-	if references != nil {
-		builder = builder.WithReferenceChecker(references)
-	}
+		WithCustomRule(uniqueCardRule(p.Repo)).
+		Build()
 
-	return &Validator{cards: builder.Build()}
+	return &Validator{cards: cards}
 }
 
-func uniqueCardRule(cards CardFinder) validationframework.TenantedRule[*fuelpurchase.FuelCard] {
-	return validationframework.NewTenantedRule[*fuelpurchase.FuelCard](
+func uniqueCardRule(cards CardFinder) validationframework.Rule[*fuelpurchase.FuelCard] {
+	return validationframework.NewRule[*fuelpurchase.FuelCard](
 		"fuel_card_provider_last_four",
 	).
 		OnBoth().
-		WithStage(validationframework.ValidationStageBusinessRules).
-		WithPriority(validationframework.ValidationPriorityHigh).
+		WithStage(validationframework.StageBusinessRules).
 		WithValidation(func(
 			ctx context.Context,
 			card *fuelpurchase.FuelCard,
-			_ *validationframework.TenantedValidationContext,
+			_ *validationframework.Context,
 			multiErr *errortypes.MultiError,
 		) error {
-			if cards == nil || card.Status == fuelpurchase.CardStatusCancelled {
+			if card.Status == fuelpurchase.CardStatusCancelled {
 				return nil
 			}
 			existing, err := cards.FindCardByLastFour(
@@ -119,13 +97,13 @@ func uniqueCardRule(cards CardFinder) validationframework.TenantedRule[*fuelpurc
 func (v *Validator) ValidateCreate(
 	ctx context.Context,
 	entity *fuelpurchase.FuelCard,
-) *errortypes.MultiError {
+) error {
 	return v.cards.ValidateCreate(ctx, entity)
 }
 
 func (v *Validator) ValidateUpdate(
 	ctx context.Context,
 	entity *fuelpurchase.FuelCard,
-) *errortypes.MultiError {
+) error {
 	return v.cards.ValidateUpdate(ctx, entity)
 }

@@ -34,7 +34,7 @@ type normalizeInput struct {
 	policy  timePolicy
 }
 
-func normalizeDetails(in normalizeInput) (int64, *errortypes.MultiError) {
+func normalizeDetails(in normalizeInput) (int64, error) {
 	multiErr := errortypes.NewMultiError()
 	d := in.details
 
@@ -91,16 +91,16 @@ func normalizeDetails(in normalizeInput) (int64, *errortypes.MultiError) {
 	}
 
 	if multiErr.HasErrors() {
-		return 0, multiErr
+		return 0, multiErr.Err()
 	}
 	return reportedAt, nil
 }
 
-func validateLogRequest(req *checkcallports.LogCheckCallRequest) *errortypes.MultiError {
+func validateLogRequest(req *checkcallports.LogCheckCallRequest) error {
 	multiErr := errortypes.NewMultiError()
 	if req == nil {
 		multiErr.Add("", errortypes.ErrInvalid, "Request is required")
-		return multiErr
+		return multiErr.Err()
 	}
 	addTenant(multiErr, req.TenantInfo)
 	if req.MoveID.IsNil() {
@@ -109,10 +109,7 @@ func validateLogRequest(req *checkcallports.LogCheckCallRequest) *errortypes.Mul
 	if req.Source != checkcall.SourceDispatcher && req.Source != checkcall.SourceAgent {
 		multiErr.Add("source", errortypes.ErrInvalid, "Source must be Dispatcher or Agent")
 	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }
 
 func validateClientEventID(id string) error {

@@ -76,7 +76,7 @@ export function FactoringReserveSection({ factoringCompanyId }: { factoringCompa
           </Alert>
         </div>
       ) : balance.data.entryCount === 0 ? (
-        <p className="text-muted-foreground px-3 py-3 text-sm">
+        <p className="px-3 py-3 text-sm text-muted-foreground">
           {t("Nothing booked with this factor yet. Funding recorded on a schedule appears here.")}
         </p>
       ) : (
@@ -112,7 +112,7 @@ export function FactoringReserveSection({ factoringCompanyId }: { factoringCompa
           </div>
           <FactoringReserveEntryList entries={entries.data.entries} show="invoice" />
           {entries.data.totalCount > entries.data.entries.length ? (
-            <p className="text-muted-foreground border-t px-3 py-2 text-xs">
+            <p className="border-t px-3 py-2 text-xs text-muted-foreground">
               {entries.data.totalCountExact === false
                 ? t(
                     "Showing the latest {0} of about {1} movements. A report on factoring reserve entries lists them all.",

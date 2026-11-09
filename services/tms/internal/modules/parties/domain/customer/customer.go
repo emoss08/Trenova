@@ -22,8 +22,8 @@ import (
 var digitsPattern = regexp.MustCompile(`^[0-9]*$`)
 
 var (
-	_ validationframework.TenantedEntity = (*Customer)(nil)
-	_ domaintypes.PostgresSearchable     = (*Customer)(nil)
+	_ validationframework.Entity     = (*Customer)(nil)
+	_ domaintypes.PostgresSearchable = (*Customer)(nil)
 )
 
 // Customers who tender freight

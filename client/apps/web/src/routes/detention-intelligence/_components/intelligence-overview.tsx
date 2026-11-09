@@ -31,7 +31,7 @@ function UpdatedAgo({ at }: { at: number }) {
   const t = useT();
   const now = useNow("minute");
   return (
-    <span className="text-muted-foreground text-xs">
+    <span className="text-xs text-muted-foreground">
       {t("Updated {0}", formatRelativeTime(Math.min(Math.round(at / 1000) - now, 0)))}
     </span>
   );
@@ -68,12 +68,12 @@ export function IntelligenceBrief({
       className="grid items-center gap-x-8 gap-y-3 md:grid-cols-[minmax(0,1fr)_auto]"
     >
       <div className="flex min-w-0 flex-col gap-2">
-        <span className="text-muted-foreground flex items-center gap-2 text-xs">
+        <span className="flex items-center gap-2 text-xs text-muted-foreground">
           <NovaBadge size="sm" />
-          <span className="text-foreground font-medium">{t("Nova")}</span>
+          <span className="font-medium text-foreground">{t("Nova")}</span>
           {t("Detention intelligence")}
         </span>
-        <p className="text-muted-foreground text-lg leading-relaxed text-pretty">
+        <p className="text-lg leading-relaxed text-pretty text-muted-foreground">
           <Narrative segments={segments} targets={targets} />
         </p>
       </div>
@@ -105,14 +105,14 @@ function Benchmark({ share }: { share: number }) {
       className="flex items-center gap-2"
       title={t("ATRI, 2023: drivers reported detention at 39.3% of stops")}
     >
-      <span className="bg-muted relative h-1 w-24 rounded-full">
+      <span className="relative h-1 w-24 rounded-full bg-muted">
         <span
-          className="bg-foreground/70 absolute inset-y-0 left-0 rounded-full"
+          className="absolute inset-y-0 left-0 rounded-full bg-foreground/70"
           style={{ width: `${Math.min(share, 1) * 100}%` }}
         />
         <span
           aria-hidden
-          className="bg-muted-foreground absolute -inset-y-1 w-px"
+          className="absolute -inset-y-1 w-px bg-muted-foreground"
           style={{ left: `${INDUSTRY_DETAINED_SHARE * 100}%` }}
         />
       </span>
@@ -216,7 +216,7 @@ function StepImpact({ step }: { step: DetentionNextStep }) {
   return (
     <div className="min-w-24 text-right">
       {value ? <p className="font-mono text-sm font-semibold tabular-nums">{value}</p> : null}
-      <p className="text-muted-foreground text-2xs">{step.impactCaption}</p>
+      <p className="text-2xs text-muted-foreground">{step.impactCaption}</p>
     </div>
   );
 }
@@ -255,10 +255,10 @@ export function NextSteps({
   };
 
   return (
-    <section aria-label={t("What to do next")} className="bg-card rounded-lg border">
+    <section aria-label={t("What to do next")} className="rounded-lg border bg-card">
       <header className="flex items-baseline gap-3 border-b px-4 py-2.5">
         <h2 className="text-sm font-semibold">{t("What to do next")}</h2>
-        <span className="text-muted-foreground text-xs">
+        <span className="text-xs text-muted-foreground">
           {t("Ranked by the hours or dollars each would recover")}
         </span>
       </header>
@@ -268,17 +268,17 @@ export function NextSteps({
             key={`${step.kind}-${step.locationId ?? step.customerId ?? index}`}
             className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3"
           >
-            <span className="bg-muted text-muted-foreground grid size-6 shrink-0 place-items-center rounded-md font-mono text-xs font-semibold">
+            <span className="grid size-6 shrink-0 place-items-center rounded-md bg-muted font-mono text-xs font-semibold text-muted-foreground">
               {index + 1}
             </span>
             <div className="min-w-0 flex-1">
               <p className="text-sm">
-                <span className="bg-muted text-muted-foreground text-2xs mr-2 rounded-badge px-1.5 py-0.5 font-medium">
+                <span className="mr-2 rounded-badge bg-muted px-1.5 py-0.5 text-2xs font-medium text-muted-foreground">
                   {STEP_LEVERS[step.kind]}
                 </span>
                 <Narrative segments={step.title} targets={targets} />
               </p>
-              <p className="text-muted-foreground mt-0.5 text-xs">{step.detail}</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">{step.detail}</p>
             </div>
             <StepImpact step={step} />
             <Button

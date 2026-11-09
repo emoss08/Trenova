@@ -1842,6 +1842,7 @@ enum AIUsageFeature {
   AccountingMapping
   AgentDrafting
   AgentEvaluation
+  AgentMemoryConsolidation
   AgentProfile
   AgentRecommendation
   AgentReflection
@@ -5964,8 +5965,6 @@ enum AgentReflectionSignalKind {
   ProposalModified
   ProposalRejected
   StandingRequest
-  ToolFailed
-  ToolRecovered
 }
 
 enum AgentReflectionSkip {
@@ -12744,6 +12743,107 @@ type DeliveryHourBucket {
   scheduled: Int!
 }
 
+type DeskActivity {
+  entries: [DeskActivityEntry!]!
+  hasMore: Boolean!
+}
+
+"""
+One line of Nova handled: a write, or a run of the same write over several records,
+one plan's steps, as the server recorded it settling. A label never claims more than
+the record of the write says.
+"""
+type DeskActivityEntry {
+  agent: AgentDefinition
+  """When the newest write in the line settled."""
+  at: Timestamp!
+  """How many writes the line folds."""
+  count: Int!
+  """Who approved it; null for what ran on its own or was only previewed."""
+  decidedBy: User
+  """Why the agent made it, or why it did not go through."""
+  detail: String!
+  id: ID!
+  outcome: DeskActivityOutcome!
+  planId: ID
+  proposalIds: [ID!]!
+  records: [DeskRecord!]!
+  """Records past the first five."""
+  recordsMore: Int!
+  runId: ID!
+  title: String!
+}
+
+"""How a write an agent made ended."""
+enum DeskActivityOutcome {
+  """Ran after a person approved it."""
+  Approved
+  """Did not go through."""
+  Failed
+  """Ran without asking, under a tool AI control lets run on its own."""
+  OnItsOwn
+  """Previewed in shadow or simulation and never made."""
+  Previewed
+}
+
+type DeskAttention {
+  counts: DeskLensCounts!
+  groups: [DeskAttentionGroup!]!
+  """True when more records wait than the first page holds."""
+  hasMore: Boolean!
+  """Where the reader's unseen line sits."""
+  seenAt: Timestamp!
+}
+
+"""
+One row of Needs you: every open item about one record, soonest deadline first.
+A shipment's late warning, the customer's email about it and the plan to recover
+it are one row.
+"""
+type DeskAttentionGroup {
+  """The soonest deadline among its items."""
+  dueAt: Timestamp
+  dueLabel: String
+  items: [WatchtowerItem!]!
+  """
+  The record's id, or the item's own id when it is about nothing beyond itself.
+  """
+  key: ID!
+  """Null when the item is about nothing beyond itself."""
+  record: DeskRecord
+  """The most severe of its items."""
+  severity: WatchtowerSeverity!
+  """True when any of its items is new to the reader."""
+  unseen: Boolean!
+}
+
+input DeskAttentionInput {
+  """Rows to read, at most 100."""
+  first: Int = 50
+  """
+  Rows with an item of one of these kinds, within the lens. Empty is every kind in it.
+  """
+  kinds: [WatchtowerSourceKind!]
+  """
+  Rows with at least one item in this lens; each row still shows all its items.
+  """
+  lens: DeskLens = Everything
+  """One record's row, for its case: every open item about it."""
+  recordId: ID
+  """Rows with an item of one of these severities. Empty is every severity."""
+  severities: [WatchtowerSeverity!]
+}
+
+"""
+A button an actions block offers. It sends its request as the person's own message
+into the board's conversation and changes nothing itself.
+"""
+type DeskBoardAction {
+  ask: String!
+  label: String!
+  records: [DeskBoardRow!]!
+}
+
 """
 One block of a board. type says which of the other fields it fills: figures,
 records (rows), compare, table, chart (an analysis chart spec), timeline
@@ -12751,6 +12851,7 @@ records (rows), compare, table, chart (an analysis chart spec), timeline
 noteTone and chips).
 """
 type DeskBoardBlock {
+  actions: [DeskBoardAction!]!
   chart: JSON
   checks: [DeskBoardCheck!]!
   chips: [DeskBoardRow!]!
@@ -12772,6 +12873,7 @@ type DeskBoardBlock {
   title: String!
   tone: String!
   type: String!
+  work: [DeskBoardWorkRow!]!
 }
 
 """
@@ -12924,6 +13026,43 @@ type DeskBoardValue {
   text: String!
 }
 
+"""
+A record on a work block with everything open about it, soonest deadline first.
+"""
+type DeskBoardWorkRow {
+  dueAt: Timestamp
+  row: DeskBoardRow!
+  signals: [DeskBoardWorkSignal!]!
+  tone: String!
+}
+
+"""One thing open about a record on a work block, as Needs you holds it."""
+type DeskBoardWorkSignal {
+  dueAt: Timestamp
+  lens: DeskLens!
+  title: String!
+  """bad, warn or info, from the item's severity."""
+  tone: String!
+}
+
+"""
+Which of the Desk's queues an item belongs to, by what raised it. Everything is all of them.
+"""
+enum DeskLens {
+  Decisions
+  Everything
+  Triage
+  Watchtower
+}
+
+"""Open items in each of the Desk's lenses, as the reader may see them."""
+type DeskLensCounts {
+  decisions: Int!
+  everything: Int!
+  triage: Int!
+  watchtower: Int!
+}
+
 input DeskMemoriesInput {
   after: String
   """Page size; 50 when left out, at most 100."""
@@ -13033,6 +13172,25 @@ type DeskMemorySettings {
   """The person's roles by name."""
   roles: [DeskMemoryRole!]!
   savingMode: AgentMemorySavingMode!
+}
+
+"""
+A business record the Desk groups work by. Its label, subtitle and status are read
+with the reader's access and are empty when they may not read this kind of record:
+it is counted, never named.
+"""
+type DeskRecord {
+  id: ID!
+  """
+  The record kind, as the record-link registry names it: shipment, customer, worker.
+  """
+  kind: String!
+  label: String!
+  """What one record of this kind is called in a sentence."""
+  noun: String!
+  readable: Boolean!
+  status: String!
+  subtitle: String!
 }
 
 input DetachPayEventInput {
@@ -27064,9 +27222,15 @@ type Query {
   carrierCapacityPosting(id: ID!): CarrierCapacityPosting
   carrierCapacityPostings(
     carrierId: ID
+    """Only postings headed to this state, by its two-letter code such as GA."""
+    destinationStateCode: String
     input: DataTableConnectionInput!
     """Only postings whose window has not closed."""
     openOnly: Boolean = false
+    """
+    Only postings picking up in this state, by its two-letter code such as TX.
+    """
+    originStateCode: String
   ): CarrierCapacityPostingConnection!
   carrierCostEvents(input: DataTableConnectionInput!): CarrierCostEventConnection!
   carrierEquipmentVerifications(carrierAssignmentId: ID!): [CarrierEquipmentVerification!]!
@@ -27145,6 +27309,14 @@ type Query {
   """
   defaultSafetyPoints(inspectionResult: InspectionResult, kind: SafetyEventKind!, preventable: Boolean, severity: SafetySeverity!): Int!
   defaultTableConfiguration(resource: String!): TableConfiguration
+  """
+  Nova handled: the writes agents settled since a moment at most 31 days ago, newest first.
+  """
+  deskActivity(first: Int = 20, since: Timestamp!): DeskActivity!
+  """
+  Needs you: what waits on people, one row per record, soonest deadline first.
+  """
+  deskAttention(input: DeskAttentionInput!): DeskAttention!
   """
   A board in one of the person's conversations, read now with their access.
   """
@@ -35936,6 +36108,10 @@ type WatchtowerCounts {
   unresolved: Int!
   unseen: Int!
   unseenCritical: Int!
+  """
+  Open and in an agent's hands: handed to an agent that has not given it back.
+  """
+  withAgents: Int!
 }
 
 """Where an item's due time came from."""
@@ -35980,6 +36156,8 @@ One thing worth a person's attention, drawn from the record that raised it.
 Every item a reader is shown is one whose source they could open themselves.
 """
 type WatchtowerItem {
+  """The business record the item is about, which the Desk groups by."""
+  aboutId: ID
   acknowledgedAt: Timestamp
   """
   The agent the item was handed to and how far along it is; absent until it is handed off.
@@ -35990,6 +36168,8 @@ type WatchtowerItem {
   assigneeId: ID
   businessUnitId: ID!
   createdAt: Timestamp!
+  """The Desk lens the item is filed under."""
+  deskLens: DeskLens!
   """
   When the owner is expected to have dealt with it; absent when no due time applies.
   """
@@ -36152,6 +36332,8 @@ input WatchtowerItemsInput {
 
 type WatchtowerKindSummary {
   count: Int!
+  """The Desk lens items of this kind are filed under."""
+  deskLens: DeskLens!
   kind: WatchtowerSourceKind!
   label: String!
 }

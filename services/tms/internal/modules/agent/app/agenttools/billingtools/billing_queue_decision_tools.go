@@ -183,16 +183,12 @@ func (t *BillingQueueDecisionTool) requiredFields(item *billingqueue.BillingQueu
 	for _, entry := range multiErr.Errors {
 		// The approver who cancels is who the item records; a proposal is
 		// checked before anyone has.
-		if t.decision.personOnly && entry.Field == changepreview.FieldCanceledByID {
+		if t.decision.personOnly && entry.Field() == changepreview.FieldCanceledByID {
 			continue
 		}
-		kept.Add(entry.Field, entry.Code, entry.Message, entry.Args...)
+		kept.AddError(entry)
 	}
-	if kept.HasErrors() {
-		return kept
-	}
-
-	return nil
+	return kept.Err()
 }
 
 func (t *BillingQueueDecisionTool) load(

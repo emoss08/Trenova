@@ -91,7 +91,7 @@ func TestRunReads_KeepAConversationsRunsToItsOwner(t *testing.T) {
 			sees:   []pulid.ID{shipmentRun.ID},
 		},
 		"the runtime": {
-			reader: agentruntimeports.UnattendedRunRead(),
+			reader: agentruntimeports.RunReader{},
 			sees:   all,
 		},
 	}

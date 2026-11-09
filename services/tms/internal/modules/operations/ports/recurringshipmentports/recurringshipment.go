@@ -37,7 +37,7 @@ type MatchRecurringShipmentsRequest struct {
 	DestinationLocationID pulid.ID              `json:"destinationLocationId"`
 }
 
-func (r *MatchRecurringShipmentsRequest) Validate() *errortypes.MultiError {
+func (r *MatchRecurringShipmentsRequest) Validate() error {
 	multiErr := errortypes.NewMultiError()
 
 	if r.CustomerID.IsNil() {
@@ -64,11 +64,7 @@ func (r *MatchRecurringShipmentsRequest) Validate() *errortypes.MultiError {
 		multiErr.Add("buId", errortypes.ErrRequired, "Business unit ID is required")
 	}
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 type LanePatternSummary struct {
@@ -99,7 +95,7 @@ type GenerateRecurringShipmentRequest struct {
 	RequestedBy         pulid.ID                     `json:"-"`
 }
 
-func (r *GenerateRecurringShipmentRequest) Validate() *errortypes.MultiError {
+func (r *GenerateRecurringShipmentRequest) Validate() error {
 	multiErr := errortypes.NewMultiError()
 
 	if r.RecurringShipmentID.IsNil() {
@@ -118,11 +114,7 @@ func (r *GenerateRecurringShipmentRequest) Validate() *errortypes.MultiError {
 		multiErr.Add("buId", errortypes.ErrRequired, "Business unit ID is required")
 	}
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 type GenerateRecurringShipmentResult struct {

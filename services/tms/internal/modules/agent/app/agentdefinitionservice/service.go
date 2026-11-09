@@ -433,11 +433,7 @@ func (s *Service) validate(
 		return err
 	}
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 func (s *Service) schedule(definition *agentdefinition.Definition) error {

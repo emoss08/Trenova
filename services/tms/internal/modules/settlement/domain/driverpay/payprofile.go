@@ -16,9 +16,9 @@ import (
 )
 
 var (
-	_ domaintypes.PostgresSearchable     = (*PayProfile)(nil)
-	_ pagination.CursorEntity            = (*PayProfile)(nil)
-	_ validationframework.TenantedEntity = (*PayProfile)(nil)
+	_ domaintypes.PostgresSearchable = (*PayProfile)(nil)
+	_ pagination.CursorEntity        = (*PayProfile)(nil)
+	_ validationframework.Entity     = (*PayProfile)(nil)
 )
 
 type PayProfile struct {

@@ -109,7 +109,7 @@ func TestRunEventReads_KeepAConversationRunsEventsToItsOwner(t *testing.T) {
 			sees:   []pulid.ID{shipmentRun.ID},
 		},
 		"the runtime": {
-			reader: agentruntimeports.UnattendedRunRead(),
+			reader: agentruntimeports.RunReader{},
 			sees:   []pulid.ID{conversationRun.ID, shipmentRun.ID},
 		},
 	}

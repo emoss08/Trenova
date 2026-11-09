@@ -178,11 +178,7 @@ func validateMachine(req *StartPairingRequest) error {
 			multiErr.Add(field, errortypes.ErrInvalid, "Contains characters that cannot be shown")
 		}
 	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 func displayable(value string) bool {
@@ -574,7 +570,7 @@ func newDeviceFromPairing(
 	multiErr := errortypes.NewMultiError()
 	device.Validate(multiErr)
 	if multiErr.HasErrors() {
-		return nil, nil, multiErr
+		return nil, nil, multiErr.Err()
 	}
 
 	return device, issued, nil

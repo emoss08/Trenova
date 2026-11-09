@@ -103,7 +103,7 @@ func (r *repository) Record(
 		me := errortypes.NewMultiError()
 		entity.Validate(me)
 		if me.HasErrors() {
-			return nil, me
+			return nil, me.Err()
 		}
 
 		t := agenttooltrustdb.ToolTrusts

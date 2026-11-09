@@ -3,19 +3,16 @@ package roleservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/rbac/rbacdb"
-	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/keelcheck"
 	"github.com/emoss08/trenova/pkg/tenantedvalidation"
+	"github.com/emoss08/trenova/pkg/validationframework"
 	"go.uber.org/fx"
 )
 
 type ValidatorParams struct {
 	fx.In
 
-	DB *postgres.Connection
+	Integrity validationframework.IntegrityChecker
 }
 
 type Validator struct {
@@ -26,8 +23,8 @@ func NewValidator(p ValidatorParams) *Validator {
 	return &Validator{
 		validator: tenantedvalidation.NewBuilder[*rbac.Role]().
 			WithModelName("Role").
-			WithUniquenessChecker(
-				keelcheck.NewChecker(p.DB, rbacdb.RolesSchema()),
+			WithIntegrityChecker(
+				p.Integrity,
 			).
 			WithUniqueField(
 				"name",
@@ -42,13 +39,13 @@ func NewValidator(p ValidatorParams) *Validator {
 func (v *Validator) ValidateCreate(
 	ctx context.Context,
 	entity *rbac.Role,
-) *errortypes.MultiError {
+) error {
 	return v.validator.ValidateCreate(ctx, entity)
 }
 
 func (v *Validator) ValidateUpdate(
 	ctx context.Context,
 	entity *rbac.Role,
-) *errortypes.MultiError {
+) error {
 	return v.validator.ValidateUpdate(ctx, entity)
 }

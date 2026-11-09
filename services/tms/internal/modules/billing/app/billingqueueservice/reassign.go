@@ -128,11 +128,11 @@ func (s *Service) planReassignCharge(
 func validateReassignRequest(
 	req *billingqueueports.ReassignChargeRequest,
 	actor *permissionports.RequestActor,
-) *errortypes.MultiError {
+) error {
 	multiErr := errortypes.NewMultiError()
 	if req == nil {
 		multiErr.Add("request", errortypes.ErrRequired, "Request is required")
-		return multiErr
+		return multiErr.Err()
 	}
 	if actor == nil {
 		multiErr.Add("actor", errortypes.ErrRequired, "Actor is required")
@@ -163,11 +163,7 @@ func validateReassignRequest(
 			"Only freight or an accessorial charge can be reassigned",
 		)
 	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 func (s *Service) planReassignment(
@@ -207,12 +203,11 @@ func (s *Service) planReassignment(
 
 	candidate := *shp
 	candidate.ChargeAllocations = merged
-	if multiErr := allocationcheck.Validate(ctx, allocationcheck.Deps{
-		CustomerRepo:         s.customerRepo,
-		ChargeAllocationRepo: s.chargeAllocationRepo,
-		Logger:               s.l,
-	}, &candidate, "allocations"); multiErr != nil {
-		return nil, multiErr
+	if allocationErr := allocationcheck.ValidateShipment(ctx, allocationcheck.Readers{
+		Customers:   s.customerRepo,
+		Allocations: s.chargeAllocationRepo,
+	}, &candidate, "allocations"); allocationErr != nil {
+		return nil, allocationErr
 	}
 
 	resolution, err := chargeallocation.ResolveShares(ctx, &candidate, merged)

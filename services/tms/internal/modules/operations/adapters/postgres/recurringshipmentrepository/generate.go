@@ -479,11 +479,7 @@ func validateGenerationEligibility(
 		)
 	}
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 func resolveOccurrence(

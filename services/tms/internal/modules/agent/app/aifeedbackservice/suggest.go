@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -131,21 +132,27 @@ func (s *Service) suggestForAgent(ctx context.Context, p suggestForAgentParams) 
 			agentID:   p.agentID,
 			agentName: agentName,
 		})
-		me := errortypes.NewMultiError()
-		memory.Validate(me)
-		if me.HasErrors() {
-			s.l.Error("aifeedback: a suggested memory failed validation",
-				zap.String("agent", p.agentID.String()),
-				zap.Error(me),
-			)
-			continue
-		}
-
-		created, cErr := s.memories.Create(ctx, memory)
+		created, cErr := s.keeper.Remember(
+			ctx,
+			suggestionRequest(p.tenant, memory),
+			systemActor(p.tenant),
+		)
 		if cErr != nil {
+			if errortypes.IsError(cErr) {
+				s.l.Error("aifeedback: a suggested memory failed validation",
+					zap.String("agent", p.agentID.String()),
+					zap.Error(cErr),
+				)
+				continue
+			}
+
 			return cErr
 		}
 		existing = append(existing, created)
+		if created.Refreshed {
+			p.result.Covered++
+			continue
+		}
 		p.result.Suggested++
 	}
 
@@ -386,6 +393,29 @@ func (c *ratingCluster) memory(p *clusterMemoryParams) *agentmemory.Memory {
 			Quotes:      evidence.Quotes,
 		}),
 		Evidence: evidence,
+	}
+}
+
+func suggestionRequest(
+	tenant pagination.TenantInfo,
+	memory *agentmemory.Memory,
+) *agentmemoryports.RememberRequest {
+	return &agentmemoryports.RememberRequest{
+		TenantInfo:        tenant,
+		Kind:              memory.Kind,
+		Content:           memory.Content,
+		Suggest:           true,
+		Source:            agentmemory.MemorySourceFeedback,
+		AgentDefinitionID: pulid.ConvertFromPtr(memory.AgentDefinitionID),
+		Evidence:          memory.Evidence,
+	}
+}
+
+func systemActor(tenant pagination.TenantInfo) *permissionports.RequestActor {
+	return &permissionports.RequestActor{
+		PrincipalType:  permissionports.PrincipalTypeSystem,
+		OrganizationID: tenant.OrgID,
+		BusinessUnitID: tenant.BuID,
 	}
 }
 

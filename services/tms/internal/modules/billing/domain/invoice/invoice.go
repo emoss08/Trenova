@@ -27,8 +27,8 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*Invoice)(nil)
-	_ domaintypes.PostgresSearchable     = (*Invoice)(nil)
+	_ validationframework.Entity     = (*Invoice)(nil)
+	_ domaintypes.PostgresSearchable = (*Invoice)(nil)
 )
 
 // Customer invoices

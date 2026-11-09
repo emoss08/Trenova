@@ -130,7 +130,7 @@ func (s PayrollExportStatus) IsValid() bool {
 }
 
 var (
-	_ validationframework.TenantedEntity = (*TimeClockEntry)(nil)
+	_ validationframework.Entity = (*TimeClockEntry)(nil)
 )
 
 // TimeClockEntry is one period of work.
@@ -275,7 +275,7 @@ func (TimeClockEntry) Constraints() []keel.Constraint {
 }
 
 var (
-	_ validationframework.TenantedEntity = (*Timesheet)(nil)
+	_ validationframework.Entity = (*Timesheet)(nil)
 )
 
 // Timesheet is one worker's week of paid hours.
@@ -442,7 +442,7 @@ func (Timesheet) Constraints() []keel.Constraint {
 }
 
 var (
-	_ validationframework.TenantedEntity = (*PayrollExport)(nil)
+	_ validationframework.Entity = (*PayrollExport)(nil)
 )
 
 // PayrollExport is one run of approved timesheets handed to payroll. A sheet

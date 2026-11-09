@@ -301,9 +301,5 @@ func validateRunAction(req *billingqueueports.StartBillingQueueApprovalRequest) 
 			maxRunReasonLength,
 		)
 	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }

@@ -16,9 +16,9 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*DistanceOverride)(nil)
-	_ domaintypes.PostgresSearchable     = (*DistanceOverride)(nil)
-	_ pagination.CursorEntity            = (*DistanceOverride)(nil)
+	_ validationframework.Entity     = (*DistanceOverride)(nil)
+	_ domaintypes.PostgresSearchable = (*DistanceOverride)(nil)
+	_ pagination.CursorEntity        = (*DistanceOverride)(nil)
 )
 
 type DistanceOverride struct {

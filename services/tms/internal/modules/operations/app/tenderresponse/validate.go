@@ -25,8 +25,5 @@ func validateCounter(req *tenderports.TenderResponseRequest) error {
 	if utf8.RuneCountInString(req.CounterNote) > tender.MaxCounterNoteLength {
 		multiErr.Add("counterNote", errortypes.ErrInvalid, "Note must be at most 500 characters")
 	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }

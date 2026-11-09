@@ -53,11 +53,7 @@ func (v *ValuesValidator) Validate(
 			zap.Error(err),
 			zap.String("resourceType", resourceType),
 		)
-		multiErr.Add(
-			"customFields",
-			errortypes.ErrSystemError,
-			"Failed to fetch custom field definitions",
-		)
+		multiErr.AddInternal(fmt.Errorf("failed to fetch custom field definitions: %w", err))
 		return
 	}
 

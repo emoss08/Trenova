@@ -39,7 +39,7 @@ export function FactoringAgreementActivity({ agreement }: { agreement: Factoring
     >
       {isLoading ? (
         <div aria-busy aria-label={t("Loading the agreement's schedules")} className="p-3">
-          <span aria-hidden className="ui-shimmer block h-16 rounded-md" />
+          <span aria-hidden className="block h-16 ui-shimmer rounded-md" />
         </div>
       ) : error || !data ? (
         <div className="p-3">
@@ -110,7 +110,7 @@ function AccountRow({
   const t = useT();
   return (
     <div className={cn("flex min-w-0 flex-col gap-0.5", muted && "opacity-60")}>
-      <dt className="text-foreground-subtle text-xs font-medium">{role}</dt>
+      <dt className="text-xs font-medium text-foreground-subtle">{role}</dt>
       <dd className="m-0 flex min-w-0 flex-col gap-0.5 text-sm">
         {account ? (
           <span className="truncate">
@@ -121,7 +121,7 @@ function AccountRow({
         ) : (
           <span className="text-muted-foreground">{t("Organization default")}</span>
         )}
-        {note ? <span className="text-muted-foreground text-xs">{note}</span> : null}
+        {note ? <span className="text-xs text-muted-foreground">{note}</span> : null}
       </dd>
     </div>
   );
@@ -216,15 +216,15 @@ export function FactoringAgreementHistory({
                   className={cn(
                     "mt-1.5 size-2 shrink-0 rounded-full border-[1.5px]",
                     moment.at && !moment.future
-                      ? "bg-foreground border-foreground"
-                      : "bg-card border-border-strong",
+                      ? "border-foreground bg-foreground"
+                      : "border-border-strong bg-card",
                   )}
                 />
-                {index < moments.length - 1 ? <span className="bg-border w-px flex-1" /> : null}
+                {index < moments.length - 1 ? <span className="w-px flex-1 bg-border" /> : null}
               </span>
               <span className="flex flex-col pb-4">
                 <span className="text-sm font-medium">{moment.label}</span>
-                <span className="text-muted-foreground text-xs">
+                <span className="text-xs text-muted-foreground">
                   {moment.at
                     ? formatUnixDate(moment.at)
                     : moment.key === "ends"
@@ -236,17 +236,17 @@ export function FactoringAgreementHistory({
           ))}
         </ol>
         <div className="flex min-w-0 flex-col gap-2">
-          <span className="text-foreground-subtle text-xs font-medium">
+          <span className="text-xs font-medium text-foreground-subtle">
             {previous && previousNumber !== null
               ? t("Changes from v{0}", previousNumber)
               : t("Changes")}
           </span>
           {!previous ? (
-            <p className="text-muted-foreground m-0 text-sm">
+            <p className="m-0 text-sm text-muted-foreground">
               {t("The first agreement with this factor; nothing to compare it with.")}
             </p>
           ) : changes.length === 0 ? (
-            <p className="text-muted-foreground m-0 text-sm">
+            <p className="m-0 text-sm text-muted-foreground">
               {t("The same terms as the version before it.")}
             </p>
           ) : (
@@ -254,7 +254,7 @@ export function FactoringAgreementHistory({
               {changes.map((change) => (
                 <li
                   key={change}
-                  className="bg-info-subtle text-info-subtle-foreground rounded-sm px-1.5 py-0.5 font-mono text-xs"
+                  className="rounded-sm bg-info-subtle px-1.5 py-0.5 font-mono text-xs text-info-subtle-foreground"
                 >
                   {change}
                 </li>
@@ -263,7 +263,7 @@ export function FactoringAgreementHistory({
           )}
           {agreement.notes ? (
             <div className="mt-2 flex flex-col gap-1">
-              <span className="text-foreground-subtle text-xs font-medium">{t("Notes")}</span>
+              <span className="text-xs font-medium text-foreground-subtle">{t("Notes")}</span>
               <p className="m-0 text-sm whitespace-pre-line">{agreement.notes}</p>
             </div>
           ) : null}

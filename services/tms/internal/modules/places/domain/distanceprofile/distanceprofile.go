@@ -16,9 +16,9 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*DistanceProfile)(nil)
-	_ domaintypes.PostgresSearchable     = (*DistanceProfile)(nil)
-	_ pagination.CursorEntity            = (*DistanceProfile)(nil)
+	_ validationframework.Entity     = (*DistanceProfile)(nil)
+	_ domaintypes.PostgresSearchable = (*DistanceProfile)(nil)
+	_ pagination.CursorEntity        = (*DistanceProfile)(nil)
 )
 
 const (

@@ -15,7 +15,7 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*FuelIndexPrice)(nil)
+	_ validationframework.Entity = (*FuelIndexPrice)(nil)
 )
 
 const PriceDateLayout = "2006-01-02"

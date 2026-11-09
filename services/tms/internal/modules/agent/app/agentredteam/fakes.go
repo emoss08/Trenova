@@ -196,6 +196,27 @@ func (r *memoryRepository) ListActive(
 	return nil, nil
 }
 
+func (r *memoryRepository) ListNeighbors(
+	_ context.Context,
+	req *agentmemoryports.ListAgentMemoryNeighborsRequest,
+) ([]*agentmemory.Memory, error) {
+	r.rec.read(ReadMemoryRepo, "ListNeighbors", req.Same.TenantInfo)
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	neighbors := make([]*agentmemory.Memory, 0, len(r.memories))
+	for _, memory := range r.memories {
+		if sameTenant(memory, req.Same.TenantInfo) &&
+			memory.Status == agentmemory.MemoryStatusActive &&
+			memory.ToolName == req.Same.ToolName {
+			neighbors = append(neighbors, memory)
+		}
+	}
+
+	return neighbors, nil
+}
+
 func sameTenant(memory *agentmemory.Memory, tenant pagination.TenantInfo) bool {
 	return memory.OrganizationID == tenant.OrgID && memory.BusinessUnitID == tenant.BuID
 }

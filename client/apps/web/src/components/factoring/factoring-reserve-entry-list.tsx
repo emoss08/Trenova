@@ -48,7 +48,7 @@ export function FactoringReserveEntryList({
               <div className="flex flex-col">
                 <span>{FACTORING_RESERVE_ENTRY_KIND_LABELS[entry.kind]}</span>
                 {entry.memo ? (
-                  <span className="text-muted-foreground text-xs">{entry.memo}</span>
+                  <span className="text-xs text-muted-foreground">{entry.memo}</span>
                 ) : null}
               </div>
             </TableCell>

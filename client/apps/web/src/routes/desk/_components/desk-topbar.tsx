@@ -19,6 +19,13 @@ import { DeskCaseMenu } from "./case/desk-case-menu";
 import { DeskHandoffMenu } from "./handoff/desk-handoff-menu";
 import { DeskThreadTitle } from "./desk-thread-title";
 import { preloadDeskWorkspace } from "./artifacts/desk-workspace-lazy";
+import { DeskSituation } from "./desk-situation";
+import { lensFromParam, lensLabel } from "./attention/lens";
+import { useCommandPaletteStore } from "@/stores/command-palette-store";
+import { useDeskMarginStore } from "@/stores/desk-margin-store";
+import { NovaBadge } from "@trenova/shared/components/ui/nova-badge";
+import { formatShortcut } from "@trenova/shared/lib/shortcuts";
+import { useSearchParams } from "react-router";
 
 /** Reaching the Workspace button starts reading its code, so a click opens it at once. */
 function preloadWorkspace() {
@@ -47,6 +54,8 @@ export function DeskTopBar({
   onRename,
   onOpenRail,
   onUnfoldRail,
+  canWatch,
+  needsYou,
 }: {
   place: DeskPlace;
   thread: AssistantThread | null;
@@ -72,8 +81,16 @@ export function DeskTopBar({
   onOpenRail?: () => void;
   /** Opens the rail again beside the page, given only while it is folded away. */
   onUnfoldRail?: () => void;
+  /** Whether the person may read the Watchtower, which the live figures count. */
+  canWatch: boolean;
+  /** Open items waiting on people, for the situation line. */
+  needsYou: number;
 }) {
   const t = useT();
+  const [search] = useSearchParams();
+  const subject = useDeskMarginStore((state) => state.pageSubject);
+  const marginOpen = useDeskMarginStore((state) => state.margin !== null);
+  const toggleMargin = useDeskMarginStore((state) => state.toggleMargin);
   const timezone = resolveUserTimezone(useAuthStore((state) => state.user?.timezone));
   const inThread = place === "thread" && thread !== null;
 
@@ -133,21 +150,61 @@ export function DeskTopBar({
             <span className="dk-ttl-sl">/</span>
             <span className="dk-ttl-a">{t("What it can do")}</span>
           </>
+        ) : place === "needs" ? (
+          <>
+            <span className="dk-ttl-a">{t("Needs you")}</span>
+            <span className="dk-ttl-sl">/</span>
+            <b>{lensLabel(t, lensFromParam(search.get("lens")))}</b>
+          </>
+        ) : place === "case" && subject ? (
+          <>
+            <span className="dk-ttl-a">{t("Case")}</span>
+            <span className="dk-ttl-sl">/</span>
+            <b>{subject.label}</b>
+          </>
         ) : (
           <b>
             {place === "decisions"
               ? t("Decisions")
-              : place === "watchtower"
-                ? t("Watchtower")
-                : place === "scheduled"
-                  ? t("Scheduled")
-                  : place === "memory"
-                    ? t("Memory")
-                    : t("Today")}
+              : place === "case"
+                ? t("Case")
+                : place === "triage"
+                    ? t("Triage")
+                    : place === "watchtower"
+                      ? t("Watchtower")
+                      : place === "scheduled"
+                        ? t("Scheduled")
+                        : place === "memory"
+                          ? t("Memory")
+                          : t("Today")}
           </b>
         )}
       </div>
       <span className="dk-sp" />
+      {!inThread && <DeskSituation canWatch={canWatch} needsYou={needsYou} />}
+      <button
+        type="button"
+        className="dk-w-kbtn ui-focus-ring"
+        aria-label={t("Search or run a command")}
+        onClick={() => useCommandPaletteStore.getState().setOpen(true)}
+      >
+        <DeskIcon name="search" size={14} />
+        <span className="dk-w-kbtn-l">{t("Search or do")}</span>
+        <span className="dk-w-kbd">{formatShortcut("K")}</span>
+      </button>
+      {!inThread && (
+        <button
+          type="button"
+          className="dk-w-kbtn ui-focus-ring"
+          aria-pressed={marginOpen}
+          aria-label={t("Ask Nova")}
+          onClick={toggleMargin}
+        >
+          <NovaBadge size="xs" />
+          <span className="dk-w-kbtn-l">{t("Ask")}</span>
+          <span className="dk-w-kbd">{formatShortcut("J")}</span>
+        </button>
+      )}
       {inThread && (
         <>
           <DeskCaseMenu thread={thread} timezone={timezone} />
@@ -188,26 +245,26 @@ export function DeskTopBar({
             </DropdownMenuContent>
           </DropdownMenu>
           <DeskTip label={workspaceOpen ? t("Hide the workspace") : t("Show the workspace")}>
-          <Button
-            variant="bare"
-            size="bare"
-            className={cn(
-              "dk-wsb flex h-8 gap-2 rounded-lg pr-3 pl-2.5 text-sm text-dsk-muted transition-colors duration-150 hover:bg-dsk-hover hover:text-dsk-fg max-[720px]:px-2",
-              workspaceOpen && "bg-dsk-hover text-dsk-fg",
-            )}
-            aria-pressed={workspaceOpen}
-            aria-label={t("Workspace")}
-            onPointerEnter={preloadWorkspace}
-            onFocus={preloadWorkspace}
-            onClick={onToggleWorkspace}
-          >
-            <DeskIcon name="panel" size={15} />
-            <span className="max-[720px]:hidden">{t("Workspace")}</span>
-            <span className="dk-n">{artifactCount}</span>
-            {!workspaceOpen && (newArtifact || pending) && (
-              <span className={cn("dk-dot", pending && "dk-dot-wait")} />
-            )}
-          </Button>
+            <Button
+              variant="bare"
+              size="bare"
+              className={cn(
+                "dk-wsb flex h-8 gap-2 rounded-lg pr-3 pl-2.5 text-sm text-dsk-muted transition-colors duration-150 hover:bg-dsk-hover hover:text-dsk-fg max-[720px]:px-2",
+                workspaceOpen && "bg-dsk-hover text-dsk-fg",
+              )}
+              aria-pressed={workspaceOpen}
+              aria-label={t("Workspace")}
+              onPointerEnter={preloadWorkspace}
+              onFocus={preloadWorkspace}
+              onClick={onToggleWorkspace}
+            >
+              <DeskIcon name="panel" size={15} />
+              <span className="max-[720px]:hidden">{t("Workspace")}</span>
+              <span className="dk-n">{artifactCount}</span>
+              {!workspaceOpen && (newArtifact || pending) && (
+                <span className={cn("dk-dot", pending && "dk-dot-wait")} />
+              )}
+            </Button>
           </DeskTip>
         </>
       )}

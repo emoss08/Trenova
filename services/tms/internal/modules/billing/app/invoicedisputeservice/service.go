@@ -381,7 +381,7 @@ func (s *Service) publish(
 	}
 }
 
-func validateOpenRequest(req *invoiceports.OpenInvoiceDisputeRequest) *errortypes.MultiError {
+func validateOpenRequest(req *invoiceports.OpenInvoiceDisputeRequest) error {
 	multiErr := errortypes.NewMultiError()
 	if req.InvoiceID.IsNil() {
 		multiErr.Add("invoiceId", errortypes.ErrRequired, "Invoice is required")
@@ -404,16 +404,12 @@ func validateOpenRequest(req *invoiceports.OpenInvoiceDisputeRequest) *errortype
 			maxDisputeNotesLength,
 		)
 	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 func validateResolveRequest(
 	req *invoiceports.ResolveInvoiceDisputeRequest,
-) *errortypes.MultiError {
+) error {
 	multiErr := errortypes.NewMultiError()
 	if req.DisputeID.IsNil() {
 		multiErr.Add("disputeId", errortypes.ErrRequired, "Dispute is required")
@@ -429,11 +425,7 @@ func validateResolveRequest(
 			maxDisputeNotesLength,
 		)
 	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 // validateDisputableInvoice says whether an invoice can carry a dispute: it
@@ -442,7 +434,7 @@ func validateResolveRequest(
 func validateDisputableInvoice(
 	inv *invoice.Invoice,
 	amount decimal.Decimal,
-) *errortypes.MultiError {
+) error {
 	multiErr := errortypes.NewMultiError()
 	switch {
 	case inv.Status == invoice.StatusVoided:
@@ -478,21 +470,13 @@ func validateDisputableInvoice(
 			inv.OpenBalanceAmount().StringFixed(2),
 		)
 	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
-func validateEntity(entity *invoicedispute.InvoiceDispute) *errortypes.MultiError {
+func validateEntity(entity *invoicedispute.InvoiceDispute) error {
 	multiErr := errortypes.NewMultiError()
 	entity.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 var _ = pulid.Nil

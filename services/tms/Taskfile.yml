@@ -46,6 +46,9 @@ vars:
   LOW_RESOURCE_JOBS: '{{.LOW_RESOURCE_JOBS | default "1"}}'
   GO_JOBS: '{{if eq .LOW_RESOURCE "true"}}{{.LOW_RESOURCE_JOBS}}{{end}}'
   GO_TEST_JOBS: '{{.GO_JOBS | default "4"}}'
+  LINT_JOBS: '{{.GO_JOBS | default "4"}}'
+  LINT_TIMEOUT: 5m
+  LINT_TIMEOUT_ALL: 20m
   AIR_FLAGS: '{{if .GO_JOBS}}--build.delay 2000{{end}}'
   GOCUT_WATCH_FLAGS: '{{if .GO_JOBS}}--delay 2000{{end}}'
   # GO_REMOTE_CACHE=on reads compiled packages from the shared build cache on
@@ -422,9 +425,29 @@ tasks:
       - go test -bench=. -benchmem ./...
 
   lint:
-    desc: Run linter
+    desc: "Lint the Go packages changed since origin/master, bounded by LINT_JOBS and LINT_TIMEOUT (task lint -- ./internal/foo to name packages)"
+    env:
+      LINT_JOBS: "{{.LINT_JOBS}}"
+      LINT_TIMEOUT: "{{.LINT_TIMEOUT}}"
     cmds:
-      - golangci-lint run{{if .GO_JOBS}} --concurrency={{.GO_JOBS}}{{end}} ./...
+      - ./scripts/lint-changed.sh {{.CLI_ARGS}}
+      - go run ./scripts/archlint
+      - go run ./scripts/pkgsizelint
+      - go run ./scripts/genericlint
+
+  lint-fast:
+    desc: "Lint the changed Go packages with only the linters golangci-lint marks fast (task lint-fast -- ./internal/foo)"
+    env:
+      LINT_JOBS: "{{.LINT_JOBS}}"
+      LINT_TIMEOUT: "{{.LINT_TIMEOUT}}"
+      LINT_FAST: "1"
+    cmds:
+      - ./scripts/lint-changed.sh {{.CLI_ARGS}}
+
+  lint-all:
+    desc: Lint the whole module as CI does, bounded by LINT_JOBS and LINT_TIMEOUT_ALL
+    cmds:
+      - golangci-lint run --concurrency={{.LINT_JOBS}} --timeout={{.LINT_TIMEOUT_ALL}} ./...
       - go run ./scripts/archlint
       - go run ./scripts/pkgsizelint
       - go run ./scripts/genericlint

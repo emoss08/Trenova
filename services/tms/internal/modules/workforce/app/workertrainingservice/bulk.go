@@ -181,8 +181,5 @@ func validateBulkAssign(req *BulkAssignRequest) error {
 	if req.DueAt != nil && *req.DueAt <= 0 {
 		multiErr.Add("dueAt", errortypes.ErrInvalid, "Due date must be a valid date")
 	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }

@@ -2,7 +2,6 @@ package paybenefit
 
 import (
 	"context"
-	"errors"
 	"strings"
 
 	"github.com/emoss08/keel"
@@ -16,12 +15,6 @@ import (
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-)
-
-var (
-	ErrInvalidBenefitPlanType  = errors.New("invalid benefit plan type")
-	ErrInvalidEnrollmentStatus = errors.New("invalid benefit enrollment status")
-	ErrInvalidCoverageTier     = errors.New("invalid coverage tier")
 )
 
 type BenefitPlanType string
@@ -45,18 +38,6 @@ func (t BenefitPlanType) IsValid() bool {
 		return true
 	default:
 		return false
-	}
-}
-
-func AllBenefitPlanTypes() []BenefitPlanType {
-	return []BenefitPlanType{
-		BenefitPlanMedical,
-		BenefitPlanDental,
-		BenefitPlanVision,
-		BenefitPlanLife,
-		BenefitPlanDisability,
-		BenefitPlanRetirement,
-		BenefitPlanOther,
 	}
 }
 
@@ -124,12 +105,8 @@ func (t CoverageTier) Multiplier() float64 {
 	}
 }
 
-func AllCoverageTiers() []CoverageTier {
-	return []CoverageTier{TierEmployee, TierEmployeeSpouse, TierEmployeeChildren, TierFamily}
-}
-
 var (
-	_ validationframework.TenantedEntity = (*BenefitPlan)(nil)
+	_ validationframework.Entity = (*BenefitPlan)(nil)
 )
 
 // BenefitPlan is what a carrier offers, for one plan year.
@@ -285,7 +262,7 @@ func (BenefitPlan) Constraints() []keel.Constraint {
 }
 
 var (
-	_ validationframework.TenantedEntity = (*WorkerBenefitEnrollment)(nil)
+	_ validationframework.Entity = (*WorkerBenefitEnrollment)(nil)
 )
 
 // WorkerBenefitEnrollment is who is on which plan. The employee contribution

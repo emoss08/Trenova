@@ -152,9 +152,6 @@ export default function FactoringCustomersTab({
           ) : undefined,
         }}
       />
-      <p className="text-muted-foreground text-xs">
-        {t("Customers are assigned to a factor in their billing profile. Each name opens it.")}
-      </p>
 
       <DraftNoticeDialog
         factoringCompanyId={factoringCompanyId}

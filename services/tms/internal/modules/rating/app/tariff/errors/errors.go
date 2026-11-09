@@ -46,10 +46,7 @@ func CheckRefusal(check *rules.TariffCheck, fields CheckFields) error {
 	if !check.OK && !multiErr.HasErrors() {
 		multiErr.Add(fields.source(), errortypes.ErrInvalid, "The formula does not check")
 	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }
 
 func diagnosticError(diagnostic *rules.TariffDiagnostic, fields CheckFields) *errortypes.Error {

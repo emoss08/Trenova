@@ -185,7 +185,7 @@ func readLocationDraft(params map[string]any) (*locationDraft, error) {
 	draft.categoryID = categoryID
 
 	if multiErr.HasErrors() {
-		return nil, multiErr
+		return nil, multiErr.Err()
 	}
 
 	return draft, nil

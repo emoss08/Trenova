@@ -238,7 +238,7 @@ func planRelease(
 	multiErr := errortypes.NewMultiError()
 	billingqueueservice.CheckStatusFields(&after, multiErr)
 	if multiErr.HasErrors() {
-		return nil, multiErr
+		return nil, multiErr.Err()
 	}
 
 	return &releasePlan{before: item, after: &after}, nil

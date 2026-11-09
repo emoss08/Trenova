@@ -1,4 +1,5 @@
 import { attention } from "@/lib/queries/attention";
+import { deskAttention } from "@/lib/queries/desk-attention";
 import { watchtower, type WatchtowerQueuePages } from "@/lib/queries/watchtower";
 import { watchtowerItem } from "@/routes/desk/_components/watchtower/__tests__/item-fixture";
 import { QueryClient, QueryObserver } from "@tanstack/react-query";
@@ -37,8 +38,9 @@ const QUEUE_AND_SUMMARIES = [
   watchtower.queue.queryKey,
   watchtower.counts().queryKey,
   attention._def,
+  deskAttention._def,
 ];
-const SUMMARIES = [watchtower.counts().queryKey, attention._def];
+const SUMMARIES = [watchtower.counts().queryKey, attention._def, deskAttention._def];
 
 afterEach(() => {
   observers.splice(0).forEach((unsubscribe) => unsubscribe());

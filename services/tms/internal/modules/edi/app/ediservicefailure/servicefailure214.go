@@ -220,10 +220,7 @@ func validateServiceFailure214LifecycleRequest(
 	if !req.Trigger.IsValid() {
 		multiErr.Add("trigger", errortypes.ErrInvalid, "Service failure EDI trigger is invalid")
 	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }
 
 func (s *Service) serviceFailure214Source(

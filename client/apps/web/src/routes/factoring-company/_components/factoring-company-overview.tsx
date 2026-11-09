@@ -63,12 +63,12 @@ export default function FactoringCompanyOverview({
   return (
     <div className="flex flex-col gap-5">
       <section aria-label={t("Summary")} className="flex flex-col gap-2">
-        <span className="text-muted-foreground flex items-center gap-2 text-xs">
+        <span className="flex items-center gap-2 text-xs text-muted-foreground">
           <NovaBadge size="sm" />
-          <span className="text-foreground font-medium">{t("Nova")}</span>
+          <span className="font-medium text-foreground">{t("Nova")}</span>
           {t("Factor summary")}
         </span>
-        <p className="text-muted-foreground max-w-5xl text-lg leading-relaxed text-pretty">
+        <p className="max-w-5xl text-lg leading-relaxed text-pretty text-muted-foreground">
           <NarrativeSegments<FactoringOverviewSegment & { targetId: string | null }>
             segments={segments}
             onTarget={(segment) => {
@@ -77,13 +77,11 @@ export default function FactoringCompanyOverview({
           />
         </p>
       </section>
-
       {settingUp ? (
         <FactoringSetupSteps overview={data} onTab={onTab} />
       ) : (
         <FactoringMoneyPath overview={data} factoringCompanyId={factoringCompanyId} onTab={onTab} />
       )}
-
       <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_24rem]">
         <FactoringAttentionList
           overview={data}

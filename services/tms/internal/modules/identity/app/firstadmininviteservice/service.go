@@ -185,10 +185,7 @@ func validate(invite *instancebootstrapports.FirstAdministratorInvite, now int64
 	if invite.ExpiresAt <= now {
 		multiErr.Add(fieldExpiresAt, errortypes.ErrInvalid, "expiresAt must be in the future")
 	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }
 
 func (s *Service) audit(ctx context.Context, admin *tenant.User, expiresAt int64) {

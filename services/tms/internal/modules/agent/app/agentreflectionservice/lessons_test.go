@@ -133,13 +133,21 @@ func threadPlan() *agentreflectionports.ReflectionPlan {
 		Taint:             &agent.RunTaint{},
 		Signals: agentreflection.ReflectionSignals{
 			{
-				Kind:   agentreflection.ReflectionSignalToolRecovered,
+				Kind:   agentreflection.ReflectionSignalProposalModified,
 				Count:  1,
 				Detail: "dispatch_assign_move",
 			},
 		},
-		ToolNames: []string{"dispatch_assign_move"},
 	}
+}
+
+func alonePlan() *agentreflectionports.ReflectionPlan {
+	plan := threadPlan()
+	plan.Signals = agentreflection.ReflectionSignals{
+		{Kind: agentreflection.ReflectionSignalLongTask, Count: 9},
+	}
+
+	return plan
 }
 
 func runPlan() *agentreflectionports.ReflectionPlan {
@@ -155,11 +163,10 @@ func runPlan() *agentreflectionports.ReflectionPlan {
 func procedure(audience string) *lesson {
 	return &lesson{
 		Kind:     string(agentmemory.MemoryKindProcedure),
-		Content:  "1. Read the move with shipment_get. 2. Pass its move id to dispatch_assign_move.",
+		Content:  "1. Keep team drivers off hazmat loads. 2. Offer the move to a solo driver first.",
 		Audience: audience,
-		ToolName: "dispatch_assign_move",
-		Evidence: "dispatch_assign_move failed with a shipment id",
-		Why:      "Saves a failed call next time.",
+		Evidence: "The dispatcher swapped the team for a solo driver: no teams on hazmat",
+		Why:      "The next hazmat assignment goes the way the dispatcher wants.",
 	}
 }
 
@@ -208,15 +215,24 @@ func TestLessonRequest_RefusesWhatTheWorkCannotVouchFor(t *testing.T) {
 			reason: "did not touch",
 		},
 		{
-			name: "a tool the work did not use",
-			plan: threadPlan(),
+			name: "a procedure from work no person said or decided anything in",
+			plan: alonePlan(),
 			lesson: &lesson{
 				Kind:     "Procedure",
-				Content:  "Use invoice_send",
-				Audience: audienceMe,
-				ToolName: "invoice_send",
+				Content:  "1. Call shipment_get with proNumber. 2. Pass its id to invoice_send.",
+				Audience: audienceAgent,
 			},
-			reason: "did not use",
+			reason: "is the tool's to say",
+		},
+		{
+			name: "a fact it worked out alone about no record",
+			plan: alonePlan(),
+			lesson: &lesson{
+				Kind:     "Fact",
+				Content:  "carrier_list_capacity_postings wants a state id",
+				Audience: audienceAgent,
+			},
+			reason: "only about a customer, location, driver or carrier",
 		},
 		{
 			name: "a memory it was not shown",
@@ -364,7 +380,7 @@ func TestParseReply(t *testing.T) {
 	for range agentreflection.MaxReflectionLessons + 2 {
 		lessons = append(
 			lessons,
-			`{"kind":"Fact","content":"x","audience":"me","subjectType":"","subjectId":"","toolName":"","replaces":"","evidence":"","why":""}`,
+			`{"kind":"Fact","content":"x","audience":"me","subjectType":"","subjectId":"","replaces":"","evidence":"","why":""}`,
 		)
 	}
 	reply, err := ParseReply(`{"lessons":[` + strings.Join(lessons, ",") + `],"notes":"Kept one."}`)
@@ -390,12 +406,14 @@ func TestFinish_KeepsLessonsRecordsThemAndShowsThemOnTheReply(t *testing.T) {
 
 	outcome, err := svc.Finish(t.Context(), plan, &llmports.StructuredCompletionResult{
 		Text: `{"lessons":[` +
-			`{"kind":"Procedure","content":"Pass the move id to dispatch_assign_move.","audience":"me","subjectType":"","subjectId":"","toolName":"dispatch_assign_move","replaces":"","evidence":"failed twice","why":"Avoids the failure."},` +
-			`{"kind":"Correction","content":"Nope","audience":"me","subjectType":"","subjectId":"","toolName":"","replaces":"","evidence":"","why":""}` +
+			`{"kind":"Procedure","content":"Offer hazmat moves to a solo driver first.","audience":"me","subjectType":"","subjectId":"","replaces":"","evidence":"no teams on hazmat","why":"Assigns the way the dispatcher wants."},` +
+			`{"kind":"Correction","content":"Nope","audience":"me","subjectType":"","subjectId":"","replaces":"","evidence":"","why":""}` +
 			`],"notes":"One procedure kept."}`,
-		ModelIdentifier: "test-model",
-		InputTokens:     1200,
-		OutputTokens:    80,
+		ModelIdentifier:  "test-model",
+		InputTokens:      1200,
+		CacheReadTokens:  3000,
+		CacheWriteTokens: 400,
+		OutputTokens:     80,
 	})
 	require.NoError(t, err)
 
@@ -408,7 +426,8 @@ func TestFinish_KeepsLessonsRecordsThemAndShowsThemOnTheReply(t *testing.T) {
 	assert.Equal(t, agentreflection.ReflectionActionSaved, stored.Changes[0].Action)
 	assert.Equal(t, agentreflection.ReflectionActionRefused, stored.Changes[1].Action)
 	assert.Equal(t, "test-model", stored.Model)
-	assert.Equal(t, 1200, stored.InputTokens)
+	assert.Equal(t, 4600, stored.InputTokens,
+		"every input token the look back read counts, cached or not")
 	assert.Equal(t, "One procedure kept.", stored.Notes)
 
 	require.Len(t, conversations.added, 1)
@@ -441,7 +460,7 @@ func TestFinish_ARefusalFromTheMemoryServiceIsRecordedNotRetried(t *testing.T) {
 	svc.conversations = &fakeConversations{}
 
 	outcome, err := svc.Finish(t.Context(), plan, &llmports.StructuredCompletionResult{
-		Text: `{"lessons":[{"kind":"Fact","content":"x","audience":"me","subjectType":"","subjectId":"","toolName":"","replaces":"","evidence":"","why":""}],"notes":""}`,
+		Text: `{"lessons":[{"kind":"Fact","content":"x","audience":"me","subjectType":"","subjectId":"","replaces":"","evidence":"","why":""}],"notes":""}`,
 	})
 	require.NoError(t, err)
 	assert.Equal(t, 1, outcome.Refused)

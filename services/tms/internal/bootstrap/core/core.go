@@ -47,7 +47,6 @@ func Options() fx.Option {
 		infrastructure.RedisRepositoriesModule,
 		infrastructure.RateLimitModule,
 		infrastructure.DatabaseModule,
-		modules.ValidatorModule,
 		modules.PostgresRepositoryModule,
 		fuelcard.Module,
 		carrierintelinfra.Module,

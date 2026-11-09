@@ -39,7 +39,6 @@ import { useStartConversation } from "@/components/assistant/use-start-conversat
 import { forgetThreadSchedules } from "@/components/assistant/thread-schedules";
 import type { DeskPlace } from "./desk-rail";
 import { DeskRailThreads } from "./desk-rail-threads";
-import { DeskSearchPalette } from "./desk-search";
 import {
   DeskSettingsDialog,
   deskSettingsClasses,
@@ -47,6 +46,19 @@ import {
   type DeskSettingsSection,
 } from "./desk-settings";
 import { DeskTopBar } from "./desk-topbar";
+import { CommandPaletteMount } from "@/components/command-palette/command-palette-mount";
+import { useGoToChords } from "@/components/navigation/use-go-to-chords";
+import { useCommandPaletteStore } from "@/stores/command-palette-store";
+import { useDeskMarginStore } from "@/stores/desk-margin-store";
+import { DeskMargin } from "./margin/desk-margin";
+
+/** G, then a letter, goes to a place in the Desk; the app's own chords go to modules. */
+const DESK_CHORDS: ReadonlyMap<string, string> = new Map([
+  ["D", "/desk"],
+  ["N", "/desk/needs"],
+  ["W", "/desk/needs?lens=watchtower"],
+  ["T", "/desk/needs?lens=triage"],
+]);
 
 export type DeskContextValue = {
   /**
@@ -68,6 +80,8 @@ export type DeskContextValue = {
   isStarting: boolean;
   /** Opens a conversation, optionally with the question that prompted it. */
   start: (agentId: string, question?: string, extras?: DeskStartExtras) => void;
+  /** Starts a conversation in Nova's margin, beside the page, instead of on a page of its own. */
+  startInMargin: (agentId: string, question?: string, extras?: DeskStartExtras) => void;
   remove: (thread: AssistantThread) => void;
   /** The open conversation is being deleted, and the Desk is moving off it. */
   deletingActive: boolean;
@@ -137,6 +151,15 @@ function placeFor(pathname: string, activeThreadId: string | null): DeskPlace {
   if (pathname.startsWith("/desk/decisions")) {
     return "decisions";
   }
+  if (pathname.startsWith("/desk/needs")) {
+    return "needs";
+  }
+  if (pathname.startsWith("/desk/r/")) {
+    return "case";
+  }
+  if (pathname.startsWith("/desk/triage")) {
+    return "triage";
+  }
   if (pathname.startsWith("/desk/watchtower")) {
     return "watchtower";
   }
@@ -175,22 +198,33 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
   const { pathname } = useLocation();
   const pane = useDeskStore((state) => state.pane);
   const setPane = useDeskStore((state) => state.setPane);
-  const togglePane = useDeskStore((state) => state.togglePane);
   const setActiveArtifact = useDeskStore((state) => state.setActiveArtifact);
   const { allowed: canDecide } = usePermission(Resource.AgentProposal, Operation.Read);
   const { allowed: canWatch } = usePermission(Resource.Watchtower, Operation.Read);
+  const { allowed: canTriage } = usePermission(Resource.InboundMessage, Operation.Read);
   const { data: attention } = useAttentionSummary();
   const { data: watchtowerCounts } = useQuery({
     ...watchtower.counts(),
     enabled: canWatch,
   });
+  const lensCounts = useMemo(() => {
+    const counts = { everything: 0, watchtower: 0, triage: 0 };
+    for (const row of watchtowerCounts?.byKind ?? []) {
+      counts.everything += row.count;
+      if (row.deskLens === "Watchtower") {
+        counts.watchtower += row.count;
+      } else if (row.deskLens === "Triage") {
+        counts.triage += row.count;
+      }
+    }
+    return counts;
+  }, [watchtowerCounts]);
 
   const [working, setWorking] = useState(false);
   const [liveArtifacts, setLiveArtifacts] = useState<LiveArtifacts>(NO_LIVE_ARTIFACTS);
   const [pendingLookups, setPendingLookups] = useState<ReadonlySet<string>>(NO_PENDING_LOOKUPS);
   const [artifactCount, setArtifactCount] = useState(0);
   const [newArtifact, setNewArtifact] = useState(false);
-  const [searching, setSearching] = useState(false);
   // On a phone the rail slides over the page instead of sitting beside it,
   // and folds away again once a place in it is chosen.
   const [railOpen, setRailOpen] = useState(false);
@@ -319,6 +353,19 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
     origin: "Desk",
     onStarted: (thread) => void navigate(conversationPath(thread.id)),
   });
+  const startMarginConversation = useStartConversation({
+    origin: "Desk",
+    onStarted: (thread) => useDeskMarginStore.getState().showThread(thread.id),
+  });
+  const marginOpen = useDeskMarginStore((state) => state.margin !== null);
+  // A conversation opened full width is the margin's conversation: the margin
+  // folds rather than draw the same thread twice.
+  const marginThreadId = useDeskMarginStore((state) => state.margin?.threadId ?? null);
+  useEffect(() => {
+    if (activeThreadId !== null && marginThreadId === activeThreadId) {
+      useDeskMarginStore.getState().closeMargin();
+    }
+  }, [activeThreadId, marginThreadId]);
 
   // Every change to a conversation shows the moment it is asked for: reads
   // under way are stopped first so none of them writes the old state back,
@@ -540,9 +587,32 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
     [setPane],
   );
 
+  // ⌘J is Nova everywhere: in a conversation it puts the caret in its box;
+  // anywhere else it opens Nova's margin beside the page, on what the page is
+  // about, and folds it again.
+  const askNova = useCallback(() => {
+    if (activeThreadId !== null) {
+      document.querySelector<HTMLTextAreaElement>(".dk-mainc .dk-cmp textarea")?.focus();
+      return;
+    }
+    useDeskMarginStore.getState().toggleMargin();
+  }, [activeThreadId]);
+
+  useGoToChords(DESK_CHORDS);
+
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.defaultPrevented) {
+        return;
+      }
+      // Esc folds Nova's margin from anywhere outside a text box.
+      if (
+        event.key === "Escape" &&
+        !isTypingTarget(event.target) &&
+        useDeskMarginStore.getState().margin !== null
+      ) {
+        event.preventDefault();
+        useDeskMarginStore.getState().closeMargin();
         return;
       }
       // ? lists the Desk's keys from anywhere outside a text box.
@@ -561,33 +631,33 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
         return;
       }
       const key = event.key.toLowerCase();
-      if (key === "k") {
-        event.preventDefault();
-        setSearching((open) => !open);
-      } else if (key === "o" && event.shiftKey) {
+      if (key === "o" && event.shiftKey) {
         // Ctrl+N belongs to the browser, which opens a window and never hands
         // the key to the page.
         event.preventDefault();
         void navigate("/desk");
+      } else if (key === "\\" && useDeskMarginStore.getState().margin !== null) {
+        event.preventDefault();
+        useDeskMarginStore.getState().closeMargin();
       } else if (key === "\\" && activeThread !== null) {
-        event.preventDefault();
-        togglePane();
-      } else if (key === "b" && !event.shiftKey) {
-        event.preventDefault();
-        const { railFolded: folded, setRailFolded: fold } = useDeskSettingsStore.getState();
-        fold(!folded);
-      } else if (key === "j" && activeThread !== null) {
         event.preventDefault();
         const { pane: current, browsing, setBrowsing } = useDeskStore.getState();
         const next = commandJ({ open: current === "open", browsing });
         setBrowsing(next.browsing);
         setPane(next.open ? "open" : "closed");
+      } else if (key === "b" && !event.shiftKey) {
+        event.preventDefault();
+        const { railFolded: folded, setRailFolded: fold } = useDeskSettingsStore.getState();
+        fold(!folded);
+      } else if (key === "j") {
+        event.preventDefault();
+        askNova();
       }
     };
     window.addEventListener("keydown", onKeyDown);
 
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [activeThread, navigate, setPane, togglePane]);
+  }, [activeThread, askNova, navigate, setPane]);
 
   const value = useMemo<DeskContextValue>(
     () => ({
@@ -597,8 +667,9 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
       agentsById,
       agentsUnavailable: agentsQuery.isError,
       isLoading: threadsQuery.isLoading || agentsQuery.isLoading || unlistedQuery.isLoading,
-      isStarting: startConversation.isStarting,
+      isStarting: startConversation.isStarting || startMarginConversation.isStarting,
       start: startConversation.start,
+      startInMargin: startMarginConversation.start,
       remove: (thread) => deleteMutation.mutate(thread),
       deletingActive: activeDeleting,
       setPinned: (thread, pinned) => pinMutation.mutate({ thread, pinned }),
@@ -611,7 +682,7 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
       workspaceOpen,
       setWorkspaceOpen,
       setArtifactCount,
-      openSearch: () => setSearching(true),
+      openSearch: () => useCommandPaletteStore.getState().openOn("conversations"),
       openSettings: () => setSettingsOpen(true),
     }),
     [
@@ -631,6 +702,8 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
       setWorkspaceOpen,
       startConversation.isStarting,
       startConversation.start,
+      startMarginConversation.isStarting,
+      startMarginConversation.start,
       threads,
       threadsQuery.isLoading,
       unlistedQuery.isLoading,
@@ -644,8 +717,12 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
   return (
     <DeskContext.Provider value={value}>
       <div
-        className={cn("dsk", deskSettingsClasses(settings), railOpen && "dk-rail-open")}
-        data-searching={searching || undefined}
+        className={cn(
+          "dsk",
+          deskSettingsClasses(settings),
+          railOpen && "dk-rail-open",
+          marginOpen && "dk-w-mg-open",
+        )}
         data-settings={settingsOpen || undefined}
       >
         <DeskRailThreads
@@ -654,12 +731,13 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
           activeThreadId={activeThreadId}
           canWatch={canWatch}
           canDecide={canDecide}
-          watchtowerCount={watchtowerCounts?.active ?? 0}
+          canTriage={canTriage}
+          lensCounts={lensCounts}
           decisionsCount={attention?.agentDecisions ?? 0}
           decisionsWaitHere={pendingHere}
           onSearch={() => {
             setRailOpen(false);
-            setSearching(true);
+            useCommandPaletteStore.getState().openOn("conversations");
           }}
           onSettings={() => {
             setRailOpen(false);
@@ -689,6 +767,8 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
         <div className="dk-mainc">
           <DeskTopBar
             onOpenRail={() => setRailOpen(true)}
+            canWatch={canWatch}
+            needsYou={lensCounts.everything}
             onUnfoldRail={railFolded ? () => setRailFolded(false) : undefined}
             place={place}
             thread={activeThread}
@@ -719,10 +799,8 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
             <Outlet />
           </main>
           <KeyboardShortcutsDialog />
-          {/* Over the main column only, as designed: the sidebar stays in view. */}
-          {searching && (
-            <DeskSearchPalette agentsById={agentsById} onClose={() => setSearching(false)} />
-          )}
+          <CommandPaletteMount />
+
           {settingsOpen && (
             <DeskSettingsDialog
               agents={agents}
@@ -731,6 +809,7 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
             />
           )}
         </div>
+        <DeskMargin />
       </div>
     </DeskContext.Provider>
   );

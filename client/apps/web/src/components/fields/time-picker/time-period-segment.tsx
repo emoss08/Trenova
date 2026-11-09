@@ -43,7 +43,7 @@ export const TimePeriodSegment = React.forwardRef<
         if (event.key === "ArrowLeft") onLeftFocus?.();
       }}
       className={cn(
-        "focus:bg-surface-selected h-5 w-6 cursor-default rounded-xs bg-transparent p-0 text-center caret-transparent outline-none disabled:cursor-not-allowed",
+        "h-5 w-6 cursor-default rounded-xs bg-transparent p-0 text-center caret-transparent outline-none focus:bg-surface-selected disabled:cursor-not-allowed",
         className,
       )}
     />

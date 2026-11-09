@@ -9,6 +9,7 @@ import "./_styles/desk-v2.css";
 import "./_styles/desk-agent.css";
 import "./_styles/desk-case.css";
 import "./_styles/desk-case-checklists.css";
+import "./_styles/desk-room.css";
 
 export const prefetch: RoutePrefetch = () => [threadListQuery(), assistant.myAgents()];
 

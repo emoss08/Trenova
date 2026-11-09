@@ -31,7 +31,7 @@ type DecideCounterRequest struct {
 	Reason     string                        `json:"reason"`
 }
 
-func (r *DecideCounterRequest) Validate() *errortypes.MultiError {
+func (r *DecideCounterRequest) Validate() error {
 	multiErr := errortypes.NewMultiError()
 	if r.OfferID.IsNil() {
 		multiErr.Add("offerId", errortypes.ErrRequired, "Offer is required")
@@ -39,10 +39,7 @@ func (r *DecideCounterRequest) Validate() *errortypes.MultiError {
 	if utf8.RuneCountInString(r.Reason) > MaxDeclineReasonLength {
 		multiErr.Add("reason", errortypes.ErrInvalid, "Reason must be at most 500 characters")
 	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }
 
 func (r *DecideCounterRequest) actor() *permissionports.RequestActor {

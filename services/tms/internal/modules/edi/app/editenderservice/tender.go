@@ -321,8 +321,5 @@ func validateSubmitLoadTender(req *SubmitLoadTenderRequest) error {
 	if req.SourceShipmentID.IsNil() {
 		multiErr.Add("sourceShipmentId", errortypes.ErrRequired, "Source shipment ID is required")
 	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }

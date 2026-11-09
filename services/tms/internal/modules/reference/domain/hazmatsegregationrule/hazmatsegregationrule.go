@@ -14,8 +14,8 @@ import (
 )
 
 var (
-	_ domaintypes.PostgresSearchable     = (*HazmatSegregationRule)(nil)
-	_ validationframework.TenantedEntity = (*HazmatSegregationRule)(nil)
+	_ domaintypes.PostgresSearchable = (*HazmatSegregationRule)(nil)
+	_ validationframework.Entity     = (*HazmatSegregationRule)(nil)
 )
 
 type HazmatSegregationRule struct {

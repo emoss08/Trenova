@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*Preset)(nil)
+	_ validationframework.Entity = (*Preset)(nil)
 )
 
 // Preset is a home screen an administrator authors once and assigns to the

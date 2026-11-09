@@ -62,14 +62,6 @@ func IsDelayedEligibleShipmentStatus(status shipmentvocab.Status) bool {
 	return !slices.Contains(DelayedExcludedShipmentStatuses(), status)
 }
 
-func IsDelayedEligibleMoveStatus(status shipmentvocab.MoveStatus) bool {
-	return !slices.Contains(DelayedExcludedMoveStatuses(), status)
-}
-
-func IsDelayedEligibleStopStatus(status shipmentvocab.StopStatus) bool {
-	return !slices.Contains(DelayedExcludedStopStatuses(), status)
-}
-
 func IsStopOverdue(stop *shipment.Stop, currentTime int64, delayThresholdMinutes int16) bool {
 	if stop == nil || stop.IsCompleted() || stop.IsCanceled() || stop.ActualDeparture != nil {
 		return false

@@ -29,7 +29,7 @@ func TestDateValidationRuleReadsCalendarBoundsInUTC(t *testing.T) {
 			err := createDateValidationRule().Validate(
 				t.Context(),
 				entity,
-				&validationframework.TenantedValidationContext{
+				&validationframework.Context{
 					Mode:           validationframework.ModeCreate,
 					OrganizationID: entity.OrganizationID,
 					BusinessUnitID: entity.BusinessUnitID,
@@ -57,7 +57,7 @@ func TestDateValidationRuleRejectsNonCalendarBoundsInUTC(t *testing.T) {
 	err := createDateValidationRule().Validate(
 		t.Context(),
 		entity,
-		&validationframework.TenantedValidationContext{Mode: validationframework.ModeCreate},
+		&validationframework.Context{Mode: validationframework.ModeCreate},
 		multiErr,
 	)
 

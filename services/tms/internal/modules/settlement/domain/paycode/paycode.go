@@ -15,8 +15,8 @@ import (
 )
 
 var (
-	_ pagination.CursorEntity            = (*PayCode)(nil)
-	_ validationframework.TenantedEntity = (*PayCode)(nil)
+	_ pagination.CursorEntity    = (*PayCode)(nil)
+	_ validationframework.Entity = (*PayCode)(nil)
 
 	payCodePattern = regexp.MustCompile(`^[A-Z0-9][A-Z0-9_-]*$`)
 )

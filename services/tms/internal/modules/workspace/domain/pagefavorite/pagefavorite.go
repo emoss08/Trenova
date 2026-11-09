@@ -21,7 +21,7 @@ const (
 var pageURLPattern = regexp.MustCompile(`^/\S*$`)
 
 var (
-	_ validationframework.TenantedEntity = (*PageFavorite)(nil)
+	_ validationframework.Entity = (*PageFavorite)(nil)
 )
 
 type PageFavorite struct {

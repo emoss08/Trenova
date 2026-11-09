@@ -2,6 +2,7 @@ package agentmemoryservice
 
 import (
 	"context"
+	"slices"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentmemoryrank"
@@ -17,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -33,7 +35,32 @@ type fakeMemoryRepo struct {
 	listed  *agentmemoryports.ListActiveAgentMemoriesRequest
 	sought  *agentmemoryports.FindActiveAgentMemoryRequest
 
+	neighbors    []*agentmemory.Memory
+	neighborAsks []*agentmemoryports.ListAgentMemoryNeighborsRequest
+
 	activeCount int
+}
+
+func (f *fakeMemoryRepo) GetByID(
+	_ context.Context,
+	req agentmemoryports.GetAgentMemoryByIDRequest,
+) (*agentmemory.Memory, error) {
+	for _, memory := range slices.Concat(f.neighbors, f.created, f.active) {
+		if memory.ID == req.ID {
+			return memory, nil
+		}
+	}
+
+	return nil, errortypes.NewNotFoundError("Agent memory not found")
+}
+
+func (f *fakeMemoryRepo) ListNeighbors(
+	_ context.Context,
+	req *agentmemoryports.ListAgentMemoryNeighborsRequest,
+) ([]*agentmemory.Memory, error) {
+	f.neighborAsks = append(f.neighborAsks, req)
+
+	return f.neighbors, nil
 }
 
 func (f *fakeMemoryRepo) CountActive(
@@ -88,6 +115,10 @@ func (f *fakeRuns) GetByID(
 	context.Context,
 	agentruntimeports.GetAgentRunByIDRequest,
 ) (*agent.AgentRun, error) {
+	if f.run == nil {
+		return nil, errortypes.NewNotFoundError("Agent run not found")
+	}
+
 	return f.run, nil
 }
 
@@ -121,8 +152,32 @@ func (quietIndexer) MarkStale(
 }
 
 // wired gives a test's service the dependencies its test does not care about.
+type fakeJudge struct {
+	verdicts map[pulid.ID]agentmemoryports.MemoryVerdict
+	err      error
+	asked    []*agentmemoryports.JudgeMemoryRequest
+}
+
+func (f *fakeJudge) Judge(
+	_ context.Context,
+	req *agentmemoryports.JudgeMemoryRequest,
+) (*agentmemoryports.MemoryJudgement, error) {
+	f.asked = append(f.asked, req)
+	if f.err != nil {
+		return nil, f.err
+	}
+
+	return &agentmemoryports.MemoryJudgement{Verdicts: f.verdicts}, nil
+}
+
 func wired(svc *Service) *Service {
 	svc.ranker = agentmemoryrank.NewRecencyRanker()
+	if svc.vectors == nil {
+		svc.vectors = &fakeVectors{}
+	}
+	if svc.judge == nil {
+		svc.judge = &fakeJudge{}
+	}
 	if svc.indexer == nil {
 		svc.indexer = quietIndexer{}
 	}
@@ -532,24 +587,33 @@ func proposal(tool string, params map[string]any) *agent.AgentProposal {
 	}
 }
 
-// A person changing what the agent proposed is the correction; the reason,
-// when they typed one, is kept with it. A default code the client filled in
-// is not a reason and is left out.
-func TestRecordCorrection_KeepsWhatAPersonChanged(t *testing.T) {
+// A person changing what the agent proposed teaches something only with the
+// reason they typed: "a person changed workerId from wrk_a to wrk_b" alone was
+// one decision's values, new text every time, riding every turn that loaded the
+// tool. Without a reason the change is left to the look back, which sees why.
+func TestRecordCorrection_KeepsAChangeOnlyWithTheReasonAPersonTyped(t *testing.T) {
 	t.Parallel()
 
 	repo := &fakeMemoryRepo{}
 	svc := newService(repo, &fakeRuns{}, &fakeLabeler{})
+	svc.permissions = &fakePermissions{manages: true}
 	p := proposal("dispatch_assign_move", map[string]any{"workerId": "wrk_a", "trailerId": "trl_1"})
+	modifications := map[string]any{"workerId": "wrk_b", "trailerId": "trl_1", "note": "call first"}
+
+	silent, err := svc.RecordCorrection(t.Context(), p, &agentdecision.AgentDecision{
+		Decision:        agentdecision.DecisionModified,
+		Modifications:   modifications,
+		ReasonCode:      "approved_from_activity",
+		DecidedByUserID: pulid.MustNew("usr_"),
+	})
+	require.NoError(t, err)
+	assert.Nil(t, silent, "a code the client filled in is not a reason")
+	assert.Empty(t, repo.created)
 
 	memory, err := svc.RecordCorrection(t.Context(), p, &agentdecision.AgentDecision{
-		Decision: agentdecision.DecisionModified,
-		Modifications: map[string]any{
-			"workerId":  "wrk_b",
-			"trailerId": "trl_1",
-			"note":      "call first",
-		},
-		ReasonCode:      "approved_from_activity",
+		Decision:        agentdecision.DecisionModified,
+		Modifications:   modifications,
+		ReasonCode:      "wrk_a is out this week",
 		DecidedByUserID: pulid.MustNew("usr_"),
 	})
 	require.NoError(t, err)
@@ -557,13 +621,49 @@ func TestRecordCorrection_KeepsWhatAPersonChanged(t *testing.T) {
 
 	assert.Equal(t, agentmemory.MemoryKindCorrection, memory.Kind)
 	assert.Equal(t, agentmemory.MemorySourceDecision, memory.Source)
+	assert.Equal(t, agentmemory.MemoryStatusActive, memory.Status)
 	assert.Equal(t, "dispatch_assign_move", memory.ToolName)
 	assert.Equal(
 		t,
-		"When dispatch_assign_move was proposed, a person changed note to call first and workerId from wrk_a to wrk_b.",
+		"When dispatch_assign_move was proposed, a person changed note to call first and "+
+			"workerId from wrk_a to wrk_b. Reason: wrk_a is out this week",
 		memory.Content,
 	)
 	assert.Equal(t, p.ID, *memory.SourceProposalID)
+	assert.True(t, memory.ApprovedByPerson())
+}
+
+// A correction to a write on a customer, a location, a driver or a carrier is
+// about that record, so it rides when the record comes up. One on a shipment
+// stays with the tool: the reason is seldom about that shipment's customer.
+func TestRecordCorrection_IsAboutTheRecordWhenTheTargetIsOne(t *testing.T) {
+	t.Parallel()
+
+	labeler := &fakeLabeler{label: "Acme Foods"}
+	svc := newService(&fakeMemoryRepo{}, &fakeRuns{}, labeler)
+	svc.permissions = &fakePermissions{manages: true}
+	rejected := &agentdecision.AgentDecision{
+		Decision:        agentdecision.DecisionRejected,
+		ReasonCode:      "They are on credit hold",
+		DecidedByUserID: pulid.MustNew("usr_"),
+	}
+
+	customer := proposal("customer_update", map[string]any{})
+	customer.TargetID = pulid.MustNew("cus_")
+	memory, err := svc.RecordCorrection(t.Context(), customer, rejected)
+	require.NoError(t, err)
+	require.NotNil(t, memory)
+	assert.Equal(t, agentmemory.MemorySubjectCustomer, memory.SubjectType)
+	assert.Equal(t, customer.TargetID, *memory.SubjectID)
+	assert.Equal(t, "Acme Foods", memory.SubjectLabel)
+
+	shipment := proposal("shipment_cancel", map[string]any{})
+	shipment.TargetID = pulid.MustNew("shp_")
+	onShipment, err := svc.RecordCorrection(t.Context(), shipment, rejected)
+	require.NoError(t, err)
+	require.NotNil(t, onShipment)
+	assert.Empty(t, onShipment.SubjectType)
+	assert.Nil(t, onShipment.SubjectID)
 }
 
 func TestRecordCorrection_KeepsARejectionOnlyWithAReason(t *testing.T) {
@@ -634,7 +734,7 @@ func TestRecordCorrection_IsOfferedUnlessThePersonManagesSharedMemory(t *testing
 		manages bool
 		status  agentmemory.MemoryStatus
 	}{
-		"a manager keeps it":        {manages: true, status: agentmemory.MemoryStatusActive},
+		"a manager keeps it":         {manages: true, status: agentmemory.MemoryStatusActive},
 		"anyone else only offers it": {manages: false, status: agentmemory.MemoryStatusSuggested},
 	} {
 		t.Run(name, func(t *testing.T) {
@@ -672,6 +772,7 @@ func TestRecordCorrection_KeepsTheTaintOfTheProposal(t *testing.T) {
 	memory, err := svc.RecordCorrection(t.Context(), p, &agentdecision.AgentDecision{
 		Decision:        agentdecision.DecisionModified,
 		Modifications:   map[string]any{"workerId": "wrk_b"},
+		ReasonCode:      "Use the driver with the hazmat endorsement",
 		DecidedByUserID: pulid.MustNew("usr_"),
 	})
 

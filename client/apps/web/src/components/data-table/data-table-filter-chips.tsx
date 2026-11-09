@@ -61,13 +61,13 @@ function FilterChip({ label, onRemove }: { label: React.ReactNode; onRemove: () 
   const t = useT();
 
   return (
-    <span className="border-border bg-muted/50 flex h-6 items-center gap-1 rounded-md border pr-1 pl-2 text-xs">
+    <span className="flex h-6 items-center gap-1 rounded-md border border-border bg-muted/50 pr-1 pl-2 text-xs">
       {label}
       <Button
         type="button"
         variant="ghost"
         size="icon-xs"
-        className="text-muted-foreground hover:text-foreground size-4 rounded-sm"
+        className="size-4 rounded-sm text-muted-foreground hover:text-foreground"
         onClick={onRemove}
         aria-label={t("Remove filter")}
       >
@@ -102,12 +102,12 @@ export default function DataTableFilterChips({
   };
 
   return (
-    <div className="bleed:border-border bleed:border-b bleed:px-3 bleed:py-1.5 flex flex-wrap items-center gap-1.5">
+    <div className="flex flex-wrap items-center gap-1.5 bleed:border-b bleed:border-border bleed:px-3 bleed:py-1.5">
       {hasQuery && (
         <FilterChip
           label={
             <span className="flex items-center gap-1">
-              <SearchLgIcon className="text-muted-foreground size-3" />
+              <SearchLgIcon className="size-3 text-muted-foreground" />
               <span className="max-w-40 truncate font-medium">{query}</span>
             </span>
           }
@@ -166,7 +166,7 @@ export default function DataTableFilterChips({
           type="button"
           variant="ghost"
           size="xs"
-          className="text-muted-foreground hover:text-foreground h-6 px-2 text-xs"
+          className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
           onClick={clearAll}
         >
           {t("Clear all")}

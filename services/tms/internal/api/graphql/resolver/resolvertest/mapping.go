@@ -13,7 +13,7 @@ func RequireRequiredPatchError(t *testing.T, err error, field string) {
 
 	var valErr *errortypes.Error
 	require.ErrorAs(t, err, &valErr)
-	assert.Equal(t, field, valErr.Field)
+	assert.Equal(t, field, valErr.Field())
 	assert.Equal(t, errortypes.ErrRequired, valErr.Code)
 	assert.Contains(t, valErr.Message, "cannot be cleared")
 }

@@ -141,10 +141,7 @@ func validateBacktestRequest(req *BacktestRequest) error {
 		multiErr.Add("limit", errortypes.ErrInvalid, "Limit cannot exceed 500")
 	}
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }
 
 func (s *Service) backtestCandidate(

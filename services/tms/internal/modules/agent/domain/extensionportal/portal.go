@@ -208,10 +208,6 @@ func (m PortalRunMode) IsValid() bool {
 	return m == PortalRunModeRead || m == PortalRunModeAct
 }
 
-func AllPortalRunModes() []PortalRunMode {
-	return []PortalRunMode{PortalRunModeRead, PortalRunModeAct}
-}
-
 type PortalRunStatus string
 
 const (
@@ -244,6 +240,10 @@ func (s PortalRunStatus) String() string { return string(s) }
 
 func (s PortalRunStatus) IsValid() bool {
 	return slices.Contains(AllPortalRunStatuses(), s)
+}
+
+func AllPortalRunModes() []PortalRunMode {
+	return []PortalRunMode{PortalRunModeRead, PortalRunModeAct}
 }
 
 func (s PortalRunStatus) Finished() bool {

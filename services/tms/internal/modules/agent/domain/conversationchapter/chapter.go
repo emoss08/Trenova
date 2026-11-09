@@ -24,7 +24,7 @@ const (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*Chapter)(nil)
+	_ validationframework.Entity = (*Chapter)(nil)
 
 	chapterMarkup = regexp.MustCompile("[*_`#>\\[\\]]+")
 	chapterSpaces = regexp.MustCompile(`\s+`)

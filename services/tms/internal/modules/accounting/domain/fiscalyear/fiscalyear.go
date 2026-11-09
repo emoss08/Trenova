@@ -16,8 +16,8 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*FiscalYear)(nil)
-	_ domaintypes.PostgresSearchable     = (*FiscalYear)(nil)
+	_ validationframework.Entity     = (*FiscalYear)(nil)
+	_ domaintypes.PostgresSearchable = (*FiscalYear)(nil)
 )
 
 // Accounting years and their close state

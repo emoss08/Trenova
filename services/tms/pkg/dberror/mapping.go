@@ -33,14 +33,6 @@ func IsVersionConflict(err error) bool {
 	return errors.Is(err, keel.ErrConflict)
 }
 
-func HandleVersionConflict(err error, entityName, entityID string) error {
-	if IsVersionConflict(err) {
-		return CreateVersionMismatchError(entityName, entityID)
-	}
-
-	return err
-}
-
 func ConstraintViolation(entity string, ce *keel.ConstraintError) error {
 	field := ""
 	if len(ce.Fields) > 0 {

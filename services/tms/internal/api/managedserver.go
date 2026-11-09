@@ -206,9 +206,9 @@ func (h *managedHandler) setState(w http.ResponseWriter, r *http.Request) {
 		state.WindowStart, state.WindowEnd = in.Window.Start.Unix(), in.Window.End.Unix()
 	}
 	err = h.usage.SetState(r.Context(), state)
-	var invalid *errortypes.MultiError
+	invalid, isInvalid := errortypes.RefusalOf(err)
 	switch {
-	case errors.As(err, &invalid):
+	case isInvalid:
 		h.problem(w, http.StatusBadRequest, invalid.Error())
 		return
 	case err != nil:
@@ -238,9 +238,9 @@ func (h *managedHandler) installInvite(w http.ResponseWriter, r *http.Request) {
 		TokenSHA256: in.TokenSHA256,
 		ExpiresAt:   in.ExpiresAt.Unix(),
 	})
-	var invalid *errortypes.MultiError
+	invalid, isInvalid := errortypes.RefusalOf(err)
 	switch {
-	case errors.As(err, &invalid):
+	case isInvalid:
 		h.problem(w, http.StatusBadRequest, invalid.Error())
 		return
 	case errors.Is(err, instancebootstrapports.ErrNotBootstrapped):

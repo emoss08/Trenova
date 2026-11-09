@@ -138,6 +138,8 @@ func (r *repository) raise(ctx context.Context, db *keel.DB, item *watchtower.It
 		it.OccurredAt,
 		it.RecordKind,
 		it.RecordLabel,
+		it.AboutKind,
+		it.AboutID,
 		it.Facts,
 		it.Impact,
 		it.Trail,
@@ -211,6 +213,8 @@ func applyUpsert(existing, incoming *watchtower.Item, plan upsertPlan) *watchtow
 	merged.OccurredAt = incoming.OccurredAt
 	merged.RecordKind = incoming.RecordKind
 	merged.RecordLabel = incoming.RecordLabel
+	merged.AboutKind = incoming.AboutKind
+	merged.AboutID = incoming.AboutID
 	merged.Facts = incoming.Facts
 	merged.Impact = incoming.Impact
 	merged.Trail = incoming.Trail
@@ -661,6 +665,7 @@ func listQuery(req *watchtowerports.ListWatchtowerItemsQuery) keel.Query[*watcht
 		assignee,
 		overdue,
 		keel.When(req.SubjectID.IsNotNil(), it.SubjectID.Eq(req.SubjectID)),
+		keel.When(len(req.AboutIDs) > 0, it.AboutID.In(req.AboutIDs...)),
 		before,
 	)
 	if req.OrderByDue {
@@ -687,6 +692,7 @@ type countTotals struct {
 	Unassigned     int64
 	Mine           int64
 	MineOverdue    int64
+	WithAgents     int64
 }
 
 func openItems(req *watchtowerports.CountWatchtowerItemsRequest) keel.Query[*watchtower.Item] {
@@ -725,6 +731,10 @@ func countTotalsQuery(
 		keel.Count().Filter(it.AssigneeID.IsNull()),
 		keel.Count().Filter(mine),
 		keel.Count().Filter(keel.And(mine, active, overdue)),
+		keel.Count().Filter(keel.And(
+			it.AgentRunID.IsNotNull(),
+			it.Status.Eq(watchtower.StatusInProgress),
+		)),
 	)
 }
 
@@ -771,6 +781,7 @@ func (r *repository) Counts(
 				Unassigned:     int(totals.Unassigned),
 				Mine:           int(totals.Mine),
 				MineOverdue:    int(totals.MineOverdue),
+				WithAgents:     int(totals.WithAgents),
 				ByKind:         byKind,
 			}, nil
 		},

@@ -26,7 +26,7 @@ func PlanException(
 	me := errortypes.NewMultiError()
 	entity.Validate(me)
 	if me.HasErrors() {
-		return entity, me
+		return entity, me.Err()
 	}
 
 	return entity, nil

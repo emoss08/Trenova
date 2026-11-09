@@ -3,7 +3,6 @@ package auditservice
 import (
 	"fmt"
 	"maps"
-	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
@@ -46,56 +45,12 @@ func WithDiff(before, after any) auditports.LogOption {
 	}
 }
 
-func WithCompactDiff(before, after any) auditports.LogOption {
-	return func(entry *audit.Entry) error {
-		results, err := jsonutils.JSONDiff(before, after, jsonutils.DefaultOptions())
-		if err != nil {
-			return err
-		}
-
-		changes := make(map[string]any)
-		for key, change := range results {
-			changes[key] = map[string]any{
-				changeFrom:  change.From,
-				changeTo:    change.To,
-				"type":      change.Type,
-				"fieldType": change.FieldType,
-				"path":      change.Path,
-			}
-		}
-
-		entry.Changes = changes
-		return nil
-	}
-}
-
 func WithMetadata(metadata map[string]any) auditports.LogOption {
 	return func(entry *audit.Entry) error {
 		if entry.Metadata == nil {
 			entry.Metadata = make(map[string]any)
 		}
 		maps.Copy(entry.Metadata, metadata)
-		return nil
-	}
-}
-
-func WithUserAgent(userAgent string) auditports.LogOption {
-	return func(entry *audit.Entry) error {
-		entry.UserAgent = userAgent
-		return nil
-	}
-}
-
-func WithCorrelationID() auditports.LogOption {
-	return func(entry *audit.Entry) error {
-		entry.CorrelationID = pulid.MustNew("corr_").String()
-		return nil
-	}
-}
-
-func WithCustomCorrelationID(id string) auditports.LogOption {
-	return func(entry *audit.Entry) error {
-		entry.CorrelationID = id
 		return nil
 	}
 }
@@ -142,54 +97,12 @@ func WithCritical() auditports.LogOption {
 	}
 }
 
-func WithIP(ip string) auditports.LogOption {
-	return func(entry *audit.Entry) error {
-		entry.IPAddress = ip
-		return nil
-	}
+type BulkLogEntity interface {
+	validationframework.Entity
+	validationframework.TenantOwned
 }
 
-func WithLocation(location string) auditports.LogOption {
-	return func(entry *audit.Entry) error {
-		if entry.Metadata == nil {
-			entry.Metadata = make(map[string]any)
-		}
-		entry.Metadata["location"] = location
-		return nil
-	}
-}
-
-func WithSessionID(sessionID string) auditports.LogOption {
-	return func(entry *audit.Entry) error {
-		if entry.Metadata == nil {
-			entry.Metadata = make(map[string]any)
-		}
-		entry.Metadata["sessionId"] = sessionID
-		return nil
-	}
-}
-
-func WithTags(tags ...string) auditports.LogOption {
-	return func(entry *audit.Entry) error {
-		if entry.Metadata == nil {
-			entry.Metadata = make(map[string]any)
-		}
-		entry.Metadata["tags"] = strings.Join(tags, ",")
-		return nil
-	}
-}
-
-func NewBulkLogEntry(
-	params *auditports.LogActionParams,
-	opts ...auditports.LogOption,
-) auditports.BulkLogEntry {
-	return auditports.BulkLogEntry{
-		Params:  params,
-		Options: opts,
-	}
-}
-
-type BulkLogEntriesParams[T validationframework.TenantedEntity] struct {
+type BulkLogEntriesParams[T BulkLogEntity] struct {
 	Resource  permission.Resource
 	Operation permission.Operation
 	UserID    pulid.ID
@@ -198,7 +111,7 @@ type BulkLogEntriesParams[T validationframework.TenantedEntity] struct {
 	Opts      []auditports.LogOption
 }
 
-func BuildBulkLogEntries[T validationframework.TenantedEntity](
+func BuildBulkLogEntries[T BulkLogEntity](
 	params *BulkLogEntriesParams[T],
 	opts ...auditports.LogOption,
 ) []auditports.BulkLogEntry {

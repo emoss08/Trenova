@@ -68,6 +68,7 @@ func DescribeTelematicsStopVisit(
 		Summary:     event.StopOutcomeReason,
 		SubjectType: agent.SubjectShipmentMove,
 		SubjectID:   event.ShipmentMoveID,
+		About:       review.ShipmentID,
 		Path:        path,
 		Facts: []watchtower.Fact{
 			watchtoweritem.Fact("Place", event.AddressName),
@@ -109,6 +110,7 @@ func DescribeNoCheckCall(
 		Summary:     summary,
 		SubjectType: agent.SubjectShipmentMove,
 		SubjectID:   move.MoveID,
+		About:       move.ShipmentID,
 		Path:        shipmentPath(move.ShipmentID),
 		Record:      watchtoweritem.ShipmentRecord(move.ProNumber),
 		Facts: []watchtower.Fact{

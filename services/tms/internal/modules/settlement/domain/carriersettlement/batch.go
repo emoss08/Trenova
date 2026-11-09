@@ -16,8 +16,8 @@ import (
 )
 
 var (
-	_ pagination.CursorEntity            = (*CarrierSettlementBatch)(nil)
-	_ validationframework.TenantedEntity = (*CarrierSettlementBatch)(nil)
+	_ pagination.CursorEntity    = (*CarrierSettlementBatch)(nil)
+	_ validationframework.Entity = (*CarrierSettlementBatch)(nil)
 )
 
 type CarrierSettlementBatch struct {

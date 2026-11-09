@@ -1,7 +1,5 @@
 package tablechangealert
 
-import "errors"
-
 type SubscriptionStatus string
 
 const (
@@ -11,17 +9,6 @@ const (
 
 func (s SubscriptionStatus) String() string {
 	return string(s)
-}
-
-func SubscriptionStatusFromString(v string) (SubscriptionStatus, error) {
-	switch v {
-	case "Active":
-		return SubscriptionStatusActive, nil
-	case "Paused":
-		return SubscriptionStatusPaused, nil
-	default:
-		return "", errors.New("invalid subscription status")
-	}
 }
 
 type EventType string

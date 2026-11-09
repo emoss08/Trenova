@@ -19,7 +19,6 @@ import (
 )
 
 var (
-	ErrInvalidCredentialCategory     = errors.New("invalid credential category")
 	ErrInvalidCredentialProfileField = errors.New("invalid credential profile field")
 )
 
@@ -46,14 +45,6 @@ func (c CredentialCategory) IsValid() bool {
 	default:
 		return false
 	}
-}
-
-func CredentialCategoryFromString(s string) (CredentialCategory, error) {
-	category := CredentialCategory(s)
-	if !category.IsValid() {
-		return "", ErrInvalidCredentialCategory
-	}
-	return category, nil
 }
 
 // CredentialProfileField names the worker_profiles column a system credential
@@ -175,9 +166,9 @@ const (
 )
 
 var (
-	_ domaintypes.PostgresSearchable     = (*WorkerCredentialType)(nil)
-	_ pagination.CursorEntity            = (*WorkerCredentialType)(nil)
-	_ validationframework.TenantedEntity = (*WorkerCredentialType)(nil)
+	_ domaintypes.PostgresSearchable = (*WorkerCredentialType)(nil)
+	_ pagination.CursorEntity        = (*WorkerCredentialType)(nil)
+	_ validationframework.Entity     = (*WorkerCredentialType)(nil)
 )
 
 // The catalog of credentials a carrier tracks

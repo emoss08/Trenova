@@ -47,14 +47,14 @@ func (c Category) IsValid() bool {
 
 type Availability string
 
+func AllAvailabilities() []Availability {
+	return []Availability{AvailabilityAllAgents, AvailabilitySelectedAgents}
+}
+
 const (
 	AvailabilityAllAgents      = Availability("AllAgents")
 	AvailabilitySelectedAgents = Availability("SelectedAgents")
 )
-
-func AllAvailabilities() []Availability {
-	return []Availability{AvailabilityAllAgents, AvailabilitySelectedAgents}
-}
 
 func (a Availability) String() string { return string(a) }
 

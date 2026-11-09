@@ -66,7 +66,7 @@ export function CollectionsTable({
                 <div className="flex min-w-0 flex-col">
                   <button
                     type="button"
-                    className="ui-focus-ring truncate rounded-control text-left font-medium"
+                    className="rounded-control truncate ui-focus-ring text-left font-medium"
                     onClick={(event) => {
                       event.stopPropagation();
                       onSelect(row.customerId);
@@ -74,7 +74,7 @@ export function CollectionsTable({
                   >
                     {row.customerName}
                   </button>
-                  <span className="text-muted-foreground text-xs">
+                  <span className="text-xs text-muted-foreground">
                     {row.customerCode}
                     {row.disputedInvoiceCount > 0
                       ? ` · ${t("{0, plural, one {# disputed} other {# disputed}}", row.disputedInvoiceCount)}`
@@ -89,7 +89,7 @@ export function CollectionsTable({
             <TableCell className="text-right tabular-nums">
               <div className="flex flex-col items-end">
                 <span>{formatMinor(row.overdueMinor, row.currencyCode)}</span>
-                <span className="text-muted-foreground text-xs">
+                <span className="text-xs text-muted-foreground">
                   {t("{0} open", formatMinor(row.totalOpenMinor, row.currencyCode))}
                 </span>
               </div>
@@ -103,7 +103,7 @@ export function CollectionsTable({
                   <Badge variant={PROMISE_STATUS_TONE[row.promise.status]}>
                     {PROMISE_STATUS_LABEL[row.promise.status]}
                   </Badge>
-                  <span className="text-muted-foreground text-xs tabular-nums">
+                  <span className="text-xs text-muted-foreground tabular-nums">
                     {t(
                       "{0} by {1}",
                       formatMinor(row.promise.amountMinor, row.promise.currencyCode),
@@ -144,7 +144,7 @@ export function CollectionsTable({
                     )}
                   </span>
                   {row.lastActivitySummary ? (
-                    <span className="text-muted-foreground truncate text-xs">
+                    <span className="truncate text-xs text-muted-foreground">
                       {row.lastActivitySummary}
                     </span>
                   ) : null}

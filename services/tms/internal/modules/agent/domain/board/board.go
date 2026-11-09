@@ -33,6 +33,11 @@ const (
 	MaxCheckDetailRunes = 160
 	MaxLabelRunes       = 40
 	MaxColumnRunes      = 120
+	MaxWorkRecords      = 12
+	MaxActions          = 3
+	MaxActionLabelRunes = 40
+	MaxActionAskRunes   = 400
+	MaxActionRecords    = 25
 )
 
 type BlockType string
@@ -48,12 +53,14 @@ const (
 	BlockMeter    = BlockType("meter")
 	BlockProse    = BlockType("prose")
 	BlockNote     = BlockType("note")
+	BlockWork     = BlockType("work")
+	BlockActions  = BlockType("actions")
 )
 
 func AllBlockTypes() []BlockType {
 	return []BlockType{
 		BlockFigures, BlockRecords, BlockCompare, BlockTable, BlockChart, BlockTimeline,
-		BlockChecks, BlockMeter, BlockProse, BlockNote,
+		BlockChecks, BlockMeter, BlockProse, BlockNote, BlockWork, BlockActions,
 	}
 }
 
@@ -62,7 +69,7 @@ func (t BlockType) IsValid() bool {
 }
 
 func (t BlockType) Words() bool {
-	return t == BlockProse || t == BlockNote
+	return t == BlockProse || t == BlockNote || t == BlockActions
 }
 
 type Tone string
@@ -155,6 +162,12 @@ type Check struct {
 	Metric  string     `json:"metric,omitempty"`
 }
 
+type Action struct {
+	Label   string     `json:"label"`
+	Ask     string     `json:"ask"`
+	Records *RecordSet `json:"records,omitempty"`
+}
+
 type Block struct {
 	Type     BlockType      `json:"type"`
 	Title    string         `json:"title,omitempty"`
@@ -174,6 +187,7 @@ type Block struct {
 	Metric   string         `json:"metric,omitempty"`
 	Text     string         `json:"text,omitempty"`
 	Tone     Tone           `json:"tone,omitempty"`
+	Actions  []Action       `json:"actions,omitempty"`
 }
 
 type Board struct {
@@ -217,9 +231,29 @@ func (b *Board) Records() map[permission.Resource][]pulid.ID {
 		for check := range block.Checks {
 			add(block.Checks[check].Records)
 		}
+		for action := range block.Actions {
+			add(block.Actions[action].Records)
+		}
 	}
 
 	return refs
+}
+
+func (b *Board) WorkRecords() []pulid.ID {
+	ids := make([]pulid.ID, 0, MaxWorkRecords)
+	for idx := range b.Blocks {
+		block := &b.Blocks[idx]
+		if block.Type != BlockWork || block.Records.Empty() {
+			continue
+		}
+		for _, id := range block.Records.IDs {
+			if !slices.Contains(ids, id) {
+				ids = append(ids, id)
+			}
+		}
+	}
+
+	return ids
 }
 
 func (b *Board) Artifacts() []pulid.ID {

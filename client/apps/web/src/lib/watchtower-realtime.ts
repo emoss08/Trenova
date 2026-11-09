@@ -1,5 +1,6 @@
 import { fetchWatchtowerItem, type WatchtowerItem } from "@/lib/graphql/watchtower";
 import { attention } from "@/lib/queries/attention";
+import { deskAttention } from "@/lib/queries/desk-attention";
 import { watchtower } from "@/lib/queries/watchtower";
 import {
   cachedQueueItem,
@@ -29,7 +30,11 @@ const COALESCE_MS = 250;
 const BURST_LIMIT = 8;
 
 const QUEUE_ROOT: QueryKeyRoot = watchtower.queue.queryKey;
-const SUMMARY_ROOTS: readonly QueryKeyRoot[] = [watchtower.counts().queryKey, attention._def];
+const SUMMARY_ROOTS: readonly QueryKeyRoot[] = [
+  watchtower.counts().queryKey,
+  attention._def,
+  deskAttention._def,
+];
 
 export function isWatchtowerEvent(event: ResourceInvalidationEvent): boolean {
   return event.resource === WATCHTOWER_RESOURCE;

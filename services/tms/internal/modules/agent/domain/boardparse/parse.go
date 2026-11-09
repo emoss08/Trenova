@@ -30,6 +30,8 @@ var blockFields = map[board.BlockType][]string{
 	board.BlockMeter:    {fieldChecksBlock, "metric"},
 	board.BlockProse:    {"text"},
 	board.BlockNote:     {"tone", "text", fieldRecords},
+	board.BlockWork:     {fieldRecords},
+	board.BlockActions:  {"actions"},
 }
 
 var commonFields = []string{"type", "title", "half"}
@@ -195,9 +197,45 @@ func (p *parser) block(fields map[string]any, at int) board.Block {
 		block.Text = p.words(fields, "text", path+".text", board.MaxProseRunes, true)
 	case board.BlockNote:
 		p.note(fields, path, &block)
+	case board.BlockWork:
+		block.Records = p.records(fields[fieldRecords], path+".records", 1, board.MaxWorkRecords)
+	case board.BlockActions:
+		block.Actions = p.actions(fields["actions"], path)
 	}
 
 	return block
+}
+
+func (p *parser) actions(raw any, path string) []board.Action {
+	entries, isList := raw.([]any)
+	if !isList || len(entries) == 0 || len(entries) > board.MaxActions {
+		p.addf("%s.actions needs 1 to %d actions", path, board.MaxActions)
+		return nil
+	}
+	actions := make([]board.Action, 0, len(entries))
+	for idx, entry := range entries {
+		fields, isObject := entry.(map[string]any)
+		at := fmt.Sprintf("%s.actions[%d]", path, idx+1)
+		if !isObject {
+			p.addf("%s is not an object", at)
+			continue
+		}
+		for key := range fields {
+			if key != "label" && key != "ask" && key != fieldRecords {
+				p.addf("%s takes a label, the words it asks and its records, not %q", at, key)
+			}
+		}
+		action := board.Action{
+			Label: p.words(fields, "label", at+".label", board.MaxActionLabelRunes, true),
+			Ask:   p.words(fields, "ask", at+".ask", board.MaxActionAskRunes, true),
+		}
+		if _, named := fields[fieldRecords]; named {
+			action.Records = p.records(fields[fieldRecords], at+".records", 1, board.MaxActionRecords)
+		}
+		actions = append(actions, action)
+	}
+
+	return actions
 }
 
 func (p *parser) timeline(fields map[string]any, path string, block *board.Block) {

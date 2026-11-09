@@ -43,12 +43,22 @@ and announce what happened. The reference is
 
 ## Validation
 
-- Each entity has a validator built with `tenantedvalidation.NewBuilder[T]()`
-  (`commodityservice/validator.go`): uniqueness and reference checks, then the entity's own
-  `Validate`. Hold it as `tenantedvalidation.EntityValidator[T]`, never the concrete
+- Each entity has a validator built once with `tenantedvalidation.NewBuilder[T]()`
+  (`commodityservice/validator.go`). A run goes: the entity's own `Validate` and the built-in
+  checks, then custom rules by stage (`StageBasic`, `StageDataIntegrity`, `StageBusinessRules`,
+  `StageCompliance`) in the order they were added, with every uniqueness and reference check
+  batched into one round trip at the start of `StageDataIntegrity`
+  ([data-access.md](data-access.md#validators)). Hold it as
+  `tenantedvalidation.EntityValidator[T]` (returns `error`) or `EntityReporter[T]` (returns the
+  report, for a caller that adds its own checks or reads advisories), never the concrete
   generic type ([go.md](go.md#generics-and-build-time)).
-- Validation returns `*errortypes.MultiError` with field paths (`user.address.street`,
-  `items[0].name`) so the client puts each message on its field.
+- A rule that needs a read others need too (shipment control, the original record) loads it
+  through `validationframework.Remember` with a `MemoKey`, once per run; `ValidateUpdateWithOriginal`
+  hands rules the original through `validationframework.OriginalOf`.
+- A rule reports refusals on the `MultiError` and returns any other failure as its error: the
+  run stops and the caller gets a 500. Never turn a failed query into a field error.
+- Field errors carry structured paths (`["items", 0, "name"]`, `pkg/fieldpath`) so the client
+  puts each message on its field; `Err()` is the only way out of a report.
 - Validate everything that crosses a trust boundary: request input, webhook payloads, files, model
   output an agent produced. Model output is input.
 

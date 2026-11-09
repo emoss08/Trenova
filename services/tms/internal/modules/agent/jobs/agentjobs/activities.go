@@ -375,6 +375,7 @@ func (a *Activities) FinishRunActivity(
 	// written earlier, a retry would write the run's account twice.
 	a.recordTrajectory(ctx, input.Payload, input.Events)
 	emitRunRoot(ctx, input, run, settled)
+	a.runtime.RecordMemoryUse(ctx, input.Payload.TenantInfo(), outcome)
 
 	return settled, nil
 }

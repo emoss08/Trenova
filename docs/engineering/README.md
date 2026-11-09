@@ -73,6 +73,7 @@ in [backend/](backend/README.md). Frontend rules are in the `trenova-frontend` s
 | [agent-waits](agent-waits.md) | `agent_create_wait`, the wait kinds, record changes and report runs heard off the realtime stream |
 | [agent-delegation](agent-delegation.md) | `delegate_task` and the per-agent allowlist |
 | [desk-cases](desk-cases.md) | Desk case state, snoozes, waiting on replies, the ready-to-bill checklist |
+| [desk-workspace](desk-workspace.md) | Needs you, Nova handled, a record's case and Nova's margin, the Desk keymap, Triage in the Desk |
 | [desk-artifacts](desk-artifacts.md) | a Desk artifact kind or resource card (build one with the `desk-artifact` skill) |
 | [desk-bench](desk-bench.md) ([gate](desk-bench-gate.md)) | `internal/deskbench`, scenarios; run only against a seeded development database |
 | [edi-spec-onboarding](edi-spec-onboarding.md) | `ediconnectiondraft`, `edi_draft_connection`, `edi_apply_connection_draft` |

@@ -30,8 +30,8 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*RateAgreement)(nil)
-	_ domaintypes.PostgresSearchable     = (*RateAgreement)(nil)
+	_ validationframework.Entity     = (*RateAgreement)(nil)
+	_ domaintypes.PostgresSearchable = (*RateAgreement)(nil)
 )
 
 const (

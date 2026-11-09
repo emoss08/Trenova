@@ -100,7 +100,7 @@ func TestRoutingGuideSeed_PrimaryGuideWalksScreening(t *testing.T) {
 	var blocked, warned, eligible int
 	for _, entry := range def.entries {
 		entity := buildSeededCarrier(t, carrierDefByCode(t, entry.carrierCode), now)
-		result := carrier.EvaluateCarrierEligibility(entity, now)
+		result := carrier.EvaluateEligibility(carrier.EligibilityInput{Carrier: entity, Now: now})
 
 		switch {
 		case result.IsBlocked():

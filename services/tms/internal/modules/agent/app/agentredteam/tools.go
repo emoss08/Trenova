@@ -53,6 +53,8 @@ func newToolDeps(rec *recorder, responses map[string]map[string]any) toolDeps {
 			Runs:         &runRepository{rec: rec},
 			Permissions:  noMemoryManagers{},
 			Indexer:      unindexedMemories{},
+			Vectors:      unindexedMemories{},
+			Judge:        unrelatedMemories{},
 			Ranker:       agentmemoryrank.NewRecencyRanker(),
 			AuditService: quietAudit{},
 		}),
@@ -340,6 +342,22 @@ func (unindexedMemories) MarkStale(
 	...pulid.ID,
 ) error {
 	return nil
+}
+
+func (unindexedMemories) SimilarMemories(
+	context.Context,
+	*retrievalports.SimilarMemoriesRequest,
+) (retrievalports.SimilarMemories, error) {
+	return retrievalports.SimilarMemories{}, nil
+}
+
+type unrelatedMemories struct{}
+
+func (unrelatedMemories) Judge(
+	context.Context,
+	*agentmemoryports.JudgeMemoryRequest,
+) (*agentmemoryports.MemoryJudgement, error) {
+	return &agentmemoryports.MemoryJudgement{}, nil
 }
 
 type quietAudit struct {

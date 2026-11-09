@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*WorkerPayAssignment)(nil)
+	_ validationframework.Entity = (*WorkerPayAssignment)(nil)
 )
 
 type RateOverride struct {

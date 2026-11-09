@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"github.com/emoss08/trenova/pkg/dbscope"
 	"mime/multipart"
 	"slices"
 
@@ -25,6 +24,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -593,11 +593,11 @@ func (s *Service) GetProfilePictureURL(
 	return url, nil
 }
 
-func (s *Service) validateProfilePictureFile(file *multipart.FileHeader) *errortypes.MultiError {
+func (s *Service) validateProfilePictureFile(file *multipart.FileHeader) error {
 	me := errortypes.NewMultiError()
 	if file == nil {
 		me.Add("file", errortypes.ErrRequired, "Profile picture file is required")
-		return me
+		return me.Err()
 	}
 
 	if file.Size == 0 {
@@ -624,11 +624,7 @@ func (s *Service) validateProfilePictureFile(file *multipart.FileHeader) *errort
 		me.Add("file", errortypes.ErrInvalidFormat, "Unsupported profile picture file extension")
 	}
 
-	if me.HasErrors() {
-		return me
-	}
-
-	return nil
+	return me.Err()
 }
 
 func (s *Service) deleteProfilePictureObject(ctx context.Context, objectKey, currentKey string) {

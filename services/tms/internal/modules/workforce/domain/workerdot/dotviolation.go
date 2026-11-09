@@ -138,7 +138,7 @@ func ReturnToDutyStatusFor(status DOTViolationStatus) worker.ReturnToDutyStatus 
 }
 
 var (
-	_ validationframework.TenantedEntity = (*WorkerDOTViolation)(nil)
+	_ validationframework.Entity = (*WorkerDOTViolation)(nil)
 )
 
 type WorkerDOTViolation struct {

@@ -111,6 +111,21 @@ item with none: routing does not give it one back. Escalation never moves a sour
 — the dock closes when it closes — and an overdue item with one escalates again only after
 `exception_escalation_minutes` since the last escalation, not on every sweep.
 
+## What an item is about
+
+An item's subject is the record an agent would work on if it is handed off, which for a message or
+a decision is the message or the decision itself. The Desk groups by the business record the item
+is about instead, so it is stored beside it: `about_kind` and `about_id`, set once by the projector
+(`ItemFromInput`: the source's `About`, else its subject; the kind from the id's prefix through
+`recordkind.OfIDPrefix`). A source names the record where it differs: an inbound message its
+matched shipment, customer or carrier; a proposal its target; a plan the record most of its steps
+change (`agent_plans.target_id`, kept when the plan opens); detention, billing exceptions and move
+coverage their shipment; a carrier event its carrier. `idx_watchtower_items_open_about` serves the
+read that fills a page of rows ([desk-workspace.md](desk-workspace.md)). Each kind is filed under a
+Desk lens (`SourceKind.DeskLens`: proposals and plans under Decisions, inbound messages under
+Triage, everything else under Watchtower), exposed as `WatchtowerItem.deskLens` and on
+`WatchtowerKindSummary` so the client never keeps the mapping.
+
 ## What an item carries for the queue
 
 Sources also describe the record an item is about (`record_kind`, a permission-registry

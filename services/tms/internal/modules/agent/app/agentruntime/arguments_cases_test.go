@@ -81,22 +81,6 @@ func requireRefusalNames(t *testing.T, content string, paths []string) {
 	}
 }
 
-func TestArgumentCases_Aliases(t *testing.T) {
-	t.Parallel()
-
-	for _, tc := range loadArgumentCases(t).Aliases {
-		t.Run(tc.Name, func(t *testing.T) {
-			t.Parallel()
-
-			sent := maps.Clone(tc.Args)
-			got := argcheck.AliasedArguments(tc.Schema, sent)
-
-			assert.Equal(t, tc.Want, got)
-			assert.Equal(t, tc.Args, sent, "the model's own call is never changed")
-		})
-	}
-}
-
 func TestArgumentCases_WhatAToolReceives(t *testing.T) {
 	t.Parallel()
 
@@ -105,7 +89,7 @@ func TestArgumentCases_WhatAToolReceives(t *testing.T) {
 			t.Parallel()
 
 			sent := maps.Clone(tc.Args)
-			got, _, err := argcheck.ContractArguments(nil, "record_case", tc.Schema, sent)
+			contract, err := argcheck.ContractCall(nil, "record_case", tc.Schema, sent)
 			assert.Equal(t, tc.Args, sent, "the model's own call is never changed")
 			if len(tc.Refused) > 0 {
 				var multiErr *errortypes.MultiError
@@ -116,7 +100,7 @@ func TestArgumentCases_WhatAToolReceives(t *testing.T) {
 				}
 			} else {
 				require.NoError(t, err)
-				assert.Equal(t, tc.Want, got)
+				assert.Equal(t, tc.Want, contract.Args)
 			}
 
 			tool := &agenttest.StubActionTool{

@@ -12,8 +12,8 @@ describe("archiveRefusal", () => {
       title: "Validation failed",
       status: 422,
       errors: [
-        { field: "name", message: "Name is required" },
-        { field: "confirmInUse", message: usageMessage, code: "INVALID" },
+        { path: ["name"], field: "name", message: "Name is required" },
+        { path: ["confirmInUse"], field: "confirmInUse", message: usageMessage, code: "INVALID" },
       ],
     });
 
@@ -39,7 +39,7 @@ describe("archiveRefusal", () => {
       type: "validation-error",
       title: "Validation failed",
       status: 422,
-      errors: [{ field: "status", message: "Invalid status" }],
+      errors: [{ path: ["status"], field: "status", message: "Invalid status" }],
     });
 
     expect(archiveRefusal(otherField)).toBeNull();

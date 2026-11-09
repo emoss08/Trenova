@@ -15,8 +15,8 @@ import (
 )
 
 var (
-	_ pagination.CursorEntity            = (*PayAdvance)(nil)
-	_ validationframework.TenantedEntity = (*PayAdvance)(nil)
+	_ pagination.CursorEntity    = (*PayAdvance)(nil)
+	_ validationframework.Entity = (*PayAdvance)(nil)
 )
 
 // Cash and money-code advances, what has been recovered, and what was written off

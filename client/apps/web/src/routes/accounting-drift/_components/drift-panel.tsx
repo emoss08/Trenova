@@ -237,7 +237,7 @@ function DriftFindingDetail({
           </DescriptionItem>
           <DescriptionItem label={t("In Trenova")}>
             {objectPath ? (
-              <Link to={objectPath} className="text-brand font-medium hover:underline">
+              <Link to={objectPath} className="font-medium text-brand hover:underline">
                 {finding.objectNumber}
               </Link>
             ) : (
@@ -283,7 +283,7 @@ function DriftFindingDetail({
                   >
                     <span className="min-w-0 truncate">
                       {path ? (
-                        <Link to={path} className="text-brand font-medium hover:underline">
+                        <Link to={path} className="font-medium text-brand hover:underline">
                           {line.objectNumber}
                         </Link>
                       ) : (

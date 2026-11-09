@@ -85,7 +85,7 @@ func (d *Document) MarkSignature(mark *SignatureMark) error {
 		}
 	}
 	if multiErr.HasErrors() {
-		return multiErr
+		return multiErr.Err()
 	}
 
 	if !d.IsCurrentVersion {

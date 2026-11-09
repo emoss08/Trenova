@@ -7,7 +7,6 @@ package customfieldportsmock
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -120,19 +119,19 @@ func (_c *MockNamedValues_GetNamed_Call) RunAndReturn(run func(ctx context.Conte
 }
 
 // SaveNamed provides a mock function for the type MockNamedValues
-func (_mock *MockNamedValues) SaveNamed(ctx context.Context, tenantInfo pagination.TenantInfo, resourceType string, resourceID string, values map[string]any) *errortypes.MultiError {
+func (_mock *MockNamedValues) SaveNamed(ctx context.Context, tenantInfo pagination.TenantInfo, resourceType string, resourceID string, values map[string]any) error {
 	ret := _mock.Called(ctx, tenantInfo, resourceType, resourceID, values)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SaveNamed")
 	}
 
-	var r0 *errortypes.MultiError
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, string, string, map[string]any) *errortypes.MultiError); ok {
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, string, string, map[string]any) error); ok {
 		r0 = returnFunc(ctx, tenantInfo, resourceType, resourceID, values)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*errortypes.MultiError)
+			r0 = ret.Error(0)
 		}
 	}
 	return r0
@@ -186,12 +185,12 @@ func (_c *MockNamedValues_SaveNamed_Call) Run(run func(ctx context.Context, tena
 	return _c
 }
 
-func (_c *MockNamedValues_SaveNamed_Call) Return(multiError *errortypes.MultiError) *MockNamedValues_SaveNamed_Call {
-	_c.Call.Return(multiError)
+func (_c *MockNamedValues_SaveNamed_Call) Return(err error) *MockNamedValues_SaveNamed_Call {
+	_c.Call.Return(err)
 	return _c
 }
 
-func (_c *MockNamedValues_SaveNamed_Call) RunAndReturn(run func(ctx context.Context, tenantInfo pagination.TenantInfo, resourceType string, resourceID string, values map[string]any) *errortypes.MultiError) *MockNamedValues_SaveNamed_Call {
+func (_c *MockNamedValues_SaveNamed_Call) RunAndReturn(run func(ctx context.Context, tenantInfo pagination.TenantInfo, resourceType string, resourceID string, values map[string]any) error) *MockNamedValues_SaveNamed_Call {
 	_c.Call.Return(run)
 	return _c
 }

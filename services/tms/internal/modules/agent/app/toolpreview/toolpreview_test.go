@@ -38,6 +38,10 @@ type testRecord struct {
 	UpdatedAt      int64           `json:"updatedAt"`
 }
 
+func withRegistry(registry *permissioncatalog.Registry) Option {
+	return func(o *options) { o.registry = registry }
+}
+
 func testRegistry(t *testing.T) *permissioncatalog.Registry {
 	t.Helper()
 
@@ -119,7 +123,7 @@ func TestUpdate_DiffsWhatThePlanFunctionChanges(t *testing.T) {
 			return nil
 		},
 		WithRefs(map[string]permission.Resource{"customerId": permission.ResourceCustomer}),
-		WithRegistry(testRegistry(t)),
+		withRegistry(testRegistry(t)),
 	)
 	require.NoError(t, err)
 
@@ -184,7 +188,7 @@ func TestUpdate_VolatileAndIgnoredPaths(t *testing.T) {
 		},
 		Volatile("pickupAt"),
 		Ignore("notes"),
-		WithRegistry(testRegistry(t)),
+		withRegistry(testRegistry(t)),
 	)
 	require.NoError(t, err)
 
@@ -215,7 +219,7 @@ func TestCreate_ShowsTheValuesTheRecordWouldHold(t *testing.T) {
 
 	record := sampleRecord()
 	change, err := Create(Record{Resource: testResource, Label: "New shipment"}, record,
-		WithRegistry(testRegistry(t)),
+		withRegistry(testRegistry(t)),
 		WithRefs(map[string]permission.Resource{"customerId": permission.ResourceCustomer}),
 	)
 	require.NoError(t, err)
@@ -289,12 +293,12 @@ func TestMoney_TotalsLinesAndHonoursSensitivity(t *testing.T) {
 	assert.Equal(t, "350.25", block.Delta.Decimal.String())
 
 	change := Money(Record{Resource: testResource}, block,
-		SensitiveAs("ratingAmount"), WithRegistry(testRegistry(t)))
+		SensitiveAs("ratingAmount"), withRegistry(testRegistry(t)))
 	require.NotNil(t, change.Money)
 	assert.Equal(t, permission.SensitivityRestricted, change.Money.Sensitivity)
 
 	confidential := Money(Record{Resource: testResource}, block,
-		SensitiveAs("bankAccount"), WithRegistry(testRegistry(t)))
+		SensitiveAs("bankAccount"), withRegistry(testRegistry(t)))
 	assert.Nil(t, confidential.Money, "a confidential amount is never carried")
 }
 
@@ -364,7 +368,7 @@ func TestParameters_StampsEachParameterAndDropsConfidentialOnes(t *testing.T) {
 		"status":       "Hold",
 		"bankAccount":  "000123",
 		"ratingAmount": "12.50",
-	}, WithRegistry(testRegistry(t)))
+	}, withRegistry(testRegistry(t)))
 
 	require.Len(t, preview.Changes, 1)
 	change := preview.Changes[0]

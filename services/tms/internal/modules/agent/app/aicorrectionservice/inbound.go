@@ -47,7 +47,7 @@ func (r *InboundRecorder) RecordInboundCorrection(
 	multiErr := errortypes.NewMultiError()
 	entity.Validate(multiErr)
 	if multiErr.HasErrors() {
-		return multiErr
+		return multiErr.Err()
 	}
 
 	if _, err := r.repo.Upsert(ctx, entity); err != nil {

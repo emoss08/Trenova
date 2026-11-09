@@ -48,7 +48,7 @@ func NewDefaultClassifier() *ChainClassifier {
 		ClassifierFunc(classifyTimeout),
 		ClassifierFunc(classifyRequestTooLarge),
 		ClassifierFunc(classifySessionContextStale),
-		ClassifierFunc(classifyEditConflict),
+		ClassifierFunc(classifyVersionMismatch),
 		ClassifierFunc(classifyValidation),
 		ClassifierFunc(classifyTariff),
 		ClassifierFunc(classifyBadRequest),
@@ -191,8 +191,8 @@ func classifySessionContextStale(err error) (ProblemType, bool) {
 	return "", false
 }
 
-func classifyEditConflict(err error) (ProblemType, bool) {
-	if errortypes.IsEditConflictError(err) {
+func classifyVersionMismatch(err error) (ProblemType, bool) {
+	if errortypes.IsVersionMismatchError(err) {
 		return ProblemTypeConflict, true
 	}
 	return "", false

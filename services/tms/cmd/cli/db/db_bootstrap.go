@@ -456,7 +456,7 @@ func describeBootstrapError(err error) error {
 	for _, fieldErr := range multiErr.Errors {
 		builder.WriteString("\n  - ")
 		builder.WriteString(fieldErr.Message)
-		if source := bootstrapInputSource(fieldErr.Field); source != "" {
+		if source := bootstrapInputSource(fieldErr.Field()); source != "" {
 			builder.WriteString(" (")
 			builder.WriteString(source)
 			builder.WriteString(")")

@@ -320,7 +320,7 @@ func (s *Cycle) appendEscrowTransaction(
 	multiErr := errortypes.NewMultiError()
 	tx.Validate(multiErr)
 	if multiErr.HasErrors() {
-		return multiErr
+		return multiErr.Err()
 	}
 	if _, err = s.escrowRepo.AppendTransaction(ctx, tx); err != nil {
 		return err

@@ -178,13 +178,23 @@ describe("CarrierIntelRulesTable", () => {
   it("maps server rule errors onto the row that owns them", () => {
     const rules = toSettingsFormValues(control, catalog).rules;
 
-    expect(remapRuleFieldPath("rules.safety.iss_high.params.minimum", rules)).toBe(
-      "rules.1.params.minimum",
-    );
-    expect(remapRuleFieldPath("rules.authority.usdot_inactive.action", rules)).toBe(
-      "rules.0.action",
-    );
-    expect(remapRuleFieldPath("rules.unknown.rule", rules)).toBe("rules.unknown.rule");
-    expect(remapRuleFieldPath("hardMaxAgeHours", rules)).toBe("hardMaxAgeHours");
+    expect(remapRuleFieldPath(["rules", "safety.iss_high", "params", "minimum"], rules)).toEqual([
+      "rules",
+      1,
+      "params",
+      "minimum",
+    ]);
+    expect(remapRuleFieldPath(["rules", "authority.usdot_inactive", "action"], rules)).toEqual([
+      "rules",
+      0,
+      "action",
+    ]);
+    expect(remapRuleFieldPath(["rules", "authority.usdot_inactive"], rules)).toEqual([
+      "rules",
+      0,
+      "action",
+    ]);
+    expect(remapRuleFieldPath(["rules", "unknown.rule"], rules)).toEqual(["rules", "unknown.rule"]);
+    expect(remapRuleFieldPath(["hardMaxAgeHours"], rules)).toEqual(["hardMaxAgeHours"]);
   });
 });

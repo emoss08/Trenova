@@ -565,11 +565,7 @@ func (s *Service) validateRuntimePermissions(inputs []apikeyports.APIKeyPermissi
 		}
 	}
 
-	if me.HasErrors() {
-		return me
-	}
-
-	return nil
+	return me.Err()
 }
 
 func permissionInputs(perms []*apikey.Permission) []apikeyports.APIKeyPermissionInput {

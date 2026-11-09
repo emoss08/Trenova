@@ -229,3 +229,10 @@ func TestListConnection_ReadsEveryAudienceOnlyForAPersonWhoManagesMemory(t *test
 		assert.True(t, repo.listed.Reader.UserID.IsNil())
 	})
 }
+
+func (r *audienceRepo) ListNeighbors(
+	context.Context,
+	*agentmemoryports.ListAgentMemoryNeighborsRequest,
+) ([]*agentmemory.Memory, error) {
+	return nil, nil
+}

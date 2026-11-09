@@ -581,7 +581,14 @@ describe("requestGraphQL error classification", () => {
               code: "REQUIRED",
               type: `${PROBLEM_BASE}validation-error`,
               traceId: "trace-1",
-              errors: [{ field: "proNumber", message: "Pro number is required", code: "REQUIRED" }],
+              errors: [
+                {
+                  path: ["proNumber"],
+                  field: "proNumber",
+                  message: "Pro number is required",
+                  code: "REQUIRED",
+                },
+              ],
             },
           },
           {
@@ -592,7 +599,12 @@ describe("requestGraphQL error classification", () => {
               type: `${PROBLEM_BASE}business-rule-violation`,
               traceId: "trace-2",
               errors: [
-                { field: "customerId", message: "Customer is inactive", code: "BUSINESS_LOGIC" },
+                {
+                  path: ["customerId"],
+                  field: "customerId",
+                  message: "Customer is inactive",
+                  code: "BUSINESS_LOGIC",
+                },
               ],
             },
           },
@@ -628,8 +640,18 @@ describe("requestGraphQL error classification", () => {
     expect(error.hasProblemType("database-error")).toBe(true);
 
     expect(error.getFieldErrors()).toEqual([
-      { field: "proNumber", message: "Pro number is required", code: "REQUIRED" },
-      { field: "customerId", message: "Customer is inactive", code: "BUSINESS_LOGIC" },
+      {
+        path: ["proNumber"],
+        field: "proNumber",
+        message: "Pro number is required",
+        code: "REQUIRED",
+      },
+      {
+        path: ["customerId"],
+        field: "customerId",
+        message: "Customer is inactive",
+        code: "BUSINESS_LOGIC",
+      },
     ]);
   });
 

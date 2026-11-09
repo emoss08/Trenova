@@ -71,10 +71,7 @@ func (s *Service) validateCourse(ctx context.Context, entity *workertraining.Tra
 		}
 	}
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }
 
 func (s *Service) CreateCourse(
@@ -197,9 +194,7 @@ func (s *Service) changeCourseStatus(
 		return original, nil
 	}
 	if req.Version > 0 && original.Version != req.Version {
-		return nil, errortypes.NewValidationError(
-			"version",
-			errortypes.ErrVersionMismatch,
+		return nil, errortypes.NewVersionMismatchError(
 			"Course was changed by someone else. Reload and try again",
 		)
 	}

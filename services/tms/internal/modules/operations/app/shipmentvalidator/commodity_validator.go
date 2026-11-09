@@ -19,16 +19,15 @@ type commodityRuleContext struct {
 	multiErr         *errortypes.MultiError
 }
 
-func createCommodityValidationRule() validationframework.TenantedRule[*shipment.Shipment] {
+func createCommodityValidationRule() validationframework.Rule[*shipment.Shipment] {
 	return validationframework.
-		NewTenantedRule[*shipment.Shipment]("shipment_commodity_validation").
+		NewRule[*shipment.Shipment]("shipment_commodity_validation").
 		OnBoth().
-		WithStage(validationframework.ValidationStageDataIntegrity).
-		WithPriority(validationframework.ValidationPriorityHigh).
+		WithStage(validationframework.StageDataIntegrity).
 		WithValidation(func(
 			_ context.Context,
 			entity *shipment.Shipment,
-			valCtx *validationframework.TenantedValidationContext,
+			valCtx *validationframework.Context,
 			multiErr *errortypes.MultiError,
 		) error {
 			seenCommodityIDs := make(map[pulid.ID]string, len(entity.Commodities))

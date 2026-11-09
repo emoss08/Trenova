@@ -15,9 +15,9 @@ import (
 )
 
 var (
-	_ pagination.CursorEntity            = (*Dispute)(nil)
-	_ validationframework.TenantedEntity = (*Dispute)(nil)
-	_ domaintypes.PostgresSearchable     = (*Dispute)(nil)
+	_ pagination.CursorEntity        = (*Dispute)(nil)
+	_ validationframework.Entity     = (*Dispute)(nil)
+	_ domaintypes.PostgresSearchable = (*Dispute)(nil)
 )
 
 type DisputeStatus string

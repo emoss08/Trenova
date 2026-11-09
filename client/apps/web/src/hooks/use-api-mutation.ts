@@ -11,7 +11,7 @@ import {
 import { useMutation, type UseMutationOptions } from "@tanstack/react-query";
 import type { FieldValues, Path, UseFormSetError } from "react-hook-form";
 import { toast } from "@trenova/shared/components/ui/toast";
-import { normalizeFieldPath, serverErrorTarget, type FieldRegistry } from "@/lib/form-errors";
+import { serverErrorTarget, type FieldRegistry } from "@/lib/form-errors";
 
 // Only the field registry and the error setter are needed, so the parameter asks for
 // exactly those. Taking the whole UseFormReturn would drag in handleSubmit, whose
@@ -57,7 +57,7 @@ function applyFieldErrors<T extends FieldValues>(
   const rootMessages = new Set<string>();
 
   for (const fieldError of fieldErrors) {
-    const path = serverErrorTarget(form.control, normalizeFieldPath(fieldError.field));
+    const path = serverErrorTarget(form.control, fieldError.field);
 
     if (path === null) {
       rootMessages.add(fieldError.message);

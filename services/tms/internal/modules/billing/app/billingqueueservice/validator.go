@@ -5,9 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/keelcheck"
 	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"go.uber.org/fx"
@@ -27,9 +25,6 @@ func NewValidator(p ValidatorParams) *Validator {
 	return &Validator{
 		validator: tenantedvalidation.NewBuilder[*billingqueue.BillingQueueItem]().
 			WithModelName("Billing Queue Item").
-			WithUniquenessChecker(
-				keelcheck.NewChecker(p.DB, billingqueuedb.BillingQueueItemsSchema()),
-			).
 			WithCustomRule(createStatusConstraintsRule()).
 			Build(),
 	}
@@ -38,24 +33,23 @@ func NewValidator(p ValidatorParams) *Validator {
 func (v *Validator) ValidateCreate(
 	ctx context.Context,
 	entity *billingqueue.BillingQueueItem,
-) *errortypes.MultiError {
+) error {
 	return v.validator.ValidateCreate(ctx, entity)
 }
 
 func (v *Validator) ValidateUpdate(
 	ctx context.Context,
 	entity *billingqueue.BillingQueueItem,
-) *errortypes.MultiError {
+) error {
 	return v.validator.ValidateUpdate(ctx, entity)
 }
 
-func createStatusConstraintsRule() validationframework.TenantedRule[*billingqueue.BillingQueueItem] {
-	return validationframework.NewTenantedRule[*billingqueue.BillingQueueItem](
+func createStatusConstraintsRule() validationframework.Rule[*billingqueue.BillingQueueItem] {
+	return validationframework.NewRule[*billingqueue.BillingQueueItem](
 		"status_constraints",
 	).
 		OnBoth().
-		WithPriority(validationframework.ValidationPriorityHigh).
-		WithValidation(func(_ context.Context, entity *billingqueue.BillingQueueItem, _ *validationframework.TenantedValidationContext, multiErr *errortypes.MultiError) error {
+		WithValidation(func(_ context.Context, entity *billingqueue.BillingQueueItem, _ *validationframework.Context, multiErr *errortypes.MultiError) error {
 			CheckStatusFields(entity, multiErr)
 
 			return nil

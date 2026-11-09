@@ -50,7 +50,7 @@ export function ActionDock({
     <div
       ref={pillRef}
       className={cn(
-        "bg-foreground flex w-fit min-w-112.5 items-center gap-x-10 rounded-lg p-2",
+        "flex w-fit min-w-112.5 items-center gap-x-10 rounded-lg bg-foreground p-2",
         pillClassName,
       )}
     >
@@ -91,7 +91,7 @@ export function ActionDockIndicator({
         <AlertCircleIcon className="rounded-full bg-warning-subtle text-warning-foreground" />
       )}
       <div className="flex flex-col">
-        <span className="text-background text-sm font-medium">{title}</span>
+        <span className="text-sm font-medium text-background">{title}</span>
         <span className="text-2xs text-background/80">{description}</span>
       </div>
     </div>

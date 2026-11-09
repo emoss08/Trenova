@@ -169,7 +169,7 @@ func (s *Service) prepareContent(
 	multiErr := errortypes.NewMultiError()
 	library.Validate(multiErr)
 	if multiErr.HasErrors() {
-		return multiErr
+		return multiErr.Err()
 	}
 
 	content, err := s.checkContent(ctx, library)

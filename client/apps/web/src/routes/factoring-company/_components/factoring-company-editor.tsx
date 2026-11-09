@@ -42,7 +42,7 @@ export function FactoringCompanyEditor({
 
   return (
     <div className="flex min-w-0 flex-1 flex-col">
-      <div className="grid flex-1 items-start gap-6 xl:grid-cols-[minmax(0,40rem)_minmax(0,1fr)]">
+      <div className="grid flex-1 items-start gap-6 xl:grid-cols-[minmax(0,40rem)_minmax(0,1fr)] xl:items-stretch">
         <fieldset disabled={readOnly} className="min-w-0">
           <FactoringCompanyForm
             recourseFromAgreement={recourseFromAgreement}
@@ -53,7 +53,7 @@ export function FactoringCompanyEditor({
             onOpenCustomers={onOpenCustomers}
           />
         </fieldset>
-        <div className="min-w-0 xl:sticky xl:top-4">
+        <div className="flex min-w-0 flex-col">
           <FactoringInvoicePreview control={control} state={state} active={active} />
         </div>
       </div>

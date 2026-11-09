@@ -37,7 +37,7 @@ export function ActorMark({
         name={name}
         profilePicUrl={user?.profilePicUrl ?? undefined}
         thumbnailUrl={user?.thumbnailUrl ?? undefined}
-        className={cn("bg-muted shrink-0 rounded-md", box)}
+        className={cn("shrink-0 rounded-md bg-muted", box)}
         imageClassName="rounded-md bg-muted"
         fallbackClassName="text-xs"
         alt={name}
@@ -79,14 +79,14 @@ export function AuditTopActors({
   return (
     <section
       aria-label={t("Who made the changes")}
-      className="bg-card flex min-w-0 flex-col rounded-md border"
+      className="flex min-w-0 flex-col rounded-md border bg-card"
     >
       <header className="px-3 pt-2.5">
         <h3 className="text-sm font-semibold">{t("Who made the changes")}</h3>
-        <p className="text-muted-foreground text-xs">{t("Pick one to see only theirs")}</p>
+        <p className="text-xs text-muted-foreground">{t("Pick one to see only theirs")}</p>
       </header>
       {actors.length === 0 ? (
-        <p className="text-muted-foreground px-3 py-4 text-xs">
+        <p className="px-3 py-4 text-xs text-muted-foreground">
           {t("Nobody wrote an entry you can read in this window.")}
         </p>
       ) : (
@@ -105,7 +105,7 @@ export function AuditTopActors({
                     aria-pressed={selected}
                     onClick={() => onSelect(selected ? null : actor)}
                     className={cn(
-                      "ui-focus-ring relative grid w-full grid-cols-[1.5rem_minmax(0,1fr)_auto] items-center gap-2 rounded-md px-2 py-1.5 text-left",
+                      "relative grid w-full grid-cols-[1.5rem_minmax(0,1fr)_auto] items-center gap-2 rounded-md ui-focus-ring px-2 py-1.5 text-left",
                       selected && "bg-brand-subtle",
                     )}
                   >
@@ -113,13 +113,13 @@ export function AuditTopActors({
                     <span className="min-w-0">
                       <span className="flex min-w-0 items-baseline gap-1.5">
                         <span className="truncate text-sm font-medium">{name}</span>
-                        <span className="text-foreground-subtle shrink-0 text-xs">
+                        <span className="shrink-0 text-xs text-foreground-subtle">
                           {ACTOR_KIND_LABELS[kind]}
                         </span>
                       </span>
                       <span
                         aria-hidden
-                        className="bg-muted mt-1 block h-0.75 overflow-hidden rounded-full"
+                        className="mt-1 block h-0.75 overflow-hidden rounded-full bg-muted"
                       >
                         <span
                           className={cn("block h-full rounded-full", series?.swatch)}
@@ -127,10 +127,10 @@ export function AuditTopActors({
                         />
                       </span>
                     </span>
-                    <span className="text-muted-foreground text-right text-xs tabular-nums">
+                    <span className="text-right text-xs text-muted-foreground tabular-nums">
                       {formatNumber(actor.entries)}
                       {actor.sensitive > 0 ? (
-                        <span className="text-warning-foreground block">
+                        <span className="block text-warning-foreground">
                           {t("{0, plural, one {# sensitive} other {# sensitive}}", actor.sensitive)}
                         </span>
                       ) : null}
@@ -143,7 +143,7 @@ export function AuditTopActors({
         </HoverGlideGroup>
       )}
       {otherActors > 0 ? (
-        <p className="text-muted-foreground mx-3 mt-auto border-t py-2 text-xs">
+        <p className="mx-3 mt-auto border-t py-2 text-xs text-muted-foreground">
           {t(
             "{0, plural, one {# more person, agent or key} other {# more people, agents and keys}} · {1, plural, one {# change} other {# changes}}",
             otherActors,

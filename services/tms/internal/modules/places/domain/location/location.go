@@ -20,9 +20,9 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*Location)(nil)
-	_ domaintypes.PostgresSearchable     = (*Location)(nil)
-	_ pagination.CursorEntity            = (*Location)(nil)
+	_ validationframework.Entity     = (*Location)(nil)
+	_ domaintypes.PostgresSearchable = (*Location)(nil)
+	_ pagination.CursorEntity        = (*Location)(nil)
 )
 
 // Physical pickup, delivery, and facility locations

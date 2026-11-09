@@ -117,10 +117,7 @@ func (s *Service) validateType(
 		}
 	}
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }
 
 func (s *Service) CreateType(
@@ -243,9 +240,7 @@ func (s *Service) changeTypeStatus(
 		return original, nil
 	}
 	if req.Version > 0 && original.Version != req.Version {
-		return nil, errortypes.NewValidationError(
-			"version",
-			errortypes.ErrVersionMismatch,
+		return nil, errortypes.NewVersionMismatchError(
 			"Credential type was changed by someone else. Reload and try again",
 		)
 	}

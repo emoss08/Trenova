@@ -33,7 +33,7 @@ export function FactoringMovementPreview({
 
   if (movement.lines.length === 0) {
     return (
-      <p className="text-muted-foreground text-sm">
+      <p className="text-sm text-muted-foreground">
         {showInvoice
           ? t("Nothing is booked for invoice {0}.", movement.invoiceNumber)
           : t("Nothing is booked: no money moves.")}
@@ -64,7 +64,7 @@ export function FactoringMovementPreview({
               <TableCell>
                 <div className="flex flex-col">
                   <span>{factoringAccountRoleLabel(line.role)}</span>
-                  <span className="text-muted-foreground text-xs">
+                  <span className="text-xs text-muted-foreground">
                     {line.account
                       ? `${line.account.accountCode} · ${line.account.name}`
                       : line.accountId}
@@ -88,7 +88,7 @@ export function FactoringMovementPreview({
           </TableRow>
         </TableFooter>
       </Table>
-      <ul className="text-muted-foreground flex flex-col gap-0.5 text-xs">
+      <ul className="flex flex-col gap-0.5 text-xs text-muted-foreground">
         <li>
           {redated
             ? t(

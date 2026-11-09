@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*SettlementControl)(nil)
+	_ validationframework.Entity = (*SettlementControl)(nil)
 )
 
 type PayPeriodFrequency string

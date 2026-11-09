@@ -187,10 +187,7 @@ func validateCreate(req *CreateProjectRequest) error {
 			"Acknowledgment must be 997, 999 or none",
 		)
 	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }
 
 func (s *Projects) GetProject(
@@ -446,10 +443,7 @@ func validateProject(files []lading.File, samples []lading.Sample) error {
 	if total > MaxSamplesBytes {
 		multiErr.Add("samples", errortypes.ErrInvalid, "A project's samples hold at most 32 MiB")
 	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }
 
 func checkPath(multiErr *errortypes.MultiError, name string, seen map[string]bool, suffix string) {
@@ -965,10 +959,7 @@ func (s *Projects) requireReplays(
 			)
 		}
 	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }
 
 func inboundMaps(manifest *lading.Check) []string {
@@ -1356,7 +1347,7 @@ func ValidateSettings(manifest *lading.Check, values map[string]any) (map[string
 		settings[name] = value
 	}
 	if multiErr.HasErrors() {
-		return nil, multiErr
+		return nil, multiErr.Err()
 	}
 	return settings, nil
 }

@@ -40,16 +40,15 @@ const (
 // at it.
 func createRateCoverageRule(
 	coverage RateCoverage,
-) validationframework.TenantedRule[*shipment.Shipment] {
+) validationframework.Rule[*shipment.Shipment] {
 	return validationframework.
-		NewTenantedRule[*shipment.Shipment](rateCoverageRuleKey).
+		NewRule[*shipment.Shipment](rateCoverageRuleKey).
 		OnBoth().
-		WithStage(validationframework.ValidationStageBusinessRules).
-		WithPriority(validationframework.ValidationPriorityMedium).
+		WithStage(validationframework.StageBusinessRules).
 		WithValidation(func(
 			ctx context.Context,
 			entity *shipment.Shipment,
-			valCtx *validationframework.TenantedValidationContext,
+			valCtx *validationframework.Context,
 			multiErr *errortypes.MultiError,
 		) error {
 			if verdict := unratedVerdict(entity); verdict != priced && valCtx.IsCreate() &&

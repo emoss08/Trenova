@@ -599,11 +599,7 @@ func (s *Service) validateChartRequest(req *workerptoports.PTOChartRequest) erro
 		}
 	}
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 func (s *Service) ListUpcoming(

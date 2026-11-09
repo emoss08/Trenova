@@ -3,19 +3,16 @@ package hazardousmaterialservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/hazardousmaterial"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/hazardousmaterial/hazardousmaterialdb"
-	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/keelcheck"
 	"github.com/emoss08/trenova/pkg/tenantedvalidation"
+	"github.com/emoss08/trenova/pkg/validationframework"
 	"go.uber.org/fx"
 )
 
 type ValidatorParams struct {
 	fx.In
 
-	DB *postgres.Connection
+	Integrity validationframework.IntegrityChecker
 }
 
 type Validator struct {
@@ -23,16 +20,10 @@ type Validator struct {
 }
 
 func NewValidator(p ValidatorParams) *Validator {
-	checker := keelcheck.NewChecker(
-		p.DB,
-		hazardousmaterialdb.HazardousMaterialsSchema(),
-	)
-
 	return &Validator{
 		validator: tenantedvalidation.NewBuilder[*hazardousmaterial.HazardousMaterial]().
 			WithModelName("HazardousMaterial").
-			WithUniquenessChecker(checker).
-			WithReferenceChecker(checker).
+			WithIntegrityChecker(p.Integrity).
 			WithUniqueField(
 				"name",
 				"name",
@@ -46,13 +37,13 @@ func NewValidator(p ValidatorParams) *Validator {
 func (v *Validator) ValidateCreate(
 	ctx context.Context,
 	entity *hazardousmaterial.HazardousMaterial,
-) *errortypes.MultiError {
+) error {
 	return v.validator.ValidateCreate(ctx, entity)
 }
 
 func (v *Validator) ValidateUpdate(
 	ctx context.Context,
 	entity *hazardousmaterial.HazardousMaterial,
-) *errortypes.MultiError {
+) error {
 	return v.validator.ValidateUpdate(ctx, entity)
 }

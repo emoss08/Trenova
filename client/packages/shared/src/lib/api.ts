@@ -1,5 +1,6 @@
 import { translate } from "@trenova/shared/i18n/runtime";
 import {
+  type Advisory,
   type ApiErrorResponse,
   type EditConflict,
   type NormalizedApiError,
@@ -7,6 +8,8 @@ import {
   type ValidationError,
   apiErrorResponseSchema,
   apiProblem,
+  parseAdvisories,
+  parseFieldErrors,
   parseProblemType,
 } from "@trenova/shared/types/errors";
 import { API_BASE_URL } from "./constants";
@@ -59,7 +62,9 @@ export class ApiRequestError extends Error {
     return {
       problemType: this.getProblemType(),
       status: this.status,
+      code: this.data.code,
       fieldErrors: this.getFieldErrors(),
+      advisories: this.getAdvisories(),
       message: detail || title || "An error occurred",
       title,
       detail,
@@ -112,8 +117,12 @@ export class ApiRequestError extends Error {
   }
 
   getFieldErrors(field?: string): ValidationError[] {
-    const fieldErrors = this.data.errors || [];
+    const fieldErrors = parseFieldErrors(this.data.errors);
     return field === undefined ? fieldErrors : fieldErrors.filter((e) => e.field === field);
+  }
+
+  getAdvisories(): Advisory[] {
+    return parseAdvisories(this.data.advisories);
   }
 
   getFieldError(field: string): ValidationError | undefined {

@@ -63,6 +63,8 @@ function block(fields) {
     meter: null,
     text: [],
     chips: [],
+    work: [],
+    actions: [],
     ...fields,
   };
 }

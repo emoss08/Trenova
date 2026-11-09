@@ -11,7 +11,6 @@ A structured error management package designed for seamless frontend integration
 - [Error Context & Correlation](#error-context--correlation)
 - [Structured Logging](#structured-logging)
 - [HTTP Status Mapping](#http-status-mapping)
-- [Stack Traces](#stack-traces)
 - [Real-World Examples](#real-world-examples)
 
 ---
@@ -26,7 +25,6 @@ The `errortypes` package provides:
 - **Error codes** for programmatic handling
 - **Request correlation** for distributed tracing
 - **Structured logging** integration
-- **Stack traces** for debugging (dev mode)
 
 ---
 
@@ -53,8 +51,8 @@ if multiErr.HasErrors() {
 ```json
 {
   "errors": [
-    {"field": "email", "code": "REQUIRED", "message": "Email is required"},
-    {"field": "password", "code": "INVALID_LENGTH", "message": "Password must be at least 8 characters"}
+    {"path": ["email"], "code": "REQUIRED", "message": "Email is required"},
+    {"path": ["password"], "code": "INVALID_LENGTH", "message": "Password must be at least 8 characters"}
   ]
 }
 ```
@@ -200,54 +198,79 @@ for i, item := range order.Items {
 ```json
 {
   "errors": [
-    {"field": "user.name", "code": "REQUIRED", "message": "Name is required"},
-    {"field": "user.address.street", "code": "REQUIRED", "message": "Street is required"},
-    {"field": "user.address.city", "code": "INVALID_LENGTH", "message": "City name too long"},
-    {"field": "items[0].quantity", "code": "INVALID", "message": "Quantity must be positive"}
+    {"path": ["user", "name"], "code": "REQUIRED", "message": "Name is required"},
+    {"path": ["user", "address", "street"], "code": "REQUIRED", "message": "Street is required"},
+    {"path": ["user", "address", "city"], "code": "INVALID_LENGTH", "message": "City name too long"},
+    {"path": ["items", 0, "quantity"], "code": "INVALID", "message": "Quantity must be positive"}
   ]
 }
 ```
 
-### Ozzo Validation Integration
+A path is a list of segments (`pkg/fieldpath`): object keys are strings and list indexes are
+numbers, so a key that contains a dot (a rule code such as `authority.revoked`) stays one
+segment. `Add` and `WithPrefix` take a path expression (`moves[0].stops[1].status` or
+`moves.0.stops.1.status`) and parse it; `AddAt` and `WithPath` take a `fieldpath.Path` when a
+key may contain dots or brackets. The client joins the segments with dots, which is the name
+react-hook-form registers. `Error.Field()` renders the bracket form for logs and summaries.
 
-Seamlessly convert ozzo-validation errors:
+### Ozzo Validation Integration
 
 ```go
 func (u *User) Validate(multiErr *errortypes.MultiError) {
-    err := validation.ValidateStruct(u,
-        validation.Field(&u.Email, validation.Required, is.Email),
+    multiErr.AddOzzoError(validation.ValidateStruct(u,
+        validation.Field(&u.Email, validation.Required, is.EmailFormat),
         validation.Field(&u.Name, validation.Required, validation.Length(1, 100)),
-    )
-
-    // One-liner conversion
-    multiErr.AddOzzoError(err)
+    ))
 }
 ```
 
-### Error Limits
+`AddOzzoError` (through `pkg/ozzoerrors`):
 
-Prevent excessive error collection in batch operations:
+- flattens nested errors into paths: a nested struct becomes `address.city`, `validation.Each`
+  and slices of validatable values become `stops[1].name`;
+- adds them in sorted order, so the same input always reports the same order;
+- maps each error by its ozzo code (`validation_required` is `REQUIRED`, the length rules are
+  `INVALID_LENGTH`, `match` and the `is` rules are `INVALID_FORMAT`, everything else `INVALID`);
+- replaces ozzo's own English defaults with catalog messages and positional arguments
+  ("Must be between {0} and {1} characters"), so they translate; a custom `.Error("…")`
+  message is kept, with any `{{.param}}` placeholder turned into `{0}`;
+- records an ozzo internal error (a field pointer that is not a field of the struct) as a
+  failed run, never as a pass.
+
+### Failed Runs
+
+A validation that could not finish (a rule's query failed, a field pointer was wrong) is not a
+refusal. Record it with `AddInternal(err)`. `HasErrors()` is then true, so nothing passes, and
+`Err()` returns the failure wrapped as a plain error, not the `MultiError`, so no caller can take
+it for a refusal: the presenters answer 500 with a generic message, log the cause and send no
+field errors, and a job retries it. A rule in `tenantedvalidation` returns the error instead and
+the run stops there.
+
+To ask whether an error is a refusal, use `RefusalOf(err)` (or `IsMultiError`), never
+`errors.As(err, &multiErr)`: a `MultiError` that escaped with an internal failure is not one.
 
 ```go
-// Stop collecting after 10 errors
-multiErr := errortypes.NewMultiErrorWithLimit(10)
-
-for _, record := range records {
-    if multiErr.IsFull() {
-        break // Stop processing
-    }
-    validateRecord(record, multiErr)
+if err != nil {
+    multiErr.AddInternal(fmt.Errorf("load accounting control: %w", err))
+    return multiErr
 }
 ```
 
-### Error Priority
+Never write a database or system failure as a field error: the client would show the
+driver's text on a form and never retry.
 
-Categorize errors by severity:
+### Results
 
-```go
-multiErr.AddWithPriority("criticalField", errortypes.ErrRequired, "This is critical", errortypes.PriorityHigh)
-multiErr.AddWithPriority("optionalField", errortypes.ErrInvalid, "Nice to fix", errortypes.PriorityLow)
-```
+`Err()` is the one way out of a report: nil when nothing was refused (advisories alone never
+refuse), the failure when the run failed, the `MultiError` otherwise. `MergeMultiErrors` keeps errors, advisories and internal
+failures. A report collects at most `MaxCollectedErrors` (500) errors; the rest are counted
+in `Dropped()` and in `LogFields()`.
+
+### Advisories
+
+`Advise(field, code, message, severity, ruleKey)` records a warning that does not refuse the
+write. The REST problem document and GraphQL extensions carry them as `advisories`, with paths,
+beside `errors`.
 
 ---
 
@@ -340,76 +363,14 @@ fields := multiErr.LogFields()
 
 ## HTTP Status Mapping
 
-Map errors to appropriate HTTP status codes:
-
-```go
-func handleError(err error) int {
-    return errortypes.HTTPStatus(err)
-}
-
-// Or map by error code
-func handleErrorCode(code errortypes.ErrorCode) int {
-    return errortypes.HTTPStatusWithCode(code)
-}
-```
-
-| Error Type | HTTP Status |
-|------------|-------------|
-| `MultiError` | 422 Unprocessable Entity |
-| `BusinessError` | 422 Unprocessable Entity |
-| `NotFoundError` | 404 Not Found |
-| `AuthenticationError` | 401 Unauthorized |
-| `AuthorizationError` | 403 Forbidden |
-| `RateLimitError` | 429 Too Many Requests |
-| `QuotaExceededError` | 402 Payment Required |
-| `PlanRestrictionError` | 403 Forbidden |
-| `SessionContextStaleError` | 409 Conflict |
-| `DatabaseError` | 500 Internal Server Error |
-
-| Error Code | HTTP Status |
-|------------|-------------|
-| `ErrDuplicate`, `ErrAlreadyExists`, `ErrVersionMismatch`, `ErrSessionContextStale` | 409 Conflict |
-| `ErrNotFound` | 404 Not Found |
-| `ErrUnauthorized` | 401 Unauthorized |
-| `ErrForbidden` | 403 Forbidden |
-| `ErrTooManyRequests` | 429 Too Many Requests |
-| All validation codes | 422 Unprocessable Entity |
-| `ErrSystemError` | 500 Internal Server Error |
-
----
-
-## Stack Traces
-
-Enable stack traces for debugging (typically in development):
-
-```go
-// Enable at application startup (dev mode only)
-if config.Environment == "development" {
-    errortypes.EnableStackTraces()
-}
-
-// Stack traces are automatically captured in ErrorContext
-ctx := errortypes.NewErrorContext().WithRequestID("req-123")
-
-// ctx.Stack contains:
-// []StackFrame{
-//   {Function: "main.handleRequest", File: "/app/handler.go", Line: 45},
-//   {Function: "main.processUser", File: "/app/user.go", Line: 123},
-//   ...
-// }
-```
-
-**Important:** Stack traces add overhead. Only enable in development/debugging.
-
-```go
-// Check if enabled
-if errortypes.StackTracesEnabled() {
-    // Stack traces are being captured
-}
-
-// Disable when done debugging
-errortypes.DisableStackTraces()
-```
+The presenters in `internal/api/helpers` (REST problem documents) and
+`internal/api/graphql/gqlext` (GraphQL extensions) classify an error once
+(`helpers.NewDefaultClassifier`) and take its code from `helpers.ErrorCodeOf`. A validation
+refusal answers 400 (`validation-error`). A save that lost a race is an `EditConflictError`, from
+`NewEditConflictError` (with what changed) or `NewVersionMismatchError` (a message only); it answers
+409 (`resource-conflict`) with `code: VERSION_MISMATCH`, and `IsVersionMismatchError` is the only
+check for it. A version mismatch is never a field error. A `MultiError` holding an internal
+failure is classified by that failure.
 
 ---
 
@@ -520,87 +481,8 @@ func (s *UserService) CreateUser(ctx context.Context, req CreateUserRequest) (*U
 
 ### HTTP Handler Integration
 
-```go
-package handler
-
-func (h *UserHandler) Create(c *gin.Context) {
-    var req CreateUserRequest
-    if err := c.ShouldBindJSON(&req); err != nil {
-        c.JSON(400, gin.H{"error": "Invalid JSON"})
-        return
-    }
-
-    user, err := h.service.CreateUser(c.Request.Context(), req)
-    if err != nil {
-        status := errortypes.HTTPStatus(err)
-
-        // Log server errors
-        if status >= 500 {
-            h.logger.Error("internal error", getLogFields(err))
-        }
-
-        c.JSON(status, err)
-        return
-    }
-
-    c.JSON(201, user)
-}
-
-func getLogFields(err error) map[string]any {
-    switch e := err.(type) {
-    case *errortypes.MultiError:
-        return e.LogFields()
-    case *errortypes.BusinessError:
-        return e.LogFields()
-    case *errortypes.DatabaseError:
-        return e.BaseError.LogFields()
-    default:
-        return map[string]any{"error": err.Error()}
-    }
-}
-```
-
-### Batch Processing with Error Limits
-
-```go
-func (s *ImportService) ImportUsers(ctx context.Context, records []UserRecord) (*ImportResult, error) {
-    // Limit errors to prevent huge responses
-    multiErr := errortypes.NewMultiErrorWithLimit(50)
-
-    var imported, skipped int
-
-    for i, record := range records {
-        if multiErr.IsFull() {
-            skipped = len(records) - i
-            break
-        }
-
-        recordErr := multiErr.WithIndex("records", i)
-
-        if err := record.Validate(recordErr); err != nil {
-            continue
-        }
-
-        if err := s.repo.Create(ctx, record.ToUser()); err != nil {
-            recordErr.Add("", errortypes.ErrSystemError, "Failed to import")
-            continue
-        }
-
-        imported++
-    }
-
-    result := &ImportResult{
-        Imported: imported,
-        Skipped:  skipped,
-    }
-
-    if multiErr.HasErrors() {
-        result.Errors = multiErr
-    }
-
-    return result, nil
-}
-```
+Handlers return the error to `helpers.ErrorHandler.HandleError`, which classifies, sanitizes,
+localizes and logs it; resolvers return it to gqlgen, whose presenter does the same.
 
 ---
 

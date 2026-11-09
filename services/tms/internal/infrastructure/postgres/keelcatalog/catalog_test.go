@@ -10,7 +10,8 @@ import (
 func TestTablesAreFoundByNameAndModel(t *testing.T) {
 	t.Parallel()
 
-	customers := MustNamed("customers")
+	customers, ok := Named("customers")
+	require.True(t, ok)
 	assert.Equal(t, "customers", customers.Name)
 
 	byModel, ok := ForModel(customers.Model)
@@ -19,5 +20,6 @@ func TestTablesAreFoundByNameAndModel(t *testing.T) {
 
 	_, ok = ForModel("nothing.Nothing")
 	assert.False(t, ok)
-	assert.Panics(t, func() { MustNamed("no_such_table") })
+	_, ok = Named("no_such_table")
+	assert.False(t, ok)
 }

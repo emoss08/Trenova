@@ -10,6 +10,8 @@ const PATHS = {
     </>
   ),
   home: <path d="M4 11l8-6.5 8 6.5V20H4z M10 20v-5h4v5" />,
+  stack: <path d="M12 4l8.5 4.5L12 13 3.5 8.5z M3.5 12.5L12 17l8.5-4.5 M3.5 16.5L12 21l8.5-4.5" />,
+  mail: <path d="M4 6h16v12H4z M4 7l8 6 8-6" />,
   radar: (
     <>
       <circle cx="12" cy="12" r="8" />

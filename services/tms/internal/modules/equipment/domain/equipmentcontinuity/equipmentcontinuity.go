@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*EquipmentContinuity)(nil)
+	_ validationframework.Entity = (*EquipmentContinuity)(nil)
 )
 
 type EquipmentType string

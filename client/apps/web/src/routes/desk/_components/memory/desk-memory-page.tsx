@@ -1,4 +1,5 @@
 "use no memo";
+import { MEMORY_CONTENT_LIMIT, memoryContentLimit } from "@/lib/memory-content-limit";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import {
   createDeskMemory,
@@ -352,7 +353,7 @@ export function DeskMemoryPage() {
             onChange={(event) => setAdd(event.target.value)}
             placeholder={t("Teach Desk something, e.g. “Granite pays by ACH only”")}
             aria-label={t("Add a memory")}
-            maxLength={4000}
+            maxLength={MEMORY_CONTENT_LIMIT}
           />
           <select
             value={addAudience}
@@ -548,7 +549,7 @@ function MemoryRowView({
             autoFocus
             value={editing}
             rows={2}
-            maxLength={4000}
+            maxLength={memoryContentLimit(row.memory.kind)}
             aria-label={t("Memory")}
             onChange={(event) => onDraft(event.target.value)}
             onKeyDown={(event) => {

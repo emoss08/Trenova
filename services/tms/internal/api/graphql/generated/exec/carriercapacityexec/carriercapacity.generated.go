@@ -380,7 +380,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_carrierCapacityPostings_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[QueryResolver](ec, "Query@carriercapacity").CarrierCapacityPostings(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput), fc.Args["carrierId"].(*string), fc.Args["openOnly"].(*bool))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@carriercapacity").CarrierCapacityPostings(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput), fc.Args["carrierId"].(*string), fc.Args["openOnly"].(*bool), fc.Args["originStateCode"].(*string), fc.Args["destinationStateCode"].(*string))
 				},
 				Marshal: gqlexec.Marshal(marshalNCarrierCapacityPostingConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐCarrierCapacityPostingConnection),
 			},
@@ -420,7 +420,7 @@ type MutationResolver interface {
 }
 
 type QueryResolver interface {
-	CarrierCapacityPostings(ctx context.Context, input gqlmodel.DataTableConnectionInput, carrierID *string, openOnly *bool) (*gqlmodel.CarrierCapacityPostingConnection, error)
+	CarrierCapacityPostings(ctx context.Context, input gqlmodel.DataTableConnectionInput, carrierID *string, openOnly *bool, originStateCode *string, destinationStateCode *string) (*gqlmodel.CarrierCapacityPostingConnection, error)
 	CarrierCapacityPosting(ctx context.Context, id string) (*carriercapacity.Posting, error)
 }
 
@@ -499,7 +499,7 @@ func field_Mutation_deleteCarrierCapacityPosting_args(ctx context.Context, ec *g
 }
 
 func field_Query_carrierCapacityPostings_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
-	args := make(map[string]any, 3)
+	args := make(map[string]any, 5)
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
 		func(ctx context.Context, v any) (gqlmodel.DataTableConnectionInput, error) {
 			return unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDataTableConnectionInput(ctx, ec, v)
@@ -524,6 +524,22 @@ func field_Query_carrierCapacityPostings_args(ctx context.Context, ec *gqlexec.E
 		return nil, err
 	}
 	args["openOnly"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "originStateCode",
+		func(ctx context.Context, v any) (*string, error) {
+			return unmarshalOString2ᚖstring(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["originStateCode"] = arg3
+	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "destinationStateCode",
+		func(ctx context.Context, v any) (*string, error) {
+			return unmarshalOString2ᚖstring(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["destinationStateCode"] = arg4
 	return args, nil
 }
 

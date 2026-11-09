@@ -163,7 +163,7 @@ func buildShares(
 	}
 
 	if multiErr.HasErrors() {
-		return nil, multiErr
+		return nil, multiErr.Err()
 	}
 
 	return shares, nil

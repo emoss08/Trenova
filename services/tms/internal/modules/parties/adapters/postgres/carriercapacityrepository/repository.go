@@ -64,6 +64,10 @@ func listOptions(req *carriercapacityports.ListCarrierCapacityPostingsRequest) [
 	return []keel.Pred{
 		keel.When(req.CarrierID.IsNotNil(), p.CarrierID.Eq(req.CarrierID)),
 		keel.When(req.OpenAt > 0, p.AvailableTo.Gte(req.OpenAt)),
+		keel.When(req.OriginStateCode != "",
+			p.OriginState().Abbreviation.Eq(req.OriginStateCode)),
+		keel.When(req.DestinationStateCode != "",
+			p.DestinationState().Abbreviation.Eq(req.DestinationStateCode)),
 	}
 }
 

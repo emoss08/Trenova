@@ -15,7 +15,7 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*Guidance)(nil)
+	_ validationframework.Entity = (*Guidance)(nil)
 )
 
 const (

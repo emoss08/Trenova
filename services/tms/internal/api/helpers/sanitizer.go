@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/fieldpath"
 	"github.com/go-playground/validator/v10"
 )
 
@@ -26,6 +27,19 @@ func (s *Sanitizer) SanitizeMessage(err error, problemType ProblemType) Message 
 }
 
 func MessageOf(err error) Message {
+	if multiErr, ok := errortypes.RefusalOf(err); ok && len(multiErr.Errors) > 0 {
+		parts := make([]Message, 0, len(multiErr.Errors))
+		seen := make(map[string]struct{}, len(multiErr.Errors))
+		for _, fieldErr := range multiErr.Errors {
+			if _, dup := seen[fieldErr.Message]; dup {
+				continue
+			}
+			seen[fieldErr.Message] = struct{}{}
+			parts = append(parts, Message{Text: fieldErr.Message, Args: fieldErr.Args})
+		}
+		return Message{Parts: parts}
+	}
+
 	var businessErr *errortypes.BusinessError
 	if errors.As(err, &businessErr) {
 		return Message{
@@ -73,6 +87,32 @@ func (s *Sanitizer) ExtractParams(err error) map[string]string {
 	return nil
 }
 
+func (s *Sanitizer) ExtractAdvisories(err error) []Advisory {
+	multiErr, ok := errortypes.RefusalOf(err)
+	if !ok {
+		return nil
+	}
+
+	advisories := multiErr.AllAdvisories()
+	if len(advisories) == 0 {
+		return nil
+	}
+
+	result := make([]Advisory, 0, len(advisories))
+	for _, advisory := range advisories {
+		result = append(result, Advisory{
+			Path:     advisory.Path,
+			Code:     string(advisory.Code),
+			Message:  advisory.Message,
+			Args:     advisory.Args,
+			Severity: advisory.Severity,
+			RuleKey:  advisory.RuleKey,
+		})
+	}
+
+	return result
+}
+
 func (s *Sanitizer) ExtractConflict(err error) *errortypes.EditConflict {
 	conflict, _ := errortypes.EditConflictOf(err)
 	return conflict
@@ -91,11 +131,14 @@ func (s *Sanitizer) extractMultiError(err error) ([]ValidationError, bool) {
 	if !errors.As(err, &multiErr) {
 		return nil, false
 	}
+	if multiErr.Internal() != nil {
+		return nil, true
+	}
 
 	result := make([]ValidationError, 0, len(multiErr.Errors))
 	for _, e := range multiErr.Errors {
 		result = append(result, ValidationError{
-			Field:    e.Field,
+			Path:     e.Path,
 			Message:  e.Message,
 			Args:     e.Args,
 			Code:     string(e.Code),
@@ -113,7 +156,7 @@ func (s *Sanitizer) extractValidationError(err error) ([]ValidationError, bool) 
 	}
 
 	return []ValidationError{{
-		Field:    validErr.Field,
+		Path:     validErr.Path,
 		Message:  validErr.Message,
 		Args:     validErr.Args,
 		Code:     string(validErr.Code),
@@ -131,9 +174,10 @@ func (s *Sanitizer) extractValidatorErrors(err error) ([]ValidationError, bool) 
 	result := make([]ValidationError, 0, len(validationErrs))
 	for _, e := range validationErrs {
 		result = append(result, ValidationError{
-			Field:    toLowerFirst(e.Field()),
+			Path:     fieldpath.Of(fieldpath.Key(toLowerFirst(e.Field()))),
 			Message:  formatValidatorMessage(e),
-			Code:     strings.ToUpper(e.Tag()),
+			Args:     validatorMessageArgs(e),
+			Code:     string(validatorCode(e.Tag())),
 			Location: "body",
 		})
 	}
@@ -147,7 +191,6 @@ func (s *Sanitizer) extractBusinessError(err error) ([]ValidationError, bool) {
 	}
 
 	return []ValidationError{{
-		Field:    "business",
 		Message:  businessErr.Message,
 		Args:     businessErr.Args,
 		Details:  businessErr.Details,
@@ -163,7 +206,7 @@ func (s *Sanitizer) extractRateLimitError(err error) ([]ValidationError, bool) {
 	}
 
 	return []ValidationError{{
-		Field:    rateLimitErr.Field,
+		Path:     fieldpath.Parse(rateLimitErr.Field),
 		Message:  rateLimitErr.Message,
 		Args:     rateLimitErr.Args,
 		Code:     string(rateLimitErr.Code),
@@ -178,25 +221,54 @@ func toLowerFirst(s string) string {
 	return strings.ToLower(s[:1]) + s[1:]
 }
 
-func formatValidatorMessage(e validator.FieldError) string {
-	messages := map[string]string{
-		"required": "This field is required",
-		"email":    "Must be a valid email address",
-		"min":      "Value is below the minimum allowed",
-		"max":      "Value exceeds the maximum allowed",
-		"uuid":     "Must be a valid UUID",
-	}
-
-	if msg, ok := messages[e.Tag()]; ok {
-		return msg
-	}
-
-	switch e.Tag() {
-	case "len":
-		return "Value must be exactly " + e.Param() + " characters"
-	case "oneof":
-		return "Must be one of: " + e.Param()
+func validatorCode(tag string) errortypes.ErrorCode {
+	switch tag {
+	case "required", "required_if", "required_unless", "required_with", "required_without":
+		return errortypes.ErrRequired
+	case "len", "min", "max":
+		return errortypes.ErrInvalidLength
+	case "email", "uuid", "uuid4", "url", "uri", "e164", "datetime", "numeric", "number",
+		"alpha", "alphanum", "hexcolor", "ip", "hostname":
+		return errortypes.ErrInvalidFormat
 	default:
-		return "Validation failed on '" + e.Tag() + "' constraint"
+		return errortypes.ErrInvalid
 	}
+}
+
+type validatorMessage struct {
+	Message  string
+	WithArgs bool
+}
+
+var validatorMessages = map[string]validatorMessage{
+	"required":         {Message: "This field is required"},
+	"required_if":      {Message: "This field is required"},
+	"required_unless":  {Message: "This field is required"},
+	"required_with":    {Message: "This field is required"},
+	"required_without": {Message: "This field is required"},
+	"email":            {Message: "Must be a valid email address"},
+	"uuid":             {Message: "Must be a valid UUID"},
+	"uuid4":            {Message: "Must be a valid UUID"},
+	"min":              {Message: "Must be at least {0}", WithArgs: true},
+	"max":              {Message: "Must be no more than {0}", WithArgs: true},
+	"len":              {Message: "Must be exactly {0} characters", WithArgs: true},
+	"oneof":            {Message: "Must be one of: {0}", WithArgs: true},
+}
+
+var invalidValidatorValue = validatorMessage{Message: "This value is not valid"}
+
+func formatValidatorMessage(e validator.FieldError) string {
+	if message, ok := validatorMessages[e.Tag()]; ok {
+		return message.Message
+	}
+
+	return invalidValidatorValue.Message
+}
+
+func validatorMessageArgs(e validator.FieldError) []any {
+	if message, ok := validatorMessages[e.Tag()]; ok && message.WithArgs {
+		return []any{e.Param()}
+	}
+
+	return nil
 }

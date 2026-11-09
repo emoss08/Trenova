@@ -2,7 +2,6 @@ package employment_test
 
 import (
 	"testing"
-	"time"
 
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/employment"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
@@ -221,21 +220,4 @@ func TestWorkerEmploymentEvent_Validate(t *testing.T) {
 		fields[fieldErr.Field] = true
 	}
 	assert.False(t, fields["reason"], "promotions may omit the reason")
-}
-
-func TestTenure(t *testing.T) {
-	const day = int64(86400)
-	now := int64(1_800_000_000)
-	assert.Equal(t, time.Duration(0), employment.Tenure(0, nil, now))
-	assert.Equal(t, 10*24*time.Hour, employment.Tenure(now-10*day, nil, now))
-	term := now - 4*day
-	assert.Equal(t, 6*24*time.Hour, employment.Tenure(now-10*day, &term, now))
-	future := now + 5*day
-	assert.Equal(
-		t,
-		10*24*time.Hour,
-		employment.Tenure(now-10*day, &future, now),
-		"a future end date is ignored",
-	)
-	assert.Equal(t, time.Duration(0), employment.Tenure(now+day, nil, now))
 }

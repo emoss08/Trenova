@@ -22,8 +22,8 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*RateZone)(nil)
-	_ domaintypes.PostgresSearchable     = (*RateZone)(nil)
+	_ validationframework.Entity     = (*RateZone)(nil)
+	_ domaintypes.PostgresSearchable = (*RateZone)(nil)
 )
 
 const (

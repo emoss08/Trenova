@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*LedgerEntry)(nil)
+	_ validationframework.Entity = (*LedgerEntry)(nil)
 )
 
 type LedgerEntry struct {

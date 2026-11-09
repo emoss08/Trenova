@@ -2,6 +2,7 @@ package customfieldservice
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -65,7 +66,7 @@ func (s *ValuesService) SaveNamed(
 	resourceType string,
 	resourceID string,
 	values map[string]any,
-) *errortypes.MultiError {
+) error {
 	multiErr := errortypes.NewMultiError()
 	definitions, err := s.definitionRepo.GetActiveByResourceType(
 		ctx,
@@ -76,12 +77,8 @@ func (s *ValuesService) SaveNamed(
 	)
 	if err != nil {
 		s.l.Error("failed to fetch custom field definitions", zap.Error(err))
-		multiErr.Add(
-			"customFields",
-			errortypes.ErrSystemError,
-			"Failed to fetch custom field definitions",
-		)
-		return multiErr
+		multiErr.AddInternal(fmt.Errorf("failed to fetch custom field definitions: %w", err))
+		return multiErr.Err()
 	}
 	existing, err := s.valueRepo.GetByResource(
 		ctx,
@@ -93,12 +90,8 @@ func (s *ValuesService) SaveNamed(
 	)
 	if err != nil {
 		s.l.Error("failed to get custom field values", zap.Error(err))
-		multiErr.Add(
-			"customFields",
-			errortypes.ErrSystemError,
-			"Failed to get custom field values",
-		)
-		return multiErr
+		multiErr.AddInternal(fmt.Errorf("failed to get custom field values: %w", err))
+		return multiErr.Err()
 	}
 
 	byName := make(map[string]*customfield.CustomFieldDefinition, len(definitions))
@@ -129,7 +122,7 @@ func (s *ValuesService) SaveNamed(
 		merged[definition.ID.String()] = value
 	}
 	if multiErr.HasErrors() {
-		return multiErr
+		return multiErr.Err()
 	}
 
 	if err = s.valueRepo.Upsert(ctx, &customfieldports.UpsertCustomFieldValuesRequest{
@@ -144,12 +137,8 @@ func (s *ValuesService) SaveNamed(
 			zap.String("resourceType", resourceType),
 			zap.String("resourceID", resourceID),
 		)
-		multiErr.Add(
-			"customFields",
-			errortypes.ErrSystemError,
-			"Failed to save custom field values",
-		)
-		return multiErr
+		multiErr.AddInternal(fmt.Errorf("failed to save custom field values: %w", err))
+		return multiErr.Err()
 	}
 	return nil
 }

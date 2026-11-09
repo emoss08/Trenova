@@ -161,6 +161,10 @@ describe("factoring agreement form", () => {
         { id: "t1", daysFrom: 0, daysTo: 30, rateBp: 300, flatMinor: 250 },
       ],
       documentTypes: [{ id: "dt_1", code: "POD", name: "Proof of delivery", color: "" }],
+      dueFromFactorAccount: null,
+      feeExpenseAccount: null,
+      liabilityAccount: null,
+      cashAccount: null,
     } satisfies FactoringAgreement;
 
     expect(agreementToFormValues(agreement)).toEqual({

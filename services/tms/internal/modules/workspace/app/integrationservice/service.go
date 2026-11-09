@@ -678,11 +678,7 @@ func validateURLFields(
 			)
 		}
 	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 func requireSecretsForNewTarget(
@@ -711,11 +707,7 @@ func requireSecretsForNewTarget(
 			field.Label,
 		)
 	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 func targetChanged(spec integration.IntegrationSpec, existing, final map[string]any) bool {

@@ -342,11 +342,11 @@ func linkState(link *customertracking.Link) map[string]any {
 	}
 }
 
-func validateIssueRequest(req *customertrackingports.IssueLinkRequest) *errortypes.MultiError {
+func validateIssueRequest(req *customertrackingports.IssueLinkRequest) error {
 	multiErr := errortypes.NewMultiError()
 	if req == nil {
 		multiErr.Add("", errortypes.ErrInvalid, "Request is required")
-		return multiErr
+		return multiErr.Err()
 	}
 	if req.TenantInfo.OrgID.IsNil() || req.TenantInfo.BuID.IsNil() {
 		multiErr.Add(
@@ -371,8 +371,5 @@ func validateIssueRequest(req *customertrackingports.IssueLinkRequest) *errortyp
 			)
 		}
 	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }

@@ -386,6 +386,7 @@ describe("AccountingIntegrationModal", () => {
         detail: "Validation failed",
         errors: [
           {
+            path: ["clientSecret"],
             field: "clientSecret",
             code: "INVALID",
             message: "QuickBooks Online did not accept this client ID and secret.",

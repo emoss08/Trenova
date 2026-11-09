@@ -196,7 +196,7 @@ func DefaultSafetyPoints(
 }
 
 var (
-	_ validationframework.TenantedEntity = (*WorkerSafetyEvent)(nil)
+	_ validationframework.Entity = (*WorkerSafetyEvent)(nil)
 )
 
 type WorkerSafetyEvent struct {

@@ -99,7 +99,7 @@ func (r ClearinghouseResult) Prohibits() bool {
 func (r ClearinghouseResult) IsResolved() bool { return r != ClearinghouseResultPending }
 
 var (
-	_ validationframework.TenantedEntity = (*WorkerClearinghouseQuery)(nil)
+	_ validationframework.Entity = (*WorkerClearinghouseQuery)(nil)
 )
 
 type WorkerClearinghouseQuery struct {

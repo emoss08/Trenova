@@ -101,7 +101,7 @@ export function TimeOfDayField<T extends FieldValues>({
                 }
               }}
               className={cn(
-                "ui-field ui-container-focus-ring relative flex h-7 w-full min-w-0 items-center gap-px pr-8 pl-1.5 tabular-nums md:text-xs",
+                "relative flex h-7 w-full min-w-0 items-center gap-px ui-field ui-container-focus-ring pr-8 pl-1.5 tabular-nums md:text-xs",
                 disabled && "cursor-not-allowed opacity-50",
                 fieldState.invalid && fieldInvalidClass,
                 className,
@@ -158,7 +158,7 @@ export function TimeOfDayField<T extends FieldValues>({
                       size="icon"
                       variant="ghost"
                       disabled={disabled}
-                      className="text-muted-foreground absolute top-1/2 right-2 size-5 -translate-y-1/2 [&>svg]:size-3"
+                      className="absolute top-1/2 right-2 size-5 -translate-y-1/2 text-muted-foreground [&>svg]:size-3"
                     />
                   }
                 >

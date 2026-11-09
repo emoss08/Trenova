@@ -1,6 +1,5 @@
 import type { ChangeFields } from "@/components/form-changes";
 import { FormSaveDock } from "@/components/form-save-dock";
-import { UnsavedChangesGuard } from "@/components/unsaved-changes-guard";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { usePermission } from "@/hooks/use-permission";
 import type { FactoringCompanyRecord } from "@/lib/graphql/factoring";
@@ -12,7 +11,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Form } from "@trenova/shared/components/ui/form";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
 import type { FactoringCompanyTab } from "../use-factoring-company-state";
 import { FactoringCompanyEditor } from "./factoring-company-editor";
@@ -60,10 +59,16 @@ export default function FactoringCompanyDetails({
   company,
   recourseFromAgreement,
   onTab,
+  onDirtyChange,
 }: {
   company: FactoringCompanyRecord;
   recourseFromAgreement: boolean;
   onTab: (tab: FactoringCompanyTab) => void;
+  /**
+   * Hears whether edits are unsaved. The page keeps this tab mounted when another is open, so it
+   * guards leaving and marks the tab rather than this tab, whose effects stop while hidden.
+   */
+  onDirtyChange: (dirty: boolean) => void;
 }) {
   const t = useT();
   const queryClient = useQueryClient();
@@ -82,18 +87,26 @@ export default function FactoringCompanyDetails({
     formState: { isDirty },
   } = form;
 
+  // The form follows the stored record only when it moves to a new version, so neither a refetch
+  // of the same version nor the tab being shown again (Activity re-runs effects) wipes edits in
+  // progress. The ref survives the tab being hidden; an effect alone would reset on every return.
+  const loadedVersion = useRef(`${company.id}:${company.version}`);
   useEffect(() => {
+    const version = `${company.id}:${company.version}`;
+    if (loadedVersion.current === version) return;
+    loadedVersion.current = version;
     reset(factoringCompanyFormValues(company));
     setState(storedState(company));
-    // The form follows the stored record only when it moves to a new version, so a refetch of the
-    // same version never wipes edits in progress.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [company.id, company.version, reset]);
+  }, [company, reset]);
 
+  // A reset (or picking the stored state again) puts the stored state's abbreviation and country
+  // back on the invoice preview; adjusted during render, not in an effect.
   const stateId = useWatch({ control, name: "stateId" });
-  useEffect(() => {
+  const [shownStateId, setShownStateId] = useState(stateId);
+  if (stateId !== shownStateId) {
+    setShownStateId(stateId);
     if (stateId === company.stateId) setState(storedState(company));
-  }, [stateId, company]);
+  }
 
   const mutation = useApiMutation<
     Awaited<ReturnType<typeof updateFactoringCompany>>,
@@ -114,6 +127,11 @@ export default function FactoringCompanyDetails({
       void queryClient.invalidateQueries({ queryKey: ["factoring-company-list"] });
     },
   });
+
+  const unsaved = isDirty && !mutation.isPending;
+  useEffect(() => {
+    onDirtyChange(unsaved);
+  }, [unsaved, onDirtyChange]);
 
   const changeFields: ChangeFields = {
     status: { label: t("Status") },
@@ -150,7 +168,6 @@ export default function FactoringCompanyDetails({
         />
         {canUpdate ? <FormSaveDock changeFields={changeFields} /> : null}
       </Form>
-      <UnsavedChangesGuard when={isDirty && !mutation.isPending} />
     </FormProvider>
   );
 }

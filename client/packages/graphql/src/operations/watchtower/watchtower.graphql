@@ -100,11 +100,13 @@ fragment WatchtowerCountsFields on WatchtowerCounts {
   unassigned
   mine
   mineOverdue
+  withAgents
   seenAt
   byKind {
     kind
     label
     count
+    deskLens
   }
 }
 

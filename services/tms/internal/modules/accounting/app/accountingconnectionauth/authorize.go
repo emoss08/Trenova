@@ -64,10 +64,7 @@ func validateCompletion(
 			"The company id returned by the provider is not valid",
 		)
 	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }
 
 type CompanyChoiceOffer struct {
@@ -102,10 +99,7 @@ func validateChoice(req *accountingconnectionports.ChooseAccountingCompanyReques
 	if !accountingconnectionkit.RealmIDPattern.MatchString(req.CompanyID) {
 		multiErr.Add("companyId", errortypes.ErrInvalid, "Choose one of the offered companies")
 	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }
 
 func splitChoice(

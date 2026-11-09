@@ -223,6 +223,7 @@ export function useRealtimeConnection() {
               t,
             });
           } else if (isForCurrentUser && notif.title) {
+            const title = notif.title;
             deliverToDesktop(notif, () => {
               const link = notif.data?.link;
               if (typeof link === "string" && link.startsWith("/")) {
@@ -244,7 +245,7 @@ export function useRealtimeConnection() {
                   : null;
 
               const announce = () =>
-                toast.info(notif.title, {
+                toast.info(title, {
                   description: notif.message,
                   action: runId
                     ? {

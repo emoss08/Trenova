@@ -547,13 +547,10 @@ func (s *Service) populateCurrentRate(
 	}
 }
 
-func validateIndex(entity *fuelsurcharge.FuelIndex) *errortypes.MultiError {
+func validateIndex(entity *fuelsurcharge.FuelIndex) error {
 	multiErr := errortypes.NewMultiError()
 	entity.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }
 
 type auditParams struct {

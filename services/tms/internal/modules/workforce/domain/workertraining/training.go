@@ -116,9 +116,9 @@ func (s TrainingStatus) IsOpen() bool {
 const dueSoonDays = int64(7)
 
 var (
-	_ domaintypes.PostgresSearchable     = (*TrainingCourse)(nil)
-	_ pagination.CursorEntity            = (*TrainingCourse)(nil)
-	_ validationframework.TenantedEntity = (*TrainingCourse)(nil)
+	_ domaintypes.PostgresSearchable = (*TrainingCourse)(nil)
+	_ pagination.CursorEntity        = (*TrainingCourse)(nil)
+	_ validationframework.Entity     = (*TrainingCourse)(nil)
 )
 
 type TrainingCourse struct {
@@ -368,7 +368,7 @@ func (TrainingCourse) Constraints() []keel.Constraint {
 }
 
 var (
-	_ validationframework.TenantedEntity = (*WorkerTrainingRecord)(nil)
+	_ validationframework.Entity = (*WorkerTrainingRecord)(nil)
 )
 
 type WorkerTrainingRecord struct {

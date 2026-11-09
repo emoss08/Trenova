@@ -27,9 +27,9 @@ const (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*FactoringCompany)(nil)
-	_ domaintypes.PostgresSearchable     = (*FactoringCompany)(nil)
-	_ pagination.CursorEntity            = (*FactoringCompany)(nil)
+	_ validationframework.Entity     = (*FactoringCompany)(nil)
+	_ domaintypes.PostgresSearchable = (*FactoringCompany)(nil)
+	_ pagination.CursorEntity        = (*FactoringCompany)(nil)
 )
 
 // Factors that buy customer invoices and the remittance details invoices carry to them

@@ -12,8 +12,8 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*DocumentTemplateAssignment)(nil)
-	_ domaintypes.PostgresSearchable     = (*DocumentTemplateAssignment)(nil)
+	_ validationframework.Entity     = (*DocumentTemplateAssignment)(nil)
+	_ domaintypes.PostgresSearchable = (*DocumentTemplateAssignment)(nil)
 )
 
 // DocumentTemplateAssignment points one customer at one template for one kind.

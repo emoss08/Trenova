@@ -77,9 +77,8 @@ func (a *Activities) FinalizeEditActivity(
 
 func classify(err error) error {
 	var validation *errortypes.Error
-	var multi *errortypes.MultiError
 	var business *errortypes.BusinessError
-	if errors.As(err, &validation) || errors.As(err, &multi) || errors.As(err, &business) {
+	if errors.As(err, &validation) || errortypes.IsMultiError(err) || errors.As(err, &business) {
 		return temporal.NewNonRetryableApplicationError(err.Error(), ErrTypeNotRunnable, err)
 	}
 	return err

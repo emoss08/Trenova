@@ -122,7 +122,7 @@ func (s DisciplinaryStatus) IsValid() bool {
 const DisciplinaryLookbackMonths = 12
 
 var (
-	_ validationframework.TenantedEntity = (*WorkerDisciplinaryAction)(nil)
+	_ validationframework.Entity = (*WorkerDisciplinaryAction)(nil)
 )
 
 type WorkerDisciplinaryAction struct {
@@ -334,7 +334,7 @@ func (k RecognitionKind) IsValid() bool {
 }
 
 var (
-	_ validationframework.TenantedEntity = (*WorkerRecognition)(nil)
+	_ validationframework.Entity = (*WorkerRecognition)(nil)
 )
 
 type WorkerRecognition struct {

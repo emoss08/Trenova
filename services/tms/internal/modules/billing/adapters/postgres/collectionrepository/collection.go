@@ -98,9 +98,7 @@ func (r *repository) SaveAccount(
 			acc.PromiseActivityID,
 		)
 		if dberror.IsVersionConflict(err) {
-			return nil, errortypes.NewValidationError(
-				"version",
-				errortypes.ErrVersionMismatch,
+			return nil, errortypes.NewVersionMismatchError(
 				"Someone else updated this account at the same time. Reload it and try again.",
 			)
 		}

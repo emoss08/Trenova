@@ -17,9 +17,9 @@ import (
 )
 
 var (
-	_ domaintypes.PostgresSearchable     = (*WorkerPTO)(nil)
-	_ pagination.CursorEntity            = (*WorkerPTO)(nil)
-	_ validationframework.TenantedEntity = (*WorkerPTO)(nil)
+	_ domaintypes.PostgresSearchable = (*WorkerPTO)(nil)
+	_ pagination.CursorEntity        = (*WorkerPTO)(nil)
+	_ validationframework.Entity     = (*WorkerPTO)(nil)
 )
 
 // Time-off requests and the days booked against them

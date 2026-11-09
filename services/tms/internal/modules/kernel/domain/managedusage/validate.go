@@ -44,8 +44,5 @@ func (s *State) Validate() error {
 			field.Add("allowance", errortypes.ErrInvalid, "The allowance cannot be negative")
 		}
 	}
-	if me.HasErrors() {
-		return me
-	}
-	return nil
+	return me.Err()
 }

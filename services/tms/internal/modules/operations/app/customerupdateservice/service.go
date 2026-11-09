@@ -89,11 +89,7 @@ func (r *NotifyDelayRequest) validate() error {
 			fmt.Sprintf("Message must be at most %d characters", MaxMessageLength),
 		)
 	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 func (s *Service) NotifyDelay(

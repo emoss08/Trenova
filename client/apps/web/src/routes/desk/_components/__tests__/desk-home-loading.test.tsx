@@ -43,6 +43,36 @@ vi.mock("@/lib/queries/assistant", async (importOriginal) => ({
   },
 }));
 
+const pending = vi.hoisted(() => () => new Promise(() => undefined));
+
+vi.mock("@/lib/queries/desk-attention", () => ({
+  deskAttention: { list: () => ({ queryKey: ["desk-attention"], queryFn: pending }) },
+}));
+vi.mock("@/lib/queries/desk-activity", () => ({
+  deskActivity: { since: () => ({ queryKey: ["desk-activity"], queryFn: pending }) },
+}));
+vi.mock("@/lib/queries/watchtower", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/queries/watchtower")>();
+  return {
+    ...actual,
+    watchtower: {
+      ...actual.watchtower,
+      counts: () => ({ queryKey: ["watchtower-counts"], queryFn: pending }),
+      cleared: () => ({ queryKey: ["watchtower-cleared"], queryFn: pending }),
+    },
+  };
+});
+vi.mock("@/lib/queries/inbox", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/queries/inbox")>();
+  return {
+    ...actual,
+    inbox: {
+      ...actual.inbox,
+      briefing: () => ({ queryKey: ["inbox-briefing"], queryFn: pending }),
+    },
+  };
+});
+
 vi.mock("../decisions/use-pending-decisions", () => ({
   usePendingDecisionSummary: (enabled: boolean) =>
     enabled && state.summary.isPending
@@ -66,6 +96,11 @@ vi.mock("@/components/assistant/use-askable-agent", () => ({
     noneAvailable: false,
   }),
 }));
+
+/** This morning's briefing as the schema returns it: sections and withheld are always lists. */
+function briefingOf(fields: { headline: string; withheldSections?: unknown[] }) {
+  return { sections: [], withheldSections: [], ...fields };
+}
 
 const agent = {
   id: "agent-1",
@@ -155,7 +190,7 @@ describe("Desk home headline while its figures load", () => {
   it("opens on the briefing's headline when the morning's briefing wrote one", async () => {
     state.briefing = {
       settled: true,
-      value: { headline: "Three loads sit under a storm warning." },
+      value: briefingOf({ headline: "Three loads sit under a storm warning." }),
     };
     renderHome();
 
@@ -188,7 +223,7 @@ describe("Desk home briefing cut to the reader's access", () => {
   it("says nothing about access when the reader sees the whole briefing", async () => {
     state.briefing = {
       settled: true,
-      value: { headline: "Three loads sit under a storm warning.", withheldSections: [] },
+      value: briefingOf({ headline: "Three loads sit under a storm warning." }),
     };
     renderHome();
 
@@ -199,13 +234,13 @@ describe("Desk home briefing cut to the reader's access", () => {
   it("names the sections left out and falls back to the computed headline", async () => {
     state.briefing = {
       settled: true,
-      value: {
+      value: briefingOf({
         headline: "",
         withheldSections: [
           { key: "Billing", title: "Billing queue", partial: false },
           { key: "Cash", title: "Cash received yesterday", partial: false },
         ],
-      },
+      }),
     };
     renderHome();
 
@@ -220,10 +255,10 @@ describe("Desk home briefing cut to the reader's access", () => {
   it("says which sections it shows only in part", async () => {
     state.briefing = {
       settled: true,
-      value: {
+      value: briefingOf({
         headline: "",
         withheldSections: [{ key: "Attention", title: "Needs attention", partial: true }],
-      },
+      }),
     };
     renderHome();
 
@@ -237,13 +272,13 @@ describe("Desk home briefing cut to the reader's access", () => {
   it("names both what it leaves out and what it shows in part", async () => {
     state.briefing = {
       settled: true,
-      value: {
+      value: briefingOf({
         headline: "",
         withheldSections: [
           { key: "Exceptions", title: "Critical", partial: true },
           { key: "Cash", title: "Cash received yesterday", partial: false },
         ],
-      },
+      }),
     };
     renderHome();
 

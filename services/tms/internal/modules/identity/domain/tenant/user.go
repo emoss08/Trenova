@@ -52,8 +52,8 @@ func (om *OrganizationMembership) BeforeCreate(ctx context.Context) error {
 }
 
 var (
-	_ domaintypes.PostgresSearchable     = (*User)(nil)
-	_ validationframework.TenantedEntity = (*User)(nil)
+	_ domaintypes.PostgresSearchable = (*User)(nil)
+	_ validationframework.Entity     = (*User)(nil)
 )
 
 const (

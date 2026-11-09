@@ -2582,8 +2582,6 @@ enum AgentReflectionSkip {
 }
 
 enum AgentReflectionSignalKind {
-  ToolRecovered
-  ToolFailed
   PersonCorrected
   StandingRequest
   ProposalModified
@@ -6967,6 +6965,7 @@ enum AIUsageFeature {
   AccountingMapping
   FactoringRemittanceExtract
   AgentReflection
+  AgentMemoryConsolidation
   AgentDrafting
   AgentProfile
   AgentRecommendation
@@ -9053,6 +9052,10 @@ extend type Query {
     carrierId: ID
     "Only postings whose window has not closed."
     openOnly: Boolean = false
+    "Only postings picking up in this state, by its two-letter code such as TX."
+    originStateCode: String
+    "Only postings headed to this state, by its two-letter code such as GA."
+    destinationStateCode: String
   ): CarrierCapacityPostingConnection!
   carrierCapacityPosting(id: ID!): CarrierCapacityPosting
 }
@@ -12273,6 +12276,139 @@ extend type Mutation {
   decideAgentProposals(ids: [ID!]!, input: DecideAgentProposalsInput!): [AgentProposalDecisionResult!]!
 }
 `, BuiltIn: false},
+	{Name: "../schema/desk_attention.graphqls", Input: `"Which of the Desk's queues an item belongs to, by what raised it. Everything is all of them."
+enum DeskLens {
+  Everything
+  Watchtower
+  Triage
+  Decisions
+}
+
+"""
+A business record the Desk groups work by. Its label, subtitle and status are read
+with the reader's access and are empty when they may not read this kind of record:
+it is counted, never named.
+"""
+type DeskRecord {
+  "The record kind, as the record-link registry names it: shipment, customer, worker."
+  kind: String!
+  "What one record of this kind is called in a sentence."
+  noun: String!
+  id: ID!
+  label: String!
+  subtitle: String!
+  status: String!
+  readable: Boolean!
+}
+
+"""
+One row of Needs you: every open item about one record, soonest deadline first.
+A shipment's late warning, the customer's email about it and the plan to recover
+it are one row.
+"""
+type DeskAttentionGroup {
+  "The record's id, or the item's own id when it is about nothing beyond itself."
+  key: ID!
+  "Null when the item is about nothing beyond itself."
+  record: DeskRecord
+  "The most severe of its items."
+  severity: WatchtowerSeverity!
+  "The soonest deadline among its items."
+  dueAt: Timestamp
+  dueLabel: String
+  "True when any of its items is new to the reader."
+  unseen: Boolean!
+  items: [WatchtowerItem!]!
+}
+
+"Open items in each of the Desk's lenses, as the reader may see them."
+type DeskLensCounts {
+  everything: Int!
+  watchtower: Int!
+  triage: Int!
+  decisions: Int!
+}
+
+type DeskAttention {
+  groups: [DeskAttentionGroup!]!
+  counts: DeskLensCounts!
+  "True when more records wait than the first page holds."
+  hasMore: Boolean!
+  "Where the reader's unseen line sits."
+  seenAt: Timestamp!
+}
+
+input DeskAttentionInput {
+  "Rows with at least one item in this lens; each row still shows all its items."
+  lens: DeskLens = Everything
+  "Rows to read, at most 100."
+  first: Int = 50
+  "One record's row, for its case: every open item about it."
+  recordId: ID
+}
+
+"How a write an agent made ended."
+enum DeskActivityOutcome {
+  "Ran without asking, under a tool AI control lets run on its own."
+  OnItsOwn
+  "Ran after a person approved it."
+  Approved
+  "Previewed in shadow or simulation and never made."
+  Previewed
+  "Did not go through."
+  Failed
+}
+
+"""
+One line of Nova handled: a write, or a run of the same write over several records,
+one plan's steps, as the server recorded it settling. A label never claims more than
+the record of the write says.
+"""
+type DeskActivityEntry {
+  id: ID!
+  outcome: DeskActivityOutcome!
+  "When the newest write in the line settled."
+  at: Timestamp!
+  agent: AgentDefinition
+  runId: ID!
+  planId: ID
+  title: String!
+  "Why the agent made it, or why it did not go through."
+  detail: String!
+  "How many writes the line folds."
+  count: Int!
+  records: [DeskRecord!]!
+  "Records past the first five."
+  recordsMore: Int!
+  "Who approved it; null for what ran on its own or was only previewed."
+  decidedBy: User
+  proposalIds: [ID!]!
+}
+
+type DeskActivity {
+  entries: [DeskActivityEntry!]!
+  hasMore: Boolean!
+}
+
+extend type WatchtowerKindSummary {
+  "The Desk lens items of this kind are filed under."
+  deskLens: DeskLens!
+}
+
+extend type WatchtowerItem {
+  "The Desk lens the item is filed under."
+  deskLens: DeskLens!
+  "The business record the item is about, which the Desk groups by."
+  aboutId: ID
+}
+
+extend type Query {
+  "Needs you: what waits on people, one row per record, soonest deadline first."
+  deskAttention(input: DeskAttentionInput!): DeskAttention!
+  "Nova handled: the writes agents settled since a moment at most 31 days ago, newest first."
+  deskActivity(since: Timestamp!, first: Int = 20): DeskActivity!
+}
+`, BuiltIn: false},
 	{Name: "../schema/desk_board.graphqls", Input: `"""
 A board an agent laid out in a conversation, read now with the reader's own
 access: its words as the agent wrote them, and each block's figures, rows,
@@ -12359,6 +12495,33 @@ type DeskBoardRow {
   subtitle: String!
   status: String!
   measure: DeskBoardRowMeasure
+}
+
+"One thing open about a record on a work block, as Needs you holds it."
+type DeskBoardWorkSignal {
+  lens: DeskLens!
+  title: String!
+  "bad, warn or info, from the item's severity."
+  tone: String!
+  dueAt: Timestamp
+}
+
+"A record on a work block with everything open about it, soonest deadline first."
+type DeskBoardWorkRow {
+  row: DeskBoardRow!
+  signals: [DeskBoardWorkSignal!]!
+  tone: String!
+  dueAt: Timestamp
+}
+
+"""
+A button an actions block offers. It sends its request as the person's own message
+into the board's conversation and changes nothing itself.
+"""
+type DeskBoardAction {
+  label: String!
+  ask: String!
+  records: [DeskBoardRow!]!
 }
 
 type DeskBoardFigure {
@@ -12451,6 +12614,8 @@ type DeskBoardBlock {
   text: [DeskBoardSegment!]!
   noteTone: String!
   chips: [DeskBoardRow!]!
+  work: [DeskBoardWorkRow!]!
+  actions: [DeskBoardAction!]!
 }
 
 extend type Query {
@@ -33491,6 +33656,8 @@ type WatchtowerCounts {
   mine: Int!
   "Owned by this reader and overdue."
   mineOverdue: Int!
+  "Open and in an agent's hands: handed to an agent that has not given it back."
+  withAgents: Int!
   byKind: [WatchtowerKindSummary!]!
   seenAt: Timestamp!
 }

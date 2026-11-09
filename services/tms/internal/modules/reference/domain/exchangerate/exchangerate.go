@@ -16,8 +16,8 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*ExchangeRate)(nil)
-	_ validationframework.TenantedEntity = (*SettlementQuote)(nil)
+	_ validationframework.Entity = (*ExchangeRate)(nil)
+	_ validationframework.Entity = (*SettlementQuote)(nil)
 )
 
 type Provider string

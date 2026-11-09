@@ -3,7 +3,6 @@ package authservice
 import (
 	"context"
 	"errors"
-	"net/http"
 	"testing"
 	"time"
 
@@ -87,7 +86,6 @@ func TestLoginRefusedWhileAccountIsThrottled(t *testing.T) {
 		Password:     "password123",
 	})
 	require.Error(t, err)
-	assert.Equal(t, http.StatusTooManyRequests, errortypes.HTTPStatus(err))
 	retryAfter, ok := errortypes.RetryAfterOf(err)
 	require.True(t, ok)
 	assert.Equal(t, 90*time.Second, retryAfter)

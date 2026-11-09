@@ -97,11 +97,11 @@ func (s *service) ReconcileStopActuals(
 
 func validateReconcileRequest(
 	req *shipmentmoveports.ReconcileStopActualsRequest,
-) *errortypes.MultiError {
+) error {
 	multiErr := errortypes.NewMultiError()
 	if req == nil {
 		multiErr.Add("", errortypes.ErrInvalid, "Request is required")
-		return multiErr
+		return multiErr.Err()
 	}
 	if req.TenantInfo.OrgID.IsNil() {
 		multiErr.Add("tenantInfo.orgId", errortypes.ErrRequired, "Organization ID is required")
@@ -115,10 +115,7 @@ func validateReconcileRequest(
 	if req.Plan == nil {
 		multiErr.Add("plan", errortypes.ErrRequired, "A plan is required")
 	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }
 
 func settleStopActuals(

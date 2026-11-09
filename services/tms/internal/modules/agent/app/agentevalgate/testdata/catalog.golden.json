@@ -738,7 +738,7 @@
             "type": "string"
           },
           "fields": {
-            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "description": "Only these columns of each row, besides its id, in what you read; a filter such as status or a has... flag is its own parameter, never a column here. The person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
             "items": {
               "enum": [
                 "objectType",
@@ -1133,7 +1133,7 @@
             "type": "string"
           },
           "fields": {
-            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "description": "Only these columns of each row, besides its id, in what you read; a filter such as status or a has... flag is its own parameter, never a column here. The person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
             "items": {
               "enum": [
                 "kind",
@@ -1377,7 +1377,7 @@
             "type": "string"
           },
           "fields": {
-            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "description": "Only these columns of each row, besides its id, in what you read; a filter such as status or a has... flag is its own parameter, never a column here. The person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
             "items": {
               "enum": [
                 "targetType",
@@ -1576,7 +1576,7 @@
             "type": "array"
           },
           "fields": {
-            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "description": "Only these columns of each row, besides its id, in what you read; a filter such as status or a has... flag is its own parameter, never a column here. The person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
             "items": {
               "enum": [
                 "objectType",
@@ -2497,7 +2497,7 @@
         "additionalProperties": false,
         "properties": {
           "content": {
-            "description": "One or two plain sentences, at most 4000 characters, written so a reader with no other context understands them.",
+            "description": "One or two plain sentences, at most 4000 characters (a Procedure's numbered steps up to 12000), written so a reader with no other context understands them.",
             "type": "string"
           },
           "expiresOn": {
@@ -2788,6 +2788,62 @@
       }
     },
     {
+      "name": "agent_edit_memory",
+      "description": "Change part of a kept memory in place, by its id (shown beside it in your instructions, or from agent_list_memories). old is the exact words to change, copied from the memory, and must appear in it exactly once; new is what they become, empty to delete them. The edited memory replaces the old one and keeps its readers; one shared beyond the person waits for someone allowed to change it, and you should say so. Use it when a person says part of a memory is wrong or out of date. To rewrite most of a memory, pass its id as replacesMemoryId to agent_create_memory instead.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "memoryId": {
+            "description": "The memory to edit, by its id.",
+            "type": "string",
+            "x-recordOf": "agent_memory"
+          },
+          "new": {
+            "description": "What those words become. Empty deletes them.",
+            "type": "string"
+          },
+          "old": {
+            "description": "The exact words to change, copied from the memory as it stands, with enough around them to appear only once.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "memoryId",
+          "old",
+          "new"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "edit memory",
+        "change memory",
+        "correct memory",
+        "update memory"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "assistant",
+        "operation": "create",
+        "scope": "tenant",
+        "defaultTier": "ActWithApproval",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": true,
+        "taintHold": "An edit made after the run read text from outside the organization waits for a person's approval, whatever kind of memory it changes.",
+        "effect": "change",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": true,
+        "rationale": "Rewrites part of a memory later runs read, as a replacement that keeps the old one's readers and history; it keeps the taint of the run that wrote it."
+      }
+    },
+    {
       "name": "agent_find_page",
       "description": "Find where something is in Trenova and how to do it there. It returns the page, where it sits in the menu, its link, whether this person may open it, and the steps with the exact labels on screen. Use it for \"how do I…\", \"where is…\" and \"what is this page for\", and whenever the person asks for something you hold no tool for, so you can tell them where they do it themselves. Answer from what it returns; never invent a page, a path, a button or a step.",
       "parameters": {
@@ -2977,6 +3033,10 @@
           },
           "query": {
             "description": "Words to look for in the memory, the name of what it is about, or its tool. Every word need not appear; the closest come first.",
+            "type": "string"
+          },
+          "recordId": {
+            "description": "Optional: any record's id, such as a shipment, a move, an invoice, a billing queue item, an inbound message or a document, or a customer, location, driver or carrier. Reads the memories about the records it names: a shipment's customer and bill-to, its stops' locations, its drivers and its carriers.",
             "type": "string"
           },
           "subjectId": {
@@ -5247,7 +5307,7 @@
         "additionalProperties": false,
         "properties": {
           "fields": {
-            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "description": "Only these columns of each row, besides its id, in what you read; a filter such as status or a has... flag is its own parameter, never a column here. The person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
             "items": {
               "enum": [
                 "number",
@@ -6937,7 +6997,7 @@
             "type": "string"
           },
           "fields": {
-            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "description": "Only these columns of each row, besides its id, in what you read; a filter such as status or a has... flag is its own parameter, never a column here. The person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
             "items": {
               "enum": [
                 "businessUnitId",
@@ -7256,7 +7316,7 @@
     },
     {
       "name": "carrier_list_capacity_postings",
-      "description": "List trucks carriers have said they have available: carrier, origin, destination, equipment, the window and the rate asked. Pass openOnly for the offers whose window has not closed. Filters: availableFromFrom/To, availableToFrom/To, carrierId, createdAtFrom/To, destinationStateId, equipmentTypeId, hasDestinationState, hasEquipmentType, hasOriginLocation, hasOriginState, note, openOnly, originLocationId, originRadiusMilesMin/Max, originStateId, rateMethod, rateMin/Max, source, truckCountMin/Max.",
+      "description": "List trucks carriers have said they have available: carrier, origin, destination, equipment, the window and the rate asked. Pass openOnly for the offers whose window has not closed, and originStateCode or destinationStateCode (two-letter codes such as TX) to narrow by state. Filters: availableFromFrom/To, availableToFrom/To, carrierId, createdAtFrom/To, destinationStateCode, equipmentTypeId, hasEquipmentType, hasOriginLocation, note, openOnly, originLocationId, originRadiusMilesMin/Max, originStateCode, rateMethod, rateMin/Max, source, truckCountMin/Max.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -7317,12 +7377,9 @@
             "format": "date",
             "type": "string"
           },
-          "destinationStateId": {
-            "description": "The state's id, from an originStateId or destinationStateId on a row of this tool, or a location's stateId from location_get. Never guess one.",
-            "type": "string",
-            "x-recordKinds": [
-              "us_state"
-            ]
+          "destinationStateCode": {
+            "description": "Only postings headed to this state, by its two-letter code such as GA.",
+            "type": "string"
           },
           "equipmentTypeId": {
             "description": "Only postings of this equipment type, by its id, from equipment_list_types. Never guess one.",
@@ -7330,7 +7387,7 @@
             "x-recordOf": "equipment_type"
           },
           "fields": {
-            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "description": "Only these columns of each row, besides its id, in what you read; a filter such as status or a has... flag is its own parameter, never a column here. The person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
             "items": {
               "enum": [
                 "carrierId",
@@ -7357,20 +7414,12 @@
             },
             "type": "array"
           },
-          "hasDestinationState": {
-            "description": "true for only records that have a destination state, false for only those that have none.",
-            "type": "boolean"
-          },
           "hasEquipmentType": {
             "description": "true for only records that have a equipment type, false for only those that have none.",
             "type": "boolean"
           },
           "hasOriginLocation": {
             "description": "true for only records that have a origin location, false for only those that have none.",
-            "type": "boolean"
-          },
-          "hasOriginState": {
-            "description": "true for only records that have a origin state, false for only those that have none.",
             "type": "boolean"
           },
           "limit": {
@@ -7401,12 +7450,9 @@
             "description": "How far from the origin location the carrier will pick up. Only records whose origin radius miles is at least this.",
             "type": "integer"
           },
-          "originStateId": {
-            "description": "The state's id, from an originStateId or destinationStateId on a row of this tool, or a location's stateId from location_get. Never guess one.",
-            "type": "string",
-            "x-recordKinds": [
-              "us_state"
-            ]
+          "originStateCode": {
+            "description": "Only postings picking up in this state, by its two-letter code such as TX.",
+            "type": "string"
           },
           "query": {
             "description": "Optional free text matched across the searchable columns. Omit it when you are narrowing by a field.",
@@ -7609,7 +7655,7 @@
             "type": "string"
           },
           "fields": {
-            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "description": "Only these columns of each row, besides its id, in what you read; a filter such as status or a has... flag is its own parameter, never a column here. The person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
             "items": {
               "enum": [
                 "subjectType",
@@ -8176,7 +8222,7 @@
             "x-clamp": true
           },
           "shipmentId": {
-            "description": "The saved shipment to price, from shipment_list or the page you are on.",
+            "description": "The saved shipment to price, from shipment_list or the page you are on. One of its moves' ids prices the move's shipment.",
             "type": "string",
             "x-recordOf": "shipment"
           },
@@ -8992,7 +9038,7 @@
             "type": "string"
           },
           "fields": {
-            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "description": "Only these columns of each row, besides its id, in what you read; a filter such as status or a has... flag is its own parameter, never a column here. The person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
             "items": {
               "enum": [
                 "businessUnitId",
@@ -11424,7 +11470,7 @@
             "type": "array"
           },
           "fields": {
-            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "description": "Only these columns of each row, besides its id, in what you read; a filter such as status or a has... flag is its own parameter, never a column here. The person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
             "items": {
               "enum": [
                 "businessUnitId",
@@ -13284,7 +13330,7 @@
             "type": "string"
           },
           "fields": {
-            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "description": "Only these columns of each row, besides its id, in what you read; a filter such as status or a has... flag is its own parameter, never a column here. The person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
             "items": {
               "enum": [
                 "ediPartnerId",
@@ -13667,7 +13713,7 @@
             "type": "array"
           },
           "fields": {
-            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "description": "Only these columns of each row, besides its id, in what you read; a filter such as status or a has... flag is its own parameter, never a column here. The person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
             "items": {
               "enum": [
                 "ediPartnerId",
@@ -13945,7 +13991,7 @@
             "type": "boolean"
           },
           "fields": {
-            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "description": "Only these columns of each row, besides its id, in what you read; a filter such as status or a has... flag is its own parameter, never a column here. The person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
             "items": {
               "enum": [
                 "kind",
@@ -14265,7 +14311,7 @@
             "type": "string"
           },
           "fields": {
-            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "description": "Only these columns of each row, besides its id, in what you read; a filter such as status or a has... flag is its own parameter, never a column here. The person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
             "items": {
               "enum": [
                 "sourceShipmentId",
@@ -15297,7 +15343,7 @@
             "type": "string"
           },
           "fields": {
-            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "description": "Only these columns of each row, besides its id, in what you read; a filter such as status or a has... flag is its own parameter, never a column here. The person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
             "items": {
               "enum": [
                 "businessUnitId",
@@ -15497,7 +15543,7 @@
             "type": "string"
           },
           "fields": {
-            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "description": "Only these columns of each row, besides its id, in what you read; a filter such as status or a has... flag is its own parameter, never a column here. The person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
             "items": {
               "enum": [
                 "businessUnitId",
@@ -15877,7 +15923,7 @@
             "type": "string"
           },
           "fields": {
-            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "description": "Only these columns of each row, besides its id, in what you read; a filter such as status or a has... flag is its own parameter, never a column here. The person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
             "items": {
               "enum": [
                 "businessUnitId",
@@ -16251,7 +16297,7 @@
             "type": "string"
           },
           "fields": {
-            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "description": "Only these columns of each row, besides its id, in what you read; a filter such as status or a has... flag is its own parameter, never a column here. The person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
             "items": {
               "enum": [
                 "businessUnitId",
@@ -17279,7 +17325,7 @@
             "type": "string"
           },
           "fields": {
-            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "description": "Only these columns of each row, besides its id, in what you read; a filter such as status or a has... flag is its own parameter, never a column here. The person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
             "items": {
               "enum": [
                 "businessUnitId",
@@ -17457,7 +17503,7 @@
             "type": "string"
           },
           "fields": {
-            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "description": "Only these columns of each row, besides its id, in what you read; a filter such as status or a has... flag is its own parameter, never a column here. The person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
             "items": {
               "enum": [
                 "shipmentId",
@@ -19006,7 +19052,7 @@
             "x-recordOf": "factoring_company"
           },
           "fields": {
-            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "description": "Only these columns of each row, besides its id, in what you read; a filter such as status or a has... flag is its own parameter, never a column here. The person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
             "items": {
               "enum": [
                 "customerId",
@@ -19221,7 +19267,7 @@
             "type": "integer"
           },
           "fields": {
-            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "description": "Only these columns of each row, besides its id, in what you read; a filter such as status or a has... flag is its own parameter, never a column here. The person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
             "items": {
               "enum": [
                 "invoiceId",
@@ -19455,7 +19501,7 @@
             "x-recordOf": "factoring_company"
           },
           "fields": {
-            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "description": "Only these columns of each row, besides its id, in what you read; a filter such as status or a has... flag is its own parameter, never a column here. The person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
             "items": {
               "enum": [
                 "factoringCompanyId",
@@ -19810,7 +19856,7 @@
             "type": "string"
           },
           "fields": {
-            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "description": "Only these columns of each row, besides its id, in what you read; a filter such as status or a has... flag is its own parameter, never a column here. The person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
             "items": {
               "enum": [
                 "number",
@@ -21222,7 +21268,7 @@
             "type": "string"
           },
           "fields": {
-            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "description": "Only these columns of each row, besides its id, in what you read; a filter such as status or a has... flag is its own parameter, never a column here. The person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
             "items": {
               "enum": [
                 "name",
@@ -21451,7 +21497,7 @@
             "type": "string"
           },
           "fields": {
-            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "description": "Only these columns of each row, besides its id, in what you read; a filter such as status or a has... flag is its own parameter, never a column here. The person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
             "items": {
               "enum": [
                 "name",
@@ -22543,7 +22589,7 @@
             "type": "string"
           },
           "fields": {
-            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "description": "Only these columns of each row, besides its id, in what you read; a filter such as status or a has... flag is its own parameter, never a column here. The person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
             "items": {
               "enum": [
                 "provider",
@@ -22768,7 +22814,7 @@
             "type": "string"
           },
           "fields": {
-            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "description": "Only these columns of each row, besides its id, in what you read; a filter such as status or a has... flag is its own parameter, never a column here. The person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
             "items": {
               "enum": [
                 "tractorId",
@@ -23029,7 +23075,7 @@
             "type": "string"
           },
           "fields": {
-            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "description": "Only these columns of each row, besides its id, in what you read; a filter such as status or a has... flag is its own parameter, never a column here. The person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
             "items": {
               "enum": [
                 "year",
@@ -23471,7 +23517,7 @@
             "type": "string"
           },
           "fields": {
-            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "description": "Only these columns of each row, besides its id, in what you read; a filter such as status or a has... flag is its own parameter, never a column here. The person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
             "items": {
               "enum": [
                 "provider",
@@ -23738,7 +23784,7 @@
             "type": "string"
           },
           "fields": {
-            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "description": "Only these columns of each row, besides its id, in what you read; a filter such as status or a has... flag is its own parameter, never a column here. The person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
             "items": {
               "enum": [
                 "tractorId",
@@ -25678,7 +25724,7 @@
             "type": "string"
           },
           "fields": {
-            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "description": "Only these columns of each row, besides its id, in what you read; a filter such as status or a has... flag is its own parameter, never a column here. The person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
             "items": {
               "enum": [
                 "source",
@@ -25832,7 +25878,7 @@
             "type": "string"
           },
           "fields": {
-            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "description": "Only these columns of each row, besides its id, in what you read; a filter such as status or a has... flag is its own parameter, never a column here. The person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
             "items": {
               "enum": [
                 "name",
@@ -25996,7 +26042,7 @@
             "type": "boolean"
           },
           "fields": {
-            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "description": "Only these columns of each row, besides its id, in what you read; a filter such as status or a has... flag is its own parameter, never a column here. The person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
             "items": {
               "enum": [
                 "mailboxId",
@@ -28367,7 +28413,7 @@
             "type": "string"
           },
           "fields": {
-            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "description": "Only these columns of each row, besides its id, in what you read; a filter such as status or a has... flag is its own parameter, never a column here. The person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
             "items": {
               "enum": [
                 "customerId",
@@ -29033,7 +29079,7 @@
         "additionalProperties": false,
         "properties": {
           "fields": {
-            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "description": "Only these columns of each row, besides its id, in what you read; a filter such as status or a has... flag is its own parameter, never a column here. The person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
             "items": {
               "enum": [
                 "number",
@@ -30546,7 +30592,7 @@
         "additionalProperties": false,
         "properties": {
           "fields": {
-            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "description": "Only these columns of each row, besides its id, in what you read; a filter such as status or a has... flag is its own parameter, never a column here. The person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
             "items": {
               "enum": [
                 "accountCode",
@@ -30771,7 +30817,7 @@
             "type": "string"
           },
           "fields": {
-            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "description": "Only these columns of each row, besides its id, in what you read; a filter such as status or a has... flag is its own parameter, never a column here. The person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
             "items": {
               "enum": [
                 "fiscalYearId",
@@ -31072,7 +31118,7 @@
             "type": "string"
           },
           "fields": {
-            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "description": "Only these columns of each row, besides its id, in what you read; a filter such as status or a has... flag is its own parameter, never a column here. The person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
             "items": {
               "enum": [
                 "fiscalPeriodId",
@@ -31370,7 +31416,7 @@
             "type": "string"
           },
           "fields": {
-            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "description": "Only these columns of each row, besides its id, in what you read; a filter such as status or a has... flag is its own parameter, never a column here. The person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
             "items": {
               "enum": [
                 "originalJournalEntryId",
@@ -31679,7 +31725,7 @@
             "type": "string"
           },
           "fields": {
-            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "description": "Only these columns of each row, besides its id, in what you read; a filter such as status or a has... flag is its own parameter, never a column here. The person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
             "items": {
               "enum": [
                 "requestNumber",
@@ -32446,7 +32492,7 @@
             "type": "string"
           },
           "fields": {
-            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "description": "Only these columns of each row, besides its id, in what you read; a filter such as status or a has... flag is its own parameter, never a column here. The person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
             "items": {
               "enum": [
                 "businessUnitId",
@@ -32797,7 +32843,7 @@
             "type": "array"
           },
           "fields": {
-            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "description": "Only these columns of each row, besides its id, in what you read; a filter such as status or a has... flag is its own parameter, never a column here. The person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
             "items": {
               "enum": [
                 "businessUnitId",
@@ -33424,7 +33470,7 @@
             "type": "string"
           },
           "fields": {
-            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "description": "Only these columns of each row, besides its id, in what you read; a filter such as status or a has... flag is its own parameter, never a column here. The person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
             "items": {
               "enum": [
                 "businessUnitId",
@@ -33593,7 +33639,7 @@
             "type": "string"
           },
           "fields": {
-            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "description": "Only these columns of each row, besides its id, in what you read; a filter such as status or a has... flag is its own parameter, never a column here. The person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
             "items": {
               "enum": [
                 "businessUnitId",
@@ -33887,7 +33933,7 @@
             "type": "string"
           },
           "fields": {
-            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "description": "Only these columns of each row, besides its id, in what you read; a filter such as status or a has... flag is its own parameter, never a column here. The person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
             "items": {
               "enum": [
                 "businessUnitId",
@@ -34096,7 +34142,7 @@
             "type": "string"
           },
           "fields": {
-            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "description": "Only these columns of each row, besides its id, in what you read; a filter such as status or a has... flag is its own parameter, never a column here. The person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
             "items": {
               "enum": [
                 "businessUnitId",
@@ -34364,7 +34410,7 @@
             "type": "string"
           },
           "fields": {
-            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "description": "Only these columns of each row, besides its id, in what you read; a filter such as status or a has... flag is its own parameter, never a column here. The person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
             "items": {
               "enum": [
                 "businessUnitId",
@@ -34537,7 +34583,7 @@
             "type": "string"
           },
           "fields": {
-            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "description": "Only these columns of each row, besides its id, in what you read; a filter such as status or a has... flag is its own parameter, never a column here. The person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
             "items": {
               "enum": [
                 "businessUnitId",
@@ -34681,7 +34727,7 @@
             "type": "string"
           },
           "fields": {
-            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "description": "Only these columns of each row, besides its id, in what you read; a filter such as status or a has... flag is its own parameter, never a column here. The person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
             "items": {
               "enum": [
                 "businessUnitId",
@@ -35693,7 +35739,7 @@
             "x-recordOf": "customer"
           },
           "fields": {
-            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "description": "Only these columns of each row, besides its id, in what you read; a filter such as status or a has... flag is its own parameter, never a column here. The person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
             "items": {
               "enum": [
                 "businessUnitId",
@@ -37282,7 +37328,7 @@
             "type": "string"
           },
           "fields": {
-            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "description": "Only these columns of each row, besides its id, in what you read; a filter such as status or a has... flag is its own parameter, never a column here. The person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
             "items": {
               "enum": [
                 "partyType",
@@ -39140,7 +39186,7 @@
             "type": "string"
           },
           "fields": {
-            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "description": "Only these columns of each row, besides its id, in what you read; a filter such as status or a has... flag is its own parameter, never a column here. The person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
             "items": {
               "enum": [
                 "customerId",
@@ -42446,7 +42492,7 @@
             "x-recordOf": "report"
           },
           "fields": {
-            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "description": "Only these columns of each row, besides its id, in what you read; a filter such as status or a has... flag is its own parameter, never a column here. The person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
             "items": {
               "enum": [
                 "definitionId",
@@ -42646,7 +42692,7 @@
             "type": "string"
           },
           "fields": {
-            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "description": "Only these columns of each row, besides its id, in what you read; a filter such as status or a has... flag is its own parameter, never a column here. The person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
             "items": {
               "enum": [
                 "name",
@@ -47003,7 +47049,7 @@
             "type": "string"
           },
           "fields": {
-            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "description": "Only these columns of each row, besides its id, in what you read; a filter such as status or a has... flag is its own parameter, never a column here. The person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
             "items": {
               "enum": [
                 "workerId",
@@ -47273,7 +47319,7 @@
             "type": "string"
           },
           "fields": {
-            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "description": "Only these columns of each row, besides its id, in what you read; a filter such as status or a has... flag is its own parameter, never a column here. The person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
             "items": {
               "enum": [
                 "carrierId",
@@ -47749,7 +47795,7 @@
             "type": "string"
           },
           "fields": {
-            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "description": "Only these columns of each row, besides its id, in what you read; a filter such as status or a has... flag is its own parameter, never a column here. The person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
             "items": {
               "enum": [
                 "workerId",
@@ -48186,7 +48232,7 @@
             "type": "string"
           },
           "fields": {
-            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "description": "Only these columns of each row, besides its id, in what you read; a filter such as status or a has... flag is its own parameter, never a column here. The person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
             "items": {
               "enum": [
                 "workerId",
@@ -48435,7 +48481,7 @@
             "type": "string"
           },
           "fields": {
-            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "description": "Only these columns of each row, besides its id, in what you read; a filter such as status or a has... flag is its own parameter, never a column here. The person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
             "items": {
               "enum": [
                 "workerId",
@@ -48725,7 +48771,7 @@
             "type": "string"
           },
           "fields": {
-            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "description": "Only these columns of each row, besides its id, in what you read; a filter such as status or a has... flag is its own parameter, never a column here. The person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
             "items": {
               "enum": [
                 "workerId",
@@ -48974,7 +49020,7 @@
             "type": "string"
           },
           "fields": {
-            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "description": "Only these columns of each row, besides its id, in what you read; a filter such as status or a has... flag is its own parameter, never a column here. The person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
             "items": {
               "enum": [
                 "organizationId",
@@ -49219,7 +49265,7 @@
             "x-recordOf": "escrow_account"
           },
           "fields": {
-            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "description": "Only these columns of each row, besides its id, in what you read; a filter such as status or a has... flag is its own parameter, never a column here. The person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
             "items": {
               "enum": [
                 "workerId",
@@ -49451,7 +49497,7 @@
             "type": "string"
           },
           "fields": {
-            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "description": "Only these columns of each row, besides its id, in what you read; a filter such as status or a has... flag is its own parameter, never a column here. The person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
             "items": {
               "enum": [
                 "workerId",
@@ -51942,7 +51988,7 @@
             "type": "string"
           },
           "fields": {
-            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "description": "Only these columns of each row, besides its id, in what you read; a filter such as status or a has... flag is its own parameter, never a column here. The person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
             "items": {
               "enum": [
                 "proNumber",
@@ -52263,7 +52309,7 @@
             "type": "array"
           },
           "fields": {
-            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "description": "Only these columns of each row, besides its id, in what you read; a filter such as status or a has... flag is its own parameter, never a column here. The person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
             "items": {
               "enum": [
                 "sourceShipmentId",
@@ -55939,7 +55985,7 @@
             "type": "string"
           },
           "fields": {
-            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "description": "Only these columns of each row, besides its id, in what you read; a filter such as status or a has... flag is its own parameter, never a column here. The person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
             "items": {
               "enum": [
                 "fleetCodeId",
@@ -57111,7 +57157,7 @@
             "type": "string"
           },
           "fields": {
-            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "description": "Only these columns of each row, besides its id, in what you read; a filter such as status or a has... flag is its own parameter, never a column here. The person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
             "items": {
               "enum": [
                 "workerId",
@@ -57445,7 +57491,7 @@
             "type": "integer"
           },
           "fields": {
-            "description": "Only these columns of each row, besides its id, in what you read; the person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
+            "description": "Only these columns of each row, besides its id, in what you read; a filter such as status or a has... flag is its own parameter, never a column here. The person's table keeps every column. Name just what the answer needs: a narrow row fits many times as many rows on a page, so a question across many records reads in one or two pages. Leave it out for every column.",
             "items": {
               "enum": [
                 "businessUnitId",

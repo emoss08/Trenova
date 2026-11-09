@@ -13,8 +13,8 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*HazardousMaterial)(nil)
-	_ domaintypes.PostgresSearchable     = (*HazardousMaterial)(nil)
+	_ validationframework.Entity     = (*HazardousMaterial)(nil)
+	_ domaintypes.PostgresSearchable = (*HazardousMaterial)(nil)
 )
 
 // Hazmat reference data

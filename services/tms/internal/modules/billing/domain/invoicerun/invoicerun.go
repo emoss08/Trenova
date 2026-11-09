@@ -17,9 +17,9 @@ import (
 )
 
 var (
-	_ domaintypes.PostgresSearchable     = (*InvoiceRun)(nil)
-	_ pagination.CursorEntity            = (*InvoiceRun)(nil)
-	_ validationframework.TenantedEntity = (*InvoiceRun)(nil)
+	_ domaintypes.PostgresSearchable = (*InvoiceRun)(nil)
+	_ pagination.CursorEntity        = (*InvoiceRun)(nil)
+	_ validationframework.Entity     = (*InvoiceRun)(nil)
 )
 
 // InvoiceRun is one pass at turning a period's approved billing-queue items into

@@ -22,35 +22,6 @@ func (c CategoryType) String() string {
 	return string(c)
 }
 
-func CategoryTypeFromString(v string) (CategoryType, error) {
-	switch v {
-	case "DriverWages":
-		return CategoryTypeDriverWages, nil
-	case "DriverBenefits":
-		return CategoryTypeDriverBenefits, nil
-	case "Fuel":
-		return CategoryTypeFuel, nil
-	case "EquipmentPayments":
-		return CategoryTypeEquipmentPayments, nil
-	case "Maintenance":
-		return CategoryTypeMaintenance, nil
-	case "Insurance":
-		return CategoryTypeInsurance, nil
-	case "Tires":
-		return CategoryTypeTires, nil
-	case "Tolls":
-		return CategoryTypeTolls, nil
-	case "PermitsLicenses":
-		return CategoryTypePermitsLicenses, nil
-	case "Overhead":
-		return CategoryTypeOverhead, nil
-	case "Custom":
-		return CategoryTypeCustom, nil
-	default:
-		return "", errors.New("invalid cost category type")
-	}
-}
-
 type CostBehavior string
 
 const (
@@ -60,17 +31,6 @@ const (
 
 func (b CostBehavior) String() string {
 	return string(b)
-}
-
-func CostBehaviorFromString(v string) (CostBehavior, error) {
-	switch v {
-	case "Fixed":
-		return CostBehaviorFixed, nil
-	case "Variable":
-		return CostBehaviorVariable, nil
-	default:
-		return "", errors.New("invalid cost behavior")
-	}
 }
 
 type RateSource string

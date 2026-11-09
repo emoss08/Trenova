@@ -2,6 +2,7 @@ package detentionpolicyservice
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detentionpolicy"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
@@ -27,14 +28,14 @@ func NewValidator(p ValidatorParams) *Validator {
 func (v *Validator) ValidateCreate(
 	ctx context.Context,
 	entity *detentionpolicy.DetentionPolicy,
-) *errortypes.MultiError {
+) error {
 	return v.validate(ctx, entity, true)
 }
 
 func (v *Validator) ValidateUpdate(
 	ctx context.Context,
 	entity *detentionpolicy.DetentionPolicy,
-) *errortypes.MultiError {
+) error {
 	return v.validate(ctx, entity, false)
 }
 
@@ -42,18 +43,14 @@ func (v *Validator) validate(
 	ctx context.Context,
 	entity *detentionpolicy.DetentionPolicy,
 	isCreate bool,
-) *errortypes.MultiError {
+) error {
 	multiErr := errortypes.NewMultiError()
 
 	entity.Validate(multiErr)
 	v.validateUniqueCode(ctx, entity, isCreate, multiErr)
 	v.validateNoOverlap(ctx, entity, isCreate, multiErr)
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 func (v *Validator) validateUniqueCode(
@@ -78,7 +75,7 @@ func (v *Validator) validateUniqueCode(
 
 	exists, err := v.repo.CodeExists(ctx, req)
 	if err != nil {
-		multiErr.Add("code", errortypes.ErrSystemError, "Failed to verify code uniqueness")
+		multiErr.AddInternal(fmt.Errorf("failed to verify code uniqueness: %w", err))
 		return
 	}
 
@@ -117,8 +114,7 @@ func (v *Validator) validateNoOverlap(
 
 	conflicts, err := v.repo.FindOverlapping(ctx, req)
 	if err != nil {
-		multiErr.Add("effectiveStartDate", errortypes.ErrSystemError,
-			"Failed to verify overlapping policies")
+		multiErr.AddInternal(fmt.Errorf("failed to verify overlapping policies: %w", err))
 		return
 	}
 

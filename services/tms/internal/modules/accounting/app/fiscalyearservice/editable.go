@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
-func validateEditable(original, updated *fiscalyear.FiscalYear) *errortypes.MultiError {
+func validateEditable(original, updated *fiscalyear.FiscalYear) error {
 	multiErr := errortypes.NewMultiError()
 
 	if original.Status == fiscalyear.StatusPermanentlyClosed {
@@ -15,7 +15,7 @@ func validateEditable(original, updated *fiscalyear.FiscalYear) *errortypes.Mult
 			errortypes.ErrInvalid,
 			"Permanently closed fiscal years cannot be changed",
 		)
-		return multiErr
+		return multiErr.Err()
 	}
 
 	if updated.Year != original.Year {
@@ -38,11 +38,7 @@ func validateEditable(original, updated *fiscalyear.FiscalYear) *errortypes.Mult
 		)
 	}
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 func preserveLifecycle(original, updated *fiscalyear.FiscalYear) {

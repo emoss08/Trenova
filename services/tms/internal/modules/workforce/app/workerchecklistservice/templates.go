@@ -64,10 +64,7 @@ func (s *Service) validateTemplate(
 		}
 	}
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }
 
 func (s *Service) CreateTemplate(
@@ -204,9 +201,7 @@ func (s *Service) changeTemplateStatus(
 		return original, nil
 	}
 	if req.Version > 0 && original.Version != req.Version {
-		return nil, errortypes.NewValidationError(
-			"version",
-			errortypes.ErrVersionMismatch,
+		return nil, errortypes.NewVersionMismatchError(
 			"Checklist template was changed by someone else. Reload and try again",
 		)
 	}

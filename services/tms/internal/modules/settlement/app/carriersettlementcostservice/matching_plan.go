@@ -516,7 +516,7 @@ func newInvoiceMatch(
 	multiErr := errortypes.NewMultiError()
 	match.Validate(multiErr)
 	if multiErr.HasErrors() {
-		return nil, multiErr
+		return nil, multiErr.Err()
 	}
 	return match, nil
 }

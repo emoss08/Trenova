@@ -136,7 +136,7 @@ type BulkTransferShipmentToBillingRequest struct {
 	SuppressExceptionNotifications bool `json:"-"`
 }
 
-func (r *BulkTransferShipmentToBillingRequest) Validate() *errortypes.MultiError {
+func (r *BulkTransferShipmentToBillingRequest) Validate() error {
 	multiErr := errortypes.NewMultiError()
 
 	switch {
@@ -151,11 +151,7 @@ func (r *BulkTransferShipmentToBillingRequest) Validate() *errortypes.MultiError
 		)
 	}
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 type BulkTransferToBillingResult struct {

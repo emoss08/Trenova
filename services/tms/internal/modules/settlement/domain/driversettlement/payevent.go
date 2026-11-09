@@ -20,8 +20,8 @@ import (
 )
 
 var (
-	_ pagination.CursorEntity            = (*PayEvent)(nil)
-	_ validationframework.TenantedEntity = (*PayEvent)(nil)
+	_ pagination.CursorEntity    = (*PayEvent)(nil)
+	_ validationframework.Entity = (*PayEvent)(nil)
 )
 
 type PayEventComponent struct {

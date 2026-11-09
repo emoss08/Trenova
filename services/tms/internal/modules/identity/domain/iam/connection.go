@@ -5,10 +5,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-func activityUserRelationship() *domaintypes.RelationshipDefintion {
-	return &domaintypes.RelationshipDefintion{Field: "user", Queryable: true}
-}
-
 func (e *AuthEvent) GetID() pulid.ID {
 	return e.ID
 }

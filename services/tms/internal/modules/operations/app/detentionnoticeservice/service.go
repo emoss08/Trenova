@@ -599,7 +599,9 @@ func (s *Service) noticeRecipients(
 	if len(recipients) == 0 {
 		return nil, errortypes.NewValidationError(
 			"occurrenceId", errortypes.ErrInvalidOperation,
-			"The customer has no notice recipients configured — add a customer email profile first")
+			"The customer has no notice recipients configured, so the notice cannot be emailed "+
+				"until a person adds a customer email profile. Retrying will not change that: "+
+				"say so, and name the occurrence and its notice deadline so they can act")
 	}
 
 	return recipients, nil

@@ -1,13 +1,5 @@
 package dispatchcontrol
 
-import "errors"
-
-var (
-	ErrInvalidServiceIncidentType        = errors.New("invalid service incident type")
-	ErrInvalidComplianceEnforcementLevel = errors.New("invalid compliance enforcement level")
-	ErrInvalidPlanningMode               = errors.New("invalid planning mode")
-)
-
 type PlanningMode string
 
 const (
@@ -25,17 +17,6 @@ func (p PlanningMode) IsValid() bool {
 		return true
 	default:
 		return false
-	}
-}
-
-func PlanningModeFromString(s string) (PlanningMode, error) {
-	switch s {
-	case "Immediate":
-		return PlanningModeImmediate, nil
-	case "Horizon":
-		return PlanningModeHorizon, nil
-	default:
-		return "", ErrInvalidPlanningMode
 	}
 }
 
@@ -63,23 +44,6 @@ func (s ServiceIncidentType) IsValid() bool {
 	}
 }
 
-func ServiceIncidentTypeFromString(s string) (ServiceIncidentType, error) {
-	switch s {
-	case "Never":
-		return ServiceIncidentTypeNever, nil
-	case "Pickup":
-		return ServiceIncidentTypePickup, nil
-	case "Delivery":
-		return ServiceIncidentTypeDelivery, nil
-	case "PickupDelivery":
-		return ServiceIncidentTypePickupDelivery, nil
-	case "AllExceptShipper":
-		return ServiceIncidentTypeAllExceptShipper, nil
-	default:
-		return "", ErrInvalidServiceIncidentType
-	}
-}
-
 type ComplianceEnforcementLevel string
 
 const (
@@ -100,19 +64,6 @@ func (c ComplianceEnforcementLevel) IsValid() bool {
 		return true
 	default:
 		return false
-	}
-}
-
-func ComplianceEnforcementLevelFromString(s string) (ComplianceEnforcementLevel, error) {
-	switch s {
-	case "Warning":
-		return ComplianceEnforcementLevelWarning, nil
-	case "Block":
-		return ComplianceEnforcementLevelBlock, nil
-	case "Audit":
-		return ComplianceEnforcementLevelAudit, nil
-	default:
-		return "", ErrInvalidComplianceEnforcementLevel
 	}
 }
 

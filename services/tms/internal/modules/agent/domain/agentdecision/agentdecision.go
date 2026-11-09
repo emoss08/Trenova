@@ -16,8 +16,8 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*AgentDecision)(nil)
-	_ pagination.CursorEntity            = (*AgentDecision)(nil)
+	_ validationframework.Entity = (*AgentDecision)(nil)
+	_ pagination.CursorEntity    = (*AgentDecision)(nil)
 )
 
 type AgentDecision struct {

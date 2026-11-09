@@ -14,8 +14,8 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*FuelIndex)(nil)
-	_ domaintypes.PostgresSearchable     = (*FuelIndex)(nil)
+	_ validationframework.Entity     = (*FuelIndex)(nil)
+	_ domaintypes.PostgresSearchable = (*FuelIndex)(nil)
 )
 
 type FuelIndex struct {

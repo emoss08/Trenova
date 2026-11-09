@@ -1,18 +1,18 @@
 import { LazyImage } from "@/components/image";
+import { useCenteredStickyTop } from "@/hooks/use-centered-sticky-top";
 import { usePermission } from "@/hooks/use-permission";
 import { factorRemitLines, standardNoticeOfAssignment } from "@/lib/factoring";
 import { organization } from "@/lib/queries/organization";
 import { userOrganization } from "@/lib/queries/user";
 import type { FactoringCompany } from "@/types/factoring-company";
 import { useQuery } from "@tanstack/react-query";
-import { EyeIcon } from "@trenova/shared/components/icons";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDate } from "@trenova/shared/lib/date";
 import { cityStatePostal, mailingAddressLines } from "@trenova/shared/lib/mailing-address";
 import { formatMinor } from "@trenova/shared/lib/money";
 import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { useWatch, type Control } from "react-hook-form";
 
 /** The parts of the invoice this page's details print, so a section can point at its own. */
@@ -55,7 +55,7 @@ function Tag({ children, className }: { children: ReactNode; className?: string 
   return (
     <div
       className={cn(
-        "text-doc-ink-2 mb-1.5 font-mono text-3xs tracking-widest uppercase",
+        "mb-1.5 font-mono text-3xs tracking-widest text-doc-ink-2 uppercase",
         className,
       )}
     >
@@ -79,7 +79,7 @@ function Marked({
       data-marked={on || undefined}
       className={cn(
         "-m-1 rounded-xs p-1 outline-offset-2 transition-colors duration-150",
-        on && "bg-brand-subtle outline-brand outline-1 outline-dashed",
+        on && "bg-brand-subtle outline-1 outline-brand outline-dashed",
         className,
       )}
     >
@@ -180,26 +180,19 @@ export function FactoringInvoicePreview({
     phoneNumber,
   });
   const printedNotice = notice?.trim() || standardNoticeOfAssignment(payee);
-  const issued = Math.floor(Date.now() / 1000);
+  const paperRef = useCenteredStickyTop<HTMLElement>();
+  const [issued] = useState(() => Math.floor(Date.now() / 1000));
   const due = issued + NET_DAYS * SECONDS_PER_DAY;
 
   return (
-    <aside aria-label={t("Invoice preview")} className="flex min-w-0 flex-col gap-2.5">
-      <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-        <span className="text-foreground-subtle flex items-center gap-2 text-xs font-medium">
-          <EyeIcon className="size-3" />
-          {t("What a customer of this factor receives")}
-        </span>
-        <span className="text-muted-foreground text-xs">
-          {t("A sample invoice; the factor's part updates as you type")}
-        </span>
-      </div>
-      <div className="bg-sunken rounded-lg border p-3 sm:p-5">
+    <aside aria-label={t("Invoice preview")} className="flex min-w-0 flex-1 flex-col gap-2.5">
+      <div className="flex-1 rounded-lg border bg-sunken p-3 sm:p-5">
         <article
+          ref={paperRef}
           aria-label={t("Sample invoice")}
-          className="bg-doc-paper text-doc-ink border-doc-rule mx-auto flex w-full max-w-176 flex-col gap-4 border px-6 py-7 font-sans text-xs tabular-nums sm:px-9 sm:py-9"
+          className="mx-auto flex w-full max-w-176 flex-col gap-4 border border-doc-rule bg-doc-paper px-6 py-7 font-sans text-xs text-doc-ink tabular-nums sm:px-9 sm:py-9 xl:sticky"
         >
-          <header className="border-doc-ink flex items-start justify-between gap-6 border-b pb-4">
+          <header className="flex items-start justify-between gap-6 border-b border-doc-ink pb-4">
             <div className="flex min-w-0 items-center gap-3">
               {issuer.logo ? (
                 <LazyImage
@@ -210,19 +203,19 @@ export function FactoringInvoicePreview({
               ) : null}
               <div className="min-w-0">
                 <div className="text-base font-semibold tracking-tight">{issuer.name}</div>
-                <div className="text-doc-ink-2 text-2xs">{issuer.lines.join(" · ")}</div>
+                <div className="text-2xs text-doc-ink-2">{issuer.lines.join(" · ")}</div>
               </div>
             </div>
             <div className="grid shrink-0 justify-items-end gap-0.5 text-right">
               <Tag className="mb-0">{t("Invoice")}</Tag>
               <div className="text-lg font-semibold tracking-tight">{SAMPLE.invoiceNumber}</div>
-              <dl className="text-2xs mt-1 grid grid-cols-[auto_auto] gap-x-3">
+              <dl className="mt-1 grid grid-cols-[auto_auto] gap-x-3 text-2xs">
                 <dt className="text-doc-ink-2">{t("Issued")}</dt>
                 <dd className="m-0 font-medium">{formatUnixDate(issued)}</dd>
                 <dt className="text-doc-ink-2">{t("Due")}</dt>
                 <dd className="m-0 font-medium">{formatUnixDate(due)}</dd>
               </dl>
-              <div className="border-doc-rule mt-1.5 flex items-baseline gap-2.5 border-t pt-1.5">
+              <div className="mt-1.5 flex items-baseline gap-2.5 border-t border-doc-rule pt-1.5">
                 <Tag className="mb-0">{t("Amount due")}</Tag>
                 <span className="text-sm font-semibold">{formatMinor(SAMPLE_TOTAL_MINOR)}</span>
               </div>
@@ -258,7 +251,7 @@ export function FactoringInvoicePreview({
               {instructionLines.length > 0 ? (
                 <Marked on={active.has("instructions")}>
                   {instructionLines.map((line, index) => (
-                    <div key={`${index}-${line}`} className="text-doc-ink-2 break-words">
+                    <div key={`${index}-${line}`} className="break-words text-doc-ink-2">
                       {line}
                     </div>
                   ))}
@@ -267,7 +260,7 @@ export function FactoringInvoicePreview({
               {contactLines.length > 0 ? (
                 <Marked on={active.has("contact")}>
                   {contactLines.map((line) => (
-                    <div key={line} className="text-doc-ink-2 break-words">
+                    <div key={line} className="break-words text-doc-ink-2">
                       {line}
                     </div>
                   ))}
@@ -277,13 +270,13 @@ export function FactoringInvoicePreview({
           </section>
 
           <Marked on={active.has("notice") || active.has("name")}>
-            <section className="border-doc-ink border-[1.5px] px-3.5 py-2.5">
+            <section className="border-[1.5px] border-doc-ink px-3.5 py-2.5">
               <Tag>{t("Notice of assignment")}</Tag>
               <p className="m-0 font-medium whitespace-pre-line">{printedNotice}</p>
             </section>
           </Marked>
 
-          <section className="bg-doc-paper-warm border-doc-rule grid grid-cols-2 gap-6 border px-4 py-3">
+          <section className="grid grid-cols-2 gap-6 border border-doc-rule bg-doc-paper-warm px-4 py-3">
             {[
               { tag: t("Shipper"), party: SAMPLE.shipper },
               { tag: t("Consignee"), party: SAMPLE.consignee },
@@ -300,19 +293,19 @@ export function FactoringInvoicePreview({
             ))}
           </section>
 
-          <div className="text-doc-ink-2 -mt-1.5 flex flex-wrap gap-x-4 gap-y-1 font-mono text-2xs">
+          <div className="-mt-1.5 flex flex-wrap gap-x-4 gap-y-1 font-mono text-2xs text-doc-ink-2">
             {SAMPLE.refs.map(([label, value]) => (
               <span key={label}>
-                {label} <span className="text-doc-ink font-medium">{value}</span>
+                {label} <span className="font-medium text-doc-ink">{value}</span>
               </span>
             ))}
           </div>
 
           <section>
             <Tag>{t("Charges")}</Tag>
-            <table className="text-2xs w-full border-collapse">
+            <table className="w-full border-collapse text-2xs">
               <thead>
-                <tr className="border-doc-ink text-doc-ink-2 border-b font-mono text-3xs tracking-widest uppercase">
+                <tr className="border-b border-doc-ink font-mono text-3xs tracking-widest text-doc-ink-2 uppercase">
                   <th className="w-5 py-1.5 pr-2 text-left font-medium">#</th>
                   <th className="px-2 py-1.5 text-left font-medium">{t("Description")}</th>
                   <th className="px-2 py-1.5 text-right font-medium">{t("Quantity")}</th>
@@ -322,8 +315,8 @@ export function FactoringInvoicePreview({
               </thead>
               <tbody>
                 {SAMPLE.charges.map((charge, index) => (
-                  <tr key={charge.description} className="border-doc-rule-soft border-b">
-                    <td className="text-doc-ink-3 py-1.5 pr-2 align-top">{index + 1}</td>
+                  <tr key={charge.description} className="border-b border-doc-rule-soft">
+                    <td className="py-1.5 pr-2 align-top text-doc-ink-3">{index + 1}</td>
                     <td className="px-2 py-1.5 align-top">{charge.description}</td>
                     <td className="px-2 py-1.5 text-right align-top whitespace-nowrap">
                       {charge.quantity}
@@ -347,11 +340,11 @@ export function FactoringInvoicePreview({
                 active.has("contact")
               }
             >
-              <div className="border-doc-rule border px-3.5 py-3">
+              <div className="border border-doc-rule px-3.5 py-3">
                 <Tag>{t("How to pay")}</Tag>
                 <div className="font-semibold">{payee}</div>
-                <div className="text-doc-ink-2 break-words">{remitLines.join(", ")}</div>
-                <p className="text-doc-ink-2 text-2xs m-0 mt-1.5">
+                <div className="break-words text-doc-ink-2">{remitLines.join(", ")}</div>
+                <p className="m-0 mt-1.5 text-2xs text-doc-ink-2">
                   {t(
                     "Write {0} on your payment so it is applied to this invoice.",
                     SAMPLE.invoiceNumber,
@@ -362,10 +355,10 @@ export function FactoringInvoicePreview({
             <dl className="m-0 grid grid-cols-[1fr_auto] gap-x-4 gap-y-1">
               <dt className="text-doc-ink-2">{t("Subtotal")}</dt>
               <dd className="m-0 text-right">{formatMinor(SAMPLE_TOTAL_MINOR)}</dd>
-              <dt className="border-doc-ink mt-1 border-t pt-2 text-sm font-semibold">
+              <dt className="mt-1 border-t border-doc-ink pt-2 text-sm font-semibold">
                 {t("Total")}
               </dt>
-              <dd className="border-doc-ink m-0 mt-1 border-t pt-2 text-right text-sm font-semibold">
+              <dd className="m-0 mt-1 border-t border-doc-ink pt-2 text-right text-sm font-semibold">
                 {formatMinor(SAMPLE_TOTAL_MINOR)}
               </dd>
               <dt className="font-semibold">{t("Balance due")}</dt>
@@ -373,7 +366,7 @@ export function FactoringInvoicePreview({
             </dl>
           </section>
 
-          <footer className="border-doc-rule-soft text-doc-ink-3 flex justify-between gap-4 border-t pt-2 font-mono text-3xs tracking-wide">
+          <footer className="flex justify-between gap-4 border-t border-doc-rule-soft pt-2 font-mono text-3xs tracking-wide text-doc-ink-3">
             <span className="truncate">{issuer.name}</span>
             <span>{SAMPLE.invoiceNumber}</span>
           </footer>

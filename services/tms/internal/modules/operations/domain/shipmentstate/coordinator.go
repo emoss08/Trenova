@@ -25,25 +25,25 @@ func NewCoordinatorWithClock(now func() int64) *Coordinator {
 	return &Coordinator{now: now}
 }
 
-func (c *Coordinator) PrepareForCreate(entity *shipment.Shipment) *errortypes.MultiError {
+func (c *Coordinator) PrepareForCreate(entity *shipment.Shipment) error {
 	return c.PrepareForCreateWithDelayThreshold(entity, 0)
 }
 
 func (c *Coordinator) PrepareForCreateWithDelayThreshold(
 	entity *shipment.Shipment,
 	delayThresholdMinutes int16,
-) *errortypes.MultiError {
+) error {
 	return c.prepare(nil, entity, delayThresholdMinutes)
 }
 
-func (c *Coordinator) PrepareForUpdate(original, entity *shipment.Shipment) *errortypes.MultiError {
+func (c *Coordinator) PrepareForUpdate(original, entity *shipment.Shipment) error {
 	return c.PrepareForUpdateWithDelayThreshold(original, entity, 0)
 }
 
 func (c *Coordinator) PrepareForUpdateWithDelayThreshold(
 	original, entity *shipment.Shipment,
 	delayThresholdMinutes int16,
-) *errortypes.MultiError {
+) error {
 	return c.prepare(original, entity, delayThresholdMinutes)
 }
 
@@ -66,7 +66,7 @@ func (c *Coordinator) RefreshShipmentStateWithDelayThreshold(
 func (c *Coordinator) prepare( //nolint:gocognit // legacy workflow
 	original, entity *shipment.Shipment,
 	delayThresholdMinutes int16,
-) *errortypes.MultiError {
+) error {
 	multiErr := errortypes.NewMultiError()
 
 	originalMoves := make(map[pulid.ID]*shipment.ShipmentMove)
@@ -154,11 +154,7 @@ func (c *Coordinator) prepare( //nolint:gocognit // legacy workflow
 	c.calculateShipmentTimestamps(entity)
 	entity.Status = c.resolveShipmentStatus(original, entity, delayThresholdMinutes, multiErr)
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 func (c *Coordinator) resolveStopStatus(

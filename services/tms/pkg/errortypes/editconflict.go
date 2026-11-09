@@ -32,6 +32,16 @@ func NewEditConflictError(edit *EditConflict) *EditConflictError {
 	}
 }
 
+func NewVersionMismatchError(message string, args ...any) *EditConflictError {
+	return &EditConflictError{
+		BaseError: BaseError{
+			Code:    ErrVersionMismatch,
+			Message: message,
+			Args:    args,
+		},
+	}
+}
+
 func (e *EditConflictError) WithInternal(err error) *EditConflictError {
 	e.Internal = err
 	return e
@@ -46,7 +56,7 @@ func (e *EditConflictError) LogFields() LogFields {
 	return fields
 }
 
-func IsEditConflictError(err error) bool {
+func IsVersionMismatchError(err error) bool {
 	_, ok := errors.AsType[*EditConflictError](err)
 	return ok
 }

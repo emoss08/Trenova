@@ -407,63 +407,6 @@ func TestMultiErrorWithLimit(t *testing.T) {
 	})
 }
 
-func TestHTTPStatus(t *testing.T) {
-	tests := []struct {
-		name     string
-		err      error
-		expected int
-	}{
-		{"nil error", nil, 200},
-		{"MultiError", errortypes.NewMultiError(), 422},
-		{"NotFoundError", errortypes.NewNotFoundError("not found"), 404},
-		{"AuthenticationError", errortypes.NewAuthenticationError("unauthorized"), 401},
-		{"AuthorizationError", errortypes.NewAuthorizationError("forbidden"), 403},
-		{"RateLimitError", errortypes.NewRateLimitError("api", "too many"), 429},
-		{"BusinessError", errortypes.NewBusinessError("invalid"), 422},
-		{"DatabaseError", errortypes.NewDatabaseError("failed"), 500},
-		{
-			"SessionContextStaleError",
-			errortypes.NewSessionContextStaleError("usr_1", "org_1", "bu_1"),
-			409,
-		},
-		{"unknown error", assert.AnError, 500},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			status := errortypes.HTTPStatus(tt.err)
-			assert.Equal(t, tt.expected, status)
-		})
-	}
-}
-
-func TestHTTPStatusWithCode(t *testing.T) {
-	tests := []struct {
-		code     errortypes.ErrorCode
-		expected int
-	}{
-		{errortypes.ErrRequired, 422},
-		{errortypes.ErrInvalid, 422},
-		{errortypes.ErrDuplicate, 409},
-		{errortypes.ErrAlreadyExists, 409},
-		{errortypes.ErrNotFound, 404},
-		{errortypes.ErrUnauthorized, 401},
-		{errortypes.ErrForbidden, 403},
-		{errortypes.ErrTooManyRequests, 429},
-		{errortypes.ErrBusinessLogic, 422},
-		{errortypes.ErrVersionMismatch, 409},
-		{errortypes.ErrSessionContextStale, 409},
-		{errortypes.ErrSystemError, 500},
-	}
-
-	for _, tt := range tests {
-		t.Run(string(tt.code), func(t *testing.T) {
-			status := errortypes.HTTPStatusWithCode(tt.code)
-			assert.Equal(t, tt.expected, status)
-		})
-	}
-}
-
 func TestMultiError_AddOzzoError(t *testing.T) {
 	t.Run("Nil Error", func(t *testing.T) {
 		me := errortypes.NewMultiError()
@@ -544,36 +487,6 @@ func TestErrorContext(t *testing.T) {
 		assert.Equal(t, "req-123", fields["request_id"])
 		assert.Equal(t, "user-456", fields["user_id"])
 		assert.Equal(t, "data", fields["custom"])
-	})
-}
-
-func TestStackTraces(t *testing.T) {
-	t.Run("Disabled by default", func(t *testing.T) {
-		assert.False(t, errortypes.StackTracesEnabled())
-	})
-
-	t.Run("Enable and disable", func(t *testing.T) {
-		errortypes.EnableStackTraces()
-		assert.True(t, errortypes.StackTracesEnabled())
-
-		errortypes.DisableStackTraces()
-		assert.False(t, errortypes.StackTracesEnabled())
-	})
-
-	t.Run("Captures stack when enabled", func(t *testing.T) {
-		errortypes.EnableStackTraces()
-		defer errortypes.DisableStackTraces()
-
-		ctx := errortypes.NewErrorContext()
-		assert.NotEmpty(t, ctx.Stack)
-		assert.NotEmpty(t, ctx.Stack[0].Function)
-		assert.NotEmpty(t, ctx.Stack[0].File)
-	})
-
-	t.Run("No stack when disabled", func(t *testing.T) {
-		errortypes.DisableStackTraces()
-		ctx := errortypes.NewErrorContext()
-		assert.Empty(t, ctx.Stack)
 	})
 }
 

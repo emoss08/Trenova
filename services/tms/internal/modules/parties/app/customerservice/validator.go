@@ -4,12 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
-	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate/usstatedb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/factoringcompanyports"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/keelcheck"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -20,6 +17,8 @@ import (
 type ValidatorParams struct {
 	fx.In
 
+	Integrity validationframework.IntegrityChecker
+
 	DB      *postgres.Connection
 	Factors factoringcompanyports.FactoringCompanyRepository
 }
@@ -29,27 +28,25 @@ type Validator struct {
 }
 
 func NewValidator(p ValidatorParams) *Validator {
-	checker := keelcheck.NewChecker(p.DB, customerdb.CustomersSchema())
 	return &Validator{
 		validator: tenantedvalidation.NewBuilder[*customer.Customer]().
 			WithModelName("Customer").
-			WithUniquenessChecker(checker).
-			WithReferenceChecker(checker).
+			WithIntegrityChecker(p.Integrity).
 			WithUniqueField(
 				"code",
 				"code",
 				"Customer with this code already exists in your organization",
 				func(c *customer.Customer) any { return c.Code },
 			).
-			WithCustomReferenceCheck(
+			WithReferenceCheck(
 				"stateId",
+				"us_states",
 				"State does not exist",
 				func(c *customer.Customer) pulid.ID { return c.StateID },
-				keelcheck.ReferenceCheck(p.DB, usstatedb.UsStatesSchema()),
 			).
 			WithCustomRule(
 				validationframework.
-					NewTenantedRule[*customer.Customer]("active_factoring_company").
+					NewRule[*customer.Customer]("active_factoring_company").
 					OnBoth().
 					WithValidation(requireActiveFactor(p.Factors)),
 			).
@@ -65,13 +62,13 @@ func requireActiveFactor(
 ) func(
 	context.Context,
 	*customer.Customer,
-	*validationframework.TenantedValidationContext,
+	*validationframework.Context,
 	*errortypes.MultiError,
 ) error {
 	return func(
 		ctx context.Context,
 		entity *customer.Customer,
-		_ *validationframework.TenantedValidationContext,
+		_ *validationframework.Context,
 		multiErr *errortypes.MultiError,
 	) error {
 		if factors == nil || entity.BillingProfile == nil ||
@@ -104,13 +101,13 @@ func requireActiveFactor(
 func (v *Validator) ValidateCreate(
 	ctx context.Context,
 	entity *customer.Customer,
-) *errortypes.MultiError {
+) error {
 	return v.validator.ValidateCreate(ctx, entity)
 }
 
 func (v *Validator) ValidateUpdate(
 	ctx context.Context,
 	entity *customer.Customer,
-) *errortypes.MultiError {
+) error {
 	return v.validator.ValidateUpdate(ctx, entity)
 }

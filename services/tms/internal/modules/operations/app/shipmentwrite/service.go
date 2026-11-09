@@ -131,14 +131,10 @@ func (s *Service) syncPermits(
 // validateChargeAllocations checks a save's allocations before anything is
 // written. The rules live in allocationcheck so the billing queue enforces the
 // same ones when a charge is reassigned.
-func (s *Service) validateChargeAllocations(
-	ctx context.Context,
-	entity *shipment.Shipment,
-) *errortypes.MultiError {
-	return allocationcheck.Validate(ctx, allocationcheck.Deps{
-		CustomerRepo:         s.customerRepo,
-		ChargeAllocationRepo: s.chargeAllocationRepo,
-		Logger:               s.l,
+func (s *Service) validateChargeAllocations(ctx context.Context, entity *shipment.Shipment) error {
+	return allocationcheck.ValidateShipment(ctx, allocationcheck.Readers{
+		Customers:   s.customerRepo,
+		Allocations: s.chargeAllocationRepo,
 	}, entity, "chargeAllocations")
 }
 
@@ -219,9 +215,9 @@ func (s *Service) prepareCreate(
 		return nil, multiErr
 	}
 
-	multiErr, advisories := s.validator.ValidateCreateWithAdvisories(ctx, entity)
-	if multiErr != nil {
-		return nil, multiErr
+	advisories, err := s.validator.ValidateCreateWithAdvisories(ctx, entity)
+	if err != nil {
+		return nil, err
 	}
 
 	if err = s.effects.CheckDuplicateBOLsWithControl(
@@ -568,11 +564,11 @@ func (s *Service) validateShipmentUpdate(
 	original, entity *shipment.Shipment,
 	control *shipmentcontrol.ShipmentControl,
 ) ([]*errortypes.AdvisoryError, error) {
-	multiErr, advisories := s.validator.ValidateUpdateWithOriginalAndAdvisories(
+	advisories, validationErr := s.validator.ValidateUpdateWithOriginalAndAdvisories(
 		ctx, original, entity,
 	)
-	if multiErr != nil {
-		return nil, multiErr
+	if validationErr != nil {
+		return nil, validationErr
 	}
 	if allocationErr := s.validateChargeAllocations(ctx, entity); allocationErr != nil {
 		return nil, allocationErr

@@ -64,11 +64,7 @@ func (s *Service) validateViewParams(ctx context.Context, req *SaveViewRequest) 
 				"This report has no parameter by that name")
 		}
 	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 func (s *Service) CreateView(

@@ -57,7 +57,7 @@ func ParseExaSettings(values map[string]string) (ExaSettings, error) {
 	multiErr := errortypes.NewMultiError()
 	settings := parseExaSettings(values, multiErr)
 	if multiErr.HasErrors() {
-		return ExaSettings{}, multiErr
+		return ExaSettings{}, multiErr.Err()
 	}
 
 	return settings, nil

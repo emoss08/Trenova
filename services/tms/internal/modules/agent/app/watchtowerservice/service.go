@@ -28,7 +28,7 @@ const (
 	RealtimeResource = "watchtower"
 	// FeedPath is where the feed lives; a notification's link opens it on
 	// the item that raised the notification.
-	FeedPath = "/desk/watchtower"
+	FeedPath = "/desk/needs"
 
 	defaultPageSize = 50
 	maxPageSize     = 200
@@ -210,6 +210,7 @@ func (s *Service) List(
 		AssigneeIDs:    assignees,
 		Unassigned:     req.Unassigned,
 		SubjectID:      req.SubjectID,
+		AboutIDs:       req.AboutIDs,
 		OrderByDue:     req.OrderByDue,
 	}
 	if req.OverdueOnly {
@@ -311,6 +312,7 @@ func (s *Service) Counts(
 	counts.Unassigned = stored.Unassigned
 	counts.Mine = stored.Mine
 	counts.MineOverdue = stored.MineOverdue
+	counts.WithAgents = stored.WithAgents
 	for _, row := range stored.ByKind {
 		counts.ByKind[row.SourceKind] = row.Count
 	}

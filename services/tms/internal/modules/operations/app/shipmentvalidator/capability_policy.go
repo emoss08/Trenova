@@ -141,25 +141,19 @@ func createCapabilityPolicyRule(
 	shipmentRepo shipmentports.ShipmentRepository,
 	equipmentTypeRepo equipmenttypeports.EquipmentTypeRepository,
 	permitSvc permitports.PermitService,
-) validationframework.TenantedRule[*shipment.Shipment] {
-	return validationframework.NewTenantedRule[*shipment.Shipment]("capability_policy").
+) validationframework.Rule[*shipment.Shipment] {
+	return validationframework.NewRule[*shipment.Shipment]("capability_policy").
 		OnBoth().
-		WithStage(validationframework.ValidationStageBusinessRules).
-		WithPriority(validationframework.ValidationPriorityHigh).
+		WithStage(validationframework.StageBusinessRules).
 		WithValidation(func(
 			ctx context.Context,
 			entity *shipment.Shipment,
-			valCtx *validationframework.TenantedValidationContext,
+			valCtx *validationframework.Context,
 			multiErr *errortypes.MultiError,
 		) error {
-			control, err := loadShipmentControlForValidation(ctx, controlRepo, entity)
+			control, err := loadShipmentControlForValidation(ctx, controlRepo, valCtx)
 			if err != nil {
-				multiErr.Add(
-					"shipmentControl",
-					errortypes.ErrInvalid,
-					"Unable to load shipment control",
-				)
-				return nil //nolint:nilerr // validation callbacks collect field errors and intentionally continue
+				return err
 			}
 
 			// A resolve failure must not fail the save: capability rules are
@@ -236,7 +230,7 @@ func validateTemperature(
 func validateMoveRemoval(
 	ctx context.Context,
 	entity *shipment.Shipment,
-	valCtx *validationframework.TenantedValidationContext,
+	valCtx *validationframework.Context,
 	policy *modeprofile.ResolvedPolicy,
 	control *shipmentcontrol.ShipmentControl,
 	shipmentRepo shipmentports.ShipmentRepository,
@@ -251,14 +245,9 @@ func validateMoveRemoval(
 		return nil
 	}
 
-	original, err := loadOriginalShipmentForValidation(ctx, shipmentRepo, entity)
+	original, err := loadOriginalShipmentForValidation(ctx, shipmentRepo, entity, valCtx)
 	if err != nil {
-		multiErr.Add(
-			"id",
-			errortypes.ErrInvalid,
-			"Unable to load the existing shipment for validation",
-		)
-		return nil //nolint:nilerr // validation callbacks collect field errors and intentionally continue
+		return err
 	}
 
 	if !hasRemovedShipmentMove(original, entity) {

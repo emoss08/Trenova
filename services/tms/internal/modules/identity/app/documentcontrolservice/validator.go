@@ -17,14 +17,10 @@ func NewValidator() *Validator {
 func (v *Validator) ValidateUpdate(
 	_ context.Context,
 	entity *documentcontrol.DocumentControl,
-) *errortypes.MultiError {
+) error {
 	multiErr := errortypes.NewMultiError()
 	entity.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
-var _ validationframework.TenantedEntity = (*documentcontrol.DocumentControl)(nil)
+var _ validationframework.Entity = (*documentcontrol.DocumentControl)(nil)

@@ -53,18 +53,18 @@ export function SectionPanel({
   return (
     <section
       aria-label={title}
-      className={cn("bg-card flex flex-col overflow-hidden rounded-lg border", className)}
+      className={cn("flex flex-col overflow-hidden rounded-lg border bg-card", className)}
     >
       <header
         className={cn(
           "flex min-h-9 justify-between gap-2 px-3",
-          description ? "items-start pt-3" : "border-border items-center border-b py-1.5",
+          description ? "items-start pt-3" : "items-center border-b border-border py-1.5",
         )}
       >
         <div className="min-w-0">
           <div className="flex min-w-0 items-center gap-2">
             {icon ? (
-              <span className="text-muted-foreground shrink-0 [&>svg]:size-3.5">{icon}</span>
+              <span className="shrink-0 text-muted-foreground [&>svg]:size-3.5">{icon}</span>
             ) : null}
             <h3 className="truncate text-sm font-semibold">{title}</h3>
             {tip ? (
@@ -78,15 +78,15 @@ export function SectionPanel({
               </InfoPopover>
             ) : null}
             {count !== undefined && count > 0 ? (
-              <span className="text-muted-foreground text-xs tabular-nums">{count}</span>
+              <span className="text-xs text-muted-foreground tabular-nums">{count}</span>
             ) : null}
           </div>
           {description ? (
-            <p className="text-muted-foreground mt-0.5 text-xs">{description}</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>
           ) : null}
         </div>
         <div className="flex min-w-0 shrink-0 items-center gap-2">
-          {hint ? <span className="text-muted-foreground truncate text-xs">{hint}</span> : null}
+          {hint ? <span className="truncate text-xs text-muted-foreground">{hint}</span> : null}
           {action}
         </div>
       </header>
@@ -97,7 +97,7 @@ export function SectionPanel({
 
 /** One quiet line for a panel with nothing to list. */
 export function SectionPanelQuiet({ children }: { children: ReactNode }) {
-  return <p className="text-muted-foreground px-3 py-3 text-xs">{children}</p>;
+  return <p className="px-3 py-3 text-xs text-muted-foreground">{children}</p>;
 }
 
 /** The page a panel's figures come from, as a quiet link in the header's `action`. */
@@ -105,7 +105,7 @@ export function SectionPanelLink({ to, children }: { to: string; children: React
   return (
     <Link
       to={to}
-      className="text-muted-foreground hover:text-foreground ui-focus-ring rounded-sm text-xs transition-colors hover:underline"
+      className="rounded-sm ui-focus-ring text-xs text-muted-foreground transition-colors hover:text-foreground hover:underline"
     >
       {children}
     </Link>

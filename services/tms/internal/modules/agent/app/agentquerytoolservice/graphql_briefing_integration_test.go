@@ -43,12 +43,12 @@ func seededBriefing(tenant *agentreadtest.Tenant) *briefing.Briefing {
 					{
 						Label: "Service failure",
 						Value: "4",
-						Path:  "/desk/watchtower?kinds=ServiceFailure",
+						Path:  "/desk/needs?kinds=ServiceFailure",
 					},
 					{
 						Label: "EDI quarantined",
 						Value: "8",
-						Path:  "/desk/watchtower?kinds=EDIInboundQuarantined",
+						Path:  "/desk/needs?kinds=EDIInboundQuarantined",
 					},
 				},
 			},

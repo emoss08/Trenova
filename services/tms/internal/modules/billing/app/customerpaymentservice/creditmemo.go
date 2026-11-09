@@ -137,7 +137,7 @@ func (s *Service) UnapplyCreditMemoApplication(
 
 func (s *Service) validateCreditApplications(
 	req *customerpaymentports.ApplyCreditMemoRequest,
-) *errortypes.MultiError {
+) error {
 	multiErr := errortypes.NewMultiError()
 	if req.CreditMemoID.IsNil() {
 		multiErr.Add("creditMemoId", errortypes.ErrRequired, "Credit memo is required")
@@ -169,14 +169,10 @@ func (s *Service) validateCreditApplications(
 		}
 		seen[app.InvoiceID] = struct{}{}
 	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
-func validateCreditMemoSource(memo *invoice.Invoice) *errortypes.MultiError {
+func validateCreditMemoSource(memo *invoice.Invoice) error {
 	multiErr := errortypes.NewMultiError()
 	switch {
 	case memo.BillType != billingvocab.BillTypeCreditMemo:
@@ -194,11 +190,7 @@ func validateCreditMemoSource(memo *invoice.Invoice) *errortypes.MultiError {
 			"This credit memo has nothing left to apply",
 		)
 	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 func validateCreditTarget(
@@ -206,7 +198,7 @@ func validateCreditTarget(
 	target *invoice.Invoice,
 	amountMinor int64,
 	idx int,
-) *errortypes.MultiError {
+) error {
 	multiErr := errortypes.NewMultiError()
 	entry := multiErr.WithIndex("applications", idx)
 	switch {
@@ -245,11 +237,7 @@ func validateCreditTarget(
 			amountMinor-target.OpenBalanceMinor(),
 		)
 	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 var _ = permission.OpUpdate

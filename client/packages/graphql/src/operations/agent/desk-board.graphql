@@ -193,6 +193,34 @@ query DeskBoardCard($threadId: ID!, $artifactId: ID!) {
           tone
         }
       }
+      work {
+        row {
+          resource
+          id
+          readable
+          label
+          subtitle
+          status
+        }
+        signals {
+          lens
+          title
+          tone
+          dueAt
+        }
+        tone
+        dueAt
+      }
+      actions {
+        label
+        ask
+        records {
+          resource
+          id
+          readable
+          label
+        }
+      }
     }
   }
 }

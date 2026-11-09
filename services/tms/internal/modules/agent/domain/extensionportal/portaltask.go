@@ -74,7 +74,7 @@ func NormalizePortalDetails(raw map[string]string) (map[string]string, error) {
 		}
 	}
 	if multiErr.HasErrors() {
-		return nil, multiErr
+		return nil, multiErr.Err()
 	}
 
 	return details, nil

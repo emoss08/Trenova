@@ -342,10 +342,19 @@ describe("isRateLimitError", () => {
 });
 
 describe("isVersionMismatchError", () => {
-  it("returns true for validation error with VERSION_MISMATCH code", () => {
+  it("returns true for a conflict whose code is VERSION_MISMATCH", () => {
     const err = makeError({
-      type: "https://x.com/problems/validation-error",
-      errors: [{ field: "version", message: "Version mismatch", code: "VERSION_MISMATCH" }],
+      status: 409,
+      type: "https://x.com/problems/resource-conflict",
+      code: "VERSION_MISMATCH",
+      errors: [
+        {
+          path: ["version"],
+          field: "version",
+          message: "Version mismatch",
+          code: "VERSION_MISMATCH",
+        },
+      ],
     });
     expect(err.isVersionMismatchError()).toBe(true);
   });
@@ -353,15 +362,17 @@ describe("isVersionMismatchError", () => {
   it("returns false without VERSION_MISMATCH code", () => {
     const err = makeError({
       type: "https://x.com/problems/validation-error",
-      errors: [{ field: "name", message: "Required" }],
+      errors: [{ path: ["name"], field: "name", message: "Required" }],
     });
     expect(err.isVersionMismatchError()).toBe(false);
   });
 
-  it("returns false for non-validation error", () => {
+  it("returns false when only a field error carries the code", () => {
     const err = makeError({
       type: "https://x.com/problems/internal-error",
-      errors: [{ field: "version", message: "Mismatch", code: "VERSION_MISMATCH" }],
+      errors: [
+        { path: ["version"], field: "version", message: "Mismatch", code: "VERSION_MISMATCH" },
+      ],
     });
     expect(err.isVersionMismatchError()).toBe(false);
   });
@@ -390,9 +401,9 @@ describe("isConflictError", () => {
 describe("getFieldErrors", () => {
   it("returns errors array", () => {
     const err = makeError({
-      errors: [{ field: "name", message: "Required" }],
+      errors: [{ path: ["name"], field: "name", message: "Required" }],
     });
-    expect(err.getFieldErrors()).toEqual([{ field: "name", message: "Required" }]);
+    expect(err.getFieldErrors()).toEqual([{ path: ["name"], field: "name", message: "Required" }]);
   });
 
   it("defaults to empty array", () => {
@@ -405,11 +416,12 @@ describe("getFieldError", () => {
   it("finds error by field name", () => {
     const err = makeError({
       errors: [
-        { field: "name", message: "Required" },
-        { field: "email", message: "Invalid" },
+        { path: ["name"], field: "name", message: "Required" },
+        { path: ["email"], field: "email", message: "Invalid" },
       ],
     });
     expect(err.getFieldError("email")).toEqual({
+      path: ["email"],
       field: "email",
       message: "Invalid",
     });
@@ -417,7 +429,7 @@ describe("getFieldError", () => {
 
   it("returns undefined when field not found", () => {
     const err = makeError({
-      errors: [{ field: "name", message: "Required" }],
+      errors: [{ path: ["name"], field: "name", message: "Required" }],
     });
     expect(err.getFieldError("missing")).toBeUndefined();
   });
@@ -465,8 +477,18 @@ describe("field error payload shapes", () => {
   it("returns both messages when two errors target the same field", () => {
     const err = makeError({
       errors: [
-        { field: "proNumber", message: "Pro number is required", code: "REQUIRED" },
-        { field: "proNumber", message: "Pro number is already in use", code: "DUPLICATE" },
+        {
+          path: ["proNumber"],
+          field: "proNumber",
+          message: "Pro number is required",
+          code: "REQUIRED",
+        },
+        {
+          path: ["proNumber"],
+          field: "proNumber",
+          message: "Pro number is already in use",
+          code: "DUPLICATE",
+        },
       ],
     });
 
@@ -486,18 +508,23 @@ describe("field error payload shapes", () => {
   it("preserves an array-element field path", () => {
     const err = makeError({
       errors: [
-        { field: "lines[0].glAccountId", message: "GL account is required", code: "REQUIRED" },
-        { field: "lines[1]", message: "Line is required", code: "REQUIRED" },
+        {
+          path: ["lines", 0, "glAccountId"],
+          field: "lines.0.glAccountId",
+          message: "GL account is required",
+          code: "REQUIRED",
+        },
+        { path: ["lines", 1], field: "lines.1", message: "Line is required", code: "REQUIRED" },
       ],
     });
 
-    expect(err.getFieldError("lines[0].glAccountId")?.message).toBe("GL account is required");
-    expect(err.getFieldError("lines[1]")?.message).toBe("Line is required");
+    expect(err.getFieldError("lines.0.glAccountId")?.message).toBe("GL account is required");
+    expect(err.getFieldError("lines.1")?.message).toBe("Line is required");
   });
 
   it("preserves an empty field path rather than discarding the error", () => {
     const err = makeError({
-      errors: [{ field: "", message: "Journal is unbalanced", code: "INVALID" }],
+      errors: [{ path: [], field: "", message: "Journal is unbalanced", code: "INVALID" }],
     });
 
     expect(err.getFieldErrors()).toHaveLength(1);
@@ -506,9 +533,16 @@ describe("field error payload shapes", () => {
 
   it("finds a version mismatch reported on a nested line", () => {
     const err = makeError({
-      type: "https://x.com/problems/validation-error",
+      status: 409,
+      type: "https://x.com/problems/resource-conflict",
+      code: "VERSION_MISMATCH",
       errors: [
-        { field: "lines[2].version", message: "Version mismatch", code: "VERSION_MISMATCH" },
+        {
+          path: ["lines", 2, "version"],
+          field: "lines.2.version",
+          message: "Version mismatch",
+          code: "VERSION_MISMATCH",
+        },
       ],
     });
 

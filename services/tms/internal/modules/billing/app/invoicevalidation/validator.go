@@ -2,22 +2,21 @@ package invoicevalidation
 
 import (
 	"context"
+	"fmt"
 
-	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceassembly"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceledger"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
 	"github.com/emoss08/trenova/internal/modules/identity/app/accountingcontrolpolicyservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/keelcheck"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/tenantedvalidation"
+	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/money"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -26,7 +25,6 @@ import (
 type ValidatorParams struct {
 	fx.In
 
-	DB               *postgres.Connection
 	Logger           *zap.Logger
 	AccountingRepo   tenantports.AccountingControlRepository
 	FiscalPeriodRepo fiscalperiodports.FiscalPeriodRepository
@@ -48,7 +46,7 @@ func NewValidator(p ValidatorParams) *Validator {
 		l: p.Logger.Named("validator.invoice"),
 		validator: tenantedvalidation.NewBuilder[*invoice.Invoice]().
 			WithModelName("Invoice").
-			WithUniquenessChecker(keelcheck.NewChecker(p.DB, invoicedb.InvoicesSchema())).
+			WithCustomRule(lineDerivedTotalsRule()).
 			Build(),
 		accountingRepo:   p.AccountingRepo,
 		fiscalPeriodRepo: p.FiscalPeriodRepo,
@@ -60,15 +58,14 @@ func NewValidator(p ValidatorParams) *Validator {
 func (v *Validator) ValidateCreate(
 	ctx context.Context,
 	entity *invoice.Invoice,
-) *errortypes.MultiError {
-	multiErr := v.validator.ValidateCreate(ctx, entity)
-	return validateLineDerivedTotals(entity, multiErr)
+) error {
+	return v.validator.ValidateCreate(ctx, entity)
 }
 
 func (v *Validator) ValidateUpdate(
 	ctx context.Context,
 	entity *invoice.Invoice,
-) *errortypes.MultiError {
+) error {
 	return v.validator.ValidateUpdate(ctx, entity)
 }
 
@@ -77,29 +74,33 @@ func (v *Validator) ValidatePost(
 	entity *invoice.Invoice,
 	tenantInfo pagination.TenantInfo,
 	postedAt int64,
-) *errortypes.MultiError {
+) error {
 	multiErr := errortypes.NewMultiError()
 
 	v.validatePostingPeriodPolicy(ctx, entity, postedAt, multiErr)
 	v.validatePostingReconciliation(ctx, entity, tenantInfo, multiErr)
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
-func validateLineDerivedTotals(
-	entity *invoice.Invoice,
-	multiErr *errortypes.MultiError,
-) *errortypes.MultiError {
-	if entity == nil || len(entity.Lines) == 0 {
-		return multiErr
-	}
+func lineDerivedTotalsRule() validationframework.Rule[*invoice.Invoice] {
+	return validationframework.NewRule[*invoice.Invoice]("line_derived_totals").
+		OnCreate().
+		WithStage(validationframework.StageBasic).
+		WithValidation(func(
+			_ context.Context,
+			entity *invoice.Invoice,
+			_ *validationframework.Context,
+			multiErr *errortypes.MultiError,
+		) error {
+			validateLineDerivedTotals(entity, multiErr)
+			return nil
+		})
+}
 
-	if multiErr == nil {
-		multiErr = errortypes.NewMultiError()
+func validateLineDerivedTotals(entity *invoice.Invoice, multiErr *errortypes.MultiError) {
+	if len(entity.Lines) == 0 {
+		return
 	}
 
 	expectedSubtotal := invoiceassembly.SumLinesByType(entity.Lines, invoice.InvoiceLineTypeFreight)
@@ -132,12 +133,6 @@ func validateLineDerivedTotals(
 	}
 
 	validateMinorUnitTotals(entity, multiErr)
-
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
 }
 
 // validateMinorUnitTotals catches the two ways a minor-unit total can disagree
@@ -186,7 +181,7 @@ func (v *Validator) validatePostingPeriodPolicy(
 		if errortypes.IsNotFoundError(err) {
 			return
 		}
-		multiErr.Add("postedAt", errortypes.ErrSystemError, "Failed to load accounting control")
+		multiErr.AddInternal(fmt.Errorf("failed to load accounting control: %w", err))
 		return
 	}
 	if v.accountingPolicy.
@@ -214,7 +209,7 @@ func (v *Validator) validatePostingPeriodPolicy(
 			)
 			return
 		}
-		multiErr.Add("postedAt", errortypes.ErrSystemError, "Failed to resolve accounting period")
+		multiErr.AddInternal(fmt.Errorf("failed to resolve accounting period: %w", err))
 		return
 	}
 
@@ -250,7 +245,7 @@ func (v *Validator) validatePostingReconciliation(
 		if errortypes.IsNotFoundError(err) {
 			return
 		}
-		multiErr.Add("totalAmount", errortypes.ErrSystemError, "Failed to load accounting control")
+		multiErr.AddInternal(fmt.Errorf("failed to load accounting control: %w", err))
 		return
 	}
 
@@ -260,11 +255,7 @@ func (v *Validator) validatePostingReconciliation(
 
 	legs, err := LoadInvoiceLegs(ctx, v.shipmentRepo, entity, tenantInfo, false)
 	if err != nil {
-		multiErr.Add(
-			"shipmentId",
-			errortypes.ErrSystemError,
-			"Failed to load invoice legs for reconciliation",
-		)
+		multiErr.AddInternal(fmt.Errorf("failed to load invoice legs for reconciliation: %w", err))
 		return
 	}
 	if len(legs) == 0 {
@@ -273,11 +264,7 @@ func (v *Validator) validatePostingReconciliation(
 
 	expectedTotal, err := ReconciliationExpectedTotal(ctx, entity, legs)
 	if err != nil {
-		multiErr.Add(
-			"totalAmount",
-			errortypes.ErrSystemError,
-			"Failed to compute the reconciliation total",
-		)
+		multiErr.AddInternal(fmt.Errorf("failed to compute the reconciliation total: %w", err))
 		return
 	}
 	discrepancy := entity.TotalAmount.Sub(expectedTotal).Abs()

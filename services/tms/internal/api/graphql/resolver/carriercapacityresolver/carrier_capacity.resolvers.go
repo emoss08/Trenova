@@ -121,6 +121,8 @@ func (r *QueryResolver) CarrierCapacityPostings(
 	input gqlmodel.DataTableConnectionInput,
 	carrierID *string,
 	openOnly *bool,
+	originStateCode *string,
+	destinationStateCode *string,
 ) (*gqlmodel.CarrierCapacityPostingConnection, error) {
 	authCtx, err := r.RequirePermission(
 		ctx,
@@ -145,10 +147,21 @@ func (r *QueryResolver) CarrierCapacityPostings(
 		return nil, err
 	}
 
+	origin, err := stateCode("originStateCode", originStateCode)
+	if err != nil {
+		return nil, err
+	}
+	destination, err := stateCode("destinationStateCode", destinationStateCode)
+	if err != nil {
+		return nil, err
+	}
+
 	req := &carriercapacityports.ListCarrierCapacityPostingsRequest{
-		Filter:    tableInput.Filter,
-		Cursor:    tableInput.Cursor,
-		CarrierID: carrierFilter,
+		Filter:               tableInput.Filter,
+		Cursor:               tableInput.Cursor,
+		CarrierID:            carrierFilter,
+		OriginStateCode:      origin,
+		DestinationStateCode: destination,
 	}
 	if gqlscalar.BoolValue(openOnly) {
 		req.OpenAt = timeutils.NowUnix()

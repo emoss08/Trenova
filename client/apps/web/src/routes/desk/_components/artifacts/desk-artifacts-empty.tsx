@@ -47,7 +47,7 @@ export function DeskArtifactsEmpty({ onClose }: { onClose: () => void }) {
           )}
         </p>
         <span className="dk-axe-k">
-          <span className="dk-kbd">{formatShortcut("J")}</span>
+          <span className="dk-kbd">{formatShortcut("\\")}</span>
           {t("opens this panel")}
         </span>
       </div>

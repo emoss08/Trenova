@@ -244,7 +244,7 @@ export function DeskArtifactBrowser({
           }}
         />
         <span className="dk-kbd" aria-hidden>
-          {formatShortcut("J")}
+          {formatShortcut("\\")}
         </span>
       </div>
       <div className="dk-axb-f" role="group" aria-label={t("Filter artifacts")}>

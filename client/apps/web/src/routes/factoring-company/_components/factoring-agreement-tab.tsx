@@ -186,7 +186,7 @@ export default function FactoringAgreementTab({
           ) : null
         }
       >
-        <div className="bg-card min-h-0 flex-1 overflow-y-auto">
+        <div className="min-h-0 flex-1 overflow-y-auto bg-card">
           <HoverGlideGroup className="bg-card p-1.5">
             <ul className="flex flex-col gap-px">
               {versions.map((agreement) => {
@@ -203,7 +203,7 @@ export default function FactoringAgreementTab({
                       aria-current={isSelected ? "true" : undefined}
                       onClick={() => setPicked(agreement.id)}
                       className={cn(
-                        "ui-focus-ring relative flex w-full flex-col gap-1 rounded-md px-2.5 py-2 text-left",
+                        "relative flex w-full flex-col gap-1 rounded-md ui-focus-ring px-2.5 py-2 text-left",
                         isSelected && "bg-surface-active",
                       )}
                     >
@@ -211,13 +211,13 @@ export default function FactoringAgreementTab({
                         {t("v{0}", numbers.get(agreement.id) ?? 1)}
                         <FactoringAgreementStatusBadge status={agreement.status} />
                       </span>
-                      <span className="text-muted-foreground text-xs">{period(t, agreement)}</span>
+                      <span className="text-xs text-muted-foreground">{period(t, agreement)}</span>
                       {changes.length > 0 ? (
                         <span className="flex flex-wrap gap-1">
                           {changes.map((change) => (
                             <span
                               key={change}
-                              className="bg-info-subtle text-info-subtle-foreground rounded-sm px-1.5 font-mono text-2xs"
+                              className="rounded-sm bg-info-subtle px-1.5 font-mono text-2xs text-info-subtle-foreground"
                             >
                               {change}
                             </span>
@@ -242,7 +242,7 @@ export default function FactoringAgreementTab({
               </h3>
               <FactoringAgreementStatusBadge status={selected.status} />
             </div>
-            <p className="text-muted-foreground text-xs">
+            <p className="text-xs text-muted-foreground">
               {selected.status === "Active"
                 ? t(
                     "In force since {0}. Funding booked to this factor uses these terms; a draft takes over only when someone activates it.",
@@ -315,7 +315,7 @@ export default function FactoringAgreementTab({
               </DescriptionItem>
               <DescriptionItem label={t("Reserve rate")} numeric>
                 {formatBasisPoints(selected.reserveRateBp)}
-                <span className="text-muted-foreground block text-xs">
+                <span className="block text-xs text-muted-foreground">
                   {t("Held until released or charged back")}
                 </span>
               </DescriptionItem>
@@ -324,7 +324,7 @@ export default function FactoringAgreementTab({
               </DescriptionItem>
               <DescriptionItem label={t("Recourse")}>
                 {FACTORING_RECOURSE_LABELS[selected.recourse]}
-                <span className="text-muted-foreground block text-xs">
+                <span className="block text-xs text-muted-foreground">
                   {FACTORING_RECOURSE_DESCRIPTIONS[selected.recourse]}
                 </span>
               </DescriptionItem>
@@ -333,7 +333,7 @@ export default function FactoringAgreementTab({
               </DescriptionItem>
               <DescriptionItem label={t("Accounting treatment")}>
                 {FACTORING_ACCOUNTING_TREATMENT_LABELS[selected.accountingTreatment]}
-                <span className="text-muted-foreground block text-xs">
+                <span className="block text-xs text-muted-foreground">
                   {FACTORING_ACCOUNTING_TREATMENT_DESCRIPTIONS[selected.accountingTreatment]}
                 </span>
               </DescriptionItem>

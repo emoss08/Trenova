@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/fieldpath"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/shared/money"
@@ -297,8 +298,8 @@ func (s *Service) contactActivity(
 	multiErr := errortypes.NewMultiError()
 	activity.Validate(multiErr)
 	for _, fieldErr := range multiErr.Errors {
-		if fieldErr != nil && fieldErr.Field == "promisedAmountMinor" {
-			fieldErr.Field = "promisedAmount"
+		if fieldErr != nil && fieldErr.Field() == "promisedAmountMinor" {
+			fieldErr.Path = fieldpath.Of(fieldpath.Key("promisedAmount"))
 		}
 	}
 	s.validateFollowUp(multiErr, "followUpOn", req.FollowUpOn)

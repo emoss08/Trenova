@@ -59,9 +59,7 @@ func (r *accessSettingsRepository) Save(
 			return nil, fmt.Errorf("save access settings: %w", err)
 		}
 		if !saved {
-			return nil, errortypes.NewValidationError(
-				"version",
-				errortypes.ErrVersionMismatch,
+			return nil, errortypes.NewVersionMismatchError(
 				"These settings were changed by someone else. Reload them and try again.",
 			)
 		}

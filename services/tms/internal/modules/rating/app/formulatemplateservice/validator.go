@@ -119,7 +119,7 @@ func (s *Service) PrepareContent(
 		entity.Metadata,
 	)
 	if multiErr.HasErrors() {
-		return multiErr
+		return multiErr.Err()
 	}
 
 	content, err := s.CheckContent(ctx, &ContentRequest{
@@ -137,7 +137,7 @@ func (s *Service) PrepareContent(
 	entity.Name = content.HeaderName()
 	entity.Validate(multiErr)
 	if multiErr.HasErrors() {
-		return multiErr
+		return multiErr.Err()
 	}
 
 	ApplyContent(entity, content)

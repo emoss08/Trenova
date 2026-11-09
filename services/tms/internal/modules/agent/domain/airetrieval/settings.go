@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*Settings)(nil)
+	_ validationframework.Entity = (*Settings)(nil)
 )
 
 var (

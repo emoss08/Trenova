@@ -82,13 +82,10 @@ func (s *service) dispatchControl(
 	return control, nil
 }
 
-func validateServiceFailure(entity *servicefailure.ServiceFailure) *errortypes.MultiError {
+func validateServiceFailure(entity *servicefailure.ServiceFailure) error {
 	multiErr := errortypes.NewMultiError()
 	entity.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }
 
 func activeStopRequest(

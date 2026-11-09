@@ -523,11 +523,7 @@ func (s *Service) validate(entity interface {
 ) error {
 	multiErr := errortypes.NewMultiError()
 	entity.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 func (s *Service) Prune(ctx context.Context, ref agentprofileports.SubjectRef) error {

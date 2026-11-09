@@ -144,7 +144,7 @@ func TestEditConflictSaysWhoSavedWhatSinceTheLoadedVersion(t *testing.T) {
 	assert.Equal(t, []errortypes.EditConflictChange{
 		{Field: "instructions", Label: "Instructions"},
 	}, edit.Changes)
-	assert.True(t, errortypes.IsEditConflictError(err))
+	assert.True(t, errortypes.IsVersionMismatchError(err))
 }
 
 func TestEditConflictPassesOtherFailuresThrough(t *testing.T) {

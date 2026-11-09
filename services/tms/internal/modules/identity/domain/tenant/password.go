@@ -44,8 +44,5 @@ func ValidateNewPassword(
 func CheckNewPassword(field, password, emailAddress string) error {
 	multiErr := errortypes.NewMultiError()
 	ValidateNewPassword(multiErr, field, password, emailAddress)
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }

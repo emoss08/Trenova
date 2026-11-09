@@ -42,7 +42,7 @@ export function watchtowerPageContext(
   ];
 
   return {
-    path: `/desk/watchtower?item=${encodeURIComponent(item.id)}`,
+    path: `/desk/needs?item=${encodeURIComponent(item.id)}`,
     entityType: withRecord ? kind : "",
     entityId: withRecord ? (item.subjectId ?? "") : "",
     title: limitUtf8Bytes(item.title, MAX_TITLE),

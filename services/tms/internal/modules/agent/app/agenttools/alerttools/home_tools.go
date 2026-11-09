@@ -109,14 +109,14 @@ func (e homeEditor) plan(
 	if effective.Locked || !effective.CanCustomize {
 		multiErr.Add("layout", errortypes.ErrForbidden,
 			"The person's administrator manages this home page, so it cannot be changed here")
-		return nil, multiErr
+		return nil, multiErr.Err()
 	}
 	if version := toolparams.OptionalInt64(params.Params, "version"); version != effective.Version {
-		multiErr.Add("version", errortypes.ErrVersionMismatch, fmt.Sprintf(
-			"The home page has changed since version %d was read; call home_get_layout "+
-				"for the current one", version,
-		))
-		return nil, multiErr
+		return nil, errortypes.NewVersionMismatchError(
+			"The home page has changed since version {0} was read; call home_get_layout "+
+				"for the current one",
+			version,
+		)
 	}
 
 	catalog, err := e.layouts.GetCatalog(ctx, request)

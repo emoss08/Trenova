@@ -24,7 +24,7 @@ const (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*QueuedMessage)(nil)
+	_ validationframework.Entity = (*QueuedMessage)(nil)
 )
 
 type QueuedRequest struct {

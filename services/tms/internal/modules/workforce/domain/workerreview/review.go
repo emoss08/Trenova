@@ -40,9 +40,9 @@ type ReviewItem struct {
 }
 
 var (
-	_ domaintypes.PostgresSearchable     = (*PerformanceReviewTemplate)(nil)
-	_ pagination.CursorEntity            = (*PerformanceReviewTemplate)(nil)
-	_ validationframework.TenantedEntity = (*PerformanceReviewTemplate)(nil)
+	_ domaintypes.PostgresSearchable = (*PerformanceReviewTemplate)(nil)
+	_ pagination.CursorEntity        = (*PerformanceReviewTemplate)(nil)
+	_ validationframework.Entity     = (*PerformanceReviewTemplate)(nil)
 )
 
 type PerformanceReviewTemplate struct {
@@ -257,7 +257,7 @@ type ReviewGoal struct {
 }
 
 var (
-	_ validationframework.TenantedEntity = (*PerformanceReview)(nil)
+	_ validationframework.Entity = (*PerformanceReview)(nil)
 )
 
 type PerformanceReview struct {

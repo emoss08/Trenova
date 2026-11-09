@@ -57,7 +57,7 @@ func (s *Service) preparePool(
 	multiErr := errortypes.NewMultiError()
 	entity.Validate(multiErr)
 	if multiErr.HasErrors() {
-		return multiErr
+		return multiErr.Err()
 	}
 
 	tenantInfo := pagination.TenantInfo{

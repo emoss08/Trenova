@@ -5,16 +5,16 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount/glaccountdb"
-	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/keelcheck"
 	"github.com/emoss08/trenova/pkg/tenantedvalidation"
+	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 )
 
 type ValidatorParams struct {
 	fx.In
+
+	Integrity validationframework.IntegrityChecker
 
 	DB *postgres.Connection
 }
@@ -24,12 +24,10 @@ type Validator struct {
 }
 
 func NewValidator(p ValidatorParams) *Validator {
-	checker := keelcheck.NewChecker(p.DB, glaccountdb.GLAccountsSchema())
 	return &Validator{
 		validator: tenantedvalidation.NewBuilder[*glaccount.GLAccount]().
 			WithModelName("GLAccount").
-			WithUniquenessChecker(checker).
-			WithReferenceChecker(checker).
+			WithIntegrityChecker(p.Integrity).
 			WithUniqueField(
 				"accountCode",
 				"account_code",
@@ -60,13 +58,13 @@ func NewValidator(p ValidatorParams) *Validator {
 func (v *Validator) ValidateCreate(
 	ctx context.Context,
 	entity *glaccount.GLAccount,
-) *errortypes.MultiError {
+) error {
 	return v.validator.ValidateCreate(ctx, entity)
 }
 
 func (v *Validator) ValidateUpdate(
 	ctx context.Context,
 	entity *glaccount.GLAccount,
-) *errortypes.MultiError {
+) error {
 	return v.validator.ValidateUpdate(ctx, entity)
 }

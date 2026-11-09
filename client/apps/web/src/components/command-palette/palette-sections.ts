@@ -6,6 +6,7 @@ import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { rankMatches, type RankedMatch } from "@trenova/shared/lib/fuzzy-score";
 import { COMMAND_GROUP_ORDER, commandGroupLabel } from "./palette-commands";
 import { paletteEntityText, PALETTE_RECORD_TYPES } from "./palette-entities";
+import type { ConversationHits } from "./palette-conversations";
 import { commandFields, matchRecord, pageFields } from "./palette-fields";
 import {
   isRecordScope,
@@ -65,6 +66,39 @@ export interface SearchInput {
   remote: RemoteState;
   ranking: LocalRanking;
   recentRecords: readonly RecentPaletteRecord[];
+  /** The person's conversations for the query, when the palette searches them. */
+  conversations?: ConversationHits | null;
+}
+
+/** How many conversations "All" shows before its scope holds the rest. */
+const CONVERSATIONS_IN_ALL = 3;
+
+function conversationSections(
+  hits: ConversationHits,
+  query: string,
+  t: TranslateFn,
+): { sections: PaletteSection[]; empty: boolean } {
+  if (hits.error) {
+    return {
+      sections: [section("conversations", t("Conversations could not be searched"), [])],
+      empty: false,
+    };
+  }
+  const items = hits.pages.slice(0, SCOPED_LIMIT).map((page) => pageItem(page));
+  const empty = query !== "" && !hits.loading && items.length === 0;
+  return {
+    sections: nonEmpty([
+      section(
+        "conversations",
+        query === "" ? t("Recent conversations") : t("Conversations"),
+        items,
+        {
+          count: hits.pages.length,
+        },
+      ),
+    ]),
+    empty,
+  };
 }
 
 export interface SearchResults {
@@ -350,6 +384,14 @@ export function buildSearchSections(input: SearchInput, t: TranslateFn): SearchR
     return { sections, empty: query !== "" && sections.length === 0 };
   }
 
+  if (scope === "conversations") {
+    return conversationSections(
+      input.conversations ?? { pages: [], loading: true, error: false },
+      query,
+      t,
+    );
+  }
+
   if (scope === "pages") {
     if (query === "") {
       return {
@@ -484,6 +526,21 @@ export function buildSearchSections(input: SearchInput, t: TranslateFn): SearchR
     }
   }
 
+  const conversations = input.conversations;
+  if (conversations && !conversations.error && conversations.pages.length > 0) {
+    sections.push(
+      section(
+        "conversations",
+        t("Conversations"),
+        conversations.pages.slice(0, CONVERSATIONS_IN_ALL).map((page) => pageItem(page)),
+        {
+          count: conversations.pages.length,
+          seeAll: conversations.pages.length > CONVERSATIONS_IN_ALL ? "conversations" : undefined,
+        },
+      ),
+    );
+  }
+
   const pageItems = ranking.pages
     .map(({ entry, match }) => pageItem(entry, { match }))
     .filter(notTop);
@@ -560,12 +617,16 @@ export function scopeCounts(
   ranking: LocalRanking,
   remote: RemoteState,
   mode: ScopeCountMode = "search",
+  conversations: ConversationHits | null = null,
 ): Partial<Record<PaletteScope, number>> {
+  const conversationCount =
+    mode === "commands" || !conversations || conversations.loading ? 0 : conversations.pages.length;
   const counts: Partial<Record<PaletteScope, number>> = {
     pages: mode === "commands" ? 0 : ranking.pages.length,
     commands: ranking.commands.length,
+    conversations: conversationCount,
   };
-  let all = (counts.pages ?? 0) + ranking.commands.length;
+  let all = (counts.pages ?? 0) + ranking.commands.length + conversationCount;
   if (mode === "commands") {
     for (const type of PALETTE_RECORD_TYPES) {
       counts[type] = 0;

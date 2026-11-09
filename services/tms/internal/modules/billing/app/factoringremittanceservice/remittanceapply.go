@@ -2,7 +2,6 @@ package factoringremittanceservice
 
 import (
 	"context"
-	"errors"
 	"strconv"
 
 	"github.com/emoss08/trenova/internal/modules/billing/app/factoringaction"
@@ -463,8 +462,7 @@ func movementCash(movement *factoringledgerports.PlannedMovement) int64 {
 }
 
 func stepError(err error) error {
-	var multiErr *errortypes.MultiError
-	if errors.As(err, &multiErr) && len(multiErr.Errors) > 0 {
+	if multiErr, ok := errortypes.RefusalOf(err); ok && len(multiErr.Errors) > 0 {
 		first := multiErr.Errors[0]
 		return errortypes.NewBusinessError(first.Message, first.Args...)
 	}

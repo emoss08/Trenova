@@ -1161,8 +1161,5 @@ func diagnosticsToValidationError(diagnostics []edidocument.Diagnostic) error {
 		field := stringutils.FirstNonEmpty(diagnostic.Path, diagnostic.SegmentID, "edi")
 		multiErr.Add(field, errortypes.ErrInvalid, diagnostic.Message)
 	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }

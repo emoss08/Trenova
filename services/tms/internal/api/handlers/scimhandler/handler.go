@@ -221,7 +221,7 @@ func toSCIMError(err error) *scimproto.Error {
 		return scimproto.Uniqueness(errortypes.Summary(err))
 	}
 
-	if multiErr, ok := errors.AsType[*errortypes.MultiError](err); ok {
+	if multiErr, ok := errortypes.RefusalOf(err); ok {
 		for _, fieldErr := range multiErr.Errors {
 			if fieldErr.Code == errortypes.ErrDuplicate ||
 				fieldErr.Code == errortypes.ErrAlreadyExists {

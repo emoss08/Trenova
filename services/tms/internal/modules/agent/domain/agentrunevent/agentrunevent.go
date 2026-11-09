@@ -15,8 +15,8 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*AgentRunEvent)(nil)
-	_ pagination.CursorEntity            = (*AgentRunEvent)(nil)
+	_ validationframework.Entity = (*AgentRunEvent)(nil)
+	_ pagination.CursorEntity    = (*AgentRunEvent)(nil)
 )
 
 // AgentRunEvent is one thing that happened, in the order it happened.

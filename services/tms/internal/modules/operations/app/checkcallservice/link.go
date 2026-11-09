@@ -432,11 +432,11 @@ func stopPlace(stop *shipment.Stop) string {
 	return place
 }
 
-func validateIssueRequest(req *checkcallports.IssueTrackingLinkRequest) *errortypes.MultiError {
+func validateIssueRequest(req *checkcallports.IssueTrackingLinkRequest) error {
 	multiErr := errortypes.NewMultiError()
 	if req == nil {
 		multiErr.Add("", errortypes.ErrInvalid, "Request is required")
-		return multiErr
+		return multiErr.Err()
 	}
 	addTenant(multiErr, req.TenantInfo)
 	if req.MoveID.IsNil() {
@@ -455,10 +455,7 @@ func validateIssueRequest(req *checkcallports.IssueTrackingLinkRequest) *errorty
 			)
 		}
 	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }
 
 type linkAuditParams struct {

@@ -26,7 +26,7 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*RateSimulation)(nil)
+	_ validationframework.Entity = (*RateSimulation)(nil)
 )
 
 const (

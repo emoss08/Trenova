@@ -14,7 +14,9 @@ import { useDeskSettingsStore } from "@/stores/desk-settings-store";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useMemo, useState } from "react";
 import { useAppDialogsStore } from "@/stores/app-dialogs-store";
-import { Link, useNavigate } from "react-router";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router";
+import { useDeskMarginStore } from "@/stores/desk-margin-store";
+import { casePath } from "./attention/attention-record";
 import { DeskIcon, type DeskIconName } from "@/components/desk-chat/desk-icons";
 import {
   deskRailRows,
@@ -33,6 +35,9 @@ import { formatModShiftShortcut, formatShortcut } from "@trenova/shared/lib/shor
 /** Which of the Desk's places is in front, so the rail can light it. */
 export type DeskPlace =
   | "today"
+  | "needs"
+  | "case"
+  | "triage"
   | "watchtower"
   | "decisions"
   | "scheduled"
@@ -62,6 +67,7 @@ function RailPlace({
   label,
   count = 0,
   waitsHere = false,
+  sub = false,
 }: {
   to: string;
   placeKey: string;
@@ -71,6 +77,8 @@ function RailPlace({
   count?: number;
   /** A change waits on the person in the conversation they have open. */
   waitsHere?: boolean;
+  /** A lens of the place above it, drawn under it without an icon. */
+  sub?: boolean;
 }) {
   const active = activeKey === placeKey;
   return (
@@ -81,10 +89,11 @@ function RailPlace({
       className={cn(
         "ui-focus-ring items-center outline-none",
         NAV_ITEM_CLASS,
+        sub && "h-6.5 pl-8.5 text-xs",
         active && NAV_ITEM_ON_CLASS,
       )}
     >
-      <DeskIcon name={icon} size={14} />
+      {!sub && <DeskIcon name={icon} size={14} />}
       <span className={NAV_LABEL_CLASS}>{label}</span>
       {count > 0 && <em className={cn("dk-sb-ct", waitsHere && "dk-w")}>{count}</em>}
     </Link>
@@ -107,7 +116,9 @@ export type DeskRailProps = {
   activeThreadId: string | null;
   canWatch: boolean;
   canDecide: boolean;
-  watchtowerCount: number;
+  canTriage: boolean;
+  /** Open items in each lens of Needs you, from the Watchtower's counts. */
+  lensCounts: { everything: number; watchtower: number; triage: number };
   decisionsCount: number;
   /** The open conversation has a change waiting on the person. */
   decisionsWaitHere: boolean;
@@ -146,7 +157,8 @@ export function DeskRail({
   activeThreadId,
   canWatch,
   canDecide,
-  watchtowerCount,
+  canTriage,
+  lensCounts,
   decisionsCount,
   decisionsWaitHere,
   onSearch,
@@ -185,20 +197,34 @@ export function DeskRail({
     }
   }
 
+  const [search] = useSearchParams();
+  const { pathname } = useLocation();
+  const lensParam = place === "needs" ? (search.get("lens") ?? "") : "";
+  const openWork = useDeskMarginStore((state) => state.openWork);
   const activeKey =
     place === "thread" && activeThreadId
       ? `c:${activeThreadId}`
-      : place === "watchtower"
+      : place === "needs" && lensParam === "watchtower"
         ? "n:watch"
-        : place === "decisions"
-          ? "n:dec"
-          : place === "scheduled"
-            ? "n:sched"
-            : place === "memory"
-              ? "n:memory"
-              : place === "agent"
-                ? "n:agent"
-                : "n:today";
+        : place === "needs" && lensParam === "triage"
+          ? "n:triage"
+          : place === "needs" && lensParam === "decisions"
+            ? "n:dec"
+            : place === "needs"
+              ? "n:needs"
+              : place === "case"
+                ? `w:${pathname}`
+                : place === "triage"
+                  ? "n:triage"
+                  : place === "decisions"
+                    ? "n:dec"
+              : place === "scheduled"
+                ? "n:sched"
+                : place === "memory"
+                  ? "n:memory"
+                  : place === "agent"
+                    ? "n:agent"
+                    : "n:today";
 
   // A conversation with schedules asks before it goes; any other slides out
   // at once.
@@ -333,23 +359,46 @@ export function DeskRail({
             />
             {canWatch && (
               <RailPlace
-                to="/desk/watchtower"
+                to="/desk/needs"
+                placeKey="n:needs"
+                activeKey={activeKey}
+                icon="stack"
+                label={t("Needs you")}
+                count={lensCounts.everything}
+              />
+            )}
+            {canWatch && (
+              <RailPlace
+                to="/desk/needs?lens=watchtower"
                 placeKey="n:watch"
                 activeKey={activeKey}
                 icon="radar"
                 label={t("Watchtower")}
-                count={watchtowerCount}
+                count={lensCounts.watchtower}
+                sub
+              />
+            )}
+            {canTriage && (
+              <RailPlace
+                to="/desk/needs?lens=triage"
+                placeKey="n:triage"
+                activeKey={activeKey}
+                icon="mail"
+                label={t("Triage")}
+                count={lensCounts.triage}
+                sub
               />
             )}
             {canDecide && (
               <RailPlace
-                to="/desk/decisions"
+                to="/desk/needs?lens=decisions"
                 placeKey="n:dec"
                 activeKey={activeKey}
                 icon="inbox"
                 label={t("Decisions")}
                 count={decisionsCount}
                 waitsHere={decisionsWaitHere}
+                sub
               />
             )}
             <RailPlace
@@ -366,6 +415,29 @@ export function DeskRail({
               icon="memory"
               label={t("Memory")}
             />
+            {openWork.length > 0 && (
+              <>
+                <div className="dk-sb-gh">{t("Open work")}</div>
+                {openWork.map((work) => {
+                  const to = casePath(work.kind, work.id);
+                  const active = activeKey === `w:${to}`;
+                  return (
+                    <Link
+                      key={to}
+                      to={to}
+                      aria-current={active ? "page" : undefined}
+                      className={cn("dk-w-sbw ui-focus-ring", active && "dk-on")}
+                    >
+                      <span className="dk-w-sbw-d" />
+                      <span className="dk-w-sbw-tx">
+                        <span className="dk-w-sbw-t">{work.label}</span>
+                        <span className="dk-w-sbw-s">{t("Case")}</span>
+                      </span>
+                    </Link>
+                  );
+                })}
+              </>
+            )}
           </>
         }
         empty={

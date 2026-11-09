@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/documentshipmentdraft"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
@@ -21,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/app/ratequoteservice"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/ratetypes"
 	"github.com/emoss08/trenova/pkg/rules"
@@ -418,7 +420,7 @@ func TestShopCarriers_RanksOptionsWithMarginAndPassesTheShortlist(t *testing.T) 
 			Status:           carrier.StatusActive,
 			ComplianceStatus: carrier.ComplianceStatusPending,
 		},
-	}}, querytooltest.MarginsReader())
+	}}, &shopMoves{}, querytooltest.MarginsReader())
 
 	shipmentID := pulid.MustNew("shp_")
 	result, err := tool.Query(t.Context(), querytooltest.ChatParams(map[string]any{
@@ -451,13 +453,62 @@ func TestShopCarriers_RanksOptionsWithMarginAndPassesTheShortlist(t *testing.T) 
 	assert.False(t, shopper.lastReq.Persist)
 }
 
+type shopMoves struct {
+	moves map[pulid.ID]*shipment.ShipmentMove
+	asked []pulid.ID
+}
+
+func (f *shopMoves) GetByID(
+	_ context.Context,
+	req *shipmentmoveports.GetMoveByIDRequest,
+) (*shipment.ShipmentMove, error) {
+	f.asked = append(f.asked, req.MoveID)
+	move, ok := f.moves[req.MoveID]
+	if !ok {
+		return nil, errortypes.NewNotFoundError("Shipment move not found")
+	}
+
+	return move, nil
+}
+
+// A move's id is what an agent working a move holds. Refusing it for a
+// shipment id taught agents to look the shipment up first, every time; the
+// shop prices the move's shipment instead.
+func TestShopCarriers_PricesTheShipmentOfAMoveItIsGiven(t *testing.T) {
+	t.Parallel()
+
+	shipmentID, moveID := pulid.MustNew("shp_"), pulid.MustNew("sm_")
+	shopper := &fakeShopper{
+		result: shopResultWithMargin(pulid.MustNew("carr_"), pulid.MustNew("carr_")),
+	}
+	moves := &shopMoves{moves: map[pulid.ID]*shipment.ShipmentMove{
+		moveID: {ID: moveID, ShipmentID: shipmentID},
+	}}
+	tool := NewShopCarriersTool(shopper, &shopCarriers{}, moves, querytooltest.MarginsReader())
+
+	_, err := tool.Query(t.Context(), querytooltest.ChatParams(map[string]any{
+		"shipmentId": moveID.String(),
+	}, ""))
+	require.NoError(t, err)
+	assert.Equal(t, shipmentID, shopper.lastReq.ShipmentID)
+	assert.Equal(t, []pulid.ID{moveID}, moves.asked)
+
+	direct := pulid.MustNew("shp_")
+	_, err = tool.Query(t.Context(), querytooltest.ChatParams(map[string]any{
+		"shipmentId": direct.String(),
+	}, ""))
+	require.NoError(t, err)
+	assert.Equal(t, direct, shopper.lastReq.ShipmentID)
+	assert.Len(t, moves.asked, 1, "a shipment id is shopped as it is")
+}
+
 func TestShopCarriers_ShowsNoMarginToAPersonWithoutTheMarginsGroup(t *testing.T) {
 	t.Parallel()
 
 	carrierA := pulid.MustNew("carr_")
 	carrierB := pulid.MustNew("carr_")
 	shopper := &fakeShopper{result: shopResultWithMargin(carrierA, carrierB)}
-	tool := NewShopCarriersTool(shopper, &shopCarriers{}, &querytooltest.FakePermissions{
+	tool := NewShopCarriersTool(shopper, &shopCarriers{}, &shopMoves{}, &querytooltest.FakePermissions{
 		Readable: map[string]*permissionports.ResourcePermissionDetail{},
 	})
 	shipmentID := pulid.MustNew("shp_")
@@ -489,7 +540,7 @@ func TestShopCarriers_HoldsAnAgentToItsDataAccess(t *testing.T) {
 		shopper := &fakeShopper{
 			result: shopResultWithMargin(pulid.MustNew("carr_"), pulid.MustNew("carr_")),
 		}
-		return NewShopCarriersTool(shopper, &shopCarriers{}, querytooltest.MarginsReader())
+		return NewShopCarriersTool(shopper, &shopCarriers{}, &shopMoves{}, querytooltest.MarginsReader())
 	}
 
 	result, err := shopFor().Query(t.Context(), querytooltest.ChatParams(map[string]any{

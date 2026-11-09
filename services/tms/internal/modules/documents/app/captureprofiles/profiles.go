@@ -292,11 +292,7 @@ func (s *Service) DeleteProfile(
 func validateProfile(profile *captureprofile.CaptureProfile) error {
 	multiErr := errortypes.NewMultiError()
 	profile.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 // profileConstraintError turns the name and default indexes into field errors

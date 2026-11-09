@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*CostCategory)(nil)
+	_ validationframework.Entity = (*CostCategory)(nil)
 )
 
 var maxRatePerMile = decimal.NewFromInt(100)

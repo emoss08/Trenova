@@ -2,7 +2,6 @@ package errortypes_test
 
 import (
 	"fmt"
-	"net/http"
 	"testing"
 
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -27,8 +26,6 @@ func TestQuotaExceededError(t *testing.T) {
 	wrapped := fmt.Errorf("create shipment: %w", err)
 	assert.True(t, errortypes.IsQuotaExceededError(wrapped))
 	assert.False(t, errortypes.IsPlanRestrictionError(wrapped))
-	assert.Equal(t, http.StatusPaymentRequired, errortypes.HTTPStatus(wrapped))
-	assert.Equal(t, http.StatusPaymentRequired, errortypes.HTTPStatusWithCode(errortypes.ErrQuotaExceeded))
 
 	fields := err.LogFields()
 	assert.Equal(t, "shipments.total", fields["quota_meter"])
@@ -88,6 +85,4 @@ func TestPlanRestrictionError(t *testing.T) {
 	require.True(t, errortypes.IsPlanRestrictionError(err))
 	assert.False(t, errortypes.IsQuotaExceededError(err))
 	assert.False(t, errortypes.IsAuthorizationError(err))
-	assert.Equal(t, http.StatusForbidden, errortypes.HTTPStatus(err))
-	assert.Equal(t, http.StatusForbidden, errortypes.HTTPStatusWithCode(errortypes.ErrPlanRestricted))
 }

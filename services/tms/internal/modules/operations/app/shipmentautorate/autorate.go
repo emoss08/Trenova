@@ -17,7 +17,7 @@ type autoRatePlan struct {
 
 // validateShipmentRateNotLocked refuses to reprice a shipment whose numbers the
 // customer has already been invoiced against.
-func validateShipmentRateNotLocked(entity *shipment.Shipment) *errortypes.MultiError {
+func validateShipmentRateNotLocked(entity *shipment.Shipment) error {
 	if entity == nil || !entity.RateLocked {
 		return nil
 	}
@@ -29,7 +29,7 @@ func validateShipmentRateNotLocked(entity *shipment.Shipment) *errortypes.MultiE
 		"This shipment's rate is locked and cannot be re-rated",
 	)
 
-	return multiErr
+	return multiErr.Err()
 }
 
 func contractRateCharge(charge *shipment.AdditionalCharge) shipmentserviceports.ContractRateCharge {

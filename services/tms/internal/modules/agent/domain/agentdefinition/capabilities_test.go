@@ -146,12 +146,3 @@ func TestValidateCapabilities(t *testing.T) {
 	ok.validateCapabilities(multiErr)
 	assert.False(t, multiErr.HasErrors(), multiErr.Error())
 }
-
-func TestFormatMinute(t *testing.T) {
-	t.Parallel()
-
-	assert.Equal(t, "7 AM", FormatMinute(420))
-	assert.Equal(t, "6 PM", FormatMinute(1080))
-	assert.Equal(t, "12 AM", FormatMinute(0))
-	assert.Equal(t, "12:30 PM", FormatMinute(750))
-}

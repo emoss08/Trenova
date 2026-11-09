@@ -113,7 +113,8 @@ function renderRail(props: Partial<DeskRailThreadsProps> = {}) {
           activeThread={null}
           canWatch
           canDecide
-          watchtowerCount={0}
+          canTriage
+          lensCounts={{ everything: 0, watchtower: 0, triage: 0 }}
           decisionsCount={0}
           decisionsWaitHere={false}
           onSearch={vi.fn()}

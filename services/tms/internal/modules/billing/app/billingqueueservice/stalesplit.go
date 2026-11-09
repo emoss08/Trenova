@@ -37,7 +37,7 @@ func accessorialNames(charges []*shipment.AdditionalCharge) map[pulid.ID]string 
 func staleAmountSplitError(
 	stale []chargeallocation.StaleAmountSplit,
 	names map[pulid.ID]string,
-) *errortypes.MultiError {
+) error {
 	multiErr := errortypes.NewMultiError()
 	for _, split := range stale {
 		charge := "freight"
@@ -57,7 +57,7 @@ func staleAmountSplitError(
 		)
 	}
 
-	return multiErr
+	return multiErr.Err()
 }
 
 func chargesUpdatedComment(convertedSplits int) string {

@@ -45,7 +45,7 @@ func ParseParallelSettings(values map[string]string) (ParallelSettings, error) {
 	multiErr := errortypes.NewMultiError()
 	settings := parseParallelSettings(values, multiErr)
 	if multiErr.HasErrors() {
-		return ParallelSettings{}, multiErr
+		return ParallelSettings{}, multiErr.Err()
 	}
 
 	return settings, nil

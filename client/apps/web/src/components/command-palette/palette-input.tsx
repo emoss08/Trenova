@@ -45,6 +45,8 @@ export function scopePlaceholder(scope: PaletteScope, t: TranslateFn): string {
     return paletteEntityText(scope, t).placeholder;
   }
   switch (scope) {
+    case "conversations":
+      return t("Find a conversation, a message or what an agent made…");
     case "pages":
       return t("Jump to a page…");
     case "commands":

@@ -191,7 +191,7 @@ func restoreImmutableFields(user, original *tenant.User) {
 	user.Version = original.Version
 }
 
-func guardSelfAccess(actorID pulid.ID, before, after *tenant.User) *errortypes.MultiError {
+func guardSelfAccess(actorID pulid.ID, before, after *tenant.User) error {
 	if actorID.IsNil() || actorID != before.ID {
 		return nil
 	}
@@ -204,11 +204,7 @@ func guardSelfAccess(actorID pulid.ID, before, after *tenant.User) *errortypes.M
 		multiErr.Add("status", errortypes.ErrForbidden, "You cannot deactivate your own account")
 	}
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 type accessChange struct {

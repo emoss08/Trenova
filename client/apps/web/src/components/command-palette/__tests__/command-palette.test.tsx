@@ -228,7 +228,7 @@ describe("CommandPalette", () => {
 
     const topHit = screen.getByRole("group", { name: /Top hit/ });
     expect(within(topHit).getByRole("option", { name: /Workers/ })).toBeInTheDocument();
-    expect(screen.queryByText("Invoices")).not.toBeInTheDocument();
+    expect(screen.queryByRole("option", { name: /Invoices/ })).not.toBeInTheDocument();
   });
 
   it("opens a new tab on Mod+Enter without running a plain Enter first", async () => {

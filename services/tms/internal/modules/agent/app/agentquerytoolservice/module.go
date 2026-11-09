@@ -51,6 +51,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchboardports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/freightoutlookports"
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentmoveports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/stopetaports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/weatheralertports"
@@ -292,9 +293,10 @@ func provideQuoteShipmentTool(
 func provideShopCarriersTool(
 	quotes *ratequoteservice.Service,
 	carriers carrierports.CarrierRepository,
+	moves shipmentmoveports.ShipmentMoveRepository,
 	permissions permissionports.PermissionEngine,
 ) agenttoolports.AgentQueryTool {
-	return intakequerytools.NewShopCarriersTool(quotes, carriers, permissions)
+	return intakequerytools.NewShopCarriersTool(quotes, carriers, moves, permissions)
 }
 
 func provideRankMoveCandidatesTool(

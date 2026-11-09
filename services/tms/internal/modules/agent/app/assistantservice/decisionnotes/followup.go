@@ -36,7 +36,7 @@ const FollowUpInstruction = "Tell the person in one or two sentences what happen
 	"most useful next step. Report only what this note holds about what ran, the card it " +
 	"quotes included: do not describe a value, a record or an effect of it that the note " +
 	"does not name, and where it does not say, say you do not know. " + saidBefore +
-	" Do not propose the same change again. " + continueTheWork
+	" Do not propose the same change again. " + continueTheWork + " " + verifyOutcome
 
 // saidBefore keeps the agent from taking back what it told the person while
 // the proposal waited. A model told "it has not posted yet; it runs once you
@@ -72,6 +72,15 @@ const continueTheWork = "When what ran was a step toward something the person as
 	"that is not done yet, such as the records a shipment needs, take the next step now " +
 	"with your tools instead of asking whether to; ask only for what you cannot find."
 
+// verifyOutcome closes the loop on a change whose point arrives later: a
+// relay that should land a delivery inside its window is only done when the
+// delivery does. The agent checks at that moment and speaks only if it slipped.
+const verifyOutcome = "When what ran is meant to bring something about later that a record " +
+	"will show, such as a delivery inside a new window, a driver taking a load at a time or a " +
+	"document arriving, set a wait to check it then if you can set waits, and say in your " +
+	"reply when you will look. When that wait wakes you, read the record and tell the person " +
+	"only if it did not happen, with what happened instead."
+
 const (
 	declinedNoteHeader = "The person declined:"
 	decisionNoteHeader = "The person's note with the decision:"
@@ -86,7 +95,7 @@ const (
 		"what they said. Report only what this note holds about what ran, the card it quotes " +
 		"included: do not describe a value, a record or an effect of it that the note does " +
 		"not name, and where it does not say, say you do not know. " + saidBefore +
-		" Do not propose the same change again. " + continueTheWork
+		" Do not propose the same change again. " + continueTheWork + " " + verifyOutcome
 )
 
 const refusedInstruction = "A change approved here was refused because its record changed " +

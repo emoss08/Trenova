@@ -73,25 +73,3 @@ func DefinitionToolSchema() map[string]any {
 	schema[schemaDescription] = definitionToolNote
 	return schema
 }
-
-func ParameterNames(def *ir.Definition) []string {
-	if def == nil {
-		return nil
-	}
-	names := make([]string, 0, len(def.Parameters))
-	for i := range def.Parameters {
-		names = append(names, def.Parameters[i].Name)
-	}
-	return names
-}
-
-func CloneDefinition(def *ir.Definition) (*ir.Definition, error) {
-	if def == nil {
-		return nil, errNoDefinition
-	}
-	encoded, err := ir.Encode(def)
-	if err != nil {
-		return nil, fmt.Errorf("encode report definition: %w", err)
-	}
-	return ir.Decode(encoded)
-}

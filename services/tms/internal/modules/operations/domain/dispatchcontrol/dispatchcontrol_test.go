@@ -302,11 +302,6 @@ func TestDispatchControl_GetBusinessUnitID(t *testing.T) {
 	assert.Equal(t, buID, dc.GetBusinessUnitID())
 }
 
-//go:fix inline
-func intPtr(v int) *int {
-	return new(v)
-}
-
 func TestNewDefaultDispatchControl(t *testing.T) {
 	t.Parallel()
 
@@ -389,49 +384,6 @@ func TestServiceIncidentType_IsValid(t *testing.T) {
 	}
 }
 
-func TestServiceIncidentTypeFromString(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name    string
-		input   string
-		want    ServiceIncidentType
-		wantErr bool
-	}{
-		{name: "never", input: "Never", want: ServiceIncidentTypeNever, wantErr: false},
-		{name: "pickup", input: "Pickup", want: ServiceIncidentTypePickup, wantErr: false},
-		{name: "delivery", input: "Delivery", want: ServiceIncidentTypeDelivery, wantErr: false},
-		{
-			name:    "pickup delivery",
-			input:   "PickupDelivery",
-			want:    ServiceIncidentTypePickupDelivery,
-			wantErr: false,
-		},
-		{
-			name:    "all except shipper",
-			input:   "AllExceptShipper",
-			want:    ServiceIncidentTypeAllExceptShipper,
-			wantErr: false,
-		},
-		{name: "invalid", input: "Invalid", want: "", wantErr: true},
-		{name: "empty", input: "", want: "", wantErr: true},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			got, err := ServiceIncidentTypeFromString(tt.input)
-			if tt.wantErr {
-				assert.ErrorIs(t, err, ErrInvalidServiceIncidentType)
-			} else {
-				require.NoError(t, err)
-				assert.Equal(t, tt.want, got)
-			}
-		})
-	}
-}
-
 func TestComplianceEnforcementLevel_String(t *testing.T) {
 	t.Parallel()
 
@@ -475,42 +427,6 @@ func TestComplianceEnforcementLevel_IsValid(t *testing.T) {
 			t.Parallel()
 
 			assert.Equal(t, tt.want, tt.c.IsValid())
-		})
-	}
-}
-
-func TestComplianceEnforcementLevelFromString(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name    string
-		input   string
-		want    ComplianceEnforcementLevel
-		wantErr bool
-	}{
-		{
-			name:    "warning",
-			input:   "Warning",
-			want:    ComplianceEnforcementLevelWarning,
-			wantErr: false,
-		},
-		{name: "block", input: "Block", want: ComplianceEnforcementLevelBlock, wantErr: false},
-		{name: "audit", input: "Audit", want: ComplianceEnforcementLevelAudit, wantErr: false},
-		{name: "invalid", input: "Invalid", want: "", wantErr: true},
-		{name: "empty", input: "", want: "", wantErr: true},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			got, err := ComplianceEnforcementLevelFromString(tt.input)
-			if tt.wantErr {
-				assert.ErrorIs(t, err, ErrInvalidComplianceEnforcementLevel)
-			} else {
-				require.NoError(t, err)
-				assert.Equal(t, tt.want, got)
-			}
 		})
 	}
 }

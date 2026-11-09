@@ -29,7 +29,7 @@ export function SentStatementsPanel({ customerId }: { customerId: string }) {
           )}
         </SectionPanelQuiet>
       ) : (
-        <ol className="divide-border divide-y">
+        <ol className="divide-y divide-border">
           {data.map((statement) => (
             <SentStatementRow key={statement.id} statement={statement} />
           ))}
@@ -59,11 +59,11 @@ function SentStatementRow({ statement }: { statement: SentStatement }) {
           </Badge>
           <span className="truncate text-sm">{period}</span>
         </div>
-        <span className="text-muted-foreground shrink-0 text-xs">
+        <span className="shrink-0 text-xs text-muted-foreground">
           {formatUnixDateTimeMedium(statement.sentAt)}
         </span>
       </div>
-      <div className="text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
         <span className="text-foreground tabular-nums">
           {t("{0} due", formatMinor(statement.endingBalanceMinor, statement.currencyCode))}
         </span>

@@ -17,9 +17,9 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*Feedback)(nil)
-	_ pagination.CursorEntity            = (*Feedback)(nil)
-	_ domaintypes.PostgresSearchable     = (*Feedback)(nil)
+	_ validationframework.Entity     = (*Feedback)(nil)
+	_ pagination.CursorEntity        = (*Feedback)(nil)
+	_ domaintypes.PostgresSearchable = (*Feedback)(nil)
 )
 
 const (

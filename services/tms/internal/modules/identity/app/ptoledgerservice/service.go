@@ -248,7 +248,7 @@ func (s *Service) post(
 			multiErr := errortypes.NewMultiError()
 			entry.Validate(multiErr)
 			if multiErr.HasErrors() {
-				return multiErr
+				return multiErr.Err()
 			}
 
 			if _, err = s.ledgerRepo.InsertEntry(txCtx, entry); err != nil {

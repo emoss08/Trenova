@@ -52,6 +52,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aituneupports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/briefingports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/deskactivityports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/deskattentionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/shipmentbriefports"
@@ -407,6 +409,8 @@ type Params struct {
 	JournalCards                      *journalcardservice.Service
 	FuelDeskCards                     *fueldeskcardservice.Service
 	BoardCards                        *boardcardservice.Service
+	DeskAttentionService              deskattentionports.DeskAttentionService
+	DeskActivityService               deskactivityports.DeskActivityService
 	JournalReview                     journalentryports.JournalReviewService
 	JournalReversalService            *journalreversalservice.Service
 	AuditService                      auditports.AuditService
@@ -705,6 +709,8 @@ type Services struct {
 	JournalCards                      *journalcardservice.Service
 	FuelDeskCards                     *fueldeskcardservice.Service
 	BoardCards                        *boardcardservice.Service
+	DeskAttentionService              deskattentionports.DeskAttentionService
+	DeskActivityService               deskactivityports.DeskActivityService
 	JournalReview                     journalentryports.JournalReviewService
 	JournalReversalService            *journalreversalservice.Service
 	AuditService                      auditports.AuditService
@@ -1009,6 +1015,8 @@ func newServices(p *Params) *Services {
 		JournalCards:                      p.JournalCards,
 		FuelDeskCards:                     p.FuelDeskCards,
 		BoardCards:                        p.BoardCards,
+		DeskAttentionService:              p.DeskAttentionService,
+		DeskActivityService:               p.DeskActivityService,
 		JournalReview:                     p.JournalReview,
 		JournalReversalService:            p.JournalReversalService,
 		AuditService:                      p.AuditService,

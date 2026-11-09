@@ -71,7 +71,7 @@ func ParseBrowserUseSettings(values map[string]string) (BrowserUseSettings, erro
 	multiErr := errortypes.NewMultiError()
 	settings := parseBrowserUseSettings(values, multiErr)
 	if multiErr.HasErrors() {
-		return BrowserUseSettings{}, multiErr
+		return BrowserUseSettings{}, multiErr.Err()
 	}
 
 	return settings, nil

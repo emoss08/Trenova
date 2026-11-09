@@ -1,76 +1,15 @@
 package errortypes
 
-import (
-	"runtime"
-
-	"go.uber.org/atomic"
-)
-
-var captureStackTraces atomic.Bool
-
-func EnableStackTraces() {
-	captureStackTraces.Store(true)
-}
-
-func DisableStackTraces() {
-	captureStackTraces.Store(false)
-}
-
-func StackTracesEnabled() bool {
-	return captureStackTraces.Load()
-}
-
-type StackFrame struct {
-	Function string `json:"function"`
-	File     string `json:"file"`
-	Line     int    `json:"line"`
-}
-
-func captureStack(skip int) []StackFrame {
-	if !captureStackTraces.Load() {
-		return nil
-	}
-
-	const maxFrames = 32
-	pcs := make([]uintptr, maxFrames)
-	n := runtime.Callers(skip+2, pcs)
-
-	if n == 0 {
-		return nil
-	}
-
-	frames := runtime.CallersFrames(pcs[:n])
-	stack := make([]StackFrame, 0, n)
-
-	for {
-		frame, more := frames.Next()
-		stack = append(stack, StackFrame{
-			Function: frame.Function,
-			File:     frame.File,
-			Line:     frame.Line,
-		})
-
-		if !more {
-			break
-		}
-	}
-
-	return stack
-}
-
 type ErrorContext struct {
 	RequestID string            `json:"requestId,omitempty"`
 	UserID    string            `json:"userId,omitempty"`
 	TraceID   string            `json:"traceId,omitempty"`
 	SpanID    string            `json:"spanId,omitempty"`
 	Extra     map[string]string `json:"extra,omitempty"`
-	Stack     []StackFrame      `json:"stack,omitempty"`
 }
 
 func NewErrorContext() *ErrorContext {
-	return &ErrorContext{
-		Stack: captureStack(1),
-	}
+	return &ErrorContext{}
 }
 
 func (c *ErrorContext) WithRequestID(id string) *ErrorContext {

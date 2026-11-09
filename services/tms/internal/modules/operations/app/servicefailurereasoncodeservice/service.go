@@ -268,13 +268,10 @@ func (s *service) Reorder(
 	return reordered, nil
 }
 
-func validateReasonCode(entity *servicefailure.ReasonCode) *errortypes.MultiError {
+func validateReasonCode(entity *servicefailure.ReasonCode) error {
 	multiErr := errortypes.NewMultiError()
 	entity.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }
 
 func (s *service) logReasonCodeAction(

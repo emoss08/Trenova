@@ -94,7 +94,6 @@ export type PlanStepView = {
   proposalId: string;
   /** The agent's own sentence for the step, else its tool in words. */
   title: string;
-  toolName: string;
   tone: PlanStepTone;
   /** When the step ran, in Unix seconds; null for one that has not. */
   ranAt: number | null;
@@ -136,7 +135,6 @@ export function planSteps(
       number: stepNumber(step, index),
       proposalId: step.id,
       title: step.rationale.trim() || humanizeToolName(step.toolName),
-      toolName: step.toolName,
       tone: stepTone(step, phase),
       ranAt: step.executedAt ?? null,
       error: step.executionError,
@@ -156,7 +154,6 @@ export function planSteps(
       number: step.step > 0 ? step.step : views.length + 1,
       proposalId: step.proposalId,
       title: step.rationale.trim() || humanizeToolName(step.toolName),
-      toolName: step.toolName,
       tone: stepTone(undefined, phase),
       ranAt: null,
       error: "",

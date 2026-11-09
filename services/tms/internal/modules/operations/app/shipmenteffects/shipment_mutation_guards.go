@@ -5,7 +5,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
-func ValidateShipmentNotLockedForBilling(entity *shipment.Shipment) *errortypes.MultiError {
+func ValidateShipmentNotLockedForBilling(entity *shipment.Shipment) error {
 	if entity.BillingTransferStatus.IsOutsideBillingQueue() {
 		return nil
 	}
@@ -17,5 +17,5 @@ func ValidateShipmentNotLockedForBilling(entity *shipment.Shipment) *errortypes.
 		"Shipment cannot be updated while in the billing queue. Send it back to operations from the billing queue to make changes.",
 	)
 
-	return multiErr
+	return multiErr.Err()
 }

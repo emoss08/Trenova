@@ -35,12 +35,12 @@ type Stage = {
 function StageCell({ stage }: { stage: Stage }) {
   const body = (
     <>
-      <span className="text-foreground-subtle flex items-center gap-1.5 text-xs font-medium">
+      <span className="flex items-center gap-1.5 text-xs font-medium text-foreground-subtle">
         <stage.icon className="size-3" />
         {stage.label}
       </span>
       <span className="text-xl leading-tight font-semibold tabular-nums">{stage.value}</span>
-      <span className="text-muted-foreground text-xs tabular-nums">{stage.count}</span>
+      <span className="text-xs text-muted-foreground tabular-nums">{stage.count}</span>
       <span
         className={cn(
           "mt-1 text-xs",
@@ -53,11 +53,11 @@ function StageCell({ stage }: { stage: Stage }) {
       >
         {stage.note}
       </span>
-      <ArrowNarrowRightIcon className="text-foreground-faint absolute top-3 right-3 size-3.5 opacity-0 transition-opacity group-hover:opacity-100" />
+      <ArrowNarrowRightIcon className="absolute top-3 right-3 size-3.5 text-foreground-faint opacity-0 transition-opacity group-hover:opacity-100" />
     </>
   );
   const className =
-    "group ui-focus-ring relative flex min-w-0 flex-col gap-0.5 rounded-md px-3 py-3 text-left";
+    "group relative flex min-w-0 flex-col gap-0.5 rounded-md ui-focus-ring px-3 py-3 text-left";
 
   if (stage.to) {
     return (
@@ -186,22 +186,22 @@ export function FactoringMoneyPath({
   ];
 
   return (
-    <section aria-label={t("Where the invoices are")} className="bg-card rounded-lg border">
+    <section aria-label={t("Where the invoices are")} className="rounded-lg border bg-card">
       <header className="flex min-h-9 items-center justify-between gap-2 border-b px-3 py-1.5">
         <h3 className="text-sm font-semibold">{t("Where the invoices are")}</h3>
-        <span className="text-muted-foreground hidden text-xs sm:inline">
+        <span className="hidden text-xs text-muted-foreground sm:inline">
           {amounts
             ? t("Open balance and face value, in {0}", currency)
             : t("Invoice counts; amounts need factoring reserve access")}
         </span>
       </header>
-      <HoverGlideGroup className="bg-card rounded-b-lg p-1.5">
+      <HoverGlideGroup className="rounded-b-lg bg-card p-1.5">
         <ol className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1fr_auto_1fr_auto_1.2fr_auto_1fr]">
           {stages.map((stage, index) => (
             <li key={stage.key} className="contents">
               <StageCell stage={stage} />
               {index < stages.length - 1 ? (
-                <span aria-hidden className="text-foreground-faint hidden items-center lg:flex">
+                <span aria-hidden className="hidden items-center text-foreground-faint lg:flex">
                   <ChevronRightIcon className="size-4" />
                 </span>
               ) : null}
@@ -210,13 +210,13 @@ export function FactoringMoneyPath({
         </ol>
       </HoverGlideGroup>
       <div className="grid border-t lg:grid-cols-[1fr_auto_1fr_auto_1.2fr_auto_1fr]">
-        <p className="text-foreground-subtle col-span-3 hidden items-center px-3 py-2.5 text-xs lg:flex">
+        <p className="col-span-3 hidden items-center px-3 py-2.5 text-xs text-foreground-subtle lg:flex">
           {t("A rejected invoice goes back to ready, with the factor's reason on it.")}
         </p>
         <div className="col-span-1 flex flex-col sm:flex-row lg:col-span-4">
           <Link
             to={workspace("funded")}
-            className="hover:bg-surface-hover ui-focus-ring flex flex-1 items-start gap-2 px-3 py-2.5 text-xs transition-colors lg:border-l"
+            className="flex flex-1 items-start gap-2 ui-focus-ring px-3 py-2.5 text-xs transition-colors hover:bg-surface-hover lg:border-l"
           >
             <CornerDownRightIcon
               className={cn(
@@ -254,9 +254,9 @@ export function FactoringMoneyPath({
           <button
             type="button"
             onClick={() => onTab("ledger")}
-            className="hover:bg-surface-hover ui-focus-ring flex flex-1 items-start gap-2 border-t px-3 py-2.5 text-left text-xs transition-colors sm:border-t-0 sm:border-l"
+            className="flex flex-1 items-start gap-2 border-t ui-focus-ring px-3 py-2.5 text-left text-xs transition-colors hover:bg-surface-hover sm:border-t-0 sm:border-l"
           >
-            <CornerDownRightIcon className="text-foreground-subtle mt-0.5 size-3.5 shrink-0" />
+            <CornerDownRightIcon className="mt-0.5 size-3.5 shrink-0 text-foreground-subtle" />
             <span className="flex flex-col gap-0.5">
               <span className="font-medium tabular-nums">
                 {amounts

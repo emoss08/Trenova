@@ -210,10 +210,7 @@ func (s *Service) validateTileTargets(
 
 	validateDashboardFilters(multiErr, s.engine.Catalog(), layout.Filters)
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }
 
 func validateDashboardFilters(

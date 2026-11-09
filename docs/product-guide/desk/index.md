@@ -1,13 +1,15 @@
 ---
 path: /desk
-aliases: [AI assistant, assistant, agents, chat, ask AI, copilot, AI desk, suggested agent, best agent, which agent, conversations, steer the agent, steering, interrupt the agent, slash commands, at mention, dictate, compact conversation, pinned facts, snooze, hand off, handoff, chapter, delegate, artifacts, citations, morning briefing]
+aliases: [needs you, what needs me, case, record case, nova handled, since you left, AI assistant, assistant, agents, chat, ask AI, copilot, AI desk, suggested agent, best agent, which agent, conversations, steer the agent, steering, interrupt the agent, slash commands, at mention, dictate, compact conversation, pinned facts, snooze, hand off, handoff, chapter, delegate, artifacts, citations, morning briefing]
 related:
+  - /desk/needs
   - /desk/decisions
   - /desk/watchtower
   - /desk/scheduled
-  - /triage
+  - /desk/triage
   - /admin/agent-control
 covers:
+  - /desk/r/:kind/:id
   - /desk/t/:threadId
   - /desk/agents/:agentId
   - /desk/c/:threadId/a/:slug
@@ -15,13 +17,31 @@ covers:
 ---
 
 ## What it's for
-The Desk is where you talk to Trenova's AI agents about the work in front of you: a shipment, a driver, a customer, or how to do something in the app. Its **Today** page greets you with the date and one line on what the day holds (the morning briefing's headline when one was written, otherwise how many decisions are waiting on you, which opens them), and below it the box you ask in. The box names the agent it will ask and types out that agent's starter questions as its placeholder: press Tab to take the one on screen, or ⌘1–3 (Ctrl+1–3) to ask it outright. The rail down the left holds **New conversation**, search, links to **Today**, **Watchtower** and **Decisions** (each with a count only while something waits there), every conversation grouped by when it was last used (**Pinned** first, then **Today**, **Yesterday**, **Previous 7 days**, **Previous 30 days** and **Older**), **Keyboard shortcuts**, **Desk settings** and **Back to Trenova**. A conversation that needs you or has an agent at work says so under its name, with the agent: "Needs your approval", "Writing a reply" or "Last reply failed". Press ? anywhere outside a text box to see every Desk shortcut. Select a group's heading to fold it away or open it again; a folded group shows how many conversations it holds, and the rail remembers which groups you folded. On a phone the rail slides over the page from the menu button at the top left.
+The Desk is where you work with Trenova's AI agents and see everything that needs you, in one room. Its **Today** page greets you with the date and one line on what the day holds (the morning briefing's headline when one was written, otherwise how many decisions are waiting on you), the box you ask in, and under it the day itself: the morning's figures in one strip, what needs you soonest, what changed since you last looked, what agents changed today (on their own, after someone approved it, only as a preview, or not at all) and what they are working on now. People who read Triage also see how many messages wait for them. The box names the agent it will ask and types out that agent's starter questions as its placeholder: press Tab to take the one on screen, or ⌘1–3 (Ctrl+1–3) to ask it outright.
 
-Each conversation opens in the middle, and anything an agent produces (a table, a draft, a document, a plan) opens in the workspace beside it. Changes an agent wants to make to your records are not applied on their own: in a Desk conversation they wait in a card above the message box, and they are also listed on [Decisions](/desk/decisions).
+The rail down the left holds **New conversation**, search, **Today**, **Needs you** with its three lenses under it (**Watchtower**, **Triage** and **Decisions**, each with a count only while something waits there), **Scheduled**, **Memory**, every conversation grouped by when it was last used (**Pinned** first, then **Today**, **Yesterday**, **Previous 7 days**, **Previous 30 days** and **Older**), **Keyboard shortcuts**, **Desk settings** and **Back to Trenova**. A conversation that needs you or has an agent at work says so under its name, with the agent: "Needs your approval", "Writing a reply" or "Last reply failed". Press ? anywhere outside a text box to see every Desk shortcut, ⌘K (Ctrl+K) to search or do anything, ⌘J (Ctrl+J) to ask Nova, and G then D, N, W or T to go to Today, Needs you, Watchtower or Triage. Select a group's heading to fold it away or open it again; a folded group shows how many conversations it holds, and the rail remembers which groups you folded. On a phone the rail slides over the page from the menu button at the top left.
+
+**Needs you** puts everything waiting on people in one list, one row per record: a shipment's late warning, the customer's email about it and the plan an agent drafted to recover it are one row. Opening a record gives its case: the record's own card, and beside it what is open about it or the conversation with Nova about it.
+
+Each conversation opens in the middle, and anything an agent produces (a table, a draft, a document, a plan, a board) opens in the workspace beside it. Changes an agent wants to make to your records are not applied on their own: in a Desk conversation they wait in a card above the message box, and they are also listed on [Decisions](/desk/decisions).
 
 While an agent replies you can steer it with a correction or queue the next question. The message box names records with @, takes slash commands, files, scans and dictation, and can share the page you came from. A conversation about a shipment, invoice or dispute becomes a case, with a ready-to-bill or ready-to-close checklist, snoozes and waiting on the customer's or carrier's reply. Conversations can also run a request on a schedule, be handed to another agent, keep pinned facts in mind, and compact themselves when they grow long. Each fact an agent looked up carries a number tying it to the step that found it.
 
 ## Tasks
+
+### Open a record's case
+Keywords: case, record page in desk, everything about a shipment, ask about this record
+1. From [Needs you](/desk/needs), select **Open the case**; from Today, select a row in **Needs you** or a line in **Nova handled today**.
+2. The record's own card fills the page. Beside it, **Open about this** lists its Watchtower conditions, the messages about it and the changes waiting on a person, each with its card and the bar to act on it.
+3. Select **Ask Nova** (or press ⌘J / Ctrl+J) to ask about the record. Your first question starts the conversation about it, with the record attached; a shipment, invoice or dispute keeps it as the record's case. Nothing changes until you approve it.
+4. Select **Needs you** at the top of the card to go back.
+
+### See what agents changed today
+Keywords: nova handled, what did the agent do, ran on its own, approved by, previewed only, didn't go through
+1. Open [Desk](/desk). **Nova handled today** lists what agents changed, newest first, with the agent and the records.
+2. Each line says how it ended: **Ran on its own** (a tool AI control lets run without asking), approved by whom, **Previewed only** (an agent in shadow or simulation) or **Didn't go through**, with the reason.
+3. Several writes of the same kind in one run are one line, such as "Filed 11 rate confirmations". Select a line to open the case of the first record it changed.
+4. **Since you last looked** says what came in, what was cleared, the changes other people approved and the writes that did not go through since you last opened the Watchtower.
 
 ### Ask an agent a question
 Keywords: chat with AI, ask the assistant, start a conversation, which agent should I ask, suggested agent, wrong agent
@@ -71,7 +91,7 @@ Keywords: new chat, blank conversation, start over
 Keywords: find chat, previous conversation, conversation history, search chats
 1. Open [Desk](/desk).
 2. Select the conversation in the rail, where conversations are grouped by when they were last used with pinned ones first.
-3. To find one by what was said in it, open search from the rail (or press ⌘K / Ctrl+K) and type a load number, customer, invoice ID or any words from the conversation. Results cover conversations, messages and what they produced.
+3. To find one by what was said in it, select **Search** in the rail (or press ⌘K / Ctrl+K and choose **Conversations**) and type a load number, customer, invoice ID or any words from the conversation. Results cover conversations, chapters, messages, what they produced and decisions.
 
 ### Move, shrink or hide the assistant on any page
 Keywords: assistant covers the screen, move chat button, hide AI button, assistant too big, resize assistant, assistant in the way, dock assistant, full screen assistant
@@ -93,7 +113,7 @@ Keywords: pin chat, delete conversation, export transcript, rename conversation,
 2. In the bar at the top, open **More actions** and use **Pin conversation** (or **Unpin conversation**) to keep it at the top of the rail, or **Download transcript** to save it.
 3. To rename it, select its name in the bar at the top, type the new name and press Enter (Esc keeps the old name).
 4. To delete it, hover over it in the rail and select **Delete conversation** (the bin). It is deleted at once. A conversation with scheduled requests asks first, because they are deleted with it and stop running: the question lists them, and you select **Delete** to go ahead or **Cancel**.
-5. Select **Workspace** in the top bar (or press ⌘\\ / Ctrl+\\) to show or hide what the agent produced, or **Hide artifacts** inside it to make room for the conversation.
+5. Select **Workspace** in the top bar (or press ⌘\\ / Ctrl+\\) to open it on everything the conversation produced or fold it away, or **Hide artifacts** inside it to make room for the conversation.
 
 ### Steer an agent while it is replying
 Keywords: steer, steering, interrupt, redirect, change direction, correct the agent mid-reply, add detail while working, send while working
@@ -311,7 +331,7 @@ Keywords: undo approval, approved by mistake, cancel approved change, do it now
 Keywords: artifacts, workspace, agent output, table the agent made, switch artifact, find artifact, pin artifact, all artifacts
 1. Open the conversation from [Desk](/desk). Select **Workspace** in the top bar to open the workspace beside it. The number on the button is how many things the conversation has produced.
 2. The open item sits in front of a small stack of the others. Select it (**Switch artifact**) to fan the stack out and pick another, or use **Previous** and **Next** to step through them.
-3. To see everything the conversation produced, select **All artifacts** at the bottom of the fanned stack, or press ⌘J (Ctrl+J). Type in **Search artifacts** to find one by its title, the tool that made it or the turn it came from, or narrow the list with **All**, **Pinned** or a kind such as a table, record or document. Press Enter to open the first match.
+3. To see everything the conversation produced, select **All artifacts** at the bottom of the fanned stack, or press ⌘\\ (Ctrl+\\). Type in **Search artifacts** to find one by its title, the tool that made it or the turn it came from, or narrow the list with **All**, **Pinned** or a kind such as a table, record or document. Press Enter to open the first match.
 4. Select **Pin to conversation** at the bottom of the workspace to keep an item at the top of the conversation. Select it again to unpin it.
 5. Select **Copy link** to copy a link that opens the conversation with this item beside it, or **Open on its own page** to read it full width in a new tab. On that page, **Open in conversation** takes you back.
 6. Select **Hide artifacts** to close the workspace.
@@ -419,12 +439,12 @@ Keywords: agent permissions, agent tools, ask first, agent limits, budget, busin
 6. Select **Back to conversation** to return.
 
 ### Search the whole Desk
-Keywords: find conversation, find chapter, find message, find artifact, find decision, search desk, recent searches
-1. On [Desk](/desk), select **Search** in the rail or press ⌘K (Ctrl+K).
-2. Type in **Search chats, messages, artifacts…**. Results are grouped as **Conversations**, **Chapters**, **Messages**, **Artifacts** and **Decisions**.
-3. Narrow the results with **All**, **Chats**, **Chapters**, **Messages**, **Artifacts** or **Decisions**, or press Tab to move between them.
+Keywords: find conversation, find chapter, find message, find artifact, find decision, search desk, command palette, recent conversations
+1. On [Desk](/desk), select **Search** in the rail, or press ⌘K (Ctrl+K). ⌘K opens the same command palette everywhere in Trenova; the rail's search opens it on **Conversations**.
+2. Type in **Find a conversation, a message or what an agent made…**. Each result says whether it is a conversation, chapter, message, artifact or decision, and which conversation it is in.
+3. Press Tab to move between **All**, the kinds of record, **Conversations**, **Pages** and **Commands**. On the Desk, **All** lists the top conversations beside records and pages.
 4. Use the arrow keys and Enter, or select a result. A conversation or message opens its conversation, a chapter opens its conversation at that chapter, an artifact opens the conversation with it beside it, and a decision opens [Decisions](/desk/decisions).
-5. With nothing typed, the search offers **Recent searches** and recent conversations and artifacts.
+5. With nothing typed, **Conversations** lists your recent conversations and artifacts.
 
 ### Change how the Desk looks and behaves
 Keywords: desk preferences, dark mode, text size, send with enter, default agent, start page, turn off confetti, dictation, scanner

@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*Override)(nil)
+	_ validationframework.Entity = (*Override)(nil)
 )
 
 // Override lets a carrier run a tighter posture than the statutory baseline

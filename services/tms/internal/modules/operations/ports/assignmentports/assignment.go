@@ -27,12 +27,12 @@ type AssignShipmentMoveRequest struct {
 	SecondaryWorkerID *pulid.ID             `json:"secondaryWorkerId,omitempty"`
 }
 
-func (r *AssignShipmentMoveRequest) Validate() *errortypes.MultiError {
+func (r *AssignShipmentMoveRequest) Validate() error {
 	me := errortypes.NewMultiError()
 
 	if r == nil {
 		me.Add("", errortypes.ErrInvalid, "Request is required")
-		return me
+		return me.Err()
 	}
 
 	if r.TenantInfo.OrgID.IsNil() {
@@ -51,11 +51,7 @@ func (r *AssignShipmentMoveRequest) Validate() *errortypes.MultiError {
 		me.Add("tractorId", errortypes.ErrRequired, "Tractor ID is required")
 	}
 
-	if me.HasErrors() {
-		return me
-	}
-
-	return nil
+	return me.Err()
 }
 
 type ReassignShipmentMoveRequest struct {
@@ -67,7 +63,7 @@ type ReassignShipmentMoveRequest struct {
 	SecondaryWorkerID *pulid.ID             `json:"secondaryWorkerId,omitempty"`
 }
 
-func (r *ReassignShipmentMoveRequest) Validate() *errortypes.MultiError {
+func (r *ReassignShipmentMoveRequest) Validate() error {
 	assignReq := &AssignShipmentMoveRequest{
 		TenantInfo:        r.TenantInfo,
 		ShipmentMoveID:    r.ShipmentMoveID,
@@ -85,12 +81,12 @@ type UnassignShipmentMoveRequest struct {
 	ShipmentMoveID pulid.ID              `json:"shipmentMoveId"`
 }
 
-func (r *UnassignShipmentMoveRequest) Validate() *errortypes.MultiError {
+func (r *UnassignShipmentMoveRequest) Validate() error {
 	me := errortypes.NewMultiError()
 
 	if r == nil {
 		me.Add("", errortypes.ErrInvalid, "Request is required")
-		return me
+		return me.Err()
 	}
 
 	if r.TenantInfo.OrgID.IsNil() {
@@ -103,11 +99,7 @@ func (r *UnassignShipmentMoveRequest) Validate() *errortypes.MultiError {
 		me.Add("shipmentMoveId", errortypes.ErrRequired, "Shipment move ID is required")
 	}
 
-	if me.HasErrors() {
-		return me
-	}
-
-	return nil
+	return me.Err()
 }
 
 type CheckWorkerComplianceRequest struct {
@@ -117,7 +109,7 @@ type CheckWorkerComplianceRequest struct {
 	SecondaryWorkerID *pulid.ID             `json:"secondaryWorkerId,omitempty"`
 }
 
-func (r *CheckWorkerComplianceRequest) Validate() *errortypes.MultiError {
+func (r *CheckWorkerComplianceRequest) Validate() error {
 	me := errortypes.NewMultiError()
 
 	if r.ShipmentMoveID.IsNil() {
@@ -127,11 +119,7 @@ func (r *CheckWorkerComplianceRequest) Validate() *errortypes.MultiError {
 		me.Add("primaryWorkerId", errortypes.ErrRequired, "Primary worker ID is required")
 	}
 
-	if me.HasErrors() {
-		return me
-	}
-
-	return nil
+	return me.Err()
 }
 
 type ActualTimelineEventType string

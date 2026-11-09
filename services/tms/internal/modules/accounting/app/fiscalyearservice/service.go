@@ -145,11 +145,15 @@ func (s *Service) GetClosePreview(
 		return nil, err
 	}
 
-	yearBlockers := fiscalcloseblockers.AppendFromMultiError(
+	yearBlockers, err := fiscalcloseblockers.Append(
 		make([]*fiscalclose.Blocker, 0, len(plan.Blockers)),
-		s.validateClose(ctx, entity),
+		s.validateClose(ctx, entity).Err(),
+		"year",
 		"year",
 	)
+	if err != nil {
+		return nil, err
+	}
 	plan.Blockers = append(yearBlockers, plan.Blockers...)
 	plan.CanClose = len(plan.Blockers) == 0
 
@@ -802,7 +806,7 @@ func (s *Service) Activate(
 	return activatedEntity, nil
 }
 
-func (s *Service) validateDelete(entity *fiscalyear.FiscalYear) *errortypes.MultiError {
+func (s *Service) validateDelete(entity *fiscalyear.FiscalYear) error {
 	multiErr := errortypes.NewMultiError()
 
 	if entity.Status != fiscalyear.StatusDraft {
@@ -813,11 +817,7 @@ func (s *Service) validateDelete(entity *fiscalyear.FiscalYear) *errortypes.Mult
 		multiErr.Add("isCurrent", errortypes.ErrInvalid, "Cannot delete the current fiscal year")
 	}
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 func (s *Service) validateClose(
@@ -841,7 +841,7 @@ func (s *Service) validateClose(
 		},
 	)
 	if err != nil {
-		multiErr.Add("__all__", errortypes.ErrSystemError, "Failed to check open periods")
+		multiErr.AddInternal(fmt.Errorf("failed to check open periods: %w", err))
 		return multiErr
 	}
 
@@ -866,7 +866,7 @@ func (s *Service) validateClose(
 func (s *Service) validateReopen(
 	entity *fiscalyear.FiscalYear,
 	reason string,
-) *errortypes.MultiError {
+) error {
 	multiErr := errortypes.NewMultiError()
 
 	if entity.Status != fiscalyear.StatusClosed {
@@ -878,14 +878,10 @@ func (s *Service) validateReopen(
 		multiErr.Add("reopenReason", errortypes.ErrRequired, "A reason for reopening is required")
 	}
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
-func (s *Service) validateActivate(entity *fiscalyear.FiscalYear) *errortypes.MultiError {
+func (s *Service) validateActivate(entity *fiscalyear.FiscalYear) error {
 	multiErr := errortypes.NewMultiError()
 
 	if entity.Status == fiscalyear.StatusPermanentlyClosed {
@@ -900,11 +896,7 @@ func (s *Service) validateActivate(entity *fiscalyear.FiscalYear) *errortypes.Mu
 			"This fiscal year is closed. Reopen it first so its closing entries are reversed.")
 	}
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 func (s *Service) generatePeriods(

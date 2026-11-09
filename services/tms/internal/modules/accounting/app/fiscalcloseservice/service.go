@@ -463,7 +463,7 @@ func appendBlocker(
 	return append(blockers, blocker)
 }
 
-func blockerError(blockers []*fiscalclose.Blocker) *errortypes.MultiError {
+func blockerError(blockers []*fiscalclose.Blocker) error {
 	if len(blockers) == 0 {
 		return nil
 	}
@@ -476,5 +476,5 @@ func blockerError(blockers []*fiscalclose.Blocker) *errortypes.MultiError {
 		multiErr.Add(blocker.Field, blocker.Code, blocker.Message)
 	}
 
-	return multiErr
+	return multiErr.Err()
 }

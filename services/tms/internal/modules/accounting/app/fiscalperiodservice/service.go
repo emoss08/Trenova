@@ -106,23 +106,20 @@ func (s *Service) GetCloseBlockers(
 		return nil, err
 	}
 
+	checks := []struct {
+		err   error
+		field string
+	}{
+		{err: s.validateCloseWithPeriods(entity, periods).Err(), field: "period"},
+		{err: s.validateCloseControl(ctx, entity), field: "accounting"},
+		{err: s.validator.ValidateClose(ctx, entity), field: "period"},
+	}
 	blockers := make([]*fiscalclose.Blocker, 0)
-	blockers = fiscalcloseblockers.AppendFromMultiError(
-		blockers,
-		s.validateCloseWithPeriods(entity, periods),
-		"period",
-	)
-	blockers = fiscalcloseblockers.AppendFromError(
-		blockers,
-		s.validateCloseControl(ctx, entity),
-		"accounting",
-		"period",
-	)
-	blockers = fiscalcloseblockers.AppendFromMultiError(
-		blockers,
-		s.validator.ValidateClose(ctx, entity),
-		"period",
-	)
+	for _, check := range checks {
+		if blockers, err = fiscalcloseblockers.Append(blockers, check.err, check.field, "period"); err != nil {
+			return nil, err
+		}
+	}
 
 	return &fiscalclose.Result{CanClose: len(blockers) == 0, Blockers: blockers}, nil
 }
@@ -587,18 +584,14 @@ func (s *Service) loadTransitionState(
 	return transitionState{period: period, periods: periods, year: year}, nil
 }
 
-func (s *Service) validateDelete(entity *fiscalperiod.FiscalPeriod) *errortypes.MultiError {
+func (s *Service) validateDelete(entity *fiscalperiod.FiscalPeriod) error {
 	multiErr := errortypes.NewMultiError()
 
 	if entity.Status != fiscalperiod.StatusOpen {
 		multiErr.Add("status", errortypes.ErrInvalid, "Only Open fiscal periods can be deleted")
 	}
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 func (s *Service) validateCloseWithPeriods(
@@ -664,7 +657,7 @@ func (s *Service) validateCloseControl(
 	return s.policy.ValidateManualPeriodClose(control)
 }
 
-func validateReopen(state transitionState, reason string) *errortypes.MultiError {
+func validateReopen(state transitionState, reason string) error {
 	multiErr := errortypes.NewMultiError()
 	entity := state.period
 
@@ -674,7 +667,7 @@ func validateReopen(state transitionState, reason string) *errortypes.MultiError
 			errortypes.ErrInvalid,
 			"Only Closed fiscal periods can be reopened. Current status: {0}", entity.Status,
 		)
-		return multiErr
+		return multiErr.Err()
 	}
 
 	if strings.TrimSpace(reason) == "" {
@@ -697,14 +690,10 @@ func validateReopen(state transitionState, reason string) *errortypes.MultiError
 		}
 	}
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
-func validateLock(entity *fiscalperiod.FiscalPeriod) *errortypes.MultiError {
+func validateLock(entity *fiscalperiod.FiscalPeriod) error {
 	if entity.Status.CanLock() {
 		return nil
 	}
@@ -716,10 +705,10 @@ func validateLock(entity *fiscalperiod.FiscalPeriod) *errortypes.MultiError {
 		"Only Open fiscal periods can be locked. Current status: {0}", entity.Status,
 	)
 
-	return multiErr
+	return multiErr.Err()
 }
 
-func validateUnlock(state transitionState) *errortypes.MultiError {
+func validateUnlock(state transitionState) error {
 	multiErr := errortypes.NewMultiError()
 
 	if !state.period.Status.CanUnlock() {
@@ -728,19 +717,15 @@ func validateUnlock(state transitionState) *errortypes.MultiError {
 			errortypes.ErrInvalid,
 			"Only Locked fiscal periods can be unlocked. Current status: {0}", state.period.Status,
 		)
-		return multiErr
+		return multiErr.Err()
 	}
 
 	addClosedYearError(multiErr, state.year, state.period)
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
-func validateActivate(state transitionState) *errortypes.MultiError {
+func validateActivate(state transitionState) error {
 	multiErr := errortypes.NewMultiError()
 	entity := state.period
 
@@ -750,7 +735,7 @@ func validateActivate(state transitionState) *errortypes.MultiError {
 			errortypes.ErrInvalid,
 			"Only Inactive fiscal periods can be opened. Current status: {0}", entity.Status,
 		)
-		return multiErr
+		return multiErr.Err()
 	}
 
 	addClosedYearError(multiErr, state.year, entity)
@@ -769,11 +754,7 @@ func validateActivate(state transitionState) *errortypes.MultiError {
 		}
 	}
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 func addClosedYearError(
@@ -808,7 +789,7 @@ func addClosedYearError(
 func validateEditable(
 	original *fiscalperiod.FiscalPeriod,
 	updated *fiscalperiod.FiscalPeriod,
-) *errortypes.MultiError {
+) error {
 	multiErr := errortypes.NewMultiError()
 
 	if original.Status == fiscalperiod.StatusPermanentlyClosed {
@@ -817,7 +798,7 @@ func validateEditable(
 			errortypes.ErrInvalid,
 			"Permanently closed fiscal periods cannot be changed",
 		)
-		return multiErr
+		return multiErr.Err()
 	}
 
 	if original.Status == fiscalperiod.StatusInactive {
@@ -840,11 +821,7 @@ func validateEditable(
 		addStructureLocked(multiErr, "endDate")
 	}
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 func addStructureLocked(multiErr *errortypes.MultiError, field string) {

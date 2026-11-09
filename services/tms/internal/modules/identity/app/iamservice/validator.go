@@ -5,13 +5,10 @@ import (
 	"maps"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/iam/iamdb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/keelcheck"
 	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"go.uber.org/fx"
@@ -20,8 +17,8 @@ import (
 type ValidatorParams struct {
 	fx.In
 
-	Repo iamports.IAMRepository
-	DB   *postgres.Connection
+	Integrity validationframework.IntegrityChecker
+	Repo      iamports.IAMRepository
 }
 
 type Validator struct {
@@ -29,27 +26,17 @@ type Validator struct {
 }
 
 func NewValidator(p ValidatorParams) *Validator {
-	return newValidator(
-		p.Repo,
-		keelcheck.NewChecker(p.DB, iamdb.AccessPoliciesSchema()),
-	)
-}
-
-func newValidator(
-	repo iamports.IAMRepository,
-	uniquenessChecker validationframework.UniquenessChecker,
-) *Validator {
 	return &Validator{
 		validator: tenantedvalidation.NewBuilder[*iam.AccessPolicy]().
 			WithModelName("Access Policy").
-			WithUniquenessChecker(uniquenessChecker).
+			WithIntegrityChecker(p.Integrity).
 			WithUniqueField(
 				"name",
 				"name",
 				"Access policy with this name already exists",
 				func(policy *iam.AccessPolicy) any { return policy.Name },
 			).
-			WithCustomRule(newAccessPolicyDecisionScopeRule(repo)).
+			WithCustomRule(newAccessPolicyDecisionScopeRule(p.Repo)).
 			Build(),
 	}
 }
@@ -57,28 +44,27 @@ func newValidator(
 func (v *Validator) ValidateCreate(
 	ctx context.Context,
 	entity *iam.AccessPolicy,
-) *errortypes.MultiError {
+) error {
 	return v.validator.ValidateCreate(ctx, entity)
 }
 
 func (v *Validator) ValidateUpdate(
 	ctx context.Context,
 	entity *iam.AccessPolicy,
-) *errortypes.MultiError {
+) error {
 	return v.validator.ValidateUpdate(ctx, entity)
 }
 
 func newAccessPolicyDecisionScopeRule(
 	repo iamports.IAMRepository,
-) validationframework.TenantedRule[*iam.AccessPolicy] {
-	return validationframework.NewTenantedRule[*iam.AccessPolicy]("access_policy_decision_scope").
-		WithStage(validationframework.ValidationStageDataIntegrity).
-		WithPriority(validationframework.ValidationPriorityHigh).
+) validationframework.Rule[*iam.AccessPolicy] {
+	return validationframework.NewRule[*iam.AccessPolicy]("access_policy_decision_scope").
+		WithStage(validationframework.StageDataIntegrity).
 		OnBoth().
 		WithValidation(func(
 			ctx context.Context,
 			entity *iam.AccessPolicy,
-			_ *validationframework.TenantedValidationContext,
+			_ *validationframework.Context,
 			multiErr *errortypes.MultiError,
 		) error {
 			if !entity.Enabled {
@@ -131,20 +117,6 @@ func findOverlappingAccessPolicy(
 		}
 	}
 	return nil
-}
-
-func accessPoliciesConflict(left *iam.AccessPolicy, right *iam.AccessPolicy) bool {
-	if !accessPoliciesOverlap(left, right) {
-		return false
-	}
-	return left.Effect != right.Effect
-}
-
-func accessPoliciesDuplicate(left *iam.AccessPolicy, right *iam.AccessPolicy) bool {
-	if !accessPoliciesOverlap(left, right) {
-		return false
-	}
-	return left.Effect == right.Effect
 }
 
 func accessPoliciesOverlap(left *iam.AccessPolicy, right *iam.AccessPolicy) bool {

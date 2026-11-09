@@ -55,7 +55,7 @@ func (s *Service) Prepare(
 	multiErr := errortypes.NewMultiError()
 	quickfilter.ValidateQuickFilters(opts.QuickFilters, multiErr)
 	if multiErr.HasErrors() {
-		return multiErr
+		return multiErr.Err()
 	}
 
 	margin, detention := quickfilter.QuickFiltersNeed(opts.QuickFilters)

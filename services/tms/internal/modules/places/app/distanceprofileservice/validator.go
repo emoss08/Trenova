@@ -16,18 +16,18 @@ func NewValidator() *Validator {
 func (v *Validator) ValidateCreate(
 	_ context.Context,
 	entity *distanceprofile.DistanceProfile,
-) *errortypes.MultiError {
+) error {
 	return v.validate(entity)
 }
 
 func (v *Validator) ValidateUpdate(
 	_ context.Context,
 	entity *distanceprofile.DistanceProfile,
-) *errortypes.MultiError {
+) error {
 	return v.validate(entity)
 }
 
-func (v *Validator) validate(entity *distanceprofile.DistanceProfile) *errortypes.MultiError {
+func (v *Validator) validate(entity *distanceprofile.DistanceProfile) error {
 	multiErr := errortypes.NewMultiError()
 	entity.Validate(multiErr)
 	if entity.OrganizationID.IsNil() {
@@ -36,8 +36,5 @@ func (v *Validator) validate(entity *distanceprofile.DistanceProfile) *errortype
 	if entity.BusinessUnitID.IsNil() {
 		multiErr.Add("businessUnitId", errortypes.ErrRequired, "Business unit is required")
 	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }

@@ -138,7 +138,7 @@ func targetsToSave(req *UpdateTargetsRequest) (*inboundmessageports.SaveTargetsR
 		save.Upsert = append(save.Upsert, target)
 	}
 	if multiErr.HasErrors() {
-		return nil, multiErr
+		return nil, multiErr.Err()
 	}
 
 	return save, nil

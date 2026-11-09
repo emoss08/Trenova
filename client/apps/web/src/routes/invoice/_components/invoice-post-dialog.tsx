@@ -167,7 +167,7 @@ function PostPreviewBody({ preview }: { preview: InvoicePostPreview }) {
                             : line.glAccountId}
                         </span>
                         {line.description ? (
-                          <span className="text-muted-foreground text-xs">{line.description}</span>
+                          <span className="text-xs text-muted-foreground">{line.description}</span>
                         ) : null}
                       </div>
                     </TableCell>
@@ -185,7 +185,7 @@ function PostPreviewBody({ preview }: { preview: InvoicePostPreview }) {
                 ))}
               </TableBody>
             </Table>
-            <p className="text-muted-foreground text-xs">
+            <p className="text-xs text-muted-foreground">
               {preview.journal.requiresApproval
                 ? t(
                     "Booked on {0} and held for approval before it reaches the ledger.",
@@ -195,7 +195,7 @@ function PostPreviewBody({ preview }: { preview: InvoicePostPreview }) {
             </p>
           </>
         ) : (
-          <p className="text-muted-foreground text-xs">
+          <p className="text-xs text-muted-foreground">
             {t("Your accounting settings book no ledger entry when an invoice posts.")}
           </p>
         )}
@@ -204,7 +204,7 @@ function PostPreviewBody({ preview }: { preview: InvoicePostPreview }) {
       {effects.length > 0 ? (
         <section className="flex flex-col gap-2">
           <h3 className="text-sm font-medium">{t("Posting also")}</h3>
-          <ul className="text-muted-foreground flex list-disc flex-col gap-1 pl-4 text-sm">
+          <ul className="flex list-disc flex-col gap-1 pl-4 text-sm text-muted-foreground">
             {effects.map((effect) => (
               <li key={effect}>{effect}</li>
             ))}

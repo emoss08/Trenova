@@ -286,7 +286,14 @@ if (!opened.has(view)) setOpened(new Set(opened).add(view));
 
 Guard with `opened`: `Activity` renders a hidden child anyway, so an unguarded one loads
 its chunk (the Maps script, here) on a page that never shows it. A hidden tree loses its
-effects, which is what stops its queries and timers, and it keeps its state. A browser
+effects, which is what stops its queries and timers, and it keeps its state.
+
+Tabs of one record use the same pattern (`factoring-company/[id]/page.tsx`), with two
+consequences. Effects run again each time a tab is shown, so an effect that loads the stored
+record into a form must remember the version it loaded in a ref and skip the same one, or
+every return wipes the edits Activity kept (`factoring-company-details.tsx`). And anything
+that must keep working while its tab is hidden, such as an `UnsavedChangesGuard`, lives on the
+page: the tab reports its state up (`onDirtyChange`) and the page guards and marks the tab. A browser
 replays a CSS animation on anything that returns from `display: none`, so an entrance must
 not run twice: a row records that it has risen (`markRowEntered` in `data-table-body.tsx`).
 

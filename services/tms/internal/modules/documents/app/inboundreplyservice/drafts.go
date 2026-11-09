@@ -278,9 +278,5 @@ func (s *Service) draftFor(message *inboundmessage.InboundMessage, userID pulid.
 func validateDraft(draft *triage.Reply) error {
 	multiErr := errortypes.NewMultiError()
 	draft.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }

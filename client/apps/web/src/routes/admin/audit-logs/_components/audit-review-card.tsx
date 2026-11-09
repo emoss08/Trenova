@@ -56,9 +56,9 @@ function ReviewItem({ review, onOpen }: { review: AuditReview; onOpen: () => voi
       <ReviewWell tone={reviewTone(review.kind)}>
         <Icon className="size-3.5" />
       </ReviewWell>
-      <button type="button" onClick={onOpen} className="ui-focus-ring min-w-0 rounded-sm text-left">
+      <button type="button" onClick={onOpen} className="min-w-0 rounded-sm ui-focus-ring text-left">
         <span className="block truncate text-sm font-medium">{review.title}</span>
-        <span className="text-muted-foreground block truncate text-xs">{meta.join(" · ")}</span>
+        <span className="block truncate text-xs text-muted-foreground">{meta.join(" · ")}</span>
       </button>
       <Button
         type="button"
@@ -93,12 +93,12 @@ export function AuditReviewCard({
   return (
     <section
       aria-label={t("Needs a review")}
-      className="bg-card flex min-w-0 flex-col rounded-md border"
+      className="flex min-w-0 flex-col rounded-md border bg-card"
     >
       <header className="flex items-start gap-2 px-3 pt-2.5">
         <div className="min-w-0">
           <h3 className="text-sm font-semibold">{t("Needs a review")}</h3>
-          <p className="text-muted-foreground text-xs">
+          <p className="text-xs text-muted-foreground">
             {t("Raised by your alert rules. Open one to see the entry.")}
           </p>
         </div>
@@ -121,7 +121,7 @@ export function AuditReviewCard({
           </ReviewWell>
           <div className="min-w-0">
             <p className="text-sm font-medium">{t("Nothing needs a review")}</p>
-            <p className="text-muted-foreground text-xs">
+            <p className="text-xs text-muted-foreground">
               {t(
                 "Your alert rules watch role and API key changes, two-factor resets, sign-in settings, bulk deletes and bulk exports.",
               )}
@@ -130,11 +130,11 @@ export function AuditReviewCard({
         </div>
       )}
       {openCount > reviews.length ? (
-        <p className="text-muted-foreground px-3 pb-1 text-xs">
+        <p className="px-3 pb-1 text-xs text-muted-foreground">
           {t("{0, plural, one {# more open} other {# more open}}", openCount - reviews.length)}
         </p>
       ) : null}
-      <footer className="text-muted-foreground mx-3 mt-auto flex items-center gap-1.5 border-t py-2 text-xs">
+      <footer className="mx-3 mt-auto flex items-center gap-1.5 border-t py-2 text-xs text-muted-foreground">
         <CheckCircleIcon aria-hidden className="size-3" />
         {reviewed.data && latest ? (
           <span className="truncate">

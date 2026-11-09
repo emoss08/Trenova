@@ -108,7 +108,7 @@ func planWithdraw(
 
 func validateWithdrawRequest(
 	req *invoiceports.WithdrawInvoiceDisputeRequest,
-) *errortypes.MultiError {
+) error {
 	multiErr := errortypes.NewMultiError()
 	if req.DisputeID.IsNil() {
 		multiErr.Add("disputeId", errortypes.ErrRequired, "Dispute is required")
@@ -121,11 +121,7 @@ func validateWithdrawRequest(
 			maxDisputeNotesLength,
 		)
 	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 const (

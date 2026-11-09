@@ -15,7 +15,7 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*BillingControl)(nil)
+	_ validationframework.Entity = (*BillingControl)(nil)
 )
 
 type BillingControl struct {

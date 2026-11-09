@@ -85,11 +85,11 @@ matches anything fails too, so the file cannot drift behind the tools.
 
 | Category | Means | Writes |
 | --- | --- | --- |
-| `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 97 |
+| `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 99 |
 | `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 247 |
 | `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 40 |
 | `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 49 |
-| `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 104 |
+| `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 103 |
 | `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 35 |
 | `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 48 |
 | `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 53 |
@@ -97,25 +97,25 @@ matches anything fails too, so the file cannot drift behind the tools.
 
 ## Totals
 
-1130 writes: 670 GraphQL mutations and 460 REST writes, after merging 27 REST routes into the mutation they duplicate.
+1132 writes: 672 GraphQL mutations and 460 REST writes, after merging 27 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
-| Covered by a tool | 443 |
-| Exempt | 683 |
-| — Security | 97 |
+| Covered by a tool | 444 |
+| Exempt | 684 |
+| — Security | 99 |
 | — Configuration | 247 |
 | — User preference | 40 |
 | — Infrastructure | 49 |
-| — Agent administration | 104 |
+| — Agent administration | 103 |
 | — Counterparty | 35 |
 | — Read-only | 48 |
 | — Attestation | 53 |
 | — Duplicate | 10 |
 | **Pending** | **4** |
-| Total | 1130 |
+| Total | 1132 |
 
-Of the 447 writes an agent should be able to make, 443 have a tool (99%).
+Of the 448 writes an agent should be able to make, 444 have a tool (99%).
 
 ## Pending
 
@@ -153,7 +153,7 @@ The writes no tool performs yet, and what the tool would do.
 | apikey | 4 | 0 | 4 | 0 |
 | assignment | 1 | 0 | 1 | 0 |
 | assistant | 35 | 4 | 31 | 0 |
-| auditlog | 5 | 0 | 5 | 0 |
+| auditlog | 7 | 0 | 7 | 0 |
 | auth | 7 | 0 | 7 | 0 |
 | bankreceipt | 2 | 1 | 1 | 0 |
 | bankreceiptbatch | 1 | 0 | 1 | 0 |
@@ -183,7 +183,7 @@ The writes no tool performs yet, and what the tool would do.
 | dataentrycontrol | 1 | 0 | 1 | 0 |
 | dataretention | 1 | 0 | 1 | 0 |
 | decisions | 1 | 0 | 1 | 0 |
-| deskmemory | 6 | 2 | 4 | 0 |
+| deskmemory | 6 | 3 | 3 | 0 |
 | detention | 8 | 4 | 4 | 0 |
 | dispatchconsole | 7 | 4 | 1 | 2 |
 | dispatchcontrol | 1 | 0 | 1 | 0 |
@@ -406,7 +406,7 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `mutation approveAgentMemorySuggestion` | Exempt, agent-administration: A person curating what agents remember; an agent writes memory through remember and agent_retire_memory. |
+| `mutation approveAgentMemorySuggestion` | Exempt, agent-administration: A person curating what agents remember; an agent writes memory through agent_create_memory, agent_edit_memory and agent_retire_memory. |
 | `mutation commitMyDecisionNow` | Exempt, agent-administration: Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work. |
 | `mutation createAgentMemory` | Tool: `agent_create_memory` |
 | `mutation decideAgentPlan` | Exempt, agent-administration: Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work. |
@@ -414,14 +414,14 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation decideMyPlan` | Exempt, agent-administration: Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work. |
 | `mutation decideMyProposal` | Exempt, agent-administration: Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work. |
 | `mutation decideMyProposals` | Exempt, agent-administration: Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work. |
-| `mutation dismissAgentMemorySuggestion` | Exempt, agent-administration: A person curating what agents remember; an agent writes memory through remember and agent_retire_memory. |
+| `mutation dismissAgentMemorySuggestion` | Exempt, agent-administration: A person curating what agents remember; an agent writes memory through agent_create_memory, agent_edit_memory and agent_retire_memory. |
 | `mutation replayAgentRun` | Exempt, agent-administration: Configures, evaluates or oversees the agents themselves; an agent doing it would be grading its own work. |
 | `mutation resolveAgentException` | Exempt, agent-administration: An agent exception is an agent handing a case to a person; the person resolves it. |
 | `mutation reviewAgentMemory` | Exempt, agent-administration: A person vouching for what an agent wrote after reading outside content; an agent clearing the taint on what it will read would undo the hold. |
 | `mutation setAgentMemoryStatus` | Tool: `agent_retire_memory` |
 | `mutation undoMyDecision` | Exempt, agent-administration: Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work. |
 | `mutation updateAgentControl` | Exempt, agent-administration: The organization-wide switches and ceilings every agent runs under. |
-| `mutation updateAgentMemory` | Exempt, agent-administration: A person curating what agents remember; an agent writes memory through remember and agent_retire_memory. |
+| `mutation updateAgentMemory` | Exempt, agent-administration: A person curating what agents remember; an agent writes memory through agent_create_memory, agent_edit_memory and agent_retire_memory. |
 
 ### agentdefinition
 
@@ -602,8 +602,10 @@ Tools that change something no person-facing write does, such as sending a messa
 | Write | Decision |
 | --- | --- |
 | `mutation auditExportDownload` | Exempt, read-only: Returns a short-lived link to an export the person already asked for; the download is itself audited. |
+| `mutation markAuditReviewReviewed` | Exempt, security: Marking a security alert reviewed is a person's word that they looked at it; an agent must not clear alerts about what agents and people did. |
 | `mutation placeAuditLegalHold` | Exempt, security: A legal hold overrides retention for litigation or an investigation; only a person accountable for that decision places one. |
 | `mutation releaseAuditLegalHold` | Exempt, security: Releasing a legal hold lets retention delete evidence; only a person accountable for that decision releases one. |
+| `mutation reopenAuditReview` | Exempt, security: Reopening a security alert puts it back in front of the security reviewers; a person accountable for the review decides it. |
 | `mutation requestAuditExport` | Exempt, security: An audit log export carries the organization's whole trail out of Trenova; a person asks for it and is recorded doing so. |
 | `mutation updateAuditAlertPolicy` | Exempt, security: Security alerts are how administrators learn of access changes; an agent must not be able to silence them. |
 
@@ -896,10 +898,10 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `mutation confirmDeskMemory` | Exempt, agent-administration: A person curating what agents remember; an agent writes memory through remember and agent_retire_memory. |
+| `mutation confirmDeskMemory` | Exempt, agent-administration: A person curating what agents remember; an agent writes memory through agent_create_memory, agent_edit_memory and agent_retire_memory. |
 | `mutation createDeskMemory` | Tool: `agent_create_memory` |
-| `mutation dismissDeskMemory` | Exempt, agent-administration: A person curating what agents remember; an agent writes memory through remember and agent_retire_memory. |
-| `mutation reviseDeskMemory` | Exempt, agent-administration: A person curating what agents remember; an agent writes memory through remember and agent_retire_memory. |
+| `mutation dismissDeskMemory` | Exempt, agent-administration: A person curating what agents remember; an agent writes memory through agent_create_memory, agent_edit_memory and agent_retire_memory. |
+| `mutation reviseDeskMemory` | Tool: `agent_edit_memory` |
 | `mutation setDeskMemoryStatus` | Tool: `agent_retire_memory` |
 | `mutation setMemorySavingMode` | Exempt, agent-administration: Whether agents keep what they learn in the person's conversations straight away or ask first; an agent that could change it could stop asking. |
 

@@ -245,7 +245,7 @@ func (w *CursorWindow) Next(cursor string) string {
 
 func RefuseStaleCursor(err error) error {
 	var invalid *errortypes.Error
-	if errors.As(err, &invalid) && invalid.Field == ParamAfter {
+	if errors.As(err, &invalid) && invalid.Field() == ParamAfter {
 		return ErrStaleCursor
 	}
 

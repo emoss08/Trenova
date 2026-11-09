@@ -15,7 +15,7 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*DocumentControl)(nil)
+	_ validationframework.Entity = (*DocumentControl)(nil)
 )
 
 type DocumentControl struct {

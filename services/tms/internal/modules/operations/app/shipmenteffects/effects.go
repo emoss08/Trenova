@@ -236,11 +236,7 @@ func (s *Effects) CheckDuplicateBOLsWithControl(
 		strings.Join(proNumbers, ", "),
 	)
 
-	if me.HasErrors() {
-		return me
-	}
-
-	return nil
+	return me.Err()
 }
 
 func (s *Effects) LogShipmentAction(

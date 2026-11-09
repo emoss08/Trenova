@@ -71,8 +71,9 @@ func (s *Service) UpdateControl(
 		return nil, err
 	}
 	if patch.ExpectedVersion != nil && *patch.ExpectedVersion != original.Version {
-		return nil, errortypes.NewValidationError("version", errortypes.ErrVersionMismatch,
-			"Carrier intelligence settings were changed by someone else. Reload and try again")
+		return nil, errortypes.NewVersionMismatchError(
+			"Carrier intelligence settings were changed by someone else. Reload and try again",
+		)
 	}
 
 	entity, policyChanged := applyControlPatch(original, patch)

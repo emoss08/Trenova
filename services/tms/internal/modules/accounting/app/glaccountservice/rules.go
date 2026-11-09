@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount/glaccountdb"
+	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -15,15 +16,14 @@ import (
 
 const maxHierarchyDepth = 10
 
-func createSystemAccountProtectionRule() validationframework.TenantedRule[*glaccount.GLAccount] {
-	return validationframework.NewTenantedRule[*glaccount.GLAccount]("system_account_protection").
+func createSystemAccountProtectionRule() validationframework.Rule[*glaccount.GLAccount] {
+	return validationframework.NewRule[*glaccount.GLAccount]("system_account_protection").
 		OnUpdate().
-		WithStage(validationframework.ValidationStageBusinessRules).
-		WithPriority(validationframework.ValidationPriorityHigh).
+		WithStage(validationframework.StageBusinessRules).
 		WithValidation(func(
 			_ context.Context,
 			entity *glaccount.GLAccount,
-			_ *validationframework.TenantedValidationContext,
+			_ *validationframework.Context,
 			multiErr *errortypes.MultiError,
 		) error {
 			if entity.IsSystem {
@@ -39,15 +39,14 @@ func createSystemAccountProtectionRule() validationframework.TenantedRule[*glacc
 
 func createParentAccountActiveRule(
 	db *postgres.Connection,
-) validationframework.TenantedRule[*glaccount.GLAccount] {
-	return validationframework.NewTenantedRule[*glaccount.GLAccount]("parent_account_active").
+) validationframework.Rule[*glaccount.GLAccount] {
+	return validationframework.NewRule[*glaccount.GLAccount]("parent_account_active").
 		OnBoth().
-		WithStage(validationframework.ValidationStageBusinessRules).
-		WithPriority(validationframework.ValidationPriorityHigh).
+		WithStage(validationframework.StageBusinessRules).
 		WithValidation(func(
 			ctx context.Context,
 			entity *glaccount.GLAccount,
-			_ *validationframework.TenantedValidationContext,
+			_ *validationframework.Context,
 			multiErr *errortypes.MultiError,
 		) error {
 			return dbtx.ReadErr(ctx, db, func(ctx context.Context) error {
@@ -60,8 +59,11 @@ func createParentAccountActiveRule(
 					Where(gla.ID.Eq(entity.ParentID)).
 					One(ctx, db.Keel(ctx))
 				if err != nil {
-					multiErr.Add("parentId", errortypes.ErrInvalid, "Parent account not found")
-					return nil //nolint:nilerr // validation callbacks collect field errors and intentionally continue
+					if !dberror.IsNotFoundError(err) {
+						return err
+					}
+					multiErr.Add("parentId", errortypes.ErrInvalidReference, "Parent account not found")
+					return nil
 				}
 
 				if parent.Status != domaintypes.StatusActive {
@@ -75,17 +77,16 @@ func createParentAccountActiveRule(
 
 func createCircularReferenceRule(
 	db *postgres.Connection,
-) validationframework.TenantedRule[*glaccount.GLAccount] {
-	return validationframework.NewTenantedRule[*glaccount.GLAccount](
+) validationframework.Rule[*glaccount.GLAccount] {
+	return validationframework.NewRule[*glaccount.GLAccount](
 		"circular_reference_detection",
 	).
 		OnBoth().
-		WithStage(validationframework.ValidationStageBusinessRules).
-		WithPriority(validationframework.ValidationPriorityHigh).
+		WithStage(validationframework.StageBusinessRules).
 		WithValidation(func(
 			ctx context.Context,
 			entity *glaccount.GLAccount,
-			_ *validationframework.TenantedValidationContext,
+			_ *validationframework.Context,
 			multiErr *errortypes.MultiError,
 		) error {
 			return dbtx.ReadErr(ctx, db, func(ctx context.Context) error {
@@ -122,7 +123,10 @@ func createCircularReferenceRule(
 						Where(gla.ID.Eq(currentParentID)).
 						One(ctx, db.Keel(ctx))
 					if err != nil {
-						return nil //nolint:nilerr // validation callbacks collect field errors and intentionally continue
+						if dberror.IsNotFoundError(err) {
+							return nil
+						}
+						return err
 					}
 
 					if ancestor.ParentID.IsNil() {
@@ -142,15 +146,14 @@ func createCircularReferenceRule(
 		})
 }
 
-func createBalanceConsistencyRule() validationframework.TenantedRule[*glaccount.GLAccount] {
-	return validationframework.NewTenantedRule[*glaccount.GLAccount]("balance_consistency").
+func createBalanceConsistencyRule() validationframework.Rule[*glaccount.GLAccount] {
+	return validationframework.NewRule[*glaccount.GLAccount]("balance_consistency").
 		OnBoth().
-		WithStage(validationframework.ValidationStageBusinessRules).
-		WithPriority(validationframework.ValidationPriorityMedium).
+		WithStage(validationframework.StageBusinessRules).
 		WithValidation(func(
 			_ context.Context,
 			entity *glaccount.GLAccount,
-			_ *validationframework.TenantedValidationContext,
+			_ *validationframework.Context,
 			multiErr *errortypes.MultiError,
 		) error {
 			if entity.DebitBalance < 0 {
@@ -175,15 +178,14 @@ func createBalanceConsistencyRule() validationframework.TenantedRule[*glaccount.
 
 func createDeactivationProtectionRule(
 	db *postgres.Connection,
-) validationframework.TenantedRule[*glaccount.GLAccount] {
-	return validationframework.NewTenantedRule[*glaccount.GLAccount]("deactivation_protection").
+) validationframework.Rule[*glaccount.GLAccount] {
+	return validationframework.NewRule[*glaccount.GLAccount]("deactivation_protection").
 		OnUpdate().
-		WithStage(validationframework.ValidationStageBusinessRules).
-		WithPriority(validationframework.ValidationPriorityHigh).
+		WithStage(validationframework.StageBusinessRules).
 		WithValidation(func(
 			ctx context.Context,
 			entity *glaccount.GLAccount,
-			_ *validationframework.TenantedValidationContext,
+			_ *validationframework.Context,
 			multiErr *errortypes.MultiError,
 		) error {
 			return dbtx.ReadErr(ctx, db, func(ctx context.Context) error {

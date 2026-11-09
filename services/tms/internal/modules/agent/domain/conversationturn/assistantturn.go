@@ -16,12 +16,24 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*AssistantTurn)(nil)
+	_ validationframework.Entity = (*AssistantTurn)(nil)
 )
 
 // AssistantTurnOrigin is what started a turn: a person asking, or the
 // application following up a decision on one of the conversation's proposals.
 type AssistantTurnOrigin string
+
+// AllAssistantTurnOrigins is every origin a turn may have, in the order they
+// were added.
+func AllAssistantTurnOrigins() []AssistantTurnOrigin {
+	return []AssistantTurnOrigin{
+		AssistantTurnOriginPerson,
+		AssistantTurnOriginDecisionFollowUp,
+		AssistantTurnOriginScheduled,
+		AssistantTurnOriginCompaction,
+		AssistantTurnOriginWaitResolved,
+	}
+}
 
 const (
 	AssistantTurnOriginPerson = AssistantTurnOrigin("Person")
@@ -41,18 +53,6 @@ const (
 	// ran out.
 	AssistantTurnOriginWaitResolved = AssistantTurnOrigin("WaitResolved")
 )
-
-// AllAssistantTurnOrigins is every origin a turn may have, in the order they
-// were added.
-func AllAssistantTurnOrigins() []AssistantTurnOrigin {
-	return []AssistantTurnOrigin{
-		AssistantTurnOriginPerson,
-		AssistantTurnOriginDecisionFollowUp,
-		AssistantTurnOriginScheduled,
-		AssistantTurnOriginCompaction,
-		AssistantTurnOriginWaitResolved,
-	}
-}
 
 func (o AssistantTurnOrigin) IsValid() bool {
 	switch o {

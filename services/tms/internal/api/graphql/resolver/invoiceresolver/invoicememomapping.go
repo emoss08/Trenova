@@ -102,7 +102,7 @@ func memoLinesFromInput(
 		lines = append(lines, line)
 	}
 	if multiErr.HasErrors() {
-		return nil, multiErr
+		return nil, multiErr.Err()
 	}
 
 	return lines, nil

@@ -25,13 +25,6 @@ func (s SourceType) String() string { return string(s) }
 
 type IndexStatus string
 
-const (
-	IndexStatusPending = IndexStatus("Pending")
-	IndexStatusIndexed = IndexStatus("Indexed")
-	IndexStatusFailed  = IndexStatus("Failed")
-	IndexStatusSkipped = IndexStatus("Skipped")
-)
-
 func AllIndexStatuses() []IndexStatus {
 	return []IndexStatus{
 		IndexStatusPending,
@@ -40,6 +33,13 @@ func AllIndexStatuses() []IndexStatus {
 		IndexStatusSkipped,
 	}
 }
+
+const (
+	IndexStatusPending = IndexStatus("Pending")
+	IndexStatusIndexed = IndexStatus("Indexed")
+	IndexStatusFailed  = IndexStatus("Failed")
+	IndexStatusSkipped = IndexStatus("Skipped")
+)
 
 func (s IndexStatus) IsValid() bool {
 	switch s {
@@ -58,18 +58,6 @@ func (s IndexStatus) String() string { return string(s) }
 
 type UnavailableReason string
 
-const (
-	UnavailableReasonExtensionMissing = UnavailableReason("ExtensionMissing")
-	UnavailableReasonSchemaMissing    = UnavailableReason("SchemaMissing")
-	UnavailableReasonTooOld           = UnavailableReason("TooOld")
-	UnavailableReasonNoProvider       = UnavailableReason("NoProvider")
-	UnavailableReasonDisabled         = UnavailableReason("Disabled")
-	UnavailableReasonBudgetPaused     = UnavailableReason("BudgetPaused")
-	UnavailableReasonNotIndexed       = UnavailableReason("NotIndexed")
-	UnavailableReasonQueryTimeout     = UnavailableReason("QueryTimeout")
-	UnavailableReasonProviderFailed   = UnavailableReason("ProviderFailed")
-)
-
 func AllUnavailableReasons() []UnavailableReason {
 	return []UnavailableReason{
 		UnavailableReasonExtensionMissing,
@@ -83,6 +71,18 @@ func AllUnavailableReasons() []UnavailableReason {
 		UnavailableReasonProviderFailed,
 	}
 }
+
+const (
+	UnavailableReasonExtensionMissing = UnavailableReason("ExtensionMissing")
+	UnavailableReasonSchemaMissing    = UnavailableReason("SchemaMissing")
+	UnavailableReasonTooOld           = UnavailableReason("TooOld")
+	UnavailableReasonNoProvider       = UnavailableReason("NoProvider")
+	UnavailableReasonDisabled         = UnavailableReason("Disabled")
+	UnavailableReasonBudgetPaused     = UnavailableReason("BudgetPaused")
+	UnavailableReasonNotIndexed       = UnavailableReason("NotIndexed")
+	UnavailableReasonQueryTimeout     = UnavailableReason("QueryTimeout")
+	UnavailableReasonProviderFailed   = UnavailableReason("ProviderFailed")
+)
 
 func (r UnavailableReason) IsValid() bool {
 	switch r {
@@ -109,14 +109,14 @@ func (r UnavailableReason) Transient() bool {
 
 type PauseReason string
 
+func AllPauseReasons() []PauseReason {
+	return []PauseReason{PauseReasonManual, PauseReasonBudget}
+}
+
 const (
 	PauseReasonManual = PauseReason("Manual")
 	PauseReasonBudget = PauseReason("Budget")
 )
-
-func AllPauseReasons() []PauseReason {
-	return []PauseReason{PauseReasonManual, PauseReasonBudget}
-}
 
 func (r PauseReason) IsValid() bool {
 	return r == PauseReasonManual || r == PauseReasonBudget
@@ -126,14 +126,14 @@ func (r PauseReason) String() string { return string(r) }
 
 type CatalogCorpus string
 
+func AllCatalogCorpora() []CatalogCorpus {
+	return []CatalogCorpus{CatalogCorpusTools, CatalogCorpusProductGuide}
+}
+
 const (
 	CatalogCorpusTools        = CatalogCorpus("Tools")
 	CatalogCorpusProductGuide = CatalogCorpus("ProductGuide")
 )
-
-func AllCatalogCorpora() []CatalogCorpus {
-	return []CatalogCorpus{CatalogCorpusTools, CatalogCorpusProductGuide}
-}
 
 func (c CatalogCorpus) IsValid() bool {
 	return c == CatalogCorpusTools || c == CatalogCorpusProductGuide

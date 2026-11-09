@@ -17,7 +17,7 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*Dashboard)(nil)
+	_ validationframework.Entity = (*Dashboard)(nil)
 )
 
 const (

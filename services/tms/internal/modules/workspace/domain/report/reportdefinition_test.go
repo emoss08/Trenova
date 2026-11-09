@@ -78,15 +78,6 @@ func TestValidate_StillRefusesWhatTheCallerOwes(t *testing.T) {
 	require.NotEmpty(t, messages(blank))
 }
 
-func TestDefinitionParameterNamesKeepDefinitionOrder(t *testing.T) {
-	def := &ir.Definition{Parameters: []ir.Parameter{
-		{Name: "status"}, {Name: "region"}, {Name: "customer"},
-	}}
-
-	assert.Equal(t, []string{"status", "region", "customer"}, report.ParameterNames(def))
-	assert.Empty(t, report.ParameterNames(&ir.Definition{}))
-}
-
 func TestDecodeDefinitionFillsTheVersionAndRejectsUnknownKeys(t *testing.T) {
 	def, err := report.DecodeDefinition(map[string]any{
 		"entity": "shipment",

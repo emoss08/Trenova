@@ -2,7 +2,6 @@ package workercredential
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
@@ -14,11 +13,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-)
-
-var (
-	ErrInvalidCredentialStatus = errors.New("invalid credential status")
-	ErrInvalidCredentialHealth = errors.New("invalid credential health")
 )
 
 type CredentialStatus string
@@ -105,7 +99,7 @@ func EvaluateCredentialHealth(
 }
 
 var (
-	_ validationframework.TenantedEntity = (*WorkerCredential)(nil)
+	_ validationframework.Entity = (*WorkerCredential)(nil)
 )
 
 // Licences and certificates a worker holds, with their expiry and verification

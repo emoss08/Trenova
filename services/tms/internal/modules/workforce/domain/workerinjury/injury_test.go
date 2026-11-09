@@ -259,7 +259,7 @@ func TestOSHAAnnualSummary_Validate(t *testing.T) {
 	assert.False(t, multiErr.HasErrors(), multiErr.Error())
 }
 
-func TestPostingWindowAndYearBounds(t *testing.T) {
+func TestPostingWindow(t *testing.T) {
 	t.Parallel()
 
 	from, through := workerinjury.PostingWindow(2026)
@@ -269,8 +269,4 @@ func TestPostingWindowAndYearBounds(t *testing.T) {
 		time.Date(2027, time.April, 30, 23, 59, 59, 0, time.UTC).Unix(),
 		through,
 	)
-
-	start, end := workerinjury.YearBounds(2026)
-	assert.Equal(t, time.Date(2026, time.January, 1, 0, 0, 0, 0, time.UTC).Unix(), start)
-	assert.Equal(t, time.Date(2027, time.January, 1, 0, 0, 0, 0, time.UTC).Unix(), end)
 }

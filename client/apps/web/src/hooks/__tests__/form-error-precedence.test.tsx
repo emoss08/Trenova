@@ -3,12 +3,8 @@ import { act, renderHook } from "@testing-library/react";
 import { type FieldValues, type UseFormReturn, useForm } from "react-hook-form";
 import { GraphQLRequestError, type NormalizedGraphQLError } from "@trenova/shared/lib/graphql";
 import { handleMutationError } from "@/hooks/use-api-mutation";
-import {
-  addErrorSurface,
-  isRegisteredLeaf,
-  normalizeFieldPath,
-  refusedFieldMessages,
-} from "@/lib/form-errors";
+import { fieldNameOf, parseFieldErrors } from "@trenova/shared/types/errors";
+import { addErrorSurface, isRegisteredLeaf, refusedFieldMessages } from "@/lib/form-errors";
 
 const PROBLEM_BASE = "https://api.trenova.app/problems/";
 
@@ -79,7 +75,7 @@ function errorsOf<TValues extends FieldValues>(form: UseFormReturn<TValues>) {
 }
 
 function validationError(
-  fieldErrors: { field: string; message: string; code?: string }[],
+  fieldErrors: { path: (string | number)[]; message: string; code?: string }[],
   message = "Validation failed",
   traceId = "trace-A",
 ): NormalizedGraphQLError {
@@ -111,10 +107,10 @@ function graphQLError(...graphQLErrors: NormalizedGraphQLError[]): GraphQLReques
 const MANUAL_JOURNAL_ERROR = graphQLError(
   validationError(
     [
-      { field: "lines[0].glAccountId", message: "GL account is required", code: "REQUIRED" },
-      { field: "reason", message: "Reason is required", code: "REQUIRED" },
+      { path: ["lines", 0, "glAccountId"], message: "GL account is required", code: "REQUIRED" },
+      { path: ["reason"], message: "Reason is required", code: "REQUIRED" },
       {
-        field: "lines[1].debitAmount",
+        path: ["lines", 1, "debitAmount"],
         message: "Debit amount cannot be negative",
         code: "INVALID",
       },
@@ -124,22 +120,46 @@ const MANUAL_JOURNAL_ERROR = graphQLError(
   ),
   validationError(
     [
-      { field: "lines[0].glAccountId", message: "GL account 4000 is inactive", code: "INVALID" },
-      { field: "status", message: "Only draft journals can be submitted", code: "INVALID" },
-      { field: "reason", message: "Reason is required", code: "REQUIRED" },
+      {
+        path: ["lines", 0, "glAccountId"],
+        message: "GL account 4000 is inactive",
+        code: "INVALID",
+      },
+      { path: ["status"], message: "Only draft journals can be submitted", code: "INVALID" },
+      { path: ["reason"], message: "Reason is required", code: "REQUIRED" },
     ],
     "Validation failed",
     "trace-B",
   ),
 );
 
-describe("normalizeFieldPath", () => {
-  it("translates the server's bracket indices to react-hook-form's dot indices", () => {
-    expect(normalizeFieldPath("lines[0].glAccountId")).toBe("lines.0.glAccountId");
-    expect(normalizeFieldPath("lines[12].debitAmount")).toBe("lines.12.debitAmount");
-    expect(normalizeFieldPath("reason")).toBe("reason");
-    expect(normalizeFieldPath("[0].name")).toBe("0.name");
-    expect(normalizeFieldPath("")).toBe("");
+describe("server field paths", () => {
+  it("names each path the way react-hook-form registers it", () => {
+    expect(fieldNameOf(["lines", 0, "glAccountId"])).toBe("lines.0.glAccountId");
+    expect(fieldNameOf(["lines", 12, "debitAmount"])).toBe("lines.12.debitAmount");
+    expect(fieldNameOf(["rules", "authority.revoked", "action"])).toBe(
+      "rules.authority.revoked.action",
+    );
+    expect(fieldNameOf(["reason"])).toBe("reason");
+    expect(fieldNameOf([])).toBe("");
+  });
+
+  it("keeps every well-formed entry and skips a malformed one", () => {
+    expect(
+      parseFieldErrors([
+        { path: ["moves", 0, "stops", 1, "status"], message: "Stop is required", code: "REQUIRED" },
+        { field: "legacy", message: "No path" },
+        { path: ["reason"], message: "Reason is required", code: "NOT_A_CODE_YET" },
+      ]),
+    ).toEqual([
+      {
+        path: ["moves", 0, "stops", 1, "status"],
+        field: "moves.0.stops.1.status",
+        message: "Stop is required",
+        code: "REQUIRED",
+      },
+      { path: ["reason"], field: "reason", message: "Reason is required", code: undefined },
+    ]);
   });
 });
 
@@ -164,14 +184,24 @@ describe("isRegisteredLeaf", () => {
 describe("getFieldErrors precedence", () => {
   it("returns every field error, and narrows to one field on request", () => {
     expect(MANUAL_JOURNAL_ERROR.getFieldErrors()).toHaveLength(5);
-    expect(MANUAL_JOURNAL_ERROR.getFieldErrors("lines[0].glAccountId")).toEqual([
-      { field: "lines[0].glAccountId", message: "GL account is required", code: "REQUIRED" },
-      { field: "lines[0].glAccountId", message: "GL account 4000 is inactive", code: "INVALID" },
+    expect(MANUAL_JOURNAL_ERROR.getFieldErrors("lines.0.glAccountId")).toEqual([
+      {
+        path: ["lines", 0, "glAccountId"],
+        field: "lines.0.glAccountId",
+        message: "GL account is required",
+        code: "REQUIRED",
+      },
+      {
+        path: ["lines", 0, "glAccountId"],
+        field: "lines.0.glAccountId",
+        message: "GL account 4000 is inactive",
+        code: "INVALID",
+      },
     ]);
   });
 
   it("getFieldError returns the first message for a field", () => {
-    expect(MANUAL_JOURNAL_ERROR.getFieldError("lines[0].glAccountId")?.message).toBe(
+    expect(MANUAL_JOURNAL_ERROR.getFieldError("lines.0.glAccountId")?.message).toBe(
       "GL account is required",
     );
   });
@@ -182,7 +212,7 @@ describe("getFieldErrors precedence", () => {
 
   it("still headlines the field message when exactly one field failed", () => {
     const single = graphQLError(
-      validationError([{ field: "reason", message: "Reason is required", code: "REQUIRED" }]),
+      validationError([{ path: ["reason"], message: "Reason is required", code: "REQUIRED" }]),
     );
 
     expect(single.normalize().detail).toBe("Reason is required");
@@ -216,7 +246,7 @@ describe("handleMutationError field distribution", () => {
     });
 
     const fromForm = errorsOf(form.current).lines[0].glAccountId.message;
-    const fromAccessor = MANUAL_JOURNAL_ERROR.getFieldError("lines[0].glAccountId")?.message;
+    const fromAccessor = MANUAL_JOURNAL_ERROR.getFieldError("lines.0.glAccountId")?.message;
 
     expect(fromForm).toBe(fromAccessor);
     // detail is the GraphQL summary here because more than one field failed; the point is
@@ -317,7 +347,7 @@ describe("handleMutationError field distribution", () => {
   it("routes a non-leaf array-element path to root rather than onto the element", () => {
     const form = renderJournalForm();
     const error = graphQLError(
-      validationError([{ field: "lines[0]", message: "Line is required", code: "REQUIRED" }]),
+      validationError([{ path: ["lines", 0], message: "Line is required", code: "REQUIRED" }]),
     );
 
     act(() => {
@@ -332,7 +362,7 @@ describe("handleMutationError field distribution", () => {
   it("routes an empty field path to root", () => {
     const form = renderJournalForm();
     const error = graphQLError(
-      validationError([{ field: "", message: "Journal is unbalanced", code: "INVALID" }]),
+      validationError([{ path: [], message: "Journal is unbalanced", code: "INVALID" }]),
     );
 
     act(() => {
@@ -357,7 +387,7 @@ describe("handleMutationError field distribution", () => {
   it("does not raise a root error when every field resolves", () => {
     const form = renderJournalForm();
     const error = graphQLError(
-      validationError([{ field: "reason", message: "Reason is required", code: "REQUIRED" }]),
+      validationError([{ path: ["reason"], message: "Reason is required", code: "REQUIRED" }]),
     );
 
     act(() => {
@@ -411,7 +441,15 @@ function refuse(
   fields: [string, string][],
 ) {
   const error = graphQLError(
-    validationError(fields.map(([field, message]) => ({ field, message, code: "INVALID" }))),
+    validationError(
+      fields.map(([field, message]) => ({
+        path: field
+          .split(".")
+          .map((segment) => (/^\d+$/.test(segment) ? Number(segment) : segment)),
+        message,
+        code: "INVALID",
+      })),
+    ),
   );
   act(() => {
     handleMutationError({ error, form });
@@ -438,7 +476,7 @@ describe("handleMutationError with an error surface", () => {
     const form = renderShipmentForm();
     surface(form.current, "moves.0");
 
-    refuse(form.current, [["moves[0].stops[1].locationId", "Location is required"]]);
+    refuse(form.current, [["moves.0.stops.1.locationId", "Location is required"]]);
 
     const errors = errorsOf(form.current);
     expect(errors.moves[0].stops[1].locationId.message).toBe("Location is required");
@@ -451,9 +489,9 @@ describe("handleMutationError with an error surface", () => {
     surface(form.current, "moves.0");
 
     refuse(form.current, [
-      ["moves[0].stops[1].locationId", "Location is required"],
-      ["moves[0].stops", "A move needs a pickup and a delivery"],
-      ["moves[0].stops[0].location", "Location is inactive"],
+      ["moves.0.stops.1.locationId", "Location is required"],
+      ["moves.0.stops", "A move needs a pickup and a delivery"],
+      ["moves.0.stops.0.location", "Location is inactive"],
     ]);
 
     const errors = errorsOf(form.current);
@@ -466,7 +504,7 @@ describe("handleMutationError with an error surface", () => {
     const form = renderShipmentForm();
     surface(form.current, "moves.0");
 
-    refuse(form.current, [["moves[1].distance", "Distance cannot be negative"]]);
+    refuse(form.current, [["moves.1.distance", "Distance cannot be negative"]]);
 
     const errors = errorsOf(form.current);
     expect(errors.root.message).toBe("Distance cannot be negative");
@@ -480,7 +518,7 @@ describe("handleMutationError with an error surface", () => {
     const form = renderShipmentForm();
     addErrorSurface(form.current.control, "moves.0")();
 
-    refuse(form.current, [["moves[0].stops[1].locationId", "Location is required"]]);
+    refuse(form.current, [["moves.0.stops.1.locationId", "Location is required"]]);
 
     expect(errorsOf(form.current).root.message).toBe("Location is required");
     expect(errorsOf(form.current).moves).toBeUndefined();
@@ -491,7 +529,7 @@ describe("handleMutationError with an error surface", () => {
     surface(form.current, "moves.0");
     addErrorSurface(form.current.control, "moves.0")();
 
-    refuse(form.current, [["moves[0].stops[1].locationId", "Location is required"]]);
+    refuse(form.current, [["moves.0.stops.1.locationId", "Location is required"]]);
 
     expect(errorsOf(form.current).moves[0].stops[1].locationId.message).toBe(
       "Location is required",
@@ -504,7 +542,7 @@ describe("handleMutationError with an error surface", () => {
     const form = renderShipmentForm({ resolver: false });
     surface(form.current, "moves.0");
 
-    refuse(form.current, [["moves[0].stops[1].locationId", "Location is required"]]);
+    refuse(form.current, [["moves.0.stops.1.locationId", "Location is required"]]);
 
     expect(errorsOf(form.current).root.message).toBe("Location is required");
     expect(errorsOf(form.current).moves).toBeUndefined();
@@ -513,7 +551,7 @@ describe("handleMutationError with an error surface", () => {
   it("does not let a refusal under a surface outlive the next submit", async () => {
     const form = renderShipmentForm();
     surface(form.current, "moves.0");
-    refuse(form.current, [["moves[0].stops[1].locationId", "Location is required"]]);
+    refuse(form.current, [["moves.0.stops.1.locationId", "Location is required"]]);
 
     let submitted = false;
     const onSubmit = form.current.handleSubmit(() => {
@@ -534,8 +572,8 @@ describe("handleMutationError with an error surface", () => {
     expect(
       refusedFieldMessages(
         [
-          { field: "moves[0].stops[1].locationId", message: "Location is required" },
-          { field: "moves[1].distance", message: "Distance cannot be negative" },
+          { field: "moves.0.stops.1.locationId", message: "Location is required" },
+          { field: "moves.1.distance", message: "Distance cannot be negative" },
         ],
         form.current.control,
       ),

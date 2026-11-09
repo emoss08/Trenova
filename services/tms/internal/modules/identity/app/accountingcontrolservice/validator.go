@@ -7,13 +7,10 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/accountingcontrol/accountingcontroldb"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/integrationports"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/keelcheck"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -23,10 +20,12 @@ import (
 	"golang.org/x/text/currency"
 )
 
+const glAccountsTable = "gl_accounts"
+
 type ValidatorParams struct {
 	fx.In
 
-	DB              *postgres.Connection
+	Integrity       validationframework.IntegrityChecker
 	IntegrationRepo integrationports.IntegrationRepository
 }
 
@@ -35,90 +34,71 @@ type Validator struct {
 }
 
 func NewValidator(p ValidatorParams) *Validator {
-	builder := newValidatorBuilderWithIntegrationRepo(p.IntegrationRepo)
-
-	checker := keelcheck.NewChecker(p.DB, accountingcontroldb.AccountingControlsSchema())
-	builder.
-		WithUniquenessChecker(checker).
-		WithReferenceChecker(checker)
-	addGLAccountReferenceChecks(
-		builder,
-		keelcheck.TableReferenceCheck(p.DB, "gl_accounts"),
-	)
+	builder := tenantedvalidation.NewBuilder[*accountingcontrol.AccountingControl]().
+		WithModelName("AccountingControl").
+		WithIntegrityChecker(p.Integrity).
+		WithCustomRule(createAccountingBasisRule()).
+		WithCustomRule(createJournalPostingRule()).
+		WithCustomRule(createManualJournalEntryRule()).
+		WithCustomRule(createCurrencyRule(p.IntegrationRepo)).
+		WithCustomRule(createReconciliationRule()).
+		WithCustomRule(createPeriodCloseRule())
+	addGLAccountReferenceChecks(builder)
 
 	return &Validator{
 		validator: builder.Build(),
 	}
 }
 
-func newValidatorBuilder() *tenantedvalidation.Builder[*accountingcontrol.AccountingControl] {
-	return newValidatorBuilderWithIntegrationRepo(nil)
-}
-
-func newValidatorBuilderWithIntegrationRepo(
-	integrationRepo integrationports.IntegrationRepository,
-) *tenantedvalidation.Builder[*accountingcontrol.AccountingControl] {
-	return tenantedvalidation.NewBuilder[*accountingcontrol.AccountingControl]().
-		WithModelName("AccountingControl").
-		WithCustomRule(createAccountingBasisRule()).
-		WithCustomRule(createJournalPostingRule()).
-		WithCustomRule(createManualJournalEntryRule()).
-		WithCustomRule(createCurrencyRule(integrationRepo)).
-		WithCustomRule(createReconciliationRule()).
-		WithCustomRule(createPeriodCloseRule())
-}
-
 func addGLAccountReferenceChecks(
 	builder *tenantedvalidation.Builder[*accountingcontrol.AccountingControl],
-	glAccountExists validationframework.CustomReferenceCheckFunc,
 ) {
 	builder.
-		WithOptionalCustomReferenceCheck("defaultRevenueAccountId", "Default revenue account does not exist in your organization", func(ac *accountingcontrol.AccountingControl) pulid.ID {
+		WithOptionalReferenceCheck("defaultRevenueAccountId", glAccountsTable, "Default revenue account does not exist in your organization", func(ac *accountingcontrol.AccountingControl) pulid.ID {
 			return ac.DefaultRevenueAccountID
-		}, glAccountExists).
-		WithOptionalCustomReferenceCheck("defaultCashAccountId", "Default cash account does not exist in your organization", func(ac *accountingcontrol.AccountingControl) pulid.ID {
+		}).
+		WithOptionalReferenceCheck("defaultCashAccountId", glAccountsTable, "Default cash account does not exist in your organization", func(ac *accountingcontrol.AccountingControl) pulid.ID {
 			return ac.DefaultCashAccountID
-		}, glAccountExists).
-		WithOptionalCustomReferenceCheck("defaultUnappliedCashAccountId", "Default unapplied cash account does not exist in your organization", func(ac *accountingcontrol.AccountingControl) pulid.ID {
+		}).
+		WithOptionalReferenceCheck("defaultUnappliedCashAccountId", glAccountsTable, "Default unapplied cash account does not exist in your organization", func(ac *accountingcontrol.AccountingControl) pulid.ID {
 			return ac.DefaultUnappliedCashAccountID
-		}, glAccountExists).
-		WithOptionalCustomReferenceCheck("defaultExpenseAccountId", "Default expense account does not exist in your organization", func(ac *accountingcontrol.AccountingControl) pulid.ID {
+		}).
+		WithOptionalReferenceCheck("defaultExpenseAccountId", glAccountsTable, "Default expense account does not exist in your organization", func(ac *accountingcontrol.AccountingControl) pulid.ID {
 			return ac.DefaultExpenseAccountID
-		}, glAccountExists).
-		WithOptionalCustomReferenceCheck("defaultArAccountId", "Default AR account does not exist in your organization", func(ac *accountingcontrol.AccountingControl) pulid.ID {
+		}).
+		WithOptionalReferenceCheck("defaultArAccountId", glAccountsTable, "Default AR account does not exist in your organization", func(ac *accountingcontrol.AccountingControl) pulid.ID {
 			return ac.DefaultARAccountID
-		}, glAccountExists).
-		WithOptionalCustomReferenceCheck("defaultApAccountId", "Default AP account does not exist in your organization", func(ac *accountingcontrol.AccountingControl) pulid.ID {
+		}).
+		WithOptionalReferenceCheck("defaultApAccountId", glAccountsTable, "Default AP account does not exist in your organization", func(ac *accountingcontrol.AccountingControl) pulid.ID {
 			return ac.DefaultAPAccountID
-		}, glAccountExists).
-		WithOptionalCustomReferenceCheck("defaultTaxLiabilityAccountId", "Default tax liability account does not exist in your organization", func(ac *accountingcontrol.AccountingControl) pulid.ID {
+		}).
+		WithOptionalReferenceCheck("defaultTaxLiabilityAccountId", glAccountsTable, "Default tax liability account does not exist in your organization", func(ac *accountingcontrol.AccountingControl) pulid.ID {
 			return ac.DefaultTaxLiabilityAccountID
-		}, glAccountExists).
-		WithOptionalCustomReferenceCheck("defaultWriteOffAccountId", "Default write-off account does not exist in your organization", func(ac *accountingcontrol.AccountingControl) pulid.ID {
+		}).
+		WithOptionalReferenceCheck("defaultWriteOffAccountId", glAccountsTable, "Default write-off account does not exist in your organization", func(ac *accountingcontrol.AccountingControl) pulid.ID {
 			return ac.DefaultWriteOffAccountID
-		}, glAccountExists).
-		WithOptionalCustomReferenceCheck("defaultRetainedEarningsAccountId", "Default retained earnings account does not exist in your organization", func(ac *accountingcontrol.AccountingControl) pulid.ID {
+		}).
+		WithOptionalReferenceCheck("defaultRetainedEarningsAccountId", glAccountsTable, "Default retained earnings account does not exist in your organization", func(ac *accountingcontrol.AccountingControl) pulid.ID {
 			return ac.DefaultRetainedEarningsAccountID
-		}, glAccountExists).
-		WithOptionalCustomReferenceCheck("realizedFxGainAccountId", "Realized FX gain account does not exist in your organization", func(ac *accountingcontrol.AccountingControl) pulid.ID {
+		}).
+		WithOptionalReferenceCheck("realizedFxGainAccountId", glAccountsTable, "Realized FX gain account does not exist in your organization", func(ac *accountingcontrol.AccountingControl) pulid.ID {
 			return ac.RealizedFXGainAccountID
-		}, glAccountExists).
-		WithOptionalCustomReferenceCheck("realizedFxLossAccountId", "Realized FX loss account does not exist in your organization", func(ac *accountingcontrol.AccountingControl) pulid.ID {
+		}).
+		WithOptionalReferenceCheck("realizedFxLossAccountId", glAccountsTable, "Realized FX loss account does not exist in your organization", func(ac *accountingcontrol.AccountingControl) pulid.ID {
 			return ac.RealizedFXLossAccountID
-		}, glAccountExists)
+		})
 }
 
-func createAccountingBasisRule() validationframework.TenantedRule[*accountingcontrol.AccountingControl] {
-	return validationframework.NewTenantedRule[*accountingcontrol.AccountingControl](
+func createAccountingBasisRule() validationframework.Rule[*accountingcontrol.AccountingControl] {
+	return validationframework.NewRule[*accountingcontrol.AccountingControl](
 		"accounting_basis",
 	).
 		OnUpdate().
-		WithStage(validationframework.ValidationStageBusinessRules).
-		WithPriority(validationframework.ValidationPriorityHigh).
+		WithStage(validationframework.StageBusinessRules).
 		WithValidation(func(
 			_ context.Context,
 			entity *accountingcontrol.AccountingControl,
-			_ *validationframework.TenantedValidationContext,
+			_ *validationframework.Context,
 			multiErr *errortypes.MultiError,
 		) error {
 			if !entity.AccountingBasis.IsValid() {
@@ -151,17 +131,16 @@ func createAccountingBasisRule() validationframework.TenantedRule[*accountingcon
 		})
 }
 
-func createJournalPostingRule() validationframework.TenantedRule[*accountingcontrol.AccountingControl] { //nolint:gocognit // legacy workflow
-	return validationframework.NewTenantedRule[*accountingcontrol.AccountingControl](
+func createJournalPostingRule() validationframework.Rule[*accountingcontrol.AccountingControl] { //nolint:gocognit // legacy workflow
+	return validationframework.NewRule[*accountingcontrol.AccountingControl](
 		"journal_posting",
 	).
 		OnUpdate().
-		WithStage(validationframework.ValidationStageBusinessRules).
-		WithPriority(validationframework.ValidationPriorityHigh).
+		WithStage(validationframework.StageBusinessRules).
 		WithValidation(func(
 			_ context.Context,
 			entity *accountingcontrol.AccountingControl,
-			_ *validationframework.TenantedValidationContext,
+			_ *validationframework.Context,
 			multiErr *errortypes.MultiError,
 		) error {
 			if entity.JournalPostingMode == accountingcontrol.JournalPostingModeManual {
@@ -307,17 +286,16 @@ func createJournalPostingRule() validationframework.TenantedRule[*accountingcont
 		})
 }
 
-func createManualJournalEntryRule() validationframework.TenantedRule[*accountingcontrol.AccountingControl] {
-	return validationframework.NewTenantedRule[*accountingcontrol.AccountingControl](
+func createManualJournalEntryRule() validationframework.Rule[*accountingcontrol.AccountingControl] {
+	return validationframework.NewRule[*accountingcontrol.AccountingControl](
 		"manual_journal_entry",
 	).
 		OnUpdate().
-		WithStage(validationframework.ValidationStageBusinessRules).
-		WithPriority(validationframework.ValidationPriorityHigh).
+		WithStage(validationframework.StageBusinessRules).
 		WithValidation(func(
 			_ context.Context,
 			entity *accountingcontrol.AccountingControl,
-			_ *validationframework.TenantedValidationContext,
+			_ *validationframework.Context,
 			multiErr *errortypes.MultiError,
 		) error {
 			if entity.ManualJournalEntryPolicy == accountingcontrol.ManualJournalEntryPolicyDisallow &&
@@ -335,15 +313,14 @@ func createManualJournalEntryRule() validationframework.TenantedRule[*accounting
 
 func createCurrencyRule(
 	integrationRepo integrationports.IntegrationRepository,
-) validationframework.TenantedRule[*accountingcontrol.AccountingControl] {
-	return validationframework.NewTenantedRule[*accountingcontrol.AccountingControl]("currency").
+) validationframework.Rule[*accountingcontrol.AccountingControl] {
+	return validationframework.NewRule[*accountingcontrol.AccountingControl]("currency").
 		OnUpdate().
-		WithStage(validationframework.ValidationStageBusinessRules).
-		WithPriority(validationframework.ValidationPriorityHigh).
+		WithStage(validationframework.StageBusinessRules).
 		WithValidation(func(
 			ctx context.Context,
 			entity *accountingcontrol.AccountingControl,
-			_ *validationframework.TenantedValidationContext,
+			_ *validationframework.Context,
 			multiErr *errortypes.MultiError,
 		) error {
 			if _, err := currency.ParseISO(
@@ -436,17 +413,16 @@ func addOANDAReadinessError(multiErr *errortypes.MultiError) {
 	)
 }
 
-func createReconciliationRule() validationframework.TenantedRule[*accountingcontrol.AccountingControl] {
-	return validationframework.NewTenantedRule[*accountingcontrol.AccountingControl](
+func createReconciliationRule() validationframework.Rule[*accountingcontrol.AccountingControl] {
+	return validationframework.NewRule[*accountingcontrol.AccountingControl](
 		"reconciliation",
 	).
 		OnUpdate().
-		WithStage(validationframework.ValidationStageBusinessRules).
-		WithPriority(validationframework.ValidationPriorityHigh).
+		WithStage(validationframework.StageBusinessRules).
 		WithValidation(func(
 			_ context.Context,
 			entity *accountingcontrol.AccountingControl,
-			_ *validationframework.TenantedValidationContext,
+			_ *validationframework.Context,
 			multiErr *errortypes.MultiError,
 		) error {
 			switch entity.ReconciliationMode {
@@ -482,17 +458,16 @@ func createReconciliationRule() validationframework.TenantedRule[*accountingcont
 		})
 }
 
-func createPeriodCloseRule() validationframework.TenantedRule[*accountingcontrol.AccountingControl] {
-	return validationframework.NewTenantedRule[*accountingcontrol.AccountingControl](
+func createPeriodCloseRule() validationframework.Rule[*accountingcontrol.AccountingControl] {
+	return validationframework.NewRule[*accountingcontrol.AccountingControl](
 		"period_close",
 	).
 		OnUpdate().
-		WithStage(validationframework.ValidationStageBusinessRules).
-		WithPriority(validationframework.ValidationPriorityHigh).
+		WithStage(validationframework.StageBusinessRules).
 		WithValidation(func(
 			_ context.Context,
 			entity *accountingcontrol.AccountingControl,
-			_ *validationframework.TenantedValidationContext,
+			_ *validationframework.Context,
 			multiErr *errortypes.MultiError,
 		) error {
 			if entity.PeriodCloseMode == accountingcontrol.PeriodCloseModeSystemScheduled &&
@@ -517,6 +492,6 @@ func requireGLAccount(multiErr *errortypes.MultiError, id pulid.ID, field, messa
 func (v *Validator) ValidateUpdate(
 	ctx context.Context,
 	entity *accountingcontrol.AccountingControl,
-) *errortypes.MultiError {
+) error {
 	return v.validator.ValidateUpdate(ctx, entity)
 }

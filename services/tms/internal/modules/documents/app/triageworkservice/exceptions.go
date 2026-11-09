@@ -166,11 +166,7 @@ func validateException(req *LogExceptionRequest) error {
 			maxExceptionNote,
 		)
 	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 func exceptionSummary(req *LogExceptionRequest) string {

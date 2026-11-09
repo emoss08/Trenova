@@ -27,9 +27,9 @@ const (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*Posting)(nil)
-	_ domaintypes.PostgresSearchable     = (*Posting)(nil)
-	_ pagination.CursorEntity            = (*Posting)(nil)
+	_ validationframework.Entity     = (*Posting)(nil)
+	_ domaintypes.PostgresSearchable = (*Posting)(nil)
+	_ pagination.CursorEntity        = (*Posting)(nil)
 )
 
 type Posting struct {

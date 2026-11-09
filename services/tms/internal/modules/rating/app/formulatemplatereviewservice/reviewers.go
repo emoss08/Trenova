@@ -111,11 +111,7 @@ func (s *Service) validateSubmission(
 	}
 	gate.addRefusals(multiErr)
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 func (s *Service) isEligibleReviewer(

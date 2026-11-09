@@ -22,7 +22,7 @@ const (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*ReportDefinition)(nil)
+	_ validationframework.Entity = (*ReportDefinition)(nil)
 )
 
 // Saved report definitions

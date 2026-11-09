@@ -136,7 +136,7 @@ export function CollectionsPage() {
           <Input
             className="h-8 w-64"
             placeholder={t("Search customers")}
-            leftElement={<SearchLgIcon className="text-muted-foreground size-3.5" />}
+            leftElement={<SearchLgIcon className="size-3.5 text-muted-foreground" />}
             value={state.query}
             onChange={(event) => void setState({ query: event.target.value, page: 1 })}
           />

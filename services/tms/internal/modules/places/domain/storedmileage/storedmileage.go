@@ -18,9 +18,9 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*StoredMileage)(nil)
-	_ domaintypes.PostgresSearchable     = (*StoredMileage)(nil)
-	_ pagination.CursorEntity            = (*StoredMileage)(nil)
+	_ validationframework.Entity     = (*StoredMileage)(nil)
+	_ domaintypes.PostgresSearchable = (*StoredMileage)(nil)
+	_ pagination.CursorEntity        = (*StoredMileage)(nil)
 )
 
 const (

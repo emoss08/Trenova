@@ -21,9 +21,9 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*AgentPlan)(nil)
-	_ pagination.CursorEntity            = (*AgentPlan)(nil)
-	_ domaintypes.PostgresSearchable     = (*AgentPlan)(nil)
+	_ validationframework.Entity     = (*AgentPlan)(nil)
+	_ pagination.CursorEntity        = (*AgentPlan)(nil)
+	_ domaintypes.PostgresSearchable = (*AgentPlan)(nil)
 )
 
 // AgentPlan is several proposals from one run as one decision.
@@ -46,6 +46,8 @@ type AgentPlan struct {
 	Title   string     `json:"title"   keel:"title"`
 	Summary string     `json:"summary" keel:"summary,nullzero"`
 	Status  PlanStatus `json:"status"  keel:"status"`
+
+	TargetID pulid.ID `json:"targetId" keel:"target_id,nullzero"`
 
 	StepCount      int    `json:"stepCount"      keel:"step_count"`
 	CompletedSteps int    `json:"completedSteps" keel:"completed_steps"`

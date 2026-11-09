@@ -31,10 +31,7 @@ func validateSaveApp(req *accountingconnectionports.SaveAccountingAppRequest) er
 			"Enter a verifier token or clear it, not both",
 		)
 	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }
 
 func environmentList(environments []accountingprovider.AppEnvironment) string {

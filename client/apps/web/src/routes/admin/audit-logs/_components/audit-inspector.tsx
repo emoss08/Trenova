@@ -47,11 +47,11 @@ function Panel({
   children: ReactNode;
 }) {
   return (
-    <section aria-label={title} className="bg-card animate-rise rounded-md border">
+    <section aria-label={title} className="animate-rise rounded-md border bg-card">
       <header className="flex h-8.5 items-center gap-2 border-b px-3 text-sm font-semibold">
         {title}
         {aside ? (
-          <span className="text-muted-foreground ml-auto flex items-center gap-1.5 text-xs font-normal">
+          <span className="ml-auto flex items-center gap-1.5 text-xs font-normal text-muted-foreground">
             {aside}
           </span>
         ) : null}
@@ -71,8 +71,8 @@ function ReviewNote({ entryId }: { entryId: string }) {
 
   if (review.reviewedAt) {
     return (
-      <div className="text-muted-foreground flex items-center gap-1.5 text-xs">
-        <CheckCircleIcon aria-hidden className="text-success-foreground size-3.5" />
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+        <CheckCircleIcon aria-hidden className="size-3.5 text-success-foreground" />
         <span>
           {t(
             "Reviewed by {0} {1}",
@@ -98,7 +98,7 @@ function ReviewNote({ entryId }: { entryId: string }) {
   return (
     <div
       className={cn(
-        "animate-rise flex gap-2 rounded-md border px-3 py-2.5",
+        "flex animate-rise gap-2 rounded-md border px-3 py-2.5",
         danger
           ? "border-danger-border bg-danger-subtle"
           : "border-warning-border bg-warning-subtle",
@@ -113,7 +113,7 @@ function ReviewNote({ entryId }: { entryId: string }) {
       />
       <div className="flex min-w-0 flex-col gap-0.5">
         <span className="text-sm font-medium">{t("An alert rule flagged this")}</span>
-        <span className="text-muted-foreground text-xs">
+        <span className="text-xs text-muted-foreground">
           {review.offHours
             ? t("{0} · off hours", REVIEW_KIND_LABELS[review.kind])
             : REVIEW_KIND_LABELS[review.kind]}
@@ -138,12 +138,10 @@ function InspectorBody({
   entry,
   canSeeReviews,
   onOpenEntry,
-  offHoursZone,
 }: {
   entry: AuditEntryDetail;
   canSeeReviews: boolean;
   onOpenEntry: (id: string) => void;
-  offHoursZone: string | null;
 }) {
   const t = useT();
   const [raw, setRaw] = useState<"before" | "after" | "metadata">("before");
@@ -162,7 +160,7 @@ function InspectorBody({
         aside={t("{0, plural, one {# field} other {# fields}}", changes.length)}
       >
         {changes.length === 0 ? (
-          <p className="text-muted-foreground px-3 py-2.5 text-xs">{t("No fields changed.")}</p>
+          <p className="px-3 py-2.5 text-xs text-muted-foreground">{t("No fields changed.")}</p>
         ) : (
           changes.map((change) => (
             <ChangeRow
@@ -186,7 +184,7 @@ function InspectorBody({
             />
             <div className="flex min-w-0 flex-col">
               <span className="truncate text-sm font-medium">{name}</span>
-              <span className="text-muted-foreground truncate text-xs">
+              <span className="truncate text-xs text-muted-foreground">
                 {actorSubtitle(
                   t,
                   actorKindOfPrincipal(entry.principalType),
@@ -256,7 +254,7 @@ function InspectorBody({
           {rawValue && isRecordValue(rawValue) && Object.keys(rawValue).length > 0 ? (
             <AuditJsonBlock value={rawValue} searchable copyPath />
           ) : (
-            <p className="text-muted-foreground px-1 text-xs">{t("Nothing recorded.")}</p>
+            <p className="px-1 text-xs text-muted-foreground">{t("Nothing recorded.")}</p>
           )}
         </div>
       </Panel>
@@ -292,7 +290,7 @@ export function AuditInspector({
   return (
     <aside
       aria-label={t("Audit entry")}
-      className="bg-background animate-panel-in flex max-h-[calc(100dvh-6rem)] min-h-0 flex-col overflow-hidden rounded-md border"
+      className="flex max-h-[calc(100dvh-6rem)] min-h-0 animate-panel-in flex-col overflow-hidden rounded-md border bg-background"
     >
       <header className="flex shrink-0 flex-col gap-2 border-b px-3.5 py-3">
         <div className="flex items-center gap-1.5">
@@ -304,7 +302,7 @@ export function AuditInspector({
               <EntryTags entry={entry} offHoursZone={offHoursZone} />
             </>
           ) : (
-            <span className="ui-shimmer h-5 w-32 rounded-sm" />
+            <span className="h-5 w-32 ui-shimmer rounded-sm" />
           )}
           <Button
             type="button"
@@ -322,7 +320,7 @@ export function AuditInspector({
             <h2 className="text-lg leading-snug font-semibold text-balance">
               {entrySentence(entry)}
             </h2>
-            <p className="text-muted-foreground text-xs">
+            <p className="text-xs text-muted-foreground">
               {t(
                 "{0} · {1}",
                 entry.actorName || entry.user?.name || t("Unknown"),
@@ -367,21 +365,16 @@ export function AuditInspector({
           </>
         ) : (
           <div aria-hidden className="flex flex-col gap-1.5">
-            <span className="ui-shimmer h-5 w-11/12 rounded-sm" />
-            <span className="ui-shimmer h-3 w-40 rounded-sm" />
+            <span className="h-5 w-11/12 ui-shimmer rounded-sm" />
+            <span className="h-3 w-40 ui-shimmer rounded-sm" />
           </div>
         )}
       </header>
       <ScrollArea className="min-h-0 flex-1">
         {entry ? (
-          <InspectorBody
-            entry={entry}
-            canSeeReviews={canSeeReviews}
-            onOpenEntry={onOpenEntry}
-            offHoursZone={offHoursZone}
-          />
+          <InspectorBody entry={entry} canSeeReviews={canSeeReviews} onOpenEntry={onOpenEntry} />
         ) : detail.isError || detail.isSuccess ? (
-          <p className="text-muted-foreground p-4 text-sm">
+          <p className="p-4 text-sm text-muted-foreground">
             {t("This entry could not be loaded, or you can no longer read it.")}
           </p>
         ) : (
@@ -390,13 +383,13 @@ export function AuditInspector({
             aria-label={t("Loading audit entry")}
             className="flex flex-col gap-3 p-3.5"
           >
-            <span aria-hidden className="ui-shimmer block h-40 rounded-md" />
-            <span aria-hidden className="ui-shimmer block h-28 rounded-md" />
-            <span aria-hidden className="ui-shimmer block h-24 rounded-md" />
+            <span aria-hidden className="block h-40 ui-shimmer rounded-md" />
+            <span aria-hidden className="block h-28 ui-shimmer rounded-md" />
+            <span aria-hidden className="block h-24 ui-shimmer rounded-md" />
           </div>
         )}
       </ScrollArea>
-      <footer className="text-muted-foreground flex shrink-0 gap-3.5 border-t px-3.5 py-2 text-xs">
+      <footer className="flex shrink-0 gap-3.5 border-t px-3.5 py-2 text-xs text-muted-foreground">
         <span>{t("↑ ↓ next entry")}</span>
         <span>{t("Esc closes")}</span>
       </footer>

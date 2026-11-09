@@ -74,6 +74,7 @@ func (h *ErrorHandler) HandleError(c *gin.Context, err error) {
 
 	problemType := h.classifier.Classify(err)
 	validationErrors := h.sanitizer.ExtractErrors(err)
+	advisories := h.sanitizer.ExtractAdvisories(err)
 	usageStats := h.sanitizer.ExtractUsageStats(err)
 	params := h.sanitizer.ExtractParams(err)
 	detail := h.sanitizer.SanitizeMessage(err, problemType)
@@ -87,7 +88,9 @@ func (h *ErrorHandler) HandleError(c *gin.Context, err error) {
 		WithDetail(detail).
 		WithInstance(c.Request.URL.Path, requestID).
 		WithTraceID(requestID).
+		WithCode(ErrorCodeOf(err, problemType)).
 		WithErrors(validationErrors).
+		WithAdvisories(advisories).
 		WithUsageStats(usageStats).
 		WithConflict(h.sanitizer.ExtractConflict(err)).
 		WithParams(params).

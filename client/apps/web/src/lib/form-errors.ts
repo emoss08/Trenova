@@ -1,11 +1,3 @@
-// The server addresses fields with bracket indices (`lines[0].glAccountId`, from
-// errortypes.MultiError.WithIndex); react-hook-form registers them with dot indices
-// (`lines.0.glAccountId`). Without this translation every nested field error would look
-// unregistered and get routed to the form root.
-export function normalizeFieldPath(field: string): string {
-  return field.replace(/\[(\d+)\]/g, ".$1").replace(/^\./, "");
-}
-
 type RegisteredField = { _f?: unknown };
 
 // Structural rather than Control<T>: react-hook-form's Control carries an invariant
@@ -157,7 +149,7 @@ export function refusedFieldMessages(
   return [
     ...new Set(
       fieldErrors
-        .filter((error) => serverErrorTarget(registry, normalizeFieldPath(error.field)) !== null)
+        .filter((error) => serverErrorTarget(registry, error.field) !== null)
         .map((error) => error.message),
     ),
   ];

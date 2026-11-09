@@ -15,8 +15,8 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*Commodity)(nil)
-	_ domaintypes.PostgresSearchable     = (*Commodity)(nil)
+	_ validationframework.Entity     = (*Commodity)(nil)
+	_ domaintypes.PostgresSearchable = (*Commodity)(nil)
 )
 
 type FreightClass string

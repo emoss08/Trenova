@@ -80,6 +80,7 @@ describe("isModuleActive", () => {
   });
 
   it("marks a module active on its base path and anything beneath it", () => {
+    expect(isModuleActive(moduleById("inbox"), "/desk/triage")).toBe(true);
     expect(isModuleActive(moduleById("inbox"), "/triage")).toBe(true);
     expect(isModuleActive(moduleById("inbox"), "/triage/msg_01")).toBe(true);
     expect(isModuleActive(moduleById("inbox"), "/inbox")).toBe(true);

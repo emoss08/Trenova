@@ -30,7 +30,7 @@ export function GrowingRule({ shown, className }: { shown: boolean; className?: 
     <span
       aria-hidden
       className={cn(
-        "bg-border ease-settle absolute inset-x-0 h-px origin-center transition-transform duration-300",
+        "absolute inset-x-0 h-px origin-center bg-border transition-transform duration-300 ease-settle",
         shown ? "scale-x-100" : "scale-x-0",
         className,
       )}
@@ -127,7 +127,7 @@ export function IntelligenceSection({
       <header className="flex flex-wrap items-end justify-between gap-x-4 gap-y-2">
         <div className="min-w-0">
           <h2 className="text-base font-semibold">{title}</h2>
-          <p className="text-muted-foreground mt-0.5 max-w-3xl text-sm text-pretty">{answer}</p>
+          <p className="mt-0.5 max-w-3xl text-sm text-pretty text-muted-foreground">{answer}</p>
         </div>
         {action ? <div className="shrink-0">{action}</div> : null}
       </header>
@@ -144,11 +144,11 @@ export function scrollToSection(section: string): void {
 
 /** A card's opening line: the finding first, the chart after it. */
 export function Finding({ children }: { children: ReactNode }) {
-  return <p className="text-muted-foreground mb-3 text-sm text-pretty">{children}</p>;
+  return <p className="mb-3 text-sm text-pretty text-muted-foreground">{children}</p>;
 }
 
 export function Strong({ children }: { children: ReactNode }) {
-  return <span className="text-foreground font-medium">{children}</span>;
+  return <span className="font-medium text-foreground">{children}</span>;
 }
 
 export function HoursValue({ minutes }: { minutes: number }) {

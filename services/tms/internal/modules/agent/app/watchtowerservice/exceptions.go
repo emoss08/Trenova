@@ -103,9 +103,7 @@ func (s *Exceptions) applyException(
 		expected = before.Version
 	}
 	if expected != before.Version {
-		return nil, errortypes.NewValidationError(
-			"version",
-			errortypes.ErrVersionMismatch,
+		return nil, errortypes.NewVersionMismatchError(
 			"This exception changed since you opened it; refresh and try again",
 		)
 	}

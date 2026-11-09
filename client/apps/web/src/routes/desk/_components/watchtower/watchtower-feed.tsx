@@ -2,26 +2,17 @@ import { usePermission } from "@/hooks/use-permission";
 import type { WatchtowerItem } from "@/lib/graphql/watchtower";
 import { watchtower, watchtowerQueueQuery } from "@/lib/queries/watchtower";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
-import { MessageChatSquareIcon } from "@trenova/shared/components/icons";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useNow } from "@trenova/shared/hooks/use-now";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { getStartOfDay, resolveUserTimezone } from "@trenova/shared/lib/date";
-import { cn } from "@trenova/shared/lib/utils";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router";
 import { QueueClear, QueueHeader, QueueLayout } from "../queue/queue";
-import {
-  QUEUE_NAV_CLASS,
-  QueueBar,
-  QueueBarSpacer,
-  QueueButton,
-  QueueNav,
-} from "../queue/queue-bar";
 import { QueueGroupHeader, QueueList, type QueueSection } from "../queue/queue-list";
-import { WatchtowerHandOff } from "./hand-off-menu";
+import { WatchtowerItemBar } from "./item-bar";
 import { WatchtowerItemCard } from "./item-card";
 import { WatchtowerItemRow } from "./item-row";
 import { groupByLane, laneLabel } from "./lanes";
@@ -214,44 +205,7 @@ export function WatchtowerFeed() {
           )}
         />
       )}
-      {current && (
-        <QueueBar>
-          <QueueNav onPrevious={actions.previous} onNext={actions.next} />
-          <Button
-            variant="quiet"
-            size="bare"
-            className={cn(QUEUE_NAV_CLASS, "dk-w3-ask ml-1.5 inline-flex h-7.5 items-center")}
-            onClick={actions.ask}
-            disabled={!actions.canAsk}
-            title={t("Ask about this")}
-          >
-            <MessageChatSquareIcon aria-hidden className="size-3.5" />
-            <span>{t("Ask about this")}</span>
-          </Button>
-          <QueueBarSpacer />
-          {canAct ? (
-            <>
-              <QueueButton shortcut="S" onClick={actions.snooze}>
-                {t("Snooze")}
-              </QueueButton>
-              <QueueButton shortcut="E" onClick={actions.done}>
-                {t("Done")}
-              </QueueButton>
-              {current.agentWork === null && current.subjectId !== null && (
-                <WatchtowerHandOff
-                  suggested={current.suggestedAgent}
-                  open={actions.menuOpen}
-                  onOpenChange={actions.setMenuOpen}
-                  onHandOff={actions.handOff}
-                  disabled={actions.handingOff}
-                />
-              )}
-            </>
-          ) : (
-            <span className="dk-dc2-qe">{t("You can read these, but not act on them.")}</span>
-          )}
-        </QueueBar>
-      )}
+      {current && <WatchtowerItemBar item={current} actions={actions} canAct={canAct} />}
     </QueueLayout>
   );
 }

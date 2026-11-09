@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*CarrierSettlementControl)(nil)
+	_ validationframework.Entity = (*CarrierSettlementControl)(nil)
 )
 
 type CarrierSettlementControl struct {

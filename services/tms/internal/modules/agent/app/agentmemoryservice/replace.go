@@ -21,6 +21,8 @@ func (s *Service) planReplacement(
 	ctx context.Context,
 	req *agentmemoryports.RememberRequest,
 	entity *agentmemory.Memory,
+	actor *permissionports.RequestActor,
+	manages bool,
 ) (*agentmemory.Memory, bool, error) {
 	notVisible := errortypes.NewValidationError(
 		fieldReplaces,
@@ -59,7 +61,26 @@ func (s *Service) planReplacement(
 		}
 	}
 
-	return replaced, !ReplacedFreely(replaced, req.PersonUserID, entity.AgentDefinitionID), nil
+	return replaced, !mayReplaceNow(replaced, entity, req.PersonUserID, actor, manages), nil
+}
+
+func mayReplaceNow(
+	replaced, entity *agentmemory.Memory,
+	personUserID pulid.ID,
+	actor *permissionports.RequestActor,
+	manages bool,
+) bool {
+	if ReplacedFreely(replaced, personUserID, entity.AgentDefinitionID) {
+		return true
+	}
+	if !actor.IsUser() {
+		return false
+	}
+	if replaced.Scope == agentmemory.MemoryScopeUser {
+		return replaced.OwnerUserID != nil && *replaced.OwnerUserID == actor.UserID
+	}
+
+	return manages
 }
 
 func (s *Service) alreadyReplaced(

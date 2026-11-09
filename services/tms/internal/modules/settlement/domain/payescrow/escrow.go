@@ -16,8 +16,8 @@ import (
 )
 
 var (
-	_ pagination.CursorEntity            = (*EscrowAccount)(nil)
-	_ validationframework.TenantedEntity = (*EscrowAccount)(nil)
+	_ pagination.CursorEntity    = (*EscrowAccount)(nil)
+	_ validationframework.Entity = (*EscrowAccount)(nil)
 )
 
 // Owner-operator escrow balances against their target

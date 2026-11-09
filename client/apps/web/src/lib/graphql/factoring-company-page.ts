@@ -1,5 +1,8 @@
 import {
   FactoringAgreementActivityDocument,
+  FactoringAgreementFieldsFragmentDoc,
+  FactoringVerdictTotalsFieldsFragmentDoc,
+  type FactoringVerdictTotalsFieldsFragment,
   FactoringCompanyCustomersDocument,
   FactoringCompanyOverviewDocument,
   FactoringCompanySchedulesDocument,
@@ -13,13 +16,29 @@ import {
   type FactoringFundingPreviewQuery,
   type FactoringReserveHistoryQuery,
 } from "@trenova/graphql/generated/graphql";
+import { getFragmentData } from "@trenova/graphql/fragment-data";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
 import type { DataTableConfigRow } from "@trenova/shared/types/data-table";
+import type { FactoringAgreement } from "./factoring";
 
 type RequestOptions = { signal?: AbortSignal };
 
-export type FactoringCompanyOverview = FactoringCompanyOverviewQuery["factoringCompanyOverview"];
+type OverviewRead = FactoringCompanyOverviewQuery["factoringCompanyOverview"];
+type OverviewTotalsKey =
+  | "ready"
+  | "readyLate"
+  | "submitted"
+  | "funded"
+  | "reserveHeld"
+  | "released"
+  | "chargebacksDue"
+  | "chargedBack";
+
+export type FactoringVerdictTotals = FactoringVerdictTotalsFieldsFragment;
+/** The overview with its money totals and agreement read out of their fragments. */
+export type FactoringCompanyOverview = Omit<OverviewRead, OverviewTotalsKey | "agreement"> &
+  Record<OverviewTotalsKey, FactoringVerdictTotals> & { agreement: FactoringAgreement | null };
 export type FactoringAttention = FactoringCompanyOverview["attention"][number];
 export type FactoringOverviewSegment = FactoringCompanyOverview["summary"][number];
 export type FactoringPacePoint = FactoringCompanyOverview["pace"][number];
@@ -64,7 +83,23 @@ export async function fetchFactoringCompanyOverview(
     variables: { factoringCompanyId },
     signal: options?.signal,
   });
-  return data.factoringCompanyOverview;
+  const read = data.factoringCompanyOverview;
+  const totals = (value: OverviewRead[OverviewTotalsKey]) =>
+    getFragmentData(FactoringVerdictTotalsFieldsFragmentDoc, value);
+  return {
+    ...read,
+    ready: totals(read.ready),
+    readyLate: totals(read.readyLate),
+    submitted: totals(read.submitted),
+    funded: totals(read.funded),
+    reserveHeld: totals(read.reserveHeld),
+    released: totals(read.released),
+    chargebacksDue: totals(read.chargebacksDue),
+    chargedBack: totals(read.chargedBack),
+    agreement: read.agreement
+      ? getFragmentData(FactoringAgreementFieldsFragmentDoc, read.agreement)
+      : null,
+  };
 }
 
 export async function fetchFactoringReserveHistory(

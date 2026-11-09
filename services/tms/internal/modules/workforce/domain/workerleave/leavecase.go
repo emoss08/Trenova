@@ -153,7 +153,7 @@ func (s LeaveCertificationStatus) Label() string {
 }
 
 var (
-	_ validationframework.TenantedEntity = (*WorkerLeaveCase)(nil)
+	_ validationframework.Entity = (*WorkerLeaveCase)(nil)
 )
 
 // WorkerLeaveCase is one qualifying reason for leave. Entitlement is drawn down
@@ -368,7 +368,7 @@ func (WorkerLeaveCase) Constraints() []keel.Constraint {
 }
 
 var (
-	_ validationframework.TenantedEntity = (*WorkerLeaveEntry)(nil)
+	_ validationframework.Entity = (*WorkerLeaveEntry)(nil)
 )
 
 // WorkerLeaveEntry is one day of leave taken. Intermittent leave is many rows;

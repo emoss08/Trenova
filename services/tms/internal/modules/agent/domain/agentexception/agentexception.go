@@ -17,9 +17,9 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*AgentException)(nil)
-	_ pagination.CursorEntity            = (*AgentException)(nil)
-	_ domaintypes.PostgresSearchable     = (*AgentException)(nil)
+	_ validationframework.Entity     = (*AgentException)(nil)
+	_ pagination.CursorEntity        = (*AgentException)(nil)
+	_ domaintypes.PostgresSearchable = (*AgentException)(nil)
 )
 
 type AgentException struct {

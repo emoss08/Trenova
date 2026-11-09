@@ -656,8 +656,18 @@ preview's payload.
 ## A board
 
 A `board` is an answer the agent laid out with `show_board`: a title, a verdict, and up to eight
-blocks (figures, records, compare, table, chart, timeline, checks, meter, prose, note; two notes
-at most). The agent writes only words; every value is read by the server.
+blocks (figures, records, compare, table, chart, timeline, checks, meter, prose, note, work,
+actions; two notes at most). The agent writes only words; every value is read by the server.
+
+- **Work and actions turn an answer into work.** A `work` block names up to 12 records of one kind
+  and is filled, in the board's one read, with what is open about each from Needs you
+  (`deskattentionports.DeskAttentionService` with `RecordIDs`, so the Watchtower's own visibility
+  rules decide what a reader sees; [desk-workspace.md](desk-workspace.md)). A row opens the record's
+  case. An `actions` block offers at most three buttons, each a label, the request it sends (`ask`)
+  and the records it is about. A button never writes: it queues its request as the person's own
+  message into the board's conversation (`useDeskStore.askAgent`), and whatever the agent proposes
+  in reply goes through Decisions with its preview digest. Actions, like prose and notes, are not
+  exhibits and cannot be cited, and a board of only actions is refused because it reads no data.
 
 - **The layout is a JSON spec, validated in Go** (`domain/board`, `boardparse.Parse`): blocks name
   records by ID, Home metrics by their key (`board.MetricKeys`, from the Home layout), an

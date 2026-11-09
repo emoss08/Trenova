@@ -19,6 +19,7 @@ import { currentProfile, useAuthStore } from "@trenova/shared/stores/auth-store"
 import type { User } from "@trenova/shared/types/user";
 import { useAssistantStore } from "@/stores/assistant-store";
 import { useDeskAttachedPageStore } from "@/stores/desk-attached-page-store";
+import { useDeskMarginStore } from "@/stores/desk-margin-store";
 import { useDeskSettingsStore } from "@/stores/desk-settings-store";
 import { useDeskStore } from "@/stores/desk-store";
 import { useRecentPagesStore } from "@/stores/recent-pages-store";
@@ -162,6 +163,7 @@ export const sessionPersistence = createSessionPersistence(
 export function forgetSessionStores(): void {
   useAssistantStore.getState().clearSession();
   useDeskAttachedPageStore.getState().clear();
+  useDeskMarginStore.getState().clearSession();
   useDeskSettingsStore.getState().clearSession();
   useDeskStore.getState().clearSession();
   useRecentPagesStore.getState().clear();

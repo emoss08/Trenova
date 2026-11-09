@@ -59,13 +59,10 @@ func (e *Evaluation) AppendToMultiError(multiErr *errortypes.MultiError, prefix 
 	}
 }
 
-func (e *Evaluation) ToMultiError(prefix string) *errortypes.MultiError {
+func (e *Evaluation) ToMultiError(prefix string) error {
 	multiErr := errortypes.NewMultiError()
 	e.AppendToMultiError(multiErr, prefix)
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }
 
 func severityErrorCode(severity dispatchfinding.Severity) errortypes.ErrorCode {

@@ -26,9 +26,5 @@ func (s *Service) CheckSubscription(
 		multiErr.Add("tableName", errortypes.ErrInvalid, "Table is not eligible for change alerts")
 	}
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }

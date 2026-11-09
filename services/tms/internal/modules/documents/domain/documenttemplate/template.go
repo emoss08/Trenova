@@ -2,7 +2,6 @@ package documenttemplate
 
 import (
 	"context"
-	"errors"
 	"strings"
 
 	"github.com/emoss08/keel"
@@ -26,8 +25,8 @@ const (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*DocumentTemplate)(nil)
-	_ domaintypes.PostgresSearchable     = (*DocumentTemplate)(nil)
+	_ validationframework.Entity     = (*DocumentTemplate)(nil)
+	_ domaintypes.PostgresSearchable = (*DocumentTemplate)(nil)
 )
 
 // DocumentTemplate is a named, versioned template an organization owns.
@@ -182,4 +181,3 @@ func (DocumentTemplate) Constraints() []keel.Constraint {
 
 // ErrTemplateKindUnknown is returned when a template names a kind the registry does
 // not publish, which would leave it unrenderable.
-var ErrTemplateKindUnknown = errors.New("template kind is not registered")

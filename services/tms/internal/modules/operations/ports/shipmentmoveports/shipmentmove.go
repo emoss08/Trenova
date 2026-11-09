@@ -32,7 +32,7 @@ type UpdateMoveStatusRequest struct {
 	Status     shipmentvocab.MoveStatus `json:"status"`
 }
 
-func (r *UpdateMoveStatusRequest) Validate() *errortypes.MultiError {
+func (r *UpdateMoveStatusRequest) Validate() error {
 	multiErr := errortypes.NewMultiError()
 
 	multiErr.AddOzzoError(validation.ValidateStruct(
@@ -59,11 +59,7 @@ func (r *UpdateMoveStatusRequest) Validate() *errortypes.MultiError {
 		),
 	))
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 type StopActualAction string
@@ -105,11 +101,11 @@ func (r *RecordStopActualRequest) Departure() *RecordStopActualRequest {
 	}
 }
 
-func (r *RecordStopActualRequest) Validate() *errortypes.MultiError {
+func (r *RecordStopActualRequest) Validate() error {
 	multiErr := errortypes.NewMultiError()
 	if r == nil {
 		multiErr.Add("", errortypes.ErrInvalid, "Request is required")
-		return multiErr
+		return multiErr.Err()
 	}
 	if r.TenantInfo.OrgID.IsNil() {
 		multiErr.Add("tenantInfo.orgId", errortypes.ErrRequired, "Organization ID is required")
@@ -143,10 +139,7 @@ func (r *RecordStopActualRequest) Validate() *errortypes.MultiError {
 		}
 	}
 	r.validateDeparture(multiErr)
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }
 
 func (r *RecordStopActualRequest) validateDeparture(multiErr *errortypes.MultiError) {
@@ -175,7 +168,7 @@ type BulkUpdateMoveStatusRequest struct {
 	Status     shipmentvocab.MoveStatus `json:"status"`
 }
 
-func (r *BulkUpdateMoveStatusRequest) Validate() *errortypes.MultiError {
+func (r *BulkUpdateMoveStatusRequest) Validate() error {
 	multiErr := errortypes.NewMultiError()
 
 	multiErr.AddOzzoError(validation.ValidateStruct(
@@ -206,11 +199,7 @@ func (r *BulkUpdateMoveStatusRequest) Validate() *errortypes.MultiError {
 		),
 	))
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 type SplitStopTimes struct {
@@ -240,7 +229,7 @@ func (r *SplitMoveRequest) Spec() *movesplit.MoveSplitSpec {
 	}
 }
 
-func (r *SplitMoveRequest) Validate() *errortypes.MultiError {
+func (r *SplitMoveRequest) Validate() error {
 	multiErr := errortypes.NewMultiError()
 
 	multiErr.AddOzzoError(validation.ValidateStruct(
@@ -269,7 +258,7 @@ func (r *SplitMoveRequest) Validate() *errortypes.MultiError {
 	))
 
 	if multiErr.HasErrors() {
-		return multiErr
+		return multiErr.Err()
 	}
 
 	if r.SplitPickupTimes.ScheduledWindowEnd != nil &&
@@ -290,11 +279,7 @@ func (r *SplitMoveRequest) Validate() *errortypes.MultiError {
 		)
 	}
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 type SplitMoveResponse struct {

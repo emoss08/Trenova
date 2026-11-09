@@ -11,7 +11,7 @@ import (
 func fieldErrors(multiErr *errortypes.MultiError) map[string]errortypes.ErrorCode {
 	fields := make(map[string]errortypes.ErrorCode, len(multiErr.Errors))
 	for _, err := range multiErr.Errors {
-		fields[err.Field] = err.Code
+		fields[err.Field()] = err.Code
 	}
 	return fields
 }

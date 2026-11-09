@@ -220,7 +220,7 @@ func ResultForConcentration(concentration decimal.Decimal) DOTTestResult {
 }
 
 var (
-	_ validationframework.TenantedEntity = (*WorkerDOTTest)(nil)
+	_ validationframework.Entity = (*WorkerDOTTest)(nil)
 )
 
 type WorkerDOTTest struct {

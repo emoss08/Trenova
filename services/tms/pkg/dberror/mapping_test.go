@@ -163,20 +163,6 @@ func TestKeelErrorsAnswerTheExistingPredicates(t *testing.T) {
 	assert.False(t, IsTenantBoundaryViolation(keel.ErrNoScope))
 }
 
-func TestHandleVersionConflict(t *testing.T) {
-	t.Parallel()
-
-	mapped := HandleVersionConflict(
-		fmt.Errorf("save: %w", &keel.ConflictError{Table: "shipments", Version: 2}),
-		"Shipment",
-		"shp_1",
-	)
-	assert.Equal(t, CreateVersionMismatchError("Shipment", "shp_1"), mapped)
-
-	other := errors.New("boom")
-	assert.Same(t, other, HandleVersionConflict(other, "Shipment", "shp_1"))
-}
-
 func TestCountCheckers(t *testing.T) {
 	t.Parallel()
 

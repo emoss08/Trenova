@@ -3,13 +3,10 @@ package rateagreementservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement/rateagreementdb"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/tariffports"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/keelcheck"
 	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -21,9 +18,9 @@ import (
 type ValidatorParams struct {
 	fx.In
 
-	DB       *postgres.Connection
-	Resolver tariffports.Resolver
-	Checker  tariffports.Checker
+	Integrity validationframework.IntegrityChecker
+	Resolver  tariffports.Resolver
+	Checker   tariffports.Checker
 }
 
 type Validator struct {
@@ -34,35 +31,26 @@ type Validator struct {
 func NewValidator(p ValidatorParams) *Validator {
 	tariffs := &tariffInputs{resolver: p.Resolver, checker: p.Checker, now: timeutils.NowUnix}
 	return &Validator{
-		validator: newBuilder(p.DB, tariffs).Build(),
+		validator: newBuilder(p.Integrity, tariffs).Build(),
 		tariffs:   tariffs,
 	}
 }
 
 func newBuilder(
-	db *postgres.Connection,
+	integrity validationframework.IntegrityChecker,
 	tariffs *tariffInputs,
 ) *tenantedvalidation.Builder[*rateagreement.RateAgreement] {
-	builder := tenantedvalidation.NewBuilder[*rateagreement.RateAgreement]().
+	return tenantedvalidation.NewBuilder[*rateagreement.RateAgreement]().
 		WithModelName("Rate Agreement").
+		WithIntegrityChecker(integrity).
 		WithCustomRule(activationReadinessRule()).
-		WithCustomRule(tariffInputsRule(tariffs))
-
-	if db == nil {
-		return builder
-	}
-
-	checker := keelcheck.NewChecker(db, rateagreementdb.RateAgreementsSchema())
-
-	return builder.
-		WithUniquenessChecker(checker).
+		WithCustomRule(tariffInputsRule(tariffs)).
 		WithUniqueField(
 			"code",
 			"code",
 			"A rate agreement with this code already exists in your organization",
 			func(a *rateagreement.RateAgreement) any { return a.Code },
 		).
-		WithReferenceChecker(checker).
 		WithOptionalReferenceCheck(
 			"customerId",
 			"customers",
@@ -86,14 +74,14 @@ func newBuilder(
 func (v *Validator) ValidateCreate(
 	ctx context.Context,
 	entity *rateagreement.RateAgreement,
-) *errortypes.MultiError {
+) error {
 	return v.validator.ValidateCreate(ctx, entity)
 }
 
 func (v *Validator) ValidateUpdate(
 	ctx context.Context,
 	entity *rateagreement.RateAgreement,
-) *errortypes.MultiError {
+) error {
 	return v.validator.ValidateUpdate(ctx, entity)
 }
 
@@ -106,7 +94,7 @@ func (v *Validator) ValidateAmendment(
 	ctx context.Context,
 	agreement *rateagreement.RateAgreement,
 	req *rateagreementports.AmendRateAgreementRulesRequest,
-) *errortypes.MultiError {
+) error {
 	multiErr := errortypes.NewMultiError()
 
 	if req.EffectiveFrom <= 0 {
@@ -151,28 +139,23 @@ func (v *Validator) ValidateAmendment(
 	}
 
 	if err := v.tariffs.checkRules(ctx, agreement, req.Rules, multiErr); err != nil {
-		multiErr.Add("rules", errortypes.ErrInvalid, "The rates' tariffs could not be checked")
+		multiErr.AddInternal(err)
 	}
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 func tariffInputsRule(
 	tariffs *tariffInputs,
-) validationframework.TenantedRule[*rateagreement.RateAgreement] {
+) validationframework.Rule[*rateagreement.RateAgreement] {
 	return validationframework.
-		NewTenantedRule[*rateagreement.RateAgreement]("rate_agreement_tariff_inputs").
+		NewRule[*rateagreement.RateAgreement]("rate_agreement_tariff_inputs").
 		OnBoth().
-		WithStage(validationframework.ValidationStageBusinessRules).
-		WithPriority(validationframework.ValidationPriorityHigh).
+		WithStage(validationframework.StageBusinessRules).
 		WithValidation(func(
 			ctx context.Context,
 			entity *rateagreement.RateAgreement,
-			_ *validationframework.TenantedValidationContext,
+			_ *validationframework.Context,
 			multiErr *errortypes.MultiError,
 		) error {
 			if err := tariffs.checkRules(ctx, entity, entity.Rules, multiErr); err != nil {
@@ -188,16 +171,15 @@ func tariffInputsRule(
 // An active agreement with no rules is the failure that looks like it worked:
 // shipments resolve nothing, fall through to whatever the organization's
 // unrated disposition says, and nobody notices until the invoices go out.
-func activationReadinessRule() validationframework.TenantedRule[*rateagreement.RateAgreement] {
+func activationReadinessRule() validationframework.Rule[*rateagreement.RateAgreement] {
 	return validationframework.
-		NewTenantedRule[*rateagreement.RateAgreement]("rate_agreement_activation_readiness").
+		NewRule[*rateagreement.RateAgreement]("rate_agreement_activation_readiness").
 		OnBoth().
-		WithStage(validationframework.ValidationStageBusinessRules).
-		WithPriority(validationframework.ValidationPriorityHigh).
+		WithStage(validationframework.StageBusinessRules).
 		WithValidation(func(
 			_ context.Context,
 			entity *rateagreement.RateAgreement,
-			_ *validationframework.TenantedValidationContext,
+			_ *validationframework.Context,
 			multiErr *errortypes.MultiError,
 		) error {
 			if entity.Status != rateagreement.StatusActive || len(entity.Rules) > 0 {

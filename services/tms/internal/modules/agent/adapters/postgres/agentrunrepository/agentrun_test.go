@@ -25,7 +25,7 @@ func readEveryWay(t *testing.T, reader agentruntimeports.RunReader) []string {
 func TestRunReads_LeaveTheTranscriptBehind(t *testing.T) {
 	t.Parallel()
 
-	sql, _ := keeltest.Render(t, readableRuns(agentruntimeports.UnattendedRunRead()).Limit(1))
+	sql, _ := keeltest.Render(t, readableRuns(agentruntimeports.RunReader{}).Limit(1))
 
 	assert.NotContains(t, sql, "transcript")
 	assert.Contains(t, sql, `ar."summary"`, "the run itself is read")
@@ -36,7 +36,7 @@ func TestListTranscriptsByIDs_ReadsOnlyTheTranscriptOfTheTenantsRuns(t *testing.
 
 	sql, _ := keeltest.Render(t, transcripts(
 		[]pulid.ID{pulid.MustNew("arun_")},
-		agentruntimeports.UnattendedRunRead(),
+		agentruntimeports.RunReader{},
 	))
 
 	assert.Contains(t, sql, `ar."transcript"`)
@@ -70,7 +70,7 @@ func TestRunReads_ShowNoConversationRunsToAReaderWhoIsNoPerson(t *testing.T) {
 func TestRunReads_LeaveAnUnattendedReadAsItWas(t *testing.T) {
 	t.Parallel()
 
-	for _, query := range readEveryWay(t, agentruntimeports.UnattendedRunRead()) {
+	for _, query := range readEveryWay(t, agentruntimeports.RunReader{}) {
 		assert.NotContains(t, query, `ar."subject_type" <> 'AssistantThread'`, query)
 		assert.NotContains(t, query, "assistant_threads", query)
 	}

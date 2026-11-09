@@ -8,10 +8,6 @@ const (
 	OperationTypeBoth      = OperationType("both")
 )
 
-func AllOperationTypes() []OperationType {
-	return []OperationType{OperationTypeAsset, OperationTypeBrokerage, OperationTypeBoth}
-}
-
 func (o OperationType) String() string {
 	return string(o)
 }

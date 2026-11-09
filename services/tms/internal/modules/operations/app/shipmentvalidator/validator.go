@@ -5,13 +5,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/equipmenttypeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenttimeline"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentnormalize"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
@@ -22,7 +20,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/ports/modeprofileports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/permitports"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/keelcheck"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -33,7 +30,7 @@ import (
 type Params struct {
 	fx.In
 
-	DB                        *postgres.Connection
+	Integrity                 validationframework.IntegrityChecker
 	AssignmentRepo            assignmentports.AssignmentRepository
 	ControlRepo               tenantports.ShipmentControlRepository
 	CustomerRepo              customerports.CustomerRepository
@@ -47,78 +44,33 @@ type Params struct {
 }
 
 type Validator struct {
-	validator      tenantedvalidation.EntityValidator[*shipment.Shipment]
+	validator      tenantedvalidation.EntityReporter[*shipment.Shipment]
 	assignmentRepo assignmentports.AssignmentRepository
 	coverage       RateCoverage
 }
 
 func New(p Params) *Validator {
-	builder := newValidatorBuilder(validatorDeps{
-		DB:                p.DB,
-		ControlRepo:       p.ControlRepo,
-		CustomerRepo:      p.CustomerRepo,
-		CommodityRepo:     p.CommodityRepo,
-		HazmatRuleRepo:    p.HazmatSegregationRuleRepo,
-		ShipmentRepo:      p.ShipmentRepo,
-		EquipmentTypeRepo: p.EquipmentTypeRepo,
-		BillingRepo:       p.BillingRepo,
-		ProfileService:    p.ModeProfileService,
-		PermitService:     p.PermitService,
-	})
-
-	return &Validator{
-		validator:      builder.Build(),
-		assignmentRepo: p.AssignmentRepo,
-		coverage:       RateCoverage{Billing: p.BillingRepo},
-	}
-}
-
-type validatorDeps struct {
-	DB                *postgres.Connection
-	ControlRepo       tenantports.ShipmentControlRepository
-	CustomerRepo      customerports.CustomerRepository
-	CommodityRepo     commodityports.CommodityRepository
-	HazmatRuleRepo    hazmatsegregationruleports.HazmatSegregationRuleRepository
-	ShipmentRepo      shipmentports.ShipmentRepository
-	EquipmentTypeRepo equipmenttypeports.EquipmentTypeRepository
-	BillingRepo       tenantports.BillingControlRepository
-	ProfileService    modeprofileports.ModeProfileService
-	PermitService     permitports.PermitService
-}
-
-func newValidatorBuilder(
-	deps validatorDeps,
-) *tenantedvalidation.Builder[*shipment.Shipment] {
-	db := deps.DB
-	builder := tenantedvalidation.NewBuilder[*shipment.Shipment]().
+	coverage := RateCoverage{Billing: p.BillingRepo}
+	validator := tenantedvalidation.NewBuilder[*shipment.Shipment]().
 		WithModelName("Shipment").
+		WithIntegrityChecker(p.Integrity).
 		WithCustomRule(createMoveValidationRule()).
 		WithCustomRule(createStopValidationRule()).
-		WithCustomRule(createAdditionalChargeValidationRule(deps.ControlRepo)).
+		WithCustomRule(createAdditionalChargeValidationRule(p.ControlRepo)).
 		WithCustomRule(createCommodityValidationRule()).
 		WithCustomRule(createShipmentStatusCoordinationRule()).
 		WithCustomRule(createHazmatSegregationRule(
-			deps.ControlRepo, deps.CommodityRepo, deps.HazmatRuleRepo,
+			p.ControlRepo, p.CommodityRepo, p.HazmatSegregationRuleRepo,
 		)).
 		WithCustomRule(createCapabilityPolicyRule(
-			deps.ProfileService,
-			deps.ControlRepo,
-			deps.ShipmentRepo,
-			deps.EquipmentTypeRepo,
-			deps.PermitService,
+			p.ModeProfileService,
+			p.ControlRepo,
+			p.ShipmentRepo,
+			p.EquipmentTypeRepo,
+			p.PermitService,
 		)).
-		WithCustomRule(createBOLValidationRule(deps.CustomerRepo)).
-		WithCustomRule(createRateCoverageRule(RateCoverage{Billing: deps.BillingRepo}))
-
-	if db == nil {
-		return builder
-	}
-
-	checker := keelcheck.NewChecker(db, shipmentdb.ShipmentsSchema())
-
-	return builder.
-		WithUniquenessChecker(checker).
-		WithReferenceChecker(checker).
+		WithCustomRule(createBOLValidationRule(p.CustomerRepo)).
+		WithCustomRule(createRateCoverageRule(coverage)).
 		WithReferenceCheck(
 			"serviceTypeId",
 			"service_types",
@@ -154,20 +106,26 @@ func newValidatorBuilder(
 			"formula_templates",
 			"Formula template does not exist in your organization",
 			func(s *shipment.Shipment) pulid.ID { return s.FormulaTemplateID },
-		)
+		).
+		Build()
+
+	return &Validator{
+		validator:      validator,
+		assignmentRepo: p.AssignmentRepo,
+		coverage:       coverage,
+	}
 }
 
 //nolint:gocognit // existing domain workflow is intentionally branch-heavy
-func createShipmentStatusCoordinationRule() validationframework.TenantedRule[*shipment.Shipment] {
+func createShipmentStatusCoordinationRule() validationframework.Rule[*shipment.Shipment] {
 	return validationframework.
-		NewTenantedRule[*shipment.Shipment]("shipment_status_coordination").
+		NewRule[*shipment.Shipment]("shipment_status_coordination").
 		OnBoth().
-		WithStage(validationframework.ValidationStageBusinessRules).
-		WithPriority(validationframework.ValidationPriorityHigh).
+		WithStage(validationframework.StageBusinessRules).
 		WithValidation(func(
 			_ context.Context,
 			entity *shipment.Shipment,
-			_ *validationframework.TenantedValidationContext,
+			_ *validationframework.Context,
 			multiErr *errortypes.MultiError,
 		) error {
 			if entity.Status == shipmentvocab.StatusCompleted ||
@@ -223,114 +181,93 @@ func createShipmentStatusCoordinationRule() validationframework.TenantedRule[*sh
 		})
 }
 
-func collectAdvisories(multiErrs ...*errortypes.MultiError) []*errortypes.AdvisoryError {
-	var advisories []*errortypes.AdvisoryError
-	for _, multiErr := range multiErrs {
-		advisories = append(advisories, multiErr.AllAdvisories()...)
-	}
-	return advisories
-}
-
-func (v *Validator) ValidateCreate(
-	ctx context.Context,
-	entity *shipment.Shipment,
-) *errortypes.MultiError {
-	multiErr, _ := v.ValidateCreateWithAdvisories(ctx, entity)
-	return multiErr
-}
-
 func (v *Validator) ValidateCreateWithAdvisories(
 	ctx context.Context,
 	entity *shipment.Shipment,
-) (*errortypes.MultiError, []*errortypes.AdvisoryError) {
+) ([]*errortypes.AdvisoryError, error) {
 	shipmentnormalize.EntryMethod(entity, nil)
 	shipmentnormalize.FreightTerms(entity, nil)
 
-	base := withMoveChronology(v.validator.ValidateCreate(ctx, entity), nil, entity)
-	timeline := shipmenttimeline.ValidateResourceActualTimeline(
-		ctx,
-		v.assignmentRepo,
-		nil,
-		entity,
-		true,
+	report := v.validator.ReportCreate(ctx, entity)
+	if report.Internal() != nil {
+		return nil, report.Err()
+	}
+
+	merged := errortypes.MergeMultiErrors(
+		report,
+		validateMoveChronology(nil, entity),
+		shipmenttimeline.ValidateResourceActualTimeline(ctx, v.assignmentRepo, nil, entity, true),
 	)
 
-	return errortypes.MergeMultiErrors(base, timeline), collectAdvisories(base, timeline)
-}
-
-func (v *Validator) ValidateUpdate(
-	ctx context.Context,
-	entity *shipment.Shipment,
-) *errortypes.MultiError {
-	shipmentnormalize.EntryMethod(entity, nil)
-	shipmentnormalize.FreightTerms(entity, nil)
-
-	return errortypes.MergeMultiErrors(
-		withMoveChronology(v.validator.ValidateUpdate(ctx, entity), nil, entity),
-		shipmenttimeline.ValidateResourceActualTimeline(ctx, v.assignmentRepo, nil, entity, false),
-	)
+	return merged.AllAdvisories(), merged.Err()
 }
 
 func (v *Validator) ValidateUpdateWithOriginal(
 	ctx context.Context,
 	original *shipment.Shipment,
 	entity *shipment.Shipment,
-) *errortypes.MultiError {
-	multiErr, _ := v.ValidateUpdateWithOriginalAndAdvisories(ctx, original, entity)
-	return multiErr
+) error {
+	_, err := v.ValidateUpdateWithOriginalAndAdvisories(ctx, original, entity)
+	return err
 }
 
 func (v *Validator) ValidateUpdateWithOriginalAndAdvisories(
 	ctx context.Context,
 	original *shipment.Shipment,
 	entity *shipment.Shipment,
-) (*errortypes.MultiError, []*errortypes.AdvisoryError) {
+) ([]*errortypes.AdvisoryError, error) {
 	shipmentnormalize.EntryMethod(entity, original)
 	shipmentnormalize.FreightTerms(entity, original)
 
-	base := withMoveChronology(v.validator.ValidateUpdate(ctx, entity), original, entity)
-	timeline := shipmenttimeline.ValidateResourceActualTimeline(
-		ctx,
-		v.assignmentRepo,
-		original,
-		entity,
-		false,
-	)
-	rating := v.coverage.refuseUnpricing(ctx, original, entity)
+	report := v.validator.ReportUpdateWithOriginal(ctx, entity, original)
+	if report.Internal() != nil {
+		return nil, report.Err()
+	}
 
-	return errortypes.MergeMultiErrors(base, timeline, rating), collectAdvisories(base, timeline)
+	merged := errortypes.MergeMultiErrors(
+		report,
+		validateMoveChronology(original, entity),
+		shipmenttimeline.ValidateResourceActualTimeline(
+			ctx,
+			v.assignmentRepo,
+			original,
+			entity,
+			false,
+		),
+		v.coverage.refuseUnpricing(ctx, original, entity),
+	)
+
+	return merged.AllAdvisories(), merged.Err()
 }
 
 func createBOLValidationRule(
 	customerRepo customerports.CustomerRepository,
-) validationframework.TenantedRule[*shipment.Shipment] {
-	return validationframework.NewTenantedRule[*shipment.Shipment]("bol_validation").
+) validationframework.Rule[*shipment.Shipment] {
+	return validationframework.NewRule[*shipment.Shipment]("bol_validation").
 		OnBoth().
-		WithStage(validationframework.ValidationStageBusinessRules).
-		WithPriority(validationframework.ValidationPriorityHigh).
+		WithStage(validationframework.StageBusinessRules).
 		WithValidation(func(
 			ctx context.Context,
 			entity *shipment.Shipment,
-			valCtx *validationframework.TenantedValidationContext,
+			valCtx *validationframework.Context,
 			multiErr *errortypes.MultiError,
 		) error {
+			if multiErr.HasErrorAt("customerId") {
+				return nil
+			}
+
 			customer, err := customerRepo.GetByID(ctx, customerports.GetCustomerByIDRequest{
 				ID: entity.CustomerID,
 				TenantInfo: pagination.TenantInfo{
-					OrgID: entity.OrganizationID,
-					BuID:  entity.BusinessUnitID,
+					OrgID: valCtx.OrganizationID,
+					BuID:  valCtx.BusinessUnitID,
 				},
 				CustomerFilterOptions: customerports.CustomerFilterOptions{
 					IncludeBillingProfile: true,
 				},
 			})
 			if err != nil {
-				multiErr.Add(
-					"customer",
-					errortypes.ErrInvalid,
-					"Unable to load customer billing profile",
-				)
-				return nil //nolint:nilerr // validation callbacks collect field errors and intentionally continue
+				return err
 			}
 
 			if customer.BillingProfile.RequireBOLNumber && entity.BOL == "" {
@@ -345,34 +282,61 @@ func createBOLValidationRule(
 		})
 }
 
+var (
+	shipmentControlKey = validationframework.NewMemoKey[*shipmentcontrol.ShipmentControl](
+		"shipment_control",
+	)
+	originalShipmentKey = validationframework.NewMemoKey[*shipment.Shipment]("original_shipment")
+)
+
 func loadShipmentControlForValidation(
 	ctx context.Context,
 	controlRepo tenantports.ShipmentControlRepository,
-	entity *shipment.Shipment,
+	valCtx *validationframework.Context,
 ) (*shipmentcontrol.ShipmentControl, error) {
-	return controlRepo.Get(ctx, tenantports.GetShipmentControlRequest{
-		TenantInfo: pagination.TenantInfo{
-			OrgID: entity.OrganizationID,
-			BuID:  entity.BusinessUnitID,
+	return validationframework.Remember(
+		ctx,
+		valCtx,
+		shipmentControlKey,
+		func(ctx context.Context) (*shipmentcontrol.ShipmentControl, error) {
+			return controlRepo.Get(ctx, tenantports.GetShipmentControlRequest{
+				TenantInfo: pagination.TenantInfo{
+					OrgID: valCtx.OrganizationID,
+					BuID:  valCtx.BusinessUnitID,
+				},
+			})
 		},
-	})
+	)
 }
 
 func loadOriginalShipmentForValidation(
 	ctx context.Context,
 	shipmentRepo shipmentports.ShipmentRepository,
 	entity *shipment.Shipment,
+	valCtx *validationframework.Context,
 ) (*shipment.Shipment, error) {
-	return shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
-		ID: entity.ID,
-		TenantInfo: pagination.TenantInfo{
-			OrgID: entity.OrganizationID,
-			BuID:  entity.BusinessUnitID,
+	if original, ok := validationframework.OriginalOf[*shipment.Shipment](valCtx); ok &&
+		original != nil {
+		return original, nil
+	}
+
+	return validationframework.Remember(
+		ctx,
+		valCtx,
+		originalShipmentKey,
+		func(ctx context.Context) (*shipment.Shipment, error) {
+			return shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
+				ID: entity.ID,
+				TenantInfo: pagination.TenantInfo{
+					OrgID: valCtx.OrganizationID,
+					BuID:  valCtx.BusinessUnitID,
+				},
+				ShipmentOptions: shipmentports.ShipmentOptions{
+					ExpandShipmentDetails: true,
+				},
+			})
 		},
-		ShipmentOptions: shipmentports.ShipmentOptions{
-			ExpandShipmentDetails: true,
-		},
-	})
+	)
 }
 
 func hasRemovedShipmentMove(original, updated *shipment.Shipment) bool {

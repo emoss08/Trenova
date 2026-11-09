@@ -17,21 +17,13 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*Evaluation)(nil)
-	_ domaintypes.PostgresSearchable     = (*Evaluation)(nil)
+	_ validationframework.Entity     = (*Evaluation)(nil)
+	_ domaintypes.PostgresSearchable = (*Evaluation)(nil)
 )
 
 const EvaluationIDPrefix = "aeval_"
 
 type EvaluationStatus string
-
-const (
-	EvaluationStatusPending   = EvaluationStatus("Pending")
-	EvaluationStatusRunning   = EvaluationStatus("Running")
-	EvaluationStatusCompleted = EvaluationStatus("Completed")
-	EvaluationStatusFailed    = EvaluationStatus("Failed")
-	EvaluationStatusSkipped   = EvaluationStatus("Skipped")
-)
 
 func AllEvaluationStatuses() []EvaluationStatus {
 	return []EvaluationStatus{
@@ -42,6 +34,14 @@ func AllEvaluationStatuses() []EvaluationStatus {
 		EvaluationStatusSkipped,
 	}
 }
+
+const (
+	EvaluationStatusPending   = EvaluationStatus("Pending")
+	EvaluationStatusRunning   = EvaluationStatus("Running")
+	EvaluationStatusCompleted = EvaluationStatus("Completed")
+	EvaluationStatusFailed    = EvaluationStatus("Failed")
+	EvaluationStatusSkipped   = EvaluationStatus("Skipped")
+)
 
 func (s EvaluationStatus) IsValid() bool {
 	switch s {

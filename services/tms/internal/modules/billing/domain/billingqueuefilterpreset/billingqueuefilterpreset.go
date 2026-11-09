@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*BillingQueueFilterPreset)(nil)
+	_ validationframework.Entity = (*BillingQueueFilterPreset)(nil)
 )
 
 type BillingQueueFilterPreset struct {

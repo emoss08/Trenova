@@ -70,9 +70,14 @@ type Item struct {
 
 	RecordKind  recordkind.Kind `json:"recordKind"  keel:"record_kind,nullzero"`
 	RecordLabel string          `json:"recordLabel" keel:"record_label,nullzero"`
-	Facts       []Fact          `json:"facts"       keel:"facts,jsonb"`
-	Impact      []string        `json:"impact"      keel:"impact,jsonb"`
-	Trail       []TrailEvent    `json:"trail"       keel:"trail,jsonb"`
+
+	// AboutKind and AboutID name the business record the item is about, which
+	// the Desk groups by. Empty when the item is about nothing beyond itself.
+	AboutKind recordkind.Kind `json:"aboutKind" keel:"about_kind,nullzero"`
+	AboutID   pulid.ID        `json:"aboutId"   keel:"about_id,nullzero"`
+	Facts     []Fact          `json:"facts"       keel:"facts,jsonb"`
+	Impact    []string        `json:"impact"      keel:"impact,jsonb"`
+	Trail     []TrailEvent    `json:"trail"       keel:"trail,jsonb"`
 
 	AgentDefinitionID pulid.ID `json:"agentDefinitionId" keel:"agent_definition_id,nullzero"`
 	AgentRunID        pulid.ID `json:"agentRunId"        keel:"agent_run_id,nullzero"`
@@ -141,9 +146,31 @@ func (i *Item) SameDescription(other *Item) bool {
 		i.Path == other.Path &&
 		i.RecordKind == other.RecordKind &&
 		i.RecordLabel == other.RecordLabel &&
+		i.AboutKind == other.AboutKind &&
+		i.AboutID == other.AboutID &&
 		slices.Equal(i.Facts, other.Facts) &&
 		slices.Equal(i.Impact, other.Impact) &&
 		slices.Equal(i.Trail, other.Trail)
+}
+
+func (i *Item) SetAbout(id pulid.ID) {
+	i.AboutKind, i.AboutID = "", pulid.Nil
+	if id.IsNil() {
+		return
+	}
+	kind, ok := recordkind.OfIDPrefix(id.Prefix())
+	if !ok {
+		return
+	}
+	i.AboutKind, i.AboutID = kind, id
+}
+
+func (i *Item) GroupKey() pulid.ID {
+	if i.AboutID.IsNotNil() {
+		return i.AboutID
+	}
+
+	return i.ID
 }
 
 func (i *Item) SameDeadline(other *Item) bool {

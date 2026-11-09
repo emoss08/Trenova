@@ -1,7 +1,6 @@
 package agenttooltrust
 
 import (
-	"slices"
 	"strings"
 
 	"github.com/emoss08/trenova/shared/intutils"
@@ -21,27 +20,6 @@ const (
 	HeldByMoneyDayCalls     = "money_day_calls"
 	HeldByMoneyDayAmount    = "money_day_amount"
 )
-
-func MoneyHeldByKeys() []string {
-	return []string{
-		HeldByMoneyUnbounded,
-		HeldByMoneyUnproven,
-		HeldByMoneyExactMatch,
-		HeldByMoneyRecordState,
-		HeldByMoneyAgentLine,
-		HeldByMoneyLimitsUnread,
-		HeldByMoneyCurrency,
-		HeldByMoneyCallCeiling,
-		HeldByMoneyRunCalls,
-		HeldByMoneyRunAmount,
-		HeldByMoneyDayCalls,
-		HeldByMoneyDayAmount,
-	}
-}
-
-func IsMoneyHeldByKey(key string) bool {
-	return slices.Contains(MoneyHeldByKeys(), key)
-}
 
 func MoneyConditionHeldByKeys() []string {
 	return []string{
@@ -104,4 +82,21 @@ func (a *MoneyAllowance) Counts(currency string) bool {
 	functional := strings.TrimSpace(a.Currency)
 
 	return functional != "" && strings.EqualFold(strings.TrimSpace(currency), functional)
+}
+
+func MoneyHeldByKeys() []string {
+	return []string{
+		HeldByMoneyUnbounded,
+		HeldByMoneyUnproven,
+		HeldByMoneyExactMatch,
+		HeldByMoneyRecordState,
+		HeldByMoneyAgentLine,
+		HeldByMoneyLimitsUnread,
+		HeldByMoneyCurrency,
+		HeldByMoneyCallCeiling,
+		HeldByMoneyRunCalls,
+		HeldByMoneyRunAmount,
+		HeldByMoneyDayCalls,
+		HeldByMoneyDayAmount,
+	}
 }

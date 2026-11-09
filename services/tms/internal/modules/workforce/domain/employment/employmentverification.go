@@ -2,7 +2,6 @@ package employment
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
@@ -17,16 +16,7 @@ import (
 	"github.com/go-ozzo/ozzo-validation/v4/is"
 )
 
-var (
-	ErrInvalidVerificationStatus = errors.New("invalid employment verification status")
-	ErrInvalidVerificationMethod = errors.New("invalid employment verification method")
-)
-
 const (
-	// SafetyHistoryLookbackYears is how far back the investigation reaches:
-	// every DOT-regulated employer in the three years before the application
-	// (49 CFR 391.23(a)(2)).
-	SafetyHistoryLookbackYears = 3
 
 	// SafetyHistoryDueDays is how long after hire the investigation must be
 	// made (49 CFR 391.23(c)(1)).
@@ -125,7 +115,7 @@ func (m EmploymentVerificationMethod) IsValid() bool {
 }
 
 var (
-	_ validationframework.TenantedEntity = (*WorkerEmploymentVerification)(nil)
+	_ validationframework.Entity = (*WorkerEmploymentVerification)(nil)
 )
 
 // WorkerEmploymentVerification is one previous employer's safety performance

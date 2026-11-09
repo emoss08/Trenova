@@ -62,9 +62,7 @@ func CreateVersionMismatchError(entityName, entityID string) error {
 		Entity: entityName,
 	})
 
-	return errortypes.NewValidationError(
-		"version",
-		errortypes.ErrVersionMismatch,
+	return errortypes.NewVersionMismatchError(
 		"Version mismatch. The {0} ({1}) has either been updated or deleted since the last request.",
 		entityName,
 		entityID,
@@ -77,9 +75,7 @@ func CreateBulkVersionMismatchError(entityName string, entityIDs []pulid.ID) err
 		Entity: entityName,
 	})
 
-	return errortypes.NewValidationError(
-		"version",
-		errortypes.ErrVersionMismatch,
+	return errortypes.NewVersionMismatchError(
 		"Version mismatch. The {0} ({1}) have either been updated or deleted since the last request.",
 		entityName,
 		strings.Join(
@@ -128,10 +124,6 @@ func IsExclusionConstraintViolation(err error) bool {
 
 func IsForeignKeyConstraintViolation(err error) bool {
 	return ExtractCode(err) == pgerrcode.ForeignKeyViolation
-}
-
-func IsNotNullConstraintViolation(err error) bool {
-	return ExtractCode(err) == pgerrcode.NotNullViolation
 }
 
 func IsCheckConstraintViolation(err error) bool {
@@ -221,15 +213,6 @@ func ExtractCode(err error) string {
 	}
 
 	return details.code
-}
-
-func ExtractCodeName(err error) string {
-	code := ExtractCode(err)
-	if code == "" {
-		return ""
-	}
-
-	return pgerrcode.Name(code)
 }
 
 type postgresErrorDetails struct {

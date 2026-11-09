@@ -459,6 +459,7 @@ export type AiUsageFeature =
   | 'AccountingMapping'
   | 'AgentDrafting'
   | 'AgentEvaluation'
+  | 'AgentMemoryConsolidation'
   | 'AgentProfile'
   | 'AgentRecommendation'
   | 'AgentReflection'
@@ -1454,9 +1455,7 @@ export type AgentReflectionSignalKind =
   | 'PersonCorrected'
   | 'ProposalModified'
   | 'ProposalRejected'
-  | 'StandingRequest'
-  | 'ToolFailed'
-  | 'ToolRecovered';
+  | 'StandingRequest';
 
 export type AgentReflectionSkip =
   | 'AgentUnavailable'
@@ -3687,6 +3686,37 @@ export type DeleteTimeEntryInput = {
   id: string | number;
   reason: string;
 };
+
+/** How a write an agent made ended. */
+export type DeskActivityOutcome =
+  /** Ran after a person approved it. */
+  | 'Approved'
+  /** Did not go through. */
+  | 'Failed'
+  /** Ran without asking, under a tool AI control lets run on its own. */
+  | 'OnItsOwn'
+  /** Previewed in shadow or simulation and never made. */
+  | 'Previewed';
+
+export type DeskAttentionInput = {
+  /** Rows to read, at most 100. */
+  first?: number | null | undefined;
+  /** Rows with an item of one of these kinds, within the lens. Empty is every kind in it. */
+  kinds?: Array<WatchtowerSourceKind> | null | undefined;
+  /** Rows with at least one item in this lens; each row still shows all its items. */
+  lens?: DeskLens | null | undefined;
+  /** One record's row, for its case: every open item about it. */
+  recordId?: string | number | null | undefined;
+  /** Rows with an item of one of these severities. Empty is every severity. */
+  severities?: Array<WatchtowerSeverity> | null | undefined;
+};
+
+/** Which of the Desk's queues an item belongs to, by what raised it. Everything is all of them. */
+export type DeskLens =
+  | 'Decisions'
+  | 'Everything'
+  | 'Triage'
+  | 'Watchtower';
 
 export type DeskMemoriesInput = {
   after?: string | null | undefined;
@@ -11126,13 +11156,35 @@ export type AgentProposalCountQueryVariables = Exact<{
 
 export type AgentProposalCountQuery = { agentProposals: { totalCount: number | null, totalCountExact: boolean } };
 
+export type DeskRecordFieldsFragment = { kind: string, noun: string, id: string, label: string, subtitle: string, status: string, readable: boolean } & { ' $fragmentName'?: 'DeskRecordFieldsFragment' };
+
+export type DeskAttentionGroupFieldsFragment = { key: string, severity: WatchtowerSeverity, dueAt: number | null, dueLabel: string | null, unseen: boolean, record: { ' $fragmentRefs'?: { 'DeskRecordFieldsFragment': DeskRecordFieldsFragment } } | null, items: Array<(
+    { deskLens: DeskLens, aboutId: string | null }
+    & { ' $fragmentRefs'?: { 'WatchtowerItemFieldsFragment': WatchtowerItemFieldsFragment } }
+  )> } & { ' $fragmentName'?: 'DeskAttentionGroupFieldsFragment' };
+
+export type DeskAttentionQueryVariables = Exact<{
+  input: DeskAttentionInput;
+}>;
+
+
+export type DeskAttentionQuery = { deskAttention: { hasMore: boolean, seenAt: number, groups: Array<{ ' $fragmentRefs'?: { 'DeskAttentionGroupFieldsFragment': DeskAttentionGroupFieldsFragment } }>, counts: { everything: number, watchtower: number, triage: number, decisions: number } } };
+
+export type DeskActivityQueryVariables = Exact<{
+  since: number;
+  first?: number | null | undefined;
+}>;
+
+
+export type DeskActivityQuery = { deskActivity: { hasMore: boolean, entries: Array<{ id: string, outcome: DeskActivityOutcome, at: number, runId: string, planId: string | null, title: string, detail: string, count: number, recordsMore: number, proposalIds: Array<string>, agent: { ' $fragmentRefs'?: { 'WatchtowerAgentFieldsFragment': WatchtowerAgentFieldsFragment } } | null, records: Array<{ ' $fragmentRefs'?: { 'DeskRecordFieldsFragment': DeskRecordFieldsFragment } }>, decidedBy: { id: string, name: string } | null }> } };
+
 export type DeskBoardCardQueryVariables = Exact<{
   threadId: string | number;
   artifactId: string | number;
 }>;
 
 
-export type DeskBoardCardQuery = { deskBoardCard: { artifactId: string, threadId: string, title: string, author: string, question: string, answeredAt: number, readAt: number, markdown: string, verdict: Array<{ text: string, numeral: number, tone: string, struck: boolean }>, blocks: Array<{ type: string, title: string, half: boolean, numeral: number, state: string, tone: string, measure: string, chart: unknown, noteTone: string, source: { kind: string, resource: string, count: number, readable: number, title: string }, figures: Array<{ label: string, tone: string, value: { kind: string, number: string, currency: string, text: string } | null, was: { kind: string, number: string, currency: string, text: string } | null }>, rows: Array<{ resource: string, id: string, readable: boolean, label: string, subtitle: string, status: string, measure: { measure: string, state: string, place: string, at: number | null, tone: string, value: { kind: string, number: string, currency: string, text: string } } | null }>, compare: { wins: Array<number>, columns: Array<{ resource: string, id: string, readable: boolean, label: string, subtitle: string, status: string, measure: { measure: string, state: string, place: string, at: number | null, tone: string, value: { kind: string, number: string, currency: string, text: string } } | null }>, lines: Array<{ label: string, better: string, wins: Array<boolean>, cells: Array<{ kind: string, number: string, currency: string, text: string } | null> }> } | null, table: { table: unknown, total: number, artifactId: string | null } | null, events: Array<{ at: number, operation: string, actor: string, principalType: string, comment: string, changes: unknown }>, checks: Array<{ title: string, tone: string, detail: string, hidden: number, count: { kind: string, number: string, currency: string, text: string } | null, was: { kind: string, number: string, currency: string, text: string } | null, records: Array<{ resource: string, id: string, readable: boolean, label: string, subtitle: string, status: string, measure: { measure: string, state: string, place: string, at: number | null, tone: string, value: { kind: string, number: string, currency: string, text: string } } | null }> }>, meter: { clear: number, total: number, tones: Array<string>, percent: { kind: string, number: string, currency: string, text: string } | null } | null, text: Array<{ text: string, numeral: number, tone: string, struck: boolean }>, chips: Array<{ resource: string, id: string, readable: boolean, label: string, subtitle: string, status: string, measure: { measure: string, state: string, place: string, at: number | null, tone: string, value: { kind: string, number: string, currency: string, text: string } } | null }> }> } };
+export type DeskBoardCardQuery = { deskBoardCard: { artifactId: string, threadId: string, title: string, author: string, question: string, answeredAt: number, readAt: number, markdown: string, verdict: Array<{ text: string, numeral: number, tone: string, struck: boolean }>, blocks: Array<{ type: string, title: string, half: boolean, numeral: number, state: string, tone: string, measure: string, chart: unknown, noteTone: string, source: { kind: string, resource: string, count: number, readable: number, title: string }, figures: Array<{ label: string, tone: string, value: { kind: string, number: string, currency: string, text: string } | null, was: { kind: string, number: string, currency: string, text: string } | null }>, rows: Array<{ resource: string, id: string, readable: boolean, label: string, subtitle: string, status: string, measure: { measure: string, state: string, place: string, at: number | null, tone: string, value: { kind: string, number: string, currency: string, text: string } } | null }>, compare: { wins: Array<number>, columns: Array<{ resource: string, id: string, readable: boolean, label: string, subtitle: string, status: string, measure: { measure: string, state: string, place: string, at: number | null, tone: string, value: { kind: string, number: string, currency: string, text: string } } | null }>, lines: Array<{ label: string, better: string, wins: Array<boolean>, cells: Array<{ kind: string, number: string, currency: string, text: string } | null> }> } | null, table: { table: unknown, total: number, artifactId: string | null } | null, events: Array<{ at: number, operation: string, actor: string, principalType: string, comment: string, changes: unknown }>, checks: Array<{ title: string, tone: string, detail: string, hidden: number, count: { kind: string, number: string, currency: string, text: string } | null, was: { kind: string, number: string, currency: string, text: string } | null, records: Array<{ resource: string, id: string, readable: boolean, label: string, subtitle: string, status: string, measure: { measure: string, state: string, place: string, at: number | null, tone: string, value: { kind: string, number: string, currency: string, text: string } } | null }> }>, meter: { clear: number, total: number, tones: Array<string>, percent: { kind: string, number: string, currency: string, text: string } | null } | null, text: Array<{ text: string, numeral: number, tone: string, struck: boolean }>, chips: Array<{ resource: string, id: string, readable: boolean, label: string, subtitle: string, status: string, measure: { measure: string, state: string, place: string, at: number | null, tone: string, value: { kind: string, number: string, currency: string, text: string } } | null }>, work: Array<{ tone: string, dueAt: number | null, row: { resource: string, id: string, readable: boolean, label: string, subtitle: string, status: string }, signals: Array<{ lens: DeskLens, title: string, tone: string, dueAt: number | null }> }>, actions: Array<{ label: string, ask: string, records: Array<{ resource: string, id: string, readable: boolean, label: string }> }> }> } };
 
 export type DeskMemoryFieldsFragment = { id: string, content: string, kind: AgentMemoryKind, scope: AgentMemoryScope, roleId: string | null, roleName: string, status: AgentMemoryStatus, source: AgentMemorySource, sourceTitle: string, useCount: number, lastUsedAt: number | null, createdAt: number, version: number, editable: boolean, reason: string, quotes: Array<string>, replaces: { id: string, content: string, status: AgentMemoryStatus } | null, replacedBy: { id: string, content: string, status: AgentMemoryStatus } | null } & { ' $fragmentName'?: 'DeskMemoryFieldsFragment' };
 
@@ -11308,7 +11360,7 @@ export type ResolveAgentExceptionMutationVariables = Exact<{
 
 export type ResolveAgentExceptionMutation = { resolveAgentException: { id: string, resolutionState: AgentResolutionState, resolutionNotes: string, version: number, updatedAt: number } };
 
-export type AgentMemoryTableRowFieldsFragment = { id: string, organizationId: string, businessUnitId: string, kind: AgentMemoryKind, source: AgentMemorySource, status: AgentMemoryStatus, scope: AgentMemoryScope, roleId: string | null, subjectType: AgentMemorySubjectType | null, subjectId: string | null, subjectLabel: string, toolName: string, content: string, agentDefinitionId: string | null, tainted: boolean, taints: boolean, reviewedByUserId: string | null, reviewedAt: number | null, sourceRunId: string | null, sourceProposalId: string | null, sourceThreadId: string | null, reflectionId: string | null, supersedesId: string | null, createdByUserId: string | null, retiredByUserId: string | null, retiredAt: number | null, expiresAt: number | null, useCount: number, lastUsedAt: number | null, version: number, createdAt: number, updatedAt: number, supersedes: { id: string, content: string, status: AgentMemoryStatus } | null, replacedBy: { id: string, content: string, status: AgentMemoryStatus, createdAt: number } | null, evidence: { feedbackIds: Array<string>, patternKey: string, ratingCount: number, distinctUsers: number, distinctThreads: number, reason: string, quotes: Array<string>, firstRatedAt: number, lastRatedAt: number, signals: Array<string> } | null } & { ' $fragmentName'?: 'AgentMemoryTableRowFieldsFragment' };
+export type AgentMemoryTableRowFieldsFragment = { id: string, organizationId: string, businessUnitId: string, kind: AgentMemoryKind, source: AgentMemorySource, status: AgentMemoryStatus, scope: AgentMemoryScope, ownerUserId: string | null, roleId: string | null, subjectType: AgentMemorySubjectType | null, subjectId: string | null, subjectLabel: string, toolName: string, content: string, agentDefinitionId: string | null, tainted: boolean, taints: boolean, reviewedByUserId: string | null, reviewedAt: number | null, sourceRunId: string | null, sourceProposalId: string | null, sourceThreadId: string | null, reflectionId: string | null, supersedesId: string | null, createdByUserId: string | null, retiredByUserId: string | null, retiredAt: number | null, expiresAt: number | null, useCount: number, lastUsedAt: number | null, version: number, createdAt: number, updatedAt: number, supersedes: { id: string, content: string, status: AgentMemoryStatus } | null, replacedBy: { id: string, content: string, status: AgentMemoryStatus, createdAt: number } | null, evidence: { feedbackIds: Array<string>, patternKey: string, ratingCount: number, distinctUsers: number, distinctThreads: number, reason: string, quotes: Array<string>, firstRatedAt: number, lastRatedAt: number, signals: Array<string> } | null } & { ' $fragmentName'?: 'AgentMemoryTableRowFieldsFragment' };
 
 export type AgentMemoryTableQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -12561,6 +12613,8 @@ export type DeskCarrierSettlementsQuery = { carrierSettlements: { totalCount?: n
 export type DeskCarrierCapacityPostingsQueryVariables = Exact<{
   input: DataTableConnectionInput;
   openOnly?: boolean | null | undefined;
+  originStateCode?: string | null | undefined;
+  destinationStateCode?: string | null | undefined;
   includeTotalCount?: boolean | null | undefined;
 }>;
 
@@ -19794,7 +19848,7 @@ export type WatchtowerItemFieldsFragment = { id: string, sourceKind: WatchtowerS
 
 export type WatchtowerAgentFieldsFragment = { id: string, name: string, description: string | null, icon: string, accent: string, template: AgentTemplate | null } & { ' $fragmentName'?: 'WatchtowerAgentFieldsFragment' };
 
-export type WatchtowerCountsFieldsFragment = { unresolved: number, critical: number, active: number, activeCritical: number, unseen: number, unseenCritical: number, overdue: number, unassigned: number, mine: number, mineOverdue: number, seenAt: number, byKind: Array<{ kind: WatchtowerSourceKind, label: string, count: number }> } & { ' $fragmentName'?: 'WatchtowerCountsFieldsFragment' };
+export type WatchtowerCountsFieldsFragment = { unresolved: number, critical: number, active: number, activeCritical: number, unseen: number, unseenCritical: number, overdue: number, unassigned: number, mine: number, mineOverdue: number, withAgents: number, seenAt: number, byKind: Array<{ kind: WatchtowerSourceKind, label: string, count: number, deskLens: DeskLens }> } & { ' $fragmentName'?: 'WatchtowerCountsFieldsFragment' };
 
 export type WatchtowerFeedQueryVariables = Exact<{
   input: WatchtowerItemsInput;
@@ -20949,6 +21003,7 @@ export { AgentCapabilityToolFieldsFragmentDoc, AgentCapabilitiesFieldsFragmentDo
 export { AgentControlFieldsFragmentDoc, AgentControlSettingsDocument, UpdateAgentControlDocument } from "./documents/agent/control";
 export { PendingProposalFieldsFragmentDoc, PendingPlanFieldsFragmentDoc, PendingDecisionsDocument, PendingDecisionSummaryDocument, PlanStepsDocument, DecideAgentProposalsDocument, RecentDecisionsDocument } from "./documents/agent/decisions";
 export { AgentDefinitionCardFieldsFragmentDoc, AgentChoiceFieldsFragmentDoc, AgentDefinitionCardsDocument, AgentChoicesDocument, AgentDefinitionCountDocument, AgentRunCountDocument, AgentProposalCountDocument } from "./documents/agent/definitions";
+export { DeskRecordFieldsFragmentDoc, DeskAttentionGroupFieldsFragmentDoc, DeskAttentionDocument, DeskActivityDocument } from "./documents/agent/desk-attention";
 export { DeskBoardCardDocument } from "./documents/agent/desk-board";
 export { DeskMemoryFieldsFragmentDoc, DeskMemorySettingsFieldsFragmentDoc, DeskMemoriesDocument, DeskMemoriesByIdsDocument, DeskMemorySettingsDocument, CreateDeskMemoryDocument, ReviseDeskMemoryDocument, SetDeskMemoryStatusDocument, ConfirmDeskMemoryDocument, DismissDeskMemoryDocument, SetMemorySavingModeDocument } from "./documents/agent/desk-memory";
 export { AgentEvalCaseTableRowFieldsFragmentDoc, AgentEvalCaseDetailFieldsFragmentDoc, AgentEvalCaseTableDocument, AgentEvalCaseDetailDocument, CreateAgentEvalCaseDocument, UpdateAgentEvalCaseDocument, SetAgentEvalCaseStatusDocument, ReplayAgentEvalCaseDocument } from "./documents/agent/eval-cases";

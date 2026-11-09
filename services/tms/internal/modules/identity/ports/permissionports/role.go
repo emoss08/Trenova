@@ -67,13 +67,6 @@ type GetRolesByIDsRequest struct {
 	RoleIDs    []pulid.ID            `json:"roleIds"`
 }
 
-type GetUserRoleAssignmentsByIDRequest struct {
-	TenantInfo       pagination.TenantInfo `json:"-"`
-	RoleAssignmentID pulid.ID              `json:"roleAssignmentID"`
-	UserID           pulid.ID              `json:"userId"` // UserID is the user ID to get the role assignments for
-	ExpandRoles      bool                  `json:"expandRoles"`
-}
-
 type DeleteRoleRequest struct {
 	RoleID         pulid.ID
 	OrganizationID pulid.ID

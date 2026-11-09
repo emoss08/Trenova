@@ -10,7 +10,6 @@ import { useAttentionSummary } from "@/hooks/use-attention";
 import { usePermission } from "@/hooks/use-permission";
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import { briefing as briefingQueries } from "@/lib/queries/briefing";
-import { watchtower } from "@/lib/queries/watchtower";
 import type { AssistantThread } from "@/types/assistant";
 import { formatList } from "@trenova/shared/i18n/format";
 import { defineLabels } from "@trenova/shared/i18n/labels";
@@ -25,9 +24,11 @@ import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import type { BriefingSectionKey } from "@trenova/graphql/generated/graphql";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQuery } from "@tanstack/react-query";
+import { NovaBadge } from "@trenova/shared/components/ui/nova-badge";
 import { useMemo, useState } from "react";
 import { Link } from "react-router";
 import { usePendingDecisionSummary } from "./decisions/use-pending-decisions";
+import { DeskToday } from "./today/desk-today";
 
 export type { DeskStartExtras } from "@/components/desk-chat/desk-home-ask";
 
@@ -95,11 +96,12 @@ function withheldNote(
 
 /**
  * The Desk's front page: the date, a greeting, one line on what the day holds,
- * and the box you talk into, centred in the room and nothing else. When the line
+ * and the box you talk into. When the line
  * is the count of decisions waiting, it is a link to them.
  *
- * Under the box, when anything on the Watchtower is critical, one quiet link
- * says how many and lands on the first of them.
+ * Under the box the page tells before it asks: the day in figures from this
+ * morning's briefing, what needs the reader soonest, what changed since they
+ * last looked, what agents settled today and what they have in hand.
  *
  * The line under the greeting is the morning briefing's headline when one was
  * written — every figure in it was checked against the facts it was written
@@ -121,8 +123,6 @@ export function DeskHome({ agents, threads, isLoading, isStarting, onStart }: De
   );
   const { data: attention } = useAttentionSummary();
   const { allowed: canWatch } = usePermission(Resource.Watchtower, Operation.Read);
-  const watchtowerCounts = useQuery({ ...watchtower.counts(), enabled: canWatch });
-  const critical = watchtowerCounts.data?.activeCritical ?? 0;
   const briefingQuery = useQuery({ ...briefingQueries.today(), retry: false });
   const briefing = briefingQuery.data ?? null;
   const summaryQuery = usePendingDecisionSummary(canDecide);
@@ -169,7 +169,7 @@ export function DeskHome({ agents, threads, isLoading, isStarting, onStart }: De
   return (
     <div className="dk-home-w">
       <DeskDropOverlay show={drag.on} hot={drag.hot} count={drag.count} />
-      <div className="dk-home">
+      <div className="dk-home dk-home-day dk-w-today">
         <div className="dk-home-in">
           <DeskGreeting
             date={dateline}
@@ -182,19 +182,21 @@ export function DeskHome({ agents, threads, isLoading, isStarting, onStart }: De
               {withheldNote(t, withheld)}
             </p>
           )}
-          <DeskHomeComposer ask={ask} isStarting={isStarting} />
-          {canWatch && critical > 0 && (
-            <Link
-              to="/desk/watchtower?severities=Critical"
-              className="ui-focus-ring mx-auto mt-4 inline-flex items-center gap-2 rounded-md px-2 py-1 text-sm text-dsk-muted transition-colors hover:text-dsk-fg"
-            >
-              <span aria-hidden className="size-1.5 rounded-full bg-danger" />
-              {t(
-                "{0, plural, one {# critical in Watchtower} other {# critical in Watchtower}}",
-                critical,
-              )}
-            </Link>
+          {!headlinePending && withheld.length === 0 && briefing?.headline && (
+            <p className="dk-w-hl-note" data-slot="desk-headline-source">
+              {briefing.narrated && <NovaBadge size="xs" />}
+              {briefing.narrated
+                ? t("Written by Nova from this morning's figures; every number was checked against them.")
+                : t("Counted from this morning's figures.")}
+            </p>
           )}
+          <DeskHomeComposer ask={ask} isStarting={isStarting} />
+          <DeskToday
+            briefing={briefing}
+            canWatch={canWatch}
+            canDecide={canDecide}
+            timezone={timezone}
+          />
         </div>
       </div>
     </div>

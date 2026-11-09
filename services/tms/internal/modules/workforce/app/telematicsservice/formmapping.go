@@ -115,10 +115,7 @@ func validateFormMappingRequest(req *SaveFormMappingRequest) error {
 		}
 		validateFormMappingTarget(item, prefix)
 	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }
 
 func validateFormMappingTarget(item *FormMappingItemInput, prefix *errortypes.MultiError) {

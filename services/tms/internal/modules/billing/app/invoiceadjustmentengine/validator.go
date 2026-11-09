@@ -22,11 +22,11 @@ func NewValidator(_ ValidatorParams) *Validator {
 func (v *Validator) ValidateRequest(
 	_ context.Context,
 	req *invoiceadjustmentports.InvoiceAdjustmentRequest,
-) *errortypes.MultiError {
+) error {
 	multiErr := errortypes.NewMultiError()
 	if req == nil {
 		multiErr.Add("request", errortypes.ErrRequired, "Adjustment request is required")
-		return multiErr
+		return multiErr.Err()
 	}
 	if req.InvoiceID.IsNil() {
 		multiErr.Add("invoiceId", errortypes.ErrRequired, "Invoice ID is required")
@@ -43,8 +43,5 @@ func (v *Validator) ValidateRequest(
 	if req.TenantInfo.BuID.IsNil() {
 		multiErr.Add("tenantInfo.buId", errortypes.ErrRequired, "Business unit ID is required")
 	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }

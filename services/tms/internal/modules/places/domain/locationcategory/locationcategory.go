@@ -14,9 +14,9 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*LocationCategory)(nil)
-	_ domaintypes.PostgresSearchable     = (*LocationCategory)(nil)
-	_ pagination.CursorEntity            = (*LocationCategory)(nil)
+	_ validationframework.Entity     = (*LocationCategory)(nil)
+	_ domaintypes.PostgresSearchable = (*LocationCategory)(nil)
+	_ pagination.CursorEntity        = (*LocationCategory)(nil)
 )
 
 // Classification of locations

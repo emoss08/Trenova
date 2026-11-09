@@ -1,32 +1,40 @@
 package carrierintelrule
 
 import (
+	"maps"
 	"slices"
 	"strconv"
 
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/fieldpath"
 	"github.com/shopspring/decimal"
 )
 
 func ValidateRuleSettings(settings RuleSettings, multiErr *errortypes.MultiError) {
-	for code, setting := range settings {
+	for _, code := range slices.Sorted(maps.Keys(settings)) {
+		setting := settings[code]
+		rule := fieldpath.Of(fieldpath.Key(code.String()))
 		def, ok := RuleByCode(code)
 		if !ok {
-			multiErr.Add(code.String(), errortypes.ErrInvalid, "Unknown rule")
+			multiErr.AddAt(rule, errortypes.ErrInvalid, "Unknown rule")
 			continue
 		}
 		if !setting.Action.IsValid() {
-			multiErr.Add(code.String()+".action", errortypes.ErrInvalid, "Rule action is invalid")
+			multiErr.AddAt(
+				rule.Append(fieldpath.Key("action")),
+				errortypes.ErrInvalid,
+				"Rule action is invalid",
+			)
 		}
-		for key, raw := range setting.Params {
+		for _, key := range slices.Sorted(maps.Keys(setting.Params)) {
+			param := rule.Append(fieldpath.Key("params"), fieldpath.Key(key))
 			spec := def.paramSpec(key)
 			if spec == nil {
-				multiErr.Add(code.String()+".params."+key, errortypes.ErrInvalid,
-					"Unknown rule parameter")
+				multiErr.AddAt(param, errortypes.ErrInvalid, "Unknown rule parameter")
 				continue
 			}
-			if msg := validateParam(spec, raw); msg != "" {
-				multiErr.Add(code.String()+".params."+key, errortypes.ErrInvalid, msg)
+			if msg := validateParam(spec, setting.Params[key]); msg != "" {
+				multiErr.AddAt(param, errortypes.ErrInvalid, msg)
 			}
 		}
 	}

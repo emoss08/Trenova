@@ -138,7 +138,7 @@ func (s *Service) appendLedgerEntry(
 	multiErr := errortypes.NewMultiError()
 	entry.Validate(multiErr)
 	if multiErr.HasErrors() {
-		return multiErr
+		return multiErr.Err()
 	}
 	return s.ledgerRepo.AppendEntries(ctx, []*carriersettlement.LedgerEntry{entry})
 }

@@ -2,7 +2,6 @@ package workerinjury
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	"github.com/emoss08/keel"
@@ -13,8 +12,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
-
-var ErrInvalidSummaryStatus = errors.New("invalid osha summary status")
 
 // The posting window for the 300A summary: February 1 to April 30 of the year
 // after the one it covers (29 CFR 1904.32(b)(6)).
@@ -38,7 +35,7 @@ func (s OSHASummaryStatus) IsValid() bool {
 }
 
 var (
-	_ validationframework.TenantedEntity = (*OSHAAnnualSummary)(nil)
+	_ validationframework.Entity = (*OSHAAnnualSummary)(nil)
 )
 
 // OSHAAnnualSummary is the 300A for one establishment and year. The
@@ -147,12 +144,6 @@ func PostingWindow(year int16) (from int64, through int64) {
 		time.UTC,
 	)
 	return start.Unix(), end.Unix()
-}
-
-// YearBounds is the calendar year a case is counted in.
-func YearBounds(year int16) (from int64, through int64) {
-	start := time.Date(int(year), time.January, 1, 0, 0, 0, 0, time.UTC)
-	return start.Unix(), start.AddDate(1, 0, 0).Unix()
 }
 
 func (s *OSHAAnnualSummary) GetID() pulid.ID { return s.ID }

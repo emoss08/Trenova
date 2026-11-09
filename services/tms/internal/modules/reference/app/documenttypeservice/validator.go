@@ -3,19 +3,16 @@ package documenttypeservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype/documenttypedb"
-	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/keelcheck"
 	"github.com/emoss08/trenova/pkg/tenantedvalidation"
+	"github.com/emoss08/trenova/pkg/validationframework"
 	"go.uber.org/fx"
 )
 
 type ValidatorParams struct {
 	fx.In
 
-	DB *postgres.Connection
+	Integrity validationframework.IntegrityChecker
 }
 
 type Validator struct {
@@ -23,12 +20,10 @@ type Validator struct {
 }
 
 func NewValidator(p ValidatorParams) *Validator {
-	checker := keelcheck.NewChecker(p.DB, documenttypedb.DocumentTypesSchema())
-
 	return &Validator{
 		validator: tenantedvalidation.NewBuilder[*documenttype.DocumentType]().
 			WithModelName("Document Type").
-			WithUniquenessChecker(checker).
+			WithIntegrityChecker(p.Integrity).
 			WithUniqueField(
 				"name",
 				"name",
@@ -43,13 +38,13 @@ func NewValidator(p ValidatorParams) *Validator {
 func (v *Validator) ValidateCreate(
 	ctx context.Context,
 	entity *documenttype.DocumentType,
-) *errortypes.MultiError {
+) error {
 	return v.validator.ValidateCreate(ctx, entity)
 }
 
 func (v *Validator) ValidateUpdate(
 	ctx context.Context,
 	entity *documenttype.DocumentType,
-) *errortypes.MultiError {
+) error {
 	return v.validator.ValidateUpdate(ctx, entity)
 }

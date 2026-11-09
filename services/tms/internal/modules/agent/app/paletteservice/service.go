@@ -209,7 +209,7 @@ func validQuestion(question *paletteports.Question) (*paletteports.Question, err
 	}
 	agentpagecontext.ValidateEntityRefs("mentions", out.Mentions, multiErr)
 	if multiErr.HasErrors() {
-		return nil, multiErr
+		return nil, multiErr.Err()
 	}
 
 	return out, nil

@@ -21,15 +21,14 @@ const (
 
 func createWorkerComplianceRule(
 	dcRepo dispatchcontrolports.DispatchControlRepository,
-) validationframework.TenantedRule[*worker.Worker] {
-	return validationframework.NewTenantedRule[*worker.Worker]("worker_compliance").
+) validationframework.Rule[*worker.Worker] {
+	return validationframework.NewRule[*worker.Worker]("worker_compliance").
 		OnBoth().
-		WithStage(validationframework.ValidationStageCompliance).
-		WithPriority(validationframework.ValidationPriorityHigh).
+		WithStage(validationframework.StageCompliance).
 		WithValidation(func(
 			ctx context.Context,
 			w *worker.Worker,
-			valCtx *validationframework.TenantedValidationContext,
+			valCtx *validationframework.Context,
 			multiErr *errortypes.MultiError,
 		) error {
 			dc, err := dcRepo.GetOrCreate(ctx, valCtx.OrganizationID, valCtx.BusinessUnitID)
@@ -44,147 +43,6 @@ func createWorkerComplianceRule(
 			validateDrugTestCompliance(dc, w, multiErr)
 			validateHazmatCompliance(dc, w, multiErr)
 
-			return nil
-		})
-}
-
-func createAgeComplianceRule(
-	dcRepo dispatchcontrolports.DispatchControlRepository,
-) validationframework.TenantedRule[*worker.Worker] {
-	return validationframework.NewTenantedRule[*worker.Worker]("age_compliance_49cfr_391.11").
-		OnBoth().
-		WithStage(validationframework.ValidationStageCompliance).
-		WithPriority(validationframework.ValidationPriorityHigh).
-		WithValidation(func(
-			ctx context.Context,
-			w *worker.Worker,
-			valCtx *validationframework.TenantedValidationContext,
-			multiErr *errortypes.MultiError,
-		) error {
-			dc, err := dcRepo.GetOrCreate(ctx, valCtx.OrganizationID, valCtx.BusinessUnitID)
-			if err != nil {
-				return err
-			}
-
-			validateAgeCompliance(dc, w, multiErr)
-			return nil
-		})
-}
-
-func createCDLComplianceRule(
-	dcRepo dispatchcontrolports.DispatchControlRepository,
-) validationframework.TenantedRule[*worker.Worker] {
-	return validationframework.NewTenantedRule[*worker.Worker]("cdl_compliance_49cfr_391.11").
-		OnBoth().
-		WithStage(validationframework.ValidationStageCompliance).
-		WithPriority(validationframework.ValidationPriorityHigh).
-		WithValidation(func(
-			ctx context.Context,
-			w *worker.Worker,
-			valCtx *validationframework.TenantedValidationContext,
-			multiErr *errortypes.MultiError,
-		) error {
-			dc, err := dcRepo.GetOrCreate(ctx, valCtx.OrganizationID, valCtx.BusinessUnitID)
-			if err != nil {
-				return err
-			}
-
-			validateCDLCompliance(dc, w, multiErr)
-			return nil
-		})
-}
-
-func createMedicalCertComplianceRule(
-	dcRepo dispatchcontrolports.DispatchControlRepository,
-) validationframework.TenantedRule[*worker.Worker] {
-	return validationframework.
-		NewTenantedRule[*worker.Worker]("medical_cert_compliance_49cfr_391.45").
-		OnBoth().
-		WithStage(validationframework.ValidationStageCompliance).
-		WithPriority(validationframework.ValidationPriorityHigh).
-		WithValidation(func(
-			ctx context.Context,
-			w *worker.Worker,
-			valCtx *validationframework.TenantedValidationContext,
-			multiErr *errortypes.MultiError,
-		) error {
-			dc, err := dcRepo.GetOrCreate(ctx, valCtx.OrganizationID, valCtx.BusinessUnitID)
-			if err != nil {
-				return err
-			}
-
-			validateMedicalCertCompliance(dc, w, multiErr)
-			return nil
-		})
-}
-
-func createMVRComplianceRule(
-	dcRepo dispatchcontrolports.DispatchControlRepository,
-) validationframework.TenantedRule[*worker.Worker] {
-	return validationframework.NewTenantedRule[*worker.Worker]("mvr_compliance_49cfr_391.25").
-		OnBoth().
-		WithStage(validationframework.ValidationStageCompliance).
-		WithPriority(validationframework.ValidationPriorityHigh).
-		WithValidation(func(
-			ctx context.Context,
-			w *worker.Worker,
-			valCtx *validationframework.TenantedValidationContext,
-			multiErr *errortypes.MultiError,
-		) error {
-			dc, err := dcRepo.GetOrCreate(ctx, valCtx.OrganizationID, valCtx.BusinessUnitID)
-			if err != nil {
-				return err
-			}
-
-			validateMVRCompliance(dc, w, multiErr)
-			return nil
-		})
-}
-
-func createDrugTestComplianceRule(
-	dcRepo dispatchcontrolports.DispatchControlRepository,
-) validationframework.TenantedRule[*worker.Worker] {
-	return validationframework.NewTenantedRule[*worker.Worker](
-		"drug_test_compliance_49cfr_382.301",
-	).
-		OnBoth().
-		WithStage(validationframework.ValidationStageCompliance).
-		WithPriority(validationframework.ValidationPriorityHigh).
-		WithValidation(func(
-			ctx context.Context,
-			w *worker.Worker,
-			valCtx *validationframework.TenantedValidationContext,
-			multiErr *errortypes.MultiError,
-		) error {
-			dc, err := dcRepo.GetOrCreate(ctx, valCtx.OrganizationID, valCtx.BusinessUnitID)
-			if err != nil {
-				return err
-			}
-
-			validateDrugTestCompliance(dc, w, multiErr)
-			return nil
-		})
-}
-
-func createHazmatComplianceRule(
-	dcRepo dispatchcontrolports.DispatchControlRepository,
-) validationframework.TenantedRule[*worker.Worker] {
-	return validationframework.NewTenantedRule[*worker.Worker]("hazmat_compliance_49cfr_383.93").
-		OnBoth().
-		WithStage(validationframework.ValidationStageCompliance).
-		WithPriority(validationframework.ValidationPriorityHigh).
-		WithValidation(func(
-			ctx context.Context,
-			w *worker.Worker,
-			valCtx *validationframework.TenantedValidationContext,
-			multiErr *errortypes.MultiError,
-		) error {
-			dc, err := dcRepo.GetOrCreate(ctx, valCtx.OrganizationID, valCtx.BusinessUnitID)
-			if err != nil {
-				return err
-			}
-
-			validateHazmatCompliance(dc, w, multiErr)
 			return nil
 		})
 }

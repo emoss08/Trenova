@@ -75,6 +75,8 @@ export function block(overrides: Partial<DeskBoardBlock>): DeskBoardBlock {
     meter: null,
     text: [],
     chips: [],
+    work: [],
+    actions: [],
     ...overrides,
   };
 }

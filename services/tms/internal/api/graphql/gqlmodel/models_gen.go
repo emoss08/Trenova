@@ -3630,6 +3630,23 @@ type DeliveryHourBucket struct {
 	Late      int `json:"late"`
 }
 
+type DeskAttentionInput struct {
+	// Rows with at least one item in this lens; each row still shows all its items.
+	Lens *watchtower.DeskLens `json:"lens,omitempty"`
+	// Rows to read, at most 100.
+	First *int `json:"first,omitempty"`
+	// One record's row, for its case: every open item about it.
+	RecordID *string `json:"recordId,omitempty"`
+}
+
+// A button an actions block offers. It sends its request as the person's own message
+// into the board's conversation and changes nothing itself.
+type DeskBoardAction struct {
+	Label   string          `json:"label"`
+	Ask     string          `json:"ask"`
+	Records []*DeskBoardRow `json:"records"`
+}
+
 // One block of a board. type says which of the other fields it fills: figures,
 // records (rows), compare, table, chart (an analysis chart spec), timeline
 // (events, with the record in rows), checks, meter, prose (text) or note (text,
@@ -3656,6 +3673,8 @@ type DeskBoardBlock struct {
 	Text     []*DeskBoardSegment `json:"text"`
 	NoteTone string              `json:"noteTone"`
 	Chips    []*DeskBoardRow     `json:"chips"`
+	Work     []*DeskBoardWorkRow `json:"work"`
+	Actions  []*DeskBoardAction  `json:"actions"`
 }
 
 // A board an agent laid out in a conversation, read now with the reader's own
@@ -3794,6 +3813,23 @@ type DeskBoardValue struct {
 	Number   string `json:"number"`
 	Currency string `json:"currency"`
 	Text     string `json:"text"`
+}
+
+// A record on a work block with everything open about it, soonest deadline first.
+type DeskBoardWorkRow struct {
+	Row     *DeskBoardRow          `json:"row"`
+	Signals []*DeskBoardWorkSignal `json:"signals"`
+	Tone    string                 `json:"tone"`
+	DueAt   *int                   `json:"dueAt,omitempty"`
+}
+
+// One thing open about a record on a work block, as Needs you holds it.
+type DeskBoardWorkSignal struct {
+	Lens  watchtower.DeskLens `json:"lens"`
+	Title string              `json:"title"`
+	// bad, warn or info, from the item's severity.
+	Tone  string `json:"tone"`
+	DueAt *int   `json:"dueAt,omitempty"`
 }
 
 type DeskMemoriesInput struct {
@@ -13576,9 +13612,11 @@ type WatchtowerCounts struct {
 	// Open and owned by this reader.
 	Mine int `json:"mine"`
 	// Owned by this reader and overdue.
-	MineOverdue int                      `json:"mineOverdue"`
-	ByKind      []*WatchtowerKindSummary `json:"byKind"`
-	SeenAt      int                      `json:"seenAt"`
+	MineOverdue int `json:"mineOverdue"`
+	// Open and in an agent's hands: handed to an agent that has not given it back.
+	WithAgents int                      `json:"withAgents"`
+	ByKind     []*WatchtowerKindSummary `json:"byKind"`
+	SeenAt     int                      `json:"seenAt"`
 }
 
 // One fact about the record behind an item, as the source reports it.
@@ -13645,6 +13683,8 @@ type WatchtowerKindSummary struct {
 	Kind  watchtower.SourceKind `json:"kind"`
 	Label string                `json:"label"`
 	Count int                   `json:"count"`
+	// The Desk lens items of this kind are filed under.
+	DeskLens watchtower.DeskLens `json:"deskLens"`
 }
 
 // One of the events that led to an item, oldest first.

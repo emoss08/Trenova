@@ -104,7 +104,7 @@ export function WorkerBenefitsSection({ workerId }: { workerId: string }) {
       ) : null}
 
       {enrollments.length === 0 ? (
-        <p className="text-muted-foreground rounded-md border border-dashed p-3 text-xs">
+        <p className="rounded-md border border-dashed p-3 text-xs text-muted-foreground">
           {t(
             "Nothing recorded. A declined plan is worth recording too — “declined” and “nobody asked” are different facts at audit.",
           )}
@@ -139,7 +139,7 @@ export function WorkerBenefitsSection({ workerId }: { workerId: string }) {
                   )}
                 </span>
                 {enrollment.waivedReason ? (
-                  <span className="text-muted-foreground truncate">{enrollment.waivedReason}</span>
+                  <span className="truncate text-muted-foreground">{enrollment.waivedReason}</span>
                 ) : null}
               </span>
               <span className="flex shrink-0 items-center gap-2 tabular-nums">
@@ -177,9 +177,9 @@ export function WorkerBenefitsSection({ workerId }: { workerId: string }) {
 function Figure({ label, value, detail }: { label: string; value: string; detail?: string }) {
   return (
     <div className="rounded-md border px-2.5 py-1.5">
-      <p className="text-muted-foreground text-xs">{label}</p>
+      <p className="text-xs text-muted-foreground">{label}</p>
       <p className="text-sm font-semibold tabular-nums">{value}</p>
-      {detail ? <p className="text-muted-foreground text-xs">{detail}</p> : null}
+      {detail ? <p className="text-xs text-muted-foreground">{detail}</p> : null}
     </div>
   );
 }

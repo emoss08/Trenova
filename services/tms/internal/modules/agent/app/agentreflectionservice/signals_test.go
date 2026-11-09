@@ -55,7 +55,7 @@ func TestReadSignals_AQuietSuccessfulTurnHasNothingToLearn(t *testing.T) {
 	assert.Empty(t, signals)
 }
 
-func TestReadSignals_AToolThatWorkedAfterFailingIsRecoveredNotFailed(t *testing.T) {
+func TestReadSignals_ToolFailuresAreForTheToolNotForMemory(t *testing.T) {
 	t.Parallel()
 
 	signals := ReadSignals(&Window{
@@ -67,12 +67,30 @@ func TestReadSignals_AToolThatWorkedAfterFailingIsRecoveredNotFailed(t *testing.
 		},
 	})
 
+	assert.Empty(t, signals, "a refused or failed call is a defect in the tool, never a lesson")
+}
+
+func TestReadSignals_ALongTaskCountsOnlyTheCallsThatWorked(t *testing.T) {
+	t.Parallel()
+
+	messages := []conversation.Message{person("Rebill the Acme loads from last week")}
+	for range LongTaskToolCalls - 1 {
+		messages = append(messages, toolResult("shipment_get", false, aitrace.OutcomeRan))
+	}
+	messages = append(messages,
+		toolResult("invoice_send", true, aitrace.OutcomeFailed),
+		toolResult("invoice_send", false, aitrace.OutcomeInvalid),
+	)
+
+	short := ReadSignals(&Window{Messages: messages, HasPerson: true})
+	assert.Empty(t, short)
+
+	messages = append(messages, toolResult("invoice_send", false, aitrace.OutcomeProposed))
+	long := ReadSignals(&Window{Messages: messages, HasPerson: true})
 	assert.Equal(t, []agentreflection.ReflectionSignalKind{
-		agentreflection.ReflectionSignalToolRecovered,
-		agentreflection.ReflectionSignalToolFailed,
-	}, signalKinds(signals))
-	assert.Equal(t, "dispatch_assign_move", signals[0].Detail)
-	assert.Equal(t, "tender_load", signals[1].Detail)
+		agentreflection.ReflectionSignalLongTask,
+	}, signalKinds(long))
+	assert.Equal(t, LongTaskToolCalls, long[0].Count)
 }
 
 func TestReadSignals_RefusalsAreNotLessons(t *testing.T) {

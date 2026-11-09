@@ -15,8 +15,8 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*GLAccount)(nil)
-	_ domaintypes.PostgresSearchable     = (*GLAccount)(nil)
+	_ validationframework.Entity     = (*GLAccount)(nil)
+	_ domaintypes.PostgresSearchable = (*GLAccount)(nil)
 )
 
 // The chart of accounts and its running balances

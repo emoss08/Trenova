@@ -537,11 +537,7 @@ func validateMySettingsFields(raw map[string]any) error {
 		}
 	}
 
-	if me.HasErrors() {
-		return me
-	}
-
-	return nil
+	return me.Err()
 }
 
 // @Summary List user organization memberships

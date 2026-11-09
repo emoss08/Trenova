@@ -71,7 +71,7 @@ func (f *fakeRepo) Create(
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	saved := *override
-	saved.ID = pulid.MustNew(agenttooltrust.ToolRuleOverrideIDPrefix)
+	saved.ID = pulid.MustNew("atro_")
 	f.rows[saved.ToolName] = &saved
 	copied := saved
 

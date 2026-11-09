@@ -653,8 +653,8 @@ var operations = []Operation{
 	},
 	{
 		Name:     "DeskCarrierCapacityPostings",
-		Hash:     "sha256:e5dec01a9278a9fbc48a02cbe535af3a5ec6ca8c9d2986d7e788c295ae7403da",
-		Document: "query DeskCarrierCapacityPostings($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!, $openOnly: Boolean = false) { carrierCapacityPostings(input: $input, openOnly: $openOnly) { edges { cursor node { availableFrom availableTo carrier { id name } carrierId destinationState { abbreviation id } destinationStateId equipmentType { code id } equipmentTypeId id originLocation { city id name } originLocationId originRadiusMiles originState { abbreviation id } originStateId rate rateMethod source truckCount version } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:2bcfaeb0c201b970410556b29a02f2d57f600ccc8399f25ecae8e32115ab8453",
+		Document: "query DeskCarrierCapacityPostings($destinationStateCode: String, $includeTotalCount: Boolean = false, $input: DataTableConnectionInput!, $openOnly: Boolean = false, $originStateCode: String) { carrierCapacityPostings( input: $input openOnly: $openOnly originStateCode: $originStateCode destinationStateCode: $destinationStateCode ) { edges { cursor node { availableFrom availableTo carrier { id name } carrierId destinationState { abbreviation id } destinationStateId equipmentType { code id } equipmentTypeId id originLocation { city id name } originLocationId originRadiusMiles originState { abbreviation id } originStateId rate rateMethod source truckCount version } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "DeskCarrierIntelEvents",

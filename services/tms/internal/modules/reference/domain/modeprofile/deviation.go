@@ -17,8 +17,8 @@ import (
 const MinAcknowledgementReasonLength = 10
 
 var (
-	_ validationframework.TenantedEntity = (*Deviation)(nil)
-	_ domaintypes.PostgresSearchable     = (*Deviation)(nil)
+	_ validationframework.Entity     = (*Deviation)(nil)
+	_ domaintypes.PostgresSearchable = (*Deviation)(nil)
 )
 
 type Deviation struct {

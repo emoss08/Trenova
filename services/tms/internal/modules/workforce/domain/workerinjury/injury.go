@@ -2,7 +2,6 @@ package workerinjury
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
@@ -14,12 +13,6 @@ import (
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-)
-
-var (
-	ErrInvalidCaseClassification = errors.New("invalid osha case classification")
-	ErrInvalidIllnessType        = errors.New("invalid osha illness type")
-	ErrInvalidInjuryTreatment    = errors.New("invalid injury treatment")
 )
 
 // MaxCountedDays is the cap 29 CFR 1904.7(b)(3)(viii) puts on the day counts:
@@ -281,7 +274,7 @@ func SuggestClassification(
 }
 
 var (
-	_ validationframework.TenantedEntity = (*WorkerInjury)(nil)
+	_ validationframework.Entity = (*WorkerInjury)(nil)
 )
 
 // WorkerInjury is one injury or illness case. The recordable ones are the OSHA

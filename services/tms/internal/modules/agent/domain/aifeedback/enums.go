@@ -59,10 +59,6 @@ func (s FingerprintSource) IsValid() bool {
 	}
 }
 
-func AllFingerprintSources() []FingerprintSource {
-	return []FingerprintSource{FingerprintAtTurn, FingerprintAtRating, FingerprintNone}
-}
-
 type Rating int16
 
 const (
@@ -94,6 +90,10 @@ const (
 
 func (r Reason) IsValid() bool {
 	return r.Negative() || r.Positive()
+}
+
+func AllFingerprintSources() []FingerprintSource {
+	return []FingerprintSource{FingerprintAtTurn, FingerprintAtRating, FingerprintNone}
 }
 
 func (r Reason) Negative() bool {

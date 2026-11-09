@@ -49,37 +49,6 @@ func TestWorkerType_IsValid(t *testing.T) {
 	}
 }
 
-func TestWorkerTypeFromString(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name      string
-		input     string
-		expected  WorkerType
-		expectErr bool
-	}{
-		{"employee", "Employee", WorkerTypeEmployee, false},
-		{"contractor", "Contractor", WorkerTypeContractor, false},
-		{"invalid", "Invalid", "", true},
-		{"empty", "", "", true},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			result, err := WorkerTypeFromString(tt.input)
-			if tt.expectErr {
-				require.Error(t, err)
-				assert.ErrorIs(t, err, ErrInvalidWorkerType)
-			} else {
-				require.NoError(t, err)
-				assert.Equal(t, tt.expected, result)
-			}
-		})
-	}
-}
-
 func TestEndorsementType_String(t *testing.T) {
 	t.Parallel()
 
@@ -154,41 +123,6 @@ func TestEndorsementType_RequiresHazmatExpiry(t *testing.T) {
 	}
 }
 
-func TestEndorsementTypeFromString(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name      string
-		input     string
-		expected  EndorsementType
-		expectErr bool
-	}{
-		{"none", "O", EndorsementTypeNone, false},
-		{"tanker", "N", EndorsementTypeTanker, false},
-		{"hazmat", "H", EndorsementTypeHazmat, false},
-		{"tanker hazmat", "X", EndorsementTypeTankerHazmat, false},
-		{"passenger", "P", EndorsementTypePassenger, false},
-		{"double triple", "T", EndorsementTypeDoubleTriple, false},
-		{"invalid", "Z", "", true},
-		{"empty", "", "", true},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			result, err := EndorsementTypeFromString(tt.input)
-			if tt.expectErr {
-				require.Error(t, err)
-				assert.ErrorIs(t, err, ErrInvalidEndorsementType)
-			} else {
-				require.NoError(t, err)
-				assert.Equal(t, tt.expected, result)
-			}
-		})
-	}
-}
-
 func TestComplianceStatus_String(t *testing.T) {
 	t.Parallel()
 
@@ -229,38 +163,6 @@ func TestComplianceStatus_IsValid(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			assert.Equal(t, tt.expected, tt.cs.IsValid())
-		})
-	}
-}
-
-func TestComplianceStatusFromString(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name      string
-		input     string
-		expected  ComplianceStatus
-		expectErr bool
-	}{
-		{"compliant", "Compliant", ComplianceStatusCompliant, false},
-		{"non compliant", "NonCompliant", ComplianceStatusNonCompliant, false},
-		{"pending", "Pending", ComplianceStatusPending, false},
-		{"invalid", "Unknown", "", true},
-		{"empty", "", "", true},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			result, err := ComplianceStatusFromString(tt.input)
-			if tt.expectErr {
-				require.Error(t, err)
-				assert.ErrorIs(t, err, ErrInvalidComplianceStatus)
-			} else {
-				require.NoError(t, err)
-				assert.Equal(t, tt.expected, result)
-			}
 		})
 	}
 }
@@ -474,37 +376,6 @@ func TestGender_IsValid(t *testing.T) {
 	}
 }
 
-func TestGenderFromString(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name      string
-		input     string
-		expected  Gender
-		expectErr bool
-	}{
-		{"male", "Male", GenderMale, false},
-		{"female", "Female", GenderFemale, false},
-		{"other is invalid", "Other", "", true},
-		{"empty", "", "", true},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			result, err := GenderFromString(tt.input)
-			if tt.expectErr {
-				require.Error(t, err)
-				assert.ErrorIs(t, err, ErrInvalidGender)
-			} else {
-				require.NoError(t, err)
-				assert.Equal(t, tt.expected, result)
-			}
-		})
-	}
-}
-
 func TestCDLClass_String(t *testing.T) {
 	t.Parallel()
 
@@ -545,38 +416,6 @@ func TestCDLClass_IsValid(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			assert.Equal(t, tt.expected, tt.c.IsValid())
-		})
-	}
-}
-
-func TestCDLClassFromString(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name      string
-		input     string
-		expected  CDLClass
-		expectErr bool
-	}{
-		{"class A", "A", CDLClassA, false},
-		{"class B", "B", CDLClassB, false},
-		{"class C", "C", CDLClassC, false},
-		{"invalid", "D", "", true},
-		{"empty", "", "", true},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			result, err := CDLClassFromString(tt.input)
-			if tt.expectErr {
-				require.Error(t, err)
-				assert.ErrorIs(t, err, ErrInvalidCDLClass)
-			} else {
-				require.NoError(t, err)
-				assert.Equal(t, tt.expected, result)
-			}
 		})
 	}
 }
@@ -623,39 +462,6 @@ func TestDriverType_IsValid(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			assert.Equal(t, tt.expected, tt.dt.IsValid())
-		})
-	}
-}
-
-func TestDriverTypeFromString(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name      string
-		input     string
-		expected  DriverType
-		expectErr bool
-	}{
-		{"local", "Local", DriverTypeLocal, false},
-		{"regional", "Regional", DriverTypeRegional, false},
-		{"OTR", "OTR", DriverTypeOTR, false},
-		{"team", "Team", DriverTypeTeam, false},
-		{"invalid", "Dedicated", "", true},
-		{"empty", "", "", true},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			result, err := DriverTypeFromString(tt.input)
-			if tt.expectErr {
-				require.Error(t, err)
-				assert.ErrorIs(t, err, ErrInvalidDriverType)
-			} else {
-				require.NoError(t, err)
-				assert.Equal(t, tt.expected, result)
-			}
 		})
 	}
 }

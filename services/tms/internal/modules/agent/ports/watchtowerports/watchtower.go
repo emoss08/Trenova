@@ -51,6 +51,7 @@ type ListWatchtowerItemsQuery struct {
 	Unassigned  bool
 	OverdueAt   int64
 	SubjectID   pulid.ID
+	AboutIDs    []pulid.ID
 	OrderByDue  bool
 	BeforeDueAt int64
 }
@@ -82,6 +83,7 @@ type WatchtowerCountsRow struct {
 	Unassigned     int
 	Mine           int
 	MineOverdue    int
+	WithAgents     int
 	ByKind         []WatchtowerKindCount
 }
 

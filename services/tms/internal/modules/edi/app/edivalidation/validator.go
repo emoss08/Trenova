@@ -22,26 +22,22 @@ func NewValidator() *Validator {
 	return &Validator{}
 }
 
-func (v *Validator) ValidatePartner(entity *edi.EDIPartner) *errortypes.MultiError {
+func (v *Validator) ValidatePartner(entity *edi.EDIPartner) error {
 	multiErr := errortypes.NewMultiError()
 	if entity == nil {
 		multiErr.Add("", errortypes.ErrRequired, "EDI partner is required")
-		return multiErr
+		return multiErr.Err()
 	}
 
 	entity.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
-func (v *Validator) ValidateConnection(entity *edi.EDIConnection) *errortypes.MultiError {
+func (v *Validator) ValidateConnection(entity *edi.EDIConnection) error {
 	multiErr := errortypes.NewMultiError()
 	if entity == nil {
 		multiErr.Add("", errortypes.ErrRequired, "EDI connection is required")
-		return multiErr
+		return multiErr.Err()
 	}
 
 	multiErr.AddOzzoError(validation.ValidateStruct(
@@ -108,19 +104,16 @@ func (v *Validator) ValidateConnection(entity *edi.EDIConnection) *errortypes.Mu
 		)
 	}
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }
 
 func (v *Validator) ValidateCommunicationProfile(
 	entity *edi.EDICommunicationProfile,
-) *errortypes.MultiError {
+) error {
 	multiErr := errortypes.NewMultiError()
 	if entity == nil {
 		multiErr.Add("", errortypes.ErrRequired, "EDI communication profile is required")
-		return multiErr
+		return multiErr.Err()
 	}
 
 	multiErr.AddOzzoError(validation.ValidateStruct(
@@ -151,19 +144,16 @@ func (v *Validator) ValidateCommunicationProfile(
 	))
 	v.validateProfileConfig(entity, multiErr)
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }
 
 func (v *Validator) ValidatePreviewDocumentRequest(
 	req *ediports.PreviewEDIDocumentRequest,
-) *errortypes.MultiError {
+) error {
 	multiErr := errortypes.NewMultiError()
 	if req == nil {
 		multiErr.Add("document", errortypes.ErrRequired, "Document request is required")
-		return multiErr
+		return multiErr.Err()
 	}
 	if req.EDIPartnerID.IsNil() {
 		multiErr.Add("ediPartnerId", errortypes.ErrRequired, "EDI partner is required")
@@ -183,10 +173,7 @@ func (v *Validator) ValidatePreviewDocumentRequest(
 		)
 	}
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }
 
 func (v *Validator) validateProfileConfig(
@@ -306,7 +293,7 @@ func requireConfigString(
 
 func (v *Validator) ValidateMappingItems(
 	items []*edi.EDIMappingProfileItem,
-) *errortypes.MultiError {
+) error {
 	multiErr := errortypes.NewMultiError()
 	for i, item := range items {
 		itemErr := multiErr.WithIndex("items", i)
@@ -325,11 +312,7 @@ func (v *Validator) ValidateMappingItems(
 		))
 	}
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 func (v *Validator) validateAS2ProfileConfig(

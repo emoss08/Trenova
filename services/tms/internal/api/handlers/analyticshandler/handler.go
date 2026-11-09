@@ -212,9 +212,5 @@ func validateAnalyticsRequest(req *kernelports.AnaltyicsRequest) error {
 		me.Add("endDate", errortypes.ErrInvalid, "endDate must not be before startDate")
 	}
 
-	if me.HasErrors() {
-		return me
-	}
-
-	return nil
+	return me.Err()
 }

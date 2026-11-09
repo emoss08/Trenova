@@ -200,11 +200,7 @@ func (s *Service) OpenMailboxSecret(
 func validateMailbox(mailbox *inboundmessage.Mailbox) error {
 	multiErr := errortypes.NewMultiError()
 	mailbox.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 // addressTaken turns the address index's refusal into the field error it is.

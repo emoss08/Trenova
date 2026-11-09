@@ -58,7 +58,7 @@ func AssertErrorField(t *testing.T, multiErr *errortypes.MultiError, field strin
 	t.Helper()
 
 	for _, validationErr := range multiErr.Errors {
-		if validationErr.Field == field {
+		if validationErr.Field() == field {
 			return
 		}
 	}

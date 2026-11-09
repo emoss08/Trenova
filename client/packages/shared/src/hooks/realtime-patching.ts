@@ -121,6 +121,8 @@ export const RESOURCE_QUERY_KEY_MAP: Record<string, QueryKeyRoot[]> = {
     "pending-decision-summary",
     "attention",
     "agentPreview",
+    "deskAttention",
+    "deskActivity",
   ],
   agent_plan: [
     ["assistant", "plans"],
@@ -129,6 +131,8 @@ export const RESOURCE_QUERY_KEY_MAP: Record<string, QueryKeyRoot[]> = {
     "pending-decision-summary",
     "attention",
     "agentPreview",
+    "deskAttention",
+    "deskActivity",
   ],
   agent_run: ["agent-run-list", ["assistant", "agents"]],
   // aiauditservice announces an export to its requester as it is written,

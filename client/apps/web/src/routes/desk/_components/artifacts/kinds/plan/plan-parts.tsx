@@ -216,9 +216,6 @@ export function PlanStep({
         <div className="dk-pln-h">
           <div>
             <b>{step.title}</b>
-            <span>
-              <code>{step.toolName}</code>
-            </span>
           </div>
           <span className="dk-pln-at">{stepTime(step, t)}</span>
         </div>

@@ -141,10 +141,7 @@ func serviceFailure214DiagnosticsError(diagnostics []edidocument.Diagnostic) err
 		}
 		multiErr.Add(field, errortypes.ErrInvalid, diagnostic.Message)
 	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }
 
 func (s *service) recordServiceFailure214Result(

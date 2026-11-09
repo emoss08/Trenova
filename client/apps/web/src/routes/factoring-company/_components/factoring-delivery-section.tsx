@@ -49,7 +49,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateTimeShort } from "@trenova/shared/lib/date";
 import { describeError } from "@trenova/shared/lib/error-presentation";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { z } from "zod";
@@ -227,7 +227,7 @@ export function FactoringDeliverySection({ factoringCompanyId }: { factoringComp
         ) : data ? (
           <DeliverySummary transport={data} />
         ) : (
-          <p className="text-muted-foreground text-sm">
+          <p className="text-sm text-muted-foreground">
             {t("Not set up. Invoices for this factor can't be submitted until it is.")}
           </p>
         )}
@@ -327,9 +327,15 @@ function DeliveryDialog({
   const authMethod = useWatch({ control, name: "sftpAuthMethod" });
   const secretStoredFor = useWatch({ control, name: "secretStoredFor" });
 
+  // The form follows the stored settings only when they move to a new version: a refetch of the
+  // same version, or the tab being shown again (Activity re-runs effects), keeps edits in progress.
+  const transportVersion = `${transport?.id ?? "none"}:${transport?.version ?? 0}`;
+  const loadedVersion = useRef(transportVersion);
   useEffect(() => {
+    if (loadedVersion.current === transportVersion) return;
+    loadedVersion.current = transportVersion;
     reset(deliveryDefaults(transport));
-  }, [transport, reset]);
+  }, [transportVersion, transport, reset]);
 
   const mutation = useApiMutation<FactoringTransport, DeliveryValues, unknown, DeliveryValues>({
     form,

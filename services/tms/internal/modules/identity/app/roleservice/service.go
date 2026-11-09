@@ -1186,7 +1186,7 @@ func (s *Service) UpdateResourcePermission(
 	multiErr := errortypes.NewMultiError()
 	rp.Validate(multiErr)
 	if multiErr.HasErrors() {
-		return multiErr
+		return multiErr.Err()
 	}
 
 	if scopeErr := unenforcedScopes(

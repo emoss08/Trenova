@@ -18,8 +18,8 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*ServiceFailure)(nil)
-	_ domaintypes.PostgresSearchable     = (*ServiceFailure)(nil)
+	_ validationframework.Entity     = (*ServiceFailure)(nil)
+	_ domaintypes.PostgresSearchable = (*ServiceFailure)(nil)
 )
 
 type ServiceFailure struct {

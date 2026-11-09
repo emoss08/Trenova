@@ -260,14 +260,14 @@ func isLocationCodeConflict(err error) bool {
 		dberror.ExtractConstraintName(err) == "idx_locations_code"
 }
 
-func duplicateLocationCodeError() *errortypes.MultiError {
+func duplicateLocationCodeError() error {
 	multiErr := errortypes.NewMultiError()
 	multiErr.Add(
 		"code",
 		errortypes.ErrDuplicate,
 		"Location with this code already exists in your organization",
 	)
-	return multiErr
+	return multiErr.Err()
 }
 
 func waitBeforeLocationCodeRetry(ctx context.Context, attempt int) error {

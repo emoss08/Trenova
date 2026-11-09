@@ -75,11 +75,7 @@ func (s *Service) prepareCase(entity *workerleave.WorkerLeaveCase) error {
 
 	multiErr := errortypes.NewMultiError()
 	entity.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 // OpenCase files a request for leave.

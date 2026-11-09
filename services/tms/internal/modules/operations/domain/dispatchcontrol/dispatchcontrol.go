@@ -77,7 +77,7 @@ var (
 var defaultAutoAssignConfidenceThreshold = decimal.NewFromFloat(0.85)
 
 var (
-	_ validationframework.TenantedEntity = (*DispatchControl)(nil)
+	_ validationframework.Entity = (*DispatchControl)(nil)
 )
 
 const DefaultServiceFailureGracePeriod = 30

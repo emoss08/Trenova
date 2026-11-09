@@ -59,9 +59,7 @@ func (s *Service) SetDeliveryFacts(
 		return nil, err
 	}
 	if req.Version != current.Version {
-		return nil, errortypes.NewValidationError(
-			"version",
-			errortypes.ErrVersionMismatch,
+		return nil, errortypes.NewVersionMismatchError(
 			"This document changed since you opened it; refresh and try again",
 		)
 	}
@@ -90,9 +88,7 @@ func (s *Service) SetDeliveryFacts(
 		return nil, err
 	}
 	if updated == nil {
-		return nil, errortypes.NewValidationError(
-			"version",
-			errortypes.ErrVersionMismatch,
+		return nil, errortypes.NewVersionMismatchError(
 			"This document changed since you opened it; refresh and try again",
 		)
 	}

@@ -640,11 +640,7 @@ func applyMasterFields[T any](
 			addFieldError(multiErr, field.key, err)
 		}
 	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 func addFieldError(multiErr *errortypes.MultiError, key string, err error) {

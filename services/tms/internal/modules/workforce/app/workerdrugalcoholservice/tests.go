@@ -67,11 +67,7 @@ func (s *Service) prepareTest(entity *workerdot.WorkerDOTTest) error {
 
 	multiErr := errortypes.NewMultiError()
 	entity.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 // RecordTest files a collection. A test can be recorded at any stage — the

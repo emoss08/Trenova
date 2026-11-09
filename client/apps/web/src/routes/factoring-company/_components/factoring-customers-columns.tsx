@@ -43,7 +43,7 @@ function NoticeTrack({ noa, nowUnix }: { noa: FactoringNoa | null; nowUnix: numb
 
   if (shown === "Expired") {
     return (
-      <span className="text-danger-foreground text-xs font-medium">
+      <span className="text-xs font-medium text-danger-foreground">
         {t("Acknowledged, signed copy expired")}
       </span>
     );
@@ -204,11 +204,11 @@ export function getFactoringCustomerColumns(
         <span className="flex min-w-0 flex-col">
           <Link
             to={recordPath("customer", row.original.id)}
-            className="ui-focus-ring truncate rounded-sm text-sm font-medium hover:underline"
+            className="truncate rounded-sm ui-focus-ring text-sm font-medium hover:underline"
           >
             {row.original.name}
           </Link>
-          <span className="text-foreground-subtle font-mono text-xs">{row.original.code}</span>
+          <span className="font-mono text-xs text-foreground-subtle">{row.original.code}</span>
         </span>
       ),
       size: 240,
@@ -263,7 +263,7 @@ export function getFactoringCustomerColumns(
               ? formatMinor(row.original.fundedMinor)
               : "—"}
           </span>
-          <span className="text-muted-foreground text-xs tabular-nums">
+          <span className="text-xs text-muted-foreground tabular-nums">
             {row.original.fundedCount > 0
               ? t("{0, plural, one {# invoice} other {# invoices}}", row.original.fundedCount)
               : t("None funded")}
@@ -301,7 +301,7 @@ export function getFactoringCustomerColumns(
       id: "sentTo",
       header: t("Sent to"),
       cell: ({ row }) => (
-        <span className="text-muted-foreground truncate text-sm">
+        <span className="truncate text-sm text-muted-foreground">
           {row.original.notice?.sentTo ?? "—"}
         </span>
       ),

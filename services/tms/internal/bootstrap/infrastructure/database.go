@@ -2,6 +2,7 @@ package infrastructure
 
 import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/integritycheck"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/querybudget"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"go.uber.org/fx"
@@ -32,6 +33,7 @@ var DatabaseModule = fx.Module(
 		asTransactor,
 		asSavepointer,
 		asDetacher,
+		integritycheck.New,
 		postgres.NewCapabilityProbe,
 		querybudget.New,
 	),

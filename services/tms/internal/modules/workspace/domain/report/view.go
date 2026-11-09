@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*ReportView)(nil)
+	_ validationframework.Entity = (*ReportView)(nil)
 )
 
 const MaxViewNameLength = 120

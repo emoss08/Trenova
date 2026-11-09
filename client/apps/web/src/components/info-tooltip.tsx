@@ -32,7 +32,7 @@ export function InfoTooltip({
             role="img"
             aria-label={t("About {0}", label)}
             className={cn(
-              "ui-focus-ring text-muted-foreground hover:bg-muted hover:text-foreground inline-flex size-4 cursor-help shrink-0 items-center justify-center rounded-sm transition-colors",
+              "inline-flex size-4 shrink-0 cursor-help items-center justify-center rounded-sm ui-focus-ring text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
               className,
             )}
           >

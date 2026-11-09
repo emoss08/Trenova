@@ -124,7 +124,7 @@ func (s *Service) CreateMemo(
 	return created, nil
 }
 
-func validateMemoRequest(req *invoiceports.CreateMemoRequest) *errortypes.MultiError {
+func validateMemoRequest(req *invoiceports.CreateMemoRequest) error {
 	multiErr := errortypes.NewMultiError()
 	if req.CustomerID.IsNil() {
 		multiErr.Add("customerId", errortypes.ErrRequired, "Customer is required")
@@ -175,11 +175,7 @@ func validateMemoRequest(req *invoiceports.CreateMemoRequest) *errortypes.MultiE
 		}
 		validateMemoLineFigures(multiErr.WithIndex("lines", idx), line)
 	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 func validateMemoLineFigures(

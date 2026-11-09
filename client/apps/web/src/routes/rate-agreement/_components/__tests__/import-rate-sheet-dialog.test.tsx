@@ -116,8 +116,8 @@ describe("ImportRateSheetDialog", () => {
         title: "Validation Error",
         status: 422,
         errors: [
-          { field: "file", message: "this sheet has no rate column" },
-          { field: "file", message: "this sheet does not say where lanes end" },
+          { path: ["file"], field: "file", message: "this sheet has no rate column" },
+          { path: ["file"], field: "file", message: "this sheet does not say where lanes end" },
         ],
       }),
     );

@@ -3,15 +3,8 @@ package worker
 import "errors"
 
 var (
-	ErrInvalidWorkerType       = errors.New("invalid worker type")
-	ErrInvalidEndorsementType  = errors.New("invalid endorsement type")
-	ErrInvalidComplianceStatus = errors.New("invalid compliance status")
-	ErrInvalidPTOStatus        = errors.New("invalid PTO status")
-	ErrInvalidPTOTransition    = errors.New("invalid PTO status transition")
-	ErrInvalidPTOType          = errors.New("invalid PTO type")
-	ErrInvalidGender           = errors.New("invalid gender")
-	ErrInvalidCDLClass         = errors.New("invalid CDL class")
-	ErrInvalidDriverType       = errors.New("invalid driver type")
+	ErrInvalidPTOStatus = errors.New("invalid PTO status")
+	ErrInvalidPTOType   = errors.New("invalid PTO type")
 )
 
 type WorkerType string
@@ -31,17 +24,6 @@ func (w WorkerType) IsValid() bool {
 		return true
 	default:
 		return false
-	}
-}
-
-func WorkerTypeFromString(s string) (WorkerType, error) {
-	switch s {
-	case "Employee":
-		return WorkerTypeEmployee, nil
-	case "Contractor":
-		return WorkerTypeContractor, nil
-	default:
-		return "", ErrInvalidWorkerType
 	}
 }
 
@@ -74,25 +56,6 @@ func (e EndorsementType) RequiresHazmatExpiry() bool {
 	return e == EndorsementTypeHazmat || e == EndorsementTypeTankerHazmat
 }
 
-func EndorsementTypeFromString(s string) (EndorsementType, error) {
-	switch s {
-	case "O":
-		return EndorsementTypeNone, nil
-	case "N":
-		return EndorsementTypeTanker, nil
-	case "H":
-		return EndorsementTypeHazmat, nil
-	case "X":
-		return EndorsementTypeTankerHazmat, nil
-	case "P":
-		return EndorsementTypePassenger, nil
-	case "T":
-		return EndorsementTypeDoubleTriple, nil
-	default:
-		return "", ErrInvalidEndorsementType
-	}
-}
-
 type ComplianceStatus string
 
 const (
@@ -111,19 +74,6 @@ func (c ComplianceStatus) IsValid() bool {
 		return true
 	default:
 		return false
-	}
-}
-
-func ComplianceStatusFromString(s string) (ComplianceStatus, error) {
-	switch s {
-	case "Compliant":
-		return ComplianceStatusCompliant, nil
-	case "NonCompliant":
-		return ComplianceStatusNonCompliant, nil
-	case "Pending":
-		return ComplianceStatusPending, nil
-	default:
-		return "", ErrInvalidComplianceStatus
 	}
 }
 
@@ -273,17 +223,6 @@ func (g Gender) IsValid() bool {
 	}
 }
 
-func GenderFromString(s string) (Gender, error) {
-	switch s {
-	case "Male":
-		return GenderMale, nil
-	case "Female":
-		return GenderFemale, nil
-	default:
-		return "", ErrInvalidGender
-	}
-}
-
 type CDLClass string
 
 const (
@@ -302,19 +241,6 @@ func (c CDLClass) IsValid() bool {
 		return true
 	default:
 		return false
-	}
-}
-
-func CDLClassFromString(s string) (CDLClass, error) {
-	switch s {
-	case "A":
-		return CDLClassA, nil
-	case "B":
-		return CDLClassB, nil
-	case "C":
-		return CDLClassC, nil
-	default:
-		return "", ErrInvalidCDLClass
 	}
 }
 
@@ -337,20 +263,5 @@ func (d DriverType) IsValid() bool {
 		return true
 	default:
 		return false
-	}
-}
-
-func DriverTypeFromString(s string) (DriverType, error) {
-	switch s {
-	case "Local":
-		return DriverTypeLocal, nil
-	case "Regional":
-		return DriverTypeRegional, nil
-	case "OTR":
-		return DriverTypeOTR, nil
-	case "Team":
-		return DriverTypeTeam, nil
-	default:
-		return "", ErrInvalidDriverType
 	}
 }

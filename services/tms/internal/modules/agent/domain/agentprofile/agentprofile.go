@@ -17,7 +17,7 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*Profile)(nil)
+	_ validationframework.Entity = (*Profile)(nil)
 )
 
 const (
@@ -38,10 +38,6 @@ const (
 
 func (s Subject) IsValid() bool {
 	return s == SubjectOrganization || s == SubjectUser
-}
-
-func AllSubjects() []Subject {
-	return []Subject{SubjectOrganization, SubjectUser}
 }
 
 type Status string
@@ -80,6 +76,10 @@ func (t Trigger) IsValid() bool {
 	default:
 		return false
 	}
+}
+
+func AllSubjects() []Subject {
+	return []Subject{SubjectOrganization, SubjectUser}
 }
 
 func AllTriggers() []Trigger {

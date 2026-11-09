@@ -2,7 +2,6 @@ package documenttemplate
 
 import (
 	"context"
-	"errors"
 	"strings"
 
 	"github.com/emoss08/keel"
@@ -38,21 +37,8 @@ func (s VersionStatus) IsValid() bool {
 	}
 }
 
-func VersionStatusFromString(v string) (VersionStatus, error) {
-	switch v {
-	case "Draft":
-		return VersionStatusDraft, nil
-	case "Active":
-		return VersionStatusActive, nil
-	case "Archived":
-		return VersionStatusArchived, nil
-	default:
-		return "", errors.New("invalid document template version status")
-	}
-}
-
 var (
-	_ validationframework.TenantedEntity = (*DocumentTemplateVersion)(nil)
+	_ validationframework.Entity = (*DocumentTemplateVersion)(nil)
 )
 
 // DocumentTemplateVersion is one revision of a template's content.

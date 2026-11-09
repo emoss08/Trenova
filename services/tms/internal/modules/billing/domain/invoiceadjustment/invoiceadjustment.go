@@ -18,8 +18,8 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*InvoiceAdjustment)(nil)
-	_ validationframework.TenantedEntity = (*InvoiceAdjustmentBatch)(nil)
+	_ validationframework.Entity = (*InvoiceAdjustment)(nil)
+	_ validationframework.Entity = (*InvoiceAdjustmentBatch)(nil)
 )
 
 // Credit memos and rebills against an issued invoice

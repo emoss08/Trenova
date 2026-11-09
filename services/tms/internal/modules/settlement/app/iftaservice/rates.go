@@ -75,7 +75,7 @@ func (s *Service) validateRates(
 		}
 	}
 	if multiErr.HasErrors() {
-		return multiErr
+		return multiErr.Err()
 	}
 
 	known, err := s.jurisdictionsByID(ctx, jurisdictionIDs)
@@ -91,11 +91,7 @@ func (s *Service) validateRates(
 			)
 		}
 	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 func (s *Service) UpsertTaxRates(

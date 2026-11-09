@@ -15,8 +15,8 @@ import (
 )
 
 var (
-	_ pagination.CursorEntity            = (*PortalInvitation)(nil)
-	_ validationframework.TenantedEntity = (*PortalInvitation)(nil)
+	_ pagination.CursorEntity    = (*PortalInvitation)(nil)
+	_ validationframework.Entity = (*PortalInvitation)(nil)
 )
 
 type PortalInvitationStatus string

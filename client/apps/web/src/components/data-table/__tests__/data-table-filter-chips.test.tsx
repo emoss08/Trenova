@@ -14,6 +14,7 @@ function dateFilter(operator: SingleFilterItem["operator"], value: unknown): Sin
     operator,
     value,
     filterType: "date",
+    connector: "and",
   };
 }
 

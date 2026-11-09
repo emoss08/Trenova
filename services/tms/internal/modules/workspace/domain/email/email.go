@@ -14,8 +14,8 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*Profile)(nil)
-	_ domaintypes.PostgresSearchable     = (*Profile)(nil)
+	_ validationframework.Entity     = (*Profile)(nil)
+	_ domaintypes.PostgresSearchable = (*Profile)(nil)
 )
 
 type Profile struct {

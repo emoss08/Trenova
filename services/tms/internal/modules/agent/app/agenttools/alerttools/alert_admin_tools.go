@@ -147,11 +147,7 @@ func (e *alertEdit) apply(subscription *tablechangealert.TCASubscription) error 
 	if _, given := e.values["conditions"]; given {
 		subscription.Conditions = alertConditions(e.values)
 	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 func (e *alertEdit) Build(

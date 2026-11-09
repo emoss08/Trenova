@@ -106,10 +106,7 @@ func ValidateRequest(req *ediconnectiondraftports.ConnectionDraftRequest) error 
 		}
 	}
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }
 
 func limit(multiErr *errortypes.MultiError, field string, count, maximum int) {

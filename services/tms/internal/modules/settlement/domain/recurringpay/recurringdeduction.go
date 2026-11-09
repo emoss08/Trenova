@@ -18,8 +18,8 @@ import (
 )
 
 var (
-	_ pagination.CursorEntity            = (*RecurringDeduction)(nil)
-	_ validationframework.TenantedEntity = (*RecurringDeduction)(nil)
+	_ pagination.CursorEntity    = (*RecurringDeduction)(nil)
+	_ validationframework.Entity = (*RecurringDeduction)(nil)
 )
 
 // Standing deductions, including garnishments and escrow contributions

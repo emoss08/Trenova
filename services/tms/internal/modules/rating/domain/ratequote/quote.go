@@ -27,7 +27,7 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*RateQuote)(nil)
+	_ validationframework.Entity = (*RateQuote)(nil)
 )
 
 // How each shipment was priced, what it cost, and what an override gave away

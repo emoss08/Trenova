@@ -160,7 +160,7 @@ describe("describeError: API problems", () => {
       graphQLErrors: [
         graphQLError({
           type: `${PROBLEM_BASE}/validation-error`,
-          errors: [{ field: "name", message: "Name is required" }],
+          errors: [{ path: ["name"], field: "name", message: "Name is required" }],
         }),
       ],
     });

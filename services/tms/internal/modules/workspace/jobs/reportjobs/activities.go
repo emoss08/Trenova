@@ -136,8 +136,7 @@ type cannedLibrary interface {
 }
 
 func classifyCompileError(err error) error {
-	var multiErr *errortypes.MultiError
-	if errors.As(err, &multiErr) {
+	if multiErr, ok := errortypes.RefusalOf(err); ok {
 		return temporal.NewNonRetryableApplicationError(
 			multiErr.Error(), ErrTypeReportValidation, err,
 		)

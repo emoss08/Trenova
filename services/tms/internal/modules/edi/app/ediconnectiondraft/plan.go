@@ -126,7 +126,9 @@ func (s *Service) plan(
 		return nil, err
 	}
 	p.buildInterchange()
-	p.buildTransport()
+	if err = p.buildTransport(); err != nil {
+		return nil, err
+	}
 	exchanges, err := p.buildSets(ctx)
 	if err != nil {
 		return nil, err
@@ -428,8 +430,8 @@ func (p *planner) buildPartner(ctx context.Context) error {
 			draft.Change = ediconnectiondraftports.ChangeKindChange
 		}
 	}
-	if multiErr := p.s.validator.ValidatePartner(partner); multiErr != nil {
-		p.addFailures(draftPartnerLabel, multiErr.Errors)
+	if err := p.addRefusal(draftPartnerLabel, p.s.validator.ValidatePartner(partner)); err != nil {
+		return err
 	}
 	draft.Status = partner.Status
 	p.draft.Partner = draft
@@ -520,9 +522,9 @@ func (p *planner) buildInterchange() {
 	p.draft.Interchange = p.fields(keys...)
 }
 
-func (p *planner) buildTransport() {
+func (p *planner) buildTransport() error {
 	if p.method == "" {
-		return
+		return nil
 	}
 	existing := p.current.Transport
 	if existing != nil && existing.Method != p.method {
@@ -561,11 +563,16 @@ func (p *planner) buildTransport() {
 		Fields:      fields,
 		Credentials: edivalidation.CredentialRequirements(entity),
 	}
-	if multiErr := p.s.validator.ValidateCommunicationProfile(entity); multiErr != nil {
-		p.addFailures(transportLabel, multiErr.Errors)
+	if err := p.addRefusal(
+		transportLabel,
+		p.s.validator.ValidateCommunicationProfile(entity),
+	); err != nil {
+		return err
 	}
 	p.writes.transport = request
 	p.writes.transportChange = change
+
+	return nil
 }
 
 func (p *planner) transportFields(isNew bool) []ediconnectiondraftports.DraftValue {
@@ -690,11 +697,24 @@ func (p *planner) markPartnerChange() {
 	p.draft.Partner.Change = ediconnectiondraftports.ChangeKindChange
 }
 
+func (p *planner) addRefusal(record string, err error) error {
+	if err == nil {
+		return nil
+	}
+	multiErr, refused := errortypes.RefusalOf(err)
+	if !refused {
+		return err
+	}
+	p.addFailures(record, multiErr.Errors)
+
+	return nil
+}
+
 func (p *planner) addFailures(record string, errs []*errortypes.Error) {
 	for _, err := range errs {
 		p.draft.Failures = append(p.draft.Failures, ediconnectiondraftports.DraftFailure{
 			Record:  record,
-			Field:   err.Field,
+			Field:   err.Field(),
 			Message: err.Message,
 		})
 	}

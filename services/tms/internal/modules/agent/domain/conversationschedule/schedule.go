@@ -18,7 +18,7 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*Schedule)(nil)
+	_ validationframework.Entity = (*Schedule)(nil)
 )
 
 const (

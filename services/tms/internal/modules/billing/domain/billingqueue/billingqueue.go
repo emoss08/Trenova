@@ -18,8 +18,8 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*BillingQueueItem)(nil)
-	_ domaintypes.PostgresSearchable     = (*BillingQueueItem)(nil)
+	_ validationframework.Entity     = (*BillingQueueItem)(nil)
+	_ domaintypes.PostgresSearchable = (*BillingQueueItem)(nil)
 )
 
 type BillingQueueItem struct {

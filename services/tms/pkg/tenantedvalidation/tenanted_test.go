@@ -82,7 +82,7 @@ func TestTenantedValidatorBuilder_WithCaseSensitiveUniqueField(t *testing.T) {
 func TestTenantedValidatorBuilder_WithCustomRule(t *testing.T) {
 	t.Parallel()
 
-	rule := validationframework.NewTenantedRule[*mockTenantedEntity]("custom_rule")
+	rule := validationframework.NewRule[*mockTenantedEntity]("custom_rule")
 	validator := NewBuilder[*mockTenantedEntity]().
 		WithCustomRule(rule).
 		Build()
@@ -109,7 +109,7 @@ func TestTenantedValidatorBuilder_FluentChaining(t *testing.T) {
 	t.Parallel()
 
 	checker := newMockUniquenessChecker()
-	rule := validationframework.NewTenantedRule[*mockTenantedEntity]("custom_rule")
+	rule := validationframework.NewRule[*mockTenantedEntity]("custom_rule")
 
 	validator := NewBuilder[*mockTenantedEntity]().
 		WithModelName("TestModel").
@@ -351,11 +351,11 @@ func TestTenantedValidator_CustomRules_OnCreate(t *testing.T) {
 	t.Parallel()
 
 	executed := false
-	rule := validationframework.NewTenantedRule[*mockTenantedEntity]("custom_create_rule").
+	rule := validationframework.NewRule[*mockTenantedEntity]("custom_create_rule").
 		OnCreate().
 		WithValidation(func(
 			_ context.Context,
-			_ *mockTenantedEntity, _ *validationframework.TenantedValidationContext,
+			_ *mockTenantedEntity, _ *validationframework.Context,
 			_ *errortypes.MultiError,
 		) error {
 			executed = true
@@ -376,11 +376,11 @@ func TestTenantedValidator_CustomRules_OnUpdate(t *testing.T) {
 	t.Parallel()
 
 	executed := false
-	rule := validationframework.NewTenantedRule[*mockTenantedEntity]("custom_update_rule").
+	rule := validationframework.NewRule[*mockTenantedEntity]("custom_update_rule").
 		OnUpdate().
 		WithValidation(func(
 			_ context.Context,
-			_ *mockTenantedEntity, _ *validationframework.TenantedValidationContext,
+			_ *mockTenantedEntity, _ *validationframework.Context,
 			_ *errortypes.MultiError,
 		) error {
 			executed = true
@@ -402,11 +402,11 @@ func TestTenantedValidator_CustomRules_NotExecutedOnWrongMode(t *testing.T) {
 	t.Parallel()
 
 	executed := false
-	rule := validationframework.NewTenantedRule[*mockTenantedEntity]("custom_update_rule").
+	rule := validationframework.NewRule[*mockTenantedEntity]("custom_update_rule").
 		OnUpdate().
 		WithValidation(func(
 			_ context.Context,
-			_ *mockTenantedEntity, _ *validationframework.TenantedValidationContext,
+			_ *mockTenantedEntity, _ *validationframework.Context,
 			_ *errortypes.MultiError,
 		) error {
 			executed = true
@@ -426,11 +426,11 @@ func TestTenantedValidator_CustomRules_NotExecutedOnWrongMode(t *testing.T) {
 func TestTenantedValidator_CustomRules_AddsErrors(t *testing.T) {
 	t.Parallel()
 
-	rule := validationframework.NewTenantedRule[*mockTenantedEntity]("custom_rule").
+	rule := validationframework.NewRule[*mockTenantedEntity]("custom_rule").
 		OnCreate().
 		WithValidation(func(
 			_ context.Context,
-			_ *mockTenantedEntity, _ *validationframework.TenantedValidationContext,
+			_ *mockTenantedEntity, _ *validationframework.Context,
 			multiErr *errortypes.MultiError,
 		) error {
 			multiErr.Add("custom", errortypes.ErrBusinessLogic, "Custom validation failed")

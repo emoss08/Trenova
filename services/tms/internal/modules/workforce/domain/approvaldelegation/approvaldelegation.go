@@ -47,7 +47,7 @@ func (s ApprovalScope) Covers(wanted ApprovalScope) bool {
 }
 
 var (
-	_ validationframework.TenantedEntity = (*ApprovalDelegation)(nil)
+	_ validationframework.Entity = (*ApprovalDelegation)(nil)
 )
 
 // ApprovalDelegation is one person approving in another's place for a while.

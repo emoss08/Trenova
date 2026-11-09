@@ -45,6 +45,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/customfielddefinitionexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/datatableinsightexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/decisionsexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/deskattentionexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/deskboardexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/deskmemoryexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/detentionexec"
@@ -180,6 +181,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/customfielddefinitionresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/datatableinsightresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/decisionsresolver"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/deskattentionresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/deskboardresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/deskmemoryresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/detentionresolver"
@@ -527,6 +529,11 @@ func FromServices(s *Services) *Resolver {
 	decisionsDeps := &decisionsresolver.Deps{
 		Core:                      s.Core,
 		AgentDecisionQueueService: s.AgentDecisionQueueService,
+	}
+	deskattentionDeps := &deskattentionresolver.Deps{
+		Core:                 s.Core,
+		DeskAttentionService: s.DeskAttentionService,
+		DeskActivityService:  s.DeskActivityService,
 	}
 	deskboardDeps := &deskboardresolver.Deps{
 		Core:       s.Core,
@@ -1171,6 +1178,9 @@ func FromServices(s *Services) *Resolver {
 	workerdrugalcoholDOTRandomPool := &workerdrugalcoholresolver.DOTRandomPoolResolver{Deps: workerdrugalcoholDeps}
 	workerdqfDQFFile := &workerdqfresolver.DQFFileResolver{Deps: workerdqfDeps}
 	workerdqfDQFItem := &workerdqfresolver.DQFItemResolver{Deps: workerdqfDeps}
+	deskattentionDeskActivityEntry := &deskattentionresolver.DeskActivityEntryResolver{Deps: deskattentionDeps}
+	deskattentionDeskAttentionGroup := &deskattentionresolver.DeskAttentionGroupResolver{Deps: deskattentionDeps}
+	deskattentionDeskRecord := &deskattentionresolver.DeskRecordResolver{Deps: deskattentionDeps}
 	detentionDetentionOccurrence := &detentionresolver.DetentionOccurrenceResolver{Deps: detentionDeps}
 	detentionDetentionPreviewResult := &detentionresolver.DetentionPreviewResultResolver{Deps: detentionDeps}
 	workersafetyDisciplinaryLadder := &workersafetyresolver.DisciplinaryLadderResolver{Deps: workersafetyDeps}
@@ -1428,6 +1438,7 @@ func FromServices(s *Services) *Resolver {
 	customfielddefinitionQuery := &customfielddefinitionresolver.QueryResolver{Deps: customfielddefinitionDeps}
 	datatableinsightQuery := &datatableinsightresolver.QueryResolver{Deps: datatableinsightDeps}
 	decisionsQuery := &decisionsresolver.QueryResolver{Deps: decisionsDeps}
+	deskattentionQuery := &deskattentionresolver.QueryResolver{Deps: deskattentionDeps}
 	deskboardQuery := &deskboardresolver.QueryResolver{Deps: deskboardDeps}
 	deskmemoryQuery := &deskmemoryresolver.QueryResolver{Deps: deskmemoryDeps}
 	detentionQuery := &detentionresolver.QueryResolver{Deps: detentionDeps}
@@ -1561,8 +1572,10 @@ func FromServices(s *Services) *Resolver {
 	inboundmessageTriageView := &inboundmessageresolver.TriageViewResolver{Deps: inboundmessageDeps}
 	tenantUser := &tenantresolver.UserResolver{Deps: tenantDeps}
 	watchtowerWatchtowerAgentWork := &watchtowerresolver.WatchtowerAgentWorkResolver{Deps: watchtowerDeps}
+	deskattentionWatchtowerItem := &deskattentionresolver.WatchtowerItemResolver{Deps: deskattentionDeps}
 	watchtowerWatchtowerItem := &watchtowerresolver.WatchtowerItemResolver{Deps: watchtowerDeps}
 	watchtowerWatchtowerItemEvent := &watchtowerresolver.WatchtowerItemEventResolver{Deps: watchtowerDeps}
+	deskattentionWatchtowerKindSummary := &deskattentionresolver.WatchtowerKindSummaryResolver{Deps: deskattentionDeps}
 	watchtowerWatchtowerRecord := &watchtowerresolver.WatchtowerRecordResolver{Deps: watchtowerDeps}
 	workerWorker := &workerresolver.WorkerResolver{Deps: workerDeps}
 	benefitsWorkerBenefitEnrollment := &benefitsresolver.WorkerBenefitEnrollmentResolver{Deps: benefitsDeps}
@@ -1709,6 +1722,9 @@ func FromServices(s *Services) *Resolver {
 			"DOTRandomPool@workerdrugalcohol":                      workerdrugalcoholDOTRandomPool,
 			"DQFFile@workerdqf":                                    workerdqfDQFFile,
 			"DQFItem@workerdqf":                                    workerdqfDQFItem,
+			"DeskActivityEntry@deskattention":                      deskattentionDeskActivityEntry,
+			"DeskAttentionGroup@deskattention":                     deskattentionDeskAttentionGroup,
+			"DeskRecord@deskattention":                             deskattentionDeskRecord,
 			"DetentionOccurrence@detention":                        detentionDetentionOccurrence,
 			"DetentionPreviewResult@detention":                     detentionDetentionPreviewResult,
 			"DisciplinaryLadder@workersafety":                      workersafetyDisciplinaryLadder,
@@ -1966,6 +1982,7 @@ func FromServices(s *Services) *Resolver {
 			"Query@customfielddefinition":                          customfielddefinitionQuery,
 			"Query@datatableinsight":                               datatableinsightQuery,
 			"Query@decisions":                                      decisionsQuery,
+			"Query@deskattention":                                  deskattentionQuery,
 			"Query@deskboard":                                      deskboardQuery,
 			"Query@deskmemory":                                     deskmemoryQuery,
 			"Query@detention":                                      detentionQuery,
@@ -2099,8 +2116,10 @@ func FromServices(s *Services) *Resolver {
 			"TriageView@inboundmessage":                            inboundmessageTriageView,
 			"User@tenant":                                          tenantUser,
 			"WatchtowerAgentWork@watchtower":                       watchtowerWatchtowerAgentWork,
+			"WatchtowerItem@deskattention":                         deskattentionWatchtowerItem,
 			"WatchtowerItem@watchtower":                            watchtowerWatchtowerItem,
 			"WatchtowerItemEvent@watchtower":                       watchtowerWatchtowerItemEvent,
+			"WatchtowerKindSummary@deskattention":                  deskattentionWatchtowerKindSummary,
 			"WatchtowerRecord@watchtower":                          watchtowerWatchtowerRecord,
 			"Worker@worker":                                        workerWorker,
 			"WorkerBenefitEnrollment@benefits":                     benefitsWorkerBenefitEnrollment,
@@ -2252,6 +2271,9 @@ var (
 	_ workerdrugalcoholexec.DOTRandomPoolResolver                      = (*workerdrugalcoholresolver.DOTRandomPoolResolver)(nil)
 	_ workerdqfexec.DQFFileResolver                                    = (*workerdqfresolver.DQFFileResolver)(nil)
 	_ workerdqfexec.DQFItemResolver                                    = (*workerdqfresolver.DQFItemResolver)(nil)
+	_ deskattentionexec.DeskActivityEntryResolver                      = (*deskattentionresolver.DeskActivityEntryResolver)(nil)
+	_ deskattentionexec.DeskAttentionGroupResolver                     = (*deskattentionresolver.DeskAttentionGroupResolver)(nil)
+	_ deskattentionexec.DeskRecordResolver                             = (*deskattentionresolver.DeskRecordResolver)(nil)
 	_ detentionexec.DetentionOccurrenceResolver                        = (*detentionresolver.DetentionOccurrenceResolver)(nil)
 	_ detentionexec.DetentionPreviewResultResolver                     = (*detentionresolver.DetentionPreviewResultResolver)(nil)
 	_ workersafetyexec.DisciplinaryLadderResolver                      = (*workersafetyresolver.DisciplinaryLadderResolver)(nil)
@@ -2509,6 +2531,7 @@ var (
 	_ customfielddefinitionexec.QueryResolver                          = (*customfielddefinitionresolver.QueryResolver)(nil)
 	_ datatableinsightexec.QueryResolver                               = (*datatableinsightresolver.QueryResolver)(nil)
 	_ decisionsexec.QueryResolver                                      = (*decisionsresolver.QueryResolver)(nil)
+	_ deskattentionexec.QueryResolver                                  = (*deskattentionresolver.QueryResolver)(nil)
 	_ deskboardexec.QueryResolver                                      = (*deskboardresolver.QueryResolver)(nil)
 	_ deskmemoryexec.QueryResolver                                     = (*deskmemoryresolver.QueryResolver)(nil)
 	_ detentionexec.QueryResolver                                      = (*detentionresolver.QueryResolver)(nil)
@@ -2642,8 +2665,10 @@ var (
 	_ inboundmessageexec.TriageViewResolver                            = (*inboundmessageresolver.TriageViewResolver)(nil)
 	_ tenantexec.UserResolver                                          = (*tenantresolver.UserResolver)(nil)
 	_ watchtowerexec.WatchtowerAgentWorkResolver                       = (*watchtowerresolver.WatchtowerAgentWorkResolver)(nil)
+	_ deskattentionexec.WatchtowerItemResolver                         = (*deskattentionresolver.WatchtowerItemResolver)(nil)
 	_ watchtowerexec.WatchtowerItemResolver                            = (*watchtowerresolver.WatchtowerItemResolver)(nil)
 	_ watchtowerexec.WatchtowerItemEventResolver                       = (*watchtowerresolver.WatchtowerItemEventResolver)(nil)
+	_ deskattentionexec.WatchtowerKindSummaryResolver                  = (*deskattentionresolver.WatchtowerKindSummaryResolver)(nil)
 	_ watchtowerexec.WatchtowerRecordResolver                          = (*watchtowerresolver.WatchtowerRecordResolver)(nil)
 	_ workerexec.WorkerResolver                                        = (*workerresolver.WorkerResolver)(nil)
 	_ benefitsexec.WorkerBenefitEnrollmentResolver                     = (*benefitsresolver.WorkerBenefitEnrollmentResolver)(nil)

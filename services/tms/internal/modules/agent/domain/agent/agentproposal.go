@@ -22,9 +22,9 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*AgentProposal)(nil)
-	_ pagination.CursorEntity            = (*AgentProposal)(nil)
-	_ domaintypes.PostgresSearchable     = (*AgentProposal)(nil)
+	_ validationframework.Entity     = (*AgentProposal)(nil)
+	_ pagination.CursorEntity        = (*AgentProposal)(nil)
+	_ domaintypes.PostgresSearchable = (*AgentProposal)(nil)
 )
 
 type AgentProposal struct {

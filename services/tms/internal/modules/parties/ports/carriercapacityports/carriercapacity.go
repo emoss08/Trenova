@@ -9,10 +9,12 @@ import (
 )
 
 type ListCarrierCapacityPostingsRequest struct {
-	Filter    *pagination.QueryOptions
-	Cursor    pagination.CursorInfo
-	CarrierID pulid.ID
-	OpenAt    int64
+	Filter               *pagination.QueryOptions
+	Cursor               pagination.CursorInfo
+	CarrierID            pulid.ID
+	OpenAt               int64
+	OriginStateCode      string
+	DestinationStateCode string
 }
 
 type GetCarrierCapacityPostingRequest struct {

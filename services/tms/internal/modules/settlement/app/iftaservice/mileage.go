@@ -88,11 +88,7 @@ func (s *Service) prepareMileageEntry(
 		entity.AssignPeriod(loc)
 	}
 	entity.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 type MileageEntryChange struct {

@@ -179,7 +179,12 @@ describe("useEditFlow when a save is refused", () => {
         title: "Validation Error",
         status: 422,
         errors: [
-          { field: "tools", message: "This tool needs a trusted provider", code: "INVALID" },
+          {
+            path: ["tools"],
+            field: "tools",
+            message: "This tool needs a trusted provider",
+            code: "INVALID",
+          },
         ],
       });
     });

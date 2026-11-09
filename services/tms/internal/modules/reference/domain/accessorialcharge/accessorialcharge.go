@@ -17,8 +17,8 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*AccessorialCharge)(nil)
-	_ domaintypes.PostgresSearchable     = (*AccessorialCharge)(nil)
+	_ validationframework.Entity     = (*AccessorialCharge)(nil)
+	_ domaintypes.PostgresSearchable = (*AccessorialCharge)(nil)
 )
 
 // The organization's accessorial catalog and default pricing

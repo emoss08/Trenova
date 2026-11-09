@@ -184,6 +184,7 @@ func uncoveredOf(graph *dispatchcandidateservice.Graph, row int) *dispatchplanpo
 	move := graph.Moves[row]
 	uncovered := &dispatchplanports.Uncovered{
 		MoveID:               move.MoveID,
+		ShipmentID:           move.ShipmentID,
 		ProNumber:            move.ProNumber,
 		StartsAt:             move.OriginWindowStart,
 		CoveragePriceCents:   graph.Coverage[row],

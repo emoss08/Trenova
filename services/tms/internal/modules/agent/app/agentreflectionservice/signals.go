@@ -34,12 +34,6 @@ var standingPhrases = []string{
 	"whenever ", "make sure you", "for future", "from here on", "in future",
 }
 
-var refusalVerdicts = []string{
-	aitrace.OutcomeDenied,
-	aitrace.OutcomeDuplicate,
-	aitrace.OutcomeOverBudget,
-}
-
 type DecidedProposal struct {
 	ToolName string
 	Outcome  agenttooltrust.TrustOutcome
@@ -64,14 +58,6 @@ func ReadSignals(window *Window) agentreflection.ReflectionSignals {
 			)
 		}
 	}
-
-	failed, recovered, succeeded := readTools(window.Messages)
-	add(
-		agentreflection.ReflectionSignalToolRecovered,
-		len(recovered),
-		strings.Join(recovered, ", "),
-	)
-	add(agentreflection.ReflectionSignalToolFailed, len(failed), strings.Join(failed, ", "))
 
 	if window.HasPerson {
 		corrected, standing := readPerson(window.Messages, window.Continues)
@@ -108,40 +94,35 @@ func ReadSignals(window *Window) agentreflection.ReflectionSignals {
 	)
 	add(agentreflection.ReflectionSignalNegativeFeedback, window.NegativeRatings, "")
 
-	if window.HasPerson && succeeded >= LongTaskToolCalls {
+	if succeeded := succeededTools(window.Messages); window.HasPerson &&
+		succeeded >= LongTaskToolCalls {
 		add(agentreflection.ReflectionSignalLongTask, succeeded, "")
 	}
 
 	return signals
 }
 
-func readTools(messages []conversation.Message) ([]string, []string, int) {
-	failing := make([]string, 0, 4)
-	recovered := make([]string, 0, 4)
-	succeeded := 0
+var unsuccessfulVerdicts = []string{
+	aitrace.OutcomeDenied,
+	aitrace.OutcomeDuplicate,
+	aitrace.OutcomeOverBudget,
+	aitrace.OutcomeInvalid,
+	aitrace.OutcomeFailed,
+}
 
+func succeededTools(messages []conversation.Message) int {
+	succeeded := 0
 	for idx := range messages {
 		message := &messages[idx]
-		if message.Role != conversation.RoleTool || message.ToolName == "" {
+		if message.Role != conversation.RoleTool || message.ToolName == "" || message.ToolFailed {
 			continue
 		}
-		if slices.Contains(refusalVerdicts, message.ToolVerdict) {
-			continue
-		}
-		if message.ToolFailed || message.ToolVerdict == aitrace.OutcomeInvalid ||
-			message.ToolVerdict == aitrace.OutcomeFailed {
-			failing = sliceutils.AppendIfMissing(failing, message.ToolName)
-			continue
-		}
-
-		succeeded++
-		if at := slices.Index(failing, message.ToolName); at >= 0 {
-			failing = slices.Delete(failing, at, at+1)
-			recovered = sliceutils.AppendIfMissing(recovered, message.ToolName)
+		if !slices.Contains(unsuccessfulVerdicts, message.ToolVerdict) {
+			succeeded++
 		}
 	}
 
-	return failing, recovered, succeeded
+	return succeeded
 }
 
 func readPerson(messages []conversation.Message, continues bool) (int, int) {

@@ -174,24 +174,24 @@ export function FactoringPaceChart({ overview }: { overview: FactoringCompanyOve
             ) : null}
           </svg>
         </PointerHoverCard>
-        <div className="text-muted-foreground flex flex-wrap gap-x-3.5 gap-y-1 text-xs">
+        <div className="flex flex-wrap gap-x-3.5 gap-y-1 text-xs text-muted-foreground">
           <span className="inline-flex items-center gap-1.5">
-            <span aria-hidden className="bg-foreground size-2 rounded-full" />
+            <span aria-hidden className="size-2 rounded-full bg-foreground" />
             {t("On time")}
           </span>
           <span className="inline-flex items-center gap-1.5">
-            <span aria-hidden className="bg-warning size-2 rounded-full" />
+            <span aria-hidden className="size-2 rounded-full bg-warning" />
             {t("Late")}
           </span>
           {agreed !== null ? (
             <span className="inline-flex items-center gap-1.5">
-              <span aria-hidden className="border-foreground-muted w-3 border-t border-dashed" />
+              <span aria-hidden className="w-3 border-t border-dashed border-foreground-muted" />
               {t("Agreed: {0, plural, one {# business day} other {# business days}}", agreed)}
             </span>
           ) : null}
         </div>
         {overview.paceMedianDays !== null && overview.paceMedianDays !== undefined ? (
-          <p className="text-muted-foreground text-sm">
+          <p className="text-sm text-muted-foreground">
             {overview.paceLate === 0
               ? t(
                   "Median {0, plural, one {# business day} other {# business days}}, every schedule on time.",

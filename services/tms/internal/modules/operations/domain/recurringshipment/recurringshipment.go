@@ -20,8 +20,8 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*RecurringShipment)(nil)
-	_ pagination.CursorEntity            = (*RecurringShipment)(nil)
+	_ validationframework.Entity = (*RecurringShipment)(nil)
+	_ pagination.CursorEntity    = (*RecurringShipment)(nil)
 )
 
 const (

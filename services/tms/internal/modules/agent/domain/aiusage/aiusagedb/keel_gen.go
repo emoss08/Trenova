@@ -937,6 +937,7 @@ var enumFeature = [...]schema.EnumValue{
 	{Value: `AccountingMapping`, Label: `Accounting Mapping`},
 	{Value: `FactoringRemittanceExtract`, Label: `Factoring Remittance Extract`},
 	{Value: `AgentReflection`, Label: `Agent Reflection`},
+	{Value: `AgentMemoryConsolidation`, Label: `Agent Memory Consolidation`},
 	{Value: `AgentDrafting`, Label: `Agent Drafting`},
 	{Value: `AgentProfile`, Label: `Agent Profile`},
 	{Value: `AgentRecommendation`, Label: `Agent Recommendation`},

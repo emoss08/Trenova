@@ -10,7 +10,7 @@ export function DeskHomePage() {
       threads={desk.threads}
       isLoading={desk.isLoading}
       isStarting={desk.isStarting}
-      onStart={desk.start}
+      onStart={desk.startInMargin}
     />
   );
 }

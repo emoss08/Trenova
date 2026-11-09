@@ -16,8 +16,8 @@ import (
 )
 
 var (
-	_ pagination.CursorEntity            = (*RecurringEarning)(nil)
-	_ validationframework.TenantedEntity = (*RecurringEarning)(nil)
+	_ pagination.CursorEntity    = (*RecurringEarning)(nil)
+	_ validationframework.Entity = (*RecurringEarning)(nil)
 )
 
 // Standing earnings such as per diem and retention bonuses

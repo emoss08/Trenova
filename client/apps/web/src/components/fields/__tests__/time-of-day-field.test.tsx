@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { setUserDatePreferences } from "@trenova/shared/lib/date";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { afterEach, describe, expect, it } from "vitest";
 import { TimeOfDayField } from "../time-of-day-field";
 
@@ -11,21 +11,23 @@ afterEach(() => {
 
 type Values = { submissionTime: string };
 
-let latest: Values | undefined;
-
 function Harness({ value }: { value: string }) {
   const form = useForm<Values>({ defaultValues: { submissionTime: value } });
-  latest = form.watch();
+  const stored = useWatch({ control: form.control, name: "submissionTime" });
   return (
-    <TimeOfDayField
-      control={form.control}
-      name="submissionTime"
-      label="Daily schedule time"
-      description="When the day's schedule is proposed."
-    />
+    <>
+      <TimeOfDayField
+        control={form.control}
+        name="submissionTime"
+        label="Daily schedule time"
+        description="When the day's schedule is proposed."
+      />
+      <output aria-label="Stored value">{stored}</output>
+    </>
   );
 }
 
+const stored = () => screen.getByLabelText("Stored value").textContent;
 const hour = () => screen.getByRole("textbox", { name: "Hour" }) as HTMLInputElement;
 const minute = () => screen.getByRole("textbox", { name: "Minute" }) as HTMLInputElement;
 const period = () => screen.getByRole("textbox", { name: "AM or PM" }) as HTMLInputElement;
@@ -60,7 +62,7 @@ describe("TimeOfDayField", () => {
     fireEvent.keyDown(minute(), { key: "4" });
     fireEvent.keyDown(minute(), { key: "5" });
 
-    expect(latest?.submissionTime).toBe("10:45");
+    expect(stored()).toBe("10:45");
   });
 
   it("ignores letters in the hour and sets the period from A or P", () => {
@@ -68,12 +70,12 @@ describe("TimeOfDayField", () => {
     render(<Harness value="09:15" />);
 
     fireEvent.keyDown(hour(), { key: "x" });
-    expect(latest?.submissionTime).toBe("09:15");
+    expect(stored()).toBe("09:15");
 
     fireEvent.keyDown(period(), { key: "p" });
-    expect(latest?.submissionTime).toBe("21:15");
+    expect(stored()).toBe("21:15");
     fireEvent.keyDown(period(), { key: "a" });
-    expect(latest?.submissionTime).toBe("09:15");
+    expect(stored()).toBe("09:15");
   });
 
   it("drops the period on a 24-hour clock and steps the hour with the arrows", () => {
@@ -83,7 +85,7 @@ describe("TimeOfDayField", () => {
     expect(screen.queryByRole("textbox", { name: "AM or PM" })).toBeNull();
     fireEvent.keyDown(hour(), { key: "ArrowUp" });
 
-    expect(latest?.submissionTime).toBe("10:00");
+    expect(stored()).toBe("10:00");
   });
 
   it("offers the clock picker beside the typed time", () => {

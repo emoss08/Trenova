@@ -133,7 +133,7 @@ type RunRequest struct {
 	// Asked is then the last thing the person did type, from LastAsked.
 	TrenovaWritten bool
 	Asked          string
-	Emit    kernelports.AssistantStreamEmitter
+	Emit           kernelports.AssistantStreamEmitter
 	// PreferredProviderID is the reader's own choice for this turn, which wins
 	// over the definition's. An administrator pins a default for everyone on
 	// the agent; a person picking a model in the composer is overriding that
@@ -590,8 +590,9 @@ type DelegatedRun struct {
 	Failed bool `json:"failed,omitempty"`
 	// Taint is the outside content the delegate's turn read, which its
 	// proposals carry.
-	Taint *agent.RunTaint `json:"taint,omitempty"`
-	Usage *RunUsage       `json:"usage,omitempty"`
+	Taint         *agent.RunTaint `json:"taint,omitempty"`
+	Usage         *RunUsage       `json:"usage,omitempty"`
+	UsedMemoryIDs []pulid.ID      `json:"usedMemoryIds,omitempty"`
 }
 
 type AgentRuntime interface {

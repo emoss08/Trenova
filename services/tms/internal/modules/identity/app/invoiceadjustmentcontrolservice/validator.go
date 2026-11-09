@@ -3,38 +3,21 @@ package invoiceadjustmentcontrolservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/invoiceadjustmentcontrol"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/invoiceadjustmentcontrol/invoiceadjustmentcontroldb"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/keelcheck"
 	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/shopspring/decimal"
-	"go.uber.org/fx"
 )
-
-type ValidatorParams struct {
-	fx.In
-
-	DB *postgres.Connection
-}
 
 type Validator struct {
 	validator tenantedvalidation.EntityValidator[*invoiceadjustmentcontrol.InvoiceAdjustmentControl]
 }
 
-func NewValidator(p ValidatorParams) *Validator {
-	checker := keelcheck.NewChecker(
-		p.DB,
-		invoiceadjustmentcontroldb.InvoiceAdjustmentControlsSchema(),
-	)
-
+func NewValidator() *Validator {
 	return &Validator{
 		validator: tenantedvalidation.NewBuilder[*invoiceadjustmentcontrol.InvoiceAdjustmentControl]().
 			WithModelName("InvoiceAdjustmentControl").
-			WithUniquenessChecker(checker).
-			WithReferenceChecker(checker).
 			WithCustomRule(createEligibilityRule()).
 			WithCustomRule(createApprovalThresholdRule()).
 			WithCustomRule(createCreditBalanceRule()).
@@ -42,17 +25,16 @@ func NewValidator(p ValidatorParams) *Validator {
 	}
 }
 
-func createEligibilityRule() validationframework.TenantedRule[*invoiceadjustmentcontrol.InvoiceAdjustmentControl] {
-	return validationframework.NewTenantedRule[*invoiceadjustmentcontrol.InvoiceAdjustmentControl](
+func createEligibilityRule() validationframework.Rule[*invoiceadjustmentcontrol.InvoiceAdjustmentControl] {
+	return validationframework.NewRule[*invoiceadjustmentcontrol.InvoiceAdjustmentControl](
 		"eligibility",
 	).
 		OnUpdate().
-		WithStage(validationframework.ValidationStageBusinessRules).
-		WithPriority(validationframework.ValidationPriorityHigh).
+		WithStage(validationframework.StageBusinessRules).
 		WithValidation(func(
 			_ context.Context,
 			entity *invoiceadjustmentcontrol.InvoiceAdjustmentControl,
-			_ *validationframework.TenantedValidationContext,
+			_ *validationframework.Context,
 			multiErr *errortypes.MultiError,
 		) error {
 			if entity.PaidInvoiceAdjustmentPolicy == invoiceadjustmentcontrol.AdjustmentEligibilityAllowWithoutApproval {
@@ -97,17 +79,16 @@ func createEligibilityRule() validationframework.TenantedRule[*invoiceadjustment
 		})
 }
 
-func createApprovalThresholdRule() validationframework.TenantedRule[*invoiceadjustmentcontrol.InvoiceAdjustmentControl] {
-	return validationframework.NewTenantedRule[*invoiceadjustmentcontrol.InvoiceAdjustmentControl](
+func createApprovalThresholdRule() validationframework.Rule[*invoiceadjustmentcontrol.InvoiceAdjustmentControl] {
+	return validationframework.NewRule[*invoiceadjustmentcontrol.InvoiceAdjustmentControl](
 		"approval_thresholds",
 	).
 		OnUpdate().
-		WithStage(validationframework.ValidationStageBusinessRules).
-		WithPriority(validationframework.ValidationPriorityHigh).
+		WithStage(validationframework.StageBusinessRules).
 		WithValidation(func(
 			_ context.Context,
 			entity *invoiceadjustmentcontrol.InvoiceAdjustmentControl,
-			_ *validationframework.TenantedValidationContext,
+			_ *validationframework.Context,
 			multiErr *errortypes.MultiError,
 		) error {
 			if entity.StandardAdjustmentApprovalPolicy == invoiceadjustmentcontrol.ApprovalPolicyAmountThreshold &&
@@ -140,17 +121,16 @@ func createApprovalThresholdRule() validationframework.TenantedRule[*invoiceadju
 		})
 }
 
-func createCreditBalanceRule() validationframework.TenantedRule[*invoiceadjustmentcontrol.InvoiceAdjustmentControl] {
-	return validationframework.NewTenantedRule[*invoiceadjustmentcontrol.InvoiceAdjustmentControl](
+func createCreditBalanceRule() validationframework.Rule[*invoiceadjustmentcontrol.InvoiceAdjustmentControl] {
+	return validationframework.NewRule[*invoiceadjustmentcontrol.InvoiceAdjustmentControl](
 		"credit_balance",
 	).
 		OnUpdate().
-		WithStage(validationframework.ValidationStageBusinessRules).
-		WithPriority(validationframework.ValidationPriorityHigh).
+		WithStage(validationframework.StageBusinessRules).
 		WithValidation(func(
 			_ context.Context,
 			entity *invoiceadjustmentcontrol.InvoiceAdjustmentControl,
-			_ *validationframework.TenantedValidationContext,
+			_ *validationframework.Context,
 			multiErr *errortypes.MultiError,
 		) error {
 			if entity.CustomerCreditBalancePolicy == invoiceadjustmentcontrol.CustomerCreditBalancePolicyDisallow &&
@@ -177,6 +157,6 @@ func createCreditBalanceRule() validationframework.TenantedRule[*invoiceadjustme
 func (v *Validator) ValidateUpdate(
 	ctx context.Context,
 	entity *invoiceadjustmentcontrol.InvoiceAdjustmentControl,
-) *errortypes.MultiError {
+) error {
 	return v.validator.ValidateUpdate(ctx, entity)
 }

@@ -470,10 +470,7 @@ func employmentGuard(original, next *worker.Worker) error {
 			"The termination date is set by a Terminated event on the Timeline tab",
 		)
 	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }
 
 func equalInt64Ptr(a, b *int64) bool {

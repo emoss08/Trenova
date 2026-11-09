@@ -173,7 +173,7 @@ func (s *Service) assignRoles(
 func roleAssignmentError(err error) error {
 	multiErr := errortypes.NewMultiError()
 
-	if source, ok := errors.AsType[*errortypes.MultiError](err); ok {
+	if source, ok := errortypes.RefusalOf(err); ok {
 		for _, item := range source.Errors {
 			multiErr.Add(roleIDsField, item.Code, item.Message, item.Args...)
 		}

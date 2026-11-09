@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*AgentControl)(nil)
+	_ validationframework.Entity = (*AgentControl)(nil)
 )
 
 type AgentControl struct {

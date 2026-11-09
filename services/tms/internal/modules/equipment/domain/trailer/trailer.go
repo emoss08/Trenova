@@ -20,10 +20,10 @@ import (
 )
 
 var (
-	_ domaintypes.PostgresSearchable     = (*Trailer)(nil)
-	_ customfield.CustomFieldsSupporter  = (*Trailer)(nil)
-	_ pagination.CursorEntity            = (*Trailer)(nil)
-	_ validationframework.TenantedEntity = (*Trailer)(nil)
+	_ domaintypes.PostgresSearchable    = (*Trailer)(nil)
+	_ customfield.CustomFieldsSupporter = (*Trailer)(nil)
+	_ pagination.CursorEntity           = (*Trailer)(nil)
+	_ validationframework.Entity        = (*Trailer)(nil)
 )
 
 // Trailers and towed equipment

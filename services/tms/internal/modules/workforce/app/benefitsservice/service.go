@@ -162,9 +162,7 @@ func (s *Service) UpdatePlan(
 		return nil, err
 	}
 	if entity.Version > 0 && original.Version != entity.Version {
-		return nil, errortypes.NewValidationError(
-			"version",
-			errortypes.ErrVersionMismatch,
+		return nil, errortypes.NewVersionMismatchError(
 			"Plan was changed by someone else. Reload and try again",
 		)
 	}

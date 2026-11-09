@@ -97,7 +97,7 @@ func (s ShiftSwapStatus) CanTransitionTo(next ShiftSwapStatus) bool {
 }
 
 var (
-	_ validationframework.TenantedEntity = (*ShiftTemplate)(nil)
+	_ validationframework.Entity = (*ShiftTemplate)(nil)
 )
 
 // ShiftTemplate is a repeating pattern of working days.
@@ -263,7 +263,7 @@ func (ShiftTemplate) Constraints() []keel.Constraint {
 }
 
 var (
-	_ validationframework.TenantedEntity = (*WorkerShiftAssignment)(nil)
+	_ validationframework.Entity = (*WorkerShiftAssignment)(nil)
 )
 
 // WorkerShiftAssignment puts a worker on a pattern for a period.
@@ -328,7 +328,7 @@ func (a *WorkerShiftAssignment) GetResourceType() string { return "worker_shift_
 func (a *WorkerShiftAssignment) GetResourceID() string { return a.ID.String() }
 
 var (
-	_ validationframework.TenantedEntity = (*WorkerAvailabilityPreference)(nil)
+	_ validationframework.Entity = (*WorkerAvailabilityPreference)(nil)
 )
 
 // WorkerAvailabilityPreference is what a driver would rather work on a given
@@ -420,7 +420,7 @@ func (WorkerAvailabilityPreference) Constraints() []keel.Constraint {
 }
 
 var (
-	_ validationframework.TenantedEntity = (*ShiftSwapRequest)(nil)
+	_ validationframework.Entity = (*ShiftSwapRequest)(nil)
 )
 
 // ShiftSwapRequest is one driver asking another to take a day.

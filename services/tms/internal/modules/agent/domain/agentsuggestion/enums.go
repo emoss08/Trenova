@@ -20,10 +20,6 @@ func (o MatchOutcome) IsValid() bool {
 
 func (o MatchOutcome) String() string { return string(o) }
 
-func AllMatchOutcomes() []MatchOutcome {
-	return []MatchOutcome{MatchBetterAgent, MatchCurrentAgent, MatchNoAgent, MatchNone}
-}
-
 type Surface string
 
 const (

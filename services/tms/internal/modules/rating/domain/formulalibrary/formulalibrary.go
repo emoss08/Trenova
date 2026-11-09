@@ -22,8 +22,8 @@ const (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*FormulaLibrary)(nil)
-	_ domaintypes.PostgresSearchable     = (*FormulaLibrary)(nil)
+	_ validationframework.Entity     = (*FormulaLibrary)(nil)
+	_ domaintypes.PostgresSearchable = (*FormulaLibrary)(nil)
 )
 
 var namePattern = regexp.MustCompile(`^[a-z][A-Za-z0-9]*$`)

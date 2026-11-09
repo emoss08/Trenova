@@ -35,6 +35,13 @@ func (r *pendingProposals) ListPendingByTargets(
 	return r.proposals, nil
 }
 
+func (r *pendingProposals) ListSettled(
+	context.Context,
+	*agentproposalports.ListSettledProposalsRequest,
+) ([]*agent.AgentProposal, error) {
+	return nil, nil
+}
+
 func (r *pendingProposals) ListFailedByTargets(
 	_ context.Context,
 	req *agentproposalports.ListFailedByTargetsRequest,

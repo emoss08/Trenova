@@ -16,8 +16,8 @@ import (
 )
 
 var (
-	_ pagination.CursorEntity            = (*SettlementBatch)(nil)
-	_ validationframework.TenantedEntity = (*SettlementBatch)(nil)
+	_ pagination.CursorEntity    = (*SettlementBatch)(nil)
+	_ validationframework.Entity = (*SettlementBatch)(nil)
 )
 
 // A pay run and its totals

@@ -143,10 +143,9 @@ func (s *Service) tenantLocation(
 }
 
 func versionMismatch(entity string) error {
-	return errortypes.NewValidationError(
-		"version",
-		errortypes.ErrVersionMismatch,
-		"This {0} was changed by someone else; reload it and try again", entity,
+	return errortypes.NewVersionMismatchError(
+		"This {0} was changed by someone else; reload it and try again",
+		entity,
 	)
 }
 

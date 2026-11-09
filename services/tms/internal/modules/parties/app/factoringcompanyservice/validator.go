@@ -4,13 +4,10 @@ import (
 	"context"
 	"strconv"
 
-	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany/factoringcompanydb"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/factoringcompanyports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/keelcheck"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -20,7 +17,8 @@ import (
 type ValidatorParams struct {
 	fx.In
 
-	DB   *postgres.Connection
+	Integrity validationframework.IntegrityChecker
+
 	Repo factoringcompanyports.FactoringCompanyRepository
 }
 
@@ -29,14 +27,10 @@ type Validator struct {
 }
 
 func NewValidator(p ValidatorParams) *Validator {
-	checker := keelcheck.NewChecker(
-		p.DB,
-		factoringcompanydb.FactoringCompaniesSchema(),
-	)
 	return &Validator{
 		validator: tenantedvalidation.NewBuilder[*factoringcompany.FactoringCompany]().
 			WithModelName("FactoringCompany").
-			WithUniquenessChecker(checker).
+			WithIntegrityChecker(p.Integrity).
 			WithUniqueField(
 				"code",
 				"code",
@@ -45,7 +39,7 @@ func NewValidator(p ValidatorParams) *Validator {
 			).
 			WithCustomRule(
 				validationframework.
-					NewTenantedRule[*factoringcompany.FactoringCompany]("inactive_with_customers").
+					NewRule[*factoringcompany.FactoringCompany]("inactive_with_customers").
 					OnUpdate().
 					WithValidation(refuseDeactivatingAssigned(p.Repo)),
 			).
@@ -60,13 +54,13 @@ func refuseDeactivatingAssigned(
 ) func(
 	context.Context,
 	*factoringcompany.FactoringCompany,
-	*validationframework.TenantedValidationContext,
+	*validationframework.Context,
 	*errortypes.MultiError,
 ) error {
 	return func(
 		ctx context.Context,
 		entity *factoringcompany.FactoringCompany,
-		_ *validationframework.TenantedValidationContext,
+		_ *validationframework.Context,
 		multiErr *errortypes.MultiError,
 	) error {
 		if entity.Status != domaintypes.StatusInactive || entity.ID.IsNil() {
@@ -102,13 +96,13 @@ func refuseDeactivatingAssigned(
 func (v *Validator) ValidateCreate(
 	ctx context.Context,
 	entity *factoringcompany.FactoringCompany,
-) *errortypes.MultiError {
+) error {
 	return v.validator.ValidateCreate(ctx, entity)
 }
 
 func (v *Validator) ValidateUpdate(
 	ctx context.Context,
 	entity *factoringcompany.FactoringCompany,
-) *errortypes.MultiError {
+) error {
 	return v.validator.ValidateUpdate(ctx, entity)
 }

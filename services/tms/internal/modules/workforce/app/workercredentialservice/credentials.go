@@ -438,9 +438,7 @@ func (s *Service) loadForChange(
 		return nil, err
 	}
 	if req.Version > 0 && original.Version != req.Version {
-		return nil, errortypes.NewValidationError(
-			"version",
-			errortypes.ErrVersionMismatch,
+		return nil, errortypes.NewVersionMismatchError(
 			"Credential was changed by someone else. Reload and try again",
 		)
 	}

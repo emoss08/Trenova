@@ -15,8 +15,8 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*FuelSurchargeProgram)(nil)
-	_ domaintypes.PostgresSearchable     = (*FuelSurchargeProgram)(nil)
+	_ validationframework.Entity     = (*FuelSurchargeProgram)(nil)
+	_ domaintypes.PostgresSearchable = (*FuelSurchargeProgram)(nil)
 )
 
 type FuelSurchargeProgram struct {

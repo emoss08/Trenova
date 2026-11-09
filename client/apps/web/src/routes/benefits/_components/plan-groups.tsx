@@ -41,7 +41,7 @@ export function PlanGroups({
       {groups.map((group) => (
         <section key={group.type} aria-label={t(group.label)} className="flex flex-col gap-1.5">
           <GroupHeading group={group} />
-          <ul className="bg-card divide-y overflow-hidden rounded-lg border">
+          <ul className="divide-y overflow-hidden rounded-lg border bg-card">
             {group.plans.map(({ plan, cost }) => {
               return (
                 <li key={plan.id}>
@@ -68,13 +68,13 @@ function GroupHeading({ group }: { group: PlanTypeGroup<BenefitPlanRow, BenefitC
 
   return (
     <header className="flex flex-wrap items-baseline justify-between gap-2 px-1">
-      <h4 className="text-muted-foreground text-xs font-medium">
+      <h4 className="text-xs font-medium text-muted-foreground">
         {t(group.label)}
         <span className="ml-1.5 font-normal normal-case tabular-nums">
           {t("{0, plural, one {# plan} other {# plans}}", group.plans.length)}
         </span>
       </h4>
-      <span className="text-muted-foreground text-xs tabular-nums">
+      <span className="text-xs text-muted-foreground tabular-nums">
         {t(
           "{0} covered {1} {2}",
           group.enrolled,
@@ -123,10 +123,10 @@ function PlanRow({ plan, cost, totalEnrolled, canUpdate, onEdit, onOpenRoster }:
       <div className="flex min-w-0 flex-col gap-1">
         <span className="flex min-w-0 flex-wrap items-center gap-2">
           <span className="truncate text-sm font-medium">{plan.name}</span>
-          <span className="text-muted-foreground text-xs tabular-nums">{plan.code}</span>
+          <span className="text-xs text-muted-foreground tabular-nums">{plan.code}</span>
           {archived ? <Badge variant="danger">{t("Archived")}</Badge> : null}
         </span>
-        <span className="text-muted-foreground truncate text-xs">{detail.join(" · ")}</span>
+        <span className="truncate text-xs text-muted-foreground">{detail.join(" · ")}</span>
         <div className="flex items-center gap-2">
           <span
             role="img"
@@ -136,15 +136,15 @@ function PlanRow({ plan, cost, totalEnrolled, canUpdate, onEdit, onOpenRoster }:
               enrolled,
               totalEnrolled,
             )}
-            className="bg-muted flex h-1 w-32 overflow-hidden rounded-full"
+            className="flex h-1 w-32 overflow-hidden rounded-full bg-muted"
           >
             <span
               aria-hidden
-              className="bg-brand/60 h-full rounded-full transition-[width] duration-500 ease-out motion-reduce:transition-none"
+              className="h-full rounded-full bg-brand/60 transition-[width] duration-500 ease-out motion-reduce:transition-none"
               style={{ width: `${headcountShare(enrolled, totalEnrolled)}%` }}
             />
           </span>
-          <span className="text-muted-foreground text-2xs tabular-nums">
+          <span className="text-2xs text-muted-foreground tabular-nums">
             {t("{0} on it{1}", enrolled, waived > 0 ? ` ${t("· {0} declined", waived)}` : "")}
           </span>
         </div>

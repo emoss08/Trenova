@@ -80,7 +80,7 @@ function DetailsCard({
       onMouseLeave={() => onAttention?.("hover", null)}
       onFocus={() => onAttention?.("focus", regions)}
       onBlur={leaveFocus}
-      className="bg-card min-w-0 rounded-lg border"
+      className="min-w-0 rounded-lg border bg-card"
     >
       <header className="border-b px-4 py-3">
         <div className="flex min-w-0 flex-col gap-0.5">
@@ -90,7 +90,7 @@ function DetailsCard({
               {prints}
             </InfoTooltip>
           </div>
-          <p className="text-muted-foreground text-xs">{description}</p>
+          <p className="text-xs text-muted-foreground">{description}</p>
         </div>
       </header>
       <div className="flex flex-col gap-3 p-4">{children}</div>
@@ -320,12 +320,12 @@ export function FactoringCompanyForm({
       >
         {recourseFromAgreement ? (
           <div className="flex items-center gap-3 rounded-md border border-dashed px-3 py-2.5">
-            <Lock01Icon className="text-muted-foreground size-3.5 shrink-0" />
+            <Lock01Icon className="size-3.5 shrink-0 text-muted-foreground" />
             <span className="flex min-w-0 flex-1 flex-col gap-0.5">
               <span className="text-sm font-medium">
                 {getValues("nonRecourse") ? t("Non-recourse") : t("Recourse")}
               </span>
-              <span className="text-muted-foreground text-xs">
+              <span className="text-xs text-muted-foreground">
                 {t(
                   "Set by the agreement in force and kept in step with it. Change it on the agreement.",
                 )}

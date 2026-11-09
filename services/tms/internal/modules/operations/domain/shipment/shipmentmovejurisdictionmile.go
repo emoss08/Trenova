@@ -21,7 +21,7 @@ var (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*ShipmentMoveJurisdictionMile)(nil)
+	_ validationframework.Entity = (*ShipmentMoveJurisdictionMile)(nil)
 )
 
 type ShipmentMoveJurisdictionMile struct {

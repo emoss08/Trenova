@@ -8,17 +8,16 @@ import (
 	"github.com/emoss08/trenova/pkg/validationframework"
 )
 
-func createSystemDocumentTypeProtectionRule() validationframework.TenantedRule[*documenttype.DocumentType] {
-	return validationframework.NewTenantedRule[*documenttype.DocumentType](
+func createSystemDocumentTypeProtectionRule() validationframework.Rule[*documenttype.DocumentType] {
+	return validationframework.NewRule[*documenttype.DocumentType](
 		"system_document_type_protection",
 	).
 		OnUpdate().
-		WithStage(validationframework.ValidationStageBusinessRules).
-		WithPriority(validationframework.ValidationPriorityHigh).
+		WithStage(validationframework.StageBusinessRules).
 		WithValidation(func(
 			_ context.Context,
 			entity *documenttype.DocumentType,
-			_ *validationframework.TenantedValidationContext,
+			_ *validationframework.Context,
 			multiErr *errortypes.MultiError,
 		) error {
 			if entity.IsSystem {

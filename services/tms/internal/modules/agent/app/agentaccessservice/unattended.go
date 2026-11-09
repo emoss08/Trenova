@@ -2,7 +2,6 @@ package agentaccessservice
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
@@ -117,8 +116,7 @@ func (s *Service) withinActor(
 }
 
 func unattendedRoleError(err error) error {
-	var multiErr *errortypes.MultiError
-	if !errors.As(err, &multiErr) {
+	if !errortypes.IsMultiError(err) {
 		return err
 	}
 	return errortypes.NewValidationError(

@@ -64,6 +64,9 @@ func writeBlock(sb *strings.Builder, block *board.FilledBlock, location *time.Lo
 	case board.BlockNote:
 		writeNote(sb, block)
 		return
+	case board.BlockActions:
+		writeActions(sb, block.Actions)
+		return
 	case board.BlockFigures,
 		board.BlockRecords,
 		board.BlockCompare,
@@ -71,7 +74,8 @@ func writeBlock(sb *strings.Builder, block *board.FilledBlock, location *time.Lo
 		board.BlockChart,
 		board.BlockTimeline,
 		board.BlockChecks,
-		board.BlockMeter:
+		board.BlockMeter,
+		board.BlockWork:
 	}
 
 	sb.WriteString("\n## ")
@@ -109,7 +113,53 @@ func writeBlock(sb *strings.Builder, block *board.FilledBlock, location *time.Lo
 		writeChecks(sb, block.Checks)
 	case board.BlockMeter:
 		writeMeter(sb, block.Meter)
-	case board.BlockProse, board.BlockNote:
+	case board.BlockWork:
+		writeWork(sb, block.Work)
+	case board.BlockProse, board.BlockNote, board.BlockActions:
+	}
+}
+
+func writeWork(sb *strings.Builder, rows []board.WorkRow) {
+	for idx := range rows {
+		row := &rows[idx]
+		label := oneLine(row.Label)
+		if !row.Readable || label == "" {
+			label = "A record the reader may not open"
+		}
+		sb.WriteString("- ")
+		sb.WriteString(label)
+		if len(row.Signals) == 0 {
+			sb.WriteString(": nothing open\n")
+			continue
+		}
+		sb.WriteString("\n")
+		for _, signal := range row.Signals {
+			sb.WriteString("  - ")
+			sb.WriteString(signal.Lens)
+			sb.WriteString(": ")
+			sb.WriteString(oneLine(signal.Title))
+			sb.WriteString("\n")
+		}
+	}
+}
+
+func writeActions(sb *strings.Builder, actions []board.FilledAction) {
+	if len(actions) == 0 {
+		return
+	}
+	sb.WriteString("\nOffered as buttons that send the person's own request:\n")
+	for idx := range actions {
+		action := &actions[idx]
+		sb.WriteString("- ")
+		sb.WriteString(oneLine(action.Label))
+		sb.WriteString(": ")
+		sb.WriteString(oneLine(action.Ask))
+		if labels := rowLabels(action.Records); labels != "" {
+			sb.WriteString(" (")
+			sb.WriteString(labels)
+			sb.WriteString(")")
+		}
+		sb.WriteString("\n")
 	}
 }
 

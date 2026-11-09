@@ -777,6 +777,12 @@ func TestDeskMemories_AnAgentsOrganizationOfferIsKeptForEveryoneOnlyByAManager(t
 	assert.Equal(t, agentmemory.MemoryScopeUser, own.Memory.Scope)
 	require.NotNil(t, own.Memory.OwnerUserID)
 	assert.Equal(t, avery, *own.Memory.OwnerUserID)
+	assert.NotEqual(t, forEveryone.ID, own.Memory.ID,
+		"keeping an offer for others for yourself saves a copy of your own")
+	assert.Equal(t, agentmemory.MemorySourceUser, own.Memory.Source)
+	assert.Equal(t, agentmemory.MemoryStatusSuggested, w.repo.memories[forEveryone.ID].Status,
+		"the offer stays in front of an administrator")
+	assert.Equal(t, agentmemory.MemoryScopeOrganization, w.repo.memories[forEveryone.ID].Scope)
 
 	kept, err := w.svc.ConfirmDesk(t.Context(), &agentmemoryports.ConfirmDeskMemoryRequest{
 		Actor: w.actor(true), ID: offer().ID, Content: "Columbus loads need a lumper receipt.",
@@ -913,4 +919,11 @@ func TestReader_ReadsTheRolesAPersonInherits(t *testing.T) {
 	nobody, err := w.svc.Reader(t.Context(), w.actor(false).Actor.TenantInfo(), pulid.Nil)
 	require.NoError(t, err)
 	assert.Empty(t, nobody.RoleIDs)
+}
+
+func (r *deskRepo) ListNeighbors(
+	context.Context,
+	*agentmemoryports.ListAgentMemoryNeighborsRequest,
+) ([]*agentmemory.Memory, error) {
+	return nil, nil
 }

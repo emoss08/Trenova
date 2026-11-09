@@ -2,6 +2,7 @@ package manualjournalservice
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
@@ -37,7 +38,7 @@ func (v *Validator) ValidateDraftUpsert(
 	ctx context.Context,
 	entity *manualjournal.Request,
 	accountingControl *accountingcontrol.AccountingControl,
-) *errortypes.MultiError {
+) error {
 	if accountingControl != nil {
 		if strings.TrimSpace(entity.CurrencyCode) == "" {
 			entity.CurrencyCode = accountingControl.FunctionalCurrencyCode
@@ -51,7 +52,7 @@ func (v *Validator) ValidateDraftUpsert(
 				errortypes.ErrInvalid,
 				"Manual journal currency must match the tenant functional currency",
 			)
-			return multiErr
+			return multiErr.Err()
 		}
 	}
 
@@ -59,7 +60,7 @@ func (v *Validator) ValidateDraftUpsert(
 	entity.Validate(multiErr)
 
 	if multiErr.HasErrors() {
-		return multiErr
+		return multiErr.Err()
 	}
 
 	period, err := v.fiscalRepo.GetPeriodByDate(ctx, fiscalperiodports.GetPeriodByDateRequest{
@@ -73,7 +74,7 @@ func (v *Validator) ValidateDraftUpsert(
 			errortypes.ErrInvalid,
 			"Accounting date must fall within a fiscal period",
 		)
-		return multiErr
+		return multiErr.Err()
 	}
 
 	entity.RequestedFiscalYearID = period.FiscalYearID
@@ -90,7 +91,7 @@ func (v *Validator) ValidateDraftUpsert(
 	}
 
 	if len(entity.Lines) == 0 {
-		return multiErrOrNil(multiErr)
+		return multiErr.Err()
 	}
 
 	accountIDs := uniqueAccountIDs(entity.Lines)
@@ -99,12 +100,8 @@ func (v *Validator) ValidateDraftUpsert(
 		GLAccountIDs: accountIDs,
 	})
 	if glErr != nil {
-		multiErr.Add(
-			"lines",
-			errortypes.ErrInvalid,
-			"Failed to validate GL accounts for manual journal lines",
-		)
-		return multiErr
+		multiErr.AddInternal(fmt.Errorf("failed to validate GL accounts for manual journal lines: %w", glErr))
+		return multiErr.Err()
 	}
 
 	accountMap := make(map[pulid.ID]struct{}, len(accounts))
@@ -136,13 +133,13 @@ func (v *Validator) ValidateDraftUpsert(
 		}
 	}
 
-	return multiErrOrNil(multiErr)
+	return multiErr.Err()
 }
 
 func (v *Validator) ValidateSubmit(
 	entity *manualjournal.Request,
 	accountingControl *accountingcontrol.AccountingControl,
-) *errortypes.MultiError {
+) error {
 	multiErr := errortypes.NewMultiError()
 	if !entity.Status.CanSubmit() {
 		multiErr.Add("status", errortypes.ErrInvalid, "Only draft manual journals can be submitted")
@@ -169,45 +166,45 @@ func (v *Validator) ValidateSubmit(
 			"Manual journal must be balanced before submission",
 		)
 	}
-	return multiErrOrNil(multiErr)
+	return multiErr.Err()
 }
 
-func (v *Validator) ValidateApprove(entity *manualjournal.Request) *errortypes.MultiError {
-	if entity.Status.CanApprove() {
-		return nil
-	}
+func (v *Validator) ValidateApprove(entity *manualjournal.Request) error {
+	return approveReport(entity).Err()
+}
+
+func approveReport(entity *manualjournal.Request) *errortypes.MultiError {
 	me := errortypes.NewMultiError()
-	me.Add("status", errortypes.ErrInvalid, "Only pending manual journals can be approved")
+	if !(entity.Status.CanApprove()) {
+		me.Add("status", errortypes.ErrInvalid, "Only pending manual journals can be approved")
+	}
 	return me
 }
 
 func (v *Validator) ValidateReject(
 	reason string,
 	entity *manualjournal.Request,
-) *errortypes.MultiError {
-	me := v.ValidateApprove(entity)
+) error {
+	me := approveReport(entity)
 	if strings.TrimSpace(reason) == "" {
-		if me == nil {
-			me = errortypes.NewMultiError()
-		}
 		me.Add("reason", errortypes.ErrRequired, "Rejection reason is required")
 	}
-	return multiErrOrNil(me)
+	return me.Err()
 }
 
-func (v *Validator) ValidatePost(entity *manualjournal.Request) *errortypes.MultiError {
+func (v *Validator) ValidatePost(entity *manualjournal.Request) error {
 	if entity.Status == manualjournal.StatusApproved {
 		return nil
 	}
 	me := errortypes.NewMultiError()
 	me.Add("status", errortypes.ErrInvalid, "Only approved manual journals can be posted")
-	return me
+	return me.Err()
 }
 
 func (v *Validator) ValidateCancel(
 	entity *manualjournal.Request,
 	reason string,
-) *errortypes.MultiError {
+) error {
 	me := errortypes.NewMultiError()
 	if !entity.Status.CanCancel() {
 		me.Add(
@@ -219,7 +216,7 @@ func (v *Validator) ValidateCancel(
 	if strings.TrimSpace(reason) == "" {
 		me.Add("reason", errortypes.ErrRequired, "Cancel reason is required")
 	}
-	return multiErrOrNil(me)
+	return me.Err()
 }
 
 func paginationFromEntity(entity *manualjournal.Request) pagination.TenantInfo {
@@ -240,11 +237,4 @@ func uniqueAccountIDs(lines []*manualjournal.Line) []pulid.ID {
 		result = append(result, line.GLAccountID)
 	}
 	return result
-}
-
-func multiErrOrNil(me *errortypes.MultiError) *errortypes.MultiError {
-	if me == nil || !me.HasErrors() {
-		return nil
-	}
-	return me
 }

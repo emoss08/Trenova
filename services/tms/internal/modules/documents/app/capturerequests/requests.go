@@ -209,7 +209,7 @@ func (s *Service) CheckTarget(
 	multiErr := errortypes.NewMultiError()
 	target.Validate(multiErr, capture.TargetFields{Type: typeField, ID: idField}, true)
 	if multiErr.HasErrors() {
-		return multiErr
+		return multiErr.Err()
 	}
 
 	if _, err := s.support.Require(

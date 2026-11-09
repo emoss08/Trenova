@@ -253,7 +253,9 @@ describe("OnboardingPage", { timeout: 30_000 }, () => {
 
     await new Promise((resolve) => setTimeout(resolve, 400));
     expect(screen.queryByPlaceholderText("27377")).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /^Mountain time/, pressed: false })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /^Mountain time/, pressed: false }),
+    ).toBeInTheDocument();
 
     await user.hover(option);
     expect(option).toHaveAttribute("aria-selected", "true");
@@ -426,7 +428,13 @@ describe("OnboardingPage", { timeout: 30_000 }, () => {
         type: "https://trenova.app/problems/validation-error",
         title: "Validation Failed",
         status: 422,
-        errors: [{ field: "organization.dotNumber", message: "DOT number is already in use" }],
+        errors: [
+          {
+            path: ["organization", "dotNumber"],
+            field: "organization.dotNumber",
+            message: "DOT number is already in use",
+          },
+        ],
       }),
     );
     const user = userEvent.setup();

@@ -929,7 +929,6 @@
   "The query ID on the Clearinghouse response.": "El ID de consulta que figura en la respuesta del Clearinghouse.",
   "The query ID the Clearinghouse assigned, for matching the answer when it comes back.": "El ID de consulta asignado por el Clearinghouse, para cotejar la respuesta cuando llegue.",
   "The reason recorded on the event itself.": "El motivo registrado en el propio evento.",
-  "The record": "El registro",
   "The record stays as it is. The driver is told, with your reason.": "El expediente queda como está. Se informa al conductor, con el motivo que indique.",
   "The report could not be loaded. Try again in a moment.": "No se pudo cargar el informe. Vuelva a intentarlo en un momento.",
   "The required courses come from the driver type's course matrix; a required course that was never assigned shows as Missing. One record speaks for each course: an open assignment first, otherwise the strongest closed record, with a completion or waiver outranking a lapsed one and a lapsed one outranking a failure.": "Los cursos obligatorios proceden de la matriz de cursos del tipo de conductor; un curso obligatorio que nunca se asignó aparece como Ausente. Un solo registro representa a cada curso: primero una asignación abierta y, si no, el registro cerrado más fuerte, donde una finalización o exención prevalece sobre uno caducado y este sobre un suspenso.",

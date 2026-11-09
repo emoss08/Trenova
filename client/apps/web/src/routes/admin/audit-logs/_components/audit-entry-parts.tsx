@@ -42,7 +42,7 @@ export function AuditValue({
         ) : null}
         <span className="wrap-anywhere">{formatted.value}</span>
         {formatted.transformed ? (
-          <span className="text-muted-foreground font-mono text-xs">
+          <span className="font-mono text-xs text-muted-foreground">
             {t("Raw: {0}", formatAuditValue(value))}
           </span>
         ) : null}
@@ -54,7 +54,7 @@ export function AuditValue({
   return (
     <span className="flex min-w-0 flex-col gap-1.5">
       <span className="flex items-center gap-2">
-        <span className="text-muted-foreground text-xs">
+        <span className="text-xs text-muted-foreground">
           {Array.isArray(value)
             ? t("{0, plural, one {List of # item} other {List of # items}}", count)
             : t("{0, plural, one {Object with # field} other {Object with # fields}}", count)}
@@ -88,14 +88,14 @@ function FieldHistory({
   if (isPending) {
     return (
       <div aria-busy aria-label={t("Loading this field's history")} className="flex flex-col gap-1">
-        <span aria-hidden className="ui-shimmer block h-5 rounded-sm" />
-        <span aria-hidden className="ui-shimmer block h-5 rounded-sm" />
+        <span aria-hidden className="block h-5 ui-shimmer rounded-sm" />
+        <span aria-hidden className="block h-5 ui-shimmer rounded-sm" />
       </div>
     );
   }
   if (isError || !data || data.length === 0) {
     return (
-      <p className="text-muted-foreground text-xs">{t("No earlier changes to this field.")}</p>
+      <p className="text-xs text-muted-foreground">{t("No earlier changes to this field.")}</p>
     );
   }
 
@@ -109,7 +109,7 @@ function FieldHistory({
             <span className="wrap-anywhere">
               {formatAuditFieldValue(to, field, currency).value}
             </span>
-            <span className="text-muted-foreground shrink-0">
+            <span className="shrink-0 text-muted-foreground">
               {t(
                 "{0} by {1}",
                 formatToUserTimezone(change.timestamp),
@@ -138,22 +138,22 @@ export function ChangeRow({
 
   return (
     <div className="grid grid-cols-[6rem_minmax(0,1fr)] gap-x-3 border-b px-3 py-2 last:border-b-0">
-      <span className="text-foreground-subtle pt-px text-xs font-medium">
+      <span className="pt-px text-xs font-medium text-foreground-subtle">
         {formatFieldLabel(change.path)}
       </span>
       <div className="flex min-w-0 flex-col gap-1 text-sm">
         {change.type === "added" ? (
-          <span className="text-foreground-subtle text-xs">{t("Was empty")}</span>
+          <span className="text-xs text-foreground-subtle">{t("Was empty")}</span>
         ) : (
-          <span className="text-muted-foreground decoration-muted-foreground/45 line-through">
+          <span className="text-muted-foreground line-through decoration-muted-foreground/45">
             <AuditValue value={change.from} path={change.path} currency={currency} />
           </span>
         )}
         {change.type === "removed" ? (
-          <span className="text-foreground-subtle text-xs">{t("Cleared")}</span>
+          <span className="text-xs text-foreground-subtle">{t("Cleared")}</span>
         ) : (
           <span className="flex items-start gap-1.5">
-            <span aria-hidden className="bg-success mt-1.5 size-1.5 shrink-0 rounded-full" />
+            <span aria-hidden className="mt-1.5 size-1.5 shrink-0 rounded-full bg-success" />
             <AuditValue value={change.to} path={change.path} currency={currency} />
           </span>
         )}
@@ -161,7 +161,7 @@ export function ChangeRow({
           type="button"
           aria-expanded={showHistory}
           onClick={() => setShowHistory((current) => !current)}
-          className="ui-focus-ring text-foreground-subtle hover:text-foreground self-start rounded-sm text-xs underline underline-offset-3"
+          className="self-start rounded-sm ui-focus-ring text-xs text-foreground-subtle underline underline-offset-3 hover:text-foreground"
         >
           {showHistory ? t("Hide history") : t("History")}
         </button>
@@ -194,13 +194,13 @@ export function RequestEntries({
   if (isPending) {
     return (
       <div aria-busy aria-label={t("Loading the other entries from this request")} className="p-2">
-        <span aria-hidden className="ui-shimmer block h-10 rounded-sm" />
+        <span aria-hidden className="block h-10 ui-shimmer rounded-sm" />
       </div>
     );
   }
   if (isError) {
     return (
-      <p className="text-muted-foreground px-3 py-2 text-xs">
+      <p className="px-3 py-2 text-xs text-muted-foreground">
         {t("The request's other entries could not be loaded.")}
       </p>
     );
@@ -208,7 +208,7 @@ export function RequestEntries({
   const others = (data ?? []).filter((entry) => entry.id !== entryId);
   if (others.length === 0) {
     return (
-      <p className="text-muted-foreground px-3 py-2 text-xs">
+      <p className="px-3 py-2 text-xs text-muted-foreground">
         {t("This request wrote no other entry you can read.")}
       </p>
     );
@@ -222,7 +222,7 @@ export function RequestEntries({
             type="button"
             disabled={!onOpen}
             onClick={() => onOpen?.(entry.id)}
-            className="ui-focus-ring hover:bg-muted/60 grid w-full grid-cols-[minmax(0,1fr)_auto] gap-3 px-3 py-1.5 text-left text-xs disabled:cursor-default disabled:hover:bg-transparent"
+            className="grid w-full grid-cols-[minmax(0,1fr)_auto] gap-3 ui-focus-ring px-3 py-1.5 text-left text-xs hover:bg-muted/60 disabled:cursor-default disabled:hover:bg-transparent"
           >
             <span className="truncate">
               {entrySentence(entry)}
@@ -230,7 +230,7 @@ export function RequestEntries({
                 <span className="text-muted-foreground"> · {entry.actorName}</span>
               ) : null}
             </span>
-            <span className="text-foreground-subtle shrink-0 font-mono">
+            <span className="shrink-0 font-mono text-foreground-subtle">
               {entry.action || channelLabel(entry.channel)}
             </span>
           </button>

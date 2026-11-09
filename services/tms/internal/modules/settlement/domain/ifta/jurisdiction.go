@@ -17,7 +17,6 @@ import (
 const (
 	CountryCodeUS = "US"
 	CountryCodeCA = "CA"
-	CountryCodeMX = "MX"
 
 	maxJurisdictionNameLength = 100
 )

@@ -46,7 +46,7 @@ func (c DriverDigestCadence) Bundles() bool {
 }
 
 var (
-	_ validationframework.TenantedEntity = (*DashControl)(nil)
+	_ validationframework.Entity = (*DashControl)(nil)
 )
 
 type DashControl struct {

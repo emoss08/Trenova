@@ -24,7 +24,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/weatheralert"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelevent"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -119,6 +118,7 @@ func DescribeProposal(
 		},
 		SourceKind: watchtower.SourceAgentProposal,
 		SourceID:   entity.ID.String(),
+		About:      entity.TargetID,
 		Severity:   watchtower.SeverityInfo,
 		Title: who + " wants to " + textcase.HumanizeSnakeCase(
 			agenttoolports.ReadingOrder(entity.ToolName),
@@ -157,6 +157,7 @@ func DescribePlan(
 		},
 		SourceKind: watchtower.SourceAgentPlan,
 		SourceID:   entity.ID.String(),
+		About:      entity.TargetID,
 		Severity:   watchtower.SeverityInfo,
 		Title:      who + " proposes a plan: " + title,
 		Summary:    entity.Summary,
@@ -329,6 +330,7 @@ func DescribeCarrierIntelEvent(
 		Summary:     entity.Summary,
 		SubjectType: agent.SubjectCarrierIntelEvent,
 		SubjectID:   entity.ID,
+		About:       entity.CarrierID,
 		EventKind:   agenttrigger.EventCarrierIntelEventOpened,
 		Path:        pathCarrierMonitor + "?tab=events&event=" + entity.ID.String(),
 		Record:      watchtoweritem.ResourceRecord(permission.ResourceCarrier, name),
@@ -338,48 +340,6 @@ func DescribeCarrierIntelEvent(
 			watchtoweritem.FactAt("Detected", entity.DetectedAt),
 		},
 		OccurredAt: entity.DetectedAt,
-	}
-}
-
-// HOSViolationSourceID keys a violation, whose record has no id of its own.
-func HOSViolationSourceID(entity *telematics.WorkerHOSViolation) string {
-	return entity.WorkerID.String() + ":" + entity.ViolationType + ":" + strconv.FormatInt(
-		entity.ViolationStartAt,
-		10,
-	)
-}
-
-// DescribeHOSViolation is a driver over their hours.
-func DescribeHOSViolation(
-	entity *telematics.WorkerHOSViolation,
-) watchtowerports.WatchtowerItemInput {
-	who := "A driver"
-	if entity.Worker != nil {
-		who = strings.TrimSpace(entity.Worker.FirstName + " " + entity.Worker.LastName)
-	}
-
-	return watchtowerports.WatchtowerItemInput{
-		TenantInfo: pagination.TenantInfo{
-			OrgID: entity.OrganizationID,
-			BuID:  entity.BusinessUnitID,
-		},
-		SourceKind: watchtower.SourceHOSViolation,
-		SourceID:   HOSViolationSourceID(entity),
-		Severity:   watchtower.SeverityWarning,
-		Title:      who + ": " + textcase.HumanizeSnakeCase(entity.ViolationType),
-		Summary:    entity.Description,
-		// Nothing is woken by an hours violation, so the item carries its
-		// driver for a conversation to start from rather than an event to
-		// hand off.
-		SubjectType: agent.SubjectWorker,
-		SubjectID:   entity.WorkerID,
-		Path:        panelPath(pathWorkers, entity.WorkerID.String()),
-		Record:      watchtoweritem.ResourceRecord(permission.ResourceWorker, who),
-		Facts: []watchtower.Fact{
-			watchtoweritem.Fact("Violation", textcase.HumanizeSnakeCase(entity.ViolationType)),
-			watchtoweritem.FactAt("Started", entity.ViolationStartAt),
-		},
-		OccurredAt: entity.ViolationStartAt,
 	}
 }
 
@@ -481,6 +441,7 @@ func DescribeBillingException(
 		Summary:     entity.ExceptionNotes,
 		SubjectType: agent.SubjectBillingQueueItem,
 		SubjectID:   entity.ID,
+		About:       entity.ShipmentID,
 		EventKind:   agenttrigger.EventBillingQueueItemException,
 		Path:        panelPath(pathBillingQueue, entity.ID.String()),
 		Facts: []watchtower.Fact{
@@ -564,6 +525,7 @@ func DescribeDetentionOccurrence(
 		Summary:     summary,
 		SubjectType: agent.SubjectDetentionOccurrence,
 		SubjectID:   entity.ID,
+		About:       entity.ShipmentID,
 		EventKind:   agenttrigger.EventDetentionOccurrenceOpened,
 		Path:        pathDetentionDesk + "?occurrence=" + entity.ID.String(),
 		Record:      watchtoweritem.ShipmentRecord(entity.ShipmentProNumber),
@@ -685,6 +647,7 @@ func expiryTitle(soonest int64, count int) string {
 type UncoveredMove struct {
 	TenantInfo pagination.TenantInfo
 	MoveID     pulid.ID
+	ShipmentID pulid.ID
 	ProNumber  string
 	Reason     string
 	StartsAt   int64
@@ -719,6 +682,7 @@ func DescribeMoveCoverageRisk(entity UncoveredMove) watchtowerports.WatchtowerIt
 		Summary:     summary,
 		SubjectType: agent.SubjectShipmentMove,
 		SubjectID:   entity.MoveID,
+		About:       entity.ShipmentID,
 		EventKind:   agenttrigger.EventShipmentMoveCoverageAtRisk,
 		Path:        watchtoweritem.PathDispatchConsole,
 		Record: watchtoweritem.ResourceRecord(
@@ -759,6 +723,7 @@ func DescribeInboundMessage(
 		Summary:     inboundMessageSummary(entity),
 		SubjectType: agent.SubjectInboundMessage,
 		SubjectID:   entity.ID,
+		About:       pulid.FirstNotNil(entity.MatchedShipmentID, entity.MatchedCustomerID, entity.MatchedCarrierID, entity.ID),
 		EventKind:   agenttrigger.EventInboundMessageClassified,
 		Path:        pathInbox + "?message=" + entity.ID.String(),
 		Record: watchtoweritem.ResourceRecord(

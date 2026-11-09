@@ -58,7 +58,11 @@ function view(overrides: Partial<PublicTrackingView> = {}): PublicTrackingView {
   };
 }
 
-function problem(status: number, type: string, errors?: Array<{ field: string; message: string }>) {
+function problem(
+  status: number,
+  type: string,
+  errors?: Array<{ path: (string | number)[]; field: string; message: string }>,
+) {
   return new ApiRequestError(status, {
     type: `https://trenova.app/problems/${type}`,
     title: "Error",
@@ -144,7 +148,11 @@ describe("CarrierTrackingPublicPage", () => {
     mocks.getPublicTracking.mockResolvedValue(view());
     mocks.postCheckCall.mockRejectedValue(
       problem(400, "validation-error", [
-        { field: "reportedAt", message: "The reported time cannot be in the future" },
+        {
+          path: ["reportedAt"],
+          field: "reportedAt",
+          message: "The reported time cannot be in the future",
+        },
       ]),
     );
     const user = userEvent.setup();
@@ -175,7 +183,7 @@ describe("CarrierTrackingPublicPage", () => {
   it("shows the dead-link state when the token is refused", async () => {
     mocks.getPublicTracking.mockRejectedValue(
       problem(400, "validation-error", [
-        { field: "token", message: "This tracking link is no longer valid" },
+        { path: ["token"], field: "token", message: "This tracking link is no longer valid" },
       ]),
     );
 

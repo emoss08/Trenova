@@ -49,8 +49,8 @@ export function HomeEditDock({
         ) : (
           <ActionDockIndicator
             icon={
-              <span className="bg-background/15 flex size-6 items-center justify-center rounded-full">
-                <Grid01Icon className="text-background size-3.5" />
+              <span className="flex size-6 items-center justify-center rounded-full bg-background/15">
+                <Grid01Icon className="size-3.5 text-background" />
               </span>
             }
             title={t("Editing home screen")}

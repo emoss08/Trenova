@@ -114,8 +114,31 @@ func TestTractorRepository(t *testing.T) {
 
 	t.Run("get by id reads the requested details", func(t *testing.T) {
 		got, err := repo.GetByID(a.Ctx, tractorports.GetTractorByIDRequest{
-			ID:                      first.ID,
-			TractorRelationIncludes: tractorports.FullTractorRelationIncludes(),
+			ID: first.ID,
+			TractorRelationIncludes: tractorports.TractorRelationIncludes{
+				IncludeTenantDetails:          true,
+				IncludeEquipmentDetails:       true,
+				IncludeFleetDetails:           true,
+				IncludeWorkerDetails:          true,
+				IncludeBusinessUnit:           true,
+				IncludeOrganization:           true,
+				IncludeEquipmentType:          true,
+				IncludeEquipmentManufacturer:  true,
+				IncludeFleetCode:              true,
+				IncludeState:                  true,
+				IncludePrimaryWorker:          true,
+				IncludePrimaryWorkerState:     true,
+				IncludePrimaryWorkerFleet:     true,
+				IncludePrimaryWorkerManager:   true,
+				IncludeSecondaryWorker:        true,
+				IncludeSecondaryWorkerState:   true,
+				IncludeSecondaryWorkerFleet:   true,
+				IncludeSecondaryWorkerManager: true,
+				IncludeOwnerWorker:            true,
+				IncludeLastKnownLocation:      true,
+				IncludeInProgressMove:         true,
+				IncludeCustomFields:           true,
+			},
 		})
 		require.NoError(t, err)
 		require.NotNil(t, got.PrimaryWorker)

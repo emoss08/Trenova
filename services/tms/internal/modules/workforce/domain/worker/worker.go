@@ -26,10 +26,10 @@ import (
 )
 
 var (
-	_ domaintypes.PostgresSearchable     = (*Worker)(nil)
-	_ validationframework.TenantedEntity = (*Worker)(nil)
-	_ customfield.CustomFieldsSupporter  = (*Worker)(nil)
-	_ pagination.CursorEntity            = (*Worker)(nil)
+	_ domaintypes.PostgresSearchable    = (*Worker)(nil)
+	_ validationframework.Entity        = (*Worker)(nil)
+	_ customfield.CustomFieldsSupporter = (*Worker)(nil)
+	_ pagination.CursorEntity           = (*Worker)(nil)
 )
 
 // Drivers and operational workers

@@ -17,6 +17,7 @@ import { translate } from "@trenova/shared/i18n/runtime";
 import { GraphQLRequestError } from "@trenova/shared/lib/graphql";
 import { isRecord, parseCommaSeparatedList } from "@trenova/shared/lib/utils";
 import { compareDecimalStrings, isDecimalString } from "@trenova/shared/types/decimal";
+import { fieldPathSchema } from "@trenova/shared/types/errors";
 import { z } from "zod";
 import { defineLabels } from "@trenova/shared/i18n/labels";
 
@@ -526,25 +527,25 @@ export function isCostConfirmationRequiredError(error: unknown): boolean {
   );
 }
 
-export function remapRuleFieldPath(field: string, rules: readonly { code: string }[]): string {
-  if (!field.startsWith("rules.")) {
-    return field;
+/**
+ * The server addresses a rule by its code (`["rules", "authority.revoked", "action"]`); the form
+ * holds rules as a list, so the code becomes the rule's index. An error on a whole rule lands on
+ * its action, the field the form shows for it.
+ */
+export function remapRuleFieldPath(
+  path: readonly (string | number)[],
+  rules: readonly { code: string }[],
+): (string | number)[] {
+  const [head, code, ...rest] = path;
+  if (head !== "rules" || typeof code !== "string") {
+    return [...path];
   }
-  const rest = field.slice("rules.".length);
-  let matchIndex = -1;
-  let matchLength = 0;
-  for (let index = 0; index < rules.length; index++) {
-    const code = rules[index].code;
-    if ((rest === code || rest.startsWith(`${code}.`)) && code.length > matchLength) {
-      matchIndex = index;
-      matchLength = code.length;
-    }
+  const index = rules.findIndex((rule) => rule.code === code);
+  if (index === -1) {
+    return [...path];
   }
-  if (matchIndex === -1) {
-    return field;
-  }
-  const suffix = rest.slice(matchLength);
-  return suffix === "" ? `rules.${matchIndex}.action` : `rules.${matchIndex}${suffix}`;
+
+  return rest.length === 0 ? ["rules", index, "action"] : ["rules", index, ...rest];
 }
 
 export function remapRuleFieldErrors(error: unknown, rules: readonly { code: string }[]): unknown {
@@ -560,11 +561,13 @@ export function remapRuleFieldErrors(error: unknown, rules: readonly { code: str
       if (!Array.isArray(graphQLError.errors)) {
         return graphQLError;
       }
-      const errors = graphQLError.errors.map((entry: unknown) =>
-        isRecord(entry) && typeof entry.field === "string"
-          ? { ...entry, field: remapRuleFieldPath(entry.field, rules) }
-          : entry,
-      );
+      const errors = graphQLError.errors.map((entry: unknown) => {
+        if (!isRecord(entry)) {
+          return entry;
+        }
+        const path = fieldPathSchema.safeParse(entry.path);
+        return path.success ? { ...entry, path: remapRuleFieldPath(path.data, rules) } : entry;
+      });
       return {
         ...graphQLError,
         errors,

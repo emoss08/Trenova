@@ -3,14 +3,12 @@ package ratematrixservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix/ratematrixdb"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrixcell"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/keelcheck"
 	"github.com/emoss08/trenova/pkg/tenantedvalidation"
+	"github.com/emoss08/trenova/pkg/validationframework"
 	"go.uber.org/fx"
 )
 
@@ -22,7 +20,7 @@ const maxCellsPerReplace = 250_000
 type ValidatorParams struct {
 	fx.In
 
-	DB *postgres.Connection
+	Integrity validationframework.IntegrityChecker
 }
 
 type Validator struct {
@@ -30,23 +28,15 @@ type Validator struct {
 }
 
 func NewValidator(p ValidatorParams) *Validator {
-	return &Validator{validator: newBuilder(p.DB).Build()}
+	return &Validator{validator: newBuilder(p.Integrity).Build()}
 }
 
 func newBuilder(
-	db *postgres.Connection,
+	integrity validationframework.IntegrityChecker,
 ) *tenantedvalidation.Builder[*ratematrix.RateMatrix] {
-	builder := tenantedvalidation.NewBuilder[*ratematrix.RateMatrix]().
-		WithModelName("Rate Matrix")
-
-	if db == nil {
-		return builder
-	}
-
-	return builder.
-		WithUniquenessChecker(
-			keelcheck.NewChecker(db, ratematrixdb.RateMatrixesSchema()),
-		).
+	return tenantedvalidation.NewBuilder[*ratematrix.RateMatrix]().
+		WithModelName("Rate Matrix").
+		WithIntegrityChecker(integrity).
 		WithUniqueField(
 			"code",
 			"code",
@@ -58,14 +48,14 @@ func newBuilder(
 func (v *Validator) ValidateCreate(
 	ctx context.Context,
 	entity *ratematrix.RateMatrix,
-) *errortypes.MultiError {
+) error {
 	return v.validator.ValidateCreate(ctx, entity)
 }
 
 func (v *Validator) ValidateUpdate(
 	ctx context.Context,
 	entity *ratematrix.RateMatrix,
-) *errortypes.MultiError {
+) error {
 	return v.validator.ValidateUpdate(ctx, entity)
 }
 
@@ -78,7 +68,7 @@ func (v *Validator) ValidateUpdate(
 func (v *Validator) ValidateCells(
 	matrix *ratematrix.RateMatrix,
 	req *ratematrixports.ReplaceRateMatrixCellsRequest,
-) *errortypes.MultiError {
+) error {
 	multiErr := errortypes.NewMultiError()
 
 	if len(req.Cells) > maxCellsPerReplace {
@@ -88,7 +78,7 @@ func (v *Validator) ValidateCells(
 			"A rate matrix cannot be loaded with more than 250,000 cells at once",
 		)
 
-		return multiErr
+		return multiErr.Err()
 	}
 
 	dimensions := matrix.OrderedDimensions()
@@ -110,9 +100,5 @@ func (v *Validator) ValidateCells(
 		ratematrixcell.ValidatePostalAxes(dimensions, req.Cells, multiErr)
 	}
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }

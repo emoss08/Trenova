@@ -18,9 +18,9 @@ import (
 const CodePOD = "POD"
 
 var (
-	_ validationframework.TenantedEntity = (*DocumentType)(nil)
-	_ domaintypes.PostgresSearchable     = (*DocumentType)(nil)
-	_ pagination.CursorEntity            = (*DocumentType)(nil)
+	_ validationframework.Entity     = (*DocumentType)(nil)
+	_ domaintypes.PostgresSearchable = (*DocumentType)(nil)
+	_ pagination.CursorEntity        = (*DocumentType)(nil)
 )
 
 type DocumentType struct {

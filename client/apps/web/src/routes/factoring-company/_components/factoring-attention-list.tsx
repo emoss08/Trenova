@@ -245,7 +245,7 @@ export function FactoringAttentionList({
                   </span>
                   <span className="flex min-w-0 flex-col gap-0.5">
                     <span className="text-sm font-medium">{worded.title}</span>
-                    <span className="text-muted-foreground text-xs leading-relaxed">
+                    <span className="text-xs leading-relaxed text-muted-foreground">
                       {worded.detail}
                     </span>
                   </span>

@@ -171,11 +171,7 @@ func (m *reviewMove) plan(
 		}
 		multiErr := errortypes.NewMultiError()
 		billingqueueservice.CheckStatusFields(after, multiErr)
-		if multiErr.HasErrors() {
-			return multiErr
-		}
-
-		return nil
+		return multiErr.Err()
 	}
 }
 

@@ -2,7 +2,6 @@ package capturefiling
 
 import (
 	"context"
-	"errors"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
@@ -94,8 +93,7 @@ func (s *Service) FileItems(ctx context.Context, in *FileItemsInput) (*FileItems
 // A reason the person can act on is passed through; anything else is logged
 // and reported as a failure to try again, since its text is for operators.
 func (s *Service) filingFailure(itemID pulid.ID, err error) string {
-	var multiErr *errortypes.MultiError
-	if errors.As(err, &multiErr) && multiErr.HasErrors() {
+	if multiErr, ok := errortypes.RefusalOf(err); ok && multiErr.HasErrors() {
 		messages := make([]string, 0, len(multiErr.Errors))
 		for _, fieldErr := range multiErr.Errors {
 			messages = append(messages, fieldErr.Error())

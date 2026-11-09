@@ -6,6 +6,7 @@ fragment AgentMemoryTableRowFields on AgentMemory {
   source
   status
   scope
+  ownerUserId
   roleId
   subjectType
   subjectId

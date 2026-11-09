@@ -205,7 +205,7 @@ function FundingForm({
               ))}
             </div>
             {itemsError ? (
-              <p role="alert" className="text-danger text-xs">
+              <p role="alert" className="text-xs text-danger">
                 {itemsError}
               </p>
             ) : null}
@@ -214,7 +214,7 @@ function FundingForm({
         <section className="flex flex-col gap-3">
           <h3 className="text-sm font-medium">{t("What it books")}</h3>
           {inputKey === null ? (
-            <p className="text-muted-foreground text-sm">
+            <p className="text-sm text-muted-foreground">
               {t("Mark an invoice funded or rejected to see the journal it books.")}
             </p>
           ) : (
@@ -262,11 +262,11 @@ function FundingItemRow({
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <div className="flex flex-col">
           <span className="font-mono text-sm font-medium">{invoiceNumber}</span>
-          <span className="text-muted-foreground text-xs">{customerName}</span>
+          <span className="text-xs text-muted-foreground">{customerName}</span>
         </div>
         <div className="flex flex-col items-end">
           <span className="text-sm tabular-nums">{face}</span>
-          <span className="text-muted-foreground text-xs">{expected}</span>
+          <span className="text-xs text-muted-foreground">{expected}</span>
         </div>
       </div>
       <FormGroup cols={outcome === "Undecided" ? 1 : 3}>
@@ -361,7 +361,7 @@ function FundingPlanBody({
         <KpiStripItem label={t("Fee")} value={money(plan.feeMinor)} />
         <KpiStripItem label={t("Reserve held")} value={money(plan.reserveMinor)} />
       </KpiStrip>
-      <p className="text-muted-foreground text-xs">
+      <p className="text-xs text-muted-foreground">
         {t("The schedule reads {0} afterwards.", FACTORING_SUBMISSION_STATUS_LABELS[plan.status])}
       </p>
       {plan.movements.map((movement) => (

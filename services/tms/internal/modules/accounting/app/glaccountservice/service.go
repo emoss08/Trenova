@@ -2,6 +2,7 @@ package glaccountservice
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -259,7 +260,7 @@ func (s *Service) Delete(
 func (s *Service) validateDelete(
 	ctx context.Context,
 	entity *glaccount.GLAccount,
-) *errortypes.MultiError {
+) error {
 	multiErr := errortypes.NewMultiError()
 
 	if entity.IsSystem {
@@ -282,16 +283,13 @@ func (s *Service) validateDelete(
 		).Exists(ctx, s.db.Keel(ctx))
 	})
 	if err != nil {
-		return nil //nolint:nilerr // validation callbacks collect field errors and intentionally continue
+		multiErr.AddInternal(fmt.Errorf("check child accounts: %w", err))
+		return multiErr.Err()
 	}
 
 	if hasActiveChild {
 		multiErr.Add("children", errortypes.ErrInvalid, "Cannot delete account with child accounts")
 	}
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }

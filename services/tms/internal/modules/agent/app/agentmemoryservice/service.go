@@ -13,6 +13,7 @@ package agentmemoryservice
 import (
 	"cmp"
 	"context"
+	"errors"
 	"fmt"
 	"reflect"
 	"regexp"
@@ -26,6 +27,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
@@ -89,6 +91,7 @@ type Params struct {
 	Security permissionports.SecurityAuditor
 	// Permissions says who may manage shared memory.
 	Permissions permissionports.PermissionEngine
+	Judge       agentmemoryports.MemoryJudge
 }
 
 type Service struct {
@@ -104,6 +107,7 @@ type Service struct {
 	roles       roleReader
 	security    permissionports.SecurityAuditor
 	permissions permissionports.PermissionEngine
+	judge       agentmemoryports.MemoryJudge
 }
 
 //nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
@@ -121,6 +125,7 @@ func New(p Params) agentmemoryports.AgentMemoryService {
 		roles:       rolesOrNil(p.Roles),
 		security:    p.Security,
 		permissions: p.Permissions,
+		judge:       p.Judge,
 	}
 }
 
@@ -195,23 +200,28 @@ func (s *Service) remember(
 	actor *permissionports.RequestActor,
 	manages bool,
 ) (*agentmemory.Memory, error) {
-	plan, err := s.planRemember(ctx, req, actor, manages)
+	plan, err := s.planRemember(ctx, req, actor, manages, true)
 	if err != nil {
 		return nil, err
 	}
 	if plan.Existing != nil {
-		refreshed, refreshErr := s.refresh(ctx, req.TenantInfo, plan.Existing)
-		if refreshErr != nil {
-			return nil, refreshErr
-		}
-		if plan.Replaced != nil && !plan.Held && !refreshed.Status.IsSuggestion() {
-			s.retireReplaced(ctx, plan.Replaced, refreshed, actor)
-		}
-
-		return refreshed, nil
+		return s.keepExisting(ctx, req, plan, actor)
 	}
 
 	created, err := s.repo.Create(ctx, plan.Memory)
+	if errors.Is(err, agentmemoryports.ErrMemoryAlreadyKept) {
+		same := sameMemoryRequest(req.TenantInfo, plan.Memory)
+		if plan.Existing, err = s.repo.FindActive(ctx, same); err != nil {
+			return nil, err
+		}
+		if plan.Existing == nil {
+			return nil, errortypes.NewConflictError(
+				"The same memory was being saved at the same time; try again",
+			)
+		}
+
+		return s.keepExisting(ctx, req, plan, actor)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -223,6 +233,23 @@ func (s *Service) remember(
 	}
 
 	return created, nil
+}
+
+func (s *Service) keepExisting(
+	ctx context.Context,
+	req *agentmemoryports.RememberRequest,
+	plan *agentmemoryports.RememberPlan,
+	actor *permissionports.RequestActor,
+) (*agentmemory.Memory, error) {
+	refreshed, err := s.refresh(ctx, req.TenantInfo, plan.Existing)
+	if err != nil {
+		return nil, err
+	}
+	if plan.Replaced != nil && !plan.Held && !refreshed.Status.IsSuggestion() {
+		s.retireReplaced(ctx, plan.Replaced, refreshed, actor)
+	}
+
+	return refreshed, nil
 }
 
 // refresh keeps the memory that already says what was asked to be saved, in
@@ -259,7 +286,7 @@ func (s *Service) PreviewRemember(
 	req *agentmemoryports.RememberRequest,
 	actor *permissionports.RequestActor,
 ) (*agentmemoryports.RememberPlan, error) {
-	return s.planRemember(ctx, req, actor, s.manages(ctx, req.TenantInfo, actor))
+	return s.planRemember(ctx, req, actor, s.manages(ctx, req.TenantInfo, actor), false)
 }
 
 func (s *Service) planRemember(
@@ -267,6 +294,7 @@ func (s *Service) planRemember(
 	req *agentmemoryports.RememberRequest,
 	actor *permissionports.RequestActor,
 	manages bool,
+	judge bool,
 ) (*agentmemoryports.RememberPlan, error) {
 	if actor == nil {
 		return nil, errortypes.NewValidationError(
@@ -277,34 +305,11 @@ func (s *Service) planRemember(
 	}
 
 	entity := NewMemory(req, actor)
-
-	if req.RunID.IsNotNil() {
-		if run, err := s.runs.GetByID(ctx, agentruntimeports.GetAgentRunByIDRequest{
-			ID:         req.RunID,
-			TenantInfo: &req.TenantInfo,
-		}); err != nil {
-			s.l.Warn(
-				"agent memory: run lookup failed",
-				zap.String("run", req.RunID.String()),
-				zap.Error(err),
-			)
-		} else {
-			if run.AgentDefinitionID.IsNotNil() {
-				definitionID := run.AgentDefinitionID
-				entity.AgentDefinitionID = &definitionID
-			}
-			// An assistant run answers a conversation, which is where the
-			// memory says it came from.
-			if run.SubjectType == agent.SubjectAssistantThread && run.SubjectID.IsNotNil() {
-				threadID := run.SubjectID
-				entity.SourceThreadID = &threadID
-			}
-		}
-	}
+	s.attachRun(ctx, req, entity)
 
 	plan := &agentmemoryports.RememberPlan{Memory: entity}
 	if req.Replaces.IsNotNil() {
-		replaced, held, err := s.planReplacement(ctx, req, entity)
+		replaced, held, err := s.planReplacement(ctx, req, entity, actor, manages)
 		if err != nil {
 			return nil, err
 		}
@@ -342,7 +347,55 @@ func (s *Service) planRemember(
 	}
 	plan.Existing = existing
 
+	s.consolidate(ctx, &consolidation{
+		req:     req,
+		plan:    plan,
+		actor:   actor,
+		manages: manages,
+		judge:   judge,
+	})
+	if plan.Existing == nil {
+		entity.Validate(me)
+		if me.HasErrors() {
+			return nil, me
+		}
+	}
+
 	return plan, nil
+}
+
+// attachRun names the agent and the conversation behind a memory recorded
+// from a run. An assistant run answers a conversation, which is where the
+// memory says it came from.
+func (s *Service) attachRun(
+	ctx context.Context,
+	req *agentmemoryports.RememberRequest,
+	entity *agentmemory.Memory,
+) {
+	if req.RunID.IsNil() {
+		return
+	}
+
+	run, err := s.runs.GetByID(ctx, agentruntimeports.GetAgentRunByIDRequest{
+		ID:         req.RunID,
+		TenantInfo: &req.TenantInfo,
+	})
+	if err != nil {
+		s.l.Warn("agent memory: run lookup failed",
+			zap.String("run", req.RunID.String()),
+			zap.Error(err),
+		)
+
+		return
+	}
+	if run.AgentDefinitionID.IsNotNil() {
+		definitionID := run.AgentDefinitionID
+		entity.AgentDefinitionID = &definitionID
+	}
+	if run.SubjectType == agent.SubjectAssistantThread && run.SubjectID.IsNotNil() {
+		threadID := run.SubjectID
+		entity.SourceThreadID = &threadID
+	}
 }
 
 func NewMemory(
@@ -434,6 +487,9 @@ func (s *Service) Update(
 	if entity.Scope.Shared() && !s.manages(ctx, req.TenantInfo, actor) {
 		return nil, errSharedMemoryManaged()
 	}
+	if err = rewritable(entity, actor); err != nil {
+		return nil, err
+	}
 
 	previous := jsonutils.MustToJSON(entity)
 	entity.Kind = req.Kind
@@ -468,6 +524,20 @@ func (s *Service) Update(
 	s.queueForRetrieval(ctx, updated)
 
 	return updated, nil
+}
+
+func rewritable(memory *agentmemory.Memory, actor *permissionports.RequestActor) error {
+	if memory.Scope != agentmemory.MemoryScopeUser {
+		return nil
+	}
+	if actor.IsUser() && memory.OwnerUserID != nil && *memory.OwnerUserID == actor.UserID {
+		return nil
+	}
+
+	return errortypes.NewAuthorizationError(
+		"A memory kept for one person is theirs to word: an administrator can read, pause " +
+			"or forget it, but only that person can change what it says",
+	)
 }
 
 // mayChangeStatus says who resumes, pauses or retires a memory: a shared one
@@ -544,8 +614,42 @@ func (s *Service) statusTarget(
 	if err = mayChangeStatus(current, actor, manages); err != nil {
 		return nil, err
 	}
+	if current.Status == agentmemory.MemoryStatusRetired &&
+		req.Status != agentmemory.MemoryStatusRetired {
+		if err = s.notReplaced(ctx, req.TenantInfo, current); err != nil {
+			return nil, err
+		}
+	}
 
 	return current, nil
+}
+
+func (s *Service) notReplaced(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	memory *agentmemory.Memory,
+) error {
+	replacements, err := s.repo.ListReplacements(
+		ctx,
+		agentmemoryports.ListAgentMemoryReplacementsRequest{
+			TenantInfo:  tenant,
+			ReplacedIDs: []pulid.ID{memory.ID},
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	replacement := agentmemory.NewestReplacements(replacements)[memory.ID]
+	if replacement == nil || !Replaceable(replacement.Status) {
+		return nil
+	}
+
+	return errortypes.NewBusinessError(
+		"A newer memory replaced this one: \"{0}\". Forget or edit that one instead of "+
+			"restoring this, so agents are not told both",
+		stringutils.Ellipsize(replacement.Content, 120),
+	)
 }
 
 func (s *Service) setStatus(
@@ -691,6 +795,9 @@ func (s *Service) ApproveSuggestion(
 
 	current, err := s.suggestion(ctx, req.ID, req.TenantInfo)
 	if err != nil {
+		return nil, err
+	}
+	if err = rewritable(current, actor); err != nil {
 		return nil, err
 	}
 
@@ -914,10 +1021,24 @@ func (s *Service) Recall(
 		Limit:             limit,
 	}
 	if req.SubjectType != "" && req.SubjectID.IsNotNil() {
-		search.Subject = &agentmemoryports.MemorySubjectRef{
+		search.Subjects = []agentmemoryports.MemorySubjectRef{{
 			Type: req.SubjectType,
 			ID:   req.SubjectID,
+		}}
+	}
+	if req.Record != nil {
+		subjects, err := s.subjects.Resolve(
+			ctx,
+			req.TenantInfo,
+			[]agentpagecontext.EntityRef{*req.Record},
+		)
+		if err != nil {
+			return nil, err
 		}
+		if len(subjects) == 0 {
+			return []agentmemoryports.RecalledMemory{}, nil
+		}
+		search.Subjects = append(search.Subjects, agentmemorysubjects.SubjectRefs(subjects)...)
 	}
 
 	found, err := s.repo.Search(ctx, search)
@@ -1147,10 +1268,6 @@ func (s *Service) Usage(
 	}, nil
 }
 
-// RecordCorrection keeps what a decision taught. A change to the proposed
-// parameters is always worth keeping, with the reason when a person typed
-// one; a rejection is worth keeping only when a person said why, because
-// "rejected" alone teaches the next run nothing it can act on.
 func (s *Service) RecordCorrection(
 	ctx context.Context,
 	proposal *agent.AgentProposal,
@@ -1165,60 +1282,65 @@ func (s *Service) RecordCorrection(
 		return nil, nil
 	}
 
-	entity := &agentmemory.Memory{
-		OrganizationID: proposal.OrganizationID,
-		BusinessUnitID: proposal.BusinessUnitID,
-		Kind:           agentmemory.MemoryKindCorrection,
-		Source:         agentmemory.MemorySourceDecision,
-		Status:         agentmemory.MemoryStatusActive,
-		Scope:          agentmemory.MemoryScopeOrganization,
-		ToolName:       proposal.ToolName,
-		Content:        content,
+	tenant := pagination.TenantInfo{
+		OrgID:  proposal.OrganizationID,
+		BuID:   proposal.BusinessUnitID,
+		UserID: decision.DecidedByUserID,
 	}
-	runID := proposal.RunID
-	entity.SourceRunID = &runID
-	proposalID := proposal.ID
-	entity.SourceProposalID = &proposalID
+	req := &agentmemoryports.RememberRequest{
+		TenantInfo:   tenant,
+		Kind:         agentmemory.MemoryKindCorrection,
+		Content:      content,
+		ToolName:     proposal.ToolName,
+		RunID:        proposal.RunID,
+		ProposalID:   proposal.ID,
+		Taint:        correctionTaint(proposal),
+		Scope:        agentmemory.MemoryScopeOrganization,
+		PersonUserID: decision.DecidedByUserID,
+		Source:       agentmemory.MemorySourceDecision,
+	}
+	if subjectType, subjectID, ok := correctionSubject(proposal); ok {
+		req.SubjectType = subjectType
+		req.SubjectID = subjectID
+	}
+
+	actor := &permissionports.RequestActor{
+		PrincipalType:  permissionports.PrincipalTypeSystem,
+		OrganizationID: tenant.OrgID,
+		BusinessUnitID: tenant.BuID,
+	}
 	if decision.DecidedByUserID.IsNotNil() {
-		userID := decision.DecidedByUserID
-		entity.CreatedByUserID = &userID
-	}
-	if proposal.Tainted {
-		entity.Tainted = true
-		entity.TaintRunID = &runID
+		actor = permissionports.UserActor(tenant)
 	}
 
-	// A correction reaches everyone's conversations, so it follows the rule
-	// every shared memory does: only a person who manages shared memory keeps
-	// one at once, and anyone else offers it for an administrator to approve.
-	tenant := pagination.TenantInfo{OrgID: proposal.OrganizationID, BuID: proposal.BusinessUnitID}
-	if !s.MayManageShared(ctx, tenant, decision.DecidedByUserID) {
-		entity.Status = agentmemory.MemoryStatusSuggested
+	return s.remember(ctx, req, actor, s.MayManageShared(ctx, tenant, decision.DecidedByUserID))
+}
+
+func correctionTaint(proposal *agent.AgentProposal) *agent.RunTaint {
+	taint := proposal.Taint.Clone()
+	if proposal.Tainted && !taint.Tainted() {
+		return &agent.RunTaint{Overflowed: true}
 	}
 
-	same := sameMemoryRequest(tenant, entity)
-	same.IncludeSuggested = entity.Status == agentmemory.MemoryStatusSuggested
-	existing, err := s.repo.FindActive(ctx, same)
-	if err != nil {
-		return nil, err
+	return taint
+}
+
+func correctionSubject(
+	proposal *agent.AgentProposal,
+) (agentmemory.MemorySubjectType, pulid.ID, bool) {
+	if proposal.TargetID.IsNil() {
+		return "", pulid.Nil, false
 	}
-	if existing != nil {
-		return existing, nil
+	kind, ok := agentmemory.MemoryRecordKindOfID(proposal.TargetID)
+	if !ok {
+		return "", pulid.Nil, false
+	}
+	subjectType, ok := kind.Subject()
+	if !ok {
+		return "", pulid.Nil, false
 	}
 
-	me := errortypes.NewMultiError()
-	entity.Validate(me)
-	if me.HasErrors() {
-		return nil, me
-	}
-
-	created, err := s.repo.Create(ctx, entity)
-	if err != nil {
-		return nil, err
-	}
-	s.queueForRetrieval(ctx, created)
-
-	return created, nil
+	return subjectType, proposal.TargetID, true
 }
 
 // label resolves the subject's name so a prompt line and a list row can say
@@ -1362,14 +1484,11 @@ func correctionContent(
 	switch agenttooltrust.OutcomeOfDecision(decision.Decision, decision.Modifications) {
 	case agenttooltrust.TrustOutcomeModified:
 		changes := describeChanges(proposal.ToolParams, decision.Modifications)
-		if len(changes) == 0 {
+		if len(changes) == 0 || reason == "" {
 			return ""
 		}
-		content := fmt.Sprintf("When %s was proposed, a person changed %s.",
-			proposal.ToolName, joinNatural(changes))
-		if reason != "" {
-			content += " Reason: " + reason
-		}
+		content := fmt.Sprintf("When %s was proposed, a person changed %s. Reason: %s",
+			proposal.ToolName, joinNatural(changes), reason)
 
 		return stringutils.Ellipsize(content, agentmemory.MaxMemoryContentChars)
 	case agenttooltrust.TrustOutcomeRejected:

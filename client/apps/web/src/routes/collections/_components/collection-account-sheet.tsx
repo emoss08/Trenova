@@ -115,19 +115,19 @@ function AccountBody({ customerId, view }: { customerId: string; view: Collectio
         <DescriptionItem label={t("Receivables")}>
           <span className="flex gap-3">
             <Link
-              className="ui-focus-ring text-brand rounded-control underline-offset-2 hover:underline"
+              className="rounded-control ui-focus-ring text-brand underline-offset-2 hover:underline"
               to={`/accounting/ar/customer-ledger?customerId=${customerId}`}
             >
               {t("Ledger")}
             </Link>
             <Link
-              className="ui-focus-ring text-brand rounded-control underline-offset-2 hover:underline"
+              className="rounded-control ui-focus-ring text-brand underline-offset-2 hover:underline"
               to={`/accounting/ar/open-items?customerId=${customerId}`}
             >
               {t("Open items")}
             </Link>
             <Link
-              className="ui-focus-ring text-brand rounded-control underline-offset-2 hover:underline"
+              className="rounded-control ui-focus-ring text-brand underline-offset-2 hover:underline"
               to={customerStatementPath(customerId)}
             >
               {t("Statement")}
@@ -154,7 +154,7 @@ function AccountBody({ customerId, view }: { customerId: string; view: Collectio
                 row.promise.madeByName,
               )}
             </span>
-            <span className="text-muted-foreground text-xs tabular-nums">
+            <span className="text-xs text-muted-foreground tabular-nums">
               {t(
                 "{0} paid since ({1}%)",
                 formatMinor(row.promise.paidSinceMinor, row.promise.currencyCode),

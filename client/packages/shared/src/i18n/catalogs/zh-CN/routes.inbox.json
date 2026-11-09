@@ -224,7 +224,6 @@
   "Me": "我",
   "Message text": "邮件正文",
   "Messages appear here as they arrive from a connected source.": "来自已连接来源的邮件到达后会显示在这里。",
-  "Messages from connected sources, what Nova did with them on its own, and what is left for a person, each with its next step": "来自已连接来源的邮件、Nova 自行对其执行的操作，以及留待人员处理的事项，每项都附有下一步",
   "Messages it matched": "匹配的邮件",
   "Messages show up here as they match.": "邮件匹配后会显示在这里。",
   "Messages still arrive, but nothing reads them — no kinds, no matches, no suggested actions. Everything waits for a person.": "邮件仍会到达，但没有任何程序读取——没有类型、没有匹配、没有建议操作。一切都等待人员处理。",

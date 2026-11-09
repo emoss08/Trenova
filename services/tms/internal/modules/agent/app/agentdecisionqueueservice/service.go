@@ -424,11 +424,7 @@ func (s *Service) checkBatch(
 		multiErr.Add("proposalIds", errortypes.ErrInvalid,
 			"A batch decides one tool at a time; these span "+strings.Join(names, ", "))
 	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 func validateBatch(req *agentdecisionqueueports.DecideAgentProposalsRequest) error {
@@ -472,11 +468,7 @@ func validateBatch(req *agentdecisionqueueports.DecideAgentProposalsRequest) err
 			agentdecision.MaxDecisionNoteLength,
 		)
 	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 // decisionErrorMessage keeps what a person may read of a failure. A

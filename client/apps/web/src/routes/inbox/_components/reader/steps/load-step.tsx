@@ -32,7 +32,6 @@ const BLANK_KEYS: readonly TriageLoadFieldKey[] = [
 ];
 /** How long each drafted row takes to arrive, so the draft reads as Nova filling it in. */
 const ROW_MS = 160;
-const SERVER_FIELD = /^fields\[(\d+)\]\.value$/;
 
 function fieldLabel(t: TranslateFn, key: TriageLoadFieldKey): string {
   switch (key) {
@@ -107,8 +106,13 @@ function fieldErrors(error: unknown, sent: readonly Row[]): Map<TriageLoadFieldK
     return byKey;
   }
   for (const fieldError of error.normalize().fieldErrors) {
-    const match = SERVER_FIELD.exec(fieldError.field);
-    const row = match === null ? undefined : sent[Number(match[1])];
+    const [list, index, leaf] = fieldError.path;
+    const isRowValue =
+      fieldError.path.length === 3 &&
+      list === "fields" &&
+      typeof index === "number" &&
+      leaf === "value";
+    const row = isRowValue ? sent[index] : undefined;
     if (row !== undefined && !byKey.has(row.key)) {
       byKey.set(row.key, fieldError.message);
     }

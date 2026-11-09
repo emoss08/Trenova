@@ -14,16 +14,6 @@ const (
 
 func (p CardProvider) String() string { return string(p) }
 
-func CardProviderValues() []CardProvider {
-	return []CardProvider{
-		CardProviderComdata,
-		CardProviderEFS,
-		CardProviderWEX,
-		CardProviderRamp,
-		CardProviderOther,
-	}
-}
-
 func (p CardProvider) IsValid() bool {
 	switch p {
 	case CardProviderComdata,
@@ -63,10 +53,6 @@ const (
 )
 
 func (s CardStatus) String() string { return string(s) }
-
-func CardStatusValues() []CardStatus {
-	return []CardStatus{CardStatusActive, CardStatusSuspended, CardStatusCancelled}
-}
 
 func (s CardStatus) IsValid() bool {
 	switch s {
@@ -151,10 +137,6 @@ const (
 
 func (s PurchaseSource) String() string { return string(s) }
 
-func PurchaseSourceValues() []PurchaseSource {
-	return []PurchaseSource{PurchaseSourceManual, PurchaseSourceCardImport}
-}
-
 func (s PurchaseSource) IsValid() bool {
 	return s == PurchaseSourceManual || s == PurchaseSourceCardImport
 }
@@ -181,16 +163,6 @@ const (
 )
 
 func (s ImportStatus) String() string { return string(s) }
-
-func ImportStatusValues() []ImportStatus {
-	return []ImportStatus{
-		ImportStatusPending,
-		ImportStatusParsed,
-		ImportStatusCommitted,
-		ImportStatusFailed,
-		ImportStatusDiscarded,
-	}
-}
 
 func (s ImportStatus) IsValid() bool {
 	switch s {
@@ -323,6 +295,34 @@ const (
 )
 
 func (o ImportOrigin) String() string { return string(o) }
+
+func CardProviderValues() []CardProvider {
+	return []CardProvider{
+		CardProviderComdata,
+		CardProviderEFS,
+		CardProviderWEX,
+		CardProviderRamp,
+		CardProviderOther,
+	}
+}
+
+func PurchaseSourceValues() []PurchaseSource {
+	return []PurchaseSource{PurchaseSourceManual, PurchaseSourceCardImport}
+}
+
+func CardStatusValues() []CardStatus {
+	return []CardStatus{CardStatusActive, CardStatusSuspended, CardStatusCancelled}
+}
+
+func ImportStatusValues() []ImportStatus {
+	return []ImportStatus{
+		ImportStatusPending,
+		ImportStatusParsed,
+		ImportStatusCommitted,
+		ImportStatusFailed,
+		ImportStatusDiscarded,
+	}
+}
 
 func (o ImportOrigin) IsValid() bool {
 	return o == ImportOriginUpload || o == ImportOriginFeed

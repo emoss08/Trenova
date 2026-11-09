@@ -27,7 +27,7 @@ func PlanIssueAdvance(entity *payadvance.PayAdvance, userID pulid.ID) error {
 	multiErr := errortypes.NewMultiError()
 	entity.Validate(multiErr)
 	if multiErr.HasErrors() {
-		return multiErr
+		return multiErr.Err()
 	}
 	entity.CreatedByID = userID
 	return nil
@@ -83,7 +83,7 @@ func (s *Service) PlanOpenEscrowAccount(
 	multiErr := errortypes.NewMultiError()
 	entity.Validate(multiErr)
 	if multiErr.HasErrors() {
-		return multiErr
+		return multiErr.Err()
 	}
 
 	existing, err := s.escrowRepo.GetActiveForWorker(
@@ -334,10 +334,7 @@ func (s *Service) CheckDeduction(
 
 	multiErr := errortypes.NewMultiError()
 	entity.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }
 
 func (s *Service) CheckEarning(ctx context.Context, entity *recurringpay.RecurringEarning) error {
@@ -351,8 +348,5 @@ func (s *Service) CheckEarning(ctx context.Context, entity *recurringpay.Recurri
 	}
 	multiErr := errortypes.NewMultiError()
 	entity.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }

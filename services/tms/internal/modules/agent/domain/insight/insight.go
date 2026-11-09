@@ -28,9 +28,9 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*Insight)(nil)
-	_ pagination.CursorEntity            = (*Insight)(nil)
-	_ domaintypes.PostgresSearchable     = (*Insight)(nil)
+	_ validationframework.Entity     = (*Insight)(nil)
+	_ pagination.CursorEntity        = (*Insight)(nil)
+	_ domaintypes.PostgresSearchable = (*Insight)(nil)
 )
 
 const (

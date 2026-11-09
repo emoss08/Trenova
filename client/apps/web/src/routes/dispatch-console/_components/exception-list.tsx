@@ -13,7 +13,7 @@ import { formatWhen } from "./format-when";
 import type { QueueRead } from "./move-queue";
 
 const EXCEPTION_COLUMNS = [{ label: "Due" }, { label: "Exception" }, { label: "Owner" }] as const;
-const WATCHTOWER_PATH = "/desk/watchtower";
+const WATCHTOWER_PATH = "/desk/needs?lens=watchtower";
 const EXCEPTION_ROW_ESTIMATE_PX = 52;
 
 function DueCell({ item, nowSeconds }: { item: WatchtowerItem; nowSeconds: number }) {

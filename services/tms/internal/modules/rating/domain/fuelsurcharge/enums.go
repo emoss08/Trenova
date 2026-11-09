@@ -1,7 +1,5 @@
 package fuelsurcharge
 
-import "errors"
-
 type IndexSource string
 
 const (
@@ -13,17 +11,6 @@ func (s IndexSource) String() string {
 	return string(s)
 }
 
-func IndexSourceFromString(v string) (IndexSource, error) {
-	switch v {
-	case "EIA":
-		return IndexSourceEIA, nil
-	case "Custom":
-		return IndexSourceCustom, nil
-	default:
-		return "", errors.New("invalid fuel index source")
-	}
-}
-
 type FuelType string
 
 const (
@@ -33,17 +20,6 @@ const (
 
 func (f FuelType) String() string {
 	return string(f)
-}
-
-func FuelTypeFromString(v string) (FuelType, error) {
-	switch v {
-	case "Diesel":
-		return FuelTypeDiesel, nil
-	case "Gasoline":
-		return FuelTypeGasoline, nil
-	default:
-		return "", errors.New("invalid fuel type")
-	}
 }
 
 type ProgramMethod string
@@ -82,23 +58,6 @@ func (m ProgramMethod) IsPerMile() bool {
 	}
 }
 
-func ProgramMethodFromString(v string) (ProgramMethod, error) {
-	switch v {
-	case "PerMileStep":
-		return ProgramMethodPerMileStep, nil
-	case "PerMileMPG":
-		return ProgramMethodPerMileMPG, nil
-	case "TablePerMile":
-		return ProgramMethodTablePerMile, nil
-	case "TablePercent":
-		return ProgramMethodTablePercent, nil
-	case "TableFlat":
-		return ProgramMethodTableFlat, nil
-	default:
-		return "", errors.New("invalid fuel surcharge program method")
-	}
-}
-
 type PercentBasis string
 
 const (
@@ -110,17 +69,6 @@ func (b PercentBasis) String() string {
 	return string(b)
 }
 
-func PercentBasisFromString(v string) (PercentBasis, error) {
-	switch v {
-	case "Linehaul":
-		return PercentBasisLinehaul, nil
-	case "LinehaulPlusAccessorials":
-		return PercentBasisLinehaulPlusAccessorials, nil
-	default:
-		return "", errors.New("invalid fuel surcharge percent basis")
-	}
-}
-
 type DateBasis string
 
 const (
@@ -130,17 +78,6 @@ const (
 
 func (d DateBasis) String() string {
 	return string(d)
-}
-
-func DateBasisFromString(v string) (DateBasis, error) {
-	switch v {
-	case "PickupDate":
-		return DateBasisPickupDate, nil
-	case "TenderDate":
-		return DateBasisTenderDate, nil
-	default:
-		return "", errors.New("invalid fuel surcharge date basis")
-	}
 }
 
 type StepRounding string
@@ -155,19 +92,6 @@ func (r StepRounding) String() string {
 	return string(r)
 }
 
-func StepRoundingFromString(v string) (StepRounding, error) {
-	switch v {
-	case "Up":
-		return StepRoundingUp, nil
-	case "Down":
-		return StepRoundingDown, nil
-	case "Nearest":
-		return StepRoundingNearest, nil
-	default:
-		return "", errors.New("invalid fuel surcharge step rounding")
-	}
-}
-
 type RateRounding string
 
 const (
@@ -178,19 +102,6 @@ const (
 
 func (r RateRounding) String() string {
 	return string(r)
-}
-
-func RateRoundingFromString(v string) (RateRounding, error) {
-	switch v {
-	case "HalfUp":
-		return RateRoundingHalfUp, nil
-	case "Up":
-		return RateRoundingUp, nil
-	case "Down":
-		return RateRoundingDown, nil
-	default:
-		return "", errors.New("invalid fuel surcharge rate rounding")
-	}
 }
 
 type MissingPriceFallback string
@@ -204,17 +115,6 @@ func (f MissingPriceFallback) String() string {
 	return string(f)
 }
 
-func MissingPriceFallbackFromString(v string) (MissingPriceFallback, error) {
-	switch v {
-	case "UseLatestAvailable":
-		return FallbackUseLatestAvailable, nil
-	case "Skip":
-		return FallbackSkip, nil
-	default:
-		return "", errors.New("invalid fuel surcharge missing price fallback")
-	}
-}
-
 type ProgramStatus string
 
 const (
@@ -224,15 +124,4 @@ const (
 
 func (s ProgramStatus) String() string {
 	return string(s)
-}
-
-func ProgramStatusFromString(v string) (ProgramStatus, error) {
-	switch v {
-	case "Active":
-		return ProgramStatusActive, nil
-	case "Inactive":
-		return ProgramStatusInactive, nil
-	default:
-		return "", errors.New("invalid fuel surcharge program status")
-	}
 }

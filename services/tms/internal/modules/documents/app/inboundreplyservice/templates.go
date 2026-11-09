@@ -140,7 +140,7 @@ func (s *Service) validateTemplate(
 	multiErr := errortypes.NewMultiError()
 	entity.Validate(multiErr)
 	if multiErr.HasErrors() {
-		return multiErr
+		return multiErr.Err()
 	}
 
 	taken, err := s.templates.NameTaken(ctx, tenantInfo, entity.Name, entity.ID)

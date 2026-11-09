@@ -83,7 +83,8 @@ func (a *AdditionalCharge) Validate(multiErr *errortypes.MultiError) {
 					return errors.New("amount must be at most 99,999,999,999.9999")
 				}
 				if a.Method == accessorialcharge.MethodPerUnit &&
-					a.Amount.Mul(decimal.NewFromInt(int64(a.Unit))).GreaterThan(money.MaxStoredAmount) {
+					a.Amount.Mul(decimal.NewFromInt(int64(a.Unit))).
+						GreaterThan(money.MaxStoredAmount) {
 					return errors.New("amount times unit must be at most 999,999,999,999,999.9999")
 				}
 				return nil

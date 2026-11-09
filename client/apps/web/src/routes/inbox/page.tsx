@@ -1,5 +1,4 @@
 import type { VirtualRowsHandle } from "@/components/virtual-rows";
-import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { handleMutationError } from "@/hooks/use-api-mutation";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { useNowSeconds } from "@/hooks/use-now-seconds";
@@ -12,7 +11,6 @@ import { inbox } from "@/lib/queries/inbox";
 import { inboxMessagesQuery } from "@/lib/queries/inbox";
 import type { RoutePrefetch, RoutePrefetchEntry } from "@/lib/route-prefetch";
 import { knownRow } from "@/lib/triage/cache";
-import { useNavigationStore } from "@/stores/navigation-store";
 import { useTriageStore } from "@/stores/triage-store";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -166,8 +164,7 @@ function Lazy({ children }: { children: ReactNode }) {
  * the rest of Triage two stable things: navigation (which message is open,
  * the folder's order) and the one set of actions.
  */
-export function TriagePage() {
-  const t = useT();
+export function TriageRoom() {
   const [searchParams, setSearchParams] = useSearchParams();
   const location = useMemo(() => parseTriageLocation(searchParams), [searchParams]);
   const wide = useMediaQuery(WIDE_QUERY);
@@ -199,16 +196,7 @@ export function TriagePage() {
   }, []);
 
   return (
-    <PageLayout
-      fill
-      className="p-0"
-      pageHeaderProps={{
-        title: t("Triage"),
-        description: t(
-          "Messages from connected sources, what Nova did with them on its own, and what is left for a person, each with its next step",
-        ),
-      }}
-    >
+    <div className="dk-tr flex min-h-0 flex-1 flex-col">
       <TriageNavigationContext.Provider value={navigation}>
         <ActionsScope>
           <TriageWorkspace
@@ -220,7 +208,7 @@ export function TriagePage() {
         </ActionsScope>
       </TriageNavigationContext.Provider>
       <ContextMenuHost />
-    </PageLayout>
+    </div>
   );
 }
 
@@ -262,8 +250,6 @@ function TriageWorkspace({
   const searchRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<VirtualRowsHandle>(null);
   const autoOpened = useRef<string | null>(null);
-
-  const railCollapsed = useNavigationStore((store) => store.sidebarCollapsed);
 
   const { folder, messageId: openId, search } = location;
   const counts = useTriageCounts().data;
@@ -615,14 +601,7 @@ function TriageWorkspace({
 
   return (
     <div className="flex min-h-0 flex-1">
-      <aside
-        aria-hidden={railCollapsed || undefined}
-        inert={railCollapsed || undefined}
-        className={cn(
-          "border-border bg-canvas hidden shrink-0 flex-col overflow-hidden border-r transition-[width] duration-300 ease-settle md:flex",
-          railCollapsed ? "w-0 border-r-0" : "w-58",
-        )}
-      >
+      <aside className="hidden w-58 shrink-0 flex-col overflow-hidden border-r border-border bg-canvas md:flex">
         <div className="flex min-h-0 w-58 flex-1 flex-col">
           <p aria-hidden className="px-4.25 pt-4 pb-1 text-base font-semibold tracking-tight">
             {t("Triage")}

@@ -17,7 +17,7 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*Reflection)(nil)
+	_ validationframework.Entity = (*Reflection)(nil)
 )
 
 const (
@@ -37,10 +37,6 @@ const (
 
 func (s ReflectionSubject) IsValid() bool {
 	return s == ReflectionSubjectThread || s == ReflectionSubjectRun
-}
-
-func AllReflectionSubjects() []ReflectionSubject {
-	return []ReflectionSubject{ReflectionSubjectThread, ReflectionSubjectRun}
 }
 
 type ReflectionStatus string
@@ -100,21 +96,9 @@ func (s ReflectionSkip) IsValid() bool {
 	}
 }
 
-func AllReflectionSkips() []ReflectionSkip {
-	return []ReflectionSkip{
-		ReflectionSkipNoSignal,
-		ReflectionSkipNothingToRead,
-		ReflectionSkipLearningOff,
-		ReflectionSkipAgentUnavailable,
-		ReflectionSkipOverBudget,
-	}
-}
-
 type ReflectionSignalKind string
 
 const (
-	ReflectionSignalToolRecovered    = ReflectionSignalKind("ToolRecovered")
-	ReflectionSignalToolFailed       = ReflectionSignalKind("ToolFailed")
 	ReflectionSignalPersonCorrected  = ReflectionSignalKind("PersonCorrected")
 	ReflectionSignalStandingRequest  = ReflectionSignalKind("StandingRequest")
 	ReflectionSignalProposalModified = ReflectionSignalKind("ProposalModified")
@@ -125,9 +109,7 @@ const (
 
 func (k ReflectionSignalKind) IsValid() bool {
 	switch k {
-	case ReflectionSignalToolRecovered,
-		ReflectionSignalToolFailed,
-		ReflectionSignalPersonCorrected,
+	case ReflectionSignalPersonCorrected,
 		ReflectionSignalStandingRequest,
 		ReflectionSignalProposalModified,
 		ReflectionSignalProposalRejected,
@@ -139,12 +121,22 @@ func (k ReflectionSignalKind) IsValid() bool {
 	}
 }
 
+func AllReflectionSubjects() []ReflectionSubject {
+	return []ReflectionSubject{ReflectionSubjectThread, ReflectionSubjectRun}
+}
+
+func AllReflectionSkips() []ReflectionSkip {
+	return []ReflectionSkip{
+		ReflectionSkipNoSignal,
+		ReflectionSkipNothingToRead,
+		ReflectionSkipLearningOff,
+		ReflectionSkipAgentUnavailable,
+		ReflectionSkipOverBudget,
+	}
+}
+
 func (k ReflectionSignalKind) Describe() string {
 	switch k {
-	case ReflectionSignalToolRecovered:
-		return "a tool call failed and a later call to the same tool worked"
-	case ReflectionSignalToolFailed:
-		return "a tool call failed or was refused as invalid"
 	case ReflectionSignalPersonCorrected:
 		return "the person corrected or redirected the agent"
 	case ReflectionSignalStandingRequest:
@@ -178,6 +170,14 @@ func (s ReflectionSignals) Has(kind ReflectionSignalKind) bool {
 	}
 
 	return false
+}
+
+func (s ReflectionSignals) FromPeople() bool {
+	return s.Has(ReflectionSignalPersonCorrected) ||
+		s.Has(ReflectionSignalStandingRequest) ||
+		s.Has(ReflectionSignalProposalModified) ||
+		s.Has(ReflectionSignalProposalRejected) ||
+		s.Has(ReflectionSignalNegativeFeedback)
 }
 
 func (s ReflectionSignals) Kinds() []string {

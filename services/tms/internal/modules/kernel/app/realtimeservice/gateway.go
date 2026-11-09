@@ -172,11 +172,7 @@ func validateScopeRequest(req *realtimeports.RealtimeScopeRequest) error {
 		return errortypes.NewAuthenticationError("A signed-in user is required for live updates")
 	}
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 func validatePresenceState(

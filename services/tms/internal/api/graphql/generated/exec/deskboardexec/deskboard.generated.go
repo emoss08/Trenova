@@ -9,12 +9,14 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/vektah/gqlparser/v2/ast"
 )
 
 var Shard = &gqlexec.Shard{
 	Name: "deskboard",
 	Objects: []*gqlexec.Object{
+		{Name: "DeskBoardAction", Implementors: []string{"DeskBoardAction"}},
 		{Name: "DeskBoardBlock", Implementors: []string{"DeskBoardBlock"}},
 		{Name: "DeskBoardCard", Implementors: []string{"DeskBoardCard"}},
 		{Name: "DeskBoardCheck", Implementors: []string{"DeskBoardCheck"}},
@@ -29,8 +31,43 @@ var Shard = &gqlexec.Shard{
 		{Name: "DeskBoardSource", Implementors: []string{"DeskBoardSource"}},
 		{Name: "DeskBoardTable", Implementors: []string{"DeskBoardTable"}},
 		{Name: "DeskBoardValue", Implementors: []string{"DeskBoardValue"}},
+		{Name: "DeskBoardWorkRow", Implementors: []string{"DeskBoardWorkRow"}},
+		{Name: "DeskBoardWorkSignal", Implementors: []string{"DeskBoardWorkSignal"}},
 	},
 	Fields: []gqlexec.Fields{
+		{Object: "DeskBoardAction", Fields: []*gqlexec.Field{
+			{
+				Name:     "label",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DeskBoardAction)
+					return obj.Label, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "ask",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DeskBoardAction)
+					return obj.Ask, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:      "records",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "DeskBoardRow",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DeskBoardAction)
+					return obj.Records, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDeskBoardRow2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDeskBoardRowᚄ),
+			},
+		}},
 		{Object: "DeskBoardBlock", Fields: []*gqlexec.Field{
 			{
 				Name:     "type",
@@ -227,6 +264,28 @@ var Shard = &gqlexec.Shard{
 					return obj.Chips, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNDeskBoardRow2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDeskBoardRowᚄ),
+			},
+			{
+				Name:      "work",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "DeskBoardWorkRow",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DeskBoardBlock)
+					return obj.Work, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDeskBoardWorkRow2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDeskBoardWorkRowᚄ),
+			},
+			{
+				Name:      "actions",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "DeskBoardAction",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DeskBoardBlock)
+					return obj.Actions, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDeskBoardAction2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDeskBoardActionᚄ),
 			},
 		}},
 		{Object: "DeskBoardCard", Fields: []*gqlexec.Field{
@@ -929,6 +988,90 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 		}},
+		{Object: "DeskBoardWorkRow", Fields: []*gqlexec.Field{
+			{
+				Name:      "row",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "DeskBoardRow",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DeskBoardWorkRow)
+					return obj.Row, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDeskBoardRow2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDeskBoardRow),
+			},
+			{
+				Name:      "signals",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "DeskBoardWorkSignal",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DeskBoardWorkRow)
+					return obj.Signals, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDeskBoardWorkSignal2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDeskBoardWorkSignalᚄ),
+			},
+			{
+				Name:     "tone",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DeskBoardWorkRow)
+					return obj.Tone, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "dueAt",
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DeskBoardWorkRow)
+					return obj.DueAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
+			},
+		}},
+		{Object: "DeskBoardWorkSignal", Fields: []*gqlexec.Field{
+			{
+				Name:     "lens",
+				NonNull:  true,
+				ChildErr: errNoChild7,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DeskBoardWorkSignal)
+					return obj.Lens, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDeskLens2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐDeskLens),
+			},
+			{
+				Name:     "title",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DeskBoardWorkSignal)
+					return obj.Title, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "tone",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DeskBoardWorkSignal)
+					return obj.Tone, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "dueAt",
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DeskBoardWorkSignal)
+					return obj.DueAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
+			},
+		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
 			{
 				Name:       "deskBoardCard",
@@ -963,6 +1106,7 @@ var (
 	errNoChild4 = errors.New("field of type ID does not have child fields")
 	errNoChild5 = errors.New("field of type Timestamp does not have child fields")
 	errNoChild6 = errors.New("field of type Decimal does not have child fields")
+	errNoChild7 = errors.New("field of type DeskLens does not have child fields")
 )
 
 func field_Query_deskBoardCard_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
@@ -1014,6 +1158,22 @@ func marshalNDecimal2string(ctx context.Context, ec *gqlexec.Exec, sel ast.Selec
 		gqlexec.NullViolation(ctx)
 	}
 	return res
+}
+
+func marshalNDeskBoardAction2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDeskBoardActionᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.DeskBoardAction) graphql.Marshaler {
+	return gqlexec.List[*gqlmodel.DeskBoardAction]{
+		Elem:        marshalNDeskBoardAction2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDeskBoardAction,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNDeskBoardAction2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDeskBoardAction(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.DeskBoardAction) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "DeskBoardAction", v)
 }
 
 func marshalNDeskBoardBlock2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDeskBoardBlockᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.DeskBoardBlock) graphql.Marshaler {
@@ -1157,6 +1317,46 @@ func marshalNDeskBoardValue2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapi
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "DeskBoardValue", v)
+}
+
+func marshalNDeskBoardWorkRow2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDeskBoardWorkRowᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.DeskBoardWorkRow) graphql.Marshaler {
+	return gqlexec.List[*gqlmodel.DeskBoardWorkRow]{
+		Elem:        marshalNDeskBoardWorkRow2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDeskBoardWorkRow,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNDeskBoardWorkRow2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDeskBoardWorkRow(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.DeskBoardWorkRow) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "DeskBoardWorkRow", v)
+}
+
+func marshalNDeskBoardWorkSignal2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDeskBoardWorkSignalᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.DeskBoardWorkSignal) graphql.Marshaler {
+	return gqlexec.List[*gqlmodel.DeskBoardWorkSignal]{
+		Elem:        marshalNDeskBoardWorkSignal2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDeskBoardWorkSignal,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNDeskBoardWorkSignal2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDeskBoardWorkSignal(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.DeskBoardWorkSignal) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "DeskBoardWorkSignal", v)
+}
+
+func marshalNDeskLens2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐDeskLens(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v watchtower.DeskLens) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
 }
 
 func marshalNID2string(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v string) graphql.Marshaler {

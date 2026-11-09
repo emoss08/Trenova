@@ -32,6 +32,7 @@ aliases:
   TenderOffer:
     counterMarginPercent: counterMargin
   WatchtowerItem:
+    deskLens: sourceKind
     assignee: assigneeId
     resolvedBy: resolvedById
     overdue: dueAt

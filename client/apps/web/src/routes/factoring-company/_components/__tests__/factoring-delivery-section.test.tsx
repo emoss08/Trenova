@@ -1,6 +1,6 @@
 import type { FactoringTransport } from "@/lib/graphql/factoring";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
+import { act, cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { FactoringDeliverySection } from "../factoring-delivery-section";
@@ -60,6 +60,7 @@ function renderSection() {
       <FactoringDeliverySection factoringCompanyId="fac_rts" />
     </QueryClientProvider>,
   );
+  return client;
 }
 
 describe("factoring delivery section", () => {
@@ -157,5 +158,25 @@ describe("factoring delivery section", () => {
     expect(
       await screen.findByText("ssh: handshake failed: knownhosts: key mismatch"),
     ).toBeInTheDocument();
+  });
+
+  it("keeps an edit in progress when the same settings are read again, and follows a new version", async () => {
+    mocks.fetchFactoringTransport.mockResolvedValue(sftpTransport());
+    const client = renderSection();
+
+    await userEvent.click(await screen.findByRole("button", { name: "Edit" }));
+    const dialog = await screen.findByRole("dialog");
+    const folder = () => within(dialog).getByRole("textbox", { name: /Folder/ });
+    await userEvent.clear(folder());
+    await userEvent.type(folder(), "/edited");
+
+    await act(() => client.refetchQueries());
+    expect(folder()).toHaveValue("/edited");
+
+    mocks.fetchFactoringTransport.mockResolvedValue(
+      sftpTransport({ version: 4, sftpDirectory: "/saved-elsewhere" }),
+    );
+    await act(() => client.refetchQueries());
+    await waitFor(() => expect(folder()).toHaveValue("/saved-elsewhere"));
   });
 });

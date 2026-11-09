@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/ports/exchangerateports"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/modeprofileports"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/fieldpath"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/ratetypes"
 	"github.com/emoss08/trenova/pkg/rules"
@@ -620,10 +621,10 @@ const shipmentTariffInputsField = "tariffInputs"
 
 func onShipmentInputs(err error) error {
 	var fieldErr *errortypes.Error
-	if !errors.As(err, &fieldErr) || fieldErr.Field != tariff.InputsField {
+	if !errors.As(err, &fieldErr) || fieldErr.Field() != tariff.InputsField {
 		return err
 	}
 	remapped := *fieldErr
-	remapped.Field = shipmentTariffInputsField
+	remapped.Path = fieldpath.Parse(shipmentTariffInputsField)
 	return &remapped
 }

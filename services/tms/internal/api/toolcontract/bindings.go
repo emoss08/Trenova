@@ -652,6 +652,7 @@ var Unbound = map[string]string{
 	"settlement_record_driver_payment":     pendingBinding,
 	"accounting_release_sync_record":       pendingBinding,
 	"agent_create_memory":                  pendingBinding,
+	"agent_edit_memory":                    pendingBinding,
 	"settlement_remove_carrier_adjustment": pendingBinding,
 	"settlement_remove_driver_adjustment":  pendingBinding,
 	"home_remove_widget":                   layoutPart,

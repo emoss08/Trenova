@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
-func (s *service) applyBody(entity *shipment.ShipmentComment) *errortypes.MultiError {
+func (s *service) applyBody(entity *shipment.ShipmentComment) error {
 	if entity.Body == nil {
 		return nil
 	}
@@ -16,7 +16,7 @@ func (s *service) applyBody(entity *shipment.ShipmentComment) *errortypes.MultiE
 	multiErr := errortypes.NewMultiError()
 	commentbody.ValidateCommentBody(entity.Body, multiErr)
 	if multiErr.HasErrors() {
-		return multiErr
+		return multiErr.Err()
 	}
 
 	entity.Comment = strings.TrimSpace(commentbody.RenderCommentBodyText(entity.Body))

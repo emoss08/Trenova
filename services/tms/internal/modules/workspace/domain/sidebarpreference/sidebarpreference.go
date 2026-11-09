@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*SidebarPreference)(nil)
+	_ validationframework.Entity = (*SidebarPreference)(nil)
 )
 
 type SidebarPreference struct {

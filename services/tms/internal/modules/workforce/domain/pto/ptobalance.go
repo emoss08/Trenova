@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*WorkerPTOBalance)(nil)
+	_ validationframework.Entity = (*WorkerPTOBalance)(nil)
 )
 
 // What each worker has accrued, used and carried, per time-off type

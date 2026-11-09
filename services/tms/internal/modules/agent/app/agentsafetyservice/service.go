@@ -393,7 +393,7 @@ func validateAgentIDs(ids []pulid.ID) ([]pulid.ID, error) {
 		out = append(out, id)
 	}
 	if multiErr.HasErrors() {
-		return nil, multiErr
+		return nil, multiErr.Err()
 	}
 
 	return out, nil

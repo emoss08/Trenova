@@ -414,7 +414,7 @@ const DOCS = [
 export const PALETTE_PAGE_FAVORITES = [
   ["pfav_cp_1", "/shipment-management/shipments", "Shipments"],
   ["pfav_cp_2", "/billing/queue", "Billing queue"],
-  ["pfav_cp_3", "/triage", "Triage"],
+  ["pfav_cp_3", "/desk/triage", "Triage"],
 ];
 
 const shipmentId = (pro) => `shp_cp_${pro.replace("S-", "")}`;

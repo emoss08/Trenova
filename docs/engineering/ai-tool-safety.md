@@ -10,7 +10,7 @@ policies, so this page cannot drift from what runs: CI regenerates it and fails
 when it differs. Each tool is listed once, under the furthest class its work
 can reach.
 
-Tools listed: 641.
+Tools listed: 642.
 
 ## The model
 
@@ -90,7 +90,7 @@ and Confidential fields never reach a model at all.
 | --- | --- | --- | --- | --- |
 | Reads only | Looks something up. Nothing changes and nothing is sent. | Automatic | No | 216 |
 | The caller's own records | Changes only the records of the person using the agent. | Automatic | No | 11 |
-| Inside the organization | Changes records only people inside the organization see. | Automatic | No | 266 |
+| Inside the organization | Changes records only people inside the organization see. | Automatic | No | 267 |
 | Seen by a customer | Changes something a customer can see. | Ask first | Yes | 5 |
 | Seen by a driver | Changes something a driver can see. | Ask first | Yes | 23 |
 | Sent outside the organization | Sends to someone outside the organization. | Ask first | Yes | 43 |
@@ -359,6 +359,7 @@ Changes records only people inside the organization see.
 | Cancel agent wait (`agent_cancel_wait`) | Inside the organization | Automatic | Runs above the agent's ceiling: it acts only on the agent's own work, so it waits for no one unless a person set its tier on the agent. | Carries outside text into later runs | Cancels a wait the agent set on its own work; it changes no record and reaches nobody. |
 | Create agent memory (`agent_create_memory`) | The caller's own records, inside the organization | Automatic | Each call is classified by what it reaches. An Instruction, a Procedure or a Correction recorded after the run read text from outside the organization waits for a person's approval; a Fact is recorded and stays marked as drawn from outside text. A call on the caller's own records runs unasked while they are present. | Carries outside text into later runs | Saves a memory later runs read, so it keeps the taint of the run that wrote it. One kept for the caller alone is their own record; one for their team or the organization reaches colleagues' conversations. |
 | Create agent wait (`agent_create_wait`) | Inside the organization | Automatic | Runs above the agent's ceiling: it acts only on the agent's own work, so it waits for no one unless a person set its tier on the agent. | Carries outside text into later runs | Parks the agent's own work until something happens and starts it again then; it changes no record and reaches nobody. |
+| Edit agent memory (`agent_edit_memory`) | Inside the organization | Automatic | An edit made after the run read text from outside the organization waits for a person's approval, whatever kind of memory it changes. | Carries outside text into later runs | Rewrites part of a memory later runs read, as a replacement that keeps the old one's readers and history; it keeps the taint of the run that wrote it. |
 | Guide agent profile (`agent_guide_profile`) | The caller's own records, inside the organization | Automatic | Each call is classified by what it reaches. Guidance recorded after the run read text from outside the organization waits for a person's approval, because every later prompt is written from it. A call on the caller's own records runs unasked while they are present. | Carries outside text into later runs | Adds a line every later write-up of a profile honours. Guidance about the person's own work reaches only their conversations; guidance about the organization reaches everyone's. |
 | Raise agent exception (`agent_raise_exception`) | Inside the organization | Automatic | Runs above the agent's ceiling: it only puts the run in front of a person, so it waits for no one unless a person set its tier on the agent. | — | Records an exception against the run itself for a person inside the organization. |
 | Retire agent memory (`agent_retire_memory`) | Inside the organization | Automatic | — | — | Retires an agent memory inside Trenova: one kept for the person in the conversation, or one shared with others when that person may manage shared memory. A run with nobody in it retires none. |

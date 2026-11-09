@@ -133,11 +133,7 @@ func (s *Service) CheckHazmatSegregation(
 	multiErr := errortypes.NewMultiError()
 	shipmentvalidator.AddHazmatConflictsToMultiError(multiErr, conflicts)
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 func (s *Service) evaluateHazmatSegregationRequest(

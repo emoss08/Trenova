@@ -5,11 +5,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/keelcheck"
-	"github.com/emoss08/trenova/pkg/scopedvalidation"
+	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"go.uber.org/fx"
 )
@@ -17,21 +15,20 @@ import (
 type ValidatorParams struct {
 	fx.In
 
+	Integrity validationframework.IntegrityChecker
+
 	DB *postgres.Connection
 }
 
 type Validator struct {
-	validator scopedvalidation.EntityValidator[*tenant.Organization]
+	validator tenantedvalidation.EntityValidator[*tenant.Organization]
 }
 
 func NewValidator(p ValidatorParams) *Validator {
-	builder := scopedvalidation.NewBuilder[*tenant.Organization]().
+	builder := tenantedvalidation.NewBuilder[*tenant.Organization]().
 		WithModelName("Organization").
-		WithScopeField(
-			"businessUnitId",
-			"business_unit_id",
-			func(o *tenant.Organization) any { return o.BusinessUnitID },
-		).
+		WithIntegrityChecker(p.Integrity).
+		WithIntegrityScope(businessUnitWideScope).
 		WithUniqueField(
 			"name",
 			"name",
@@ -57,35 +54,14 @@ func NewValidator(p ValidatorParams) *Validator {
 			func(o *tenant.Organization) any { return o.LoginSlug },
 		).
 		WithCustomRule(
-			scopedvalidation.NewRule[*tenant.Organization]("operating_capabilities").
+			validationframework.NewRule[*tenant.Organization]("operating_capabilities").
 				OnUpdate().
-				WithParallelSafeExecution().
 				WithValidation(validateOperatingCapabilities),
 		)
-
-	builder.WithUniquenessChecker(businessUnitWideChecker{
-		checker: keelcheck.NewChecker(p.DB, tenantdb.OrganizationsSchema()),
-	})
 
 	return &Validator{
 		validator: builder.Build(),
 	}
-}
-
-type businessUnitWideChecker struct {
-	checker validationframework.UniquenessChecker
-}
-
-func (c businessUnitWideChecker) CheckUniqueness(
-	ctx context.Context,
-	req *validationframework.UniquenessRequest,
-) (bool, error) {
-	scoped := *req
-	if current, ok := dbscope.TenantFrom(ctx); ok {
-		scoped.BusinessUnitID = current.BusinessUnitID
-	}
-
-	return c.checker.CheckUniqueness(businessUnitWideScope(ctx), &scoped)
 }
 
 func businessUnitWideScope(ctx context.Context) context.Context {
@@ -98,7 +74,7 @@ func businessUnitWideScope(ctx context.Context) context.Context {
 func validateOperatingCapabilities(
 	_ context.Context,
 	entity *tenant.Organization,
-	_ *scopedvalidation.ValidationContext,
+	_ *validationframework.Context,
 	multiErr *errortypes.MultiError,
 ) error {
 	if entity.BrokerageEnabled || entity.AssetOperationsEnabled {
@@ -117,13 +93,13 @@ func validateOperatingCapabilities(
 func (v *Validator) ValidateCreate(
 	ctx context.Context,
 	entity *tenant.Organization,
-) *errortypes.MultiError {
+) error {
 	return v.validator.ValidateCreate(ctx, entity)
 }
 
 func (v *Validator) ValidateUpdate(
 	ctx context.Context,
 	entity *tenant.Organization,
-) *errortypes.MultiError {
+) error {
 	return v.validator.ValidateUpdate(ctx, entity)
 }

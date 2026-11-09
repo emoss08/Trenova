@@ -2,7 +2,6 @@ package modeprofile
 
 import (
 	"errors"
-	"slices"
 	"sort"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -10,8 +9,7 @@ import (
 )
 
 var (
-	ErrInvalidCapability = errors.New("invalid capability")
-	ErrUnknownRuleKey    = errors.New("unknown rule key")
+	ErrUnknownRuleKey = errors.New("unknown rule key")
 )
 
 type Capability string
@@ -36,14 +34,6 @@ func (c Capability) String() string { return string(c) }
 func (c Capability) IsValid() bool {
 	_, ok := capabilityLabels[c]
 	return ok
-}
-
-func CapabilityFromString(v string) (Capability, error) {
-	c := Capability(v)
-	if !c.IsValid() {
-		return "", ErrInvalidCapability
-	}
-	return c, nil
 }
 
 var capabilityLabels = map[Capability]string{
@@ -336,18 +326,4 @@ func AllRuleDefinitions() []RuleDefinition {
 	}
 	sort.Slice(defs, func(i, j int) bool { return defs[i].Key < defs[j].Key })
 	return defs
-}
-
-func RuleKeysForCapability(capability Capability) []RuleKey {
-	keys := make([]RuleKey, 0, len(ruleDefinitions))
-	for key := range ruleDefinitions {
-		def := ruleDefinitions[key]
-
-		if def.Capability == capability {
-			keys = append(keys, key)
-		}
-	}
-
-	slices.Sort(keys)
-	return keys
 }

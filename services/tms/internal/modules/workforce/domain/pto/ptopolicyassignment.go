@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*WorkerPTOPolicyAssignment)(nil)
+	_ validationframework.Entity = (*WorkerPTOPolicyAssignment)(nil)
 )
 
 type WorkerPTOPolicyAssignment struct {

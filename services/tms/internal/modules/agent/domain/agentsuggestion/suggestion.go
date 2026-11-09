@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*Suggestion)(nil)
+	_ validationframework.Entity = (*Suggestion)(nil)
 )
 
 type Suggestion struct {

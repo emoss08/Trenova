@@ -43,11 +43,7 @@ func (lr *LoginRequest) Validate() error {
 
 	me.AddOzzoError(valErr)
 
-	if me.HasErrors() {
-		return me
-	}
-
-	return nil
+	return me.Err()
 }
 
 type LoginResponse struct {
@@ -87,11 +83,7 @@ func (r *VerifyMFAChallengeRequest) Validate() error {
 	if strings.TrimSpace(r.Code) == "" && strings.TrimSpace(r.RecoveryCode) == "" {
 		me.Add("code", errortypes.ErrRequired, "Enter the code from your authenticator app")
 	}
-	if me.HasErrors() {
-		return me
-	}
-
-	return nil
+	return me.Err()
 }
 
 type TenantLoginMetadataResponse struct {

@@ -113,7 +113,7 @@ export function FiscalYearActivateAlertDialogContent({
     <AlertDialogContent>
       <AlertDialogHeader>
         <AlertDialogTitle>{t("Set Fiscal Year {0} as Current?", record?.year)}</AlertDialogTitle>
-        <div className="text-muted-foreground flex flex-col space-y-2 text-sm">
+        <div className="flex flex-col space-y-2 text-sm text-muted-foreground">
           <p>{t("This will mark this fiscal year as the active year for transaction posting.")}</p>
           <p>{t("Any currently active fiscal year will be automatically deactivated.")}</p>
         </div>
@@ -252,7 +252,7 @@ export function FiscalYearReopenAlertDialogContent({ record, onClose, onComplete
             placeholder={t("Why is this year being reopened?")}
             rows={3}
           />
-          <p className="text-muted-foreground text-xs">
+          <p className="text-xs text-muted-foreground">
             {t("Recorded on the fiscal year and on every reversing entry.")}
           </p>
         </div>
@@ -315,7 +315,7 @@ function ClosePreview({ plan }: { plan: FiscalYearClosePlan }) {
           emphasis
         />
       </div>
-      <p className="text-muted-foreground text-sm">
+      <p className="text-sm text-muted-foreground">
         {plan.netIncomeMinor < 0 ? `${t("Debited to")} ` : `${t("Credited to")} `}
         <span className="font-medium">
           {plan.retainedEarningsAccountCode} {plan.retainedEarningsAccountName}
@@ -361,7 +361,7 @@ function SubledgerChecks({ checks }: { checks: FiscalYearSubledgerCheck[] }) {
               {t("reconciled · {0}", formatMinor(check.glBalanceMinor))}
             </span>
           ) : (
-            <span className="text-destructive font-mono">
+            <span className="font-mono text-destructive">
               {t(
                 "off by {0}{1}",
                 formatMinor(check.differenceMinor),
@@ -378,7 +378,7 @@ function SubledgerChecks({ checks }: { checks: FiscalYearSubledgerCheck[] }) {
 function Figure({ label, value, emphasis }: { label: string; value: string; emphasis?: boolean }) {
   return (
     <div className="flex flex-col">
-      <span className="text-muted-foreground text-xs">{label}</span>
+      <span className="text-xs text-muted-foreground">{label}</span>
       <span className={emphasis ? "font-mono font-semibold" : "font-mono"}>{value}</span>
     </div>
   );
@@ -394,18 +394,18 @@ function EntrySummary({
   const t = useT();
 
   if (!entry) {
-    return <p className="text-muted-foreground text-xs">{fallback}</p>;
+    return <p className="text-xs text-muted-foreground">{fallback}</p>;
   }
 
   return (
-    <div className="border-border rounded-md border p-3 text-sm">
+    <div className="rounded-md border border-border p-3 text-sm">
       <div className="flex items-baseline justify-between gap-2">
         <span className="font-medium">
           {entry.kind === "Closing" ? t("Closing entry") : t("Opening entry")}
         </span>
         <span className="font-mono text-xs">{formatMinor(entry.totalDebitMinor)}</span>
       </div>
-      <p className="text-muted-foreground text-xs">
+      <p className="text-xs text-muted-foreground">
         {t(
           "{0, plural, one {# line} other {# lines}} into {1}{2} dated {3}",
           entry.lines.length,

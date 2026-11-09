@@ -422,3 +422,10 @@ func TestMemoryValidate_ASuggestionComesOnlyFromFeedbackWithEvidence(t *testing.
 	offered.Validate(me)
 	assert.False(t, me.HasErrors(), "a person offers a memory for the organization")
 }
+
+func (f *suggestionRepo) ListNeighbors(
+	context.Context,
+	*agentmemoryports.ListAgentMemoryNeighborsRequest,
+) ([]*agentmemory.Memory, error) {
+	return nil, nil
+}

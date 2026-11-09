@@ -12,11 +12,11 @@ import (
 
 func validateObserved(
 	params *trackingeventports.RecordObservedStopEventParams,
-) *errortypes.MultiError {
+) error {
 	multiErr := errortypes.NewMultiError()
 	if params == nil {
 		multiErr.Add("", errortypes.ErrInvalid, "Request is required")
-		return multiErr
+		return multiErr.Err()
 	}
 	addTarget(multiErr, params.TenantInfo, params.MoveID, params.StopID)
 	if params.Source.Interactive() || !params.Source.IsValid() {
@@ -26,19 +26,16 @@ func validateObserved(
 		multiErr.Add("kind", errortypes.ErrInvalid, "Kind must be Arrival or Departure")
 	}
 	addEventTime(multiErr, "eventAt", &params.EventAt)
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }
 
 func validateReported(
 	params *trackingeventports.RecordReportedStopEventParams,
-) *errortypes.MultiError {
+) error {
 	multiErr := errortypes.NewMultiError()
 	if params == nil {
 		multiErr.Add("", errortypes.ErrInvalid, "Request is required")
-		return multiErr
+		return multiErr.Err()
 	}
 	addTarget(multiErr, params.TenantInfo, params.MoveID, params.StopID)
 	if !params.Source.Interactive() {
@@ -68,10 +65,7 @@ func validateReported(
 			addEventTime(multiErr, "departedAt", params.DepartedAt)
 		}
 	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }
 
 func addTarget(

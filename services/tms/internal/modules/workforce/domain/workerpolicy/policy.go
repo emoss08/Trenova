@@ -55,7 +55,7 @@ func (a PolicyAudience) Covers(workerType worker.WorkerType) bool {
 }
 
 var (
-	_ validationframework.TenantedEntity = (*WorkerPolicy)(nil)
+	_ validationframework.Entity = (*WorkerPolicy)(nil)
 )
 
 // WorkerPolicy is a handbook, a policy, or a notice the carrier needs people
@@ -197,7 +197,7 @@ func (WorkerPolicy) Constraints() []keel.Constraint {
 }
 
 var (
-	_ validationframework.TenantedEntity = (*WorkerPolicyAcknowledgement)(nil)
+	_ validationframework.Entity = (*WorkerPolicyAcknowledgement)(nil)
 )
 
 // WorkerPolicyAcknowledgement is one worker's signature on one version of a

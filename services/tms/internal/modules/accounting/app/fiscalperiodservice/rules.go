@@ -7,21 +7,21 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear/fiscalyeardb"
+	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 )
 
 func createDateValidationRule(
 	db *postgres.Connection,
-) validationframework.TenantedRule[*fiscalperiod.FiscalPeriod] {
-	return validationframework.NewTenantedRule[*fiscalperiod.FiscalPeriod]("date_validation").
+) validationframework.Rule[*fiscalperiod.FiscalPeriod] {
+	return validationframework.NewRule[*fiscalperiod.FiscalPeriod]("date_validation").
 		OnBoth().
-		WithStage(validationframework.ValidationStageBusinessRules).
-		WithPriority(validationframework.ValidationPriorityHigh).
+		WithStage(validationframework.StageBusinessRules).
 		WithValidation(func(
 			ctx context.Context,
 			entity *fiscalperiod.FiscalPeriod,
-			_ *validationframework.TenantedValidationContext,
+			_ *validationframework.Context,
 			multiErr *errortypes.MultiError,
 		) error {
 			return dbtx.ReadErr(ctx, db, func(ctx context.Context) error {
@@ -43,7 +43,10 @@ func createDateValidationRule(
 					Where(fyt.ID.Eq(entity.FiscalYearID)).
 					One(ctx, db.Keel(ctx))
 				if err != nil {
-					return nil //nolint:nilerr // validation callbacks collect field errors and intentionally continue
+					if dberror.IsNotFoundError(err) {
+						return nil
+					}
+					return err
 				}
 
 				if entity.StartDate < fy.StartDate {
@@ -67,15 +70,14 @@ func createDateValidationRule(
 		})
 }
 
-func createStatusConsistencyRule() validationframework.TenantedRule[*fiscalperiod.FiscalPeriod] {
-	return validationframework.NewTenantedRule[*fiscalperiod.FiscalPeriod]("status_consistency").
+func createStatusConsistencyRule() validationframework.Rule[*fiscalperiod.FiscalPeriod] {
+	return validationframework.NewRule[*fiscalperiod.FiscalPeriod]("status_consistency").
 		OnBoth().
-		WithStage(validationframework.ValidationStageBusinessRules).
-		WithPriority(validationframework.ValidationPriorityHigh).
+		WithStage(validationframework.StageBusinessRules).
 		WithValidation(func(
 			_ context.Context,
 			entity *fiscalperiod.FiscalPeriod,
-			_ *validationframework.TenantedValidationContext,
+			_ *validationframework.Context,
 			multiErr *errortypes.MultiError,
 		) error {
 			if entity.Status == fiscalperiod.StatusClosed {

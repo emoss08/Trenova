@@ -39,8 +39,8 @@ type PacketSummary struct {
 }
 
 var (
-	_ domaintypes.PostgresSearchable     = (*DocumentPacketRule)(nil)
-	_ validationframework.TenantedEntity = (*DocumentPacketRule)(nil)
+	_ domaintypes.PostgresSearchable = (*DocumentPacketRule)(nil)
+	_ validationframework.Entity     = (*DocumentPacketRule)(nil)
 )
 
 const defaultExpirationWarningDays = 30

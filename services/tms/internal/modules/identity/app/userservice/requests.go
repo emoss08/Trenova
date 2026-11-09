@@ -39,11 +39,7 @@ func (r *UpdateMySettingsRequest) Validate() error {
 	)
 
 	me.AddOzzoError(err)
-	if me.HasErrors() {
-		return me
-	}
-
-	return nil
+	return me.Err()
 }
 
 type ChangeMyPasswordRequest struct {
@@ -79,9 +75,5 @@ func (r *ChangeMyPasswordRequest) Validate() error {
 		)
 	}
 
-	if me.HasErrors() {
-		return me
-	}
-
-	return nil
+	return me.Err()
 }

@@ -14,8 +14,8 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*AccountType)(nil)
-	_ domaintypes.PostgresSearchable     = (*AccountType)(nil)
+	_ validationframework.Entity     = (*AccountType)(nil)
+	_ domaintypes.PostgresSearchable = (*AccountType)(nil)
 )
 
 // Asset, liability, equity, revenue and expense classification

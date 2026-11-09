@@ -48,6 +48,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/customfielddefinitionexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/datatableinsightexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/decisionsexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/deskattentionexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/deskboardexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/deskmemoryexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/detentionexec"
@@ -202,6 +203,7 @@ var registry = sync.OnceValues(func() (*gqlexec.Registry, error) {
 		customfielddefinitionexec.Shard,
 		datatableinsightexec.Shard,
 		decisionsexec.Shard,
+		deskattentionexec.Shard,
 		deskboardexec.Shard,
 		deskmemoryexec.Shard,
 		detentionexec.Shard,

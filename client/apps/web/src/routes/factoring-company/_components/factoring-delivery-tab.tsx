@@ -106,14 +106,14 @@ export default function FactoringDeliveryTab({
                   >
                     <Link
                       to={recordPath("factoring_submission", schedule.id)}
-                      className="ui-focus-ring rounded-sm font-mono text-sm hover:underline"
+                      className="rounded-sm ui-focus-ring font-mono text-sm hover:underline"
                     >
                       {schedule.number}
                     </Link>
-                    <span className="text-muted-foreground hidden text-sm md:block">
+                    <span className="hidden text-sm text-muted-foreground md:block">
                       {formatUnixDateTimeShort(schedule.sentAt ?? schedule.createdAt)}
                     </span>
-                    <span className="text-muted-foreground hidden text-right text-sm tabular-nums md:block">
+                    <span className="hidden text-right text-sm text-muted-foreground tabular-nums md:block">
                       {t("{0, plural, one {# invoice} other {# invoices}}", schedule.invoiceCount)}
                     </span>
                     <span className="hidden text-right text-sm tabular-nums md:block">
@@ -121,7 +121,7 @@ export default function FactoringDeliveryTab({
                     </span>
                     <span className="flex min-w-0 items-center gap-2">
                       <FactoringSubmissionStatusBadge status={schedule.status} />
-                      <span className="text-muted-foreground truncate text-xs">
+                      <span className="truncate text-xs text-muted-foreground">
                         {outcome(t, schedule)}
                       </span>
                     </span>

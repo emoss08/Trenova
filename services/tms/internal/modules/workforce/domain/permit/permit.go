@@ -17,8 +17,8 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*Permit)(nil)
-	_ domaintypes.PostgresSearchable     = (*Permit)(nil)
+	_ validationframework.Entity     = (*Permit)(nil)
+	_ domaintypes.PostgresSearchable = (*Permit)(nil)
 )
 
 type Permit struct {

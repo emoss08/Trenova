@@ -2,6 +2,7 @@ package agentmemoryservice
 
 import (
 	"context"
+	"slices"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -41,6 +42,20 @@ func (f *replacingRepo) SetStatus(
 	memory.Status = req.Status
 
 	return &memory, nil
+}
+
+func (f *replacingRepo) ListReplacements(
+	_ context.Context,
+	req agentmemoryports.ListAgentMemoryReplacementsRequest,
+) ([]*agentmemory.Memory, error) {
+	out := make([]*agentmemory.Memory, 0)
+	for _, memory := range f.stored {
+		if memory.SupersedesID != nil && slices.Contains(req.ReplacedIDs, *memory.SupersedesID) {
+			out = append(out, memory)
+		}
+	}
+
+	return out, nil
 }
 
 func replacingService(repo *replacingRepo) *Service {
@@ -126,6 +141,49 @@ func TestRemember_ReplacingAnOrganizationMemoryWaitsForSomeoneAllowedToChangeIt(
 	assert.Equal(t, agentmemory.MemoryStatusSuggested, got.Status)
 	assert.Equal(t, agentmemory.MemoryScopeOrganization, got.Scope)
 	assert.Empty(t, repo.retired)
+}
+
+// An administrator approving an agent's edit of an organization memory used to
+// get the edit back as one more suggestion to approve. Someone who manages
+// shared memory replaces it at once, as they would write it.
+func TestRemember_SomeoneWhoManagesSharedMemoryReplacesItAtOnce(t *testing.T) {
+	t.Parallel()
+
+	old := &agentmemory.Memory{
+		ID:      pulid.MustNew("amem_"),
+		Kind:    agentmemory.MemoryKindFact,
+		Source:  agentmemory.MemorySourceUser,
+		Status:  agentmemory.MemoryStatusActive,
+		Scope:   agentmemory.MemoryScopeOrganization,
+		Content: "Acme's terms are net 30",
+	}
+	repo := newReplacingRepo(old)
+	svc := replacingService(repo)
+	svc.permissions = &fakePermissions{manages: true}
+
+	got, err := svc.Remember(t.Context(), &agentmemoryports.RememberRequest{
+		TenantInfo:   tenant(),
+		Content:      "Acme's terms are net 45",
+		PersonUserID: pulid.MustNew("usr_"),
+		Replaces:     old.ID,
+		RunID:        pulid.MustNew("arun_"),
+	}, userActor())
+	require.NoError(t, err)
+
+	assert.Equal(t, agentmemory.MemoryStatusActive, got.Status)
+	assert.Equal(t, agentmemory.MemoryScopeOrganization, got.Scope)
+	require.NotNil(t, got.SupersedesID)
+	assert.Equal(t, old.ID, *got.SupersedesID)
+
+	_, err = svc.Remember(t.Context(), &agentmemoryports.RememberRequest{
+		TenantInfo: tenant(),
+		Content:    "Acme's terms are net 60",
+		Replaces:   old.ID,
+		RunID:      pulid.MustNew("arun_"),
+	}, agentActor())
+	require.NoError(t, err)
+	assert.Equal(t, agentmemory.MemoryStatusSuggested, repo.created[len(repo.created)-1].Status,
+		"an agent on its own still only offers it")
 }
 
 func TestRemember_SomeoneElsesMemoryCannotBeReplaced(t *testing.T) {

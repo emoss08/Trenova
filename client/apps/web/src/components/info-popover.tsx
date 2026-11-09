@@ -34,7 +34,7 @@ export function InfoPopover({ title, children, className }: InfoPopoverProps) {
             aria-label={t("About {0}", title)}
             className={cn(
               "inline-flex size-4 shrink-0 items-center justify-center rounded-sm",
-              "text-muted-foreground hover:bg-muted hover:text-foreground transition-colors",
+              "text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
               "ui-focus-ring",
               className,
             )}
@@ -48,9 +48,9 @@ export function InfoPopover({ title, children, className }: InfoPopoverProps) {
           <PopoverTitle className="text-xs">{title}</PopoverTitle>
         </PopoverHeader>
         {typeof children === "string" ? (
-          <p className="text-muted-foreground text-xs leading-snug">{children}</p>
+          <p className="text-xs leading-snug text-muted-foreground">{children}</p>
         ) : (
-          <div className="text-muted-foreground flex flex-col gap-1.5 text-xs leading-snug">
+          <div className="flex flex-col gap-1.5 text-xs leading-snug text-muted-foreground">
             {children}
           </div>
         )}

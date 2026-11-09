@@ -2,6 +2,7 @@ package fiscalyearservice
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/emoss08/keel"
@@ -13,15 +14,14 @@ import (
 	"github.com/emoss08/trenova/pkg/validationframework"
 )
 
-func createDateValidationRule() validationframework.TenantedRule[*fiscalyear.FiscalYear] {
-	return validationframework.NewTenantedRule[*fiscalyear.FiscalYear]("date_validation").
+func createDateValidationRule() validationframework.Rule[*fiscalyear.FiscalYear] {
+	return validationframework.NewRule[*fiscalyear.FiscalYear]("date_validation").
 		OnBoth().
-		WithStage(validationframework.ValidationStageBusinessRules).
-		WithPriority(validationframework.ValidationPriorityHigh).
+		WithStage(validationframework.StageBusinessRules).
 		WithValidation(func(
 			_ context.Context,
 			entity *fiscalyear.FiscalYear,
-			_ *validationframework.TenantedValidationContext,
+			_ *validationframework.Context,
 			multiErr *errortypes.MultiError,
 		) error {
 			if entity.EndDate <= entity.StartDate {
@@ -80,15 +80,14 @@ func createDateValidationRule() validationframework.TenantedRule[*fiscalyear.Fis
 		})
 }
 
-func createStatusConsistencyRule() validationframework.TenantedRule[*fiscalyear.FiscalYear] {
-	return validationframework.NewTenantedRule[*fiscalyear.FiscalYear]("status_consistency").
+func createStatusConsistencyRule() validationframework.Rule[*fiscalyear.FiscalYear] {
+	return validationframework.NewRule[*fiscalyear.FiscalYear]("status_consistency").
 		OnBoth().
-		WithStage(validationframework.ValidationStageBusinessRules).
-		WithPriority(validationframework.ValidationPriorityHigh).
+		WithStage(validationframework.StageBusinessRules).
 		WithValidation(func(
 			_ context.Context,
 			entity *fiscalyear.FiscalYear,
-			_ *validationframework.TenantedValidationContext,
+			_ *validationframework.Context,
 			multiErr *errortypes.MultiError,
 		) error {
 			//nolint:exhaustive // only actionable enum states require explicit handling here
@@ -118,15 +117,14 @@ func createStatusConsistencyRule() validationframework.TenantedRule[*fiscalyear.
 
 func createCurrentYearRule(
 	db *postgres.Connection,
-) validationframework.TenantedRule[*fiscalyear.FiscalYear] {
-	return validationframework.NewTenantedRule[*fiscalyear.FiscalYear]("current_year_validation").
+) validationframework.Rule[*fiscalyear.FiscalYear] {
+	return validationframework.NewRule[*fiscalyear.FiscalYear]("current_year_validation").
 		OnBoth().
-		WithStage(validationframework.ValidationStageBusinessRules).
-		WithPriority(validationframework.ValidationPriorityHigh).
+		WithStage(validationframework.StageBusinessRules).
 		WithValidation(func(
 			ctx context.Context,
 			entity *fiscalyear.FiscalYear,
-			valCtx *validationframework.TenantedValidationContext,
+			valCtx *validationframework.Context,
 			multiErr *errortypes.MultiError,
 		) error {
 			return dbtx.ReadErr(ctx, db, func(ctx context.Context) error {
@@ -148,12 +146,7 @@ func createCurrentYearRule(
 					keel.When(valCtx.IsUpdate(), fy.ID.Ne(entity.ID)),
 				).Exists(ctx, db.Keel(ctx))
 				if err != nil {
-					multiErr.Add(
-						"__all__",
-						errortypes.ErrSystemError,
-						"Failed to check current year uniqueness",
-					)
-					return nil //nolint:nilerr // validation callbacks collect field errors and intentionally continue
+					return fmt.Errorf("failed to check current year uniqueness: %w", err)
 				}
 
 				if exists {
@@ -171,15 +164,14 @@ func createCurrentYearRule(
 
 func createOverlappingYearsRule(
 	db *postgres.Connection,
-) validationframework.TenantedRule[*fiscalyear.FiscalYear] {
-	return validationframework.NewTenantedRule[*fiscalyear.FiscalYear]("no_overlapping_years").
+) validationframework.Rule[*fiscalyear.FiscalYear] {
+	return validationframework.NewRule[*fiscalyear.FiscalYear]("no_overlapping_years").
 		OnBoth().
-		WithStage(validationframework.ValidationStageDataIntegrity).
-		WithPriority(validationframework.ValidationPriorityHigh).
+		WithStage(validationframework.StageDataIntegrity).
 		WithValidation(func(
 			ctx context.Context,
 			entity *fiscalyear.FiscalYear,
-			valCtx *validationframework.TenantedValidationContext,
+			valCtx *validationframework.Context,
 			multiErr *errortypes.MultiError,
 		) error {
 			return dbtx.ReadErr(ctx, db, func(ctx context.Context) error {
@@ -190,12 +182,7 @@ func createOverlappingYearsRule(
 					keel.When(valCtx.IsUpdate(), fy.ID.Ne(entity.ID)),
 				).Exists(ctx, db.Keel(ctx))
 				if err != nil {
-					multiErr.Add(
-						"__all__",
-						errortypes.ErrSystemError,
-						"Failed to check for overlapping fiscal years",
-					)
-					return nil //nolint:nilerr // validation callbacks collect field errors and intentionally continue
+					return fmt.Errorf("failed to check for overlapping fiscal years: %w", err)
 				}
 
 				if exists {

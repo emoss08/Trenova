@@ -12,7 +12,7 @@ type CancelTenderRequest struct {
 	Reason     string                `json:"reason"`
 }
 
-func (r *CancelTenderRequest) Validate() *errortypes.MultiError {
+func (r *CancelTenderRequest) Validate() error {
 	multiErr := errortypes.NewMultiError()
 	if r.TenderID.IsNil() {
 		multiErr.Add("tenderId", errortypes.ErrRequired, "Tender is required")
@@ -20,8 +20,5 @@ func (r *CancelTenderRequest) Validate() *errortypes.MultiError {
 	if r.Reason == "" {
 		multiErr.Add("reason", errortypes.ErrRequired, "Cancellation reason is required")
 	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }

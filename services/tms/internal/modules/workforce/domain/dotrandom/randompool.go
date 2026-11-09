@@ -138,8 +138,8 @@ func (s RandomEntryStatus) IsOutstanding() bool {
 }
 
 var (
-	_ validationframework.TenantedEntity = (*DOTRandomPool)(nil)
-	_ domaintypes.PostgresSearchable     = (*DOTRandomPool)(nil)
+	_ validationframework.Entity     = (*DOTRandomPool)(nil)
+	_ domaintypes.PostgresSearchable = (*DOTRandomPool)(nil)
 )
 
 type DOTRandomPool struct {
@@ -319,7 +319,7 @@ func (DOTRandomPool) Constraints() []keel.Constraint {
 }
 
 var (
-	_ validationframework.TenantedEntity = (*DOTRandomDraw)(nil)
+	_ validationframework.Entity = (*DOTRandomDraw)(nil)
 )
 
 type DOTRandomDraw struct {
@@ -440,7 +440,7 @@ func (DOTRandomDraw) Constraints() []keel.Constraint {
 }
 
 var (
-	_ validationframework.TenantedEntity = (*DOTRandomDrawEntry)(nil)
+	_ validationframework.Entity = (*DOTRandomDrawEntry)(nil)
 )
 
 type DOTRandomDrawEntry struct {

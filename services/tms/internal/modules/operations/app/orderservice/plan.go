@@ -26,7 +26,7 @@ func (s *Service) PlanCreate(ctx context.Context, entity *order.Order) (*OrderCh
 		entity.CurrencyCode = "USD"
 	}
 	if entity.OrderNumber == "" {
-		if multiErr := s.validateCreateWithoutNumber(ctx, entity); multiErr != nil {
+		if multiErr := s.validator.ValidateCreateUnnumbered(ctx, entity); multiErr != nil {
 			return nil, multiErr
 		}
 
@@ -38,34 +38,6 @@ func (s *Service) PlanCreate(ctx context.Context, entity *order.Order) (*OrderCh
 	}
 
 	return &OrderChange{After: entity}, nil
-}
-
-// validateCreateWithoutNumber checks an order whose number the write will
-// issue: the uniqueness rule has nothing to compare yet, so the placeholder
-// is dropped from what the validator reports.
-func (s *Service) validateCreateWithoutNumber(
-	ctx context.Context,
-	entity *order.Order,
-) *errortypes.MultiError {
-	probe := *entity
-	probe.OrderNumber = pulid.MustNew("ord_").String()
-	multiErr := s.validator.ValidateCreate(ctx, &probe)
-	if multiErr == nil {
-		return nil
-	}
-
-	kept := errortypes.NewMultiError()
-	for _, entry := range multiErr.Errors {
-		if entry.Field == "orderNumber" {
-			continue
-		}
-		kept.Add(entry.Field, entry.Code, entry.Message, entry.Args...)
-	}
-	if kept.HasErrors() {
-		return kept
-	}
-
-	return nil
 }
 
 func (s *Service) PlanUpdate(ctx context.Context, entity *order.Order) (*OrderChange, error) {
@@ -249,13 +221,13 @@ func (s *Service) PlanAddCharge(
 	if multiErr.HasErrors() {
 		return nil, multiErr
 	}
-	if multiErr = s.validateChargeAllocations(
+	if allocationErr := s.validateChargeAllocations(
 		ctx,
 		req.TenantInfo,
 		charge,
 		req.Allocations,
-	); multiErr != nil {
-		return nil, multiErr
+	); allocationErr != nil {
+		return nil, allocationErr
 	}
 
 	return &ChargePlan{Order: ord, After: charge}, nil
@@ -295,13 +267,13 @@ func (s *Service) PlanUpdateCharge(
 	if multiErr.HasErrors() {
 		return nil, multiErr
 	}
-	if multiErr = s.validateChargeAllocations(
+	if allocationErr := s.validateChargeAllocations(
 		ctx,
 		req.TenantInfo,
 		charge,
 		req.Allocations,
-	); multiErr != nil {
-		return nil, multiErr
+	); allocationErr != nil {
+		return nil, allocationErr
 	}
 
 	return &ChargePlan{Order: ord, Before: current, After: charge}, nil
@@ -353,13 +325,13 @@ func (s *Service) PlanSetChargeAllocations(
 			"An invoiced order charge cannot be re-allocated",
 		)
 	}
-	if multiErr := s.validateChargeAllocations(
+	if allocationErr := s.validateChargeAllocations(
 		ctx,
 		req.TenantInfo,
 		current,
 		allocations,
-	); multiErr != nil {
-		return nil, multiErr
+	); allocationErr != nil {
+		return nil, allocationErr
 	}
 
 	after := *current

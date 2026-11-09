@@ -167,10 +167,7 @@ func (s *Service) validateSubmission(
 	}
 	gate.addRefusals(multiErr)
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }
 
 func (s *Service) Approve(
@@ -215,7 +212,7 @@ func (s *Service) Approve(
 				multiErr := errortypes.NewMultiError()
 				gate.addRefusals(multiErr)
 				if multiErr.HasErrors() {
-					return multiErr
+					return multiErr.Err()
 				}
 				content = gate.content
 				return nil
@@ -604,7 +601,7 @@ func (s *Service) recordReview(
 	multiErr := errortypes.NewMultiError()
 	review.Validate(multiErr)
 	if multiErr.HasErrors() {
-		return multiErr
+		return multiErr.Err()
 	}
 
 	_, err = s.reviewRepo.Create(ctx, review)

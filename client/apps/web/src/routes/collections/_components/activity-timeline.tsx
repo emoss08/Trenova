@@ -11,14 +11,14 @@ export function ActivityTimeline({ activities }: { activities: CollectionActivit
 
   if (activities.length === 0) {
     return (
-      <p className="text-muted-foreground px-3 py-3 text-xs">
+      <p className="px-3 py-3 text-xs text-muted-foreground">
         {t("Nobody has worked this account yet. Calls, emails, notes and promises appear here.")}
       </p>
     );
   }
 
   return (
-    <ol className="divide-border divide-y">
+    <ol className="divide-y divide-border">
       {activities.map((activity) => (
         <li key={activity.id} className="flex flex-col gap-1 px-3 py-2.5">
           <div className="flex items-center justify-between gap-2">
@@ -26,13 +26,13 @@ export function ActivityTimeline({ activities }: { activities: CollectionActivit
               <Badge variant={activity.kind === "PromiseToPay" ? "info" : "neutral"}>
                 {ACTIVITY_KIND_LABEL[activity.kind]}
               </Badge>
-              <span className="text-muted-foreground truncate text-xs">
+              <span className="truncate text-xs text-muted-foreground">
                 {activity.contactName
                   ? t("{0} with {1}", activity.createdByName, activity.contactName)
                   : activity.createdByName}
               </span>
             </div>
-            <span className="text-muted-foreground shrink-0 text-xs">
+            <span className="shrink-0 text-xs text-muted-foreground">
               {formatUnixDateTimeMedium(activity.createdAt)}
             </span>
           </div>
@@ -51,12 +51,12 @@ export function ActivityTimeline({ activities }: { activities: CollectionActivit
             <p className="text-sm whitespace-pre-wrap">{activity.summary}</p>
           ) : null}
           {activity.kind === "FollowUpScheduled" && activity.followUpOn !== null ? (
-            <span className="text-muted-foreground text-xs">
+            <span className="text-xs text-muted-foreground">
               {t("Follow up on {0}", formatUnixDateMedium(activity.followUpOn))}
             </span>
           ) : null}
           {activity.kind !== "FollowUpScheduled" && activity.followUpOn !== null ? (
-            <span className="text-muted-foreground text-xs">
+            <span className="text-xs text-muted-foreground">
               {t("Next follow-up {0}", formatUnixDateMedium(activity.followUpOn))}
             </span>
           ) : null}

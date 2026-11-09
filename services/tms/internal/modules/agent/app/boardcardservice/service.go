@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/deskattentionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/recordsummaryports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/orgzone"
@@ -44,6 +45,7 @@ type Params struct {
 	Receivables   customerledgerports.ARSnapshotReader
 	Audit         auditports.AuditService
 	Organizations tenantports.OrganizationRepository
+	Attention     deskattentionports.DeskAttentionService
 }
 
 type permissionChecker interface {
@@ -104,6 +106,7 @@ type Service struct {
 	receivables   receivablesReader
 	activity      activityReader
 	organizations orgzone.OrganizationReader
+	attention     deskattentionports.DeskAttentionService
 	now           func() time.Time
 }
 
@@ -118,6 +121,7 @@ func New(p Params) *Service { //nolint:gocritic // fx params are passed by value
 		receivables:   p.Receivables,
 		activity:      p.Audit,
 		organizations: p.Organizations,
+		attention:     p.Attention,
 		now:           time.Now,
 	}
 }
@@ -234,6 +238,9 @@ func (s *Service) Fill(
 		return nil, err
 	}
 	s.readArtifacts(ctx, req, reads)
+	if err = s.readWork(ctx, req, reads); err != nil {
+		return nil, err
+	}
 	if err = s.readEvents(ctx, req, reads); err != nil {
 		return nil, err
 	}

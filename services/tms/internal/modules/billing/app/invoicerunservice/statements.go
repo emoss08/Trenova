@@ -2,7 +2,6 @@ package invoicerunservice
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicerun"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
@@ -400,30 +399,4 @@ func filterToCustomer(
 	}
 
 	return nil
-}
-
-// StatementCadenceGuard reports whether invoicing a shipment on its own deviates
-// from the customer's agreed billing cadence.
-//
-// It is advisory rather than a bar: a biller who needs to cut one invoice today
-// for a customer on a monthly statement is doing something legitimate often
-// enough that refusing would just teach them to work around it. What it must not
-// be is silent, so the caller has to supply a reason.
-func StatementCadenceGuard(
-	schedule *customerports.DueBillingSchedule,
-) (string, bool) {
-	if schedule == nil {
-		return "", false
-	}
-
-	profile := schedule.Profile()
-	if !profile.IsStatementBilled() {
-		return "", false
-	}
-
-	return fmt.Sprintf(
-		"%s is billed on a %s statement. Invoicing this shipment on its own takes it off that statement.",
-		schedule.CustomerName,
-		profile.BillingCycle.Describe(),
-	), true
 }

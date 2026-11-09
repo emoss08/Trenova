@@ -3,6 +3,7 @@ import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import {
   Grid01Icon,
+  MessageChatSquareIcon,
   LayersThree01Icon,
   TerminalSquareIcon,
 } from "@trenova/shared/components/icons";
@@ -19,10 +20,12 @@ import { isRecordScope } from "./palette-model";
  */
 export function paletteScopes(
   readable: readonly GlobalSearchEntityType[] | null,
+  conversations = false,
 ): readonly PaletteScope[] {
   return [
     "all",
     ...PALETTE_RECORD_TYPES.filter((type) => readable?.includes(type) ?? false),
+    ...(conversations ? (["conversations"] as const) : []),
     "pages",
     "commands",
   ];
@@ -47,6 +50,8 @@ export function scopePresentation(
     return { label: paletteEntityText(scope, t).plural, icon: PALETTE_ENTITY_ICONS[scope] };
   }
   switch (scope) {
+    case "conversations":
+      return { label: t("Conversations"), icon: MessageChatSquareIcon };
     case "pages":
       return { label: t("Pages"), icon: Grid01Icon };
     case "commands":

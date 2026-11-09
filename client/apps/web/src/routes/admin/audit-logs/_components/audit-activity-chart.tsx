@@ -154,7 +154,7 @@ export function AuditActivityChart({
             key={series.key}
             type="button"
             className={cn(
-              "ui-focus-ring text-muted-foreground inline-flex items-center gap-1.5 rounded-sm text-xs transition-opacity",
+              "inline-flex items-center gap-1.5 rounded-sm ui-focus-ring text-xs text-muted-foreground transition-opacity",
               focus && focus !== series.key && "opacity-45",
             )}
             onPointerEnter={() => setFocus(series.key)}
@@ -164,12 +164,12 @@ export function AuditActivityChart({
           >
             <span aria-hidden className={cn("size-2 rounded-xs", series.swatch)} />
             {ACTOR_KIND_LABELS[series.key]}
-            <span className="text-foreground font-medium tabular-nums">
+            <span className="font-medium text-foreground tabular-nums">
               {Math.round(shareOf(totals[series.key], grand) * 100)}%
             </span>
           </button>
         ))}
-        <span className="text-foreground-subtle ml-auto text-xs">
+        <span className="ml-auto text-xs text-foreground-subtle">
           {t("Drag across the chart to narrow the trail")}
         </span>
       </div>
@@ -277,15 +277,17 @@ export function AuditActivityChart({
               />
             ) : null}
             {activity.map((bucket, index) => {
-              let base = 0;
               return (
                 <g key={bucket.at}>
-                  {ACTIVITY_SERIES.map((series) => {
+                  {ACTIVITY_SERIES.map((series, seriesIndex) => {
                     const value = bucket[series.key];
                     if (value === 0) return null;
-                    const y0 = y(base);
-                    base += value;
-                    const y1 = y(base);
+                    const below = ACTIVITY_SERIES.slice(0, seriesIndex).reduce(
+                      (sum, earlier) => sum + bucket[earlier.key],
+                      0,
+                    );
+                    const y0 = y(below);
+                    const y1 = y(below + value);
                     return (
                       <rect
                         key={series.key}
@@ -321,7 +323,7 @@ export function AuditActivityChart({
                   role="button"
                   tabIndex={0}
                   aria-label={review.title}
-                  className="ui-focus-ring cursor-pointer"
+                  className="cursor-pointer ui-focus-ring"
                   onClick={() => onOpenReview(review)}
                   onKeyDown={(event) => {
                     if (event.key === "Enter" || event.key === " ") {

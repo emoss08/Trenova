@@ -3,36 +3,22 @@ package billingcontrolservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol/billingcontroldb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/keelcheck"
 	"github.com/emoss08/trenova/pkg/tenantedvalidation"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/shopspring/decimal"
-	"go.uber.org/fx"
 )
-
-type ValidatorParams struct {
-	fx.In
-
-	DB *postgres.Connection
-}
 
 type Validator struct {
 	validator tenantedvalidation.EntityValidator[*billingcontrol.BillingControl]
 }
 
-func NewValidator(p ValidatorParams) *Validator {
-	checker := keelcheck.NewChecker(p.DB, billingcontroldb.BillingControlsSchema())
-
+func NewValidator() *Validator {
 	return &Validator{
 		validator: tenantedvalidation.NewBuilder[*billingcontrol.BillingControl]().
 			WithModelName("BillingControl").
-			WithUniquenessChecker(checker).
-			WithReferenceChecker(checker).
 			WithCustomRule(createTransferAutomationRule()).
 			WithCustomRule(createInvoiceAutomationRule()).
 			WithCustomRule(createRequirementEnforcementRule()).
@@ -41,17 +27,16 @@ func NewValidator(p ValidatorParams) *Validator {
 	}
 }
 
-func createTransferAutomationRule() validationframework.TenantedRule[*billingcontrol.BillingControl] {
-	return validationframework.NewTenantedRule[*billingcontrol.BillingControl](
+func createTransferAutomationRule() validationframework.Rule[*billingcontrol.BillingControl] {
+	return validationframework.NewRule[*billingcontrol.BillingControl](
 		"transfer_automation",
 	).
 		OnUpdate().
-		WithStage(validationframework.ValidationStageBusinessRules).
-		WithPriority(validationframework.ValidationPriorityHigh).
+		WithStage(validationframework.StageBusinessRules).
 		WithValidation(func(
 			_ context.Context,
 			entity *billingcontrol.BillingControl,
-			_ *validationframework.TenantedValidationContext,
+			_ *validationframework.Context,
 			multiErr *errortypes.MultiError,
 		) error {
 			if entity.BillingQueueTransferMode != billingcontrol.BillingQueueTransferModeAutomaticWhenReady {
@@ -77,17 +62,16 @@ func createTransferAutomationRule() validationframework.TenantedRule[*billingcon
 		})
 }
 
-func createInvoiceAutomationRule() validationframework.TenantedRule[*billingcontrol.BillingControl] {
-	return validationframework.NewTenantedRule[*billingcontrol.BillingControl](
+func createInvoiceAutomationRule() validationframework.Rule[*billingcontrol.BillingControl] {
+	return validationframework.NewRule[*billingcontrol.BillingControl](
 		"invoice_automation",
 	).
 		OnUpdate().
-		WithStage(validationframework.ValidationStageBusinessRules).
-		WithPriority(validationframework.ValidationPriorityHigh).
+		WithStage(validationframework.StageBusinessRules).
 		WithValidation(func(
 			_ context.Context,
 			entity *billingcontrol.BillingControl,
-			_ *validationframework.TenantedValidationContext,
+			_ *validationframework.Context,
 			multiErr *errortypes.MultiError,
 		) error {
 			if entity.InvoiceDraftCreationMode == billingcontrol.InvoiceDraftCreationModeManualOnly {
@@ -126,17 +110,16 @@ func createInvoiceAutomationRule() validationframework.TenantedRule[*billingcont
 		})
 }
 
-func createRequirementEnforcementRule() validationframework.TenantedRule[*billingcontrol.BillingControl] {
-	return validationframework.NewTenantedRule[*billingcontrol.BillingControl](
+func createRequirementEnforcementRule() validationframework.Rule[*billingcontrol.BillingControl] {
+	return validationframework.NewRule[*billingcontrol.BillingControl](
 		"requirement_enforcement",
 	).
 		OnUpdate().
-		WithStage(validationframework.ValidationStageBusinessRules).
-		WithPriority(validationframework.ValidationPriorityHigh).
+		WithStage(validationframework.StageBusinessRules).
 		WithValidation(func(
 			_ context.Context,
 			entity *billingcontrol.BillingControl,
-			_ *validationframework.TenantedValidationContext,
+			_ *validationframework.Context,
 			multiErr *errortypes.MultiError,
 		) error {
 			//nolint:exhaustive // only actionable enum states require explicit handling here
@@ -157,15 +140,14 @@ func createRequirementEnforcementRule() validationframework.TenantedRule[*billin
 		})
 }
 
-func createRateValidationRule() validationframework.TenantedRule[*billingcontrol.BillingControl] {
-	return validationframework.NewTenantedRule[*billingcontrol.BillingControl]("rate_validation").
+func createRateValidationRule() validationframework.Rule[*billingcontrol.BillingControl] {
+	return validationframework.NewRule[*billingcontrol.BillingControl]("rate_validation").
 		OnUpdate().
-		WithStage(validationframework.ValidationStageBusinessRules).
-		WithPriority(validationframework.ValidationPriorityHigh).
+		WithStage(validationframework.StageBusinessRules).
 		WithValidation(func(
 			_ context.Context,
 			entity *billingcontrol.BillingControl,
-			_ *validationframework.TenantedValidationContext,
+			_ *validationframework.Context,
 			multiErr *errortypes.MultiError,
 		) error {
 			if entity.RateValidationEnforcement == tenant.EnforcementLevelIgnore {
@@ -218,6 +200,6 @@ func createRateValidationRule() validationframework.TenantedRule[*billingcontrol
 func (v *Validator) ValidateUpdate(
 	ctx context.Context,
 	entity *billingcontrol.BillingControl,
-) *errortypes.MultiError {
+) error {
 	return v.validator.ValidateUpdate(ctx, entity)
 }

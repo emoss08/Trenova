@@ -2,8 +2,6 @@ package employment
 
 import (
 	"context"
-	"errors"
-	"time"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
@@ -16,8 +14,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
-
-var ErrInvalidEmploymentEventKind = errors.New("invalid employment event kind")
 
 type EmploymentEventKind string
 
@@ -47,14 +43,6 @@ func (k EmploymentEventKind) IsValid() bool {
 	default:
 		return false
 	}
-}
-
-func EmploymentEventKindFromString(s string) (EmploymentEventKind, error) {
-	kind := EmploymentEventKind(s)
-	if !kind.IsValid() {
-		return "", ErrInvalidEmploymentEventKind
-	}
-	return kind, nil
 }
 
 // EndsEmployment reports whether the event closes the worker's employment.
@@ -110,7 +98,6 @@ const (
 	EmploymentValueFleetCodeID     = "fleetCodeId"
 	EmploymentValueFleetCode       = "fleetCode"
 	EmploymentValueManagerID       = "managerId"
-	EmploymentValueManager         = "manager"
 	EmploymentValueDriverType      = "driverType"
 	EmploymentValueWorkerType      = "workerType"
 	EmploymentValueRate            = "rate"
@@ -120,7 +107,7 @@ const (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*WorkerEmploymentEvent)(nil)
+	_ validationframework.Entity = (*WorkerEmploymentEvent)(nil)
 )
 
 // Hires, transfers, leave, suspensions and terminations, with who recorded them
@@ -468,20 +455,4 @@ func (WorkerEmploymentEvent) Constraints() []keel.Constraint {
 			Message: "Document does not exist or belongs to a different organization",
 		},
 	}
-}
-
-// Tenure returns whole days of service between hire and either termination or
-// now. A zero hire date yields zero.
-func Tenure(hireDate int64, terminationDate *int64, now int64) time.Duration {
-	if hireDate <= 0 {
-		return 0
-	}
-	end := now
-	if terminationDate != nil && *terminationDate > 0 && *terminationDate < now {
-		end = *terminationDate
-	}
-	if end <= hireDate {
-		return 0
-	}
-	return time.Duration(end-hireDate) * time.Second
 }

@@ -22,6 +22,8 @@ import (
 
 const (
 	maxSuggestionContextLimit = 500
+	maxNeighborLimit          = 16
+	keptContentConstraint     = "uq_agent_memories_kept_content"
 	memoryEntity              = "AgentMemory"
 )
 
@@ -52,6 +54,9 @@ func (r *repository) Create(
 ) (*agentmemory.Memory, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentmemory.Memory, error) {
 		if err := agentmemorydb.Memories.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			if keel.IsUnique(err, keptContentConstraint) {
+				return nil, agentmemoryports.ErrMemoryAlreadyKept
+			}
 			r.l.Error("failed to create agent memory", zap.Error(err))
 
 			return nil, fmt.Errorf("create agent memory: %w", err)
@@ -296,8 +301,12 @@ func searchQuery(
 ) keel.Query[*agentmemory.Memory] {
 	m := agentmemorydb.Memories
 	var subject keel.Pred
-	if req.Subject != nil {
-		subject = keel.And(m.SubjectType.Eq(req.Subject.Type), m.SubjectID.Eq(req.Subject.ID))
+	if len(req.Subjects) > 0 {
+		about := make([]keel.Pred, 0, len(req.Subjects))
+		for _, ref := range req.Subjects {
+			about = append(about, keel.And(m.SubjectType.Eq(ref.Type), m.SubjectID.Eq(ref.ID)))
+		}
+		subject = keel.Or(about...)
 	}
 	tool := strings.TrimSpace(req.ToolName)
 
@@ -346,22 +355,13 @@ func (r *repository) FindActive(
 ) (*agentmemory.Memory, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentmemory.Memory, error) {
 		m := agentmemorydb.Memories
-		subject := m.SubjectType.IsNull()
-		if req.Subject != nil {
-			subject = keel.And(m.SubjectType.Eq(req.Subject.Type), m.SubjectID.Eq(req.Subject.ID))
-		}
-		tool := m.ToolName.IsNull()
-		if name := strings.TrimSpace(req.ToolName); name != "" {
-			tool = m.ToolName.Eq(name)
-		}
-
 		entity, err := m.Where(
 			keptOnly(req.Now, req.IncludeSuggested),
-			foldedContent(m.Content).EqExpr(foldedContent(keel.Text(req.Content))),
+			keel.StringOf(m.ContentKey).EqExpr(foldedContent(keel.Text(req.Content))),
 			sameReaders(req),
-			keel.When(!req.Tainted, keel.Or(m.Tainted.IsFalse(), m.ReviewedAt.IsNotNull())),
-			subject,
-			tool,
+			cleanFor(req),
+			sameSubject(req),
+			sameTool(req),
 		).
 			Order(taintsLast(), activeFirst(), m.CreatedAt.Desc()).
 			First(ctx, r.db.Keel(ctx))
@@ -373,6 +373,53 @@ func (r *repository) FindActive(
 		}
 
 		return entity, nil
+	})
+}
+
+func (r *repository) ListNeighbors(
+	ctx context.Context,
+	req *agentmemoryports.ListAgentMemoryNeighborsRequest,
+) ([]*agentmemory.Memory, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentmemory.Memory, error) {
+		same := req.Same
+		if same == nil {
+			return []*agentmemory.Memory{}, nil
+		}
+
+		m := agentmemorydb.Memories
+		match := anyTermMatch(req.Terms)
+		focused := same.Subject != nil || strings.TrimSpace(same.ToolName) != ""
+		var near keel.Pred
+		if !focused {
+			if match == nil && len(req.IDs) == 0 {
+				return []*agentmemory.Memory{}, nil
+			}
+			near = keel.Or(
+				match.matches(m.SearchVector),
+				keel.When(len(req.IDs) > 0, m.ID.In(req.IDs...)),
+			)
+		}
+
+		q := m.Where(
+			keptOnly(same.Now, same.IncludeSuggested),
+			sameReaders(same),
+			cleanFor(same),
+			sameSubject(same),
+			sameTool(same),
+			near,
+		)
+		if match != nil {
+			q = q.Order(keel.Desc(match.rank(m.SearchVector)))
+		}
+
+		rows, err := q.Order(m.CreatedAt.Desc(), m.ID.Asc()).
+			Limit(boundedNeighborLimit(req.Limit)).
+			List(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, fmt.Errorf("list agent memory neighbors: %w", err)
+		}
+
+		return rows, nil
 	})
 }
 
@@ -688,6 +735,38 @@ func sameReaders(req *agentmemoryports.FindActiveAgentMemoryRequest) keel.Pred {
 	default:
 		return m.Scope.Eq(agentmemory.MemoryScopeOrganization)
 	}
+}
+
+func cleanFor(req *agentmemoryports.FindActiveAgentMemoryRequest) keel.Pred {
+	m := agentmemorydb.Memories
+
+	return keel.When(!req.Tainted, keel.Or(m.Tainted.IsFalse(), m.ReviewedAt.IsNotNull()))
+}
+
+func sameSubject(req *agentmemoryports.FindActiveAgentMemoryRequest) keel.Pred {
+	m := agentmemorydb.Memories
+	if req.Subject == nil {
+		return m.SubjectType.IsNull()
+	}
+
+	return keel.And(m.SubjectType.Eq(req.Subject.Type), m.SubjectID.Eq(req.Subject.ID))
+}
+
+func sameTool(req *agentmemoryports.FindActiveAgentMemoryRequest) keel.Pred {
+	m := agentmemorydb.Memories
+	if name := strings.TrimSpace(req.ToolName); name != "" {
+		return m.ToolName.Eq(name)
+	}
+
+	return m.ToolName.IsNull()
+}
+
+func boundedNeighborLimit(limit int) int {
+	if limit <= 0 || limit > maxNeighborLimit {
+		return maxNeighborLimit
+	}
+
+	return limit
 }
 
 // agentScopes are the scopes about which agents read a memory rather than

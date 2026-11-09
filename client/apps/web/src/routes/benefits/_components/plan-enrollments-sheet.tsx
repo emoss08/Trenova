@@ -95,11 +95,11 @@ export function PlanEnrollmentsSheet({ plan, now, onOpenChange }: PlanEnrollment
               onChange={(event) => setQuery(event.target.value)}
               placeholder={t("Find a name or terminal")}
               aria-label={t("Find on this plan")}
-              leftElement={<SearchLgIcon className="text-muted-foreground size-3.5" />}
+              leftElement={<SearchLgIcon className="size-3.5 text-muted-foreground" />}
               inputContainerClassName="w-60 max-w-full"
             />
             {enrollments.data ? (
-              <span className="text-muted-foreground text-xs tabular-nums">
+              <span className="text-xs text-muted-foreground tabular-nums">
                 {t("{0} covered · {1} on record", covered, rows.length)}
               </span>
             ) : null}
@@ -112,14 +112,14 @@ export function PlanEnrollmentsSheet({ plan, now, onOpenChange }: PlanEnrollment
               <Skeleton className="h-10 w-2/3" />
             </div>
           ) : rows.length === 0 ? (
-            <p className="text-muted-foreground rounded-lg border border-dashed p-4 text-sm">
+            <p className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
               {query
                 ? t("Nobody on this plan matches that.")
                 : t("Nobody has been put on this plan yet.")}
             </p>
           ) : (
             <ul
-              className="bg-card divide-y overflow-hidden rounded-lg border"
+              className="divide-y overflow-hidden rounded-lg border bg-card"
               aria-label={t("People on the plan")}
             >
               {rows.map(({ entry, standing }) => {
@@ -129,7 +129,7 @@ export function PlanEnrollmentsSheet({ plan, now, onOpenChange }: PlanEnrollment
                   <li key={entry.id}>
                     <Link
                       to={workerHref(entry.workerId)}
-                      className="hover:bg-accent grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-3 py-2 transition-colors"
+                      className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-3 py-2 transition-colors hover:bg-accent"
                     >
                       <span className="flex min-w-0 items-center gap-2.5">
                         <Avatar size="sm">
@@ -146,7 +146,7 @@ export function PlanEnrollmentsSheet({ plan, now, onOpenChange }: PlanEnrollment
                           <span className="flex min-w-0 items-center gap-1.5">
                             <span className="truncate text-sm font-medium">{name}</span>
                             {fleet ? (
-                              <span className="text-muted-foreground text-2xs flex items-center gap-1">
+                              <span className="flex items-center gap-1 text-2xs text-muted-foreground">
                                 <span
                                   aria-hidden
                                   className="size-1.5 rounded-full"
@@ -156,7 +156,7 @@ export function PlanEnrollmentsSheet({ plan, now, onOpenChange }: PlanEnrollment
                               </span>
                             ) : null}
                           </span>
-                          <span className="text-muted-foreground text-xs">
+                          <span className="text-xs text-muted-foreground">
                             {describeEntry(entry, standing)}
                           </span>
                         </span>

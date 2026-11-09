@@ -260,10 +260,7 @@ func validateSourcingQuery(query *SourcingQuery) error {
 	if query.Sort != "" && !query.Sort.IsValid() {
 		multiErr.Add("sort", errortypes.ErrInvalid, "Sort order is invalid")
 	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }
 
 func sortSourcingResults(items []*SourcingResult, order SourcingSort) {

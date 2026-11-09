@@ -38,6 +38,7 @@ type Reads struct {
 	Analyses  map[pulid.ID]*AnalysisRead
 	Tables    map[pulid.ID]*TableRead
 	Events    map[pulid.ID][]board.Event
+	Work      map[pulid.ID][]board.WorkSignal
 }
 
 func (r *Reads) summary(resource permission.Resource, id pulid.ID) (Summary, bool) {
@@ -120,9 +121,67 @@ func assembleBlock(layout *board.Board, idx int, reads *Reads) board.FilledBlock
 		if !spec.Records.Empty() {
 			block.Chips, _ = rowsOf(spec.Records, reads)
 		}
+	case board.BlockWork:
+		assembleWork(&block, spec, reads)
+	case board.BlockActions:
+		assembleActions(&block, spec, reads)
 	}
 
 	return block
+}
+
+func assembleWork(block *board.FilledBlock, spec *board.Block, reads *Reads) {
+	set := spec.Records
+	block.Source = board.Source{
+		Kind:     board.SourceRecords,
+		Resource: set.Resource,
+		Count:    len(set.IDs),
+	}
+	if !reads.Readable[set.Resource] {
+		block.State = board.StateUnreadable
+		return
+	}
+	rows, readable := rowsOf(set, reads)
+	block.Source.Readable = readable
+	block.Work = make([]board.WorkRow, 0, len(rows))
+	for idx := range rows {
+		row := board.WorkRow{Row: rows[idx], Signals: []board.WorkSignal{}}
+		if rows[idx].Readable {
+			row.Signals = append(row.Signals, reads.Work[rows[idx].ID]...)
+		}
+		for _, signal := range row.Signals {
+			if signal.Tone.Severity() > row.Tone.Severity() {
+				row.Tone = signal.Tone
+			}
+			if signal.DueAt != nil && (row.DueAt == nil || *signal.DueAt < *row.DueAt) {
+				due := *signal.DueAt
+				row.DueAt = &due
+			}
+		}
+		if row.Tone.Severity() > block.Tone.Severity() {
+			block.Tone = row.Tone
+		}
+		block.Work = append(block.Work, row)
+	}
+	if readable == 0 {
+		block.State = board.StateUnreadable
+	} else if len(block.Work) > 0 && !slices.ContainsFunc(block.Work, func(row board.WorkRow) bool {
+		return len(row.Signals) > 0
+	}) {
+		block.State = board.StateEmpty
+	}
+}
+
+func assembleActions(block *board.FilledBlock, spec *board.Block, reads *Reads) {
+	block.Actions = make([]board.FilledAction, 0, len(spec.Actions))
+	for idx := range spec.Actions {
+		action := &spec.Actions[idx]
+		filled := board.FilledAction{Label: action.Label, Ask: board.PlainText(action.Ask)}
+		if !action.Records.Empty() && reads.Readable[action.Records.Resource] {
+			filled.Records, _ = rowsOf(action.Records, reads)
+		}
+		block.Actions = append(block.Actions, filled)
+	}
 }
 
 func assembleFigures(block *board.FilledBlock, spec *board.Block, reads *Reads) {

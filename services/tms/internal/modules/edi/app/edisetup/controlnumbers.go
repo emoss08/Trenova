@@ -89,8 +89,5 @@ func validateControlNumberRequest(req *edipartnerports.ResetEDIControlNumberRequ
 	if req.NextValue < 1 {
 		multiErr.Add("nextValue", errortypes.ErrInvalid, "Next value must be at least 1")
 	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }

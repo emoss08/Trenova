@@ -47,6 +47,7 @@ func watchtowerCountsModel(counts *watchtowerports.WatchtowerCounts) *gqlmodel.W
 		Unassigned:     counts.Unassigned,
 		Mine:           counts.Mine,
 		MineOverdue:    counts.MineOverdue,
+		WithAgents:     counts.WithAgents,
 		ByKind:         byKind,
 		SeenAt:         int(counts.SeenAt),
 	}

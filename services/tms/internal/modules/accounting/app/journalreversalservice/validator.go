@@ -2,6 +2,7 @@ package journalreversalservice
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/app/journalposting"
@@ -33,7 +34,7 @@ func (v *Validator) ValidateCreate(
 	entry *journalentry.JournalEntry,
 	reqAccountingDate int64,
 	reasonCode, reasonText string,
-) *errortypes.MultiError {
+) error {
 	me := errortypes.NewMultiError()
 	if entry == nil {
 		me.Add(
@@ -41,7 +42,7 @@ func (v *Validator) ValidateCreate(
 			errortypes.ErrRequired,
 			"Original journal entry is required",
 		)
-		return me
+		return me.Err()
 	}
 	if !entry.IsPosted || entry.Status != "Posted" {
 		me.Add(
@@ -77,7 +78,7 @@ func (v *Validator) ValidateCreate(
 	if strings.TrimSpace(reasonText) == "" {
 		me.Add("reasonText", errortypes.ErrRequired, "Reason text is required")
 	}
-	return multiErrOrNil(me)
+	return me.Err()
 }
 
 func (v *Validator) ResolvePostingPeriod(
@@ -85,7 +86,7 @@ func (v *Validator) ResolvePostingPeriod(
 	orgID, buID pulid.ID,
 	accountingDate int64,
 	control *accountingcontrol.AccountingControl,
-) (*fiscalperiod.FiscalPeriod, int64, *errortypes.MultiError) {
+) (*fiscalperiod.FiscalPeriod, int64, error) {
 	me := errortypes.NewMultiError()
 	period, err := v.fiscalRepo.GetPeriodByDate(
 		ctx,
@@ -97,7 +98,7 @@ func (v *Validator) ResolvePostingPeriod(
 			errortypes.ErrInvalid,
 			"Accounting date must resolve to a fiscal period",
 		)
-		return nil, 0, me
+		return nil, 0, me.Err()
 	}
 	if period.Status == fiscalperiod.StatusClosed ||
 		period.Status == fiscalperiod.StatusPermanentlyClosed {
@@ -108,7 +109,7 @@ func (v *Validator) ResolvePostingPeriod(
 				errortypes.ErrInvalidOperation,
 				"Closed periods require next-open-period reversal policy",
 			)
-			return nil, 0, me
+			return nil, 0, me.Err()
 		}
 		periods, listErr := v.fiscalRepo.ListByFiscalYearID(
 			ctx,
@@ -119,12 +120,8 @@ func (v *Validator) ResolvePostingPeriod(
 			},
 		)
 		if listErr != nil {
-			me.Add(
-				"requestedAccountingDate",
-				errortypes.ErrSystemError,
-				"Failed to resolve next open fiscal period",
-			)
-			return nil, 0, me
+			me.AddInternal(fmt.Errorf("failed to resolve next open fiscal period: %w", listErr))
+			return nil, 0, me.Err()
 		}
 		for _, candidate := range periods {
 			if candidate == nil || candidate.PeriodNumber <= period.PeriodNumber {
@@ -140,7 +137,7 @@ func (v *Validator) ResolvePostingPeriod(
 			errortypes.ErrInvalidOperation,
 			"No next open fiscal period is available for reversal posting",
 		)
-		return nil, 0, me
+		return nil, 0, me.Err()
 	}
 	if !journalposting.AcceptsPostings(period.Status) {
 		me.Add(
@@ -148,7 +145,7 @@ func (v *Validator) ResolvePostingPeriod(
 			errortypes.ErrInvalidOperation,
 			"Journal reversals cannot post to an inactive fiscal period",
 		)
-		return nil, 0, me
+		return nil, 0, me.Err()
 	}
 	return period, accountingDate, nil
 }
@@ -174,33 +171,33 @@ func (v *Validator) HoldPostingPeriod(
 	return nil
 }
 
-func (v *Validator) ValidateApprove(entity *journalreversal.Reversal) *errortypes.MultiError {
-	if entity != nil && entity.Status.CanApprove() {
-		return nil
-	}
+func (v *Validator) ValidateApprove(entity *journalreversal.Reversal) error {
+	return approveReport(entity).Err()
+}
+
+func approveReport(entity *journalreversal.Reversal) *errortypes.MultiError {
 	me := errortypes.NewMultiError()
-	me.Add("status", errortypes.ErrInvalid, "Only requested or pending reversals can be approved")
+	if !(entity != nil && entity.Status.CanApprove()) {
+		me.Add("status", errortypes.ErrInvalid, "Only requested or pending reversals can be approved")
+	}
 	return me
 }
 
 func (v *Validator) ValidateReject(
 	entity *journalreversal.Reversal,
 	reason string,
-) *errortypes.MultiError {
-	me := v.ValidateApprove(entity)
+) error {
+	me := approveReport(entity)
 	if strings.TrimSpace(reason) == "" {
-		if me == nil {
-			me = errortypes.NewMultiError()
-		}
 		me.Add("reason", errortypes.ErrRequired, "Rejection reason is required")
 	}
-	return multiErrOrNil(me)
+	return me.Err()
 }
 
 func (v *Validator) ValidateCancel(
 	entity *journalreversal.Reversal,
 	reason string,
-) *errortypes.MultiError {
+) error {
 	me := errortypes.NewMultiError()
 	if entity == nil || !entity.Status.CanCancel() {
 		me.Add(
@@ -212,20 +209,13 @@ func (v *Validator) ValidateCancel(
 	if strings.TrimSpace(reason) == "" {
 		me.Add("reason", errortypes.ErrRequired, "Cancel reason is required")
 	}
-	return multiErrOrNil(me)
+	return me.Err()
 }
-func (v *Validator) ValidatePost(entity *journalreversal.Reversal) *errortypes.MultiError {
+func (v *Validator) ValidatePost(entity *journalreversal.Reversal) error {
 	if entity != nil && entity.Status.CanPost() {
 		return nil
 	}
 	me := errortypes.NewMultiError()
 	me.Add("status", errortypes.ErrInvalid, "Only approved journal reversals can be posted")
-	return me
-}
-
-func multiErrOrNil(me *errortypes.MultiError) *errortypes.MultiError {
-	if me == nil || !me.HasErrors() {
-		return nil
-	}
-	return me
+	return me.Err()
 }

@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*DataRetention)(nil)
+	_ validationframework.Entity = (*DataRetention)(nil)
 )
 
 const (

@@ -14,8 +14,8 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*FiscalPeriod)(nil)
-	_ domaintypes.PostgresSearchable     = (*FiscalPeriod)(nil)
+	_ validationframework.Entity     = (*FiscalPeriod)(nil)
+	_ domaintypes.PostgresSearchable = (*FiscalPeriod)(nil)
 )
 
 // ---------------------------------------------------------------

@@ -22,16 +22,15 @@ type moveRuleContext struct {
 	multiErr      *errortypes.MultiError
 }
 
-func createMoveValidationRule() validationframework.TenantedRule[*shipment.Shipment] {
+func createMoveValidationRule() validationframework.Rule[*shipment.Shipment] {
 	return validationframework.
-		NewTenantedRule[*shipment.Shipment]("shipment_move_validation").
+		NewRule[*shipment.Shipment]("shipment_move_validation").
 		OnBoth().
-		WithStage(validationframework.ValidationStageDataIntegrity).
-		WithPriority(validationframework.ValidationPriorityHigh).
+		WithStage(validationframework.StageDataIntegrity).
 		WithValidation(func(
 			_ context.Context,
 			entity *shipment.Shipment,
-			valCtx *validationframework.TenantedValidationContext,
+			valCtx *validationframework.Context,
 			multiErr *errortypes.MultiError,
 		) error {
 			seenMoveIDs := make(map[pulid.ID]int, len(entity.Moves))

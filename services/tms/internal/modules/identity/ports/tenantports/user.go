@@ -15,14 +15,6 @@ type GetUserByIDRequest struct {
 	IncludeMemberships bool `json:"includeMemberships"`
 }
 
-type UserOrganizationResult struct {
-	OrganizationID   pulid.ID
-	OrganizationName string
-	BusinessUnitID   pulid.ID
-	IsDefault        bool
-	JoinedAt         int64
-}
-
 type UserOrganizationResponse struct {
 	ID        pulid.ID `json:"id"`
 	Name      string   `json:"name"`

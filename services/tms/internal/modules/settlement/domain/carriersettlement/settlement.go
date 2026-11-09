@@ -18,9 +18,9 @@ import (
 )
 
 var (
-	_ domaintypes.PostgresSearchable     = (*CarrierSettlement)(nil)
-	_ pagination.CursorEntity            = (*CarrierSettlement)(nil)
-	_ validationframework.TenantedEntity = (*CarrierSettlement)(nil)
+	_ domaintypes.PostgresSearchable = (*CarrierSettlement)(nil)
+	_ pagination.CursorEntity        = (*CarrierSettlement)(nil)
+	_ validationframework.Entity     = (*CarrierSettlement)(nil)
 )
 
 // Carrier payable statements for purchased transportation

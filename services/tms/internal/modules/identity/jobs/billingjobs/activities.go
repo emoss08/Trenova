@@ -387,8 +387,7 @@ func classifyInvoiceRenderError(err error) error {
 	// Field-level errors from the template engine mean the template does not
 	// compile or does not render against real data. An administrator has to
 	// change it; no number of attempts will.
-	var multiErr *errortypes.MultiError
-	if errors.As(err, &multiErr) {
+	if multiErr, ok := errortypes.RefusalOf(err); ok {
 		return temporaltype.NewTemplateInvalidError(
 			"the invoice template could not be rendered: "+multiErr.Error(), err,
 		)

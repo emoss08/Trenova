@@ -1,6 +1,8 @@
 package carriercapacityresolver
 
 import (
+	"strings"
+
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqldecimal"
@@ -79,7 +81,7 @@ func postingFromInput(
 	posting.Rate = rate
 
 	if multiErr.HasErrors() {
-		return nil, multiErr
+		return nil, multiErr.Err()
 	}
 
 	return posting, nil
@@ -105,4 +107,23 @@ func postingConnectionToModel(
 		TotalCount:      page.TotalCount,
 		TotalCountExact: page.TotalCountExact,
 	}, nil
+}
+
+func stateCode(field string, raw *string) (string, error) {
+	if raw == nil {
+		return "", nil
+	}
+	code := strings.ToUpper(strings.TrimSpace(*raw))
+	if code == "" {
+		return "", nil
+	}
+	if len(code) != 2 || code[0] < 'A' || code[0] > 'Z' || code[1] < 'A' || code[1] > 'Z' {
+		return "", errortypes.NewValidationError(
+			field,
+			errortypes.ErrInvalid,
+			"A state is its two-letter code, such as TX",
+		)
+	}
+
+	return code, nil
 }

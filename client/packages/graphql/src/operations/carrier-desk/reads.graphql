@@ -5,9 +5,16 @@
 query DeskCarrierCapacityPostings(
   $input: DataTableConnectionInput!
   $openOnly: Boolean = false
+  $originStateCode: String
+  $destinationStateCode: String
   $includeTotalCount: Boolean = false
 ) {
-  carrierCapacityPostings(input: $input, openOnly: $openOnly) {
+  carrierCapacityPostings(
+    input: $input
+    openOnly: $openOnly
+    originStateCode: $originStateCode
+    destinationStateCode: $destinationStateCode
+  ) {
     edges {
       cursor
       node {

@@ -123,7 +123,7 @@ const TimePickerInput = React.forwardRef<HTMLInputElement, TimePickerInputProps>
         <input
           {...shared}
           className={cn(
-            "focus:bg-surface-selected h-5 w-5 rounded-xs bg-transparent p-0 text-center tabular-nums caret-transparent outline-none disabled:cursor-not-allowed",
+            "h-5 w-5 rounded-xs bg-transparent p-0 text-center tabular-nums caret-transparent outline-none focus:bg-surface-selected disabled:cursor-not-allowed",
             className,
           )}
           {...props}
@@ -135,7 +135,7 @@ const TimePickerInput = React.forwardRef<HTMLInputElement, TimePickerInputProps>
       <Input
         {...shared}
         className={cn(
-          "focus:bg-muted focus:text-accent-foreground w-[48px] text-center font-mono text-sm tabular-nums caret-transparent [&::-webkit-inner-spin-button]:appearance-none",
+          "w-[48px] text-center font-mono text-sm tabular-nums caret-transparent focus:bg-muted focus:text-accent-foreground [&::-webkit-inner-spin-button]:appearance-none",
           className,
         )}
         {...props}

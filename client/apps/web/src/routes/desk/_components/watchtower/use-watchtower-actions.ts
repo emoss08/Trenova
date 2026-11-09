@@ -22,6 +22,8 @@ import {
 } from "@/lib/watchtower-cache";
 import { assistantService } from "@/services/assistant";
 import { useAssistantStore } from "@/stores/assistant-store";
+import { patchAttentionItem, removeAttentionItem } from "@/lib/desk-attention-cache";
+import { deskAttention } from "@/lib/queries/desk-attention";
 import { useDeskAttachedPageStore } from "@/stores/desk-attached-page-store";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLatestCallback } from "@trenova/shared/hooks/use-latest-callback";
@@ -119,6 +121,7 @@ export function useWatchtowerActions({
       refetchType: "active",
     });
     void queryClient.invalidateQueries({ queryKey: attention._def, refetchType: "active" });
+    void queryClient.invalidateQueries({ queryKey: deskAttention._def, refetchType: "active" });
   };
 
   // Opening an item marks it seen for this reader. The dot goes at once; a
@@ -130,8 +133,10 @@ export function useWatchtowerActions({
       return;
     }
     patchQueueItem(queryClient, currentId, (item) => ({ ...item, seen: true }));
+    patchAttentionItem(queryClient, currentId, (item) => ({ ...item, seen: true }));
     markWatchtowerItemSeen(currentId).catch(() => {
       patchQueueItem(queryClient, currentId, (item) => ({ ...item, seen: false }));
+      patchAttentionItem(queryClient, currentId, (item) => ({ ...item, seen: false }));
     });
   }, [currentId, currentSeen, queryClient]);
 
@@ -162,6 +167,7 @@ export function useWatchtowerActions({
 
     leave(how === "done" ? "ok" : "no", () => {
       removeFromQueue(queryClient, item.id);
+      removeAttentionItem(queryClient, item.id);
       shiftQueueCounts(queryClient, item, -1);
       shiftCleared(queryClient, since, 1);
       cursor.select(nextId);

@@ -2,12 +2,11 @@ package orderservice
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/chargeallocation"
+	"github.com/emoss08/trenova/internal/modules/operations/app/allocationcheck"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
@@ -15,7 +14,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentserviceports"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -602,15 +600,15 @@ func (s *Service) AddChargeWithAllocations(
 		multiErr := errortypes.NewMultiError()
 		charge.Validate(multiErr)
 		if multiErr.HasErrors() {
-			return multiErr
+			return multiErr.Err()
 		}
-		if multiErr = s.validateChargeAllocations(
+		if allocationErr := s.validateChargeAllocations(
 			txCtx,
 			tenantInfo,
 			charge,
 			req.Allocations,
-		); multiErr != nil {
-			return multiErr
+		); allocationErr != nil {
+			return allocationErr
 		}
 
 		if _, txErr = s.repo.AddCharge(txCtx, charge); txErr != nil {
@@ -730,15 +728,15 @@ func (s *Service) UpdateCharge(
 		multiErr := errortypes.NewMultiError()
 		charge.Validate(multiErr)
 		if multiErr.HasErrors() {
-			return multiErr
+			return multiErr.Err()
 		}
-		if multiErr = s.validateChargeAllocations(
+		if allocationErr := s.validateChargeAllocations(
 			txCtx,
 			req.TenantInfo,
 			charge,
 			req.Allocations,
-		); multiErr != nil {
-			return multiErr
+		); allocationErr != nil {
+			return allocationErr
 		}
 
 		affected, txErr := s.repo.UpdateCharge(txCtx, charge)
@@ -851,13 +849,13 @@ func (s *Service) SetChargeAllocations(
 			)
 		}
 
-		if multiErr := s.validateChargeAllocations(
+		if allocationErr := s.validateChargeAllocations(
 			txCtx,
 			req.TenantInfo,
 			charge,
 			allocations,
-		); multiErr != nil {
-			return multiErr
+		); allocationErr != nil {
+			return allocationErr
 		}
 		if txErr = s.syncChargeAllocations(
 			txCtx,
@@ -891,125 +889,16 @@ func (s *Service) validateChargeAllocations(
 	tenantInfo pagination.TenantInfo,
 	charge *order.OrderCharge,
 	allocations []*shipment.ChargeAllocation,
-) *errortypes.MultiError {
-	if allocations == nil {
-		return nil
-	}
-
-	payerIDs := make([]pulid.ID, 0, len(allocations))
-	rowIDs := make([]pulid.ID, 0, len(allocations))
-	seen := make(map[pulid.ID]struct{}, len(allocations))
-	for _, allocation := range allocations {
-		if allocation == nil {
-			continue
-		}
-		allocation.ChargeKind = shipmentvocab.ChargeAllocationKindOrderCharge
-		if charge.ID.IsNotNil() {
-			chargeID := charge.ID
-			allocation.OrderChargeID = &chargeID
-		}
-		if allocation.ID.IsNotNil() {
-			rowIDs = append(rowIDs, allocation.ID)
-		}
-		if allocation.BillToCustomerID.IsNil() {
-			continue
-		}
-		if _, ok := seen[allocation.BillToCustomerID]; ok {
-			continue
-		}
-		seen[allocation.BillToCustomerID] = struct{}{}
-		payerIDs = append(payerIDs, allocation.BillToCustomerID)
-	}
-
-	customers := make(map[pulid.ID]*customer.Customer, len(payerIDs))
-	if len(payerIDs) > 0 {
-		found, err := s.customerRepo.GetByIDs(ctx, customerports.GetCustomersByIDsRequest{
-			TenantInfo:  tenantInfo,
-			CustomerIDs: payerIDs,
-		})
-		if err != nil {
-			multiErr := errortypes.NewMultiError()
-			multiErr.Add("allocations", errortypes.ErrInvalid, "Unable to verify bill-to customers")
-			return multiErr
-		}
-		for _, cus := range found {
-			if cus != nil {
-				customers[cus.ID] = cus
-			}
-		}
-	}
-
-	locked := make(map[pulid.ID]struct{})
-	if len(rowIDs) > 0 {
-		found, err := s.chargeAllocationRepo.LockedIDs(ctx, tenantInfo, rowIDs)
-		if err != nil {
-			multiErr := errortypes.NewMultiError()
-			multiErr.Add(
-				"allocations",
-				errortypes.ErrInvalid,
-				"Unable to verify invoiced allocations",
-			)
-			return multiErr
-		}
-		locked = found
-	}
-
-	// A charge that has no id yet is validated against a placeholder so the
-	// rows can name it; the repository stamps the real id on insert.
-	chargeID := charge.ID
-	if chargeID.IsNil() {
-		chargeID = pulid.MustNew("ordchg_")
-		for _, allocation := range allocations {
-			if allocation != nil {
-				id := chargeID
-				allocation.OrderChargeID = &id
-			}
-		}
-	}
-
-	multiErr := chargeallocation.ValidateAllocations(&chargeallocation.ValidateAllocationsParams{
-		TenantOrgID: tenantInfo.OrgID,
-		TenantBuID:  tenantInfo.BuID,
-		Allocations: allocations,
-		Customers:   customers,
-		Locked:      locked,
-		Field:       "allocations",
-	})
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	if _, err := chargeallocation.ResolveOrderChargeShares(
+) error {
+	return allocationcheck.ValidateOrderCharge(
 		ctx,
-		[]chargeallocation.OrderChargeRef{
-			{ID: chargeID, Description: charge.Description, Amount: charge.Amount},
+		allocationcheck.Readers{Customers: s.customerRepo, Allocations: s.chargeAllocationRepo},
+		allocationcheck.OrderChargeRequest{
+			TenantInfo:  tenantInfo,
+			Charge:      charge,
+			Allocations: allocations,
 		},
-		allocations,
-		pulid.Nil,
-	); err != nil {
-		var typed *errortypes.Error
-		if !errors.As(err, &typed) {
-			s.l.Error("failed to split the order charge", zap.Error(err))
-			multiErr.Add(
-				"allocations",
-				errortypes.ErrSystemError,
-				"Unable to check how the charge is split",
-			)
-			return multiErr
-		}
-		multiErr.Add(typed.Field, typed.Code, typed.Message, typed.Args...)
-		return multiErr
-	}
-
-	if charge.ID.IsNil() {
-		for _, allocation := range allocations {
-			if allocation != nil {
-				allocation.OrderChargeID = nil
-			}
-		}
-	}
-
-	return nil
+	)
 }
 
 func (s *Service) syncChargeAllocations(

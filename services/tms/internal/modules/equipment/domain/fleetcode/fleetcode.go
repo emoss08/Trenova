@@ -13,8 +13,8 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*FleetCode)(nil)
-	_ domaintypes.PostgresSearchable     = (*FleetCode)(nil)
+	_ validationframework.Entity     = (*FleetCode)(nil)
+	_ domaintypes.PostgresSearchable = (*FleetCode)(nil)
 )
 
 // Fleet groupings

@@ -136,11 +136,7 @@ func (t *SaveTableViewTool) validateArgs(params map[string]any) error {
 			fmt.Sprintf("%q is not a table a view can be saved for", entity))
 	}
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 func (t *SaveTableViewTool) Execute(

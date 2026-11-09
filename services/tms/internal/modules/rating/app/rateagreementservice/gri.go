@@ -29,7 +29,7 @@ type RateAdjustment struct {
 	PercentChange decimal.NullDecimal `json:"percentChange"`
 }
 
-func (ra RateAdjustment) Validate() *errortypes.MultiError {
+func (ra RateAdjustment) Validate() error {
 	multiErr := errortypes.NewMultiError()
 
 	switch {
@@ -47,11 +47,7 @@ func (ra RateAdjustment) Validate() *errortypes.MultiError {
 		)
 	}
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 func (ra RateAdjustment) factor() decimal.Decimal {
@@ -81,12 +77,12 @@ type RateIncreaseRequest struct {
 	EffectiveFrom int64          `json:"effectiveFrom"`
 }
 
-func (req *RateIncreaseRequest) Validate() *errortypes.MultiError {
+func (req *RateIncreaseRequest) Validate() error {
 	multiErr := errortypes.NewMultiError()
 
 	if req == nil {
 		multiErr.Add("request", errortypes.ErrRequired, "A rate increase request is required")
-		return multiErr
+		return multiErr.Err()
 	}
 
 	if adjErr := req.Adjustment.Validate(); adjErr != nil {
@@ -118,11 +114,7 @@ func (req *RateIncreaseRequest) Validate() *errortypes.MultiError {
 		)
 	}
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 // RateIncreaseLine is one lane's before and after, which is what somebody

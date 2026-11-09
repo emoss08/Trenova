@@ -289,7 +289,7 @@ function MovementForm({
         <section className="flex flex-col gap-3">
           <h3 className="text-sm font-medium">{t("What it books")}</h3>
           {inputKey === null ? (
-            <p className="text-muted-foreground text-sm">
+            <p className="text-sm text-muted-foreground">
               {t("Fill in the form to see the journal it books.")}
             </p>
           ) : (
@@ -344,7 +344,7 @@ function MovementPlanBody({
   return (
     <div className="flex flex-col gap-3">
       {plan.reverses ? (
-        <p className="text-muted-foreground text-xs">
+        <p className="text-xs text-muted-foreground">
           {t(
             "Reverses the chargeback of {0}, {1} repaid to the factor.",
             formatUnixDateMedium(plan.reverses.occurredOn),
@@ -355,11 +355,11 @@ function MovementPlanBody({
       {plan.movement ? (
         <FactoringMovementPreview movement={plan.movement} currencyCode={currencyCode} />
       ) : (
-        <p className="text-muted-foreground text-sm">
+        <p className="text-sm text-muted-foreground">
           {t("Nothing is booked: the factor held no reserve and paid nothing.")}
         </p>
       )}
-      <p className="text-muted-foreground text-xs">
+      <p className="text-xs text-muted-foreground">
         {t(
           "The invoice reads {0} on the schedule afterwards.",
           FACTORING_SUBMISSION_ITEM_STATUS_LABELS[plan.itemStatus],

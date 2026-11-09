@@ -48,7 +48,7 @@ export function FactoringPage() {
         <FactoringSummaryStrip active={state.view} onSelect={selectTab} />
       )}
       <Tabs value={state.view} onValueChange={(value) => selectTab(value as FactoringTab)}>
-        <div className="border-border border-b">
+        <div className="border-b border-border">
           <TabsList variant="underline">
             <TabsTab value="ready">{t("Ready")}</TabsTab>
             <TabsTab value="not-ready">{t("Not ready")}</TabsTab>
@@ -95,7 +95,7 @@ function FactorNarrowing({
           {t("Showing only {0}.", name)}{" "}
           <Link
             to={recordPath("factoring_company", factoringCompanyId)}
-            className="ui-focus-ring rounded-sm underline underline-offset-4"
+            className="rounded-sm ui-focus-ring underline underline-offset-4"
           >
             {t("Open its page")}
           </Link>

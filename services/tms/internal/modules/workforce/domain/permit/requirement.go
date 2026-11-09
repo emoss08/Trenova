@@ -17,7 +17,7 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*Requirement)(nil)
+	_ validationframework.Entity = (*Requirement)(nil)
 )
 
 // RuleProvenance is a snapshot of the jurisdiction rule as it stood when the

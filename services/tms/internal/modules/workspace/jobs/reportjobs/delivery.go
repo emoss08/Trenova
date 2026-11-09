@@ -247,12 +247,11 @@ func (a *Activities) isRetryableEmailError(ctx context.Context, err error) bool 
 	var (
 		businessErr   *errortypes.BusinessError
 		validationErr *errortypes.Error
-		multiErr      *errortypes.MultiError
 		authzErr      *errortypes.AuthorizationError
 		notFoundErr   *errortypes.NotFoundError
 	)
 	if errors.As(err, &businessErr) || errors.As(err, &validationErr) ||
-		errors.As(err, &multiErr) || errors.As(err, &authzErr) ||
+		errortypes.IsMultiError(err) || errors.As(err, &authzErr) ||
 		errors.As(err, &notFoundErr) {
 		return false
 	}

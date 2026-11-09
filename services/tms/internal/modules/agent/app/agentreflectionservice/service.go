@@ -293,7 +293,6 @@ func (s *Service) ready(
 	if len(memories) > maxKnownMemories {
 		memories = memories[:maxKnownMemories]
 	}
-	plan.ToolNames = toolNames
 	plan.KnownMemoryIDs = memoryIDs(memories)
 	plan.Subjects = subjectRefs(known.Subjects)
 	for _, memory := range memories {

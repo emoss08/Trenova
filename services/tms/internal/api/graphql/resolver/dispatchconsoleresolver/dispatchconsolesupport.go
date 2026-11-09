@@ -2,7 +2,6 @@ package dispatchconsoleresolver
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports"
@@ -180,7 +179,7 @@ func summarizeBulkResults(
 }
 
 func findingsFromError(err error) []*gqlmodel.DispatchFinding {
-	multiErr, ok := errors.AsType[*errortypes.MultiError](err)
+	multiErr, ok := errortypes.RefusalOf(err)
 	if !ok {
 		return []*gqlmodel.DispatchFinding{}
 	}
@@ -195,7 +194,7 @@ func findingsFromError(err error) []*gqlmodel.DispatchFinding {
 		findings = append(findings, &gqlmodel.DispatchFinding{
 			Code:     string(item.Code),
 			Severity: severity,
-			Field:    item.Field,
+			Field:    item.Field(),
 			Message:  item.Message,
 		})
 	}

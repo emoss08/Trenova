@@ -232,11 +232,7 @@ func validateTarget(req *driverpositioningports.CreateRequest, now int64) error 
 		multiErr.Add("slotStart", errortypes.ErrInvalid,
 			"Choose a window in the next 48 hours of the outlook")
 	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 func (s *Service) driverStart(

@@ -200,7 +200,7 @@ type Condition struct {
 }
 
 var (
-	_ validationframework.TenantedEntity = (*Wait)(nil)
+	_ validationframework.Entity = (*Wait)(nil)
 )
 
 type Wait struct {

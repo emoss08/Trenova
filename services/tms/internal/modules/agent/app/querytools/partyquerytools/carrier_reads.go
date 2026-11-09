@@ -7,7 +7,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 )
 
@@ -76,19 +75,13 @@ func carrierIntelEventsListSpec() readspec.List {
 }
 
 func capacityPostingsListSpec() readspec.List {
-	state := readspec.Reference{
-		Kinds: []recordkind.Kind{recordkind.USState},
-		What:  "The state's id",
-		Source: "an originStateId or destinationStateId on a row of this tool, or a " +
-			"location's stateId from location_get",
-	}
-
 	return readspec.List{
 		Name:         "carrier_list_capacity_postings",
 		EntityPlural: "carrier capacity postings",
 		Summary: "List trucks carriers have said they have available: carrier, origin, " +
 			"destination, equipment, the window and the rate asked. Pass openOnly for the " +
-			"offers whose window has not closed.",
+			"offers whose window has not closed, and originStateCode or destinationStateCode " +
+			"(two-letter codes such as TX) to narrow by state.",
 		SearchTerms: []string{"carrier capacity", "available trucks", "truck postings"},
 		References: map[string]readspec.Reference{
 			querytool.ParamCarrierID: carrierReference,
@@ -97,15 +90,13 @@ func capacityPostingsListSpec() readspec.List {
 				What:     "Only postings from this location, by the location's id",
 				Source:   "location_list or location_get",
 			},
-			"originStateId":      state,
-			"destinationStateId": state,
 			"equipmentTypeId": {
 				Resource: permission.ResourceEquipmentType,
 				What:     "Only postings of this equipment type, by its id",
 				Source:   "equipment_list_types",
 			},
 		},
-		Unoffered: []string{"updatedAt"},
+		Unoffered: []string{"updatedAt", "originStateId", "destinationStateId"},
 		Resource:  permission.ResourceCarrierCapacityPosting,
 	}
 }

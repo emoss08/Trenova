@@ -36,6 +36,7 @@ import {
   type OpensInPlace,
 } from "./board-parts";
 import { BoardSkeleton } from "./board-skeleton";
+import { BoardActions, BoardWork } from "./board-work";
 
 type Opened = { entity: string; recordId: string; order: readonly string[] };
 
@@ -143,6 +144,8 @@ function BlockBody({
       return <Checks checks={block.checks} open={open} opensInPlace={opensInPlace} />;
     case "meter":
       return block.meter ? <Pips meter={block.meter} /> : null;
+    case "work":
+      return <BoardWork rows={block.work} now={now} />;
     default:
       return null;
   }
@@ -209,6 +212,16 @@ export function BoardView({
               <p key={key} className={cn("dk-bd-prose", halves[index] && "dk-bd-half")}>
                 <Segments segments={block.text} />
               </p>
+            );
+          }
+          if (block.type === "actions") {
+            return (
+              <BoardActions
+                key={key}
+                actions={block.actions}
+                threadId={card.threadId}
+                half={halves[index]}
+              />
             );
           }
           if (block.type === "note") {

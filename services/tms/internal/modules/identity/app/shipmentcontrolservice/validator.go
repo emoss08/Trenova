@@ -3,12 +3,9 @@ package shipmentcontrolservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol/shipmentcontroldb"
-	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/keelcheck"
 	"github.com/emoss08/trenova/pkg/tenantedvalidation"
+	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 )
@@ -16,7 +13,7 @@ import (
 type ValidatorParams struct {
 	fx.In
 
-	DB *postgres.Connection
+	Integrity validationframework.IntegrityChecker
 }
 
 type Validator struct {
@@ -24,15 +21,13 @@ type Validator struct {
 }
 
 func NewValidator(p ValidatorParams) *Validator {
-	checker := keelcheck.NewChecker(p.DB, shipmentcontroldb.ShipmentControlsSchema())
-
 	return &Validator{
 		validator: tenantedvalidation.NewBuilder[*shipmentcontrol.ShipmentControl]().
 			WithModelName("ShipmentControl").
-			WithUniquenessChecker(checker).
-			WithReferenceChecker(checker).
-			WithOptionalCustomReferenceCheck(
+			WithIntegrityChecker(p.Integrity).
+			WithOptionalReferenceCheck(
 				"detentionChargeId",
+				"accessorial_charges",
 				"Detention charge does not exist in your organization",
 				func(sc *shipmentcontrol.ShipmentControl) pulid.ID {
 					if sc.DetentionChargeID == nil {
@@ -41,7 +36,6 @@ func NewValidator(p ValidatorParams) *Validator {
 
 					return *sc.DetentionChargeID
 				},
-				keelcheck.TableReferenceCheck(p.DB, "accessorial_charges"),
 			).
 			Build(),
 	}
@@ -50,6 +44,6 @@ func NewValidator(p ValidatorParams) *Validator {
 func (v *Validator) ValidateUpdate(
 	ctx context.Context,
 	entity *shipmentcontrol.ShipmentControl,
-) *errortypes.MultiError {
+) error {
 	return v.validator.ValidateUpdate(ctx, entity)
 }

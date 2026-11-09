@@ -48,7 +48,7 @@ type AssignMoveToCarrierRequest struct {
 	RateQuoteID *pulid.ID `json:"-"`
 }
 
-func (r *AssignMoveToCarrierRequest) Validate() *errortypes.MultiError {
+func (r *AssignMoveToCarrierRequest) Validate() error {
 	multiErr := errortypes.NewMultiError()
 
 	if r.ShipmentMoveID.IsNil() {
@@ -77,10 +77,7 @@ func (r *AssignMoveToCarrierRequest) Validate() *errortypes.MultiError {
 		}
 	}
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }
 
 type CancelCarrierAssignmentRequest struct {
@@ -89,7 +86,7 @@ type CancelCarrierAssignmentRequest struct {
 	Reason         string                `json:"reason"`
 }
 
-func (r *CancelCarrierAssignmentRequest) Validate() *errortypes.MultiError {
+func (r *CancelCarrierAssignmentRequest) Validate() error {
 	multiErr := errortypes.NewMultiError()
 
 	if r.ShipmentMoveID.IsNil() {
@@ -99,10 +96,7 @@ func (r *CancelCarrierAssignmentRequest) Validate() *errortypes.MultiError {
 		multiErr.Add("reason", errortypes.ErrRequired, "Cancellation reason is required")
 	}
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }
 
 type GetCarrierAssignmentByIDRequest struct {

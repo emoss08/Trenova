@@ -248,13 +248,13 @@ func ValidationFields(t *testing.T, err error) map[string]*errortypes.Error {
 	var multi *errortypes.MultiError
 	if errors.As(err, &multi) {
 		for _, fieldErr := range multi.Errors {
-			fields[fieldErr.Field] = fieldErr
+			fields[fieldErr.Field()] = fieldErr
 		}
 		return fields
 	}
 	var single *errortypes.Error
 	require.ErrorAs(t, err, &single)
-	fields[single.Field] = single
+	fields[single.Field()] = single
 	return fields
 }
 

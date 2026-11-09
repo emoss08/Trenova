@@ -82,7 +82,7 @@ func (s *service) RecordDeviations(
 			Enforcement:    severityToEnforcement(advisory.Severity),
 			ResourceType:   req.ResourceType,
 			ResourceID:     req.ResourceID,
-			Field:          advisory.Field,
+			Field:          advisory.Field(),
 			Message:        advisory.Message,
 			State:          modeprofile.DeviationStateOpen,
 			OccurredAt:     now,

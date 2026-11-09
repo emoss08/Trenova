@@ -444,6 +444,7 @@ export function DecisionFlow() {
   // handlers, so a key pressed in the same frame the Approve button enables
   // acts on the state the button shows rather than the previous render's.
   const onKey = useLatestCallback((event: KeyboardEvent) => {
+    if (event.defaultPrevented) return;
     const target = event.target as HTMLElement | null;
     if (target?.closest("input,textarea,select,[contenteditable=true],[role=dialog]")) return;
     if (event.metaKey || event.ctrlKey || event.altKey) return;

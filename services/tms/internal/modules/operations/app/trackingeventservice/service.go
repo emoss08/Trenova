@@ -501,11 +501,8 @@ func visitForAction(action shipmentmoveports.StopActualAction) shipmentvocab.Vis
 	return shipmentvocab.VisitArrival
 }
 
-func validateEntity(entity *trackingevent.TrackingEvent) *errortypes.MultiError {
+func validateEntity(entity *trackingevent.TrackingEvent) error {
 	multiErr := errortypes.NewMultiError()
 	entity.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }

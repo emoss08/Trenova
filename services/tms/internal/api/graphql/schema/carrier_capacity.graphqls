@@ -76,6 +76,10 @@ extend type Query {
     carrierId: ID
     "Only postings whose window has not closed."
     openOnly: Boolean = false
+    "Only postings picking up in this state, by its two-letter code such as TX."
+    originStateCode: String
+    "Only postings headed to this state, by its two-letter code such as GA."
+    destinationStateCode: String
   ): CarrierCapacityPostingConnection!
   carrierCapacityPosting(id: ID!): CarrierCapacityPosting
 }

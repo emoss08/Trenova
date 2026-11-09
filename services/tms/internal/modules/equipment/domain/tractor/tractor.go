@@ -21,10 +21,10 @@ import (
 )
 
 var (
-	_ domaintypes.PostgresSearchable     = (*Tractor)(nil)
-	_ customfield.CustomFieldsSupporter  = (*Tractor)(nil)
-	_ pagination.CursorEntity            = (*Tractor)(nil)
-	_ validationframework.TenantedEntity = (*Tractor)(nil)
+	_ domaintypes.PostgresSearchable    = (*Tractor)(nil)
+	_ customfield.CustomFieldsSupporter = (*Tractor)(nil)
+	_ pagination.CursorEntity           = (*Tractor)(nil)
+	_ validationframework.Entity        = (*Tractor)(nil)
 )
 
 // Power units

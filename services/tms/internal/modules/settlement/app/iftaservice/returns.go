@@ -499,11 +499,7 @@ func validReturn(ret *ifta.Return) error {
 	ret.Normalize()
 	multiErr := errortypes.NewMultiError()
 	ret.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 func (s *Service) recomputable(

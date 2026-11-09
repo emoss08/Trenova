@@ -74,6 +74,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentexceptionservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentextensionservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentmemoryjudge"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentmemoryservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentmemorysubjects"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentplanservice"
@@ -133,6 +134,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/briefingservice/briefingwriter"
 	"github.com/emoss08/trenova/internal/modules/agent/app/casechecklistservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/conversationscheduleservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/deskactivityservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/deskattentionservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/deskrecords"
 	"github.com/emoss08/trenova/internal/modules/agent/app/dispatchautoassignservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/dispatchcoveragewatch"
 	"github.com/emoss08/trenova/internal/modules/agent/app/documentreader"
@@ -394,6 +398,9 @@ func SharedOptions() fx.Option {
 			watchtowerservice.AsProjector,
 			watchtowerservice.AsSubjectReconciler,
 			watchtowerservice.AsService,
+			deskrecords.New,
+			deskattentionservice.New,
+			deskactivityservice.New,
 			briefingwriter.New,
 			briefingservice.New,
 			briefingservice.AsService,
@@ -410,6 +417,7 @@ func SharedOptions() fx.Option {
 			agentdecisionservice.New,
 			agentplanservice.New,
 			agentmemorysubjects.NewLabeler,
+			agentmemoryjudge.New,
 			agentmemoryservice.New,
 			agentreflectionservice.New,
 			aicorrectionservice.New,

@@ -9,7 +9,7 @@ function needsConfirmation() {
     type: "validation-error",
     title: "Validation failed",
     status: 422,
-    errors: [{ field: "confirmInUse", message: inUse, code: "INVALID" }],
+    errors: [{ path: ["confirmInUse"], field: "confirmInUse", message: inUse, code: "INVALID" }],
   });
 }
 

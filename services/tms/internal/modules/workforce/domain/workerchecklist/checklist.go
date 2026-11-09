@@ -213,10 +213,10 @@ func (s ChecklistItemStatus) IsValid() bool {
 func (s ChecklistItemStatus) Settled() bool { return s != ChecklistItemPending }
 
 var (
-	_ domaintypes.PostgresSearchable     = (*WorkerChecklistTemplate)(nil)
-	_ pagination.CursorEntity            = (*WorkerChecklistTemplate)(nil)
-	_ validationframework.TenantedEntity = (*WorkerChecklistTemplate)(nil)
-	_ validationframework.TenantedEntity = (*WorkerChecklist)(nil)
+	_ domaintypes.PostgresSearchable = (*WorkerChecklistTemplate)(nil)
+	_ pagination.CursorEntity        = (*WorkerChecklistTemplate)(nil)
+	_ validationframework.Entity     = (*WorkerChecklistTemplate)(nil)
+	_ validationframework.Entity     = (*WorkerChecklist)(nil)
 )
 
 type WorkerChecklistTemplate struct {

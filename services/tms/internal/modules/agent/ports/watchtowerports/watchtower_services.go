@@ -31,6 +31,7 @@ type WatchtowerItemInput struct {
 	OwnerID     pulid.ID
 	Deadline    *watchtower.Deadline
 	Record      *watchtower.RecordRef
+	About       pulid.ID
 	Facts       []watchtower.Fact
 	Impact      []string
 	Trail       []watchtower.TrailEvent
@@ -85,6 +86,7 @@ type ListWatchtowerItemsRequest struct {
 	Unassigned     bool
 	OverdueOnly    bool
 	SubjectID      pulid.ID
+	AboutIDs       []pulid.ID
 	OrderByDue     bool
 }
 
@@ -108,6 +110,7 @@ type WatchtowerCounts struct {
 	Unassigned     int
 	Mine           int
 	MineOverdue    int
+	WithAgents     int
 	ByKind         map[watchtower.SourceKind]int
 	SeenAt         int64
 }

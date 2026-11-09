@@ -577,10 +577,16 @@ func (s *Service) openPlan(
 		}
 	}
 
+	targets := make([]pulid.ID, 0, len(steps))
+	for _, step := range steps {
+		targets = append(targets, step.proposal.TargetID)
+	}
+
 	plan := &agentplan.AgentPlan{
 		OrganizationID: actor.OrganizationID,
 		BusinessUnitID: actor.BusinessUnitID,
 		RunID:          owner.run.ID,
+		TargetID:       agentplan.MostTargeted(targets),
 		Title:          planTitle(opening.title, owner.definition, len(steps), scriptStepKey != ""),
 		Summary:        planSummary(owner.run, rationale),
 		Status:         agentplan.PlanStatusPending,

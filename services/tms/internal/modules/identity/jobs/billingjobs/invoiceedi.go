@@ -213,8 +213,7 @@ func (a *Activities) SendInvoiceEDIActivity(
 }
 
 func isInvalidEDIRequest(err error) bool {
-	var validationErr *errortypes.MultiError
-	if errors.As(err, &validationErr) {
+	if errortypes.IsMultiError(err) {
 		return true
 	}
 	var typed *errortypes.Error

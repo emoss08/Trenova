@@ -22,8 +22,8 @@ const (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*FormulaTemplate)(nil)
-	_ domaintypes.PostgresSearchable     = (*FormulaTemplate)(nil)
+	_ validationframework.Entity     = (*FormulaTemplate)(nil)
+	_ domaintypes.PostgresSearchable = (*FormulaTemplate)(nil)
 )
 
 type BillingVersion struct {

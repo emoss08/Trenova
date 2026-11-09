@@ -28,10 +28,10 @@ import (
 )
 
 var (
-	_ pagination.CursorEntity            = (*Shipment)(nil)
-	_ domaintypes.PostgresSearchable     = (*Shipment)(nil)
-	_ customfield.CustomFieldsSupporter  = (*Shipment)(nil)
-	_ validationframework.TenantedEntity = (*Shipment)(nil)
+	_ pagination.CursorEntity           = (*Shipment)(nil)
+	_ domaintypes.PostgresSearchable    = (*Shipment)(nil)
+	_ customfield.CustomFieldsSupporter = (*Shipment)(nil)
+	_ validationframework.Entity        = (*Shipment)(nil)
 )
 
 type RatingSkip struct {

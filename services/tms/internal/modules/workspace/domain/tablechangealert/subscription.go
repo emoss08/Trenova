@@ -14,8 +14,8 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*TCASubscription)(nil)
-	_ domaintypes.PostgresSearchable     = (*TCASubscription)(nil)
+	_ validationframework.Entity     = (*TCASubscription)(nil)
+	_ domaintypes.PostgresSearchable = (*TCASubscription)(nil)
 )
 
 type TCASubscription struct {

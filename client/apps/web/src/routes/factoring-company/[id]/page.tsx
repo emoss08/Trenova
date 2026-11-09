@@ -1,4 +1,5 @@
 import { PageLayout } from "@/components/navigation/sidebar-layout";
+import { UnsavedChangesGuard } from "@/components/unsaved-changes-guard";
 import { useBreadcrumbLabel } from "@/hooks/use-breadcrumb-label";
 import { usePermission } from "@/hooks/use-permission";
 import { factoring as factoringQueries } from "@/lib/queries/factoring";
@@ -11,7 +12,7 @@ import { ErrorState } from "@trenova/shared/components/errors/error-state";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQueryStates } from "nuqs";
-import { lazy, useState } from "react";
+import { Activity, lazy, useState, type ReactNode } from "react";
 import { useParams } from "react-router";
 import {
   FactoringAgreementTabSkeleton,
@@ -25,6 +26,7 @@ import {
   factoringCompanyPageParsers,
   type FactoringCompanyTab,
 } from "../use-factoring-company-state";
+import { cn } from "@trenova/shared/lib/utils";
 
 const Overview = lazy(() => import("../_components/factoring-company-overview"));
 const Details = lazy(() => import("../_components/factoring-company-details"));
@@ -113,6 +115,20 @@ function FactoringCompanyView({ company }: { company: FactoringCompanyRecord }) 
     activity: canReadAudit,
   };
   const tab = visible[state.tab] ? state.tab : "overview";
+  const [opened, setOpened] = useState<ReadonlySet<FactoringCompanyTab>>(() => new Set([tab]));
+  if (!opened.has(tab)) setOpened(new Set(opened).add(tab));
+  const [detailsUnsaved, setDetailsUnsaved] = useState(false);
+  /**
+   * A tab mounts the first time it is opened and then stays, hidden, in Activity: its form edits,
+   * calculator inputs and table filters survive a look at another tab, and a hidden tab's effects
+   * stop, so its queries and timers rest until it is shown again.
+   */
+  const pane = (key: FactoringCompanyTab, node: ReactNode, { bleed = false } = {}) =>
+    opened.has(key) ? (
+      <Activity key={key} mode={tab === key ? "visible" : "hidden"}>
+        <div className={cn("flex min-w-0 flex-1 flex-col gap-4", !bleed && "p-4")}>{node}</div>
+      </Activity>
+    ) : null;
   const selectTab = (next: FactoringCompanyTab) =>
     void setState({ tab: next, agreement: null, noa: null });
 
@@ -146,6 +162,7 @@ function FactoringCompanyView({ company }: { company: FactoringCompanyRecord }) 
         overviewFetching={overview.isFetching}
         onRefresh={() => void overview.refetch()}
         agreementNumber={agreementNumber}
+        detailsUnsaved={detailsUnsaved}
         tab={tab}
         visible={visible}
         onTab={selectTab}
@@ -153,45 +170,60 @@ function FactoringCompanyView({ company }: { company: FactoringCompanyRecord }) 
         canSubmit={canSubmit}
         onImport={() => setImporting(true)}
       />
-      <div className="flex min-w-0 flex-1 flex-col gap-4 px-6 pt-5 pb-7">
-        {tab === "overview" ? (
+      <div className="flex min-w-0 flex-1 flex-col">
+        {pane(
+          "overview",
           <LazyComponent fallback={<FactoringCompanyOverviewSkeleton />}>
             <Overview factoringCompanyId={company.id} onTab={selectTab} />
-          </LazyComponent>
-        ) : tab === "details" ? (
+          </LazyComponent>,
+        )}
+        {pane(
+          "details",
           <LazyComponent fallback={<FactoringCompanyDetailsSkeleton />}>
             <Details
               company={company}
               recourseFromAgreement={Boolean(data?.agreement)}
               onTab={selectTab}
+              onDirtyChange={setDetailsUnsaved}
             />
-          </LazyComponent>
-        ) : tab === "agreement" ? (
+          </LazyComponent>,
+        )}
+        {pane(
+          "agreement",
           <LazyComponent fallback={<FactoringAgreementTabSkeleton />}>
             <AgreementTab factoringCompanyId={company.id} highlightedId={state.agreement} />
-          </LazyComponent>
-        ) : tab === "customers" ? (
+          </LazyComponent>,
+        )}
+        {pane(
+          "customers",
           <DataTableLazyComponent>
             <CustomersTab factoringCompanyId={company.id} highlightedNoaId={state.noa} />
-          </DataTableLazyComponent>
-        ) : tab === "delivery" ? (
+          </DataTableLazyComponent>,
+          { bleed: true },
+        )}
+        {pane(
+          "delivery",
           <LazyComponent
             fallback={<FactoringCompanyPanelsSkeleton label={t("Loading the delivery settings")} />}
           >
             <DeliveryTab factoringCompanyId={company.id} />
-          </LazyComponent>
-        ) : tab === "ledger" ? (
+          </LazyComponent>,
+        )}
+        {pane(
+          "ledger",
           <LazyComponent
             fallback={<FactoringCompanyPanelsSkeleton label={t("Loading the ledger")} />}
           >
             <LedgerTab factoringCompanyId={company.id} />
-          </LazyComponent>
-        ) : (
+          </LazyComponent>,
+        )}
+        {pane(
+          "activity",
           <LazyComponent
             fallback={<FactoringCompanyPanelsSkeleton label={t("Loading the history")} />}
           >
             <AuditTab resourceId={company.id} />
-          </LazyComponent>
+          </LazyComponent>,
         )}
       </div>
       <ImportRemittanceDialog
@@ -199,6 +231,7 @@ function FactoringCompanyView({ company }: { company: FactoringCompanyRecord }) 
         onOpenChange={setImporting}
         factoringCompanyId={company.id}
       />
+      <UnsavedChangesGuard when={detailsUnsaved} />
     </PageLayout>
   );
 }

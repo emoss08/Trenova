@@ -53,7 +53,7 @@ func TestRunEventReads_ShowNoConversationRunsEventsToAReaderWhoIsNoPerson(t *tes
 func TestRunEventReads_LeaveAnUnattendedReadAsItWas(t *testing.T) {
 	t.Parallel()
 
-	for _, query := range readEventsEveryWay(t, agentruntimeports.UnattendedRunRead()) {
+	for _, query := range readEventsEveryWay(t, agentruntimeports.RunReader{}) {
 		assert.NotContains(t, query, "agent_runs", query)
 		assert.NotContains(t, query, "assistant_threads", query)
 	}

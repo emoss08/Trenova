@@ -53,7 +53,7 @@ func (s *Service) GetBillingReadiness(
 func (s *Service) ValidateBillingReadinessForStatusChange(
 	ctx context.Context,
 	entity *shipment.Shipment,
-) *errortypes.MultiError {
+) error {
 	if entity.Status != shipmentvocab.StatusReadyToInvoice {
 		return nil
 	}
@@ -66,7 +66,7 @@ func (s *Service) ValidateBillingReadinessForStatusChange(
 			errortypes.ErrInvalid,
 			"Unable to evaluate shipment billing readiness",
 		)
-		return multiErr
+		return multiErr.Err()
 	}
 
 	if readiness.CanMarkReadyToInvoice {
@@ -97,7 +97,7 @@ func (s *Service) ValidateBillingReadinessForStatusChange(
 		)
 	}
 
-	return multiErr
+	return multiErr.Err()
 }
 
 // billingControlFor reads the organization's billing policy, at most once per

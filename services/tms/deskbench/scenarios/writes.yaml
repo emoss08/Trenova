@@ -130,7 +130,11 @@ scenarios:
       - decide: approve
         expect:
           executed: true
-          rubric: Reports the new delivery window as it now stands.
+          calls: ["agent_create_wait"]
+          rubric: >
+            Reports the new delivery window as it now stands, and sets a wait to check that the
+            load delivers inside it, saying when it will look and that it will speak up only if
+            the delivery slips.
 
   - name: assign-a-driver
     description: >

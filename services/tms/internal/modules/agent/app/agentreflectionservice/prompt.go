@@ -73,18 +73,23 @@ func systemPrompt(in *promptInput) string {
 		)
 		b.WriteString("from the person's own words.\n")
 	}
-	b.WriteString("- Procedure: the steps that worked for a task here, when the agent had to find ")
-	b.WriteString("them out and no tool told it: a tool that failed until its input changed in ")
-	b.WriteString("a way its refusal did not name, an order of calls that finally worked, what a ")
-	b.WriteString("person changed or refused in a proposal. Write it as ")
-	b.WriteString("short numbered steps that name the tools and what each needs, so a later run ")
-	b.WriteString("can follow it.\n")
-	b.WriteString("- Fact: something about this organization, a customer, a location, a driver or ")
-	b.WriteString("a carrier that the agent had to find out or was told and no record holds.\n\n")
+	b.WriteString("- Procedure: how this organization does a task, as a person showed it: the " +
+		"steps a person gave or corrected, or what a person changed or refused in a proposal " +
+		"and why. Write it as short numbered steps in the organization's terms, so a later " +
+		"run does the task their way.\n")
+	b.WriteString(
+		"- Fact: something about this organization, a customer, a location, a driver or " +
+			"a carrier that the agent was told or had to find out and no record holds. A fact " +
+			"nobody told the agent is kept only about one of those records.\n\n",
+	)
 
-	b.WriteString("Never keep a one-off request; what a record already says; what a tool's own ")
-	b.WriteString("refusal, schema or note tells the agent every time it is called, such as a ")
-	b.WriteString("limit it names or what it says to change, since the tool says it again; ")
+	b.WriteString("Never keep a one-off request; what a record already says; anything about ")
+	b.WriteString(
+		"how to call a tool: which arguments or values it takes, what it refused, what a ",
+	)
+	b.WriteString("retry needed, or which calls to make in which order. A tool that was refused ")
+	b.WriteString("is a defect Trenova fixes in the tool, and every organization would otherwise ")
+	b.WriteString("learn it again; ")
 	b.WriteString("figures or statuses ")
 	b.WriteString("that will change, such as a shipment's current status or today's counts; ")
 	b.WriteString("personal or sensitive details about people; credentials; anything a person ")
@@ -113,10 +118,7 @@ func systemPrompt(in *promptInput) string {
 	}
 	b.WriteString("subjectType and subjectId name the one customer, location, worker (driver) or ")
 	b.WriteString("carrier a lesson is about, only from the records listed; otherwise leave both ")
-	b.WriteString("empty. toolName names the tool a procedure or fact is about, only from the ")
-	b.WriteString(
-		"tools listed; otherwise leave it empty. replaces is a kept memory's id or empty.\n",
-	)
+	b.WriteString("empty. replaces is a kept memory's id or empty.\n")
 	b.WriteString("Write each lesson in plain sentences a reader with no other context ")
 	fmt.Fprintf(
 		&b,
@@ -392,14 +394,13 @@ func outputSchema(hasPerson bool) map[string]any {
 						"audience":    map[string]any{"type": "string", "enum": audiences},
 						"subjectType": map[string]any{"type": "string", "enum": subjectTypes},
 						"subjectId":   text("A listed record's id, or empty"),
-						"toolName":    text("A listed tool's name, or empty"),
 						"replaces":    text("A kept memory's id, or empty"),
 						"evidence":    text("A short quote from, or pointer to, what taught it"),
 						"why":         text("One sentence on how it helps next time"),
 					},
 					"required": []string{
 						"kind", "content", "audience", "subjectType", "subjectId",
-						"toolName", "replaces", "evidence", "why",
+						"replaces", "evidence", "why",
 					},
 					"additionalProperties": false,
 				},

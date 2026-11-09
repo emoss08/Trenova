@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*InvoiceAdjustmentControl)(nil)
+	_ validationframework.Entity = (*InvoiceAdjustmentControl)(nil)
 )
 
 type InvoiceAdjustmentControl struct {

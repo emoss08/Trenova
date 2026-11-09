@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
@@ -120,15 +120,38 @@ func newDispatchControl() *dispatchcontrol.DispatchControl {
 	}
 }
 
+func singleComplianceRule(
+	dcRepo dispatchcontrolports.DispatchControlRepository,
+	check func(*dispatchcontrol.DispatchControl, *worker.Worker, *errortypes.MultiError),
+) validationframework.Rule[*worker.Worker] {
+	return validationframework.NewRule[*worker.Worker]("single_compliance_check").
+		OnBoth().
+		WithStage(validationframework.StageCompliance).
+		WithValidation(func(
+			ctx context.Context,
+			w *worker.Worker,
+			valCtx *validationframework.Context,
+			multiErr *errortypes.MultiError,
+		) error {
+			dc, err := dcRepo.GetOrCreate(ctx, valCtx.OrganizationID, valCtx.BusinessUnitID)
+			if err != nil {
+				return err
+			}
+			check(dc, w, multiErr)
+
+			return nil
+		})
+}
+
 func runComplianceRule(
 	t *testing.T,
-	rule validationframework.TenantedRule[*worker.Worker],
+	rule validationframework.Rule[*worker.Worker],
 	w *worker.Worker,
 ) *errortypes.MultiError {
 	t.Helper()
 	ctx := t.Context()
 	multiErr := errortypes.NewMultiError()
-	valCtx := &validationframework.TenantedValidationContext{
+	valCtx := &validationframework.Context{
 		Mode:           validationframework.ModeCreate,
 		OrganizationID: w.OrganizationID,
 		BusinessUnitID: w.BusinessUnitID,
@@ -170,7 +193,7 @@ func TestAgeComplianceRule(t *testing.T) {
 		dc := newDispatchControl()
 		dcRepo.On("GetOrCreate", mock.Anything, w.OrganizationID, w.BusinessUnitID).Return(dc, nil)
 
-		rule := createAgeComplianceRule(dcRepo)
+		rule := singleComplianceRule(dcRepo, validateAgeCompliance)
 		multiErr := runComplianceRule(t, rule, w)
 
 		assert.False(t, multiErr.HasErrors())
@@ -185,7 +208,7 @@ func TestAgeComplianceRule(t *testing.T) {
 		dc := newDispatchControl()
 		dcRepo.On("GetOrCreate", mock.Anything, w.OrganizationID, w.BusinessUnitID).Return(dc, nil)
 
-		rule := createAgeComplianceRule(dcRepo)
+		rule := singleComplianceRule(dcRepo, validateAgeCompliance)
 		multiErr := runComplianceRule(t, rule, w)
 
 		assert.True(t, multiErr.HasErrors())
@@ -202,7 +225,7 @@ func TestAgeComplianceRule(t *testing.T) {
 		dc := newDispatchControl()
 		dcRepo.On("GetOrCreate", mock.Anything, w.OrganizationID, w.BusinessUnitID).Return(dc, nil)
 
-		rule := createAgeComplianceRule(dcRepo)
+		rule := singleComplianceRule(dcRepo, validateAgeCompliance)
 		multiErr := runComplianceRule(t, rule, w)
 
 		assert.False(t, multiErr.HasErrors())
@@ -218,7 +241,7 @@ func TestAgeComplianceRule(t *testing.T) {
 		dc.EnforceDriverQualificationCompliance = false
 		dcRepo.On("GetOrCreate", mock.Anything, w.OrganizationID, w.BusinessUnitID).Return(dc, nil)
 
-		rule := createAgeComplianceRule(dcRepo)
+		rule := singleComplianceRule(dcRepo, validateAgeCompliance)
 		multiErr := runComplianceRule(t, rule, w)
 
 		assert.False(t, multiErr.HasErrors())
@@ -233,7 +256,7 @@ func TestAgeComplianceRule(t *testing.T) {
 		dc := newDispatchControl()
 		dcRepo.On("GetOrCreate", mock.Anything, w.OrganizationID, w.BusinessUnitID).Return(dc, nil)
 
-		rule := createAgeComplianceRule(dcRepo)
+		rule := singleComplianceRule(dcRepo, validateAgeCompliance)
 		multiErr := runComplianceRule(t, rule, w)
 
 		assert.False(t, multiErr.HasErrors())
@@ -247,10 +270,10 @@ func TestAgeComplianceRule(t *testing.T) {
 		dcRepo.On("GetOrCreate", mock.Anything, w.OrganizationID, w.BusinessUnitID).
 			Return(nil, errors.New("db error"))
 
-		rule := createAgeComplianceRule(dcRepo)
+		rule := singleComplianceRule(dcRepo, validateAgeCompliance)
 		ctx := t.Context()
 		multiErr := errortypes.NewMultiError()
-		valCtx := &validationframework.TenantedValidationContext{
+		valCtx := &validationframework.Context{
 			Mode:           validationframework.ModeCreate,
 			OrganizationID: w.OrganizationID,
 			BusinessUnitID: w.BusinessUnitID,
@@ -270,7 +293,7 @@ func TestAgeComplianceRule(t *testing.T) {
 		dc.ComplianceEnforcementLevel = dispatchcontrol.ComplianceEnforcementLevelBlock
 		dcRepo.On("GetOrCreate", mock.Anything, w.OrganizationID, w.BusinessUnitID).Return(dc, nil)
 
-		rule := createAgeComplianceRule(dcRepo)
+		rule := singleComplianceRule(dcRepo, validateAgeCompliance)
 		multiErr := runComplianceRule(t, rule, w)
 
 		assert.True(t, multiErr.HasErrors())
@@ -287,7 +310,7 @@ func TestAgeComplianceRule(t *testing.T) {
 		dc.ComplianceEnforcementLevel = dispatchcontrol.ComplianceEnforcementLevelWarning
 		dcRepo.On("GetOrCreate", mock.Anything, w.OrganizationID, w.BusinessUnitID).Return(dc, nil)
 
-		rule := createAgeComplianceRule(dcRepo)
+		rule := singleComplianceRule(dcRepo, validateAgeCompliance)
 		multiErr := runComplianceRule(t, rule, w)
 
 		assert.True(t, multiErr.HasErrors())
@@ -307,7 +330,7 @@ func TestCDLComplianceRule(t *testing.T) {
 		dc := newDispatchControl()
 		dcRepo.On("GetOrCreate", mock.Anything, w.OrganizationID, w.BusinessUnitID).Return(dc, nil)
 
-		rule := createCDLComplianceRule(dcRepo)
+		rule := singleComplianceRule(dcRepo, validateCDLCompliance)
 		multiErr := runComplianceRule(t, rule, w)
 
 		assert.False(t, multiErr.HasErrors())
@@ -322,7 +345,7 @@ func TestCDLComplianceRule(t *testing.T) {
 		dc := newDispatchControl()
 		dcRepo.On("GetOrCreate", mock.Anything, w.OrganizationID, w.BusinessUnitID).Return(dc, nil)
 
-		rule := createCDLComplianceRule(dcRepo)
+		rule := singleComplianceRule(dcRepo, validateCDLCompliance)
 		multiErr := runComplianceRule(t, rule, w)
 
 		assert.True(t, multiErr.HasErrors())
@@ -339,7 +362,7 @@ func TestCDLComplianceRule(t *testing.T) {
 		dc := newDispatchControl()
 		dcRepo.On("GetOrCreate", mock.Anything, w.OrganizationID, w.BusinessUnitID).Return(dc, nil)
 
-		rule := createCDLComplianceRule(dcRepo)
+		rule := singleComplianceRule(dcRepo, validateCDLCompliance)
 		multiErr := runComplianceRule(t, rule, w)
 
 		assert.True(t, multiErr.HasErrors())
@@ -355,7 +378,7 @@ func TestCDLComplianceRule(t *testing.T) {
 		dc.EnforceDriverQualificationCompliance = false
 		dcRepo.On("GetOrCreate", mock.Anything, w.OrganizationID, w.BusinessUnitID).Return(dc, nil)
 
-		rule := createCDLComplianceRule(dcRepo)
+		rule := singleComplianceRule(dcRepo, validateCDLCompliance)
 		multiErr := runComplianceRule(t, rule, w)
 
 		assert.False(t, multiErr.HasErrors())
@@ -370,7 +393,7 @@ func TestCDLComplianceRule(t *testing.T) {
 		dc := newDispatchControl()
 		dcRepo.On("GetOrCreate", mock.Anything, w.OrganizationID, w.BusinessUnitID).Return(dc, nil)
 
-		rule := createCDLComplianceRule(dcRepo)
+		rule := singleComplianceRule(dcRepo, validateCDLCompliance)
 		multiErr := runComplianceRule(t, rule, w)
 
 		assert.False(t, multiErr.HasErrors())
@@ -386,7 +409,7 @@ func TestCDLComplianceRule(t *testing.T) {
 		dc.ComplianceEnforcementLevel = dispatchcontrol.ComplianceEnforcementLevelBlock
 		dcRepo.On("GetOrCreate", mock.Anything, w.OrganizationID, w.BusinessUnitID).Return(dc, nil)
 
-		rule := createCDLComplianceRule(dcRepo)
+		rule := singleComplianceRule(dcRepo, validateCDLCompliance)
 		multiErr := runComplianceRule(t, rule, w)
 
 		assert.True(t, multiErr.HasErrors())
@@ -401,10 +424,10 @@ func TestCDLComplianceRule(t *testing.T) {
 		dcRepo.On("GetOrCreate", mock.Anything, w.OrganizationID, w.BusinessUnitID).
 			Return(nil, errors.New("db error"))
 
-		rule := createCDLComplianceRule(dcRepo)
+		rule := singleComplianceRule(dcRepo, validateCDLCompliance)
 		ctx := t.Context()
 		multiErr := errortypes.NewMultiError()
-		valCtx := &validationframework.TenantedValidationContext{
+		valCtx := &validationframework.Context{
 			Mode:           validationframework.ModeCreate,
 			OrganizationID: w.OrganizationID,
 			BusinessUnitID: w.BusinessUnitID,
@@ -428,7 +451,7 @@ func TestMedicalCertComplianceRule(t *testing.T) {
 		dc := newDispatchControl()
 		dcRepo.On("GetOrCreate", mock.Anything, w.OrganizationID, w.BusinessUnitID).Return(dc, nil)
 
-		rule := createMedicalCertComplianceRule(dcRepo)
+		rule := singleComplianceRule(dcRepo, validateMedicalCertCompliance)
 		multiErr := runComplianceRule(t, rule, w)
 
 		assert.False(t, multiErr.HasErrors())
@@ -444,7 +467,7 @@ func TestMedicalCertComplianceRule(t *testing.T) {
 		dc := newDispatchControl()
 		dcRepo.On("GetOrCreate", mock.Anything, w.OrganizationID, w.BusinessUnitID).Return(dc, nil)
 
-		rule := createMedicalCertComplianceRule(dcRepo)
+		rule := singleComplianceRule(dcRepo, validateMedicalCertCompliance)
 		multiErr := runComplianceRule(t, rule, w)
 
 		assert.True(t, multiErr.HasErrors())
@@ -461,7 +484,7 @@ func TestMedicalCertComplianceRule(t *testing.T) {
 		dc := newDispatchControl()
 		dcRepo.On("GetOrCreate", mock.Anything, w.OrganizationID, w.BusinessUnitID).Return(dc, nil)
 
-		rule := createMedicalCertComplianceRule(dcRepo)
+		rule := singleComplianceRule(dcRepo, validateMedicalCertCompliance)
 		multiErr := runComplianceRule(t, rule, w)
 
 		assert.True(t, multiErr.HasErrors())
@@ -480,7 +503,7 @@ func TestMedicalCertComplianceRule(t *testing.T) {
 		dc := newDispatchControl()
 		dcRepo.On("GetOrCreate", mock.Anything, w.OrganizationID, w.BusinessUnitID).Return(dc, nil)
 
-		rule := createMedicalCertComplianceRule(dcRepo)
+		rule := singleComplianceRule(dcRepo, validateMedicalCertCompliance)
 		multiErr := runComplianceRule(t, rule, w)
 
 		assert.True(t, multiErr.HasErrors())
@@ -497,7 +520,7 @@ func TestMedicalCertComplianceRule(t *testing.T) {
 		dc := newDispatchControl()
 		dcRepo.On("GetOrCreate", mock.Anything, w.OrganizationID, w.BusinessUnitID).Return(dc, nil)
 
-		rule := createMedicalCertComplianceRule(dcRepo)
+		rule := singleComplianceRule(dcRepo, validateMedicalCertCompliance)
 		multiErr := runComplianceRule(t, rule, w)
 
 		assert.False(t, multiErr.HasErrors())
@@ -514,7 +537,7 @@ func TestMedicalCertComplianceRule(t *testing.T) {
 		dc.EnforceMedicalCertCompliance = false
 		dcRepo.On("GetOrCreate", mock.Anything, w.OrganizationID, w.BusinessUnitID).Return(dc, nil)
 
-		rule := createMedicalCertComplianceRule(dcRepo)
+		rule := singleComplianceRule(dcRepo, validateMedicalCertCompliance)
 		multiErr := runComplianceRule(t, rule, w)
 
 		assert.False(t, multiErr.HasErrors())
@@ -529,7 +552,7 @@ func TestMedicalCertComplianceRule(t *testing.T) {
 		dc := newDispatchControl()
 		dcRepo.On("GetOrCreate", mock.Anything, w.OrganizationID, w.BusinessUnitID).Return(dc, nil)
 
-		rule := createMedicalCertComplianceRule(dcRepo)
+		rule := singleComplianceRule(dcRepo, validateMedicalCertCompliance)
 		multiErr := runComplianceRule(t, rule, w)
 
 		assert.False(t, multiErr.HasErrors())
@@ -545,7 +568,7 @@ func TestMedicalCertComplianceRule(t *testing.T) {
 		dc := newDispatchControl()
 		dcRepo.On("GetOrCreate", mock.Anything, w.OrganizationID, w.BusinessUnitID).Return(dc, nil)
 
-		rule := createMedicalCertComplianceRule(dcRepo)
+		rule := singleComplianceRule(dcRepo, validateMedicalCertCompliance)
 		multiErr := runComplianceRule(t, rule, w)
 
 		assert.False(t, multiErr.HasErrors())
@@ -559,10 +582,10 @@ func TestMedicalCertComplianceRule(t *testing.T) {
 		dcRepo.On("GetOrCreate", mock.Anything, w.OrganizationID, w.BusinessUnitID).
 			Return(nil, errors.New("db error"))
 
-		rule := createMedicalCertComplianceRule(dcRepo)
+		rule := singleComplianceRule(dcRepo, validateMedicalCertCompliance)
 		ctx := t.Context()
 		multiErr := errortypes.NewMultiError()
-		valCtx := &validationframework.TenantedValidationContext{
+		valCtx := &validationframework.Context{
 			Mode:           validationframework.ModeCreate,
 			OrganizationID: w.OrganizationID,
 			BusinessUnitID: w.BusinessUnitID,
@@ -585,7 +608,7 @@ func TestMVRComplianceRule(t *testing.T) {
 		dc := newDispatchControl()
 		dcRepo.On("GetOrCreate", mock.Anything, w.OrganizationID, w.BusinessUnitID).Return(dc, nil)
 
-		rule := createMVRComplianceRule(dcRepo)
+		rule := singleComplianceRule(dcRepo, validateMVRCompliance)
 		multiErr := runComplianceRule(t, rule, w)
 
 		assert.False(t, multiErr.HasErrors())
@@ -600,7 +623,7 @@ func TestMVRComplianceRule(t *testing.T) {
 		dc := newDispatchControl()
 		dcRepo.On("GetOrCreate", mock.Anything, w.OrganizationID, w.BusinessUnitID).Return(dc, nil)
 
-		rule := createMVRComplianceRule(dcRepo)
+		rule := singleComplianceRule(dcRepo, validateMVRCompliance)
 		multiErr := runComplianceRule(t, rule, w)
 
 		assert.True(t, multiErr.HasErrors())
@@ -617,7 +640,7 @@ func TestMVRComplianceRule(t *testing.T) {
 		dc := newDispatchControl()
 		dcRepo.On("GetOrCreate", mock.Anything, w.OrganizationID, w.BusinessUnitID).Return(dc, nil)
 
-		rule := createMVRComplianceRule(dcRepo)
+		rule := singleComplianceRule(dcRepo, validateMVRCompliance)
 		multiErr := runComplianceRule(t, rule, w)
 
 		assert.True(t, multiErr.HasErrors())
@@ -633,7 +656,7 @@ func TestMVRComplianceRule(t *testing.T) {
 		dc := newDispatchControl()
 		dcRepo.On("GetOrCreate", mock.Anything, w.OrganizationID, w.BusinessUnitID).Return(dc, nil)
 
-		rule := createMVRComplianceRule(dcRepo)
+		rule := singleComplianceRule(dcRepo, validateMVRCompliance)
 		multiErr := runComplianceRule(t, rule, w)
 
 		assert.False(t, multiErr.HasErrors())
@@ -648,7 +671,7 @@ func TestMVRComplianceRule(t *testing.T) {
 		dc := newDispatchControl()
 		dcRepo.On("GetOrCreate", mock.Anything, w.OrganizationID, w.BusinessUnitID).Return(dc, nil)
 
-		rule := createMVRComplianceRule(dcRepo)
+		rule := singleComplianceRule(dcRepo, validateMVRCompliance)
 		multiErr := runComplianceRule(t, rule, w)
 
 		assert.False(t, multiErr.HasErrors())
@@ -665,7 +688,7 @@ func TestMVRComplianceRule(t *testing.T) {
 		dc := newDispatchControl()
 		dcRepo.On("GetOrCreate", mock.Anything, w.OrganizationID, w.BusinessUnitID).Return(dc, nil)
 
-		rule := createMVRComplianceRule(dcRepo)
+		rule := singleComplianceRule(dcRepo, validateMVRCompliance)
 		multiErr := runComplianceRule(t, rule, w)
 
 		assert.True(t, multiErr.HasErrors())
@@ -682,7 +705,7 @@ func TestMVRComplianceRule(t *testing.T) {
 		dc.EnforceHOSCompliance = false
 		dcRepo.On("GetOrCreate", mock.Anything, w.OrganizationID, w.BusinessUnitID).Return(dc, nil)
 
-		rule := createMVRComplianceRule(dcRepo)
+		rule := singleComplianceRule(dcRepo, validateMVRCompliance)
 		multiErr := runComplianceRule(t, rule, w)
 
 		assert.False(t, multiErr.HasErrors())
@@ -697,7 +720,7 @@ func TestMVRComplianceRule(t *testing.T) {
 		dc := newDispatchControl()
 		dcRepo.On("GetOrCreate", mock.Anything, w.OrganizationID, w.BusinessUnitID).Return(dc, nil)
 
-		rule := createMVRComplianceRule(dcRepo)
+		rule := singleComplianceRule(dcRepo, validateMVRCompliance)
 		multiErr := runComplianceRule(t, rule, w)
 
 		assert.False(t, multiErr.HasErrors())
@@ -713,7 +736,7 @@ func TestMVRComplianceRule(t *testing.T) {
 		dc := newDispatchControl()
 		dcRepo.On("GetOrCreate", mock.Anything, w.OrganizationID, w.BusinessUnitID).Return(dc, nil)
 
-		rule := createMVRComplianceRule(dcRepo)
+		rule := singleComplianceRule(dcRepo, validateMVRCompliance)
 		multiErr := runComplianceRule(t, rule, w)
 
 		assert.False(t, multiErr.HasErrors())
@@ -727,10 +750,10 @@ func TestMVRComplianceRule(t *testing.T) {
 		dcRepo.On("GetOrCreate", mock.Anything, w.OrganizationID, w.BusinessUnitID).
 			Return(nil, errors.New("db error"))
 
-		rule := createMVRComplianceRule(dcRepo)
+		rule := singleComplianceRule(dcRepo, validateMVRCompliance)
 		ctx := t.Context()
 		multiErr := errortypes.NewMultiError()
-		valCtx := &validationframework.TenantedValidationContext{
+		valCtx := &validationframework.Context{
 			Mode:           validationframework.ModeCreate,
 			OrganizationID: w.OrganizationID,
 			BusinessUnitID: w.BusinessUnitID,
@@ -753,7 +776,7 @@ func TestDrugTestComplianceRule(t *testing.T) {
 		mutate(w, dc)
 		dcRepo.On("GetOrCreate", mock.Anything, w.OrganizationID, w.BusinessUnitID).Return(dc, nil)
 
-		rule := createDrugTestComplianceRule(dcRepo)
+		rule := singleComplianceRule(dcRepo, validateDrugTestCompliance)
 		multiErr := runComplianceRule(t, rule, w)
 		dcRepo.AssertExpectations(t)
 		return multiErr
@@ -846,7 +869,7 @@ func TestDrugTestComplianceRule(t *testing.T) {
 		dc := newDispatchControl()
 		dcRepo.On("GetOrCreate", mock.Anything, w.OrganizationID, w.BusinessUnitID).Return(dc, nil)
 
-		rule := createDrugTestComplianceRule(dcRepo)
+		rule := singleComplianceRule(dcRepo, validateDrugTestCompliance)
 		multiErr := runComplianceRule(t, rule, w)
 
 		assert.False(t, multiErr.HasErrors())
@@ -865,7 +888,7 @@ func TestHazmatComplianceRule(t *testing.T) {
 		dc := newDispatchControl()
 		dcRepo.On("GetOrCreate", mock.Anything, w.OrganizationID, w.BusinessUnitID).Return(dc, nil)
 
-		rule := createHazmatComplianceRule(dcRepo)
+		rule := singleComplianceRule(dcRepo, validateHazmatCompliance)
 		multiErr := runComplianceRule(t, rule, w)
 
 		assert.False(t, multiErr.HasErrors())
@@ -880,7 +903,7 @@ func TestHazmatComplianceRule(t *testing.T) {
 		dc := newDispatchControl()
 		dcRepo.On("GetOrCreate", mock.Anything, w.OrganizationID, w.BusinessUnitID).Return(dc, nil)
 
-		rule := createHazmatComplianceRule(dcRepo)
+		rule := singleComplianceRule(dcRepo, validateHazmatCompliance)
 		multiErr := runComplianceRule(t, rule, w)
 
 		assert.False(t, multiErr.HasErrors())
@@ -897,7 +920,7 @@ func TestHazmatComplianceRule(t *testing.T) {
 		dc := newDispatchControl()
 		dcRepo.On("GetOrCreate", mock.Anything, w.OrganizationID, w.BusinessUnitID).Return(dc, nil)
 
-		rule := createHazmatComplianceRule(dcRepo)
+		rule := singleComplianceRule(dcRepo, validateHazmatCompliance)
 		multiErr := runComplianceRule(t, rule, w)
 
 		assert.False(t, multiErr.HasErrors())
@@ -914,7 +937,7 @@ func TestHazmatComplianceRule(t *testing.T) {
 		dc := newDispatchControl()
 		dcRepo.On("GetOrCreate", mock.Anything, w.OrganizationID, w.BusinessUnitID).Return(dc, nil)
 
-		rule := createHazmatComplianceRule(dcRepo)
+		rule := singleComplianceRule(dcRepo, validateHazmatCompliance)
 		multiErr := runComplianceRule(t, rule, w)
 
 		assert.False(t, multiErr.HasErrors())
@@ -930,7 +953,7 @@ func TestHazmatComplianceRule(t *testing.T) {
 		dc := newDispatchControl()
 		dcRepo.On("GetOrCreate", mock.Anything, w.OrganizationID, w.BusinessUnitID).Return(dc, nil)
 
-		rule := createHazmatComplianceRule(dcRepo)
+		rule := singleComplianceRule(dcRepo, validateHazmatCompliance)
 		multiErr := runComplianceRule(t, rule, w)
 
 		assert.True(t, multiErr.HasErrors())
@@ -948,7 +971,7 @@ func TestHazmatComplianceRule(t *testing.T) {
 		dc := newDispatchControl()
 		dcRepo.On("GetOrCreate", mock.Anything, w.OrganizationID, w.BusinessUnitID).Return(dc, nil)
 
-		rule := createHazmatComplianceRule(dcRepo)
+		rule := singleComplianceRule(dcRepo, validateHazmatCompliance)
 		multiErr := runComplianceRule(t, rule, w)
 
 		assert.True(t, multiErr.HasErrors())
@@ -966,7 +989,7 @@ func TestHazmatComplianceRule(t *testing.T) {
 		dc := newDispatchControl()
 		dcRepo.On("GetOrCreate", mock.Anything, w.OrganizationID, w.BusinessUnitID).Return(dc, nil)
 
-		rule := createHazmatComplianceRule(dcRepo)
+		rule := singleComplianceRule(dcRepo, validateHazmatCompliance)
 		multiErr := runComplianceRule(t, rule, w)
 
 		assert.True(t, multiErr.HasErrors())
@@ -984,7 +1007,7 @@ func TestHazmatComplianceRule(t *testing.T) {
 		dc := newDispatchControl()
 		dcRepo.On("GetOrCreate", mock.Anything, w.OrganizationID, w.BusinessUnitID).Return(dc, nil)
 
-		rule := createHazmatComplianceRule(dcRepo)
+		rule := singleComplianceRule(dcRepo, validateHazmatCompliance)
 		multiErr := runComplianceRule(t, rule, w)
 
 		assert.True(t, multiErr.HasErrors())
@@ -1002,7 +1025,7 @@ func TestHazmatComplianceRule(t *testing.T) {
 		dc.EnforceHazmatCompliance = false
 		dcRepo.On("GetOrCreate", mock.Anything, w.OrganizationID, w.BusinessUnitID).Return(dc, nil)
 
-		rule := createHazmatComplianceRule(dcRepo)
+		rule := singleComplianceRule(dcRepo, validateHazmatCompliance)
 		multiErr := runComplianceRule(t, rule, w)
 
 		assert.False(t, multiErr.HasErrors())
@@ -1017,7 +1040,7 @@ func TestHazmatComplianceRule(t *testing.T) {
 		dc := newDispatchControl()
 		dcRepo.On("GetOrCreate", mock.Anything, w.OrganizationID, w.BusinessUnitID).Return(dc, nil)
 
-		rule := createHazmatComplianceRule(dcRepo)
+		rule := singleComplianceRule(dcRepo, validateHazmatCompliance)
 		multiErr := runComplianceRule(t, rule, w)
 
 		assert.False(t, multiErr.HasErrors())
@@ -1035,7 +1058,7 @@ func TestHazmatComplianceRule(t *testing.T) {
 		dc.ComplianceEnforcementLevel = dispatchcontrol.ComplianceEnforcementLevelBlock
 		dcRepo.On("GetOrCreate", mock.Anything, w.OrganizationID, w.BusinessUnitID).Return(dc, nil)
 
-		rule := createHazmatComplianceRule(dcRepo)
+		rule := singleComplianceRule(dcRepo, validateHazmatCompliance)
 		multiErr := runComplianceRule(t, rule, w)
 
 		assert.True(t, multiErr.HasErrors())
@@ -1050,10 +1073,10 @@ func TestHazmatComplianceRule(t *testing.T) {
 		dcRepo.On("GetOrCreate", mock.Anything, w.OrganizationID, w.BusinessUnitID).
 			Return(nil, errors.New("db error"))
 
-		rule := createHazmatComplianceRule(dcRepo)
+		rule := singleComplianceRule(dcRepo, validateHazmatCompliance)
 		ctx := t.Context()
 		multiErr := errortypes.NewMultiError()
-		valCtx := &validationframework.TenantedValidationContext{
+		valCtx := &validationframework.Context{
 			Mode:           validationframework.ModeCreate,
 			OrganizationID: w.OrganizationID,
 			BusinessUnitID: w.BusinessUnitID,
@@ -1073,7 +1096,7 @@ func TestHazmatComplianceRule(t *testing.T) {
 		dc := newDispatchControl()
 		dcRepo.On("GetOrCreate", mock.Anything, w.OrganizationID, w.BusinessUnitID).Return(dc, nil)
 
-		rule := createHazmatComplianceRule(dcRepo)
+		rule := singleComplianceRule(dcRepo, validateHazmatCompliance)
 		multiErr := runComplianceRule(t, rule, w)
 
 		assert.False(t, multiErr.HasErrors())
@@ -1089,7 +1112,7 @@ func TestHazmatComplianceRule(t *testing.T) {
 		dc := newDispatchControl()
 		dcRepo.On("GetOrCreate", mock.Anything, w.OrganizationID, w.BusinessUnitID).Return(dc, nil)
 
-		rule := createHazmatComplianceRule(dcRepo)
+		rule := singleComplianceRule(dcRepo, validateHazmatCompliance)
 		multiErr := runComplianceRule(t, rule, w)
 
 		assert.False(t, multiErr.HasErrors())

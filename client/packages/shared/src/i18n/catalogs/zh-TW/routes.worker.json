@@ -929,7 +929,6 @@
   "The query ID on the Clearinghouse response.": "Clearinghouse 回覆上的查詢 ID。",
   "The query ID the Clearinghouse assigned, for matching the answer when it comes back.": "Clearinghouse 指派的查詢 ID，用於在收到答覆時進行比對。",
   "The reason recorded on the event itself.": "記錄於事件本身的原因。",
-  "The record": "記錄",
   "The record stays as it is. The driver is told, with your reason.": "紀錄維持原狀。系統會連同您填寫的原因一併通知駕駛。",
   "The report could not be loaded. Try again in a moment.": "無法載入報表。請稍後再試。",
   "The required courses come from the driver type's course matrix; a required course that was never assigned shows as Missing. One record speaks for each course: an open assignment first, otherwise the strongest closed record, with a completion or waiver outranking a lapsed one and a lapsed one outranking a failure.": "必修課程來自駕駛員類型的課程矩陣；從未指派的必修課程會顯示為「缺少」。每門課程以一筆記錄為準：優先採用開設中的指派，否則採用最具效力的已結束記錄，其中「已完成」或「已豁免」優先於「已失效」，「已失效」又優先於「未通過」。",

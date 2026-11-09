@@ -49,7 +49,7 @@ func (s *Service) VoidInvoice(
 	return s.voidPosted(ctx, req, entity, actor)
 }
 
-func validateVoidRequest(req *invoiceports.VoidInvoiceRequest) *errortypes.MultiError {
+func validateVoidRequest(req *invoiceports.VoidInvoiceRequest) error {
 	multiErr := errortypes.NewMultiError()
 	reason := strings.TrimSpace(req.Reason)
 	switch {
@@ -70,11 +70,7 @@ func validateVoidRequest(req *invoiceports.VoidInvoiceRequest) *errortypes.Multi
 			"Disposition must be Rebill or DoNotRebill",
 		)
 	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 func (s *Service) voidDraft(

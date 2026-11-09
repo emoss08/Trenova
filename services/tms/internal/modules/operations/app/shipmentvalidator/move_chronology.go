@@ -121,21 +121,3 @@ func timestampsEqual(left, right *int64) bool {
 		return *left == *right
 	}
 }
-
-func withMoveChronology(
-	base *errortypes.MultiError,
-	original, entity *shipment.Shipment,
-) *errortypes.MultiError {
-	chronology := validateMoveChronology(original, entity)
-	if chronology == nil {
-		return base
-	}
-	if base == nil {
-		return chronology
-	}
-	for _, err := range chronology.Errors {
-		base.AddError(err)
-	}
-
-	return base
-}

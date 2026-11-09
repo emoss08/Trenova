@@ -602,6 +602,7 @@
   "such as tender": "por ejemplo, tender",
   "to add": "para agregar",
   "to choose": "para elegir",
+  "to move": "para moverse",
   "{0, plural, one {# message differs} other {# messages differ}}": "{0, plural, one {# mensaje difiere} other {# mensajes difieren}}",
   "{0, plural, one {# quick fix} other {# quick fixes}}": "{0, plural, one {# corrección rápida} other {# correcciones rápidas}}",
   "{0, plural, one {# setting needs a valid value} other {# settings need a valid value}}": "{0, plural, one {# configuración necesita un valor válido} other {# configuraciones necesitan un valor válido}}",

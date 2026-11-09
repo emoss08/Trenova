@@ -465,6 +465,7 @@ func (s *Service) FinishTurn(
 	result.Proposals = proposals
 	result.ProposalsUnrecorded = err != nil
 	result.Artifacts = artifacts.Artifacts()
+	s.runtime.RecordMemoryUse(ctx, req.TenantInfo, req.Run)
 
 	return result, nil
 }

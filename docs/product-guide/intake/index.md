@@ -2,7 +2,7 @@
 path: /intake
 aliases: [scanning, scanned documents, scan queue, virtual printer, print to Trenova, paperwork queue, document intake, Kofax, batch scanning]
 related:
-  - /triage
+  - /desk/triage
   - /shipment-management/shipments
 ---
 

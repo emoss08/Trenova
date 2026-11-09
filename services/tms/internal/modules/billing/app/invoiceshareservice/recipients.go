@@ -25,7 +25,7 @@ type shareInput struct {
 	tab     invoiceshare.ShareTab
 }
 
-func validateShareInput(input *shareInput, actorID pulid.ID) *errortypes.MultiError {
+func validateShareInput(input *shareInput, actorID pulid.ID) error {
 	multiErr := errortypes.NewMultiError()
 
 	switch {
@@ -74,11 +74,7 @@ func validateShareInput(input *shareInput, actorID pulid.ID) *errortypes.MultiEr
 		)
 	}
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 func (s *Service) resolveRecipients(

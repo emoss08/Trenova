@@ -8,7 +8,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -68,11 +67,4 @@ func DueAfterSeconds(policy dispatchcontrol.ExceptionPolicy, severity watchtower
 
 func DueAt(policy dispatchcontrol.ExceptionPolicy, severity watchtower.Severity, now int64) int64 {
 	return now + DueAfterSeconds(policy, severity)
-}
-
-func RouteAssignee(policy dispatchcontrol.ExceptionPolicy, ownerID pulid.ID) pulid.ID {
-	if ownerID.IsNotNil() {
-		return ownerID
-	}
-	return policy.DefaultAssigneeID
 }

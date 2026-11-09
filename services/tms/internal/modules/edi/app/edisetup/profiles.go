@@ -440,11 +440,7 @@ func requireSecretsForNewTarget(check *secretTargetCheck) error {
 			targetSecretLabels[key],
 		)
 	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 func (s *Service) encryptProfileSecret(

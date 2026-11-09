@@ -23,9 +23,9 @@ const (
 )
 
 var (
-	_ domaintypes.PostgresSearchable     = (*FuelCard)(nil)
-	_ pagination.CursorEntity            = (*FuelCard)(nil)
-	_ validationframework.TenantedEntity = (*FuelCard)(nil)
+	_ domaintypes.PostgresSearchable = (*FuelCard)(nil)
+	_ pagination.CursorEntity        = (*FuelCard)(nil)
+	_ validationframework.Entity     = (*FuelCard)(nil)
 )
 
 // Fuel cards issued to drivers and units

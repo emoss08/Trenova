@@ -87,12 +87,30 @@ func TestReflectionSignals(t *testing.T) {
 	t.Parallel()
 
 	signals := ReflectionSignals{
-		{Kind: ReflectionSignalToolRecovered, Count: 1},
+		{Kind: ReflectionSignalProposalModified, Count: 1},
 		{Kind: ReflectionSignalLongTask, Count: 0},
 	}
-	assert.True(t, signals.Has(ReflectionSignalToolRecovered))
+	assert.True(t, signals.Has(ReflectionSignalProposalModified))
 	assert.False(t, signals.Has(ReflectionSignalLongTask))
-	assert.Equal(t, []string{"ToolRecovered"}, signals.Kinds())
+	assert.Equal(t, []string{"ProposalModified"}, signals.Kinds())
+}
+
+func TestReflectionSignals_FromPeopleIsWhatAPersonSaidOrDecided(t *testing.T) {
+	t.Parallel()
+
+	for _, kind := range []ReflectionSignalKind{
+		ReflectionSignalPersonCorrected,
+		ReflectionSignalStandingRequest,
+		ReflectionSignalProposalModified,
+		ReflectionSignalProposalRejected,
+		ReflectionSignalNegativeFeedback,
+	} {
+		assert.True(t, ReflectionSignals{{Kind: kind, Count: 1}}.FromPeople(), kind)
+	}
+
+	assert.False(t, ReflectionSignals{{Kind: ReflectionSignalLongTask, Count: 7}}.FromPeople())
+	assert.False(t, ReflectionSignals{{Kind: ReflectionSignalPersonCorrected, Count: 0}}.FromPeople())
+	assert.False(t, ReflectionSignals{}.FromPeople())
 }
 
 func TestMemoryKindsAndSourcesForLearning(t *testing.T) {

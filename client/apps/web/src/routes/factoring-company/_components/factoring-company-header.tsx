@@ -61,7 +61,7 @@ function UpdatedAgo({ at, onRefresh, busy }: { at: number; onRefresh: () => void
       onClick={onRefresh}
       disabled={busy}
       title={t("Read the figures again")}
-      className="text-foreground-subtle hover:text-foreground ui-focus-ring inline-flex items-center gap-1.5 rounded-sm text-xs transition-colors disabled:opacity-60"
+      className="inline-flex items-center gap-1.5 rounded-sm ui-focus-ring text-xs text-foreground-subtle transition-colors hover:text-foreground disabled:opacity-60"
     >
       <RefreshCw01Icon className={busy ? "size-3 animate-spin" : "size-3"} />
       {t("Updated {0}", formatRelativeTime(Math.min(Math.round(at / 1000) - now, 0)))}
@@ -77,6 +77,8 @@ export type FactoringCompanyHeaderProps = {
   onRefresh: () => void;
   /** The agreement in force, numbered by start date among all of the factor's agreements. */
   agreementNumber: number | null;
+  /** The Details tab holds edits that are not saved, so the tab is marked from any other. */
+  detailsUnsaved: boolean;
   tab: FactoringCompanyTab;
   visible: Record<FactoringCompanyTab, boolean>;
   onTab: (tab: FactoringCompanyTab) => void;
@@ -97,6 +99,7 @@ export function FactoringCompanyHeader({
   overviewFetching,
   onRefresh,
   agreementNumber,
+  detailsUnsaved,
   tab,
   visible,
   onTab,
@@ -125,11 +128,11 @@ export function FactoringCompanyHeader({
   const ready = overview?.ready.count ?? 0;
 
   return (
-    <header className="bg-card flex flex-col gap-2.5 border-b px-6 pt-3.5">
+    <header className="flex flex-col gap-2.5 border-b bg-card px-6 pt-3.5">
       <div className="flex flex-wrap items-start gap-x-3.5 gap-y-3">
         <span
           aria-hidden
-          className="bg-sunken grid size-10 shrink-0 place-items-center rounded-md border font-mono text-sm font-semibold tracking-wide"
+          className="grid size-10 shrink-0 place-items-center rounded-md border bg-sunken font-mono text-sm font-semibold tracking-wide"
         >
           {initialsOf(company.name)}
         </span>
@@ -142,7 +145,7 @@ export function FactoringCompanyHeader({
             <StatusBadge status={company.status} />
             <Badge variant="neutral">{nonRecourse ? t("Non-recourse") : t("Recourse")}</Badge>
           </div>
-          <p className="text-muted-foreground flex flex-wrap gap-x-4 gap-y-1 text-xs">
+          <p className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
             <MetaItem icon={<MarkerPin01Icon />}>{address}</MetaItem>
             {company.email ? <MetaItem icon={<Mail01Icon />}>{company.email}</MetaItem> : null}
             {company.phoneNumber ? (
@@ -172,7 +175,7 @@ export function FactoringCompanyHeader({
               <Send01Icon className="size-3.5" />
               {t("Submit invoices")}
               {ready > 0 ? (
-                <span className="bg-background/15 grid h-4.5 min-w-4.5 place-items-center rounded-sm px-1 text-2xs font-medium tabular-nums">
+                <span className="grid h-4.5 min-w-4.5 place-items-center rounded-sm bg-background/15 px-1 text-2xs font-medium tabular-nums">
                   {ready}
                 </span>
               ) : null}
@@ -208,12 +211,21 @@ export function FactoringCompanyHeader({
         <div className="-mb-px flex items-center gap-3">
           <TabsList variant="underline" className="-ml-2.5 max-w-full min-w-0 overflow-x-auto">
             <TabsTab value="overview">{t("Overview")}</TabsTab>
-            <TabsTab value="details">{t("Details")}</TabsTab>
+            <TabsTab value="details">
+              {t("Details")}
+              {detailsUnsaved ? (
+                <span
+                  role="img"
+                  aria-label={t("Unsaved changes")}
+                  className="size-1.5 rounded-full bg-warning"
+                />
+              ) : null}
+            </TabsTab>
             {visible.agreement ? (
               <TabsTab value="agreement">
                 {t("Agreement")}
                 {agreementNumber !== null ? (
-                  <span className="text-foreground-subtle font-normal tabular-nums">
+                  <span className="font-normal text-foreground-subtle tabular-nums">
                     {t("v{0}", agreementNumber)}
                   </span>
                 ) : null}
@@ -223,7 +235,7 @@ export function FactoringCompanyHeader({
               <TabsTab value="customers">
                 {t("Customers")}
                 {overview && overview.notices.assigned > 0 ? (
-                  <span className="text-foreground-subtle font-normal tabular-nums">
+                  <span className="font-normal text-foreground-subtle tabular-nums">
                     {overview.notices.assigned}
                   </span>
                 ) : null}
@@ -235,7 +247,7 @@ export function FactoringCompanyHeader({
                 <span
                   role="img"
                   aria-label={t("Delivery needs attention")}
-                  className="bg-danger size-1.5 rounded-full"
+                  className="size-1.5 rounded-full bg-danger"
                 />
               ) : null}
             </TabsTab>

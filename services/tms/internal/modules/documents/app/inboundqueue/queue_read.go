@@ -188,11 +188,7 @@ func (s *Service) verifyLinkTargets(ctx context.Context, req *LinkRequest) error
 		}
 	}
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 func (s *Service) GetByID(

@@ -182,7 +182,7 @@ func (s *Service) applySiteRequest(
 		)
 	}
 	if multiErr.HasErrors() {
-		return multiErr
+		return multiErr.Err()
 	}
 
 	if req.ClearSignIn {

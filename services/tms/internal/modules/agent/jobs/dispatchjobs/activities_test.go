@@ -53,6 +53,13 @@ func (m *stubProposalRepo) ListPendingByTargets(
 	return nil, nil
 }
 
+func (m *stubProposalRepo) ListSettled(
+	context.Context,
+	*agentproposalports.ListSettledProposalsRequest,
+) ([]*agent.AgentProposal, error) {
+	return nil, nil
+}
+
 func (m *stubProposalRepo) ListFailedByTargets(
 	context.Context,
 	*agentproposalports.ListFailedByTargetsRequest,

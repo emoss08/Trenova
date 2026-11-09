@@ -354,11 +354,11 @@ func (s *service) DeleteLogo(
 	return updatedOrg, nil
 }
 
-func (s *service) validateLogoFile(file *multipart.FileHeader) *errortypes.MultiError {
+func (s *service) validateLogoFile(file *multipart.FileHeader) error {
 	multiErr := errortypes.NewMultiError()
 	if file == nil {
 		multiErr.Add("file", errortypes.ErrRequired, "Logo file is required")
-		return multiErr
+		return multiErr.Err()
 	}
 
 	if file.Size == 0 {
@@ -381,11 +381,7 @@ func (s *service) validateLogoFile(file *multipart.FileHeader) *errortypes.Multi
 		multiErr.Add("file", errortypes.ErrInvalidFormat, "Unsupported logo file extension")
 	}
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 func (s *service) GetMicrosoftSSOConfig(

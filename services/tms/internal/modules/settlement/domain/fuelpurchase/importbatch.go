@@ -20,9 +20,9 @@ import (
 const maxImportFileNameLength = 255
 
 var (
-	_ domaintypes.PostgresSearchable     = (*ImportBatch)(nil)
-	_ pagination.CursorEntity            = (*ImportBatch)(nil)
-	_ validationframework.TenantedEntity = (*ImportBatch)(nil)
+	_ domaintypes.PostgresSearchable = (*ImportBatch)(nil)
+	_ pagination.CursorEntity        = (*ImportBatch)(nil)
+	_ validationframework.Entity     = (*ImportBatch)(nil)
 )
 
 type ImportSummary struct {

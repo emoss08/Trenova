@@ -537,11 +537,7 @@ func (s *service) CheckWorkerCompliance(
 		)
 	}
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 func (s *service) shipmentMoveHasHazmat(

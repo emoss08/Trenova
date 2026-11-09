@@ -29,11 +29,11 @@ func qualifiedCarrier(now int64) *carrier.Carrier {
 	}
 }
 
-func TestEvaluateCarrierEligibility(t *testing.T) {
+func TestEvaluateEligibility_Carrier(t *testing.T) {
 	now := timeutils.NowUnix()
 
 	t.Run("qualified carrier with healthy insurance passes", func(t *testing.T) {
-		result := carrier.EvaluateCarrierEligibility(qualifiedCarrier(now), now)
+		result := carrier.EvaluateEligibility(carrier.EligibilityInput{Carrier: qualifiedCarrier(now), Now: now})
 		assert.False(t, result.IsBlocked())
 		assert.False(t, result.HasWarnings())
 	})
@@ -41,35 +41,35 @@ func TestEvaluateCarrierEligibility(t *testing.T) {
 	t.Run("inactive carrier is blocked", func(t *testing.T) {
 		entity := qualifiedCarrier(now)
 		entity.Status = carrier.StatusDoNotUse
-		result := carrier.EvaluateCarrierEligibility(entity, now)
+		result := carrier.EvaluateEligibility(carrier.EligibilityInput{Carrier: entity, Now: now})
 		assert.True(t, result.IsBlocked())
 	})
 
 	t.Run("unqualified carrier is blocked", func(t *testing.T) {
 		entity := qualifiedCarrier(now)
 		entity.ComplianceStatus = carrier.ComplianceStatusPending
-		result := carrier.EvaluateCarrierEligibility(entity, now)
+		result := carrier.EvaluateEligibility(carrier.EligibilityInput{Carrier: entity, Now: now})
 		assert.True(t, result.IsBlocked())
 	})
 
 	t.Run("missing required policy is blocked", func(t *testing.T) {
 		entity := qualifiedCarrier(now)
 		entity.InsurancePolicies = entity.InsurancePolicies[:1]
-		result := carrier.EvaluateCarrierEligibility(entity, now)
+		result := carrier.EvaluateEligibility(carrier.EligibilityInput{Carrier: entity, Now: now})
 		assert.True(t, result.IsBlocked())
 	})
 
 	t.Run("expired required policy is blocked", func(t *testing.T) {
 		entity := qualifiedCarrier(now)
 		entity.InsurancePolicies[0].ExpirationDate = now - day
-		result := carrier.EvaluateCarrierEligibility(entity, now)
+		result := carrier.EvaluateEligibility(carrier.EligibilityInput{Carrier: entity, Now: now})
 		assert.True(t, result.IsBlocked())
 	})
 
 	t.Run("policy expiring inside the window only warns", func(t *testing.T) {
 		entity := qualifiedCarrier(now)
 		entity.InsurancePolicies[1].ExpirationDate = now + 10*day
-		result := carrier.EvaluateCarrierEligibility(entity, now)
+		result := carrier.EvaluateEligibility(carrier.EligibilityInput{Carrier: entity, Now: now})
 		assert.False(t, result.IsBlocked())
 		assert.True(t, result.HasWarnings())
 	})
@@ -82,7 +82,7 @@ func TestEvaluateCarrierEligibility(t *testing.T) {
 				PolicyNumber:   "AUTO-OLD",
 				ExpirationDate: now + 5*day,
 			})
-		result := carrier.EvaluateCarrierEligibility(entity, now)
+		result := carrier.EvaluateEligibility(carrier.EligibilityInput{Carrier: entity, Now: now})
 		assert.False(t, result.IsBlocked())
 		assert.False(t, result.HasWarnings())
 	})

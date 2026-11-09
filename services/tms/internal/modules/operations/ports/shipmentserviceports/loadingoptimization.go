@@ -29,7 +29,7 @@ type LoadingOptimizationRequest struct {
 	Stops           []StopInfo              `json:"stops,omitempty"`
 }
 
-func (r *LoadingOptimizationRequest) Validate() *errortypes.MultiError {
+func (r *LoadingOptimizationRequest) Validate() error {
 	multiErr := errortypes.NewMultiError()
 
 	if len(r.Commodities) == 0 {
@@ -43,11 +43,7 @@ func (r *LoadingOptimizationRequest) Validate() *errortypes.MultiError {
 		}
 	}
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 type CommodityPlacement struct {

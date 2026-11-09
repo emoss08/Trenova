@@ -123,7 +123,13 @@ function kindFromProblem(problem: NormalizedApiError): ErrorKind {
 }
 
 function kindFromStatus(status: number): ErrorKind {
-  return kindFromProblem({ status, problemType: null, fieldErrors: [], message: "" });
+  return kindFromProblem({
+    status,
+    problemType: null,
+    fieldErrors: [],
+    advisories: [],
+    message: "",
+  });
 }
 
 // A server message is shown to people only when the server wrote it for them. Anything the

@@ -91,7 +91,7 @@ func ParseWebResearchSettings(values map[string]string) (WebResearchSettings, er
 	multiErr := errortypes.NewMultiError()
 	settings := parseWebResearchSettings(values, multiErr)
 	if multiErr.HasErrors() {
-		return WebResearchSettings{}, multiErr
+		return WebResearchSettings{}, multiErr.Err()
 	}
 
 	return settings, nil

@@ -12,6 +12,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func coreTools() []string {
+	return (&agentdefinition.Definition{}).EffectiveToolNames()
+}
+
 /*
 An agent an organization built by hand holds memory, escalation and review
 without anyone ticking them.
@@ -27,14 +31,14 @@ func TestDefinition_HoldsTheCoreToolsWithoutSelectingThem(t *testing.T) {
 	definition := validDefinition()
 	definition.ToolNames = []string{"report_list"}
 
-	for _, tool := range agentdefinition.CoreTools() {
+	for _, tool := range coreTools() {
 		assert.Truef(t, definition.AllowsTool(tool), "an agent must hold %s", tool)
 	}
 	assert.True(t, definition.AllowsTool("report_list"))
 	assert.False(t, definition.AllowsTool("report_create_dashboard"))
 
 	assert.Equal(t,
-		append(agentdefinition.CoreTools(), "report_list"),
+		append(coreTools(), "report_list"),
 		definition.EffectiveToolNames(),
 	)
 }
@@ -51,7 +55,7 @@ func TestDefinition_EffectiveToolNamesDoesNotRepeatACoreToolAlsoSelected(t *test
 		seen[name]++
 	}
 	assert.Equal(t, 1, seen["agent_create_memory"])
-	assert.Len(t, names, len(agentdefinition.CoreTools())+1)
+	assert.Len(t, names, len(coreTools())+1)
 }
 
 // A tier or a daily cap on a core tool is a setting on a tool the agent holds,

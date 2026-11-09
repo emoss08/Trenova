@@ -26,9 +26,9 @@ func newTestGLAccount() *glaccount.GLAccount {
 
 func newValCtx(
 	entity *glaccount.GLAccount,
-	mode validationframework.ValidationMode,
-) *validationframework.TenantedValidationContext {
-	return &validationframework.TenantedValidationContext{
+	mode validationframework.Mode,
+) *validationframework.Context {
+	return &validationframework.Context{
 		Mode:           mode,
 		OrganizationID: entity.OrganizationID,
 		BusinessUnitID: entity.BusinessUnitID,
@@ -38,9 +38,9 @@ func newValCtx(
 
 func runRule(
 	t *testing.T,
-	rule validationframework.TenantedRule[*glaccount.GLAccount],
+	rule validationframework.Rule[*glaccount.GLAccount],
 	entity *glaccount.GLAccount,
-	mode validationframework.ValidationMode,
+	mode validationframework.Mode,
 ) *errortypes.MultiError {
 	t.Helper()
 	ctx := t.Context()

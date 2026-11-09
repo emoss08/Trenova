@@ -15,15 +15,12 @@ type CreateWaterfallTenderRequest struct {
 	RoutingGuideID *pulid.ID             `json:"routingGuideId"`
 }
 
-func (r *CreateWaterfallTenderRequest) Validate() *errortypes.MultiError {
+func (r *CreateWaterfallTenderRequest) Validate() error {
 	multiErr := errortypes.NewMultiError()
 	if r.ShipmentMoveID.IsNil() {
 		multiErr.Add("shipmentMoveId", errortypes.ErrRequired, "Shipment move is required")
 	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }
 
 type SpotTenderLine struct {
@@ -43,7 +40,7 @@ type CreateSpotTenderRequest struct {
 	OverrideInsuranceWarnings bool                  `json:"overrideInsuranceWarnings"`
 }
 
-func (r *CreateSpotTenderRequest) Validate() *errortypes.MultiError {
+func (r *CreateSpotTenderRequest) Validate() error {
 	multiErr := errortypes.NewMultiError()
 	if r.ShipmentMoveID.IsNil() {
 		multiErr.Add("shipmentMoveId", errortypes.ErrRequired, "Shipment move is required")
@@ -78,10 +75,7 @@ func (r *CreateSpotTenderRequest) Validate() *errortypes.MultiError {
 			lineErr.Add("channel", errortypes.ErrInvalid, "Channel is invalid")
 		}
 	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }
 
 // GuideEntryScreeningResult is one routing guide entry's eligibility verdict as

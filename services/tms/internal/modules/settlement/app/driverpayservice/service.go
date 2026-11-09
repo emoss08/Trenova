@@ -246,10 +246,7 @@ func validateRateOverrides(
 			)
 		}
 	}
-	if overrideErr.HasErrors() {
-		return overrideErr
-	}
-	return nil
+	return overrideErr.Err()
 }
 
 func (s *Service) endOverlappingAssignments(

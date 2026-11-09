@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*CapabilityRule)(nil)
+	_ validationframework.Entity = (*CapabilityRule)(nil)
 )
 
 type CapabilityRule struct {

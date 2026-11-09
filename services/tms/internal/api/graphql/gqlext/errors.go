@@ -2,7 +2,6 @@ package gqlext
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/99designs/gqlgen/graphql"
@@ -45,7 +44,7 @@ func newErrorPresenter(cfg *appconfig.Config) graphql.ErrorPresenterFunc {
 		problemType := classifier.Classify(err)
 		gqlErr.Message = sanitizer.SanitizeMessage(err, problemType).Localize(locale)
 		gqlErr.Extensions = map[string]any{
-			"code":    string(errorCode(err, problemType)),
+			"code":    string(helpers.ErrorCodeOf(err, problemType)),
 			"type":    baseURI + string(problemType),
 			"traceId": gqlctx.RequestID(ctx),
 		}
@@ -58,6 +57,9 @@ func newErrorPresenter(cfg *appconfig.Config) graphql.ErrorPresenterFunc {
 		}
 		if validationErrors := sanitizer.ExtractErrors(err); len(validationErrors) > 0 {
 			gqlErr.Extensions["errors"] = helpers.LocalizeErrors(locale, validationErrors)
+		}
+		if advisories := sanitizer.ExtractAdvisories(err); len(advisories) > 0 {
+			gqlErr.Extensions["advisories"] = helpers.LocalizeAdvisories(locale, advisories)
 		}
 
 		return gqlErr
@@ -86,34 +88,6 @@ func protocolProblemType(code string) helpers.ProblemType {
 	}
 
 	return helpers.ProblemTypeValidation
-}
-
-func errorCode(err error, problemType helpers.ProblemType) errortypes.ErrorCode {
-	var errorable errortypes.Errorable
-	if errors.As(err, &errorable) {
-		return errorable.GetCode()
-	}
-
-	switch problemType {
-	case helpers.ProblemTypeAuthentication:
-		return errortypes.ErrUnauthorized
-	case helpers.ProblemTypeAuthorization:
-		return errortypes.ErrForbidden
-	case helpers.ProblemTypeNotFound:
-		return errortypes.ErrNotFound
-	case helpers.ProblemTypeRateLimit:
-		return errortypes.ErrTooManyRequests
-	case helpers.ProblemTypeQuotaExceeded:
-		return errortypes.ErrQuotaExceeded
-	case helpers.ProblemTypePlanRestricted:
-		return errortypes.ErrPlanRestricted
-	case helpers.ProblemTypeConflict:
-		return errortypes.ErrResourceInUse
-	case helpers.ProblemTypeValidation, helpers.ProblemTypeBusiness:
-		return errortypes.ErrInvalid
-	default:
-		return errortypes.ErrSystemError
-	}
 }
 
 func recoverFunc(ctx context.Context, err any) error {

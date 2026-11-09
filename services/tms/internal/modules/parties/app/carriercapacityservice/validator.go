@@ -3,13 +3,9 @@ package carriercapacityservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/infrastructure/postgres"
-	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate/usstatedb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carriercapacity"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carriercapacity/carriercapacitydb"
-	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/keelcheck"
 	"github.com/emoss08/trenova/pkg/tenantedvalidation"
+	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 )
@@ -17,7 +13,7 @@ import (
 type ValidatorParams struct {
 	fx.In
 
-	DB *postgres.Connection
+	Integrity validationframework.IntegrityChecker
 }
 
 type Validator struct {
@@ -32,13 +28,10 @@ func optionalID(id *pulid.ID) pulid.ID {
 }
 
 func NewValidator(p ValidatorParams) *Validator {
-	checker := keelcheck.NewChecker(p.DB, carriercapacitydb.PostingsSchema())
-	stateCheck := keelcheck.ReferenceCheck(p.DB, usstatedb.UsStatesSchema())
-
 	return &Validator{
 		validator: tenantedvalidation.NewBuilder[*carriercapacity.Posting]().
 			WithModelName("CarrierCapacityPosting").
-			WithReferenceChecker(checker).
+			WithIntegrityChecker(p.Integrity).
 			WithReferenceCheck(
 				"carrierId",
 				"carriers",
@@ -57,17 +50,17 @@ func NewValidator(p ValidatorParams) *Validator {
 				"Equipment type does not exist in your organization",
 				func(p *carriercapacity.Posting) pulid.ID { return optionalID(p.EquipmentTypeID) },
 			).
-			WithOptionalCustomReferenceCheck(
+			WithOptionalReferenceCheck(
 				"originStateId",
+				"us_states",
 				"Origin state does not exist",
 				func(p *carriercapacity.Posting) pulid.ID { return optionalID(p.OriginStateID) },
-				stateCheck,
 			).
-			WithOptionalCustomReferenceCheck(
+			WithOptionalReferenceCheck(
 				"destinationStateId",
+				"us_states",
 				"Destination state does not exist",
 				func(p *carriercapacity.Posting) pulid.ID { return optionalID(p.DestinationStateID) },
-				stateCheck,
 			).
 			Build(),
 	}
@@ -76,13 +69,13 @@ func NewValidator(p ValidatorParams) *Validator {
 func (v *Validator) ValidateCreate(
 	ctx context.Context,
 	entity *carriercapacity.Posting,
-) *errortypes.MultiError {
+) error {
 	return v.validator.ValidateCreate(ctx, entity)
 }
 
 func (v *Validator) ValidateUpdate(
 	ctx context.Context,
 	entity *carriercapacity.Posting,
-) *errortypes.MultiError {
+) error {
 	return v.validator.ValidateUpdate(ctx, entity)
 }

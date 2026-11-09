@@ -117,6 +117,7 @@ func TestRecordCorrectionQueuesTheCorrection(t *testing.T) {
 		&agentdecision.AgentDecision{
 			Decision:        agentdecision.DecisionModified,
 			Modifications:   map[string]any{"workerId": "wrk_b"},
+			ReasonCode:      "wrk_a is out this week",
 			DecidedByUserID: pulid.MustNew("usr_"),
 		},
 	)

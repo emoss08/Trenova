@@ -113,10 +113,6 @@ type EligibilityInput struct {
 	Intel   *IntelGate
 }
 
-func EvaluateCarrierEligibility(entity *Carrier, now int64) EligibilityResult {
-	return EvaluateEligibility(EligibilityInput{Carrier: entity, Now: now})
-}
-
 func EvaluateEligibility(in EligibilityInput) EligibilityResult {
 	result := EligibilityResult{
 		Blockers:   []string{},

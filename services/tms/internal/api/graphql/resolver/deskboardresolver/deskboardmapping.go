@@ -3,6 +3,7 @@ package deskboardresolver
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/board"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/shared/jsonutils"
 )
@@ -50,6 +51,8 @@ func blockToModel(block *board.FilledBlock) *gqlmodel.DeskBoardBlock {
 		Text:     segmentsToModel(block.Text),
 		NoteTone: string(block.NoteTone),
 		Chips:    rowsToModel(block.Chips),
+		Work:     workToModel(block.Work),
+		Actions:  actionsToModel(block.Actions),
 	}
 	for idx := range block.Figures {
 		figure := &block.Figures[idx]
@@ -136,6 +139,53 @@ func compareToModel(compare *board.FilledCompare) *gqlmodel.DeskBoardCompare {
 	}
 
 	return model
+}
+
+func workToModel(rows []board.WorkRow) []*gqlmodel.DeskBoardWorkRow {
+	out := make([]*gqlmodel.DeskBoardWorkRow, 0, len(rows))
+	for idx := range rows {
+		row := &rows[idx]
+		signals := make([]*gqlmodel.DeskBoardWorkSignal, 0, len(row.Signals))
+		for _, signal := range row.Signals {
+			signals = append(signals, &gqlmodel.DeskBoardWorkSignal{
+				Lens:  watchtower.DeskLens(signal.Lens),
+				Title: signal.Title,
+				Tone:  string(signal.Tone),
+				DueAt: int64PtrToInt(signal.DueAt),
+			})
+		}
+		out = append(out, &gqlmodel.DeskBoardWorkRow{
+			Row:     rowsToModel([]board.Row{row.Row})[0],
+			Signals: signals,
+			Tone:    string(row.Tone),
+			DueAt:   int64PtrToInt(row.DueAt),
+		})
+	}
+
+	return out
+}
+
+func actionsToModel(actions []board.FilledAction) []*gqlmodel.DeskBoardAction {
+	out := make([]*gqlmodel.DeskBoardAction, 0, len(actions))
+	for idx := range actions {
+		action := &actions[idx]
+		out = append(out, &gqlmodel.DeskBoardAction{
+			Label:   action.Label,
+			Ask:     action.Ask,
+			Records: rowsToModel(action.Records),
+		})
+	}
+
+	return out
+}
+
+func int64PtrToInt(value *int64) *int {
+	if value == nil {
+		return nil
+	}
+	converted := int(*value)
+
+	return &converted
 }
 
 func rowsToModel(rows []board.Row) []*gqlmodel.DeskBoardRow {

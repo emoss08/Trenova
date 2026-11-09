@@ -1,7 +1,5 @@
 package documenttemplate
 
-import "errors"
-
 type PageSize string
 
 const (
@@ -18,19 +16,6 @@ func (p PageSize) IsValid() bool {
 		return true
 	default:
 		return false
-	}
-}
-
-func PageSizeFromString(v string) (PageSize, error) {
-	switch v {
-	case "Letter":
-		return PageSizeLetter, nil
-	case "A4":
-		return PageSizeA4, nil
-	case "Legal":
-		return PageSizeLegal, nil
-	default:
-		return "", errors.New("invalid document template page size")
 	}
 }
 
@@ -69,17 +54,6 @@ func (o Orientation) IsValid() bool {
 }
 
 func (o Orientation) IsLandscape() bool { return o == OrientationLandscape }
-
-func OrientationFromString(v string) (Orientation, error) {
-	switch v {
-	case "Portrait":
-		return OrientationPortrait, nil
-	case "Landscape":
-		return OrientationLandscape, nil
-	default:
-		return "", errors.New("invalid document template orientation")
-	}
-}
 
 // millimetersPerInch converts authored margins to the inches Gotenberg expects.
 const millimetersPerInch = 25.4

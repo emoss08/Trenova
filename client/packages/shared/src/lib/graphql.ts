@@ -11,12 +11,14 @@ import type {
   TypedGraphQLDocument,
 } from "@trenova/shared/types/graphql";
 import {
+  type Advisory,
   type EditConflict,
   type NormalizedApiError,
   type ProblemType,
   type ValidationError,
   apiProblem,
   editConflictSchema,
+  parseAdvisories,
   parseFieldErrors,
   parseProblemType,
 } from "@trenova/shared/types/errors";
@@ -112,6 +114,7 @@ export function prepareGraphQLRequest<TVariables>(
 }
 
 export type GraphQLErrorExtensions = Record<string, unknown> & {
+  advisories?: unknown;
   code?: string;
   errors?: unknown;
   params?: unknown;
@@ -205,7 +208,9 @@ export class GraphQLRequestError extends Error {
     return {
       problemType: this.getProblemType(),
       status: this.status ?? 0,
+      code: this.code,
       fieldErrors,
+      advisories: this.getAdvisories(),
       message: detail,
       detail,
       traceId: this.traceId,
@@ -250,6 +255,10 @@ export class GraphQLRequestError extends Error {
 
   public getFieldError(field: string): ValidationError | undefined {
     return this.getFieldErrors(field)[0];
+  }
+
+  public getAdvisories(): Advisory[] {
+    return this.graphQLErrors.flatMap((error) => parseAdvisories(error.extensions.advisories));
   }
 
   public isValidationError(): boolean {

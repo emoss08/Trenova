@@ -8,6 +8,11 @@ import (
 // CheckKey names one of the five things a biller confirms before approving.
 type CheckKey string
 
+// AllCheckKeys is the five checks in the order a biller works through them.
+func AllCheckKeys() []CheckKey {
+	return []CheckKey{CheckBiller, CheckCharges, CheckPOD, CheckTerms, CheckDuplicate}
+}
+
 const (
 	CheckBiller    = CheckKey("biller")
 	CheckCharges   = CheckKey("charges")
@@ -15,11 +20,6 @@ const (
 	CheckTerms     = CheckKey("terms")
 	CheckDuplicate = CheckKey("duplicate")
 )
-
-// AllCheckKeys is the five checks in the order a biller works through them.
-func AllCheckKeys() []CheckKey {
-	return []CheckKey{CheckBiller, CheckCharges, CheckPOD, CheckTerms, CheckDuplicate}
-}
 
 // CheckState is what a check asks of the person: nothing, a decision they can
 // make from the item, or a fix that has to happen first.

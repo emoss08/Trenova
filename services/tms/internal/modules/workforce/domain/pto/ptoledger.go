@@ -2,7 +2,6 @@ package pto
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
@@ -13,11 +12,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/shopspring/decimal"
-)
-
-var (
-	ErrInvalidPTOLedgerEntryType = errors.New("invalid PTO ledger entry type")
-	ErrInvalidPTOLedgerActorType = errors.New("invalid PTO ledger actor type")
 )
 
 type PTOLedgerEntryType string
@@ -84,8 +78,8 @@ func (a PTOLedgerActorType) IsValid() bool {
 }
 
 var (
-	_ validationframework.TenantedEntity = (*WorkerPTOLedgerEntry)(nil)
-	_ domaintypes.PostgresSearchable     = (*WorkerPTOLedgerEntry)(nil)
+	_ validationframework.Entity     = (*WorkerPTOLedgerEntry)(nil)
+	_ domaintypes.PostgresSearchable = (*WorkerPTOLedgerEntry)(nil)
 )
 
 type WorkerPTOLedgerEntry struct {

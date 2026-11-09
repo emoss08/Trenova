@@ -220,6 +220,7 @@ func ToolProviders() []any {
 		dispatchtools.ProvideVoidRateConfirmationTool,
 		dispatchtools.ProvideRecordRateConfirmationConfirmedTool,
 		memorytools.NewRememberTool,
+		memorytools.NewEditMemoryTool,
 		memorytools.NewGuideProfileTool,
 		memorytools.NewForgetMemoryTool,
 		provideDismissInsightTool,

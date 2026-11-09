@@ -317,6 +317,8 @@ type WatchtowerCounts {
   mine: Int!
   "Owned by this reader and overdue."
   mineOverdue: Int!
+  "Open and in an agent's hands: handed to an agent that has not given it back."
+  withAgents: Int!
   byKind: [WatchtowerKindSummary!]!
   seenAt: Timestamp!
 }

@@ -216,9 +216,8 @@ func (s *RemittanceService) StagePending(
 func isUserFacing(err error) bool {
 	var validationErr *errortypes.Error
 	var businessErr *errortypes.BusinessError
-	var multiErr *errortypes.MultiError
 	return errors.As(err, &validationErr) || errors.As(err, &businessErr) ||
-		errors.As(err, &multiErr)
+		errortypes.IsMultiError(err)
 }
 
 func stagingFor(

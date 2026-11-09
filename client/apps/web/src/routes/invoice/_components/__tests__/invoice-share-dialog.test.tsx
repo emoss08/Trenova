@@ -219,7 +219,8 @@ describe("invoice share dialog", () => {
         detail: "Validation failed",
         errors: [
           {
-            field: "userIds[0]",
+            path: ["userIds", 0],
+            field: "userIds.0",
             code: "INVALID_OPERATION",
             message: "Dana Whitfield cannot view invoices, so the link would not open for them",
           },

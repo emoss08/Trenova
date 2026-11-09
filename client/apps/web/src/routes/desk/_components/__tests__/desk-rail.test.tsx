@@ -150,7 +150,8 @@ function RailHarness({
         activeThreadId={null}
         canWatch
         canDecide
-        watchtowerCount={0}
+        canTriage
+        lensCounts={{ everything: 0, watchtower: 0, triage: 0 }}
         decisionsCount={0}
         decisionsWaitHere={false}
         folded={false}
@@ -554,16 +555,23 @@ describe("DeskRail", () => {
   });
 
   it("shows the places with what waits at each", () => {
-    renderRail({ watchtowerCount: 11, decisionsCount: 6, decisionsWaitHere: true });
+    renderRail({
+      lensCounts: { everything: 19, watchtower: 11, triage: 2 },
+      decisionsCount: 6,
+      decisionsWaitHere: true,
+    });
 
+    expect(screen.getByRole("link", { name: /Needs you/ })).toHaveTextContent("19");
     expect(screen.getByRole("link", { name: /Watchtower/ })).toHaveTextContent("11");
+    expect(screen.getByRole("link", { name: /Triage/ })).toHaveAttribute("href", "/desk/triage");
+    expect(screen.getByRole("link", { name: /Triage/ })).toHaveTextContent("2");
     const decisions = screen.getByRole("link", { name: /Decisions/ });
     expect(decisions).toHaveTextContent("6");
     expect(decisions.querySelector(".dk-sb-ct")).toHaveClass("dk-w");
   });
 
   it("shows no count at a place where nothing waits", () => {
-    renderRail({ watchtowerCount: 0, decisionsCount: 0 });
+    renderRail({ lensCounts: { everything: 0, watchtower: 0, triage: 0 }, decisionsCount: 0 });
 
     expect(screen.getByRole("link", { name: "Watchtower" }).querySelector(".dk-sb-ct")).toBeNull();
     expect(screen.getByRole("link", { name: "Decisions" }).querySelector(".dk-sb-ct")).toBeNull();

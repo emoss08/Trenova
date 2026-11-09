@@ -77,7 +77,7 @@ func validateRequest(req *aianalyticsports.AnalyticsRequest) (*time.Location, er
 		multiErr.Add("timezone", errortypes.ErrInvalid, "Unknown timezone")
 	}
 	if multiErr.HasErrors() {
-		return nil, multiErr
+		return nil, multiErr.Err()
 	}
 
 	return location, nil

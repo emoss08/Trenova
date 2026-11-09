@@ -101,7 +101,7 @@ func (s *Service) VerifyForPublish(
 	ctx context.Context,
 	def *templatecatalog.KindDefinition,
 	version *documenttemplate.DocumentTemplateVersion,
-) *errortypes.MultiError {
+) error {
 	if version.Status != documenttemplate.VersionStatusDraft {
 		multiErr := errortypes.NewMultiError()
 		multiErr.Add(
@@ -110,7 +110,7 @@ func (s *Service) VerifyForPublish(
 			"Only a draft can be published. This version is {0}.",
 			version.Status,
 		)
-		return multiErr
+		return multiErr.Err()
 	}
 
 	content := contentFromVersion(version)
@@ -131,7 +131,7 @@ func (s *Service) VerifyForPublish(
 
 	diags = append(diags, s.verifyAgainstContexts(ctx, def, compiled)...)
 
-	return diagnosticsToMultiError(diags)
+	return diagnosticsToMultiError(diags).Err()
 }
 
 // verifyAgainstContexts renders every channel twice.

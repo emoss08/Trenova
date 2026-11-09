@@ -1,15 +1,5 @@
 package modeprofile
 
-import "errors"
-
-var (
-	ErrInvalidServiceModel   = errors.New("invalid service model")
-	ErrInvalidEquipmentClass = errors.New("invalid equipment class")
-	ErrInvalidExecutionParty = errors.New("invalid execution party")
-	ErrInvalidProfileStatus  = errors.New("invalid profile status")
-	ErrInvalidDeviationState = errors.New("invalid deviation state")
-)
-
 type ServiceModel string
 
 const (
@@ -35,14 +25,6 @@ func (s ServiceModel) IsValid() bool {
 	default:
 		return false
 	}
-}
-
-func ServiceModelFromString(v string) (ServiceModel, error) {
-	sm := ServiceModel(v)
-	if !sm.IsValid() {
-		return "", ErrInvalidServiceModel
-	}
-	return sm, nil
 }
 
 type EquipmentClass string
@@ -76,14 +58,6 @@ func (e EquipmentClass) IsValid() bool {
 	}
 }
 
-func EquipmentClassFromString(v string) (EquipmentClass, error) {
-	ec := EquipmentClass(v)
-	if !ec.IsValid() {
-		return "", ErrInvalidEquipmentClass
-	}
-	return ec, nil
-}
-
 type ExecutionParty string
 
 const (
@@ -107,14 +81,6 @@ func (e ExecutionParty) IsValid() bool {
 	}
 }
 
-func ExecutionPartyFromString(v string) (ExecutionParty, error) {
-	ep := ExecutionParty(v)
-	if !ep.IsValid() {
-		return "", ErrInvalidExecutionParty
-	}
-	return ep, nil
-}
-
 type ProfileStatus string
 
 const (
@@ -134,14 +100,6 @@ func (s ProfileStatus) IsValid() bool {
 	}
 }
 
-func ProfileStatusFromString(v string) (ProfileStatus, error) {
-	ps := ProfileStatus(v)
-	if !ps.IsValid() {
-		return "", ErrInvalidProfileStatus
-	}
-	return ps, nil
-}
-
 type DeviationState string
 
 const (
@@ -159,12 +117,4 @@ func (d DeviationState) IsValid() bool {
 	default:
 		return false
 	}
-}
-
-func DeviationStateFromString(v string) (DeviationState, error) {
-	ds := DeviationState(v)
-	if !ds.IsValid() {
-		return "", ErrInvalidDeviationState
-	}
-	return ds, nil
 }

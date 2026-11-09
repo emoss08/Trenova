@@ -87,7 +87,7 @@ type BulkEdit struct {
 }
 
 var (
-	_ validationframework.TenantedEntity = (*BulkEdit)(nil)
+	_ validationframework.Entity = (*BulkEdit)(nil)
 )
 
 func (b *BulkEdit) Validate(multiErr *errortypes.MultiError) {

@@ -92,11 +92,7 @@ func (s *Service) validateBacktest(req *BacktestRequest) error {
 
 	multiErr := errortypes.NewMultiError()
 	req.Policy.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 func newBacktestResult(req *BacktestRequest) *BacktestResult {
@@ -375,7 +371,7 @@ func validatePreview(
 	multiErr := errortypes.NewMultiError()
 	policy.Validate(multiErr)
 	if multiErr.HasErrors() {
-		return multiErr
+		return multiErr.Err()
 	}
 
 	if scenario.ArrivedAt <= 0 {

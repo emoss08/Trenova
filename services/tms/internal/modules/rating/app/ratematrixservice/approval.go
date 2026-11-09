@@ -159,10 +159,7 @@ func (s *Service) validateSubmission(
 	if err := s.publishGate(ctx, matrix, multiErr); err != nil {
 		return err
 	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }
 
 func (s *Service) publishGate(
@@ -241,7 +238,7 @@ func (s *Service) Approve(
 					return err
 				}
 				if multiErr.HasErrors() {
-					return multiErr
+					return multiErr.Err()
 				}
 				publishes = matrix.HasDraftChanges
 				return nil
@@ -632,7 +629,7 @@ func (s *Service) recordReview(
 	multiErr := errortypes.NewMultiError()
 	review.Validate(multiErr)
 	if multiErr.HasErrors() {
-		return multiErr
+		return multiErr.Err()
 	}
 
 	_, err = s.reviewRepo.Create(ctx, review)

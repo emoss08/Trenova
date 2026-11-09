@@ -3055,6 +3055,10 @@ models:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/watchtower.Item
     fields:
+      deskLens:
+        resolver: true
+      aboutId:
+        resolver: true
       subjectType:
         resolver: true
       subjectId:
@@ -3144,6 +3148,49 @@ models:
   WatchtowerSeverity:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/watchtower.Severity
+  DeskLens:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtower.DeskLens
+  WatchtowerKindSummary:
+    fields:
+      deskLens:
+        resolver: true
+  DeskRecord:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/ports/deskattentionports.Record
+    fields:
+      kind:
+        resolver: true
+      noun:
+        resolver: true
+  DeskAttentionGroup:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/ports/deskattentionports.Group
+    fields:
+      dueLabel:
+        resolver: true
+  DeskLensCounts:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/ports/deskattentionports.LensCounts
+  DeskAttention:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/ports/deskattentionports.Attention
+  DeskActivityOutcome:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/ports/deskactivityports.Outcome
+  DeskActivityEntry:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/ports/deskactivityports.Entry
+    fields:
+      agent:
+        resolver: true
+      planId:
+        resolver: true
+      decidedBy:
+        resolver: true
+  DeskActivity:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/ports/deskactivityports.Activity
   CaptureDevice:
     model:
       - github.com/emoss08/trenova/internal/modules/documents/domain/capture.CaptureDevice

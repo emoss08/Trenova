@@ -182,7 +182,7 @@ func DiffContact(current, wanted ContactSnapshot) []FieldChange {
 }
 
 var (
-	_ validationframework.TenantedEntity = (*WorkerProfileChangeRequest)(nil)
+	_ validationframework.Entity = (*WorkerProfileChangeRequest)(nil)
 )
 
 // WorkerProfileChangeRequest is a driver asking to change their own record,

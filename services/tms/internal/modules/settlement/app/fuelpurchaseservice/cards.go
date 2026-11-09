@@ -229,10 +229,7 @@ func validateEntity(entity interface {
 }) error {
 	multiErr := errortypes.NewMultiError()
 	entity.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
+	return multiErr.Err()
 }
 
 type AssignCardRequest struct {

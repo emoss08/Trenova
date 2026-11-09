@@ -15,7 +15,7 @@ func unenforcedScopes(
 	permissions []*rbac.ResourcePermission,
 	existing []*rbac.ResourcePermission,
 	field func(index int) string,
-) *errortypes.MultiError {
+) error {
 	kept := make(map[string]permission.DataScope, len(existing))
 	for _, rp := range existing {
 		if rp != nil {
@@ -54,10 +54,7 @@ func unenforcedScopes(
 			name,
 		)
 	}
-	if !me.HasErrors() {
-		return nil
-	}
-	return me
+	return me.Err()
 }
 
 func permissionField(index int) string {

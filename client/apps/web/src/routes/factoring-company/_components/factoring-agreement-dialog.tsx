@@ -2,7 +2,7 @@ import {
   DocumentTypeMultiSelectField,
   GLAccountAutocompleteField,
 } from "@/components/autocomplete-fields";
-import { AutoCompleteDateField, DateField } from "@/components/fields/date-field/date-field";
+import { AutoCompleteDateField } from "@/components/fields/date-field/date-field";
 import { MoneyField } from "@/components/fields/money-field";
 import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
@@ -143,7 +143,7 @@ function FactoringAgreementCreateDialog({
       resourceName="factoring agreement"
       size="xl"
       form={form}
-      formComponent={<FactoringAgreementFields control={form.control} />}
+      formComponent={<FactoringAgreementFields />}
       mutationFn={(values) =>
         createFactoringAgreement(agreementFormToInput(factoringCompanyId, values))
       }
@@ -210,7 +210,7 @@ function FactoringAgreementEditDialog({
             onSubmit={form.handleSubmit((values) => mutation.mutateAsync(values))}
             className="flex flex-col gap-6"
           >
-            <FactoringAgreementFields control={form.control} />
+            <FactoringAgreementFields />
           </Form>
         </FormProvider>
         <DialogFooter>
@@ -480,8 +480,8 @@ function FeeTiersEditor({ control }: { control: Control<FactoringAgreementFormVa
           { label: t("Flat fee"), description: t("Added to every invoice") },
         ].map((column) => (
           <span key={column.label} className="flex min-w-0 flex-col gap-0.5">
-            <span className="text-muted-foreground text-xs font-medium">{column.label}</span>
-            <span className="text-foreground-subtle text-2xs">{column.description}</span>
+            <span className="text-xs font-medium text-muted-foreground">{column.label}</span>
+            <span className="text-2xs text-foreground-subtle">{column.description}</span>
           </span>
         ))}
         <span />

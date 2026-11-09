@@ -378,8 +378,9 @@ func ValidateAllocations(p *ValidateAllocationsParams) *errortypes.MultiError {
 
 		rowErr := errortypes.NewMultiError()
 		allocation.Validate(rowErr)
+		scoped := multiErr.WithPrefix(field)
 		for _, e := range rowErr.Errors {
-			multiErr.Add(field+"."+e.Field, e.Code, e.Message)
+			scoped.AddError(e)
 		}
 
 		if _, locked := p.Locked[allocation.ID]; locked {

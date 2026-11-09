@@ -206,11 +206,7 @@ func validateEmbedRequest(req *aiusageports.EmbedRequest) error {
 		}
 	}
 
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 func (s *Embedder) embeddingCandidates(

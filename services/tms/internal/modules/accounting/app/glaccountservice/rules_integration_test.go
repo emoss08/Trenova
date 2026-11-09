@@ -60,14 +60,14 @@ func (f *rulesFixture) account(
 
 func (f *rulesFixture) run(
 	t *testing.T,
-	rule validationframework.TenantedRule[*glaccount.GLAccount],
+	rule validationframework.Rule[*glaccount.GLAccount],
 	entity *glaccount.GLAccount,
-	mode validationframework.ValidationMode,
+	mode validationframework.Mode,
 ) *errortypes.MultiError {
 	t.Helper()
 
 	multiErr := errortypes.NewMultiError()
-	require.NoError(t, rule.Validate(f.db.A.Ctx, entity, &validationframework.TenantedValidationContext{
+	require.NoError(t, rule.Validate(f.db.A.Ctx, entity, &validationframework.Context{
 		Mode:           mode,
 		OrganizationID: f.db.A.Info.OrgID,
 		BusinessUnitID: f.db.A.Info.BuID,

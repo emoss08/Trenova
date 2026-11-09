@@ -51,7 +51,7 @@ func (s *Service) record(
 		multiErr := errortypes.NewMultiError()
 		entity.Validate(multiErr)
 		if multiErr.HasErrors() {
-			return multiErr
+			return multiErr.Err()
 		}
 
 		stored, inserted, err := s.repo.Insert(txCtx, entity)

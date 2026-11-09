@@ -86,11 +86,7 @@ func (r *CreateAPIKeyRequest) Validate() error {
 		}
 	}
 
-	if me.HasErrors() {
-		return me
-	}
-
-	return nil
+	return me.Err()
 }
 
 type UpdateAPIKeyRequest struct {
@@ -127,8 +123,5 @@ func (r *UpdateAPIKeyRequest) Validate() error {
 			break
 		}
 	}
-	if me.HasErrors() {
-		return me
-	}
-	return nil
+	return me.Err()
 }

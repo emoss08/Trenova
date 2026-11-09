@@ -84,7 +84,7 @@ func (e *EffectivePermissions) Uncovered(
 	return DelegationViolation{}, false
 }
 
-func (v DelegationViolation) FieldError(field string) *errortypes.MultiError {
+func (v DelegationViolation) FieldError(field string) error {
 	me := errortypes.NewMultiError()
 	switch v.Kind {
 	case DelegationResourceNotHeld:
@@ -111,5 +111,5 @@ func (v DelegationViolation) FieldError(field string) *errortypes.MultiError {
 			v.Resource,
 		)
 	}
-	return me
+	return me.Err()
 }

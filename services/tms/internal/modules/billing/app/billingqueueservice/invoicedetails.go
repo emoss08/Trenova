@@ -97,7 +97,7 @@ func (s *Service) UpdateInvoiceDetails(
 func validateInvoiceDetails(
 	req *billingqueueports.UpdateInvoiceDetailsRequest,
 	packet []pulid.ID,
-) *errortypes.MultiError {
+) error {
 	multiErr := errortypes.NewMultiError()
 	if len(strings.TrimSpace(req.PONumber)) > maxPONumberLength {
 		multiErr.Add(
@@ -129,11 +129,7 @@ func validateInvoiceDetails(
 			maxPacketDocuments,
 		)
 	}
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
+	return multiErr.Err()
 }
 
 func (s *Service) ensurePacketDocuments(

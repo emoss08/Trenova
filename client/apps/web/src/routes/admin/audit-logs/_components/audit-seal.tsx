@@ -43,7 +43,7 @@ export function AuditSealChip() {
       <span
         aria-busy
         aria-label={t("Checking the audit log's seals")}
-        className="ui-shimmer h-6 w-40 rounded-full"
+        className="h-6 w-40 ui-shimmer rounded-full"
       />
     );
   }
@@ -79,7 +79,7 @@ export function AuditSealChip() {
           <span
             tabIndex={0}
             className={cn(
-              "ui-focus-ring inline-flex h-6 items-center gap-1.5 rounded-full border px-2 text-xs font-medium",
+              "inline-flex h-6 items-center gap-1.5 rounded-full border ui-focus-ring px-2 text-xs font-medium",
               TONE_CLASS[tone],
             )}
           />

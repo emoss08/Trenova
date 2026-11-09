@@ -356,7 +356,7 @@ func (s *Service) accrueWorkerMove(
 	multiErr := errortypes.NewMultiError()
 	event.Validate(multiErr)
 	if multiErr.HasErrors() {
-		return multiErr
+		return multiErr.Err()
 	}
 
 	created, err := s.payEventRepo.Create(ctx, event)

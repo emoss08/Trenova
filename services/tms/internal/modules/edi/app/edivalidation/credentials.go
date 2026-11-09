@@ -114,18 +114,6 @@ func credentialSpecs(method edi.ConnectionMethod) []credentialSpec {
 	}
 }
 
-func IsCredentialKey(method edi.ConnectionMethod, key string) bool {
-	for _, spec := range credentialSpecs(method) {
-		for _, candidate := range spec.keys {
-			if candidate == key {
-				return true
-			}
-		}
-	}
-
-	return false
-}
-
 func CredentialRequirements(
 	profile *edi.EDICommunicationProfile,
 ) []ediconnectiondraftports.CredentialRequirement {

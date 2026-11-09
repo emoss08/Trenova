@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -96,6 +97,7 @@ func ItemFromInput(input watchtowerports.WatchtowerItemInput) *watchtower.Item {
 		item.RecordKind = input.Record.Kind
 		item.RecordLabel = input.Record.Label
 	}
+	item.SetAbout(pulid.FirstNotNil(input.About, input.SubjectID))
 	item.ApplyDeadline(input.Deadline)
 	item.Normalize()
 

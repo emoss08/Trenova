@@ -196,7 +196,7 @@ export const RECORD_LINKS = {
   },
   inbound_message: {
     label: "Message",
-    path: "/triage",
+    path: "/desk/triage",
     params: { message: "{id}" },
   },
   accounting_sync_record: {

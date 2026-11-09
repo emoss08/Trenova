@@ -66,7 +66,7 @@ export function FactoringReserveChart({
     return (
       <SectionPanel title={title}>
         <div aria-busy aria-label={t("Loading the reserve history")} className="p-3">
-          <span aria-hidden className="ui-shimmer block h-40 rounded-md" />
+          <span aria-hidden className="block h-40 ui-shimmer rounded-md" />
         </div>
       </SectionPanel>
     );

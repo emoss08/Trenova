@@ -31,9 +31,9 @@ const (
 )
 
 var (
-	_ domaintypes.PostgresSearchable     = (*FuelPurchase)(nil)
-	_ pagination.CursorEntity            = (*FuelPurchase)(nil)
-	_ validationframework.TenantedEntity = (*FuelPurchase)(nil)
+	_ domaintypes.PostgresSearchable = (*FuelPurchase)(nil)
+	_ pagination.CursorEntity        = (*FuelPurchase)(nil)
+	_ validationframework.Entity     = (*FuelPurchase)(nil)
 )
 
 // Fuel bought at the pump or on a fuel card
