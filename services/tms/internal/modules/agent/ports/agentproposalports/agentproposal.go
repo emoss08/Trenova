@@ -195,7 +195,14 @@ type ListFailedByTargetsRequest struct {
 	TargetIDs      []pulid.ID
 }
 
+type ListSettledProposalsRequest struct {
+	TenantInfo pagination.TenantInfo
+	Since      int64
+	Limit      int
+}
+
 type AgentProposalRepository interface {
+	ListSettled(ctx context.Context, req *ListSettledProposalsRequest) ([]*agent.AgentProposal, error)
 	List(
 		ctx context.Context,
 		req *ListAgentProposalRequest,

@@ -75,7 +75,7 @@ describe("MemoryProvenance", () => {
           quotes: ["Read it first next time"],
           firstRatedAt: 0,
           lastRatedAt: 0,
-          signals: ["ToolRecovered", "PersonCorrected"],
+          signals: ["ProposalModified", "PersonCorrected"],
         },
       }),
     );
@@ -83,7 +83,7 @@ describe("MemoryProvenance", () => {
     expect(screen.getByText("Learned from work")).toBeInTheDocument();
     expect(screen.getByText("Assigning failed until the move was read.")).toBeInTheDocument();
     const signals = screen.getByRole("list", { name: "What made the agent look back" });
-    expect(within(signals).getByText("A tool worked after failing")).toBeInTheDocument();
+    expect(within(signals).getByText("A proposal was changed")).toBeInTheDocument();
     expect(within(signals).getByText("A person corrected it")).toBeInTheDocument();
     expect(screen.getByText("Read it first next time")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Open the conversation" })).toHaveAttribute(

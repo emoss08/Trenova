@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytool"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
@@ -95,6 +96,14 @@ func (t *recallMemoryTool) ParamSchema() map[string]any {
 				recordkind.Kind(permission.ResourceWorker),
 				recordkind.Kind(permission.ResourceCarrier),
 			),
+			fieldRecordID: map[string]any{
+				toolschema.KeyType: toolschema.TypeString,
+				toolschema.KeyDescription: "Optional: any record's id, such as a shipment, a move, " +
+					"an invoice, a billing queue item, an inbound message or a document, or a " +
+					"customer, location, driver or carrier. Reads the memories about the records " +
+					"it names: a shipment's customer and bill-to, its stops' locations, its drivers " +
+					"and its carriers.",
+			},
 			"toolName": map[string]any{
 				toolschema.KeyType:        toolschema.TypeString,
 				toolschema.KeyDescription: "Only memories about one tool, such as corrections to dispatch_assign_move.",
@@ -163,6 +172,10 @@ func (t *recallMemoryTool) Query(
 		req.SubjectType = subject.kind
 		req.SubjectID = subject.id
 	}
+	rawRecordID := querytool.OptionalString(params.Params, fieldRecordID)
+	if req.Record, err = readMemoryRecord(rawRecordID); err != nil {
+		return nil, err
+	}
 
 	criteria := filtercatalog.NewCriteria("memories").At(querytool.ClockFor(params))
 	criteria.Text(req.Query)
@@ -171,6 +184,7 @@ func (t *recallMemoryTool) Query(
 	if subject.kind != "" {
 		criteria.Field("about", strings.ToLower(string(subject.kind))+" "+subject.raw)
 	}
+	criteria.Field("record", rawRecordID)
 	criteria.Field("tool", req.ToolName)
 
 	memories, err := t.memories.Recall(ctx, &req)
@@ -179,15 +193,8 @@ func (t *recallMemoryTool) Query(
 	}
 
 	rows, tainted, ids := recalledRows(memories)
-
-	// A memory read back is a memory used, as much as one a prompt carried;
-	// counting only the prompt's left the ones agents look up reading as
-	// never used. A count that fails costs the count, not the answer.
-	if len(ids) > 0 {
-		_ = t.memories.RecordUse(ctx, agentmemoryports.RecordMemoryUseRequest{
-			TenantInfo: req.TenantInfo,
-			IDs:        ids,
-		})
+	if len(req.IDs) == 0 {
+		ids = nil
 	}
 
 	return &recallOutcome{
@@ -195,6 +202,29 @@ func (t *recallMemoryTool) Query(
 		tainted:       tainted,
 		recalled:      ids,
 	}, nil
+}
+
+const fieldRecordID = "recordId"
+
+func readMemoryRecord(raw string) (*agentpagecontext.EntityRef, error) {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return nil, nil //nolint:nilnil // no record narrows nothing
+	}
+	id, err := pulid.Parse(raw)
+	if err != nil {
+		return nil, fmt.Errorf("recordId %q is not a record id", raw)
+	}
+	kind, ok := agentmemory.MemoryRecordKindOfID(id)
+	if !ok {
+		return nil, fmt.Errorf(
+			"recordId %q is not a shipment, move, invoice, billing queue item, inbound message, "+
+				"document, customer, location, driver or carrier",
+			raw,
+		)
+	}
+
+	return &agentpagecontext.EntityRef{Type: string(kind), ID: id.String()}, nil
 }
 
 type memorySubject struct {

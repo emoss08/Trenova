@@ -13,8 +13,6 @@ must still show, as it was recorded.
 describe("reflectionSignalLabel", () => {
   it("names every kind the server records", () => {
     const kinds = [
-      "ToolRecovered",
-      "ToolFailed",
       "PersonCorrected",
       "StandingRequest",
       "ProposalModified",
@@ -25,8 +23,6 @@ describe("reflectionSignalLabel", () => {
     const labels = kinds.map((kind) => reflectionSignalLabel(kind, t));
 
     expect(labels).toEqual([
-      "A tool worked after failing",
-      "A tool failed",
       "A person corrected it",
       "A person said how they want it done",
       "A proposal was changed",
@@ -38,5 +34,10 @@ describe("reflectionSignalLabel", () => {
 
   it("shows a kind it does not know as it was recorded", () => {
     expect(reflectionSignalLabel("SomethingNew", t)).toBe("SomethingNew");
+  });
+
+  it("no longer names tool failures, which the server stopped recording", () => {
+    expect(reflectionSignalLabel("ToolRecovered", t)).toBe("ToolRecovered");
+    expect(reflectionSignalLabel("ToolFailed", t)).toBe("ToolFailed");
   });
 });

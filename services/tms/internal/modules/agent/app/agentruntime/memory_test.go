@@ -147,9 +147,11 @@ func TestOpenTurn_CarriesWhatFitsTheBudgetAndCountsOnlyThat(t *testing.T) {
 		Context:    agentturn.RuntimeContext{Memories: pool},
 	})
 
-	assert.Equal(t, []pulid.ID{pool[0].ID, pool[1].ID, pool[2].ID}, memories.used,
-		"three memories of about 280 tokens fill a 1000-token budget")
-	assert.Equal(t, 3, strings.Count(turn.State().System, "- [Fact] zzz"))
+	assert.Equal(t, []pulid.ID{pool[0].ID, pool[1].ID, pool[2].ID},
+		turn.State().Result.UsedMemoryIDs,
+		"three memories of about 290 tokens fill a 1000-token budget")
+	assert.Empty(t, memories.used, "use is counted when the turn is saved, not when it opens")
+	assert.Equal(t, 3, strings.Count(turn.State().System, "] zzz"))
 	assert.False(t, turn.Taint().Tainted(),
 		"a tainted memory the prompt had no room for is never read, so it taints nothing")
 }
@@ -222,7 +224,7 @@ func TestOpenTurn_CountsOnlyTheMemoriesThatBearOnTheTurn(t *testing.T) {
 		},
 	})
 
-	assert.Equal(t, []pulid.ID{bearing.ID}, memories.used)
+	assert.Empty(t, memories.used)
 	assert.Equal(t, []pulid.ID{bearing.ID}, turn.State().Result.UsedMemoryIDs)
 	system := turn.State().System
 	assert.Contains(t, system, rule.Content, "a standing rule is followed whether or not it bears")
@@ -256,4 +258,47 @@ func TestNoteToolMemories_AToolsMemoriesAreUsedOnceItIsCalled(t *testing.T) {
 
 	turnmemory.NoteTool(turn, fx, "dispatch_assign_move")
 	assert.Len(t, fx.events, 1, "a second call announces nothing new")
+}
+
+func TestNoteToolMemories_ADelegateKeepsWhatItUsedWithoutAnnouncingIt(t *testing.T) {
+	t.Parallel()
+
+	rt := newRuntime(&scriptedCompletion{}, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
+	fix := pulid.MustNew("amem_")
+	turn := rt.RestoreTurn(
+		&agentruntimeports.RunRequest{
+			Definition: runtimetest.Definition(),
+			Delegation: &agentruntimeports.Delegation{},
+		},
+		&TurnState{ToolMemories: map[string][]pulid.ID{"dispatch_assign_move": {fix}}},
+	)
+	fx := &memoryEvents{}
+
+	turnmemory.NoteTool(turn, fx, "dispatch_assign_move")
+
+	assert.Empty(t, fx.events, "the person's card shows what the conversation's own agent used")
+	assert.Equal(t, []pulid.ID{fix}, turn.State().Result.UsedMemoryIDs)
+}
+
+// Use is counted once per turn, when it is saved, from what the turn ended up
+// using: the memories that bore on it, those about tools it called, those it
+// read whole by id, and those its delegates used.
+func TestRecordMemoryUse_CountsTheTurnAndItsDelegatesOnce(t *testing.T) {
+	t.Parallel()
+
+	memories := &fakeMemories{}
+	rt := newRuntime(&scriptedCompletion{}, &stubQueryRegistry{}, &stubActionRegistry{}, nil)
+	rt.memories = memories
+	own, shared, delegated := pulid.MustNew("amem_"), pulid.MustNew("amem_"), pulid.MustNew("amem_")
+
+	rt.RecordMemoryUse(t.Context(), runtimetest.Actor().TenantInfo(), &agentruntimeports.RunResult{
+		UsedMemoryIDs: []pulid.ID{own, shared},
+		Delegations: []agentruntimeports.DelegatedRun{
+			{UsedMemoryIDs: []pulid.ID{shared, delegated}},
+		},
+	})
+	rt.RecordMemoryUse(t.Context(), runtimetest.Actor().TenantInfo(), &agentruntimeports.RunResult{})
+	rt.RecordMemoryUse(t.Context(), runtimetest.Actor().TenantInfo(), nil)
+
+	assert.Equal(t, []pulid.ID{own, shared, delegated}, memories.used)
 }

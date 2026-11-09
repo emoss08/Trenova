@@ -56,6 +56,7 @@ var memoriesTable = schema.Table{
 		{Name: "last_used_at", Quoted: `"last_used_at"`, Field: "LastUsedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Last Used At`, JSON: `lastUsedAt`},
 		{Name: "evidence", Quoted: `"evidence"`, Field: "Evidence", Kind: schema.KindJSON, Flags: schema.FlagNullable | schema.FlagJSONB, Label: `Evidence`, JSON: `evidence`},
 		{Name: "search_vector", Quoted: `"search_vector"`, Field: "SearchVector", Kind: schema.KindTSVector, Flags: schema.FlagReadOnly | schema.FlagNoSelect, Label: `Search Vector`},
+		{Name: "content_key", Quoted: `"content_key"`, Field: "ContentKey", Kind: schema.KindString, Flags: schema.FlagReadOnly | schema.FlagNoSelect, Label: `Content Key`},
 		{Name: "source_title", Quoted: `"source_title"`, Field: "SourceTitle", Kind: schema.KindString, Flags: schema.FlagNullZero | schema.FlagComputed, Label: `Source Title`},
 		{Name: "role_name", Quoted: `"role_name"`, Field: "RoleName", Kind: schema.KindString, Flags: schema.FlagNullZero | schema.FlagComputed, Label: `Role Name`},
 		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, JSON: `version`},
@@ -64,14 +65,14 @@ var memoriesTable = schema.Table{
 	},
 	PK:           []int32{0, 1, 2},
 	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 34, 35, 36},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 34, 35, 36},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 36},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 35, 36, 37},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 35, 36, 37},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 37},
 	Returning:    nil,
-	Version:      34,
+	Version:      35,
 	AutoID:       0,
-	AutoCreate:   35,
-	AutoUpdate:   36,
+	AutoCreate:   36,
+	AutoUpdate:   37,
 	IDPrefix:     "amem_",
 	New:          newMemory,
 	NewN:         newNMemory,
@@ -118,6 +119,7 @@ type MemoriesTable struct {
 	LastUsedAt        keel.Int64Col
 	Evidence          keel.JSONBCol
 	SearchVector      keel.TSVectorCol
+	ContentKey        keel.StringCol
 	SourceTitle       keel.StringCol
 	RoleName          keel.StringCol
 	Version           keel.Int64Col
@@ -160,11 +162,12 @@ var Memories = &MemoriesTable{
 	LastUsedAt:        keel.Int64Col{Col: keel.Col{Ref: &memoriesRef, Index: 29}},
 	Evidence:          keel.JSONBCol{Col: keel.Col{Ref: &memoriesRef, Index: 30}},
 	SearchVector:      keel.TSVectorCol{Col: keel.Col{Ref: &memoriesRef, Index: 31}},
-	SourceTitle:       keel.StringCol{Col: keel.Col{Ref: &memoriesRef, Index: 32}},
-	RoleName:          keel.StringCol{Col: keel.Col{Ref: &memoriesRef, Index: 33}},
-	Version:           keel.Int64Col{Col: keel.Col{Ref: &memoriesRef, Index: 34}},
-	CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: &memoriesRef, Index: 35}},
-	UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: &memoriesRef, Index: 36}},
+	ContentKey:        keel.StringCol{Col: keel.Col{Ref: &memoriesRef, Index: 32}},
+	SourceTitle:       keel.StringCol{Col: keel.Col{Ref: &memoriesRef, Index: 33}},
+	RoleName:          keel.StringCol{Col: keel.Col{Ref: &memoriesRef, Index: 34}},
+	Version:           keel.Int64Col{Col: keel.Col{Ref: &memoriesRef, Index: 35}},
+	CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: &memoriesRef, Index: 36}},
+	UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: &memoriesRef, Index: 37}},
 }
 
 // BuildMemories builds the table of agent_memories for ref. Generated relation and alias methods call it.
@@ -203,11 +206,12 @@ func BuildMemories(r *keel.Ref) *MemoriesTable {
 		LastUsedAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 29}},
 		Evidence:          keel.JSONBCol{Col: keel.Col{Ref: r, Index: 30}},
 		SearchVector:      keel.TSVectorCol{Col: keel.Col{Ref: r, Index: 31}},
-		SourceTitle:       keel.StringCol{Col: keel.Col{Ref: r, Index: 32}},
-		RoleName:          keel.StringCol{Col: keel.Col{Ref: r, Index: 33}},
-		Version:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 34}},
-		CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 35}},
-		UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 36}},
+		ContentKey:        keel.StringCol{Col: keel.Col{Ref: r, Index: 32}},
+		SourceTitle:       keel.StringCol{Col: keel.Col{Ref: r, Index: 33}},
+		RoleName:          keel.StringCol{Col: keel.Col{Ref: r, Index: 34}},
+		Version:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 35}},
+		CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 36}},
+		UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 37}},
 	}
 }
 
@@ -663,14 +667,16 @@ func ptrMemory(p unsafe.Pointer, c int32) any {
 	case 31:
 		return &r.SearchVector
 	case 32:
-		return &r.SourceTitle
+		return &r.ContentKey
 	case 33:
-		return &r.RoleName
+		return &r.SourceTitle
 	case 34:
-		return &r.Version
+		return &r.RoleName
 	case 35:
-		return &r.CreatedAt
+		return &r.Version
 	case 36:
+		return &r.CreatedAt
+	case 37:
 		return &r.UpdatedAt
 	}
 	return nil
@@ -807,20 +813,22 @@ func valueMemory(p unsafe.Pointer, c int32) any {
 	case 31:
 		return r.SearchVector
 	case 32:
+		return r.ContentKey
+	case 33:
 		if r.SourceTitle == "" {
 			return nil
 		}
 		return r.SourceTitle
-	case 33:
+	case 34:
 		if r.RoleName == "" {
 			return nil
 		}
 		return r.RoleName
-	case 34:
-		return r.Version
 	case 35:
-		return r.CreatedAt
+		return r.Version
 	case 36:
+		return r.CreatedAt
+	case 37:
 		return r.UpdatedAt
 	}
 	return nil

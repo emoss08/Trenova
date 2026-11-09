@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { MEMORY_CONTENT_LIMIT, PROCEDURE_CONTENT_LIMIT } from "@/lib/memory-content-limit";
 import {
-  MEMORY_CONTENT_LIMIT,
   memoryFormDefaults,
   memoryFormSchema,
   memoryValuesFromRow,
@@ -55,6 +55,23 @@ describe("memoryFormSchema", () => {
     });
     expect(over.success).toBe(false);
     expect(over.error?.issues[0]?.message).toBe("Keep it to 4000 characters");
+  });
+
+  it("lets a procedure run to 12000 characters, as the server does", () => {
+    expect(PROCEDURE_CONTENT_LIMIT).toBe(12000);
+    const procedure = { ...memoryFormDefaults, kind: "Procedure" as const };
+    expect(
+      memoryFormSchema.safeParse({ ...procedure, content: "x".repeat(PROCEDURE_CONTENT_LIMIT) })
+        .success,
+    ).toBe(true);
+
+    const over = memoryFormSchema.safeParse({
+      ...procedure,
+      content: "x".repeat(PROCEDURE_CONTENT_LIMIT + 1),
+    });
+    expect(over.success).toBe(false);
+    expect(over.error?.issues[0]?.message).toBe("Keep it to 12000 characters");
+    expect(over.error?.issues[0]?.path).toEqual(["content"]);
   });
 });
 

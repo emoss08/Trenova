@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -52,7 +53,34 @@ func (t *RememberTool) Preview(
 		return nil, err
 	}
 
-	plan, err := t.memories.PreviewRemember(ctx, request, params.Actor)
+	return previewRemember(ctx, t.memories, request, params)
+}
+
+func (t *EditMemoryTool) Preview(
+	ctx context.Context,
+	params *agenttoolports.ToolExecuteParams,
+) (*agentpreview.ToolPreview, error) {
+	request, err := t.request(ctx, params)
+	if err != nil {
+		if changepreview.IsRefusal(err) {
+			return changepreview.WarnWouldFail(toolpreview.Build(
+				"Would edit the memory in place.",
+			), err), nil
+		}
+
+		return nil, err
+	}
+
+	return previewRemember(ctx, t.memories, request, params)
+}
+
+func previewRemember(
+	ctx context.Context,
+	memories agentmemoryports.AgentMemoryService,
+	request *agentmemoryports.RememberRequest,
+	params *agenttoolports.ToolExecuteParams,
+) (*agentpreview.ToolPreview, error) {
+	plan, err := memories.PreviewRemember(ctx, request, params.Actor)
 	if err != nil {
 		if changepreview.IsRefusal(err) {
 			summary := previewAudience(request.Scope, agentmemory.MemoryStatusActive)

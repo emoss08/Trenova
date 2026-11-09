@@ -5,14 +5,7 @@ import type {
 } from "@trenova/graphql/generated/graphql";
 import { z } from "zod";
 import { translate } from "@trenova/shared/i18n/runtime";
-
-/**
- * The most characters one memory may hold. The single client copy of the
- * server's `agentmemory.MaxMemoryContentChars`; every field and counter reads it
- * from here. A prompt shows the first 1200 and names the memory's id so the
- * agent can read the rest.
- */
-export const MEMORY_CONTENT_LIMIT = 4000;
+import { memoryContentLimit } from "@/lib/memory-content-limit";
 
 export const memoryKindValues = [
   "Instruction",
@@ -42,10 +35,7 @@ export const memoryFormSchema = z
     content: z
       .string()
       .trim()
-      .min(1, { error: () => translate("Say what the agents should know") })
-      .max(MEMORY_CONTENT_LIMIT, {
-        error: () => translate("Keep it to {0} characters", MEMORY_CONTENT_LIMIT),
-      }),
+      .min(1, { error: () => translate("Say what the agents should know") }),
     subjectType: z.preprocess(
       (value) => (value === "" || value === undefined ? null : value),
       z.enum(memorySubjectTypeValues).nullable(),
@@ -61,6 +51,14 @@ export const memoryFormSchema = z
     version: z.number().int().nonnegative().default(0),
   })
   .superRefine((values, ctx) => {
+    const limit = memoryContentLimit(values.kind);
+    if (values.content.length > limit) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["content"],
+        message: translate("Keep it to {0} characters", limit),
+      });
+    }
     if (values.subjectType && !values.subjectId) {
       ctx.addIssue({
         code: "custom",

@@ -7,10 +7,6 @@ import type { TranslateFn } from "@trenova/shared/i18n/use-t";
  */
 export function reflectionSignalLabel(kind: string, t: TranslateFn): string {
   switch (kind) {
-    case "ToolRecovered":
-      return t("A tool worked after failing");
-    case "ToolFailed":
-      return t("A tool failed");
     case "PersonCorrected":
       return t("A person corrected it");
     case "StandingRequest":

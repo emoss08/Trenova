@@ -32,6 +32,28 @@ type fakeMemories struct {
 	roleIDs    []pulid.ID
 	offers     bool
 	refuse     error
+	edited     *agentmemoryports.EditAgentMemoryRequest
+}
+
+func (f *fakeMemories) PlanEdit(
+	_ context.Context,
+	req *agentmemoryports.EditAgentMemoryRequest,
+) (*agentmemoryports.RememberRequest, error) {
+	f.edited = req
+	if f.refuse != nil {
+		return nil, f.refuse
+	}
+
+	return &agentmemoryports.RememberRequest{
+		TenantInfo:   req.TenantInfo,
+		Kind:         agentmemory.MemoryKindInstruction,
+		Content:      "Quote Acme in Canadian dollars.",
+		Scope:        agentmemory.MemoryScopeUser,
+		OwnerUserID:  req.PersonUserID,
+		RunID:        req.RunID,
+		PersonUserID: req.PersonUserID,
+		Replaces:     req.ID,
+	}, nil
 }
 
 func (f *fakeMemories) SavingMode(
@@ -274,6 +296,28 @@ func TestRemember_KeepsItForThePersonUnlessToldWhoElse(t *testing.T) {
 	assert.Nil(t, memory.OwnerUserID)
 }
 
+// A replacement takes the readers of the memory it replaces, so "for me" says
+// nothing about who it reaches. Classified personal, an agent once rewrote an
+// organization memory without asking anyone; a replacement goes through the
+// tiers like any shared write.
+func TestRemember_AReplacementIsNeverClassifiedPersonal(t *testing.T) {
+	t.Parallel()
+
+	tool := NewRememberTool(&fakeMemories{})
+	for _, visibleTo := range []string{"", "me"} {
+		args := map[string]any{
+			"content":          "Quote Acme in Canadian dollars.",
+			"replacesMemoryId": pulid.MustNew("amem_").String(),
+		}
+		if visibleTo != "" {
+			args["visibleTo"] = visibleTo
+		}
+
+		assert.Equal(t, agent.EgressInternal,
+			policyOf(tool).Classified(agenttoolstest.MemoryParams(args)).Egress, visibleTo)
+	}
+}
+
 // Nobody in the conversation means nobody to keep it for: it is the
 // organization's, as it always was.
 func TestRemember_WithNobodyInTheConversationKeepsItForTheOrganization(t *testing.T) {
@@ -340,8 +384,90 @@ func TestMemoryTools_AreGatedOnUsingTheAssistant(t *testing.T) {
 	}
 }
 
-func policyOf(tool interface{ Policy() agenttoolports.ToolPolicy }) *agenttoolports.ToolPolicy {
+func policyOf(tool interface {
+	Policy() agenttoolports.ToolPolicy
+}) *agenttoolports.ToolPolicy {
 	policy := tool.Policy()
 
 	return &policy
+}
+
+func TestRemember_ReadsAnExpiryAsTheEndOfThatDayWhereTheOrganizationWorks(t *testing.T) {
+	t.Parallel()
+
+	memories := &fakeMemories{}
+	params := agenttoolstest.MemoryParams(map[string]any{
+		"content":   "Acme's dock is closed for repairs.",
+		"expiresOn": "2026-12-31",
+	})
+	params.Timezone = "America/Chicago"
+
+	require.NoError(t, NewRememberTool(memories).Execute(t.Context(), params))
+
+	require.NotNil(t, memories.remembered.ExpiresAt)
+	assert.Equal(t, int64(1798783200), *memories.remembered.ExpiresAt,
+		"midnight after the 31st in Chicago, not in UTC")
+}
+
+func TestEditMemory_ChangesPartOfAMemoryAsItsReplacement(t *testing.T) {
+	t.Parallel()
+
+	memories := &fakeMemories{}
+	tool := NewEditMemoryTool(memories)
+	memoryID := pulid.MustNew("amem_")
+	params := agenttoolstest.MemoryParams(map[string]any{
+		"memoryId": memoryID.String(),
+		"old":      " in dollars",
+		"new":      " in Canadian dollars",
+	})
+	require.NoError(t, tool.Execute(t.Context(), params))
+
+	require.NotNil(t, memories.edited)
+	assert.Equal(t, memoryID, memories.edited.ID)
+	assert.Equal(t, " in dollars", memories.edited.Old, "the words are matched exactly as sent")
+	assert.Equal(t, " in Canadian dollars", memories.edited.New)
+	assert.Equal(t, params.RunID, memories.edited.RunID)
+	require.NotNil(t, memories.remembered)
+	assert.Equal(t, memoryID, memories.remembered.Replaces)
+	assert.Equal(t, "agent_edit_memory", tool.Name())
+	assert.Equal(t, agent.TierActWithApproval, tool.Policy().DefaultTier)
+	assert.True(t, tool.Policy().CarriesTaint)
+	assert.True(t, tool.Policy().TaintHold.Applies(params),
+		"an edit after outside content always waits for a person")
+}
+
+func TestEditMemory_EmptyNewDeletesTheWords(t *testing.T) {
+	t.Parallel()
+
+	memories := &fakeMemories{}
+	params := agenttoolstest.MemoryParams(map[string]any{
+		"memoryId": pulid.MustNew("amem_").String(),
+		"old":      " Copy dispatch.",
+		"new":      "",
+	})
+
+	require.NoError(t, NewEditMemoryTool(memories).Execute(t.Context(), params))
+	assert.Empty(t, memories.edited.New)
+}
+
+func TestEditMemory_RefusesWhatTheServiceRefuses(t *testing.T) {
+	t.Parallel()
+
+	refusal := errortypes.NewValidationError("old", errortypes.ErrInvalid,
+		"Those words are not in the memory as it stands")
+	memories := &fakeMemories{refuse: refusal}
+	params := agenttoolstest.MemoryParams(map[string]any{
+		"memoryId": pulid.MustNew("amem_").String(),
+		"old":      "in euros",
+		"new":      "in dollars",
+	})
+
+	err := NewEditMemoryTool(memories).Execute(t.Context(), params)
+
+	require.ErrorIs(t, err, refusal)
+	assert.Nil(t, memories.remembered, "nothing is saved for an edit that cannot be placed")
+
+	_, err = NewEditMemoryTool(memories).(*EditMemoryTool).request(t.Context(),
+		agenttoolstest.MemoryParams(map[string]any{"memoryId": "nope", "old": "a", "new": "b"}))
+	require.Error(t, err)
 }

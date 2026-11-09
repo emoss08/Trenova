@@ -2,6 +2,7 @@ package agentmemoryports
 
 import (
 	"context"
+	"errors"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -75,7 +76,7 @@ type SearchAgentMemoriesRequest struct {
 	Terms    []string
 	IDs      []pulid.ID
 	Kind     agentmemory.MemoryKind
-	Subject  *MemorySubjectRef
+	Subjects []MemorySubjectRef
 	ToolName string
 	Limit    int
 }
@@ -101,6 +102,15 @@ type FindActiveAgentMemoryRequest struct {
 	RoleID            pulid.ID
 	Tainted           bool
 	IncludeSuggested  bool
+}
+
+var ErrMemoryAlreadyKept = errors.New("an active memory already says this for the same readers")
+
+type ListAgentMemoryNeighborsRequest struct {
+	Same  *FindActiveAgentMemoryRequest
+	Terms []string
+	IDs   []pulid.ID
+	Limit int
 }
 
 type SetAgentMemoryStatusQuery struct {
@@ -235,6 +245,10 @@ type AgentMemoryRepository interface {
 	) ([]*agentmemory.Memory, error)
 	Search(ctx context.Context, req *SearchAgentMemoriesRequest) ([]*agentmemory.Memory, error)
 	FindActive(ctx context.Context, req *FindActiveAgentMemoryRequest) (*agentmemory.Memory, error)
+	ListNeighbors(
+		ctx context.Context,
+		req *ListAgentMemoryNeighborsRequest,
+	) ([]*agentmemory.Memory, error)
 	CountActive(ctx context.Context, req CountActiveAgentMemoriesRequest) (int, error)
 	SetStatus(ctx context.Context, req *SetAgentMemoryStatusQuery) (*agentmemory.Memory, error)
 	// Review clears an Active or Paused memory's taint for the person who

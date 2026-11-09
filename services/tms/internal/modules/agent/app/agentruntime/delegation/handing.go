@@ -1,6 +1,8 @@
 package delegation
 
 import (
+	"slices"
+
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/argcheck"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolcall"
@@ -248,14 +250,15 @@ func settle(
 	}
 	if run.Definition != nil && run.Result != nil {
 		result.Delegations = append(result.Delegations, agentruntimeports.DelegatedRun{
-			Definition: run.Definition,
-			CallID:     call.ID,
-			Actions:    run.Result.Actions,
-			Model:      run.Result.Model,
-			Input:      h.Task,
-			Failed:     run.Failure != "" || run.Stopped,
-			Taint:      run.Result.Taint.Clone(),
-			Usage:      run.Result.Usage.Clone(),
+			Definition:    run.Definition,
+			CallID:        call.ID,
+			Actions:       run.Result.Actions,
+			Model:         run.Result.Model,
+			Input:         h.Task,
+			Failed:        run.Failure != "" || run.Stopped,
+			Taint:         run.Result.Taint.Clone(),
+			Usage:         run.Result.Usage.Clone(),
+			UsedMemoryIDs: slices.Clone(run.Result.UsedMemoryIDs),
 		})
 	}
 

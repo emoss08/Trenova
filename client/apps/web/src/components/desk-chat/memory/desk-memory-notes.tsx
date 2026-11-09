@@ -1,4 +1,5 @@
 import { replaceMemoryNote, type ThreadHistory } from "@/components/assistant/thread-history";
+import { MEMORY_CONTENT_LIMIT, PROCEDURE_CONTENT_LIMIT } from "@/lib/memory-content-limit";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import {
   confirmDeskMemory,
@@ -398,7 +399,7 @@ function MemorySteps({
           className="dk-mem-ed"
           rows={1}
           value={draft}
-          maxLength={4000}
+          maxLength={procedure ? PROCEDURE_CONTENT_LIMIT : MEMORY_CONTENT_LIMIT}
           aria-label={t("Memory")}
           onChange={(event) => onDraft(event.target.value)}
           onKeyDown={(event) => {
@@ -598,6 +599,7 @@ export function DeskMemorySaved({ card }: { card: MemoryCard }) {
   const [scope, setScope] = useState({ scope: card.scope, roleName: card.roleName ?? null });
   const [version, setVersion] = useState(card.version);
   const [savedAt, setSavedAt] = useState(card.createdAt);
+  const [memoryId, setMemoryId] = useState(card.id);
   const learned = card.source === "Reflection";
   const procedure = card.kind === "Procedure";
   const asking = state === "ask";
@@ -608,9 +610,10 @@ export function DeskMemorySaved({ card }: { card: MemoryCard }) {
     enabled: asking || editing,
   });
   // A memory for a team or the organization is kept at once only by someone
-  // who manages agent memory. An offer the agent made for others is already in
-  // front of an administrator, so the person's own choice here is a copy for
-  // themselves, and the teams they may keep for are theirs only when they manage.
+  // who manages agent memory. An offer the agent made for others stays in front
+  // of an administrator, so keeping it here saves a copy for the person alone,
+  // a memory of its own whose id the card follows from then on; the teams they
+  // may keep for are theirs only when they manage.
   const manages = settings.data?.managesShared ?? false;
   const teams = manages ? (settings.data?.roles ?? []) : [];
   // Until the settings are read, who the person may keep for is unknown, so
@@ -623,6 +626,7 @@ export function DeskMemorySaved({ card }: { card: MemoryCard }) {
     setDraft(memory.content);
     setVersion(memory.version);
     setSavedAt(memory.createdAt);
+    setMemoryId(memory.id);
     setAudience(audienceOf({ scope: memory.scope, roleId: memory.roleId ?? null }));
     setScope({ scope: memory.scope, roleName: memory.roleName ?? null });
     setEditing(false);
@@ -639,7 +643,7 @@ export function DeskMemorySaved({ card }: { card: MemoryCard }) {
             offeredToAdministrators ? { scope: "User", roleId: null } : audience,
             version,
           )
-        : reviseDeskMemory(card.id, { content, audience, version }),
+        : reviseDeskMemory(memoryId, { content, audience, version }),
     onSuccess: (memory) => {
       setJustKept(asking);
       setWhyOpen(false);
@@ -656,7 +660,7 @@ export function DeskMemorySaved({ card }: { card: MemoryCard }) {
     resourceName: "Memory",
   });
   const remove = useApiMutation({
-    mutationFn: (removed: boolean) => setDeskMemoryStatus(card.id, removed ? "Retired" : "Active"),
+    mutationFn: (removed: boolean) => setDeskMemoryStatus(memoryId, removed ? "Retired" : "Active"),
     onSuccess: (memory, removed) => {
       setJustKept(false);
       settle(memory, removed ? "removed" : "saved");

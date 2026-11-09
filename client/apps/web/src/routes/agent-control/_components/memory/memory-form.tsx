@@ -14,7 +14,8 @@ import { defineLabels } from "@trenova/shared/i18n/labels";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useController, useFormContext, useWatch } from "react-hook-form";
 import { aicFieldTrigger } from "../edit/field-trigger";
-import { MEMORY_CONTENT_LIMIT, type MemoryFormValues } from "./memory-form-schema";
+import { memoryContentLimit } from "@/lib/memory-content-limit";
+import type { MemoryFormValues } from "./memory-form-schema";
 import { MEMORY_KIND_LABELS, MEMORY_KINDS } from "./memory-kind";
 
 const SUBJECT_LABELS: Record<AgentMemorySubjectType, string> = defineLabels({
@@ -40,6 +41,7 @@ export function MemoryText() {
   const t = useT();
   const { control } = useFormContext<MemoryFormValues>();
   const content = useWatch({ control, name: "content" });
+  const limit = memoryContentLimit(useWatch({ control, name: "kind" }));
 
   return (
     <div className="flex flex-col gap-3">
@@ -50,8 +52,8 @@ export function MemoryText() {
         label={t("Memory")}
         placeholder={t("What should the agents know?")}
         autoFocus
-        maxLength={MEMORY_CONTENT_LIMIT}
-        description={`${content.length}/${MEMORY_CONTENT_LIMIT}`}
+        maxLength={limit}
+        description={`${content.length}/${limit}`}
       />
       <SegmentedField<MemoryFormValues, (typeof MEMORY_KINDS)[number]>
         control={control}

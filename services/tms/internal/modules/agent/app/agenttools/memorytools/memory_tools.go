@@ -79,8 +79,9 @@ func (t *RememberTool) ParamSchema() map[string]any {
 			"content": map[string]any{
 				toolschema.KeyType: toolschema.TypeString,
 				toolschema.KeyDescription: fmt.Sprintf("One or two plain sentences, at most %d "+
-					"characters, written so a reader with no other context understands them.",
-					agentmemory.MaxMemoryContentChars),
+					"characters (a Procedure's numbered steps up to %d), written so a reader with "+
+					"no other context understands them.",
+					agentmemory.MaxMemoryContentChars, agentmemory.MaxProcedureContentChars),
 			},
 			changepreview.FieldKind: agenttoolschema.Enum(
 				"Instruction for a rule a person gave; Procedure for the steps a person gave for a "+
@@ -156,12 +157,16 @@ func classifyRemember(
 	params *agenttoolports.ToolExecuteParams,
 ) agenttoolports.CallPolicy {
 	actor := params.Actor
-	if rememberAudience(params) != visibleToMe || actor == nil ||
+	if rememberAudience(params) != visibleToMe || replacesAMemory(params) || actor == nil ||
 		actor.PrincipalType != permissionports.PrincipalTypeUser || actor.UserID.IsNil() {
 		return agenttoolports.CallPolicy{Egress: agent.EgressInternal}
 	}
 
 	return agenttoolports.CallPolicy{Egress: agent.EgressPersonal}
+}
+
+func replacesAMemory(params *agenttoolports.ToolExecuteParams) bool {
+	return strings.TrimSpace(toolparams.OptionalString(params.Params, fieldReplacesMemoryID)) != ""
 }
 
 // rememberAudience is who the call keeps the memory for, defaulting to the
@@ -244,7 +249,10 @@ func (t *RememberTool) request(
 		return nil, err
 	}
 
-	expiresAt, err := memoryExpiry(toolparams.OptionalString(params.Params, "expiresOn"))
+	expiresAt, err := memoryExpiry(
+		toolparams.OptionalString(params.Params, "expiresOn"),
+		timeutils.LoadLocation(params.Timezone),
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -307,16 +315,157 @@ func (t *RememberTool) audience(
 			audience, strings.Join(memoryAudiences.Names(), ", "))
 	}
 
+	return askFirst(ctx, t.memories, params, request)
+}
+
+func askFirst(
+	ctx context.Context,
+	memories agentmemoryports.AgentMemoryService,
+	params *agenttoolports.ToolExecuteParams,
+	request *agentmemoryports.RememberRequest,
+) error {
+	person := request.PersonUserID
 	if person.IsNil() || params.ApprovedFromProposal() {
 		return nil
 	}
-	mode, err := t.memories.SavingMode(ctx, request.TenantInfo, person)
+	mode, err := memories.SavingMode(ctx, request.TenantInfo, person)
 	if err != nil {
 		return err
 	}
 	request.Suggest = mode == agentmemory.MemorySavingAskFirst
 
 	return nil
+}
+
+type EditMemoryTool struct {
+	memories agentmemoryports.AgentMemoryService
+}
+
+func NewEditMemoryTool(memories agentmemoryports.AgentMemoryService) agenttoolports.AgentTool {
+	return &EditMemoryTool{memories: memories}
+}
+
+func (t *EditMemoryTool) Name() string { return "agent_edit_memory" }
+
+func (t *EditMemoryTool) SearchTerms() []string {
+	return []string{"edit memory", "change memory", "correct memory", "update memory"}
+}
+
+func (t *EditMemoryTool) Description() string {
+	return "Change part of a kept memory in place, by its id (shown beside it in your " +
+		"instructions, or from agent_list_memories). old is the exact words to change, copied " +
+		"from the memory, and must appear in it exactly once; new is what they become, empty " +
+		"to delete them. The edited memory replaces the old one and keeps its readers; one " +
+		"shared beyond the person waits for someone allowed to change it, and you should say " +
+		"so. Use it when a person says part of a memory is wrong or out of date. To rewrite " +
+		"most of a memory, pass its id as replacesMemoryId to agent_create_memory instead."
+}
+
+func (t *EditMemoryTool) ParamSchema() map[string]any {
+	return map[string]any{
+		toolschema.KeyType: toolschema.TypeObject,
+		toolschema.KeyProperties: map[string]any{
+			fieldMemoryID: agenttoolschema.RecordIDText(
+				permission.ResourceAgentMemory,
+				"The memory to edit, by its id.",
+			),
+			fieldEditOld: map[string]any{
+				toolschema.KeyType: toolschema.TypeString,
+				toolschema.KeyDescription: "The exact words to change, copied from the memory as " +
+					"it stands, with enough around them to appear only once.",
+			},
+			fieldEditNew: map[string]any{
+				toolschema.KeyType:        toolschema.TypeString,
+				toolschema.KeyDescription: "What those words become. Empty deletes them.",
+			},
+		},
+		toolschema.KeyRequired:             []string{fieldMemoryID, fieldEditOld, fieldEditNew},
+		toolschema.KeyAdditionalProperties: false,
+	}
+}
+
+func (t *EditMemoryTool) Policy() agenttoolports.ToolPolicy {
+	return agenttoolports.ToolPolicy{
+		Name:          t.Name(),
+		Kind:          agenttooltrust.ToolKindAction,
+		Resource:      permission.ResourceAssistant,
+		Operation:     permission.OpCreate,
+		Scope:         agenttooltrust.ToolScopeTenant,
+		DefaultTier:   agent.TierActWithApproval,
+		MaxTier:       agent.TierAutoExecute,
+		Egress:        []agent.EgressClass{agent.EgressInternal},
+		Effect:        agenttooltrust.ToolEffectChange,
+		Reversible:    true,
+		ReadsExternal: agenttooltrust.ExternalReadNever,
+		CarriesTaint:  true,
+		TaintHold: &agenttoolports.TaintHold{
+			Description: "An edit made after the run read text from outside the organization " +
+				"waits for a person's approval, whatever kind of memory it changes.",
+			Applies: func(*agenttoolports.ToolExecuteParams) bool { return true },
+		},
+		Rationale: "Rewrites part of a memory later runs read, as a replacement that keeps the " +
+			"old one's readers and history; it keeps the taint of the run that wrote it.",
+	}
+}
+
+func (t *EditMemoryTool) Execute(
+	ctx context.Context,
+	params *agenttoolports.ToolExecuteParams,
+) error {
+	_, err := t.Record(ctx, params)
+
+	return err
+}
+
+func (t *EditMemoryTool) Record(
+	ctx context.Context,
+	params *agenttoolports.ToolExecuteParams,
+) (*agentmemory.Memory, error) {
+	request, err := t.request(ctx, params)
+	if err != nil {
+		return nil, err
+	}
+
+	return t.memories.Remember(ctx, request, params.Actor)
+}
+
+func (t *EditMemoryTool) request(
+	ctx context.Context,
+	params *agenttoolports.ToolExecuteParams,
+) (*agentmemoryports.RememberRequest, error) {
+	if err := toolguard.GuardExecute(t, params); err != nil {
+		return nil, err
+	}
+
+	memoryID, err := toolparams.RequirePulid(params.Params, fieldMemoryID)
+	if err != nil {
+		return nil, err
+	}
+	old, err := toolparams.RequireString(params.Params, fieldEditOld)
+	if err != nil {
+		return nil, err
+	}
+
+	request, err := t.memories.PlanEdit(ctx, &agentmemoryports.EditAgentMemoryRequest{
+		TenantInfo:        toolparams.TenantFrom(params),
+		ID:                memoryID,
+		Old:               old,
+		New:               toolparams.OptionalString(params.Params, fieldEditNew),
+		RunID:             params.RunID,
+		ProposalID:        params.ProposalID,
+		Taint:             params.CarriedTaint(timeutils.NowUnix()),
+		PersonUserID:      params.Actor.PersonUserID(),
+		AgentDefinitionID: params.DefinitionID,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if err = askFirst(ctx, t.memories, params, request); err != nil {
+		return nil, err
+	}
+
+	return request, nil
 }
 
 // forgetMemoryTool retires a memory that no longer holds. It is a status
@@ -347,12 +496,12 @@ func (t *ForgetMemoryTool) ParamSchema() map[string]any {
 	return map[string]any{
 		toolschema.KeyType: toolschema.TypeObject,
 		toolschema.KeyProperties: map[string]any{
-			"memoryId": agenttoolschema.RecordIDText(
+			fieldMemoryID: agenttoolschema.RecordIDText(
 				permission.ResourceAgentMemory,
 				"The memory to retire, by the id agent_list_memories returned.",
 			),
 		},
-		toolschema.KeyRequired:             []string{"memoryId"},
+		toolschema.KeyRequired:             []string{fieldMemoryID},
 		toolschema.KeyAdditionalProperties: false,
 	}
 }
@@ -397,7 +546,7 @@ func (t *ForgetMemoryTool) request(
 		return agentmemoryports.SetAgentMemoryStatusRequest{}, err
 	}
 
-	memoryID, err := toolparams.RequirePulid(params.Params, "memoryId")
+	memoryID, err := toolparams.RequirePulid(params.Params, fieldMemoryID)
 	if err != nil {
 		return agentmemoryports.SetAgentMemoryStatusRequest{}, err
 	}
@@ -432,6 +581,12 @@ const fieldVisibleTo = "visibleTo"
 
 const fieldReplacesMemoryID = "replacesMemoryId"
 
+const (
+	fieldMemoryID = "memoryId"
+	fieldEditOld  = "old"
+	fieldEditNew  = "new"
+)
+
 // memorySubject reads the optional subject pair. A type with no id names
 // nothing, so it is read as no subject: a model that fills every field sends
 // a type for a memory about no record, and refusing that kept it from ever
@@ -461,20 +616,21 @@ func memorySubject(params map[string]any) (agentmemory.MemorySubjectType, pulid.
 	return subjectType, subjectID, nil
 }
 
-// memoryExpiry reads a YYYY-MM-DD as the end of that day, so "expires on the
-// 30th" still applies on the 30th.
-func memoryExpiry(raw string) (*int64, error) {
+// memoryExpiry reads a YYYY-MM-DD as the end of that day in the
+// organization's zone, so "expires on the 30th" still applies all of the 30th
+// where the organization works.
+func memoryExpiry(raw string, zone *time.Location) (*int64, error) {
 	raw = strings.TrimSpace(raw)
 	if raw == "" {
 		return nil, nil //nolint:nilnil // a memory with no expiry date never expires
 	}
 
-	day, err := time.Parse("2006-01-02", raw)
+	day, err := time.ParseInLocation("2006-01-02", raw, zone)
 	if err != nil {
 		return nil, fmt.Errorf("expiresOn must be YYYY-MM-DD, got %q", raw)
 	}
 
-	end := day.Add(24 * time.Hour).Unix()
+	end := day.AddDate(0, 0, 1).Unix()
 
 	return &end, nil
 }

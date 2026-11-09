@@ -19,13 +19,15 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*Memory)(nil)
+	_ validationframework.Entity = (*Memory)(nil)
 )
 
 // MaxMemoryContentChars bounds one memory. A prompt shows at most
 // MemoryPromptExcerptChars of it and names its id, so the rest is read through
 // agent_list_memories rather than paid for by every run.
 const MaxMemoryContentChars = 4000
+
+const MaxProcedureContentChars = 12000
 
 const (
 	MemoryPromptExcerptChars = 1200
@@ -90,6 +92,14 @@ func (k MemoryKind) Rank() int {
 	}
 }
 
+func (k MemoryKind) MaxContentChars() int {
+	if k == MemoryKindProcedure {
+		return MaxProcedureContentChars
+	}
+
+	return MaxMemoryContentChars
+}
+
 func (k MemoryKind) Followed() bool {
 	return k == MemoryKindInstruction || k == MemoryKindProcedure
 }
@@ -119,16 +129,6 @@ func (s MemorySource) IsValid() bool {
 
 func (s MemorySource) OfferedByAgent() bool {
 	return s == MemorySourceAgent || s == MemorySourceReflection
-}
-
-func AllMemorySources() []MemorySource {
-	return []MemorySource{
-		MemorySourceUser,
-		MemorySourceAgent,
-		MemorySourceDecision,
-		MemorySourceFeedback,
-		MemorySourceReflection,
-	}
 }
 
 // MemoryScope is who a memory is read for. Organization and Agent are about
@@ -163,15 +163,6 @@ func (s MemoryScope) IsValid() bool {
 // than to some agents.
 func (s MemoryScope) Personal() bool {
 	return s == MemoryScopeUser || s == MemoryScopeRole
-}
-
-func AllMemoryScopes() []MemoryScope {
-	return []MemoryScope{
-		MemoryScopeOrganization,
-		MemoryScopeAgent,
-		MemoryScopeUser,
-		MemoryScopeRole,
-	}
 }
 
 // MemoryReader is the person a memory is read for: their own memories and
@@ -219,19 +210,6 @@ func (m MemorySavingMode) IsValid() bool {
 	return m == MemorySavingAutomatic || m == MemorySavingAskFirst
 }
 
-func AllMemorySavingModes() []MemorySavingMode {
-	return []MemorySavingMode{MemorySavingAutomatic, MemorySavingAskFirst}
-}
-
-func AllMemoryKinds() []MemoryKind {
-	return []MemoryKind{
-		MemoryKindInstruction,
-		MemoryKindFact,
-		MemoryKindCorrection,
-		MemoryKindProcedure,
-	}
-}
-
 type MemoryStatus string
 
 const (
@@ -259,16 +237,6 @@ func (s MemoryStatus) IsValid() bool {
 
 func (s MemoryStatus) IsSuggestion() bool {
 	return s == MemoryStatusSuggested || s == MemoryStatusDismissed
-}
-
-func AllMemoryStatuses() []MemoryStatus {
-	return []MemoryStatus{
-		MemoryStatusActive,
-		MemoryStatusPaused,
-		MemoryStatusRetired,
-		MemoryStatusSuggested,
-		MemoryStatusDismissed,
-	}
 }
 
 func ReplacingMemoryStatuses() []MemoryStatus {
@@ -412,6 +380,7 @@ type Memory struct {
 	Evidence *MemoryEvidence `json:"evidence" keel:"evidence,jsonb"`
 
 	SearchVector string `json:"-" keel:"search_vector,tsvector,readonly,noselect"`
+	ContentKey   string `json:"-" keel:"content_key,readonly,noselect"`
 
 	// Refreshed is set, never stored, on the memory a save returns when an
 	// active one already said the same thing for the same readers: that one
@@ -469,12 +438,12 @@ func (m *Memory) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&m.Content, validation.Required.Error("Content is required")),
 	))
 
-	if utf8.RuneCountInString(m.Content) > MaxMemoryContentChars {
+	if limit := m.Kind.MaxContentChars(); utf8.RuneCountInString(m.Content) > limit {
 		multiErr.Add(
 			"content",
 			errortypes.ErrInvalid,
 			"Content must be at most {0} characters",
-			MaxMemoryContentChars,
+			limit,
 		)
 	}
 

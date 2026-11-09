@@ -44,14 +44,6 @@ type MemoryFit struct {
 	HeldBack int
 }
 
-// FitMemories picks what the prompt carries.
-func FitMemories(
-	d *agentdefinition.Definition,
-	rc *agentturn.RuntimeContext,
-) []*agentmemory.Memory {
-	return PlanMemories(d, rc).Carried
-}
-
 // PlanMemories fits the memories that have not gone stale to the agent's
 // token budget and MaxPromptMemories, best first, and says which of them
 // bear on the turn. A memory in no tier of its own (a Fact or Procedure for
@@ -101,7 +93,7 @@ func PlanMemories(d *agentdefinition.Definition, rc *agentturn.RuntimeContext) M
 			headed[memoryGroupKey(memory)] = struct{}{}
 		}
 		fit.Carried = append(fit.Carried, memory)
-		fit.note(rc, entry)
+		fit.note(entry)
 	}
 	fit.HeldBack = heldBack(rc, len(ranked)-len(fit.Carried))
 
@@ -116,7 +108,7 @@ func heldBack(rc *agentturn.RuntimeContext, left int) int {
 	return max(left, 0) + rc.MemoriesHeldBack
 }
 
-func (f *MemoryFit) note(rc *agentturn.RuntimeContext, entry rankedMemory) {
+func (f *MemoryFit) note(entry rankedMemory) {
 	memory := entry.memory
 	if memory.ID.IsNil() {
 		return
@@ -124,8 +116,6 @@ func (f *MemoryFit) note(rc *agentturn.RuntimeContext, entry rankedMemory) {
 
 	switch {
 	case entry.relevant:
-		f.Used = append(f.Used, memory.ID)
-	case entry.tier == memoryTierLoadedTool && rc.ToolsDisclosed:
 		f.Used = append(f.Used, memory.ID)
 	case entry.tier == memoryTierLoadedTool:
 		if f.ByTool == nil {
@@ -279,16 +269,24 @@ func memoryHeading(memory *agentmemory.Memory) string {
 }
 
 func memoryLine(memory *agentmemory.Memory) string {
-	return "- [" + string(memory.Kind) + "] " + memoryPromptContent(memory)
+	return "- [" + string(memory.Kind) + memoryIDTag(memory) + "] " + memoryPromptContent(memory)
 }
 
 func outsideMemoryLine(memory *agentmemory.Memory) string {
-	line := "- (recorded as " + strings.ToLower(string(memory.Kind)) + ") "
+	line := "- (recorded as " + strings.ToLower(string(memory.Kind)) + memoryIDTag(memory) + ") "
 	if about := memory.About(); about != "" {
 		line += about + ": "
 	}
 
 	return line + memoryPromptContent(memory)
+}
+
+func memoryIDTag(memory *agentmemory.Memory) string {
+	if memory.ID.IsNil() {
+		return ""
+	}
+
+	return " · " + memory.ID.String()
 }
 
 func memoryPromptContent(memory *agentmemory.Memory) string {
@@ -298,8 +296,7 @@ func memoryPromptContent(memory *agentmemory.Memory) string {
 	}
 
 	return stringutils.Ellipsize(content, agentmemory.MemoryPromptExcerptChars) +
-		" (cut short: call agent_list_memories with id " + memory.ID.String() +
-		" to read all of it)"
+		" (cut short: call agent_list_memories with its id to read all of it)"
 }
 
 type memoryGroup struct {

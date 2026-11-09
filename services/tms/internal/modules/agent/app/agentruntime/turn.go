@@ -395,19 +395,11 @@ func (s *Service) OpenTurn(ctx context.Context, req *agentruntimeports.RunReques
 	history := turnhistory.ModelHistory(req.History)
 
 	kit := s.openTurnTools(ctx, req, &runtimeContext, history)
-	memoryFit := s.memoriesForPrompt(ctx, req, &runtimeContext)
+	memoryFit := s.memoriesForPrompt(req, &runtimeContext)
 	runtimeContext.Memories = memoryFit.Carried
 	runtimeContext.MemoriesHeldBack = memoryFit.HeldBack
-	// A task handed to another agent reads memories for that agent; the card
-	// under the reply says what the conversation's own agent used.
-	var (
-		usedMemories []pulid.ID
-		toolMemories map[string][]pulid.ID
-	)
-	if req.Delegation == nil {
-		usedMemories = memoryFit.Used
-		toolMemories = memoryFit.ByTool
-	}
+	usedMemories := memoryFit.Used
+	toolMemories := memoryFit.ByTool
 	repeats := loopguard.NewRepeatGuard()
 	counts := tooldispatch.NewOrdinals()
 	// A delegate's turn shares the ledger of the turn that delegated, and is

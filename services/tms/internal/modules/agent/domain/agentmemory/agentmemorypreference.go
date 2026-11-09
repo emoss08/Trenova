@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	_ validationframework.TenantedEntity = (*MemoryPreference)(nil)
+	_ validationframework.Entity = (*MemoryPreference)(nil)
 )
 
 // MemoryPreference is one person's choice about the memories agents pick up

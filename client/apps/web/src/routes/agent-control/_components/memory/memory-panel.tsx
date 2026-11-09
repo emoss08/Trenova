@@ -11,6 +11,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
+import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { formatUnixDateTimeMedium } from "@trenova/shared/lib/date";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { useState } from "react";
@@ -61,6 +62,8 @@ type MemoryEditorProps = {
 
 function MemoryEditor({ row, preset, onClose }: MemoryEditorProps) {
   const t = useT();
+  const userId = useAuthStore((state) => state.user?.id);
+  const someoneElses = row?.scope === "User" && row.ownerUserId !== userId;
   const queryClient = useQueryClient();
   const [retiring, setRetiring] = useState(false);
   const [reviewing, setReviewing] = useState(false);
@@ -132,23 +135,34 @@ function MemoryEditor({ row, preset, onClose }: MemoryEditorProps) {
     },
   };
 
-  const sections: EditSection[] = [
-    { id: "memory", label: t("Memory"), keys: ["content", "kind"], content: <MemoryText /> },
-    {
-      id: "about",
-      label: t("About"),
-      keys: ["subjectType", "subjectId", "toolName"],
-      note: t("Leave it on every agent for something every agent should know."),
-      content: <MemoryAbout />,
-    },
-    {
-      id: "until",
-      label: t("Until"),
-      keys: ["expiresAt"],
-      note: t("After this day agents stop reading it."),
-      content: <MemoryUntil />,
-    },
-  ];
+  const sections: EditSection[] = someoneElses
+    ? [
+        {
+          id: "memory",
+          label: t("Memory"),
+          note: t(
+            "Kept by one person for their own conversations. You can read, pause or retire it, but only they can change what it says.",
+          ),
+          content: <p className="text-sm whitespace-pre-wrap">{row?.content}</p>,
+        },
+      ]
+    : [
+        { id: "memory", label: t("Memory"), keys: ["content", "kind"], content: <MemoryText /> },
+        {
+          id: "about",
+          label: t("About"),
+          keys: ["subjectType", "subjectId", "toolName"],
+          note: t("Leave it on every agent for something every agent should know."),
+          content: <MemoryAbout />,
+        },
+        {
+          id: "until",
+          label: t("Until"),
+          keys: ["expiresAt"],
+          note: t("After this day agents stop reading it."),
+          content: <MemoryUntil />,
+        },
+      ];
   if (row?.taints) {
     sections.push({
       id: "review",

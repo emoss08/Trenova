@@ -52,11 +52,62 @@ type RememberRequest struct {
 	Evidence          *agentmemory.MemoryEvidence
 }
 
+type EditAgentMemoryRequest struct {
+	TenantInfo        pagination.TenantInfo
+	ID                pulid.ID
+	Old               string
+	New               string
+	RunID             pulid.ID
+	ProposalID        pulid.ID
+	Taint             *agent.RunTaint
+	PersonUserID      pulid.ID
+	AgentDefinitionID pulid.ID
+}
+
 type RememberPlan struct {
-	Memory   *agentmemory.Memory
-	Existing *agentmemory.Memory
-	Replaced *agentmemory.Memory
-	Held     bool
+	Memory       *agentmemory.Memory
+	Existing     *agentmemory.Memory
+	Replaced     *agentmemory.Memory
+	Held         bool
+	Contradicted bool
+}
+
+type MemoryVerdict string
+
+const (
+	MemoryVerdictSame        = MemoryVerdict("same")
+	MemoryVerdictContradicts = MemoryVerdict("contradicts")
+	MemoryVerdictUnrelated   = MemoryVerdict("unrelated")
+)
+
+func (v MemoryVerdict) IsValid() bool {
+	return v == MemoryVerdictSame || v == MemoryVerdictContradicts || v == MemoryVerdictUnrelated
+}
+
+type JudgeMemoryRequest struct {
+	TenantInfo  pagination.TenantInfo
+	Memory      *agentmemory.Memory
+	Candidates  []*agentmemory.Memory
+	Attribution aiusageports.AIUsageAttribution
+}
+
+type MemoryJudgement struct {
+	Verdicts map[pulid.ID]MemoryVerdict
+}
+
+func (j *MemoryJudgement) Verdict(id pulid.ID) MemoryVerdict {
+	if j == nil {
+		return MemoryVerdictUnrelated
+	}
+	if verdict, ok := j.Verdicts[id]; ok {
+		return verdict
+	}
+
+	return MemoryVerdictUnrelated
+}
+
+type MemoryJudge interface {
+	Judge(ctx context.Context, req *JudgeMemoryRequest) (*MemoryJudgement, error)
 }
 
 // UpdateAgentMemoryRequest rewrites what a memory says or is about. Its
@@ -100,6 +151,7 @@ type RecallAgentMemoriesRequest struct {
 	Kind         agentmemory.MemoryKind
 	SubjectType  agentmemory.MemorySubjectType
 	SubjectID    pulid.ID
+	Record       *agentpagecontext.EntityRef
 	ToolName     string
 	Limit        int
 	Attribution  aiusageports.AIUsageAttribution
@@ -345,6 +397,7 @@ type AgentMemoryService interface {
 		req *RememberRequest,
 		actor *permissionports.RequestActor,
 	) (*agentmemory.Memory, error)
+	PlanEdit(ctx context.Context, req *EditAgentMemoryRequest) (*RememberRequest, error)
 	PreviewRemember(
 		ctx context.Context,
 		req *RememberRequest,

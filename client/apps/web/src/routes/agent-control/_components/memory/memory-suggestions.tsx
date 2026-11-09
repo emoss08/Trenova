@@ -20,7 +20,7 @@ import { Ic } from "../kit/ic";
 import { ScrollBox } from "../kit/layout";
 import { Modal } from "../kit/modal";
 import { invalidateAIControlCounts } from "../overview/use-ai-control-stats";
-import { MEMORY_CONTENT_LIMIT } from "./memory-form-schema";
+import { memoryContentLimit } from "@/lib/memory-content-limit";
 import { Button } from "@trenova/shared/components/ui/button";
 
 export const agentMemorySuggestionsQueryKey = [AGENT_MEMORY_SUGGESTIONS_KEY] as const;
@@ -223,6 +223,7 @@ function ApproveEdited({ suggestion, busy, onClose, onApprove }: ApproveEditedPr
   const form = useForm<ApproveEditedValues>({ defaultValues: { content: suggestion.content } });
   const content = useWatch({ control: form.control, name: "content" });
   const trimmed = content.trim();
+  const limit = memoryContentLimit(suggestion.kind);
 
   return (
     <Modal
@@ -235,7 +236,7 @@ function ApproveEdited({ suggestion, busy, onClose, onApprove }: ApproveEditedPr
       footer={
         <>
           <span className="cmp-n mono">
-            {content.length}/{MEMORY_CONTENT_LIMIT}
+            {content.length}/{limit}
           </span>
           <span className="sp" />
           <Button type="button" variant="ghost" size="sm" onClick={onClose}>
@@ -259,7 +260,7 @@ function ApproveEdited({ suggestion, busy, onClose, onApprove }: ApproveEditedPr
         rules={{ required: true }}
         label={t("Memory")}
         autoFocus
-        maxLength={MEMORY_CONTENT_LIMIT}
+        maxLength={limit}
       />
     </Modal>
   );

@@ -246,10 +246,10 @@ func TestRecallMemory_ReadsOneMemoryByIDWithoutAMatchLabel(t *testing.T) {
 }
 
 // A recall answers for the person in the conversation: what is kept for them
-// and their roles is read with the organization's, and every memory it reads
-// back is counted as used and named to the runtime, which says so under the
-// reply.
-func TestRecallMemory_ReadsForThePersonAndNamesWhatItUsed(t *testing.T) {
+// and their roles is read with the organization's. A search is not a use: ten
+// rows back used to count as ten memories used and the Desk said so. Reading
+// one memory whole by its id is, and the runtime counts it with the turn.
+func TestRecallMemory_ASearchUsesNothingAndAReadByIDUsesThatMemory(t *testing.T) {
 	t.Parallel()
 
 	first, second := pulid.MustNew("amem_"), pulid.MustNew("amem_")
@@ -274,8 +274,43 @@ func TestRecallMemory_ReadsForThePersonAndNamesWhatItUsed(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, params.Actor.PersonUserID(), recall.captured.ReaderUserID)
-	used, ok := result.(agentmemoryports.MemoryRecall)
+	searched, ok := result.(agentmemoryports.MemoryRecall)
 	require.True(t, ok, "the runtime reads which memories a recall used")
-	assert.Equal(t, []pulid.ID{first, second}, used.RecalledMemoryIDs())
-	assert.Equal(t, []pulid.ID{first, second}, recall.used)
+	assert.Empty(t, searched.RecalledMemoryIDs())
+	assert.Empty(t, recall.used, "the tool counts nothing itself; the turn does")
+
+	recall.items = recall.items[:1]
+	byID, err := tool.Query(t.Context(), querytooltest.TestParams(map[string]any{"id": first.String()}))
+	require.NoError(t, err)
+	assert.Equal(t, []pulid.ID{first}, byID.(agentmemoryports.MemoryRecall).RecalledMemoryIDs())
+	assert.Empty(t, recall.used)
+}
+
+// An agent on a shipment asked for its memories by subjectType ShipmentMove and
+// was refused. recordId takes any record the prompt resolves, and the service
+// reads the memories about the records it names.
+func TestRecallMemory_ReadsTheMemoriesAboutTheRecordsARecordNames(t *testing.T) {
+	t.Parallel()
+
+	move := pulid.MustNew("sm_")
+	recall := &fakeRecall{}
+
+	result, err := NewRecallMemoryTool(recall).Query(
+		t.Context(),
+		querytooltest.TestParams(map[string]any{"recordId": move.String()}),
+	)
+
+	require.NoError(t, err)
+	require.NotNil(t, recall.captured.Record)
+	assert.Equal(t, string(agentmemory.MemoryRecordShipmentMove), recall.captured.Record.Type)
+	assert.Equal(t, move.String(), recall.captured.Record.ID)
+	assert.Contains(t, result.(*recallOutcome).SearchedFor, "record "+move.String())
+
+	for _, raw := range []string{"PRO-1001", pulid.MustNew("usr_").String()} {
+		_, err = NewRecallMemoryTool(recall).Query(
+			t.Context(),
+			querytooltest.TestParams(map[string]any{"recordId": raw}),
+		)
+		require.Error(t, err, raw)
+	}
 }

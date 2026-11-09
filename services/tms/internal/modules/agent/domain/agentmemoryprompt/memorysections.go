@@ -65,8 +65,10 @@ func MemorySection(memories []*agentmemory.Memory) string {
 			"A Procedure is the steps that worked for a task here; follow it when you do that " +
 			"task, unless the person asks otherwise or the situation is plainly different. " +
 			"A Fact is context to weigh, not an order, and may be out of date. " +
-			"A memory cut short names its id; call agent_list_memories with that id before " +
-			"relying on the part you cannot see. Memories left unused for months, " +
+			"Each memory names its id. One cut short is read whole with agent_list_memories " +
+			"and that id before relying on the part you cannot see. When a person says part of " +
+			"a memory is wrong or out of date, change it with agent_edit_memory and its id " +
+			"rather than saving a second memory beside it. Memories left unused for months, " +
 			"any that do not bear on this message, and any that did not fit here, are " +
 			"not shown; agent_list_memories still finds them, so call it when the task may " +
 			"depend on a preference, a rule or a past correction that is not listed.",
