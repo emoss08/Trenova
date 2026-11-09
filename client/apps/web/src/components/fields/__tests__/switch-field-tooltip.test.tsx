@@ -28,18 +28,18 @@ describe("SwitchField tooltip", () => {
   it("shows an info trigger named after the field when a tooltip is given", () => {
     render(<Harness tooltip="May be billed as an extra transaction per route." />);
     expect(
-      screen.getByRole("button", { name: "About Capture jurisdiction miles" }),
+      screen.getByRole("img", { name: "About Capture jurisdiction miles" }),
     ).toBeInTheDocument();
   });
 
   it("renders no info trigger without a tooltip", () => {
     render(<Harness />);
-    expect(screen.queryByRole("button", { name: /About/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("img", { name: /About/ })).not.toBeInTheDocument();
   });
 
   it("leaves the recommended badge in charge of the tooltip when both are set", () => {
     render(<Harness tooltip="Why it is recommended" recommended />);
     expect(screen.getByText("Recommended")).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /About/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("img", { name: /About/ })).not.toBeInTheDocument();
   });
 });

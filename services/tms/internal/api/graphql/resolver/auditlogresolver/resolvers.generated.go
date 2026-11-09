@@ -8,6 +8,8 @@ import (
 	auditexportservice "github.com/emoss08/trenova/internal/modules/workspace/app/auditexportservice"
 	auditintegrity "github.com/emoss08/trenova/internal/modules/workspace/app/auditintegrity"
 	auditlegalholdservice "github.com/emoss08/trenova/internal/modules/workspace/app/auditlegalholdservice"
+	auditoverview "github.com/emoss08/trenova/internal/modules/workspace/app/auditoverview"
+	auditreviewservice "github.com/emoss08/trenova/internal/modules/workspace/app/auditreviewservice"
 	auditports "github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 )
 
@@ -17,6 +19,8 @@ type Deps struct {
 	AuditLegalHoldService *auditlegalholdservice.Service
 	AuditExportService    *auditexportservice.Service
 	AuditAlertService     *auditalertservice.Service
+	AuditOverviewService  *auditoverview.Service
+	AuditReviewService    *auditreviewservice.Service
 	AuditIntegrity        *auditintegrity.Status
 }
 
@@ -29,6 +33,8 @@ type AuditEntryResolver struct{ *Deps }
 type AuditExportResolver struct{ *Deps }
 
 type AuditLegalHoldResolver struct{ *Deps }
+
+type AuditReviewResolver struct{ *Deps }
 
 type MutationResolver struct{ *Deps }
 

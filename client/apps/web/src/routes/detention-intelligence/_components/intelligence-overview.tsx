@@ -32,7 +32,7 @@ function UpdatedAgo({ at }: { at: number }) {
   const now = useNow("minute");
   return (
     <span className="text-muted-foreground text-xs">
-      {t("Updated {0}", formatRelativeTime(Math.round(at / 1000) - now))}
+      {t("Updated {0}", formatRelativeTime(Math.min(Math.round(at / 1000) - now, 0)))}
     </span>
   );
 }

@@ -15,7 +15,7 @@ import {
 } from "@trenova/shared/components/ui/sheet";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { formatMinor } from "@trenova/shared/lib/benefits";
+import { formatMinor } from "@trenova/shared/lib/money";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 import {
   CREDIT_STATUS_LABEL,

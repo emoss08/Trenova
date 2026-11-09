@@ -427,6 +427,12 @@ it. See [product-guide.md](product-guide.md).
   getters that call `translate()`. A caption computed at runtime from a key or an enum value
   (`humanizeKey`) goes through `translateLabel()`, which reads the catalog and leaves an
   unknown caption in English.
+- **The Go extractor reads only a literal passed straight to `i18n.Translate`, `i18n.T`,
+  `i18n.TranslateRich` or an `errortypes` constructor.** A helper that takes the message as a
+  parameter (`n.rich(msg, parts, args...)`) hides every message routed through it: they never
+  reach a catalog, `i18n-check` does not notice, and the sentence stays English in every
+  language. Call `i18n.TranslateRich(locale, "…", tags, args...)` at each site and pass its
+  pieces to the composer (`factoringoverviewservice/narrative.go`, `auditoverview/narrative.go`).
 - A message that arrives as data — a rules module `{ message, args }`, whose template the
   extractor took from the crate's `message!` — is shown with `translateMessage(message, t)`
   (`@trenova/shared/i18n/message`). An argument may itself be a message (a band label inside a
@@ -466,6 +472,9 @@ These are real, and only look like something else:
 - **A command stops at a path that doesn't exist.** The default shell is zsh: an unmatched glob
   aborts the whole line, and an unquoted variable isn't split into words (`${=VAR}` does that).
   Pass `grep -r --include='*.go'` rather than a glob of files.
+- **`oxfmt` refuses a file under a bracketed route folder** (`routes/factoring-company/[id]/page.tsx`)
+  with "Expected at least one target file": it reads `[id]` as a glob. Escape the brackets
+  (`'routes/factoring-company/\[id\]/page.tsx'`).
 - **`pkill -f <pattern>` kills your own shell**, because the pattern is in its command line. List
   the process, then stop it by PID.
 - **A skipped re-record.** `TestRecordEmbeddingFixture` reports `ok` and writes nothing without

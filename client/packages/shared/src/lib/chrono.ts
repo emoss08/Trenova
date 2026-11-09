@@ -107,44 +107,48 @@ customChrono.parsers.unshift(relativeHoursParser);
 const MMDD_HHMM_REGEX = /^(\d{2})(\d{2})\s+(\d{2})(\d{2})$/;
 const MMDD_ONLY_REGEX = /^(\d{2})(\d{2})$/;
 
-function parseCompactDate(text: string): Date | null {
+/** A calendar date only when it exists: 02/31 is refused rather than rolled into March. */
+function realDate(year: number, month: number, day: number, hour = 0, minute = 0): Date | null {
+  if (month < 1 || month > 12 || hour > 23 || minute > 59) return null;
+  const date = new Date(year, month - 1, day, hour, minute, 0, 0);
+  return date.getMonth() === month - 1 && date.getDate() === day ? date : null;
+}
+
+function parseCompactDate(text: string, refDate: Date): Date | null {
   const trimmed = text.trim();
 
   const mmddHhmm = MMDD_HHMM_REGEX.exec(trimmed);
   if (mmddHhmm) {
-    const month = parseInt(mmddHhmm[1], 10);
-    const day = parseInt(mmddHhmm[2], 10);
-    const hour = parseInt(mmddHhmm[3], 10);
-    const minute = parseInt(mmddHhmm[4], 10);
-
-    if (month < 1 || month > 12 || day < 1 || day > 31) return null;
-    if (hour > 23 || minute > 59) return null;
-
-    const now = new Date();
-    return new Date(now.getFullYear(), month - 1, day, hour, minute, 0, 0);
+    return realDate(
+      refDate.getFullYear(),
+      parseInt(mmddHhmm[1], 10),
+      parseInt(mmddHhmm[2], 10),
+      parseInt(mmddHhmm[3], 10),
+      parseInt(mmddHhmm[4], 10),
+    );
   }
 
   const mmdd = MMDD_ONLY_REGEX.exec(trimmed);
   if (mmdd) {
-    const month = parseInt(mmdd[1], 10);
-    const day = parseInt(mmdd[2], 10);
-
-    if (month < 1 || month > 12 || day < 1 || day > 31) return null;
-
-    const now = new Date();
-    return new Date(now.getFullYear(), month - 1, day, 0, 0, 0, 0);
+    return realDate(refDate.getFullYear(), parseInt(mmdd[1], 10), parseInt(mmdd[2], 10));
   }
 
   return null;
 }
 
-export function parseDate(text: string): Date | null {
+/**
+ * A date a person typed, read against `refDate` as "now". Pass the reader's wall clock
+ * (`userWallClockNow`) so "t" and "t+1" mean today and tomorrow where they are, not where the
+ * device thinks it is.
+ */
+export function parseDate(text: string, refDate: Date = new Date()): Date | null {
   if (!text || !text.trim()) return null;
 
-  const compactResult = parseCompactDate(text);
+  const compactResult = parseCompactDate(text, refDate);
   if (compactResult) return compactResult;
+  if (MMDD_HHMM_REGEX.test(text.trim()) || MMDD_ONLY_REGEX.test(text.trim())) return null;
 
-  const result = customChrono.parseDate(text);
+  const result = customChrono.parseDate(text, refDate);
   if (!result || isNaN(result.getTime())) return null;
   return result;
 }
@@ -152,12 +156,12 @@ export function parseDate(text: string): Date | null {
 // Free text a person typed into a date field ("next tue", "3/4"). These live with the
 // parser rather than in lib/date, which nearly every screen imports: chrono and its
 // locale tables are only read by the screens that take typed dates.
-export function generateDateOnly(date: string): Date | null {
+export function generateDateOnly(date: string, refDate?: Date): Date | null {
   if (!date || typeof date !== "string") {
     return null;
   }
 
-  const parsed = parseDate(date);
+  const parsed = parseDate(date, refDate);
   if (parsed && !isNaN(parsed.getTime())) {
     const normalized = new Date(parsed);
     normalized.setHours(0, 0, 0, 0);
@@ -166,11 +170,11 @@ export function generateDateOnly(date: string): Date | null {
   return null;
 }
 
-export function generateDateTime(date: string): Date | null {
+export function generateDateTime(date: string, refDate?: Date): Date | null {
   if (!date || typeof date !== "string") {
     return null;
   }
 
-  const parsed = parseDate(date);
+  const parsed = parseDate(date, refDate);
   return parsed && !isNaN(parsed.getTime()) ? parsed : null;
 }

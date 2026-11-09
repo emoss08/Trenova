@@ -35,6 +35,26 @@ fragment FactoringAgreementFields on FactoringAgreement {
     name
     color
   }
+  dueFromFactorAccount {
+    id
+    accountCode
+    name
+  }
+  feeExpenseAccount {
+    id
+    accountCode
+    name
+  }
+  liabilityAccount {
+    id
+    accountCode
+    name
+  }
+  cashAccount {
+    id
+    accountCode
+    name
+  }
 }
 
 query FactoringAgreements($factoringCompanyId: ID!) {
@@ -96,5 +116,10 @@ query FactoringCompanyRecord($id: ID!) {
     version
     createdAt
     updatedAt
+    state {
+      id
+      abbreviation
+      countryName
+    }
   }
 }

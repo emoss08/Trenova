@@ -46,6 +46,8 @@ type AuditEntry {
   critical: Boolean!
   entityRef: String
   user: User
+  "How many entries the caller can read that the same request wrote, this one included; 0 when the entry names no request."
+  requestEntryCount: Int!
 }
 
 type AuditEntryEdge {
@@ -222,9 +224,142 @@ input UpdateAuditAlertPolicyInput {
   windowMinutes: Int
 }
 
+enum AuditOverviewUnit {
+  Hour
+  Day
+}
+
+enum AuditOverviewTarget {
+  Review
+  View
+}
+
+"The overview's figures, each a count of entries the caller can read."
+type AuditOverviewFigures {
+  entries: Int!
+  "Entries written through the web app, the portal or Trenova support."
+  people: Int!
+  "Entries an agent wrote in a conversation, for the person in it."
+  agentsAsked: Int!
+  "Entries an agent wrote on its own."
+  agentsOwn: Int!
+  "Entries written with an API key or by a SCIM directory."
+  integrations: Int!
+  "Entries written by background jobs, the command line or the system."
+  jobs: Int!
+  "Security entries, critical ones, deletes and exports."
+  sensitive: Int!
+  security: Int!
+  deletesExports: Int!
+  "People's entries written between 8 PM and 6 AM in the organization's time zone."
+  peopleOffHours: Int!
+}
+
+type AuditActivityBucket {
+  "The hour or day the bucket starts, in the organization's time zone."
+  at: Timestamp!
+  people: Int!
+  agents: Int!
+  integrations: Int!
+  jobs: Int!
+}
+
+"How many distinct people, agents, keys and system principals wrote entries."
+type AuditActorCounts {
+  people: Int!
+  agents: Int!
+  integrations: Int!
+  jobs: Int!
+}
+
+type AuditActorStat {
+  principalId: ID!
+  principalType: String!
+  "The name they last wrote an entry under in the window."
+  name: String!
+  entries: Int!
+  sensitive: Int!
+  user: User
+}
+
+"One run of the overview's sentence: plain, strong, or a reference that opens what it names."
+type AuditOverviewSegment {
+  text: String!
+  strong: Boolean!
+  tone: String
+  target: AuditOverviewTarget
+  "A review's ID, or a quick view: agents, security or deletes."
+  targetId: String
+}
+
+"What happened in the organization's audit log over whole days of its time zone, read from rollups refreshed every minute."
+type AuditOverview {
+  days: Int!
+  from: Timestamp!
+  to: Timestamp!
+  timezone: String!
+  unit: AuditOverviewUnit!
+  totals: AuditOverviewFigures!
+  "Entries in the window of the same length before this one."
+  previousEntries: Int!
+  activity: [AuditActivityBucket!]!
+  actors: AuditActorCounts!
+  topActors: [AuditActorStat!]!
+  otherActors: Int!
+  otherEntries: Int!
+  "Whether the caller can read reviews; without security_audit_log read the review fields are empty."
+  reviewsIncluded: Boolean!
+  openReviews: [AuditReview!]!
+  openReviewCount: Int!
+  summary: [AuditOverviewSegment!]!
+}
+
+"One hit of an audit alert rule, kept until a security reviewer marks it reviewed."
+type AuditReview {
+  id: ID!
+  kind: AuditAlertKind!
+  "The entry that set the alert off: for a counted alert, the one that reached the threshold."
+  entryId: ID!
+  action: String!
+  resource: String!
+  resourceId: String
+  entityRef: String
+  principalId: ID!
+  principalType: String!
+  actorName: String
+  count: Int!
+  threshold: Int!
+  windowMinutes: Int!
+  occurredAt: Timestamp!
+  "Whether it happened between 8 PM and 6 AM in the organization's time zone."
+  offHours: Boolean!
+  title: String!
+  reviewedAt: Timestamp
+  reviewedBy: User
+  version: Int!
+}
+
+type AuditReviewList {
+  open: [AuditReview!]!
+  openCount: Int!
+  "Reviewed in the last seven days, latest first."
+  reviewed: [AuditReview!]!
+  reviewedCount: Int!
+}
+
 extend type Query {
+  "The audit log's overview for the last days whole days, today included: at most 90. Figures cover only the kinds of record the caller can read; security entries need security_audit_log read."
+  auditOverview(days: Int!): AuditOverview!
+  "Open audit reviews, latest first, and those reviewed in the last seven days."
+  auditReviews(limit: Int): AuditReviewList!
+  "The review an entry set off, if it set one off."
+  auditEntryReview(entryId: ID!): AuditReview
   "The organization's audit log, narrowed to the kinds of record the caller can read; security entries need security_audit_log read."
-  auditEntries(input: DataTableConnectionInput!): AuditEntryConnection!
+  auditEntries(
+    input: DataTableConnectionInput!
+    "List only the earliest entry of each request the caller can read; the rest are counted in requestEntryCount. Ignored when the input narrows the list by a search or a filter, since the earliest entry is judged against every readable entry."
+    onePerRequest: Boolean
+  ): AuditEntryConnection!
   "One record's history, for anyone who can read that kind of record organization-wide. field narrows it to the entries that changed that field."
   auditEntriesByResourceId(
     input: DataTableConnectionInput!
@@ -246,4 +381,6 @@ extend type Mutation {
   "A short-lived link to download one of the caller's exports; the download is itself audited."
   auditExportDownload(id: ID!): AuditExportDownload!
   updateAuditAlertPolicy(input: UpdateAuditAlertPolicyInput!): AuditAlertPolicy!
+  markAuditReviewReviewed(id: ID!): AuditReview!
+  reopenAuditReview(id: ID!): AuditReview!
 }

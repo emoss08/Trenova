@@ -6,7 +6,6 @@ import {
   employerSharePercent,
   enrollmentStatusLabel,
   enrollmentStatusTone,
-  formatMinor,
 } from "../benefits";
 
 describe("labels", () => {
@@ -29,20 +28,6 @@ describe("enrollmentStatusTone", () => {
     expect(enrollmentStatusTone("Ended")).toBe("danger");
     expect(enrollmentStatusTone("Pending")).toBe("warning");
     expect(enrollmentStatusTone("Waived")).toBe("neutral");
-  });
-});
-
-describe("formatMinor", () => {
-  // Integer arithmetic all the way to the formatter: dividing by 100 is the
-  // last thing that happens, not the first.
-  it("renders minor units as money", () => {
-    expect(formatMinor(12_000)).toBe("$120.00");
-    expect(formatMinor(0)).toBe("$0.00");
-    expect(formatMinor(9_048_000)).toBe("$90,480.00");
-  });
-
-  it("keeps the odd cent", () => {
-    expect(formatMinor(1_234_567)).toBe("$12,345.67");
   });
 });
 

@@ -2,12 +2,13 @@ import {
   DocumentTypeMultiSelectField,
   GLAccountAutocompleteField,
 } from "@/components/autocomplete-fields";
-import { DateField } from "@/components/fields/date-field/date-field";
-import { InputField } from "@/components/fields/input-field";
+import { AutoCompleteDateField, DateField } from "@/components/fields/date-field/date-field";
 import { MoneyField } from "@/components/fields/money-field";
 import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
 import { TextareaField } from "@/components/fields/textarea-field";
+import { TimeOfDayField } from "@/components/fields/time-of-day-field";
+import { FormCreateModal } from "@/components/form-create-modal";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import {
   FACTORING_ACCOUNTING_TREATMENT_DESCRIPTIONS,
@@ -44,6 +45,7 @@ import {
   useFieldArray,
   useForm,
   useWatch,
+  useFormContext,
   type Control,
   type Resolver,
 } from "react-hook-form";
@@ -62,37 +64,113 @@ import {
 
 const FORM_ID = "factoring-agreement-form";
 
+function useAgreementForm() {
+  return useForm<FactoringAgreementFormValues>({
+    resolver: zodResolver(factoringAgreementFormSchema) as Resolver<FactoringAgreementFormValues>,
+    defaultValues: emptyAgreementValues(0),
+  });
+}
+
 /**
- * Drafts a new agreement with a factor, or changes one that has not ended.
- * The terms are entered the way a factoring contract states them — percent
- * of the invoice, days outstanding — and sent as basis points and day bands.
+ * Drafts a new agreement with a factor, or changes one that has not ended. A new one opens in the
+ * form-create dialog; a change opens in its own dialog over the same fields.
  */
 export function FactoringAgreementDialog({
+  factoringCompanyId,
+  agreement,
+  template = null,
+  open,
+  onOpenChange,
+}: {
+  factoringCompanyId: string;
+  agreement: FactoringAgreement | null;
+  /** For a new agreement: the one whose terms it starts from, dated from today. */
+  template?: FactoringAgreement | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  return agreement ? (
+    <FactoringAgreementEditDialog
+      factoringCompanyId={factoringCompanyId}
+      agreement={agreement}
+      open={open}
+      onOpenChange={onOpenChange}
+    />
+  ) : (
+    <FactoringAgreementCreateDialog
+      factoringCompanyId={factoringCompanyId}
+      template={template}
+      open={open}
+      onOpenChange={onOpenChange}
+    />
+  );
+}
+
+function FactoringAgreementCreateDialog({
+  factoringCompanyId,
+  template,
+  open,
+  onOpenChange,
+}: {
+  factoringCompanyId: string;
+  template: FactoringAgreement | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const t = useT();
+  const queryClient = useQueryClient();
+  const form = useAgreementForm();
+  const { reset } = form;
+
+  useEffect(() => {
+    if (!open) return;
+    const today = dateToUnixTimestamp(new Date());
+    reset(
+      template
+        ? { ...agreementToFormValues(template), effectiveFrom: today, effectiveTo: null }
+        : emptyAgreementValues(today),
+    );
+  }, [open, template, reset]);
+
+  return (
+    <FormCreateModal<FactoringAgreementFormValues, FactoringAgreementFormValues, FactoringAgreement>
+      open={open}
+      onOpenChange={onOpenChange}
+      title={template ? t("New version from these terms") : t("New agreement")}
+      description={t(
+        "The terms you agreed with this factor. A factor has one active agreement at a time, and each invoice uses the terms in force when it posted.",
+      )}
+      resourceName="factoring agreement"
+      size="xl"
+      form={form}
+      formComponent={<FactoringAgreementFields control={form.control} />}
+      mutationFn={(values) =>
+        createFactoringAgreement(agreementFormToInput(factoringCompanyId, values))
+      }
+      onCreated={() => invalidateFactoringQueries(queryClient)}
+      submitText={t("Save draft")}
+    />
+  );
+}
+
+function FactoringAgreementEditDialog({
   factoringCompanyId,
   agreement,
   open,
   onOpenChange,
 }: {
   factoringCompanyId: string;
-  agreement: FactoringAgreement | null;
+  agreement: FactoringAgreement;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
   const t = useT();
   const queryClient = useQueryClient();
-  const form = useForm<FactoringAgreementFormValues>({
-    resolver: zodResolver(factoringAgreementFormSchema) as Resolver<FactoringAgreementFormValues>,
-    defaultValues: emptyAgreementValues(0),
-  });
+  const form = useAgreementForm();
   const { reset } = form;
 
   useEffect(() => {
-    if (!open) return;
-    reset(
-      agreement
-        ? agreementToFormValues(agreement)
-        : emptyAgreementValues(dateToUnixTimestamp(new Date())),
-    );
+    if (open) reset(agreementToFormValues(agreement));
   }, [open, agreement, reset]);
 
   const mutation = useApiMutation<
@@ -103,22 +181,56 @@ export function FactoringAgreementDialog({
   >({
     form,
     resourceName: "factoring agreement",
-    mutationFn: (values) => {
-      const input = agreementFormToInput(factoringCompanyId, values);
-      return agreement
-        ? updateFactoringAgreement({
-            id: agreement.id,
-            version: agreement.version,
-            agreement: input,
-          })
-        : createFactoringAgreement(input);
-    },
+    mutationFn: (values) =>
+      updateFactoringAgreement({
+        id: agreement.id,
+        version: agreement.version,
+        agreement: agreementFormToInput(factoringCompanyId, values),
+      }),
     onSuccess: () => {
       invalidateFactoringQueries(queryClient);
       onOpenChange(false);
     },
   });
 
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent size="xl" className="max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{t("Edit agreement")}</DialogTitle>
+          <DialogDescription>
+            {t(
+              "The terms you agreed with this factor. A factor has one active agreement at a time, and each invoice uses the terms in force when it posted.",
+            )}
+          </DialogDescription>
+        </DialogHeader>
+        <FormProvider {...form}>
+          <Form
+            id={FORM_ID}
+            onSubmit={form.handleSubmit((values) => mutation.mutateAsync(values))}
+            className="flex flex-col gap-6"
+          >
+            <FactoringAgreementFields control={form.control} />
+          </Form>
+        </FormProvider>
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            {t("Cancel")}
+          </Button>
+          <Button type="submit" form={FORM_ID} isLoading={mutation.isPending}>
+            {t("Save changes")}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/** The agreement's terms, entered the way a factoring contract states them. */
+function FactoringAgreementFields() {
+  const t = useT();
+  const { control } = useFormContext<FactoringAgreementFormValues>();
+  const treatment = useWatch({ control, name: "accountingTreatment" });
   const recourseOptions = FACTORING_RECOURSE_VALUES.map((value) => ({
     value,
     label: FACTORING_RECOURSE_LABELS[value],
@@ -129,247 +241,222 @@ export function FactoringAgreementDialog({
     label: FACTORING_ACCOUNTING_TREATMENT_LABELS[value],
     description: FACTORING_ACCOUNTING_TREATMENT_DESCRIPTIONS[value],
   }));
-  const { control } = form;
-  const treatment = useWatch({ control, name: "accountingTreatment" });
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent size="xl" className="max-h-[85vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{agreement ? t("Edit agreement") : t("New agreement")}</DialogTitle>
-          <DialogDescription>
-            {t(
-              "The terms you agreed with this factor. A factor has one active agreement at a time, and each invoice uses the terms in force when it posted.",
-            )}
-          </DialogDescription>
-        </DialogHeader>
-        <div>
-          <FormProvider {...form}>
-            <Form
-              id={FORM_ID}
-              onSubmit={form.handleSubmit((values) => mutation.mutate(values))}
-              className="flex flex-col gap-6"
-            >
-              <FormSection title={t("Term")}>
-                <FormGroup cols={2}>
-                  <FormControl>
-                    <DateField
-                      control={control}
-                      name="effectiveFrom"
-                      label={t("Starts")}
-                      rules={{ required: true }}
-                    />
-                  </FormControl>
-                  <FormControl>
-                    <DateField
-                      control={control}
-                      name="effectiveTo"
-                      label={t("Ends")}
-                      placeholder={t("Open-ended")}
-                      description={t(
-                        "Leave blank while the contract runs until either side ends it.",
-                      )}
-                      clearable
-                    />
-                  </FormControl>
-                </FormGroup>
-              </FormSection>
+    <>
+      <FormSection title={t("Term")}>
+        <FormGroup cols={2}>
+          <FormControl>
+            <AutoCompleteDateField
+              control={control}
+              name="effectiveFrom"
+              label={t("Starts")}
+              description={t("The first day invoices are funded on these terms.")}
+              rules={{ required: true }}
+            />
+          </FormControl>
+          <FormControl>
+            <AutoCompleteDateField
+              control={control}
+              name="effectiveTo"
+              label={t("Ends")}
+              placeholder={t("Open-ended")}
+              description={t("Leave blank while the contract runs until either side ends it.")}
+              clearable
+            />
+          </FormControl>
+        </FormGroup>
+      </FormSection>
 
-              <FormSection title={t("Advance and reserve")}>
-                <FormGroup cols={2}>
-                  <FormControl>
-                    <NumberField
-                      control={control}
-                      name="advanceRatePercent"
-                      label={t("Advance rate")}
-                      description={t("Share of the invoice paid when the factor funds it.")}
-                      suffix="%"
-                      decimalScale={2}
-                      min={0}
-                      max={100}
-                      rules={{ required: true }}
-                    />
-                  </FormControl>
-                  <FormControl>
-                    <NumberField
-                      control={control}
-                      name="reserveRatePercent"
-                      label={t("Reserve rate")}
-                      description={t("Share held back until the customer pays the factor.")}
-                      suffix="%"
-                      decimalScale={2}
-                      min={0}
-                      max={100}
-                      rules={{ required: true }}
-                    />
-                  </FormControl>
-                  <FormControl>
-                    <MoneyField
-                      control={control}
-                      name="minimumFeeMinor"
-                      label={t("Minimum fee")}
-                      description={t("The least the factor charges on one invoice.")}
-                    />
-                  </FormControl>
-                  <FormControl>
-                    <NumberField
-                      control={control}
-                      name="chargebackWindowDays"
-                      label={t("Chargeback window")}
-                      description={t(
-                        "Days after the due date before a recourse factor can charge an unpaid invoice back.",
-                      )}
-                      sideText={t("days")}
-                      decimalScale={0}
-                      min={0}
-                      max={MAX_CHARGEBACK_WINDOW_DAYS}
-                      rules={{ required: true }}
-                    />
-                  </FormControl>
-                  <FormControl>
-                    <SelectField
-                      control={control}
-                      name="recourse"
-                      label={t("Recourse")}
-                      options={recourseOptions}
-                      rules={{ required: true }}
-                    />
-                  </FormControl>
-                  <FormControl>
-                    <SelectField
-                      control={control}
-                      name="accountingTreatment"
-                      label={t("Accounting treatment")}
-                      options={treatmentOptions}
-                      rules={{ required: true }}
-                    />
-                  </FormControl>
-                </FormGroup>
-              </FormSection>
+      <FormSection title={t("Advance and reserve")}>
+        <FormGroup cols={2}>
+          <FormControl>
+            <NumberField
+              control={control}
+              name="advanceRatePercent"
+              label={t("Advance rate")}
+              description={t("Share of the invoice paid when the factor funds it.")}
+              suffix="%"
+              decimalScale={2}
+              min={0}
+              max={100}
+              rules={{ required: true }}
+            />
+          </FormControl>
+          <FormControl>
+            <NumberField
+              control={control}
+              name="reserveRatePercent"
+              label={t("Reserve rate")}
+              description={t("Share held back until the customer pays the factor.")}
+              suffix="%"
+              decimalScale={2}
+              min={0}
+              max={100}
+              rules={{ required: true }}
+            />
+          </FormControl>
+          <FormControl>
+            <MoneyField
+              control={control}
+              name="minimumFeeMinor"
+              label={t("Minimum fee")}
+              description={t("The least the factor charges on one invoice.")}
+            />
+          </FormControl>
+          <FormControl>
+            <NumberField
+              control={control}
+              name="chargebackWindowDays"
+              label={t("Chargeback window")}
+              description={t(
+                "Days after the due date before a recourse factor can charge an unpaid invoice back.",
+              )}
+              sideText={t("days")}
+              decimalScale={0}
+              min={0}
+              max={MAX_CHARGEBACK_WINDOW_DAYS}
+              rules={{ required: true }}
+            />
+          </FormControl>
+          <FormControl>
+            <SelectField
+              control={control}
+              name="recourse"
+              label={t("Recourse")}
+              description={t("Who carries the loss when a customer never pays.")}
+              options={recourseOptions}
+              rules={{ required: true }}
+            />
+          </FormControl>
+          <FormControl>
+            <SelectField
+              control={control}
+              name="accountingTreatment"
+              label={t("Accounting treatment")}
+              description={t("How funding is booked: a sale of the invoice, or a loan against it.")}
+              options={treatmentOptions}
+              rules={{ required: true }}
+            />
+          </FormControl>
+        </FormGroup>
+      </FormSection>
 
-              <FormSection
-                title={t("Fees")}
+      <FormSection
+        title={t("Fees")}
+        description={t(
+          "The fee by how long the invoice stays open, counted from funding. Each band starts where the one before it ends; leave the last one open-ended.",
+        )}
+      >
+        <FeeTiersEditor control={control} />
+      </FormSection>
+
+      <FormSection
+        title={t("Accounts")}
+        description={t(
+          "Where funding, reserve releases and chargebacks are booked. Nothing is booked for this factor until the accounts its treatment needs are set.",
+        )}
+      >
+        <FormGroup cols={2}>
+          <FormControl>
+            <GLAccountAutocompleteField
+              control={control}
+              name="feeExpenseAccountId"
+              label={t("Factoring fee account")}
+              placeholder={t("Select Factoring fee account")}
+              description={t("Where the factor's fees are expensed.")}
+              clearable
+            />
+          </FormControl>
+          {treatment === "SecuredBorrowing" ? (
+            <FormControl>
+              <GLAccountAutocompleteField
+                control={control}
+                name="liabilityAccountId"
+                label={t("Owed to factor")}
+                placeholder={t("Select owed to factor account")}
                 description={t(
-                  "The fee by how long the invoice stays open, counted from funding. Each band starts where the one before it ends; leave the last one open-ended.",
+                  "The liability for what the factor advanced, until the customer pays.",
                 )}
-              >
-                <FeeTiersEditor control={control} />
-              </FormSection>
+                clearable
+              />
+            </FormControl>
+          ) : (
+            <FormControl>
+              <GLAccountAutocompleteField
+                control={control}
+                name="dueFromFactorAccountId"
+                label={t("Due from factor")}
+                placeholder={t("Select Due from factor account")}
+                description={t("The reserve the factor holds until the customer pays it.")}
+                clearable
+              />
+            </FormControl>
+          )}
+          <FormControl cols="full">
+            <GLAccountAutocompleteField
+              control={control}
+              name="cashAccountId"
+              label={t("Cash account")}
+              placeholder={t("Select Cash Account")}
+              description={t(
+                "Where the factor's payments land. Empty uses the organization's cash account.",
+              )}
+              clearable
+            />
+          </FormControl>
+        </FormGroup>
+      </FormSection>
 
-              <FormSection
-                title={t("Accounts")}
-                description={t(
-                  "Where funding, reserve releases and chargebacks are booked. Nothing is booked for this factor until the accounts its treatment needs are set.",
-                )}
-              >
-                <FormGroup cols={2}>
-                  <FormControl>
-                    <GLAccountAutocompleteField
-                      control={control}
-                      name="feeExpenseAccountId"
-                      label={t("Factoring fee account")}
-                      description={t("Where the factor's fees are expensed.")}
-                      clearable
-                    />
-                  </FormControl>
-                  {treatment === "SecuredBorrowing" ? (
-                    <FormControl>
-                      <GLAccountAutocompleteField
-                        control={control}
-                        name="liabilityAccountId"
-                        label={t("Owed to factor")}
-                        description={t(
-                          "The liability for what the factor advanced, until the customer pays.",
-                        )}
-                        clearable
-                      />
-                    </FormControl>
-                  ) : (
-                    <FormControl>
-                      <GLAccountAutocompleteField
-                        control={control}
-                        name="dueFromFactorAccountId"
-                        label={t("Due from factor")}
-                        description={t("The reserve the factor holds until the customer pays it.")}
-                        clearable
-                      />
-                    </FormControl>
-                  )}
-                  <FormControl>
-                    <GLAccountAutocompleteField
-                      control={control}
-                      name="cashAccountId"
-                      label={t("Cash account")}
-                      description={t(
-                        "Where the factor's payments land. Empty uses the organization's cash account.",
-                      )}
-                      clearable
-                    />
-                  </FormControl>
-                </FormGroup>
-              </FormSection>
-
-              <FormSection title={t("Submission")}>
-                <FormGroup cols={2}>
-                  <FormControl>
-                    <NumberField
-                      control={control}
-                      name="fundingDays"
-                      label={t("Funding days")}
-                      description={t("Business days from submission to funding.")}
-                      decimalScale={0}
-                      min={0}
-                      max={MAX_FUNDING_DAYS}
-                      rules={{ required: true }}
-                    />
-                  </FormControl>
-                  <FormControl>
-                    <InputField
-                      control={control}
-                      name="submissionTime"
-                      label={t("Daily schedule time")}
-                      description={t(
-                        "When the day's schedule of ready invoices is proposed, in your organization's time zone.",
-                      )}
-                      type="time"
-                      step={300}
-                      rules={{ required: true }}
-                    />
-                  </FormControl>
-                  <FormControl cols="full">
-                    <DocumentTypeMultiSelectField
-                      control={control}
-                      name="documentTypes"
-                      label={t("Documents the factor needs")}
-                      description={t(
-                        "Documents every invoice must carry for this factor, beyond what billing already requires. An invoice missing one is not ready.",
-                      )}
-                    />
-                  </FormControl>
-                  <FormControl cols="full">
-                    <TextareaField
-                      control={control}
-                      name="notes"
-                      label={t("Notes")}
-                      rows={3}
-                      maxLength={MAX_AGREEMENT_NOTES}
-                    />
-                  </FormControl>
-                </FormGroup>
-              </FormSection>
-            </Form>
-          </FormProvider>
-        </div>
-        <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-            {t("Cancel")}
-          </Button>
-          <Button type="submit" form={FORM_ID} isLoading={mutation.isPending}>
-            {agreement ? t("Save changes") : t("Save draft")}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+      <FormSection title={t("Submission")}>
+        <FormGroup cols={2}>
+          <FormControl>
+            <NumberField
+              control={control}
+              name="fundingDays"
+              label={t("Funding days")}
+              description={t("Business days from submission to funding.")}
+              decimalScale={0}
+              min={0}
+              max={MAX_FUNDING_DAYS}
+              rules={{ required: true }}
+            />
+          </FormControl>
+          <FormControl>
+            <TimeOfDayField
+              control={control}
+              name="submissionTime"
+              label={t("Daily schedule time")}
+              description={t(
+                "When the day's schedule of ready invoices is proposed, in your organization's time zone.",
+              )}
+              rules={{ required: true }}
+            />
+          </FormControl>
+          <FormControl cols="full">
+            <DocumentTypeMultiSelectField
+              control={control}
+              name="documentTypes"
+              label={t("Documents the factor needs")}
+              placeholder={t("Select Document Types")}
+              description={t(
+                "Documents every invoice must carry for this factor, beyond what billing already requires. An invoice missing one is not ready.",
+              )}
+            />
+          </FormControl>
+          <FormControl cols="full">
+            <TextareaField
+              control={control}
+              name="notes"
+              label={t("Notes")}
+              description={t("For your team only. Never sent to the factor or printed.")}
+              rows={3}
+              maxLength={MAX_AGREEMENT_NOTES}
+            />
+          </FormControl>
+        </FormGroup>
+      </FormSection>
+    </>
   );
 }
 
@@ -385,11 +472,18 @@ function FeeTiersEditor({ control }: { control: Control<FactoringAgreementFormVa
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="text-muted-foreground grid grid-cols-[5rem_1fr_1fr_1fr_2rem] gap-2 text-xs font-medium">
-        <span>{t("From day")}</span>
-        <span>{t("Until day")}</span>
-        <span>{t("Fee rate")}</span>
-        <span>{t("Flat fee")}</span>
+      <div className="grid grid-cols-[5rem_1fr_1fr_1fr_2rem] gap-2">
+        {[
+          { label: t("From day"), description: t("Where the band starts") },
+          { label: t("Until day"), description: t("Where it ends; blank on the last") },
+          { label: t("Fee rate"), description: t("Percent of the invoice") },
+          { label: t("Flat fee"), description: t("Added to every invoice") },
+        ].map((column) => (
+          <span key={column.label} className="flex min-w-0 flex-col gap-0.5">
+            <span className="text-muted-foreground text-xs font-medium">{column.label}</span>
+            <span className="text-foreground-subtle text-2xs">{column.description}</span>
+          </span>
+        ))}
         <span />
       </div>
       {fields.map((field, index) => (

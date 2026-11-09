@@ -122,6 +122,8 @@ const (
 	ActionExportDownloaded   = "audit_log.export_downloaded"
 	ActionAlertPolicyChanged = "audit_alert_policy.updated"
 	ActionAlertRaised        = "audit_alert.raised"
+	ActionReviewReviewed     = "audit_review.reviewed"
+	ActionReviewReopened     = "audit_review.reopened"
 	ActionCrossTenantRefused = "organization.cross_tenant_refused"
 	ActionMalwareRefused     = "document.malware_refused"
 )

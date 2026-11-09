@@ -88,7 +88,7 @@ func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 			Name:        auditports.AlertWorkflowName,
 			Fn:          AuditAlertWorkflow,
 			TaskQueue:   temporaltype.AuditTaskQueue,
-			Description: "Notify an organization's security reviewers of a security alert",
+			Description: "Record a security alert for review and notify the organization's security reviewers",
 		},
 	}
 }
@@ -142,6 +142,10 @@ func AuditExportCleanupWorkflow(ctx workflow.Context) (int, error) {
 
 func AuditAlertWorkflow(ctx workflow.Context, payload *auditports.AlertPayload) (int, error) {
 	var a *Activities
+	if err := workflow.ExecuteActivity(shortActivity(ctx), a.RecordReviewActivity, payload).
+		Get(ctx, nil); err != nil {
+		return 0, err
+	}
 	var sent int
 	err := workflow.ExecuteActivity(shortActivity(ctx), a.NotifyAlertActivity, payload).
 		Get(ctx, &sent)

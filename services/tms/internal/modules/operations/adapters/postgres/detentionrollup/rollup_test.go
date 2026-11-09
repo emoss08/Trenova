@@ -3,6 +3,7 @@ package detentionrollup_test
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/rollupread"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/detentionrollup"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -54,7 +55,7 @@ func TestEveryTableHoldsTheColumnsItsReadsSum(t *testing.T) {
 	}
 
 	cases := map[string]struct {
-		table *detentionrollup.Table
+		table *rollupread.Table
 		names []string
 	}{
 		"daily":            {detentionrollup.DailyTable, figures},
@@ -76,7 +77,7 @@ func TestEveryTableHoldsTheColumnsItsReadsSum(t *testing.T) {
 }
 
 func TestTheDailyAndMonthlyRollupsOfAFigureHoldTheSameColumns(t *testing.T) {
-	pairs := map[string][2]*detentionrollup.Table{
+	pairs := map[string][2]*rollupread.Table{
 		"facility": {detentionrollup.FacilityDailyTable, detentionrollup.FacilityMonthlyTable},
 		"customer": {detentionrollup.CustomerDailyTable, detentionrollup.CustomerMonthlyTable},
 		"policy":   {detentionrollup.PolicyDailyTable, detentionrollup.PolicyMonthlyTable},

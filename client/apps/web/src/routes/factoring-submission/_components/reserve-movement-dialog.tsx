@@ -35,7 +35,7 @@ import {
 import { Form, FormControl, FormGroup } from "@trenova/shared/components/ui/form";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { formatMinor } from "@trenova/shared/lib/benefits";
+import { formatMinor } from "@trenova/shared/lib/money";
 import { dateToUnixTimestamp, formatUnixDateMedium } from "@trenova/shared/lib/date";
 import { describeError } from "@trenova/shared/lib/error-presentation";
 import { useMemo, useState } from "react";

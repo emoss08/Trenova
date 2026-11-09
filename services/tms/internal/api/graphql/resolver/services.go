@@ -59,6 +59,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/app/accountsreceivableservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingtransferservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/costingservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/factoringoverviewservice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptbatchports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
@@ -224,6 +225,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditexportservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditintegrity"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditlegalholdservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditoverview"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditreviewservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/bulkeditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/customfieldservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/emailservice"
@@ -410,6 +413,8 @@ type Params struct {
 	AuditLegalHoldService             *auditlegalholdservice.Service
 	AuditExportService                *auditexportservice.Service
 	AuditAlertService                 *auditalertservice.Service
+	AuditOverviewService              *auditoverview.Service
+	AuditReviewService                *auditreviewservice.Service
 	AuditIntegrity                    *auditintegrity.Status
 	ServiceFailureReasonCodeSvc       servicefailureports.ServiceFailureReasonCodeService
 	ServiceFailureSvc                 servicefailureports.ServiceFailureService
@@ -428,6 +433,7 @@ type Params struct {
 	FactoringLedgerService            factoringledgerports.LedgerService
 	FactoringRemittanceService        factoringremittanceports.RemittanceService
 	FactoringTransportService         factoringsubmissionports.TransportService
+	FactoringOverviewService          *factoringoverviewservice.Service
 	InvoiceDisputeService             invoiceports.InvoiceDisputeService
 	LateChargeService                 latechargeports.LateChargeService
 	AgentRunService                   agentruntimeports.AgentRunService
@@ -705,6 +711,8 @@ type Services struct {
 	AuditLegalHoldService             *auditlegalholdservice.Service
 	AuditExportService                *auditexportservice.Service
 	AuditAlertService                 *auditalertservice.Service
+	AuditOverviewService              *auditoverview.Service
+	AuditReviewService                *auditreviewservice.Service
 	AuditIntegrity                    *auditintegrity.Status
 	ServiceFailureReasonCodeSvc       servicefailureports.ServiceFailureReasonCodeService
 	ServiceFailureSvc                 servicefailureports.ServiceFailureService
@@ -723,6 +731,7 @@ type Services struct {
 	FactoringLedgerService            factoringledgerports.LedgerService
 	FactoringRemittanceService        factoringremittanceports.RemittanceService
 	FactoringTransportService         factoringsubmissionports.TransportService
+	FactoringOverviewService          *factoringoverviewservice.Service
 	InvoiceDisputeService             invoiceports.InvoiceDisputeService
 	LateChargeService                 latechargeports.LateChargeService
 	AgentRunService                   agentruntimeports.AgentRunService
@@ -1006,6 +1015,8 @@ func newServices(p *Params) *Services {
 		AuditLegalHoldService:             p.AuditLegalHoldService,
 		AuditExportService:                p.AuditExportService,
 		AuditAlertService:                 p.AuditAlertService,
+		AuditOverviewService:              p.AuditOverviewService,
+		AuditReviewService:                p.AuditReviewService,
 		AuditIntegrity:                    p.AuditIntegrity,
 		ServiceFailureReasonCodeSvc:       p.ServiceFailureReasonCodeSvc,
 		ServiceFailureSvc:                 p.ServiceFailureSvc,
@@ -1025,6 +1036,7 @@ func newServices(p *Params) *Services {
 		FactoringLedgerService:            p.FactoringLedgerService,
 		FactoringRemittanceService:        p.FactoringRemittanceService,
 		FactoringTransportService:         p.FactoringTransportService,
+		FactoringOverviewService:          p.FactoringOverviewService,
 		LateChargeService:                 p.LateChargeService,
 		AgentRunService:                   p.AgentRunService,
 		AgentDefinitionService:            p.AgentDefinitionService,

@@ -19,7 +19,7 @@ import {
   TableRow,
 } from "@trenova/shared/components/ui/table";
 import { usePostInvoice } from "@/hooks/use-post-invoice";
-import { formatMinor } from "@trenova/shared/lib/benefits";
+import { formatMinor } from "@trenova/shared/lib/money";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 import { invoiceService } from "@/services/invoice";
 import type { InvoicePostPreview } from "@trenova/shared/types/invoice";

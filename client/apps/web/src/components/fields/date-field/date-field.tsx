@@ -5,7 +5,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/compone
 import { fromUserWallClock, toUserWallClock } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import type { FormControlProps } from "@trenova/shared/types/fields";
-import { format } from "date-fns";
+import { dateTimeFormatter } from "@trenova/shared/i18n/format";
 import { CalendarIcon, XCloseIcon } from "@trenova/shared/components/icons";
 import { useState } from "react";
 import { Controller, type FieldValues } from "react-hook-form";
@@ -90,7 +90,11 @@ function DateFieldControl({
             )}
           >
             <CalendarIcon className="mr-0.5" />
-            {dateValue ? format(dateValue, "PPP") : <span>{placeholder || t("Pick a date")}</span>}
+            {dateValue ? (
+              dateTimeFormatter({ dateStyle: "long" }).format(dateValue)
+            ) : (
+              <span>{placeholder || t("Pick a date")}</span>
+            )}
             {clearable && dateValue && !isLocked && (
               <XCloseIcon
                 className="ml-auto h-4 w-4 cursor-pointer"
@@ -179,6 +183,8 @@ export interface DatePickerProps extends Omit<
   setDate: (date: Date | undefined) => void;
   isInvalid?: boolean;
   clearable?: boolean;
+  /** The zone "today" is read in; the reader's own when absent. */
+  timezone?: string;
 }
 
 export type AutoCompleteDateFieldProps<T extends FieldValues> = Omit<
@@ -188,7 +194,6 @@ export type AutoCompleteDateFieldProps<T extends FieldValues> = Omit<
   FormControlProps<T> & {
     label?: string;
     description?: string;
-    timezone?: string;
   };
 
 export function AutoCompleteDateField<T extends FieldValues>({
@@ -230,6 +235,7 @@ export function AutoCompleteDateField<T extends FieldValues>({
               name={field.name}
               ref={field.ref}
               aria-label={label}
+              timezone={timezone}
               date={toUserWallClock(field.value, timezone)}
               setDate={(date) => field.onChange(fromUserWallClock(date, timezone) ?? null)}
               onBlur={field.onBlur}

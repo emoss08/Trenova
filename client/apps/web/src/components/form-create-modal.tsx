@@ -1,4 +1,5 @@
-import { useT } from "@trenova/shared/i18n/use-t";
+import { useApiMutation } from "@/hooks/use-api-mutation";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
@@ -9,127 +10,145 @@ import {
   DialogTitle,
 } from "@trenova/shared/components/ui/dialog";
 import { Form } from "@trenova/shared/components/ui/form";
-import { useApiMutation } from "@/hooks/use-api-mutation";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
+import { useT } from "@trenova/shared/i18n/use-t";
 import { api } from "@trenova/shared/lib/api";
-import type { TableSheetProps } from "@trenova/shared/types/data-table";
+import { formatShortcut } from "@trenova/shared/lib/shortcuts";
 import type { API_ENDPOINTS } from "@trenova/shared/types/server";
-import { useQueryClient } from "@tanstack/react-query";
-import { useCallback, useEffect } from "react";
-import { type FieldValues, FormProvider, type UseFormReturn } from "react-hook-form";
+import { useEffect, useId } from "react";
+import { FormProvider, type FieldValues, type UseFormReturn } from "react-hook-form";
+import { FormChangesFooter, type ChangeFields } from "./form-changes";
 
-type FormCreateModalProps<T extends FieldValues, TResponse = unknown> = TableSheetProps & {
-  url: API_ENDPOINTS;
+type FormCreateModalProps<TFieldValues extends FieldValues, TSubmitValues, TResponse> = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  /** The dialog's whole title, such as "New agreement". */
   title: string;
-  queryKey: string;
-  formComponent: React.ReactNode;
   description?: string;
-  form: UseFormReturn<T>;
-  className?: string;
+  /** What is being created, for error messages ("factoring agreement"). */
+  resourceName: string;
+  form: UseFormReturn<TFieldValues, any, TSubmitValues>;
+  formComponent: React.ReactNode;
   size?: React.ComponentProps<typeof DialogContent>["size"];
   notice?: React.ReactNode;
-  onSuccess?: (data: TResponse, values: T) => void | Promise<void>;
+  /** Labels for the change review in the footer. */
+  changeFields?: ChangeFields;
+  /** A REST endpoint to POST the values to, when there is no `mutationFn`. */
+  url?: API_ENDPOINTS;
+  mutationFn?: (values: TSubmitValues) => Promise<TResponse>;
+  /** Query keys whose reads the new record changes. */
+  invalidates?: readonly (readonly unknown[])[];
+  onCreated?: (data: TResponse, values: TSubmitValues) => void | Promise<void>;
   submitText?: string;
-  loadingText?: string;
 };
 
-export function FormCreateModal<T extends FieldValues, TResponse = unknown>({
+/**
+ * The dialog a record is created in: a title, the form, and a footer that counts the changes and
+ * holds Cancel and the save. The save holds until the server answers; a field error lands on its
+ * field; Cmd/Ctrl+Enter saves. Only the form scrolls, so the title and the save stay in view.
+ */
+export function FormCreateModal<
+  TFieldValues extends FieldValues,
+  TSubmitValues = TFieldValues,
+  TResponse = unknown,
+>({
   open,
   onOpenChange,
-  description,
   title,
-  formComponent,
+  description,
+  resourceName,
   form,
-  className,
+  formComponent,
   size,
-  url,
-  queryKey,
   notice,
-  onSuccess,
-  submitText = "Save and Close",
-  loadingText = "Saving...",
-}: FormCreateModalProps<T, TResponse>) {
+  changeFields = {},
+  url,
+  mutationFn,
+  invalidates = [],
+  onCreated,
+  submitText,
+}: FormCreateModalProps<TFieldValues, TSubmitValues, TResponse>) {
   const t = useT();
-
+  const formId = useId();
   const queryClient = useQueryClient();
-
   const {
     formState: { isSubmitting },
     handleSubmit,
-    reset,
   } = form;
 
-  const handleClose = useCallback(() => {
-    onOpenChange(false);
-    reset();
-  }, [onOpenChange, reset]);
-
-  const { mutateAsync } = useApiMutation({
-    mutationFn: async (values: T) => {
+  const { mutateAsync } = useApiMutation<TResponse, TSubmitValues, unknown, TFieldValues>({
+    form,
+    resourceName,
+    mutationFn: async (values) => {
+      if (mutationFn) return mutationFn(values);
+      if (!url) throw new Error("FormCreateModal needs a url or a mutationFn");
       return api.post<TResponse>(url, values);
     },
     onSuccess: async (data, values) => {
+      await Promise.all(
+        invalidates.map((queryKey) => queryClient.invalidateQueries({ queryKey: [...queryKey] })),
+      );
       onOpenChange(false);
-      reset();
-      await onSuccess?.(data, values);
-
-      queryClient.setQueryData([queryKey], data);
+      await onCreated?.(data, values);
     },
-    form,
-    resourceName: title,
   });
 
-  const onSubmit = useCallback(
-    async (values: T) => {
-      await mutateAsync(values);
-    },
-    [mutateAsync],
-  );
+  const submit = handleSubmit(async (values) => {
+    await mutateAsync(values);
+  });
 
   useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (open && (event.ctrlKey || event.metaKey) && event.key === "Enter" && !isSubmitting) {
+    if (!open) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.key === "Enter" && !isSubmitting) {
         event.preventDefault();
-        void handleSubmit(onSubmit)();
+        void submit();
       }
     };
-
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [open, isSubmitting, handleSubmit, onSubmit]);
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [open, isSubmitting, submit]);
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(nextOpen) => {
-        if (nextOpen) {
-          onOpenChange(true);
-          return;
-        }
-        handleClose();
-      }}
-    >
-      <DialogContent size={size} className={className}>
-        <DialogHeader>
-          <DialogTitle>{t("Add new {0}", title)}</DialogTitle>
-          <DialogDescription>
-            {description
-              ? description
-              : t("Please fill out the form below to create a new {0}.", title)}
-          </DialogDescription>
+    <Dialog open={open} onOpenChange={(next) => !isSubmitting && onOpenChange(next)}>
+      <DialogContent
+        size={size}
+        className="max-h-[calc(100dvh-4rem)] grid-rows-[auto_minmax(0,1fr)_auto] gap-0"
+      >
+        <DialogHeader className="pb-4">
+          <DialogTitle>{title}</DialogTitle>
+          {description ? <DialogDescription>{description}</DialogDescription> : null}
         </DialogHeader>
-        {notice ? notice : null}
         <FormProvider {...form}>
-          <Form className="flex flex-col gap-4" onSubmit={handleSubmit(onSubmit)}>
-            {formComponent}
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={handleClose}>
+          <ScrollArea className="-mx-4 min-h-0">
+            <div className="flex flex-col gap-4 px-4 pb-4">
+              {notice}
+              <Form id={formId} onSubmit={submit} className="flex flex-col gap-6">
+                {formComponent}
+              </Form>
+            </div>
+          </ScrollArea>
+          <DialogFooter className="items-center sm:justify-between">
+            <FormChangesFooter form={form} fields={changeFields} create />
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={isSubmitting}
+                onClick={() => onOpenChange(false)}
+              >
                 {t("Cancel")}
               </Button>
-              <Button type="submit" isLoading={isSubmitting} loadingText={loadingText}>
-                {submitText}
+              <Button
+                type="submit"
+                form={formId}
+                isLoading={isSubmitting}
+                title={formatShortcut("Enter")}
+              >
+                {submitText ?? t("Create")}
               </Button>
-            </DialogFooter>
-          </Form>
+            </div>
+          </DialogFooter>
         </FormProvider>
       </DialogContent>
     </Dialog>

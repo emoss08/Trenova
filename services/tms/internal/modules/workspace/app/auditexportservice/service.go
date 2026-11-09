@@ -556,7 +556,7 @@ func (s *Service) notify(ctx context.Context, export *audit.Export) {
 		Message:        message,
 		Source:         noticeSource,
 		CorrelationID:  &correlation,
-		Data:           map[string]any{"link": "/admin/audit-logs?tab=exports", "exportId": correlation},
+		Data:           map[string]any{"link": "/admin/audit-logs?view=exports", "exportId": correlation},
 	}); err != nil {
 		s.l.Warn("failed to notify about an audit export", zap.String("exportId", correlation), zap.Error(err))
 	}

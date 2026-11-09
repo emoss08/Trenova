@@ -2,7 +2,7 @@ import { cn } from "@trenova/shared/lib/utils";
 import { createContext, useContext } from "react";
 import type React from "react";
 
-type DescriptionListLayout = "stacked" | "inline" | "split";
+type DescriptionListLayout = "stacked" | "inline" | "split" | "ruled";
 
 const DescriptionListContext = createContext<DescriptionListLayout>("stacked");
 
@@ -10,6 +10,7 @@ const LIST_LAYOUT: Record<DescriptionListLayout, string> = {
   stacked: "grid gap-x-6 gap-y-3",
   inline: "grid grid-cols-[minmax(7rem,auto)_minmax(0,1fr)] gap-x-4 gap-y-1.5",
   split: "divide-border-subtle flex flex-col divide-y",
+  ruled: "-mr-px -mb-px grid",
 };
 
 const STACKED_COLUMNS = {
@@ -32,21 +33,37 @@ function DescriptionList({
   children,
   ...props
 }: DescriptionListProps) {
+  const ruled = layout === "ruled";
+  const list = (
+    <dl
+      data-slot="description-list"
+      data-layout={layout}
+      className={cn(
+        "min-w-0 text-sm",
+        LIST_LAYOUT[layout],
+        (layout === "stacked" || ruled) && STACKED_COLUMNS[columns],
+        !ruled && className,
+      )}
+      {...props}
+    >
+      {children}
+    </dl>
+  );
+
   return (
     <DescriptionListContext.Provider value={layout}>
-      <dl
-        data-slot="description-list"
-        data-layout={layout}
-        className={cn(
-          "min-w-0 text-sm",
-          LIST_LAYOUT[layout],
-          layout === "stacked" && STACKED_COLUMNS[columns],
-          className,
-        )}
-        {...props}
-      >
-        {children}
-      </dl>
+      {ruled ? (
+        <div
+          className={cn(
+            "border-border-subtle min-w-0 overflow-hidden rounded-md border",
+            className,
+          )}
+        >
+          {list}
+        </div>
+      ) : (
+        list
+      )}
     </DescriptionListContext.Provider>
   );
 }
@@ -96,6 +113,7 @@ function DescriptionItem({
     <div
       className={cn(
         "flex min-w-0 flex-col gap-0.5",
+        layout === "ruled" && "border-border-subtle border-r border-b px-3.5 py-2.5",
         span === 2 && "col-span-2",
         span === "full" && "col-span-full",
         className,

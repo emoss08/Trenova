@@ -19,6 +19,8 @@ fragment AuditLogTableRowFields on AuditEntry {
   aiRunId
   sensitiveData
   critical
+  changes
+  requestEntryCount
   user {
     id
     name
@@ -29,8 +31,12 @@ fragment AuditLogTableRowFields on AuditEntry {
   }
 }
 
-query AuditLogTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) @requiresRead(kind: "user") {
-  auditEntries(input: $input) {
+query AuditLogTable(
+  $input: DataTableConnectionInput!
+  $includeTotalCount: Boolean = true
+  $onePerRequest: Boolean = false
+) @requiresRead(kind: "user") {
+  auditEntries(input: $input, onePerRequest: $onePerRequest) {
     edges {
       node {
         ...AuditLogTableRowFields
@@ -69,6 +75,8 @@ query AuditRequestEntries($input: DataTableConnectionInput!) @requiresRead(kind:
         resourceId
         entityRef
         comment
+        actorName
+        channel
       }
     }
   }

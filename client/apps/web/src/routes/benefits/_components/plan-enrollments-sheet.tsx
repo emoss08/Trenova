@@ -19,7 +19,8 @@ import {
   SheetTitle,
 } from "@trenova/shared/components/ui/sheet";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
-import { coverageTierLabel, formatMinor } from "@trenova/shared/lib/benefits";
+import { coverageTierLabel } from "@trenova/shared/lib/benefits";
+import { formatMinor } from "@trenova/shared/lib/money";
 import { formatUnixDate } from "@trenova/shared/lib/date";
 import { initials } from "@trenova/shared/lib/utils";
 import { SearchLgIcon } from "@trenova/shared/components/icons";

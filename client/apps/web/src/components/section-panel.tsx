@@ -1,13 +1,23 @@
 import { InfoPopover } from "@/components/info-popover";
+import { InfoTooltip } from "@/components/info-tooltip";
 import { cn } from "@trenova/shared/lib/utils";
 import type { ReactNode } from "react";
 import { Link } from "react-router";
+
+/**
+ * Geist sets text high in its line box, so an icon centred on the title's line sits below the
+ * letters; this lifts it onto their middle and draws it as close to the title as the panel's other
+ * header parts sit to each other.
+ */
+const TITLE_ICON = "-ml-1 -translate-y-0.5";
 
 type SectionPanelProps = {
   title: string;
   icon?: ReactNode;
   /** A short muted note beside the title: a count, a window, a unit. */
   hint?: ReactNode;
+  /** One short line behind an info icon that shows on hover: what the panel's figures rest on. */
+  tip?: ReactNode;
   /** Shown only when above zero, so an empty panel does not announce "0". */
   count?: number;
   /** Controls on the right of the header: a button, a segmented control. */
@@ -32,6 +42,7 @@ export function SectionPanel({
   title,
   icon,
   hint,
+  tip,
   count,
   action,
   help,
@@ -56,7 +67,16 @@ export function SectionPanel({
               <span className="text-muted-foreground shrink-0 [&>svg]:size-3.5">{icon}</span>
             ) : null}
             <h3 className="truncate text-sm font-semibold">{title}</h3>
-            {help ? <InfoPopover title={title}>{help}</InfoPopover> : null}
+            {tip ? (
+              <InfoTooltip label={title} className={TITLE_ICON}>
+                {tip}
+              </InfoTooltip>
+            ) : null}
+            {help ? (
+              <InfoPopover title={title} className={TITLE_ICON}>
+                {help}
+              </InfoPopover>
+            ) : null}
             {count !== undefined && count > 0 ? (
               <span className="text-muted-foreground text-xs tabular-nums">{count}</span>
             ) : null}

@@ -13,7 +13,7 @@ import { fetchRecordActivity, type ActivityEntry } from "@/lib/graphql/record-ac
 import { audit } from "@/lib/queries/audit";
 import { cn } from "@trenova/shared/lib/utils";
 import {
-  formatAuditValueWithDates,
+  formatAuditFieldValue,
   formatFieldLabel,
   isRecordValue,
   normalizeAuditChanges,
@@ -33,7 +33,7 @@ import { AuditEmpty } from "./audit-empty";
 const PAGE_SIZE = 20;
 
 function auditEntryUrl(entryId: string) {
-  return `/admin/audit-logs?panelType=edit&panelEntityId=${entryId}`;
+  return `/admin/audit-logs?entry=${encodeURIComponent(entryId)}`;
 }
 
 export default function AuditTab({ resourceId }: { resourceId: string }) {
@@ -246,8 +246,8 @@ function OperationSummary({ operation, changeCount }: { operation: string; chang
 }
 
 function ChangeItem({ change }: { change: NormalizedAuditChange }) {
-  const fromFormatted = formatAuditValueWithDates(change.from, change.path);
-  const toFormatted = formatAuditValueWithDates(change.to, change.path);
+  const fromFormatted = formatAuditFieldValue(change.from, change.path);
+  const toFormatted = formatAuditFieldValue(change.to, change.path);
   const fromDisplay = fromFormatted.value;
   const toDisplay = toFormatted.value;
 

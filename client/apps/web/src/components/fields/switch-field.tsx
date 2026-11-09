@@ -1,14 +1,12 @@
-import { InfoCircleIcon } from "@trenova/shared/components/icons";
 import { Label } from "@trenova/shared/components/ui/label";
 import { Switch } from "@trenova/shared/components/ui/switch";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
-import { useT } from "@trenova/shared/i18n/use-t";
 import { useFieldRegistration } from "@trenova/shared/lib/form-field-registry";
 import { cn } from "@trenova/shared/lib/utils";
 import { fieldInvalidClass } from "@trenova/shared/lib/variants/field";
 import type { FormControlProps, WarningProps } from "@trenova/shared/types/fields";
 import { Controller, type FieldValues } from "react-hook-form";
 import type { SwitchProps } from "../animate-ui/components/base/switch";
+import { InfoTooltip } from "../info-tooltip";
 import { RecommendedBadge } from "../recommended-badge";
 
 type BaseSwitchFieldProps = Omit<SwitchProps, "name"> & {
@@ -44,7 +42,6 @@ export function SwitchField<T extends FieldValues>({
   ...props
 }: SwitchFieldProps<T>) {
   useFieldRegistration(name, label);
-  const t = useT();
   const inputId = `switch-${name}`;
   const descriptionId = `${inputId}-description`;
   const errorId = `${inputId}-error`;
@@ -92,22 +89,7 @@ export function SwitchField<T extends FieldValues>({
               <Label htmlFor={inputId}>{label}</Label>
               {badges}
               {recommended && <RecommendedBadge size="sm" variant="warning" tooltip={tooltip} />}
-              {!recommended && tooltip && (
-                <Tooltip>
-                  <TooltipTrigger
-                    render={
-                      <button
-                        type="button"
-                        aria-label={t("About {0}", label)}
-                        className="ui-focus-ring text-muted-foreground/70 hover:bg-muted hover:text-foreground inline-flex size-4 shrink-0 items-center justify-center rounded-sm transition-colors"
-                      >
-                        <InfoCircleIcon className="size-3" />
-                      </button>
-                    }
-                  />
-                  <TooltipContent className="max-w-xs">{tooltip}</TooltipContent>
-                </Tooltip>
-              )}
+              {!recommended && tooltip && <InfoTooltip label={label}>{tooltip}</InfoTooltip>}
             </div>
             {description && (
               <p

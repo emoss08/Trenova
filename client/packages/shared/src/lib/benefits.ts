@@ -88,19 +88,6 @@ export function deductionKindLabel(value: string): string {
 }
 
 /**
- * Renders a minor-unit amount as money. Integer arithmetic all the way to the
- * formatter: dividing by 100 is the last thing that happens, not the first.
- */
-export function formatMinor(minor: number, currency = "USD"): string {
-  return (minor / 100).toLocaleString("en-US", {
-    style: "currency",
-    currency,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-}
-
-/**
  * What one enrollment costs over a year, given how many settlements a year
  * carries it. Reported per period as well, because a driver reads the number
  * that comes off their settlement and HR reads the annual one.

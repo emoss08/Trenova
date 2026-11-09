@@ -11,8 +11,8 @@ import {
   accountingInboundIsOpen,
   accountingInboundPhase,
   accountingSyncObjectPath,
-  formatAccountingMinor,
 } from "@/lib/accounting-sync";
+import { formatMinor } from "@trenova/shared/lib/money";
 import type {
   AccountingInboundApplyPreview,
   AccountingInboundChange,
@@ -124,7 +124,7 @@ function InboundChangeDetail({
       description={t(
         "{0} · {1} · recorded in {2}",
         change.partyName || t("Unknown party"),
-        formatAccountingMinor(change.amountMinor, currency),
+        formatMinor(change.amountMinor, currency),
         providerName,
       )}
       size="lg"
@@ -189,11 +189,11 @@ function InboundChangeDetail({
             {change.txnDate ? formatUnixDate(change.txnDate) : <DescriptionEmpty />}
           </DescriptionItem>
           <DescriptionItem label={t("Amount")} numeric>
-            {formatAccountingMinor(change.amountMinor, currency)}
+            {formatMinor(change.amountMinor, currency)}
           </DescriptionItem>
           <DescriptionItem label={t("Left unapplied")} numeric>
             {change.unappliedMinor > 0 ? (
-              formatAccountingMinor(change.unappliedMinor, currency)
+              formatMinor(change.unappliedMinor, currency)
             ) : (
               <DescriptionEmpty />
             )}
@@ -270,16 +270,11 @@ function InboundChangeDetail({
                       </p>
                       <p className="text-foreground-muted text-xs">
                         {line.objectId
-                          ? t(
-                              "{0} open in Trenova",
-                              formatAccountingMinor(line.openMinor, currency),
-                            )
+                          ? t("{0} open in Trenova", formatMinor(line.openMinor, currency))
                           : t("Not a document Trenova sent")}
                       </p>
                     </div>
-                    <span className="tabular-nums">
-                      {formatAccountingMinor(line.amountMinor, currency)}
-                    </span>
+                    <span className="tabular-nums">{formatMinor(line.amountMinor, currency)}</span>
                   </li>
                 );
               })}
@@ -361,15 +356,9 @@ function InboundApplyPreview({
                 className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 text-sm"
               >
                 <span className="min-w-0 truncate">
-                  {t(
-                    "{0}, open {1}",
-                    line.objectNumber,
-                    formatAccountingMinor(line.openMinor, currency),
-                  )}
+                  {t("{0}, open {1}", line.objectNumber, formatMinor(line.openMinor, currency))}
                 </span>
-                <span className="tabular-nums">
-                  {formatAccountingMinor(line.amountMinor, currency)}
-                </span>
+                <span className="tabular-nums">{formatMinor(line.amountMinor, currency)}</span>
               </li>
             ))}
           </ul>
@@ -378,7 +367,7 @@ function InboundApplyPreview({
               ? t(
                   "Posted on {0}. {1} stays on the account as unapplied cash.",
                   formatUnixDate(preview.paidAt),
-                  formatAccountingMinor(preview.unappliedMinor, currency),
+                  formatMinor(preview.unappliedMinor, currency),
                 )
               : t("Posted on {0}.", formatUnixDate(preview.paidAt))}
           </p>

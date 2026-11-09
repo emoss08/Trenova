@@ -12,7 +12,7 @@ import { Alert, AlertDescription, AlertTitle } from "@trenova/shared/components/
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Textarea } from "@trenova/shared/components/ui/textarea";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { formatMinor } from "@trenova/shared/lib/benefits";
+import { formatMinor } from "@trenova/shared/lib/money";
 import { formatUnixDate, getTodayDate } from "@trenova/shared/lib/date";
 import { FISCAL_CALENDAR_TIMEZONE } from "@/lib/fiscal-calendar";
 import type { FiscalYearAction } from "@/lib/fiscal-year-actions";

@@ -203,13 +203,15 @@ func (r *watchtowerReader) ListFailedSubmissions(
 			return intoPointers[factoringwatchtowerports.FailedSubmission](
 				ctx,
 				r.db.Keel(ctx),
-				failedSubmissions(req.Limit),
+				failedSubmissions(req),
 			)
 		},
 	)
 }
 
-func failedSubmissions(limit int) keel.Query[*factoringsubmission.Submission] {
+func failedSubmissions(
+	req *factoringwatchtowerports.ListFailedSubmissionsRequest,
+) keel.Query[*factoringsubmission.Submission] {
 	sub := factoringsubmissiondb.Submissions
 	return sub.Pick(
 		sub.ID,
@@ -223,9 +225,16 @@ func failedSubmissions(limit int) keel.Query[*factoringsubmission.Submission] {
 		blank(sub.LastError),
 		sub.FailedAt,
 	).
-		Where(sub.Status.Eq(factoringsubmission.SubmissionStatusFailed), sub.FailedAt.IsNotNull()).
+		Where(
+			sub.Status.Eq(factoringsubmission.SubmissionStatusFailed),
+			sub.FailedAt.IsNotNull(),
+			keel.When(
+				req.FactoringCompanyID.IsNotNil(),
+				sub.FactoringCompanyID.Eq(req.FactoringCompanyID),
+			),
+		).
 		Order(sub.FailedAt.Asc(), sub.ID.Asc()).
-		Limit(boundedLimit(limit, maxAttentionRows))
+		Limit(boundedLimit(req.Limit, maxAttentionRows))
 }
 
 func (r *watchtowerReader) ListUnfundedSubmissions(
@@ -275,6 +284,10 @@ func unfundedSubmissions(
 			sub.Status.In(factoringsubmission.AwaitingFundingStatuses()...),
 			sub.SentAt.IsNotNull(),
 			dueAt.Lt(req.At),
+			keel.When(
+				req.FactoringCompanyID.IsNotNil(),
+				sub.FactoringCompanyID.Eq(req.FactoringCompanyID),
+			),
 		).
 		Group(sub.ID, sub.OrganizationID, sub.BusinessUnitID, fac.Name, agr.FundingDays).
 		Order(dueAt.Asc(), sub.ID.Asc()).
@@ -329,6 +342,10 @@ func chargebacksDueSoon(
 			agr.Recourse.Eq(factoring.RecourseFull),
 			deadline.Lte(req.Before),
 			keel.When(req.UnwarnedOnly, item.ChargebackWarnedAt.IsNull()),
+			keel.When(
+				req.FactoringCompanyID.IsNotNil(),
+				sub.FactoringCompanyID.Eq(req.FactoringCompanyID),
+			),
 		).
 		Order(deadline.Asc(), item.ID.Asc()).
 		Limit(boundedLimit(req.Limit, maxAttentionRows))

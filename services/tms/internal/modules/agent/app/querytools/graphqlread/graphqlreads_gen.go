@@ -3484,6 +3484,10 @@ var Reads = map[string]Read{
 			{Name: "feeTiers", Type: "FactoringFeeTier", Kind: "object", List: true, NonNull: true, Selected: true},
 			{Name: "documentTypes", Type: "DocumentType", Kind: "object", List: true, NonNull: true, Selected: true, Description: "Documents the factor needs with every invoice, beyond what billing already requires."},
 			{Name: "factoringCompany", Type: "FactoringCompany", Kind: "object", List: false, NonNull: false},
+			{Name: "dueFromFactorAccount", Type: "JournalEntryLineAccount", Kind: "object", List: false, NonNull: false, Description: "The account each role books to; null when it falls back to the organization's default."},
+			{Name: "feeExpenseAccount", Type: "JournalEntryLineAccount", Kind: "object", List: false, NonNull: false},
+			{Name: "liabilityAccount", Type: "JournalEntryLineAccount", Kind: "object", List: false, NonNull: false},
+			{Name: "cashAccount", Type: "JournalEntryLineAccount", Kind: "object", List: false, NonNull: false},
 		},
 	},
 	"factoring_list_noas": {

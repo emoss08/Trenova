@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditexportservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditintegrity"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditretention"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditreviewservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -23,6 +24,7 @@ type ActivitiesParams struct {
 	Verifier  *auditintegrity.Verifier
 	Exports   *auditexportservice.Service
 	Alerts    *auditalertservice.Service
+	Reviews   *auditreviewservice.Service
 }
 
 type Activities struct {
@@ -31,6 +33,7 @@ type Activities struct {
 	verifier  *auditintegrity.Verifier
 	exports   *auditexportservice.Service
 	alerts    *auditalertservice.Service
+	reviews   *auditreviewservice.Service
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
@@ -40,6 +43,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 		verifier:  p.Verifier,
 		exports:   p.Exports,
 		alerts:    p.Alerts,
+		reviews:   p.Reviews,
 	}
 }
 
@@ -103,6 +107,20 @@ func (a *Activities) RunExportActivity(
 func (a *Activities) ExpireExportsActivity(ctx context.Context) (int, error) {
 	expired, err := a.exports.ExpireDue(ctx)
 	return expired, retryable("Failed to expire audit exports", err)
+}
+
+func (a *Activities) RecordReviewActivity(
+	ctx context.Context,
+	payload *auditports.AlertPayload,
+) error {
+	ctx = dbscope.WithValidTenant(ctx, dbscope.Tenant{
+		OrganizationID: payload.TenantInfo.OrgID,
+		BusinessUnitID: payload.TenantInfo.BuID,
+	})
+	return retryable(
+		"Failed to record the security alert for review",
+		a.reviews.Raise(ctx, payload),
+	)
 }
 
 func (a *Activities) NotifyAlertActivity(

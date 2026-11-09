@@ -1,7 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { generateDateTime } from "@trenova/shared/lib/chrono";
-import { generateDateTimeString } from "@trenova/shared/lib/date";
+import { generateDateTimeString, userWallClockNow } from "@trenova/shared/lib/date";
 import { CalendarIcon } from "@trenova/shared/components/icons";
 import { DateSuggestionInput } from "./date-suggestion-input";
 import { DateTimePickerPopover } from "./datetime-picker-popover";
@@ -18,6 +18,8 @@ export interface DateTimePickerProps extends Omit<
   setDateTime: (date: Date | undefined) => void;
   isInvalid?: boolean;
   clearable?: boolean;
+  /** The zone "today" is read in; the reader's own when absent. */
+  timezone?: string;
 }
 
 export function DateTimePicker({
@@ -27,9 +29,11 @@ export function DateTimePicker({
   clearable,
   disabled,
   readOnly,
+  timezone,
   ...props
 }: DateTimePickerProps) {
   const t = useT();
+  const parseInput = (text: string) => generateDateTime(text, userWallClockNow(timezone));
 
   return (
     <DateSuggestionInput
@@ -37,7 +41,7 @@ export function DateTimePicker({
       value={dateTime}
       onValueChange={setDateTime}
       formatValue={formatDateTime}
-      parseInput={generateDateTime}
+      parseInput={parseInput}
       defaultSuggestions={defaultSuggestions}
       isInvalid={isInvalid}
       clearable={clearable}

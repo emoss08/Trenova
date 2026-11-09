@@ -629,6 +629,20 @@ a write touched (`keel_rollup_dirty`) and a refresh that recomputes them. The de
   (`rollup.Histogram`) and the read interpolates (`rollup.Quantile`). Choose bins so a quantile
   lands within the precision the page shows. A distinct count does not add up either: read it
   live, through an index on its filter (detention waivers' approvers).
+- **Read through `rollupread`.** `internal/infrastructure/postgres/rollupread` holds the
+  generic read side: `Of(rollup)` gives a `Table` with `Col`, `Count`, `Amount` and `Bucket`
+  by the declaration's column names, `OrganizationZone(orgColumn)` is the tenant-zone
+  expression, and `LocalHour` an epoch's hour in a zone. A module's rollup package declares
+  its rollups and tables from these rather than copying them (`detentionrollup`,
+  `auditrollup`).
+- **An epoch column named otherwise says so.** A bigint grain is read as epochs by its `_at`,
+  `_date` or `_time` suffix; any other (`audit_entries.timestamp`) declares it at the grain,
+  `rollup.Hour(e.Timestamp).Epoch()`.
+- **A partitioned source** takes `rollup.WithoutSourceIndex()`: Postgres cannot build an
+  index concurrently on a partitioned table, and the tenant-and-time index it already has
+  serves the refresh. The statement triggers go on the parent, which every insert goes
+  through. Dropping a partition fires no trigger, so a rollup keeps counts older than the
+  source's retention; read windows stay inside it.
 - **Refresh** runs every minute on the system queue (`temporaljobs/rollupjobs`), a transaction
   per batch under the system scope, with backlog and throughput in the `rollup_*` metrics. A
   migration's new rollup marks every tenant, and the first refresh builds it.

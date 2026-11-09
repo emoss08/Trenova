@@ -1,7 +1,8 @@
+import { NarrativeSegments } from "@/components/narrative-segments";
 import type { DetentionNarrativeSegment } from "@/lib/graphql/detention-intelligence";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn, formatCurrencyWhole } from "@trenova/shared/lib/utils";
-import { createContext, use, useState, type KeyboardEvent, type ReactNode } from "react";
+import { createContext, use, useState, type ReactNode } from "react";
 
 /** Whole dollars: the page compares amounts, it does not reconcile them. */
 export function money(value: number): string {
@@ -96,61 +97,14 @@ export function Narrative({
   targets: NarrativeTargets;
 }) {
   return (
-    <>
-      {segments.map((segment, index) => {
-        if (segment.target && segment.targetId) {
-          const id = segment.targetId;
-          const open = () => {
-            if (segment.target === "Facility") targets.onFacility(id);
-            else if (segment.target === "Customer") targets.onCustomer(id);
-            else targets.onSection(id);
-          };
-          const onKeyDown = (event: KeyboardEvent<HTMLSpanElement>) => {
-            if (event.key === "Enter" || event.key === " ") {
-              event.preventDefault();
-              open();
-            }
-          };
-          return (
-            <span
-              key={index}
-              role="link"
-              tabIndex={0}
-              onClick={open}
-              onKeyDown={onKeyDown}
-              className={cn(
-                "ui-focus-ring decoration-border-strong hover:decoration-foreground cursor-pointer rounded-sm underline underline-offset-4",
-                segment.tone === "danger"
-                  ? "text-danger-foreground"
-                  : segment.tone === "good"
-                    ? "text-success-foreground"
-                    : "text-foreground",
-              )}
-            >
-              {segment.text}
-            </span>
-          );
-        }
-        if (segment.strong) {
-          return (
-            <span
-              key={index}
-              className={cn(
-                "font-medium",
-                segment.tone === "danger"
-                  ? "text-danger-foreground"
-                  : segment.tone === "good"
-                    ? "text-success-foreground"
-                    : "text-foreground",
-              )}
-            >
-              {segment.text}
-            </span>
-          );
-        }
-        return <span key={index}>{segment.text}</span>;
-      })}
-    </>
+    <NarrativeSegments
+      segments={segments}
+      onTarget={(segment, id) => {
+        if (segment.target === "Facility") targets.onFacility(id);
+        else if (segment.target === "Customer") targets.onCustomer(id);
+        else targets.onSection(id);
+      }}
+    />
   );
 }
 

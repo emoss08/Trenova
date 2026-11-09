@@ -17,8 +17,8 @@ import {
   employerSharePercent,
   enrollmentStatusLabel,
   enrollmentStatusTone,
-  formatMinor,
 } from "@trenova/shared/lib/benefits";
+import { formatMinor } from "@trenova/shared/lib/money";
 import { formatUnixDate } from "@trenova/shared/lib/date";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { PlusIcon } from "@trenova/shared/components/icons";

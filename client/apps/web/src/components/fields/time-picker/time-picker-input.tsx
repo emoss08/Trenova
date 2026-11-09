@@ -18,6 +18,8 @@ export interface TimePickerInputProps extends React.InputHTMLAttributes<HTMLInpu
   period?: Period;
   onRightFocus?: () => void;
   onLeftFocus?: () => void;
+  /** A segment inside a field that draws the box itself, as a time typed in place. */
+  bare?: boolean;
 }
 
 const TimePickerInput = React.forwardRef<HTMLInputElement, TimePickerInputProps>(
@@ -36,6 +38,7 @@ const TimePickerInput = React.forwardRef<HTMLInputElement, TimePickerInputProps>
       period,
       onLeftFocus,
       onRightFocus,
+      bare = false,
       ...props
     },
     ref,
@@ -98,26 +101,43 @@ const TimePickerInput = React.forwardRef<HTMLInputElement, TimePickerInputProps>
       }
     };
 
+    const shared = {
+      ref,
+      id: id || picker,
+      name: name || picker,
+      value: value || calculatedValue,
+      onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
+        e.preventDefault();
+        onChange?.(e);
+      },
+      type,
+      inputMode: "decimal" as const,
+      onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => {
+        onKeyDown?.(e);
+        handleKeyDown(e);
+      },
+    };
+
+    if (bare) {
+      return (
+        <input
+          {...shared}
+          className={cn(
+            "focus:bg-surface-selected h-5 w-5 rounded-xs bg-transparent p-0 text-center tabular-nums caret-transparent outline-none disabled:cursor-not-allowed",
+            className,
+          )}
+          {...props}
+        />
+      );
+    }
+
     return (
       <Input
-        ref={ref}
-        id={id || picker}
-        name={name || picker}
+        {...shared}
         className={cn(
           "focus:bg-muted focus:text-accent-foreground w-[48px] text-center font-mono text-sm tabular-nums caret-transparent [&::-webkit-inner-spin-button]:appearance-none",
           className,
         )}
-        value={value || calculatedValue}
-        onChange={(e) => {
-          e.preventDefault();
-          onChange?.(e);
-        }}
-        type={type}
-        inputMode="decimal"
-        onKeyDown={(e) => {
-          onKeyDown?.(e);
-          handleKeyDown(e);
-        }}
         {...props}
       />
     );

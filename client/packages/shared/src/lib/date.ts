@@ -58,6 +58,37 @@ function isHour12(timeFormat?: TimeFormatType): boolean {
   return resolveUserTimeFormat(timeFormat) === TimeFormat.enum["12-hour"];
 }
 
+/** Whether the reader reads times on a 12-hour clock with AM and PM. */
+export function usesTwelveHourClock(timeFormat?: TimeFormatType): boolean {
+  return isHour12(timeFormat);
+}
+
+/** A 24-hour clock value ("09:30") as its hour and minute, or null when it is not one. */
+export function parseTimeOfDay(
+  value: string | null | undefined,
+): { hour: number; minute: number } | null {
+  const match = /^([01]?\d|2[0-3]):([0-5]\d)$/.exec((value ?? "").trim());
+  return match ? { hour: Number(match[1]), minute: Number(match[2]) } : null;
+}
+
+/** An hour and minute as the 24-hour clock value a form stores ("09:30"). */
+export function timeOfDayValue(hour: number, minute: number): string {
+  return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+}
+
+/**
+ * A time of day that belongs to no date ("2:00 PM", or "14:00" on a 24-hour clock), in the
+ * reader's locale and clock preference. No time zone is applied: it is the clock face itself.
+ */
+export function formatTimeOfDay(hour: number, minute: number, timeFormat?: TimeFormatType): string {
+  return dateTimeFormatter({
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: isHour12(timeFormat),
+    timeZone: "UTC",
+  }).format(new Date(Date.UTC(2000, 0, 1, hour, minute)));
+}
+
 export type ZonedFormatOptions = Intl.DateTimeFormatOptions & {
   timezone?: string;
   timeFormat?: TimeFormatType;
@@ -793,6 +824,37 @@ export function formatUnixDayTimeRange(
   // formatRange adds the day of the month once the ends fall on different days ("7 Sat"); a
   // span under a week is plain with its weekday and time at each end.
   return `${formatter.format(startDate)} – ${formatter.format(endDate)}`;
+}
+
+function isWholeDayBound(date: Date, timezone: string, end: boolean): boolean {
+  const wall = toZonedTime(date, timezone);
+  const clock = [wall.getHours(), wall.getMinutes(), wall.getSeconds()].join(":");
+  return clock === "0:0:0" || (end && clock === "23:59:59");
+}
+
+/**
+ * A span between two instants as the reader's language writes a range: dates alone when both
+ * ends are whole days in the user's timezone ("Nov 3 – 5, 2026"), the date and time otherwise
+ * ("Nov 5, 2026, 9:00 – 9:59 AM").
+ */
+export function formatUnixSpan(
+  start: number | null | undefined,
+  end: number | null | undefined,
+  { timezone, timeFormat, fallback = "N/A" }: UnixFormatOptions = {},
+): string {
+  const startDate = start ? toDate(start) : undefined;
+  const endDate = end ? toDate(end) : undefined;
+  if (!startDate || !endDate) {
+    return fallback;
+  }
+  const resolved = resolveUserTimezone(timezone);
+  const wholeDays =
+    isWholeDayBound(startDate, resolved, false) && isWholeDayBound(endDate, resolved, true);
+  const shape = wholeDays ? MEDIUM_DATE : { ...MEDIUM_DATE, ...CLOCK_TIME };
+  return zonedFormatter({ ...shape, timezone: resolved, timeFormat }).formatRange(
+    startDate,
+    endDate,
+  );
 }
 
 export function formatUnixDateTimeOrDash(

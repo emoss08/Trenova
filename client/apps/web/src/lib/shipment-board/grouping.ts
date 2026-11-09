@@ -1,12 +1,6 @@
 import type { ShipmentBoardGrouping, ShipmentStage } from "@trenova/graphql/generated/graphql";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
-import {
-  formatISODateMedium,
-  fromISODateString,
-  fromUserWallClock,
-  toISODateString,
-  toUserWallClock,
-} from "@trenova/shared/lib/date";
+import { formatISODateMedium, fromISODateString } from "@trenova/shared/lib/date";
 import type {
   DataTableGroup,
   DataTableGroupKey,
@@ -16,7 +10,7 @@ import type {
   SortField,
 } from "@trenova/shared/types/data-table";
 import type { Shipment, ShipmentMove, Stop } from "@trenova/shared/types/shipment";
-import { addDays } from "date-fns";
+import { dayGroupScope, dayKey } from "@/lib/day-grouping";
 import type { ShipmentBoardGroup } from "@/lib/graphql/shipment-board";
 import { STAGE_GROUP_FIELD, wholeDollars } from "./stage";
 
@@ -132,21 +126,6 @@ export function consigneeStop(row: Pick<Shipment, "moves">): Stop | null {
 }
 
 /** The `YYYY-MM-DD` day an instant falls on in the board's time zone. */
-export function dayKey(unixSeconds: number | null | undefined, timezone: string): string {
-  if (unixSeconds === null || unixSeconds === undefined) return NO_GROUP_VALUE;
-  const wallClock = toUserWallClock(unixSeconds, timezone);
-  return wallClock ? toISODateString(wallClock) : NO_GROUP_VALUE;
-}
-
-/** The instants a local day covers, `[start, end)`, so a DST day is 23 or 25 hours. */
-export function dayBounds(key: string, timezone: string): { start: number; end: number } | null {
-  const day = fromISODateString(key);
-  if (!day) return null;
-  const start = fromUserWallClock(day, timezone);
-  const end = fromUserWallClock(addDays(day, 1), timezone);
-  return start === undefined || end === undefined ? null : { start, end };
-}
-
 export function boardGroupKey(
   grouping: Exclude<BoardGrouping, "none">,
   row: Shipment,
@@ -174,27 +153,6 @@ export function parseCollapsedKeys(
 ): DataTableGroupKey[] {
   if (grouping !== "stage") return [...keys];
   return keys.map(Number).filter((rank) => Number.isInteger(rank));
-}
-
-function dayScope(field: string, keys: readonly DataTableGroupKey[], timezone: string) {
-  const fieldFilters: FieldFilter[] = [];
-  const filterGroups: FilterGroup[] = [];
-  for (const key of keys) {
-    if (key === NO_GROUP_VALUE) {
-      fieldFilters.push({ field, operator: "isnotnull", value: null });
-      continue;
-    }
-    const bounds = dayBounds(String(key), timezone);
-    if (!bounds) continue;
-    filterGroups.push({
-      filters: [
-        { field, operator: "lt", value: bounds.start },
-        { field, operator: "gte", value: bounds.end },
-        { field, operator: "isnull", value: null },
-      ],
-    });
-  }
-  return { fieldFilters, filterGroups };
 }
 
 function ownerScope(keys: readonly DataTableGroupKey[]): DataTableGroupScope {
@@ -228,9 +186,9 @@ export function collapsedScopeFor(
 ): ((keys: readonly DataTableGroupKey[]) => DataTableGroupScope) | undefined {
   switch (grouping) {
     case "shipDate":
-      return (keys) => dayScope(SHIP_DATE_FIELD, keys, timezone);
+      return (keys) => dayGroupScope(SHIP_DATE_FIELD, keys, timezone);
     case "deliveryDate":
-      return (keys) => dayScope(DELIVERY_DATE_FIELD, keys, timezone);
+      return (keys) => dayGroupScope(DELIVERY_DATE_FIELD, keys, timezone);
     case "customer":
       return (keys) => ({
         fieldFilters: [{ field: "customerId", operator: "notin", value: keys.map(String) }],

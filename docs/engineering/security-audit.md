@@ -444,10 +444,20 @@ entries. `AuditExportCleanupWorkflow` deletes expired files hourly.
 
 `auditservice.Alerts` matches each committed entry against the cached policies; counted kinds
 increment a Redis counter per principal and window, and raise once when the threshold is
-crossed. A raised alert starts `AuditAlertWorkflow`, which notifies everyone holding
-`security_audit_log:read` and writes an `audit.alert_raised` entry. Redis being down drops
-counted alerts, never entries. Changing a policy needs `security_audit_log:update` and is
-itself a `Security` entry.
+crossed. A raised alert starts `AuditAlertWorkflow`, keyed by the alert's dedupe key
+(`kind/entry` or `kind/principal:window`), which first records an `audit_reviews` row under
+that key (`RecordReviewActivity`, idempotent through `uq_audit_reviews_dedupe`, so a replay
+finds its row) and then notifies everyone holding `security_audit_log:read` and writes an
+`audit.alert_raised` entry. Redis being down drops counted alerts, never entries. Changing a
+policy needs `security_audit_log:update` and is itself a `Security` entry.
+
+A review stays open until a security reviewer marks it reviewed (`markAuditReviewReviewed`,
+`security_audit_log:update`); `reopenAuditReview` puts it back. Both change state only from the
+other state (a conditional update, so two reviewers never overwrite each other), record
+`audit_review.reviewed` or `audit_review.reopened` through `SecurityAuditor`, and publish an
+`audit-reviews` invalidation. Agents may not clear reviews (`writecoverage.yml`, `security`).
+Each review's title is written on the server (`auditreviewservice.Title`), so the review list
+and the overview's summary say the same thing.
 
 ## Reading the trail
 
@@ -455,8 +465,26 @@ The audit log's GraphQL queries check `audit_log:read`, then list only entries a
 resources the reader can read across the organization (`auditlogresolver.readableResources`,
 one batched permission check over the registry). A reader with only own or team scope on a
 resource does not see its history. `Security` entries need `security_audit_log:read`. The
-list reads a summary projection without the states; opening an entry reads its detail, the
-other entries of the same request and a field's history (`changedField`).
+list reads a summary projection without the states, adding `changes` only when the trail asks
+for it; opening an entry reads its detail, the other entries of the same request and a field's
+history (`changedField`). `requestEntryCount` is one grouped count per page over
+`idx_audit_entries_tenant_correlation`, bounded to an hour around the page's timestamps so it
+reads one or two partitions, and counts only what the reader may read. `auditEntries(onePerRequest: true)` keeps
+an entry only when no earlier entry of its request that the reader may read exists
+(`auditrepository.firstOfRequest`, a `NOT EXISTS` over the correlation index within the hour
+before). It is ignored when the input searches or filters, because the earliest entry is judged
+against every readable entry, not the filtered ones.
+
+The overview (`auditOverview(days)`, `app/auditoverview`) never reads `audit_entries`. Its
+figures come from three keel rollups (`adapters/postgres/auditrollup`): `audit_hourly` and
+`audit_daily` (counts by actor kind, sensitive, security, deletes and exports, and people's
+off-hours entries, by resource and category) and `audit_actor_daily` (each principal's
+entries by resource and category). Resource and category are dimensions so the overview
+applies the same `EntryAccess` as the trail: a reader's figures add up only what they could
+list. A window of up to a week reads hours, a longer one days, up to 90. Off hours are 8 PM to
+6 AM in the organization's time zone (`audit.IsOffHours`), counted for people's channels only.
+The top actors are ranked on the rollup and named from each one's latest entry in the window,
+one `LIMIT 1` probe per ranked principal in one batch.
 
 Sign-ins stay in `auth_events` and have their own page (Sign-in activity), and agent runs in the
 AI audit trail; the audit log links to both rather than merging them.

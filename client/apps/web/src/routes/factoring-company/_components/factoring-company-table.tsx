@@ -3,14 +3,14 @@ import { DataTable } from "@/components/data-table/data-table";
 import { factoringCompanyTableGraphQLConfig } from "@/lib/graphql/factoring-company-table";
 import type { FactoringCompany } from "@/types/factoring-company";
 import { Resource } from "@trenova/shared/types/permission";
-import { useMemo } from "react";
+import { useNavigate } from "react-router";
+import { FACTORING_COMPANIES_PATH, factoringCompanyPath } from "../use-factoring-company-state";
 import { getColumns } from "./factoring-company-columns";
-import { FactoringCompanyPanel } from "./factoring-company-panel";
 
 export default function FactoringCompanyTable() {
   const t = useT();
-
-  const columns = useMemo(() => getColumns(t), [t]);
+  const navigate = useNavigate();
+  const columns = getColumns(t);
 
   return (
     <DataTable<FactoringCompany>
@@ -20,7 +20,10 @@ export default function FactoringCompanyTable() {
       graphql={factoringCompanyTableGraphQLConfig}
       resource={Resource.FactoringCompany}
       columns={columns}
-      TablePanel={FactoringCompanyPanel}
+      onAddRecord={() => void navigate(`${FACTORING_COMPANIES_PATH}/new`)}
+      onRowClick={(row) => {
+        if (row.original.id) void navigate(factoringCompanyPath(row.original.id));
+      }}
     />
   );
 }

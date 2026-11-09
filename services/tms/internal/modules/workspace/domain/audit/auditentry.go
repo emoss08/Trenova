@@ -35,39 +35,40 @@ var (
 type Entry struct {
 	keel.Table `keel:"audit_entries"`
 
-	ID             pulid.ID             `json:"id"                      keel:"id,pk,autoid:ae_"`
-	BusinessUnitID pulid.ID             `json:"businessUnitId"          keel:"business_unit_id,pk,tenant"`
-	OrganizationID pulid.ID             `json:"organizationId"          keel:"organization_id,pk,tenant"`
-	Timestamp      int64                `json:"timestamp"               keel:"timestamp,pk"`
-	Resource       permission.Resource  `json:"resource"                keel:"resource"`
-	ResourceID     string               `json:"resourceId"              keel:"resource_id"`
-	Operation      permission.Operation `json:"operation"               keel:"operation"`
-	Action         string               `json:"action"                  keel:"action"`
-	Category       Category             `json:"category"                keel:"category"`
-	RetentionClass RetentionClass       `json:"retentionClass"          keel:"retention_class"`
-	Channel        Channel              `json:"channel"                 keel:"channel"`
-	PrincipalType  string               `json:"principalType"           keel:"principal_type"`
-	PrincipalID    pulid.ID             `json:"principalId"             keel:"principal_id"`
-	UserID         pulid.ID             `json:"userId,omitempty"        keel:"user_id,nullzero"`
-	APIKeyID       pulid.ID             `json:"apiKeyId,omitempty"      keel:"api_key_id,nullzero"`
-	ActorName      string               `json:"actorName,omitempty"     keel:"actor_name,nullzero"`
-	AIRunID        string               `json:"aiRunId,omitempty"       keel:"ai_run_id,nullzero"`
-	EntityRef      string               `json:"entityRef,omitempty"     keel:"entity_ref,nullzero"`
-	CorrelationID  string               `json:"correlationId,omitempty" keel:"correlation_id,nullzero"`
-	TraceID        string               `json:"traceId,omitempty"       keel:"trace_id,nullzero"`
-	IPAddress      string               `json:"ipAddress,omitempty"     keel:"ip_address,nullzero"`
-	UserAgent      string               `json:"userAgent,omitempty"     keel:"user_agent,nullzero"`
-	Comment        string               `json:"comment,omitempty"       keel:"comment,nullzero"`
-	Changes        map[string]any       `json:"changes,omitempty"       keel:"changes,jsonb"`
-	PreviousState  map[string]any       `json:"previousState,omitempty" keel:"previous_state,jsonb"`
-	CurrentState   map[string]any       `json:"currentState,omitempty"  keel:"current_state,jsonb"`
-	Metadata       map[string]any       `json:"metadata,omitempty"      keel:"metadata,jsonb"`
-	SensitiveData  bool                 `json:"sensitiveData"           keel:"sensitive_data"`
-	Critical       bool                 `json:"critical"                keel:"critical"`
-	User           *tenant.User         `json:"user,omitempty"          keel:"belongs:user_id"`
-	APIKey         *apikey.Key          `json:"apiKey,omitempty"        keel:"belongs:api_key_id"`
-	Organization   *tenant.Organization `json:"-"`
-	BusinessUnit   *tenant.BusinessUnit `json:"-"`
+	ID                pulid.ID             `json:"id"                      keel:"id,pk,autoid:ae_"`
+	BusinessUnitID    pulid.ID             `json:"businessUnitId"          keel:"business_unit_id,pk,tenant"`
+	OrganizationID    pulid.ID             `json:"organizationId"          keel:"organization_id,pk,tenant"`
+	Timestamp         int64                `json:"timestamp"               keel:"timestamp,pk"`
+	Resource          permission.Resource  `json:"resource"                keel:"resource"`
+	ResourceID        string               `json:"resourceId"              keel:"resource_id"`
+	Operation         permission.Operation `json:"operation"               keel:"operation"`
+	Action            string               `json:"action"                  keel:"action"`
+	Category          Category             `json:"category"                keel:"category"`
+	RetentionClass    RetentionClass       `json:"retentionClass"          keel:"retention_class"`
+	Channel           Channel              `json:"channel"                 keel:"channel"`
+	PrincipalType     string               `json:"principalType"           keel:"principal_type"`
+	PrincipalID       pulid.ID             `json:"principalId"             keel:"principal_id"`
+	UserID            pulid.ID             `json:"userId,omitempty"        keel:"user_id,nullzero"`
+	APIKeyID          pulid.ID             `json:"apiKeyId,omitempty"      keel:"api_key_id,nullzero"`
+	ActorName         string               `json:"actorName,omitempty"     keel:"actor_name,nullzero"`
+	AIRunID           string               `json:"aiRunId,omitempty"       keel:"ai_run_id,nullzero"`
+	EntityRef         string               `json:"entityRef,omitempty"     keel:"entity_ref,nullzero"`
+	CorrelationID     string               `json:"correlationId,omitempty" keel:"correlation_id,nullzero"`
+	TraceID           string               `json:"traceId,omitempty"       keel:"trace_id,nullzero"`
+	IPAddress         string               `json:"ipAddress,omitempty"     keel:"ip_address,nullzero"`
+	UserAgent         string               `json:"userAgent,omitempty"     keel:"user_agent,nullzero"`
+	Comment           string               `json:"comment,omitempty"       keel:"comment,nullzero"`
+	Changes           map[string]any       `json:"changes,omitempty"       keel:"changes,jsonb"`
+	PreviousState     map[string]any       `json:"previousState,omitempty" keel:"previous_state,jsonb"`
+	CurrentState      map[string]any       `json:"currentState,omitempty"  keel:"current_state,jsonb"`
+	Metadata          map[string]any       `json:"metadata,omitempty"      keel:"metadata,jsonb"`
+	SensitiveData     bool                 `json:"sensitiveData"           keel:"sensitive_data"`
+	Critical          bool                 `json:"critical"                keel:"critical"`
+	User              *tenant.User         `json:"user,omitempty"          keel:"belongs:user_id"`
+	RequestEntryCount int64                `json:"-"                       keel:"-"`
+	APIKey            *apikey.Key          `json:"apiKey,omitempty"        keel:"belongs:api_key_id"`
+	Organization      *tenant.Organization `json:"-"`
+	BusinessUnit      *tenant.BusinessUnit `json:"-"`
 }
 
 func (e *Entry) BeforeCreate(_ context.Context) error {

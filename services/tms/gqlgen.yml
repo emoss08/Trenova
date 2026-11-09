@@ -1832,6 +1832,33 @@ models:
   FactoringSummary:
     model:
       - github.com/emoss08/trenova/internal/modules/billing/ports/factoringports.Summary
+  FactoringAgreementActivity:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/factoringports.AgreementActivity
+  FactoringNoticeCounts:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/factoringports.NoticeCounts
+  FactoringAwaitingSchedule:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/factoringports.AwaitingSubmission
+  FactoringCustomerNoticeStage:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/factoringports.CustomerNoticeStage
+  FactoringReserveDay:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports.ReserveDay
+  FactoringPacePoint:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/app/factoringoverviewservice.PacePoint
+  FactoringSetup:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/app/factoringoverviewservice.Setup
+  FactoringAttentionKind:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/app/factoringoverviewservice.AttentionKind
+  FactoringOverviewTarget:
+    model:
+      - github.com/emoss08/trenova/internal/modules/billing/app/factoringoverviewservice.Target
   FactoringDocumentRequestResult:
     model:
       - github.com/emoss08/trenova/internal/modules/billing/ports/factoringports.RequestMissingDocumentsResult
@@ -5070,6 +5097,14 @@ models:
       threshold:
         resolver: true
       windowMinutes:
+        resolver: true
+  AuditReview:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workspace/app/auditreviewservice.View
+    fields:
+      resource:
+        resolver: true
+      reviewedBy:
         resolver: true
   NotificationPriority:
     model:

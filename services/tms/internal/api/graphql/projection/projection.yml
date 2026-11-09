@@ -478,6 +478,7 @@ virtuals:
     - secretState
   AuditEntry:
     - entityRef
+    - requestEntryCount
   # Computed by resolvers from columns the trail's column selection adds when
   # the field is asked for: a person or agent by its id, the trace link from
   # the trace id, the reader's view of the arguments from the arguments and

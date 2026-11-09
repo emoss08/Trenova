@@ -14,6 +14,7 @@ const AlertWorkflowName = "AuditAlertWorkflow"
 type AlertPayload struct {
 	TenantInfo    pagination.TenantInfo `json:"tenantInfo"`
 	Kind          audit.AlertKind       `json:"kind"`
+	DedupeKey     string                `json:"dedupeKey"`
 	EntryID       pulid.ID              `json:"entryId"`
 	Action        string                `json:"action"`
 	Resource      permission.Resource   `json:"resource"`
@@ -24,6 +25,8 @@ type AlertPayload struct {
 	EntityRef     string                `json:"entityRef"`
 	Comment       string                `json:"comment"`
 	Count         int64                 `json:"count"`
+	Threshold     int                   `json:"threshold"`
+	WindowMinutes int                   `json:"windowMinutes"`
 	OccurredAt    int64                 `json:"occurredAt"`
 }
 

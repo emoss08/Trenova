@@ -9,6 +9,7 @@ import {
   FactoringAgreementOwnerDocument,
   FactoringAgreementsDocument,
   FactoringCompanyRecordDocument,
+  type FactoringCompanyRecordQuery,
   FactoringInvoiceStateFieldsFragmentDoc,
   FactoringInvoiceStateTableDocument,
   FactoringNoaFieldsFragmentDoc,
@@ -83,12 +84,12 @@ import { getFragmentData, type FragmentType } from "@trenova/graphql/fragment-da
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
 import type { DataTableConfigRow } from "@trenova/shared/types/data-table";
-import type { FactoringCompany } from "@/types/factoring-company";
 
 type RequestOptions = { signal?: AbortSignal };
 
 export type FactoringAgreement = FactoringAgreementFieldsFragment;
 export type FactoringNoa = FactoringNoaFieldsFragment;
+export type FactoringCompanyRecord = NonNullable<FactoringCompanyRecordQuery["factoringCompany"]>;
 export type FactoringInvoiceState = FactoringInvoiceStateFieldsFragment;
 export type FactoringCheck = FactoringInvoiceState["checks"][number];
 export type FactoringSummary = FactoringSummaryQuery["factoringSummary"];
@@ -153,12 +154,15 @@ export type FactoringReserveEntryPage = {
 };
 
 /** The readiness queue, one row per evaluated invoice, keyed by the invoice it describes. */
-export function createFactoringInvoiceStateTableConfig(verdicts: FactoringVerdict[]) {
+export function createFactoringInvoiceStateTableConfig(
+  verdicts: FactoringVerdict[],
+  factoringCompanyId: string | null = null,
+) {
   return defineDataTableGraphQLConfig({
     document: FactoringInvoiceStateTableDocument,
     operationName: "FactoringInvoiceStateTable",
     connectionKey: "factoringInvoiceStates",
-    extraVariables: { verdicts },
+    extraVariables: { verdicts, factoringCompanyId },
     mapNode: (node) => ({ ...node, id: node.invoiceId }),
   });
 }
@@ -168,12 +172,15 @@ export type FactoringInvoiceStateRow = DataTableConfigRow<
 >;
 
 /** Schedules of accounts sent to factors, newest first unless the table sorts otherwise. */
-export function createFactoringSubmissionTableConfig(statuses: FactoringSubmissionStatus[] | null) {
+export function createFactoringSubmissionTableConfig(
+  statuses: FactoringSubmissionStatus[] | null,
+  factoringCompanyId: string | null = null,
+) {
   return defineDataTableGraphQLConfig({
     document: FactoringSubmissionTableDocument,
     operationName: "FactoringSubmissionTable",
     connectionKey: "factoringSubmissions",
-    extraVariables: { statuses },
+    extraVariables: { statuses, factoringCompanyId },
   });
 }
 
@@ -499,7 +506,7 @@ export async function releaseFactoringNoa(input: ReleaseFactoringNoaInput): Prom
 export async function fetchFactoringCompany(
   id: string,
   options?: RequestOptions,
-): Promise<FactoringCompany | null> {
+): Promise<FactoringCompanyRecord | null> {
   const data = await requestGraphQL({
     document: FactoringCompanyRecordDocument,
     operationName: "FactoringCompanyRecord",

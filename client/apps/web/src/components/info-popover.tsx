@@ -34,12 +34,12 @@ export function InfoPopover({ title, children, className }: InfoPopoverProps) {
             aria-label={t("About {0}", title)}
             className={cn(
               "inline-flex size-4 shrink-0 items-center justify-center rounded-sm",
-              "text-muted-foreground/70 hover:bg-muted hover:text-foreground transition-colors",
+              "text-muted-foreground hover:bg-muted hover:text-foreground transition-colors",
               "ui-focus-ring",
               className,
             )}
           >
-            <InfoCircleIcon className="size-3" />
+            <InfoCircleIcon className="size-3.5" />
           </button>
         }
       />

@@ -22,6 +22,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditexportservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditintegrity"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditlegalholdservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditoverview"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditreviewservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -36,7 +38,7 @@ func (r *AuditEntryResolver) Operation(ctx context.Context, obj *audit.Entry) (s
 	return string(obj.Operation), nil
 }
 
-func (r *QueryResolver) AuditEntries(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AuditEntryConnection, error) {
+func (r *QueryResolver) AuditEntries(ctx context.Context, input gqlmodel.DataTableConnectionInput, onePerRequest *bool) (*gqlmodel.AuditEntryConnection, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAuditLog, permission.OpRead)
 	if err != nil {
 		return nil, err
@@ -53,12 +55,18 @@ func (r *QueryResolver) AuditEntries(ctx context.Context, input gqlmodel.DataTab
 	}
 
 	result, err := r.AuditService.ListConnection(ctx, &auditports.ListAuditEntriesRequest{
-		Filter:        tableInput.Filter,
-		Cursor:        tableInput.Cursor,
-		Access:        access,
-		IncludeDetail: detailRequested(ctx),
+		Filter:         tableInput.Filter,
+		Cursor:         tableInput.Cursor,
+		Access:         access,
+		IncludeDetail:  detailRequested(ctx),
+		IncludeChanges: changesRequested(ctx),
+		OnePerRequest:  onePerRequest != nil && *onePerRequest,
 	})
 	if err != nil {
+		return nil, err
+	}
+
+	if err = r.countRequests(ctx, authCtx, access, result.Items); err != nil {
 		return nil, err
 	}
 
@@ -92,12 +100,13 @@ func (r *QueryResolver) AuditEntriesByResourceID(ctx context.Context, input gqlm
 	}
 
 	result, err := r.AuditService.ListConnection(ctx, &auditports.ListAuditEntriesRequest{
-		Filter:        tableInput.Filter,
-		Cursor:        tableInput.Cursor,
-		Access:        access,
-		ResourceID:    parsedResourceID.String(),
-		ChangedField:  changedField,
-		IncludeDetail: detailRequested(ctx),
+		Filter:         tableInput.Filter,
+		Cursor:         tableInput.Cursor,
+		Access:         access,
+		ResourceID:     parsedResourceID.String(),
+		ChangedField:   changedField,
+		IncludeDetail:  detailRequested(ctx),
+		IncludeChanges: changesRequested(ctx),
 	})
 	if err != nil {
 		return nil, err
@@ -381,4 +390,86 @@ func (r *QueryResolver) AuditAlertPolicies(ctx context.Context) ([]*auditalertse
 		out = append(out, &views[i])
 	}
 	return out, nil
+}
+
+func (r *AuditReviewResolver) Resource(ctx context.Context, obj *auditreviewservice.View) (string, error) {
+	return obj.Resource.String(), nil
+}
+
+func (r *AuditReviewResolver) ReviewedBy(ctx context.Context, obj *auditreviewservice.View) (*tenant.User, error) {
+	return loaderfields.LoadUser(ctx, obj.ReviewedByID)
+}
+
+func (r *MutationResolver) MarkAuditReviewReviewed(ctx context.Context, id string) (*auditreviewservice.View, error) {
+	return r.setReviewed(ctx, id, true)
+}
+
+func (r *MutationResolver) ReopenAuditReview(ctx context.Context, id string) (*auditreviewservice.View, error) {
+	return r.setReviewed(ctx, id, false)
+}
+
+func (r *QueryResolver) AuditOverview(ctx context.Context, days int) (*gqlmodel.AuditOverview, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAuditLog, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	access, err := r.readableResources(ctx, authCtx)
+	if err != nil {
+		return nil, err
+	}
+
+	overview, err := r.AuditOverviewService.Build(ctx, &auditoverview.Request{
+		TenantInfo:     resolvercore.TenantInfo(authCtx),
+		Days:           days,
+		Access:         access,
+		IncludeReviews: access.IncludeSecurity,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return auditOverviewToModel(ctx, overview)
+}
+
+func (r *QueryResolver) AuditReviews(ctx context.Context, limit *int) (*gqlmodel.AuditReviewList, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceSecurityAuditLog, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	req := &auditreviewservice.ListRequest{TenantInfo: resolvercore.TenantInfo(authCtx)}
+	if limit != nil {
+		req.Limit = *limit
+	}
+	list, err := r.AuditReviewService.List(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return &gqlmodel.AuditReviewList{
+		Open:          reviewPointers(list.Open),
+		OpenCount:     list.OpenCount,
+		Reviewed:      reviewPointers(list.Reviewed),
+		ReviewedCount: list.ReviewedCount,
+	}, nil
+}
+
+func (r *QueryResolver) AuditEntryReview(ctx context.Context, entryID string) (*auditreviewservice.View, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceSecurityAuditLog, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	id, err := pulid.MustParse(entryID)
+	if err != nil {
+		return nil, err
+	}
+
+	view, found, err := r.AuditReviewService.ForEntry(ctx, resolvercore.TenantInfo(authCtx), id)
+	if err != nil || !found {
+		return nil, err
+	}
+
+	return &view, nil
 }

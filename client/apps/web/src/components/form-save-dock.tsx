@@ -10,7 +10,7 @@ import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { SplitButton, type SplitButtonOption } from "@trenova/shared/components/ui/split-button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useFormFieldRegistry } from "@trenova/shared/lib/form-field-registry";
-import { cn } from "@trenova/shared/lib/utils";
+import { AnimatePresence } from "motion/react";
 import type { ReactNode } from "react";
 import { useCallback, useRef, type Ref } from "react";
 import { useFormContext, useFormState } from "react-hook-form";
@@ -88,7 +88,7 @@ function SaveDockContent<T extends string = string>({
     >
       {showReset && (
         <Button
-          type="reset"
+          type="button"
           variant="outline"
           onClick={onReset}
           disabled={isSubmitting}
@@ -121,9 +121,6 @@ function SaveDockContent<T extends string = string>({
   );
 }
 
-const PROMPT_ENTER =
-  "animate-in fade-in-0 slide-in-from-bottom-2 ease-settle duration-200 motion-reduce:animate-none";
-
 /** The dock asking whether to discard, in place of the save. */
 function ClosePromptDock({
   prompt,
@@ -142,7 +139,7 @@ function ClosePromptDock({
     <ActionDock
       position={position}
       width={width}
-      className={cn(PROMPT_ENTER, className)}
+      className={className}
       pillClassName="w-112.5 gap-x-4"
       indicator={
         <div role="alert" className="flex min-w-0 items-center gap-x-3">
@@ -203,15 +200,7 @@ export function FormSaveDock<T extends string = string>({
   });
   const changed = useChangedFieldNames(control);
 
-  const handleReset = useCallback(() => {
-    reset(
-      {},
-      {
-        keepDirty: false,
-        keepValues: true,
-      },
-    );
-  }, [reset]);
+  const handleReset = useCallback(() => reset(), [reset]);
 
   const hasDirtyFields = isDirty && changed.length > 0;
   const liveChanges = hasDirtyFields ? (
@@ -226,48 +215,42 @@ export function FormSaveDock<T extends string = string>({
   ) : undefined;
   const hasTouchedFields = Object.keys(touchedFields).length > 0;
 
-  if (closePrompt) {
-    return (
-      <>
-        {showHeightGap && <div className="h-16" />}
-        <ClosePromptDock
-          key="close-prompt"
-          prompt={closePrompt}
-          position={position}
-          width={width}
-          className={className}
-        />
-      </>
-    );
-  }
-
-  if (alwaysVisible) {
-    // always show
-  } else if (requireInteraction) {
-    if (!hasDirtyFields || !hasTouchedFields) {
-      return null;
-    }
-  } else if (!hasDirtyFields) {
-    return null;
-  }
+  const visible = alwaysVisible
+    ? true
+    : requireInteraction
+      ? hasDirtyFields && hasTouchedFields
+      : hasDirtyFields;
 
   return (
     <>
-      {showHeightGap && <div className="h-16" />}
-      <SaveDockContent
-        saveButtonContent={saveButtonContent}
-        position={position}
-        width={width}
-        className={className}
-        isSubmitting={isSubmitting}
-        isDirty={isDirty}
-        onReset={handleReset}
-        splitButton={splitButton}
-        formId={formId}
-        showReset={showReset}
-        changes={liveChanges}
-        dockRef={dockRef}
-      />
+      {showHeightGap && (closePrompt || visible) ? <div className="h-16" /> : null}
+      <AnimatePresence mode="wait">
+        {closePrompt ? (
+          <ClosePromptDock
+            key="close-prompt"
+            prompt={closePrompt}
+            position={position}
+            width={width}
+            className={className}
+          />
+        ) : visible ? (
+          <SaveDockContent
+            key="save"
+            saveButtonContent={saveButtonContent}
+            position={position}
+            width={width}
+            className={className}
+            isSubmitting={isSubmitting}
+            isDirty={isDirty}
+            onReset={handleReset}
+            splitButton={splitButton}
+            formId={formId}
+            showReset={showReset}
+            changes={liveChanges}
+            dockRef={dockRef}
+          />
+        ) : null}
+      </AnimatePresence>
     </>
   );
 }

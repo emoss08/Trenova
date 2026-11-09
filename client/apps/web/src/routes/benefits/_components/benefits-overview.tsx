@@ -12,7 +12,7 @@ import { costTotals, endingSoon, startingSoon } from "@/lib/benefits-console";
 import NumberFlow from "@number-flow/react";
 import { CompositionBar } from "@trenova/shared/components/ui/composition-bar";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
-import { formatMinor } from "@trenova/shared/lib/benefits";
+import { formatMinor } from "@trenova/shared/lib/money";
 import { useMemo } from "react";
 
 type BenefitsOverviewProps = {

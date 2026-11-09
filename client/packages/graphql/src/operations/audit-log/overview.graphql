@@ -1,0 +1,118 @@
+fragment AuditReviewFields on AuditReview {
+  id
+  kind
+  entryId
+  action
+  resource
+  resourceId
+  entityRef
+  principalId
+  principalType
+  actorName
+  count
+  threshold
+  windowMinutes
+  occurredAt
+  offHours
+  title
+  reviewedAt
+  reviewedBy {
+    id
+    name
+  }
+  version
+}
+
+query AuditOverview($days: Int!) @requiresRead(kind: "user") {
+  auditOverview(days: $days) {
+    days
+    from
+    to
+    timezone
+    unit
+    totals {
+      entries
+      people
+      agentsAsked
+      agentsOwn
+      integrations
+      jobs
+      sensitive
+      security
+      deletesExports
+      peopleOffHours
+    }
+    previousEntries
+    activity {
+      at
+      people
+      agents
+      integrations
+      jobs
+    }
+    actors {
+      people
+      agents
+      integrations
+      jobs
+    }
+    topActors {
+      principalId
+      principalType
+      name
+      entries
+      sensitive
+      user {
+        id
+        name
+        profilePicUrl
+        thumbnailUrl
+      }
+    }
+    otherActors
+    otherEntries
+    reviewsIncluded
+    openReviews {
+      ...AuditReviewFields
+    }
+    openReviewCount
+    summary {
+      text
+      strong
+      tone
+      target
+      targetId
+    }
+  }
+}
+
+query AuditReviews($limit: Int) @requiresRead(kind: "user") {
+  auditReviews(limit: $limit) {
+    open {
+      ...AuditReviewFields
+    }
+    openCount
+    reviewed {
+      ...AuditReviewFields
+    }
+    reviewedCount
+  }
+}
+
+query AuditEntryReview($entryId: ID!) @requiresRead(kind: "user") {
+  auditEntryReview(entryId: $entryId) {
+    ...AuditReviewFields
+  }
+}
+
+mutation MarkAuditReviewReviewed($id: ID!) @requiresRead(kind: "user") {
+  markAuditReviewReviewed(id: $id) {
+    ...AuditReviewFields
+  }
+}
+
+mutation ReopenAuditReview($id: ID!) @requiresRead(kind: "user") {
+  reopenAuditReview(id: $id) {
+    ...AuditReviewFields
+  }
+}

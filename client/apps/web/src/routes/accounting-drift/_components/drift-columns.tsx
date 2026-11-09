@@ -5,8 +5,8 @@ import {
   ACCOUNTING_DRIFT_STATUSES,
   accountingDriftPhase,
   accountingDriftWithinTolerance,
-  formatAccountingMinor,
 } from "@/lib/accounting-sync";
+import { formatMinor } from "@trenova/shared/lib/money";
 import type { AccountingDriftRow } from "@/lib/graphql/accounting-drift-table";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
@@ -15,7 +15,7 @@ import { phaseTone } from "@trenova/shared/lib/status-phase";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 
 function minorOrDash(minor: number | null | undefined, currency: string): string {
-  return minor == null ? "—" : formatAccountingMinor(minor, currency);
+  return minor == null ? "—" : formatMinor(minor, currency);
 }
 
 export function getDriftColumns(
@@ -113,7 +113,7 @@ export function getDriftColumns(
         <span className="tabular-nums">
           {row.original.trenovaMinor == null
             ? row.original.trenovaState
-            : formatAccountingMinor(row.original.trenovaMinor, row.original.currencyCode)}
+            : formatMinor(row.original.trenovaMinor, row.original.currencyCode)}
         </span>
       ),
       size: 140,
@@ -128,7 +128,7 @@ export function getDriftColumns(
         <span className="tabular-nums">
           {row.original.providerMinor == null
             ? row.original.providerState
-            : formatAccountingMinor(row.original.providerMinor, row.original.currencyCode)}
+            : formatMinor(row.original.providerMinor, row.original.currencyCode)}
         </span>
       ),
       size: 140,

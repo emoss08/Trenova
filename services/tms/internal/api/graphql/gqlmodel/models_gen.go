@@ -53,6 +53,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aituneupports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
+	"github.com/emoss08/trenova/internal/modules/billing/app/factoringoverviewservice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingtransfer"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
@@ -65,6 +66,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicedispute"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringremittanceports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
@@ -176,6 +178,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workerschedule"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workertraining"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditreviewservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/customfield"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
@@ -1754,6 +1757,33 @@ type AttentionSummary struct {
 	AgentDecisions *int `json:"agentDecisions,omitempty"`
 }
 
+type AuditActivityBucket struct {
+	// The hour or day the bucket starts, in the organization's time zone.
+	At           int `json:"at"`
+	People       int `json:"people"`
+	Agents       int `json:"agents"`
+	Integrations int `json:"integrations"`
+	Jobs         int `json:"jobs"`
+}
+
+// How many distinct people, agents, keys and system principals wrote entries.
+type AuditActorCounts struct {
+	People       int `json:"people"`
+	Agents       int `json:"agents"`
+	Integrations int `json:"integrations"`
+	Jobs         int `json:"jobs"`
+}
+
+type AuditActorStat struct {
+	PrincipalID   string `json:"principalId"`
+	PrincipalType string `json:"principalType"`
+	// The name they last wrote an entry under in the window.
+	Name      string       `json:"name"`
+	Entries   int          `json:"entries"`
+	Sensitive int          `json:"sensitive"`
+	User      *tenant.User `json:"user,omitempty"`
+}
+
 type AuditEntryConnection struct {
 	Edges      []*AuditEntryEdge `json:"edges"`
 	PageInfo   *PageInfo         `json:"pageInfo"`
@@ -1798,6 +1828,67 @@ type AuditLegalHoldConnection struct {
 type AuditLegalHoldEdge struct {
 	Node   *audit.LegalHold `json:"node"`
 	Cursor string           `json:"cursor"`
+}
+
+// What happened in the organization's audit log over whole days of its time zone, read from rollups refreshed every minute.
+type AuditOverview struct {
+	Days     int                   `json:"days"`
+	From     int                   `json:"from"`
+	To       int                   `json:"to"`
+	Timezone string                `json:"timezone"`
+	Unit     AuditOverviewUnit     `json:"unit"`
+	Totals   *AuditOverviewFigures `json:"totals"`
+	// Entries in the window of the same length before this one.
+	PreviousEntries int                    `json:"previousEntries"`
+	Activity        []*AuditActivityBucket `json:"activity"`
+	Actors          *AuditActorCounts      `json:"actors"`
+	TopActors       []*AuditActorStat      `json:"topActors"`
+	OtherActors     int                    `json:"otherActors"`
+	OtherEntries    int                    `json:"otherEntries"`
+	// Whether the caller can read reviews; without security_audit_log read the review fields are empty.
+	ReviewsIncluded bool                       `json:"reviewsIncluded"`
+	OpenReviews     []*auditreviewservice.View `json:"openReviews"`
+	OpenReviewCount int                        `json:"openReviewCount"`
+	Summary         []*AuditOverviewSegment    `json:"summary"`
+}
+
+// The overview's figures, each a count of entries the caller can read.
+type AuditOverviewFigures struct {
+	Entries int `json:"entries"`
+	// Entries written through the web app, the portal or Trenova support.
+	People int `json:"people"`
+	// Entries an agent wrote in a conversation, for the person in it.
+	AgentsAsked int `json:"agentsAsked"`
+	// Entries an agent wrote on its own.
+	AgentsOwn int `json:"agentsOwn"`
+	// Entries written with an API key or by a SCIM directory.
+	Integrations int `json:"integrations"`
+	// Entries written by background jobs, the command line or the system.
+	Jobs int `json:"jobs"`
+	// Security entries, critical ones, deletes and exports.
+	Sensitive      int `json:"sensitive"`
+	Security       int `json:"security"`
+	DeletesExports int `json:"deletesExports"`
+	// People's entries written between 8 PM and 6 AM in the organization's time zone.
+	PeopleOffHours int `json:"peopleOffHours"`
+}
+
+// One run of the overview's sentence: plain, strong, or a reference that opens what it names.
+type AuditOverviewSegment struct {
+	Text   string               `json:"text"`
+	Strong bool                 `json:"strong"`
+	Tone   *string              `json:"tone,omitempty"`
+	Target *AuditOverviewTarget `json:"target,omitempty"`
+	// A review's ID, or a quick view: agents, security or deletes.
+	TargetID *string `json:"targetId,omitempty"`
+}
+
+type AuditReviewList struct {
+	Open      []*auditreviewservice.View `json:"open"`
+	OpenCount int                        `json:"openCount"`
+	// Reviewed in the last seven days, latest first.
+	Reviewed      []*auditreviewservice.View `json:"reviewed"`
+	ReviewedCount int                        `json:"reviewedCount"`
 }
 
 type AuthEventConnection struct {
@@ -6169,12 +6260,62 @@ type FactoringAgreementInput struct {
 	CashAccountID          *string                       `json:"cashAccountId,omitempty"`
 }
 
+type FactoringAttention struct {
+	Kind factoringoverviewservice.AttentionKind `json:"kind"`
+	// danger, warning or neutral.
+	Tone          string  `json:"tone"`
+	Count         int     `json:"count"`
+	AmountMinor   int     `json:"amountMinor"`
+	At            *int    `json:"at,omitempty"`
+	SubmissionID  *string `json:"submissionId,omitempty"`
+	Number        *string `json:"number,omitempty"`
+	InvoiceID     *string `json:"invoiceId,omitempty"`
+	InvoiceNumber *string `json:"invoiceNumber,omitempty"`
+	CustomerName  *string `json:"customerName,omitempty"`
+	RemittanceID  *string `json:"remittanceId,omitempty"`
+	FileName      *string `json:"fileName,omitempty"`
+	// Invoices on the failed schedules, or lines on the remittance.
+	LineCount      int `json:"lineCount"`
+	ExceptionCount int `json:"exceptionCount"`
+	// The delivery error, as the server reported it.
+	Detail *string `json:"detail,omitempty"`
+}
+
 type FactoringCompanyConnection struct {
 	Edges      []*FactoringCompanyEdge `json:"edges"`
 	PageInfo   *PageInfo               `json:"pageInfo"`
 	TotalCount *int                    `json:"totalCount,omitempty"`
 	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
 	TotalCountExact bool `json:"totalCountExact"`
+}
+
+// A customer whose billing profile assigns its invoices to the factor.
+type FactoringCompanyCustomer struct {
+	// The customer's id.
+	ID     string             `json:"id"`
+	Code   string             `json:"code"`
+	Name   string             `json:"name"`
+	Status domaintypes.Status `json:"status"`
+	// The notice that is not released: drafted, sent or acknowledged. Null without notice read.
+	Notice *factoring.Noa `json:"notice,omitempty"`
+	// When its last notice to this factor was released, when none is open.
+	LastReleasedAt *int `json:"lastReleasedAt,omitempty"`
+	FundedCount    int  `json:"fundedCount"`
+	// Face value funded and not yet released. Zero without reserve read.
+	FundedMinor int `json:"fundedMinor"`
+}
+
+type FactoringCompanyCustomerConnection struct {
+	Edges      []*FactoringCompanyCustomerEdge `json:"edges"`
+	PageInfo   *PageInfo                       `json:"pageInfo"`
+	TotalCount *int                            `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
+}
+
+type FactoringCompanyCustomerEdge struct {
+	Node   *FactoringCompanyCustomer `json:"node"`
+	Cursor string                    `json:"cursor"`
 }
 
 type FactoringCompanyEdge struct {
@@ -6200,6 +6341,52 @@ type FactoringCompanyInput struct {
 	Notes       *string `json:"notes,omitempty"`
 }
 
+// Where one factor's invoices are, what needs someone, and Nova's summary, read in one batch.
+type FactoringCompanyOverview struct {
+	FactoringCompanyID string `json:"factoringCompanyId"`
+	CurrencyCode       string `json:"currencyCode"`
+	// False when the caller can't read factoring reserves: every amount is zero and the summary leaves money out.
+	AmountsIncluded bool `json:"amountsIncluded"`
+	// The days released and charged back cover.
+	MovedWindowDays int                           `json:"movedWindowDays"`
+	Ready           *factoringports.VerdictTotals `json:"ready"`
+	// Ready for more than a day without being submitted.
+	ReadyLate *factoringports.VerdictTotals `json:"readyLate"`
+	Submitted *factoringports.VerdictTotals `json:"submitted"`
+	// Funded and not yet released or charged back, by face value.
+	Funded      *factoringports.VerdictTotals `json:"funded"`
+	ReserveHeld *factoringports.VerdictTotals `json:"reserveHeld"`
+	// Reserve released in the window, by invoices and cash returned.
+	Released *factoringports.VerdictTotals `json:"released"`
+	// Funded recourse invoices whose chargeback window closes within a week, by what the organization would repay.
+	ChargebacksDue *factoringports.VerdictTotals `json:"chargebacksDue"`
+	// Chargebacks booked in the window, by invoices and cash repaid.
+	ChargedBack        *factoringports.VerdictTotals `json:"chargedBack"`
+	OldestFundedOn     *int                          `json:"oldestFundedOn,omitempty"`
+	ChargebackDeadline *int                          `json:"chargebackDeadline,omitempty"`
+	// The newest schedule waiting on funding.
+	Awaiting      *factoringports.AwaitingSubmission `json:"awaiting,omitempty"`
+	AwaitingCount int                                `json:"awaitingCount"`
+	// The last funded schedules, oldest first.
+	Pace           []*factoringoverviewservice.PacePoint `json:"pace"`
+	PaceMedianDays *int                                  `json:"paceMedianDays,omitempty"`
+	PaceLate       int                                   `json:"paceLate"`
+	// The agreement in force now.
+	Agreement *factoring.Agreement            `json:"agreement,omitempty"`
+	Delivery  *FactoringDeliveryHealth        `json:"delivery"`
+	Notices   *factoringports.NoticeCounts    `json:"notices"`
+	Attention []*FactoringAttention           `json:"attention"`
+	Setup     *factoringoverviewservice.Setup `json:"setup"`
+	Summary   []*FactoringOverviewSegment     `json:"summary"`
+}
+
+type FactoringDeliveryHealth struct {
+	Configured    bool                                 `json:"configured"`
+	Method        *factoringsubmission.TransportMethod `json:"method,omitempty"`
+	LastTestedAt  *int                                 `json:"lastTestedAt,omitempty"`
+	LastTestError *string                              `json:"lastTestError,omitempty"`
+}
+
 type FactoringFeeTierInput struct {
 	DaysFrom  int  `json:"daysFrom"`
 	DaysTo    *int `json:"daysTo,omitempty"`
@@ -6216,6 +6403,17 @@ type FactoringFundingItemInput struct {
 	FeeMinor *int `json:"feeMinor,omitempty"`
 	// Why the factor rejected the invoice.
 	Reason *string `json:"reason,omitempty"`
+}
+
+// An invoice and the terms to price it with: what the agreement page's calculator sends.
+type FactoringFundingPreviewInput struct {
+	FaceMinor int `json:"faceMinor"`
+	// Days of terms left when submitted, which picks the fee tier.
+	Days            int                      `json:"days"`
+	AdvanceRateBp   int                      `json:"advanceRateBp"`
+	ReserveRateBp   int                      `json:"reserveRateBp"`
+	MinimumFeeMinor int                      `json:"minimumFeeMinor"`
+	FeeTiers        []*FactoringFeeTierInput `json:"feeTiers"`
 }
 
 type FactoringInvoiceStateConnection struct {
@@ -6256,6 +6454,15 @@ type FactoringNoaListInput struct {
 	CustomerID         *string                   `json:"customerId,omitempty"`
 	FactoringCompanyID *string                   `json:"factoringCompanyId,omitempty"`
 	Statuses           []factoring.NoaStatus     `json:"statuses,omitempty"`
+}
+
+// One run of the factor's summary: plain, strong, or a phrase that opens the tab it names.
+type FactoringOverviewSegment struct {
+	Text   string `json:"text"`
+	Strong bool   `json:"strong"`
+	// danger, warning or null.
+	Tone   *string                          `json:"tone,omitempty"`
+	Target *factoringoverviewservice.Target `json:"target,omitempty"`
 }
 
 // Which column of the file holds a field.
@@ -14060,6 +14267,116 @@ func (e *AssignmentStatus) UnmarshalJSON(b []byte) error {
 }
 
 func (e AssignmentStatus) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type AuditOverviewTarget string
+
+const (
+	AuditOverviewTargetReview AuditOverviewTarget = "Review"
+	AuditOverviewTargetView   AuditOverviewTarget = "View"
+)
+
+var AllAuditOverviewTarget = []AuditOverviewTarget{
+	AuditOverviewTargetReview,
+	AuditOverviewTargetView,
+}
+
+func (e AuditOverviewTarget) IsValid() bool {
+	switch e {
+	case AuditOverviewTargetReview, AuditOverviewTargetView:
+		return true
+	}
+	return false
+}
+
+func (e AuditOverviewTarget) String() string {
+	return string(e)
+}
+
+func (e *AuditOverviewTarget) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = AuditOverviewTarget(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid AuditOverviewTarget", str)
+	}
+	return nil
+}
+
+func (e AuditOverviewTarget) MarshalGQL(w io.Writer) {
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *AuditOverviewTarget) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e AuditOverviewTarget) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+type AuditOverviewUnit string
+
+const (
+	AuditOverviewUnitHour AuditOverviewUnit = "Hour"
+	AuditOverviewUnitDay  AuditOverviewUnit = "Day"
+)
+
+var AllAuditOverviewUnit = []AuditOverviewUnit{
+	AuditOverviewUnitHour,
+	AuditOverviewUnitDay,
+}
+
+func (e AuditOverviewUnit) IsValid() bool {
+	switch e {
+	case AuditOverviewUnitHour, AuditOverviewUnitDay:
+		return true
+	}
+	return false
+}
+
+func (e AuditOverviewUnit) String() string {
+	return string(e)
+}
+
+func (e *AuditOverviewUnit) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = AuditOverviewUnit(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid AuditOverviewUnit", str)
+	}
+	return nil
+}
+
+func (e AuditOverviewUnit) MarshalGQL(w io.Writer) {
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *AuditOverviewUnit) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e AuditOverviewUnit) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil

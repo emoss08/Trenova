@@ -6,8 +6,6 @@ import {
   boardGroupKey,
   collapsedScopeFor,
   consigneeStop,
-  dayBounds,
-  dayKey,
   groupSort,
   parseCollapsedKeys,
   shipperStop,
@@ -68,23 +66,6 @@ describe("shipperStop and consigneeStop", () => {
     expect(shipperStop(shipment({}))).toBeNull();
     expect(shipperStop(shipment({ moves: [move(0, [stop("s", "Delivery", 0)])] }))).toBeNull();
     expect(consigneeStop(shipment({ moves: [] }))).toBeNull();
-  });
-});
-
-describe("dayKey and dayBounds", () => {
-  it("read the day in the board's zone, not UTC's", () => {
-    expect(dayKey(Date.UTC(2026, 9, 8, 3, 0) / 1000, CHICAGO)).toBe("2026-10-07");
-    expect(dayKey(Date.UTC(2026, 9, 8, 3, 0) / 1000, "UTC")).toBe("2026-10-08");
-    expect(dayKey(null, CHICAGO)).toBe("");
-  });
-
-  it("cover a 25-hour day when the clocks fall back", () => {
-    const bounds = dayBounds("2026-11-01", CHICAGO);
-    expect(bounds).toEqual({
-      start: Date.UTC(2026, 10, 1, 5) / 1000,
-      end: Date.UTC(2026, 10, 2, 6) / 1000,
-    });
-    expect(dayBounds("not-a-day", CHICAGO)).toBeNull();
   });
 });
 

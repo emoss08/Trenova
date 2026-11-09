@@ -68,6 +68,13 @@ func (r *fakeRepo) TenantsWithEntries(context.Context, int64, int64) ([]auditpor
 	return nil, nil
 }
 
+func (r *fakeRepo) CountByRequest(
+	context.Context,
+	*auditports.CountByRequestRequest,
+) (map[string]int64, error) {
+	return map[string]int64{}, nil
+}
+
 type noopRealtimeService struct{}
 
 func (s *noopRealtimeService) PublishResourceInvalidation(

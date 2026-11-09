@@ -1,6 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
-import { formatMinor } from "@trenova/shared/lib/benefits";
+import { formatMinor } from "@trenova/shared/lib/money";
 import { formatUnixDateMedium, formatUnixDateTimeMedium } from "@trenova/shared/lib/date";
 import { ACTIVITY_KIND_LABEL } from "@/lib/collection-labels";
 import type { CollectionActivity } from "@/types/collection";

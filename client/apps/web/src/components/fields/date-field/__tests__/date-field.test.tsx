@@ -4,7 +4,7 @@ import {
   setUserDatePreferences,
   toUnixTimeStamp,
 } from "@trenova/shared/lib/date";
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useForm, useWatch } from "react-hook-form";
 import { afterEach, describe, expect, it } from "vitest";
@@ -122,10 +122,9 @@ describe("AutoCompleteDateField", () => {
     );
   });
 
-  it("reverts unparseable text on blur without changing the value", async () => {
+  it("keeps text that is not a date, says so, and clears the value instead of keeping the old one", async () => {
     const user = userEvent.setup();
     const initialDate = new Date(2024, 0, 15);
-    const initialTimestamp = toUnixTimeStamp(initialDate);
 
     render(<DateFieldHarness initialDate={initialDate} />);
 
@@ -134,8 +133,64 @@ describe("AutoCompleteDateField", () => {
     await user.keyboard("{Control>}a{/Control}zzzz");
     await user.tab();
 
-    expect(input).toHaveValue(generateDateOnlyString(initialDate));
-    expect(screen.getByLabelText("date value")).toHaveTextContent(String(initialTimestamp));
+    expect(input).toHaveValue("zzzz");
+    expect(input).toHaveAttribute("aria-invalid", "true");
+    expect(
+      screen.getByText('"zzzz" is not a date. Try "t+2", "next friday", or "07/15".'),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("date value")).toHaveTextContent("null");
+  });
+
+  it("drops the warning once a real date replaces the text", async () => {
+    const user = userEvent.setup();
+
+    render(<DateFieldHarness initialDate={new Date(2024, 0, 15)} />);
+
+    const input = screen.getByRole("combobox", { name: "Date" });
+    await user.click(input);
+    await user.keyboard("{Control>}a{/Control}zzzz");
+    await user.tab();
+    await user.click(input);
+    await user.keyboard("{Control>}a{/Control}01/20/2024");
+    await user.tab();
+
+    expect(input).toHaveValue("01/20/2024");
+    expect(input).not.toHaveAttribute("aria-invalid", "true");
+    expect(screen.queryByText(/is not a date/)).not.toBeInTheDocument();
+  });
+
+  it("does not open the suggestions when the field is only focused, as a dialog does on open", async () => {
+    const user = userEvent.setup();
+
+    render(<DateFieldHarness initialDate={new Date(2024, 0, 15)} />);
+
+    const input = screen.getByRole("combobox", { name: "Date" });
+    act(() => input.focus());
+    expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+    expect(input).toHaveAttribute("aria-expanded", "false");
+
+    await user.keyboard("{ArrowDown}");
+    expect(screen.getByRole("listbox", { name: "Date suggestions" })).toBeInTheDocument();
+  });
+
+  it("offers the shortcuts when a filled field is clicked, not just its own value", async () => {
+    const user = userEvent.setup();
+
+    render(<DateFieldHarness initialDate={new Date(2024, 0, 15)} />);
+
+    await user.click(screen.getByRole("combobox", { name: "Date" }));
+
+    const options = within(screen.getByRole("listbox", { name: "Date suggestions" })).getAllByRole(
+      "option",
+    );
+    expect(options.map((option) => option.querySelector("span")?.textContent)).toEqual([
+      "t",
+      "t+1",
+      "t+2",
+      "t+3",
+      "t+5",
+      "t+7",
+    ]);
   });
 
   it("reverts typed text when Escape is pressed", async () => {

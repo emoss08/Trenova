@@ -214,6 +214,25 @@ useForm({
 
 A message the module returns is shown with `translateMessage(message, t)`.
 
+## A server-owned calculation, shown live (`factoring-funding-calculator.tsx`)
+
+A sum the server owns in Go and the rules module does not hold (factoring funding: advance,
+fee, release) is never copied into TypeScript to make a calculator feel instant. The server
+exposes a read that computes from the inputs alone, with no database read
+(`factoringFundingPreview`), and the screen settles its inputs and keeps the last answer on
+screen while the next one loads:
+
+```tsx
+const face = useSettledValue(faceMinor, 150);
+const preview = useQuery({
+  ...factoring.fundingPreview({ faceMinor: face, days, ...terms }),
+  placeholderData: keepPreviousData,
+});
+```
+
+Comparing or dividing what came back (a yearly rate, "the minimum was charged") is display
+work; choosing a tier or rounding a fee is not.
+
 ## A sheet of hundreds of rows (`components/timeline/`)
 
 Every timeline is one shared sheet: the shipments board and the dispatch console both draw on

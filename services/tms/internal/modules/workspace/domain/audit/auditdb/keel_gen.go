@@ -3084,6 +3084,640 @@ func beforeCreateLegalHold(ctx context.Context, p unsafe.Pointer) error {
 	return (*audit.LegalHold)(p).BeforeCreate(ctx)
 }
 
+// reviewsTable is the schema of audit.Review.
+var reviewsTable = schema.Table{
+	Name:   "audit_reviews",
+	Quoted: `"audit_reviews"`,
+	Alias:  "ar",
+	Model:  "audit.Review",
+	Label:  `Review`,
+	Plural: `Reviews`,
+	Columns: []schema.Column{
+		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
+		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
+		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},
+		{Name: "kind", Quoted: `"kind"`, Field: "Kind", Kind: schema.KindString, Flags: 0, Label: `Kind`, JSON: `kind`, Enum: enumAlertKind[:]},
+		{Name: "dedupe_key", Quoted: `"dedupe_key"`, Field: "DedupeKey", Kind: schema.KindString, Flags: 0, Label: `Dedupe Key`},
+		{Name: "entry_id", Quoted: `"entry_id"`, Field: "EntryID", Kind: schema.KindString, Flags: 0, Label: `Entry ID`, JSON: `entryId`},
+		{Name: "action", Quoted: `"action"`, Field: "Action", Kind: schema.KindString, Flags: 0, Label: `Action`, JSON: `action`},
+		{Name: "resource", Quoted: `"resource"`, Field: "Resource", Kind: schema.KindString, Flags: 0, Label: `Resource`, JSON: `resource`, Enum: enumPermissionResource[:]},
+		{Name: "resource_id", Quoted: `"resource_id"`, Field: "ResourceID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Resource ID`, JSON: `resourceId`},
+		{Name: "entity_ref", Quoted: `"entity_ref"`, Field: "EntityRef", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Entity Ref`, JSON: `entityRef`},
+		{Name: "principal_id", Quoted: `"principal_id"`, Field: "PrincipalID", Kind: schema.KindString, Flags: 0, Label: `Principal ID`, JSON: `principalId`},
+		{Name: "principal_type", Quoted: `"principal_type"`, Field: "PrincipalType", Kind: schema.KindString, Flags: 0, Label: `Principal Type`, JSON: `principalType`},
+		{Name: "actor_name", Quoted: `"actor_name"`, Field: "ActorName", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Actor Name`, JSON: `actorName`},
+		{Name: "count", Quoted: `"count"`, Field: "Count", Kind: schema.KindInt64, Flags: 0, Label: `Count`, JSON: `count`},
+		{Name: "threshold", Quoted: `"threshold"`, Field: "Threshold", Kind: schema.KindInt64, Flags: 0, Label: `Threshold`, JSON: `threshold`},
+		{Name: "window_minutes", Quoted: `"window_minutes"`, Field: "WindowMinutes", Kind: schema.KindInt64, Flags: 0, Label: `Window Minutes`, JSON: `windowMinutes`},
+		{Name: "occurred_at", Quoted: `"occurred_at"`, Field: "OccurredAt", Kind: schema.KindInt64, Flags: 0, Label: `Occurred At`, JSON: `occurredAt`},
+		{Name: "reviewed_by_id", Quoted: `"reviewed_by_id"`, Field: "ReviewedByID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Reviewed By ID`, JSON: `reviewedById`},
+		{Name: "reviewed_at", Quoted: `"reviewed_at"`, Field: "ReviewedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Reviewed At`, JSON: `reviewedAt`},
+		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, JSON: `version`},
+		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
+		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
+	},
+	PK:         []int32{0, 1, 2},
+	Tenant:     []int32{1, 2},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21},
+	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 21},
+	Returning:  nil,
+	Version:    19,
+	AutoID:     0,
+	AutoCreate: 20,
+	AutoUpdate: 21,
+	IDPrefix:   "arv_",
+	New:        newReview,
+	NewN:       newNReview,
+	Size:       unsafe.Sizeof(audit.Review{}),
+	Ptr:        ptrReview,
+	Value:      valueReview,
+}
+
+var reviewsRef = keel.Ref{Table: &reviewsTable}
+
+// ReviewsTable is the table of audit.Review.
+type ReviewsTable struct {
+	keel.TableBase
+	ID             keelkinds.PulidIDCol
+	BusinessUnitID keelkinds.PulidIDCol
+	OrganizationID keelkinds.PulidIDCol
+	Kind           AlertKindCol
+	DedupeKey      keel.StringCol
+	EntryID        keelkinds.PulidIDCol
+	Action         keel.StringCol
+	Resource       keelkinds.PermissionResourceCol
+	ResourceID     keel.StringCol
+	EntityRef      keel.StringCol
+	PrincipalID    keelkinds.PulidIDCol
+	PrincipalType  keel.StringCol
+	ActorName      keel.StringCol
+	Count          keel.Int64Col
+	Threshold      keel.Int64Col
+	WindowMinutes  keel.Int64Col
+	OccurredAt     keel.Int64Col
+	ReviewedByID   keelkinds.PulidIDCol
+	ReviewedAt     keel.Int64Col
+	Version        keel.Int64Col
+	CreatedAt      keel.Int64Col
+	UpdatedAt      keel.Int64Col
+}
+
+// Reviews references the audit_reviews table.
+var Reviews = &ReviewsTable{
+	TableBase:      keel.TableBase{Ref: &reviewsRef},
+	ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reviewsRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reviewsRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reviewsRef, Index: 2}}},
+	Kind:           AlertKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reviewsRef, Index: 3}}},
+	DedupeKey:      keel.StringCol{Col: keel.Col{Ref: &reviewsRef, Index: 4}},
+	EntryID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reviewsRef, Index: 5}}},
+	Action:         keel.StringCol{Col: keel.Col{Ref: &reviewsRef, Index: 6}},
+	Resource:       keelkinds.PermissionResourceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reviewsRef, Index: 7}}},
+	ResourceID:     keel.StringCol{Col: keel.Col{Ref: &reviewsRef, Index: 8}},
+	EntityRef:      keel.StringCol{Col: keel.Col{Ref: &reviewsRef, Index: 9}},
+	PrincipalID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reviewsRef, Index: 10}}},
+	PrincipalType:  keel.StringCol{Col: keel.Col{Ref: &reviewsRef, Index: 11}},
+	ActorName:      keel.StringCol{Col: keel.Col{Ref: &reviewsRef, Index: 12}},
+	Count:          keel.Int64Col{Col: keel.Col{Ref: &reviewsRef, Index: 13}},
+	Threshold:      keel.Int64Col{Col: keel.Col{Ref: &reviewsRef, Index: 14}},
+	WindowMinutes:  keel.Int64Col{Col: keel.Col{Ref: &reviewsRef, Index: 15}},
+	OccurredAt:     keel.Int64Col{Col: keel.Col{Ref: &reviewsRef, Index: 16}},
+	ReviewedByID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reviewsRef, Index: 17}}},
+	ReviewedAt:     keel.Int64Col{Col: keel.Col{Ref: &reviewsRef, Index: 18}},
+	Version:        keel.Int64Col{Col: keel.Col{Ref: &reviewsRef, Index: 19}},
+	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &reviewsRef, Index: 20}},
+	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &reviewsRef, Index: 21}},
+}
+
+// BuildReviews builds the table of audit_reviews for ref. Generated relation and alias methods call it.
+func BuildReviews(r *keel.Ref) *ReviewsTable {
+	return &ReviewsTable{
+		TableBase:      keel.TableBase{Ref: r},
+		ID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		Kind:           AlertKindCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		DedupeKey:      keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
+		EntryID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		Action:         keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
+		Resource:       keelkinds.PermissionResourceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		ResourceID:     keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
+		EntityRef:      keel.StringCol{Col: keel.Col{Ref: r, Index: 9}},
+		PrincipalID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		PrincipalType:  keel.StringCol{Col: keel.Col{Ref: r, Index: 11}},
+		ActorName:      keel.StringCol{Col: keel.Col{Ref: r, Index: 12}},
+		Count:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
+		Threshold:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
+		WindowMinutes:  keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
+		OccurredAt:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
+		ReviewedByID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 17}}},
+		ReviewedAt:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
+		Version:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 19}},
+		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 20}},
+		UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 21}},
+	}
+}
+
+// ReviewsSchema returns the schema of audit_reviews.
+func ReviewsSchema() *schema.Table { return &reviewsTable }
+
+// As returns a handle that references audit_reviews under its own alias.
+func (t *ReviewsTable) As(alias string) *ReviewsTable { return keel.Alias(t.Ref, alias, BuildReviews) }
+
+// Get returns the audit_reviews row with the given key, or keel.ErrNotFound.
+func (t *ReviewsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*audit.Review, error) {
+	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+// ReviewsQuery is a query over audit.Review.
+type ReviewsQuery struct{ keel.QueryCore }
+
+var _ keel.Query[*audit.Review] = (*ReviewsQuery)(nil)
+
+// Query starts a query over the table.
+func (t *ReviewsTable) Query() keel.Query[*audit.Review] {
+	return &ReviewsQuery{QueryCore: keel.NewQueryCore(t.Ref)}
+}
+
+// Where starts a query; see ReviewsQuery.Where.
+func (t *ReviewsTable) Where(ps ...keel.Pred) keel.Query[*audit.Review] {
+	return t.Query().Where(ps...)
+}
+
+// Pick starts a query; see ReviewsQuery.Pick.
+func (t *ReviewsTable) Pick(es ...keel.Expr) keel.Query[*audit.Review] {
+	return t.Query().Pick(es...)
+}
+
+// Load starts a query; see ReviewsQuery.Load.
+func (t *ReviewsTable) Load(ls ...keel.Loader) keel.Query[*audit.Review] {
+	return t.Query().Load(ls...)
+}
+
+// Omit starts a query; see ReviewsQuery.Omit.
+func (t *ReviewsTable) Omit(cols ...keel.Column) keel.Query[*audit.Review] {
+	return t.Query().Omit(cols...)
+}
+
+// Order starts a query; see ReviewsQuery.Order.
+func (t *ReviewsTable) Order(os ...keel.Order) keel.Query[*audit.Review] {
+	return t.Query().Order(os...)
+}
+
+// Limit starts a query; see ReviewsQuery.Limit.
+func (t *ReviewsTable) Limit(n int) keel.Query[*audit.Review] {
+	return t.Query().Limit(n)
+}
+
+// Group starts a query; see ReviewsQuery.Group.
+func (t *ReviewsTable) Group(es ...keel.Expr) keel.Query[*audit.Review] {
+	return t.Query().Group(es...)
+}
+
+// GroupingSets starts a query; see ReviewsQuery.GroupingSets.
+func (t *ReviewsTable) GroupingSets(sets ...[]keel.Expr) keel.Query[*audit.Review] {
+	return t.Query().GroupingSets(sets...)
+}
+
+// Rollup starts a query; see ReviewsQuery.Rollup.
+func (t *ReviewsTable) Rollup(es ...keel.Expr) keel.Query[*audit.Review] {
+	return t.Query().Rollup(es...)
+}
+
+// Cube starts a query; see ReviewsQuery.Cube.
+func (t *ReviewsTable) Cube(es ...keel.Expr) keel.Query[*audit.Review] {
+	return t.Query().Cube(es...)
+}
+
+// AllTenants starts a query; see ReviewsQuery.AllTenants.
+func (t *ReviewsTable) AllTenants() keel.Query[*audit.Review] {
+	return t.Query().AllTenants()
+}
+
+// Join starts a query; see ReviewsQuery.Join.
+func (t *ReviewsTable) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*audit.Review] {
+	return t.Query().Join(other, on...)
+}
+
+// LeftJoin starts a query; see ReviewsQuery.LeftJoin.
+func (t *ReviewsTable) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*audit.Review] {
+	return t.Query().LeftJoin(other, on...)
+}
+
+// LeftJoinLateral starts a query; see ReviewsQuery.LeftJoinLateral.
+func (t *ReviewsTable) LeftJoinLateral(sub keel.LateralSource) keel.Query[*audit.Review] {
+	return t.Query().LeftJoinLateral(sub)
+}
+
+// JoinLateral starts a query; see ReviewsQuery.JoinLateral.
+func (t *ReviewsTable) JoinLateral(sub keel.LateralSource) keel.Query[*audit.Review] {
+	return t.Query().JoinLateral(sub)
+}
+
+// Lock starts a query; see ReviewsQuery.Lock.
+func (t *ReviewsTable) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*audit.Review] {
+	return t.Query().Lock(strength, wait...)
+}
+
+// DistinctOn starts a query; see ReviewsQuery.DistinctOn.
+func (t *ReviewsTable) DistinctOn(es ...keel.Expr) keel.Query[*audit.Review] {
+	return t.Query().DistinctOn(es...)
+}
+
+// Cache starts a query; see ReviewsQuery.Cache.
+func (t *ReviewsTable) Cache(opts ...keel.CacheOption) keel.Query[*audit.Review] {
+	return t.Query().Cache(opts...)
+}
+
+// LoadStrategy starts a query; see ReviewsQuery.LoadStrategy.
+func (t *ReviewsTable) LoadStrategy(s keel.LoadStrategy) keel.Query[*audit.Review] {
+	return t.Query().LoadStrategy(s)
+}
+
+// With starts a query; see ReviewsQuery.With.
+func (t *ReviewsTable) With(ctes ...*keel.CTETable) keel.Query[*audit.Review] {
+	return t.Query().With(ctes...)
+}
+
+// Compute starts a query; see ReviewsQuery.Compute.
+func (t *ReviewsTable) Compute(col keel.Column, e keel.Expr) keel.Query[*audit.Review] {
+	return t.Query().Compute(col, e)
+}
+
+// Create inserts row.
+func (t *ReviewsTable) Create(ctx context.Context, db *keel.DB, row *audit.Review) error {
+	return keel.CreatePtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
+}
+
+// CreateMany inserts rows with as few statements as Postgres's parameter limit allows.
+func (t *ReviewsTable) CreateMany(ctx context.Context, db *keel.DB, rows []*audit.Review) error {
+	return keel.CreateManyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
+}
+
+// Save updates row by its primary key.
+func (t *ReviewsTable) Save(ctx context.Context, db *keel.DB, row *audit.Review, cols ...keel.Column) error {
+	return keel.SavePtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
+}
+
+// SaveExcept is Save writing every updatable column except cols.
+func (t *ReviewsTable) SaveExcept(ctx context.Context, db *keel.DB, row *audit.Review, cols ...keel.Column) error {
+	return keel.SaveExceptPtr(ctx, db, &t.TableBase, unsafe.Pointer(row), cols...)
+}
+
+// DeleteRow deletes row by its primary key.
+func (t *ReviewsTable) DeleteRow(ctx context.Context, db *keel.DB, row *audit.Review) error {
+	return keel.DeleteRowPtr(ctx, db, &t.TableBase, unsafe.Pointer(row))
+}
+
+// Upsert inserts rows, updating the existing row on conflict.
+func (t *ReviewsTable) Upsert(ctx context.Context, db *keel.DB, rows []*audit.Review, c keel.Conflict) ([]bool, error) {
+	return keel.UpsertPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), c)
+}
+
+// CreateOrSkip inserts rows, skipping those that conflict on targets.
+func (t *ReviewsTable) CreateOrSkip(ctx context.Context, db *keel.DB, rows []*audit.Review, targets ...keel.Expr) (int64, error) {
+	return keel.CreateOrSkipPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)), targets...)
+}
+
+// Copy inserts rows through Postgres's binary COPY protocol.
+func (t *ReviewsTable) Copy(ctx context.Context, db *keel.DB, rows []*audit.Review) (int64, error) {
+	return keel.CopyPtrs(ctx, db, &t.TableBase, *(*[]unsafe.Pointer)(unsafe.Pointer(&rows)))
+}
+
+// Where adds predicates, joined by AND. Nil predicates are skipped.
+func (q *ReviewsQuery) Where(ps ...keel.Pred) keel.Query[*audit.Review] {
+	q.QueryCore.Where(ps...)
+	return q
+}
+
+// Pick selects only es.
+func (q *ReviewsQuery) Pick(es ...keel.Expr) keel.Query[*audit.Review] {
+	q.QueryCore.Pick(es...)
+	return q
+}
+
+// Omit leaves cols out of the columns the query reads.
+func (q *ReviewsQuery) Omit(cols ...keel.Column) keel.Query[*audit.Review] {
+	q.QueryCore.Omit(cols...)
+	return q
+}
+
+// Load loads relations into the rows.
+func (q *ReviewsQuery) Load(ls ...keel.Loader) keel.Query[*audit.Review] {
+	q.QueryCore.Load(ls...)
+	return q
+}
+
+// Order sets the sort order.
+func (q *ReviewsQuery) Order(os ...keel.Order) keel.Query[*audit.Review] {
+	q.QueryCore.Order(os...)
+	return q
+}
+
+// Distinct returns each distinct row once: SELECT DISTINCT.
+func (q *ReviewsQuery) Distinct() keel.Query[*audit.Review] {
+	q.QueryCore.Distinct()
+	return q
+}
+
+// Group adds GROUP BY expressions.
+func (q *ReviewsQuery) Group(es ...keel.Expr) keel.Query[*audit.Review] {
+	q.QueryCore.Group(es...)
+	return q
+}
+
+// GroupingSets groups by each of sets in turn: GROUP BY GROUPING SETS.
+func (q *ReviewsQuery) GroupingSets(sets ...[]keel.Expr) keel.Query[*audit.Review] {
+	q.QueryCore.GroupingSets(sets...)
+	return q
+}
+
+// Rollup groups by es and by each prefix of es down to the grand total.
+func (q *ReviewsQuery) Rollup(es ...keel.Expr) keel.Query[*audit.Review] {
+	q.QueryCore.Rollup(es...)
+	return q
+}
+
+// Cube groups by every subset of es.
+func (q *ReviewsQuery) Cube(es ...keel.Expr) keel.Query[*audit.Review] {
+	q.QueryCore.Cube(es...)
+	return q
+}
+
+// Window declares a named window (WINDOW name AS (…)).
+func (q *ReviewsQuery) Window(name string, w keel.Window) keel.Query[*audit.Review] {
+	q.QueryCore.Window(name, w)
+	return q
+}
+
+// Having adds HAVING predicates.
+func (q *ReviewsQuery) Having(ps ...keel.Pred) keel.Query[*audit.Review] {
+	q.QueryCore.Having(ps...)
+	return q
+}
+
+// Limit caps the number of rows.
+func (q *ReviewsQuery) Limit(n int) keel.Query[*audit.Review] {
+	q.QueryCore.Limit(n)
+	return q
+}
+
+// Offset skips n rows.
+func (q *ReviewsQuery) Offset(n int) keel.Query[*audit.Review] {
+	q.QueryCore.Offset(n)
+	return q
+}
+
+// DistinctOn keeps the first row of each group of es (DISTINCT ON).
+func (q *ReviewsQuery) DistinctOn(es ...keel.Expr) keel.Query[*audit.Review] {
+	q.QueryCore.DistinctOn(es...)
+	return q
+}
+
+// AllTenants lets the query cross tenants. It needs a system scope.
+func (q *ReviewsQuery) AllTenants() keel.Query[*audit.Review] {
+	q.QueryCore.AllTenants()
+	return q
+}
+
+// CustomPlan plans the query for its parameter values on every execution.
+func (q *ReviewsQuery) CustomPlan() keel.Query[*audit.Review] {
+	q.QueryCore.CustomPlan()
+	return q
+}
+
+// Timeout bounds the query's execution.
+func (q *ReviewsQuery) Timeout(d time.Duration) keel.Query[*audit.Review] {
+	q.QueryCore.Timeout(d)
+	return q
+}
+
+// Lock locks the table's selected rows.
+func (q *ReviewsQuery) Lock(strength keel.LockStrength, wait ...keel.LockWait) keel.Query[*audit.Review] {
+	q.QueryCore.Lock(strength, wait...)
+	return q
+}
+
+// Join adds an INNER JOIN of another table on the given predicates.
+func (q *ReviewsQuery) Join(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*audit.Review] {
+	q.QueryCore.Join(other, on...)
+	return q
+}
+
+// LeftJoin adds a LEFT JOIN of another table on the given predicates.
+func (q *ReviewsQuery) LeftJoin(other interface{ TableRef() *keel.Ref }, on ...keel.Pred) keel.Query[*audit.Review] {
+	q.QueryCore.LeftJoin(other, on...)
+	return q
+}
+
+// LeftJoinLateral adds LEFT JOIN LATERAL (sub) ON TRUE.
+func (q *ReviewsQuery) LeftJoinLateral(sub keel.LateralSource) keel.Query[*audit.Review] {
+	q.QueryCore.LeftJoinLateral(sub)
+	return q
+}
+
+// JoinLateral adds CROSS JOIN LATERAL (sub).
+func (q *ReviewsQuery) JoinLateral(sub keel.LateralSource) keel.Query[*audit.Review] {
+	q.QueryCore.JoinLateral(sub)
+	return q
+}
+
+// Cache serves the query's reads from the result cache.
+func (q *ReviewsQuery) Cache(opts ...keel.CacheOption) keel.Query[*audit.Review] {
+	q.QueryCore.Cache(opts...)
+	return q
+}
+
+// With declares CTEs the query uses.
+func (q *ReviewsQuery) With(ctes ...*keel.CTETable) keel.Query[*audit.Review] {
+	q.QueryCore.With(ctes...)
+	return q
+}
+
+// Compute selects e into the computed field col of the rows.
+func (q *ReviewsQuery) Compute(col keel.Column, e keel.Expr) keel.Query[*audit.Review] {
+	q.QueryCore.Compute(col, e)
+	return q
+}
+
+// LoadStrategy chooses how the query's relations load.
+func (q *ReviewsQuery) LoadStrategy(s keel.LoadStrategy) keel.Query[*audit.Review] {
+	q.QueryCore.LoadStrategy(s)
+	return q
+}
+
+// Clone returns an independent copy of the query.
+func (q *ReviewsQuery) Clone() keel.Query[*audit.Review] {
+	return &ReviewsQuery{QueryCore: *q.QueryCore.Clone()}
+}
+
+// One returns the only matching row, or keel.ErrNotFound or keel.ErrNotSingular.
+func (q *ReviewsQuery) One(ctx context.Context, db *keel.DB) (*audit.Review, error) {
+	row, err := keel.OnePtr(ctx, db, &q.QueryCore)
+	return (*audit.Review)(row), err
+}
+
+// First returns the first row in the query's order, or keel.ErrNotFound.
+func (q *ReviewsQuery) First(ctx context.Context, db *keel.DB) (*audit.Review, error) {
+	row, err := keel.FirstPtr(ctx, db, &q.QueryCore)
+	return (*audit.Review)(row), err
+}
+
+// List returns the matching rows. The query must have a Limit.
+func (q *ReviewsQuery) List(ctx context.Context, db *keel.DB) ([]*audit.Review, error) {
+	rows, err := keel.ListPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*audit.Review)(unsafe.Pointer(&rows)), err
+}
+
+// All returns every matching row. Use it only for sets known to be small.
+func (q *ReviewsQuery) All(ctx context.Context, db *keel.DB) ([]*audit.Review, error) {
+	rows, err := keel.AllPtrs(ctx, db, &q.QueryCore)
+	return *(*[]*audit.Review)(unsafe.Pointer(&rows)), err
+}
+
+// UpdateReturning sets columns on every matching row and returns the updated rows.
+func (q *ReviewsQuery) UpdateReturning(ctx context.Context, db *keel.DB, sets ...keel.Assignment) ([]*audit.Review, error) {
+	rows, err := keel.UpdateReturningPtrs(ctx, db, &q.QueryCore, sets...)
+	return *(*[]*audit.Review)(unsafe.Pointer(&rows)), err
+}
+
+// Page returns the page of rows after the request's cursor.
+func (q *ReviewsQuery) Page(ctx context.Context, db *keel.DB, p keel.PageRequest) (keel.Page[*audit.Review], error) {
+	page, err := keel.PagePtrs(ctx, db, &q.QueryCore, p)
+	return *(*keel.Page[*audit.Review])(unsafe.Pointer(&page)), err
+}
+
+// Each runs the query page by page and calls fn with each batch of at most size rows.
+func (q *ReviewsQuery) Each(ctx context.Context, db *keel.DB, size int, fn func(ctx context.Context, batch []*audit.Review) error) error {
+	return keel.EachPtrs(ctx, db, &q.QueryCore, size, func(ctx context.Context, rows []unsafe.Pointer) error {
+		return fn(ctx, *(*[]*audit.Review)(unsafe.Pointer(&rows)))
+	})
+}
+
+func newReview() unsafe.Pointer { return unsafe.Pointer(new(audit.Review)) }
+
+func newNReview(n int) unsafe.Pointer {
+	return unsafe.Pointer(unsafe.SliceData(make([]audit.Review, n)))
+}
+
+func ptrReview(p unsafe.Pointer, c int32) any {
+	r := (*audit.Review)(p)
+	switch c {
+	case 0:
+		return (*string)(unsafe.Pointer(&r.ID))
+	case 1:
+		return (*string)(unsafe.Pointer(&r.BusinessUnitID))
+	case 2:
+		return (*string)(unsafe.Pointer(&r.OrganizationID))
+	case 3:
+		return (*string)(unsafe.Pointer(&r.Kind))
+	case 4:
+		return &r.DedupeKey
+	case 5:
+		return (*string)(unsafe.Pointer(&r.EntryID))
+	case 6:
+		return &r.Action
+	case 7:
+		return (*string)(unsafe.Pointer(&r.Resource))
+	case 8:
+		return &r.ResourceID
+	case 9:
+		return &r.EntityRef
+	case 10:
+		return (*string)(unsafe.Pointer(&r.PrincipalID))
+	case 11:
+		return &r.PrincipalType
+	case 12:
+		return &r.ActorName
+	case 13:
+		return &r.Count
+	case 14:
+		return (*int64)(unsafe.Pointer(&r.Threshold))
+	case 15:
+		return (*int64)(unsafe.Pointer(&r.WindowMinutes))
+	case 16:
+		return &r.OccurredAt
+	case 17:
+		return (*string)(unsafe.Pointer(&r.ReviewedByID))
+	case 18:
+		return &r.ReviewedAt
+	case 19:
+		return &r.Version
+	case 20:
+		return &r.CreatedAt
+	case 21:
+		return &r.UpdatedAt
+	}
+	return nil
+}
+
+func valueReview(p unsafe.Pointer, c int32) any {
+	r := (*audit.Review)(p)
+	switch c {
+	case 0:
+		return string(r.ID)
+	case 1:
+		return string(r.BusinessUnitID)
+	case 2:
+		return string(r.OrganizationID)
+	case 3:
+		return string(r.Kind)
+	case 4:
+		return r.DedupeKey
+	case 5:
+		return string(r.EntryID)
+	case 6:
+		return r.Action
+	case 7:
+		return string(r.Resource)
+	case 8:
+		if r.ResourceID == "" {
+			return nil
+		}
+		return r.ResourceID
+	case 9:
+		if r.EntityRef == "" {
+			return nil
+		}
+		return r.EntityRef
+	case 10:
+		return string(r.PrincipalID)
+	case 11:
+		return r.PrincipalType
+	case 12:
+		if r.ActorName == "" {
+			return nil
+		}
+		return r.ActorName
+	case 13:
+		return r.Count
+	case 14:
+		return int64(r.Threshold)
+	case 15:
+		return int64(r.WindowMinutes)
+	case 16:
+		return r.OccurredAt
+	case 17:
+		if r.ReviewedByID == "" {
+			return nil
+		}
+		return string(r.ReviewedByID)
+	case 18:
+		if r.ReviewedAt == nil {
+			return nil
+		}
+		return *r.ReviewedAt
+	case 19:
+		return r.Version
+	case 20:
+		return r.CreatedAt
+	case 21:
+		return r.UpdatedAt
+	}
+	return nil
+}
+
 // sealsTable is the schema of audit.Seal.
 var sealsTable = schema.Table{
 	Name:   "audit_seals",

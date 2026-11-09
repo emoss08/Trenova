@@ -378,10 +378,58 @@ type verdictRow struct {
 }
 
 type fundedRow struct {
-	Count        int
-	AmountMinor  int64
-	ReserveCount int
-	ReserveMinor int64
+	Count          int
+	AmountMinor    int64
+	ReserveCount   int
+	ReserveMinor   int64
+	OldestFundedOn *int64
+}
+
+type summaryRead struct {
+	verdicts []verdictRow
+	funded   fundedRow
+	due      factoringports.VerdictTotals
+}
+
+func (s *summaryRead) items(req *factoringports.GetSummaryRequest) []keel.BatchItem {
+	return []keel.BatchItem{
+		keel.IntoSlice(verdictTotals(req.ReadyBefore, req.FactoringCompanyID), &s.verdicts),
+		keel.IntoValue(fundedTotals(req.FactoringCompanyID), &s.funded),
+		keel.IntoValue(chargebacksDue(req.ChargebackBefore, req.FactoringCompanyID), &s.due),
+	}
+}
+
+func (s *summaryRead) summary() *factoringports.Summary {
+	summary := &factoringports.Summary{
+		Funded: factoringports.VerdictTotals{
+			Count:       s.funded.Count,
+			AmountMinor: s.funded.AmountMinor,
+		},
+		ReserveHeld: factoringports.VerdictTotals{
+			Count:       s.funded.ReserveCount,
+			AmountMinor: s.funded.ReserveMinor,
+		},
+		ChargebacksDue: s.due,
+		OldestFundedOn: s.funded.OldestFundedOn,
+	}
+	for _, rw := range s.verdicts {
+		totals := factoringports.VerdictTotals{Count: rw.Count, AmountMinor: rw.AmountMinor}
+		switch rw.Verdict {
+		case factoringreadiness.VerdictReady:
+			summary.Ready = totals
+			summary.ReadyUnsubmitted = factoringports.VerdictTotals{
+				Count:       rw.LateCount,
+				AmountMinor: rw.LateMinor,
+			}
+		case factoringreadiness.VerdictNotReady:
+			summary.NotReady = totals
+		case factoringreadiness.VerdictSubmitted:
+			summary.Submitted = totals
+		case factoringreadiness.VerdictFunded, factoringreadiness.VerdictExcluded:
+		}
+	}
+
+	return summary
 }
 
 func (r *invoiceStateRepository) GetSummary(
@@ -389,53 +437,19 @@ func (r *invoiceStateRepository) GetSummary(
 	req factoringports.GetSummaryRequest,
 ) (*factoringports.Summary, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*factoringports.Summary, error) {
-		var (
-			verdicts []verdictRow
-			funded   fundedRow
-			due      factoringports.VerdictTotals
-		)
-		err := keel.Batch(ctx, r.db.Keel(ctx),
-			keel.IntoSlice(verdictTotals(req.ReadyBefore), &verdicts),
-			keel.IntoValue(fundedTotals(), &funded),
-			keel.IntoValue(chargebacksDue(req.ChargebackBefore), &due),
-		)
-		if err != nil {
+		var read summaryRead
+		if err := keel.Batch(ctx, r.db.Keel(ctx), read.items(&req)...); err != nil {
 			return nil, err
 		}
 
-		summary := &factoringports.Summary{
-			Funded: factoringports.VerdictTotals{
-				Count:       funded.Count,
-				AmountMinor: funded.AmountMinor,
-			},
-			ReserveHeld: factoringports.VerdictTotals{
-				Count:       funded.ReserveCount,
-				AmountMinor: funded.ReserveMinor,
-			},
-			ChargebacksDue: due,
-		}
-		for _, rw := range verdicts {
-			totals := factoringports.VerdictTotals{Count: rw.Count, AmountMinor: rw.AmountMinor}
-			switch rw.Verdict {
-			case factoringreadiness.VerdictReady:
-				summary.Ready = totals
-				summary.ReadyUnsubmitted = factoringports.VerdictTotals{
-					Count:       rw.LateCount,
-					AmountMinor: rw.LateMinor,
-				}
-			case factoringreadiness.VerdictNotReady:
-				summary.NotReady = totals
-			case factoringreadiness.VerdictSubmitted:
-				summary.Submitted = totals
-			case factoringreadiness.VerdictFunded, factoringreadiness.VerdictExcluded:
-			}
-		}
-
-		return summary, nil
+		return read.summary(), nil
 	})
 }
 
-func verdictTotals(readyBefore int64) keel.Query[*factoringreadiness.InvoiceState] {
+func verdictTotals(
+	readyBefore int64,
+	factorID pulid.ID,
+) keel.Query[*factoringreadiness.InvoiceState] {
 	st := factoringreadinessdb.InvoiceStates
 	late := st.ReadySince.Lte(readyBefore)
 	return st.Group(st.Verdict).
@@ -446,24 +460,34 @@ func verdictTotals(readyBefore int64) keel.Query[*factoringreadiness.InvoiceStat
 			keel.Count().Filter(late),
 			keel.NumericOf(st.OpenBalanceMinor.Sum().Filter(late)).Coalesce(0),
 		).
-		Where(st.Verdict.In(
-			factoringreadiness.VerdictReady,
-			factoringreadiness.VerdictNotReady,
-			factoringreadiness.VerdictSubmitted,
-		))
+		Where(
+			st.Verdict.In(
+				factoringreadiness.VerdictReady,
+				factoringreadiness.VerdictNotReady,
+				factoringreadiness.VerdictSubmitted,
+			),
+			keel.When(factorID.IsNotNil(), st.FactoringCompanyID.Eq(factorID)),
+		)
 }
 
-func fundedTotals() keel.Query[*factoringsubmission.SubmissionItem] {
+func fundedTotals(factorID pulid.ID) keel.Query[*factoringsubmission.SubmissionItem] {
 	item := factoringsubmissiondb.SubmissionItems
 	return item.Pick(
 		keel.Count(),
 		keel.NumericOf(item.FaceMinor.Sum()).Coalesce(0),
 		keel.Count().Filter(item.ReserveMinor.Coalesce(0).Gt(0)),
 		keel.NumericOf(item.ReserveMinor.Sum()).Coalesce(0),
-	).Where(item.Status.Eq(factoringsubmission.SubmissionItemStatusFunded))
+		item.FundedOn.Min(),
+	).Where(
+		item.Status.Eq(factoringsubmission.SubmissionItemStatusFunded),
+		keel.When(factorID.IsNotNil(), item.Submission().FactoringCompanyID.Eq(factorID)),
+	)
 }
 
-func chargebacksDue(before int64) keel.Query[*factoringsubmission.SubmissionItem] {
+func chargebacksDue(
+	before int64,
+	factorID pulid.ID,
+) keel.Query[*factoringsubmission.SubmissionItem] {
 	item := factoringsubmissiondb.SubmissionItems
 	sub := factoringsubmissiondb.Submissions
 	agr := factoringdb.Agreements
@@ -480,6 +504,7 @@ func chargebacksDue(before int64) keel.Query[*factoringsubmission.SubmissionItem
 			item.FundedOn.IsNotNull(),
 			agr.Recourse.Eq(factoring.RecourseFull),
 			item.FundedOn.Add(agr.ChargebackWindowDays.Mul(keel.Int64(86400))).Lte(before),
+			keel.When(factorID.IsNotNil(), sub.FactoringCompanyID.Eq(factorID)),
 		)
 }
 

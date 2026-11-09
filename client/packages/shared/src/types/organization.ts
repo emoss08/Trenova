@@ -54,6 +54,7 @@ export const organizationSettingsSchema = z.object({
       id: z.string(),
       name: z.string(),
       abbreviation: z.string().nullish(),
+      countryName: z.string().nullish(),
     })
     .nullish(),
 });

@@ -1,18 +1,10 @@
-import { useT } from "@trenova/shared/i18n/use-t";
+import { autoUpdate, flip, hide, offset, size, useFloating } from "@floating-ui/react-dom";
+import { XCloseIcon } from "@trenova/shared/components/icons";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Input } from "@trenova/shared/components/ui/input";
+import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import { XCloseIcon } from "@trenova/shared/components/icons";
-import {
-  useCallback,
-  useEffect,
-  useId,
-  useImperativeHandle,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useEffect, useId, useImperativeHandle, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 export type Suggestion = {
@@ -21,7 +13,7 @@ export type Suggestion = {
 };
 
 function buildSuggestions(
-  inputValue: string,
+  query: string,
   defaults: string[],
   parseInput: (text: string) => Date | null,
 ): Suggestion[] {
@@ -31,7 +23,7 @@ function buildSuggestions(
   };
   const isSuggestion = (s: Suggestion | null): s is Suggestion => s !== null;
 
-  const trimmed = inputValue.trim();
+  const trimmed = query.trim();
   if (!trimmed) {
     return defaults.map(toSuggestion).filter(isSuggestion);
   }
@@ -60,6 +52,14 @@ export interface DateSuggestionInputProps extends Omit<
   clearable?: boolean;
 }
 
+/**
+ * A date typed in place ("t+2", "next friday", "07/15") with shortcuts offered beneath it. The list
+ * is positioned by floating-ui, so it follows the field through every scrolling ancestor, flips
+ * when there is no room below, and hides while the field is scrolled out of view. Text that is not
+ * a date stays where it was typed and is marked, rather than being swapped back for the old value.
+ * The list opens on a click, on typing or on the down arrow, never on focus alone, so a dialog that
+ * focuses its first field does not open it.
+ */
 export function DateSuggestionInput({
   value,
   onValueChange,
@@ -83,31 +83,52 @@ export function DateSuggestionInput({
   const t = useT();
 
   const listboxId = useId();
+  const hintId = useId();
   const [text, setText] = useState("");
+  const [edited, setEdited] = useState(false);
+  const [rejected, setRejected] = useState<string | null>(null);
   const [focused, setFocused] = useState(false);
   const [open, setOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
 
   const inputRef = useRef<HTMLInputElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  useImperativeHandle(ref, () => inputRef.current!);
+  useImperativeHandle(ref, () => inputRef.current!, []);
 
   const isLocked = disabled || readOnly;
   const committedText = useMemo(() => (value ? formatValue(value) : ""), [value, formatValue]);
-  const displayValue = focused ? text : committedText;
+  const [shownCommitted, setShownCommitted] = useState(committedText);
+  if (committedText !== shownCommitted) {
+    setShownCommitted(committedText);
+    if (committedText) setRejected(null);
+  }
+  const displayValue = focused ? text : (rejected ?? committedText);
 
   const suggestions = useMemo(
-    () => buildSuggestions(text, defaultSuggestions, parseInput),
-    [text, defaultSuggestions, parseInput],
+    () => buildSuggestions(edited ? text : "", defaultSuggestions, parseInput),
+    [edited, text, defaultSuggestions, parseInput],
   );
   const activeIndex = suggestions.length ? Math.min(selectedIndex, suggestions.length - 1) : 0;
   const dropdownVisible = open && (suggestions.length > 0 || text.trim().length > 0);
   const showClear = !!clearable && !isLocked && displayValue.length > 0;
+  const invalid = isInvalid || rejected !== null;
 
-  function openDropdown() {
-    setOpen(true);
-  }
+  const { refs, floatingStyles, middlewareData } = useFloating({
+    open: dropdownVisible,
+    placement: "bottom-start",
+    strategy: "fixed",
+    whileElementsMounted: autoUpdate,
+    middleware: [
+      offset(4),
+      flip({ padding: 8 }),
+      size({
+        apply({ rects, elements }) {
+          elements.floating.style.width = `${rects.reference.width}px`;
+        },
+      }),
+      hide(),
+    ],
+  });
+  const anchorHidden = middlewareData.hide?.referenceHidden ?? false;
 
   function closeDropdown() {
     setSelectedIndex(0);
@@ -116,22 +137,28 @@ export function DateSuggestionInput({
 
   function commitDate(date: Date | undefined) {
     setText(date ? formatValue(date) : "");
+    setRejected(null);
     onValueChange(date);
   }
 
   function commitTypedText() {
     const trimmed = text.trim();
     if (!trimmed) {
-      if (value) {
-        onValueChange(undefined);
-      }
+      setRejected(null);
+      if (value) onValueChange(undefined);
       return;
     }
-    if (trimmed === committedText) return;
+    if (trimmed === committedText) {
+      setRejected(null);
+      return;
+    }
     const parsed = parseInput(trimmed);
     if (parsed) {
       commitDate(parsed);
+      return;
     }
+    setRejected(trimmed);
+    if (value) onValueChange(undefined);
   }
 
   function selectSuggestion(suggestion: Suggestion) {
@@ -141,43 +168,42 @@ export function DateSuggestionInput({
 
   function handleClear() {
     setText("");
+    setRejected(null);
     setSelectedIndex(0);
-    if (value) {
-      onValueChange(undefined);
-    }
+    if (value) onValueChange(undefined);
   }
 
   function handleFocus(e: React.FocusEvent<HTMLInputElement>) {
     onFocus?.(e);
     if (isLocked) return;
     setFocused(true);
-    setText(committedText);
+    setText(rejected ?? committedText);
+    setEdited(rejected !== null);
     setSelectedIndex(0);
-    openDropdown();
   }
 
   function handleBlur(e: React.FocusEvent<HTMLInputElement>) {
     setFocused(false);
     closeDropdown();
-    if (!isLocked) {
-      commitTypedText();
-    }
+    if (!isLocked) commitTypedText();
     onBlur?.(e);
   }
 
   function handleClick(e: React.MouseEvent<HTMLInputElement>) {
     onClick?.(e);
     if (isLocked || open) return;
-    openDropdown();
+    setOpen(true);
   }
 
   function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
     const next = e.target.value;
     setText(next);
+    setEdited(true);
     setSelectedIndex(0);
-    openDropdown();
-    if (!next.trim() && value) {
-      onValueChange(undefined);
+    setOpen(true);
+    if (!next.trim()) {
+      setRejected(null);
+      if (value) onValueChange(undefined);
     }
   }
 
@@ -188,7 +214,7 @@ export function DateSuggestionInput({
     if (e.key === "ArrowDown") {
       e.preventDefault();
       if (!open) {
-        openDropdown();
+        setOpen(true);
         return;
       }
       setSelectedIndex(Math.min(activeIndex + 1, Math.max(suggestions.length - 1, 0)));
@@ -203,44 +229,12 @@ export function DateSuggestionInput({
     } else if (e.key === "Escape") {
       if (open) {
         e.stopPropagation();
-        setText(committedText);
+        setText(rejected ?? committedText);
+        setEdited(false);
         closeDropdown();
       }
     }
   }
-
-  const updateDropdownPosition = useCallback(() => {
-    if (!containerRef.current || !dropdownRef.current) return;
-    const rect = containerRef.current.getBoundingClientRect();
-    const dropdownHeight = dropdownRef.current.offsetHeight;
-    const spaceBelow = window.innerHeight - rect.bottom;
-    const spaceAbove = rect.top;
-    const placeAbove = spaceBelow < dropdownHeight + 8 && spaceAbove > spaceBelow;
-
-    dropdownRef.current.style.top = placeAbove
-      ? `${rect.top - dropdownHeight - 4}px`
-      : `${rect.bottom + 4}px`;
-    dropdownRef.current.style.left = `${rect.left}px`;
-    dropdownRef.current.style.width = `${rect.width}px`;
-  }, []);
-
-  useLayoutEffect(() => {
-    if (dropdownVisible) {
-      updateDropdownPosition();
-    }
-  }, [dropdownVisible, suggestions.length, updateDropdownPosition]);
-
-  useEffect(() => {
-    if (!dropdownVisible) return;
-
-    window.addEventListener("resize", updateDropdownPosition);
-    window.addEventListener("scroll", updateDropdownPosition, true);
-
-    return () => {
-      window.removeEventListener("resize", updateDropdownPosition);
-      window.removeEventListener("scroll", updateDropdownPosition, true);
-    };
-  }, [dropdownVisible, updateDropdownPosition]);
 
   useEffect(() => {
     if (!dropdownVisible) return;
@@ -249,11 +243,13 @@ export function DateSuggestionInput({
       ?.scrollIntoView({ block: "nearest" });
   }, [activeIndex, dropdownVisible, listboxId]);
 
+  const listed = dropdownVisible && suggestions.length > 0;
+
   return (
-    <div ref={containerRef} className="relative">
+    <div ref={refs.setReference} className="relative">
       <div className="relative">
         <Input
-          placeholder={placeholder ?? "Tomorrow"}
+          placeholder={placeholder ?? t("Tomorrow")}
           autoComplete="off"
           spellCheck={false}
           {...props}
@@ -261,14 +257,13 @@ export function DateSuggestionInput({
           type="text"
           role="combobox"
           aria-expanded={dropdownVisible}
-          aria-controls={listboxId}
+          aria-controls={listed ? listboxId : undefined}
           aria-autocomplete="list"
-          aria-activedescendant={
-            dropdownVisible && suggestions.length > 0
-              ? `${listboxId}-option-${activeIndex}`
-              : undefined
+          aria-activedescendant={listed ? `${listboxId}-option-${activeIndex}` : undefined}
+          aria-invalid={invalid}
+          aria-describedby={
+            cn(props["aria-describedby"], rejected !== null && !focused && hintId) || undefined
           }
-          aria-invalid={isInvalid}
           disabled={disabled}
           readOnly={readOnly}
           className={cn("pr-8", showClear && "pr-14", className)}
@@ -294,47 +289,57 @@ export function DateSuggestionInput({
         )}
         {picker}
       </div>
+      {rejected !== null && !focused ? (
+        <p id={hintId} className="text-danger-foreground mt-1 text-2xs">
+          {t('"{0}" is not a date. Try "t+2", "next friday", or "07/15".', rejected)}
+        </p>
+      ) : null}
 
       {dropdownVisible &&
         createPortal(
           <div
-            ref={dropdownRef}
-            className="animate-in bg-popover fade-in-0 fixed z-[9999] rounded-md border p-0"
-            tabIndex={-1}
+            ref={refs.setFloating}
+            style={{ ...floatingStyles, visibility: anchorHidden ? "hidden" : undefined }}
+            className="dark isolate z-50"
           >
-            {suggestions.length > 0 ? (
-              <ul
-                id={listboxId}
-                role="listbox"
-                aria-label={t("Date suggestions")}
-                className="max-h-56 overflow-auto p-1"
-              >
-                {suggestions.map((suggestion, index) => (
-                  <li
-                    key={suggestion.inputString}
-                    id={`${listboxId}-option-${index}`}
-                    role="option"
-                    aria-selected={activeIndex === index}
-                    className={cn(
-                      "flex cursor-pointer items-center justify-between gap-1 rounded-sm px-3 py-1.5 text-xs",
-                      index === activeIndex && "bg-muted text-accent-foreground",
-                    )}
-                    onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => selectSuggestion(suggestion)}
-                    onMouseEnter={() => setSelectedIndex(index)}
-                  >
-                    <span className="xs:w-auto w-[110px] truncate">{suggestion.inputString}</span>
-                    <span className="text-muted-foreground shrink-0 text-xs">
-                      {formatValue(suggestion.date)}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-muted-foreground px-3 py-1.5 text-xs">
-                {t('No matching date. Try "t+2", "next friday", or "07/15".')}
-              </p>
-            )}
+            <div
+              className="bg-popover text-popover-foreground animate-in fade-in-0 rounded-lg p-0 ring-1 ring-foreground/10"
+              tabIndex={-1}
+            >
+              {suggestions.length > 0 ? (
+                <ul
+                  id={listboxId}
+                  role="listbox"
+                  aria-label={t("Date suggestions")}
+                  className="max-h-56 overflow-auto p-1"
+                >
+                  {suggestions.map((suggestion, index) => (
+                    <li
+                      key={suggestion.inputString}
+                      id={`${listboxId}-option-${index}`}
+                      role="option"
+                      aria-selected={activeIndex === index}
+                      className={cn(
+                        "flex cursor-pointer items-center justify-between gap-1 rounded-sm px-3 py-1.5 text-xs",
+                        index === activeIndex && "bg-muted text-accent-foreground",
+                      )}
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => selectSuggestion(suggestion)}
+                      onMouseEnter={() => setSelectedIndex(index)}
+                    >
+                      <span className="xs:w-auto w-[110px] truncate">{suggestion.inputString}</span>
+                      <span className="text-muted-foreground shrink-0 text-xs">
+                        {formatValue(suggestion.date)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-muted-foreground px-3 py-1.5 text-xs">
+                  {t('No matching date. Try "t+2", "next friday", or "07/15".')}
+                </p>
+              )}
+            </div>
           </div>,
           document.body,
         )}

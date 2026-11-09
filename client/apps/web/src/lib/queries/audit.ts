@@ -1,6 +1,11 @@
 import { createQueryKeys } from "@lukemorales/query-key-factory";
 import { fetchAuditAlertPolicies, fetchAuditChainStatus } from "@/lib/graphql/audit-log-admin";
 import {
+  fetchAuditEntryReview,
+  fetchAuditOverview,
+  fetchAuditReviews,
+} from "@/lib/graphql/audit-overview";
+import {
   fetchAuditEntryDetail,
   fetchAuditFieldHistory,
   fetchAuditRequestEntries,
@@ -27,6 +32,18 @@ export const audit = createQueryKeys("audit", {
   chainStatus: () => ({
     queryKey: ["chain-status"],
     queryFn: ({ signal }: { signal?: AbortSignal }) => fetchAuditChainStatus({ signal }),
+  }),
+  overview: (days: number) => ({
+    queryKey: ["overview", days],
+    queryFn: ({ signal }: { signal?: AbortSignal }) => fetchAuditOverview(days, { signal }),
+  }),
+  reviews: (limit: number) => ({
+    queryKey: ["reviews", limit],
+    queryFn: ({ signal }: { signal?: AbortSignal }) => fetchAuditReviews(limit, { signal }),
+  }),
+  entryReview: (entryId: string) => ({
+    queryKey: ["entry-review", entryId],
+    queryFn: ({ signal }: { signal?: AbortSignal }) => fetchAuditEntryReview(entryId, { signal }),
   }),
   alertPolicies: () => ({
     queryKey: ["alert-policies"],

@@ -1837,6 +1837,14 @@ export type AuditExportStatus =
   | 'Running'
   | 'Succeeded';
 
+export type AuditOverviewTarget =
+  | 'Review'
+  | 'View';
+
+export type AuditOverviewUnit =
+  | 'Day'
+  | 'Hour';
+
 export type AuditRetentionClass =
   | 'Access'
   | 'Financial'
@@ -4568,6 +4576,19 @@ export type FactoringAgreementStatus =
   | 'Draft'
   | 'Ended';
 
+/** Something on a factor's page that needs someone, with the facts to word it. */
+export type FactoringAttentionKind =
+  | 'ChargebacksDue'
+  | 'DeliveryFailing'
+  | 'FundingOverdue'
+  | 'NoAgreement'
+  | 'NoDelivery'
+  | 'NoticesAwaiting'
+  | 'NoticesMissing'
+  | 'ReadyWaiting'
+  | 'RemittanceWaiting'
+  | 'ScheduleFailed';
+
 export type FactoringCheckCode =
   | 'Agreement'
   | 'AgreementDocument'
@@ -4599,6 +4620,11 @@ export type FactoringCompanyInput = {
   status: EntityStatus;
 };
 
+export type FactoringCustomerNoticeStage =
+  | 'Acknowledged'
+  | 'Awaiting'
+  | 'NeedsNotice';
+
 export type FactoringFeeTierInput = {
   daysFrom: number;
   daysTo?: number | null | undefined;
@@ -4629,6 +4655,17 @@ export type FactoringFundingOutcome =
   | 'Funded'
   | 'Rejected';
 
+/** An invoice and the terms to price it with: what the agreement page's calculator sends. */
+export type FactoringFundingPreviewInput = {
+  advanceRateBp: number;
+  /** Days of terms left when submitted, which picks the fee tier. */
+  days: number;
+  faceMinor: number;
+  feeTiers: Array<FactoringFeeTierInput>;
+  minimumFeeMinor: number;
+  reserveRateBp: number;
+};
+
 /** What a factoring entry does to the invoice. */
 export type FactoringInvoiceEffect =
   /** Leaves the invoice as it is. */
@@ -4650,6 +4687,13 @@ export type FactoringNoaStatus =
   | 'Draft'
   | 'Released'
   | 'Sent';
+
+/** The tab of the factor's page a phrase of its summary opens. */
+export type FactoringOverviewTarget =
+  | 'Agreement'
+  | 'Customers'
+  | 'Delivery'
+  | 'Ledger';
 
 /** Who carries the loss when a customer does not pay a factored invoice. */
 export type FactoringRecourse =
@@ -11929,6 +11973,43 @@ export type UpdateAuditAlertPolicyMutationVariables = Exact<{
 
 export type UpdateAuditAlertPolicyMutation = { updateAuditAlertPolicy: { kind: AuditAlertKind, title: string, description: string, counted: boolean, enabled: boolean, threshold: number, windowMinutes: number } };
 
+export type AuditReviewFieldsFragment = { id: string, kind: AuditAlertKind, entryId: string, action: string, resource: string, resourceId: string | null, entityRef: string | null, principalId: string, principalType: string, actorName: string | null, count: number, threshold: number, windowMinutes: number, occurredAt: number, offHours: boolean, title: string, reviewedAt: number | null, version: number, reviewedBy: { id: string, name: string } | null } & { ' $fragmentName'?: 'AuditReviewFieldsFragment' };
+
+export type AuditOverviewQueryVariables = Exact<{
+  days: number;
+}>;
+
+
+export type AuditOverviewQuery = { auditOverview: { days: number, from: number, to: number, timezone: string, unit: AuditOverviewUnit, previousEntries: number, otherActors: number, otherEntries: number, reviewsIncluded: boolean, openReviewCount: number, totals: { entries: number, people: number, agentsAsked: number, agentsOwn: number, integrations: number, jobs: number, sensitive: number, security: number, deletesExports: number, peopleOffHours: number }, activity: Array<{ at: number, people: number, agents: number, integrations: number, jobs: number }>, actors: { people: number, agents: number, integrations: number, jobs: number }, topActors: Array<{ principalId: string, principalType: string, name: string, entries: number, sensitive: number, user: { id: string, name: string, profilePicUrl: string, thumbnailUrl: string } | null }>, openReviews: Array<{ ' $fragmentRefs'?: { 'AuditReviewFieldsFragment': AuditReviewFieldsFragment } }>, summary: Array<{ text: string, strong: boolean, tone: string | null, target: AuditOverviewTarget | null, targetId: string | null }> } };
+
+export type AuditReviewsQueryVariables = Exact<{
+  limit?: number | null | undefined;
+}>;
+
+
+export type AuditReviewsQuery = { auditReviews: { openCount: number, reviewedCount: number, open: Array<{ ' $fragmentRefs'?: { 'AuditReviewFieldsFragment': AuditReviewFieldsFragment } }>, reviewed: Array<{ ' $fragmentRefs'?: { 'AuditReviewFieldsFragment': AuditReviewFieldsFragment } }> } };
+
+export type AuditEntryReviewQueryVariables = Exact<{
+  entryId: string | number;
+}>;
+
+
+export type AuditEntryReviewQuery = { auditEntryReview: { ' $fragmentRefs'?: { 'AuditReviewFieldsFragment': AuditReviewFieldsFragment } } | null };
+
+export type MarkAuditReviewReviewedMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type MarkAuditReviewReviewedMutation = { markAuditReviewReviewed: { ' $fragmentRefs'?: { 'AuditReviewFieldsFragment': AuditReviewFieldsFragment } } };
+
+export type ReopenAuditReviewMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type ReopenAuditReviewMutation = { reopenAuditReview: { ' $fragmentRefs'?: { 'AuditReviewFieldsFragment': AuditReviewFieldsFragment } } };
+
 export type RecentActivityQueryVariables = Exact<{
   first: number;
   after?: string | null | undefined;
@@ -11937,11 +12018,12 @@ export type RecentActivityQueryVariables = Exact<{
 
 export type RecentActivityQuery = { auditEntries: { edges: Array<{ node: { id: string, resource: string, operation: string, resourceId: string, timestamp: number, comment: string | null, entityRef: string | null, user: { id: string, name: string, username: string, profilePicUrl: string, thumbnailUrl: string } | null } }>, pageInfo: { endCursor: string | null, hasNextPage: boolean } } };
 
-export type AuditLogTableRowFieldsFragment = { id: string, userId: string | null, timestamp: number, resource: string, operation: string, action: string, resourceId: string, entityRef: string | null, correlationId: string | null, comment: string | null, ipAddress: string | null, category: AuditCategory, retentionClass: AuditRetentionClass, channel: string, principalType: string, principalId: string, actorName: string | null, aiRunId: string | null, sensitiveData: boolean, critical: boolean, user: { id: string, name: string, username: string, emailAddress: string | null, profilePicUrl: string, thumbnailUrl: string } | null } & { ' $fragmentName'?: 'AuditLogTableRowFieldsFragment' };
+export type AuditLogTableRowFieldsFragment = { id: string, userId: string | null, timestamp: number, resource: string, operation: string, action: string, resourceId: string, entityRef: string | null, correlationId: string | null, comment: string | null, ipAddress: string | null, category: AuditCategory, retentionClass: AuditRetentionClass, channel: string, principalType: string, principalId: string, actorName: string | null, aiRunId: string | null, sensitiveData: boolean, critical: boolean, changes: unknown, requestEntryCount: number, user: { id: string, name: string, username: string, emailAddress: string | null, profilePicUrl: string, thumbnailUrl: string } | null } & { ' $fragmentName'?: 'AuditLogTableRowFieldsFragment' };
 
 export type AuditLogTableQueryVariables = Exact<{
   input: DataTableConnectionInput;
   includeTotalCount?: boolean | null | undefined;
+  onePerRequest?: boolean | null | undefined;
 }>;
 
 
@@ -11962,7 +12044,7 @@ export type AuditRequestEntriesQueryVariables = Exact<{
 }>;
 
 
-export type AuditRequestEntriesQuery = { auditEntries: { edges: Array<{ node: { id: string, timestamp: number, resource: string, operation: string, action: string, resourceId: string, entityRef: string | null, comment: string | null } }> } };
+export type AuditRequestEntriesQuery = { auditEntries: { edges: Array<{ node: { id: string, timestamp: number, resource: string, operation: string, action: string, resourceId: string, entityRef: string | null, comment: string | null, actorName: string | null, channel: string } }> } };
 
 export type AuditFieldHistoryQueryVariables = Exact<{
   resourceId: string | number;
@@ -14896,7 +14978,7 @@ export type FactoringCompanyTableQueryVariables = Exact<{
 
 export type FactoringCompanyTableQuery = { factoringCompanies: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'FactoringCompanyTableRowFieldsFragment': FactoringCompanyTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
-export type FactoringAgreementFieldsFragment = { id: string, factoringCompanyId: string, status: FactoringAgreementStatus, effectiveFrom: number, effectiveTo: number | null, advanceRateBp: number, reserveRateBp: number, minimumFeeMinor: number, chargebackWindowDays: number, recourse: FactoringRecourse, accountingTreatment: FactoringAccountingTreatment, fundingDays: number, submissionTime: number, dueFromFactorAccountId: string | null, feeExpenseAccountId: string | null, liabilityAccountId: string | null, cashAccountId: string | null, notes: string | null, activatedAt: number | null, endedAt: number | null, version: number, createdAt: number, updatedAt: number, feeTiers: Array<{ id: string, daysFrom: number, daysTo: number | null, rateBp: number, flatMinor: number }>, documentTypes: Array<{ id: string, code: string, name: string, color: string }> } & { ' $fragmentName'?: 'FactoringAgreementFieldsFragment' };
+export type FactoringAgreementFieldsFragment = { id: string, factoringCompanyId: string, status: FactoringAgreementStatus, effectiveFrom: number, effectiveTo: number | null, advanceRateBp: number, reserveRateBp: number, minimumFeeMinor: number, chargebackWindowDays: number, recourse: FactoringRecourse, accountingTreatment: FactoringAccountingTreatment, fundingDays: number, submissionTime: number, dueFromFactorAccountId: string | null, feeExpenseAccountId: string | null, liabilityAccountId: string | null, cashAccountId: string | null, notes: string | null, activatedAt: number | null, endedAt: number | null, version: number, createdAt: number, updatedAt: number, feeTiers: Array<{ id: string, daysFrom: number, daysTo: number | null, rateBp: number, flatMinor: number }>, documentTypes: Array<{ id: string, code: string, name: string, color: string }>, dueFromFactorAccount: { id: string, accountCode: string, name: string } | null, feeExpenseAccount: { id: string, accountCode: string, name: string } | null, liabilityAccount: { id: string, accountCode: string, name: string } | null, cashAccount: { id: string, accountCode: string, name: string } | null } & { ' $fragmentName'?: 'FactoringAgreementFieldsFragment' };
 
 export type FactoringAgreementsQueryVariables = Exact<{
   factoringCompanyId: string | number;
@@ -14945,7 +15027,56 @@ export type FactoringCompanyRecordQueryVariables = Exact<{
 }>;
 
 
-export type FactoringCompanyRecordQuery = { factoringCompany: { id: string, businessUnitId: string, organizationId: string, status: EntityStatus, code: string, name: string, addressLine1: string, addressLine2: string | null, city: string, stateId: string, postalCode: string, email: string | null, phoneNumber: string | null, remittanceInstructions: string | null, noticeOfAssignment: string | null, nonRecourse: boolean, notes: string | null, version: number, createdAt: number, updatedAt: number } | null };
+export type FactoringCompanyRecordQuery = { factoringCompany: { id: string, businessUnitId: string, organizationId: string, status: EntityStatus, code: string, name: string, addressLine1: string, addressLine2: string | null, city: string, stateId: string, postalCode: string, email: string | null, phoneNumber: string | null, remittanceInstructions: string | null, noticeOfAssignment: string | null, nonRecourse: boolean, notes: string | null, version: number, createdAt: number, updatedAt: number, state: { id: string, abbreviation: string, countryName: string } | null } | null };
+
+export type FactoringVerdictTotalsFieldsFragment = { count: number, amountMinor: number } & { ' $fragmentName'?: 'FactoringVerdictTotalsFieldsFragment' };
+
+export type FactoringCompanyOverviewQueryVariables = Exact<{
+  factoringCompanyId: string | number;
+}>;
+
+
+export type FactoringCompanyOverviewQuery = { factoringCompanyOverview: { factoringCompanyId: string, currencyCode: string, amountsIncluded: boolean, movedWindowDays: number, oldestFundedOn: number | null, chargebackDeadline: number | null, awaitingCount: number, paceMedianDays: number | null, paceLate: number, ready: { ' $fragmentRefs'?: { 'FactoringVerdictTotalsFieldsFragment': FactoringVerdictTotalsFieldsFragment } }, readyLate: { ' $fragmentRefs'?: { 'FactoringVerdictTotalsFieldsFragment': FactoringVerdictTotalsFieldsFragment } }, submitted: { ' $fragmentRefs'?: { 'FactoringVerdictTotalsFieldsFragment': FactoringVerdictTotalsFieldsFragment } }, funded: { ' $fragmentRefs'?: { 'FactoringVerdictTotalsFieldsFragment': FactoringVerdictTotalsFieldsFragment } }, reserveHeld: { ' $fragmentRefs'?: { 'FactoringVerdictTotalsFieldsFragment': FactoringVerdictTotalsFieldsFragment } }, released: { ' $fragmentRefs'?: { 'FactoringVerdictTotalsFieldsFragment': FactoringVerdictTotalsFieldsFragment } }, chargebacksDue: { ' $fragmentRefs'?: { 'FactoringVerdictTotalsFieldsFragment': FactoringVerdictTotalsFieldsFragment } }, chargedBack: { ' $fragmentRefs'?: { 'FactoringVerdictTotalsFieldsFragment': FactoringVerdictTotalsFieldsFragment } }, awaiting: { submissionId: string, number: string, invoiceCount: number, faceMinor: number, sentAt: number, dueAt: number } | null, pace: Array<{ submissionId: string, number: string, sentAt: number, fundedAt: number, businessDays: number, late: boolean }>, agreement: { ' $fragmentRefs'?: { 'FactoringAgreementFieldsFragment': FactoringAgreementFieldsFragment } } | null, delivery: { configured: boolean, method: FactoringTransportMethod | null, lastTestedAt: number | null, lastTestError: string | null }, notices: { assigned: number, needsNotice: number, awaiting: number, acknowledged: number }, attention: Array<{ kind: FactoringAttentionKind, tone: string, count: number, amountMinor: number, at: number | null, submissionId: string | null, number: string | null, invoiceId: string | null, invoiceNumber: string | null, customerName: string | null, remittanceId: string | null, fileName: string | null, lineCount: number, exceptionCount: number, detail: string | null }>, setup: { agreement: boolean, delivery: boolean, customers: boolean, notices: boolean, done: number }, summary: Array<{ text: string, strong: boolean, tone: string | null, target: FactoringOverviewTarget | null }> } };
+
+export type FactoringCompanyCustomersQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+  factoringCompanyId: string | number;
+  stage?: FactoringCustomerNoticeStage | null | undefined;
+  includeTotalCount?: boolean | null | undefined;
+}>;
+
+
+export type FactoringCompanyCustomersQuery = { factoringCompanyCustomers: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ cursor: string, node: { id: string, code: string, name: string, status: EntityStatus, lastReleasedAt: number | null, fundedCount: number, fundedMinor: number, notice: { ' $fragmentRefs'?: { 'FactoringNoaFieldsFragment': FactoringNoaFieldsFragment } } | null } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
+
+export type FactoringReserveHistoryQueryVariables = Exact<{
+  factoringCompanyId: string | number;
+  days: number;
+}>;
+
+
+export type FactoringReserveHistoryQuery = { factoringReserveHistory: Array<{ day: number, reserveMinor: number }> };
+
+export type FactoringCompanySchedulesQueryVariables = Exact<{
+  factoringCompanyId: string | number;
+  first: number;
+}>;
+
+
+export type FactoringCompanySchedulesQuery = { factoringSubmissions: { edges: Array<{ node: { id: string, number: string, status: FactoringSubmissionStatus, currencyCode: string, invoiceCount: number, faceMinor: number, transportMethod: FactoringTransportMethod, transportTarget: string, lastError: string | null, sentAt: number | null, failedAt: number | null, fundedAt: number | null, createdAt: number } }> } };
+
+export type FactoringFundingPreviewQueryVariables = Exact<{
+  input: FactoringFundingPreviewInput;
+}>;
+
+
+export type FactoringFundingPreviewQuery = { factoringFundingPreview: { faceMinor: number, advanceMinor: number, feeMinor: number, reserveMinor: number, restOnReleaseMinor: number, days: number, feeRateBp: number } };
+
+export type FactoringAgreementActivityQueryVariables = Exact<{
+  agreementId: string | number;
+}>;
+
+
+export type FactoringAgreementActivityQuery = { factoringAgreementActivity: { schedules: number, fundedSchedules: number, invoices: number, faceMinor: number, expectedAdvanceMinor: number, expectedFeeMinor: number, firstSentAt: number | null, lastSentAt: number | null } };
 
 export type DeskFactoringInvoiceStateFieldsFragment = { invoiceId: string, customerId: string, factoringCompanyId: string | null, verdict: FactoringVerdict, failedChecks: number, openBalanceMinor: number, readySince: number | null, evaluatedAt: number, checks: Array<{ code: FactoringCheckCode, passed: boolean, message: string, fix: FactoringFixAction | null, documentTypeId: string | null, documentTypeName: string | null, shipmentId: string | null, shipmentPro: string | null }> } & { ' $fragmentName'?: 'DeskFactoringInvoiceStateFieldsFragment' };
 
@@ -17505,7 +17636,7 @@ export type RevokeApprovalDelegationMutationVariables = Exact<{
 
 export type RevokeApprovalDelegationMutation = { revokeApprovalDelegation: { id: string, revokedAt: number | null, version: number } };
 
-export type OrganizationSettingsStateFieldsFragment = { id: string, name: string, abbreviation: string } & { ' $fragmentName'?: 'OrganizationSettingsStateFieldsFragment' };
+export type OrganizationSettingsStateFieldsFragment = { id: string, name: string, abbreviation: string, countryName: string } & { ' $fragmentName'?: 'OrganizationSettingsStateFieldsFragment' };
 
 export type OrganizationSettingsFieldsFragment = { id: string, version: number, createdAt: number, updatedAt: number, bucketName: string, businessUnitId: string, loginSlug: string, name: string, scacCode: string, dotNumber: string, logoUrl: string, addressLine1: string, addressLine2: string, city: string, stateId: string, postalCode: string, timezone: string, taxId: string, brokerageEnabled: boolean, assetOperationsEnabled: boolean, state: { ' $fragmentRefs'?: { 'OrganizationSettingsStateFieldsFragment': OrganizationSettingsStateFieldsFragment } } | null } & { ' $fragmentName'?: 'OrganizationSettingsFieldsFragment' };
 
@@ -20838,6 +20969,7 @@ export { AiUsageSummaryDocument } from "./documents/ai-provider/usage-summary";
 export { ApiKeyTableRowFieldsFragmentDoc, ApiKeyTableDocument } from "./documents/api-key/table";
 export { AttentionSummaryDocument } from "./documents/attention/summary";
 export { AuditLegalHoldRowFieldsFragmentDoc, AuditExportRowFieldsFragmentDoc, AuditChainStatusDocument, AuditLegalHoldTableDocument, PlaceAuditLegalHoldDocument, ReleaseAuditLegalHoldDocument, AuditExportTableDocument, RequestAuditExportDocument, AuditExportDownloadDocument, AuditAlertPoliciesDocument, UpdateAuditAlertPolicyDocument } from "./documents/audit-log/admin";
+export { AuditReviewFieldsFragmentDoc, AuditOverviewDocument, AuditReviewsDocument, AuditEntryReviewDocument, MarkAuditReviewReviewedDocument, ReopenAuditReviewDocument } from "./documents/audit-log/overview";
 export { RecentActivityDocument } from "./documents/audit-log/recent-activity";
 export { AuditLogTableRowFieldsFragmentDoc, AuditLogTableDocument, AuditEntryDetailDocument, AuditRequestEntriesDocument, AuditFieldHistoryDocument } from "./documents/audit-log/table";
 export { BenefitPlansDocument, WorkerBenefitEnrollmentsDocument, BenefitEnrollmentsDocument, BenefitCostsDocument, WorkerTotalCompensationDocument, MyTotalCompensationDocument, CreateBenefitPlanDocument, UpdateBenefitPlanDocument, EnrollBenefitDocument, EndBenefitEnrollmentDocument } from "./documents/benefits/operations";
@@ -20900,6 +21032,7 @@ export { ExtractionFieldAccuracyFieldsFragmentDoc, AiCorrectionTableRowFieldsFra
 export { CreateFactoringCompanyDocument, UpdateFactoringCompanyDocument } from "./documents/factoring-company/mutations";
 export { FactoringCompanyTableRowFieldsFragmentDoc, FactoringCompanyTableDocument } from "./documents/factoring-company/table";
 export { FactoringAgreementFieldsFragmentDoc, FactoringAgreementsDocument, FactoringAgreementOwnerDocument, CreateFactoringAgreementDocument, UpdateFactoringAgreementDocument, ActivateFactoringAgreementDocument, EndFactoringAgreementDocument, FactoringCompanyRecordDocument } from "./documents/factoring/agreements";
+export { FactoringVerdictTotalsFieldsFragmentDoc, FactoringCompanyOverviewDocument, FactoringCompanyCustomersDocument, FactoringReserveHistoryDocument, FactoringCompanySchedulesDocument, FactoringFundingPreviewDocument, FactoringAgreementActivityDocument } from "./documents/factoring/company-page";
 export { DeskFactoringInvoiceStateFieldsFragmentDoc, DeskFactoringSubmissionFieldsFragmentDoc, DeskFactoringRemittanceFieldsFragmentDoc, DeskFactoringReadinessDocument, DeskFactoringInvoiceStatesDocument, DeskFactoringAgreementsDocument, DeskFactoringNoasDocument, DeskFactoringSubmissionsDocument, DeskFactoringSubmissionDocument, DeskFactoringRemittancesDocument, DeskFactoringRemittanceDocument } from "./documents/factoring/desk";
 export { FactoringPlannedMovementFieldsFragmentDoc, FactoringReserveEntryFieldsFragmentDoc, FactoringReserveMovementPlanFieldsFragmentDoc, FactoringReserveEntriesDocument, FactoringReserveBalanceDocument, FactoringFundingPlanDocument, FactoringReleasePlanDocument, FactoringChargebackPlanDocument, FactoringChargebackReversalPlanDocument, RecordFactoringFundingDocument, ReleaseFactoringReserveDocument, RecordFactoringChargebackDocument, ReverseFactoringChargebackDocument } from "./documents/factoring/ledger";
 export { FactoringNoaFieldsFragmentDoc, FactoringNoasDocument, FactoringNoaOwnerDocument, DraftFactoringNoaDocument, SendFactoringNoaDocument, AcknowledgeFactoringNoaDocument, ReleaseFactoringNoaDocument } from "./documents/factoring/noas";

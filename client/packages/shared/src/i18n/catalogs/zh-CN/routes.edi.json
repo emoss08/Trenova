@@ -485,7 +485,6 @@
   "Stop shadow": "停止影子运行",
   "Structured partner settings reserved for integration-specific options and runtime overrides.": "保留供集成专属选项与运行时覆盖使用的结构化合作伙伴设置。",
   "Stuck transfers": "卡住的转移",
-  "Submitted {0}": "提交于 {0}",
   "Success rate": "成功率",
   "Synchronous": "同步",
   "Synchronous MDNs return in the HTTP response; asynchronous MDNs post back to the return URL.": "同步 MDN 会在 HTTP 响应中返回；异步 MDN 则会回传至返回网址。",

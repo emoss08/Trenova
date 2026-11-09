@@ -165,6 +165,7 @@ import (
 	journalentryports "github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	briefingports "github.com/emoss08/trenova/internal/modules/agent/ports/briefingports"
 	dispatchconsoleports "github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
+	factoringoverviewservice "github.com/emoss08/trenova/internal/modules/billing/app/factoringoverviewservice"
 	customerpaymentports "github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	factoringledgerports "github.com/emoss08/trenova/internal/modules/billing/ports/factoringledgerports"
 	factoringports "github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
@@ -387,6 +388,7 @@ type ResolverParams struct {
 	FactoringCompanyService           *factoringcompanyservice.Service
 	FactoringLedgerService            factoringledgerports.LedgerService
 	FactoringNoaService               factoringports.NoaService
+	FactoringOverviewService          *factoringoverviewservice.Service
 	FactoringReadinessService         factoringports.ReadinessService
 	FactoringRemittanceService        factoringremittanceports.RemittanceService
 	FactoringSubmissionService        factoringsubmissionports.SubmissionService
@@ -1477,6 +1479,7 @@ func NewSchema(p ResolverParams) Schema {
 		FactoringLedgerService:     p.FactoringLedgerService,
 		FactoringRemittanceService: p.FactoringRemittanceService,
 		FactoringTransportService:  p.FactoringTransportService,
+		FactoringOverviewService:   p.FactoringOverviewService,
 	}
 	factoringcompanyDeps := &factoringcompanyresolver.Deps{
 		Core:                    core,

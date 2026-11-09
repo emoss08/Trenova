@@ -58,7 +58,10 @@ func withPrincipals(q keel.Query[*audit.Entry]) keel.Query[*audit.Entry] {
 }
 
 func accessPreds(access auditports.EntryAccess) ([]keel.Pred, bool) {
-	e := auditdb.Entries
+	return accessPredsOn(auditdb.Entries, access)
+}
+
+func accessPredsOn(e *auditdb.EntriesTable, access auditports.EntryAccess) ([]keel.Pred, bool) {
 	preds := make([]keel.Pred, 0, 2)
 	if !access.AllResources {
 		if len(access.Resources) == 0 {
@@ -74,6 +77,31 @@ func accessPreds(access auditports.EntryAccess) ([]keel.Pred, bool) {
 		preds = append(preds, e.Category.Ne(audit.CategorySecurity))
 	}
 	return preds, true
+}
+
+const requestLookback = int64(60 * 60)
+
+func firstOfRequest(access auditports.EntryAccess) keel.Pred {
+	e := auditdb.Entries
+	p := auditdb.Entries.As("earlier_entry")
+	earlier, _ := accessPredsOn(p, access)
+	earlier = append(earlier,
+		p.CorrelationID.EqCol(e.CorrelationID),
+		keel.Int64Of(p.Timestamp).GteExpr(e.Timestamp.Sub(keel.Int64(requestLookback))),
+		keel.Or(
+			keel.Int64Of(p.Timestamp).LtExpr(e.Timestamp),
+			keel.And(
+				keel.Int64Of(p.Timestamp).EqExpr(e.Timestamp),
+				keel.Raw("? < ?", p.ID, e.ID),
+			),
+		),
+	)
+	return keel.NotExists(p.Where(earlier...))
+}
+
+func narrowed(filter *pagination.QueryOptions) bool {
+	return filter != nil && (filter.Query != "" || len(filter.FieldFilters) > 0 ||
+		len(filter.FilterGroups) > 0 || len(filter.GeoFilters) > 0 || len(filter.AggregateFilters) > 0)
 }
 
 func permissionResources(names []string) []permission.Resource {
@@ -112,13 +140,20 @@ func (r *repository) ListConnection(
 			if req.ChangedField != "" {
 				preds = append(preds, e.Changes.HasKey(req.ChangedField))
 			}
+			if req.OnePerRequest && req.ResourceID == "" && !narrowed(req.Filter) {
+				preds = append(preds, firstOfRequest(req.Access))
+			}
 
 			lq := &listquery.Request[audit.Entry]{
 				Filter: req.Filter,
 				Cursor: req.Cursor,
 				Shape:  withPrincipals,
 			}
-			if !req.IncludeDetail {
+			switch {
+			case req.IncludeDetail:
+			case req.IncludeChanges:
+				lq.Columns = append(append([]string{}, summaryColumns...), "changes")
+			default:
 				lq.Columns = summaryColumns
 			}
 
@@ -361,6 +396,53 @@ func (r *repository) TenantsWithEntries(
 				BusinessUnitID: rw.BusinessUnitID,
 			})
 		}
+		return out, nil
+	})
+}
+
+type requestCountRow struct {
+	CorrelationID string
+	Entries       int64
+}
+
+func (r *repository) CountByRequest(
+	ctx context.Context,
+	req *auditports.CountByRequestRequest,
+) (map[string]int64, error) {
+	out := make(map[string]int64, len(req.CorrelationIDs))
+	if len(req.CorrelationIDs) == 0 {
+		return out, nil
+	}
+
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[string]int64, error) {
+		preds, allowed := accessPreds(req.Access)
+		if !allowed {
+			return out, nil
+		}
+
+		e := auditdb.Entries
+		preds = append(preds,
+			e.CorrelationID.In(req.CorrelationIDs...),
+			e.Timestamp.Gte(req.From),
+			e.Timestamp.Lte(req.To),
+		)
+
+		var rows []requestCountRow
+		err := keel.Batch(ctx, r.db.Keel(ctx), keel.IntoSlice(
+			e.Group(e.CorrelationID).
+				Pick(e.CorrelationID, keel.CastInt64(keel.Count())).
+				Where(preds...),
+			&rows,
+		))
+		if err != nil {
+			r.l.Error("failed to count audit entries by request", zap.Error(err))
+			return nil, err
+		}
+
+		for _, row := range rows {
+			out[row.CorrelationID] = row.Entries
+		}
+
 		return out, nil
 	})
 }

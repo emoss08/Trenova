@@ -11,10 +11,17 @@ import { getFactoringSubmissionColumns } from "./factoring-submission-columns";
 
 const ALL_STATUSES = null;
 
-export default function FactoringSubmissionTable() {
+export default function FactoringSubmissionTable({
+  factoringCompanyId,
+}: {
+  factoringCompanyId: string | null;
+}) {
   const t = useT();
   const columns = useMemo(() => getFactoringSubmissionColumns(t), [t]);
-  const graphql = useMemo(() => createFactoringSubmissionTableConfig(ALL_STATUSES), []);
+  const graphql = useMemo(
+    () => createFactoringSubmissionTableConfig(ALL_STATUSES, factoringCompanyId),
+    [factoringCompanyId],
+  );
 
   return (
     <DataTable<FactoringSubmissionRow>

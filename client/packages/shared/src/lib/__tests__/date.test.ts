@@ -11,6 +11,7 @@ import {
   formatUnixDateTimeOrDash,
   formatUnixDateTimeShort,
   formatUnixDayTimeRange,
+  formatUnixSpan,
   formatUnixTime,
   formatUnixTimeWithSeconds,
   fromUserWallClock,
@@ -41,6 +42,10 @@ import {
   getStartOfMonth,
   getEndOfMonth,
   getCommonDatePresets,
+  formatTimeOfDay,
+  parseTimeOfDay,
+  timeOfDayValue,
+  usesTwelveHourClock,
 } from "@trenova/shared/lib/date";
 
 const JAN_15_2024_UTC = 1705276800;
@@ -131,6 +136,44 @@ describe("formatUnixDayTimeRange", () => {
   it("treats an unset end of the span as unset", () => {
     expect(formatUnixDayTimeRange(JAN_15_2024_UTC, null)).toBe("N/A");
     expect(formatUnixDayTimeRange(0, JAN_15_2024_UTC, { fallback: "—" })).toBe("—");
+  });
+});
+
+describe("formatUnixSpan", () => {
+  const NOV_5_2026_DENVER_MIDNIGHT = 1_793_862_000;
+  const DAY = 86_400;
+  const plain = (text: string) => text.replace(/\s/g, " ");
+
+  it("reads as dates when both ends are midnights in the user's timezone", () => {
+    setUserDatePreferences({ timezone: "America/Denver" });
+
+    const text = formatUnixSpan(NOV_5_2026_DENVER_MIDNIGHT - 2 * DAY, NOV_5_2026_DENVER_MIDNIGHT);
+
+    expect(plain(text)).toBe("Nov 3 – 5, 2026");
+  });
+
+  it("reads as dates when the end is the last second of a day", () => {
+    setUserDatePreferences({ timezone: "America/Denver" });
+
+    const text = formatUnixSpan(
+      NOV_5_2026_DENVER_MIDNIGHT - 2 * DAY,
+      NOV_5_2026_DENVER_MIDNIGHT + DAY - 1,
+    );
+
+    expect(plain(text)).toBe("Nov 3 – 5, 2026");
+  });
+
+  it("names the hours of a window inside one day", () => {
+    setUserDatePreferences({ timezone: "America/Denver", timeFormat: "12-hour" });
+
+    const text = formatUnixSpan(1_793_908_800, 1_793_912_399);
+
+    expect(plain(text)).toBe("Nov 5, 2026, 1:00 – 1:59 PM");
+  });
+
+  it("treats an unset end of the span as unset", () => {
+    expect(formatUnixSpan(JAN_15_2024_UTC, undefined)).toBe("N/A");
+    expect(formatUnixSpan(undefined, JAN_15_2024_UTC, { fallback: "" })).toBe("");
   });
 });
 
@@ -646,5 +689,34 @@ describe("formatCountdownClock", () => {
     expect(formatCountdownClock(-3)).toBe("0:00");
     expect(formatCountdownClock(Number.NaN)).toBe("0:00");
     expect(formatCountdownClock(Number.POSITIVE_INFINITY)).toBe("0:00");
+  });
+});
+
+describe("time of day", () => {
+  it("reads a 24-hour clock value and refuses anything else", () => {
+    expect(parseTimeOfDay("09:30")).toEqual({ hour: 9, minute: 30 });
+    expect(parseTimeOfDay(" 7:05 ")).toEqual({ hour: 7, minute: 5 });
+    expect(parseTimeOfDay("23:59")).toEqual({ hour: 23, minute: 59 });
+    expect(parseTimeOfDay("24:00")).toBeNull();
+    expect(parseTimeOfDay("9:3")).toBeNull();
+    expect(parseTimeOfDay("")).toBeNull();
+    expect(parseTimeOfDay(null)).toBeNull();
+  });
+
+  it("writes the value a form stores, padded to two digits", () => {
+    expect(timeOfDayValue(9, 5)).toBe("09:05");
+    expect(timeOfDayValue(14, 0)).toBe("14:00");
+  });
+
+  it("shows the time on the reader's clock, with no time zone applied", () => {
+    setUserDatePreferences({ timezone: "America/Denver", timeFormat: "12-hour" });
+    expect(usesTwelveHourClock()).toBe(true);
+    expect(formatTimeOfDay(14, 0)).toMatch(/^2:00\sPM$/);
+    expect(formatTimeOfDay(0, 30)).toMatch(/^12:30\sAM$/);
+
+    setUserDatePreferences({ timezone: "America/Denver", timeFormat: "24-hour" });
+    expect(usesTwelveHourClock()).toBe(false);
+    expect(formatTimeOfDay(14, 0)).toBe("14:00");
+    expect(formatTimeOfDay(9, 5)).toBe("09:05");
   });
 });

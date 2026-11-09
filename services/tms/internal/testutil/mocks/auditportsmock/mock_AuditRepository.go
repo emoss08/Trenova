@@ -509,3 +509,71 @@ func (_c *MockAuditRepository_TenantsWithEntries_Call) RunAndReturn(run func(ctx
 	_c.Call.Return(run)
 	return _c
 }
+
+// CountByRequest provides a mock function for the type MockAuditRepository
+func (_mock *MockAuditRepository) CountByRequest(ctx context.Context, req *auditports.CountByRequestRequest) (map[string]int64, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CountByRequest")
+	}
+
+	var r0 map[string]int64
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *auditports.CountByRequestRequest) (map[string]int64, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *auditports.CountByRequestRequest) map[string]int64); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(map[string]int64)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *auditports.CountByRequestRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockAuditRepository_CountByRequest_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CountByRequest'
+type MockAuditRepository_CountByRequest_Call struct {
+	*mock.Call
+}
+
+// CountByRequest is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *auditports.CountByRequestRequest
+func (_e *MockAuditRepository_Expecter) CountByRequest(ctx any, req any) *MockAuditRepository_CountByRequest_Call {
+	return &MockAuditRepository_CountByRequest_Call{Call: _e.mock.On("CountByRequest", ctx, req)}
+}
+
+func (_c *MockAuditRepository_CountByRequest_Call) Run(run func(ctx context.Context, req *auditports.CountByRequestRequest)) *MockAuditRepository_CountByRequest_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *auditports.CountByRequestRequest
+		if args[1] != nil {
+			arg1 = args[1].(*auditports.CountByRequestRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockAuditRepository_CountByRequest_Call) Return(counts map[string]int64, err error) *MockAuditRepository_CountByRequest_Call {
+	_c.Call.Return(counts, err)
+	return _c
+}
+
+func (_c *MockAuditRepository_CountByRequest_Call) RunAndReturn(run func(ctx context.Context, req *auditports.CountByRequestRequest) (map[string]int64, error)) *MockAuditRepository_CountByRequest_Call {
+	_c.Call.Return(run)
+	return _c
+}

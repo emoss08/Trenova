@@ -40,7 +40,6 @@ export function HomeEditDock({
 
   return (
     <ActionDock
-      animated
       indicator={
         dirty ? (
           <ActionDockIndicator

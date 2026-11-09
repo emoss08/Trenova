@@ -12,8 +12,8 @@ import {
   accountingDriftPhase,
   accountingDriftWithinTolerance,
   accountingSyncObjectPath,
-  formatAccountingMinor,
 } from "@/lib/accounting-sync";
+import { formatMinor } from "@trenova/shared/lib/money";
 import type { AccountingDriftFinding } from "@/lib/graphql/accounting-drift";
 import type { AccountingDriftRow } from "@/lib/graphql/accounting-drift-table";
 import { accountingSync } from "@/lib/queries/accounting-sync";
@@ -194,12 +194,12 @@ function DriftFindingDetail({
           <DescriptionItem label={t("In Trenova")} numeric>
             {finding.trenovaMinor == null
               ? finding.trenovaState || <DescriptionEmpty />
-              : formatAccountingMinor(finding.trenovaMinor, currency)}
+              : formatMinor(finding.trenovaMinor, currency)}
           </DescriptionItem>
           <DescriptionItem label={t("In {0}", providerName)} numeric>
             {finding.providerMinor == null
               ? finding.providerState || <DescriptionEmpty />
-              : formatAccountingMinor(finding.providerMinor, currency)}
+              : formatMinor(finding.providerMinor, currency)}
           </DescriptionItem>
           <DescriptionItem label={t("State in Trenova")}>
             {finding.trenovaState || <DescriptionEmpty />}
@@ -211,11 +211,11 @@ function DriftFindingDetail({
             {finding.differenceMinor == null ? (
               <DescriptionEmpty />
             ) : (
-              formatAccountingMinor(finding.differenceMinor, currency)
+              formatMinor(finding.differenceMinor, currency)
             )}
           </DescriptionItem>
           <DescriptionItem label={t("Reconciliation tolerance")} numeric>
-            {formatAccountingMinor(toleranceMinor, currency)}
+            {formatMinor(toleranceMinor, currency)}
           </DescriptionItem>
           <DescriptionItem label={t("Changed in {0}", providerName)}>
             {finding.providerModifiedAt ? (
@@ -292,11 +292,11 @@ function DriftFindingDetail({
                     </span>
                     <span className="tabular-nums">
                       {explainedOnly
-                        ? formatAccountingMinor(line.trenovaMinor, currency)
+                        ? formatMinor(line.trenovaMinor, currency)
                         : t(
                             "{0} in Trenova, {1} in {2}",
-                            formatAccountingMinor(line.trenovaMinor, currency),
-                            formatAccountingMinor(line.providerMinor, currency),
+                            formatMinor(line.trenovaMinor, currency),
+                            formatMinor(line.providerMinor, currency),
                             providerName,
                           )}
                     </span>

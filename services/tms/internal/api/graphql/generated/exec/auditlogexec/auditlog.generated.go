@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditalertservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditexportservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditintegrity"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditreviewservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
@@ -21,6 +22,9 @@ import (
 var Shard = &gqlexec.Shard{
 	Name: "auditlog",
 	Objects: []*gqlexec.Object{
+		{Name: "AuditActivityBucket", Implementors: []string{"AuditActivityBucket"}},
+		{Name: "AuditActorCounts", Implementors: []string{"AuditActorCounts"}},
+		{Name: "AuditActorStat", Implementors: []string{"AuditActorStat"}},
 		{Name: "AuditAlertPolicy", Implementors: []string{"AuditAlertPolicy"}},
 		{Name: "AuditChainStatus", Implementors: []string{"AuditChainStatus"}},
 		{Name: "AuditEntry", Implementors: []string{"AuditEntry"}},
@@ -34,15 +38,176 @@ var Shard = &gqlexec.Shard{
 		{Name: "AuditLegalHold", Implementors: []string{"AuditLegalHold"}},
 		{Name: "AuditLegalHoldConnection", Implementors: []string{"AuditLegalHoldConnection"}},
 		{Name: "AuditLegalHoldEdge", Implementors: []string{"AuditLegalHoldEdge"}},
+		{Name: "AuditOverview", Implementors: []string{"AuditOverview"}},
+		{Name: "AuditOverviewFigures", Implementors: []string{"AuditOverviewFigures"}},
+		{Name: "AuditOverviewSegment", Implementors: []string{"AuditOverviewSegment"}},
+		{Name: "AuditReview", Implementors: []string{"AuditReview"}},
+		{Name: "AuditReviewList", Implementors: []string{"AuditReviewList"}},
 	},
 	Fields: []gqlexec.Fields{
+		{Object: "AuditActivityBucket", Fields: []*gqlexec.Field{
+			{
+				Name:     "at",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AuditActivityBucket)
+					return obj.At, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int),
+			},
+			{
+				Name:     "people",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AuditActivityBucket)
+					return obj.People, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "agents",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AuditActivityBucket)
+					return obj.Agents, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "integrations",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AuditActivityBucket)
+					return obj.Integrations, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "jobs",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AuditActivityBucket)
+					return obj.Jobs, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+		}},
+		{Object: "AuditActorCounts", Fields: []*gqlexec.Field{
+			{
+				Name:     "people",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AuditActorCounts)
+					return obj.People, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "agents",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AuditActorCounts)
+					return obj.Agents, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "integrations",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AuditActorCounts)
+					return obj.Integrations, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "jobs",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AuditActorCounts)
+					return obj.Jobs, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+		}},
+		{Object: "AuditActorStat", Fields: []*gqlexec.Field{
+			{
+				Name:     "principalId",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AuditActorStat)
+					return obj.PrincipalID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2string),
+			},
+			{
+				Name:     "principalType",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AuditActorStat)
+					return obj.PrincipalType, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "name",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AuditActorStat)
+					return obj.Name, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "entries",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AuditActorStat)
+					return obj.Entries, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "sensitive",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AuditActorStat)
+					return obj.Sensitive, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:      "user",
+				HasChild:  true,
+				ChildType: "User",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AuditActorStat)
+					return obj.User, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
+			},
+		}},
 		{Object: "AuditAlertPolicy", Fields: []*gqlexec.Field{
 			{
 				Name:       "kind",
 				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild0,
+				ChildErr:   errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*auditalertservice.PolicyView)
 					return gqlexec.Resolver[AuditAlertPolicyResolver](ec, "AuditAlertPolicy@auditlog").Kind(ctx, obj)
@@ -54,7 +219,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild1,
+				ChildErr:   errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*auditalertservice.PolicyView)
 					return gqlexec.Resolver[AuditAlertPolicyResolver](ec, "AuditAlertPolicy@auditlog").Title(ctx, obj)
@@ -66,7 +231,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild1,
+				ChildErr:   errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*auditalertservice.PolicyView)
 					return gqlexec.Resolver[AuditAlertPolicyResolver](ec, "AuditAlertPolicy@auditlog").Description(ctx, obj)
@@ -78,7 +243,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild2,
+				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*auditalertservice.PolicyView)
 					return gqlexec.Resolver[AuditAlertPolicyResolver](ec, "AuditAlertPolicy@auditlog").Counted(ctx, obj)
@@ -90,7 +255,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild2,
+				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*auditalertservice.PolicyView)
 					return gqlexec.Resolver[AuditAlertPolicyResolver](ec, "AuditAlertPolicy@auditlog").Enabled(ctx, obj)
@@ -102,7 +267,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild3,
+				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*auditalertservice.PolicyView)
 					return gqlexec.Resolver[AuditAlertPolicyResolver](ec, "AuditAlertPolicy@auditlog").Threshold(ctx, obj)
@@ -114,7 +279,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild3,
+				ChildErr:   errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*auditalertservice.PolicyView)
 					return gqlexec.Resolver[AuditAlertPolicyResolver](ec, "AuditAlertPolicy@auditlog").WindowMinutes(ctx, obj)
@@ -126,7 +291,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "signed",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*auditintegrity.ChainStatus)
 					return obj.Signed, nil
@@ -136,7 +301,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "lastSeq",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*auditintegrity.ChainStatus)
 					return obj.LastSeq, nil
@@ -147,7 +312,7 @@ var Shard = &gqlexec.Shard{
 				Name:       "sealedThrough",
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild4,
+				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*auditintegrity.ChainStatus)
 					return gqlexec.Resolver[AuditChainStatusResolver](ec, "AuditChainStatus@auditlog").SealedThrough(ctx, obj)
@@ -156,7 +321,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "lastVerifiedAt",
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*auditintegrity.ChainStatus)
 					return obj.LastVerifiedAt, nil
@@ -167,7 +332,7 @@ var Shard = &gqlexec.Shard{
 				Name:       "lastVerificationStatus",
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild5,
+				ChildErr:   errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*auditintegrity.ChainStatus)
 					return gqlexec.Resolver[AuditChainStatusResolver](ec, "AuditChainStatus@auditlog").LastVerificationStatus(ctx, obj)
@@ -176,7 +341,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "lastVerificationDetail",
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*auditintegrity.ChainStatus)
 					return obj.LastVerificationDetail, nil
@@ -188,7 +353,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "id",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*audit.Entry)
 					return obj.ID, nil
@@ -197,7 +362,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "userId",
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*audit.Entry)
 					return obj.UserID, nil
@@ -207,7 +372,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "principalType",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*audit.Entry)
 					return obj.PrincipalType, nil
@@ -217,7 +382,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "principalId",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*audit.Entry)
 					return obj.PrincipalID, nil
@@ -226,7 +391,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "apiKeyId",
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*audit.Entry)
 					return obj.APIKeyID, nil
@@ -236,7 +401,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "businessUnitId",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*audit.Entry)
 					return obj.BusinessUnitID, nil
@@ -246,7 +411,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "organizationId",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*audit.Entry)
 					return obj.OrganizationID, nil
@@ -256,7 +421,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "timestamp",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*audit.Entry)
 					return obj.Timestamp, nil
@@ -310,7 +475,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild1,
+				ChildErr:   errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*audit.Entry)
 					return gqlexec.Resolver[AuditEntryResolver](ec, "AuditEntry@auditlog").Resource(ctx, obj)
@@ -322,7 +487,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild1,
+				ChildErr:   errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*audit.Entry)
 					return gqlexec.Resolver[AuditEntryResolver](ec, "AuditEntry@auditlog").Operation(ctx, obj)
@@ -332,7 +497,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "action",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*audit.Entry)
 					return obj.Action, nil
@@ -342,7 +507,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "resourceId",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*audit.Entry)
 					return obj.ResourceID, nil
@@ -351,7 +516,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "correlationId",
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*audit.Entry)
 					return obj.CorrelationID, nil
@@ -360,7 +525,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "traceId",
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*audit.Entry)
 					return obj.TraceID, nil
@@ -369,7 +534,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "userAgent",
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*audit.Entry)
 					return obj.UserAgent, nil
@@ -378,7 +543,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "comment",
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*audit.Entry)
 					return obj.Comment, nil
@@ -387,7 +552,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "ipAddress",
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*audit.Entry)
 					return obj.IPAddress, nil
@@ -419,7 +584,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild1,
+				ChildErr:   errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*audit.Entry)
 					return gqlexec.Resolver[AuditEntryResolver](ec, "AuditEntry@auditlog").Channel(ctx, obj)
@@ -428,7 +593,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "actorName",
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*audit.Entry)
 					return obj.ActorName, nil
@@ -437,7 +602,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "aiRunId",
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*audit.Entry)
 					return obj.AIRunID, nil
@@ -447,7 +612,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "sensitiveData",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*audit.Entry)
 					return obj.SensitiveData, nil
@@ -457,7 +622,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "critical",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*audit.Entry)
 					return obj.Critical, nil
@@ -466,7 +631,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "entityRef",
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*audit.Entry)
 					return obj.EntityRef, nil
@@ -482,6 +647,16 @@ var Shard = &gqlexec.Shard{
 					return obj.User, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
+			},
+			{
+				Name:     "requestEntryCount",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*audit.Entry)
+					return obj.RequestEntryCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
 			},
 		}},
 		{Object: "AuditEntryConnection", Fields: []*gqlexec.Field{
@@ -509,7 +684,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "totalCount",
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AuditEntryConnection)
 					return obj.TotalCount, nil
@@ -519,7 +694,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "totalCountExact",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AuditEntryConnection)
 					return obj.TotalCountExact, nil
@@ -542,7 +717,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "cursor",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AuditEntryEdge)
 					return obj.Cursor, nil
@@ -554,7 +729,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "id",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*audit.Export)
 					return obj.ID, nil
@@ -585,7 +760,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "rangeFrom",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*audit.Export)
 					return obj.RangeFrom, nil
@@ -595,7 +770,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "rangeTo",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*audit.Export)
 					return obj.RangeTo, nil
@@ -605,7 +780,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "includeSecurity",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*audit.Export)
 					return obj.IncludeSecurity, nil
@@ -625,7 +800,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "rowCount",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*audit.Export)
 					return obj.RowCount, nil
@@ -635,7 +810,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "byteSize",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*audit.Export)
 					return obj.ByteSize, nil
@@ -644,7 +819,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "sha256",
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*audit.Export)
 					return obj.SHA256, nil
@@ -653,7 +828,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "artifactExpiresAt",
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*audit.Export)
 					return obj.ArtifactExpiresAt, nil
@@ -662,7 +837,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "errorMessage",
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*audit.Export)
 					return obj.ErrorMessage, nil
@@ -671,7 +846,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "startedAt",
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*audit.Export)
 					return obj.StartedAt, nil
@@ -680,7 +855,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "completedAt",
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*audit.Export)
 					return obj.CompletedAt, nil
@@ -690,7 +865,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "createdAt",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*audit.Export)
 					return obj.CreatedAt, nil
@@ -702,7 +877,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild2,
+				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*audit.Export)
 					return gqlexec.Resolver[AuditExportResolver](ec, "AuditExport@auditlog").Downloadable(ctx, obj)
@@ -735,7 +910,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "totalCount",
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AuditExportConnection)
 					return obj.TotalCount, nil
@@ -745,7 +920,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "totalCountExact",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AuditExportConnection)
 					return obj.TotalCountExact, nil
@@ -757,7 +932,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "url",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*auditexportservice.Download)
 					return obj.URL, nil
@@ -767,7 +942,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "fileName",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*auditexportservice.Download)
 					return obj.FileName, nil
@@ -777,7 +952,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "expiresAt",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*auditexportservice.Download)
 					return obj.ExpiresAt, nil
@@ -786,7 +961,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "sha256",
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*auditexportservice.Download)
 					return obj.SHA256, nil
@@ -809,7 +984,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "cursor",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AuditExportEdge)
 					return obj.Cursor, nil
@@ -821,7 +996,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "resources",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*audit.ExportFilters)
 					return obj.Resources, nil
@@ -831,7 +1006,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "operations",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*audit.ExportFilters)
 					return obj.Operations, nil
@@ -841,7 +1016,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "categories",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*audit.ExportFilters)
 					return obj.Categories, nil
@@ -851,7 +1026,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "channels",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*audit.ExportFilters)
 					return obj.Channels, nil
@@ -860,7 +1035,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "principalId",
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*audit.ExportFilters)
 					return obj.PrincipalID, nil
@@ -869,7 +1044,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "resourceId",
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*audit.ExportFilters)
 					return obj.ResourceID, nil
@@ -881,7 +1056,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "id",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*audit.LegalHold)
 					return obj.ID, nil
@@ -891,7 +1066,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "name",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*audit.LegalHold)
 					return obj.Name, nil
@@ -901,7 +1076,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "reason",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*audit.LegalHold)
 					return obj.Reason, nil
@@ -912,7 +1087,7 @@ var Shard = &gqlexec.Shard{
 				Name:       "resource",
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild1,
+				ChildErr:   errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*audit.LegalHold)
 					return gqlexec.Resolver[AuditLegalHoldResolver](ec, "AuditLegalHold@auditlog").Resource(ctx, obj)
@@ -921,7 +1096,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "resourceId",
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*audit.LegalHold)
 					return obj.ResourceID, nil
@@ -931,7 +1106,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "placedById",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*audit.LegalHold)
 					return obj.PlacedByID, nil
@@ -941,7 +1116,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "placedAt",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*audit.LegalHold)
 					return obj.PlacedAt, nil
@@ -950,7 +1125,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "releasedById",
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*audit.LegalHold)
 					return obj.ReleasedByID, nil
@@ -959,7 +1134,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "releasedAt",
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*audit.LegalHold)
 					return obj.ReleasedAt, nil
@@ -968,7 +1143,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "releaseReason",
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*audit.LegalHold)
 					return obj.ReleaseReason, nil
@@ -980,7 +1155,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild2,
+				ChildErr:   errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*audit.LegalHold)
 					return gqlexec.Resolver[AuditLegalHoldResolver](ec, "AuditLegalHold@auditlog").Active(ctx, obj)
@@ -1037,7 +1212,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "totalCount",
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AuditLegalHoldConnection)
 					return obj.TotalCount, nil
@@ -1047,7 +1222,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "totalCountExact",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AuditLegalHoldConnection)
 					return obj.TotalCountExact, nil
@@ -1070,12 +1245,567 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "cursor",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AuditLegalHoldEdge)
 					return obj.Cursor, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+		}},
+		{Object: "AuditOverview", Fields: []*gqlexec.Field{
+			{
+				Name:     "days",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AuditOverview)
+					return obj.Days, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "from",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AuditOverview)
+					return obj.From, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int),
+			},
+			{
+				Name:     "to",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AuditOverview)
+					return obj.To, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int),
+			},
+			{
+				Name:     "timezone",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AuditOverview)
+					return obj.Timezone, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "unit",
+				NonNull:  true,
+				ChildErr: errNoChild12,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AuditOverview)
+					return obj.Unit, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNAuditOverviewUnit2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAuditOverviewUnit),
+			},
+			{
+				Name:      "totals",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "AuditOverviewFigures",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AuditOverview)
+					return obj.Totals, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNAuditOverviewFigures2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAuditOverviewFigures),
+			},
+			{
+				Name:     "previousEntries",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AuditOverview)
+					return obj.PreviousEntries, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:      "activity",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "AuditActivityBucket",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AuditOverview)
+					return obj.Activity, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNAuditActivityBucket2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAuditActivityBucketᚄ),
+			},
+			{
+				Name:      "actors",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "AuditActorCounts",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AuditOverview)
+					return obj.Actors, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNAuditActorCounts2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAuditActorCounts),
+			},
+			{
+				Name:      "topActors",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "AuditActorStat",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AuditOverview)
+					return obj.TopActors, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNAuditActorStat2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAuditActorStatᚄ),
+			},
+			{
+				Name:     "otherActors",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AuditOverview)
+					return obj.OtherActors, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "otherEntries",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AuditOverview)
+					return obj.OtherEntries, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "reviewsIncluded",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AuditOverview)
+					return obj.ReviewsIncluded, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:      "openReviews",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "AuditReview",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AuditOverview)
+					return obj.OpenReviews, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNAuditReview2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋappᚋauditreviewserviceᚐViewᚄ),
+			},
+			{
+				Name:     "openReviewCount",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AuditOverview)
+					return obj.OpenReviewCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:      "summary",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "AuditOverviewSegment",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AuditOverview)
+					return obj.Summary, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNAuditOverviewSegment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAuditOverviewSegmentᚄ),
+			},
+		}},
+		{Object: "AuditOverviewFigures", Fields: []*gqlexec.Field{
+			{
+				Name:     "entries",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AuditOverviewFigures)
+					return obj.Entries, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "people",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AuditOverviewFigures)
+					return obj.People, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "agentsAsked",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AuditOverviewFigures)
+					return obj.AgentsAsked, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "agentsOwn",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AuditOverviewFigures)
+					return obj.AgentsOwn, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "integrations",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AuditOverviewFigures)
+					return obj.Integrations, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "jobs",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AuditOverviewFigures)
+					return obj.Jobs, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "sensitive",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AuditOverviewFigures)
+					return obj.Sensitive, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "security",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AuditOverviewFigures)
+					return obj.Security, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "deletesExports",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AuditOverviewFigures)
+					return obj.DeletesExports, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "peopleOffHours",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AuditOverviewFigures)
+					return obj.PeopleOffHours, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+		}},
+		{Object: "AuditOverviewSegment", Fields: []*gqlexec.Field{
+			{
+				Name:     "text",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AuditOverviewSegment)
+					return obj.Text, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "strong",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AuditOverviewSegment)
+					return obj.Strong, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:     "tone",
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AuditOverviewSegment)
+					return obj.Tone, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
+			},
+			{
+				Name:     "target",
+				ChildErr: errNoChild13,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AuditOverviewSegment)
+					return obj.Target, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOAuditOverviewTarget2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAuditOverviewTarget),
+			},
+			{
+				Name:     "targetId",
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AuditOverviewSegment)
+					return obj.TargetID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
+			},
+		}},
+		{Object: "AuditReview", Fields: []*gqlexec.Field{
+			{
+				Name:     "id",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*auditreviewservice.View)
+					return obj.ID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "kind",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*auditreviewservice.View)
+					return obj.Kind, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNAuditAlertKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋauditᚐAlertKind),
+			},
+			{
+				Name:     "entryId",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*auditreviewservice.View)
+					return obj.EntryID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "action",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*auditreviewservice.View)
+					return obj.Action, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:       "resource",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*auditreviewservice.View)
+					return gqlexec.Resolver[AuditReviewResolver](ec, "AuditReview@auditlog").Resource(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "resourceId",
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*auditreviewservice.View)
+					return obj.ResourceID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOString2string),
+			},
+			{
+				Name:     "entityRef",
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*auditreviewservice.View)
+					return obj.EntityRef, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOString2string),
+			},
+			{
+				Name:     "principalId",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*auditreviewservice.View)
+					return obj.PrincipalID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "principalType",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*auditreviewservice.View)
+					return obj.PrincipalType, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "actorName",
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*auditreviewservice.View)
+					return obj.ActorName, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOString2string),
+			},
+			{
+				Name:     "count",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*auditreviewservice.View)
+					return obj.Count, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+			{
+				Name:     "threshold",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*auditreviewservice.View)
+					return obj.Threshold, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "windowMinutes",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*auditreviewservice.View)
+					return obj.WindowMinutes, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "occurredAt",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*auditreviewservice.View)
+					return obj.OccurredAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+			{
+				Name:     "offHours",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*auditreviewservice.View)
+					return obj.OffHours, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:     "title",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*auditreviewservice.View)
+					return obj.Title, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "reviewedAt",
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*auditreviewservice.View)
+					return obj.ReviewedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
+			},
+			{
+				Name:       "reviewedBy",
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "User",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*auditreviewservice.View)
+					return gqlexec.Resolver[AuditReviewResolver](ec, "AuditReview@auditlog").ReviewedBy(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
+			},
+			{
+				Name:     "version",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*auditreviewservice.View)
+					return obj.Version, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+		}},
+		{Object: "AuditReviewList", Fields: []*gqlexec.Field{
+			{
+				Name:      "open",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "AuditReview",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AuditReviewList)
+					return obj.Open, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNAuditReview2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋappᚋauditreviewserviceᚐViewᚄ),
+			},
+			{
+				Name:     "openCount",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AuditReviewList)
+					return obj.OpenCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:      "reviewed",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "AuditReview",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AuditReviewList)
+					return obj.Reviewed, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNAuditReview2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋappᚋauditreviewserviceᚐViewᚄ),
+			},
+			{
+				Name:     "reviewedCount",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AuditReviewList)
+					return obj.ReviewedCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
 			},
 		}},
 		{Object: "Mutation", Fields: []*gqlexec.Field{
@@ -1144,8 +1874,75 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalNAuditAlertPolicy2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋappᚋauditalertserviceᚐPolicyView),
 			},
+			{
+				Name:       "markAuditReviewReviewed",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "AuditReview",
+				Args:       field_Mutation_markAuditReviewReviewed_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@auditlog").MarkAuditReviewReviewed(ctx, fc.Args["id"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNAuditReview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋappᚋauditreviewserviceᚐView),
+			},
+			{
+				Name:       "reopenAuditReview",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "AuditReview",
+				Args:       field_Mutation_reopenAuditReview_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@auditlog").ReopenAuditReview(ctx, fc.Args["id"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNAuditReview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋappᚋauditreviewserviceᚐView),
+			},
 		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
+			{
+				Name:       "auditOverview",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "AuditOverview",
+				Args:       field_Query_auditOverview_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@auditlog").AuditOverview(ctx, fc.Args["days"].(int))
+				},
+				Marshal: gqlexec.Marshal(marshalNAuditOverview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAuditOverview),
+			},
+			{
+				Name:       "auditReviews",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "AuditReviewList",
+				Args:       field_Query_auditReviews_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@auditlog").AuditReviews(ctx, fc.Args["limit"].(*int))
+				},
+				Marshal: gqlexec.Marshal(marshalNAuditReviewList2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAuditReviewList),
+			},
+			{
+				Name:       "auditEntryReview",
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "AuditReview",
+				Args:       field_Query_auditEntryReview_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@auditlog").AuditEntryReview(ctx, fc.Args["entryId"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalOAuditReview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋappᚋauditreviewserviceᚐView),
+			},
 			{
 				Name:       "auditEntries",
 				NonNull:    true,
@@ -1156,7 +1953,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_auditEntries_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[QueryResolver](ec, "Query@auditlog").AuditEntries(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput))
+					return gqlexec.Resolver[QueryResolver](ec, "Query@auditlog").AuditEntries(ctx, fc.Args["input"].(gqlmodel.DataTableConnectionInput), fc.Args["onePerRequest"].(*bool))
 				},
 				Marshal: gqlexec.Marshal(marshalNAuditEntryConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAuditEntryConnection),
 			},
@@ -1253,6 +2050,7 @@ var Shard = &gqlexec.Shard{
 		{Root: "AuditEntry@auditlog", Check: func(r any) bool { _, ok := r.(AuditEntryResolver); return ok }},
 		{Root: "AuditExport@auditlog", Check: func(r any) bool { _, ok := r.(AuditExportResolver); return ok }},
 		{Root: "AuditLegalHold@auditlog", Check: func(r any) bool { _, ok := r.(AuditLegalHoldResolver); return ok }},
+		{Root: "AuditReview@auditlog", Check: func(r any) bool { _, ok := r.(AuditReviewResolver); return ok }},
 		{Root: "Mutation@auditlog", Check: func(r any) bool { _, ok := r.(MutationResolver); return ok }},
 		{Root: "Query@auditlog", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
@@ -1293,16 +2091,26 @@ type AuditLegalHoldResolver interface {
 	ReleasedBy(ctx context.Context, obj *audit.LegalHold) (*tenant.User, error)
 }
 
+type AuditReviewResolver interface {
+	Resource(ctx context.Context, obj *auditreviewservice.View) (string, error)
+	ReviewedBy(ctx context.Context, obj *auditreviewservice.View) (*tenant.User, error)
+}
+
 type MutationResolver interface {
 	PlaceAuditLegalHold(ctx context.Context, input gqlmodel.PlaceAuditLegalHoldInput) (*audit.LegalHold, error)
 	ReleaseAuditLegalHold(ctx context.Context, id string, reason string) (*audit.LegalHold, error)
 	RequestAuditExport(ctx context.Context, input gqlmodel.RequestAuditExportInput) (*audit.Export, error)
 	AuditExportDownload(ctx context.Context, id string) (*auditexportservice.Download, error)
 	UpdateAuditAlertPolicy(ctx context.Context, input gqlmodel.UpdateAuditAlertPolicyInput) (*auditalertservice.PolicyView, error)
+	MarkAuditReviewReviewed(ctx context.Context, id string) (*auditreviewservice.View, error)
+	ReopenAuditReview(ctx context.Context, id string) (*auditreviewservice.View, error)
 }
 
 type QueryResolver interface {
-	AuditEntries(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AuditEntryConnection, error)
+	AuditOverview(ctx context.Context, days int) (*gqlmodel.AuditOverview, error)
+	AuditReviews(ctx context.Context, limit *int) (*gqlmodel.AuditReviewList, error)
+	AuditEntryReview(ctx context.Context, entryID string) (*auditreviewservice.View, error)
+	AuditEntries(ctx context.Context, input gqlmodel.DataTableConnectionInput, onePerRequest *bool) (*gqlmodel.AuditEntryConnection, error)
 	AuditEntriesByResourceID(ctx context.Context, input gqlmodel.DataTableConnectionInput, resourceID string, field *string) (*gqlmodel.AuditEntryConnection, error)
 	AuditEntry(ctx context.Context, id string) (*audit.Entry, error)
 	AuditChainStatus(ctx context.Context) (*auditintegrity.ChainStatus, error)
@@ -1312,18 +2120,20 @@ type QueryResolver interface {
 }
 
 var (
-	errNoChild0  = errors.New("field of type AuditAlertKind does not have child fields")
-	errNoChild1  = errors.New("field of type String does not have child fields")
-	errNoChild2  = errors.New("field of type Boolean does not have child fields")
-	errNoChild3  = errors.New("field of type Int does not have child fields")
-	errNoChild4  = errors.New("field of type Timestamp does not have child fields")
-	errNoChild5  = errors.New("field of type AuditVerificationStatus does not have child fields")
-	errNoChild6  = errors.New("field of type ID does not have child fields")
+	errNoChild0  = errors.New("field of type Timestamp does not have child fields")
+	errNoChild1  = errors.New("field of type Int does not have child fields")
+	errNoChild2  = errors.New("field of type ID does not have child fields")
+	errNoChild3  = errors.New("field of type String does not have child fields")
+	errNoChild4  = errors.New("field of type AuditAlertKind does not have child fields")
+	errNoChild5  = errors.New("field of type Boolean does not have child fields")
+	errNoChild6  = errors.New("field of type AuditVerificationStatus does not have child fields")
 	errNoChild7  = errors.New("field of type JSON does not have child fields")
 	errNoChild8  = errors.New("field of type AuditCategory does not have child fields")
 	errNoChild9  = errors.New("field of type AuditRetentionClass does not have child fields")
 	errNoChild10 = errors.New("field of type AuditExportFormat does not have child fields")
 	errNoChild11 = errors.New("field of type AuditExportStatus does not have child fields")
+	errNoChild12 = errors.New("field of type AuditOverviewUnit does not have child fields")
+	errNoChild13 = errors.New("field of type AuditOverviewTarget does not have child fields")
 )
 
 func field_Mutation_placeAuditLegalHold_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
@@ -1399,8 +2209,73 @@ func field_Mutation_updateAuditAlertPolicy_args(ctx context.Context, ec *gqlexec
 	return args, nil
 }
 
-func field_Query_auditEntries_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+func field_Mutation_markAuditReviewReviewed_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
 	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func field_Mutation_reopenAuditReview_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func field_Query_auditOverview_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "days",
+		func(ctx context.Context, v any) (int, error) {
+			return unmarshalNInt2int(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["days"] = arg0
+	return args, nil
+}
+
+func field_Query_auditReviews_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "limit",
+		func(ctx context.Context, v any) (*int, error) {
+			return unmarshalOInt2ᚖint(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["limit"] = arg0
+	return args, nil
+}
+
+func field_Query_auditEntryReview_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "entryId",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["entryId"] = arg0
+	return args, nil
+}
+
+func field_Query_auditEntries_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input",
 		func(ctx context.Context, v any) (gqlmodel.DataTableConnectionInput, error) {
 			return unmarshalNDataTableConnectionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDataTableConnectionInput(ctx, ec, v)
@@ -1409,6 +2284,14 @@ func field_Query_auditEntries_args(ctx context.Context, ec *gqlexec.Exec, rawArg
 		return nil, err
 	}
 	args["input"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "onePerRequest",
+		func(ctx context.Context, v any) (*bool, error) {
+			return unmarshalOBoolean2ᚖbool(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["onePerRequest"] = arg1
 	return args, nil
 }
 
@@ -1750,6 +2633,11 @@ func unmarshalNID2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, 
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func unmarshalNInt2int(ctx context.Context, ec *gqlexec.Exec, v any) (int, error) {
+	res, err := graphql.UnmarshalInt(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func unmarshalNPlaceAuditLegalHoldInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPlaceAuditLegalHoldInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.PlaceAuditLegalHoldInput, error) {
 	res, err := unmarshalInputPlaceAuditLegalHoldInput(ctx, ec, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -1827,6 +2715,46 @@ func unmarshalOString2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*
 	}
 	res, err := graphql.UnmarshalString(v)
 	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func marshalNAuditActivityBucket2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAuditActivityBucketᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.AuditActivityBucket) graphql.Marshaler {
+	return gqlexec.List[*gqlmodel.AuditActivityBucket]{
+		Elem:        marshalNAuditActivityBucket2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAuditActivityBucket,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNAuditActivityBucket2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAuditActivityBucket(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.AuditActivityBucket) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "AuditActivityBucket", v)
+}
+
+func marshalNAuditActorCounts2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAuditActorCounts(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.AuditActorCounts) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "AuditActorCounts", v)
+}
+
+func marshalNAuditActorStat2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAuditActorStatᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.AuditActorStat) graphql.Marshaler {
+	return gqlexec.List[*gqlmodel.AuditActorStat]{
+		Elem:        marshalNAuditActorStat2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAuditActorStat,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNAuditActorStat2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAuditActorStat(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.AuditActorStat) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "AuditActorStat", v)
 }
 
 func marshalNAuditAlertKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋauditᚐAlertKind(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v audit.AlertKind) graphql.Marshaler {
@@ -1993,12 +2921,72 @@ func marshalNAuditLegalHoldEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return ec.MarshalType(ctx, sel, "AuditLegalHoldEdge", v)
 }
 
+func marshalNAuditOverview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAuditOverview(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.AuditOverview) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "AuditOverview", v)
+}
+
+func marshalNAuditOverviewFigures2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAuditOverviewFigures(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.AuditOverviewFigures) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "AuditOverviewFigures", v)
+}
+
+func marshalNAuditOverviewSegment2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAuditOverviewSegmentᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.AuditOverviewSegment) graphql.Marshaler {
+	return gqlexec.List[*gqlmodel.AuditOverviewSegment]{
+		Elem:        marshalNAuditOverviewSegment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAuditOverviewSegment,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNAuditOverviewSegment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAuditOverviewSegment(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.AuditOverviewSegment) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "AuditOverviewSegment", v)
+}
+
+func marshalNAuditOverviewUnit2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAuditOverviewUnit(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v gqlmodel.AuditOverviewUnit) graphql.Marshaler {
+	return v
+}
+
 func marshalNAuditRetentionClass2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋauditᚐRetentionClass(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v audit.RetentionClass) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
 	}
 	return res
+}
+
+func marshalNAuditReview2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋappᚋauditreviewserviceᚐViewᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*auditreviewservice.View) graphql.Marshaler {
+	return gqlexec.List[*auditreviewservice.View]{
+		Elem:        marshalNAuditReview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋappᚋauditreviewserviceᚐView,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNAuditReview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋappᚋauditreviewserviceᚐView(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *auditreviewservice.View) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "AuditReview", v)
+}
+
+func marshalNAuditReviewList2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAuditReviewList(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.AuditReviewList) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "AuditReviewList", v)
 }
 
 func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v bool) graphql.Marshaler {
@@ -2011,6 +2999,14 @@ func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.Selecti
 
 func marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v pulid.ID) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
+func marshalNID2string(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v string) graphql.Marshaler {
+	res := graphql.MarshalID(v)
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
 	}
@@ -2058,6 +3054,14 @@ func marshalNString2ᚕstringᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.
 	}.Marshal(ctx, ec, sel, v)
 }
 
+func marshalNTimestamp2int(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v int) graphql.Marshaler {
+	res := graphql.MarshalInt(v)
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
 func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v int64) graphql.Marshaler {
 	res := graphql.MarshalInt64(v)
 	if res == graphql.Null {
@@ -2071,6 +3075,20 @@ func marshalOAuditEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodules
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "AuditEntry", v)
+}
+
+func marshalOAuditOverviewTarget2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAuditOverviewTarget(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.AuditOverviewTarget) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return v
+}
+
+func marshalOAuditReview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋappᚋauditreviewserviceᚐView(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *auditreviewservice.View) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "AuditReview", v)
 }
 
 func marshalOAuditVerificationStatus2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋauditᚐVerificationStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *audit.VerificationStatus) graphql.Marshaler {

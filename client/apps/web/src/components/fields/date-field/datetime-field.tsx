@@ -14,6 +14,7 @@ export function AutoCompleteDateTimeField<T extends FieldValues>({
   description,
   placeholder,
   disabled,
+  timezone,
   ...props
 }: AutoCompleteDateFieldProps<T>) {
   const inputId = `input-${name}`;
@@ -43,8 +44,9 @@ export function AutoCompleteDateTimeField<T extends FieldValues>({
               name={field.name}
               ref={field.ref}
               aria-label={label}
-              dateTime={toUserWallClock(field.value)}
-              setDateTime={(date) => field.onChange(fromUserWallClock(date) ?? null)}
+              timezone={timezone}
+              dateTime={toUserWallClock(field.value, timezone)}
+              setDateTime={(date) => field.onChange(fromUserWallClock(date, timezone) ?? null)}
               onBlur={field.onBlur}
               placeholder={placeholder}
               disabled={disabled || field.disabled}

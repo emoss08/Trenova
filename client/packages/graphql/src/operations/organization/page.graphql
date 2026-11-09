@@ -2,6 +2,7 @@ fragment OrganizationSettingsStateFields on UsState {
   id
   name
   abbreviation
+  countryName
 }
 
 fragment OrganizationSettingsFields on Organization {

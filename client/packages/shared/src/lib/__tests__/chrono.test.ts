@@ -345,3 +345,32 @@ describe("generateDateOnly", () => {
     expect(generateDateOnly("not a date at all xyz")).toBeNull();
   });
 });
+
+describe("dates that do not exist", () => {
+  it("refuses a compact date past the end of its month rather than rolling into the next", () => {
+    expect(parseDate("0231")).toBeNull();
+    expect(parseDate("0431 0800")).toBeNull();
+    expect(parseDate("1301")).toBeNull();
+  });
+
+  it("refuses a compact time outside the clock", () => {
+    expect(parseDate("0318 2400")).toBeNull();
+    expect(parseDate("0318 0860")).toBeNull();
+  });
+
+  it("still takes the last day of a month", () => {
+    const parsed = parseDate("0228");
+    expect(parsed?.getMonth()).toBe(1);
+    expect(parsed?.getDate()).toBe(28);
+  });
+});
+
+describe("the day it is now", () => {
+  it("reads relative dates against the clock it is given, not the device's", () => {
+    const lateOnJan15 = new Date(2024, 0, 15, 23, 30);
+
+    expect(sameDate(generateDateOnly("t", lateOnJan15)!, new Date(2024, 0, 15))).toBe(true);
+    expect(sameDate(generateDateOnly("t+1", lateOnJan15)!, new Date(2024, 0, 16))).toBe(true);
+    expect(parseDate("0318", lateOnJan15)?.getFullYear()).toBe(2024);
+  });
+});

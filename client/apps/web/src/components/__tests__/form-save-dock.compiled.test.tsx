@@ -104,6 +104,22 @@ describe("FormSaveDock under the React Compiler", () => {
     expect(await screen.findByRole("button", { name: "Save changes" })).toBeInTheDocument();
   });
 
+  it("puts back what the form opened with on Reset, and still sees the next change", async () => {
+    render(<SettingsForm />);
+    const name = screen.getByLabelText("Name") as HTMLInputElement;
+
+    fireEvent.change(name, { target: { value: "North" } });
+    fireEvent.click(await screen.findByRole("button", { name: "Reset" }));
+
+    await waitFor(() => expect(saveButton()).toBeNull());
+    expect(name.value).toBe("Main");
+    expect((screen.getByLabelText("City") as HTMLInputElement).value).toBe("Austin");
+
+    fireEvent.change(screen.getByLabelText("City"), { target: { value: "Dallas" } });
+    expect(await screen.findByRole("button", { name: "Save changes" })).toBeInTheDocument();
+    expect(document.body.textContent).toContain("1 unsaved change");
+  });
+
   it("stays closed when only the version changes", () => {
     let form: UseFormReturn<Settings> | undefined;
     render(<SettingsForm onForm={(f) => (form = f)} />);

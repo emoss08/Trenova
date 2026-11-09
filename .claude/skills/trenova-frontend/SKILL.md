@@ -43,7 +43,8 @@ Copyable patterns for the common tasks are in [patterns.md](patterns.md).
   files. Existing helpers worth knowing: `useObjectUrl`, `useElementSize`/`useElementWidth`,
   `useDebounce`, `useSettledValue`, `useLatestCallback` (shared hooks); `usePermission`,
   `useApiMutation`, `useCopyToClipboard`, `useSignOut` (web hooks); `apiUrl`/`apiEndpoint`,
-  `escapeRegExp`, `escapeHtml`, `cn`, `toSentenceFragment` (shared lib).
+  `escapeRegExp`, `escapeHtml`, `cn`, `toSentenceFragment` (shared lib); `formatMinor`,
+  `formatMinorAmount`, `isMinorAmountField` for `…Minor` money fields (`@trenova/shared/lib/money`).
 - **A module that pages share holds only what is light.** A key, a constant or a pure function
   imported from a component module brings the whole component and everything it imports.
   `pageAssistantThreadKey`, imported from `page-assistant.tsx`, once put the entire Desk chat

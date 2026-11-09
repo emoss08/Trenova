@@ -232,6 +232,13 @@ export const RESOURCE_QUERY_KEY_MAP: Record<string, QueryKeyRoot[]> = {
   trailers: ["trailer-list"],
   workers: ["worker-list", "dispatch-board", "shipmentBoard"],
   "audit-logs": ["audit-entry-list"],
+  // A security alert raised for review, marked reviewed or reopened: the overview that counts
+  // and lists the open ones, the review list and the review an entry's inspector shows.
+  "audit-reviews": [
+    ["audit", "overview"],
+    ["audit", "reviews"],
+    ["audit", "entry-review"],
+  ],
   billing_queue: ["billing-queue-list", "billingQueue"],
   // A document filed, replaced or marked signed: the lists that show it and the
   // shipment's billing readiness, which counts it. Billing items reviewing that

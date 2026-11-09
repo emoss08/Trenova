@@ -9,6 +9,7 @@ import type {
 } from "@trenova/shared/types/data-table";
 import { SearchLgIcon, XCloseIcon } from "@trenova/shared/components/icons";
 import { translate } from "@trenova/shared/i18n/runtime";
+import { formatUnixDateMedium, formatUnixSpan } from "@trenova/shared/lib/date";
 import { RecordFilterValue } from "./record-filter-input";
 
 type DataTableFilterChipsProps = {
@@ -19,8 +20,22 @@ type DataTableFilterChipsProps = {
   extraChips?: DataTableExtraChips;
 };
 
+function formatDateFilterValue(filter: SingleFilterItem): string | null {
+  const { operator, value } = filter;
+  if (operator === "daterange") {
+    const range = value as { from?: number; to?: number } | null;
+    return formatUnixSpan(range?.from, range?.to, { fallback: "" });
+  }
+  if (operator === "lastndays" || operator === "nextndays") return null;
+  return typeof value === "number" ? formatUnixDateMedium(value) : null;
+}
+
 function formatFilterValue(filter: SingleFilterItem): string {
   if (!operatorRequiresValue(filter.operator)) return "";
+  if (filter.filterType === "date") {
+    const dateLabel = formatDateFilterValue(filter);
+    if (dateLabel !== null) return dateLabel;
+  }
   const { value } = filter;
   if (Array.isArray(value)) {
     const labels = value.map((v) => {

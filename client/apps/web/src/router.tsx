@@ -855,6 +855,53 @@ export const routes: RouteObject[] = withPathScopedRevalidation([
             },
           },
           {
+            path: "/billing/configuration-files/factoring-companies/new",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.FactoringCompany, Operation.Create),
+            ),
+            async lazy() {
+              const { FactoringCompanyCreatePage } =
+                await import("@/routes/factoring-company/new/page");
+              return { Component: FactoringCompanyCreatePage };
+            },
+          },
+          {
+            path: "/billing/configuration-files/factoring-companies/agreements/:id",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.FactoringAgreement),
+            ),
+            async lazy() {
+              const { FactoringAgreementRedirectPage } =
+                await import("@/routes/factoring-company/record-redirect-page");
+              return { Component: FactoringAgreementRedirectPage };
+            },
+          },
+          {
+            path: "/billing/configuration-files/factoring-companies/notices/:id",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.FactoringNoa)),
+            async lazy() {
+              const { FactoringNoticeRedirectPage } =
+                await import("@/routes/factoring-company/record-redirect-page");
+              return { Component: FactoringNoticeRedirectPage };
+            },
+          },
+          {
+            path: "/billing/configuration-files/factoring-companies/:id",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.FactoringCompany),
+              createPrefetchLoader(
+                lazyPrefetch(() => import("@/routes/factoring-company/[id]/page")),
+              ),
+            ),
+            async lazy() {
+              const { FactoringCompanyPage } = await import("@/routes/factoring-company/[id]/page");
+              return { Component: FactoringCompanyPage };
+            },
+          },
+          {
             path: "/billing/configuration-files/document-types",
             loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.DocumentType)),
             async lazy() {
@@ -2157,7 +2204,12 @@ export const routes: RouteObject[] = withPathScopedRevalidation([
               },
               {
                 path: "audit-logs",
-                loader: createPermissionLoader(Resource.AuditLog, Operation.Read),
+                loader: combineLoaders(
+                  createPermissionLoader(Resource.AuditLog, Operation.Read),
+                  createPrefetchLoader(
+                    lazyPrefetch(() => import("@/routes/admin/audit-logs/page")),
+                  ),
+                ),
                 async lazy() {
                   const { AuditLogsPage } = await import("@/routes/admin/audit-logs/page");
                   return { Component: AuditLogsPage };

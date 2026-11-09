@@ -7206,6 +7206,35 @@ type AttentionSummary {
   serviceFailures: Int
 }
 
+type AuditActivityBucket {
+  agents: Int!
+  """The hour or day the bucket starts, in the organization's time zone."""
+  at: Timestamp!
+  integrations: Int!
+  jobs: Int!
+  people: Int!
+}
+
+"""
+How many distinct people, agents, keys and system principals wrote entries.
+"""
+type AuditActorCounts {
+  agents: Int!
+  integrations: Int!
+  jobs: Int!
+  people: Int!
+}
+
+type AuditActorStat {
+  entries: Int!
+  """The name they last wrote an entry under in the window."""
+  name: String!
+  principalId: ID!
+  principalType: String!
+  sensitive: Int!
+  user: User
+}
+
 enum AuditAlertKind {
   APIKeyChanged
   BulkDelete
@@ -7280,6 +7309,10 @@ type AuditEntry {
   previousState: JSON
   principalId: ID!
   principalType: String!
+  """
+  How many entries the caller can read that the same request wrote, this one included; 0 when the entry names no request.
+  """
+  requestEntryCount: Int!
   resource: String!
   resourceId: String!
   retentionClass: AuditRetentionClass!
@@ -7403,11 +7436,121 @@ type AuditLegalHoldEdge {
   node: AuditLegalHold!
 }
 
+"""
+What happened in the organization's audit log over whole days of its time zone, read from rollups refreshed every minute.
+"""
+type AuditOverview {
+  activity: [AuditActivityBucket!]!
+  actors: AuditActorCounts!
+  days: Int!
+  from: Timestamp!
+  openReviewCount: Int!
+  openReviews: [AuditReview!]!
+  otherActors: Int!
+  otherEntries: Int!
+  """Entries in the window of the same length before this one."""
+  previousEntries: Int!
+  """
+  Whether the caller can read reviews; without security_audit_log read the review fields are empty.
+  """
+  reviewsIncluded: Boolean!
+  summary: [AuditOverviewSegment!]!
+  timezone: String!
+  to: Timestamp!
+  topActors: [AuditActorStat!]!
+  totals: AuditOverviewFigures!
+  unit: AuditOverviewUnit!
+}
+
+"""The overview's figures, each a count of entries the caller can read."""
+type AuditOverviewFigures {
+  """Entries an agent wrote in a conversation, for the person in it."""
+  agentsAsked: Int!
+  """Entries an agent wrote on its own."""
+  agentsOwn: Int!
+  deletesExports: Int!
+  entries: Int!
+  """Entries written with an API key or by a SCIM directory."""
+  integrations: Int!
+  """Entries written by background jobs, the command line or the system."""
+  jobs: Int!
+  """Entries written through the web app, the portal or Trenova support."""
+  people: Int!
+  """
+  People's entries written between 8 PM and 6 AM in the organization's time zone.
+  """
+  peopleOffHours: Int!
+  security: Int!
+  """Security entries, critical ones, deletes and exports."""
+  sensitive: Int!
+}
+
+"""
+One run of the overview's sentence: plain, strong, or a reference that opens what it names.
+"""
+type AuditOverviewSegment {
+  strong: Boolean!
+  target: AuditOverviewTarget
+  """A review's ID, or a quick view: agents, security or deletes."""
+  targetId: String
+  text: String!
+  tone: String
+}
+
+enum AuditOverviewTarget {
+  Review
+  View
+}
+
+enum AuditOverviewUnit {
+  Day
+  Hour
+}
+
 enum AuditRetentionClass {
   Access
   Financial
   Operational
   Security
+}
+
+"""
+One hit of an audit alert rule, kept until a security reviewer marks it reviewed.
+"""
+type AuditReview {
+  action: String!
+  actorName: String
+  count: Int!
+  entityRef: String
+  """
+  The entry that set the alert off: for a counted alert, the one that reached the threshold.
+  """
+  entryId: ID!
+  id: ID!
+  kind: AuditAlertKind!
+  occurredAt: Timestamp!
+  """
+  Whether it happened between 8 PM and 6 AM in the organization's time zone.
+  """
+  offHours: Boolean!
+  principalId: ID!
+  principalType: String!
+  resource: String!
+  resourceId: String
+  reviewedAt: Timestamp
+  reviewedBy: User
+  threshold: Int!
+  title: String!
+  version: Int!
+  windowMinutes: Int!
+}
+
+type AuditReviewList {
+  open: [AuditReview!]!
+  openCount: Int!
+  """Reviewed in the last seven days, latest first."""
+  reviewed: [AuditReview!]!
+  reviewedCount: Int!
 }
 
 enum AuditVerificationStatus {
@@ -17242,6 +17385,7 @@ type FactoringAgreement {
   """Share of the invoice advanced at funding, in basis points."""
   advanceRateBp: Int!
   businessUnitId: ID!
+  cashAccount: JournalEntryLineAccount
   """
   Where the factor's payments land; the organization's cash account when empty.
   """
@@ -17255,6 +17399,10 @@ type FactoringAgreement {
   Documents the factor needs with every invoice, beyond what billing already requires.
   """
   documentTypes: [DocumentType!]!
+  """
+  The account each role books to; null when it falls back to the organization's default.
+  """
+  dueFromFactorAccount: JournalEntryLineAccount
   """Where the reserve the factor holds is booked, for a sale."""
   dueFromFactorAccountId: ID
   effectiveFrom: Timestamp!
@@ -17262,12 +17410,14 @@ type FactoringAgreement {
   endedAt: Timestamp
   factoringCompany: FactoringCompany
   factoringCompanyId: ID!
+  feeExpenseAccount: JournalEntryLineAccount
   """Where the factor's fee is expensed."""
   feeExpenseAccountId: ID
   feeTiers: [FactoringFeeTier!]!
   """Business days from submission to funding."""
   fundingDays: Int!
   id: ID!
+  liabilityAccount: JournalEntryLineAccount
   """What is owed the factor, for secured borrowing."""
   liabilityAccountId: ID
   minimumFeeMinor: Int!
@@ -17285,6 +17435,20 @@ type FactoringAgreement {
   submissionTime: Int!
   updatedAt: Timestamp!
   version: Int!
+}
+
+"""
+What the schedules sent under one agreement carried, from the schedules themselves.
+"""
+type FactoringAgreementActivity {
+  expectedAdvanceMinor: Int!
+  expectedFeeMinor: Int!
+  faceMinor: Int!
+  firstSentAt: Timestamp
+  fundedSchedules: Int!
+  invoices: Int!
+  lastSentAt: Timestamp
+  schedules: Int!
 }
 
 input FactoringAgreementInput {
@@ -17312,6 +17476,52 @@ enum FactoringAgreementStatus {
   Active
   Draft
   Ended
+}
+
+type FactoringAttention {
+  amountMinor: Int!
+  at: Timestamp
+  count: Int!
+  customerName: String
+  """The delivery error, as the server reported it."""
+  detail: String
+  exceptionCount: Int!
+  fileName: String
+  invoiceId: ID
+  invoiceNumber: String
+  kind: FactoringAttentionKind!
+  """Invoices on the failed schedules, or lines on the remittance."""
+  lineCount: Int!
+  number: String
+  remittanceId: ID
+  submissionId: ID
+  """danger, warning or neutral."""
+  tone: String!
+}
+
+"""
+Something on a factor's page that needs someone, with the facts to word it.
+"""
+enum FactoringAttentionKind {
+  ChargebacksDue
+  DeliveryFailing
+  FundingOverdue
+  NoAgreement
+  NoDelivery
+  NoticesAwaiting
+  NoticesMissing
+  ReadyWaiting
+  RemittanceWaiting
+  ScheduleFailed
+}
+
+type FactoringAwaitingSchedule {
+  dueAt: Timestamp!
+  faceMinor: Int!
+  invoiceCount: Int!
+  number: String!
+  sentAt: Timestamp!
+  submissionId: ID!
 }
 
 """One readiness check on an invoice."""
@@ -17391,6 +17601,39 @@ type FactoringCompanyConnection {
   totalCountExact: Boolean!
 }
 
+"""A customer whose billing profile assigns its invoices to the factor."""
+type FactoringCompanyCustomer {
+  code: String!
+  fundedCount: Int!
+  """Face value funded and not yet released. Zero without reserve read."""
+  fundedMinor: Int!
+  """The customer's id."""
+  id: ID!
+  """When its last notice to this factor was released, when none is open."""
+  lastReleasedAt: Timestamp
+  name: String!
+  """
+  The notice that is not released: drafted, sent or acknowledged. Null without notice read.
+  """
+  notice: FactoringNoa
+  status: EntityStatus!
+}
+
+type FactoringCompanyCustomerConnection {
+  edges: [FactoringCompanyCustomerEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+  """
+  Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+  """
+  totalCountExact: Boolean!
+}
+
+type FactoringCompanyCustomerEdge {
+  cursor: String!
+  node: FactoringCompanyCustomer!
+}
+
 type FactoringCompanyEdge {
   cursor: String!
   node: FactoringCompany!
@@ -17412,6 +17655,64 @@ input FactoringCompanyInput {
   remittanceInstructions: String
   stateId: ID!
   status: EntityStatus!
+}
+
+"""
+Where one factor's invoices are, what needs someone, and Nova's summary, read in one batch.
+"""
+type FactoringCompanyOverview {
+  """The agreement in force now."""
+  agreement: FactoringAgreement
+  """
+  False when the caller can't read factoring reserves: every amount is zero and the summary leaves money out.
+  """
+  amountsIncluded: Boolean!
+  attention: [FactoringAttention!]!
+  """The newest schedule waiting on funding."""
+  awaiting: FactoringAwaitingSchedule
+  awaitingCount: Int!
+  chargebackDeadline: Timestamp
+  """
+  Funded recourse invoices whose chargeback window closes within a week, by what the organization would repay.
+  """
+  chargebacksDue: FactoringVerdictTotals!
+  """Chargebacks booked in the window, by invoices and cash repaid."""
+  chargedBack: FactoringVerdictTotals!
+  currencyCode: String!
+  delivery: FactoringDeliveryHealth!
+  factoringCompanyId: ID!
+  """Funded and not yet released or charged back, by face value."""
+  funded: FactoringVerdictTotals!
+  """The days released and charged back cover."""
+  movedWindowDays: Int!
+  notices: FactoringNoticeCounts!
+  oldestFundedOn: Timestamp
+  """The last funded schedules, oldest first."""
+  pace: [FactoringPacePoint!]!
+  paceLate: Int!
+  paceMedianDays: Int
+  ready: FactoringVerdictTotals!
+  """Ready for more than a day without being submitted."""
+  readyLate: FactoringVerdictTotals!
+  """Reserve released in the window, by invoices and cash returned."""
+  released: FactoringVerdictTotals!
+  reserveHeld: FactoringVerdictTotals!
+  setup: FactoringSetup!
+  submitted: FactoringVerdictTotals!
+  summary: [FactoringOverviewSegment!]!
+}
+
+enum FactoringCustomerNoticeStage {
+  Acknowledged
+  Awaiting
+  NeedsNotice
+}
+
+type FactoringDeliveryHealth {
+  configured: Boolean!
+  lastTestError: String
+  lastTestedAt: Timestamp
+  method: FactoringTransportMethod
 }
 
 type FactoringDocumentRequestResult {
@@ -17494,6 +17795,19 @@ type FactoringFundingPlan {
   """The schedule's status once the funding is recorded."""
   status: FactoringSubmissionStatus!
   submissionId: ID!
+}
+
+"""
+An invoice and the terms to price it with: what the agreement page's calculator sends.
+"""
+input FactoringFundingPreviewInput {
+  advanceRateBp: Int!
+  """Days of terms left when submitted, which picks the fee tier."""
+  days: Int!
+  faceMinor: Int!
+  feeTiers: [FactoringFeeTierInput!]!
+  minimumFeeMinor: Int!
+  reserveRateBp: Int!
 }
 
 """What a factoring entry does to the invoice."""
@@ -17627,6 +17941,52 @@ enum FactoringNoaStatus {
   Draft
   Released
   Sent
+}
+
+"""
+Customers assigned to the factor, by where their notice of assignment stands.
+"""
+type FactoringNoticeCounts {
+  acknowledged: Int!
+  assigned: Int!
+  """Drafted or sent, not yet acknowledged."""
+  awaiting: Int!
+  """
+  No notice in force: none open, or an acknowledged one that has expired.
+  """
+  needsNotice: Int!
+}
+
+"""
+One run of the factor's summary: plain, strong, or a phrase that opens the tab it names.
+"""
+type FactoringOverviewSegment {
+  strong: Boolean!
+  target: FactoringOverviewTarget
+  text: String!
+  """danger, warning or null."""
+  tone: String
+}
+
+"""The tab of the factor's page a phrase of its summary opens."""
+enum FactoringOverviewTarget {
+  Agreement
+  Customers
+  Delivery
+  Ledger
+}
+
+"""
+A funded schedule: business days from sent to funded, in the organization's time zone.
+"""
+type FactoringPacePoint {
+  businessDays: Int!
+  fundedAt: Timestamp!
+  """Funded after the agreement's funding days."""
+  late: Boolean!
+  number: String!
+  sentAt: Timestamp!
+  submissionId: ID!
 }
 
 """One line of the journal a factoring action would book."""
@@ -17952,6 +18312,14 @@ type FactoringReserveBalance @kind(resource: "factoring_reserve") {
 }
 
 """
+The reserve the factor held at the end of a day, from today's balance walked back through the day's movements.
+"""
+type FactoringReserveDay {
+  day: Timestamp!
+  reserveMinor: Int!
+}
+
+"""
 One movement between the organization and a factor, booked to the ledger. Entries are never edited; a chargeback is undone by a reversal entry.
 """
 type FactoringReserveEntry {
@@ -18051,6 +18419,16 @@ type FactoringReserveMovementPlan {
   """The chargeback a reversal undoes."""
   reverses: FactoringReserveEntry
   submissionId: ID!
+}
+
+"""What stands between the factor and its first schedule."""
+type FactoringSetup {
+  agreement: Boolean!
+  customers: Boolean!
+  """Set up, and its last test did not fail."""
+  delivery: Boolean!
+  done: Int!
+  notices: Boolean!
 }
 
 enum FactoringSftpAuthMethod {
@@ -23653,6 +24031,7 @@ type Mutation {
   """
   markAllMyNotificationsRead: Boolean!
   markAllNotificationsRead: Boolean!
+  markAuditReviewReviewed(id: ID!): AuditReview!
   markBriefingRead(id: ID!): Briefing!
   markCarrierIntelReviewed(carrierId: ID!, note: String!): Boolean!
   markCarrierSettlementPaid(input: MarkCarrierSettlementPaidInput!): CarrierSettlement!
@@ -23834,6 +24213,7 @@ type Mutation {
   Switches a certificate connection to a newly uploaded certificate once the accounting system accepts it.
   """
   renewAccountingCertificate(input: RenewAccountingCertificateInput!): AccountingConnection!
+  reopenAuditReview(id: ID!): AuditReview!
   """
   Returns a Finalized return to Draft. The reason, at least ten characters, is audited.
   """
@@ -26610,15 +26990,31 @@ type Query {
   """
   The organization's audit log, narrowed to the kinds of record the caller can read; security entries need security_audit_log read.
   """
-  auditEntries(input: DataTableConnectionInput!): AuditEntryConnection!
+  auditEntries(
+    input: DataTableConnectionInput!
+    """
+    List only the earliest entry of each request the caller can read; the rest are counted in requestEntryCount. Ignored when the input narrows the list by a search or a filter, since the earliest entry is judged against every readable entry.
+    """
+    onePerRequest: Boolean
+  ): AuditEntryConnection!
   """
   One record's history, for anyone who can read that kind of record organization-wide. field narrows it to the entries that changed that field.
   """
   auditEntriesByResourceId(field: String, input: DataTableConnectionInput!, resourceId: ID!): AuditEntryConnection!
   auditEntry(id: ID!): AuditEntry
+  """The review an entry set off, if it set one off."""
+  auditEntryReview(entryId: ID!): AuditReview
   """The caller's own audit log exports."""
   auditExports(input: DataTableConnectionInput!): AuditExportConnection!
   auditLegalHolds(activeOnly: Boolean, input: DataTableConnectionInput!): AuditLegalHoldConnection!
+  """
+  The audit log's overview for the last days whole days, today included: at most 90. Figures cover only the kinds of record the caller can read; security entries need security_audit_log read.
+  """
+  auditOverview(days: Int!): AuditOverview!
+  """
+  Open audit reviews, latest first, and those reviewed in the last seven days.
+  """
+  auditReviews(limit: Int): AuditReviewList!
   authEvents(input: DataTableConnectionInput!): AuthEventConnection!
   """
   The profiles offered when somebody starts a scan: active ones, default first.
@@ -26910,6 +27306,8 @@ type Query {
   extractionAccuracy(windowDays: Int): ExtractionAccuracy!
   extractionProviderTrends: ExtractionProviderTrends!
   factoringAgreement(id: ID!): FactoringAgreement!
+  """What the schedules sent under this agreement carried."""
+  factoringAgreementActivity(agreementId: ID!): FactoringAgreementActivity!
   factoringAgreements(factoringCompanyId: ID!): [FactoringAgreement!]!
   """What recording this chargeback would book, without booking it."""
   factoringChargebackPlan(input: FactoringReserveMovementInput!): FactoringReserveMovementPlan!
@@ -26919,8 +27317,17 @@ type Query {
   factoringChargebackReversalPlan(input: FactoringReserveMovementInput!): FactoringReserveMovementPlan!
   factoringCompanies(input: DataTableConnectionInput!): FactoringCompanyConnection!
   factoringCompany(id: ID!): FactoringCompany
+  """
+  The customers assigned to the factor, as a table: searched, filtered and sorted on the customer's own fields, narrowed to a notice stage when one is given.
+  """
+  factoringCompanyCustomers(factoringCompanyId: ID!, input: DataTableConnectionInput!, stage: FactoringCustomerNoticeStage): FactoringCompanyCustomerConnection!
+  factoringCompanyOverview(factoringCompanyId: ID!): FactoringCompanyOverview!
   """What recording this funding would book, without booking it."""
   factoringFundingPlan(input: RecordFactoringFundingInput!): FactoringFundingPlan!
+  """
+  What an invoice would pay under these terms, computed exactly as funding computes it. Reads nothing.
+  """
+  factoringFundingPreview(input: FactoringFundingPreviewInput!): FactoringFunding!
   factoringInvoiceStates(input: FactoringInvoiceStateListInput!): FactoringInvoiceStateConnection! @authorizes(resource: "invoice")
   factoringNoa(id: ID!): FactoringNoa!
   factoringNoas(input: FactoringNoaListInput!): FactoringNoaConnection!
@@ -26937,6 +27344,8 @@ type Query {
   factoringRemittances(input: FactoringRemittanceListInput!): FactoringRemittanceConnection!
   factoringReserveBalance(factoringCompanyId: ID!): FactoringReserveBalance!
   factoringReserveEntries(input: FactoringReserveEntryListInput!): FactoringReserveEntryConnection!
+  """The reserve held at the end of each of the last days, oldest first."""
+  factoringReserveHistory(days: Int! = 90, factoringCompanyId: ID!): [FactoringReserveDay!]!
   factoringSubmission(id: ID!): FactoringSubmission!
   """
   The schedule these invoices would make, with expected funding, without sending anything.

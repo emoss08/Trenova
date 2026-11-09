@@ -314,6 +314,12 @@ writes:
   "mutation auditExportDownload":
     exempt: read-only
     reason: "Returns a short-lived link to an export the person already asked for; the download is itself audited."
+  "mutation markAuditReviewReviewed":
+    exempt: security
+    reason: "Marking a security alert reviewed is a person's word that they looked at it; an agent must not clear alerts about what agents and people did."
+  "mutation reopenAuditReview":
+    exempt: security
+    reason: "Reopening a security alert puts it back in front of the security reviewers; a person accountable for the review decides it."
   "mutation placeAuditLegalHold":
     exempt: security
     reason: "A legal hold overrides retention for litigation or an investigation; only a person accountable for that decision places one."

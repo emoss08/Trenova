@@ -1,12 +1,13 @@
 import type { ActivityEntry, RecordActivityPage } from "@/lib/graphql/record-activity";
 import { recordActivityQuery } from "@/lib/queries/record-activity";
 import {
-  formatAuditValueWithDates,
+  formatAuditFieldValue,
   isSensitiveOmittedValue,
   normalizeAuditChanges,
 } from "@/routes/admin/audit-logs/_components/audit-log-formatters";
 import { defineLabels } from "@trenova/shared/i18n/labels";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
+import { withoutMinorSuffix } from "@trenova/shared/lib/money";
 import { toTitleCase } from "@trenova/shared/lib/utils";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { usePagedRows, type PagedRows } from "./paged-rows";
@@ -58,7 +59,7 @@ const INITIALISMS = new Set([
  */
 export function fieldName(path: string): string {
   const last = path.split(".").filter(Boolean).at(-1) ?? path;
-  return last
+  return withoutMinorSuffix(last)
     .replace(/([a-z0-9])([A-Z])/gu, "$1 $2")
     .replace(/_/gu, " ")
     .toLowerCase()
@@ -115,7 +116,7 @@ function changeValue(value: unknown, path: string, t: TranslateFn): string | nul
     const words = value.replace(/([a-z])([A-Z])/gu, "$1 $2").toLowerCase();
     return words.charAt(0).toUpperCase() + words.slice(1);
   }
-  return formatAuditValueWithDates(value, path).value;
+  return formatAuditFieldValue(value, path).value;
 }
 
 /**

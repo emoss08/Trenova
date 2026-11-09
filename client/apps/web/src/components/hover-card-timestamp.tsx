@@ -24,6 +24,8 @@ type HoverCardTimestampProps = {
   alignOffset?: HoverCardContentProps["alignOffset"];
   className?: string;
   showTime?: boolean;
+  /** False shows only the time, for a list already grouped by day; the card still has the date. */
+  showDate?: boolean;
 };
 
 export function HoverCardTimestamp({
@@ -34,6 +36,7 @@ export function HoverCardTimestamp({
   sideOffset,
   className,
   showTime = true,
+  showDate = true,
 }: HoverCardTimestampProps) {
   const t = useT();
 
@@ -60,7 +63,7 @@ export function HoverCardTimestamp({
               showSeconds: false,
               showTimeZone: false,
               showTime: showTime,
-              showDate: true,
+              showDate,
             })}
           </div>
         }

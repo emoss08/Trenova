@@ -158,9 +158,10 @@ type ListCustomerInvoiceIDsRequest struct {
 }
 
 type GetSummaryRequest struct {
-	TenantInfo       pagination.TenantInfo `json:"-"`
-	ReadyBefore      int64                 `json:"readyBefore"`
-	ChargebackBefore int64                 `json:"chargebackBefore"`
+	TenantInfo         pagination.TenantInfo `json:"-"`
+	FactoringCompanyID pulid.ID              `json:"factoringCompanyId"`
+	ReadyBefore        int64                 `json:"readyBefore"`
+	ChargebackBefore   int64                 `json:"chargebackBefore"`
 }
 
 type VerdictTotals struct {
@@ -176,6 +177,7 @@ type Summary struct {
 	ReserveHeld      VerdictTotals `json:"reserveHeld"`
 	ChargebacksDue   VerdictTotals `json:"chargebacksDue"`
 	ReadyUnsubmitted VerdictTotals `json:"readyUnsubmitted"`
+	OldestFundedOn   *int64        `json:"oldestFundedOn"`
 }
 
 type ShipmentContact struct {

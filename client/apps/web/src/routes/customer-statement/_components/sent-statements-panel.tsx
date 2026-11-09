@@ -1,7 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
-import { formatMinor } from "@trenova/shared/lib/benefits";
+import { formatMinor } from "@trenova/shared/lib/money";
 import { formatUnixDateMedium, formatUnixDateTimeMedium } from "@trenova/shared/lib/date";
 import { SectionPanel, SectionPanelQuiet } from "@/components/section-panel";
 import { customerStatement } from "@/lib/queries/customer-statement";

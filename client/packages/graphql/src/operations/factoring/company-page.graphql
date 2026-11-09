@@ -1,0 +1,193 @@
+fragment FactoringVerdictTotalsFields on FactoringVerdictTotals {
+  count
+  amountMinor
+}
+
+query FactoringCompanyOverview($factoringCompanyId: ID!) {
+  factoringCompanyOverview(factoringCompanyId: $factoringCompanyId) {
+    factoringCompanyId
+    currencyCode
+    amountsIncluded
+    movedWindowDays
+    ready {
+      ...FactoringVerdictTotalsFields
+    }
+    readyLate {
+      ...FactoringVerdictTotalsFields
+    }
+    submitted {
+      ...FactoringVerdictTotalsFields
+    }
+    funded {
+      ...FactoringVerdictTotalsFields
+    }
+    reserveHeld {
+      ...FactoringVerdictTotalsFields
+    }
+    released {
+      ...FactoringVerdictTotalsFields
+    }
+    chargebacksDue {
+      ...FactoringVerdictTotalsFields
+    }
+    chargedBack {
+      ...FactoringVerdictTotalsFields
+    }
+    oldestFundedOn
+    chargebackDeadline
+    awaiting {
+      submissionId
+      number
+      invoiceCount
+      faceMinor
+      sentAt
+      dueAt
+    }
+    awaitingCount
+    pace {
+      submissionId
+      number
+      sentAt
+      fundedAt
+      businessDays
+      late
+    }
+    paceMedianDays
+    paceLate
+    agreement {
+      ...FactoringAgreementFields
+    }
+    delivery {
+      configured
+      method
+      lastTestedAt
+      lastTestError
+    }
+    notices {
+      assigned
+      needsNotice
+      awaiting
+      acknowledged
+    }
+    attention {
+      kind
+      tone
+      count
+      amountMinor
+      at
+      submissionId
+      number
+      invoiceId
+      invoiceNumber
+      customerName
+      remittanceId
+      fileName
+      lineCount
+      exceptionCount
+      detail
+    }
+    setup {
+      agreement
+      delivery
+      customers
+      notices
+      done
+    }
+    summary {
+      text
+      strong
+      tone
+      target
+    }
+  }
+}
+
+query FactoringCompanyCustomers(
+  $input: DataTableConnectionInput!
+  $factoringCompanyId: ID!
+  $stage: FactoringCustomerNoticeStage
+  $includeTotalCount: Boolean = true
+) {
+  factoringCompanyCustomers(
+    input: $input
+    factoringCompanyId: $factoringCompanyId
+    stage: $stage
+  ) {
+    edges {
+      cursor
+      node {
+        id
+        code
+        name
+        status
+        notice {
+          ...FactoringNoaFields
+        }
+        lastReleasedAt
+        fundedCount
+        fundedMinor
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+query FactoringReserveHistory($factoringCompanyId: ID!, $days: Int!) {
+  factoringReserveHistory(factoringCompanyId: $factoringCompanyId, days: $days) {
+    day
+    reserveMinor
+  }
+}
+
+query FactoringCompanySchedules($factoringCompanyId: ID!, $first: Int!) {
+  factoringSubmissions(
+    input: { table: { first: $first }, factoringCompanyId: $factoringCompanyId }
+  ) {
+    edges {
+      node {
+        id
+        number
+        status
+        currencyCode
+        invoiceCount
+        faceMinor
+        transportMethod
+        transportTarget
+        lastError
+        sentAt
+        failedAt
+        fundedAt
+        createdAt
+      }
+    }
+  }
+}
+
+query FactoringFundingPreview($input: FactoringFundingPreviewInput!) {
+  factoringFundingPreview(input: $input) {
+    faceMinor
+    advanceMinor
+    feeMinor
+    reserveMinor
+    restOnReleaseMinor
+    days
+    feeRateBp
+  }
+}
+
+query FactoringAgreementActivity($agreementId: ID!) {
+  factoringAgreementActivity(agreementId: $agreementId) {
+    schedules
+    fundedSchedules
+    invoices
+    faceMinor
+    expectedAdvanceMinor
+    expectedFeeMinor
+    firstSentAt
+    lastSentAt
+  }
+}

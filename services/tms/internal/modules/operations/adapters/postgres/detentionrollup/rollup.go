@@ -9,7 +9,7 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/keel/analytics/rollup"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/rollupread"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention/detentiondb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
@@ -201,13 +201,7 @@ func dwellBounds() []float64 {
 
 // OrganizationZone is the time zone of the row's organization, which its days are counted in.
 func OrganizationZone() keel.StringExpr {
-	orgs, zone, _ := keel.ColumnOf(tenantdb.Organizations.Timezone)
-	_, id, _ := keel.ColumnOf(tenantdb.Organizations.ID)
-	return keel.StringOf(keel.Raw(
-		"coalesce((SELECT z."+orgs.Columns[zone].Quoted+" FROM "+orgs.Quoted+" z WHERE z."+
-			orgs.Columns[id].Quoted+" = ?), 'UTC')",
-		detentiondb.DetentionOccurrences.OrganizationID,
-	))
+	return rollupread.OrganizationZone(detentiondb.DetentionOccurrences.OrganizationID)
 }
 
 func DwellBin(i int) string { return fmt.Sprintf("dwell_bin_%d", i) }
@@ -305,9 +299,7 @@ func facilityMeasures() []rollup.Measure {
 
 func arrivalMeasures() []rollup.Measure {
 	o := detentiondb.DetentionOccurrences
-	hour := keel.CastInt64(
-		keel.DatePart("hour", keel.ToTimestamp(o.ArrivedAt).AtTimeZone(OrganizationZone())),
-	)
+	hour := rollupread.LocalHour(o.ArrivedAt, OrganizationZone())
 	out := make([]rollup.Measure, 0, 2*HoursPerDay)
 	for h := range HoursPerDay {
 		at := hour.Eq(int64(h))

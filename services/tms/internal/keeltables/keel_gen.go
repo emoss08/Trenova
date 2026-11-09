@@ -357,6 +357,7 @@ func All() []*schema.Table {
 		auditdb.EntriesSchema(),
 		auditdb.ExportsSchema(),
 		auditdb.LegalHoldsSchema(),
+		auditdb.ReviewsSchema(),
 		auditdb.SealsSchema(),
 		iamdb.AuthEventsSchema(),
 		bankreceiptbatchdb.BankReceiptBatchesSchema(),

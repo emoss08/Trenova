@@ -24,7 +24,6 @@ import type { AccountingSyncRecord } from "@/lib/graphql/accounting-sync-ledger"
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateTimeShort } from "@trenova/shared/lib/date";
 import type { StatusPhase } from "@trenova/shared/lib/status-phase";
-import { formatCurrency } from "@trenova/shared/lib/utils";
 
 export const ACCOUNTING_MAPPINGS_PATH = "/accounting/sync/mappings";
 
@@ -190,10 +189,6 @@ export function accountingAppliedObjectPath(
     case "CreditMemoApplication":
       return null;
   }
-}
-
-export function formatAccountingMinor(minor: number, currency: string): string {
-  return formatCurrency(minor / 100, currency || "USD");
 }
 
 export const ACCOUNTING_INBOUND_POLICIES: readonly AccountingInboundPaymentPolicy[] = [

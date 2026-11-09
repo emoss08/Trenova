@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/loaders/partiesloaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	"github.com/emoss08/trenova/internal/modules/billing/app/factoringoverviewservice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringledger"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringreadiness"
@@ -1350,4 +1351,139 @@ func (r *FactoringRemittanceResolver) Lines(ctx context.Context, obj *factoringr
 		return nil, err
 	}
 	return linesIn(full.Lines, matchStatuses), nil
+}
+
+func (r *QueryResolver) FactoringCompanyOverview(ctx context.Context, factoringCompanyID string) (*gqlmodel.FactoringCompanyOverview, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFactoringCompany, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+	factorID, err := parseID(factoringCompanyID, "factoringCompanyId")
+	if err != nil {
+		return nil, err
+	}
+	overview, err := r.FactoringOverviewService.Build(ctx, &factoringoverviewservice.Request{
+		TenantInfo:         resolvercore.TenantInfo(authCtx),
+		FactoringCompanyID: factorID,
+		AmountsIncluded:    r.HasPermission(ctx, authCtx, permission.ResourceFactoringReserve, permission.OpRead),
+	})
+	if err != nil {
+		return nil, err
+	}
+	if !r.HasPermission(ctx, authCtx, permission.ResourceFactoringAgreement, permission.OpRead) {
+		overview.Agreement = nil
+	}
+	return overviewToModel(overview), nil
+}
+
+func (r *QueryResolver) FactoringCompanyCustomers(ctx context.Context, input gqlmodel.DataTableConnectionInput, factoringCompanyID string, stage *factoringports.CustomerNoticeStage) (*gqlmodel.FactoringCompanyCustomerConnection, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFactoringCompany, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+	if _, err = r.RequirePermission(ctx, permission.ResourceCustomer, permission.OpRead); err != nil {
+		return nil, err
+	}
+	factorID, err := parseID(factoringCompanyID, "factoringCompanyId")
+	if err != nil {
+		return nil, err
+	}
+	tableInput, err := gqlconnection.DataTableConnectionFromGraphQL(ctx, &input, resolvercore.TenantInfo(authCtx))
+	if err != nil {
+		return nil, err
+	}
+	req := &factoringoverviewservice.CustomersRequest{
+		Filter:             tableInput.Filter,
+		Cursor:             tableInput.Cursor,
+		FactoringCompanyID: factorID,
+	}
+	if stage != nil {
+		req.Stage = *stage
+	}
+	page, err := r.FactoringOverviewService.Customers(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	return customerPageToModel(
+		page,
+		r.HasPermission(ctx, authCtx, permission.ResourceFactoringNoa, permission.OpRead),
+		r.HasPermission(ctx, authCtx, permission.ResourceFactoringReserve, permission.OpRead),
+	)
+}
+
+func (r *QueryResolver) FactoringReserveHistory(ctx context.Context, factoringCompanyID string, days int) ([]*factoringledgerports.ReserveDay, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFactoringReserve, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+	factorID, err := parseID(factoringCompanyID, "factoringCompanyId")
+	if err != nil {
+		return nil, err
+	}
+	return r.FactoringLedgerService.ReserveHistory(ctx, factoringledgerports.ReserveHistoryRequest{
+		TenantInfo:         resolvercore.TenantInfo(authCtx),
+		FactoringCompanyID: factorID,
+		Days:               days,
+	})
+}
+
+func (r *QueryResolver) FactoringFundingPreview(ctx context.Context, input gqlmodel.FactoringFundingPreviewInput) (*factoring.Funding, error) {
+	if _, err := r.RequirePermission(ctx, permission.ResourceFactoringAgreement, permission.OpRead); err != nil {
+		return nil, err
+	}
+	funding, err := r.FactoringOverviewService.PreviewFunding(&factoringoverviewservice.FundingPreviewRequest{
+		FaceMinor:       int64(input.FaceMinor),
+		Days:            input.Days,
+		AdvanceRateBP:   input.AdvanceRateBp,
+		ReserveRateBP:   input.ReserveRateBp,
+		MinimumFeeMinor: int64(input.MinimumFeeMinor),
+		FeeTiers:        feeTiersFromInput(input.FeeTiers),
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &funding, nil
+}
+
+func (r *QueryResolver) FactoringAgreementActivity(ctx context.Context, agreementID string) (*factoringports.AgreementActivity, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceFactoringAgreement, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+	id, err := parseID(agreementID, "agreementId")
+	if err != nil {
+		return nil, err
+	}
+	return r.FactoringOverviewService.AgreementActivity(ctx, &factoringoverviewservice.AgreementActivityRequest{
+		TenantInfo:  resolvercore.TenantInfo(authCtx),
+		AgreementID: id,
+	})
+}
+
+func (r *FactoringAgreementResolver) DueFromFactorAccount(ctx context.Context, obj *factoring.Agreement) (*gqlmodel.JournalEntryLineAccount, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return r.accountRef(ctx, obj.DueFromFactorAccountID)
+}
+
+func (r *FactoringAgreementResolver) FeeExpenseAccount(ctx context.Context, obj *factoring.Agreement) (*gqlmodel.JournalEntryLineAccount, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return r.accountRef(ctx, obj.FeeExpenseAccountID)
+}
+
+func (r *FactoringAgreementResolver) LiabilityAccount(ctx context.Context, obj *factoring.Agreement) (*gqlmodel.JournalEntryLineAccount, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return r.accountRef(ctx, obj.LiabilityAccountID)
+}
+
+func (r *FactoringAgreementResolver) CashAccount(ctx context.Context, obj *factoring.Agreement) (*gqlmodel.JournalEntryLineAccount, error) {
+	if obj == nil {
+		return nil, nil
+	}
+	return r.accountRef(ctx, obj.CashAccountID)
 }

@@ -3,7 +3,7 @@ import type { BenefitCostRow, BenefitPlanRow } from "@/lib/graphql/benefits";
 import { groupPlansByType, type PlanTypeGroup } from "@/lib/benefits-console";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
-import { formatMinor } from "@trenova/shared/lib/benefits";
+import { formatMinor } from "@trenova/shared/lib/money";
 import { headcountShare } from "@trenova/shared/lib/org-structure";
 import { cn } from "@trenova/shared/lib/utils";
 import { PencilLineIcon, Users01Icon } from "@trenova/shared/components/icons";

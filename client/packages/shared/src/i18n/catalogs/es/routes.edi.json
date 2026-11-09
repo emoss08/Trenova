@@ -485,7 +485,6 @@
   "Stop shadow": "Detener sombra",
   "Structured partner settings reserved for integration-specific options and runtime overrides.": "Ajustes estructurados del socio reservados para opciones específicas de la integración y anulaciones en tiempo de ejecución.",
   "Stuck transfers": "Transferencias bloqueadas",
-  "Submitted {0}": "Enviado {0}",
   "Success rate": "Tasa de éxito",
   "Synchronous": "Síncrono",
   "Synchronous MDNs return in the HTTP response; asynchronous MDNs post back to the return URL.": "Los MDN síncronos se devuelven en la respuesta HTTP; los asíncronos se envían a la URL de retorno.",

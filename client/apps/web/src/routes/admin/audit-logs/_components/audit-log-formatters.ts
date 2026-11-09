@@ -3,6 +3,12 @@ import type { BadgeVariant } from "@trenova/shared/components/ui/badge";
 import { formatToUserTimezone } from "@trenova/shared/lib/date";
 import type { SelectOption } from "@trenova/shared/types/fields";
 import { defineLabels, sourceLabels, translateLabel } from "@trenova/shared/i18n/labels";
+import {
+  formatMinor,
+  formatMinorAmount,
+  isMinorAmountField,
+  withoutMinorSuffix,
+} from "@trenova/shared/lib/money";
 
 type AuditChangeType = "added" | "removed" | "changed";
 
@@ -31,15 +37,19 @@ function toTrimmedString(value: unknown): string | undefined {
   return normalized.length > 0 ? normalized : undefined;
 }
 
-function inferChangeType(from: unknown, to: unknown): AuditChangeType {
-  if (from === undefined && to !== undefined) {
-    return "added";
-  }
+function isEmptyValue(value: unknown): boolean {
+  return value === undefined || value === null;
+}
 
-  if (from !== undefined && to === undefined) {
-    return "removed";
-  }
-
+/**
+ * How a field changed, from the server's diff (`created`, `updated`, `deleted` in
+ * shared/jsonutils): an update from or to null reads as filled in or cleared, not as a value.
+ */
+function changeTypeOf(serverType: string | undefined, from: unknown, to: unknown): AuditChangeType {
+  if (serverType === "created") return "added";
+  if (serverType === "deleted") return "removed";
+  if (isEmptyValue(from) && !isEmptyValue(to)) return "added";
+  if (!isEmptyValue(from) && isEmptyValue(to)) return "removed";
   return "changed";
 }
 
@@ -50,11 +60,7 @@ export function normalizeAuditChanges(changes: Record<string, unknown>): Normali
         const from = value.from;
         const to = value.to;
         const path = toTrimmedString(value.path) ?? key;
-        const explicitType = toTrimmedString(value.type);
-        const type =
-          explicitType === "added" || explicitType === "removed" || explicitType === "changed"
-            ? explicitType
-            : inferChangeType(from, to);
+        const type = changeTypeOf(toTrimmedString(value.type), from, to);
 
         return {
           path,
@@ -69,7 +75,7 @@ export function normalizeAuditChanges(changes: Record<string, unknown>): Normali
         path: key,
         from: undefined,
         to: value,
-        type: inferChangeType(undefined, value),
+        type: changeTypeOf(undefined, undefined, value),
       };
     })
     .sort((left, right) => left.path.localeCompare(right.path));
@@ -188,7 +194,7 @@ export function userInitials(name?: string) {
 }
 
 export function formatFieldLabel(path: string) {
-  const words = path
+  const words = withoutMinorSuffix(path)
     .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
     .replace(/([A-Z]+)([A-Z][a-z])/g, "$1 $2")
     .split(/[\s._]+/)
@@ -196,28 +202,6 @@ export function formatFieldLabel(path: string) {
     .map((word) => (/^[A-Z0-9]+$/.test(word) && word.length > 1 ? word : word.toLowerCase()));
   if (words.length === 0) return path;
   return [words[0].charAt(0).toUpperCase() + words[0].slice(1), ...words.slice(1)].join(" ");
-}
-
-export function changeTypeLabel(type: AuditChangeType) {
-  switch (type) {
-    case "added":
-      return "Added";
-    case "removed":
-      return "Removed";
-    default:
-      return "Changed";
-  }
-}
-
-export function changeTypeVariant(type: AuditChangeType): BadgeVariant {
-  switch (type) {
-    case "added":
-      return "success";
-    case "removed":
-      return "warning";
-    default:
-      return "info";
-  }
 }
 
 export function formatAuditValue(value: unknown): string {
@@ -253,10 +237,23 @@ function looksLikeDatePath(path?: string): boolean {
   return /(?:^|[._])(date|time|timestamp|at|eta|etd|start|end)(?:$|[._])/i.test(snaked);
 }
 
-export function formatAuditValueWithDates(
+/**
+ * A changed field's value as a person reads it: an instant as a date, money in minor units as
+ * an amount (with its currency when the record names one), anything else as it was stored.
+ */
+export function formatAuditFieldValue(
   value: unknown,
   path?: string,
+  currency?: string | null,
 ): { value: string; transformed: boolean; hint?: string } {
+  if (typeof value === "number" && isMinorAmountField(path)) {
+    return {
+      value: currency ? formatMinor(value, currency) : formatMinorAmount(value),
+      transformed: true,
+      hint: translate("Minor units"),
+    };
+  }
+
   const isDatePath = looksLikeDatePath(path);
 
   if (typeof value === "number" && isDatePath) {
@@ -335,4 +332,15 @@ export const AUDIT_CHANNEL_LABELS = defineLabels({
 
 export function channelLabel(channel: string): string {
   return (AUDIT_CHANNEL_LABELS as Record<string, string>)[channel] ?? channel;
+}
+
+const CURRENCY_CODE = /^[A-Z]{3}$/;
+
+/** The currency a record's saved state names (`currencyCode`), after the change or before it. */
+export function recordCurrency(currentState: unknown, previousState: unknown): string | null {
+  for (const state of [currentState, previousState]) {
+    const code = isRecord(state) ? state.currencyCode : undefined;
+    if (typeof code === "string" && CURRENCY_CODE.test(code)) return code;
+  }
+  return null;
 }

@@ -39,6 +39,33 @@ type ReserveBalance struct {
 	LastOccurredOn     *int64   `json:"lastOccurredOn"`
 }
 
+type GetReserveHistoryRequest struct {
+	TenantInfo         pagination.TenantInfo `json:"-"`
+	FactoringCompanyID pulid.ID              `json:"factoringCompanyId"`
+	Since              int64                 `json:"since"`
+}
+
+type ReserveDayChange struct {
+	Day         int64 `json:"day"`
+	ChangeMinor int64 `json:"changeMinor"`
+}
+
+type ReserveHistoryRead struct {
+	CurrentMinor int64               `json:"currentMinor"`
+	Changes      []*ReserveDayChange `json:"changes"`
+}
+
+type ReserveHistoryRequest struct {
+	TenantInfo         pagination.TenantInfo `json:"-"`
+	FactoringCompanyID pulid.ID              `json:"factoringCompanyId"`
+	Days               int                   `json:"days"`
+}
+
+type ReserveDay struct {
+	Day          int64 `json:"day"`
+	ReserveMinor int64 `json:"reserveMinor"`
+}
+
 type ReserveEntryRepository interface {
 	Create(
 		ctx context.Context,
@@ -53,4 +80,5 @@ type ReserveEntryRepository interface {
 		req ListReserveEntriesForItemRequest,
 	) ([]*factoringledger.ReserveEntry, error)
 	GetBalance(ctx context.Context, req GetReserveBalanceRequest) (*ReserveBalance, error)
+	GetHistory(ctx context.Context, req GetReserveHistoryRequest) (*ReserveHistoryRead, error)
 }

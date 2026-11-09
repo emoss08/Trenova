@@ -5,8 +5,8 @@ import {
   benefitPlanTypeLabel,
   coverageTierLabel,
   employerSharePercent,
-  formatMinor,
 } from "@trenova/shared/lib/benefits";
+import { formatMinor } from "@trenova/shared/lib/money";
 import { fetchMyTotalCompensation } from "@trenova/shared/lib/graphql/driver-portal";
 import { useQuery } from "@tanstack/react-query";
 

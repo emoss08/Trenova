@@ -1,3 +1,5 @@
+import { parseTimeOfDay } from "@trenova/shared/lib/date";
+import { mailingAddressLines, type MailingAddress } from "@trenova/shared/lib/mailing-address";
 import type {
   FactoringAccountRole,
   FactoringAccountingTreatment,
@@ -342,14 +344,46 @@ export function formatMinutesOfDay(minutes: number): string {
 
 /** A 24-hour clock time ("09:30") as minutes after midnight, or null when it is not one. */
 export function parseMinutesOfDay(value: string): number | null {
-  const match = /^([01]?\d|2[0-3]):([0-5]\d)$/.exec(value.trim());
-  if (!match) {
-    return null;
-  }
-  return Number(match[1]) * MINUTES_PER_HOUR + Number(match[2]);
+  const time = parseTimeOfDay(value);
+  return time ? time.hour * MINUTES_PER_HOUR + time.minute : null;
 }
 
 /** Whether an invoice has been ready for longer than a day without being submitted. */
 export function readyOverADay(readySince: number | null | undefined, nowUnix: number): boolean {
   return readySince != null && nowUnix - readySince >= SECONDS_PER_DAY;
+}
+
+/**
+ * The notice of assignment an invoice prints when its factor has no wording of its own, word for
+ * word as the server prints it (`factoringcompany.StandardNotice`). It is the document's text, so
+ * it is not translated: a preview shows what the customer will read.
+ */
+export function standardNoticeOfAssignment(factorName: string): string {
+  const name = factorName.trim();
+  // i18n-ignore: the invoice's printed text, mirrored word for word from the server
+  return `NOTICE OF ASSIGNMENT: This invoice has been assigned to, and is payable only to, ${name}. Payment to any other party will not discharge your obligation. Remit payment to the address below and direct any dispute to ${name}.`;
+}
+
+export type FactorRemitDetails = MailingAddress & {
+  remittanceInstructions?: string | null;
+  email?: string | null;
+  phoneNumber?: string | null;
+};
+
+/**
+ * The lines under the factor's name in an invoice's Remit To, in the order the server prints them
+ * (`factoringcompany.RemitLines`): the mailing address, each line of the remittance instructions,
+ * then the email and phone. The labels are the document's printed text, so they are not translated.
+ */
+export function factorRemitLines(factor: FactorRemitDetails): string[] {
+  const email = factor.email?.trim();
+  const phone = factor.phoneNumber?.trim();
+  return [
+    ...mailingAddressLines(factor),
+    ...(factor.remittanceInstructions ?? "").split("\n").map((line) => line.trim()),
+    // i18n-ignore: the invoice's printed text, mirrored word for word from the server
+    email ? `Email: ${email}` : "",
+    // i18n-ignore: the invoice's printed text, mirrored word for word from the server
+    phone ? `Phone: ${phone}` : "",
+  ].filter(Boolean);
 }

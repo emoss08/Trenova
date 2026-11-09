@@ -8,7 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from "@trenova/shared/components/ui/table";
-import { formatMinor } from "@trenova/shared/lib/benefits";
+import { formatMinor } from "@trenova/shared/lib/money";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import {

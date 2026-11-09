@@ -101,6 +101,7 @@ type LedgerService interface {
 		req *ListReserveEntryConnectionRequest,
 	) (*pagination.CursorListResult[*factoringledger.ReserveEntry], error)
 	GetBalance(ctx context.Context, req GetReserveBalanceRequest) (*ReserveBalance, error)
+	ReserveHistory(ctx context.Context, req ReserveHistoryRequest) ([]*ReserveDay, error)
 	PlanFunding(
 		ctx context.Context,
 		req *RecordFundingRequest,

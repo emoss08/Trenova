@@ -190,6 +190,13 @@ A ladder, not a pile. Each has one job.
 | `bg-field` | the ground of a form control — use `ui-field`, below, rather than this directly |
 | `bg-surface-hover` / `-active` / `-selected` | interaction fills |
 
+A printed document drawn on screen (the factoring company page's invoice
+preview) is paper in either theme, so it takes the `doc-*` family instead of the
+ladder: `bg-doc-paper`, `bg-doc-paper-warm`, `text-doc-ink` / `-ink-2` / `-ink-3`
+and `border-doc-rule` / `-rule-soft`, which carry the print template's own ink
+(`invoice.pdf.css`). Use them only for the document itself; the frame around it
+stays on the ladder (`bg-sunken`).
+
 Interaction fills are separate from container surfaces on purpose, so a hover
 state never has to borrow a container's colour. If you find yourself writing
 `bg-muted/30` to invent a shade, the rung you want is above — that pattern
@@ -397,6 +404,12 @@ One curve family and default speeds, declared in the `@theme` block, so a bare
 | `animate-confirm` | a check landing, a copied tick |
 | `animate-fill` | a meter or progress bar filling to its value (`origin-left`) |
 
+A dock (the save dock, the home edit dock, any `ActionDock`) slides up from below
+the viewport when it appears and back down when it leaves, settling in and
+leaving quicker than it came; `ActionDock` does both, and a fade when reduced
+motion is asked for. Render a dock inside `AnimatePresence` (as `FormSaveDock`
+does) so its leave plays; a dock that unmounts outside one simply vanishes.
+
 Motion answers an action. Nothing on a working screen moves on its own: no
 looping shimmer on a badge, no pulsing glow, no floating sparkle. A global
 `prefers-reduced-motion` rule collapses every animation and transition to a cut.
@@ -584,8 +597,10 @@ and both `StatTile`s render as strip cells when placed inside a `KpiStrip`.
 
 A titled block on a dashboard or workspace is `SectionPanel`
 (`components/section-panel.tsx`): `rounded-lg border bg-card`, a 36px header with
-the title at `text-sm` semibold, an optional `help` note, a `count`, and `action`
-on the right. Do not hand-write `<header className="… border-b px-3 py-2">`.
+the title at `text-sm` semibold, a `tip` (one short line behind an info icon that
+shows on hover) or a `help` note (prose behind an info icon that opens on click), a
+`count`, and `action` on the right. The info icon sits on the middle of the title's
+letters, not its line box, because Geist sets text high in the line. Do not hand-write `<header className="… border-b px-3 py-2">`.
 
 ### Resizable panes
 
@@ -602,9 +617,11 @@ restyle it per page.
 ### Label and value: `DescriptionList`
 
 Read-only detail is `DescriptionList` + `DescriptionItem`
-(`@trenova/shared/components/ui/description-list`). Three layouts: `stacked`
+(`@trenova/shared/components/ui/description-list`). Four layouts: `stacked`
 (label over value, in `columns`), `inline` (label left, value right, aligned in a
-grid) and `split` (label and value at opposite ends of a ruled row, for totals).
+grid), `split` (label and value at opposite ends of a ruled row, for totals) and
+`ruled` (stacked cells in `columns` inside one bordered box with hairlines between
+them, for terms read as a sheet).
 The label is `text-xs` medium in `--foreground-subtle`; the value is `text-sm` at
 weight 400, because a value in a cell takes no weight. `numeric` adds
 `tabular-nums`. An absent value is `<DescriptionEmpty />`, an em dash — never a
@@ -661,41 +678,65 @@ updates and reminders stay in the bell and the watchtower feed.
 
 #### The toaster
 
-Toasts are Trenova's own, in `@trenova/shared/components/ui/`: `toast` (the call, from
-`toast.ts`), `Toaster` (where they appear), the card and the stack layout. The calls kept
-sonner's shapes when it was retired: `toast(title, options)`, `toast.success/error/warning/
-info/loading`, `toast.promise(work, { loading, success, error, finally })`,
-`toast.custom(render)` and `toast.dismiss(id?)`. Import `toast` only from
-`@trenova/shared/components/ui/toast`, which holds nothing but the store, so the four
-hundred modules that raise toasts never pull the Toaster into their chunk. Tests mock that
-module.
+Toasts are [ding](https://ding.yusufcengiz.dev) (`@yusufceng1z/ding` and
+`@yusufceng1z/ding-react`), wrapped in `@trenova/shared/components/ui/`: `toast` (the call,
+from `toast.ts`) and `Toaster` (where they appear, one per app). Import `toast` only from
+`@trenova/shared/components/ui/toast`. It imports ding's core store and nothing that draws, so
+the four hundred modules that raise toasts never pull the renderer into their chunk. Tests mock
+that module.
 
-- **One toast per piece of news.** Calling again with the same `id` changes the toast in
-  place: a loading toast becomes its result, Undo becomes "Restored". A
-  `toast.promise` outcome can be a whole toast (`{ title, description, action }`) rather than
-  a string. Never dismiss one toast and raise another for the next step of the same work.
-- **Repeats fold.** Plain news that is already up (same type, title and description, no
-  action) counts up (×3) and restarts its clock instead of stacking. A toast with an action
-  never folds, because two Undo toasts undo two different things.
-- **The clock reads the content.** Unset, a toast stays long enough to read its words and
-  at least eight seconds when it offers something to press; loading toasts stay until they
-  change. Time left is a hairline along the bottom, and every clock in the stack stops while
-  the person hovers it, has focus in it, or has left the tab. Pass `duration` only for a
-  reason the content cannot show.
-- **Evidence goes behind Details.** `details: [{ label, value, monospace }]` puts the facts
-  support asks for (a trace reference, the record) behind a Details button with Copy, out of
-  the sentence. `errorReferenceDetails(traceId)` in `lib/error-presentation.ts` builds the
-  reference line; `useApiMutation` attaches it to every server failure it reports.
-- **It is drawn dark in both themes,** like menus and popovers, so it never reads as part
-  of the page; the card sets `dark` itself. A `toast.custom` render draws its own surface in
-  the page's theme.
-- **One unnamed `Toaster` per app.** A page that wants its toasts somewhere else mounts a
-  named one (`<Toaster id="user-settings" />`) and addresses it with `toasterId`; once that
-  page is gone, its toasts land in the app's Toaster rather than vanishing.
-- **Keyboard and assistive technology:** Alt+T focuses the newest toast, Tab reaches its
-  actions, Escape dismisses it and returns focus to where it was. Errors and `urgent` toasts
-  are announced assertively, everything else politely, and each change in place is
-  announced again.
+The calls: `toast(title, options)`, `toast.success/error/warning/info/loading`,
+`toast.promise(work, { id, loading, success, error, finally })` and `toast.dismiss(id?)`.
+Options are `id`, `description`, `action`, `duration` and `progress`.
+
+- **One toast on screen.** ding draws one toast and reshapes it for each new message, so a
+  new toast takes the place of the last instead of stacking. Calling again with the same `id`
+  changes the toast in place: a loading toast becomes its result, Undo becomes "Restored". An
+  action's handler can raise the next toast under the same `id`, and that toast stays. Never
+  dismiss one toast and raise another for the next step of the same work.
+- **A late result gives way.** When a newer toast has taken a caller's place, that caller's
+  later plain success, info or progress is dropped. An error, a warning or a button still
+  shows, because the person has to see it.
+- **`toast.promise` takes whole toasts.** `loading`, `success` and `error` are each a title or
+  `{ title, description, action }`, and an outcome can be a function of the result.
+  An outcome that is missing or returns `null` closes the toast quietly.
+- **Progress.** `progress: 0–1` draws a bar inside the toast. Moving it under the same `id`
+  with the same words is silent: no announcement, no cue.
+- **Text only.** ding draws strings, never markup, so titles, descriptions and button labels are
+  `string`. Build the sentence with `t()` and format figures into it (`formatCurrency`); never
+  pass a component. Pass errors through `describeError` or a helper that writes one line, not a
+  raw stack.
+- **Repeats fold.** Plain news that is already up (same type, title and description, no button)
+  counts up (×2) and restarts its clock instead of replacing itself.
+- **The clock reads the content.** Unset, a toast stays long enough to read its words, and at
+  least eight seconds when it offers something to press, with a countdown along the bottom.
+  Errors and loading toasts stay until they change or the person closes them. The clock stops
+  while the person hovers the toast or has focus in it. Pass `duration` only for a reason the
+  content cannot show; `Infinity` keeps the toast up.
+- **No references in a toast.** A toast says what happened and what to do next; it carries
+  no trace id or anything to copy for support. A failure support needs to trace belongs on a
+  surface that stays, the error screen's details (`components/errors/error-details.tsx`).
+- **A cue per status.** Success, error, warning and info each play a short tone synthesized
+  with Web Audio; loading is silent. Sounds are on unless this person turns them off: "Toast
+  sounds" in Settings → Preferences, and on the driver portal's profile, kept on the device
+  (`useToastSoundStore` in `toast-sound.ts`).
+- **It is drawn dark in both themes,** like menus and popovers, so it never reads as part of
+  the page. The Toaster sits inside `.dark`, and `app.css` maps ding's variables onto the
+  tokens (popover surface, status hues, float lift, brand ring, Geist).
+- **Keyboard and assistive technology.** Alt+T moves focus into the toast, Escape dismisses
+  it, and its buttons stay out of the tab order until it has opened. Errors are announced
+  assertively, everything else politely, from two live regions that are always present.
+  Reduced motion follows the operating system; the in-app "Reduce motion" setting stops ding's
+  CSS motion but not its scripted spring. ding names its region and close button in English,
+  and the Toaster relabels them through `t()`.
+- **In Playwright,** find a toast with `page.locator(".tst:not([data-phase=exit])").last()`
+  and assert with `toContainText`. ding repeats a toast's words in a live region
+  (`role="status"` or `role="alert"`, class `tst-sr`), so a page-wide `getByText` or
+  `getByRole("status")` finds them twice.
+- **The dependency is pinned exactly** in the pnpm catalog and listed in
+  `singleton-packages.ts`, since a second copy of its store would draw nothing. Both packages
+  were read before adoption: no dependencies beyond each other, no install scripts, no
+  network, storage or `eval`. A version bump is a deliberate change and gets the same read.
 
 ### List totals
 

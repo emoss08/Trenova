@@ -3,8 +3,8 @@ import {
   ACCOUNTING_INBOUND_REASONS,
   ACCOUNTING_INBOUND_STATUSES,
   accountingInboundPhase,
-  formatAccountingMinor,
 } from "@/lib/accounting-sync";
+import { formatMinor } from "@trenova/shared/lib/money";
 import type { AccountingInboundRow } from "@/lib/graphql/accounting-inbound-table";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
@@ -126,7 +126,7 @@ export function getInboundColumns(
       header: t("Amount"),
       cell: ({ row }) => (
         <span className="tabular-nums">
-          {formatAccountingMinor(row.original.amountMinor, row.original.currencyCode)}
+          {formatMinor(row.original.amountMinor, row.original.currencyCode)}
         </span>
       ),
       size: 130,

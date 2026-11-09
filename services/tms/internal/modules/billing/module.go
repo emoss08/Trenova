@@ -47,6 +47,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/app/factoringagreementservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/factoringledgerservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/factoringnoaservice"
+	"github.com/emoss08/trenova/internal/modules/billing/app/factoringoverviewservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/factoringreadinessservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/factoringremittanceservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/factoringsubmissionservice"
@@ -239,6 +240,8 @@ func factoringOptions() fx.Option {
 			factoringrepository.NewRemittanceRepository,
 			factoringrepository.NewTransportRepository,
 			factoringrepository.NewWatchtowerReader,
+			factoringrepository.NewOverviewRepository,
+			factoringrepository.NewFactorCustomerRepository,
 			factoringcontract.NewRequester,
 			factoringagreementservice.NewAgreementService,
 			factoringnoaservice.NewNoaService,
@@ -248,6 +251,7 @@ func factoringOptions() fx.Option {
 			factoringremittanceservice.NewRemittanceService,
 			factoringremittanceservice.NewRemittanceIntake,
 			factoringtransportservice.NewTransportService,
+			factoringoverviewservice.New,
 			factoringcontract.NewSendStarter,
 			factoringcontract.NewRemittanceStageStarter,
 			fx.Annotate(

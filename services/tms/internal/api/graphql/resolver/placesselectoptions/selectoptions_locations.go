@@ -341,6 +341,7 @@ func usStateSelectOption(entity *usstate.UsState) *gqlmodel.SelectOption {
 		Label: entity.Name,
 		Meta: map[string]any{
 			"abbreviation": entity.Abbreviation,
+			"countryName":  entity.CountryName,
 			"countryIso3":  entity.CountryIso3,
 		},
 	}

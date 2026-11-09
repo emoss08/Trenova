@@ -186,3 +186,61 @@ func reserveBalance(
 		re.OccurredOn.Max(),
 	).Where(re.FactoringCompanyID.Eq(req.FactoringCompanyID))
 }
+
+type reserveDayRow struct {
+	Day         int64
+	ChangeMinor int64
+}
+
+func (r *reserveEntryRepository) GetHistory(
+	ctx context.Context,
+	req factoringledgerports.GetReserveHistoryRequest,
+) (*factoringledgerports.ReserveHistoryRead, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*factoringledgerports.ReserveHistoryRead, error) {
+			var (
+				totals reserveTotals
+				days   []reserveDayRow
+			)
+			balance := factoringledgerports.GetReserveBalanceRequest{
+				TenantInfo:         req.TenantInfo,
+				FactoringCompanyID: req.FactoringCompanyID,
+			}
+			if err := keel.Batch(ctx, r.db.Keel(ctx),
+				keel.IntoValue(reserveBalance(&balance), &totals),
+				keel.IntoSlice(reserveDays(&req), &days),
+			); err != nil {
+				r.l.Error("failed to read the factor's reserve history", zap.Error(err))
+				return nil, err
+			}
+
+			out := &factoringledgerports.ReserveHistoryRead{
+				CurrentMinor: totals.ReserveMinor,
+				Changes:      make([]*factoringledgerports.ReserveDayChange, len(days)),
+			}
+			for i, day := range days {
+				out.Changes[i] = &factoringledgerports.ReserveDayChange{
+					Day:         day.Day,
+					ChangeMinor: day.ChangeMinor,
+				}
+			}
+
+			return out, nil
+		},
+	)
+}
+
+func reserveDays(
+	req *factoringledgerports.GetReserveHistoryRequest,
+) keel.Query[*factoringledger.ReserveEntry] {
+	re := factoringledgerdb.ReserveEntries
+	return re.Group(re.OccurredOn).
+		Pick(re.OccurredOn, keel.NumericOf(re.ReserveMinor.Sum()).Coalesce(0)).
+		Where(
+			re.FactoringCompanyID.Eq(req.FactoringCompanyID),
+			re.OccurredOn.Gt(req.Since),
+		).
+		Order(re.OccurredOn.Asc())
+}

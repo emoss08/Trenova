@@ -38,6 +38,7 @@ type AuditService interface {
 		req *ListAuditEntriesRequest,
 	) (*pagination.CursorListResult[*audit.Entry], error)
 	GetByID(ctx context.Context, req *GetAuditEntryByIDOptions) (*audit.Entry, error)
+	CountByRequest(ctx context.Context, req *CountByRequestRequest) (map[string]int64, error)
 	LogAction(ctx context.Context, params *LogActionParams, opts ...LogOption) error
 	LogActions(ctx context.Context, entries []BulkLogEntry) error
 }

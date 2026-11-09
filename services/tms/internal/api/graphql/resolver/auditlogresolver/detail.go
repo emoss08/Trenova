@@ -7,7 +7,6 @@ import (
 )
 
 var detailFields = []string{
-	"edges.node.changes",
 	"edges.node.previousState",
 	"edges.node.currentState",
 	"edges.node.metadata",
@@ -20,4 +19,12 @@ func detailRequested(ctx context.Context) bool {
 		}
 	}
 	return false
+}
+
+func changesRequested(ctx context.Context) bool {
+	return graphql.FieldRequested(ctx, "edges.node.changes")
+}
+
+func requestCountRequested(ctx context.Context) bool {
+	return graphql.FieldRequested(ctx, "edges.node.requestEntryCount")
 }

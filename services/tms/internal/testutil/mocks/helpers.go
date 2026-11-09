@@ -59,6 +59,13 @@ func (n *NoopAuditService) LogActions(_ context.Context, _ []auditports.BulkLogE
 	return nil
 }
 
+func (n *NoopAuditService) CountByRequest(
+	_ context.Context,
+	_ *auditports.CountByRequestRequest,
+) (map[string]int64, error) {
+	return map[string]int64{}, nil
+}
+
 var _ permissionports.PermissionEngine = (*AllowAllPermissionEngine)(nil)
 
 type AllowAllPermissionEngine struct{}

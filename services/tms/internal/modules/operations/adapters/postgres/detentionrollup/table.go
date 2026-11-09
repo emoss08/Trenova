@@ -5,36 +5,19 @@ import (
 	"time"
 
 	"github.com/emoss08/keel"
-	"github.com/emoss08/keel/analytics/rollup"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/rollupread"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 )
 
-// Table is a rollup's table as a read sees it: one reference, and its columns by the names the
-// declarations give them.
-type Table struct {
-	Ref  *keel.Ref
-	cols map[string]int32
-}
-
-func tableOf(r *rollup.Rollup) *Table {
-	t := r.Table()
-	cols := make(map[string]int32, len(t.Columns))
-	for i := range t.Columns {
-		cols[t.Columns[i].Name] = int32(i)
-	}
-
-	return &Table{Ref: &keel.Ref{Table: t}, cols: cols}
-}
-
 var (
-	DailyTable           = tableOf(Daily)
-	FacilityDailyTable   = tableOf(FacilityDaily)
-	FacilityMonthlyTable = tableOf(FacilityMonthly)
-	CustomerDailyTable   = tableOf(CustomerDaily)
-	CustomerMonthlyTable = tableOf(CustomerMonthly)
-	PolicyDailyTable     = tableOf(PolicyDaily)
-	PolicyMonthlyTable   = tableOf(PolicyMonthly)
-	ArrivalDailyTable    = tableOf(ArrivalDaily)
+	DailyTable           = rollupread.Of(Daily)
+	FacilityDailyTable   = rollupread.Of(FacilityDaily)
+	FacilityMonthlyTable = rollupread.Of(FacilityMonthly)
+	CustomerDailyTable   = rollupread.Of(CustomerDaily)
+	CustomerMonthlyTable = rollupread.Of(CustomerMonthly)
+	PolicyDailyTable     = rollupread.Of(PolicyDaily)
+	PolicyMonthlyTable   = rollupread.Of(PolicyMonthly)
+	ArrivalDailyTable    = rollupread.Of(ArrivalDaily)
 )
 
 // Source is what a read sums: a rollup table, or a window's whole months and edge days read
@@ -43,50 +26,6 @@ type Source interface {
 	Col(name string) keel.Col
 	Count(name string) keel.Int64Expr
 	Amount(name string) keel.NumericExpr
-}
-
-// Has reports whether the table stores a column of that name.
-func (t *Table) Has(name string) bool {
-	_, ok := t.cols[name]
-	return ok
-}
-
-// Col is the named column. A name the declaration never gave is a programming error, which the
-// package's tests catch for every name a read uses.
-func (t *Table) Col(name string) keel.Col {
-	idx, ok := t.cols[name]
-	if !ok {
-		panic(fmt.Sprintf("detentionrollup: %s has no column %s", t.Ref.Table.Name, name))
-	}
-
-	return keel.Col{Ref: t.Ref, Index: idx}
-}
-
-// Count is the named count column summed over the rows read: zero when none are.
-func (t *Table) Count(name string) keel.Int64Expr { return countOf(t.Col(name)) }
-
-// Amount is the named sum column summed over the rows read: zero when none are.
-func (t *Table) Amount(name string) keel.NumericExpr { return amountOf(t.Col(name)) }
-
-func countOf(c keel.Col) keel.Int64Expr {
-	return keel.CastInt64(keel.NumericOf(keel.Sum(c)).Coalesce(0))
-}
-
-func amountOf(c keel.Col) keel.NumericExpr {
-	return keel.NumericOf(keel.Sum(c)).Coalesce(0)
-}
-
-// Bucket is the day each row adds up.
-func (t *Table) Bucket() keel.TimeExpr {
-	return keel.TimeOf(t.Col(Bucket))
-}
-
-// As is the table under another name, for a subquery over the table its outer query reads.
-func (t *Table) As(alias string) *Table {
-	return &Table{
-		Ref:  keel.Alias(t.Ref, alias, func(ref *keel.Ref) *keel.Ref { return ref }),
-		cols: t.cols,
-	}
 }
 
 // View is a window read from a monthly and a daily rollup together: the whole months from the
@@ -100,12 +39,12 @@ type View struct {
 // Union reads columns of the window from monthly and daily, each narrowed by where.
 func Union(
 	name string,
-	monthly, daily *Table,
+	monthly, daily *rollupread.Table,
 	w detentionports.IntelligenceWindow,
 	columns []string,
-	where func(t *Table) []keel.Pred,
+	where func(t *rollupread.Table) []keel.Pred,
 ) *View {
-	part := func(t *Table, from, to time.Time, last bool) keel.Query[*keel.Row] {
+	part := func(t *rollupread.Table, from, to time.Time, last bool) keel.Query[*keel.Row] {
 		picks := make([]keel.Expr, len(columns))
 		for i, c := range columns {
 			picks[i] = t.Col(c)
@@ -152,6 +91,6 @@ func (v *View) Col(name string) keel.Col {
 	return v.cte.Col(name).Col
 }
 
-func (v *View) Count(name string) keel.Int64Expr { return countOf(v.Col(name)) }
+func (v *View) Count(name string) keel.Int64Expr { return rollupread.CountOf(v.Col(name)) }
 
-func (v *View) Amount(name string) keel.NumericExpr { return amountOf(v.Col(name)) }
+func (v *View) Amount(name string) keel.NumericExpr { return rollupread.AmountOf(v.Col(name)) }

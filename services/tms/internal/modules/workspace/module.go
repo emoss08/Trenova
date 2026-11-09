@@ -5,7 +5,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/auditalertpolicyrepository"
 	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/auditexportrepository"
 	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/auditlegalholdrepository"
+	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/auditoverviewrepository"
 	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/auditrepository"
+	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/auditreviewrepository"
 	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/auditsealrepository"
 	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/bulkeditrepository"
 	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/customfieldrepository"
@@ -29,7 +31,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditexportservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditintegrity"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditlegalholdservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditoverview"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditretention"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/auditreviewservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/bulkeditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/customfieldservice"
@@ -79,6 +83,8 @@ func SharedOptions() fx.Option {
 			auditalertpolicyrepository.New,
 			auditexportrepository.New,
 			auditsealrepository.New,
+			auditoverviewrepository.New,
+			auditreviewrepository.New,
 			dataentrycontrolrepository.New,
 			customfieldrepository.New,
 			customfieldvaluerepository.New,
@@ -115,6 +121,8 @@ func SharedOptions() fx.Option {
 			auditlegalholdservice.New,
 			auditalertservice.New,
 			auditexportservice.New,
+			auditreviewservice.New,
+			auditoverview.New,
 			customfieldservice.New,
 			customfieldservice.NewValuesService,
 			func(s *customfieldservice.ValuesService) customfieldports.NamedValues { return s },

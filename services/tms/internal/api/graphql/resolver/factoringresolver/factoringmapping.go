@@ -70,18 +70,7 @@ func agreementInputFromModel(
 		}
 		accounts[field] = id
 	}
-	tiers := make([]*factoring.FeeTier, 0, len(in.FeeTiers))
-	for _, tier := range in.FeeTiers {
-		if tier == nil {
-			continue
-		}
-		tiers = append(tiers, &factoring.FeeTier{
-			DaysFrom:  tier.DaysFrom,
-			DaysTo:    tier.DaysTo,
-			RateBP:    tier.RateBp,
-			FlatMinor: int64(intOrZero(tier.FlatMinor)),
-		})
-	}
+	tiers := feeTiersFromInput(in.FeeTiers)
 	return &factoringports.AgreementInput{
 		FactoringCompanyID:     factorID,
 		EffectiveFrom:          int64(in.EffectiveFrom),
@@ -286,4 +275,20 @@ func permissionDenied(resource permission.Resource, op permission.Operation) err
 	return errortypes.NewAuthorizationError(
 		"You don't have permission to perform this action: {0} {1}", resource, op,
 	)
+}
+
+func feeTiersFromInput(in []*gqlmodel.FactoringFeeTierInput) []*factoring.FeeTier {
+	tiers := make([]*factoring.FeeTier, 0, len(in))
+	for _, tier := range in {
+		if tier == nil {
+			continue
+		}
+		tiers = append(tiers, &factoring.FeeTier{
+			DaysFrom:  tier.DaysFrom,
+			DaysTo:    tier.DaysTo,
+			RateBP:    tier.RateBp,
+			FlatMinor: int64(intOrZero(tier.FlatMinor)),
+		})
+	}
+	return tiers
 }

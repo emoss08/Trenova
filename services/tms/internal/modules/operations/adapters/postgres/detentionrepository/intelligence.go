@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/keel/analytics/rollup"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/rollupread"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate/usstatedb"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/detentionrollup"
@@ -67,7 +68,7 @@ func (r *intelligenceRepository) OrganizationTimezone(
 		var zone string
 		err := keel.Batch(ctx, r.db.Keel(ctx), keel.IntoValue(
 			org.Pick(org.Timezone).
-				Where(org.ID.Eq(tenant.OrgID), org.BusinessUnitID.Eq(tenant.BuID)),
+				Where(org.ID.Eq(tenant.OrgID)),
 			&zone,
 		))
 		if err != nil {
@@ -147,7 +148,7 @@ type span struct {
 
 // days keeps the daily rollup rows of the span's days: a row's bucket is its day's local midnight,
 // so the last day's bucket falls before the span's last instant.
-func (s span) days(t *detentionrollup.Table) []keel.Pred {
+func (s span) days(t *rollupread.Table) []keel.Pred {
 	return append([]keel.Pred{
 		t.Bucket().Gte(time.Unix(s.From, 0)),
 		t.Bucket().Lte(time.Unix(s.To, 0)),
@@ -155,7 +156,7 @@ func (s span) days(t *detentionrollup.Table) []keel.Pred {
 }
 
 // at narrows a rollup that keeps facilities to the span's one, when it names one.
-func (s span) at(t *detentionrollup.Table) []keel.Pred {
+func (s span) at(t *rollupread.Table) []keel.Pred {
 	if s.location.IsNil() || !t.Has(detentionrollup.Location) {
 		return nil
 	}
@@ -167,7 +168,7 @@ func (s span) at(t *detentionrollup.Table) []keel.Pred {
 // table of columns.
 func (s span) view(
 	name string,
-	monthly, daily *detentionrollup.Table,
+	monthly, daily *rollupread.Table,
 	columns ...string,
 ) *detentionrollup.View {
 	return detentionrollup.Union(name, monthly, daily, s.IntelligenceWindow, columns, s.at)
@@ -186,7 +187,7 @@ func (s span) settled(o *detentiondb.DetentionOccurrencesTable) []keel.Pred {
 }
 
 // figuresTable is where a read's figures come from: the organization's days, or one facility's.
-func figuresTable(location pulid.ID) *detentionrollup.Table {
+func figuresTable(location pulid.ID) *rollupread.Table {
 	if location.IsNotNil() {
 		return detentionrollup.FacilityDailyTable
 	}
@@ -233,7 +234,7 @@ func figurePicks(t detentionrollup.Source) []keel.Expr {
 	}
 }
 
-func (r *intelligenceRepository) totals(t *detentionrollup.Table, s span) keel.Projection {
+func (r *intelligenceRepository) totals(t *rollupread.Table, s span) keel.Projection {
 	return keel.RowsOf(t.Ref).Pick(figurePicks(t)...).Where(s.days(t)...)
 }
 
@@ -491,7 +492,7 @@ type recoveryRow struct {
 	Billable []decimal.Decimal
 }
 
-func (r *intelligenceRepository) recovery(t *detentionrollup.Table, s span) keel.Projection {
+func (r *intelligenceRepository) recovery(t *rollupread.Table, s span) keel.Projection {
 	n := len(detentionrollup.RecoveryBuckets)
 	stops := make([]keel.Int64Value, n)
 	gross := make([]keel.NumericValue, n)
@@ -663,7 +664,7 @@ type splitsRow struct {
 	Minutes  []int64
 }
 
-func (r *intelligenceRepository) splits(t *detentionrollup.Table, s span) keel.Projection {
+func (r *intelligenceRepository) splits(t *rollupread.Table, s span) keel.Projection {
 	return keel.RowsOf(t.Ref).
 		Pick(
 			bins(
@@ -709,7 +710,7 @@ func (row *splitsRow) splits() detentionports.Splits {
 	}
 }
 
-func (r *intelligenceRepository) days(t *detentionrollup.Table, s span) keel.Projection {
+func (r *intelligenceRepository) days(t *rollupread.Table, s span) keel.Projection {
 	day := t.Bucket()
 	return keel.RowsOf(t.Ref).
 		Group(day).

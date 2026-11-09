@@ -28,7 +28,16 @@ import {
   listFactoringRemittances,
   type FactoringRemittanceFilter,
 } from "@/lib/graphql/factoring-remittance";
+import {
+  FACTORING_COMPANY_CUSTOMER_KEY,
+  fetchFactoringAgreementActivity,
+  fetchFactoringCompanyOverview,
+  fetchFactoringFundingPreview,
+  fetchFactoringReserveHistory,
+  listFactoringCompanySchedules,
+} from "@/lib/graphql/factoring-company-page";
 import type {
+  FactoringFundingPreviewInput,
   FactoringRemittanceMatchStatus,
   FactoringRemittanceVersionInput,
   FactoringReserveMovementInput,
@@ -128,6 +137,30 @@ export const factoring = createQueryKeys("factoring", {
     queryFn: async ({ signal }: QueryContext) =>
       fetchFactoringCompany(factoringCompanyId, { signal }),
   }),
+  overview: (factoringCompanyId: string) => ({
+    queryKey: ["overview", factoringCompanyId],
+    queryFn: async ({ signal }: QueryContext) =>
+      fetchFactoringCompanyOverview(factoringCompanyId, { signal }),
+  }),
+  reserveHistory: (factoringCompanyId: string) => ({
+    queryKey: ["reserve-history", factoringCompanyId],
+    queryFn: async ({ signal }: QueryContext) =>
+      fetchFactoringReserveHistory(factoringCompanyId, { signal }),
+  }),
+  agreementActivity: (agreementId: string) => ({
+    queryKey: ["agreement-activity", agreementId],
+    queryFn: async ({ signal }: QueryContext) =>
+      fetchFactoringAgreementActivity(agreementId, { signal }),
+  }),
+  fundingPreview: (input: FactoringFundingPreviewInput) => ({
+    queryKey: ["funding-preview", input],
+    queryFn: async ({ signal }: QueryContext) => fetchFactoringFundingPreview(input, { signal }),
+  }),
+  schedules: (factoringCompanyId: string) => ({
+    queryKey: ["schedules", factoringCompanyId],
+    queryFn: async ({ signal }: QueryContext) =>
+      listFactoringCompanySchedules(factoringCompanyId, { signal }),
+  }),
 });
 
 /**
@@ -141,4 +174,5 @@ export function invalidateFactoringQueries(queryClient: QueryClient): void {
   void queryClient.invalidateQueries({ queryKey: [FACTORING_INVOICE_STATE_KEY] });
   void queryClient.invalidateQueries({ queryKey: [FACTORING_SUBMISSION_KEY] });
   void queryClient.invalidateQueries({ queryKey: [FACTORING_REMITTANCE_KEY] });
+  void queryClient.invalidateQueries({ queryKey: [FACTORING_COMPANY_CUSTOMER_KEY] });
 }

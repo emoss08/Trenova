@@ -66,13 +66,11 @@ export const RECORD_LINKS = {
   },
   factoring_agreement: {
     label: "Factoring agreement",
-    path: "/billing/configuration-files/factoring-companies",
-    params: { section: "agreements", agreement: "{id}" },
+    path: "/billing/configuration-files/factoring-companies/agreements/{id}",
   },
   factoring_noa: {
     label: "Notice of assignment",
-    path: "/billing/configuration-files/factoring-companies",
-    params: { section: "notices", noa: "{id}" },
+    path: "/billing/configuration-files/factoring-companies/notices/{id}",
   },
   factoring_remittance: {
     label: "Factor remittance",
@@ -84,8 +82,7 @@ export const RECORD_LINKS = {
   },
   factoring_company: {
     label: "Factoring company",
-    path: "/billing/configuration-files/factoring-companies",
-    params: { panelType: "edit", panelEntityId: "{id}" },
+    path: "/billing/configuration-files/factoring-companies/{id}",
   },
   carrier: {
     label: "Carrier",

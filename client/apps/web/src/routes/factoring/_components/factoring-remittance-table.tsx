@@ -12,13 +12,18 @@ import { useMemo, useState } from "react";
 import { getFactoringRemittanceColumns } from "./factoring-remittance-columns";
 import { ImportRemittanceDialog } from "./import-remittance-dialog";
 
-const ALL_FACTORS = null;
-
-export default function FactoringRemittanceTable() {
+export default function FactoringRemittanceTable({
+  factoringCompanyId,
+}: {
+  factoringCompanyId: string | null;
+}) {
   const t = useT();
   const [importing, setImporting] = useState(false);
   const columns = useMemo(() => getFactoringRemittanceColumns(t), [t]);
-  const graphql = useMemo(() => createFactoringRemittanceTableConfig(ALL_FACTORS), []);
+  const graphql = useMemo(
+    () => createFactoringRemittanceTableConfig(factoringCompanyId),
+    [factoringCompanyId],
+  );
 
   return (
     <>
@@ -39,7 +44,11 @@ export default function FactoringRemittanceTable() {
           ),
         }}
       />
-      <ImportRemittanceDialog open={importing} onOpenChange={setImporting} />
+      <ImportRemittanceDialog
+        open={importing}
+        onOpenChange={setImporting}
+        factoringCompanyId={factoringCompanyId ?? undefined}
+      />
     </>
   );
 }

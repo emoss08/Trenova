@@ -19,6 +19,7 @@ describe("fieldName", () => {
     expect(fieldName("charges.0.amount")).toBe("amount");
     expect(fieldName("bill_to_customer_id")).toBe("bill to customer ID");
     expect(fieldName("totalAmount")).toBe("total amount");
+    expect(fieldName("balanceDueMinor")).toBe("balance due");
   });
 });
 

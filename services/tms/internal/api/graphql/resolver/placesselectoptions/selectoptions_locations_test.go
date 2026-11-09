@@ -37,9 +37,11 @@ func TestPlacesSelectOptionMappers(t *testing.T) {
 		ID:           pulid.MustNew("us_"),
 		Name:         "Illinois",
 		Abbreviation: "IL",
+		CountryName:  "United States",
 		CountryIso3:  "USA",
 	})
 	assert.Equal(t, "Illinois", stateOption.Label)
 	assert.Equal(t, "IL", stateOption.Meta["abbreviation"])
+	assert.Equal(t, "United States", stateOption.Meta["countryName"])
 	assert.Equal(t, "USA", stateOption.Meta["countryIso3"])
 }

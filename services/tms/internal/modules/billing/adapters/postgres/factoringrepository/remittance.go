@@ -488,11 +488,7 @@ func openRemittances(limit int) keel.Query[*factoringremittance.Remittance] {
 		rem.CreatedAt,
 	).
 		Where(
-			rem.Status.In(
-				factoringremittance.RemittanceStatusNeedsMapping,
-				factoringremittance.RemittanceStatusParsed,
-				factoringremittance.RemittanceStatusPartiallyApplied,
-			),
+			rem.Status.In(openRemittanceStatuses()...),
 			keel.Or(
 				rem.ExceptionCount.Gt(0),
 				rem.Status.Eq(factoringremittance.RemittanceStatusNeedsMapping),

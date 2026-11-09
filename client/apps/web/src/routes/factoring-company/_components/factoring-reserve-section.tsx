@@ -13,7 +13,7 @@ import {
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatRowTotal } from "@trenova/shared/lib/row-total";
-import { formatMinor } from "@trenova/shared/lib/benefits";
+import { formatMinor } from "@trenova/shared/lib/money";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 

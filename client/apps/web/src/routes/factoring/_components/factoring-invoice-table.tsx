@@ -23,14 +23,20 @@ const EMPTY_TITLES = defineLabels({
   funded: "No funded invoices are waiting on their reserve",
 });
 
-export default function FactoringInvoiceTable({ tab }: { tab: FactoringQueueTab }) {
+export default function FactoringInvoiceTable({
+  tab,
+  factoringCompanyId,
+}: {
+  tab: FactoringQueueTab;
+  factoringCompanyId: string | null;
+}) {
   const t = useT();
   const { allowed: canSubmit } = usePermission(Resource.FactoringSubmission, Operation.Submit);
   const [selected, setSelected] = useState<FactoringInvoiceStateRow[] | null>(null);
   const columns = useMemo(() => getFactoringInvoiceColumns(t, tab), [t, tab]);
   const graphql = useMemo(
-    () => createFactoringInvoiceStateTableConfig(factoringTabVerdicts(tab)),
-    [tab],
+    () => createFactoringInvoiceStateTableConfig(factoringTabVerdicts(tab), factoringCompanyId),
+    [tab, factoringCompanyId],
   );
   const selectable = tab === "ready" && canSubmit;
   const dockActions = useMemo<DockAction<FactoringInvoiceStateRow>[]>(

@@ -22,12 +22,22 @@ type GetAuditEntryByIDOptions struct {
 }
 
 type ListAuditEntriesRequest struct {
-	Filter        *pagination.QueryOptions `json:"filter"`
-	Cursor        pagination.CursorInfo    `json:"-"`
-	Access        EntryAccess              `json:"-"`
-	ResourceID    string                   `json:"resourceId"`
-	ChangedField  string                   `json:"changedField"`
-	IncludeDetail bool                     `json:"-"`
+	Filter         *pagination.QueryOptions `json:"filter"`
+	Cursor         pagination.CursorInfo    `json:"-"`
+	Access         EntryAccess              `json:"-"`
+	ResourceID     string                   `json:"resourceId"`
+	ChangedField   string                   `json:"changedField"`
+	IncludeDetail  bool                     `json:"-"`
+	IncludeChanges bool                     `json:"-"`
+	OnePerRequest  bool                     `json:"-"`
+}
+
+type CountByRequestRequest struct {
+	TenantInfo     pagination.TenantInfo
+	Access         EntryAccess
+	CorrelationIDs []string
+	From           int64
+	To             int64
 }
 
 type DeleteExpiredAuditEntriesRequest struct {
@@ -62,6 +72,7 @@ type AuditRepository interface {
 	DeleteExpired(ctx context.Context, req DeleteExpiredAuditEntriesRequest) (int64, error)
 	PartitionHorizon(ctx context.Context) (int64, error)
 	TenantsWithEntries(ctx context.Context, from, to int64) ([]TenantKey, error)
+	CountByRequest(ctx context.Context, req *CountByRequestRequest) (map[string]int64, error)
 }
 
 type LegalHoldRepository interface {

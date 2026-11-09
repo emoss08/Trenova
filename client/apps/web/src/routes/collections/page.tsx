@@ -9,7 +9,7 @@ import { Label } from "@trenova/shared/components/ui/label";
 import { SegmentedControl } from "@trenova/shared/components/ui/segmented-control";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Switch } from "@trenova/shared/components/ui/switch";
-import { formatMinor } from "@trenova/shared/lib/benefits";
+import { formatMinor } from "@trenova/shared/lib/money";
 import { collection } from "@/lib/queries/collection";
 import { SearchLgIcon } from "@trenova/shared/components/icons";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";

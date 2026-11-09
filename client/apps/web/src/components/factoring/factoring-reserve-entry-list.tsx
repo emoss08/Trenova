@@ -10,7 +10,7 @@ import {
   TableRow,
 } from "@trenova/shared/components/ui/table";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { formatMinor } from "@trenova/shared/lib/benefits";
+import { formatMinor } from "@trenova/shared/lib/money";
 import { formatUnixDateMedium } from "@trenova/shared/lib/date";
 import { Link } from "react-router";
 

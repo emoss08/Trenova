@@ -399,6 +399,16 @@
   --dsk-mention: oklch(0.679 0.175 251);
   --dsk-error: oklch(0.626 0.193 23);
   --dsk-paper: oklch(0.985 0.004 91.4);
+  /* A printed document drawn on screen (an invoice preview): the print
+     template's own ink on paper, the same in light and dark, because the page
+     it stands for is paper either way. */
+  --doc-paper: oklch(1 0 none);
+  --doc-paper-warm: oklch(0.973 0.005 95.1);
+  --doc-ink: oklch(0.181 0.004 106.8);
+  --doc-ink-2: oklch(0.445 0.01 99.1);
+  --doc-ink-3: oklch(0.626 0.013 96.5);
+  --doc-rule: oklch(0.891 0.011 95.2);
+  --doc-rule-soft: oklch(0.939 0.008 98.9);
   --dsk-mark: color-mix(in oklch, var(--brand) 9%, transparent);
   --dsk-mark-line: color-mix(in oklch, var(--brand) 40%, transparent);
   --dsk-mark-on: color-mix(in oklch, var(--brand) 20%, transparent);
@@ -930,6 +940,16 @@
   --dsk-mention: oklch(0.679 0.175 251);
   --dsk-error: oklch(0.626 0.193 23);
   --dsk-paper: oklch(0.985 0.004 91.4);
+  /* A printed document drawn on screen (an invoice preview): the print
+     template's own ink on paper, the same in light and dark, because the page
+     it stands for is paper either way. */
+  --doc-paper: oklch(1 0 none);
+  --doc-paper-warm: oklch(0.973 0.005 95.1);
+  --doc-ink: oklch(0.181 0.004 106.8);
+  --doc-ink-2: oklch(0.445 0.01 99.1);
+  --doc-ink-3: oklch(0.626 0.013 96.5);
+  --doc-rule: oklch(0.891 0.011 95.2);
+  --doc-rule-soft: oklch(0.939 0.008 98.9);
   --dsk-mark: color-mix(in oklch, var(--brand) 14%, transparent);
   --dsk-mark-line: color-mix(in oklch, var(--brand) 55%, transparent);
   --dsk-mark-on: color-mix(in oklch, var(--brand) 28%, transparent);
@@ -1209,6 +1229,14 @@
   --color-accent-violet: var(--accent-violet);
   --color-accent-violet-subtle: var(--accent-violet-subtle);
   --color-accent-violet-subtle-hover: var(--accent-violet-subtle-hover);
+  /* Printed documents --------------------------------------------------- */
+  --color-doc-paper: var(--doc-paper);
+  --color-doc-paper-warm: var(--doc-paper-warm);
+  --color-doc-ink: var(--doc-ink);
+  --color-doc-ink-2: var(--doc-ink-2);
+  --color-doc-ink-3: var(--doc-ink-3);
+  --color-doc-rule: var(--doc-rule);
+  --color-doc-rule-soft: var(--doc-rule-soft);
   /* Desk ---------------------------------------------------------------
      The Desk's palette as Tailwind colours, so its controls are written as
      classes (text-dsk-muted, bg-dsk-hover) rather than one-off rules. */

@@ -67,6 +67,13 @@ func (s *service) GetByID(
 	return entity, nil
 }
 
+func (s *service) CountByRequest(
+	ctx context.Context,
+	req *auditports.CountByRequestRequest,
+) (map[string]int64, error) {
+	return s.repo.CountByRequest(ctx, req)
+}
+
 func normalizeOperationFilters(opts *pagination.QueryOptions) {
 	if opts == nil {
 		return

@@ -425,6 +425,8 @@ func FromServices(s *Services) *Resolver {
 		AuditLegalHoldService: s.AuditLegalHoldService,
 		AuditExportService:    s.AuditExportService,
 		AuditAlertService:     s.AuditAlertService,
+		AuditOverviewService:  s.AuditOverviewService,
+		AuditReviewService:    s.AuditReviewService,
 		AuditIntegrity:        s.AuditIntegrity,
 	}
 	benefitsDeps := &benefitsresolver.Deps{
@@ -640,6 +642,7 @@ func FromServices(s *Services) *Resolver {
 		FactoringLedgerService:     s.FactoringLedgerService,
 		FactoringRemittanceService: s.FactoringRemittanceService,
 		FactoringTransportService:  s.FactoringTransportService,
+		FactoringOverviewService:   s.FactoringOverviewService,
 	}
 	factoringcompanyDeps := &factoringcompanyresolver.Deps{
 		Core:                    s.Core,
@@ -1124,6 +1127,7 @@ func FromServices(s *Services) *Resolver {
 	auditlogAuditEntry := &auditlogresolver.AuditEntryResolver{Deps: auditlogDeps}
 	auditlogAuditExport := &auditlogresolver.AuditExportResolver{Deps: auditlogDeps}
 	auditlogAuditLegalHold := &auditlogresolver.AuditLegalHoldResolver{Deps: auditlogDeps}
+	auditlogAuditReview := &auditlogresolver.AuditReviewResolver{Deps: auditlogDeps}
 	securityactivityAuthEvent := &securityactivityresolver.AuthEventResolver{Deps: securityactivityDeps}
 	briefingBriefingSection := &briefingresolver.BriefingSectionResolver{Deps: briefingDeps}
 	captureCaptureBatch := &captureresolver.CaptureBatchResolver{Deps: captureDeps}
@@ -1661,6 +1665,7 @@ func FromServices(s *Services) *Resolver {
 			"AuditEntry@auditlog":                                  auditlogAuditEntry,
 			"AuditExport@auditlog":                                 auditlogAuditExport,
 			"AuditLegalHold@auditlog":                              auditlogAuditLegalHold,
+			"AuditReview@auditlog":                                 auditlogAuditReview,
 			"AuthEvent@securityactivity":                           securityactivityAuthEvent,
 			"BriefingSection@briefing":                             briefingBriefingSection,
 			"CaptureBatch@capture":                                 captureCaptureBatch,
@@ -2203,6 +2208,7 @@ var (
 	_ auditlogexec.AuditEntryResolver                                  = (*auditlogresolver.AuditEntryResolver)(nil)
 	_ auditlogexec.AuditExportResolver                                 = (*auditlogresolver.AuditExportResolver)(nil)
 	_ auditlogexec.AuditLegalHoldResolver                              = (*auditlogresolver.AuditLegalHoldResolver)(nil)
+	_ auditlogexec.AuditReviewResolver                                 = (*auditlogresolver.AuditReviewResolver)(nil)
 	_ securityactivityexec.AuthEventResolver                           = (*securityactivityresolver.AuthEventResolver)(nil)
 	_ briefingexec.BriefingSectionResolver                             = (*briefingresolver.BriefingSectionResolver)(nil)
 	_ captureexec.CaptureBatchResolver                                 = (*captureresolver.CaptureBatchResolver)(nil)

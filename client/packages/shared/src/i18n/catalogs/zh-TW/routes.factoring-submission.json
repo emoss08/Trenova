@@ -26,7 +26,6 @@
   "Fill in the form to see the journal it books.": "填寫表單以查看其入帳的分錄。",
   "Fix the factor's delivery settings and retry, or cancel the schedule to put its invoices back in the queue.": "請修正承購公司的傳送設定後重試，或取消清單，將其中的發票放回佇列。",
   "Funded on": "撥款日期",
-  "Funded {0}": "已於 {0} 撥款",
   "Keep it under 500 characters": "請保持在 500 個字元以內",
   "Keep schedule": "保留清單",
   "Keep the memo under 500 characters": "備註請保持在 500 個字元以內",

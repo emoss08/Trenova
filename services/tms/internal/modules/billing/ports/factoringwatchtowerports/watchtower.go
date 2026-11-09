@@ -60,8 +60,9 @@ type ExpiringNoa struct {
 }
 
 type ListFailedSubmissionsRequest struct {
-	TenantInfo pagination.TenantInfo `json:"-"`
-	Limit      int                   `json:"limit"`
+	TenantInfo         pagination.TenantInfo `json:"-"`
+	FactoringCompanyID pulid.ID              `json:"factoringCompanyId"`
+	Limit              int                   `json:"limit"`
 }
 
 type FailedSubmission struct {
@@ -78,9 +79,10 @@ type FailedSubmission struct {
 }
 
 type ListUnfundedSubmissionsRequest struct {
-	TenantInfo pagination.TenantInfo `json:"-"`
-	At         int64                 `json:"at"`
-	Limit      int                   `json:"limit"`
+	TenantInfo         pagination.TenantInfo `json:"-"`
+	FactoringCompanyID pulid.ID              `json:"factoringCompanyId"`
+	At                 int64                 `json:"at"`
+	Limit              int                   `json:"limit"`
 }
 
 type UnfundedSubmission struct {
@@ -97,10 +99,11 @@ type UnfundedSubmission struct {
 }
 
 type ListChargebacksDueRequest struct {
-	TenantInfo   pagination.TenantInfo `json:"-"`
-	Before       int64                 `json:"before"`
-	UnwarnedOnly bool                  `json:"unwarnedOnly"`
-	Limit        int                   `json:"limit"`
+	TenantInfo         pagination.TenantInfo `json:"-"`
+	FactoringCompanyID pulid.ID              `json:"factoringCompanyId"`
+	Before             int64                 `json:"before"`
+	UnwarnedOnly       bool                  `json:"unwarnedOnly"`
+	Limit              int                   `json:"limit"`
 }
 
 type ChargebackDue struct {

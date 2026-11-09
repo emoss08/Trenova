@@ -44,9 +44,9 @@ describe("HomeEditDock", () => {
 });
 
 describe("ActionDock", () => {
-  it("keeps the fixed element as its root when animated", () => {
+  it("animates the fixed element itself, with nothing wrapping it", () => {
     const { container } = render(
-      <ActionDock animated>
+      <ActionDock>
         <button type="button">Save</button>
       </ActionDock>,
     );
@@ -54,15 +54,5 @@ describe("ActionDock", () => {
     const root = container.firstElementChild;
     expect(root).toHaveClass("fixed", "bottom-6");
     expect(container.querySelectorAll(".fixed")).toHaveLength(1);
-  });
-
-  it("still renders the fixed shell without the animation", () => {
-    const { container } = render(
-      <ActionDock>
-        <button type="button">Save</button>
-      </ActionDock>,
-    );
-
-    expect(container.firstElementChild).toHaveClass("fixed", "bottom-6");
   });
 });

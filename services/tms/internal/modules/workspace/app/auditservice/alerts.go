@@ -149,10 +149,11 @@ func (a *Alerts) raiseIfEnabled(
 	dedupe string,
 	count int64,
 ) {
-	if _, enabled := a.policy(ctx, entry, kind); !enabled {
+	policy, enabled := a.policy(ctx, entry, kind)
+	if !enabled {
 		return
 	}
-	a.raise(ctx, entry, kind, dedupe, count)
+	a.raise(ctx, entry, kind, policy, dedupe, count)
 }
 
 func (a *Alerts) count(ctx context.Context, entry *audit.Entry, kind audit.AlertKind) {
@@ -195,6 +196,7 @@ func (a *Alerts) count(ctx context.Context, entry *audit.Entry, kind audit.Alert
 		ctx,
 		entry,
 		kind,
+		policy,
 		entry.PrincipalID.String()+":"+strconv.FormatInt(bucket, 10),
 		incr.Val(),
 	)
@@ -204,15 +206,18 @@ func (a *Alerts) raise(
 	ctx context.Context,
 	entry *audit.Entry,
 	kind audit.AlertKind,
+	policy *audit.AlertPolicy,
 	dedupe string,
 	count int64,
 ) {
+	key := fmt.Sprintf("%s/%s", kind, dedupe)
 	payload := &auditports.AlertPayload{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entry.OrganizationID,
 			BuID:  entry.BusinessUnitID,
 		},
 		Kind:          kind,
+		DedupeKey:     key,
 		EntryID:       entry.ID,
 		Action:        entry.Action,
 		Resource:      entry.Resource,
@@ -223,16 +228,17 @@ func (a *Alerts) raise(
 		EntityRef:     entry.EntityRef,
 		Comment:       entry.Comment,
 		Count:         count,
+		Threshold:     policy.Threshold,
+		WindowMinutes: policy.WindowMinutes,
 		OccurredAt:    entry.Timestamp,
 	}
 
 	_, err := a.workflows.StartWorkflow(ctx, client.StartWorkflowOptions{
 		ID: fmt.Sprintf(
-			"audit-alert/%s/%s/%s/%s",
+			"audit-alert/%s/%s/%s",
 			entry.OrganizationID,
 			entry.BusinessUnitID,
-			kind,
-			dedupe,
+			key,
 		),
 		TaskQueue:                temporaltype.AuditTaskQueue,
 		WorkflowIDReusePolicy:    enums.WORKFLOW_ID_REUSE_POLICY_REJECT_DUPLICATE,
