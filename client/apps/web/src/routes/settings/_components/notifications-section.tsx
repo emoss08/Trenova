@@ -21,7 +21,7 @@ import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Switch } from "@trenova/shared/components/ui/switch";
-import { Bell01Icon, ChevronDownIcon, Lock01Icon } from "@trenova/shared/components/icons";
+import { ChevronDownIcon, Lock01Icon } from "@trenova/shared/components/icons";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixInUserTimezone, resolveUserTimezone } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
@@ -35,7 +35,7 @@ import type { TimeFormatType } from "@trenova/shared/types/user";
 import { useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { useForm, useWatch, type UseFormReturn } from "react-hook-form";
 import { toast } from "@trenova/shared/components/ui/toast";
-import { SETTINGS_PREVIEW_TOASTER_ID, useSettingsFeedback } from "./settings-feedback";
+import { useSettingsFeedback } from "./settings-feedback";
 import { SettingsCard, SettingsRow } from "./settings-layout";
 import { useAutosaveForm } from "./use-autosave-form";
 
@@ -127,21 +127,7 @@ function DeliveryCard({ form, email }: { form: UseFormReturn<NotifyValues>; emai
   const sendTest = () => {
     const title = t("Test notification");
     const body = t("This is how a notification from Trenova reaches you.");
-    toast.custom(
-      () => (
-        <div className="bg-raised ui-lift-float flex w-90 max-w-[calc(100vw-40px)] gap-3 rounded-lg border px-3.5 py-3">
-          <span className="bg-muted grid size-8 shrink-0 place-items-center rounded-md">
-            <Bell01Icon className="text-muted-foreground size-3.5" />
-          </span>
-          <span className="flex min-w-0 flex-col gap-0.5">
-            <span className="text-foreground-subtle text-2xs">{t("Trenova · now")}</span>
-            <span className="text-xs font-medium">{title}</span>
-            <span className="text-muted-foreground text-xs">{body}</span>
-          </span>
-        </div>
-      ),
-      { toasterId: SETTINGS_PREVIEW_TOASTER_ID, duration: 4600 },
-    );
+    toast.info(title, { description: body, duration: 4600 });
     if (permission === "granted") {
       new window.Notification(title, { body, tag: "trenova-test" });
     }

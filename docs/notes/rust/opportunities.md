@@ -60,12 +60,12 @@ The repository already has most of what a Rust addition needs:
 
 So there are four ways in, from least to most disruptive:
 
-| Seam | Use it for | What it keeps | What it costs |
-| --- | --- | --- | --- |
-| Rust → `wasm32-wasip1` run by wazero inside the Go process | Pure computation: parsers, rule engines, encoders | `CGO_ENABLED=0`, one binary, cancellation | Slower than native; a boundary call per item is expensive, so APIs must be batched |
-| Rust → `wasm32` in the browser | Logic the browser and server must agree on | One source of truth | Bundle weight against the 590 KB gzip first-load budget (`client/apps/web/bundle-budget.json`); load it lazily |
-| Rust sidecar service | Work that needs native libraries (PDFium, SIMD) | Isolation, its own memory limit | Another container, an internal API, plaintext crossing a local socket |
-| pgrx extension in Postgres | Functions on every statement's path | Native speed inside the database | Rules out managed Postgres (RDS, Cloud SQL); native code inside the security boundary |
+| Seam                                                       | Use it for                                        | What it keeps                             | What it costs                                                                                                  |
+| ---------------------------------------------------------- | ------------------------------------------------- | ----------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| Rust → `wasm32-wasip1` run by wazero inside the Go process | Pure computation: parsers, rule engines, encoders | `CGO_ENABLED=0`, one binary, cancellation | Slower than native; a boundary call per item is expensive, so APIs must be batched                             |
+| Rust → `wasm32` in the browser                             | Logic the browser and server must agree on        | One source of truth                       | Bundle weight against the 590 KB gzip first-load budget (`client/apps/web/bundle-budget.json`); load it lazily |
+| Rust sidecar service                                       | Work that needs native libraries (PDFium, SIMD)   | Isolation, its own memory limit           | Another container, an internal API, plaintext crossing a local socket                                          |
+| pgrx extension in Postgres                                 | Functions on every statement's path               | Native speed inside the database          | Rules out managed Postgres (RDS, Cloud SQL); native code inside the security boundary                          |
 
 ## 3. Candidates, ranked
 
@@ -169,13 +169,13 @@ as it was written.
 **Today.** Several rule sets live twice, once in Go and once in TypeScript, held together by tests on
 one side or by nothing.
 
-| Logic | Server (Go) | Browser (TS) | How they are kept equal | Known drift |
-| --- | --- | --- | --- | --- |
-| Formula language parse and check | `expr-lang/expr` v1.17.8 plus `rating/app/formula` | `formula-editor/expr-parser.ts` (1,071 lines), `expr-check.ts` (1,656) | 73-case `testdata/conformance.json` | Precedence table hand-copied from expr's `operator.go` |
-| Charge allocation | `decimalutils/allocate.go`, `operations/domain/shipment/allocationresolver.go:153` (half-to-even) | `packages/shared/src/lib/charge-split.ts:10` (`Math.round(v*100)`, half-up, floats) | TS tests only | Half-cent cases differ |
-| Report value formatting | `pkg/reportfmt/format.go:214` (`shopspring/decimal`) | `packages/shared/src/lib/report-format.ts:242` (`toFixed`) | None | `1.005` → Go "1.01", JS "1.00"; `2.675` → Go "2.68", JS "2.67" |
-| Lane specificity | `rategeo.Weight`, rate agreement weights | `packages/shared/src/lib/rate.ts` ("must stay in step", lines 7-12) | None | Unknown |
-| Matrix quantity bands | `ratematrix.ContainsQuantity` | `packages/shared/src/lib/rate-matrix.ts` | None | Unknown |
+| Logic                            | Server (Go)                                                                                       | Browser (TS)                                                                        | How they are kept equal             | Known drift                                                    |
+| -------------------------------- | ------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- | ----------------------------------- | -------------------------------------------------------------- |
+| Formula language parse and check | `expr-lang/expr` v1.17.8 plus `rating/app/formula`                                                | `formula-editor/expr-parser.ts` (1,071 lines), `expr-check.ts` (1,656)              | 73-case `testdata/conformance.json` | Precedence table hand-copied from expr's `operator.go`         |
+| Charge allocation                | `decimalutils/allocate.go`, `operations/domain/shipment/allocationresolver.go:153` (half-to-even) | `packages/shared/src/lib/charge-split.ts:10` (`Math.round(v*100)`, half-up, floats) | TS tests only                       | Half-cent cases differ                                         |
+| Report value formatting          | `pkg/reportfmt/format.go:214` (`shopspring/decimal`)                                              | `packages/shared/src/lib/report-format.ts:242` (`toFixed`)                          | None                                | `1.005` → Go "1.01", JS "1.00"; `2.675` → Go "2.68", JS "2.67" |
+| Lane specificity                 | `rategeo.Weight`, rate agreement weights                                                          | `packages/shared/src/lib/rate.ts` ("must stay in step", lines 7-12)                 | None                                | Unknown                                                        |
+| Matrix quantity bands            | `ratematrix.ContainsQuantity`                                                                     | `packages/shared/src/lib/rate-matrix.ts`                                            | None                                | Unknown                                                        |
 
 The formula evaluator also has a runtime defect. On timeout it abandons the goroutine running the
 expression, which keeps using CPU (`rating/app/formula/engine/engine.go:527-563`). Each evaluation also
@@ -363,45 +363,45 @@ only if it shows up in a profile.
 
 ### Candidates at a glance
 
-| # | Candidate | Main gain | Seam | Effort (rough) | Prerequisite |
-| --- | --- | --- | --- | --- | --- |
-| R1 | Document and imaging worker | Memory, throughput, one imaging library | Sidecar (done) | Large | Binary encryption envelope; page cache |
-| R2 | Capture companion uploads results | Server CPU per scanned page | Existing desktop crate | Small | Shared JSON fixtures; CI path filter |
-| R3 | Shared calculation crate | One answer in browser and server; hard timeouts | Browser WASM plus wazero | Large | Fix TS rounding with shared fixtures first |
-| R4 | pgrx `claims()` | Per-statement overhead under RLS (measured: 0.1–0.2 ms) | Postgres extension | Medium | Done: JIT off; SQL fixes measured and rejected |
-| R5 | `pg_search` | Search under RLS, one fewer service | Postgres extension | Medium | — |
-| R6 | X12 core crate | Robust, guide-driven parsing | wazero plus browser WASM (reading done) | Medium | — |
-| R7 | Local code-mode sandbox | No vendor, lower latency | wazero (done) | Medium | — |
-| R8 | Imaging in Dash | Small uploads over cellular | Browser WASM | Small–medium | PWA basics |
-| R9 | Spreadsheet parsing | Memory, sandboxing | wazero | Small | Go limits and streaming first |
-| R10 | i18n extractor | One parse, real ICU checks | CLI | Small | Try `oxc-parser` first |
-| R11 | SSE gateway | Memory per connection | Sidecar | Medium | Only beyond 20k per replica |
-| R12 | JCS canonical crate | Verifiable audit exports | wazero plus CLI | Small | — |
-| R13 | PII scrubbing | Regex throughput | wazero | Small | A profile that shows it |
+| #   | Candidate                         | Main gain                                               | Seam                                    | Effort (rough) | Prerequisite                                   |
+| --- | --------------------------------- | ------------------------------------------------------- | --------------------------------------- | -------------- | ---------------------------------------------- |
+| R1  | Document and imaging worker       | Memory, throughput, one imaging library                 | Sidecar (done)                          | Large          | Binary encryption envelope; page cache         |
+| R2  | Capture companion uploads results | Server CPU per scanned page                             | Existing desktop crate                  | Small          | Shared JSON fixtures; CI path filter           |
+| R3  | Shared calculation crate          | One answer in browser and server; hard timeouts         | Browser WASM plus wazero                | Large          | Fix TS rounding with shared fixtures first     |
+| R4  | pgrx `claims()`                   | Per-statement overhead under RLS (measured: 0.1–0.2 ms) | Postgres extension                      | Medium         | Done: JIT off; SQL fixes measured and rejected |
+| R5  | `pg_search`                       | Search under RLS, one fewer service                     | Postgres extension                      | Medium         | —                                              |
+| R6  | X12 core crate                    | Robust, guide-driven parsing                            | wazero plus browser WASM (reading done) | Medium         | —                                              |
+| R7  | Local code-mode sandbox           | No vendor, lower latency                                | wazero (done)                           | Medium         | —                                              |
+| R8  | Imaging in Dash                   | Small uploads over cellular                             | Browser WASM                            | Small–medium   | PWA basics                                     |
+| R9  | Spreadsheet parsing               | Memory, sandboxing                                      | wazero                                  | Small          | Go limits and streaming first                  |
+| R10 | i18n extractor                    | One parse, real ICU checks                              | CLI                                     | Small          | Try `oxc-parser` first                         |
+| R11 | SSE gateway                       | Memory per connection                                   | Sidecar                                 | Medium         | Only beyond 20k per replica                    |
+| R12 | JCS canonical crate               | Verifiable audit exports                                | wazero plus CLI                         | Small          | —                                              |
+| R13 | PII scrubbing                     | Regex throughput                                        | wazero                                  | Small          | A profile that shows it                        |
 
 ## 4. Where Rust will not help
 
-| Area | Why not |
-| --- | --- |
-| GraphQL executor and resolvers | The pain is Go compile time (354 s cold before sharding, 152 s after a domain-struct edit). Rust compiles more slowly. `async-graphql` would mean rewriting every resolver. |
-| Agent runtime and model I/O | Network- and Temporal-bound. Streams parse fine with sonic; no partial-JSON parser is needed. |
-| Token counting | Claude's tokenizer is not public. Calibrate from the provider's reported `usage.input_tokens` instead of the `runes/4` (`shared/llmtokens`) and `bytes/4` (`agentruntime/turnhistory/contextuse.go:134-143`) heuristics, which disagree. |
-| Tool-argument validation | Compiled once per tool (`pkg/toolschema/validate.go:50-101`); a WASM call would cost more than the validation. |
-| Retrieval | pgvector and Postgres full-text search do the work; in-memory catalogs are a few hundred items. |
-| numberguard | O(citations × supported) decimal comparisons; the fix is a sorted float slice and binary search in Go. |
-| Dispatch planner and assignment solver | Time goes to the scoring callback, which builds detail strings with `fmt.Sprintf` in the inner loop (`dispatchcandidateservice/score.go:177-210`). Fix in Go. |
-| ETA, hours of service, mileage, telematics | I/O-bound (PC*MILER, Samsara) or small pure functions. |
-| Accounting, billing, settlement, IFTA | Database-bound decimal maths. No bank-file parsers exist yet. |
-| Permission engine | Cost is two Redis round trips and a JSON decode per check, not CPU. |
-| Auth and crypto | Thin wrappers over Go's standard library, go-oidc and Cloud KMS. SAML does not exist yet; if it is built, XML-DSig is where library choice matters most. |
-| Reporting compiler | Postgres does the work; compiling takes milliseconds. |
-| Template engine | Rust template engines lack `html/template`'s context-aware escaping, so a port would weaken security. |
-| Change-data-capture consumers, Redis Lua, migrations | A few events a second, scripts that run inside Redis, DDL-bound. |
-| Rate limiting, idempotency, webhook signatures, SSRF guard | Tiny and Redis-bound. |
-| Go code generators and lint tools | They need `go/types`. |
-| Simulators, CLI, observability | Development fixtures, operator commands, configuration. |
-| Browser CSV export and maps | A Web Worker and marker clustering, not WASM. |
-| Python ML tooling, docling | Tied to the Python ML ecosystem; no mature Rust equivalent for layout and table extraction. |
+| Area                                                       | Why not                                                                                                                                                                                                                                  |
+| ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GraphQL executor and resolvers                             | The pain is Go compile time (354 s cold before sharding, 152 s after a domain-struct edit). Rust compiles more slowly. `async-graphql` would mean rewriting every resolver.                                                              |
+| Agent runtime and model I/O                                | Network- and Temporal-bound. Streams parse fine with sonic; no partial-JSON parser is needed.                                                                                                                                            |
+| Token counting                                             | Claude's tokenizer is not public. Calibrate from the provider's reported `usage.input_tokens` instead of the `runes/4` (`shared/llmtokens`) and `bytes/4` (`agentruntime/turnhistory/contextuse.go:134-143`) heuristics, which disagree. |
+| Tool-argument validation                                   | Compiled once per tool (`pkg/toolschema/validate.go:50-101`); a WASM call would cost more than the validation.                                                                                                                           |
+| Retrieval                                                  | pgvector and Postgres full-text search do the work; in-memory catalogs are a few hundred items.                                                                                                                                          |
+| numberguard                                                | O(citations × supported) decimal comparisons; the fix is a sorted float slice and binary search in Go.                                                                                                                                   |
+| Dispatch planner and assignment solver                     | Time goes to the scoring callback, which builds detail strings with `fmt.Sprintf` in the inner loop (`dispatchcandidateservice/score.go:177-210`). Fix in Go.                                                                            |
+| ETA, hours of service, mileage, telematics                 | I/O-bound (PC*MILER, Samsara) or small pure functions.                                                                                                                                                                                   |
+| Accounting, billing, settlement, IFTA                      | Database-bound decimal maths. No bank-file parsers exist yet.                                                                                                                                                                            |
+| Permission engine                                          | Cost is two Redis round trips and a JSON decode per check, not CPU.                                                                                                                                                                      |
+| Auth and crypto                                            | Thin wrappers over Go's standard library, go-oidc and Cloud KMS. SAML does not exist yet; if it is built, XML-DSig is where library choice matters most.                                                                                 |
+| Reporting compiler                                         | Postgres does the work; compiling takes milliseconds.                                                                                                                                                                                    |
+| Template engine                                            | Rust template engines lack `html/template`'s context-aware escaping, so a port would weaken security.                                                                                                                                    |
+| Change-data-capture consumers, Redis Lua, migrations       | A few events a second, scripts that run inside Redis, DDL-bound.                                                                                                                                                                         |
+| Rate limiting, idempotency, webhook signatures, SSRF guard | Tiny and Redis-bound.                                                                                                                                                                                                                    |
+| Go code generators and lint tools                          | They need `go/types`.                                                                                                                                                                                                                    |
+| Simulators, CLI, observability                             | Development fixtures, operator commands, configuration.                                                                                                                                                                                  |
+| Browser CSV export and maps                                | A Web Worker and marker clustering, not WASM.                                                                                                                                                                                            |
+| Python ML tooling, docling                                 | Tied to the Python ML ecosystem; no mature Rust equivalent for layout and table extraction.                                                                                                                                              |
 
 One more note: `shared/samsara/internal/samsaraspec/types.gen.go` is 90,650 lines of oapi-codegen
 output. Trimming the spec to the endpoints used would cut compile time more than any port.
@@ -415,22 +415,21 @@ output. Trimming the spec to the endpoints used would cut compile time more than
    the formula language as its anchor.
 4. **Database:** run the R4 measurements and SQL fixes, then decide on pgrx. Evaluate R5 at the same time,
    since both rule out managed Postgres.
-5. **As needs arise:** R11
-   only at scale, the rest when a profile points at them.
+5. **As needs arise:** R11 only at scale, the rest when a profile points at them.
 
 ## 6. What to measure before porting
 
-| Question | How |
-| --- | --- |
-| Cost of `claims()` per statement | `track_functions = 'pl'`, then `pg_stat_user_functions` under a realistic load |
-| Index use under row-level security | `SET ROLE trenova_tenant; EXPLAIN ANALYZE` on trigram, full-text and `ST_DWithin` searches |
-| Where capture processing spends time | CPU profile of `captureprocessing/processing.go` over a 100-page batch |
-| Peak heap per document | Heap profile of upload → decrypt → thumbnail for 5, 20 and 50 MB files |
-| Page-viewer latency | p50/p95 of `GetPageImage` under concurrent Desk use |
-| wazero against native for pixel work | Benchmark the same resize, threshold and QR code natively, under wazero, and in Go |
-| numberguard per reply | Benchmark `CheckAmounts` on a tool-heavy turn |
-| Redis round trips per GraphQL request | Count permission-cache reads per operation |
-| Formula evaluation under load | Abandoned-evaluation metric (`AbandonedEvaluationFinished`) in production |
+| Question                              | How                                                                                        |
+| ------------------------------------- | ------------------------------------------------------------------------------------------ |
+| Cost of `claims()` per statement      | `track_functions = 'pl'`, then `pg_stat_user_functions` under a realistic load             |
+| Index use under row-level security    | `SET ROLE trenova_tenant; EXPLAIN ANALYZE` on trigram, full-text and `ST_DWithin` searches |
+| Where capture processing spends time  | CPU profile of `captureprocessing/processing.go` over a 100-page batch                     |
+| Peak heap per document                | Heap profile of upload → decrypt → thumbnail for 5, 20 and 50 MB files                     |
+| Page-viewer latency                   | p50/p95 of `GetPageImage` under concurrent Desk use                                        |
+| wazero against native for pixel work  | Benchmark the same resize, threshold and QR code natively, under wazero, and in Go         |
+| numberguard per reply                 | Benchmark `CheckAmounts` on a tool-heavy turn                                              |
+| Redis round trips per GraphQL request | Count permission-cache reads per operation                                                 |
+| Formula evaluation under load         | Abandoned-evaluation metric (`AbandonedEvaluationFinished`) in production                  |
 
 ## 7. Glossary
 

@@ -1,5 +1,3 @@
-import type { ToastDetail } from "@trenova/shared/components/ui/toast-store";
-import { translate } from "@trenova/shared/i18n/runtime";
 import { ApiRequestError } from "@trenova/shared/lib/api";
 import { GraphQLRequestError } from "@trenova/shared/lib/graphql";
 import { RequestTimeoutError, ResponseContractError } from "@trenova/shared/lib/request-errors";
@@ -231,17 +229,6 @@ export function describeError(error: unknown): ErrorDescription {
   });
 }
 
-// isSessionExpiry says whether a failure proves the session is gone (a 401 or an
-// authentication problem, from either transport), as opposed to one that says nothing about
-// it: a rate limit, a server error or a dropped connection.
-/**
- * The reference support searches by, as a toast's Details, for a failure the server traced;
- * nothing when it did not.
- */
-export function errorReferenceDetails(traceId: string | undefined): ToastDetail[] | undefined {
-  return traceId ? [{ label: translate("Reference"), value: traceId, monospace: true }] : undefined;
-}
-
 /** A record that is not there, or that this person may not read: an answer, not a failure. */
 export function isAbsence(error: unknown): boolean {
   const { kind } = describeError(error);
@@ -261,6 +248,9 @@ export async function nullWhenAbsent<T>(read: Promise<T>): Promise<T | null> {
   }
 }
 
+// isSessionExpiry says whether a failure proves the session is gone (a 401 or an
+// authentication problem, from either transport), as opposed to one that says nothing about
+// it: a rate limit, a server error or a dropped connection.
 export function isSessionExpiry(error: unknown): boolean {
   return describeError(error).kind === "session-expired";
 }

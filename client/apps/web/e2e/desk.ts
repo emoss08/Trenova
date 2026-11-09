@@ -141,11 +141,11 @@ export async function approveAndSettle(page: Page, card: Locator, commit: boolea
   await approve.click();
 
   // Held for its undo window, or carried out at once: either way the dock
-  // says it was approved.
-  const undoBar = page
-    .getByRole("status")
-    .filter({ has: page.getByRole("button", { name: "Undo" }) });
-  const approved = page.getByRole("status").filter({ hasText: /Approved/ });
+  // says it was approved. The toaster's live region is a status too; it
+  // repeats a toast's words, so it is left out.
+  const dock = page.getByRole("status").and(page.locator(":not(.tst-sr)"));
+  const undoBar = dock.filter({ has: page.getByRole("button", { name: "Undo" }) });
+  const approved = dock.filter({ hasText: /Approved/ });
   await expect(approved.first()).toBeVisible();
 
   if (!(await undoBar.isVisible())) {

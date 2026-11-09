@@ -29,4 +29,5 @@ export const singletonPackages = [
   "zustand",
   "motion",
   "zod",
+  "@yusufceng1z/ding",
 ] as const;

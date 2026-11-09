@@ -91,6 +91,7 @@ const SHOTS = [
       await openSettings(page);
       await jumpTo(page, "Notifications");
       await page.getByRole("radio", { name: "Everything" }).first().click();
+      await page.locator(".tst[data-phase=open]").waitFor();
       await page.waitForTimeout(400);
     },
   },

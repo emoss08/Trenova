@@ -11,6 +11,7 @@ import { useMotionPreferenceStore } from "@/stores/motion-preference-store";
 import { useNavigationStore } from "@/stores/navigation-store";
 import { userService } from "@trenova/shared/services/user";
 import { useTheme } from "@trenova/shared/components/theme-provider";
+import { useToastSoundStore } from "@trenova/shared/components/ui/toast-sound";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useNow } from "@trenova/shared/hooks/use-now";
 import {
@@ -41,6 +42,7 @@ type DisplayValues = {
   theme: ThemeChoice;
   sidebar: "open" | "folded";
   reduceMotion: boolean;
+  toastSounds: boolean;
   vimKeys: boolean;
   formatOnSave: boolean;
   codeLigatures: boolean;
@@ -189,6 +191,7 @@ function useDisplayRows() {
   const { theme, setTheme } = useTheme();
   const sidebarCollapsed = useNavigationStore((state) => state.sidebarCollapsed);
   const reduceMotion = useMotionPreferenceStore((state) => state.reduceMotion);
+  const toastSounds = useToastSoundStore((state) => state.on);
   const vimKeys = useEditorPreferenceStore((state) => state.vimKeys);
   const formatOnSave = useEditorPreferenceStore((state) => state.formatOnSave);
   const codeLigatures = useEditorPreferenceStore((state) => state.codeLigatures);
@@ -197,6 +200,7 @@ function useDisplayRows() {
       theme: theme as ThemeChoice,
       sidebar: sidebarCollapsed ? "folded" : "open",
       reduceMotion,
+      toastSounds,
       vimKeys,
       formatOnSave,
       codeLigatures,
@@ -211,6 +215,8 @@ function useDisplayRows() {
       setTheme(next.theme);
       useNavigationStore.getState().setSidebarCollapsed(next.sidebar === "folded");
       useMotionPreferenceStore.getState().setReduceMotion(next.reduceMotion);
+      const sound = useToastSoundStore.getState();
+      if (sound.on !== next.toastSounds) sound.setOn(next.toastSounds);
       useEditorPreferenceStore.getState().setVimKeys(next.vimKeys);
       useEditorPreferenceStore.getState().setFormatOnSave(next.formatOnSave);
       useEditorPreferenceStore.getState().setCodeLigatures(next.codeLigatures);
@@ -256,6 +262,15 @@ function useDisplayRows() {
             name="reduceMotion"
             label={t("Reduce motion")}
             description={t("Fewer slides, springs and other movement.")}
+            className="p-0"
+          />
+        </SettingsRow>
+        <SettingsRow id="toast-sounds">
+          <SwitchField
+            control={form.control}
+            name="toastSounds"
+            label={t("Toast sounds")}
+            description={t("A short tone when a toast appears, on this device.")}
             className="p-0"
           />
         </SettingsRow>

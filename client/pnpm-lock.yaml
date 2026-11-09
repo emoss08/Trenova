@@ -176,6 +176,12 @@ catalogs:
     '@tanstack/react-table':
       specifier: ^9.3.1
       version: 9.3.1
+    '@yusufceng1z/ding':
+      specifier: 0.0.2
+      version: 0.0.2
+    '@yusufceng1z/ding-react':
+      specifier: 0.0.2
+      version: 0.0.2
     motion:
       specifier: ^14.9.1
       version: 14.9.1
@@ -819,6 +825,12 @@ importers:
       '@untitledui/icons':
         specifier: 0.0.23
         version: 0.0.23(react@19.3.1)
+      '@yusufceng1z/ding':
+        specifier: 'catalog:'
+        version: 0.0.2
+      '@yusufceng1z/ding-react':
+        specifier: 'catalog:'
+        version: 0.0.2(react@19.3.1)
       chrono-node:
         specifier: ^2.10.3
         version: 2.10.3
@@ -4898,6 +4910,16 @@ packages:
   '@whatwg-node/promise-helpers@2.0.1':
     resolution: {integrity: sha512-ziVgm01A9irPLVBaUFei64qp771BrDXldbv5pY6kgFgNtA+7zq8ux6nj/6w8bELGH/+Ttnc76ox04HIjU8nqvg==}
     engines: {node: '>=22.15.0'}
+
+  '@yusufceng1z/ding-react@0.0.2':
+    resolution: {integrity: sha512-lwSeNwxTifI9UZu5SOQgZU3brU/NuAKPsWyhHyn7HmvgHO6d2jysj7Kv592XT42OIxQ/JMtNuheWshAQJSJVjA==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      react: '>=18'
+
+  '@yusufceng1z/ding@0.0.2':
+    resolution: {integrity: sha512-amncS7tqeC8zHx+Xz0lCOyMGr3Tt7D7l0b9xUkBqjbtW1m0XqRLkG+pFGjFDYNRqx6BRucOzVxG989xoObXkWQ==}
+    engines: {node: '>=18'}
 
   acorn-jsx@5.3.2:
     resolution: {integrity: sha512-rq9s+JNhf0IChjtDXxllJ7g41oZk5SlXtp0LHwyA5cejwn7vKmKp4pPri6YEePv2PU65sAsegbXtIinmDFDXgQ==}
@@ -11882,6 +11904,13 @@ snapshots:
   '@whatwg-node/promise-helpers@2.0.1':
     dependencies:
       tslib: 2.9.1
+
+  '@yusufceng1z/ding-react@0.0.2(react@19.3.1)':
+    dependencies:
+      '@yusufceng1z/ding': 0.0.2
+      react: 19.3.1
+
+  '@yusufceng1z/ding@0.0.2': {}
 
   acorn-jsx@5.3.2(acorn@8.19.0):
     dependencies:

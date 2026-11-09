@@ -69,6 +69,7 @@ const FIXED_ENTRIES: readonly SettingsIndexEntry[] = [
   { label: "Time format · 24-hour", section: "preferences", row: "time-format" },
   { label: "Sidebar", section: "preferences", row: "sidebar" },
   { label: "Reduce motion", section: "preferences", row: "motion" },
+  { label: "Toast sounds · chime", section: "preferences", row: "toast-sounds" },
   { label: "Vim keys · code editor", section: "preferences", row: "vim-keys" },
   { label: "Format on save · code editor", section: "preferences", row: "format-on-save" },
   { label: "Ligatures · code editor", section: "preferences", row: "code-ligatures" },

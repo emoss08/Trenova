@@ -11,9 +11,6 @@ import {
   type ReactNode,
 } from "react";
 
-export const SETTINGS_TOASTER_ID = "user-settings";
-export const SETTINGS_PREVIEW_TOASTER_ID = "user-settings-preview";
-
 const SAVED_TOAST_ID = "user-settings-saved";
 const SAVED_TOAST_MS = 4200;
 const MESSAGE_TOAST_MS = 2400;
@@ -44,7 +41,6 @@ export function SettingsFeedbackProvider({ children }: { children: ReactNode }) 
     pulseTimer.current = window.setTimeout(() => setPulsing(false), SAVED_PULSE_MS);
     toast.success(translate("Saved"), {
       id: SAVED_TOAST_ID,
-      toasterId: SETTINGS_TOASTER_ID,
       duration: SAVED_TOAST_MS,
       action: undo ? { label: translate("Undo"), onClick: () => void undo() } : undefined,
     });
@@ -53,7 +49,6 @@ export function SettingsFeedbackProvider({ children }: { children: ReactNode }) 
   const message = useCallback((text: string) => {
     toast(text, {
       id: SAVED_TOAST_ID,
-      toasterId: SETTINGS_TOASTER_ID,
       duration: MESSAGE_TOAST_MS,
       action: undefined,
     });

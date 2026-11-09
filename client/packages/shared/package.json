@@ -36,6 +36,8 @@
     "@tiptap/suggestion": "^3.32.0",
     "@trenova/graphql": "workspace:*",
     "@untitledui/icons": "0.0.23",
+    "@yusufceng1z/ding": "catalog:",
+    "@yusufceng1z/ding-react": "catalog:",
     "chrono-node": "^2.10.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

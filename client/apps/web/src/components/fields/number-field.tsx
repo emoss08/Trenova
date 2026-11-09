@@ -209,7 +209,7 @@ function NumberFieldImpl<T extends FieldValues>({
             htmlFor={inputId}
           >
             <div className={cn(endAddon !== undefined && "flex items-start gap-1.5")}>
-              <div className="relative min-w-0 flex-1 overflow-hidden">
+              <div className="relative min-w-0 flex-1">
                 <NumericFormat
                   value={codec ? text : (field.value ?? "")}
                   onValueChange={(values, source) => {
@@ -247,11 +247,11 @@ function NumberFieldImpl<T extends FieldValues>({
                     props["aria-describedby"],
                   )}
                   className={cn(
-                    "ui-field flex h-7 w-full min-w-0 px-2 py-0.5 outline-none md:text-xs",
+                    "flex h-7 w-full min-w-0 ui-field px-2 py-0.5 outline-none md:text-xs",
                     "file:border-0 file:bg-transparent file:text-sm file:font-medium",
                     "placeholder:text-muted-foreground",
                     "disabled:cursor-not-allowed disabled:opacity-50",
-                    "read-only:text-muted-foreground read-only:cursor-default",
+                    "read-only:cursor-default read-only:text-muted-foreground",
                     "ui-focus-ring",
                     props.readOnly && "pointer-events-none cursor-not-allowed opacity-60",
                     fieldState.invalid && fieldInvalidClass,
@@ -263,16 +263,16 @@ function NumberFieldImpl<T extends FieldValues>({
 
                 <div className="absolute top-px right-px bottom-px flex items-center gap-1 pr-0">
                   {sideText && (
-                    <div className="text-muted-foreground pointer-events-none mr-2 text-xs select-none">
+                    <div className="pointer-events-none mr-2 text-xs text-muted-foreground select-none">
                       {sideText}
                     </div>
                   )}
                   {stepper ? (
-                    <div className="border-muted-foreground/20 flex h-full flex-col items-stretch rounded-r-md border-l bg-transparent">
+                    <div className="flex h-full flex-col items-stretch rounded-r-md border-l border-muted-foreground/20 bg-transparent">
                       <button
                         type="button"
                         aria-label={t("Increment")}
-                        className="border-muted-foreground/20 text-muted-foreground hover:bg-muted-foreground/10 hover:text-foreground inline-flex h-7 w-6 flex-1 items-center justify-center border-b disabled:opacity-50"
+                        className="inline-flex h-7 w-6 flex-1 items-center justify-center border-b border-muted-foreground/20 text-muted-foreground hover:bg-muted-foreground/10 hover:text-foreground disabled:opacity-50"
                         disabled={props.disabled || props.readOnly}
                         onClick={() => stepBy(step, max, "max")}
                       >
@@ -281,7 +281,7 @@ function NumberFieldImpl<T extends FieldValues>({
                       <button
                         type="button"
                         aria-label={t("Decrement")}
-                        className="text-muted-foreground hover:bg-muted-foreground/10 hover:text-foreground inline-flex h-7 w-6 flex-1 items-center justify-center disabled:opacity-50"
+                        className="inline-flex h-7 w-6 flex-1 items-center justify-center text-muted-foreground hover:bg-muted-foreground/10 hover:text-foreground disabled:opacity-50"
                         disabled={props.disabled || props.readOnly}
                         onClick={() => stepBy(-step, min, "min")}
                       >

@@ -17,6 +17,7 @@ import { Label } from "@trenova/shared/components/ui/label";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { formatUnixDate } from "@trenova/shared/lib/date";
+import { formatCurrency } from "@trenova/shared/lib/utils";
 import {
   fetchUnsettledPayEvents,
   payWorkerNow,
@@ -130,18 +131,13 @@ export function InstantPayDialog({
       }),
     onSuccess: (settlement) => {
       toast.success(t("{0} paid", settlement.settlementNumber), {
-        description: (
-          <span>
-            {t("Net")}{" "}
-            <AmountDisplay
-              value={rootField(settlement.netPayMinor, "DriverSettlement.netPayMinor")}
-              currency={rootField(settlement.currencyCode, "DriverSettlement.currencyCode")}
-            />
-            {t(
-              "via {0} · posted to the GL and visible to the driver in Dash.",
-              settlement.paymentMethod,
-            )}
-          </span>
+        description: t(
+          "Net {0} via {1} · posted to the GL and visible to the driver in Dash.",
+          formatCurrency(
+            rootField(settlement.netPayMinor, "DriverSettlement.netPayMinor") / 100,
+            rootField(settlement.currencyCode, "DriverSettlement.currencyCode"),
+          ),
+          settlement.paymentMethod,
         ),
       });
       onPaid();

@@ -3,6 +3,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Switch } from "@trenova/shared/components/ui/switch";
 import { useTheme } from "@trenova/shared/components/theme-provider";
+import { useToastSoundStore } from "@trenova/shared/components/ui/toast-sound";
 import { enablePush, getPushSubscription, pushSupported } from "@trenova/shared/lib/push";
 import { currentProfile, useAuthStore } from "@trenova/shared/stores/auth-store";
 import { rememberPushOwner, releasePush } from "@/lib/push-owner";
@@ -43,6 +44,8 @@ export function DashProfilePage() {
 
   const logout = useAuthStore((state) => state.logout);
   const { theme, setTheme } = useTheme();
+  const toastSounds = useToastSoundStore((state) => state.on);
+  const setToastSounds = useToastSoundStore((state) => state.setOn);
   const profile = useDashProfile();
   const features = useDashFeatures();
 
@@ -120,6 +123,21 @@ export function DashProfilePage() {
               {t(option.label)}
             </button>
           ))}
+        </div>
+        <div className="mt-4 flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p id="toast-sounds-label" className="text-sm font-medium">
+              {t("Toast sounds")}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {t("A short tone when a toast appears, on this device.")}
+            </p>
+          </div>
+          <Switch
+            aria-labelledby="toast-sounds-label"
+            checked={toastSounds}
+            onCheckedChange={(checked) => setToastSounds(checked)}
+          />
         </div>
       </div>
 

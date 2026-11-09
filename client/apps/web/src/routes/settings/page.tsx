@@ -7,7 +7,6 @@ import { useMotionPreferenceStore } from "@/stores/motion-preference-store";
 import { useNavigationStore } from "@/stores/navigation-store";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Kbd, KbdGroup } from "@trenova/shared/components/ui/kbd";
-import { Toaster } from "@trenova/shared/components/ui/toaster";
 import { BellOff01Icon, LogOut01Icon } from "@trenova/shared/components/icons";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -19,12 +18,7 @@ import { NotificationsSection } from "./_components/notifications-section";
 import { PreferencesSection } from "./_components/preferences-section";
 import { ProfileSection } from "./_components/profile-section";
 import { SecuritySection } from "./_components/security-section";
-import {
-  SETTINGS_PREVIEW_TOASTER_ID,
-  SETTINGS_TOASTER_ID,
-  SettingsFeedbackProvider,
-  useSettingsFeedback,
-} from "./_components/settings-feedback";
+import { SettingsFeedbackProvider, useSettingsFeedback } from "./_components/settings-feedback";
 import { SettingsHero } from "./_components/settings-hero";
 import { SETTINGS_SECTION_META } from "./_components/settings-index";
 import {
@@ -285,8 +279,6 @@ export function SettingsPage() {
       <SettingsFeedbackProvider>
         <SettingsWorkspace />
       </SettingsFeedbackProvider>
-      <Toaster id={SETTINGS_TOASTER_ID} position="bottom-center" />
-      <Toaster id={SETTINGS_PREVIEW_TOASTER_ID} position="top-right" offset={64} />
     </PageLayout>
   );
 }

@@ -975,3 +975,46 @@ html[data-reduce-motion="true"] *::after {
   transition-delay: 0ms !important;
   scroll-behavior: auto !important;
 }
+
+/* Toasts (ding, components/ui/toaster.tsx). ding injects its stylesheet first in
+   <head>, unlayered; these rules are unlayered too and come later, so they win.
+   The Toaster sits inside `.dark`, so the toast is the dark popover in both themes:
+   ink on the raised surface, the status hues for the glyph and the bar, the float
+   lift and the brand focus ring. */
+.tst-viewport {
+  --tst-bg: var(--popover);
+  --tst-fg: var(--popover-foreground);
+  --tst-ring: color-mix(in oklch, var(--foreground) 8%, transparent);
+  --tst-shadow: var(--lift-float);
+  --tst-success: var(--success);
+  --tst-error: var(--danger);
+  --tst-warning: var(--warning);
+  --tst-info: var(--info);
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+}
+
+.tst-title {
+  font-weight: 500;
+}
+
+.tst-desc {
+  color: var(--muted-foreground);
+  font-size: var(--text-sm);
+  opacity: 1;
+}
+
+.tst-action {
+  font-size: var(--text-sm);
+  font-weight: 500;
+}
+
+.tst-count,
+.tst-meta {
+  font-family: var(--font-mono);
+}
+
+.tst-action:focus-visible,
+.tst-close:focus-visible {
+  outline-color: var(--ring);
+}

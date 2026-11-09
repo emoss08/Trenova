@@ -3,7 +3,6 @@ import { SegmentedField } from "@/components/fields/segmented-field";
 import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ToastOptions } from "@trenova/shared/components/ui/toast";
-import type { MouseEvent } from "react";
 import { useForm } from "react-hook-form";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SettingsFeedbackProvider } from "../settings-feedback";
@@ -61,7 +60,7 @@ async function pressLastUndo() {
   const action = (call?.[1] as ToastOptions | undefined)?.action;
   expect(action?.label).toBe("Undo");
   await act(async () => {
-    action?.onClick({} as MouseEvent<HTMLButtonElement>);
+    action?.onClick();
   });
 }
 
