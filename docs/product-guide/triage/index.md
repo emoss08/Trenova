@@ -3,7 +3,6 @@ path: /desk/triage
 aliases: [triage in desk, inbox, email, mail, inbound email, monitored mailbox, shared inbox, customer emails, tenders by email, queue, nova]
 related:
   - /desk
-  - /desk/watchtower
   - /shipment-management/shipments
   - /admin/inbound-mailboxes
 ---

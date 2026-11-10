@@ -58,7 +58,7 @@ export function DeskThreadTitle({
   if (editing) {
     return (
       <input
-        className="dk-ttl-in"
+        className="dk-tb-tin"
         // oxlint-disable-next-line jsx-a11y/no-autofocus -- the name turned into this field on purpose
         autoFocus
         defaultValue={shown}
@@ -75,7 +75,7 @@ export function DeskThreadTitle({
     <Button
       variant="bare"
       size="bare"
-      className="dk-ttl-t"
+      className="dk-tb-tt"
       onClick={() => {
         settled.current = false;
         setEditing(true);

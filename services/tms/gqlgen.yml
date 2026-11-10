@@ -3048,6 +3048,9 @@ models:
   BriefingItem:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/briefing.Item
+  BriefingHeadlineLink:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/briefing.HeadlineLink
   BriefingWithheldSection:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/briefing.WithheldSection
@@ -3191,6 +3194,18 @@ models:
   DeskActivity:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/ports/deskactivityports.Activity
+  DeskActivityChange:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/ports/deskactivityports.Change
+    fields:
+      proposalId:
+        fieldName: ProposalID
+  DeskActivityDetail:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/ports/deskactivityports.EntryDetail
+    fields:
+      tool:
+        fieldName: ToolName
   CaptureDevice:
     model:
       - github.com/emoss08/trenova/internal/modules/documents/domain/capture.CaptureDevice

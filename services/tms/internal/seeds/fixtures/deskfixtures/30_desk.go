@@ -357,19 +357,17 @@ func briefingFor(refs *deskSeedRefs) *briefing.Briefing {
 	waiting := len(refs.messages)
 	decisions := len(refs.proposals) + len(refs.plans)
 
-	return &briefing.Briefing{
+	waitingPhrase := fmt.Sprintf("%d messages and %d decisions waiting", waiting, decisions)
+	headline := "14 pickups and 11 deliveries today, 2 moves uncovered, " + waitingPhrase + "."
+	entity := &briefing.Briefing{
 		ID:             pulid.MustNew("brf_"),
 		OrganizationID: refs.org.ID,
 		BusinessUnitID: refs.org.BusinessUnitID,
 		RoleKey:        briefing.RoleDispatch,
 		BriefingDate:   today,
 		Status:         briefing.StatusReady,
-		Headline: fmt.Sprintf(
-			"14 pickups and 11 deliveries today, 2 moves uncovered, "+
-				"%d messages and %d decisions waiting.",
-			waiting, decisions,
-		),
-		Narrated: false,
+		Headline:       headline,
+		Narrated:       false,
 		Sections: []briefing.Section{
 			{
 				Key:     briefing.SectionToday,
@@ -447,4 +445,11 @@ func briefingFor(refs *deskSeedRefs) *briefing.Briefing {
 			"seeded":              true,
 		},
 	}
+	entity.HeadlineLinks = briefing.LinkPhrases(headline, entity.Sections, []briefing.Phrase{
+		{Text: "14 pickups and 11 deliveries today", Section: briefing.SectionToday},
+		{Text: "2 moves uncovered", Section: briefing.SectionCoverage},
+		{Text: waitingPhrase, Section: briefing.SectionDecisions},
+	})
+
+	return entity
 }

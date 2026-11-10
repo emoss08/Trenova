@@ -566,7 +566,6 @@
   "Fields scored": "已評分欄位",
   "Figures it can back up": "有依據的數據",
   "Filter this agent's tools": "篩選此代理的工具",
-  "Filtered": "已篩選",
   "Filters left rows out, so the file's chain cannot be checked end to end.": "篩選條件排除了部分資料列，因此無法從頭到尾驗證檔案的雜湊鏈。",
   "First of the month": "每月 1 日",
   "First token": "第一個權杖",

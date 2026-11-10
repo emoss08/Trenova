@@ -6,7 +6,6 @@ related:
   - /dispatch/routing-guides
   - /dispatch/carriers
   - /hr/workers
-  - /desk/watchtower
   - /dispatch/outlook
 ---
 

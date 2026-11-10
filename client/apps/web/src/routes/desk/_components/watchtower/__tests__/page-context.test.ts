@@ -15,7 +15,7 @@ describe("watchtowerPageContext", () => {
     });
 
     expect(watchtowerPageContext(t, item, 1_800_000_000, "UTC")).toEqual({
-      path: "/desk/watchtower?item=wt_1",
+      path: "/desk/needs?item=wt_1",
       entityType: "shipment",
       entityId: "shp_1",
       title: item.title,

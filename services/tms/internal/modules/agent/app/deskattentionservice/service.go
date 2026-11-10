@@ -233,7 +233,7 @@ func group(items []*watchtower.Item) []*deskattentionports.Group {
 		g, ok := byKey[key]
 		if !ok {
 			g = &deskattentionports.Group{Key: key, Severity: item.Severity}
-			if item.AboutID.IsNotNil() {
+			if item.AboutID.IsNotNil() && item.AboutKind.Resource() != "" {
 				g.Record = &deskattentionports.Record{Kind: item.AboutKind, ID: item.AboutID}
 			}
 			byKey[key] = g

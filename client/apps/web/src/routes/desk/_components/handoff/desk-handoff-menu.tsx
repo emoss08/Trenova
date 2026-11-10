@@ -59,13 +59,10 @@ export function DeskHandoffMenu({
         <PopoverTrigger
           disabled={state.pendingAgentId !== null}
           render={
-            <Button
-              variant="quiet"
-              size="icon-sm"
-              className={cn(
-                "size-7.5 rounded-lg text-dsk-subtle transition-colors duration-140 hover:bg-dsk-hover hover:text-dsk-fg",
-                state.open && "bg-dsk-hover text-dsk-fg",
-              )}
+            <button
+              type="button"
+              className="dk-tb-ib ui-focus-ring"
+              data-on={state.open || undefined}
               aria-label={t("Hand off to another agent")}
               aria-haspopup="menu"
             />

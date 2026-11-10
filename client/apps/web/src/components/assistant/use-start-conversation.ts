@@ -3,12 +3,34 @@ import { useApiMutation } from "@/hooks/use-api-mutation";
 import { assistant } from "@/lib/queries/assistant";
 import { assistantService } from "@/services/assistant";
 import { useAssistantStore } from "@/stores/assistant-store";
+import { useDeskAttachedPageStore } from "@/stores/desk-attached-page-store";
 import { useDeskHandoffStore } from "@/stores/desk-handoff-store";
-import type { AssistantThread, ThreadOrigin } from "@/types/assistant";
+import type {
+  AssistantPageContext,
+  AssistantThread,
+  CaseSubjectType,
+  ThreadOrigin,
+} from "@/types/assistant";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 
-type StartVariables = { agentId: string; question?: string; extras?: DeskStartExtras };
+/**
+ * What a conversation is about from its first turn: a title, the case it
+ * belongs to, and the page every question in it carries.
+ */
+export type StartBinding = {
+  title?: string;
+  subjectType?: CaseSubjectType;
+  subjectId?: string;
+  page?: AssistantPageContext;
+};
+
+type StartVariables = {
+  agentId: string;
+  question?: string;
+  extras?: DeskStartExtras;
+  binding?: StartBinding;
+};
 
 /**
  * Starts a conversation, optionally with the question that prompted it and
@@ -32,11 +54,21 @@ export function useStartConversation({
   const setLastAgentId = useAssistantStore((state) => state.setLastAgentId);
   const setOpeningQuestion = useAssistantStore((state) => state.setOpeningQuestion);
   const setHandoff = useDeskHandoffStore((state) => state.setHandoff);
+  const attachPage = useDeskAttachedPageStore((state) => state.attach);
 
   const mutation = useApiMutation({
-    mutationFn: ({ agentId }: StartVariables) => assistantService.startThread(agentId, { origin }),
-    onSuccess: async (thread, { agentId, question, extras }) => {
+    mutationFn: ({ agentId, binding }: StartVariables) =>
+      assistantService.startThread(agentId, {
+        origin,
+        title: binding?.title,
+        subjectType: binding?.subjectType,
+        subjectId: binding?.subjectId,
+      }),
+    onSuccess: async (thread, { agentId, question, extras, binding }) => {
       setLastAgentId(agentId);
+      if (binding?.page) {
+        attachPage(thread.id, binding.page);
+      }
       if (extras && (extras.files.length > 0 || extras.mentions.length > 0 || extras.providerId)) {
         setHandoff({
           threadId: thread.id,
@@ -59,8 +91,8 @@ export function useStartConversation({
 
   const { mutate } = mutation;
   const start = useCallback(
-    (agentId: string, question?: string, extras?: DeskStartExtras) =>
-      mutate({ agentId, question, extras }),
+    (agentId: string, question?: string, extras?: DeskStartExtras, binding?: StartBinding) =>
+      mutate({ agentId, question, extras, binding }),
     [mutate],
   );
 

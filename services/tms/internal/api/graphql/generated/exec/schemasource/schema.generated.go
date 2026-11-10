@@ -8060,6 +8060,18 @@ type BriefingSection {
   path: String
 }
 
+"""
+A phrase of the headline that opens the section it is about. The model may
+point a phrase at a section on the page, never at a destination of its own:
+the path is the section's.
+"""
+type BriefingHeadlineLink {
+  "The words, exactly as they appear in the headline."
+  text: String!
+  section: BriefingSectionKey!
+  path: String!
+}
+
 "A section the reader was not shown in full, because they may not read the records it counts."
 type BriefingWithheldSection {
   key: BriefingSectionKey!
@@ -8085,6 +8097,8 @@ type Briefing {
   status: BriefingStatus!
   "Empty while any section is withheld."
   headline: String!
+  "The phrases of the headline that open what they are about, in the order they appear; empty while the headline is."
+  headlineLinks: [BriefingHeadlineLink!]!
   sections: [BriefingSection!]!
   "True when a model's wording was accepted for any part of the page the reader is shown."
   narrated: Boolean!
@@ -12341,6 +12355,10 @@ type DeskAttention {
 input DeskAttentionInput {
   "Rows with at least one item in this lens; each row still shows all its items."
   lens: DeskLens = Everything
+  "Rows with an item of one of these kinds, within the lens. Empty is every kind in it."
+  kinds: [WatchtowerSourceKind!]
+  "Rows with an item of one of these severities. Empty is every severity."
+  severities: [WatchtowerSeverity!]
   "Rows to read, at most 100."
   first: Int = 50
   "One record's row, for its case: every open item about it."
@@ -12390,6 +12408,32 @@ type DeskActivity {
   hasMore: Boolean!
 }
 
+"One write a ledger line folds: the record it changed, when it settled and how."
+type DeskActivityChange {
+  proposalId: ID!
+  "Null when the write named no record."
+  record: DeskRecord
+  at: Timestamp!
+  outcome: DeskActivityOutcome!
+  "Why it did not go through; empty when it did."
+  error: String!
+}
+
+"""
+A line of Nova handled read in full: the line, every write it folds, and how
+often this agent has made this write before, which is what earns a write the
+right to run on its own.
+"""
+type DeskActivityDetail {
+  entry: DeskActivityEntry!
+  "The write in words: what the tool does."
+  tool: String!
+  changes: [DeskActivityChange!]!
+  "How many times this agent made this write in the last 30 days."
+  ranBefore: Int!
+  ranSince: Timestamp!
+}
+
 extend type WatchtowerKindSummary {
   "The Desk lens items of this kind are filed under."
   deskLens: DeskLens!
@@ -12407,6 +12451,8 @@ extend type Query {
   deskAttention(input: DeskAttentionInput!): DeskAttention!
   "Nova handled: the writes agents settled since a moment at most 31 days ago, newest first."
   deskActivity(since: Timestamp!, first: Int = 20): DeskActivity!
+  "One line of Nova handled, by the id of any write it folds."
+  deskActivityEntry(id: ID!): DeskActivityDetail!
 }
 `, BuiltIn: false},
 	{Name: "../schema/desk_board.graphqls", Input: `"""

@@ -368,6 +368,7 @@
   --dsk-sunken: var(--surface-hover);
   --dsk-field: var(--canvas);
   --dsk-hover: var(--surface-hover);
+  --dsk-active: var(--surface-active);
   --dsk-rail: var(--card);
   --dsk-fg: var(--foreground);
   --dsk-fg2: oklch(0.301 0 none);
@@ -909,6 +910,7 @@
   --dsk-sunken: var(--surface-hover);
   --dsk-field: var(--card);
   --dsk-hover: var(--surface-active);
+  --dsk-active: var(--surface-active);
   --dsk-rail: var(--canvas);
   --dsk-fg: var(--foreground);
   --dsk-fg2: oklch(0.87 0 none);

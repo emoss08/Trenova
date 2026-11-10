@@ -45,10 +45,36 @@ type Activity struct {
 	HasMore bool
 }
 
+type EntryRequest struct {
+	TenantInfo pagination.TenantInfo
+	ID         pulid.ID
+}
+
+type Change struct {
+	ProposalID pulid.ID
+	Record     *deskattentionports.Record
+	At         int64
+	Outcome    Outcome
+	Error      string
+}
+
+type EntryDetail struct {
+	Entry     *Entry
+	ToolName  string
+	Changes   []*Change
+	RanBefore int
+	RanSince  int64
+}
+
 type DeskActivityService interface {
 	Activity(
 		ctx context.Context,
 		req *ActivityRequest,
 		actor *permissionports.RequestActor,
 	) (*Activity, error)
+	Entry(
+		ctx context.Context,
+		req *EntryRequest,
+		actor *permissionports.RequestActor,
+	) (*EntryDetail, error)
 }

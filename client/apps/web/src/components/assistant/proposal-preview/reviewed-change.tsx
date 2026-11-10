@@ -8,6 +8,7 @@ import {
   useProposalPreview,
 } from "@/components/assistant/proposal-preview/use-proposal-preview";
 import { presentProposal } from "@/components/assistant/proposal-presenters";
+import type { PreviewScope } from "@/lib/graphql/agent-preview";
 import type { AssistantProposal } from "@/types/assistant";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useCallback, useEffect, useState } from "react";
@@ -47,12 +48,15 @@ function useReportedState(id: string, report: ReviewReport, onReport: Report) {
 export function ReviewedChange({
   proposal,
   onReport,
+  scope = "mine",
 }: {
   proposal: AssistantProposal;
   onReport: Report;
+  /** "mine" for a proposal from the person's own conversation, "approver" for any other. */
+  scope?: PreviewScope;
 }) {
   const t = useT();
-  const query = useProposalPreview({ scope: "mine", id: proposal.id });
+  const query = useProposalPreview({ scope, id: proposal.id });
   useReportedState(proposal.id, reportOf(query), onReport);
   const title = t(presentProposal(proposal).title);
 
@@ -67,8 +71,16 @@ export function ReviewedChange({
 }
 
 /** The preview of a plan with a step the server approves only once it has been shown. */
-export function ReviewedPlan({ planId, onReport }: { planId: string; onReport: Report }) {
-  const query = usePlanPreview({ scope: "mine", id: planId });
+export function ReviewedPlan({
+  planId,
+  onReport,
+  scope = "mine",
+}: {
+  planId: string;
+  onReport: Report;
+  scope?: PreviewScope;
+}) {
+  const query = usePlanPreview({ scope, id: planId });
   useReportedState(planId, reportOf(query), onReport);
 
   return (

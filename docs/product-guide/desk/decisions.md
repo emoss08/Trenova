@@ -3,7 +3,6 @@ path: /desk/decisions
 aliases: [agent approvals, AI proposals, approval queue, pending approvals, pending changes, proposed changes, agent proposals, approve agent change, decline agent change, agent plan approval, dry run, human in the loop, review agent actions, preview agent change, what will this change]
 related:
   - /desk
-  - /desk/watchtower
   - /admin/agent-control
 ---
 

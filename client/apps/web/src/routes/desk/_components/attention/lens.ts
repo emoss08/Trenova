@@ -46,7 +46,7 @@ export function groupName(t: TranslateFn, group: DeskAttentionGroup): string {
   if (record?.readable && record.label !== "") {
     return record.subtitle !== "" ? t("{0} · {1}", record.label, record.subtitle) : record.label;
   }
-  if (record) {
+  if (record && !record.readable) {
     return t("A record you can't open");
   }
   const lead = group.items[0];
@@ -61,4 +61,9 @@ export function leadItem(group: DeskAttentionGroup): DeskAttentionItem {
 /** Every item the page holds, row by row, in the order J and K walk them. */
 export function attentionItems(groups: readonly DeskAttentionGroup[]): DeskAttentionItem[] {
   return groups.flatMap((group) => group.items);
+}
+
+/** Whether a row names a business record the reader may open as a case. */
+export function hasCase(group: DeskAttentionGroup): boolean {
+  return group.record !== null && group.record.readable && group.record.label !== "";
 }

@@ -1,5 +1,3 @@
-import { DESK_SHELF_KEYS, type DeskShelfKey } from "@/components/desk-chat/rail/desk-threads";
-import { clampInteger } from "@trenova/shared/lib/utils";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
@@ -57,15 +55,6 @@ export const DESK_SETTINGS_DEFAULTS: DeskSettings = {
   ring: "on",
 };
 
-export const DESK_RAIL_MIN_WIDTH = 200;
-export const DESK_RAIL_MAX_WIDTH = 340;
-export const DESK_RAIL_DEFAULT_WIDTH = 232;
-
-/** The rail's width in pixels, between its bounds; anything else reads as the default. */
-export function clampDeskRailWidth(width: number): number {
-  return clampInteger(width, DESK_RAIL_MIN_WIDTH, DESK_RAIL_MAX_WIDTH, DESK_RAIL_DEFAULT_WIDTH);
-}
-
 /** How many past searches the palette offers back. */
 const RECENT_SEARCH_LIMIT = 3;
 
@@ -73,16 +62,10 @@ interface DeskSettingsState {
   settings: DeskSettings;
   /** What this person last searched the Desk for, newest first. */
   recentSearches: string[];
-  /** The rail's shelves this person has folded away. */
-  collapsedShelves: DeskShelfKey[];
-  /** How wide this person has dragged the rail, in pixels. */
-  railWidth: number;
   /** The rail is folded away beside the page. */
   railFolded: boolean;
   rememberSearch: (query: string) => void;
   clearSession: () => void;
-  toggleShelf: (key: DeskShelfKey) => void;
-  setRailWidth: (width: number) => void;
   setRailFolded: (folded: boolean) => void;
   set: <K extends keyof DeskSettings>(key: K, value: DeskSettings[K]) => void;
   reset: () => void;
@@ -103,15 +86,6 @@ export const useDeskSettingsStore = create<DeskSettingsState>()(
             ...state.recentSearches.filter((past) => past.toLowerCase() !== query.toLowerCase()),
           ].slice(0, RECENT_SEARCH_LIMIT),
         })),
-      collapsedShelves: [],
-      toggleShelf: (key) =>
-        set((state) => ({
-          collapsedShelves: state.collapsedShelves.includes(key)
-            ? state.collapsedShelves.filter((shelf) => shelf !== key)
-            : [...state.collapsedShelves, key],
-        })),
-      railWidth: DESK_RAIL_DEFAULT_WIDTH,
-      setRailWidth: (width) => set({ railWidth: clampDeskRailWidth(width) }),
       railFolded: false,
       setRailFolded: (folded) => set({ railFolded: folded }),
     }),
@@ -121,8 +95,6 @@ export const useDeskSettingsStore = create<DeskSettingsState>()(
       partialize: (state) => ({
         settings: state.settings,
         recentSearches: state.recentSearches,
-        collapsedShelves: state.collapsedShelves,
-        railWidth: state.railWidth,
         railFolded: state.railFolded,
       }),
       merge: (persisted, current) => {
@@ -131,10 +103,6 @@ export const useDeskSettingsStore = create<DeskSettingsState>()(
           ...current,
           settings: { ...DESK_SETTINGS_DEFAULTS, ...saved?.settings },
           recentSearches: Array.isArray(saved?.recentSearches) ? saved.recentSearches : [],
-          collapsedShelves: Array.isArray(saved?.collapsedShelves)
-            ? DESK_SHELF_KEYS.filter((key) => saved.collapsedShelves?.includes(key))
-            : [],
-          railWidth: clampDeskRailWidth(saved?.railWidth ?? DESK_RAIL_DEFAULT_WIDTH),
           railFolded: saved?.railFolded === true,
         };
       },

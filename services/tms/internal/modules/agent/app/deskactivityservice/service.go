@@ -1,7 +1,9 @@
 package deskactivityservice
 
 import (
+	"cmp"
 	"context"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -18,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/inflect"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/textcase"
@@ -32,6 +35,7 @@ const (
 	maxRead          = 500
 	recordsPerEntry  = 5
 	maxLookbackHours = 24 * 31
+	ranLookbackDays  = 30
 )
 
 type Params struct {
@@ -104,10 +108,10 @@ func (s *Service) Activity(
 		return out, nil
 	}
 
-	if err = s.attachAgents(ctx, req, entries); err != nil {
+	if err = s.attachAgents(ctx, req.TenantInfo, entries); err != nil {
 		return nil, err
 	}
-	if err = s.attachDecisions(ctx, req, entries); err != nil {
+	if err = s.attachDecisions(ctx, req.TenantInfo, entries); err != nil {
 		return nil, err
 	}
 
@@ -124,7 +128,7 @@ func (s *Service) Activity(
 
 func (s *Service) attachAgents(
 	ctx context.Context,
-	req *deskactivityports.ActivityRequest,
+	tenant pagination.TenantInfo,
 	entries []*deskactivityports.Entry,
 ) error {
 	runIDs := make([]pulid.ID, 0, len(entries))
@@ -133,7 +137,7 @@ func (s *Service) attachAgents(
 	}
 	runs, err := s.runs.ListByIDs(ctx, &agentruntimeports.ListAgentRunsByIDsRequest{
 		IDs:        distinct(runIDs),
-		TenantInfo: req.TenantInfo,
+		TenantInfo: tenant,
 	})
 	if err != nil {
 		return err
@@ -153,7 +157,7 @@ func (s *Service) attachAgents(
 
 func (s *Service) attachDecisions(
 	ctx context.Context,
-	req *deskactivityports.ActivityRequest,
+	tenant pagination.TenantInfo,
 	entries []*deskactivityports.Entry,
 ) error {
 	proposalIDs := make([]pulid.ID, 0, len(entries))
@@ -181,7 +185,7 @@ func (s *Service) attachDecisions(
 			ctx,
 			agentdecisionports.ListAgentDecisionsByProposalsRequest{
 				ProposalIDs: distinct(proposalIDs),
-				TenantInfo:  req.TenantInfo,
+				TenantInfo:  tenant,
 			},
 		)
 		if err != nil {
@@ -196,7 +200,7 @@ func (s *Service) attachDecisions(
 	if len(planIDs) > 0 {
 		plans, err := s.plans.ListByIDs(ctx, agentplanports.ListAgentPlansByIDsRequest{
 			IDs:        distinct(planIDs),
-			TenantInfo: req.TenantInfo,
+			TenantInfo: tenant,
 		})
 		if err != nil {
 			return err
@@ -232,6 +236,115 @@ func (s *Service) attachDecisions(
 	}
 
 	return nil
+}
+
+func (s *Service) Entry(
+	ctx context.Context,
+	req *deskactivityports.EntryRequest,
+	actor *permissionports.RequestActor,
+) (*deskactivityports.EntryDetail, error) {
+	tenant := req.TenantInfo
+	proposal, err := s.proposals.GetByID(ctx, agentproposalports.GetAgentProposalByIDRequest{
+		ID:         req.ID,
+		TenantInfo: &tenant,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if proposal.ExecutedAt == nil && proposal.SimulatedAt == nil {
+		return nil, errortypes.NewNotFoundError("This change has not settled")
+	}
+
+	siblings, err := s.proposals.ListByRun(ctx, agentproposalports.ListAgentProposalsByRunRequest{
+		RunID:      proposal.RunID,
+		TenantInfo: tenant,
+	})
+	if err != nil {
+		return nil, err
+	}
+	settled := make([]*agent.AgentProposal, 0, len(siblings))
+	for _, sibling := range siblings {
+		if sibling != nil && (sibling.ExecutedAt != nil || sibling.SimulatedAt != nil) {
+			settled = append(settled, sibling)
+		}
+	}
+	slices.SortStableFunc(settled, func(a, b *agent.AgentProposal) int {
+		if c := cmp.Compare(settledAt(b), settledAt(a)); c != 0 {
+			return c
+		}
+		return cmp.Compare(b.ID.String(), a.ID.String())
+	})
+
+	entry, members := entryHolding(settled, proposal.ID)
+	if entry == nil {
+		return nil, errortypes.NewNotFoundError("This change is not in the ledger")
+	}
+	if err = s.attachAgents(ctx, tenant, []*deskactivityports.Entry{entry}); err != nil {
+		return nil, err
+	}
+	if err = s.attachDecisions(ctx, tenant, []*deskactivityports.Entry{entry}); err != nil {
+		return nil, err
+	}
+
+	changes := make([]*deskactivityports.Change, 0, len(members))
+	records := make([]*deskattentionports.Record, 0, len(members)+len(entry.Records))
+	records = append(records, entry.Records...)
+	for _, member := range members {
+		change := &deskactivityports.Change{
+			ProposalID: member.ID,
+			At:         settledAt(member),
+			Outcome:    outcomeOf(member),
+			Error:      member.ExecutionError,
+		}
+		if kind, ok := recordkind.OfResource(permission.Resource(member.TargetResource)); ok &&
+			member.TargetID.IsNotNil() {
+			change.Record = &deskattentionports.Record{Kind: kind, ID: member.TargetID}
+			records = append(records, change.Record)
+		}
+		changes = append(changes, change)
+	}
+	if err = s.labels.Label(ctx, tenant, actor, records); err != nil {
+		return nil, err
+	}
+
+	ranSince := s.now() - ranLookbackDays*24*3600
+	ranBefore := 0
+	if entry.AgentDefinitionID.IsNotNil() {
+		ranBefore, err = s.proposals.CountExecutedTool(ctx, &agentproposalports.CountExecutedToolRequest{
+			TenantInfo:   tenant,
+			DefinitionID: entry.AgentDefinitionID,
+			ToolName:     proposal.ToolName,
+			Since:        ranSince,
+		})
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return &deskactivityports.EntryDetail{
+		Entry:     entry,
+		ToolName:  toolPhrase(proposal.ToolName),
+		Changes:   changes,
+		RanBefore: ranBefore,
+		RanSince:  ranSince,
+	}, nil
+}
+
+func entryHolding(
+	settled []*agent.AgentProposal,
+	id pulid.ID,
+) (*deskactivityports.Entry, []*agent.AgentProposal) {
+	entries := fold(settled)
+	offset := 0
+	for _, entry := range entries {
+		members := settled[offset : offset+entry.Count]
+		offset += entry.Count
+		if slices.Contains(entry.ProposalIDs, id) {
+			return entry, members
+		}
+	}
+
+	return nil, nil
 }
 
 func outcomeOf(p *agent.AgentProposal) deskactivityports.Outcome {
@@ -376,7 +489,7 @@ func titleOf(proposals []*agent.AgentProposal, outcome deskactivityports.Outcome
 		}
 	}
 
-	phrase := toolPhrase(first.ToolName)
+	phrase := textcase.CapitalizeFirst(toolPhrase(first.ToolName))
 	if len(proposals) == 1 {
 		return phrase
 	}

@@ -2399,6 +2399,14 @@ export const routes: RouteObject[] = withPathScopedRevalidation([
                 },
               },
               {
+                path: "handled/:id",
+                loader: createPermissionLoader(Resource.AgentProposal, Operation.Read),
+                async lazy() {
+                  const { DeskHandledPage } = await import("@/routes/desk/handled-page");
+                  return { Component: DeskHandledPage };
+                },
+              },
+              {
                 path: "r/:kind/:id",
                 async lazy() {
                   const { DeskCasePage } = await import("@/routes/desk/case-page");

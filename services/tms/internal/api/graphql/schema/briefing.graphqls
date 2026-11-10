@@ -47,6 +47,18 @@ type BriefingSection {
   path: String
 }
 
+"""
+A phrase of the headline that opens the section it is about. The model may
+point a phrase at a section on the page, never at a destination of its own:
+the path is the section's.
+"""
+type BriefingHeadlineLink {
+  "The words, exactly as they appear in the headline."
+  text: String!
+  section: BriefingSectionKey!
+  path: String!
+}
+
 "A section the reader was not shown in full, because they may not read the records it counts."
 type BriefingWithheldSection {
   key: BriefingSectionKey!
@@ -72,6 +84,8 @@ type Briefing {
   status: BriefingStatus!
   "Empty while any section is withheld."
   headline: String!
+  "The phrases of the headline that open what they are about, in the order they appear; empty while the headline is."
+  headlineLinks: [BriefingHeadlineLink!]!
   sections: [BriefingSection!]!
   "True when a model's wording was accepted for any part of the page the reader is shown."
   narrated: Boolean!

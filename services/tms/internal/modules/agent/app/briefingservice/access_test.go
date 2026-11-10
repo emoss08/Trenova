@@ -81,7 +81,12 @@ func everySectionPage() *briefing.Briefing {
 		BriefingDate: "2026-10-23",
 		Status:       briefing.StatusReady,
 		Headline:     "Twelve items open and $4,210 received yesterday.",
-		Narrated:     true,
+		HeadlineLinks: []briefing.HeadlineLink{{
+			Text:    "$4,210 received yesterday",
+			Section: briefing.SectionCash,
+			Path:    "/accounting/customer-payments",
+		}},
+		Narrated: true,
 		Sections: []briefing.Section{
 			section(briefing.SectionAttention, "Needs attention",
 				briefing.Item{Label: "Service failure", Value: "4",
@@ -157,6 +162,7 @@ func TestToday_AReaderOfEverySectionReadsTheWholeNarratedPage(t *testing.T) {
 	assert.Empty(t, page.WithheldSections)
 	assert.NotNil(t, page.WithheldSections, "the list is never null")
 	assert.Equal(t, "Twelve items open and $4,210 received yesterday.", page.Headline)
+	assert.Len(t, page.HeadlineLinks, 1)
 	assert.True(t, page.Narrated)
 	assert.Equal(t, "Today in a model's words.", page.Sections[1].Read())
 }
@@ -205,6 +211,7 @@ func TestToday_AReaderMissingASectionsPermissionDoesNotSeeIt(t *testing.T) {
 			}
 			assert.ElementsMatch(t, tc.left, withheld)
 			assert.Empty(t, page.Headline, "the headline may cite a withheld section")
+			assert.Empty(t, page.HeadlineLinks, "a link may open a withheld section")
 			assert.False(t, page.Narrated)
 			for _, section := range page.Sections {
 				assert.Empty(t, section.Body, "%s keeps only its computed wording", section.Key)
@@ -229,6 +236,7 @@ func TestToday_AWatchtowerSectionKeepsOnlyTheKindsTheReaderMayRead(t *testing.T)
 		Key: briefing.SectionAttention, Title: "Needs attention", Partial: true,
 	}}, page.WithheldSections)
 	assert.Empty(t, page.Headline)
+	assert.Empty(t, page.HeadlineLinks)
 	assert.Len(t, page.Sections, 8, "the critical section's one kind is still readable")
 }
 

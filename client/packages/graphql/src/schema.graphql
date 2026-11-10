@@ -8100,6 +8100,10 @@ type Briefing {
   emailedAt: Timestamp
   """Empty while any section is withheld."""
   headline: String!
+  """
+  The phrases of the headline that open what they are about, in the order they appear; empty while the headline is.
+  """
+  headlineLinks: [BriefingHeadlineLink!]!
   id: ID!
   """
   True when a model's wording was accepted for any part of the page the reader is shown.
@@ -8116,6 +8120,18 @@ type Briefing {
   The sections left out or cut short for this reader; empty when they see the whole page.
   """
   withheldSections: [BriefingWithheldSection!]!
+}
+
+"""
+A phrase of the headline that opens the section it is about. The model may
+point a phrase at a section on the page, never at a destination of its own:
+the path is the section's.
+"""
+type BriefingHeadlineLink {
+  path: String!
+  section: BriefingSectionKey!
+  """The words, exactly as they appear in the headline."""
+  text: String!
 }
 
 """
@@ -12746,6 +12762,34 @@ type DeliveryHourBucket {
 type DeskActivity {
   entries: [DeskActivityEntry!]!
   hasMore: Boolean!
+}
+
+"""
+One write a ledger line folds: the record it changed, when it settled and how.
+"""
+type DeskActivityChange {
+  at: Timestamp!
+  """Why it did not go through; empty when it did."""
+  error: String!
+  outcome: DeskActivityOutcome!
+  proposalId: ID!
+  """Null when the write named no record."""
+  record: DeskRecord
+}
+
+"""
+A line of Nova handled read in full: the line, every write it folds, and how
+often this agent has made this write before, which is what earns a write the
+right to run on its own.
+"""
+type DeskActivityDetail {
+  changes: [DeskActivityChange!]!
+  entry: DeskActivityEntry!
+  """How many times this agent made this write in the last 30 days."""
+  ranBefore: Int!
+  ranSince: Timestamp!
+  """The write in words: what the tool does."""
+  tool: String!
 }
 
 """
@@ -27313,6 +27357,8 @@ type Query {
   Nova handled: the writes agents settled since a moment at most 31 days ago, newest first.
   """
   deskActivity(first: Int = 20, since: Timestamp!): DeskActivity!
+  """One line of Nova handled, by the id of any write it folds."""
+  deskActivityEntry(id: ID!): DeskActivityDetail!
   """
   Needs you: what waits on people, one row per record, soonest deadline first.
   """

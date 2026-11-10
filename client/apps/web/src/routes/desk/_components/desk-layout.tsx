@@ -1,5 +1,4 @@
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { useAttentionSummary } from "@/hooks/use-attention";
 import { usePermission } from "@/hooks/use-permission";
 import { conversationPath } from "@/lib/conversation-path";
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
@@ -35,17 +34,20 @@ import { isTypingTarget } from "@/lib/dom";
 import { useAppDialogsStore } from "@/stores/app-dialogs-store";
 import { Outlet, useLocation, useNavigate, useSearchParams } from "react-router";
 import type { DeskStartExtras } from "@/components/desk-chat/desk-home-ask";
-import { useStartConversation } from "@/components/assistant/use-start-conversation";
+import {
+  useStartConversation,
+  type StartBinding,
+} from "@/components/assistant/use-start-conversation";
 import { forgetThreadSchedules } from "@/components/assistant/thread-schedules";
-import type { DeskPlace } from "./desk-rail";
-import { DeskRailThreads } from "./desk-rail-threads";
+import type { DeskPlace } from "./rail/desk-rail";
+import { DeskRailThreads } from "./rail/rail-threads";
 import {
   DeskSettingsDialog,
   deskSettingsClasses,
   isDeskSettingsSection,
   type DeskSettingsSection,
 } from "./desk-settings";
-import { DeskTopBar } from "./desk-topbar";
+import { DeskTop } from "./top/desk-top";
 import { CommandPaletteMount } from "@/components/command-palette/command-palette-mount";
 import { useGoToChords } from "@/components/navigation/use-go-to-chords";
 import { useCommandPaletteStore } from "@/stores/command-palette-store";
@@ -81,7 +83,12 @@ export type DeskContextValue = {
   /** Opens a conversation, optionally with the question that prompted it. */
   start: (agentId: string, question?: string, extras?: DeskStartExtras) => void;
   /** Starts a conversation in Nova's margin, beside the page, instead of on a page of its own. */
-  startInMargin: (agentId: string, question?: string, extras?: DeskStartExtras) => void;
+  startInMargin: (
+    agentId: string,
+    question?: string,
+    extras?: DeskStartExtras,
+    binding?: StartBinding,
+  ) => void;
   remove: (thread: AssistantThread) => void;
   /** The open conversation is being deleted, and the Desk is moving off it. */
   deletingActive: boolean;
@@ -157,11 +164,11 @@ function placeFor(pathname: string, activeThreadId: string | null): DeskPlace {
   if (pathname.startsWith("/desk/r/")) {
     return "case";
   }
+  if (pathname.startsWith("/desk/handled/")) {
+    return "handled";
+  }
   if (pathname.startsWith("/desk/triage")) {
     return "triage";
-  }
-  if (pathname.startsWith("/desk/watchtower")) {
-    return "watchtower";
   }
   if (pathname.startsWith("/desk/memory")) {
     return "memory";
@@ -202,19 +209,20 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
   const { allowed: canDecide } = usePermission(Resource.AgentProposal, Operation.Read);
   const { allowed: canWatch } = usePermission(Resource.Watchtower, Operation.Read);
   const { allowed: canTriage } = usePermission(Resource.InboundMessage, Operation.Read);
-  const { data: attention } = useAttentionSummary();
   const { data: watchtowerCounts } = useQuery({
     ...watchtower.counts(),
     enabled: canWatch,
   });
   const lensCounts = useMemo(() => {
-    const counts = { everything: 0, watchtower: 0, triage: 0 };
+    const counts = { everything: 0, watchtower: 0, triage: 0, decisions: 0 };
     for (const row of watchtowerCounts?.byKind ?? []) {
       counts.everything += row.count;
       if (row.deskLens === "Watchtower") {
         counts.watchtower += row.count;
       } else if (row.deskLens === "Triage") {
         counts.triage += row.count;
+      } else if (row.deskLens === "Decisions") {
+        counts.decisions += row.count;
       }
     }
     return counts;
@@ -633,9 +641,9 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
       const key = event.key.toLowerCase();
       if (key === "o" && event.shiftKey) {
         // Ctrl+N belongs to the browser, which opens a window and never hands
-        // the key to the page.
+        // the key to the page. A new conversation opens in Nova's margin.
         event.preventDefault();
-        void navigate("/desk");
+        useDeskMarginStore.getState().openMargin(null);
       } else if (key === "\\" && useDeskMarginStore.getState().margin !== null) {
         event.preventDefault();
         useDeskMarginStore.getState().closeMargin();
@@ -733,8 +741,6 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
           canDecide={canDecide}
           canTriage={canTriage}
           lensCounts={lensCounts}
-          decisionsCount={attention?.agentDecisions ?? 0}
-          decisionsWaitHere={pendingHere}
           onSearch={() => {
             setRailOpen(false);
             useCommandPaletteStore.getState().openOn("conversations");
@@ -743,8 +749,6 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
             setRailOpen(false);
             setSettingsOpen(true);
           }}
-          onSetPinned={(thread, pinned) => pinMutation.mutate({ thread, pinned })}
-          onDelete={(thread) => deleteMutation.mutate(thread)}
           activeThread={activeThread}
           folded={railFolded}
           onFold={() => {
@@ -765,7 +769,7 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
           />
         )}
         <div className="dk-mainc">
-          <DeskTopBar
+          <DeskTop
             onOpenRail={() => setRailOpen(true)}
             canWatch={canWatch}
             needsYou={lensCounts.everything}
@@ -793,6 +797,7 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
             onRename={(title) =>
               activeThread && renameMutation.mutate({ thread: activeThread, title })
             }
+            onDelete={(thread) => deleteMutation.mutate(thread)}
           />
           {/* The page's main landmark; `contents` keeps the column's layout as it was. */}
           <main className="contents">

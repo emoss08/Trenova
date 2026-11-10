@@ -45,10 +45,7 @@ function sameSubject(a: DeskSubject | null, b: DeskSubject | null): boolean {
 }
 
 /** The open work with this case first, each case once, the oldest dropped past the limit. */
-export function withOpenWork(
-  current: readonly DeskOpenWork[],
-  work: DeskOpenWork,
-): DeskOpenWork[] {
+export function withOpenWork(current: readonly DeskOpenWork[], work: DeskOpenWork): DeskOpenWork[] {
   const rest = current.filter((entry) => !(entry.kind === work.kind && entry.id === work.id));
   return [work, ...rest].slice(0, OPEN_WORK_LIMIT);
 }

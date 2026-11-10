@@ -22,6 +22,8 @@ var Shard = &gqlexec.Shard{
 	Name: "deskattention",
 	Objects: []*gqlexec.Object{
 		{Name: "DeskActivity", Implementors: []string{"DeskActivity"}},
+		{Name: "DeskActivityChange", Implementors: []string{"DeskActivityChange"}},
+		{Name: "DeskActivityDetail", Implementors: []string{"DeskActivityDetail"}},
 		{Name: "DeskActivityEntry", Implementors: []string{"DeskActivityEntry"}},
 		{Name: "DeskAttention", Implementors: []string{"DeskAttention"}},
 		{Name: "DeskAttentionGroup", Implementors: []string{"DeskAttentionGroup"}},
@@ -52,6 +54,112 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
 		}},
+		{Object: "DeskActivityChange", Fields: []*gqlexec.Field{
+			{
+				Name:     "proposalId",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*deskactivityports.Change)
+					return obj.ProposalID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:      "record",
+				HasChild:  true,
+				ChildType: "DeskRecord",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*deskactivityports.Change)
+					return obj.Record, nil
+				},
+				Marshal: gqlexec.Marshal(marshalODeskRecord2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋdeskattentionportsᚐRecord),
+			},
+			{
+				Name:     "at",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*deskactivityports.Change)
+					return obj.At, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+			{
+				Name:     "outcome",
+				NonNull:  true,
+				ChildErr: errNoChild3,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*deskactivityports.Change)
+					return obj.Outcome, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDeskActivityOutcome2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋdeskactivityportsᚐOutcome),
+			},
+			{
+				Name:     "error",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*deskactivityports.Change)
+					return obj.Error, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+		}},
+		{Object: "DeskActivityDetail", Fields: []*gqlexec.Field{
+			{
+				Name:      "entry",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "DeskActivityEntry",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*deskactivityports.EntryDetail)
+					return obj.Entry, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDeskActivityEntry2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋdeskactivityportsᚐEntry),
+			},
+			{
+				Name:     "tool",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*deskactivityports.EntryDetail)
+					return obj.ToolName, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:      "changes",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "DeskActivityChange",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*deskactivityports.EntryDetail)
+					return obj.Changes, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDeskActivityChange2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋdeskactivityportsᚐChangeᚄ),
+			},
+			{
+				Name:     "ranBefore",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*deskactivityports.EntryDetail)
+					return obj.RanBefore, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "ranSince",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*deskactivityports.EntryDetail)
+					return obj.RanSince, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+		}},
 		{Object: "DeskActivityEntry", Fields: []*gqlexec.Field{
 			{
 				Name:     "id",
@@ -66,7 +174,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "outcome",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*deskactivityports.Entry)
 					return obj.Outcome, nil
@@ -76,7 +184,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "at",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*deskactivityports.Entry)
 					return obj.At, nil
@@ -226,7 +334,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "seenAt",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*deskattentionports.Attention)
 					return obj.SeenAt, nil
@@ -267,7 +375,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "dueAt",
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*deskattentionports.Group)
 					return obj.DueAt, nil
@@ -454,6 +562,20 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalNDeskActivity2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋdeskactivityportsᚐActivity),
 			},
+			{
+				Name:       "deskActivityEntry",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "DeskActivityDetail",
+				Args:       field_Query_deskActivityEntry_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@deskattention").DeskActivityEntry(ctx, fc.Args["id"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNDeskActivityDetail2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋdeskactivityportsᚐEntryDetail),
+			},
 		}},
 		{Object: "WatchtowerItem", Fields: []*gqlexec.Field{
 			{
@@ -526,6 +648,7 @@ type DeskRecordResolver interface {
 type QueryResolver interface {
 	DeskAttention(ctx context.Context, input gqlmodel.DeskAttentionInput) (*deskattentionports.Attention, error)
 	DeskActivity(ctx context.Context, since int, first *int) (*deskactivityports.Activity, error)
+	DeskActivityEntry(ctx context.Context, id string) (*deskactivityports.EntryDetail, error)
 }
 
 type WatchtowerItemResolver interface {
@@ -540,8 +663,8 @@ type WatchtowerKindSummaryResolver interface {
 var (
 	errNoChild0 = errors.New("field of type Boolean does not have child fields")
 	errNoChild1 = errors.New("field of type ID does not have child fields")
-	errNoChild2 = errors.New("field of type DeskActivityOutcome does not have child fields")
-	errNoChild3 = errors.New("field of type Timestamp does not have child fields")
+	errNoChild2 = errors.New("field of type Timestamp does not have child fields")
+	errNoChild3 = errors.New("field of type DeskActivityOutcome does not have child fields")
 	errNoChild4 = errors.New("field of type String does not have child fields")
 	errNoChild5 = errors.New("field of type Int does not have child fields")
 	errNoChild6 = errors.New("field of type WatchtowerSeverity does not have child fields")
@@ -582,6 +705,19 @@ func field_Query_deskActivity_args(ctx context.Context, ec *gqlexec.Exec, rawArg
 	return args, nil
 }
 
+func field_Query_deskActivityEntry_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
 func unmarshalInputDeskAttentionInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.DeskAttentionInput, error) {
 	var it gqlmodel.DeskAttentionInput
 	if obj == nil {
@@ -599,7 +735,7 @@ func unmarshalInputDeskAttentionInput(ctx context.Context, ec *gqlexec.Exec, obj
 		asMap["first"] = 50
 	}
 
-	fieldsInOrder := [...]string{"lens", "first", "recordId"}
+	fieldsInOrder := [...]string{"lens", "kinds", "severities", "first", "recordId"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -613,6 +749,20 @@ func unmarshalInputDeskAttentionInput(ctx context.Context, ec *gqlexec.Exec, obj
 				return it, err
 			}
 			it.Lens = data
+		case "kinds":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kinds"))
+			data, err := unmarshalOWatchtowerSourceKind2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐSourceKindᚄ(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Kinds = data
+		case "severities":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("severities"))
+			data, err := unmarshalOWatchtowerSeverity2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐSeverityᚄ(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Severities = data
 		case "first":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
 			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
@@ -637,8 +787,25 @@ func unmarshalNDeskAttentionInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋ
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func unmarshalNID2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
+	res, err := graphql.UnmarshalID(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func unmarshalNTimestamp2int(ctx context.Context, ec *gqlexec.Exec, v any) (int, error) {
 	res, err := graphql.UnmarshalInt(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNWatchtowerSeverity2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐSeverity(ctx context.Context, ec *gqlexec.Exec, v any) (watchtower.Severity, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := watchtower.Severity(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNWatchtowerSourceKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐSourceKind(ctx context.Context, ec *gqlexec.Exec, v any) (watchtower.SourceKind, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := watchtower.SourceKind(tmp)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -667,6 +834,20 @@ func unmarshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*int, e
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
+func unmarshalOWatchtowerSeverity2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐSeverityᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]watchtower.Severity, error) {
+	if v == nil {
+		return nil, nil
+	}
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNWatchtowerSeverity2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐSeverity)
+}
+
+func unmarshalOWatchtowerSourceKind2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐSourceKindᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]watchtower.SourceKind, error) {
+	if v == nil {
+		return nil, nil
+	}
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNWatchtowerSourceKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐSourceKind)
+}
+
 func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v bool) graphql.Marshaler {
 	res := graphql.MarshalBoolean(v)
 	if res == graphql.Null {
@@ -681,6 +862,30 @@ func marshalNDeskActivity2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodul
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "DeskActivity", v)
+}
+
+func marshalNDeskActivityChange2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋdeskactivityportsᚐChangeᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*deskactivityports.Change) graphql.Marshaler {
+	return gqlexec.List[*deskactivityports.Change]{
+		Elem:        marshalNDeskActivityChange2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋdeskactivityportsᚐChange,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNDeskActivityChange2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋdeskactivityportsᚐChange(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *deskactivityports.Change) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "DeskActivityChange", v)
+}
+
+func marshalNDeskActivityDetail2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋdeskactivityportsᚐEntryDetail(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *deskactivityports.EntryDetail) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "DeskActivityDetail", v)
 }
 
 func marshalNDeskActivityEntry2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋdeskactivityportsᚐEntryᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*deskactivityports.Entry) graphql.Marshaler {

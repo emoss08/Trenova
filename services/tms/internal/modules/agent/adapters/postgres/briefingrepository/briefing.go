@@ -89,6 +89,7 @@ func upsertConflict() keel.Conflict {
 		b.RunID,
 		b.Status,
 		b.Headline,
+		b.HeadlineLinks,
 		b.Sections,
 		b.Facts,
 		b.Narrated,

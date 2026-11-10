@@ -138,6 +138,7 @@ func (a readAccess) withhold(page *briefing.Briefing) {
 
 	if len(withheld) > 0 {
 		page.Headline = ""
+		page.HeadlineLinks = []briefing.HeadlineLink{}
 		page.Narrated = false
 		for idx := range kept {
 			kept[idx].Body = ""

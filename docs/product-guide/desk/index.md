@@ -4,12 +4,12 @@ aliases: [needs you, what needs me, case, record case, nova handled, since you l
 related:
   - /desk/needs
   - /desk/decisions
-  - /desk/watchtower
   - /desk/scheduled
   - /desk/triage
   - /admin/agent-control
 covers:
   - /desk/r/:kind/:id
+  - /desk/handled/:id
   - /desk/t/:threadId
   - /desk/agents/:agentId
   - /desk/c/:threadId/a/:slug
@@ -17,11 +17,13 @@ covers:
 ---
 
 ## What it's for
-The Desk is where you work with Trenova's AI agents and see everything that needs you, in one room. Its **Today** page greets you with the date and one line on what the day holds (the morning briefing's headline when one was written, otherwise how many decisions are waiting on you), the box you ask in, and under it the day itself: the morning's figures in one strip, what needs you soonest, what changed since you last looked, what agents changed today (on their own, after someone approved it, only as a preview, or not at all) and what they are working on now. People who read Triage also see how many messages wait for them. The box names the agent it will ask and types out that agent's starter questions as its placeholder: press Tab to take the one on screen, or ⌘1–3 (Ctrl+1–3) to ask it outright.
+The Desk is where you work with Trenova's AI agents and see everything that needs you, in one room: the rail down the left, the page in the middle, and Nova's margin on the right when you ask something. The bar across the top names where you are and, on every page but a conversation, holds the operation in one strip (the morning's first figures, how much needs you and how many items agents are **Working** on), **Search or do** (⌘K / Ctrl+K) and **Ask** (⌘J / Ctrl+J), which opens Nova's margin on whatever the page is about.
 
-The rail down the left holds **New conversation**, search, **Today**, **Needs you** with its three lenses under it (**Watchtower**, **Triage** and **Decisions**, each with a count only while something waits there), **Scheduled**, **Memory**, every conversation grouped by when it was last used (**Pinned** first, then **Today**, **Yesterday**, **Previous 7 days**, **Previous 30 days** and **Older**), **Keyboard shortcuts**, **Desk settings** and **Back to Trenova**. A conversation that needs you or has an agent at work says so under its name, with the agent: "Needs your approval", "Writing a reply" or "Last reply failed". Press ? anywhere outside a text box to see every Desk shortcut, ⌘K (Ctrl+K) to search or do anything, ⌘J (Ctrl+J) to ask Nova, and G then D, N, W or T to go to Today, Needs you, Watchtower or Triage. Select a group's heading to fold it away or open it again; a folded group shows how many conversations it holds, and the rail remembers which groups you folded. On a phone the rail slides over the page from the menu button at the top left.
+Its **Today** page greets you with the date and one line on what the day holds (the morning briefing's headline when one was written, with a note on how it was written, otherwise how many decisions are waiting on you), the box you ask in, and under it the day itself: the morning's figures in one strip, the four rows that need you soonest with every signal about each, what changed since you left, what agents changed today (on their own, after someone approved it, only as a preview, or not at all) and what they are working on now. The box names the agent it will ask and types out that agent's starter questions as its placeholder: press Tab to take the one on screen, or ⌘1–3 (Ctrl+1–3) to ask it outright. Your question opens in Nova's margin, beside Today.
 
-**Needs you** puts everything waiting on people in one list, one row per record: a shipment's late warning, the customer's email about it and the plan an agent drafted to recover it are one row. Opening a record gives its case: the record's own card, and beside it what is open about it or the conversation with Nova about it.
+The rail down the left holds its fold (⌘B / Ctrl+B), the logo (which leads back to Trenova), search, **New conversation**, **Today**, **Needs you** with its three lenses under it (**Watchtower**, **Triage** and **Decisions**, each opening Needs you on that lens, with a count only while something waits there), **Scheduled**, **Memory**, **Open work** (the cases you opened this session), every conversation grouped by when it was last used (**Pinned** first, then **Today**, **Yesterday**, **Previous 7 days**, **Previous 30 days** and **Older**), and at the foot your name with **Keyboard shortcuts** and **Desk settings**. Each conversation names its agent under its title, and says so when it needs you or has an agent at work: "Needs your approval", "Writing a reply" or "Last reply failed". Selecting a conversation opens it in Nova's margin beside the page you are on; **Open full width** at the top of the margin opens it as a page of its own. Press ? anywhere outside a text box to see every Desk shortcut, ⌘K (Ctrl+K) to search or do anything, ⌘J (Ctrl+J) to ask Nova, and G then D, N, W or T to go to Today, Needs you, or Needs you on the Watchtower or Triage lens. On a phone the rail slides over the page from the menu button at the top left.
+
+**Needs you** puts everything waiting on people in one list, one row per record: a shipment's late warning, the customer's email about it and the plan an agent drafted to recover it are one row. Opening a record gives its case: what it is and how long is left, what the agent found with each point numbered to the evidence beside it, the plan to approve or decline as written, and the record's own card.
 
 Each conversation opens in the middle, and anything an agent produces (a table, a draft, a document, a plan, a board) opens in the workspace beside it. Changes an agent wants to make to your records are not applied on their own: in a Desk conversation they wait in a card above the message box, and they are also listed on [Decisions](/desk/decisions).
 
@@ -30,18 +32,18 @@ While an agent replies you can steer it with a correction or queue the next ques
 ## Tasks
 
 ### Open a record's case
-Keywords: case, record page in desk, everything about a shipment, ask about this record
-1. From [Needs you](/desk/needs), select **Open the case**; from Today, select a row in **Needs you** or a line in **Nova handled today**.
-2. The record's own card fills the page. Beside it, **Open about this** lists its Watchtower conditions, the messages about it and the changes waiting on a person, each with its card and the bar to act on it.
-3. Select **Ask Nova** (or press ⌘J / Ctrl+J) to ask about the record. Your first question starts the conversation about it, with the record attached; a shipment, invoice or dispute keeps it as the record's case. Nothing changes until you approve it.
-4. Select **Needs you** at the top of the card to go back.
+Keywords: case, record page in desk, everything about a shipment, ask about this record, evidence, approve plan
+1. From [Needs you](/desk/needs), select **Open the case** (or press Enter); from Today, select a row in **Needs you**. The case also joins **Open work** in the rail.
+2. The top names the record and how long is left before its deadline. Under it, what the agent found (or what the Watchtower raised), with numbers that light up the evidence beside it, and why it matters and what happens if nothing changes.
+3. When an agent drafted a change, its plan shows each step with what it sets. Select **Approve plan**, or press ⌘Enter (Ctrl+Enter), to run exactly what is shown; select **Decline**, or press D, and say why. Each step is marked done only once the server confirms it.
+4. The record's own card is under it. To ask about the record, pick a suggested question or type one in the box at the bottom: the answer opens in Nova's margin with the record attached, and a shipment, invoice or dispute keeps the conversation as the record's case.
 
 ### See what agents changed today
 Keywords: nova handled, what did the agent do, ran on its own, approved by, previewed only, didn't go through
-1. Open [Desk](/desk). **Nova handled today** lists what agents changed, newest first, with the agent and the records.
-2. Each line says how it ended: **Ran on its own** (a tool AI control lets run without asking), approved by whom, **Previewed only** (an agent in shadow or simulation) or **Didn't go through**, with the reason.
-3. Several writes of the same kind in one run are one line, such as "Filed 11 rate confirmations". Select a line to open the case of the first record it changed.
-4. **Since you last looked** says what came in, what was cleared, the changes other people approved and the writes that did not go through since you last opened the Watchtower.
+1. Open [Desk](/desk). **Nova handled today** lists what agents changed, newest first, with the time, the agent, the records and who stood behind it.
+2. Each line says how it ended: **Done on its own** (a tool AI control lets run without asking), **Done** after someone approved it, **Previewed only** (an agent in shadow or simulation) or **Didn't go through**.
+3. Several writes of the same kind in one run are one line, such as "Filed 11 rate confirmations". Select a line to open it: why the agent could make it (the rule it ran under, or who approved it), how often it has made it in the last 30 days, and every record it changed.
+4. The "Since you left" section says what came in, what was cleared, the changes other people approved and the writes that did not go through since you last looked.
 
 ### Ask an agent a question
 Keywords: chat with AI, ask the assistant, start a conversation, which agent should I ask, suggested agent, wrong agent
@@ -112,7 +114,7 @@ Keywords: pin chat, delete conversation, export transcript, rename conversation,
 1. Open the conversation from [Desk](/desk).
 2. In the bar at the top, open **More actions** and use **Pin conversation** (or **Unpin conversation**) to keep it at the top of the rail, or **Download transcript** to save it.
 3. To rename it, select its name in the bar at the top, type the new name and press Enter (Esc keeps the old name).
-4. To delete it, hover over it in the rail and select **Delete conversation** (the bin). It is deleted at once. A conversation with scheduled requests asks first, because they are deleted with it and stop running: the question lists them, and you select **Delete** to go ahead or **Cancel**.
+4. To delete it, open it full width, open **More actions** in the bar at the top and select **Delete conversation**. It is deleted at once. A conversation with scheduled requests asks first, because they are deleted with it and stop running: the question lists them, and you select **Delete** to go ahead or **Cancel**.
 5. Select **Workspace** in the top bar (or press ⌘\\ / Ctrl+\\) to open it on everything the conversation produced or fold it away, or **Hide artifacts** inside it to make room for the conversation.
 
 ### Steer an agent while it is replying

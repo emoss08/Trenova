@@ -11170,13 +11170,22 @@ export type DeskAttentionQueryVariables = Exact<{
 
 export type DeskAttentionQuery = { deskAttention: { hasMore: boolean, seenAt: number, groups: Array<{ ' $fragmentRefs'?: { 'DeskAttentionGroupFieldsFragment': DeskAttentionGroupFieldsFragment } }>, counts: { everything: number, watchtower: number, triage: number, decisions: number } } };
 
+export type DeskActivityEntryFieldsFragment = { id: string, outcome: DeskActivityOutcome, at: number, runId: string, planId: string | null, title: string, detail: string, count: number, recordsMore: number, proposalIds: Array<string>, agent: { ' $fragmentRefs'?: { 'WatchtowerAgentFieldsFragment': WatchtowerAgentFieldsFragment } } | null, records: Array<{ ' $fragmentRefs'?: { 'DeskRecordFieldsFragment': DeskRecordFieldsFragment } }>, decidedBy: { id: string, name: string } | null } & { ' $fragmentName'?: 'DeskActivityEntryFieldsFragment' };
+
+export type DeskActivityEntryQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DeskActivityEntryQuery = { deskActivityEntry: { tool: string, ranBefore: number, ranSince: number, entry: { ' $fragmentRefs'?: { 'DeskActivityEntryFieldsFragment': DeskActivityEntryFieldsFragment } }, changes: Array<{ proposalId: string, at: number, outcome: DeskActivityOutcome, error: string, record: { ' $fragmentRefs'?: { 'DeskRecordFieldsFragment': DeskRecordFieldsFragment } } | null }> } };
+
 export type DeskActivityQueryVariables = Exact<{
   since: number;
   first?: number | null | undefined;
 }>;
 
 
-export type DeskActivityQuery = { deskActivity: { hasMore: boolean, entries: Array<{ id: string, outcome: DeskActivityOutcome, at: number, runId: string, planId: string | null, title: string, detail: string, count: number, recordsMore: number, proposalIds: Array<string>, agent: { ' $fragmentRefs'?: { 'WatchtowerAgentFieldsFragment': WatchtowerAgentFieldsFragment } } | null, records: Array<{ ' $fragmentRefs'?: { 'DeskRecordFieldsFragment': DeskRecordFieldsFragment } }>, decidedBy: { id: string, name: string } | null }> } };
+export type DeskActivityQuery = { deskActivity: { hasMore: boolean, entries: Array<{ ' $fragmentRefs'?: { 'DeskActivityEntryFieldsFragment': DeskActivityEntryFieldsFragment } }> } };
 
 export type DeskBoardCardQueryVariables = Exact<{
   threadId: string | number;
@@ -12289,7 +12298,7 @@ export type RetryBillingTransferRunMutationVariables = Exact<{
 
 export type RetryBillingTransferRunMutation = { retryBillingTransferRun: { id: string, status: BillingTransferRunStatus, scope: BillingTransferRunScope, billType: BillType, searchQuery: string | null, shipmentStatus: ShipmentStatus | null, sourceRunId: string | null, totalCount: number, processedCount: number, transferredCount: number, notTransferredCount: number, skippedCount: number, markedReadyToInvoiceCount: number, retryableCount: number, unmatchedCount: number, failureMessage: string | null, cancelRequestedAt: number | null, queuedAt: number, startedAt: number | null, completedAt: number | null, failureCounts: Array<{ code: ShipmentBillingTransferFailureCode, count: number, retryable: boolean }> } };
 
-export type BriefingFieldsFragment = { id: string, roleKey: BriefingRoleKey, briefingDate: string, status: BriefingStatus, headline: string, narrated: boolean, readAt: number | null, withheldSections: Array<{ key: BriefingSectionKey, title: string, partial: boolean }>, sections: Array<{ key: BriefingSectionKey, title: string, summary: string, body: string | null, read: string, path: string | null, items: Array<{ label: string, value: string, path: string | null }> }> } & { ' $fragmentName'?: 'BriefingFieldsFragment' };
+export type BriefingFieldsFragment = { id: string, roleKey: BriefingRoleKey, briefingDate: string, status: BriefingStatus, headline: string, narrated: boolean, readAt: number | null, headlineLinks: Array<{ text: string, section: BriefingSectionKey, path: string }>, withheldSections: Array<{ key: BriefingSectionKey, title: string, partial: boolean }>, sections: Array<{ key: BriefingSectionKey, title: string, summary: string, body: string | null, read: string, path: string | null, items: Array<{ label: string, value: string, path: string | null }> }> } & { ' $fragmentName'?: 'BriefingFieldsFragment' };
 
 export type TodaysBriefingQueryVariables = Exact<{
   input: TodaysBriefingInput;
@@ -21003,7 +21012,7 @@ export { AgentCapabilityToolFieldsFragmentDoc, AgentCapabilitiesFieldsFragmentDo
 export { AgentControlFieldsFragmentDoc, AgentControlSettingsDocument, UpdateAgentControlDocument } from "./documents/agent/control";
 export { PendingProposalFieldsFragmentDoc, PendingPlanFieldsFragmentDoc, PendingDecisionsDocument, PendingDecisionSummaryDocument, PlanStepsDocument, DecideAgentProposalsDocument, RecentDecisionsDocument } from "./documents/agent/decisions";
 export { AgentDefinitionCardFieldsFragmentDoc, AgentChoiceFieldsFragmentDoc, AgentDefinitionCardsDocument, AgentChoicesDocument, AgentDefinitionCountDocument, AgentRunCountDocument, AgentProposalCountDocument } from "./documents/agent/definitions";
-export { DeskRecordFieldsFragmentDoc, DeskAttentionGroupFieldsFragmentDoc, DeskAttentionDocument, DeskActivityDocument } from "./documents/agent/desk-attention";
+export { DeskRecordFieldsFragmentDoc, DeskAttentionGroupFieldsFragmentDoc, DeskActivityEntryFieldsFragmentDoc, DeskAttentionDocument, DeskActivityEntryDocument, DeskActivityDocument } from "./documents/agent/desk-attention";
 export { DeskBoardCardDocument } from "./documents/agent/desk-board";
 export { DeskMemoryFieldsFragmentDoc, DeskMemorySettingsFieldsFragmentDoc, DeskMemoriesDocument, DeskMemoriesByIdsDocument, DeskMemorySettingsDocument, CreateDeskMemoryDocument, ReviseDeskMemoryDocument, SetDeskMemoryStatusDocument, ConfirmDeskMemoryDocument, DismissDeskMemoryDocument, SetMemorySavingModeDocument } from "./documents/agent/desk-memory";
 export { AgentEvalCaseTableRowFieldsFragmentDoc, AgentEvalCaseDetailFieldsFragmentDoc, AgentEvalCaseTableDocument, AgentEvalCaseDetailDocument, CreateAgentEvalCaseDocument, UpdateAgentEvalCaseDocument, SetAgentEvalCaseStatusDocument, ReplayAgentEvalCaseDocument } from "./documents/agent/eval-cases";

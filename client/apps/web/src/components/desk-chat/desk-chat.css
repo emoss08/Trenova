@@ -42,105 +42,6 @@
   display: grid;
   place-items: center;
 }
-.dk-top .dk-ttl-sl {
-  color: var(--dsk-faint);
-  font-size: 16px;
-  font-weight: 300;
-  margin: 0 2px;
-}
-.dk-ttl {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  height: 32px;
-  min-width: 0;
-  flex: 1 1 auto;
-  font-size: 13px;
-}
-.dk-ttl b {
-  min-width: 0;
-  flex: 0 1 auto;
-}
-.dk-ttl-a {
-  color: var(--dsk-subtle);
-  white-space: nowrap;
-}
-
-.dk-ttl b {
-  font-weight: 500;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-/* the open conversation's name: a click renames it in place */
-.dk-ttl-t {
-  min-width: 0;
-  flex: 0 1 auto;
-  margin: 0 -4px;
-  padding: 2px 4px;
-  border-radius: 6px;
-  font-weight: 500;
-  color: var(--dsk-fg);
-  cursor: text;
-  transition: background 150ms;
-}
-.dk-ttl-t:hover {
-  background: var(--dsk-hover);
-}
-.dk-ttl-t > span {
-  min-width: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.dk-ttl-in {
-  flex: 0 1 auto;
-  min-width: 16ch;
-  max-width: min(520px, 100%);
-  field-sizing: content;
-  margin: 0 -4px;
-  padding: 2px 4px;
-  font: inherit;
-  font-weight: 500;
-  color: var(--dsk-fg);
-  background: transparent;
-  border: 0;
-  border-radius: 6px;
-  outline: none;
-}
-.dk-top .dk-sp {
-  flex: 1;
-}
-.dk-wsb .dk-n {
-  font: 10.5px var(--font-mono);
-  min-width: 18px;
-  height: 18px;
-  border-radius: 9px;
-  display: grid;
-  place-items: center;
-  background: var(--dsk-sunken);
-  color: var(--dsk-muted);
-}
-.dk-wsb .dk-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--dsk-agent);
-  margin-left: -2px;
-}
-.dk-me {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: var(--dsk-sunken);
-  border: 1px solid var(--dsk-b-sub);
-  display: grid;
-  place-items: center;
-  font-size: 10px;
-  font-weight: 500;
-  color: var(--dsk-muted);
-  margin-left: 4px;
-}
 .dk-pop {
   position: absolute;
   top: 46px;
@@ -1578,12 +1479,7 @@
     transform: none;
   }
 }
-.dk-sb-new {
-  box-shadow: var(--dsk-lift);
-}
-.dk-sb-new:hover {
-  box-shadow: var(--dsk-lift-hi);
-}
+
 .dk-sb-knob {
   position: absolute;
   left: 8px;
@@ -1597,131 +1493,13 @@
     height 420ms var(--dk-settle);
   pointer-events: none;
 }
-.dk-sb-i {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  height: 30px;
-  padding: 0 8px 0 10px;
-  border-radius: 8px;
-  color: var(--dsk-muted);
-  font-size: 12.5px;
-  text-align: left;
-  transition:
-    color 140ms,
-    background 140ms;
-}
-.dk-sb-i:hover {
-  color: var(--dsk-fg);
-  background: color-mix(in oklch, var(--dsk-fg) 4%, transparent);
-}
-.dk-sb-i.dk-on {
-  color: var(--dsk-fg);
-  background: transparent;
-}
-.dk-sb-i > span:nth-child(2):not(.dk-sb-acts) {
-  flex: 1;
-  min-width: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-/* A conversation row is a link to it; pin and delete sit beside the link, not in it. */
-.dk-sb-l {
-  display: flex;
-  flex: 1;
-  align-items: center;
-  align-self: stretch;
-  gap: 10px;
-  min-width: 0;
-  border-radius: inherit;
-  color: inherit;
-  text-decoration: none;
-  outline: none;
-}
-.dk-sb-l:focus-visible {
-  box-shadow: 0 0 0 var(--ring-width)
-    color-mix(in oklch, var(--ring) calc(var(--ring-opacity) * 100%), transparent);
-}
-.dk-sb-tx {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  min-width: 0;
-}
-.dk-sb-tx .dk-sb-t {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-/* What the conversation waits on, in words: "EDI · Needs your approval". */
-.dk-sb-n {
-  overflow: hidden;
-  color: var(--dsk-muted);
-  font-size: 11px;
-  font-weight: 500;
-  line-height: 15px;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-.dk-sb-n.dk-s-wait {
-  color: var(--dsk-warn-fg);
-}
-.dk-sb-n.dk-s-error {
-  color: var(--dsk-error);
-}
-.dk-sb-c.dk-sb-2 {
-  height: auto;
-  min-height: 30px;
-  padding-top: 5px;
-  padding-bottom: 5px;
-}
-.dk-sb-c.dk-sb-2 .dk-sb-l {
-  align-items: flex-start;
-}
-.dk-sb-c.dk-sb-2 .dk-sb-dot {
-  height: 17px;
-}
-.dk-sb-ct {
-  font-style: normal;
-  font: 10.5px var(--font-mono);
-  color: var(--dsk-faint);
-}
-.dk-sb-ct.dk-w {
-  color: var(--dsk-warn-fg);
-}
+
 .dk-sb-gh {
   font: 10.5px/1 var(--font-mono);
   color: var(--dsk-faint);
   padding: 18px 10px 8px;
 }
-.dk-sb-gt {
-  display: flex;
-  width: 100%;
-  gap: 6px;
-  text-align: left;
-  border-radius: 6px;
-  transition: color 140ms;
-}
-.dk-sb-gt:hover {
-  color: var(--dsk-muted);
-}
-.dk-sb-gc {
-  margin-block: -1px;
-  transform: rotate(90deg);
-  transition: transform 260ms var(--dk-spring);
-}
-.dk-sb-gt[aria-expanded="false"] .dk-sb-gc {
-  transform: rotate(0deg);
-}
-@media (prefers-reduced-motion: reduce) {
-  .dk-sb-gc {
-    transition: none;
-  }
-}
+
 .dk-sb-dot {
   width: 14px;
   display: grid;
@@ -1800,32 +1578,7 @@
 .dk-sb-c.dk-on .dk-sb-t {
   font-weight: 500;
 }
-.dk-sb-w {
-  font: 10.5px var(--font-mono);
-  color: var(--dsk-faint);
-  opacity: 0;
-  transform: translateX(4px);
-  transition:
-    opacity 160ms,
-    transform 220ms var(--dk-settle);
-}
-.dk-sb-me {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  height: 52px;
-  padding: 0 8px 0 12px;
-  font-size: 12.5px;
-}
-.dk-sb-me .dk-me {
-  margin: 0;
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-}
-.dk-sb-me b {
-  font-weight: 500;
-}
+
 .dk-ibadge {
   display: inline-flex;
   align-items: center;
@@ -1880,7 +1633,6 @@
 .dark .dk-sb-dot.dk-s-error {
   color: var(--dsk-error);
 }
-.dk-sb-ct.dk-w,
 .dk-dcx-i {
   color: var(--dsk-warn);
 }
@@ -2312,71 +2064,20 @@
   }
 }
 
-.dk-sb-logo {
-  width: 26px;
-  height: 26px;
-  object-fit: contain;
-  flex: none;
-}
 .dk-sb-c {
   cursor: pointer;
 }
 .dk-sb-c {
   position: relative;
 }
-.dk-sb-acts {
-  position: absolute;
-  right: 4px;
-  top: 50%;
-  display: flex;
-  align-items: center;
-  gap: 1px;
-  padding-left: 22px;
-  opacity: 0;
-  transform: translate(4px, -50%);
-  pointer-events: none;
-  transition:
-    opacity 140ms,
-    transform 200ms var(--dk-settle);
-  background: linear-gradient(90deg, transparent, var(--dk-sb-bg, var(--dsk-canvas)) 18px);
-}
+
 .dk-sb-c:hover {
   --dk-sb-bg: color-mix(in srgb, var(--dsk-fg) 4%, var(--dsk-canvas));
 }
 .dk-sb-c.dk-on {
   --dk-sb-bg: var(--dsk-card);
 }
-.dk-sb-c:hover .dk-sb-acts,
-.dk-sb-c:focus-within .dk-sb-acts {
-  opacity: 1;
-  transform: translate(0, -50%);
-  pointer-events: auto;
-}
-.dk-sb-a::after {
-  content: attr(data-tip);
-  position: absolute;
-  bottom: calc(100% + 6px);
-  left: 50%;
-  transform: translate(-50%, 3px);
-  padding: 3px 7px;
-  border-radius: 6px;
-  background: var(--dsk-ink);
-  color: var(--dsk-ink-fg);
-  font-size: 10.5px;
-  font-weight: 500;
-  white-space: nowrap;
-  opacity: 0;
-  pointer-events: none;
-  transition:
-    opacity 120ms,
-    transform 180ms var(--dk-settle);
-  z-index: 5;
-}
-.dk-sb-a:hover::after {
-  opacity: 1;
-  transform: translate(-50%, 0);
-  transition-delay: 300ms;
-}
+
 .dk-sb-c.dk-out {
   animation: dk-sbout 260ms var(--dk-ease) forwards;
 }
@@ -2944,8 +2645,7 @@
 .dk-mp2-l {
   max-height: min(330px, calc(100vh - 250px));
 }
-.dk-who b,
-.dk-sb-me b {
+.dk-who b {
   white-space: nowrap;
 }
 .dk-mp2-ri {
@@ -7067,9 +6767,6 @@
 }
 
 /* ---- app additions ---- */
-.dk-wsb .dk-dot.dk-dot-wait {
-  background: var(--dsk-warn);
-}
 .dk-ib.dk-on {
   color: var(--dsk-fg);
 }
@@ -7831,85 +7528,7 @@
   font-weight: 500;
   animation: none;
 }
-/* ---- a billing item, as a biller reviews it ---- */
-/* the checks: what is left to do stands out, what passed is one quiet line */
-/* charges */
-/* the shipment and its paperwork */
-/* what happened to it, oldest first */
-/* hold and approve, always in reach */
-/* the rail: the empty list, and the way back */
-.dk-sb-empty {
-  padding: 2px 10px 0;
-  font-size: 12px;
-  line-height: 1.6;
-  color: var(--dsk-subtle);
-  text-wrap: pretty;
-}
-.dk-sb-empty .dk-kbd {
-  margin: 0 1px;
-}
-/* where the next page of conversations arrives: room for it, a bar while it loads, a retry if it failed */
-.dk-sb-more {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  height: 30px;
-  padding: 0 8px 0 34px;
-  font-size: 12px;
-  color: var(--dsk-subtle);
-}
-.dk-sb-more-err {
-  padding-left: 10px;
-}
-.dk-sb-more-err > span {
-  flex: 1;
-  min-width: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.dk-sb-retry {
-  flex: none;
-  height: 22px;
-  padding: 0 6px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--dsk-fg);
-  transition: background 140ms;
-}
-.dk-sb-retry:hover {
-  background: color-mix(in oklch, var(--dsk-fg) 6%, transparent);
-}
-.dk-sb-skel {
-  width: 62%;
-  height: 8px;
-  border-radius: 5px;
-}
-.dk-sb-bk-c,
-.dk-sb-bk-l {
-  position: absolute;
-  inset: 0;
-  margin: auto;
-  display: grid;
-  place-items: center;
-  transition:
-    transform 300ms var(--dk-spring),
-    opacity 180ms;
-}
-.dk-sb-bk-l {
-  width: 18px;
-  height: 18px;
-  object-fit: contain;
-  transform: translateX(130%);
-  opacity: 0;
-}
-.dk-sb-back:hover .dk-sb-bk-c {
-  animation: dk-sbkc 3.6s cubic-bezier(0.3, 1.3, 0.5, 1) 1;
-}
-.dk-sb-back:hover .dk-sb-bk-l {
-  animation: dk-sbkl 3.6s cubic-bezier(0.3, 1.3, 0.5, 1) 1;
-}
+
 @keyframes dk-sbkc {
   0% {
     transform: none;

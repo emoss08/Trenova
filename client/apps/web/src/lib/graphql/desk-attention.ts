@@ -1,15 +1,20 @@
 import { getFragmentData } from "@trenova/graphql/fragment-data";
 import {
   DeskActivityDocument,
+  DeskActivityEntryDocument,
+  DeskActivityEntryFieldsFragmentDoc,
   DeskAttentionDocument,
   DeskAttentionGroupFieldsFragmentDoc,
   DeskRecordFieldsFragmentDoc,
   WatchtowerAgentFieldsFragmentDoc,
   WatchtowerItemFieldsFragmentDoc,
+  type DeskActivityEntryFieldsFragment,
   type DeskActivityOutcome,
   type DeskAttentionGroupFieldsFragment,
   type DeskLens,
   type DeskRecordFieldsFragment,
+  type WatchtowerSeverity,
+  type WatchtowerSourceKind,
   type WatchtowerItemFieldsFragment,
 } from "@trenova/graphql/generated/graphql";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
@@ -64,6 +69,10 @@ type RequestOptions = { signal?: AbortSignal };
 
 export type DeskAttentionFilter = {
   lens?: DeskLens;
+  /** Rows with an item of one of these kinds, within the lens. */
+  kinds?: readonly WatchtowerSourceKind[];
+  /** Rows with an item of one of these severities. */
+  severities?: readonly WatchtowerSeverity[];
   first?: number;
   recordId?: string | null;
 };
@@ -78,6 +87,9 @@ export async function fetchDeskAttention(
     variables: {
       input: {
         lens: filter.lens ?? "Everything",
+        kinds: filter.kinds && filter.kinds.length > 0 ? [...filter.kinds] : null,
+        severities:
+          filter.severities && filter.severities.length > 0 ? [...filter.severities] : null,
         first: filter.first ?? null,
         recordId: filter.recordId ?? null,
       },
@@ -105,6 +117,16 @@ export async function fetchDeskAttention(
   };
 }
 
+function activityEntry(ref: DeskActivityEntryFieldsFragment): DeskActivityEntry {
+  return {
+    ...ref,
+    agent: ref.agent ? getFragmentData(WatchtowerAgentFieldsFragmentDoc, ref.agent) : null,
+    records: ref.records.map((record) => getFragmentData(DeskRecordFieldsFragmentDoc, record)),
+    planId: ref.planId ?? null,
+    decidedBy: ref.decidedBy ?? null,
+  };
+}
+
 export async function fetchDeskActivity(
   since: number,
   first?: number,
@@ -119,12 +141,49 @@ export async function fetchDeskActivity(
 
   return {
     hasMore: data.deskActivity.hasMore,
-    entries: data.deskActivity.entries.map((entry) => ({
-      ...entry,
-      agent: entry.agent ? getFragmentData(WatchtowerAgentFieldsFragmentDoc, entry.agent) : null,
-      records: entry.records.map((record) => getFragmentData(DeskRecordFieldsFragmentDoc, record)),
-      planId: entry.planId ?? null,
-      decidedBy: entry.decidedBy ?? null,
+    entries: data.deskActivity.entries.map((entry) =>
+      activityEntry(getFragmentData(DeskActivityEntryFieldsFragmentDoc, entry)),
+    ),
+  };
+}
+
+export type DeskActivityChange = {
+  proposalId: string;
+  record: DeskRecord | null;
+  at: number;
+  outcome: DeskActivityOutcome;
+  error: string;
+};
+
+export type DeskActivityDetail = {
+  entry: DeskActivityEntry;
+  tool: string;
+  changes: DeskActivityChange[];
+  ranBefore: number;
+  ranSince: number;
+};
+
+/** One line of Nova handled, by the id of any write it folds. */
+export async function fetchDeskActivityEntry(
+  id: string,
+  options?: RequestOptions,
+): Promise<DeskActivityDetail> {
+  const data = await requestGraphQL({
+    document: DeskActivityEntryDocument,
+    operationName: "DeskActivityEntry",
+    variables: { id },
+    signal: options?.signal,
+  });
+  const detail = data.deskActivityEntry;
+
+  return {
+    entry: activityEntry(getFragmentData(DeskActivityEntryFieldsFragmentDoc, detail.entry)),
+    tool: detail.tool,
+    changes: detail.changes.map((change) => ({
+      ...change,
+      record: change.record ? getFragmentData(DeskRecordFieldsFragmentDoc, change.record) : null,
     })),
+    ranBefore: detail.ranBefore,
+    ranSince: detail.ranSince,
   };
 }

@@ -116,6 +116,32 @@ type DeskActivity {
   hasMore: Boolean!
 }
 
+"One write a ledger line folds: the record it changed, when it settled and how."
+type DeskActivityChange {
+  proposalId: ID!
+  "Null when the write named no record."
+  record: DeskRecord
+  at: Timestamp!
+  outcome: DeskActivityOutcome!
+  "Why it did not go through; empty when it did."
+  error: String!
+}
+
+"""
+A line of Nova handled read in full: the line, every write it folds, and how
+often this agent has made this write before, which is what earns a write the
+right to run on its own.
+"""
+type DeskActivityDetail {
+  entry: DeskActivityEntry!
+  "The write in words: what the tool does."
+  tool: String!
+  changes: [DeskActivityChange!]!
+  "How many times this agent made this write in the last 30 days."
+  ranBefore: Int!
+  ranSince: Timestamp!
+}
+
 extend type WatchtowerKindSummary {
   "The Desk lens items of this kind are filed under."
   deskLens: DeskLens!
@@ -133,4 +159,6 @@ extend type Query {
   deskAttention(input: DeskAttentionInput!): DeskAttention!
   "Nova handled: the writes agents settled since a moment at most 31 days ago, newest first."
   deskActivity(since: Timestamp!, first: Int = 20): DeskActivity!
+  "One line of Nova handled, by the id of any write it folds."
+  deskActivityEntry(id: ID!): DeskActivityDetail!
 }

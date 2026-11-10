@@ -8,7 +8,6 @@ import { Input } from "@trenova/shared/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
-import { cn } from "@trenova/shared/lib/utils";
 import { useState, type ReactNode } from "react";
 import { caseRecordTitle, caseStateLabel } from "./case-labels";
 import { CaseRecordPicker } from "./case-record-picker";
@@ -66,13 +65,10 @@ export function DeskCaseMenu({ thread, timezone }: { thread: AssistantThread; ti
         <PopoverTrigger
           disabled={deskCase.busy || !thread.canContinue}
           render={
-            <Button
-              variant="quiet"
-              size="icon-sm"
-              className={cn(
-                "size-7.5 rounded-lg text-dsk-subtle transition-colors duration-140 hover:bg-dsk-hover hover:text-dsk-fg",
-                (open || isCase) && "bg-dsk-hover text-dsk-fg",
-              )}
+            <button
+              type="button"
+              className="dk-tb-ib ui-focus-ring"
+              data-on={open || isCase || undefined}
               aria-label={isCase ? t("Case") : t("Make this a case")}
             />
           }

@@ -4,6 +4,11 @@ fragment BriefingFields on Briefing {
   briefingDate
   status
   headline
+  headlineLinks {
+    text
+    section
+    path
+  }
   narrated
   readAt
   withheldSections {

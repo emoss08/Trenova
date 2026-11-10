@@ -18,6 +18,7 @@ var Shard = &gqlexec.Shard{
 	Name: "briefing",
 	Objects: []*gqlexec.Object{
 		{Name: "Briefing", Implementors: []string{"Briefing"}},
+		{Name: "BriefingHeadlineLink", Implementors: []string{"BriefingHeadlineLink"}},
 		{Name: "BriefingItem", Implementors: []string{"BriefingItem"}},
 		{Name: "BriefingSection", Implementors: []string{"BriefingSection"}},
 		{Name: "BriefingWithheldSection", Implementors: []string{"BriefingWithheldSection"}},
@@ -93,6 +94,17 @@ var Shard = &gqlexec.Shard{
 					return obj.Headline, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:      "headlineLinks",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "BriefingHeadlineLink",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*briefing.Briefing)
+					return obj.HeadlineLinks, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBriefingHeadlineLink2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋbriefingᚐHeadlineLinkᚄ),
 			},
 			{
 				Name:      "sections",
@@ -173,6 +185,38 @@ var Shard = &gqlexec.Shard{
 					return obj.UpdatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+		}},
+		{Object: "BriefingHeadlineLink", Fields: []*gqlexec.Field{
+			{
+				Name:     "text",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*briefing.HeadlineLink)
+					return obj.Text, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "section",
+				NonNull:  true,
+				ChildErr: errNoChild7,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*briefing.HeadlineLink)
+					return obj.Section, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBriefingSectionKey2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋbriefingᚐSectionKey),
+			},
+			{
+				Name:     "path",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*briefing.HeadlineLink)
+					return obj.Path, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 		}},
 		{Object: "BriefingItem", Fields: []*gqlexec.Field{
@@ -624,6 +668,18 @@ func marshalNBriefing2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodules�
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "Briefing", v)
+}
+
+func marshalNBriefingHeadlineLink2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋbriefingᚐHeadlineLink(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v briefing.HeadlineLink) graphql.Marshaler {
+	return ec.MarshalType(ctx, sel, "BriefingHeadlineLink", &v)
+}
+
+func marshalNBriefingHeadlineLink2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋbriefingᚐHeadlineLinkᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []briefing.HeadlineLink) graphql.Marshaler {
+	return gqlexec.List[briefing.HeadlineLink]{
+		Elem:        marshalNBriefingHeadlineLink2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋbriefingᚐHeadlineLink,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
 }
 
 func marshalNBriefingItem2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋbriefingᚐItem(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v briefing.Item) graphql.Marshaler {

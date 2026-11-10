@@ -1,165 +1,274 @@
-import type { Briefing } from "@/lib/graphql/briefing";
+import {
+  DeskHomeComposer,
+  useDeskHomeAsk,
+  type DeskStartExtras,
+} from "@/components/desk-chat/desk-home-ask";
+import { DeskDropOverlay } from "@/components/desk-chat/composer/desk-uploads";
+import { useAttentionSummary } from "@/hooks/use-attention";
+import { usePermission } from "@/hooks/use-permission";
+import type { AgentChoice } from "@/lib/graphql/agent-definition";
+import { briefing as briefingQueries } from "@/lib/queries/briefing";
 import { deskActivity } from "@/lib/queries/desk-activity";
 import { deskAttention } from "@/lib/queries/desk-attention";
 import { watchtower } from "@/lib/queries/watchtower";
+import { useDeskSetting } from "@/stores/desk-settings-store";
+import type { AssistantThread } from "@/types/assistant";
 import { useQuery } from "@tanstack/react-query";
+import { NovaBadge } from "@trenova/shared/components/ui/nova-badge";
 import { useNow } from "@trenova/shared/hooks/use-now";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { formatUnixTime, getStartOfDay } from "@trenova/shared/lib/date";
+import {
+  formatUnixTime,
+  getStartOfDay,
+  partOfDay,
+  resolveUserTimezone,
+  toUserWallClock,
+} from "@trenova/shared/lib/date";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
+import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useState } from "react";
-import { useNavigate } from "react-router";
-import { AttentionRow } from "../attention/attention-row";
+import { Link, useNavigate } from "react-router";
 import { attentionPath } from "../attention/attention-record";
-import { DeskDayStrip } from "./day-strip";
+import { AttentionRow } from "../attention/attention-row";
+import { usePendingDecisionSummary } from "../decisions/use-pending-decisions";
+import { BriefingHeadline } from "./briefing-headline";
+import { DayStrip } from "./day-strip";
 import { NovaHandled } from "./nova-handled";
 import { NovaWorking } from "./nova-working";
 import { SinceYouLeft } from "./since-you-left";
-import { TodaySection } from "./today-section";
+import { greeting, withheldNote } from "./today-headline";
+import { TodayRowsSkeleton, TodaySection } from "./today-section";
+import "./today.css";
 
+export type { DeskStartExtras } from "@/components/desk-chat/desk-home-ask";
+
+/** The records that need the reader soonest, as the prototype shows them under the box. */
 const TOP_ROWS = 4;
-const ACTIVITY_LINES = 6;
+/** The ledger lines read for the day; the first few show and the rest wait behind one line. */
+const ACTIVITY_READ = 18;
 
-function SectionSkeleton({ rows }: { rows: number }) {
-  return (
-    <div className="dk-w-sk" aria-hidden>
-      {Array.from({ length: rows }, (_, index) => (
-        <i key={index} className="dk-sk" />
-      ))}
-    </div>
-  );
-}
+const nowInSeconds = () => Math.floor(Date.now() / 1000);
+
+export type DeskTodayProps = {
+  agents: AgentChoice[];
+  threads: AssistantThread[];
+  isLoading: boolean;
+  isStarting: boolean;
+  onStart: (agentId: string, question?: string, extras?: DeskStartExtras) => void;
+};
 
 /**
- * Today under the box, telling before it asks: the day in figures, what
- * needs the reader soonest (one row per record, its signals under it), what
- * changed since they last looked, what agents settled and what they have in
- * hand. Each block shows only to someone who may read what it counts.
+ * The Desk's front page, as the prototype's `Today` draws it: the date, a
+ * greeting, one line on what the day holds with where it came from, and the
+ * box you talk into. Under the box it tells before it asks: the day in
+ * figures, what needs the reader soonest, what changed since they last
+ * looked, what agents settled and what they have in hand. Each block shows
+ * only to someone who may read what it counts.
+ *
+ * The line under the greeting is the morning briefing's headline when one was
+ * written (every figure in it was checked against the facts it was written
+ * from), and otherwise a sentence composed from counts, never from a model. A
+ * briefing cut to the sections the reader may open carries no headline, since
+ * it was written about the whole page; a quiet line names what was left out.
  */
-export function DeskToday({
-  briefing,
-  canWatch,
-  canDecide,
-  timezone,
-}: {
-  briefing: Briefing | null;
-  canWatch: boolean;
-  canDecide: boolean;
-  timezone: string;
-}) {
+export function DeskToday({ agents, threads, isLoading, isStarting, onStart }: DeskTodayProps) {
   const t = useT();
   const navigate = useNavigate();
+  const [opened] = useState(nowInSeconds);
   const now = useNow("minute");
-  const userId = useAuthStore((state) => state.user?.id ?? null);
+  const user = useAuthStore((state) => state.user);
+  const timezone = resolveUserTimezone(user?.timezone);
   const [startOfDay] = useState(() => getStartOfDay(new Date(), timezone));
 
+  const { allowed: canDecide, isLoading: permissionsLoading } = usePermission(
+    Resource.AgentProposal,
+    Operation.Read,
+  );
+  const { allowed: canWatch } = usePermission(Resource.Watchtower, Operation.Read);
+  const { data: attentionSummary } = useAttentionSummary();
+  const briefingQuery = useQuery({ ...briefingQueries.today(), retry: false });
+  const briefing = briefingQuery.data ?? null;
+  const summaryQuery = usePendingDecisionSummary(canDecide);
   const attentionQuery = useQuery({ ...deskAttention.list(), enabled: canWatch });
   const countsQuery = useQuery({ ...watchtower.counts(), enabled: canWatch });
   const seenAt = countsQuery.data?.seenAt ?? 0;
   const clearedQuery = useQuery({ ...watchtower.cleared(seenAt), enabled: canWatch && seenAt > 0 });
   const activityQuery = useQuery({
-    ...deskActivity.since(startOfDay, ACTIVITY_LINES * 3),
+    ...deskActivity.since(startOfDay, ACTIVITY_READ),
     enabled: canDecide,
   });
+
+  const preferredAgent = useDeskSetting("agent");
+  const ask = useDeskHomeAsk({ agents, threads, isLoading, preferId: preferredAgent, onStart });
+
+  const dateline = new Intl.DateTimeFormat(undefined, {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    timeZone: timezone,
+  }).format(new Date(opened * 1000));
+  const hour = toUserWallClock(opened, timezone)?.getHours() ?? 9;
+  const firstName = user?.name?.trim().split(/\s+/)[0] ?? "";
+
+  const waiting = summaryQuery.data?.total ?? attentionSummary?.agentDecisions ?? 0;
+  const headline = briefing?.headline ? (
+    <BriefingHeadline headline={briefing.headline} links={briefing.headlineLinks} />
+  ) : canDecide && waiting > 0 ? (
+    <Link to="/desk/decisions" className="dk-dy-lnk ui-focus-ring">
+      {t(
+        "{0, plural, one {One decision is waiting on you.} other {# decisions are waiting on you.}}",
+        waiting,
+      )}
+    </Link>
+  ) : ask.noAgents ? (
+    t("Nothing is running here yet.")
+  ) : (
+    t("How can I help today?")
+  );
+
+  const withheld = briefing?.withheldSections ?? [];
+  const headlinePending =
+    isLoading ||
+    permissionsLoading ||
+    briefingQuery.isPending ||
+    (canDecide && summaryQuery.isPending);
 
   const groups = attentionQuery.data?.groups ?? [];
   const working = groups
     .flatMap((group) => group.items)
-    .filter((item) => item.agentWork?.status === "Working");
+    .filter((item) => item.agentWork !== null && !item.agentWork.failed);
   const entries = activityQuery.data?.entries ?? [];
   const sinceEntries = entries.filter((entry) => entry.at > seenAt);
   const approvedByOthers = sinceEntries.filter(
     (entry) =>
-      entry.outcome === "Approved" && entry.decidedBy !== null && entry.decidedBy.id !== userId,
+      entry.outcome === "Approved" && entry.decidedBy !== null && entry.decidedBy.id !== user?.id,
   );
   const failedSince = sinceEntries.filter((entry) => entry.outcome === "Failed").length;
-  const groupOf = (itemId: string) =>
-    groups.find((group) => group.items.some((item) => item.id === itemId)) ?? null;
+  const needsCount = attentionQuery.data?.counts.everything ?? 0;
+  const handledCount = activityQuery.data?.hasMore
+    ? t("{0}+", entries.length)
+    : String(entries.length);
+  const pathOfWork = (itemId: string) => {
+    const group = groups.find((candidate) => candidate.items.some((item) => item.id === itemId));
+    return group ? attentionPath(group) : "/desk/needs";
+  };
 
   return (
-    <>
-      {briefing && <DeskDayStrip sections={briefing.sections} />}
-
-      {canWatch && (
-        <TodaySection
-          id="dk-w-needs"
-          title={t("Needs you")}
-          count={attentionQuery.data?.counts.everything}
-          more={{ to: "/desk/needs", label: t("All of them"), shortcut: "G N" }}
-        >
-          {attentionQuery.isPending ? (
-            <SectionSkeleton rows={TOP_ROWS} />
-          ) : attentionQuery.isError ? (
-            <p className="dk-w-quiet">{t("What needs you could not be read.")}</p>
-          ) : groups.length === 0 ? (
-            <p className="dk-w-quiet">{t("Nothing needs you right now.")}</p>
-          ) : (
-            <div className="dk-w-rows">
-              {groups.slice(0, TOP_ROWS).map((group) => (
-                <AttentionRow
-                  key={group.key}
-                  group={group}
-                  now={now}
-                  onOpen={() => void navigate(attentionPath(group))}
-                />
-              ))}
-            </div>
-          )}
-        </TodaySection>
-      )}
-
-      {canWatch && seenAt > 0 && (
-        <TodaySection
-          id="dk-w-since"
-          title={t("Since you left at {0}", formatUnixTime(seenAt, { timezone }))}
-        >
-          <SinceYouLeft
-            unseen={countsQuery.data?.unseen ?? 0}
-            cleared={clearedQuery.data ?? 0}
-            approvedByOthers={approvedByOthers}
-            failed={failedSince}
-          />
-        </TodaySection>
-      )}
-
-      {canDecide && (
-        <TodaySection
-          id="dk-w-handled"
-          title={t("Nova handled today")}
-          count={entries.length}
-          aside={t("since midnight")}
-        >
-          {activityQuery.isPending ? (
-            <SectionSkeleton rows={3} />
-          ) : activityQuery.isError ? (
-            <p className="dk-w-quiet">{t("What agents did today could not be read.")}</p>
-          ) : entries.length === 0 ? (
-            <p className="dk-w-quiet">{t("No agent has changed anything today.")}</p>
-          ) : (
-            <NovaHandled entries={entries.slice(0, ACTIVITY_LINES)} timezone={timezone} />
-          )}
-        </TodaySection>
-      )}
-
-      {canWatch && (
-        <TodaySection id="dk-w-working" title={t("Nova is working on")} count={working.length}>
-          {attentionQuery.isPending ? (
-            <SectionSkeleton rows={2} />
-          ) : working.length === 0 ? (
-            <p className="dk-w-quiet">
-              {t("No agent is working on anything open. Hand an item off from Needs you.")}
+    <div className="dk-dy-w">
+      <DeskDropOverlay show={ask.drag.on} hot={ask.drag.hot} count={ask.drag.count} />
+      <div className="dk-dy-scroll">
+        <div className="dk-dy">
+          <div className="dk-dy-date">{dateline}</div>
+          <h1 className="dk-dy-greet">{greeting(t, partOfDay(hour), firstName)}</h1>
+          <p className="dk-dy-hl" data-slot="desk-headline">
+            {headlinePending ? (
+              <span className="dk-dy-hl-sk ui-shimmer" data-slot="skeleton" />
+            ) : (
+              headline
+            )}
+          </p>
+          {!headlinePending && withheld.length > 0 && (
+            <p className="dk-dy-hl-note" data-slot="desk-briefing-withheld">
+              {withheldNote(t, withheld)}
             </p>
-          ) : (
-            <NovaWorking
-              items={working}
-              pathOf={(item) => {
-                const group = groupOf(item.id);
-                return group ? attentionPath(group) : "/desk/needs";
-              }}
-            />
           )}
-        </TodaySection>
-      )}
-    </>
+          {!headlinePending && withheld.length === 0 && briefing?.headline && (
+            <p className="dk-dy-hl-note" data-slot="desk-headline-source">
+              {briefing.narrated && <NovaBadge size="xs" />}
+              {briefing.narrated
+                ? t(
+                    "Written by Nova from this morning's figures; every number was checked against them.",
+                  )
+                : t("Counted from this morning's figures.")}
+            </p>
+          )}
+
+          <div className="dk-dy-cmp">
+            <DeskHomeComposer ask={ask} isStarting={isStarting} />
+          </div>
+
+          {briefing && <DayStrip sections={briefing.sections} />}
+
+          {canWatch && (
+            <TodaySection
+              id="dk-dy-needs"
+              title={t("Needs you")}
+              count={needsCount > 0 ? String(needsCount) : undefined}
+              more={{ to: "/desk/needs", label: t("All of them"), shortcut: "G N" }}
+            >
+              {attentionQuery.isPending ? (
+                <TodayRowsSkeleton rows={TOP_ROWS} />
+              ) : attentionQuery.isError ? (
+                <p className="dk-dy-quiet">{t("What needs you could not be read.")}</p>
+              ) : groups.length === 0 ? (
+                <p className="dk-dy-quiet">{t("Nothing needs you right now.")}</p>
+              ) : (
+                <div className="dk-dy-rows">
+                  {groups.slice(0, TOP_ROWS).map((group) => (
+                    <AttentionRow
+                      key={group.key}
+                      group={group}
+                      now={now}
+                      onOpen={() => void navigate(attentionPath(group))}
+                    />
+                  ))}
+                </div>
+              )}
+            </TodaySection>
+          )}
+
+          {canWatch && seenAt > 0 && (
+            <TodaySection
+              id="dk-dy-since"
+              title={t("Since you left at {0}", formatUnixTime(seenAt, { timezone }))}
+            >
+              <SinceYouLeft
+                unseen={countsQuery.data?.unseen ?? 0}
+                cleared={clearedQuery.data ?? 0}
+                approvedByOthers={approvedByOthers}
+                failed={failedSince}
+              />
+            </TodaySection>
+          )}
+
+          {canDecide && (
+            <TodaySection
+              id="dk-dy-handled"
+              title={t("Nova handled")}
+              count={entries.length > 0 ? handledCount : undefined}
+              aside={t("since midnight")}
+            >
+              {activityQuery.isPending ? (
+                <TodayRowsSkeleton rows={3} />
+              ) : activityQuery.isError ? (
+                <p className="dk-dy-quiet">{t("What agents did today could not be read.")}</p>
+              ) : entries.length === 0 ? (
+                <p className="dk-dy-quiet">{t("No agent has changed anything today.")}</p>
+              ) : (
+                <NovaHandled entries={entries} timezone={timezone} />
+              )}
+            </TodaySection>
+          )}
+
+          {canWatch && (
+            <TodaySection
+              id="dk-dy-working"
+              title={t("Nova is working on")}
+              count={working.length > 0 ? String(working.length) : undefined}
+            >
+              {attentionQuery.isPending ? (
+                <TodayRowsSkeleton rows={2} />
+              ) : working.length === 0 ? (
+                <p className="dk-dy-quiet">
+                  {t("No agent is working on anything open. Hand an item off from Needs you.")}
+                </p>
+              ) : (
+                <NovaWorking items={working} pathOf={(item) => pathOfWork(item.id)} />
+              )}
+            </TodaySection>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }

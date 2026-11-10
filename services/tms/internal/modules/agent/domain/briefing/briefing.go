@@ -103,6 +103,10 @@ type Briefing struct {
 
 	Status   Status `json:"status"   keel:"status"`
 	Headline string `json:"headline" keel:"headline,nullzero"`
+	// HeadlineLinks are the phrases of the headline that open what they are
+	// about, in the order they appear. Each is a section on the page, so the
+	// model can point at what was computed but never add a destination.
+	HeadlineLinks []HeadlineLink `json:"headlineLinks" keel:"headline_links,jsonb"`
 	// Sections is the page. Facts is what the figures were drawn from, kept
 	// so the guard can be re-run and a reader can be shown the working.
 	Sections []Section      `json:"sections" keel:"sections,jsonb"`
@@ -142,6 +146,7 @@ func (b *Briefing) GetBusinessUnitID() pulid.ID { return b.BusinessUnitID }
 // is cut rather than refused: the morning is not worth failing over.
 func (b *Briefing) Normalize() {
 	b.Headline = stringutils.Ellipsize(strings.TrimSpace(b.Headline), MaxHeadlineLength)
+	b.HeadlineLinks = FitLinks(b.Headline, b.HeadlineLinks)
 	if len(b.Sections) > MaxSections {
 		b.Sections = b.Sections[:MaxSections]
 	}

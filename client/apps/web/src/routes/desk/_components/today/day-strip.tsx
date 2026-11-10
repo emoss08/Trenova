@@ -1,19 +1,20 @@
 import type { BriefingSection } from "@/lib/graphql/briefing";
-import { cn } from "@trenova/shared/lib/utils";
 import { useT } from "@trenova/shared/i18n/use-t";
+import { cn } from "@trenova/shared/lib/utils";
+import type { CSSProperties } from "react";
 import { Link } from "react-router";
 
-/** How many of the morning's figures the strip shows; the briefing holds up to eight. */
+/** How many of the morning's figures the strip shows, as the prototype draws it; the briefing holds up to eight. */
 const CELLS = 6;
 
 /**
- * The day in figures, one joined strip under the box: each cell is a section
- * of this morning's briefing — what it counts, its first figure and what that
- * figure is — and opens the page that shows it. The numbers are the
- * briefing's own, computed before any wording, so the strip reads the same
- * with Nova away.
+ * The day in figures, the prototype's `.strip`: one joined strip under the
+ * box. Each cell is a section of this morning's briefing, what it counts, its
+ * first figure and what that figure is, and opens the page that shows it. The
+ * numbers are the briefing's own, computed before any wording, so the strip
+ * reads the same with Nova away.
  */
-export function DeskDayStrip({ sections }: { sections: readonly BriefingSection[] }) {
+export function DayStrip({ sections }: { sections: readonly BriefingSection[] }) {
   const t = useT();
   const cells = sections.filter((section) => section.items.length > 0).slice(0, CELLS);
   if (cells.length === 0) {
@@ -22,8 +23,8 @@ export function DeskDayStrip({ sections }: { sections: readonly BriefingSection[
 
   return (
     <nav
-      className="dk-w-strip"
-      style={{ gridTemplateColumns: `repeat(${cells.length}, minmax(0, 1fr))` }}
+      className="dk-dy-strip"
+      style={{ "--dk-dy-cells": cells.length } as CSSProperties}
       aria-label={t("The day")}
     >
       {cells.map((section) => {
@@ -32,12 +33,12 @@ export function DeskDayStrip({ sections }: { sections: readonly BriefingSection[
         const warn = section.key === "Exceptions";
         const body = (
           <>
-            <span className="dk-w-strip-l">{section.title}</span>
-            <span className="dk-w-strip-v">
-              {warn && <span className="dk-w-dot dk-warn" />}
+            <span className="dk-dy-strip-l">{section.title}</span>
+            <span className="dk-dy-strip-v">
+              {warn && <span className="dk-dy-dot dk-warn" />}
               {item.value}
             </span>
-            <span className={cn("dk-w-strip-d", warn && "dk-warn")}>{item.label}</span>
+            <span className={cn("dk-dy-strip-d", warn && "dk-warn")}>{item.label}</span>
           </>
         );
         return to ? (

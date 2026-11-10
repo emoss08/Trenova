@@ -1,56 +1,14 @@
 import { DeskAgentTile } from "@/components/desk-chat/desk-agent-tile";
 import type { DeskAttentionItem } from "@/lib/graphql/desk-attention";
-import type { WatchtowerAgentStep } from "@/lib/graphql/watchtower";
-import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
-import { cn } from "@trenova/shared/lib/utils";
+import { useT } from "@trenova/shared/i18n/use-t";
 import { Link } from "react-router";
-
-export function stepName(t: TranslateFn, step: WatchtowerAgentStep): string {
-  switch (step) {
-    case "Read":
-      return t("Read");
-    case "Decide":
-      return t("Decide");
-    default:
-      return t("Approve");
-  }
-}
-
-/** The run's real progress: steps done, the one under way, and what is left. */
-export function RunSteps({ work }: { work: NonNullable<DeskAttentionItem["agentWork"]> }) {
-  const t = useT();
-  const current = Math.min(work.step + 1, work.steps.length);
-
-  return (
-    <span className="dk-w-steps">
-      <span
-        className="dk-w-steps-b"
-        style={{ gridTemplateColumns: `repeat(${work.steps.length}, 1fr)` }}
-        aria-label={t("Step {0} of {1}", current, work.steps.length)}
-      >
-        {work.steps.map((step, index) => (
-          <i
-            key={step}
-            className={cn(
-              index < work.step && "dk-on",
-              index === work.step && work.status === "Working" && "dk-cur",
-            )}
-          />
-        ))}
-      </span>
-      <span className="dk-w-steps-l">
-        {work.steps.map((step) => (
-          <span key={step}>{stepName(t, step)}</span>
-        ))}
-      </span>
-    </span>
-  );
-}
+import { RunSteps } from "../attention/run-steps";
 
 /**
- * The work agents have in hand right now, each with its run's real progress:
- * reading the record, working out what to do, asking a person to approve. The
- * bar moves only when the run does; nothing here is simulated.
+ * The work agents have in hand right now, the prototype's `.run`: the agent,
+ * what it is doing and its run's real progress (reading the record, working
+ * out what to do, asking a person to approve). The bar moves only when the
+ * run does; nothing here is simulated.
  */
 export function NovaWorking({
   items,
@@ -63,18 +21,18 @@ export function NovaWorking({
   const t = useT();
 
   return (
-    <div className="dk-w-rows">
+    <div className="dk-dy-rows">
       {items.map((item) => {
         const work = item.agentWork;
         if (!work) {
           return null;
         }
         return (
-          <Link key={item.id} to={pathOf(item)} className="dk-w-run ui-focus-ring">
+          <Link key={item.id} to={pathOf(item)} className="dk-dy-run ui-focus-ring">
             <DeskAgentTile agent={work.agent} size="sm" />
-            <span className="dk-w-run-main">
-              <span className="dk-w-run-ti">{item.title}</span>
-              <span className="dk-w-run-nt">
+            <span className="dk-dy-run-main">
+              <span className="dk-dy-run-ti">{item.title}</span>
+              <span className="dk-dy-run-nt">
                 {work.note !== "" ? work.note : (work.agent?.name ?? t("An agent"))}
               </span>
             </span>

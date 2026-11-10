@@ -57,8 +57,8 @@ describe("Desk first load", () => {
     expect(screen.queryByText("The Desk")).toBeNull();
     const frame = document.querySelector('[data-slot="desk-loading-screen"]');
     expect(frame).toHaveClass("dsk");
-    expect(frame?.querySelector(".dk-sb")).not.toBeNull();
-    expect(frame?.querySelector(".dk-top")).not.toBeNull();
+    expect(frame?.querySelector(".dk-rl")).not.toBeNull();
+    expect(frame?.querySelector(".dk-tb")).not.toBeNull();
   });
 });
 
@@ -87,25 +87,28 @@ async function openAt(path: string) {
 describe("Desk loading screen", () => {
   it("fills the rail: its places, every shelf of conversations, the person's row", async () => {
     const frame = await openAt("/desk");
-    const rail = frame.querySelector(".dk-sb") as HTMLElement;
+    const rail = frame.querySelector(".dk-rl") as HTMLElement;
 
-    expect(rail.querySelectorAll(".dk-sb-top .dk-sk-ic")).toHaveLength(3);
-    expect(rail.querySelector(".dk-sb-top")?.firstElementChild).toHaveClass("dk-sk-ic");
+    expect(rail.querySelectorAll(".dk-rl-top .dk-sk-ic")).toHaveLength(3);
+    expect(rail.querySelector(".dk-rl-top")?.firstElementChild).toHaveClass("dk-sk-ic");
     expect(rail.querySelectorAll(".dk-skr .dk-sk-glyph")).toHaveLength(5);
     expect(rail.querySelectorAll(".dk-skr-gh")).toHaveLength(6);
     expect(rail.querySelectorAll(".dk-skr .dk-sk-dot")).toHaveLength(34);
-    expect(rail.querySelector(".dk-sb-list")).toHaveClass("dk-skr-list");
+    expect(rail.querySelector(".dk-rl-list")).toHaveClass("dk-skr-list");
     expect(rail.querySelector(".dk-skr-me .dk-sk-me")).not.toBeNull();
   });
 
   it("opens Today on the greeting over the composer", async () => {
     const frame = await openAt("/desk");
-    const home = frame.querySelector(".dk-home-in") as HTMLElement;
+    const home = frame.querySelector(".dk-dy") as HTMLElement;
 
-    expect(
-      [...home.children].map((child) => child.className.replace("dk-sk ", "")),
-    ).toEqual(["dk-sk-date", "dk-sk-greet", "dk-sk-headline", "dk-sk-cmp"]);
-    expect(frame.querySelector(".dk-top .dk-sk-place")).not.toBeNull();
+    expect([...home.children].map((child) => child.className.replace("dk-sk ", ""))).toEqual([
+      "dk-sk-date",
+      "dk-sk-greet",
+      "dk-sk-headline",
+      "dk-sk-cmp",
+    ]);
+    expect(frame.querySelector(".dk-tb .dk-sk-place")).not.toBeNull();
     expect(frame.querySelector(".dk-stage")).toBeNull();
   });
 
@@ -116,17 +119,17 @@ describe("Desk loading screen", () => {
     expect(room.querySelectorAll(".dk-scroll > .dk-grid.dk-flow > .dk-skt")).toHaveLength(2);
     expect(room.querySelector(".dk-dock .dk-c > .dk-sk-cmp")).not.toBeNull();
     expect(room.querySelector(".dk-dock .dk-c > .dk-sk-hint")).not.toBeNull();
-    expect(frame.querySelector(".dk-top .dk-sk-tile")).not.toBeNull();
-    expect(frame.querySelector(".dk-top .dk-sk-title")).not.toBeNull();
-    expect(frame.querySelector(".dk-home-in")).toBeNull();
+    expect(frame.querySelector(".dk-tb .dk-sk-tile")).not.toBeNull();
+    expect(frame.querySelector(".dk-tb .dk-sk-title")).not.toBeNull();
+    expect(frame.querySelector(".dk-dy")).toBeNull();
     expect(screen.getAllByRole("status")).toHaveLength(1);
   });
 
   it("opens any other place on its strip and leaves the page to it", async () => {
     const frame = await openAt("/desk/watchtower");
 
-    expect(frame.querySelector(".dk-top .dk-sk-place")).not.toBeNull();
-    expect(frame.querySelector(".dk-home-in")).toBeNull();
+    expect(frame.querySelector(".dk-tb .dk-sk-place")).not.toBeNull();
+    expect(frame.querySelector(".dk-dy")).toBeNull();
     expect(frame.querySelector(".dk-stage")).toBeNull();
   });
 });

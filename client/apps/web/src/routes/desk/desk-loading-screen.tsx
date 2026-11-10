@@ -3,6 +3,9 @@ import { conversationAtPath } from "@/lib/conversation-path";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useLocation } from "react-router";
 import "@/components/desk-chat/desk-frame.css";
+import "./_components/rail/rail.css";
+import "./_components/today/today.css";
+import "./_components/top/top.css";
 
 /** How wide each of the rail's places is drawn: Today, Watchtower, Decisions, Scheduled, Memory. */
 const PLACE_WIDTHS = [38, 58, 52, 54, 44] as const;
@@ -52,15 +55,15 @@ export function DeskLoadingScreen() {
       <span role="status" className="sr-only">
         {t("Opening the desk")}
       </span>
-      <aside className="dk-sb" aria-hidden>
-        <div className="dk-sb-top">
+      <aside className="dk-rl" aria-hidden>
+        <div className="dk-rl-top">
           <i className="dk-sk dk-sk-ic" />
           <i className="dk-sk dk-sk-logo" />
           <span className="dk-sk-sp" />
           <i className="dk-sk dk-sk-ic" />
           <i className="dk-sk dk-sk-ic" />
         </div>
-        <div className="dk-sb-list dk-skr-list">
+        <div className="dk-rl-list dk-skr-list">
           {PLACE_WIDTHS.map((width) => (
             <div key={width} className="dk-skr">
               <i className="dk-sk dk-sk-glyph" />
@@ -92,7 +95,7 @@ export function DeskLoadingScreen() {
         </div>
       </aside>
       <div className="dk-mainc">
-        <header className="dk-top" aria-hidden>
+        <header className="dk-tb" aria-hidden>
           {opening === "conversation" ? (
             <>
               <i className="dk-sk dk-sk-tile" />
@@ -111,9 +114,9 @@ export function DeskLoadingScreen() {
         {opening === "conversation" ? (
           <DeskConversationSkeleton announce={false} />
         ) : opening === "home" ? (
-          <div className="dk-home-w" aria-hidden>
-            <div className="dk-home">
-              <div className="dk-home-in">
+          <div className="dk-dy-w" aria-hidden>
+            <div className="dk-dy-scroll">
+              <div className="dk-dy dk-dy-skh">
                 <i className="dk-sk dk-sk-date" />
                 <i className="dk-sk dk-sk-greet" />
                 <i className="dk-sk dk-sk-headline" />

@@ -6,6 +6,8 @@ type QueryContext = { signal?: AbortSignal };
 function normalized(filter?: DeskAttentionFilter): Required<DeskAttentionFilter> {
   return {
     lens: filter?.lens ?? "Everything",
+    kinds: [...(filter?.kinds ?? [])].sort(),
+    severities: [...(filter?.severities ?? [])].sort(),
     first: filter?.first ?? 0,
     recordId: filter?.recordId ?? "",
   };
@@ -19,7 +21,13 @@ export const deskAttention = createQueryKeys("deskAttention", {
       queryKey: [key],
       queryFn: ({ signal }: QueryContext) =>
         fetchDeskAttention(
-          { lens: key.lens, first: key.first || undefined, recordId: key.recordId || null },
+          {
+            lens: key.lens,
+            kinds: key.kinds,
+            severities: key.severities,
+            first: key.first || undefined,
+            recordId: key.recordId || null,
+          },
           { signal },
         ),
     };

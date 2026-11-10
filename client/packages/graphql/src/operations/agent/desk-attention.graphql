@@ -40,29 +40,53 @@ query DeskAttention($input: DeskAttentionInput!) {
   }
 }
 
+fragment DeskActivityEntryFields on DeskActivityEntry {
+  id
+  outcome
+  at
+  agent {
+    ...WatchtowerAgentFields
+  }
+  runId
+  planId
+  title
+  detail
+  count
+  records {
+    ...DeskRecordFields
+  }
+  recordsMore
+  decidedBy {
+    id
+    name
+  }
+  proposalIds
+}
+
+query DeskActivityEntry($id: ID!) {
+  deskActivityEntry(id: $id) {
+    entry {
+      ...DeskActivityEntryFields
+    }
+    tool
+    changes {
+      proposalId
+      record {
+        ...DeskRecordFields
+      }
+      at
+      outcome
+      error
+    }
+    ranBefore
+    ranSince
+  }
+}
+
 query DeskActivity($since: Timestamp!, $first: Int) {
   deskActivity(since: $since, first: $first) {
     entries {
-      id
-      outcome
-      at
-      agent {
-        ...WatchtowerAgentFields
-      }
-      runId
-      planId
-      title
-      detail
-      count
-      records {
-        ...DeskRecordFields
-      }
-      recordsMore
-      decidedBy {
-        id
-        name
-      }
-      proposalIds
+      ...DeskActivityEntryFields
     }
     hasMore
   }

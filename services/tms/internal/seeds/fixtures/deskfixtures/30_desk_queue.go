@@ -384,6 +384,7 @@ func (s *DeskSeed) queueItems(refs *deskSeedRefs, readerID pulid.ID) *queueSeed 
 			item.SubjectType = spec.subject.kind
 			item.SubjectID = spec.subject.id
 			item.EventKind = spec.eventKind
+			item.SetAbout(spec.subject.id)
 		}
 		if spec.due != nil {
 			item.ApplyDeadline(&watchtower.Deadline{

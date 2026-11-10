@@ -767,9 +767,16 @@ work read.
   through `TodaysBriefing`. `BriefingService` drops every section whose source
   resource the reader may not read, and every watchtower line of a kind they
   may not read, for the screen and the tool alike, and names them in
-  `withheldSections`. When anything is dropped, the headline goes too and the
-  remaining sections read in their computed wording, because the model's prose
-  may cite a figure from what was dropped.
+  `withheldSections`. When anything is dropped, the headline and its links go
+  too and the remaining sections read in their computed wording, because the
+  model's prose may cite a figure from what was dropped.
+- The briefing's headline carries `headlineLinks`: phrases of it that open the
+  section they are about. The writer returns a phrase and a section key, never
+  a path; `briefing.LinkPhrases` keeps a phrase only when it appears in the
+  headline, does not overlap another and names a section on the page with a
+  path, at most three, and the link takes that section's path. The computed
+  headline links its whole sentence to its section, so a page with no model
+  still opens what it talks about.
 - `agent_list_runs` filters on status, trigger, subject, agent and date; `mine`
   keeps to the calling agent and is on by default when an agent principal runs
   unattended. A run on an assistant conversation is listed only to the person

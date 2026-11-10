@@ -566,7 +566,6 @@
   "Fields scored": "已评分字段",
   "Figures it can back up": "有据可查的数据",
   "Filter this agent's tools": "筛选此智能体的工具",
-  "Filtered": "已筛选",
   "Filters left rows out, so the file's chain cannot be checked end to end.": "筛选条件排除了部分数据行，因此无法从头到尾验证文件的哈希链。",
   "First of the month": "每月第一天",
   "First token": "首个令牌",

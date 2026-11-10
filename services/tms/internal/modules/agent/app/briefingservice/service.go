@@ -191,13 +191,7 @@ func (s *Service) writeRole(
 		Facts:          p.facts.Map(),
 	}
 
-	// A role with nothing computed for it is still written, so the page
-	// says the morning is quiet rather than showing yesterday's.
-	if len(sections) == 0 {
-		entity.Headline = "Nothing needs you this morning."
-	} else {
-		entity.Headline = sections[0].Summary
-	}
+	entity.Headline, entity.HeadlineLinks = briefing.ComputedHeadline(sections)
 
 	if p.narrate && len(sections) > 0 {
 		written := s.writer.Write(ctx, &briefingwriter.Request{
@@ -208,6 +202,7 @@ func (s *Service) writeRole(
 			Supported:        p.facts.Supported(),
 		})
 		entity.Headline = written.Headline
+		entity.HeadlineLinks = written.Links
 		entity.Narrated = written.Narrated
 		if written.Narrated {
 			entity.ModelIdentifier = written.ModelIdentifier

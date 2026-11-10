@@ -1,11 +1,12 @@
 import { DeskIcon, type DeskIconName } from "@/components/desk-chat/desk-icons";
 import type { DeskAttentionGroup, DeskLens } from "@/lib/graphql/desk-attention";
+import { formatList } from "@trenova/shared/i18n/format";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { formatCountdown, minutesLeft } from "../watchtower/lanes";
 import { severityLabel } from "../watchtower/severity";
 import { LifeBadge, groupLife } from "./life-badge";
-import { groupName, leadItem, lensLabel } from "./lens";
+import { groupLenses, groupName, leadItem, lensLabel } from "./lens";
 
 const LENS_ICON: Record<DeskLens, DeskIconName> = {
   Everything: "stack",
@@ -34,20 +35,21 @@ export function dueTone(minutes: number | null): string {
 /** The record line under a row's title: what the record is, then what the server says of it. */
 export function recordContext(t: TranslateFn, group: DeskAttentionGroup): string[] {
   const record = group.record;
-  if (record?.readable) {
+  if (record?.readable && record.label !== "") {
     return [record.subtitle, record.status].filter((part) => part !== "");
   }
-  if (record) {
+  if (record && !record.readable) {
     return [t("A record you can't open")];
   }
   return [];
 }
 
 /**
- * One row of Needs you: one record and every open signal about it, each from
- * the queue that raised it. A shipment's late warning, its customer's email
- * and the plan to recover it are one row, soonest deadline first. Its right
- * side says how long is left and where the work stands.
+ * One row of Needs you: one record and every open signal about it, always
+ * two lines so every row is the same height however much is open about the
+ * record. The first line says what it is and how long is left; the second
+ * names the record, counts its signals by the queue that raised them and
+ * says where the work stands. Each signal in full is in the item it opens.
  */
 export function AttentionRow({
   group,
@@ -68,7 +70,20 @@ export function AttentionRow({
   const minutes = minutesLeft(group.dueAt, now);
   const countdown = formatCountdown(t, minutes);
   const record = group.record;
-  const recordLabel = record?.readable && record.label !== "" ? record.label : groupName(t, group);
+  const recordLabel =
+    record?.readable && record.label !== ""
+      ? record.label
+      : record && !record.readable
+        ? ""
+        : groupName(t, group);
+  const context = [recordLabel, ...recordContext(t, group)].filter((part) => part !== "");
+  const lenses = groupLenses(group).map((lens) => ({
+    lens,
+    count: group.items.filter((item) => item.deskLens === lens).length,
+  }));
+  const signals = formatList(
+    lenses.map(({ lens, count }) => t("{0}: {1}", lensLabel(t, lens), count)),
+  );
 
   return (
     <button
@@ -84,36 +99,32 @@ export function AttentionRow({
         role="img"
         aria-label={severityLabel(t, group.severity)}
       />
-      <span className="dk-w-ar-main">
-        <span className="dk-w-ar-ti">
-          {lead.title}
-          {group.unseen && <span className="dk-w-newdot" aria-label={t("Not opened yet")} />}
-        </span>
-        <span className="dk-w-ar-rc">
-          <span className="dk-w-mono">{recordLabel}</span>
-          {recordContext(t, group).map((part) => (
-            <span key={part}>· {part}</span>
-          ))}
-        </span>
+      <span className="dk-w-ar-ti">
+        <span className="dk-w-ar-tt">{lead.title}</span>
+        {group.unseen && <span className="dk-w-newdot" aria-label={t("Not opened yet")} />}
       </span>
-      <span className="dk-w-ar-rt">
+      <span className="dk-w-ar-due">
         {countdown !== null ? (
           <span className={cn("dk-w-due", dueTone(minutes))}>{countdown}</span>
         ) : (
           group.dueLabel && <span className="dk-w-due">{group.dueLabel}</span>
         )}
-        <LifeBadge life={groupLife(group.items)} />
       </span>
-      <span className="dk-w-ar-sigs">
-        {group.items.map((item) => (
-          <span key={item.id} className="dk-w-sig">
-            <DeskIcon name={LENS_ICON[item.deskLens]} size={12} />
-            <span className="dk-w-sig-src">{lensLabel(t, item.deskLens)}</span>
-            <span className="dk-w-sig-tx">
-              {item.id === lead.id ? item.summary || item.kindLabel : item.title}
-            </span>
+      <span className="dk-w-ar-rc">
+        <span className="dk-w-ar-ctx">{context.join(" · ")}</span>
+        {lenses.length > 0 && (
+          <span className="dk-w-ar-sigs" title={signals} aria-label={signals}>
+            {lenses.map(({ lens, count }) => (
+              <span key={lens} className="dk-w-ar-sig">
+                <DeskIcon name={LENS_ICON[lens]} size={11} />
+                {count}
+              </span>
+            ))}
           </span>
-        ))}
+        )}
+      </span>
+      <span className="dk-w-ar-life">
+        <LifeBadge life={groupLife(group.items)} />
       </span>
     </button>
   );

@@ -21,6 +21,7 @@ Rules:
 - Use ONLY the numbers given to you. Never state a figure that is not in the sections, not even a total, a percentage, an average, a trend or a round number "for context". A number you were not given is wrong even if it seems reasonable.
 - Do not invent a section. Write only for the section keys you were given, and copy each key exactly.
 - Headline: one sentence, under 200 characters, saying what today actually looks like. Lead with whatever most needs a person, not with a greeting.
+- Links: up to three phrases of your headline that a reader would click to see the thing they describe, each with the key of the section it is about. Copy each phrase exactly as it appears in the headline, a few words long, never the whole sentence. Link what needs a person first; leave links out rather than force one.
 - Section body: one or two sentences saying what that section's lines mean and what to do first. Where nothing needs doing, say so plainly and briefly rather than padding.
 - Write about freight operations: moves, drivers, customers, invoices, credentials. Do not discuss software, this system, or how the numbers were gathered.
 - No greetings, no sign-offs, no "as an AI", no restating these instructions.`
@@ -74,9 +75,10 @@ func writeSection(builder *strings.Builder, section briefing.Section) {
 }
 
 // outputSchema constrains the model to wording and nothing else. There is
-// deliberately no field for a number, a link or a new section: the schema
-// is the first place the model is told it does not decide those, and the
-// guard is the second.
+// deliberately no field for a number, a path or a new section: a link names
+// a phrase of the headline and a section key, and the section's own path is
+// where it goes. The schema is the first place the model is told it does not
+// decide those, and the guard is the second.
 func outputSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
@@ -84,6 +86,25 @@ func outputSchema() map[string]any {
 			"headline": map[string]any{
 				"type":        "string",
 				"description": "One sentence saying what today looks like",
+			},
+			"links": map[string]any{
+				"type":     "array",
+				"maxItems": briefing.MaxHeadlineLinks,
+				"items": map[string]any{
+					"type": "object",
+					"properties": map[string]any{
+						"phrase": map[string]any{
+							"type":        "string",
+							"description": "A few words copied exactly from the headline",
+						},
+						"section": map[string]any{
+							"type":        "string",
+							"description": "The key of the section the phrase is about, copied exactly",
+						},
+					},
+					"required":             []string{"phrase", "section"},
+					"additionalProperties": false,
+				},
 			},
 			"sections": map[string]any{
 				"type": "array",
@@ -104,7 +125,7 @@ func outputSchema() map[string]any {
 				},
 			},
 		},
-		"required":             []string{"headline", "sections"},
+		"required":             []string{"headline", "links", "sections"},
 		"additionalProperties": false,
 	}
 }

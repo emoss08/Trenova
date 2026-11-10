@@ -1203,6 +1203,28 @@ func (rr *RouteRegistry) registerDeskRoutes() {
 	})
 
 	_ = rr.Register(&RouteDefinition{
+		Path:      "/desk/r/:kind/:id",
+		MatchType: RouteMatchPattern,
+		Requirements: []RouteRequirement{
+			{Resource: permission.ResourceWatchtower, Operation: permission.OpRead},
+		},
+		DisplayName: "Desk case",
+		Category:    "Desk",
+		ParentRoute: "/desk",
+	})
+
+	_ = rr.Register(&RouteDefinition{
+		Path:      "/desk/handled/:id",
+		MatchType: RouteMatchPattern,
+		Requirements: []RouteRequirement{
+			{Resource: permission.ResourceAgentProposal, Operation: permission.OpRead},
+		},
+		DisplayName: "Nova handled",
+		Category:    "Desk",
+		ParentRoute: "/desk",
+	})
+
+	_ = rr.Register(&RouteDefinition{
 		Path:      "/desk/needs",
 		MatchType: RouteMatchExact,
 		Requirements: []RouteRequirement{

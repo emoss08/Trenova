@@ -2,9 +2,9 @@
 // person reads.
 //
 // It is the only part of the briefing that talks to a model, and it is the
-// least trusted part. It cannot add a section, a figure or a link: it is
-// given the page as computed and returns a headline and one sentence per
-// section. Every sentence is checked against the figures that were gathered,
+// least trusted part. It cannot add a section, a figure or a destination: it
+// is given the page as computed and returns a headline, the phrases of it
+// that point at a section, and one sentence per section. Every sentence is checked against the figures that were gathered,
 // and anything citing a number nobody computed is dropped in favour of the
 // deterministic wording. A briefing without a model is a complete briefing.
 package briefingwriter
@@ -64,6 +64,10 @@ type Request struct {
 // Result is the wording, and whether any of it was the model's.
 type Result struct {
 	Headline string
+	// Links are the headline's phrases that open the section they are about,
+	// each checked to appear in the headline and to name a section on the
+	// page.
+	Links []briefing.HeadlineLink
 	// Bodies is the model's sentence per section key, only for the
 	// sections whose wording survived the guard.
 	Bodies map[briefing.SectionKey]string
@@ -78,8 +82,10 @@ type Result struct {
 // briefing whose prose could not be written is still a briefing, and the
 // caller keeps the deterministic summaries.
 func (s *Service) Write(ctx context.Context, req *Request) Result {
+	headline, links := briefing.ComputedHeadline(req.Sections)
 	result := Result{
-		Headline: fallbackHeadline(req.Sections),
+		Headline: headline,
+		Links:    links,
 		Bodies:   map[briefing.SectionKey]string{},
 	}
 	if len(req.Sections) == 0 {
@@ -135,6 +141,7 @@ func (s *Service) apply(
 	if headline := strings.TrimSpace(written.Headline); headline != "" {
 		if check := numberguard.CheckNumbers(headline, req.Supported); check.OK {
 			result.Headline = headline
+			result.Links = briefing.LinkPhrases(headline, req.Sections, written.phrases())
 			result.Narrated = true
 		} else {
 			s.rejected(req, completion, "headline", check.Unsupported)
@@ -198,10 +205,26 @@ func (s *Service) logUnavailable(err error, role briefing.RoleKey) {
 
 type briefingDraft struct {
 	Headline string `json:"headline"`
+	Links    []struct {
+		Phrase  string `json:"phrase"`
+		Section string `json:"section"`
+	} `json:"links"`
 	Sections []struct {
 		Key  string `json:"key"`
 		Body string `json:"body"`
 	} `json:"sections"`
+}
+
+func (d *briefingDraft) phrases() []briefing.Phrase {
+	phrases := make([]briefing.Phrase, 0, len(d.Links))
+	for _, link := range d.Links {
+		phrases = append(phrases, briefing.Phrase{
+			Text:    link.Phrase,
+			Section: briefing.SectionKey(link.Section),
+		})
+	}
+
+	return phrases
 }
 
 func parse(text string) (*briefingDraft, error) {
@@ -211,16 +234,4 @@ func parse(text string) (*briefingDraft, error) {
 	}
 
 	return draft, nil
-}
-
-// fallbackHeadline is what the page says when no model wrote it: the first
-// computed summary, which is plainer and always true.
-func fallbackHeadline(sections []briefing.Section) string {
-	for _, section := range sections {
-		if summary := strings.TrimSpace(section.Summary); summary != "" {
-			return summary
-		}
-	}
-
-	return "Here is your day."
 }

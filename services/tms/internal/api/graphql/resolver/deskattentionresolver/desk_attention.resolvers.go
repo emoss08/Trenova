@@ -95,6 +95,22 @@ func (r *QueryResolver) DeskActivity(ctx context.Context, since int, first *int)
 	}, actorutil.FromAuthContext(authCtx))
 }
 
+func (r *QueryResolver) DeskActivityEntry(ctx context.Context, id string) (*deskactivityports.EntryDetail, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentProposal, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+	entryID, err := gqlid.ParseIDField("id", id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.DeskActivityService.Entry(ctx, &deskactivityports.EntryRequest{
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+		ID:         entryID,
+	}, actorutil.FromAuthContext(authCtx))
+}
+
 func (r *WatchtowerItemResolver) DeskLens(ctx context.Context, obj *watchtower.Item) (watchtower.DeskLens, error) {
 	return obj.SourceKind.DeskLens(), nil
 }

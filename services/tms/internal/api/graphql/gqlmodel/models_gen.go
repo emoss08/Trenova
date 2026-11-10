@@ -3633,6 +3633,10 @@ type DeliveryHourBucket struct {
 type DeskAttentionInput struct {
 	// Rows with at least one item in this lens; each row still shows all its items.
 	Lens *watchtower.DeskLens `json:"lens,omitempty"`
+	// Rows with an item of one of these kinds, within the lens. Empty is every kind in it.
+	Kinds []watchtower.SourceKind `json:"kinds,omitempty"`
+	// Rows with an item of one of these severities. Empty is every severity.
+	Severities []watchtower.Severity `json:"severities,omitempty"`
 	// Rows to read, at most 100.
 	First *int `json:"first,omitempty"`
 	// One record's row, for its case: every open item about it.

@@ -16,7 +16,7 @@ export function needsItemPath(itemId: string): string {
  */
 export function attentionPath(group: DeskAttentionGroup): string {
   const record = group.record;
-  if (record?.readable) {
+  if (record?.readable && record.label !== "") {
     return casePath(record.kind, record.id);
   }
   return needsItemPath(group.items[0]?.id ?? "");

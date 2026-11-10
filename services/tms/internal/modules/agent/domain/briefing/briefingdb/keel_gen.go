@@ -33,6 +33,7 @@ var briefingsTable = schema.Table{
 		{Name: "run_id", Quoted: `"run_id"`, Field: "RunID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Run ID`, JSON: `runId`},
 		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, JSON: `status`, Enum: enumStatus[:]},
 		{Name: "headline", Quoted: `"headline"`, Field: "Headline", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Headline`, JSON: `headline`},
+		{Name: "headline_links", Quoted: `"headline_links"`, Field: "HeadlineLinks", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Headline Links`, Doc: `HeadlineLinks are the phrases of the headline that open what they are about, in the order they appear. Each is a section on the page, so the model can point at what was computed but never add a destination.`, JSON: `headlineLinks`},
 		{Name: "sections", Quoted: `"sections"`, Field: "Sections", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Sections`, Doc: `Sections is the page. Facts is what the figures were drawn from, kept so the guard can be re-run and a reader can be shown the working.`, JSON: `sections`},
 		{Name: "facts", Quoted: `"facts"`, Field: "Facts", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Facts`, JSON: `facts`},
 		{Name: "narrated", Quoted: `"narrated"`, Field: "Narrated", Kind: schema.KindBool, Flags: 0, Label: `Narrated`, Doc: `Narrated says whether the model's wording was accepted. False means the page is the deterministic one, which is a complete briefing.`, JSON: `narrated`},
@@ -47,14 +48,14 @@ var briefingsTable = schema.Table{
 	},
 	PK:         []int32{0, 1, 2},
 	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 19},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
+	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20},
 	Returning:  nil,
-	Version:    17,
+	Version:    18,
 	AutoID:     0,
-	AutoCreate: 18,
-	AutoUpdate: 19,
+	AutoCreate: 19,
+	AutoUpdate: 20,
 	IDPrefix:   "brf_",
 	New:        newBriefing,
 	NewN:       newNBriefing,
@@ -77,6 +78,7 @@ type BriefingsTable struct {
 	RunID           keelkinds.PulidIDCol
 	Status          StatusCol
 	Headline        keel.StringCol
+	HeadlineLinks   keel.JSONBCol
 	Sections        keel.JSONBCol
 	Facts           keel.JSONBCol
 	Narrated        keel.BoolCol
@@ -102,17 +104,18 @@ var Briefings = &BriefingsTable{
 	RunID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &briefingsRef, Index: 6}}},
 	Status:          StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &briefingsRef, Index: 7}}},
 	Headline:        keel.StringCol{Col: keel.Col{Ref: &briefingsRef, Index: 8}},
-	Sections:        keel.JSONBCol{Col: keel.Col{Ref: &briefingsRef, Index: 9}},
-	Facts:           keel.JSONBCol{Col: keel.Col{Ref: &briefingsRef, Index: 10}},
-	Narrated:        keel.BoolCol{Col: keel.Col{Ref: &briefingsRef, Index: 11}},
-	ModelIdentifier: keel.StringCol{Col: keel.Col{Ref: &briefingsRef, Index: 12}},
-	ProviderID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &briefingsRef, Index: 13}}},
-	FailureReason:   keel.StringCol{Col: keel.Col{Ref: &briefingsRef, Index: 14}},
-	EmailedAt:       keel.Int64Col{Col: keel.Col{Ref: &briefingsRef, Index: 15}},
-	ReadAt:          keel.Int64Col{Col: keel.Col{Ref: &briefingsRef, Index: 16}},
-	Version:         keel.Int64Col{Col: keel.Col{Ref: &briefingsRef, Index: 17}},
-	CreatedAt:       keel.Int64Col{Col: keel.Col{Ref: &briefingsRef, Index: 18}},
-	UpdatedAt:       keel.Int64Col{Col: keel.Col{Ref: &briefingsRef, Index: 19}},
+	HeadlineLinks:   keel.JSONBCol{Col: keel.Col{Ref: &briefingsRef, Index: 9}},
+	Sections:        keel.JSONBCol{Col: keel.Col{Ref: &briefingsRef, Index: 10}},
+	Facts:           keel.JSONBCol{Col: keel.Col{Ref: &briefingsRef, Index: 11}},
+	Narrated:        keel.BoolCol{Col: keel.Col{Ref: &briefingsRef, Index: 12}},
+	ModelIdentifier: keel.StringCol{Col: keel.Col{Ref: &briefingsRef, Index: 13}},
+	ProviderID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &briefingsRef, Index: 14}}},
+	FailureReason:   keel.StringCol{Col: keel.Col{Ref: &briefingsRef, Index: 15}},
+	EmailedAt:       keel.Int64Col{Col: keel.Col{Ref: &briefingsRef, Index: 16}},
+	ReadAt:          keel.Int64Col{Col: keel.Col{Ref: &briefingsRef, Index: 17}},
+	Version:         keel.Int64Col{Col: keel.Col{Ref: &briefingsRef, Index: 18}},
+	CreatedAt:       keel.Int64Col{Col: keel.Col{Ref: &briefingsRef, Index: 19}},
+	UpdatedAt:       keel.Int64Col{Col: keel.Col{Ref: &briefingsRef, Index: 20}},
 }
 
 // BuildBriefings builds the table of assistant_briefings for ref. Generated relation and alias methods call it.
@@ -128,17 +131,18 @@ func BuildBriefings(r *keel.Ref) *BriefingsTable {
 		RunID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
 		Status:          StatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
 		Headline:        keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
-		Sections:        keel.JSONBCol{Col: keel.Col{Ref: r, Index: 9}},
-		Facts:           keel.JSONBCol{Col: keel.Col{Ref: r, Index: 10}},
-		Narrated:        keel.BoolCol{Col: keel.Col{Ref: r, Index: 11}},
-		ModelIdentifier: keel.StringCol{Col: keel.Col{Ref: r, Index: 12}},
-		ProviderID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 13}}},
-		FailureReason:   keel.StringCol{Col: keel.Col{Ref: r, Index: 14}},
-		EmailedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
-		ReadAt:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
-		Version:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
-		CreatedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
-		UpdatedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 19}},
+		HeadlineLinks:   keel.JSONBCol{Col: keel.Col{Ref: r, Index: 9}},
+		Sections:        keel.JSONBCol{Col: keel.Col{Ref: r, Index: 10}},
+		Facts:           keel.JSONBCol{Col: keel.Col{Ref: r, Index: 11}},
+		Narrated:        keel.BoolCol{Col: keel.Col{Ref: r, Index: 12}},
+		ModelIdentifier: keel.StringCol{Col: keel.Col{Ref: r, Index: 13}},
+		ProviderID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 14}}},
+		FailureReason:   keel.StringCol{Col: keel.Col{Ref: r, Index: 15}},
+		EmailedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
+		ReadAt:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
+		Version:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
+		CreatedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 19}},
+		UpdatedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 20}},
 	}
 }
 
@@ -548,26 +552,28 @@ func ptrBriefing(p unsafe.Pointer, c int32) any {
 	case 8:
 		return &r.Headline
 	case 9:
-		return &r.Sections
+		return &r.HeadlineLinks
 	case 10:
-		return &r.Facts
+		return &r.Sections
 	case 11:
-		return &r.Narrated
+		return &r.Facts
 	case 12:
-		return &r.ModelIdentifier
+		return &r.Narrated
 	case 13:
-		return (*string)(unsafe.Pointer(&r.ProviderID))
+		return &r.ModelIdentifier
 	case 14:
-		return &r.FailureReason
+		return (*string)(unsafe.Pointer(&r.ProviderID))
 	case 15:
-		return &r.EmailedAt
+		return &r.FailureReason
 	case 16:
-		return &r.ReadAt
+		return &r.EmailedAt
 	case 17:
-		return &r.Version
+		return &r.ReadAt
 	case 18:
-		return &r.CreatedAt
+		return &r.Version
 	case 19:
+		return &r.CreatedAt
+	case 20:
 		return &r.UpdatedAt
 	}
 	return nil
@@ -604,47 +610,52 @@ func valueBriefing(p unsafe.Pointer, c int32) any {
 		}
 		return r.Headline
 	case 9:
+		if r.HeadlineLinks == nil {
+			return keel.EmptyJSONArray
+		}
+		return r.HeadlineLinks
+	case 10:
 		if r.Sections == nil {
 			return keel.EmptyJSONArray
 		}
 		return r.Sections
-	case 10:
+	case 11:
 		if r.Facts == nil {
 			return keel.EmptyJSONObject
 		}
 		return r.Facts
-	case 11:
-		return r.Narrated
 	case 12:
+		return r.Narrated
+	case 13:
 		if r.ModelIdentifier == "" {
 			return nil
 		}
 		return r.ModelIdentifier
-	case 13:
+	case 14:
 		if r.ProviderID == "" {
 			return nil
 		}
 		return string(r.ProviderID)
-	case 14:
+	case 15:
 		if r.FailureReason == "" {
 			return nil
 		}
 		return r.FailureReason
-	case 15:
+	case 16:
 		if r.EmailedAt == nil {
 			return nil
 		}
 		return *r.EmailedAt
-	case 16:
+	case 17:
 		if r.ReadAt == nil {
 			return nil
 		}
 		return *r.ReadAt
-	case 17:
-		return r.Version
 	case 18:
-		return r.CreatedAt
+		return r.Version
 	case 19:
+		return r.CreatedAt
+	case 20:
 		return r.UpdatedAt
 	}
 	return nil

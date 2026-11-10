@@ -314,3 +314,5 @@ export function useWatchtowerActions({
     },
   };
 }
+
+export type WatchtowerActions = ReturnType<typeof useWatchtowerActions>;

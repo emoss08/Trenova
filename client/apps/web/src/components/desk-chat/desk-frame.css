@@ -99,84 +99,10 @@
 .dark :is(.dsk, .dk-chat) .dk-mainc {
   background: var(--dsk-canvas);
 }
-.dk-mainc > .dk-top,
 .dk-mainc > .dk-home {
   min-width: 0;
 }
-.dk-top {
-  position: relative;
-  z-index: 3;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 0 14px 0 16px;
-}
 
-.dk-sb {
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  background: var(--dsk-canvas);
-  border-right: 1px solid var(--dsk-b-sub);
-}
-:is(.dsk, .dk-chat) .dk-sb {
-  background: var(--dsk-rail);
-}
-.dark :is(.dsk, .dk-chat) .dk-sb {
-  background: var(--dsk-rail);
-}
-/* The Desk's rail is as wide as its person dragged it (desk-rail-frame.tsx)
-   and folds away to nothing beside the page. Its contents keep that width
-   while it folds or opens, so nothing inside reflows on the way. */
-.dsk > .dk-sb {
-  width: var(--dk-rail-w, 232px);
-}
-.dk-sb-in {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  min-width: 0;
-  min-height: 0;
-}
-@media (min-width: 721px) {
-  .dsk > .dk-sb-rs {
-    position: relative;
-    z-index: 1;
-    clip-path: inset(0 -6px 0 0);
-    transition:
-      width 240ms var(--dk-settle),
-      border-color 240ms var(--dk-settle);
-  }
-  .dsk > .dk-sb-rs:has(> .dk-sb-rz[data-dragging]) {
-    transition: none;
-  }
-  .dsk > .dk-sb-rs > .dk-sb-in {
-    width: calc(var(--dk-rail-w, 232px) - 1px);
-    transition: opacity 160ms ease;
-  }
-  .dsk > .dk-sb-rs[data-folded] {
-    width: 0;
-    border-right-color: transparent;
-  }
-  .dsk > .dk-sb-rs[data-folded] > .dk-sb-in {
-    opacity: 0;
-  }
-  .dsk > .dk-sb-rs:has(> .dk-sb-rz[data-folding]) > .dk-sb-in {
-    opacity: 0.45;
-  }
-}
-.dk-sb-top {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  height: 52px;
-  padding: 0 8px;
-  font-size: 13px;
-}
-.dk-sb-top b {
-  font-weight: 600;
-  letter-spacing: -0.01em;
-}
 .dk-sb-list {
   position: relative;
   flex: 1;
@@ -543,19 +469,5 @@
 @media (max-width: 720px) {
   .dsk {
     grid-template-columns: minmax(0, 1fr);
-  }
-  .dk-top {
-    padding-inline: 10px 8px;
-  }
-  :is(.dsk, .dk-chat) .dk-sb {
-    position: fixed;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    z-index: 40;
-    width: min(300px, 86vw);
-    transform: translateX(-102%);
-    transition: transform 320ms var(--dk-settle);
-    box-shadow: none;
   }
 }

@@ -17,6 +17,8 @@ import { NovaBadge } from "@trenova/shared/components/ui/nova-badge";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useNavigate } from "react-router";
 import { useDesk } from "../desk-layout";
+import { casePath } from "../attention/attention-record";
+import { casePageContext, caseSubjectOf } from "../record-case/case-subject";
 
 /** The record a margin question carries, as the composer's mention of it. */
 function subjectMention(subject: DeskSubject | null) {
@@ -34,8 +36,17 @@ export function DeskMargin() {
   const desk = useDesk();
   const margin = useDeskMarginStore((state) => state.margin);
   const closeMargin = useDeskMarginStore((state) => state.closeMargin);
-  const threadId = margin?.threadId ?? null;
   const subject = margin?.subject ?? null;
+  // A record a case can be about keeps one conversation: the margin opens on
+  // it rather than starting another.
+  const caseType = subject ? caseSubjectOf(subject.kind) : null;
+  const caseThread =
+    subject && caseType
+      ? (desk.threads.find(
+          (thread) => thread.subjectType === caseType && thread.subjectId === subject.id,
+        ) ?? null)
+      : null;
+  const threadId = margin?.threadId ?? caseThread?.id ?? null;
   const threadQuery = useQuery({
     ...assistant.thread(threadId ?? ""),
     enabled: threadId !== null,
@@ -48,11 +59,15 @@ export function DeskMargin() {
   }
 
   const title = thread ? (
-    <>
-      <b>{agent?.name ?? t("Agent unavailable")}</b>
-      <span className="dk-w-mg-sep">·</span>
-      <span>{subject ? t("about {0}", subject.label) : thread.title}</span>
-    </>
+    subject ? (
+      <>
+        <b>{agent?.name ?? t("Agent unavailable")}</b>
+        <span className="dk-w-mg-sep">·</span>
+        <span>{t("about {0}", subject.label)}</span>
+      </>
+    ) : (
+      <b>{thread.title || t("Untitled conversation")}</b>
+    )
   ) : subject ? (
     <>
       <b>{t("New conversation")}</b>
@@ -144,12 +159,31 @@ function MarginAsk({ subject }: { subject: DeskSubject | null }) {
     isLoading: desk.isLoading,
     preferId: preferredAgent,
     pageSource: "screen",
-    onStart: (agentId: string, question?: string, extras?: DeskStartExtras) =>
-      desk.startInMargin(agentId, question, {
-        files: extras?.files ?? [],
-        providerId: extras?.providerId ?? "",
-        mentions: [...subjectMention(subject), ...(extras?.mentions ?? [])],
-      }),
+    onStart: (agentId: string, question?: string, extras?: DeskStartExtras) => {
+      const caseType = subject ? caseSubjectOf(subject.kind) : null;
+      desk.startInMargin(
+        agentId,
+        question,
+        {
+          files: extras?.files ?? [],
+          providerId: extras?.providerId ?? "",
+          mentions: [...subjectMention(subject), ...(extras?.mentions ?? [])],
+        },
+        subject
+          ? {
+              title: subject.label,
+              subjectType: caseType ?? undefined,
+              subjectId: caseType ? subject.id : undefined,
+              page: casePageContext(
+                casePath(subject.kind, subject.id),
+                subject.kind,
+                subject.id,
+                subject.label,
+              ),
+            }
+          : undefined,
+      );
+    },
   });
 
   return (
