@@ -94,7 +94,7 @@ jobs:
       authenticode: ${{ steps.decide.outputs.authenticode }}
       manifest: ${{ steps.decide.outputs.manifest }}
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
 
@@ -201,7 +201,7 @@ jobs:
     needs: prepare
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ needs.prepare.outputs.sha }}
 
@@ -260,7 +260,7 @@ jobs:
       AUTHENTICODE: ${{ needs.prepare.outputs.release == 'true' && needs.prepare.outputs.authenticode == 'true' }}
       MANIFEST: ${{ needs.prepare.outputs.release == 'true' && needs.prepare.outputs.manifest == 'true' }}
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ needs.prepare.outputs.sha }}
 
@@ -322,7 +322,7 @@ jobs:
 
       - name: Sign in to Azure for Trusted Signing
         if: env.AUTHENTICODE == 'true'
-        uses: azure/login@7184910d9eb2b1c5e48f7073824a90609bb9b6d6 # v2
+        uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906 # v3.1.0
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
@@ -395,7 +395,7 @@ jobs:
           "$hash  $($msi.Name)" | Set-Content -Path "installer/out/TrenovaCapture-$env:VERSION-x64.msi.sha256" -NoNewline
           Write-Host "$($msi.Name): $hash ($([math]::Round($msi.Length / 1MB, 1)) MB)"
 
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: trenova-capture-msi
           path: |
@@ -418,7 +418,7 @@ jobs:
     env:
       VERSION: ${{ needs.prepare.outputs.version }}
     steps:
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: trenova-capture-msi
           path: out
