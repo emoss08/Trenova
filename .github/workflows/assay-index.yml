@@ -41,7 +41,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Go
         uses: ./.github/actions/setup-go
@@ -51,7 +51,7 @@ jobs:
           r2-secret-access-key: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' && secrets.R2_BUILD_CACHE_WRITE_SECRET_ACCESS_KEY || secrets.R2_BUILD_CACHE_READ_SECRET_ACCESS_KEY }}
 
       - name: Restore previous index
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         with:
           path: /home/runner/.cache/assay
           key: assay-index-${{ runner.os }}-${{ github.sha }}
@@ -81,7 +81,7 @@ jobs:
             || echo "::warning::assay index did not complete cleanly; selection falls back to whole packages where records are missing"
 
       - name: Save index
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v6
         if: always()
         with:
           path: /home/runner/.cache/assay
