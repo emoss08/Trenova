@@ -23,6 +23,8 @@ var chartDir = filepath.Join("..", "..", "..", "..", "deploy", "helm", "trenova"
 
 const operatorNS = "trenova-system"
 
+var scientific = regexp.MustCompile(`\d(\.\d+)?e\+\d\d`)
+
 var plans = []instanceapi.SpecPlan{
 	{Key: "sandbox", Vcpu: 4, MemoryGiB: 16, DiskGiB: 50},
 	{Key: "production", Vcpu: 8, MemoryGiB: 32, DiskGiB: 200},
@@ -69,6 +71,12 @@ func TestEveryPlanAndLifecycleRendersThroughTheChart(t *testing.T) {
 					require.NoError(t, chartutil.ValidateAgainstSchema(ch, r.Values))
 					out, err := engine.Render(ch, vals)
 					require.NoError(t, err)
+
+					// Helm holds numbers as floats and quotes a large one as
+					// "5.24288e+07", which no process reads as a size.
+					for name, body := range out {
+						require.NotRegexp(t, scientific, body, name)
+					}
 
 					require.NotContains(t, out["trenova/templates/secrets.yaml"], "encryptionKey:")
 					require.Contains(

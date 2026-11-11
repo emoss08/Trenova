@@ -70,6 +70,9 @@ email, accounting integrations, release checks).
 ## Requirements
 
 - A 64-bit Linux host (x86_64; the TMS and postgres images are built for `linux/amd64`).
+- **Linux kernel 6.2 or later** with landlock on (the default on Ubuntu 24.04 and Debian 13;
+  Debian 12's 6.1 is too old). The `imaging` service won't start without it: its log says
+  `a child is not hardened as required: … landlock=Partial`.
 - **4 vCPU, 8 GB RAM, 50 GB SSD** for a small fleet. Give PostgreSQL more memory as data grows
   (see [Tuning](#tuning)).
 - The `docling` service adds about **8 GB of disk** for its image (its models are inside it)

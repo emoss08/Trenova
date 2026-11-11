@@ -278,6 +278,37 @@ func TestNamesCrashingContainersAndKeepsTheCauseWithinTheLimit(t *testing.T) {
 	require.LessOrEqual(t, len([]rune(msg)), 200)
 }
 
+func TestSaysHowACrashLoopingContainerLastEnded(t *testing.T) {
+	t.Parallel()
+	selector := map[string]string{"app.kubernetes.io/component": "docling"}
+	c := checker(t, cnpg("Cluster in healthy state", 1, false),
+		&appsv1.Deployment{
+			ObjectMeta: metav1.ObjectMeta{Name: "trenova-docling", Namespace: "trenova", Labels: labels("docling"), Generation: 1},
+			Spec: appsv1.DeploymentSpec{
+				Replicas: ptr(int32(1)), Selector: &metav1.LabelSelector{MatchLabels: selector},
+			},
+			Status: appsv1.DeploymentStatus{ObservedGeneration: 1, Replicas: 1, UpdatedReplicas: 1},
+		},
+		pod("trenova-docling-abc", selector, 100, corev1.PodStatus{
+			Phase: corev1.PodRunning,
+			ContainerStatuses: []corev1.ContainerStatus{{
+				Name: "docling",
+				State: corev1.ContainerState{Waiting: &corev1.ContainerStateWaiting{
+					Reason: "CrashLoopBackOff", Message: "back-off 5m0s restarting failed container=docling",
+				}},
+				LastTerminationState: corev1.ContainerState{Terminated: &corev1.ContainerStateTerminated{
+					ExitCode: 137, Reason: "OOMKilled",
+				}},
+			}},
+		}),
+	)
+	comps, err := c.Check(t.Context(), health.CheckParams{HelmRevision: 1, Stopped: true})
+	require.NoError(t, err)
+	require.Equal(t,
+		"pod trenova-docling-abc: docling CrashLoopBackOff, last exited 137 (OOMKilled); 0 of 1 replicas available",
+		byName(comps)["docling"].Message)
+}
+
 func TestLeavesReadyComponentsAlone(t *testing.T) {
 	t.Parallel()
 	selector := map[string]string{"app.kubernetes.io/component": "api"}

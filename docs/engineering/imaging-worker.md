@@ -87,7 +87,11 @@ Each child is hardened before it reads untrusted input:
 
 - `PR_SET_NO_NEW_PRIVS`;
 - landlock: the filesystem shrinks to read-only shared libraries and fonts; no writable path;
-  on a kernel that has it (6.12 and later), signals stop at the child as well;
+  on a kernel that has it (6.12 and later), signals stop at the child as well. The kernel
+  must be 6.2 or later, the first that can refuse truncation. The one filesystem right newer
+  than that, `ioctl` on device files (6.10), isn't required, because the seccomp allow list
+  below has no `ioctl` on it; a test in `seccomp.rs` holds that. So the worker runs on
+  Ubuntu 24.04's 6.8 kernel, which managed instances use;
 - seccomp-bpf: a kill list (sockets, exec, ptrace, namespaces, mounts, BPF, keys, `io_uring`,
   identity changes) and an allow list answering `EPERM` to anything else, with thread-only
   `clone` and `clone3` as `ENOSYS`. `tgkill` reaches only the child itself, `prctl` only names
@@ -105,7 +109,7 @@ Each child is hardened before it reads untrusted input:
 - an empty environment.
 
 The pool **fails closed**: a child whose report falls short of the policy is refused, so the
-worker does not start. `pool.require_hardening = false` exists for development machines
+worker does not start (on a kernel before 6.2 it exits with `landlock=Partial`). `pool.require_hardening = false` exists for development machines
 without landlock or seccomp, is refused in production, and is logged at error level on every
 spawn.
 

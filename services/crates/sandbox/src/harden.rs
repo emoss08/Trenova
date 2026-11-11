@@ -40,9 +40,10 @@ pub struct HardeningPolicy {
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum LandlockStatus {
-    /// Every restriction the policy asks for is enforced.
+    /// Every restriction the policy depends on is enforced.
     Full,
-    /// The kernel supports landlock but not every access right asked for.
+    /// The kernel supports landlock but lacks an access right the policy
+    /// depends on.
     Partial,
     /// The kernel has no landlock, or it is turned off.
     None,
@@ -141,15 +142,40 @@ pub fn harden(_policy: &HardeningPolicy) -> HardeningReport {
 #[cfg(target_os = "linux")]
 mod landlock {
     use landlock::{
-        ABI, Access, AccessFs, PathBeneath, PathFd, Ruleset, RulesetAttr, RulesetCreatedAttr,
-        RulesetStatus, Scope,
+        ABI, Access, AccessFs, CompatLevel, Compatible, PathBeneath, PathFd, Ruleset, RulesetAttr,
+        RulesetCreatedAttr, RulesetStatus, Scope,
     };
 
     use super::{HardeningPolicy, LandlockStatus};
 
-    /// The newest ABI this code knows the access rights of. Rights the
-    /// running kernel lacks make the status partial rather than failing.
+    /// The newest ABI this code knows the access rights of. Every right the
+    /// running kernel has is asked for; whether the ones it lacks matter is
+    /// decided by [`required_abi`].
     const ABI_TARGET: ABI = ABI::V5;
+
+    /// The oldest ABI that enforces the policy in full beside seccomp: the
+    /// third (kernel 6.2), the first that can refuse truncation. The fifth
+    /// (kernel 6.10) adds only `ioctl` on device files, and the seccomp allow
+    /// list has no `ioctl` on it, so a child under both loses nothing on an
+    /// older kernel such as Ubuntu 24.04's 6.8.
+    const ABI_BESIDE_SECCOMP: ABI = ABI::V3;
+
+    /// The oldest ABI on which `policy` is fully in force.
+    pub(super) fn required_abi(policy: &HardeningPolicy) -> ABI {
+        if policy.seccomp {
+            ABI_BESIDE_SECCOMP
+        } else {
+            ABI_TARGET
+        }
+    }
+
+    /// Whether the running kernel enforces every filesystem right of `abi`.
+    fn kernel_enforces(abi: ABI) -> bool {
+        Ruleset::default()
+            .set_compatibility(CompatLevel::HardRequirement)
+            .handle_access(AccessFs::from_all(abi))
+            .is_ok()
+    }
 
     pub fn apply(policy: &HardeningPolicy) -> Result<LandlockStatus, String> {
         let all = AccessFs::from_all(ABI_TARGET);
@@ -177,6 +203,9 @@ mod landlock {
         scope_signals()?;
         Ok(match status.ruleset {
             RulesetStatus::FullyEnforced => LandlockStatus::Full,
+            RulesetStatus::PartiallyEnforced if kernel_enforces(required_abi(policy)) => {
+                LandlockStatus::Full
+            }
             RulesetStatus::PartiallyEnforced => LandlockStatus::Partial,
             RulesetStatus::NotEnforced => LandlockStatus::None,
         })
@@ -202,6 +231,24 @@ mod landlock {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn seccomp_lowers_the_landlock_abi_the_policy_needs() {
+        use ::landlock::ABI;
+
+        let both = HardeningPolicy {
+            landlock: true,
+            seccomp: true,
+            ..HardeningPolicy::default()
+        };
+        assert_eq!(landlock::required_abi(&both), ABI::V3);
+        let alone = HardeningPolicy {
+            seccomp: false,
+            ..both
+        };
+        assert_eq!(landlock::required_abi(&alone), ABI::V5);
+    }
 
     #[test]
     fn a_report_short_of_the_policy_does_not_satisfy_it() {

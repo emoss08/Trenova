@@ -271,14 +271,16 @@ spec:
               value: "false"
             - name: DOCLING_SERVE_ALLOW_EXTERNAL_PLUGINS
               value: "false"
+            {{- /* int64: Helm holds a number as a float, and quoting one of
+            eight digits writes "5.24288e+07", which docling refuses to start on. */}}
             - name: DOCLING_SERVE_MAX_FILE_SIZE
-              value: {{ .Values.docling.maxFileBytes | quote }}
+              value: {{ .Values.docling.maxFileBytes | int64 | quote }}
             - name: DOCLING_SERVE_MAX_NUM_PAGES
-              value: {{ .Values.docling.maxPages | quote }}
+              value: {{ .Values.docling.maxPages | int64 | quote }}
             - name: DOCLING_SERVE_ENG_KIND
               value: local
             - name: DOCLING_SERVE_ENG_LOC_NUM_WORKERS
-              value: {{ .Values.docling.workers | quote }}
+              value: {{ .Values.docling.workers | int64 | quote }}
             - name: DOCLING_SERVE_LOAD_MODELS_AT_BOOT
               value: "true"
             - name: DOCLING_SERVE_SINGLE_USE_RESULTS

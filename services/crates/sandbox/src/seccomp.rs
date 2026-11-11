@@ -312,6 +312,17 @@ mod tests {
         }
     }
 
+    /// Landlock is reported as fully in force on a kernel that cannot yet
+    /// restrict `ioctl` on device files (before 6.10) because no `ioctl`
+    /// passes this filter. Allowing one here means raising the landlock ABI
+    /// that `harden` requires beside seccomp.
+    #[test]
+    fn no_ioctl_is_allowed() {
+        assert!(!ALLOW.contains(&libc::SYS_ioctl));
+        let conditional = conditional(1).expect("builds");
+        assert!(!conditional.contains_key(&libc::SYS_ioctl));
+    }
+
     #[test]
     fn a_call_with_conditions_is_never_also_allowed_outright() {
         let conditional = conditional(1).expect("builds");

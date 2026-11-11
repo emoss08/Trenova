@@ -22,6 +22,7 @@ import (
 const (
 	labelCNPGCluster = "cnpg.io/cluster"
 	labelJobName     = "job-name"
+	reasonCrashLoop  = "CrashLoopBackOff"
 )
 
 // Waiting reasons that only say a container has not started yet; the cause,
@@ -104,9 +105,18 @@ func (o *observed) podCause(p *corev1.Pod) string {
 	statuses := slices.Concat(p.Status.InitContainerStatuses, p.Status.ContainerStatuses)
 	for i := range statuses {
 		s := &statuses[i]
-		if w := s.State.Waiting; w != nil && !slices.Contains(startingReasons, w.Reason) {
-			return joinReason(s.Name, w.Reason, w.Message)
+		w := s.State.Waiting
+		if w == nil || slices.Contains(startingReasons, w.Reason) {
+			continue
 		}
+		// A container waiting to be restarted says only how long the wait
+		// is; how it last ended (killed for memory, or its exit code) is the
+		// cause.
+		if t := s.LastTerminationState.Terminated; t != nil && w.Reason == reasonCrashLoop {
+			why := fmt.Sprintf("%s, last exited %d (%s)", w.Reason, t.ExitCode, t.Reason)
+			return joinReason(s.Name, why, t.Message)
+		}
+		return joinReason(s.Name, w.Reason, w.Message)
 	}
 	for i := range statuses {
 		s := &statuses[i]
