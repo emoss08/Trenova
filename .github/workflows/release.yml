@@ -38,6 +38,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      packages: read
     outputs:
       should_build: ${{ steps.detect.outputs.should_build }}
       previous_tag: ${{ steps.detect.outputs.previous_tag }}
@@ -51,8 +52,46 @@ jobs:
       - name: Detect Postgres image changes
         id: detect
         shell: bash
+        env:
+          GHCR_USER: ${{ github.actor }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
+
+          # Every chart names a published PostgreSQL image, so with none on
+          # GHCR (the package was deleted once) this release builds one,
+          # whatever the Dockerfile's history says.
+          published="$(python3 - "${REGISTRY}" "${IMAGE_NAMESPACE}/postgres" <<'PY'
+          import base64, json, os, re, sys, urllib.error, urllib.request
+
+          registry, repository = "https://" + sys.argv[1], sys.argv[2]
+
+          def get(url, auth):
+              request = urllib.request.Request(url, headers={
+                  "Authorization": auth, "User-Agent": "trenova-release"})
+              with urllib.request.urlopen(request, timeout=30) as response:
+                  return json.load(response)
+
+          basic = base64.b64encode(
+              f"{os.environ['GHCR_USER']}:{os.environ['GHCR_TOKEN']}".encode()).decode()
+          try:
+              token = get(f"{registry}/token?scope=repository:{repository}:pull",
+                          f"Basic {basic}")["token"]
+              tags = get(f"{registry}/v2/{repository}/tags/list?n=1000",
+                         f"Bearer {token}").get("tags") or []
+          except urllib.error.HTTPError as e:
+              if e.code not in (403, 404):
+                  raise
+              tags = []  # GHCR answers a missing repository with 403 or 404.
+          print(sum(1 for t in tags if re.fullmatch(r"\d+\.\d+\.\d+", t)))
+          PY
+          )"
+          if [[ "${published}" == 0 ]]; then
+            echo "No PostgreSQL image is published; building one."
+            echo "should_build=true" >> "${GITHUB_OUTPUT}"
+            echo "previous_tag=" >> "${GITHUB_OUTPUT}"
+            exit 0
+          fi
 
           current_ref="${GITHUB_REF_NAME}"
           previous_tag="$(git tag --sort=-v:refname | grep -v "^${current_ref}$" | head -n 1 || true)"
@@ -410,19 +449,29 @@ jobs:
         env:
           BUILT: ${{ needs.detect-postgres-changes.outputs.should_build }}
           REPOSITORY: ${{ env.IMAGE_NAMESPACE }}/postgres
+          # GHCR refuses an anonymous token request from the runners (403), so
+          # the job's own token asks, as the next step's docker login does.
+          GHCR_USER: ${{ github.actor }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
           python3 - "${GITHUB_REF_NAME#v}" <<'PY'
-          import json, os, re, sys, urllib.request
+          import base64, json, os, re, sys, urllib.request
+
+          def get(url, auth):
+              request = urllib.request.Request(url, headers={
+                  "Authorization": auth, "User-Agent": "trenova-release"})
+              with urllib.request.urlopen(request, timeout=30) as response:
+                  return json.load(response)
 
           def newest_published(repository):
               registry = "https://" + os.environ["REGISTRY"]
-              token = json.load(urllib.request.urlopen(
-                  f"{registry}/token?scope=repository:{repository}:pull"))["token"]
-              request = urllib.request.Request(
-                  f"{registry}/v2/{repository}/tags/list?n=1000",
-                  headers={"Authorization": f"Bearer {token}"})
-              tags = json.load(urllib.request.urlopen(request)).get("tags") or []
+              basic = base64.b64encode(
+                  f"{os.environ['GHCR_USER']}:{os.environ['GHCR_TOKEN']}".encode()).decode()
+              token = get(f"{registry}/token?scope=repository:{repository}:pull",
+                          f"Basic {basic}")["token"]
+              tags = get(f"{registry}/v2/{repository}/tags/list?n=1000",
+                         f"Bearer {token}").get("tags") or []
               versions = [t for t in tags if re.fullmatch(r"\d+\.\d+\.\d+", t)]
               if not versions:
                   sys.exit(f"no X.Y.Z tag published for {repository}")
