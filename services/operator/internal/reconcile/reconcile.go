@@ -476,12 +476,7 @@ func sleep(ctx context.Context, d time.Duration) bool {
 	}
 }
 
-func trim(s string) string {
-	if len(s) <= maxMessage {
-		return s
-	}
-	return s[:maxMessage-1] + "…"
-}
+func trim(s string) string { return health.Clean(s, maxMessage) }
 
 func value(p *int64) int64 {
 	if p == nil {

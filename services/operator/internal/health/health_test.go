@@ -3,6 +3,7 @@ package health_test
 import (
 	"strings"
 	"testing"
+	"unicode"
 	"unicode/utf8"
 
 	"github.com/stretchr/testify/require"
@@ -324,4 +325,21 @@ func TestTrimsBetweenCharacters(t *testing.T) {
 	msg := byName(comps)["worker"].Message
 	require.True(t, utf8.ValidString(msg))
 	require.Equal(t, 200, utf8.RuneCountInString(msg))
+}
+
+func TestCleanMakesMessagesTheInstanceAPIAccepts(t *testing.T) {
+	t.Parallel()
+	cases := []struct{ in, want string }{
+		{"install failed:\n  timed out waiting for the condition\n", "install failed: timed out waiting for the condition"},
+		{"a\tb\r\nc  d", "a b c d"},
+		{"\x00\x1bstart", "start"},
+		{"", ""},
+	}
+	for _, tc := range cases {
+		require.Equal(t, tc.want, health.Clean(tc.in, 200))
+	}
+	long := health.Clean(strings.Repeat("“é”\n", 300), 500)
+	require.True(t, utf8.ValidString(long))
+	require.Equal(t, 500, utf8.RuneCountInString(long))
+	require.False(t, strings.ContainsFunc(long, unicode.IsControl), "the control plane refuses control characters")
 }

@@ -6,6 +6,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"unicode"
 
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
@@ -290,12 +291,30 @@ func job(j *batchv1.Job) Component {
 	return c
 }
 
-// trim keeps a message within the instance API's limit of 200 characters,
-// cutting between characters so it stays valid UTF-8.
-func trim(s string) string {
-	r := []rune(s)
-	if len(r) <= maxMessage {
-		return s
+// trim keeps a component message within the instance API's limit.
+func trim(s string) string { return Clean(s, maxMessage) }
+
+// Clean makes s acceptable to the instance API, which refuses control
+// characters in a message: every run of control characters and spaces
+// becomes one space (Helm's and Kubernetes' errors are often several lines),
+// and the result is cut between characters to at most maxLen.
+func Clean(s string, maxLen int) string {
+	var b strings.Builder
+	space := false
+	for _, r := range s {
+		if unicode.IsControl(r) || unicode.IsSpace(r) {
+			space = true
+			continue
+		}
+		if space && b.Len() > 0 {
+			b.WriteByte(' ')
+		}
+		space = false
+		b.WriteRune(r)
 	}
-	return string(r[:maxMessage-1]) + "…"
+	out := []rune(b.String())
+	if len(out) <= maxLen {
+		return string(out)
+	}
+	return string(out[:maxLen-1]) + "…"
 }
