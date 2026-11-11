@@ -12,6 +12,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
@@ -74,32 +75,69 @@ type CheckParams struct {
 func (c *Checker) Check(ctx context.Context, p CheckParams) ([]Component, error) {
 	selector := fmt.Sprintf("%s=%s,%s=%s", labelName, c.chart, labelInstance, c.release)
 	list := metav1.ListOptions{LabelSelector: selector}
-	out := []Component{}
+	found := []checked{}
 
 	deployments, err := c.kube.AppsV1().Deployments(c.namespace).List(ctx, list)
 	if err != nil {
 		return nil, fmt.Errorf("list deployments: %w", err)
 	}
 	for i := range deployments.Items {
-		out = append(out, deployment(&deployments.Items[i]))
+		d := &deployments.Items[i]
+		found = append(found, checked{deployment(d), podSelector(d.Spec.Selector)})
 	}
 	sets, err := c.kube.AppsV1().StatefulSets(c.namespace).List(ctx, list)
 	if err != nil {
 		return nil, fmt.Errorf("list statefulsets: %w", err)
 	}
 	for i := range sets.Items {
-		out = append(out, statefulSet(&sets.Items[i]))
+		s := &sets.Items[i]
+		found = append(found, checked{statefulSet(s), podSelector(s.Spec.Selector)})
 	}
-	out = append(out, c.postgres(ctx, p.Hibernated))
+	pg, cluster := c.postgres(ctx, p.Hibernated)
+	found = append(found, checked{
+		comp: pg,
+		pods: labels.SelectorFromSet(labels.Set{labelCNPGCluster: cluster}),
+	})
 	if !p.Stopped {
-		job, jerr := c.releaseJob(ctx, &list, p.HelmRevision)
+		job, jobName, jerr := c.releaseJob(ctx, &list, p.HelmRevision)
 		if jerr != nil {
 			return nil, jerr
 		}
-		out = append(out, job)
+		var sel labels.Selector
+		if jobName != "" {
+			sel = labels.SelectorFromSet(labels.Set{labelJobName: jobName})
+		}
+		found = append(found, checked{job, sel})
+	}
+
+	out := make([]Component, 0, len(found))
+	var seen *observed
+	for _, f := range found {
+		if !f.comp.Ready && f.pods != nil {
+			if seen == nil {
+				o := c.observe(ctx)
+				seen = &o
+			}
+			f.comp = explain(f.comp, seen.cause(f.pods))
+		}
+		out = append(out, f.comp)
 	}
 	slices.SortFunc(out, func(a, b Component) int { return strings.Compare(a.Name, b.Name) })
 	return out, nil
+}
+
+// checked is a component and the selector of the pods that make it up.
+type checked struct {
+	comp Component
+	pods labels.Selector
+}
+
+func podSelector(s *metav1.LabelSelector) labels.Selector {
+	sel, err := metav1.LabelSelectorAsSelector(s)
+	if err != nil {
+		return nil
+	}
+	return sel
 }
 
 func component(m *metav1.ObjectMeta) string {
@@ -153,7 +191,10 @@ func statefulSet(s *appsv1.StatefulSet) Component {
 	return c
 }
 
-func (c *Checker) postgres(ctx context.Context, hibernated bool) Component {
+func (c *Checker) postgres(
+	ctx context.Context,
+	hibernated bool,
+) (comp Component, clusterName string) {
 	name := c.release + "-postgres"
 	if c.release != c.chart && !strings.Contains(c.release, c.chart) {
 		name = c.release + "-" + c.chart + "-postgres"
@@ -165,9 +206,9 @@ func (c *Checker) postgres(ctx context.Context, hibernated bool) Component {
 		return Component{
 			Name:    componentPostgres,
 			Message: trim("cluster " + name + ": " + err.Error()),
-		}
+		}, name
 	}
-	return cluster(obj, hibernated)
+	return cluster(obj, hibernated), name
 }
 
 func cluster(obj *unstructured.Unstructured, hibernated bool) Component {
@@ -212,11 +253,11 @@ func (c *Checker) releaseJob(
 	ctx context.Context,
 	list *metav1.ListOptions,
 	revision int,
-) (Component, error) {
+) (Component, string, error) {
 	comp := Component{Name: componentRelease}
 	jobs, err := c.kube.BatchV1().Jobs(c.namespace).List(ctx, *list)
 	if err != nil {
-		return comp, fmt.Errorf("list jobs: %w", err)
+		return comp, "", fmt.Errorf("list jobs: %w", err)
 	}
 	suffix := "-" + strconv.Itoa(revision)
 	for i := range jobs.Items {
@@ -224,10 +265,10 @@ func (c *Checker) releaseJob(
 		if j.Labels[labelComponent] != componentRelease || !strings.HasSuffix(j.Name, suffix) {
 			continue
 		}
-		return job(j), nil
+		return job(j), j.Name, nil
 	}
 	comp.Message = "waiting for the release Job of revision " + strconv.Itoa(revision)
-	return comp, nil
+	return comp, "", nil
 }
 
 func job(j *batchv1.Job) Component {
@@ -249,9 +290,12 @@ func job(j *batchv1.Job) Component {
 	return c
 }
 
+// trim keeps a message within the instance API's limit of 200 characters,
+// cutting between characters so it stays valid UTF-8.
 func trim(s string) string {
-	if len(s) <= maxMessage {
+	r := []rune(s)
+	if len(r) <= maxMessage {
 		return s
 	}
-	return s[:maxMessage-1] + "…"
+	return string(r[:maxMessage-1]) + "…"
 }

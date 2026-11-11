@@ -36,6 +36,7 @@ const (
 	keyRedis    = "redis"
 	keyMinio    = "minio"
 	keyMemory   = "memory"
+	keyCPU      = "cpu"
 )
 
 var (

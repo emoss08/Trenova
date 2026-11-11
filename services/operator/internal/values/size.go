@@ -6,13 +6,30 @@ import (
 	"strconv"
 )
 
+// What a node runs besides the workloads sized below is reserved first; the
+// rest is shared. The scheduler places pods by their requests, so these must
+// cover every request outside the shares or the last pod to arrive cannot be
+// placed: with a flat 500m, a 4 vCPU node came out 10m short and CloudNativePG's
+// primary, created after the release Job, never scheduled.
 const (
-	reservedMiB       = 2048
-	reservedMillicore = 500
+	reservedMiB = 2048
+	// k3s's CoreDNS and metrics-server request 100m each.
+	systemMillicore = 200
+	// The operator (50m, deploy/helm/trenova-operator) and cloudflared (10m,
+	// the control plane's cloud-init manifest).
+	companionMillicore = 60
+	// The release Job, which holds its request while it waits for PostgreSQL.
+	releaseMillicore = 100
+	// The CloudNativePG controller and Traefik, which set no request, and
+	// room for a future companion.
+	headroomMillicore = 240
+	reservedMillicore = systemMillicore + companionMillicore + releaseMillicore + headroomMillicore
 	minMemoryGiB      = 8
 	minMemoryGiBScan  = 10
 	clamavRequestMiB  = 3072
 	clamavLimitMiB    = 4096
+	releaseMiB        = 256
+	releaseLimitMiB   = 1024
 	minVCPU           = 2
 	minDiskGiB        = 40
 	postgresDiskShare = 0.35
@@ -101,7 +118,7 @@ func size(in sizeInput) (map[string]any, error) {
 			cores := math.Max(1, math.Floor(float64(in.vcpu)/2))
 			limit = math.Max(limit, cores*1024)
 			limits = map[string]any{
-				"cpu":     strconv.FormatInt(int64(cores), 10),
+				keyCPU:    strconv.FormatInt(int64(cores), 10),
 				keyMemory: mib(limit),
 			}
 		case keyRedis:
@@ -109,12 +126,20 @@ func size(in sizeInput) (map[string]any, error) {
 		}
 		set(out, append(append([]string{}, s.path...), "resources"), map[string]any{
 			"requests": map[string]any{
-				"cpu":     millicores(cpuAlloc * s.cpu / cpuTotal),
+				keyCPU:    millicores(cpuAlloc * s.cpu / cpuTotal),
 				keyMemory: mib(request),
 			},
 			"limits": limits,
 		})
 	}
+
+	set(out, []string{keyTMS, "release", "resources"}, map[string]any{
+		"requests": map[string]any{
+			keyCPU:    millicores(releaseMillicore),
+			keyMemory: mib(releaseMiB),
+		},
+		"limits": map[string]any{keyMemory: mib(releaseLimitMiB)},
+	})
 
 	pgDiskGiB := math.Max(10, math.Floor(float64(in.diskGiB)*postgresDiskShare))
 	set(out, []string{keyPostgres, "storage", "size"}, fmt.Sprintf("%dGi", int64(pgDiskGiB)))
