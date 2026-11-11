@@ -209,7 +209,7 @@ services:
     networks: [data]
 
   redis:
-    image: redis:8@sha256:f245f4c83b84a9e9a0588da1c9456e579455310f0945d5db52cd2ba27f2000cc
+    image: redis:8@sha256:1f88291b4c57bdf249f02eb085a8669889b2d2954e91d4de5118a5da6b78dd53
     # Sessions, rate limits and short caches carry a TTL and may be evicted;
     # GTC's tca:events stream, its dead-letter queue and the synced caches carry
     # none, so volatile-lru never drops them. AOF keeps them across restarts.
@@ -263,7 +263,7 @@ services:
     networks: [data, edge]
 
   meilisearch:
-    image: getmeili/meilisearch:v1.16@sha256:c0c45cb82a96221d7c855d1cc36ca04ff4b3ce6330fbd8df5ba82e86e632a053
+    image: getmeili/meilisearch:v1.55@sha256:88f2a08eb9532cc54a60d8fd014a23bf5cfda33d0c01ecbbaca9b4b463e17466
     environment:
       MEILI_MASTER_KEY: ${TRENOVA_MEILI_MASTER_KEY:?set TRENOVA_MEILI_MASTER_KEY in .env}
       MEILI_ENV: production
@@ -381,7 +381,7 @@ services:
   # for why each flag is there. Every route but /health needs the password in
   # .env, which the TMS sends.
   gotenberg:
-    image: gotenberg/gotenberg:8@sha256:13672f317b443c793e972b1bd2155ec62a3e7b6891b411e8196442cc053ee5f5
+    image: gotenberg/gotenberg:8@sha256:53073e798c8ef39ea2187e44cb67bab77894ea2509100b94c4fe3b461f7b2996
     command:
       - gotenberg
       - --chromium-disable-javascript=true
@@ -435,7 +435,7 @@ services:
   # worker reports extraction as not configured until it has one; see
   # "Upgrades" in docs/self-hosting/README.md for adding it.
   docling:
-    image: ghcr.io/docling-project/docling-serve-cpu:v1.36.0@sha256:225c8586e20d5d0fc6811a9e0e044fa602bcc4393f00389009bad42d6787b58f
+    image: ghcr.io/docling-project/docling-serve-cpu:v1.38.2@sha256:7a480a1604fa3b42efeddc7db9527690d9f9bc903226136013e2bfe6b1a4dfb0
     entrypoint: &docling-entrypoint
       - /bin/sh
       - -c
@@ -490,7 +490,7 @@ services:
   # docling_vlm_models volume, which you fill once (it cannot download).
   docling-gpu:
     profiles: [gpu]
-    image: ghcr.io/docling-project/docling-serve-cu128:v1.36.0@sha256:68f9c77470225a154622b7a05c2660a22ab74ac12ccf3efee1a92588d0213b41
+    image: ghcr.io/docling-project/docling-serve-cu128:v1.38.2@sha256:f26a8dea114dfcfdebcd1617a9eb0a66f48351ff8b5140510d3bfc989c74c38d
     entrypoint: *docling-entrypoint
     environment:
       <<: *docling-environment
@@ -524,7 +524,7 @@ services:
 
   docling-vlm:
     profiles: [gpu]
-    image: vllm/vllm-openai:v0.30.0@sha256:8a69ffad015f138d7170c4ddc429e230a3bc1c1719f67e14324749df200a4b90
+    image: vllm/vllm-openai:v0.33.0@sha256:d825baf9ce4b1b6bfc5ecc7b79880c7e6748c65a72d697ce3d47607aafa84c6e
     command:
       - --model=/models/granite-docling-258M
       - --served-model-name=ibm-granite/granite-docling-258M
