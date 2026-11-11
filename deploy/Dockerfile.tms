@@ -1,4 +1,4 @@
-FROM golang:1.27.1-alpine@sha256:8a5910f31396cd4d89662f56c68b3ae31d374308270a1c3bd96672ee5ed43414 AS source
+FROM golang:1.27.3-alpine@sha256:fa3d596898d9f126af7c01d14ee7597bab3f39cccf392ef36b69fe77cd681f18 AS source
 
 WORKDIR /build
 
@@ -27,7 +27,7 @@ RUN go build -tags nomsgpack -ldflags="-s -w" -o /build/trenova ./cmd/cli
 FROM source AS build-db
 RUN go build -tags nomsgpack -ldflags="-s -w" -o /build/trenova-db ./cmd/db
 
-FROM alpine:3.21@sha256:ee16d92f96db08d9d2d07da48555a27f3a69d8f0759021dbc601195ed0d2b5bd AS runtime
+FROM alpine:3.24@sha256:f59abe656b692d901e184be3445e084786602108599d2a51d229c0f5a48c71bf AS runtime
 
 # The same uid as the imaging worker, which issues the client certificate in
 # deploy/selfhost/compose.yml: its key is readable by its owner only.
