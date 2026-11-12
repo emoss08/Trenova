@@ -33,14 +33,12 @@ type FlowsParams struct {
 	Logger  *zap.Logger
 	Runtime *Runtime
 	Flows   ladingports.FlowRepository
-	Timers  ladingports.FlowTimerScheduler
 }
 
 type Flows struct {
 	l       *zap.Logger
 	runtime *Runtime
 	flows   ladingports.FlowRepository
-	timers  ladingports.FlowTimerScheduler
 }
 
 func NewFlows(p FlowsParams) *Flows {
@@ -48,7 +46,6 @@ func NewFlows(p FlowsParams) *Flows {
 		l:       p.Logger.Named("edi.lading.flows"),
 		runtime: p.Runtime,
 		flows:   p.Flows,
-		timers:  p.Timers,
 	}
 }
 
@@ -206,12 +203,10 @@ func (f *Flows) step(
 			f.journal(ctx, instance, req, nil, step.Error)
 			return nil, step.Error.BusinessError()
 		}
-		previousWake := instance.WakeAt
 		apply(instance, req, step)
 		saved, saveErr := f.flows.SaveInstance(ctx, instance)
 		if saveErr == nil {
 			f.journal(ctx, saved, req, step.Actions, nil)
-			f.schedule(ctx, req.TenantInfo, saved, previousWake)
 			return &Dispatched{Program: req.Program, Instance: saved, Actions: step.Actions}, nil
 		}
 		if !dberror.IsVersionConflict(saveErr) && !errortypes.IsVersionMismatchError(saveErr) ||
@@ -339,31 +334,6 @@ func eventDetail(event *lading.FlowEvent) flowEventDetail {
 		detail.Accepted = &accepted
 	}
 	return detail
-}
-
-func (f *Flows) schedule(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	instance *ladingproject.FlowInstance,
-	previous *int64,
-) {
-	if instance.WakeAt == nil {
-		return
-	}
-	if previous != nil && *previous == *instance.WakeAt {
-		return
-	}
-	if err := f.timers.Schedule(ctx, &ladingports.ScheduleFlowTimerRequest{
-		TenantInfo: tenantInfo,
-		InstanceID: instance.ID,
-		WakeAt:     *instance.WakeAt,
-	}); err != nil {
-		f.l.Error("failed to schedule a flow timer",
-			zap.String("instanceId", instance.ID.String()),
-			zap.Int64("wakeAt", *instance.WakeAt),
-			zap.Error(err),
-		)
-	}
 }
 
 // Release takes an instance out of the exception queue after a person dealt with it.

@@ -28,7 +28,7 @@ func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 		{
 			Name:        PollNWSAlertsWorkflowName,
 			Fn:          PollNWSAlertsWorkflow,
-			TaskQueue:   temporaltype.WeatherAlertTaskQueue,
+			TaskQueue:   temporaltype.TaskQueueSystem.String(),
 			Description: "Poll active NWS weather alerts and persist them for all tenants",
 		},
 	}

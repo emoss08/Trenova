@@ -2,7 +2,6 @@ package insightjobs
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
 	"github.com/emoss08/trenova/internal/modules/agent/app/insightservice"
@@ -40,12 +39,7 @@ func (a *Activities) ListOrganizationsActivity(
 	ctx context.Context,
 	input *ListOrganizationsInput,
 ) (*temporaljobs.TenantPage, error) {
-	organizations, err := a.tenants.ListOrganizations(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("list organizations: %w", err)
-	}
-
-	return temporaljobs.OrganizationPage(organizations, input.After, input.Limit), nil
+	return temporaljobs.OrganizationPage(ctx, a.tenants, input.After, input.Limit)
 }
 
 // RefreshOrganizationInsightsActivity recomputes one organization's insights

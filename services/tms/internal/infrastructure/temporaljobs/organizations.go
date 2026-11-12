@@ -1,51 +1,48 @@
 package temporaljobs
 
 import (
-	"slices"
-	"strings"
+	"context"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
 )
 
 // DefaultOrganizationPageSize is how many organizations a fan-out starts
 // children for before it lists the next page.
 const DefaultOrganizationPageSize = 200
 
-// OrganizationPage is one page of organizations in id order, starting after
-// the cursor. Every organization is read at once, because the list is small
-// and read in one query; the paging is for the workflow fanning out over it,
-// whose history grows with every child it starts.
+// TenantPager pages through organizations in id order
+// (tenantports.TenantSyncRepository).
+type TenantPager interface {
+	ListTenantsPage(ctx context.Context, after pulid.ID, limit int) ([]pagination.TenantInfo, error)
+}
+
+// OrganizationPage reads one page of organizations in id order after the
+// cursor, from the database, so a fan-out never holds every organization at
+// once. It reads one more than the page to know whether another follows.
 func OrganizationPage(
-	organizations []tenant.SyncOrganization,
+	ctx context.Context,
+	tenants TenantPager,
 	after *TenantWorkItem,
 	limit int,
-) *TenantPage {
+) (*TenantPage, error) {
 	limit = NormalizeLimit(limit, DefaultOrganizationPageSize)
-	ordered := slices.Clone(organizations)
-	slices.SortFunc(ordered, func(a, b tenant.SyncOrganization) int {
-		return strings.Compare(a.ID.String(), b.ID.String())
-	})
-
-	start := 0
+	cursor := pulid.Nil
 	if after != nil {
-		cursor := after.OrganizationID.String()
-		start, _ = slices.BinarySearchFunc(ordered, cursor,
-			func(org tenant.SyncOrganization, id string) int {
-				return strings.Compare(org.ID.String(), id)
-			})
-		if start < len(ordered) && ordered[start].ID.String() == cursor {
-			start++
-		}
+		cursor = after.OrganizationID
 	}
 
-	end := min(start+limit, len(ordered))
-	items := make([]TenantWorkItem, 0, end-start)
-	for _, org := range ordered[start:end] {
-		items = append(items, NewTenantWorkItem(
-			pagination.TenantInfo{OrgID: org.ID, BuID: org.BusinessUnitID}, 1,
-		))
+	page, err := tenants.ListTenantsPage(ctx, cursor, limit+1)
+	if err != nil {
+		return nil, err
 	}
 
-	return &TenantPage{Tenants: items, HasMore: end < len(ordered)}
+	hasMore := len(page) > limit
+	page = page[:min(len(page), limit)]
+	items := make([]TenantWorkItem, 0, len(page))
+	for _, tenant := range page {
+		items = append(items, NewTenantWorkItem(tenant, 1))
+	}
+
+	return &TenantPage{Tenants: items, HasMore: hasMore}, nil
 }

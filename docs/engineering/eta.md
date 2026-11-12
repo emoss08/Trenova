@@ -9,7 +9,7 @@ arrival settings on dispatch controls and customers.
 ## The shape of it
 
 ```
-stop event / assignment / check call ──▶ etatrigger ──▶ RefreshShipmentEtaWorkflow (per shipment)
+stop event / assignment / check call ──▶ etatrigger ──▶ ShipmentEtaDrainWorkflow (per tenant)
 shipment-eta-sweep (5 min, per tenant) ─────────────────────────────▶ RefreshTenant
                                                                         │
                        ShipmentEtaService.RefreshShipments ◀────────────┘
@@ -102,11 +102,15 @@ The threshold is the customer's `eta_risk_threshold_minutes` when set, else disp
   status, arrived, departed, stop completed, driver and carrier assigned or unassigned, tender
   accepted) and check calls (the `check_call_observers` group), and calls
   `RefreshRequester.RequestRefresh`.
-- The requester signals-with-start `RefreshShipmentEtaWorkflow` with id
-  `shipment-eta-refresh-<shipment id>` on the dispatch queue. The workflow waits ten seconds,
-  refreshes, and refreshes again while signals keep arriving, continuing as new after 25 rounds,
-  so a burst of edits is one refresh and an edit during a refresh is never lost.
-- `shipment-eta-sweep` runs every five minutes on the dispatch queue: one activity per tenant
+- The requester queues the shipment (`work_queue_items`, kind `shipment-eta`) in the caller's
+  transaction and, after commit, signals-with-start the tenant's `ShipmentEtaDrainWorkflow` on
+  the dispatch queue. The drain waits ten seconds, then refreshes the queued shipments fifty at
+  a time in one `RefreshShipments` call per page, and goes round again while requests keep
+  arriving, continuing as new after 25 rounds. A burst of edits across many shipments is one
+  workflow, and an edit during a refresh keeps its shipment queued (`temporaljobs.DrainDue`).
+  A page whose refresh fails is due again a minute later.
+- `shipment-eta-sweep` runs every five minutes on the dispatch queue. It first wakes every
+  tenant drain with queued shipments (the backstop for a lost wake), then runs one activity per tenant
   with tracked shipments or leftover rows (`ListActiveTenants`, under a system scope), each
   calling `RefreshTenant`. The sweep is how tractor positions and driver hours reach the
   projection, and how inputs go stale. Positions are not routed on every one-minute telematics

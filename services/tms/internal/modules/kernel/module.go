@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/adapters/postgres/recordvisibilityrepository"
 	"github.com/emoss08/trenova/internal/modules/kernel/adapters/postgres/settingversionrepository"
 	"github.com/emoss08/trenova/internal/modules/kernel/adapters/postgres/usstaterepository"
+	"github.com/emoss08/trenova/internal/modules/kernel/adapters/postgres/workqueuerepository"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/editioninfo"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/entitlementservice"
@@ -34,6 +35,7 @@ func SharedOptions() fx.Option {
 			usstaterepository.New,
 			settingversionrepository.New,
 			recordvisibilityrepository.New,
+			workqueuerepository.New,
 			fx.Annotate(
 				entitlementservice.NewLocalEntitlementProvider,
 				fx.As(new(platformcatalogports.EntitlementProvider)),

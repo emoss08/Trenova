@@ -8,6 +8,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -18,10 +19,19 @@ func NewMockTenantSyncRepository(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockTenantSyncRepository {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockTenantSyncRepository{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -295,6 +305,80 @@ func (_c *MockTenantSyncRepository_ListOrganizationsByID_Call) Return(syncOrgani
 }
 
 func (_c *MockTenantSyncRepository_ListOrganizationsByID_Call) RunAndReturn(run func(ctx context.Context, ids []pulid.ID) ([]tenant.SyncOrganization, error)) *MockTenantSyncRepository_ListOrganizationsByID_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListTenantsPage provides a mock function for the type MockTenantSyncRepository
+func (_mock *MockTenantSyncRepository) ListTenantsPage(ctx context.Context, after pulid.ID, limit int) ([]pagination.TenantInfo, error) {
+	ret := _mock.Called(ctx, after, limit)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListTenantsPage")
+	}
+
+	var r0 []pagination.TenantInfo
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, int) ([]pagination.TenantInfo, error)); ok {
+		return returnFunc(ctx, after, limit)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID, int) []pagination.TenantInfo); ok {
+		r0 = returnFunc(ctx, after, limit)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]pagination.TenantInfo)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, pulid.ID, int) error); ok {
+		r1 = returnFunc(ctx, after, limit)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockTenantSyncRepository_ListTenantsPage_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListTenantsPage'
+type MockTenantSyncRepository_ListTenantsPage_Call struct {
+	*mock.Call
+}
+
+// ListTenantsPage is a helper method to define mock.On call
+//   - ctx context.Context
+//   - after pulid.ID
+//   - limit int
+func (_e *MockTenantSyncRepository_Expecter) ListTenantsPage(ctx any, after any, limit any) *MockTenantSyncRepository_ListTenantsPage_Call {
+	return &MockTenantSyncRepository_ListTenantsPage_Call{Call: _e.mock.On("ListTenantsPage", ctx, after, limit)}
+}
+
+func (_c *MockTenantSyncRepository_ListTenantsPage_Call) Run(run func(ctx context.Context, after pulid.ID, limit int)) *MockTenantSyncRepository_ListTenantsPage_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 pulid.ID
+		if args[1] != nil {
+			arg1 = args[1].(pulid.ID)
+		}
+		var arg2 int
+		if args[2] != nil {
+			arg2 = args[2].(int)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockTenantSyncRepository_ListTenantsPage_Call) Return(tenantInfos []pagination.TenantInfo, err error) *MockTenantSyncRepository_ListTenantsPage_Call {
+	_c.Call.Return(tenantInfos, err)
+	return _c
+}
+
+func (_c *MockTenantSyncRepository_ListTenantsPage_Call) RunAndReturn(run func(ctx context.Context, after pulid.ID, limit int) ([]pagination.TenantInfo, error)) *MockTenantSyncRepository_ListTenantsPage_Call {
 	_c.Call.Return(run)
 	return _c
 }

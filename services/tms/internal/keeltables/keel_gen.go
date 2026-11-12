@@ -148,6 +148,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/managedusage/managedusagedb"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/settingversion/settingversiondb"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate/usstatedb"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/workqueue/workqueuedb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/checkcall/checkcalldb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/customertracking/customertrackingdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/demandforecast/demandforecastdb"
@@ -757,6 +758,7 @@ func All() []*schema.Table {
 		watchtowerdb.ItemsSchema(),
 		weatheralertdb.ActivitiesSchema(),
 		weatheralertdb.WeatherAlertsSchema(),
+		workqueuedb.ItemsSchema(),
 		workerscheduledb.WorkerAvailabilityPreferencesSchema(),
 		paybenefitdb.WorkerBenefitEnrollmentsSchema(),
 		workerchecklistdb.WorkerChecklistItemsSchema(),

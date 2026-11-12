@@ -42,7 +42,7 @@ The workflow costs nothing while it waits and survives every restart.
 | `HOSDriveBelow` | `workerId`, `driveHoursBelow` | the drive clock drops below it, timed to the second while the driver drives |
 | `PortalRun` | `portalRunId` | the portal task an approved `web_use_portal` started, or a `web_read_portal` that stopped for a sign-in code, ends (`NotifyPortalRun` from `PortalRunWorkflow`) |
 | `DocumentRead` | `documentId` | the file's extraction is saved (`document.extracted`), or a look every minute finds its reading over: text in, and no shipment draft still `Pending` |
-| `WebWatch` | `webWatchId` | the web watch finds something new (`NotifyWebWatch` from `WebWatchWorkflow`), or fails |
+| `WebWatch` | `webWatchId` | the web watch finds something new (`NotifyWebWatch` from `CheckDueWebWatchesWorkflow`), or fails |
 | `RecordChanged` | `recordId` (any record, by its id) | someone other than this conversation's own turn changes the record, then it is quiet for 30 s (at most 2 min from the first change) |
 | `ReportRun` | `reportRunId` | the report run finishes (its `report-run` invalidation), or a look every two minutes finds it finished |
 

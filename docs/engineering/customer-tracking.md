@@ -13,7 +13,7 @@ template kinds, or the public page at `/shipment-tracking/:token`.
 ## The shape of it
 
 ```
-Shipment event / stop ETAs refreshed ─▶ customerstatustrigger ─▶ EvaluateShipment (10 s debounce)
+Shipment event / stop ETAs refreshed ─▶ customerstatustrigger ─▶ CustomerStatusDrainWorkflow (per tenant, 10 s debounce)
 customer-status-sweep (10 min) ─▶ every notifying tenant: candidate shipments + due retries
                      │
                      ▼
@@ -152,9 +152,12 @@ an hour, and becomes `Failed` after 8 attempts. Times in the email are in the st
 
 `customerstatustrigger` joins `shipment_event_observers` (updates, status changes, cancel and
 uncancel, move status, arrivals and departures, stop completed) and observes stop ETA refreshes,
-and signals a debounced `EvaluateShipment` workflow per shipment. It first asks a one-minute
+and queues the shipment (`work_queue_items`, kind `customer-status`) for its tenant's
+`CustomerStatusDrainWorkflow`, which evaluates the queued shipments 25 at a time; a shipment
+whose evaluation fails is due again a minute later. It first asks a one-minute
 cache whether the tenant has any rule on, so organizations that use none pay nothing per event.
-`customer-status-sweep` runs every ten minutes over every tenant with a rule on: it evaluates
+`customer-status-sweep` runs every ten minutes: it first wakes every tenant drain with queued
+shipments (the backstop for a lost wake), then goes over every tenant with a rule on. It evaluates
 candidate shipments (which also catches PODs, which raise no shipment event) and delivers rows
 whose retry is due. The tenant list is a system-scope read listed in the RLS allowlist.
 

@@ -41,6 +41,25 @@ type WebWatchRepository interface {
 	) (*extensionwebwatch.WebWatch, error)
 	List(ctx context.Context, req *ListWebWatchesRequest) ([]*extensionwebwatch.WebWatch, error)
 	CountActive(ctx context.Context, tenantInfo pagination.TenantInfo) (int, error)
+	// ScheduleCheck makes the watch due for a check by at, never later than
+	// it already was.
+	ScheduleCheck(ctx context.Context, tenantInfo pagination.TenantInfo, id pulid.ID, at int64) error
+	// ClearCheck takes a watch a check found ended off the sweep.
+	ClearCheck(ctx context.Context, tenantInfo pagination.TenantInfo, id pulid.ID) error
+	// ClaimDueChecks takes the watches whose check is due, across tenants,
+	// moving each one's next check to Next.
+	ClaimDueChecks(ctx context.Context, req *ClaimWebWatchChecksRequest) ([]WebWatchRef, error)
+}
+
+type ClaimWebWatchChecksRequest struct {
+	Now   int64
+	Next  int64
+	Limit int
+}
+
+type WebWatchRef struct {
+	ID     pulid.ID
+	Tenant pagination.TenantInfo
 }
 
 type WebWatchFindingRepository interface {
@@ -249,7 +268,7 @@ type WebWatchCheck struct {
 	Ended       bool
 }
 
-// WebWatchRunner is what the workflow that follows a watch asks of it.
+// WebWatchRunner is what the minute sweep that checks the watches asks of one.
 type WebWatchRunner interface {
 	CheckWebWatch(
 		ctx context.Context,

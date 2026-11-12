@@ -9,14 +9,11 @@ const (
 	TaskQueueDocumentIntelligence TaskQueue = "document-intelligence-queue"
 	TaskQueueDocumentExtraction   TaskQueue = "document-extraction-queue"
 	TaskQueueIntegration          TaskQueue = "integration-queue"
-	TaskQueueDistanceMileage      TaskQueue = "distance-mileage-queue"
-	TaskQueueWeatherAlert         TaskQueue = "weather-alert-queue"
 	TaskQueueSystem               TaskQueue = "system-queue"
 	TaskQueueThumbnail            TaskQueue = "thumbnail-queue"
 	TaskQueueUpload               TaskQueue = "upload-queue"
 	TaskQueueSMS                  TaskQueue = "sms-queue"
 	TaskQueueEmail                TaskQueue = "email-queue"
-	TaskQueueFiscal               TaskQueue = "fiscal-queue"
 	TaskQueueEDI                  TaskQueue = "edi-queue"
 	TaskQueueReport               TaskQueue = "report-queue"
 	// TaskQueueAgent carries decision commits: the short wait after a person
@@ -50,10 +47,7 @@ const ThumbnailTaskQueue = string(TaskQueueThumbnail)
 const UploadTaskQueue = string(TaskQueueUpload)
 const SMSTaskQueue = string(TaskQueueSMS)
 const EmailTaskQueue = string(TaskQueueEmail)
-const FiscalTaskQueue = string(TaskQueueFiscal)
 const IntegrationTaskQueue = string(TaskQueueIntegration)
-const DistanceMileageTaskQueue = string(TaskQueueDistanceMileage)
-const WeatherAlertTaskQueue = string(TaskQueueWeatherAlert)
 const EDITaskQueue = string(TaskQueueEDI)
 const ReportTaskQueue = string(TaskQueueReport)
 const CaptureTaskQueue = string(TaskQueueCapture)

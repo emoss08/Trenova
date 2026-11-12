@@ -9,7 +9,7 @@ import (
 
 var DomainConfig = registry.DomainConfig{
 	Name:         "weather-alert-worker",
-	TaskQueue:    temporaltype.TaskQueueWeatherAlert.String(),
+	TaskQueue:    temporaltype.TaskQueueSystem.String(),
 	WorkerConfig: registry.DefaultWorkerConfig(),
 }
 

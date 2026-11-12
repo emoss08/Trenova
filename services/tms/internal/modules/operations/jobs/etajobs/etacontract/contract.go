@@ -3,57 +3,58 @@ package etacontract
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/workqueueports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/stopetaports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
-	"go.temporal.io/sdk/client"
-	"go.temporal.io/sdk/temporal"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
 const (
-	RefreshWorkflowName     = "RefreshShipmentEtaWorkflow"
-	SweepWorkflowName       = "ShipmentEtaSweepWorkflow"
-	RefreshSignalName       = "shipment-eta-refresh"
-	refreshWorkflowIDPrefix = "shipment-eta-refresh-"
+	// DrainKind queues a shipment whose arrival at each open stop needs
+	// projecting again; one drain per tenant works them all.
+	DrainKind         = "shipment-eta"
+	DrainWorkflowName = "ShipmentEtaDrainWorkflow"
+	DrainSignalName   = "shipment-eta-drain"
+	SweepWorkflowName = "ShipmentEtaSweepWorkflow"
 )
-
-type RefreshPayload struct {
-	OrganizationID pulid.ID `json:"organizationId"`
-	BusinessUnitID pulid.ID `json:"businessUnitId"`
-	ShipmentID     pulid.ID `json:"shipmentId"`
-	Iterations     int      `json:"iterations"`
-}
-
-func (p *RefreshPayload) TenantInfo() pagination.TenantInfo {
-	return pagination.TenantInfo{OrgID: p.OrganizationID, BuID: p.BusinessUnitID}
-}
-
-type RefreshSignal struct{}
-
-func RefreshWorkflowID(shipmentID pulid.ID) string {
-	return refreshWorkflowIDPrefix + shipmentID.String()
-}
 
 type RequesterParams struct {
 	fx.In
 
+	Queue   workqueueports.Queue
 	Signals kernelports.WorkflowSignalStarter
 	Logger  *zap.Logger
 }
 
+// Requester queues a shipment for its tenant's ETA drain.
 type Requester struct {
-	signals kernelports.WorkflowSignalStarter
-	l       *zap.Logger
+	drain *temporaljobs.DrainRequester
+	l     *zap.Logger
 }
 
 var _ stopetaports.RefreshRequester = (*Requester)(nil)
 
-func NewRequester(p RequesterParams) stopetaports.RefreshRequester {
-	return &Requester{signals: p.Signals, l: p.Logger.Named("shipment-eta-requester")}
+func NewRequester(p RequesterParams) *Requester {
+	l := p.Logger.Named("shipment-eta-requester")
+
+	return &Requester{
+		drain: &temporaljobs.DrainRequester{
+			Queue:     p.Queue,
+			Signals:   p.Signals,
+			Kind:      DrainKind,
+			Workflow:  DrainWorkflowName,
+			TaskQueue: temporaltype.TaskQueueDispatch.String(),
+			Signal:    DrainSignalName,
+			Summary:   "Project the arrival at each open stop of the tenant's changed shipments",
+			Logger:    l,
+		},
+		l: l,
+	}
 }
 
 func (r *Requester) RequestRefresh(
@@ -61,31 +62,14 @@ func (r *Requester) RequestRefresh(
 	tenantInfo pagination.TenantInfo,
 	shipmentID pulid.ID,
 ) {
-	if shipmentID.IsNil() || tenantInfo.OrgID.IsNil() {
-		return
-	}
-
-	_, err := r.signals.SignalWithStartWorkflow(
-		ctx,
-		RefreshWorkflowID(shipmentID),
-		RefreshSignalName,
-		RefreshSignal{},
-		client.StartWorkflowOptions{
-			ID:            RefreshWorkflowID(shipmentID),
-			TaskQueue:     temporaltype.TaskQueueDispatch.String(),
-			StaticSummary: "Project the shipment's arrival at each open stop",
-			Priority:      temporal.Priority{FairnessKey: tenantInfo.OrgID.String()},
-		},
-		RefreshWorkflowName,
-		&RefreshPayload{
-			OrganizationID: tenantInfo.OrgID,
-			BusinessUnitID: tenantInfo.BuID,
-			ShipmentID:     shipmentID,
-		},
-	)
-	if err != nil {
-		r.l.Warn("could not request a shipment eta refresh",
+	if err := r.drain.Request(ctx, tenantInfo, shipmentID); err != nil {
+		r.l.Warn("could not queue a shipment eta refresh; the sweep projects it",
 			zap.String("shipmentId", shipmentID.String()),
 			zap.Error(err))
 	}
+}
+
+// WakeDue wakes every tenant with shipments waiting for a refresh.
+func (r *Requester) WakeDue(ctx context.Context, limit int) (int, error) {
+	return r.drain.WakeDue(ctx, limit)
 }

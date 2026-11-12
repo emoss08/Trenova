@@ -3,20 +3,28 @@ package customertrackingjobs
 import (
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
 	"github.com/emoss08/trenova/internal/modules/operations/jobs/customertrackingjobs/customertrackingcontract"
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
 )
 
 const (
-	evaluateDebounce         = 10 * time.Second
-	evaluateIterationsPerRun = 25
-	evaluateActivityTimeout  = 2 * time.Minute
-	sweepTenantTimeout       = 15 * time.Minute
+	drainDebounce         = 10 * time.Second
+	drainIterationsPerRun = 25
+	drainPagesPerRound    = 20
+	// drainPageSize is the shipments one activity evaluates; each may send
+	// an email, so the page stays well inside the activity's timeout.
+	drainPageSize        = 25
+	drainRetryAfter      = time.Minute
+	drainWakeLimit       = 1000
+	drainActivityTimeout = 5 * time.Minute
+	sweepTenantTimeout   = 15 * time.Minute
 )
 
-var evaluateActivityOptions = workflow.ActivityOptions{
-	StartToCloseTimeout: evaluateActivityTimeout,
+var drainActivityOptions = workflow.ActivityOptions{
+	StartToCloseTimeout: drainActivityTimeout,
+	HeartbeatTimeout:    2 * time.Minute,
 	RetryPolicy: &temporal.RetryPolicy{
 		InitialInterval:    5 * time.Second,
 		BackoffCoefficient: 2.0,
@@ -46,64 +54,48 @@ var sweepTenantOptions = workflow.ActivityOptions{
 	},
 }
 
-// EvaluateCustomerStatusWorkflow evaluates one shipment shortly after it
-// changes. Signals that arrive while it waits or works are folded into the
-// next pass, so a burst of stop updates costs one evaluation.
-func EvaluateCustomerStatusWorkflow(
+// CustomerStatusDrainWorkflow evaluates a tenant's queued shipments shortly
+// after they change, a page at a time: a burst of stop updates across many
+// shipments costs one workflow and a few activities.
+func CustomerStatusDrainWorkflow(
 	ctx workflow.Context,
-	payload *customertrackingcontract.EvaluatePayload,
-) (*EvaluateResult, error) {
+	payload *temporaljobs.DrainPayload,
+) (*temporaljobs.DrainTotals, error) {
 	var a *Activities
-	signals := workflow.GetSignalChannel(ctx, customertrackingcontract.EvaluateSignalName)
-	actx := workflow.WithActivityOptions(ctx, evaluateActivityOptions)
-	result := &EvaluateResult{}
+	actx := workflow.WithActivityOptions(ctx, drainActivityOptions)
+	totals, again, err := temporaljobs.RunTenantDrain(ctx, temporaljobs.TenantDrainOptions{
+		SignalName:       customertrackingcontract.DrainSignalName,
+		Debounce:         drainDebounce,
+		PagesPerRound:    drainPagesPerRound,
+		IterationsPerRun: drainIterationsPerRun,
+		Iterations:       payload.Iterations,
+		Page: func(ctx workflow.Context) (*temporaljobs.DrainPage, error) {
+			var page temporaljobs.DrainPage
+			err := workflow.ExecuteActivity(actx, a.DrainCustomerStatusActivity, payload).Get(actx, &page)
 
-	for {
-		if err := workflow.Sleep(ctx, evaluateDebounce); err != nil {
-			return result, err
-		}
-		drainSignals(signals)
-
-		var evaluated EvaluateResult
-		if err := workflow.ExecuteActivity(actx, a.EvaluateCustomerStatusActivity, payload).
-			Get(actx, &evaluated); err != nil {
-			return result, err
-		}
-		result.add(&evaluated)
-
-		if !drainSignals(signals) {
-			return result, nil
-		}
-		payload.Iterations++
-		if payload.Iterations >= evaluateIterationsPerRun {
-			return result, workflow.NewContinueAsNewError(
-				ctx,
-				EvaluateCustomerStatusWorkflow,
-				&customertrackingcontract.EvaluatePayload{
-					OrganizationID: payload.OrganizationID,
-					BusinessUnitID: payload.BusinessUnitID,
-					ShipmentID:     payload.ShipmentID,
-				},
-			)
-		}
+			return &page, err
+		},
+	})
+	if err != nil || !again {
+		return totals, err
 	}
-}
 
-func drainSignals(signals workflow.ReceiveChannel) bool {
-	received := false
-	for {
-		var signal customertrackingcontract.EvaluateSignal
-		if !signals.ReceiveAsync(&signal) {
-			return received
-		}
-		received = true
-	}
+	return totals, workflow.NewContinueAsNewError(ctx, CustomerStatusDrainWorkflow,
+		&temporaljobs.DrainPayload{
+			OrganizationID: payload.OrganizationID,
+			BusinessUnitID: payload.BusinessUnitID,
+		})
 }
 
 func CustomerStatusSweepWorkflow(ctx workflow.Context) (*SweepResult, error) {
 	var a *Activities
 	listCtx := workflow.WithActivityOptions(ctx, listOptions)
 	tenantCtx := workflow.WithActivityOptions(ctx, sweepTenantOptions)
+
+	// Wake the drains whose wake was lost before sweeping every tenant.
+	if err := workflow.ExecuteActivity(listCtx, a.WakeDueCustomerStatusDrainsActivity).Get(listCtx, nil); err != nil {
+		workflow.GetLogger(ctx).Warn("could not wake the customer status drains", "error", err)
+	}
 
 	var tenants []TenantRef
 	if err := workflow.ExecuteActivity(listCtx, a.ListCustomerStatusSweepTenantsActivity).

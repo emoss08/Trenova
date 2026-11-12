@@ -1,24 +1,53 @@
 package temporaljobs
 
 import (
+	"context"
+	"slices"
+	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func organizations(ids ...string) []tenant.SyncOrganization {
-	orgs := make([]tenant.SyncOrganization, 0, len(ids))
+// sortedTenants pages like the repository: id order, after the cursor.
+type sortedTenants struct {
+	tenants []pagination.TenantInfo
+	limits  []int
+}
+
+func newSortedTenants(ids ...string) *sortedTenants {
+	tenants := make([]pagination.TenantInfo, 0, len(ids))
 	for _, id := range ids {
-		orgs = append(
-			orgs,
-			tenant.SyncOrganization{ID: pulid.ID(id), BusinessUnitID: pulid.ID("bu_" + id)},
-		)
+		tenants = append(tenants, pagination.TenantInfo{OrgID: pulid.ID(id), BuID: pulid.ID("bu_" + id)})
+	}
+	slices.SortFunc(tenants, func(a, b pagination.TenantInfo) int {
+		return strings.Compare(a.OrgID.String(), b.OrgID.String())
+	})
+
+	return &sortedTenants{tenants: tenants}
+}
+
+func (s *sortedTenants) ListTenantsPage(
+	_ context.Context,
+	after pulid.ID,
+	limit int,
+) ([]pagination.TenantInfo, error) {
+	s.limits = append(s.limits, limit)
+	out := make([]pagination.TenantInfo, 0, limit)
+	for _, tenant := range s.tenants {
+		if after.IsNotNil() && tenant.OrgID.String() <= after.String() {
+			continue
+		}
+		if len(out) == limit {
+			break
+		}
+		out = append(out, tenant)
 	}
 
-	return orgs
+	return out, nil
 }
 
 func ids(page *TenantPage) []string {
@@ -30,50 +59,40 @@ func ids(page *TenantPage) []string {
 	return out
 }
 
-// Paging walks every organization once, in id order, whatever order they were
-// read in.
+// Paging walks every organization once, in id order, reading one past the
+// page to know whether another follows.
 func TestOrganizationPage_WalksEveryOrganizationOnce(t *testing.T) {
 	t.Parallel()
 
-	orgs := organizations("org_e", "org_a", "org_d", "org_b", "org_c")
+	tenants := newSortedTenants("org_e", "org_a", "org_d", "org_b", "org_c")
 
-	first := OrganizationPage(orgs, nil, 2)
+	first, err := OrganizationPage(t.Context(), tenants, nil, 2)
+	require.NoError(t, err)
 	assert.Equal(t, []string{"org_a", "org_b"}, ids(first))
 	assert.True(t, first.HasMore)
-	assert.Equal(t, pulid.ID("bu_org_a"), first.Tenants[0].BusinessUnitID)
 
-	second := OrganizationPage(orgs, &first.Tenants[1], 2)
+	last := first.Tenants[len(first.Tenants)-1]
+	second, err := OrganizationPage(t.Context(), tenants, &last, 2)
+	require.NoError(t, err)
 	assert.Equal(t, []string{"org_c", "org_d"}, ids(second))
 	assert.True(t, second.HasMore)
 
-	last := OrganizationPage(orgs, &second.Tenants[1], 2)
-	assert.Equal(t, []string{"org_e"}, ids(last))
-	assert.False(t, last.HasMore)
+	last = second.Tenants[len(second.Tenants)-1]
+	third, err := OrganizationPage(t.Context(), tenants, &last, 2)
+	require.NoError(t, err)
+	assert.Equal(t, []string{"org_e"}, ids(third))
+	assert.False(t, third.HasMore)
+
+	assert.Equal(t, []int{3, 3, 3}, tenants.limits)
+	assert.Equal(t, pulid.ID("bu_org_a"), first.Tenants[0].BusinessUnitID)
 }
 
-// An organization deleted between pages does not make the walk repeat or skip
-// the ones after it.
-func TestOrganizationPage_ResumesAfterACursorThatNoLongerExists(t *testing.T) {
+// A page that ends exactly at the last organization says nothing follows.
+func TestOrganizationPage_ExactPageHasNoMore(t *testing.T) {
 	t.Parallel()
 
-	page := OrganizationPage(
-		organizations("org_a", "org_c", "org_d"),
-		&TenantWorkItem{OrganizationID: "org_b"},
-		10,
-	)
-	assert.Equal(t, []string{"org_c", "org_d"}, ids(page))
+	page, err := OrganizationPage(t.Context(), newSortedTenants("org_a", "org_b"), nil, 2)
+	require.NoError(t, err)
+	assert.Equal(t, []string{"org_a", "org_b"}, ids(page))
 	assert.False(t, page.HasMore)
-}
-
-func TestOrganizationPage_EmptyAndExhausted(t *testing.T) {
-	t.Parallel()
-
-	empty := OrganizationPage(nil, nil, 10)
-	require.NotNil(t, empty)
-	assert.Empty(t, empty.Tenants)
-	assert.False(t, empty.HasMore)
-
-	past := OrganizationPage(organizations("org_a"), &TenantWorkItem{OrganizationID: "org_z"}, 10)
-	assert.Empty(t, past.Tenants)
-	assert.False(t, past.HasMore)
 }

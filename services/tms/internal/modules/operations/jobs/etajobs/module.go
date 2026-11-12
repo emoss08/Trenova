@@ -13,10 +13,10 @@ import (
 )
 
 const (
-	SweepScheduleID    = "shipment-eta-sweep"
-	sweepInterval      = 5 * time.Minute
-	refreshDescription = "Project a shipment's arrival at each open stop after it changes"
-	sweepDescription   = "Project arrivals for every active shipment and mark stale inputs"
+	SweepScheduleID  = "shipment-eta-sweep"
+	sweepInterval    = 5 * time.Minute
+	drainDescription = "Project the arrivals of a tenant's changed shipments, a page at a time"
+	sweepDescription = "Project arrivals for every active shipment and mark stale inputs"
 )
 
 var DomainConfig = registry.DomainConfig{
@@ -27,9 +27,9 @@ var DomainConfig = registry.DomainConfig{
 
 var Workflows = []registry.WorkflowDefinition{
 	{
-		Name:        etacontract.RefreshWorkflowName,
-		Fn:          RefreshShipmentEtaWorkflow,
-		Description: refreshDescription,
+		Name:        etacontract.DrainWorkflowName,
+		Fn:          ShipmentEtaDrainWorkflow,
+		Description: drainDescription,
 	},
 	{
 		Name:        etacontract.SweepWorkflowName,

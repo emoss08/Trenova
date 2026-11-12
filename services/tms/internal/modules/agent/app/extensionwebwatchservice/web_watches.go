@@ -14,7 +14,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/extensionsecrets"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/extensionwebwatch"
-	"github.com/emoss08/trenova/internal/modules/agent/jobs/webwatchjobs/webwatchcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -299,13 +298,7 @@ func (s *Service) WatchWeb(
 		watch, err = s.watches.Update(ctx, watch)
 	}
 	if err == nil {
-		err = webwatchcontract.Start(ctx, &webwatchcontract.StartParams{
-			Workflows: s.workflows,
-			Tenant:    req.TenantInfo,
-			WatchID:   watch.ID,
-			Summary:   stringutils.TruncateRunes(watch.Purpose, 80),
-			Now:       s.now(),
-		})
+		err = s.watches.ScheduleCheck(ctx, req.TenantInfo, watch.ID, s.now())
 	}
 	if err != nil {
 		s.l.Error("a web watch the vendor took could not be kept",
@@ -455,9 +448,10 @@ func (s *Service) StopWebWatch(
 	if err != nil {
 		return nil, err
 	}
-	if signalErr := webwatchcontract.Check(ctx, s.workflows, updated.ID); signalErr != nil {
-		s.l.Warn("could not tell a stopped web watch's workflow to end",
-			zap.String("webWatch", updated.ID.String()), zap.Error(signalErr))
+	// One last check tells the work waiting on the watch that it was stopped.
+	if checkErr := s.watches.ScheduleCheck(ctx, req.TenantInfo, updated.ID, s.now()); checkErr != nil {
+		s.l.Warn("could not queue a stopped web watch's last check",
+			zap.String("webWatch", updated.ID.String()), zap.Error(checkErr))
 	}
 
 	view := webWatchView(updated)
@@ -740,7 +734,7 @@ func (s *Service) ReceiveWebWatchDelivery(
 		return nil
 	}
 
-	return webwatchcontract.Check(ctx, s.workflows, watch.ID)
+	return s.watches.ScheduleCheck(ctx, req.TenantInfo, watch.ID, s.now())
 }
 
 // maySteer is the person a watch was set for, the agent whose background work

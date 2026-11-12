@@ -9,7 +9,7 @@ import (
 
 var DomainConfig = registry.DomainConfig{
 	Name:         "fiscal-worker",
-	TaskQueue:    temporaltype.FiscalTaskQueue,
+	TaskQueue:    temporaltype.TaskQueueSystem.String(),
 	WorkerConfig: registry.DefaultWorkerConfig(),
 }
 

@@ -17,7 +17,7 @@ const (
 	PurgeScheduleID     = "customer-tracking-link-retention"
 	sweepInterval       = 10 * time.Minute
 	purgeInterval       = 24 * time.Hour
-	evaluateDescription = "Send the customer the status emails a shipment's changes owe it"
+	evaluateDescription = "Evaluate the customer status emails for a tenant's changed shipments, a page at a time"
 	sweepDescription    = "Catch status emails the per-shipment evaluations missed and retry pending ones"
 	purgeDescription    = "Delete customer tracking links revoked or expired more than 30 days ago"
 )
@@ -30,8 +30,8 @@ var DomainConfig = registry.DomainConfig{
 
 var Workflows = []registry.WorkflowDefinition{
 	{
-		Name:        customertrackingcontract.EvaluateWorkflowName,
-		Fn:          EvaluateCustomerStatusWorkflow,
+		Name:        customertrackingcontract.DrainWorkflowName,
+		Fn:          CustomerStatusDrainWorkflow,
 		Description: evaluateDescription,
 	},
 	{

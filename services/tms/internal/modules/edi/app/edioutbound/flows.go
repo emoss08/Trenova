@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ladingports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/lading"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -247,6 +248,56 @@ func (s *Service) DispatchFlowTimer(
 		return dispatched.Instance, err
 	}
 	return dispatched.Instance, nil
+}
+
+// dueFlowPage bounds how many due instances one read returns, and
+// dueFlowPagesPerRun how many pages one sweep works before leaving the rest
+// to the next minute.
+const (
+	dueFlowPage        = 200
+	dueFlowPagesPerRun = 10
+)
+
+// DispatchDueFlowTimers wakes, in every tenant, the open flow instances whose
+// timer is due. It is the only timer behind a flow, run each minute, so an
+// instance holds no workflow while it waits and one whose timer was never
+// heard is still woken. An instance that fails is left due and tried again
+// next minute; it is kept out of the rest of this run so it cannot hold up
+// the instances behind it.
+func (s *Service) DispatchDueFlowTimers(ctx context.Context, now int64) (int, error) {
+	dispatched := 0
+	var failed []pulid.ID
+	for range dueFlowPagesPerRun {
+		due, err := s.flowRepo.ListDueInstances(ctx, &ladingports.ListDueFlowInstancesRequest{
+			Now:     now,
+			Limit:   dueFlowPage,
+			Exclude: failed,
+		})
+		if err != nil {
+			return dispatched, err
+		}
+
+		for _, instance := range due {
+			tenant := instance.TenantInfo()
+			if _, dErr := s.DispatchFlowTimer(
+				dbscope.WithTenant(ctx, tenant.DBTenant()),
+				tenant,
+				instance.ID,
+			); dErr != nil {
+				s.l.Warn("could not wake a due EDI flow; it is tried again next minute",
+					zap.String("instanceId", instance.ID.String()),
+					zap.Error(dErr))
+				failed = append(failed, instance.ID)
+				continue
+			}
+			dispatched++
+		}
+		if len(due) < dueFlowPage {
+			return dispatched, nil
+		}
+	}
+
+	return dispatched, nil
 }
 
 type NotifyFlowEventRequest struct {

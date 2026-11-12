@@ -21,7 +21,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 			Description:   "Poll active NWS weather alerts and persist them for all tenants",
 			Spec:          schedule.Every(30 * time.Minute),
 			Workflow:      PollNWSAlertsWorkflow,
-			TaskQueue:     temporaltype.TaskQueueWeatherAlert.String(),
+			TaskQueue:     temporaltype.TaskQueueSystem.String(),
 			OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,
 			Memo: map[string]any{
 				"purpose": "weather-alert-poll",

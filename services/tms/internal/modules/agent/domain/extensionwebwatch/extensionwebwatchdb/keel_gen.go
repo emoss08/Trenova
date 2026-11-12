@@ -38,6 +38,7 @@ var webWatchesTable = schema.Table{
 		{Name: "secrets", Quoted: `"secrets"`, Field: "Secrets", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Secrets`},
 		{Name: "ends_at", Quoted: `"ends_at"`, Field: "EndsAt", Kind: schema.KindInt64, Flags: 0, Label: `Ends At`, JSON: `endsAt`},
 		{Name: "last_checked_at", Quoted: `"last_checked_at"`, Field: "LastCheckedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Last Checked At`, JSON: `lastCheckedAt`},
+		{Name: "next_check_at", Quoted: `"next_check_at"`, Field: "NextCheckAt", Kind: schema.KindInt64, Flags: schema.FlagReadOnly | schema.FlagNoSelect | schema.FlagNullable, Label: `Next Check At`},
 		{Name: "last_run_at", Quoted: `"last_run_at"`, Field: "LastRunAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Last Run At`, JSON: `lastRunAt`},
 		{Name: "run_count", Quoted: `"run_count"`, Field: "RunCount", Kind: schema.KindInt64, Flags: 0, Label: `Run Count`, JSON: `runCount`},
 		{Name: "finding_count", Quoted: `"finding_count"`, Field: "FindingCount", Kind: schema.KindInt64, Flags: 0, Label: `Finding Count`, JSON: `findingCount`},
@@ -55,14 +56,14 @@ var webWatchesTable = schema.Table{
 	},
 	PK:         []int32{0, 1, 2},
 	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 26},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27},
+	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 27},
 	Returning:  nil,
-	Version:    24,
+	Version:    25,
 	AutoID:     0,
-	AutoCreate: 25,
-	AutoUpdate: 26,
+	AutoCreate: 26,
+	AutoUpdate: 27,
 	IDPrefix:   "awwt_",
 	New:        newWebWatch,
 	NewN:       newNWebWatch,
@@ -89,6 +90,7 @@ type WebWatchesTable struct {
 	Secrets           keel.JSONBCol
 	EndsAt            keel.Int64Col
 	LastCheckedAt     keel.Int64Col
+	NextCheckAt       keel.Int64Col
 	LastRunAt         keel.Int64Col
 	RunCount          keel.Int64Col
 	FindingCount      keel.Int64Col
@@ -121,20 +123,21 @@ var WebWatches = &WebWatchesTable{
 	Secrets:           keel.JSONBCol{Col: keel.Col{Ref: &webWatchesRef, Index: 10}},
 	EndsAt:            keel.Int64Col{Col: keel.Col{Ref: &webWatchesRef, Index: 11}},
 	LastCheckedAt:     keel.Int64Col{Col: keel.Col{Ref: &webWatchesRef, Index: 12}},
-	LastRunAt:         keel.Int64Col{Col: keel.Col{Ref: &webWatchesRef, Index: 13}},
-	RunCount:          keel.Int64Col{Col: keel.Col{Ref: &webWatchesRef, Index: 14}},
-	FindingCount:      keel.Int64Col{Col: keel.Col{Ref: &webWatchesRef, Index: 15}},
-	CostUSD:           keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &webWatchesRef, Index: 16}}},
-	Failure:           keel.StringCol{Col: keel.Col{Ref: &webWatchesRef, Index: 17}},
-	AgentDefinitionID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &webWatchesRef, Index: 18}}},
-	AgentRunID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &webWatchesRef, Index: 19}}},
-	ThreadID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &webWatchesRef, Index: 20}}},
-	RequestedByID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &webWatchesRef, Index: 21}}},
-	StoppedByID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &webWatchesRef, Index: 22}}},
-	FinishedAt:        keel.Int64Col{Col: keel.Col{Ref: &webWatchesRef, Index: 23}},
-	Version:           keel.Int64Col{Col: keel.Col{Ref: &webWatchesRef, Index: 24}},
-	CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: &webWatchesRef, Index: 25}},
-	UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: &webWatchesRef, Index: 26}},
+	NextCheckAt:       keel.Int64Col{Col: keel.Col{Ref: &webWatchesRef, Index: 13}},
+	LastRunAt:         keel.Int64Col{Col: keel.Col{Ref: &webWatchesRef, Index: 14}},
+	RunCount:          keel.Int64Col{Col: keel.Col{Ref: &webWatchesRef, Index: 15}},
+	FindingCount:      keel.Int64Col{Col: keel.Col{Ref: &webWatchesRef, Index: 16}},
+	CostUSD:           keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &webWatchesRef, Index: 17}}},
+	Failure:           keel.StringCol{Col: keel.Col{Ref: &webWatchesRef, Index: 18}},
+	AgentDefinitionID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &webWatchesRef, Index: 19}}},
+	AgentRunID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &webWatchesRef, Index: 20}}},
+	ThreadID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &webWatchesRef, Index: 21}}},
+	RequestedByID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &webWatchesRef, Index: 22}}},
+	StoppedByID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &webWatchesRef, Index: 23}}},
+	FinishedAt:        keel.Int64Col{Col: keel.Col{Ref: &webWatchesRef, Index: 24}},
+	Version:           keel.Int64Col{Col: keel.Col{Ref: &webWatchesRef, Index: 25}},
+	CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: &webWatchesRef, Index: 26}},
+	UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: &webWatchesRef, Index: 27}},
 }
 
 // BuildWebWatches builds the table of agent_web_watches for ref. Generated relation and alias methods call it.
@@ -154,20 +157,21 @@ func BuildWebWatches(r *keel.Ref) *WebWatchesTable {
 		Secrets:           keel.JSONBCol{Col: keel.Col{Ref: r, Index: 10}},
 		EndsAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
 		LastCheckedAt:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
-		LastRunAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
-		RunCount:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
-		FindingCount:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
-		CostUSD:           keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 16}}},
-		Failure:           keel.StringCol{Col: keel.Col{Ref: r, Index: 17}},
-		AgentDefinitionID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 18}}},
-		AgentRunID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 19}}},
-		ThreadID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 20}}},
-		RequestedByID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 21}}},
-		StoppedByID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 22}}},
-		FinishedAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 23}},
-		Version:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 24}},
-		CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 25}},
-		UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 26}},
+		NextCheckAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
+		LastRunAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
+		RunCount:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
+		FindingCount:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
+		CostUSD:           keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 17}}},
+		Failure:           keel.StringCol{Col: keel.Col{Ref: r, Index: 18}},
+		AgentDefinitionID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 19}}},
+		AgentRunID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 20}}},
+		ThreadID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 21}}},
+		RequestedByID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 22}}},
+		StoppedByID:       keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 23}}},
+		FinishedAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 24}},
+		Version:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 25}},
+		CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 26}},
+		UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 27}},
 	}
 }
 
@@ -585,32 +589,34 @@ func ptrWebWatch(p unsafe.Pointer, c int32) any {
 	case 12:
 		return &r.LastCheckedAt
 	case 13:
-		return &r.LastRunAt
+		return &r.NextCheckAt
 	case 14:
-		return (*int64)(unsafe.Pointer(&r.RunCount))
+		return &r.LastRunAt
 	case 15:
-		return (*int64)(unsafe.Pointer(&r.FindingCount))
+		return (*int64)(unsafe.Pointer(&r.RunCount))
 	case 16:
-		return &r.CostUSD
+		return (*int64)(unsafe.Pointer(&r.FindingCount))
 	case 17:
-		return &r.Failure
+		return &r.CostUSD
 	case 18:
-		return (*string)(unsafe.Pointer(&r.AgentDefinitionID))
+		return &r.Failure
 	case 19:
-		return (*string)(unsafe.Pointer(&r.AgentRunID))
+		return (*string)(unsafe.Pointer(&r.AgentDefinitionID))
 	case 20:
-		return (*string)(unsafe.Pointer(&r.ThreadID))
+		return (*string)(unsafe.Pointer(&r.AgentRunID))
 	case 21:
-		return (*string)(unsafe.Pointer(&r.RequestedByID))
+		return (*string)(unsafe.Pointer(&r.ThreadID))
 	case 22:
-		return (*string)(unsafe.Pointer(&r.StoppedByID))
+		return (*string)(unsafe.Pointer(&r.RequestedByID))
 	case 23:
-		return &r.FinishedAt
+		return (*string)(unsafe.Pointer(&r.StoppedByID))
 	case 24:
-		return &r.Version
+		return &r.FinishedAt
 	case 25:
-		return &r.CreatedAt
+		return &r.Version
 	case 26:
+		return &r.CreatedAt
+	case 27:
 		return &r.UpdatedAt
 	}
 	return nil
@@ -655,53 +661,58 @@ func valueWebWatch(p unsafe.Pointer, c int32) any {
 		}
 		return *r.LastCheckedAt
 	case 13:
+		if r.NextCheckAt == nil {
+			return nil
+		}
+		return *r.NextCheckAt
+	case 14:
 		if r.LastRunAt == nil {
 			return nil
 		}
 		return *r.LastRunAt
-	case 14:
-		return int64(r.RunCount)
 	case 15:
-		return int64(r.FindingCount)
+		return int64(r.RunCount)
 	case 16:
-		return r.CostUSD
+		return int64(r.FindingCount)
 	case 17:
-		return r.Failure
+		return r.CostUSD
 	case 18:
+		return r.Failure
+	case 19:
 		if r.AgentDefinitionID == "" {
 			return nil
 		}
 		return string(r.AgentDefinitionID)
-	case 19:
+	case 20:
 		if r.AgentRunID == "" {
 			return nil
 		}
 		return string(r.AgentRunID)
-	case 20:
+	case 21:
 		if r.ThreadID == "" {
 			return nil
 		}
 		return string(r.ThreadID)
-	case 21:
+	case 22:
 		if r.RequestedByID == "" {
 			return nil
 		}
 		return string(r.RequestedByID)
-	case 22:
+	case 23:
 		if r.StoppedByID == "" {
 			return nil
 		}
 		return string(r.StoppedByID)
-	case 23:
+	case 24:
 		if r.FinishedAt == nil {
 			return nil
 		}
 		return *r.FinishedAt
-	case 24:
-		return r.Version
 	case 25:
-		return r.CreatedAt
+		return r.Version
 	case 26:
+		return r.CreatedAt
+	case 27:
 		return r.UpdatedAt
 	}
 	return nil

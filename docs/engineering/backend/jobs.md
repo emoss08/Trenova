@@ -23,21 +23,26 @@ in [module-architecture.md](../module-architecture.md). Agent work has its own r
   outside the Temporal SDK. Every database or network call is an activity.
 - **No version gates.** We have not launched; change workflow code directly and let running
   executions be reset or terminated. Don't add `workflow.GetVersion`.
-- **One workflow per thing, not per event.** Repeated triggers for the same entity
-  `SignalWithStartWorkflow` a debounced workflow keyed by the entity
-  (`etacontract.RefreshWorkflowID(id)`), which sleeps for the debounce, drains its signals, does
-  the work once and continues-as-new after N iterations (`etajobs/workflows.go`). Pass a tenant
-  `FairnessKey` so one tenant's burst does not starve the rest.
-- **Key the debounce by tenant when the entity count is large.** A workflow per entity is
-  still one per row: a tenant moving thousands of items keeps thousands cycling, each a
-  start, a timer and several activities, all written to the Temporal database. Keep the work
-  queue in the row instead: a `<work>_due_at` column set in the requesting transaction, moved
-  strictly forward on every request (`GREATEST(coalesce(due, 0) + 1, now)`), so nothing is lost
-  between commit and signal. One payload-free `SignalWithStart` per tenant wakes a drain that
-  claims a page of due rows, works each, and clears the marker only while it still holds the
-  claimed value (a request that landed meanwhile keeps the row due); a failed row is pushed
-  back (`due_at = now + backoff`). The sweep marks stale rows due and signals the tenants with
-  due rows, never row by row (`billingqueuejobs.BillingQueueTenantWorkflow`).
+- **One workflow per tenant, not per event or per entity.** Repeated triggers collapse into a
+  debounced drain keyed by the tenant: a workflow per entity is still one per row, and a tenant
+  moving thousands of shipments keeps thousands cycling, each a start, a timer and several
+  activities written to the Temporal database. The request is a row in `work_queue_items`
+  (`workqueueports.Queue`, kind per job), written in the requester's transaction and moved
+  strictly forward on every request (`GREATEST(due + 1, now)`), so nothing is lost between
+  commit and signal. `temporaljobs.DrainRequester` enqueues and, after commit, sends one
+  payload-free `SignalWithStart` to `temporaljobs.DrainWorkflowID(kind, tenant)`;
+  `temporaljobs.RunTenantDrain` is the workflow loop (debounce, pages per round,
+  continue-as-new) and `temporaljobs.DrainDue` the activity page: it claims due rows, works
+  them, and settles each only while it still holds the claimed due time, pushing a failed one
+  back. The job's sweep calls `DrainRequester.WakeDue` as the backstop for a lost wake
+  (`etajobs.ShipmentEtaDrainWorkflow`). A queue that is a property of the row itself keeps it
+  on the row instead (`billing_queue_items.recheck_due_at`, `BillingQueueTenantWorkflow`).
+  Pass a tenant `FairnessKey` so one tenant's burst does not starve the rest.
+- **A timer over a time column is a sweep, not a workflow per row.** A snoozed message, an EDI
+  flow's next wake and a web watch's next check are columns with a partial index; a one-minute
+  schedule claims what is due (`WakeDueTriageWorkflow`, `DispatchDueFlowTimersWorkflow`,
+  `CheckDueWebWatchesWorkflow`). Keep a workflow per entity only when it orchestrates more than
+  a timer, as an agent wait does (signals, settle windows, retries while a conversation is busy).
 - **A workflow ends when its work does.** Waiting on a person is a record's status, not a
   parked workflow: close the record from the action that settles it and from the sweep that
   expires it, with one conditional statement both can race on

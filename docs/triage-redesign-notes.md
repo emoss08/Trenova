@@ -52,11 +52,12 @@ provider webhook ──▶ inboundhandler ──▶ inboundintake.ReceiveWebhook
   of the first known message (inbound or one of our replies) named by In-Reply-To or References,
   else the message's own key. Collapsing in a folder keeps the newest message of each thread
   that is in the folder (`NOT EXISTS` probe on `(org, bu, thread_key, received_at)`).
-- **Snooze and waiting on them** wake through a per-message Temporal timer workflow
-  (`triage-wake:<message id>`) and, for events, through `TriageEventSink`, which the operations,
-  documents and billing modules call when a shipment delivers, a document is attached or an
-  invoice is paid. A reply on the thread wakes a message waiting on them at ingest. An hourly
-  reconcile closes anything a lost timer missed. Nothing polls the list.
+- **Snooze and waiting on them** wake through one minute sweep, `WakeDueTriageWorkflow`
+  (schedule `triage-wake-due`), which reads the parked columns by their partial indexes and
+  wakes each tenant's due messages in one transition; a message holds no workflow while it
+  waits. Events wake through `TriageEventSink`, which the operations, documents and billing
+  modules call when a shipment delivers, a document is attached or an invoice is paid. A reply
+  on the thread wakes a message waiting on them at ingest.
 - **Briefing** is one aggregate per tenant cached in Redis for a short TTL and dropped on every
   queue write (`TriageBriefingInvalidator`, called from `TriageMessageNotifier`).
 - **Activity trace** is `inbound_message_activities`; every write records its line in the same

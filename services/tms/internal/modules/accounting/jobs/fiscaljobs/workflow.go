@@ -42,19 +42,19 @@ func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 		{
 			Name:        "AutoCloseFiscalPeriodsWorkflow",
 			Fn:          AutoCloseFiscalPeriodsWorkflow,
-			TaskQueue:   temporaltype.FiscalTaskQueue,
+			TaskQueue:   temporaltype.TaskQueueSystem.String(),
 			Description: "Automatically close expired fiscal periods for tenants with auto-close enabled",
 		},
 		{
 			Name:        "AutoCreateNextFiscalYearWorkflow",
 			Fn:          AutoCreateNextFiscalYearWorkflow,
-			TaskQueue:   temporaltype.FiscalTaskQueue,
+			TaskQueue:   temporaltype.TaskQueueSystem.String(),
 			Description: "Automatically create next fiscal year when current one is nearing end",
 		},
 		{
 			Name:        "FiscalYearCloseReadinessWorkflow",
 			Fn:          FiscalYearCloseReadinessWorkflow,
-			TaskQueue:   temporaltype.FiscalTaskQueue,
+			TaskQueue:   temporaltype.TaskQueueSystem.String(),
 			Description: "Notify controllers about fiscal years that are past their end date and still open",
 		},
 	}

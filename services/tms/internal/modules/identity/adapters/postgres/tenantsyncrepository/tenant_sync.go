@@ -78,6 +78,37 @@ func (r *repository) ListOrganizations(
 	return r.listOrganizations(ctx, nil)
 }
 
+func (r *repository) ListTenantsPage(
+	ctx context.Context,
+	after pulid.ID,
+	limit int,
+) ([]pagination.TenantInfo, error) {
+	ctx = dbscope.WithSystem(ctx, "page through organizations across every tenant for fan-out")
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pagination.TenantInfo, error) {
+		if limit <= 0 {
+			return []pagination.TenantInfo{}, nil
+		}
+
+		o := tenantdb.Organizations
+		orgs, err := o.AllTenants().
+			Pick(o.ID, o.BusinessUnitID).
+			Where(keel.When(after.IsNotNil(), o.ID.Gt(after))).
+			Order(o.ID.Asc()).
+			Limit(limit).
+			List(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, err
+		}
+
+		tenants := make([]pagination.TenantInfo, 0, len(orgs))
+		for _, org := range orgs {
+			tenants = append(tenants, pagination.TenantInfo{OrgID: org.ID, BuID: org.BusinessUnitID})
+		}
+
+		return tenants, nil
+	})
+}
+
 func (r *repository) ListBusinessUnitsByID(
 	ctx context.Context,
 	ids []pulid.ID,

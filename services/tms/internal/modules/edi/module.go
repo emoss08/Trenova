@@ -77,7 +77,6 @@ func SharedOptions() fx.Option {
 			edilading.NewFlows,
 			edilading.NewProjects,
 			edilading.NewReplayer,
-			edijobscontract.NewTimerScheduler,
 			fx.Annotate(
 				edijobscontract.NewShipmentObserver,
 				fx.ResultTags(`group:"shipment_event_observers"`),

@@ -9,7 +9,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/secretconfig"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
@@ -44,20 +43,18 @@ type Params struct {
 	Connectors []agentextensionports.ExtensionConnector `group:"agent_extension_connectors"`
 	Watches    agentextensionports.WebWatchRepository
 	Findings   agentextensionports.WebWatchFindingRepository
-	Workflows  kernelports.WorkflowStarter
 	AppConfig  *appconfig.Config
 }
 
 type Service struct {
-	l         *zap.Logger
-	core      webWatchRuntime
-	secrets   secretconfig.Codec
-	watchers  map[agentextension.Type]agentextensionports.WebWatchProvider
-	watches   agentextensionports.WebWatchRepository
-	findings  agentextensionports.WebWatchFindingRepository
-	workflows kernelports.WorkflowStarter
-	webBase   string
-	now       func() int64
+	l        *zap.Logger
+	core     webWatchRuntime
+	secrets  secretconfig.Codec
+	watchers map[agentextension.Type]agentextensionports.WebWatchProvider
+	watches  agentextensionports.WebWatchRepository
+	findings agentextensionports.WebWatchFindingRepository
+	webBase  string
+	now      func() int64
 }
 
 //nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
@@ -73,14 +70,13 @@ func New(p Params) *Service {
 	}
 
 	return &Service{
-		l:         p.Logger.Named("service.agentextension"),
-		core:      p.Extensions,
-		secrets:   secretconfig.NewCodec(p.Encryption, p.Logger),
-		watchers:  watchers,
-		watches:   p.Watches,
-		findings:  p.Findings,
-		workflows: p.Workflows,
-		webBase:   webBaseOf(p.AppConfig),
-		now:       timeutils.NowUnix,
+		l:        p.Logger.Named("service.agentextension"),
+		core:     p.Extensions,
+		secrets:  secretconfig.NewCodec(p.Encryption, p.Logger),
+		watchers: watchers,
+		watches:  p.Watches,
+		findings: p.Findings,
+		webBase:  webBaseOf(p.AppConfig),
+		now:      timeutils.NowUnix,
 	}
 }

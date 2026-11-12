@@ -24,70 +24,16 @@ import (
 
 const (
 	FlowEventWorkflowName = "EDIFlowShipmentEventWorkflow"
-	// RoundsPerRun bounds a timer workflow's history: it continues as new after this many
-	// wakes.
-	RoundsPerRun = 50
 )
-
-// FlowTimerWorkflowID is one per flow instance, so scheduling again moves the one timer.
-func FlowTimerWorkflowID(instanceID pulid.ID) string {
-	return "edi-flow-timer:" + instanceID.String()
-}
 
 // FlowEventWorkflowID is one per shipment event, so an event is given to the flows once.
 func FlowEventWorkflowID(eventID pulid.ID) string {
 	return "edi-flow-event:" + eventID.String()
 }
 
-// FlowTimerInput starts a timer workflow; its wake signal carries the instant, in Unix
-// seconds, the instance is next due.
-type FlowTimerInput struct {
-	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
-	InstanceID pulid.ID              `json:"instanceId"`
-	WakeAt     int64                 `json:"wakeAt"`
-}
-
 type FlowEventInput struct {
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
 	EventID    pulid.ID              `json:"eventId"`
-}
-
-type TimerSchedulerParams struct {
-	fx.In
-
-	Logger  *zap.Logger
-	Signals kernelports.WorkflowSignalStarter
-}
-
-type TimerScheduler struct {
-	l       *zap.Logger
-	signals kernelports.WorkflowSignalStarter
-}
-
-func NewTimerScheduler(p TimerSchedulerParams) ladingports.FlowTimerScheduler {
-	return &TimerScheduler{l: p.Logger.Named("job.edi-flow-timer"), signals: p.Signals}
-}
-
-// Schedule starts the instance's timer workflow, or moves the one already waiting.
-func (s *TimerScheduler) Schedule(
-	ctx context.Context,
-	req *ladingports.ScheduleFlowTimerRequest,
-) error {
-	tenant := pagination.TenantInfo{OrgID: req.TenantInfo.OrgID, BuID: req.TenantInfo.BuID}
-	_, err := s.signals.SignalWithStartWorkflow(
-		ctx,
-		FlowTimerWorkflowID(req.InstanceID),
-		temporaltype.EDIFlowTimerWakeSignal,
-		req.WakeAt,
-		client.StartWorkflowOptions{
-			ID:            FlowTimerWorkflowID(req.InstanceID),
-			TaskQueue:     temporaltype.EDITaskQueue,
-			StaticSummary: "Wake an EDI flow when it is due",
-		},
-		temporaltype.EDIFlowTimerWorkflowName,
-		&FlowTimerInput{TenantInfo: tenant, InstanceID: req.InstanceID, WakeAt: req.WakeAt},
-	)
-	return err
 }
 
 type ShipmentObserverParams struct {

@@ -310,6 +310,7 @@ func SharedOptions() fx.Option {
 			aiproviderrepository.NewAdvisorRecorder,
 			aituneuprepository.New,
 			aianalyticsrepository.New,
+			func(r aianalyticsports.AnalyticsRepository) aianalyticsports.ActiveTenantLister { return r },
 			agentdefinitionrepository.NewTestPromptRepository,
 			agentscorecardrepository.New,
 			agenttooltrustrepository.New,

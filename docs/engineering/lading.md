@@ -775,9 +775,12 @@ expect 997 for every send within 30 min else escalate "Swift has not acknowledge
 ```
 
 A flow is a function from its state and one event to its new state and the actions Trenova
-takes. The crate computes it (`lading.flowStep`); the TMS runs each instance as a Temporal
-workflow that feeds it events (messages, Trenova's events, a planner's decision, timers,
-acknowledgments) and carries out its actions. Flow tests run the same function.
+takes. The crate computes it (`lading.flowStep`); the TMS keeps each instance as a row, feeds it
+events (messages, Trenova's events, a planner's decision, timers, acknowledgments) and carries
+out its actions. A timer is the instance's `wake_at`: `DispatchDueFlowTimersWorkflow` (schedule
+`edi-flow-timers`, every minute) reads the open instances due by their partial index and
+dispatches each, so an instance holds no workflow while it waits and one whose timer was never
+heard still wakes. Flow tests run the same function.
 
 ## Tests
 

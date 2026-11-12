@@ -3,6 +3,8 @@ package customertrackingjobs
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/workqueueports"
 	"github.com/emoss08/trenova/internal/modules/operations/jobs/customertrackingjobs/customertrackingcontract"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/customertrackingports"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -52,39 +54,71 @@ func (t *TenantRef) TenantInfo() pagination.TenantInfo {
 type ActivitiesParams struct {
 	fx.In
 
-	Notifier customertrackingports.StatusNotifier
-	Logger   *zap.Logger
+	Notifier  customertrackingports.StatusNotifier
+	Queue     workqueueports.Queue
+	Requester *customertrackingcontract.Requester
+	Logger    *zap.Logger
 }
 
 type Activities struct {
-	notifier customertrackingports.StatusNotifier
-	l        *zap.Logger
+	notifier  customertrackingports.StatusNotifier
+	queue     workqueueports.Queue
+	requester *customertrackingcontract.Requester
+	l         *zap.Logger
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
 	return &Activities{
-		notifier: p.Notifier,
-		l:        p.Logger.Named("temporal.customer-status-activities"),
+		notifier:  p.Notifier,
+		queue:     p.Queue,
+		requester: p.Requester,
+		l:         p.Logger.Named("temporal.customer-status-activities"),
 	}
 }
 
-func (a *Activities) EvaluateCustomerStatusActivity(
+// DrainCustomerStatusActivity evaluates a page of the tenant's queued
+// shipments. A shipment whose evaluation fails is due again shortly; the
+// others are settled.
+func (a *Activities) DrainCustomerStatusActivity(
 	ctx context.Context,
-	payload *customertrackingcontract.EvaluatePayload,
-) (*EvaluateResult, error) {
+	payload *temporaljobs.DrainPayload,
+) (*temporaljobs.DrainPage, error) {
 	tenant := payload.TenantInfo()
 	ctx = dbscope.WithTenant(ctx, tenant.DBTenant())
 
-	evaluated, err := a.notifier.Evaluate(ctx, tenant, payload.ShipmentID)
-	if err != nil {
-		a.l.Warn("customer status evaluation failed",
-			zap.String("shipmentId", payload.ShipmentID.String()),
-			zap.Error(err))
-		return nil, err
-	}
-	result := resultOf(evaluated)
-	result.Shipments = 1
-	return result, nil
+	return temporaljobs.DrainDue(ctx, &temporaljobs.DrainDueParams{
+		Queue:      a.queue,
+		Kind:       customertrackingcontract.DrainKind,
+		Tenant:     tenant,
+		PageSize:   drainPageSize,
+		RetryAfter: drainRetryAfter,
+		Handle: func(ctx context.Context, shipments []pulid.ID) map[pulid.ID]error {
+			failed := make(map[pulid.ID]error)
+			for _, shipmentID := range shipments {
+				if err := ctx.Err(); err != nil {
+					failed[shipmentID] = err
+					continue
+				}
+				if activity.IsActivity(ctx) {
+					activity.RecordHeartbeat(ctx, shipmentID.String())
+				}
+				if _, err := a.notifier.Evaluate(ctx, tenant, shipmentID); err != nil {
+					a.l.Warn("customer status evaluation failed; it is tried again shortly",
+						zap.String("shipmentId", shipmentID.String()),
+						zap.Error(err))
+					failed[shipmentID] = err
+				}
+			}
+
+			return failed
+		},
+	})
+}
+
+// WakeDueCustomerStatusDrainsActivity wakes every tenant with shipments still
+// queued: the backstop for a wake that was lost.
+func (a *Activities) WakeDueCustomerStatusDrainsActivity(ctx context.Context) (int, error) {
+	return a.requester.WakeDue(ctx, drainWakeLimit)
 }
 
 func (a *Activities) ListCustomerStatusSweepTenantsActivity(

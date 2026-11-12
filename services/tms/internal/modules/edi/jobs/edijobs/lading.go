@@ -45,10 +45,10 @@ func ladingWorkflows() []temporaltype.WorkflowDefinition {
 			Description: "Replay a Lading version against another on a partner's real messages",
 		},
 		{
-			Name:        temporaltype.EDIFlowTimerWorkflowName,
-			Fn:          EDIFlowTimerWorkflow,
+			Name:        DispatchDueFlowTimersWorkflowName,
+			Fn:          DispatchDueFlowTimersWorkflow,
 			TaskQueue:   temporaltype.EDITaskQueue,
-			Description: "Wake an EDI flow instance when its timer is due",
+			Description: "Wake every open EDI flow instance whose timer is due",
 		},
 		{
 			Name:        edijobscontract.FlowEventWorkflowName,
@@ -92,71 +92,34 @@ func (a *Activities) RunLadingReplayActivity(
 	return replay, nil
 }
 
-// EDIFlowTimerWorkflow sleeps until a flow instance is due, wakes it, and sleeps again until it
-// is next due; a wake signal moves the time. It ends when the instance has nothing to wait for.
-func EDIFlowTimerWorkflow(ctx workflow.Context, input *edijobscontract.FlowTimerInput) error {
-	activityCtx := workflow.WithActivityOptions(ctx, flowActivityOptions)
-	signals := workflow.GetSignalChannel(ctx, temporaltype.EDIFlowTimerWakeSignal)
-	wakeAt := input.WakeAt
-	var a *Activities
-	for round := 0; round < edijobscontract.RoundsPerRun; round++ {
-		for drained := true; drained; {
-			drained = signals.ReceiveAsync(&wakeAt)
-		}
-		if wakeAt <= 0 {
-			return nil
-		}
-		timerCtx, cancel := workflow.WithCancel(ctx)
-		wait := time.Unix(wakeAt, 0).Sub(workflow.Now(ctx))
-		if wait < 0 {
-			wait = 0
-		}
-		timer := workflow.NewTimer(timerCtx, wait)
-		moved := false
-		selector := workflow.NewSelector(ctx)
-		selector.AddFuture(timer, func(workflow.Future) {})
-		selector.AddReceive(signals, func(channel workflow.ReceiveChannel, _ bool) {
-			channel.Receive(ctx, &wakeAt)
-			moved = true
-		})
-		selector.Select(ctx)
-		cancel()
-		if moved {
-			continue
-		}
-		var next int64
-		if err := workflow.ExecuteActivity(activityCtx, a.DispatchFlowTimerActivity, input).
-			Get(activityCtx, &next); err != nil {
-			return err
-		}
-		wakeAt = next
-	}
-	return workflow.NewContinueAsNewError(
-		ctx,
-		EDIFlowTimerWorkflow,
-		&edijobscontract.FlowTimerInput{
-			TenantInfo: input.TenantInfo,
-			InstanceID: input.InstanceID,
-			WakeAt:     wakeAt,
-		},
-	)
+// DispatchDueFlowTimersWorkflowName is the minute sweep behind every flow
+// timer: an instance holds no workflow while it waits.
+const DispatchDueFlowTimersWorkflowName = "DispatchDueFlowTimersWorkflow"
+
+var dueFlowTimerOptions = workflow.ActivityOptions{
+	StartToCloseTimeout: 10 * time.Minute,
+	RetryPolicy: &temporal.RetryPolicy{
+		InitialInterval:    5 * time.Second,
+		BackoffCoefficient: 2.0,
+		MaximumAttempts:    3,
+		MaximumInterval:    30 * time.Second,
+	},
 }
 
-// DispatchFlowTimerActivity wakes the instance if it is due and returns when it is next due, or
-// zero when it waits for nothing.
-func (a *Activities) DispatchFlowTimerActivity(
-	ctx context.Context,
-	input *edijobscontract.FlowTimerInput,
-) (int64, error) {
-	instance, err := a.outboundService.DispatchFlowTimer(ctx, input.TenantInfo, input.InstanceID)
-	if err != nil {
-		return 0, err
-	}
-	if instance == nil || instance.WakeAt == nil ||
-		instance.Status == ladingproject.FlowInstanceStatusClosed {
-		return 0, nil
-	}
-	return *instance.WakeAt, nil
+func DispatchDueFlowTimersWorkflow(ctx workflow.Context) (int, error) {
+	ctx = workflow.WithActivityOptions(ctx, dueFlowTimerOptions)
+	var a *Activities
+
+	var dispatched int
+	err := workflow.ExecuteActivity(ctx, a.DispatchDueFlowTimersActivity).Get(ctx, &dispatched)
+
+	return dispatched, err
+}
+
+// DispatchDueFlowTimersActivity wakes every open flow instance whose timer is
+// due, across tenants.
+func (a *Activities) DispatchDueFlowTimersActivity(ctx context.Context) (int, error) {
+	return a.outboundService.DispatchDueFlowTimers(ctx, time.Now().Unix())
 }
 
 func EDIFlowShipmentEventWorkflow(

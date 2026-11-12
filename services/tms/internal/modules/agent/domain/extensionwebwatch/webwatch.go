@@ -145,6 +145,7 @@ type WebWatch struct {
 	Secrets           map[string]any      `json:"-"                 keel:"secrets,jsonb"`
 	EndsAt            int64               `json:"endsAt"            keel:"ends_at"`
 	LastCheckedAt     *int64              `json:"lastCheckedAt"     keel:"last_checked_at"`
+	NextCheckAt       *int64              `json:"-"                 keel:"next_check_at,readonly,noselect"`
 	LastRunAt         *int64              `json:"lastRunAt"         keel:"last_run_at"`
 	RunCount          int                 `json:"runCount"          keel:"run_count"`
 	FindingCount      int                 `json:"findingCount"      keel:"finding_count"`

@@ -196,6 +196,7 @@ type FlowRepository interface {
 		ctx context.Context,
 		req GetFlowSendMessageRequest,
 	) (*edimessage.EDIMessage, error)
+	ListDueInstances(ctx context.Context, req *ListDueFlowInstancesRequest) ([]DueFlowInstance, error)
 }
 
 type GetLadingReplayRequest struct {
@@ -247,12 +248,21 @@ type LadingReplayRepository interface {
 	) (*LadingShadowSummary, error)
 }
 
-type ScheduleFlowTimerRequest struct {
-	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
-	InstanceID pulid.ID              `json:"instanceId"`
-	WakeAt     int64                 `json:"wakeAt"`
+// ListDueFlowInstancesRequest lists, across every tenant, the open flow
+// instances whose timer is due, oldest first. Exclude leaves out the ones a
+// sweep already tried this run.
+type ListDueFlowInstancesRequest struct {
+	Now     int64
+	Limit   int
+	Exclude []pulid.ID
 }
 
-type FlowTimerScheduler interface {
-	Schedule(ctx context.Context, req *ScheduleFlowTimerRequest) error
+type DueFlowInstance struct {
+	ID             pulid.ID
+	OrganizationID pulid.ID
+	BusinessUnitID pulid.ID
+}
+
+func (d DueFlowInstance) TenantInfo() pagination.TenantInfo {
+	return pagination.TenantInfo{OrgID: d.OrganizationID, BuID: d.BusinessUnitID}
 }

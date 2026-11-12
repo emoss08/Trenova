@@ -3,20 +3,27 @@ package etajobs
 import (
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
 	"github.com/emoss08/trenova/internal/modules/operations/jobs/etajobs/etacontract"
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
 )
 
 const (
-	refreshDebounce         = 10 * time.Second
-	refreshIterationsPerRun = 25
-	sweepTenantTimeout      = 10 * time.Minute
-	refreshActivityTimeout  = 2 * time.Minute
+	drainDebounce         = 10 * time.Second
+	drainIterationsPerRun = 25
+	drainPagesPerRound    = 20
+	// drainPageSize is the shipments one activity projects, in one batched
+	// refresh.
+	drainPageSize        = 50
+	drainRetryAfter      = time.Minute
+	drainWakeLimit       = 1000
+	sweepTenantTimeout   = 10 * time.Minute
+	drainActivityTimeout = 5 * time.Minute
 )
 
-var refreshActivityOptions = workflow.ActivityOptions{
-	StartToCloseTimeout: refreshActivityTimeout,
+var drainActivityOptions = workflow.ActivityOptions{
+	StartToCloseTimeout: drainActivityTimeout,
 	RetryPolicy: &temporal.RetryPolicy{
 		InitialInterval:    5 * time.Second,
 		BackoffCoefficient: 2.0,
@@ -46,63 +53,48 @@ var sweepTenantOptions = workflow.ActivityOptions{
 	},
 }
 
-func RefreshShipmentEtaWorkflow(
+// ShipmentEtaDrainWorkflow projects the arrivals of a tenant's queued
+// shipments shortly after they change, a page at a time: one workflow per
+// tenant, however many shipments move.
+func ShipmentEtaDrainWorkflow(
 	ctx workflow.Context,
-	payload *etacontract.RefreshPayload,
-) (*RefreshResult, error) {
+	payload *temporaljobs.DrainPayload,
+) (*temporaljobs.DrainTotals, error) {
 	var a *Activities
-	signals := workflow.GetSignalChannel(ctx, etacontract.RefreshSignalName)
-	actx := workflow.WithActivityOptions(ctx, refreshActivityOptions)
-	result := &RefreshResult{}
+	actx := workflow.WithActivityOptions(ctx, drainActivityOptions)
+	totals, again, err := temporaljobs.RunTenantDrain(ctx, temporaljobs.TenantDrainOptions{
+		SignalName:       etacontract.DrainSignalName,
+		Debounce:         drainDebounce,
+		PagesPerRound:    drainPagesPerRound,
+		IterationsPerRun: drainIterationsPerRun,
+		Iterations:       payload.Iterations,
+		Page: func(ctx workflow.Context) (*temporaljobs.DrainPage, error) {
+			var page temporaljobs.DrainPage
+			err := workflow.ExecuteActivity(actx, a.DrainShipmentEtasActivity, payload).Get(actx, &page)
 
-	for {
-		if err := workflow.Sleep(ctx, refreshDebounce); err != nil {
-			return result, err
-		}
-		drainSignals(signals)
-
-		var refreshed RefreshResult
-		if err := workflow.ExecuteActivity(actx, a.RefreshShipmentActivity, payload).
-			Get(actx, &refreshed); err != nil {
-			return result, err
-		}
-		result.Refreshes++
-		result.Rows = refreshed.Rows
-		result.Attention = refreshed.Attention
-
-		if !drainSignals(signals) {
-			return result, nil
-		}
-		payload.Iterations++
-		if payload.Iterations >= refreshIterationsPerRun {
-			return result, workflow.NewContinueAsNewError(
-				ctx,
-				RefreshShipmentEtaWorkflow,
-				&etacontract.RefreshPayload{
-					OrganizationID: payload.OrganizationID,
-					BusinessUnitID: payload.BusinessUnitID,
-					ShipmentID:     payload.ShipmentID,
-				},
-			)
-		}
+			return &page, err
+		},
+	})
+	if err != nil || !again {
+		return totals, err
 	}
-}
 
-func drainSignals(signals workflow.ReceiveChannel) bool {
-	received := false
-	for {
-		var signal etacontract.RefreshSignal
-		if !signals.ReceiveAsync(&signal) {
-			return received
-		}
-		received = true
-	}
+	return totals, workflow.NewContinueAsNewError(ctx, ShipmentEtaDrainWorkflow,
+		&temporaljobs.DrainPayload{
+			OrganizationID: payload.OrganizationID,
+			BusinessUnitID: payload.BusinessUnitID,
+		})
 }
 
 func ShipmentEtaSweepWorkflow(ctx workflow.Context) (*SweepResult, error) {
 	var a *Activities
 	listCtx := workflow.WithActivityOptions(ctx, sweepListOptions)
 	tenantCtx := workflow.WithActivityOptions(ctx, sweepTenantOptions)
+
+	// Wake the drains whose wake was lost before refreshing every tenant.
+	if err := workflow.ExecuteActivity(listCtx, a.WakeDueEtaDrainsActivity).Get(listCtx, nil); err != nil {
+		workflow.GetLogger(ctx).Warn("could not wake the shipment eta drains", "error", err)
+	}
 
 	var tenants []TenantRef
 	if err := workflow.ExecuteActivity(listCtx, a.ListSweepTenantsActivity).

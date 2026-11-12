@@ -384,6 +384,9 @@ packages:
   github.com/emoss08/trenova/internal/modules/kernel/ports/usstateports:
     config:
       all: true
+  github.com/emoss08/trenova/internal/modules/kernel/ports/workqueueports:
+    config:
+      all: true
   github.com/emoss08/trenova/internal/modules/operations/ports/assignmentports:
     config:
       all: true

@@ -26,7 +26,7 @@ func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 		{
 			Name:        "ScheduledStoredMileageFlushWorkflow",
 			Fn:          ScheduledStoredMileageFlushWorkflow,
-			TaskQueue:   temporaltype.DistanceMileageTaskQueue,
+			TaskQueue:   temporaltype.TaskQueueSystem.String(),
 			Description: "Flush stored mileage candidates from Redis into PostgreSQL",
 		},
 	}

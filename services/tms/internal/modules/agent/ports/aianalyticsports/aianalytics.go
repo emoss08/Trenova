@@ -299,7 +299,14 @@ type AnalyticsReader interface {
 	Palette(ctx context.Context, tenant pagination.TenantInfo, since int64) ([]DeploymentKey, error)
 }
 
+// ActiveTenantLister lists, across every tenant, the organizations with AI
+// activity since a moment: the only ones whose analytics can have moved.
+type ActiveTenantLister interface {
+	ListActiveTenants(ctx context.Context, since int64, limit int) ([]pagination.TenantInfo, error)
+}
+
 type AnalyticsRepository interface {
 	AnalyticsRefresher
 	AnalyticsReader
+	ActiveTenantLister
 }

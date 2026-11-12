@@ -65,6 +65,17 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 			},
 		},
 		{
+			ID:            "edi-flow-timers",
+			Description:   "Wake every open EDI flow instance whose timer is due",
+			Spec:          schedule.Every(time.Minute),
+			Workflow:      DispatchDueFlowTimersWorkflow,
+			TaskQueue:     temporaltype.EDITaskQueue,
+			OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,
+			Memo: map[string]any{
+				"purpose": "edi-flow-timers",
+			},
+		},
+		{
 			ID:            "edi-raw-retention-purge",
 			Description:   "Purge raw EDI payloads past each organization's retention window",
 			Spec:          schedule.Cron("0 3 * * *"),

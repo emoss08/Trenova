@@ -3,92 +3,75 @@ package customertrackingcontract
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/workqueueports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/customertrackingports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
-	"go.temporal.io/sdk/client"
-	"go.temporal.io/sdk/temporal"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
 const (
-	EvaluateWorkflowName     = "EvaluateCustomerStatusWorkflow"
-	SweepWorkflowName        = "CustomerStatusSweepWorkflow"
-	PurgeWorkflowName        = "CustomerTrackingLinkPurgeWorkflow"
-	EvaluateSignalName       = "customer-status-evaluate"
-	evaluateWorkflowIDPrefix = "customer-status-evaluate-"
+	// DrainKind queues a shipment whose customer status emails need
+	// evaluating; one drain per tenant works them all.
+	DrainKind         = "customer-status"
+	DrainWorkflowName = "CustomerStatusDrainWorkflow"
+	DrainSignalName   = "customer-status-drain"
+	SweepWorkflowName = "CustomerStatusSweepWorkflow"
+	PurgeWorkflowName = "CustomerTrackingLinkPurgeWorkflow"
 )
-
-type EvaluatePayload struct {
-	OrganizationID pulid.ID `json:"organizationId"`
-	BusinessUnitID pulid.ID `json:"businessUnitId"`
-	ShipmentID     pulid.ID `json:"shipmentId"`
-	Iterations     int      `json:"iterations"`
-}
-
-func (p *EvaluatePayload) TenantInfo() pagination.TenantInfo {
-	return pagination.TenantInfo{OrgID: p.OrganizationID, BuID: p.BusinessUnitID}
-}
-
-type EvaluateSignal struct{}
-
-func EvaluateWorkflowID(shipmentID pulid.ID) string {
-	return evaluateWorkflowIDPrefix + shipmentID.String()
-}
 
 type RequesterParams struct {
 	fx.In
 
+	Queue   workqueueports.Queue
 	Signals kernelports.WorkflowSignalStarter
 	Logger  *zap.Logger
 }
 
+// Requester queues a shipment for its tenant's customer status drain, so a
+// burst of changes to many shipments is evaluated by one workflow.
 type Requester struct {
-	signals kernelports.WorkflowSignalStarter
-	l       *zap.Logger
+	drain *temporaljobs.DrainRequester
+	l     *zap.Logger
 }
 
 var _ customertrackingports.EvaluationRequester = (*Requester)(nil)
 
-func NewRequester(p RequesterParams) customertrackingports.EvaluationRequester {
-	return &Requester{signals: p.Signals, l: p.Logger.Named("customer-status-requester")}
+func NewRequester(p RequesterParams) *Requester {
+	l := p.Logger.Named("customer-status-requester")
+
+	return &Requester{
+		drain: &temporaljobs.DrainRequester{
+			Queue:     p.Queue,
+			Signals:   p.Signals,
+			Kind:      DrainKind,
+			Workflow:  DrainWorkflowName,
+			TaskQueue: temporaltype.TaskQueueDispatch.String(),
+			Signal:    DrainSignalName,
+			Summary:   "Send the customer status emails the tenant's rules ask for",
+			Logger:    l,
+		},
+		l: l,
+	}
 }
 
-// RequestEvaluation signals the shipment's evaluation workflow, starting it if
-// it is not running, so a burst of changes to one shipment is evaluated once.
 func (r *Requester) RequestEvaluation(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	shipmentID pulid.ID,
 ) {
-	if shipmentID.IsNil() || tenantInfo.OrgID.IsNil() {
-		return
-	}
-
-	_, err := r.signals.SignalWithStartWorkflow(
-		ctx,
-		EvaluateWorkflowID(shipmentID),
-		EvaluateSignalName,
-		EvaluateSignal{},
-		client.StartWorkflowOptions{
-			ID:            EvaluateWorkflowID(shipmentID),
-			TaskQueue:     temporaltype.TaskQueueDispatch.String(),
-			StaticSummary: "Send the customer the status emails its rules ask for",
-			Priority:      temporal.Priority{FairnessKey: tenantInfo.OrgID.String()},
-		},
-		EvaluateWorkflowName,
-		&EvaluatePayload{
-			OrganizationID: tenantInfo.OrgID,
-			BusinessUnitID: tenantInfo.BuID,
-			ShipmentID:     shipmentID,
-		},
-	)
-	if err != nil {
-		r.l.Warn("could not request a customer status evaluation",
+	if err := r.drain.Request(ctx, tenantInfo, shipmentID); err != nil {
+		r.l.Warn("could not queue a customer status evaluation; the sweep evaluates it",
 			zap.String("shipmentId", shipmentID.String()),
 			zap.Error(err))
 	}
+}
+
+// WakeDue wakes every tenant with shipments waiting for an evaluation.
+func (r *Requester) WakeDue(ctx context.Context, limit int) (int, error) {
+	return r.drain.WakeDue(ctx, limit)
 }

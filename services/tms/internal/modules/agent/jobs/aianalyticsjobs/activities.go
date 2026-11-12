@@ -3,10 +3,13 @@ package aianalyticsjobs
 import (
 	"context"
 	"fmt"
+	"slices"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aianalyticsports"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"go.temporal.io/sdk/activity"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -16,34 +19,71 @@ type ActivitiesParams struct {
 	fx.In
 
 	Analytics aianalyticsports.AnalyticsService
-	Tenants   tenantports.TenantSyncRepository
+	Active    aianalyticsports.ActiveTenantLister
 	Logger    *zap.Logger
 }
 
 type Activities struct {
 	analytics aianalyticsports.AnalyticsService
-	tenants   tenantports.TenantSyncRepository
+	active    aianalyticsports.ActiveTenantLister
 	l         *zap.Logger
+	now       func() int64
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
 	return &Activities{
 		analytics: p.Analytics,
-		tenants:   p.Tenants,
+		active:    p.Active,
 		l:         p.Logger.Named("job.ai-analytics"),
+		now:       timeutils.NowUnix,
 	}
 }
 
+// ListAIAnalyticsOrganizationsActivity lists one page of the organizations
+// with AI activity in the last activeWindow. A refresh starts from the
+// tenant's own watermark, so an organization that has gone quiet loses
+// nothing by being left out: its next activity brings it back, and the
+// refresh then covers everything since its watermark.
 func (a *Activities) ListAIAnalyticsOrganizationsActivity(
 	ctx context.Context,
 	input *ListAIAnalyticsOrganizationsInput,
 ) (*temporaljobs.TenantPage, error) {
-	organizations, err := a.tenants.ListOrganizations(ctx)
+	since := a.now() - int64(activeWindow.Seconds())
+	tenants, err := a.active.ListActiveTenants(ctx, since, maxActiveTenants)
 	if err != nil {
-		return nil, fmt.Errorf("list organizations: %w", err)
+		return nil, fmt.Errorf("list organizations with ai activity: %w", err)
 	}
 
-	return temporaljobs.OrganizationPage(organizations, input.After, input.Limit), nil
+	return pageAfter(tenants, input.After, input.Limit), nil
+}
+
+// pageAfter is one page of tenants, already in organization id order, after
+// the cursor.
+func pageAfter(
+	tenants []pagination.TenantInfo,
+	after *temporaljobs.TenantWorkItem,
+	limit int,
+) *temporaljobs.TenantPage {
+	limit = temporaljobs.NormalizeLimit(limit, temporaljobs.DefaultOrganizationPageSize)
+	start := 0
+	if after != nil {
+		cursor := after.OrganizationID.String()
+		start, _ = slices.BinarySearchFunc(tenants, cursor,
+			func(tenant pagination.TenantInfo, id string) int {
+				return strings.Compare(tenant.OrgID.String(), id)
+			})
+		for start < len(tenants) && tenants[start].OrgID.String() <= cursor {
+			start++
+		}
+	}
+
+	end := min(start+limit, len(tenants))
+	items := make([]temporaljobs.TenantWorkItem, 0, end-start)
+	for _, tenant := range tenants[start:end] {
+		items = append(items, temporaljobs.NewTenantWorkItem(tenant, 1))
+	}
+
+	return &temporaljobs.TenantPage{Tenants: items, HasMore: end < len(tenants)}
 }
 
 func (a *Activities) RefreshOrganizationAIAnalyticsActivity(

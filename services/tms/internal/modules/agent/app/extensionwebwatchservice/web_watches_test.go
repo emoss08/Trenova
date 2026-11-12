@@ -13,7 +13,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentextensiontest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/extensionwebwatch"
-	"github.com/emoss08/trenova/internal/modules/agent/jobs/webwatchjobs/webwatchcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -22,7 +21,6 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.temporal.io/sdk/client"
 	"go.uber.org/zap"
 )
 
@@ -107,8 +105,43 @@ func (f *fakeWatcher) VerifyDelivery(
 }
 
 type memoryWatches struct {
-	mu      sync.Mutex
-	watches map[pulid.ID]*extensionwebwatch.WebWatch
+	mu        sync.Mutex
+	watches   map[pulid.ID]*extensionwebwatch.WebWatch
+	scheduled []pulid.ID
+	cleared   []pulid.ID
+}
+
+func (m *memoryWatches) ScheduleCheck(_ context.Context, _ pagination.TenantInfo, id pulid.ID, _ int64) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	m.scheduled = append(m.scheduled, id)
+
+	return nil
+}
+
+func (m *memoryWatches) ClearCheck(_ context.Context, _ pagination.TenantInfo, id pulid.ID) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	m.cleared = append(m.cleared, id)
+
+	return nil
+}
+
+func (m *memoryWatches) ClaimDueChecks(
+	context.Context,
+	*agentextensionports.ClaimWebWatchChecksRequest,
+) ([]agentextensionports.WebWatchRef, error) {
+	return nil, nil
+}
+
+// scheduledSince is the checks scheduled after the first n.
+func (m *memoryWatches) scheduledSince(n int) []pulid.ID {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	return slices.Clone(m.scheduled[n:])
 }
 
 func (m *memoryWatches) Create(
@@ -279,52 +312,14 @@ func (m *memoryFindings) matching(
 	return out
 }
 
-type watchWorkflows struct {
-	mu      sync.Mutex
-	started []string
-	signals []string
-}
-
-func (w *watchWorkflows) StartWorkflow(
-	_ context.Context,
-	options client.StartWorkflowOptions,
-	_ any,
-	_ ...any,
-) (client.WorkflowRun, error) {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-
-	w.started = append(w.started, options.ID)
-
-	return nil, nil //nolint:nilnil // the run handle is never read
-}
-
-func (w *watchWorkflows) CancelWorkflow(context.Context, string, string) error { return nil }
-
-func (w *watchWorkflows) SignalWorkflow(
-	_ context.Context,
-	workflowID, _, signalName string,
-	_ any,
-) error {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-
-	w.signals = append(w.signals, workflowID+"/"+signalName)
-
-	return nil
-}
-
-func (w *watchWorkflows) Enabled() bool { return true }
-
 type watchFixture struct {
-	svc       *Service
-	core      *agentextensionservice.Service
-	usage     *agentextensiontest.MemoryUsage
-	watcher   *fakeWatcher
-	watches   *memoryWatches
-	findings  *memoryFindings
-	workflows *watchWorkflows
-	tenant    pagination.TenantInfo
+	svc      *Service
+	core     *agentextensionservice.Service
+	usage    *agentextensiontest.MemoryUsage
+	watcher  *fakeWatcher
+	watches  *memoryWatches
+	findings *memoryFindings
+	tenant   pagination.TenantInfo
 }
 
 func newWatchFixture(t *testing.T, webBase string) *watchFixture {
@@ -347,9 +342,8 @@ func newBareWatchFixture(t *testing.T, webBase string) *watchFixture {
 			SearchCost: decimal.RequireFromString("0.005"),
 			ReadCost:   decimal.RequireFromString("0.001"),
 		}},
-		watches:   &memoryWatches{watches: make(map[pulid.ID]*extensionwebwatch.WebWatch)},
-		findings:  &memoryFindings{},
-		workflows: &watchWorkflows{},
+		watches:  &memoryWatches{watches: make(map[pulid.ID]*extensionwebwatch.WebWatch)},
+		findings: &memoryFindings{},
 		tenant: pagination.TenantInfo{
 			OrgID:  pulid.MustNew("org_"),
 			BuID:   pulid.MustNew("bu_"),
@@ -380,7 +374,6 @@ func newBareWatchFixture(t *testing.T, webBase string) *watchFixture {
 		Connectors: connectors,
 		Watches:    w.watches,
 		Findings:   w.findings,
-		Workflows:  w.workflows,
 		AppConfig:  &appconfig.Config{WebBaseURL: webBase},
 	})
 	w.svc.now = func() int64 { return agentextensiontest.Now }
@@ -500,7 +493,7 @@ func TestSettingAWatchRecordsItThenFollowsIt(t *testing.T) {
 	assert.True(t, stored.HasSecret())
 	assert.NotContains(t, stored.Secrets[extensionwebwatch.WebWatchSecretField], testWatchSecret,
 		"the webhook secret is kept encrypted")
-	assert.Equal(t, []string{webwatchcontract.WorkflowIDFor(view.ID)}, w.workflows.started)
+	assert.Equal(t, []pulid.ID{view.ID}, w.watches.scheduledSince(0), "a new watch is checked at once")
 }
 
 func TestAWatchNeedsTrenovaAtAPublicAddress(t *testing.T) {
@@ -547,7 +540,7 @@ func TestAWatchTheVendorRefusedEndsFailedAtOnce(t *testing.T) {
 	stored := w.watches.only(t)
 	assert.Equal(t, extensionwebwatch.WebWatchStatusFailed, stored.Status)
 	assert.NotEmpty(t, stored.Failure)
-	assert.Empty(t, w.workflows.started)
+	assert.Empty(t, w.watches.scheduledSince(0), "a watch that could not be kept is never checked")
 }
 
 func TestAVendorThatCannotWatchIsRefused(t *testing.T) {
@@ -678,6 +671,7 @@ func TestOnlyWhoAWatchWasSetForStopsIt(t *testing.T) {
 	require.True(t, errortypes.IsNotFoundError(err))
 	assert.Empty(t, w.watcher.deleted)
 
+	before := len(w.watches.scheduledSince(0))
 	stopped, err := w.svc.StopWebWatch(t.Context(), &agentextensionports.StopWebWatchRequest{
 		TenantInfo: w.tenant,
 		WatchID:    view.ID,
@@ -687,8 +681,8 @@ func TestOnlyWhoAWatchWasSetForStopsIt(t *testing.T) {
 	assert.Equal(t, extensionwebwatch.WebWatchStatusStopped, stopped.Status)
 	assert.Equal(t, w.tenant.UserID, stopped.StoppedByID)
 	assert.Equal(t, []string{"mon_1"}, w.watcher.deleted)
-	assert.Equal(t, []string{webwatchcontract.WorkflowIDFor(view.ID) + "/" +
-		webwatchcontract.SignalCheck}, w.workflows.signals)
+	assert.Equal(t, []pulid.ID{view.ID}, w.watches.scheduledSince(before),
+		"a stopped watch gets one last check, which tells the waiting work")
 
 	again, err := w.svc.StopWebWatch(t.Context(), &agentextensionports.StopWebWatchRequest{
 		TenantInfo:  w.tenant,
@@ -723,6 +717,7 @@ func TestADeliverySignedWithTheWatchsSecretAsksForACheck(t *testing.T) {
 	w := newWatchFixture(t, testWebBase)
 	view := w.set(t)
 
+	before := len(w.watches.scheduledSince(0))
 	forged := http.Header{}
 	forged.Set(testSignatureName, "not-the-secret")
 	err := w.svc.ReceiveWebWatchDelivery(t.Context(),
@@ -732,7 +727,7 @@ func TestADeliverySignedWithTheWatchsSecretAsksForACheck(t *testing.T) {
 			Delivery:   agentextensionports.WebWatchDelivery{Header: forged},
 		})
 	require.Error(t, err)
-	assert.Empty(t, w.workflows.signals)
+	assert.Empty(t, w.watches.scheduledSince(before), "a forged delivery checks nothing")
 
 	signed := http.Header{}
 	signed.Set(testSignatureName, testWatchSecret)
@@ -742,6 +737,6 @@ func TestADeliverySignedWithTheWatchsSecretAsksForACheck(t *testing.T) {
 			WatchID:    view.ID,
 			Delivery:   agentextensionports.WebWatchDelivery{Header: signed},
 		}))
-	assert.Equal(t, []string{webwatchcontract.WorkflowIDFor(view.ID) + "/" +
-		webwatchcontract.SignalCheck}, w.workflows.signals)
+	assert.Equal(t, []pulid.ID{view.ID}, w.watches.scheduledSince(before),
+		"a signed delivery checks the watch now")
 }

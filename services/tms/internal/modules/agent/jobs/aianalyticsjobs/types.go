@@ -1,8 +1,22 @@
 package aianalyticsjobs
 
-import "github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
+import (
+	"time"
+
+	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
+)
 
 const RefreshAIAnalyticsWorkflowName = "RefreshAIAnalyticsWorkflow"
+
+const (
+	// activeWindow is how recent an organization's AI activity must be for
+	// the refresh to visit it: twelve runs of the schedule, so a refresh
+	// that failed is retried for an hour before the tenant waits on its next
+	// activity.
+	activeWindow = time.Hour
+	// maxActiveTenants bounds each source read of the active set.
+	maxActiveTenants = 10_000
+)
 
 type RefreshAIAnalyticsInput struct {
 	After *temporaljobs.TenantWorkItem `json:"after,omitempty"`

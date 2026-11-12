@@ -42,12 +42,7 @@ func (a *Activities) ListAICorrectionOrganizationsActivity(
 	ctx context.Context,
 	input *ListAICorrectionOrganizationsInput,
 ) (*temporaljobs.TenantPage, error) {
-	organizations, err := a.tenants.ListOrganizations(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("list organizations: %w", err)
-	}
-
-	return temporaljobs.OrganizationPage(organizations, input.After, input.Limit), nil
+	return temporaljobs.OrganizationPage(ctx, a.tenants, input.After, input.Limit)
 }
 
 func (a *Activities) PurgeOrganizationAICorrectionsActivity(

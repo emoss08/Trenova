@@ -60,10 +60,14 @@ one.
 
 ## Following a watch
 
-`WebWatchWorkflow` (`agent-web-watch:<watch id>`, system queue) checks the watch every half
-hour, or at once on the `check` signal, until a check says it ended, continuing as new after a
-run of checks so its history stays small. A check that keeps failing waits for the next one; a
-watch ends only when its time runs out, it is stopped, or Exa can no longer run it.
+A watch holds no workflow. Its next check is `next_check_at`, read-only on the model and moved
+only by the repository. `CheckDueWebWatchesWorkflow` (schedule `web-watch-checks`, every minute,
+system queue) claims the watches due, moving each one's next check half an hour out in the
+same statement so a watch is checked once per claim, and checks them eight at a time. A check
+that found the watch ended clears the column; one that failed is due again in five minutes. A
+new watch, a vendor's report and a stop make the watch due at once (`ScheduleCheck`, which never
+puts a check later). A watch ends only when its time runs out, it is stopped, or Exa can no
+longer run it.
 
 Each check (`CheckWebWatch`):
 
@@ -91,8 +95,8 @@ picks the work up twice nor sets two waits.
 
 Exa's webhook only speeds this up. `ReceiveWebWatchDelivery` reads the watch under the tenant
 in its path, checks the delivery's `Exa-Signature` (`t=<unix>,v1=<hex>`, HMAC-SHA256 of
-`t.body`, five minutes either way) against the watch's own secret, and signals the workflow to
-check now. What the delivery says is never used: the check reads the runs from Exa. The route
+`t.body`, five minutes either way) against the watch's own secret, and makes the watch due
+now. What the delivery says is never used: the check reads the runs from Exa. The route
 is public, rate-limited by client address, and refuses a body over its limit; a bad signature
 is 401 and an unknown watch 404.
 
@@ -101,7 +105,7 @@ is 401 and an unknown watch 404.
 `web_stop_watch`, **Stop watching** on the Desk's wait, and **Stop watching** under the
 extension in AI control (`POST /agent-web-watches/:watchID/stop/`) remove the monitor, record
 the watch `Stopped` with who stopped it, close its waits quietly (`EndWebWatchWaits`) and
-signal the workflow, which then ends. Only the person a watch was set for, the agent whose
+make it due once more; that last check finds it stopped and takes it off the sweep. Only the person a watch was set for, the agent whose
 background work set one for no person, or someone who can update agent extensions may stop it;
 anyone else is told it does not exist. A monitor Exa will not remove leaves the watch running
 rather than recorded as stopped. A `WebWatch` wait cannot be cancelled on its own
@@ -128,7 +132,7 @@ lets its wait run out an hour later, and the work hears the watch ended.
 | Ports | `ports/agentextensionports/webwatch.go` |
 | Service | `app/extensionwebwatchservice/web_watches.go` |
 | Repositories | `adapters/postgres/agentextensionrepository/webwatch.go` |
-| Workflow and activity | `jobs/webwatchjobs/`, `webwatchcontract` |
+| Sweep, schedule and activity | `jobs/webwatchjobs/` |
 | Waits | `agentwait.KindWebWatch`, `app/agentwaitservice/webwatch.go` |
 | Tools | `app/agenttools/webwatchtools/` (`web_watch`, `web_stop_watch`), `app/querytools/webquerytools/web_watch_tools.go` (`web_list_watches`) |
 | Vendor | `shared/exa/monitors.go`, `internal/infrastructure/agentextension/exaconnector/monitors.go` |

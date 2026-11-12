@@ -393,6 +393,7 @@ func SharedOptions() fx.Option {
 			),
 			fx.Annotate(shipmentetaservice.NewRefresher, fx.As(new(stopetaports.Refresher))),
 			etacontract.NewRequester,
+			func(r *etacontract.Requester) stopetaports.RefreshRequester { return r },
 			etatrigger.New,
 			fx.Annotate(
 				func(t *etatrigger.Trigger) shipmenteventports.ShipmentEventObserver { return t },
@@ -408,6 +409,7 @@ func SharedOptions() fx.Option {
 			},
 			func(s *customertrackingservice.Service) customertrackingports.StatusNotifier { return s },
 			customertrackingcontract.NewRequester,
+			func(r *customertrackingcontract.Requester) customertrackingports.EvaluationRequester { return r },
 			customerstatustrigger.New,
 			fx.Annotate(
 				func(t *customerstatustrigger.Trigger) shipmenteventports.ShipmentEventObserver {

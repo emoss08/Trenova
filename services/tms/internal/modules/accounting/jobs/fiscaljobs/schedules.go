@@ -19,7 +19,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 			Description:   "Automatically close fiscal periods whose end date has passed",
 			Spec:          schedule.Cron("0 1 * * *"), // runs at 1:00 AM UTC
 			Workflow:      AutoCloseFiscalPeriodsWorkflow,
-			TaskQueue:     temporaltype.FiscalTaskQueue,
+			TaskQueue:     temporaltype.TaskQueueSystem.String(),
 			OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,
 			Memo: map[string]any{
 				"purpose": "fiscal-period-auto-close",
@@ -30,7 +30,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 			Description:   "Automatically create next fiscal year when current one is within 60 days of ending",
 			Spec:          schedule.Cron("0 2 * * *"), // runs at 2:00 AM UTC
 			Workflow:      AutoCreateNextFiscalYearWorkflow,
-			TaskQueue:     temporaltype.FiscalTaskQueue,
+			TaskQueue:     temporaltype.TaskQueueSystem.String(),
 			OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,
 			Memo: map[string]any{
 				"purpose": "fiscal-year-auto-create",
@@ -41,7 +41,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 			Description:   "Notify controllers about fiscal years past their end date that are still open",
 			Spec:          schedule.Cron("0 3 * * *"), // runs at 3:00 AM UTC
 			Workflow:      FiscalYearCloseReadinessWorkflow,
-			TaskQueue:     temporaltype.FiscalTaskQueue,
+			TaskQueue:     temporaltype.TaskQueueSystem.String(),
 			OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,
 			Memo: map[string]any{
 				"purpose": "fiscal-year-close-readiness",

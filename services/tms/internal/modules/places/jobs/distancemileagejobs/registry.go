@@ -9,7 +9,7 @@ import (
 
 var DomainConfig = registry.DomainConfig{
 	Name:         "distance-mileage-worker",
-	TaskQueue:    temporaltype.DistanceMileageTaskQueue,
+	TaskQueue:    temporaltype.TaskQueueSystem.String(),
 	WorkerConfig: registry.DefaultWorkerConfig(),
 }
 

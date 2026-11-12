@@ -5,12 +5,11 @@
 package ladingportsmock
 
 import (
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject"
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edimessage"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/ladingproject"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ladingports"
-
 	"github.com/emoss08/trenova/pkg/pagination"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -21,10 +20,19 @@ func NewMockFlowRepository(t interface {
 	mock.TestingT
 	Cleanup(func())
 }) *MockFlowRepository {
+	if helper, ok := t.(interface{ Helper() }); ok {
+		helper.Helper()
+	}
+
 	mock := &MockFlowRepository{}
 	mock.Mock.Test(t)
 
-	t.Cleanup(func() { mock.AssertExpectations(t) })
+	t.Cleanup(func() {
+		if helper, ok := t.(interface{ Helper() }); ok {
+			helper.Helper()
+		}
+		mock.AssertExpectations(t)
+	})
 
 	return mock
 }
@@ -299,6 +307,74 @@ func (_c *MockFlowRepository_GetSendMessage_Call) Return(eDIMessage *edimessage.
 }
 
 func (_c *MockFlowRepository_GetSendMessage_Call) RunAndReturn(run func(ctx context.Context, req ladingports.GetFlowSendMessageRequest) (*edimessage.EDIMessage, error)) *MockFlowRepository_GetSendMessage_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListDueInstances provides a mock function for the type MockFlowRepository
+func (_mock *MockFlowRepository) ListDueInstances(ctx context.Context, req *ladingports.ListDueFlowInstancesRequest) ([]ladingports.DueFlowInstance, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListDueInstances")
+	}
+
+	var r0 []ladingports.DueFlowInstance
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ladingports.ListDueFlowInstancesRequest) ([]ladingports.DueFlowInstance, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ladingports.ListDueFlowInstancesRequest) []ladingports.DueFlowInstance); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]ladingports.DueFlowInstance)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *ladingports.ListDueFlowInstancesRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockFlowRepository_ListDueInstances_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListDueInstances'
+type MockFlowRepository_ListDueInstances_Call struct {
+	*mock.Call
+}
+
+// ListDueInstances is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *ladingports.ListDueFlowInstancesRequest
+func (_e *MockFlowRepository_Expecter) ListDueInstances(ctx any, req any) *MockFlowRepository_ListDueInstances_Call {
+	return &MockFlowRepository_ListDueInstances_Call{Call: _e.mock.On("ListDueInstances", ctx, req)}
+}
+
+func (_c *MockFlowRepository_ListDueInstances_Call) Run(run func(ctx context.Context, req *ladingports.ListDueFlowInstancesRequest)) *MockFlowRepository_ListDueInstances_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *ladingports.ListDueFlowInstancesRequest
+		if args[1] != nil {
+			arg1 = args[1].(*ladingports.ListDueFlowInstancesRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockFlowRepository_ListDueInstances_Call) Return(dueFlowInstances []ladingports.DueFlowInstance, err error) *MockFlowRepository_ListDueInstances_Call {
+	_c.Call.Return(dueFlowInstances, err)
+	return _c
+}
+
+func (_c *MockFlowRepository_ListDueInstances_Call) RunAndReturn(run func(ctx context.Context, req *ladingports.ListDueFlowInstancesRequest) ([]ladingports.DueFlowInstance, error)) *MockFlowRepository_ListDueInstances_Call {
 	_c.Call.Return(run)
 	return _c
 }
