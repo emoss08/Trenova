@@ -55,7 +55,7 @@ export const queueSearchParamsParser = {
   billers: parseAsStringArray,
   /** Narrows the queue to the items billed to one customer, on any shipment. */
   payer: parseAsString,
-  includePosted: parseAsBoolean.withDefault(false),
+  includeClosed: parseAsBoolean.withDefault(false),
   preset: parseAsString,
   /** The lanes the list shows; empty shows every open lane. */
   lanes: parseAsArrayOf(parseAsStringLiteral(BILLING_QUEUE_OPEN_LANES)).withDefault([]),
@@ -70,9 +70,10 @@ export const queueSearchParamsParser = {
   pickedUp: parseAsDateWindow,
   queued: parseAsDateWindow,
   /**
-   * The transfer run the bulk dialog is watching. It lives in the URL so the
-   * toast announcing a finished transfer can link straight back to its report,
-   * and so a refresh mid-run reattaches instead of losing sight of it.
+   * The transfer run the bulk dialog is watching, while the dialog is open. It
+   * lives in the URL so the toast announcing a finished transfer can link straight
+   * back to its report, and so a refresh mid-run reattaches instead of losing sight
+   * of it; closing the dialog drops it.
    */
   transferRun: parseAsString,
 };
@@ -99,7 +100,7 @@ export const queueSidebarSearchParamsParser = {
   billType: queueSearchParamsParser.billType,
   billers: queueSearchParamsParser.billers,
   payer: queueSearchParamsParser.payer,
-  includePosted: queueSearchParamsParser.includePosted,
+  includeClosed: queueSearchParamsParser.includeClosed,
   preset: queueSearchParamsParser.preset,
   lanes: queueSearchParamsParser.lanes,
   minAmount: queueSearchParamsParser.minAmount,

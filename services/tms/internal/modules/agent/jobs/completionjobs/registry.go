@@ -54,6 +54,11 @@ func NewRegistry(p RegistryParams) *registry.ComposedRegistry {
 				Fn:          WriteBriefingWorkflow,
 				Description: "Write a day's briefing again for a person who asked",
 			},
+			{
+				Name:        completioncontract.WriteCaseReadingWorkflowName,
+				Fn:          WriteCaseReadingWorkflow,
+				Description: "Write Nova's reading of a record's case",
+			},
 		},
 		Logger: p.Logger,
 	})

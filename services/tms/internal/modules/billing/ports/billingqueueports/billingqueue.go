@@ -13,7 +13,7 @@ import (
 
 type ListBillingQueueItemsRequest struct {
 	Filter        *pagination.QueryOptions `json:"filter"`
-	IncludePosted bool                     `json:"includePosted"`
+	IncludeClosed bool                     `json:"includeClosed"`
 	Lanes         []billingqueue.Lane      `json:"lanes"`
 	MinAmount     decimal.NullDecimal      `json:"minAmount"`
 	MaxAmount     decimal.NullDecimal      `json:"maxAmount"`

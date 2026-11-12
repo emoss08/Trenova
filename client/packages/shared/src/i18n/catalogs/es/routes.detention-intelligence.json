@@ -143,7 +143,6 @@
   "{0, plural, one {# arrival} other {# arrivals}}": "{0, plural, one {# llegada} other {# llegadas}}",
   "{0, plural, one {# charge held} other {# charges held}}": "{0, plural, one {# cargo retenido} other {# cargos retenidos}}",
   "{0, plural, one {# facility} other {# facilities}} · {1} of the hours": "{0, plural, one {# instalación} other {# instalaciones}} · {1} de las horas",
-  "{0, plural, one {# more} other {# more}}": "{0, plural, one {# más} other {# más}}",
   "{0, plural, one {# policy change} other {# policy changes}}": "{0, plural, one {# cambio de política} other {# cambios de política}}",
   "{0, plural, one {# stop} other {# stops}} · {1, plural, one {# detained} other {# detained}}": "{0, plural, one {# parada} other {# paradas}} · {1, plural, one {# con demoras} other {# con demoras}}",
   "{0, plural, one {# waiver} other {# waivers}}": "{0, plural, one {# condonación} other {# condonaciones}}",

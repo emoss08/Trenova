@@ -16,6 +16,8 @@ type Config struct {
 
 const (
 	loopbackHost                       = "127.0.0.1"
+	defaultPprofPort                   = 6060
+	defaultWorkerPprofPort             = 6061
 	defaultGraphQLSlowOperationAfter   = time.Second
 	defaultGraphQLMaxTrackedOperations = 2000
 )
@@ -77,9 +79,10 @@ type HealthConfig struct {
 }
 
 type PprofConfig struct {
-	Enabled bool   `mapstructure:"enabled"`
-	Host    string `mapstructure:"host"    validate:"omitempty,hostname|ip"`
-	Port    int    `mapstructure:"port"    validate:"omitempty,min=1,max=65535"`
+	Enabled    bool   `mapstructure:"enabled"`
+	Host       string `mapstructure:"host"       validate:"omitempty,hostname|ip"`
+	Port       int    `mapstructure:"port"       validate:"omitempty,min=1,max=65535"`
+	WorkerPort int    `mapstructure:"workerPort" validate:"omitempty,min=1,max=65535"`
 }
 
 func (c *PprofConfig) GetHost() string {
@@ -91,9 +94,16 @@ func (c *PprofConfig) GetHost() string {
 
 func (c *PprofConfig) GetPort() int {
 	if c.Port <= 0 {
-		return 6060
+		return defaultPprofPort
 	}
 	return c.Port
+}
+
+func (c *PprofConfig) GetWorkerPort() int {
+	if c.WorkerPort <= 0 {
+		return defaultWorkerPprofPort
+	}
+	return c.WorkerPort
 }
 
 func (c *TracingConfig) GetAISamplingRate() float64 {
@@ -127,7 +137,8 @@ func Defaults() map[string]any {
 		"health.timeout":           "5s",
 		"pprof.enabled":            false,
 		"pprof.host":               loopbackHost,
-		"pprof.port":               6060,
+		"pprof.port":               defaultPprofPort,
+		"pprof.workerPort":         defaultWorkerPprofPort,
 	}
 }
 

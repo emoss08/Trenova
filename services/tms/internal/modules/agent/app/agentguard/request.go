@@ -23,6 +23,11 @@ type EvaluateRequest struct {
 	Input string
 	// Recent is the tail of the conversation, oldest first.
 	Recent []Turn
+	// About names what the person had in front of them when they asked: the
+	// record a case or a page is on, and the records they named. A question
+	// asked beside a record ("what are my options here?") carries its subject
+	// there and nowhere in its words.
+	About string
 }
 
 const (
@@ -34,7 +39,20 @@ const (
 	// in its first sentence, and a full answer — a table of drivers, say —
 	// would otherwise dominate the prompt and cost more than the call it saves.
 	maxContextChars = 400
+	// maxAboutChars bounds what is said about the page: a kind, a label and a
+	// few named records.
+	maxAboutChars = 300
 )
+
+// aboutContext is what the person was looking at, bounded for the classifier.
+func (r EvaluateRequest) aboutContext() string {
+	about := strings.Join(strings.Fields(r.About), " ")
+	if len(about) > maxAboutChars {
+		about = about[:truncationBoundary(about, maxAboutChars)] + "…"
+	}
+
+	return about
+}
 
 // conversationContext renders the tail of a thread for the classifier.
 //

@@ -1,0 +1,12 @@
+{{ if .RecipientFirstName }}{{ t "Hi {0}," .RecipientFirstName }}{{ else }}{{ t "Hi," }}{{ end }}
+
+{{ if .SharedByName }}{{ t "{0} shared {1} with you." .SharedByName .RecordTitle }}{{ else }}{{ t "A teammate shared {0} with you." .RecordTitle }}{{ end }}
+{{ if .RecordSubtitle }}{{ .RecordSubtitle }}
+{{ end }}{{ if .Note }}
+{{ if .SharedByName }}{{ t "Note from {0}" .SharedByName }}{{ else }}{{ t "Note" }}{{ end }}:
+{{ .Note }}
+{{ end }}
+{{ t "Open it:" }}
+{{ .RecordURL }}
+
+{{ if .CompanyName }}{{ t "You can open this because your role in {0} already lets you view records like it. Sharing adds nothing to what your role allows." .CompanyName }}{{ else }}{{ t "You can open this because your role already lets you view records like it. Sharing adds nothing to what your role allows." }}{{ end }}

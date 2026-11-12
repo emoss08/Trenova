@@ -619,40 +619,6 @@ func commentNotificationVariables() []templatecatalog.VariableDefinition {
 	}
 }
 
-type InvoiceShareNotificationContext struct {
-	SharedByName  string
-	InvoiceNumber string
-	CustomerName  string
-}
-
-func newInvoiceShareNotificationSampleContext() any {
-	return InvoiceShareNotificationContext{
-		SharedByName:  "Marcus Bell",
-		InvoiceNumber: templatecatalog.SampleInvoiceNo,
-		CustomerName:  templatecatalog.SampleCustomerName,
-	}
-}
-
-func invoiceShareNotificationVariables() []templatecatalog.VariableDefinition {
-	return []templatecatalog.VariableDefinition{
-		{
-			Path:        "SharedByName",
-			Type:        templatecatalog.VariableString,
-			Description: "Who shared the invoice.",
-		},
-		templatecatalog.InvoiceNumberVariable(false, "The invoice that was shared."),
-		templatecatalog.CustomerNameVariable(false, "The billed customer's name."),
-	}
-}
-
-var invoiceNotificationKinds = []notificationKind{
-	{
-		kind:        documenttemplate.KindNotificationInvoiceShared,
-		displayName: "Invoice Shared With You",
-		description: "Tells someone a teammate shared an invoice with them. The sharer's note is not available here: in-app notifications are broadcast to the organization's live clients, so it is only sent by email.",
-	},
-}
-
 // notificationKind is one registered event, sharing its family's context.
 type notificationKind struct {
 	kind        documenttemplate.Kind
@@ -695,6 +661,11 @@ var driverNotificationKinds = []notificationKind{
 		kind:        documenttemplate.KindNotificationCredentialExpiring,
 		displayName: "Credential Expiring",
 		description: "Warns a driver that a licence or certificate is about to lapse, while there is still time to renew it.",
+	},
+	{
+		kind:        documenttemplate.KindNotificationCredentialRenewalRequested,
+		displayName: "Credential Renewal Requested",
+		description: "Asks a driver to renew the papers named, with what the office wrote for them in Reason. Sent when a person or an agent asks for the renewal, not on a schedule.",
 	},
 	{
 		kind:        documenttemplate.KindNotificationTrainingDue,
@@ -844,9 +815,9 @@ func RegisterNotificationKinds(r *templatecatalog.Registry) {
 	)
 	registerNotificationFamily(
 		r,
-		invoiceNotificationKinds,
-		invoiceShareNotificationVariables(),
-		newInvoiceShareNotificationSampleContext,
+		recordShareNotificationKinds,
+		recordShareNotificationVariables(),
+		newRecordShareNotificationSampleContext,
 	)
 }
 

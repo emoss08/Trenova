@@ -4,10 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/url"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/invoicepreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolspec"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
@@ -15,11 +15,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/recordshare"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceshare"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/recordshareports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/latechargeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/money"
@@ -41,13 +42,37 @@ var errNothingToCharge = errors.New(
 		"what is due is under the organization's minimum",
 )
 
-var shareTabs = agenttoolschema.Source("invoice.shareTab", []invoiceshare.ShareTab{
-	invoiceshare.ShareTabOverview,
-	invoiceshare.ShareTabDelivery,
-	invoiceshare.ShareTabCharges,
-	invoiceshare.ShareTabDocuments,
-	invoiceshare.ShareTabActivity,
+// shareTab is a part of the invoice's page a shared link can open on.
+type shareTab string
+
+const (
+	shareTabOverview  = shareTab("overview")
+	shareTabDelivery  = shareTab("delivery")
+	shareTabCharges   = shareTab("charges")
+	shareTabDocuments = shareTab("documents")
+	shareTabActivity  = shareTab("activity")
+)
+
+var shareTabs = agenttoolschema.Source("invoice.shareTab", []shareTab{
+	shareTabOverview,
+	shareTabDelivery,
+	shareTabCharges,
+	shareTabDocuments,
+	shareTabActivity,
 })
+
+const invoicesPath = "/billing/invoices"
+
+// invoiceSharePath is where a shared invoice opens: its page, on the tab named.
+func invoiceSharePath(invoiceID pulid.ID, tab shareTab) string {
+	query := url.Values{}
+	query.Set("item", invoiceID.String())
+	if tab != "" && tab != shareTabOverview {
+		query.Set("tab", string(tab))
+	}
+
+	return invoicesPath + "?" + query.Encode()
+}
 
 type lateChargeAssessor interface {
 	Assess(
@@ -62,17 +87,19 @@ type lateChargeAssessor interface {
 	) (*latechargeports.LateChargeAssessmentResult, error)
 }
 
+// invoiceSharer is the part of record sharing the tool uses: an invoice is
+// shared the way every record is, as a record of kind invoice.
 type invoiceSharer interface {
 	Share(
 		ctx context.Context,
-		req *invoiceports.ShareInvoiceRequest,
+		req *recordshareports.ShareRequest,
 		actor *permissionports.RequestActor,
-	) (*invoiceports.ShareInvoiceResult, error)
+	) (*recordshareports.ShareResult, error)
 	PreviewShare(
 		ctx context.Context,
-		req *invoiceports.ShareInvoiceRequest,
+		req *recordshareports.ShareRequest,
 		actor *permissionports.RequestActor,
-	) (*invoiceports.InvoiceSharePreview, error)
+	) (*recordshareports.Preview, error)
 }
 
 func NewAssessLateChargesTool(charges lateChargeAssessor) agenttoolports.AgentTool {
@@ -245,34 +272,34 @@ func NewShareInvoiceTool(shares invoiceSharer) agenttoolports.AgentTool {
 			paramUserIDs: agenttoolschema.RecordIDs(
 				permission.ResourceUser,
 				"The teammates, from invoice_list_share_candidates.",
-				invoiceshare.MaxShareRecipients,
+				recordshare.MaxRecipients,
 			),
 			toolparams.ParamNote: toolparams.StringProperty(
 				"A note for them, such as what to look at.",
-				invoiceshare.MaxShareNoteLength,
+				recordshare.MaxNoteLength,
 			),
 			paramTab: agenttoolschema.Enum("The part of the invoice the link opens on. "+
 				"Defaults to overview.", shareTabs),
 		},
 		Required: []string{toolparams.ParamInvoiceID, paramUserIDs},
 		Target:   toolparams.TargetInvoice,
-	}, toolspec.ReceivablePlan[*invoiceports.ShareInvoiceRequest, *invoiceports.InvoiceSharePreview]{
+	}, toolspec.ReceivablePlan[*recordshareports.ShareRequest, *recordshareports.Preview]{
 		Request: shareRequest,
 		Plan: func(
 			ctx context.Context,
-			req *invoiceports.ShareInvoiceRequest,
+			req *recordshareports.ShareRequest,
 			params *agenttoolports.ToolExecuteParams,
-		) (*invoiceports.InvoiceSharePreview, error) {
+		) (*recordshareports.Preview, error) {
 			return shares.PreviewShare(ctx, req, params.Actor)
 		},
-		Refused: func(req *invoiceports.ShareInvoiceRequest) string {
+		Refused: func(req *recordshareports.ShareRequest) string {
 			return fmt.Sprintf("Would share the invoice with %s.",
 				changepreview.CountOf(len(req.UserIDs), "teammate"))
 		},
 		Render: renderShare,
 		Run: func(
 			ctx context.Context,
-			req *invoiceports.ShareInvoiceRequest,
+			req *recordshareports.ShareRequest,
 			params *agenttoolports.ToolExecuteParams,
 		) (*agentrecord.ToolExecutionResult, error) {
 			_, err := shares.Share(ctx, req, params.Actor)
@@ -283,7 +310,7 @@ func NewShareInvoiceTool(shares invoiceSharer) agenttoolports.AgentTool {
 
 func shareRequest(
 	params *agenttoolports.ToolExecuteParams,
-) (*invoiceports.ShareInvoiceRequest, error) {
+) (*recordshareports.ShareRequest, error) {
 	invoiceID, err := toolparams.RequirePulid(params.Params, toolparams.ParamInvoiceID)
 	if err != nil {
 		return nil, err
@@ -291,7 +318,7 @@ func shareRequest(
 	userIDs, err := toolparams.RequirePulidSlice(
 		params.Params,
 		paramUserIDs,
-		invoiceshare.MaxShareRecipients,
+		recordshare.MaxRecipients,
 	)
 	if err != nil {
 		return nil, err
@@ -299,7 +326,7 @@ func shareRequest(
 	note, err := toolparams.BoundedText(
 		params.Params,
 		toolparams.ParamNote,
-		invoiceshare.MaxShareNoteLength,
+		recordshare.MaxNoteLength,
 	)
 	if err != nil {
 		return nil, err
@@ -309,26 +336,27 @@ func shareRequest(
 		return nil, err
 	}
 
-	return &invoiceports.ShareInvoiceRequest{
+	return &recordshareports.ShareRequest{
 		TenantInfo: toolparams.TenantFrom(params),
-		InvoiceID:  invoiceID,
+		Kind:       recordkind.Kind(permission.ResourceInvoice),
+		RecordID:   invoiceID,
 		UserIDs:    userIDs,
 		Note:       note,
-		Tab:        tab,
+		Path:       invoiceSharePath(invoiceID, tab),
 	}, nil
 }
 
 type shareView struct {
 	SharedWithID pulid.ID `json:"sharedWithId"`
-	Tab          string   `json:"tab"`
+	Path         string   `json:"path"`
 	Note         string   `json:"note,omitempty"`
 }
 
 func renderShare(
-	_ *invoiceports.ShareInvoiceRequest,
-	plan *invoiceports.InvoiceSharePreview,
+	_ *recordshareports.ShareRequest,
+	plan *recordshareports.Preview,
 ) (*agentpreview.ToolPreview, error) {
-	label := invoicepreview.InvoiceLabel(plan.Invoice)
+	label := plan.Record.Title()
 	changes := make([]*agentpreview.RecordChange, 0, len(plan.Recipients))
 	names := make([]string, 0, len(plan.Recipients))
 	for _, recipient := range plan.Recipients {
@@ -338,7 +366,7 @@ func renderShare(
 				Resource: permission.ResourceInvoice,
 				Label:    label + " shared with " + recipient.Name,
 			},
-			&shareView{SharedWithID: recipient.UserID, Tab: string(plan.Tab), Note: plan.Note},
+			&shareView{SharedWithID: recipient.UserID, Path: plan.Path, Note: plan.Note},
 			toolpreview.WithRefs(map[string]permission.Resource{
 				"sharedWithId": permission.ResourceUser,
 			}),

@@ -1,0 +1,358 @@
+"How a line of a case reads: good news, a warning, bad news, or neither."
+enum DeskCaseTone {
+  Neutral
+  Good
+  Warning
+  Bad
+  Info
+}
+
+"Where the plan about a record stands."
+enum DeskCaseDecisionPhase {
+  "Waiting on a person."
+  Awaiting
+  "Approved; nothing has run and it can still be undone."
+  Undoable
+  "Approved and running."
+  Running
+  "Every step ran and was confirmed."
+  Done
+  "A step did not go through, so it stopped."
+  Failed
+  "Declined; nothing ran."
+  Declined
+  Expired
+}
+
+enum DeskCaseDecisionKind {
+  "Several changes decided as one."
+  Plan
+  "One change."
+  Proposal
+}
+
+enum DeskCaseExhibitKind {
+  "The route and where the truck is on it."
+  Route
+  "Amounts left of a limit: a driver's hours, what is paid of an invoice."
+  Meters
+  "A message someone sent about the record."
+  Message
+  "What happened and what is still to come, in order."
+  Timeline
+  "Labelled facts."
+  Facts
+}
+
+enum DeskCasePointState {
+  Done
+  Ahead
+  "Added by the chosen option; not on the record yet."
+  Proposed
+}
+
+"Whether Nova's reading of the case is written."
+enum DeskCaseReadingStatus {
+  "Being written now; the case updates when it lands."
+  Writing
+  Ready
+  "Nova is off, has no provider, or its wording was refused."
+  Unavailable
+}
+
+enum DeskCaseTrustKey {
+  "Why it matters."
+  Matters
+  "If nothing changes."
+  Unchanged
+  "What the agent proposes."
+  Proposes
+  "Why it needs a person's approval."
+  Approval
+}
+
+enum DeskCaseOptionKind {
+  "An alternative an agent drafts a plan for."
+  Plan
+  "Leave the record as it is."
+  Leave
+}
+
+type DeskCaseDeadline {
+  at: Timestamp!
+  "What the time is until, in the source's words."
+  label: String!
+}
+
+type DeskCaseHead {
+  "The customer, a reference number: what tells this record from the next."
+  references: [String!]!
+  title: String!
+  status: String!
+  statusTone: DeskCaseTone!
+  "Who is on it, what comes next."
+  details: [String!]!
+  deadline: DeskCaseDeadline
+}
+
+"One run of the reading: plain text, text worth marking, or the number of the exhibit a claim rests on."
+type DeskCaseSegment {
+  text: String!
+  highlight: Boolean!
+  "Null for text; the exhibit's number for a citation."
+  cite: Int
+}
+
+type DeskCaseTrustCell {
+  key: DeskCaseTrustKey!
+  text: String!
+}
+
+type DeskCaseFinding {
+  "The agent that found it; null when only the Watchtower did."
+  agent: AgentDefinition
+  foundAt: Timestamp!
+  "How many exhibits the finding rests on."
+  sources: Int!
+  "What the Watchtower raised, said plainly; shown when there is no reading."
+  raised: String!
+  computed: String!
+  readingStatus: DeskCaseReadingStatus!
+  "Nova's reading; empty until it is written."
+  reading: [DeskCaseSegment!]!
+  trust: [DeskCaseTrustCell!]!
+}
+
+type DeskCaseOption {
+  id: ID!
+  kind: DeskCaseOptionKind!
+  label: String!
+  "What it leads to: an arrival time, an amount."
+  outcome: String!
+  outcomeNote: String!
+  tone: DeskCaseTone!
+  cost: String!
+  description: String!
+  recommended: Boolean!
+  chosen: Boolean!
+}
+
+"The plan, or the single change, that waits on or was decided for the record."
+type DeskCaseDecision {
+  kind: DeskCaseDecisionKind!
+  "The plan's id or the proposal's."
+  id: ID!
+  title: String!
+  phase: DeskCaseDecisionPhase!
+  agent: AgentDefinition
+  proposedAt: Timestamp!
+  stepCount: Int!
+  completedSteps: Int!
+  "The number of the step that did not go through, counted from one as a plan records it."
+  failedStep: Int
+  failureError: String!
+  "When an approval in its undo window starts to run."
+  commitsAt: Timestamp
+  decidedAt: Timestamp
+  decidedBy: User
+  "What the decider told the agent, such as why they declined."
+  note: String!
+  "The Needs you item the decision stands behind, while it is open."
+  itemId: ID
+  "Other decisions still waiting about the same record."
+  others: Int!
+}
+
+type DeskCaseRoutePoint {
+  label: String!
+  "Across the sketch, 0 at the left edge and 1 at the right."
+  x: Float!
+  "Down the sketch, 0 at the top and 1 at the bottom."
+  y: Float!
+  "Where the stop is, for a map."
+  latitude: Float!
+  longitude: Float!
+  state: DeskCasePointState!
+}
+
+type DeskCaseRouteMarker {
+  x: Float!
+  y: Float!
+  "Where the truck last reported, for a map."
+  latitude: Float!
+  longitude: Float!
+}
+
+type DeskCaseRoute {
+  points: [DeskCaseRoutePoint!]!
+  truck: DeskCaseRouteMarker
+  callout: String!
+  calloutTone: DeskCaseTone!
+}
+
+type DeskCaseMeter {
+  label: String!
+  value: String!
+  "How much is left, 0 to 1."
+  fraction: Float!
+  tone: DeskCaseTone!
+}
+
+type DeskCaseMessage {
+  quote: String!
+  from: String!
+  "The agent that has the message, when one does."
+  replyAgent: AgentDefinition
+  reply: String!
+}
+
+type DeskCaseTimelineRow {
+  label: String!
+  sub: String!
+  when: String!
+  tone: DeskCaseTone!
+  state: DeskCasePointState!
+}
+
+type DeskCaseFact {
+  label: String!
+  value: String!
+  at: Timestamp
+  tone: DeskCaseTone!
+}
+
+"One piece of evidence beside the finding, numbered so the reading can cite it."
+type DeskCaseExhibit {
+  key: String!
+  number: Int!
+  kind: DeskCaseExhibitKind!
+  title: String!
+  source: String!
+  at: Timestamp
+  "True when `at` is when the source was read rather than when something happened."
+  read: Boolean!
+  route: DeskCaseRoute
+  meters: [DeskCaseMeter!]!
+  message: DeskCaseMessage
+  timeline: [DeskCaseTimelineRow!]!
+  facts: [DeskCaseFact!]!
+  note: String!
+  path: String!
+}
+
+"""
+What lets a person put an agent on a case nobody has worked: the Watchtower
+item to hand off with `handOffWatchtowerItem`, and whether an agent has it now.
+"""
+type DeskCaseHandOff {
+  itemId: ID!
+  "What kind of condition it is, which decides what a person can do about it themselves."
+  kind: WatchtowerSourceKind!
+  "True while an agent has the item and has not finished."
+  working: Boolean!
+  "The agent that has it, or last had it."
+  agent: AgentDefinition
+  "What that agent said when it finished and proposed nothing; markdown. Empty otherwise."
+  note: String!
+}
+
+"""
+Who a case belongs to and how its reader stands to it. A case has one owner;
+the owner, and whoever covers for them while they are away, decide it.
+"""
+type DeskCaseOwnership {
+  "Null while the case is unowned."
+  owner: User
+  "True when the owner came from the record (its owner, its fleet's manager, its biller or collector) rather than a person's choice."
+  auto: Boolean!
+  "True when the reader works the case in its owner's place while the owner is away."
+  covering: Boolean!
+  "False when the case is someone else's: the reader sees it and decides nothing on it."
+  canWork: Boolean!
+  "True when the case is unowned and the reader may take it."
+  canClaim: Boolean!
+  "True when the reader may give the case to someone, take it over, or leave it unowned."
+  canAssign: Boolean!
+}
+
+"A case that was put away, and when it comes back if nothing new happens first."
+type DeskCaseAway {
+  until: Timestamp!
+}
+
+"""
+A record's case: the record and every open signal about it, read as one decision.
+What is wrong and why, what could happen, the plan to approve, and the evidence
+beside it. The same anatomy serves a late shipment, an invoice past due and a
+disputed invoice.
+"""
+type DeskCase {
+  record: DeskRecord!
+  ownership: DeskCaseOwnership!
+  "Set while the case is put away: everything still open about the record is snoozed."
+  away: DeskCaseAway
+  "The condition an agent can be asked to work; null when nothing open about the record can be handed to one."
+  handOff: DeskCaseHandOff
+  head: DeskCaseHead!
+  "Null when nothing is open about the record."
+  finding: DeskCaseFinding
+  options: [DeskCaseOption!]!
+  "True while an agent drafts the plan for the chosen option."
+  drafting: Boolean!
+  "What the agent said when it finished without drafting a plan for the chosen option; markdown."
+  draftNote: String!
+  decision: DeskCaseDecision
+  exhibits: [DeskCaseExhibit!]!
+  "What the Watchtower says about the condition, for the foot of the evidence."
+  note: String!
+  "Questions worth asking about the record."
+  starters: [String!]!
+  "Open items about the record."
+  open: Int!
+  severity: WatchtowerSeverity!
+}
+
+extend type Query {
+  """
+  A record's case, in one read. `timezone` is the reader's IANA zone, which the
+  times in its wording are told in; the organization's when left out.
+  """
+  deskCase(kind: String!, id: ID!, timezone: String): DeskCase!
+}
+
+extend type Mutation {
+  """
+  Chooses one of the options on a record's case. Choosing one no plan was
+  drafted for asks the agent that offered it to draft that plan against the
+  record as it is now.
+  """
+  chooseDeskCaseOption(kind: String!, id: ID!, optionId: ID!): Boolean!
+  """
+  Accepts the risk on a record: marks the conditions the Watchtower holds
+  about it as needing no action, with a reason the team can read. Returns how
+  many it cleared.
+  """
+  acceptDeskCaseRisk(kind: String!, id: ID!, reason: String!): Int!
+  """
+  Gives a record's case to an owner. With no `ownerId` the caller claims it:
+  an unowned case is anyone's to claim who may work cases, and one that has an
+  owner is taken over, or given to another person, only by someone who may
+  assign cases.
+  """
+  assignDeskCase(kind: String!, id: ID!, ownerId: ID): Boolean!
+  """
+  Leaves a record's case unowned, for the next person to claim. Its owner may
+  let it go, and so may someone who assigns cases.
+  """
+  releaseDeskCase(kind: String!, id: ID!): Boolean!
+  """
+  Puts a record's case away once the person has done what they can: every
+  condition still open about the record is snoozed until `until`, so the case
+  leaves Needs you. Nothing is closed. It comes back at that time, or sooner
+  when something new is raised about the record. Refused while a change waits
+  to be approved. Returns how many conditions it put away.
+  """
+  putAwayDeskCase(kind: String!, id: ID!, until: Timestamp!): Int!
+  "Brings a put-away case back in front before its time. Returns how many conditions it woke."
+  bringBackDeskCase(kind: String!, id: ID!): Int!
+}

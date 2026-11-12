@@ -1,5 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { AdvancedMarker } from "@vis.gl/react-google-maps";
+import { AdvancedMarker } from "@/components/map/advanced-marker";
 import { useMapFocusStore } from "./map-focus-store";
 import { groupLanes, laneArcPath, laneWeight, type MapLane } from "./map-lanes";
 import type { MapShipment } from "./map-shipment-model";

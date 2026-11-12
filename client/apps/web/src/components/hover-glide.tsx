@@ -1,5 +1,5 @@
 import { cn } from "@trenova/shared/lib/utils";
-import { useRef, useState, type PointerEvent, type ReactNode } from "react";
+import { useEffect, useRef, useState, type PointerEvent, type ReactNode } from "react";
 
 const TARGET_SELECTOR = "[data-glide-target]";
 
@@ -30,9 +30,12 @@ const HIDDEN: Glide = { x: 0, y: 0, width: 0, height: 0, shown: false, travel: f
  */
 export function HoverGlideGroup({
   className,
+  glideClassName,
   children,
 }: {
   className?: string;
+  /** The glide's own look where the surface differs: its fill and its corner. */
+  glideClassName?: string;
   children: ReactNode;
 }) {
   const groupRef = useRef<HTMLDivElement>(null);
@@ -40,6 +43,17 @@ export function HoverGlideGroup({
 
   const hide = () =>
     setGlide((current) => (current.shown ? { ...current, shown: false } : current));
+
+  // The target the glide sits on can go without the pointer ever leaving the
+  // group: a click swaps the list for another, or the row is removed. Left
+  // alone the glide would stay lit over nothing, so it goes with its target.
+  const targetRef = useRef<Element | null>(null);
+  useEffect(() => {
+    if (glide.shown && targetRef.current !== null && !targetRef.current.isConnected) {
+      targetRef.current = null;
+      hide();
+    }
+  });
 
   const handlePointerOver = (event: PointerEvent<HTMLDivElement>) => {
     const group = groupRef.current;
@@ -52,6 +66,7 @@ export function HoverGlideGroup({
       return;
     }
 
+    targetRef.current = tile;
     const groupRect = group.getBoundingClientRect();
     const tileRect = tile.getBoundingClientRect();
     const x = tileRect.left - groupRect.left;
@@ -83,8 +98,9 @@ export function HoverGlideGroup({
         data-slot="hover-glide"
         data-state={glide.shown ? "shown" : "hidden"}
         className={cn(
-          "bg-surface-hover pointer-events-none absolute top-0 left-0 rounded-md duration-200",
+          "pointer-events-none absolute top-0 left-0 rounded-md bg-surface-hover duration-200",
           glide.travel ? "transition-[transform,opacity]" : "transition-opacity",
+          glideClassName,
         )}
         style={{
           width: glide.width,

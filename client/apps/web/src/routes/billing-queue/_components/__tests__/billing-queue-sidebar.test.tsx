@@ -11,7 +11,7 @@ import type { ReactElement } from "react";
 import { MemoryRouter } from "react-router";
 import { stubLayout } from "@/test/layout";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { BillingQueueCaughtUp, isCaughtUp } from "../billing-queue-caught-up";
+import { isCaughtUp } from "../billing-queue-caught-up";
 import BillingQueueDetailPane from "../billing-queue-detail-pane";
 import { BillingQueueSidebar } from "../billing-queue-sidebar";
 
@@ -150,22 +150,51 @@ afterEach(() => {
 });
 
 describe("billing queue sidebar", () => {
-  it("says the queue is caught up, with today's approvals, when nothing is open", async () => {
-    renderWithin(<BillingQueueCaughtUp stats={parsedStats({})} onShowApproved={vi.fn()} />);
-
-    expect(await screen.findByText("You're all caught up")).toBeInTheDocument();
-    expect(
-      screen.getByText("Every shipment that reached billing has been approved and posted."),
-    ).toBeInTheDocument();
-    expect(screen.getByText("4 approved · $9,600.00")).toBeInTheDocument();
-  });
-
   it("counts the queue caught up only when no lane holds work for a biller", () => {
     expect(isCaughtUp(undefined)).toBe(false);
     expect(isCaughtUp(parsedStats({}))).toBe(true);
     expect(isCaughtUp(parsedStats({ Approved: 3, NeedsYou: 0 }))).toBe(true);
     expect(isCaughtUp(parsedStats({ Held: 1 }))).toBe(false);
     expect(isCaughtUp(parsedStats({ Waiting: 2 }))).toBe(false);
+  });
+
+  it("lists no closed lane unless closed items are asked for", async () => {
+    mocks.stats.mockResolvedValue(stats({ NeedsYou: 1 }));
+    mocks.lane.mockImplementation(async (lane: BillingQueueLane) =>
+      lane === "NeedsYou" ? lanePage([queued("1", "NeedsYou")]) : lanePage([]),
+    );
+    renderWithin(<BillingQueueSidebar selectedItemId={null} onSelectItem={vi.fn()} />);
+
+    expect(await screen.findByRole("button", { name: /Needs you/ })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^Closed/ })).not.toBeInTheDocument();
+    expect(mocks.lane.mock.calls.map(([lane]) => lane)).not.toContain("Closed");
+  });
+
+  it("adds a folded closed lane, counted, when closed items are asked for", async () => {
+    mocks.stats.mockResolvedValue(stats({ NeedsYou: 1 }));
+    mocks.lane.mockImplementation(async (lane: BillingQueueLane) => {
+      if (lane === "NeedsYou") return lanePage([queued("1", "NeedsYou")]);
+      if (lane === "Closed") return lanePage([queued("9", "Closed")]);
+      return lanePage([]);
+    });
+    renderWithin(
+      <BillingQueueSidebar selectedItemId={null} onSelectItem={vi.fn()} />,
+      "?includeClosed=true",
+    );
+
+    const closed = await screen.findByRole("button", { name: /^Closed/, expanded: false });
+    await waitFor(() => expect(closed).toHaveTextContent("Closed1"));
+    expect(mocks.lane).toHaveBeenCalledWith(
+      "Closed",
+      expect.objectContaining({ includeClosed: true }),
+      null,
+    );
+
+    await userEvent.click(closed);
+
+    expect(
+      await screen.findByRole("button", { name: /^Closed/, expanded: true }),
+    ).toBeInTheDocument();
   });
 
   it("draws each open lane in working order with the issue its rows wait on", async () => {

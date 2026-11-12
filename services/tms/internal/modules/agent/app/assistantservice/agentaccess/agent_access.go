@@ -55,8 +55,6 @@ func continueRefusal(
 		return conversation.ContinueNoAccess
 	case !definition.Enabled:
 		return conversation.ContinueAgentDisabled
-	case AssertChatAgent(definition) != nil:
-		return conversation.ContinueAgentNotConversational
 	default:
 		return ""
 	}

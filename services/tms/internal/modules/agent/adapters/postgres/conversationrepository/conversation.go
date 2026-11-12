@@ -222,6 +222,7 @@ func threadPageQuery(
 		pinned,
 		keel.When(req.TouchedFrom > 0, touchedAt.Gte(req.TouchedFrom)),
 		keel.When(req.TouchedBefore > 0, touchedAt.Lt(req.TouchedBefore)),
+		aboutRecord(req.AboutRecord),
 		threadPositionPred(touchedAt, keel.TupleExpr.Lt, window.after),
 		threadPositionPred(touchedAt, keel.TupleExpr.Gte, window.until),
 	).
@@ -252,8 +253,23 @@ func threadShelfCountQuery(
 	band := threadShelfBandExpr(req.Edges)
 
 	return th.Pick(band, keel.Count()).
-		Where(threadListScope(req.UserID, false)).
+		Where(threadListScope(req.UserID, false), aboutRecord(req.AboutRecord)).
 		Group(band)
+}
+
+// aboutRecord keeps one half of a person's conversations: the ones asked on
+// a record's case, which the Desk lists as cases, or the ones about no
+// record, which it lists as conversations by day.
+func aboutRecord(wanted *bool) keel.Pred {
+	th := conversationdb.Threads
+	switch {
+	case wanted == nil:
+		return nil
+	case *wanted:
+		return th.SubjectID.IsNotNull()
+	default:
+		return th.SubjectID.IsNull()
+	}
 }
 
 func (r *repository) CountThreadShelves(
@@ -309,6 +325,7 @@ func (r *repository) UpdateThread(
 			th.Version.Eq(thread.Version),
 		).Update(ctx, r.db.Keel(ctx),
 			th.Title.To(thread.Title),
+			th.TitleSource.To(titleSourceOf(thread)),
 			th.Status.To(thread.Status),
 			th.PreferredProviderID.To(thread.PreferredProviderID),
 			th.Origin.To(thread.Origin),
@@ -727,4 +744,36 @@ func (r *repository) deleteStaleThreads(
 	}
 
 	return int(n), nil
+}
+
+func titleSourceOf(thread *conversation.Thread) conversation.TitleSource {
+	if thread.TitleSource == "" {
+		return conversation.TitleFromQuestion
+	}
+
+	return thread.TitleSource
+}
+
+// NameThread gives a conversation the model's name for it, unless a person
+// has named it since or the model already has: only a title still taken from
+// the first question is replaced.
+func (r *repository) NameThread(
+	ctx context.Context,
+	req *conversationports.NameThreadRequest,
+) (bool, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
+		th := conversationdb.Threads
+		n, err := th.Where(
+			th.ID.Eq(req.ThreadID),
+			th.TitleSource.Eq(conversation.TitleFromQuestion),
+		).Update(ctx, r.db.Keel(ctx),
+			th.Title.To(req.Title),
+			th.TitleSource.To(conversation.TitleFromModel),
+		)
+		if err != nil {
+			return false, fmt.Errorf("name thread: %w", err)
+		}
+
+		return n > 0, nil
+	})
 }

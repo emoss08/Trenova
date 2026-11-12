@@ -7,15 +7,18 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/fieldgate"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytool"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytooltest"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/recordshareports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicerun"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoicerunports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -96,21 +99,18 @@ func (f *fakeRunReader) ListOpenStatements(
 }
 
 type fakeShareCandidates struct {
-	req        *invoiceports.ListShareCandidatesRequest
-	candidates []*invoiceports.ShareCandidate
+	req        *recordshareports.CandidatesRequest
+	candidates []*tenant.User
 }
 
 func (f *fakeShareCandidates) ListCandidates(
 	_ context.Context,
-	req *invoiceports.ListShareCandidatesRequest,
-) (*pagination.ListResult[*invoiceports.ShareCandidate], error) {
+	req *recordshareports.CandidatesRequest,
+	_ *permissionports.RequestActor,
+) ([]*tenant.User, error) {
 	f.req = req
 
-	return &pagination.ListResult[*invoiceports.ShareCandidate]{
-		Items:      f.candidates,
-		Total:      len(f.candidates),
-		TotalExact: true,
-	}, nil
+	return f.candidates, nil
 }
 
 func TestListInvoiceAdjustments_ReadsAnInvoicesLineageWithItsDrafts(t *testing.T) {
@@ -287,7 +287,7 @@ func TestListInvoiceShareCandidates_ListsWhoMayReadTheInvoice(t *testing.T) {
 	t.Parallel()
 
 	invoiceID := pulid.MustNew("inv_")
-	shares := &fakeShareCandidates{candidates: []*invoiceports.ShareCandidate{{
+	shares := &fakeShareCandidates{candidates: []*tenant.User{{
 		ID: pulid.MustNew("usr_"), Name: "Dana Whitfield", Username: "dana",
 	}}}
 	tool := newListInvoiceShareCandidatesTool(shares)
@@ -298,7 +298,9 @@ func TestListInvoiceShareCandidates_ListsWhoMayReadTheInvoice(t *testing.T) {
 	}, ""))
 	require.NoError(t, err)
 	require.NotNil(t, shares.req)
-	assert.Equal(t, invoiceID, shares.req.InvoiceID)
+	// The tool asks the one way every record is shared, about an invoice.
+	assert.Equal(t, recordkind.Kind(permission.ResourceInvoice), shares.req.Kind)
+	assert.Equal(t, invoiceID, shares.req.RecordID)
 	assert.Equal(t, "dana", shares.req.Query)
 	listed := result.(*fieldgate.List[shareCandidateRow])
 	require.Len(t, listed.Items, 1)

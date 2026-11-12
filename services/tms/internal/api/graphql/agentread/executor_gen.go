@@ -943,8 +943,8 @@ var operations = []Operation{
 	},
 	{
 		Name:     "TodaysBriefing",
-		Hash:     "sha256:65f37d12e5d9c0d23e805a11cf6299ea753996a33e88ac4ebebc9d1c882091d0",
-		Document: "fragment BriefingFields on Briefing { briefingDate headline id narrated readAt roleKey sections { body items { label path value } key path read summary title } status withheldSections { key partial title } } query TodaysBriefing($input: TodaysBriefingInput!) { todaysBriefing(input: $input) { ...BriefingFields } }",
+		Hash:     "sha256:3bf500825f7e01a9eae6810c6b9d833c8fadc3dac8e82d445c4e638418a3f2bc",
+		Document: "fragment BriefingFields on Briefing { briefingDate headline headlineLinks { path section text } id narrated readAt roleKey sections { body items { label path value } key path read summary title } status withheldSections { key partial title } } query TodaysBriefing($input: TodaysBriefingInput!) { todaysBriefing(input: $input) { ...BriefingFields } }",
 	},
 	{
 		Name:     "DeskInvoiceDetail",

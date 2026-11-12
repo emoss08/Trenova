@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/pkg/pagination"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -154,6 +156,29 @@ func (r *repository) ListOpenWatching(
 		}
 
 		return items, nil
+	})
+}
+
+func (r *repository) HasOpenForRun(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	runID pulid.ID,
+) (bool, error) {
+	if runID.IsNil() {
+		return false, nil
+	}
+
+	ctx = dbscope.WithTenant(ctx, tenant.DBTenant())
+
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
+		w := agentwaitdb.Waits
+		open, err := w.Where(w.Status.Eq(agentwait.StatusWaiting), w.RunID.Eq(runID)).
+			Exists(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return false, fmt.Errorf("read whether the run left a wait open: %w", err)
+		}
+
+		return open, nil
 	})
 }
 

@@ -51,6 +51,115 @@ fragment WatchtowerItemFields on WatchtowerItem {
     at
     text
   }
+  panel {
+    kind
+    stop {
+      role
+      verdict
+      place
+      windowEnd
+      estimatedAt
+      arrivedAt
+      lastHeardAt
+      milesRemaining
+      stale
+    }
+    clock {
+      place
+      customer
+      arrivedAt
+      freeEndsAt
+      departedAt
+      freeMinutes
+      billableMinutes
+      accrued
+    }
+    paper {
+      customer
+      deliveredAt
+      papers {
+        name
+        onFile
+      }
+      holds
+    }
+    message {
+      fromName
+      fromAddress
+      subject
+      readAs
+      why
+      receivedAt
+      held
+    }
+    expiry {
+      who
+      papers {
+        name
+        expiresAt
+        daysLeft
+      }
+    }
+    coverage {
+      startsAt
+      reason
+      exhausted
+      endedAt
+    }
+    contact {
+      who
+      lastHeardAt
+      everyHours
+      dueAt
+    }
+    run {
+      agent
+      reason
+      failedAt
+    }
+    books {
+      system
+      count
+      since
+      expiresAt
+      down
+    }
+    money {
+      stake
+      party
+      amount
+      count
+      dueAt
+      reason
+    }
+    change {
+      who
+      what
+      from
+      to
+      ref
+      at
+    }
+    ask {
+      category
+      tried
+    }
+    finding {
+      advice
+      detail
+    }
+    file {
+      name
+      reason
+      receivedAt
+    }
+    sighting {
+      departure
+      place
+      seenAt
+      why
+    }
+  }
   suggestedAgentId
   suggestedAgent {
     id

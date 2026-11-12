@@ -31,6 +31,16 @@ export type WatchtowerAgent = WatchtowerAgentFieldsFragment;
 export type WatchtowerAgentWork = NonNullable<WatchtowerItem["agentWork"]>;
 export type WatchtowerFact = WatchtowerItem["facts"][number];
 export type WatchtowerTrailEvent = WatchtowerItem["trail"][number];
+/** What is happening on an item, typed for the view made for it. */
+export type WatchtowerPanel = NonNullable<WatchtowerItem["panel"]>;
+export type WatchtowerStopPanel = NonNullable<WatchtowerPanel["stop"]>;
+export type WatchtowerClockPanel = NonNullable<WatchtowerPanel["clock"]>;
+export type WatchtowerPaperPanel = NonNullable<WatchtowerPanel["paper"]>;
+export type WatchtowerMessagePanel = NonNullable<WatchtowerPanel["message"]>;
+export type WatchtowerExpiryPanel = NonNullable<WatchtowerPanel["expiry"]>;
+export type WatchtowerCoveragePanel = NonNullable<WatchtowerPanel["coverage"]>;
+export type WatchtowerContactPanel = NonNullable<WatchtowerPanel["contact"]>;
+export type WatchtowerRunPanel = NonNullable<WatchtowerPanel["run"]>;
 export type {
   WatchtowerAgentStatus,
   WatchtowerAgentStep,

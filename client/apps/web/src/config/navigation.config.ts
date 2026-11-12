@@ -10,7 +10,6 @@ import {
   FuelIcon,
   HandshakeIcon,
   Home02Icon,
-  Inbox01Icon,
   InvoiceIcon,
   MessageChatSquareIcon,
   PackageIcon,
@@ -44,36 +43,30 @@ const deskModule: NavModule = {
   label: "Desk",
   icon: MessageChatSquareIcon,
   description:
-    "Your conversations with the agents, what they produced, and what they ask you to decide",
+    "Your conversations with the agents, what needs you, and Triage for the mail that arrives",
   basePath: "/desk",
-  keywords: ["nova", "assistant", "ai", "chat", "conversations"],
+  keywords: [
+    "nova",
+    "assistant",
+    "ai",
+    "chat",
+    "conversations",
+    "triage",
+    "inbox",
+    "email",
+    "mail",
+    "messages",
+  ],
   routePrefixes: ["/desk"],
   hideSecondarySidebar: true,
   resource: Resource.Assistant,
   navigation: [],
 };
 
-// Triage (once the inbox) is its own module rather than a page under the Desk.
-// What arrives from a connected source is work coming in from outside, which
-// is a different thing from the conversations and decisions the Desk holds,
-// and a dispatcher opens one without wanting the other. The old address still
-// belongs to it while it redirects.
-const inboxModule: NavModule = {
-  id: "inbox",
-  label: "Triage",
-  icon: Inbox01Icon,
-  description: "Messages from connected sources, what Nova did with them, and what is left for you",
-  basePath: "/desk/triage",
-  keywords: ["inbox", "email", "mail", "messages"],
-  routePrefixes: ["/desk/triage", "/triage", "/inbox"],
-  hideSecondarySidebar: true,
-  resource: Resource.InboundMessage,
-  navigation: [],
-};
-
-// Intake sits beside the inbox: both are what arrived and has not been dealt
-// with yet, one from a monitored address and one from a scanner or a print
-// dialog, and a clerk working the paper opens it without the mail.
+// Intake is what arrived on paper and has not been dealt with yet, from a
+// scanner or a print dialog. What arrived by mail is Triage, a room of the
+// Desk, which the Desk's rail opens: it has no module of its own, so there is
+// one way to it and one place it lives.
 const intakeModule: NavModule = {
   id: "intake",
   label: "Intake",
@@ -1108,7 +1101,6 @@ export const navigationConfig: NavigationConfig = {
   modules: [
     homeModule,
     deskModule,
-    inboxModule,
     intakeModule,
     shipmentManagementModule,
     dispatchModule,
@@ -1554,7 +1546,7 @@ export const appModuleGroups: AppModuleGroup[] = [
   {
     id: "core",
     label: "Core",
-    moduleIds: ["home", "desk", "inbox", "intake"],
+    moduleIds: ["home", "desk", "intake"],
   },
   {
     id: "operations",

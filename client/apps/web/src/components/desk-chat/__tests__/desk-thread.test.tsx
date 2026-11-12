@@ -1,3 +1,4 @@
+import { placeholderOf, writeInBox } from "../composer/editor/editor-test-kit";
 import type { ThreadAsks, ThreadAskRequest } from "@/components/assistant/ask-requests";
 import { approvalQueue } from "@/components/assistant/approval-queue";
 import type { AssistantMessage, AssistantThread } from "@/types/assistant";
@@ -38,6 +39,10 @@ const conversation = vi.hoisted(() => ({
 vi.mock("@/lib/queries/assistant", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/queries/assistant")>()),
   assistant: {
+    mentionSearch: (query: string, tab: string) => ({
+      queryKey: ["mention-search", query, tab],
+      queryFn: () => [],
+    }),
     commands: (agentId: string) => ({
       queryKey: ["assistant-commands", agentId],
       queryFn: () => ({ commands: [] }),
@@ -375,8 +380,7 @@ describe("DeskThread's open question", () => {
     asked();
     renderThread();
 
-    expect(screen.getByRole("textbox", { name: "Message the Desk" })).toHaveAttribute(
-      "placeholder",
+    expect(placeholderOf(screen.getByRole("textbox", { name: "Message the Desk" }))).toBe(
       "Number of days",
     );
   });
@@ -613,11 +617,13 @@ describe("DeskThread approves only on purpose", () => {
   it("sends a question with Ctrl+Enter without approving the change it asks about", async () => {
     useDeskSettingsStore.setState({ settings: { ...DESK_SETTINGS_DEFAULTS, send: "mod" } });
     waitingChange();
+    // No lock for a missing model: these are about the box that is there.
+    conversation.providersReady = false;
     renderThread();
     await waitFor(() => expect(screen.getByRole("button", { name: /^Approve/ })).toBeEnabled());
 
     const box = screen.getByRole("textbox", { name: "Message the Desk" });
-    fireEvent.change(box, { target: { value: "Why this driver?" } });
+    writeInBox(box, "Why this driver?");
     fireEvent.keyDown(box, { key: "Enter", ctrlKey: true });
 
     await new Promise((resolve) => setTimeout(resolve, 0));
@@ -633,6 +639,8 @@ describe("DeskThread approves only on purpose", () => {
       decision: { commitsAt: null },
     });
     waitingChange();
+    // No lock for a missing model: these are about the box that is there.
+    conversation.providersReady = false;
     renderThread();
     await waitFor(() => expect(screen.getByRole("button", { name: /^Approve/ })).toBeEnabled());
 

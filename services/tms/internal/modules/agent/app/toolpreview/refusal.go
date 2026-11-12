@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/remedy"
 	"github.com/emoss08/trenova/shared/textcase"
 )
 
@@ -20,12 +21,17 @@ const WouldFailPrefix = "This would be refused as it stands: "
 func WouldFail(err error) agentpreview.PreviewWarning {
 	refusal := strings.TrimSpace(err.Error())
 
-	return agentpreview.PreviewWarning{
+	warning := agentpreview.PreviewWarning{
 		Code:    agentpreview.PreviewWarningWouldFail,
 		Args:    []string{refusal},
 		Message: WouldFailPrefix + refusal,
 		Reasons: Reasons(err),
 	}
+	if kind, ok := remedy.Of(err); ok {
+		warning.Remedies = []agentpreview.PreviewRemedy{{Kind: string(kind)}}
+	}
+
+	return warning
 }
 
 // RefusalMessage is a would_fail warning's refusal as the write's own rules

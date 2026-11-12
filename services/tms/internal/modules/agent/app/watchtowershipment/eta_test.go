@@ -67,6 +67,9 @@ func (p *recordingProjector) Resolve(
 	}
 }
 
+// etaTestNow is when the fixtures are read: before their windows close.
+const etaTestNow = int64(1_800_000_000)
+
 func attentionStop(
 	shipmentID pulid.ID,
 	seq int64,
@@ -99,7 +102,7 @@ func TestDescribeEtaRisks_OneItemPerShipmentForTheWorstStop(t *testing.T) {
 	risky := attentionStop(shipmentID, 1, stopeta.VerdictAtRisk)
 	late := attentionStop(shipmentID, 2, stopeta.VerdictLate)
 
-	items := DescribeEtaRisks(tenant, []*stopetaports.AttentionStop{risky, late})
+	items := DescribeEtaRisks(tenant, []*stopetaports.AttentionStop{risky, late}, etaTestNow)
 	require.Len(t, items, 1)
 	item := items[0]
 	assert.Equal(t, watchtower.SourceEtaAtRisk, item.SourceKind)
@@ -140,6 +143,7 @@ func TestEtaAtRiskSource_SnapshotHonoursTheSwitch(t *testing.T) {
 		StopEtas: etas,
 		Controls: &fakeEtaControls{control: control},
 	})
+	source.(*EtaAtRiskSource).now = func() int64 { return etaTestNow }
 
 	items, err := source.Snapshot(t.Context(), tenant)
 	require.NoError(t, err)
@@ -169,6 +173,7 @@ func TestEtaAtRiskObserver_RaisesAndClears(t *testing.T) {
 		Projector: projector,
 		Logger:    zap.NewNop(),
 	})
+	observer.(*EtaAtRiskObserver).now = func() int64 { return etaTestNow }
 
 	observer.StopEtasRefreshed(t.Context(), tenant, []pulid.ID{risky, recovered})
 
@@ -177,4 +182,90 @@ func TestEtaAtRiskObserver_RaisesAndClears(t *testing.T) {
 	assert.Equal(t, []string{recovered.String()}, projector.resolved)
 	require.Len(t, etas.requests, 1)
 	assert.Equal(t, []pulid.ID{risky, recovered}, etas.requests[0].ShipmentIDs)
+}
+
+/*
+A stop that was projected late and then ran out its window with no arrival
+is a missed stop, which has its own item. The projection gives it up once
+the missed-stop grace has passed, so one late stop is one item; a later stop
+on the same shipment that is still ahead keeps the projection.
+*/
+func TestDescribeEtaRisks_AStopPastItsWindowAndGraceBelongsToTheMissedStop(t *testing.T) {
+	t.Parallel()
+
+	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
+	windowEnd := int64(1_800_010_000)
+
+	missedOnly := pulid.MustNew("shp_")
+	missed := attentionStop(missedOnly, 1, stopeta.VerdictLate)
+
+	inGrace := DescribeEtaRisks(
+		tenant,
+		[]*stopetaports.AttentionStop{missed},
+		windowEnd,
+	)
+	require.Len(t, inGrace, 1, "a window that closed within the grace is still a projection")
+
+	afterGrace := DescribeEtaRisks(
+		tenant,
+		[]*stopetaports.AttentionStop{missed},
+		windowEnd+1,
+	)
+	assert.Empty(t, afterGrace)
+
+	both := pulid.MustNew("shp_")
+	pickup := attentionStop(both, 1, stopeta.VerdictLate)
+	delivery := attentionStop(both, 2, stopeta.VerdictAtRisk)
+	later := windowEnd + 86_400
+	delivery.ETA.WindowEnd = &later
+
+	items := DescribeEtaRisks(
+		tenant,
+		[]*stopetaports.AttentionStop{pickup, delivery},
+		windowEnd+1,
+	)
+	require.Len(t, items, 1)
+	assert.Equal(t, "ETA at risk on PRO-7", items[0].Title,
+		"the item is about the delivery still ahead, not the pickup already missed")
+}
+
+// The grace is the organization's own missed-stop grace, the same one the
+// missed stop source waits out, so the two never both hold a stop.
+func TestEtaAtRiskSource_GivesUpAStopOnceTheMissedStopGraceHasPassed(t *testing.T) {
+	t.Parallel()
+
+	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
+	control := dispatchcontrol.NewDefaultDispatchControl(tenant.OrgID, tenant.BuID)
+	grace := int64(control.ExceptionPolicy().MissedStopGrace) * 60
+	source := NewEtaAtRiskSource(EtaAtRiskParams{
+		StopEtas: &fakeStopEtas{stops: []*stopetaports.AttentionStop{
+			attentionStop(pulid.MustNew("shp_"), 1, stopeta.VerdictLate),
+		}},
+		Controls: &fakeEtaControls{control: control},
+	})
+	windowEnd := int64(1_800_010_000)
+	now := windowEnd + grace
+	source.(*EtaAtRiskSource).now = func() int64 { return now }
+
+	items, err := source.Snapshot(t.Context(), tenant)
+	require.NoError(t, err)
+	assert.Len(t, items, 1)
+
+	now++
+	items, err = source.Snapshot(t.Context(), tenant)
+	require.NoError(t, err)
+	assert.Empty(t, items)
+}
+
+func TestDescribeEtaRisk_NamesASplitStopInWords(t *testing.T) {
+	t.Parallel()
+
+	stop := attentionStop(pulid.MustNew("shp_"), 1, stopeta.VerdictLate)
+	stop.StopType = shipmentvocab.StopTypeSplitDelivery
+
+	assert.Equal(
+		t,
+		"Projected to reach the split delivery at Houston DC in Houston, TX after its window closes.",
+		DescribeEtaRisk(pagination.TenantInfo{}, stop).Summary,
+	)
 }

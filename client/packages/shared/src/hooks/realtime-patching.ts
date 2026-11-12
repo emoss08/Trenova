@@ -122,6 +122,7 @@ export const RESOURCE_QUERY_KEY_MAP: Record<string, QueryKeyRoot[]> = {
     "attention",
     "agentPreview",
     "deskAttention",
+    "deskCase",
     "deskActivity",
   ],
   agent_plan: [
@@ -132,9 +133,13 @@ export const RESOURCE_QUERY_KEY_MAP: Record<string, QueryKeyRoot[]> = {
     "attention",
     "agentPreview",
     "deskAttention",
+    "deskCase",
     "deskActivity",
   ],
-  agent_run: ["agent-run-list", ["assistant", "agents"]],
+  // A run started, moved on or finished: besides the run list, a record's
+  // case says whether the agent it was handed to is still working and what
+  // it said when it stopped, so the case is read again.
+  agent_run: ["agent-run-list", ["assistant", "agents"], "deskCase"],
   // aiauditservice announces an export to its requester as it is written,
   // expires or fails, and the chain once a check has stored its result.
   "ai-audit-export": ["ai-audit-export-list"],
@@ -151,8 +156,12 @@ export const RESOURCE_QUERY_KEY_MAP: Record<string, QueryKeyRoot[]> = {
     ["assistant", "chapters"],
   ],
   // A chapter opened, named or merged: the conversation's headings and its
-  // chapter rail move.
-  assistant_chapters: [["assistant", "chapters"]],
+  // chapter rail move, and the name the model gives a conversation's first
+  // chapter is the conversation's name in the rail.
+  assistant_chapters: [
+    ["assistant", "chapters"],
+    ["assistant", "threads"],
+  ],
   // A schedule made, paused, resumed, deleted or run: its card's state and
   // next run move, and so does its row on the Desk's Scheduled page.
   conversation_schedules: [
@@ -186,8 +195,13 @@ export const RESOURCE_QUERY_KEY_MAP: Record<string, QueryKeyRoot[]> = {
   // The feed and its counts live under one key root from the query factory
   // (createQueryKeys("watchtower")), so invalidating the root catches both the
   // list and every filtered variant of it.
-  watchtower: ["watchtower", "attention"],
+  // An item raised, handed to an agent, cleared or resolved moves the case
+  // of the record it is about, not only the lists.
+  watchtower: ["watchtower", "attention", "deskCase"],
   briefings: ["briefing"],
+  // Nova's reading of a record's case was written: the case on screen reads
+  // again and draws it.
+  "desk-cases": ["deskCase"],
   // Every Triage write: the folders, their counts, the open message, its
   // thread, the saved views' waiting numbers and the briefing move together.
   // The web app patches a named message in place (lib/triage/realtime.ts);

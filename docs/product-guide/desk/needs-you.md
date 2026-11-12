@@ -1,6 +1,6 @@
 ---
 path: /desk/needs
-aliases: [needs you, what needs me, everything waiting, one list, lenses, watchtower, watch tower, watchtower lens, triage lens, decisions lens, unified queue, alerts feed, exceptions feed, exception feed, exception queue, things to look at, operational alerts, AI monitoring, failed agent runs, agent exceptions, quarantined EDI, deadlines, approve in place]
+aliases: [needs you, what needs me, everything waiting, one list, lenses, watchtower, watch tower, watchtower lens, decisions lens, unified queue, alerts feed, exceptions feed, exception feed, exception queue, things to look at, operational alerts, AI monitoring, failed agent runs, agent exceptions, quarantined EDI, deadlines, approve in place]
 related:
   - /desk
   - /desk/decisions
@@ -13,7 +13,7 @@ Needs you is everything waiting on people across the operation, in one list with
 
 The list down the left is grouped by how long is left before each row's soonest deadline: **Act now** (four hours or less, or already past), **Today**, **Coming up** and **For your information** (no deadline). Each row has a square coloured by its worst severity, the title of what is most urgent, the record's number and what it is, and under it one line for every signal about the record with the queue that raised it. On the right it shows how long is left (red inside four hours, amber inside a day) and where the work stands: **Needs your approval**, **Looking into it** while an agent works it, or **Didn't go through**. A blue dot marks a row you have not opened yet. Above the list, the bar shows how many items you have cleared today out of all of them.
 
-**Everything**, **Watchtower**, **Triage** and **Decisions** above the list are lenses, not separate places: pick one (or press 1 to 4) to see only the rows with something in that queue. Each row still shows every signal about its record. The Triage lens links to the Triage room for reading and filing messages, and the Decisions lens to [Decisions](/desk/decisions) for approving several changes at once.
+**Everything**, **Watchtower** and **Decisions** above the list are lenses, not separate places: pick one (or press 1 to 3) to see only the rows with something in that queue. Each row still shows every signal about its record, a customer's email included. The Decisions lens links to [Decisions](/desk/decisions) for approving several changes at once. Mail has no lens here: a message shows on the row of the record it is about, and it is read, answered and filed in [Triage](/desk/triage), the one place mail is worked. Select **Open in Triage** on a message to go to it; answering, filing or ignoring it there clears it from this list.
 
 The right side is the item in front of you: what it is and the record it is about, how long is left, the **Condition** the Watchtower raised (what is at stake, the facts and how it got here), the agent working it with its steps, or the agent that could take it, the **Message** Triage read, and for a change an agent wants to make, the **Decision**: what it would change, why the agent proposes it, whether it can be undone and why it asks. The bar at the bottom acts on it.
 
@@ -25,7 +25,7 @@ You only see the kinds of items whose records you are allowed to open, and a rec
 Keywords: next item, keyboard, check alerts, what went wrong, exceptions today, open alerts
 1. Open [Needs you](/desk/needs) from the rail, or press G then N.
 2. Select a row, or press J (or the down arrow) for the next one and K (or the up arrow) for the previous one. Opening an item marks it seen, so its blue dot goes away.
-3. Pick a lens above the list, or press 1 to 4, to see only one queue's rows.
+3. Pick a lens above the list, or press 1 to 3, to see only one queue's rows.
 
 ### Mark an item done or snooze it
 Keywords: clear alert, resolve, close alert, finished, remove from list, later, put aside, remind me tomorrow

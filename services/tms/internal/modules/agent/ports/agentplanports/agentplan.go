@@ -2,6 +2,7 @@ package agentplanports
 
 import (
 	"context"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/caseowner"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -19,6 +20,9 @@ type ListAgentPlansByThreadRequest struct {
 }
 
 type ListAgentPlanConnectionRequest struct {
+	// Sight keeps a plan about a record whose case is someone else's out of
+	// the list. Nil lists every plan.
+	Sight   *caseowner.Sight         `json:"-"`
 	Filter  *pagination.QueryOptions `json:"filter"`
 	Cursor  pagination.CursorInfo    `json:"-"`
 	Columns []string                 `json:"-"`

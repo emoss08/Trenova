@@ -54,7 +54,7 @@ func TestDelayedShipments_UsesThresholdAndExcludedStatuses(t *testing.T) {
 func TestAutoDelayedShipmentIDs_JoinsTheShipmentControl(t *testing.T) {
 	t.Parallel()
 
-	sql, args := keeltest.Render(t, autoDelayedShipmentIDs(1_800_000_000, scopedTenant).Limit(10))
+	sql, args := keeltest.Render(t, autoDelayedShipmentIDs(t.Context(), 1_800_000_000).Limit(10))
 
 	assert.Contains(t, sql, `"shipment_controls" auto_sc`)
 	assert.Contains(t, sql, `auto_sc."auto_delay_shipments" IS TRUE`)
@@ -81,7 +81,7 @@ func TestAutoCancelableShipments_UsesThreshold(t *testing.T) {
 func TestControlledAutoCancelIDs_JoinsTheShipmentControl(t *testing.T) {
 	t.Parallel()
 
-	sql, args := keeltest.Render(t, controlledAutoCancelIDs(1_800_000_000, scopedTenant).Limit(10))
+	sql, args := keeltest.Render(t, controlledAutoCancelIDs(t.Context(), 1_800_000_000).Limit(10))
 
 	assert.Contains(t, sql, `"shipment_controls" cancel_sc`)
 	assert.Contains(t, sql, `cancel_sc."auto_cancel_shipments" IS TRUE`)

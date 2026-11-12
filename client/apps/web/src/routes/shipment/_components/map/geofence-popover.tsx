@@ -1,7 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Separator } from "@trenova/shared/components/ui/separator";
 import type { Location } from "@trenova/shared/types/location";
-import { AdvancedMarker } from "@vis.gl/react-google-maps";
+import { AdvancedMarker } from "@/components/map/advanced-marker";
 import { Hash01Icon, MarkerPin01Icon, XCloseIcon } from "@trenova/shared/components/icons";
 import type { NormalizedGeofence } from "./geofence-types";
 

@@ -126,6 +126,20 @@ func (m *memoryWaits) ListOpenByThreads(
 	return out, nil
 }
 
+func (m *memoryWaits) HasOpenForRun(
+	_ context.Context,
+	_ pagination.TenantInfo,
+	runID pulid.ID,
+) (bool, error) {
+	for _, wait := range m.items {
+		if wait.Status.Open() && wait.RunID == runID {
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
+
 func (m *memoryWaits) ListOverdueAcrossTenants(
 	_ context.Context,
 	req *agentwaitports.ListOverdueWaitsRequest,

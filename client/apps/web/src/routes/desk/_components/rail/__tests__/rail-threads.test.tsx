@@ -13,7 +13,8 @@ const DAY = 24 * 60 * 60;
 const api = vi.hoisted(() => ({
   listThreads:
     vi.fn<(options: { filter?: ThreadListFilter; cursor?: string }) => Promise<unknown>>(),
-  countThreadShelves: vi.fn<(edges: readonly number[]) => Promise<unknown>>(),
+  countThreadShelves:
+    vi.fn<(edges: readonly number[], options?: { aboutRecord?: boolean }) => Promise<unknown>>(),
 }));
 
 vi.mock("@/services/assistant", async (importOriginal) => ({
@@ -106,16 +107,23 @@ function renderRail(props: Partial<DeskRailThreadsProps> = {}) {
       <MemoryRouter initialEntries={["/desk"]}>
         <DeskRailThreads
           place="today"
+          onSetPinned={vi.fn()}
+          onRename={vi.fn()}
+          onDownload={vi.fn()}
+          onDelete={vi.fn()}
           agentsById={new Map<string, AgentChoice>()}
           activeThreadId={null}
           activeThread={null}
           canWatch
           canDecide
           canTriage
-          lensCounts={{ everything: 0, watchtower: 0, triage: 0, decisions: 0 }}
+          lensCounts={{ everything: 0, watchtower: 0, decisions: 0 }}
+          triageWaiting={0}
           onSearch={vi.fn()}
           onSettings={vi.fn()}
           folded={false}
+          mode="pinned"
+          open={false}
           onFold={vi.fn()}
           {...props}
         />
@@ -168,6 +176,32 @@ describe("DeskRailThreads", () => {
     await waitFor(() => expect(askedFor(olderShelf)).toBe(true));
     expect(screen.queryByText("Before reply")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /^Older/ })).not.toBeInTheDocument();
+  });
+
+  it("is the cases' rail on case work: that half of the work, Needs you and a way back", async () => {
+    serve({});
+    renderRail({ place: "needs", canWatch: true });
+
+    await waitFor(() => expect(api.countThreadShelves).toHaveBeenCalled());
+    expect(api.countThreadShelves.mock.calls[0][1]).toMatchObject({ aboutRecord: true });
+    expect(
+      api.listThreads.mock.calls.every(([options]) => options.filter?.aboutRecord === true),
+    ).toBe(true);
+    expect(await screen.findByText(/No cases yet/)).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Back to chats" })).toHaveAttribute("href", "/desk");
+    expect(screen.getByRole("link", { name: /Needs you/ })).toBeTruthy();
+    expect(screen.queryByRole("link", { name: "Scheduled" })).toBeNull();
+  });
+
+  it("is the conversations' rail everywhere else, with the way into cases", async () => {
+    serve({});
+    renderRail({ canWatch: true });
+
+    await waitFor(() => expect(api.countThreadShelves).toHaveBeenCalled());
+    expect(api.countThreadShelves.mock.calls[0][1]).toMatchObject({ aboutRecord: false });
+    expect(screen.getByRole("link", { name: /Cases/ })).toHaveAttribute("href", "/desk/needs");
+    expect(screen.getByRole("link", { name: "Scheduled" })).toBeTruthy();
+    expect(screen.queryByRole("link", { name: /Needs you/ })).toBeNull();
   });
 
   it("says there are no chats only once every shelf has been counted empty", async () => {

@@ -48,6 +48,14 @@ func QualityRegressionSummary(run *agentqualitysuite.SuiteRun) string {
 
 const maxQualitySummary = 1000
 
+func scorePercent(score *float64) string {
+	if score == nil {
+		return ""
+	}
+
+	return strconv.Itoa(int(*score*100+0.5)) + "%"
+}
+
 func DescribeQualityRegression(
 	run *agentqualitysuite.SuiteRun,
 	agentName string,
@@ -72,6 +80,16 @@ func DescribeQualityRegression(
 		Title:      who + " answers its evaluation cases worse than before",
 		Summary:    QualityRegressionSummary(run),
 		Path:       QualityRegressionPath(run),
+		Panel: &watchtower.Panel{
+			Kind: watchtower.PanelChange,
+			Change: &watchtower.ChangePanel{
+				Who:  who,
+				What: "Evaluation score",
+				From: scorePercent(run.BaselineScore),
+				To:   scorePercent(run.QualityScore),
+				At:   occurredAt,
+			},
+		},
 		OccurredAt: occurredAt,
 	}
 }

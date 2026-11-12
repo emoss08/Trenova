@@ -13,6 +13,12 @@ import (
 
 // GetThreadRequest reads one thread. UserID is required rather than optional:
 // threads are per-person, so every read is scoped to the person reading.
+type NameThreadRequest struct {
+	ThreadID   pulid.ID
+	TenantInfo pagination.TenantInfo
+	Title      string
+}
+
 type GetThreadRequest struct {
 	ID         pulid.ID
 	UserID     pulid.ID
@@ -47,6 +53,10 @@ type ListThreadsRequest struct {
 	Pinned          *bool
 	TouchedFrom     int64
 	TouchedBefore   int64
+	// AboutRecord splits a person's conversations in two: true lists only
+	// those asked on a record's case, false only the ones about no record.
+	// Nil lists both.
+	AboutRecord *bool
 }
 
 func (r *ListThreadsRequest) Validate(multiErr *errortypes.MultiError) {
@@ -71,6 +81,9 @@ type CountThreadShelvesRequest struct {
 	UserID     pulid.ID
 	TenantInfo pagination.TenantInfo
 	Edges      []int64
+	// AboutRecord counts one half of the person's conversations, as
+	// ListThreadsRequest.AboutRecord lists it.
+	AboutRecord *bool
 }
 
 func (r *CountThreadShelvesRequest) Validate(multiErr *errortypes.MultiError) {
@@ -286,6 +299,9 @@ type ConversationRepository interface {
 		req *CountThreadShelvesRequest,
 	) (*ThreadShelfCounts, error)
 	UpdateThread(ctx context.Context, thread *conversation.Thread) (*conversation.Thread, error)
+	// NameThread gives a conversation the model's name for it when its title
+	// is still the one taken from its first question. It reports whether it did.
+	NameThread(ctx context.Context, req *NameThreadRequest) (bool, error)
 	DeleteThread(ctx context.Context, req *GetThreadRequest) error
 	// DeleteStaleThreads removes unkept conversations of an origin, with their
 	// messages, across every tenant. It reports how many threads went.

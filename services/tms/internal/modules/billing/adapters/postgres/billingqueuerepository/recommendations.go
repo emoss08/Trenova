@@ -36,7 +36,7 @@ func (r *repository) ListRecommendations(
 		r.db,
 		func(ctx context.Context) ([]*billingqueueports.Recommendation, error) {
 			db := r.db.Keel(ctx)
-			specs := recommendationSpecs(req)
+			specs := recommendationSpecs(ctx, req)
 			out := make([]*billingqueueports.Recommendation, 0, len(specs))
 			for _, spec := range specs {
 				rec, err := recommendationFor(ctx, db, spec)
@@ -97,7 +97,10 @@ func recommendationFor(
 	}, nil
 }
 
-func recommendationSpecs(req *billingqueueports.ListRecommendationsRequest) []recommendationSpec {
+func recommendationSpecs(
+	ctx context.Context,
+	req *billingqueueports.ListRecommendationsRequest,
+) []recommendationSpec {
 	bq := billingqueuedb.BillingQueueItems
 	rules := billingqueueports.RecommendationSourceRules
 	agent := billingqueueports.RecommendationSourceAgent
@@ -155,7 +158,7 @@ func recommendationSpecs(req *billingqueueports.ListRecommendationsRequest) []re
 			where: keel.And(
 				bq.Lane.Eq(billingqueue.LaneNeedsYou),
 				bq.AssignedBillerID.IsNull(),
-				keel.Not(billingqueueprojection.HasActionableIssue(bq)),
+				keel.Not(billingqueueprojection.HasActionableIssue(ctx, bq)),
 			),
 		})
 	}

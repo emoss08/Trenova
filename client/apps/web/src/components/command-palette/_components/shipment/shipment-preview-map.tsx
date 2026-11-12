@@ -5,7 +5,8 @@ import { googleMaps } from "@/lib/queries/google-maps";
 import { cn, formatLocation } from "@trenova/shared/lib/utils";
 import type { ShipmentMove, Stop } from "@trenova/shared/types/shipment";
 import { useQuery } from "@tanstack/react-query";
-import { AdvancedMarker, APIProvider, Map } from "@vis.gl/react-google-maps";
+import { AdvancedMarker } from "@/components/map/advanced-marker";
+import { APIProvider, Map } from "@vis.gl/react-google-maps";
 import { useMemo, useState } from "react";
 import { DirectionsPolyline, FitBounds } from "../map-components";
 

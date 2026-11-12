@@ -1,3 +1,4 @@
+import { placeholderOf, writeInBox } from "@/components/desk-chat/composer/editor/editor-test-kit";
 import type { AgentChoice, AgentMatch } from "@/lib/graphql/agent-definition";
 import { useDeskSettingsStore } from "@/stores/desk-settings-store";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -57,6 +58,10 @@ vi.mock("@/lib/queries/briefing", () => ({
 vi.mock("@/lib/queries/assistant", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/queries/assistant")>()),
   assistant: {
+    mentionSearch: (query: string, tab: string) => ({
+      queryKey: ["mention-search", query, tab],
+      queryFn: () => [],
+    }),
     commands: (agentId: string) => ({
       queryKey: ["assistant-commands", agentId],
       queryFn: () => ({ commands: [] }),
@@ -171,7 +176,7 @@ function renderHome(onStart: DeskTodayProps["onStart"]) {
 
 async function type(text: string) {
   const box = await screen.findByRole("textbox", { name: /Message/ });
-  fireEvent.change(box, { target: { value: text } });
+  writeInBox(box, text);
 
   return box;
 }
@@ -310,7 +315,7 @@ describe("Desk home suggesting the agent with the tools for a question", () => {
     await new Promise((settle) => setTimeout(settle, 1000));
     expect(queryNote()).toBeNull();
 
-    fireEvent.change(box, { target: { value: shipments } });
+    writeInBox(box, shipments);
 
     expect(await findNote()).toHaveTextContent("Customer service has the tools for this");
     pressEnter(box);
@@ -337,11 +342,11 @@ describe("Desk home suggesting the agent with the tools for a question", () => {
     fireEvent.click(
       await screen.findByRole("button", { name: "Keep Dispatch" }, { timeout: 3000 }),
     );
-    fireEvent.change(box, { target: { value: `${QUESTION} today` } });
+    writeInBox(box, `${QUESTION} today`);
     await new Promise((settle) => setTimeout(settle, 1000));
     expect(queryNote()).toBeNull();
 
-    fireEvent.change(box, { target: { value: shipments } });
+    writeInBox(box, shipments);
 
     expect(await findNote()).toHaveTextContent("Customer service has the tools for this");
   });
@@ -354,8 +359,8 @@ describe("Desk home suggesting the agent with the tools for a question", () => {
       await screen.findByRole("button", { name: "Keep Dispatch" }, { timeout: 3000 }),
     );
     expect(queryNote()).toBeNull();
-    fireEvent.change(box, { target: { value: "" } });
-    fireEvent.change(box, { target: { value: QUESTION } });
+    writeInBox(box, "");
+    writeInBox(box, QUESTION);
 
     expect(await findNote()).toHaveTextContent("Billing assistant has the tools for this");
   });
@@ -389,7 +394,7 @@ describe("Desk home suggesting the agent with the tools for a question", () => {
 
     const box = await type(QUESTION);
     await findNote();
-    fireEvent.change(box, { target: { value: `${QUESTION} now` } });
+    writeInBox(box, `${QUESTION} now`);
     pressEnter(box);
 
     expect(await screen.findByRole("button", { name: "Switch" })).toBeDisabled();
@@ -455,9 +460,10 @@ describe("Desk home suggesting the agent with the tools for a question", () => {
     const box = await type(QUESTION);
     pressEnter(box);
 
-    expect(
-      await screen.findByPlaceholderText("Finding the agent with the tools for this…"),
-    ).toBeDisabled();
+    await waitFor(() =>
+      expect(placeholderOf(box)).toBe("Finding the agent with the tools for this…"),
+    );
+    expect(box).toHaveAttribute("aria-disabled", "true");
     await waitFor(() => expect(onStart).toHaveBeenCalledTimes(1), { timeout: 3000 });
     expect(onStart.mock.calls[0]?.[0]).toBe(dispatch.id);
   });
@@ -634,7 +640,7 @@ describe("Desk home suggesting the agent with the tools for a question", () => {
 
     const box = await type(QUESTION);
     await findNote();
-    fireEvent.change(box, { target: { value: `${QUESTION} please` } });
+    writeInBox(box, `${QUESTION} please`);
     await new Promise((settle) => setTimeout(settle, 900));
     fireEvent.click(screen.getByRole("button", { name: "Switch" }));
 

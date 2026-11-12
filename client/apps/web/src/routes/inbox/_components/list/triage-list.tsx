@@ -1,4 +1,5 @@
-import { VirtualRows, type VirtualRow, type VirtualRowsHandle } from "@/components/virtual-rows";
+import type { VirtualRow, VirtualRowsHandle } from "@/components/virtual-rows";
+import { DeskList, DeskListHeading, DeskListStill } from "@/routes/desk/_components/list/desk-list";
 import type { InboundMessageRow, TriageSort } from "@/lib/graphql/inbox";
 import { useTriageStore, type TriageRowMode } from "@/stores/triage-store";
 import { openContextMenu } from "@trenova/shared/components/context-menu/context-menu-host";
@@ -147,15 +148,9 @@ export function TriageList({
               key: item.key,
               sticky: true,
               render: () => (
-                <div
-                  role="presentation"
-                  className={cn(
-                    "bg-canvas flex h-7.5 items-end px-4.5 pb-1 text-xs font-medium",
-                    item.tone === "danger" ? "text-danger" : "text-foreground-subtle",
-                  )}
-                >
+                <DeskListHeading tone={item.tone === "danger" ? "danger" : "quiet"}>
                   {item.label}
-                </div>
+                </DeskListHeading>
               ),
             }
           : {
@@ -193,25 +188,25 @@ export function TriageList({
         {isLoading ? (
           <ListSkeleton />
         ) : (
-          <VirtualRows
+          <DeskList
             rows={rows}
             estimateSize={ROW_ESTIMATE}
             initialHeight={800}
             overscan={6}
             handleRef={listRef}
             onEndReached={onEndReached}
-            className="min-h-0 flex-1 pb-16"
             rowClassName="pb-px"
             aria-label={t("Messages")}
             role="listbox"
             aria-multiselectable
-            empty={<div className="min-h-0 flex-1 overflow-y-auto">{empty}</div>}
+            empty={<DeskListStill>{empty}</DeskListStill>}
             footer={
-              isFetchingNextPage ? (
-                <p className="text-foreground-subtle py-3 text-center text-xs">
-                  {t("Loading more…")}
-                </p>
-              ) : undefined
+              // Room under the last row for the bar that acts on the picked ones.
+              <div className="min-h-12">
+                {isFetchingNextPage && (
+                  <p className="py-3 text-center text-xs text-dsk-subtle">{t("Loading more…")}</p>
+                )}
+              </div>
             }
           />
         )}

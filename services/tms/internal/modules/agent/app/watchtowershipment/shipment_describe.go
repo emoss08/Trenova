@@ -4,6 +4,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/emoss08/trenova/shared/textcase"
+
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtoweritem"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
@@ -74,6 +76,15 @@ func DescribeTelematicsStopVisit(
 			watchtoweritem.Fact("Place", event.AddressName),
 			watchtoweritem.FactAt("Seen", event.OccurredAt),
 		},
+		Panel: &watchtower.Panel{
+			Kind: watchtower.PanelSighting,
+			Sighting: &watchtower.SightingPanel{
+				Departure: event.StopVisit == shipmentvocab.VisitDeparture,
+				Place:     event.AddressName,
+				SeenAt:    event.OccurredAt,
+				Why:       event.StopOutcomeReason,
+			},
+		},
 		OccurredAt: event.OccurredAt,
 	}
 }
@@ -118,6 +129,15 @@ func DescribeNoCheckCall(
 			watchtoweritem.FactAt("Last contact", move.LastContactAt),
 			watchtoweritem.Fact("Window", hours+"h"),
 		},
+		Panel: &watchtower.Panel{
+			Kind: watchtower.PanelContact,
+			Contact: &watchtower.ContactPanel{
+				Who:         carrier,
+				LastHeardAt: move.LastContactAt,
+				EveryHours:  int64(move.IntervalHours),
+				DueAt:       move.LastContactAt + window,
+			},
+		},
 		Trail: []watchtower.TrailEvent{
 			{At: move.LastContactAt, Text: "Last heard from " + carrier},
 			{At: move.LastContactAt + window, Text: "Check call window closed"},
@@ -158,7 +178,7 @@ func DescribeEtaRisk(
 		windowLabel = "Pickup window closes"
 	}
 	facts := []watchtower.Fact{
-		watchtoweritem.Fact("Stop", place),
+		watchtoweritem.Fact("Stop", etaStopName(stop)),
 		watchtoweritem.FactAtPtr("Window closes", row.WindowEnd),
 	}
 	if row.EstimatedArrival != nil {
@@ -194,14 +214,62 @@ func DescribeEtaRisk(
 		Record:      watchtoweritem.ShipmentRecord(stop.ProNumber),
 		Facts:       facts,
 		Trail:       trail,
+		Panel:       etaPanel(stop, late),
 		Deadline:    watchtoweritem.DeadlineAtPtr(row.WindowEnd, windowLabel),
 		OccurredAt:  etaRiskOccurredAt(row, late),
 		OwnerID:     stop.OwnerID,
 	}
 }
 
+// etaStopName is the stop as a fact names it: where it is, without the words
+// that fit it into a sentence.
+func etaPanel(stop *stopetaports.AttentionStop, late bool) *watchtower.Panel {
+	row := stop.ETA
+	panel := &watchtower.StopPanel{
+		Role:           watchtower.StopRoleDelivery,
+		Verdict:        watchtower.StopAtRisk,
+		Place:          etaStopName(stop),
+		MilesRemaining: int64(row.MilesRemaining),
+		Stale:          row.InputStale,
+	}
+	if stop.StopType == shipmentvocab.StopTypePickup {
+		panel.Role = watchtower.StopRolePickup
+	}
+	if late {
+		panel.Verdict = watchtower.StopLate
+	}
+	if row.WindowEnd != nil {
+		panel.WindowEnd = *row.WindowEnd
+	}
+	if row.EstimatedArrival != nil {
+		panel.EstimatedAt = *row.EstimatedArrival
+	}
+	if row.InputAt != nil {
+		panel.LastHeardAt = *row.InputAt
+	}
+
+	return &watchtower.Panel{Kind: watchtower.PanelStop, Stop: panel}
+}
+
+func etaStopName(stop *stopetaports.AttentionStop) string {
+	city := stop.City
+	if city != "" && stop.StateCode != "" {
+		city += ", " + stop.StateCode
+	}
+	switch {
+	case stop.LocationName != "" && city != "":
+		return stop.LocationName + " in " + city
+	case stop.LocationName != "":
+		return stop.LocationName
+	default:
+		return city
+	}
+}
+
 func etaStopPlace(stop *stopetaports.AttentionStop) string {
-	kind := "the " + strings.ToLower(stringutils.FirstNonEmpty(string(stop.StopType), "stop"))
+	kind := "the " + strings.ToLower(
+		textcase.HumanizeCamelCase(stringutils.FirstNonEmpty(string(stop.StopType), "stop")),
+	)
 	city := stop.City
 	if city != "" && stop.StateCode != "" {
 		city += ", " + stop.StateCode

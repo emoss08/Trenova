@@ -499,11 +499,11 @@ func unmarshalInputBillingQueueItemsFilterInput(ctx context.Context, ec *gqlexec
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
 	}
-	if _, present := asMap["includePosted"]; !present {
-		asMap["includePosted"] = false
+	if _, present := asMap["includeClosed"]; !present {
+		asMap["includeClosed"] = false
 	}
 
-	fieldsInOrder := [...]string{"lanes", "includePosted", "minAmount", "maxAmount", "createdBefore"}
+	fieldsInOrder := [...]string{"lanes", "includeClosed", "minAmount", "maxAmount", "createdBefore"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -517,13 +517,13 @@ func unmarshalInputBillingQueueItemsFilterInput(ctx context.Context, ec *gqlexec
 				return it, err
 			}
 			it.Lanes = data
-		case "includePosted":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("includePosted"))
+		case "includeClosed":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("includeClosed"))
 			data, err := unmarshalOBoolean2ᚖbool(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
-			it.IncludePosted = data
+			it.IncludeClosed = data
 		case "minAmount":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("minAmount"))
 			data, err := unmarshalODecimal2ᚖstring(ctx, ec, v)

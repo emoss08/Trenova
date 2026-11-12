@@ -64,7 +64,12 @@ const toTarget = (item: BillingQueueRow): BillingQueueTarget => ({
 
 type HoldRequest = { targets: BillingQueueTarget[]; note: string };
 
-type OpenLane = (typeof BILLING_QUEUE_OPEN_LANES)[number];
+type SidebarLane = (typeof BILLING_QUEUE_OPEN_LANES)[number] | "Closed";
+
+/** The lanes the sidebar lists: the open ones, and the closed one when asked for. */
+function sidebarLanes(includeClosed: boolean): readonly SidebarLane[] {
+  return includeClosed ? [...BILLING_QUEUE_OPEN_LANES, "Closed"] : BILLING_QUEUE_OPEN_LANES;
+}
 
 function useLaneQuery(lane: BillingQueueLane, filters: BillingQueueListFilters, enabled: boolean) {
   return useInfiniteQuery({ ...billingQueueLaneQuery(lane, filters), enabled });
@@ -73,7 +78,8 @@ function useLaneQuery(lane: BillingQueueLane, filters: BillingQueueListFilters, 
 /**
  * The queue as lanes in working order: what needs the biller, what is ready to
  * approve, what waits on someone else, what is still being checked, what is held,
- * and what is approved but not posted. One virtualized list carries every lane,
+ * what is approved but not posted, and, when asked for, what is closed. One
+ * virtualized list carries every lane,
  * each lane's heading pinned while its rows scroll under it; each lane pages on its
  * own, a folded lane fetches nothing until a filter needs its count, and a selection
  * spans lanes.
@@ -104,7 +110,7 @@ export function BillingQueueSidebar({
     billType: params.billType,
     payer: params.payer,
     search,
-    includePosted: params.includePosted,
+    includeClosed: params.includeClosed,
     minAmount: params.minAmount,
     maxAmount: params.maxAmount,
     createdBefore: params.createdBefore,
@@ -118,12 +124,14 @@ export function BillingQueueSidebar({
   const [folded, setFolded] = useState<ReadonlySet<BillingQueueLane>>(
     () => new Set(LANES_FOLDED_BY_DEFAULT),
   );
-  const visibleLanes = BILLING_QUEUE_OPEN_LANES.filter(
-    (lane) => params.lanes.length === 0 || params.lanes.includes(lane),
+  const namedLanes: readonly BillingQueueLane[] = params.lanes;
+  const visibleLanes = sidebarLanes(params.includeClosed).filter(
+    (lane) => namedLanes.length === 0 || namedLanes.includes(lane),
   );
   // A lane asked for by name opens, whatever it was left as.
-  const isOpen = (lane: OpenLane) => params.lanes.includes(lane) || !folded.has(lane);
-  const shouldFetch = (lane: OpenLane) => visibleLanes.includes(lane) && (isOpen(lane) || filtered);
+  const isOpen = (lane: SidebarLane) => namedLanes.includes(lane) || !folded.has(lane);
+  const shouldFetch = (lane: SidebarLane) =>
+    visibleLanes.includes(lane) && (isOpen(lane) || filtered);
 
   const lanes = {
     NeedsYou: useLaneQuery("NeedsYou", filters, shouldFetch("NeedsYou")),
@@ -132,7 +140,8 @@ export function BillingQueueSidebar({
     Checking: useLaneQuery("Checking", filters, shouldFetch("Checking")),
     Held: useLaneQuery("Held", filters, shouldFetch("Held")),
     Approved: useLaneQuery("Approved", filters, shouldFetch("Approved")),
-  } satisfies Record<OpenLane, unknown>;
+    Closed: useLaneQuery("Closed", filters, shouldFetch("Closed")),
+  } satisfies Record<SidebarLane, unknown>;
 
   const items = visibleLanes.filter(isOpen).flatMap((lane) => laneItems(lanes[lane].data));
   const selection = useListSelection(items, itemId);
@@ -254,8 +263,8 @@ export function BillingQueueSidebar({
     return () => document.removeEventListener("keydown", handler);
   }, [items, onSelectItem, selectedItemId]);
 
-  const toggleLane = (lane: OpenLane) => {
-    if (params.lanes.includes(lane)) {
+  const toggleLane = (lane: SidebarLane) => {
+    if (namedLanes.includes(lane)) {
       void setParams({ lanes: params.lanes.filter((value) => value !== lane) });
       return;
     }
@@ -267,9 +276,10 @@ export function BillingQueueSidebar({
     });
   };
 
-  function laneCount(lane: OpenLane): number | null {
+  function laneCount(lane: SidebarLane): number | null {
     const loaded = laneTotal(lanes[lane].data);
-    if (filtered) return loaded ?? null;
+    // The stats count open work only; the closed lane counts its own first page.
+    if (filtered || lane === "Closed") return loaded ?? null;
     // The stats leave out empty lanes, so a lane they don't name is empty.
     if (stats) return statFor(stats, lane)?.count ?? 0;
     return loaded ?? null;
@@ -385,7 +395,7 @@ export function BillingQueueSidebar({
         <BillingQueueFilters />
       </div>
       {emptyByFilter || firstLoad ? (
-        <ScrollArea maskVariant="card" className="min-h-0 flex-1">
+        <ScrollArea maskVariant="background" className="min-h-0 flex-1">
           {suggestions}
           {emptyByFilter ? (
             <BillingListEmpty
@@ -402,7 +412,7 @@ export function BillingQueueSidebar({
           rows={rows}
           estimateSize={56}
           initialHeight={720}
-          mask="card"
+          mask="background"
           className="min-h-0 flex-1"
           aria-label={t("Billing queue")}
           hoverGlide

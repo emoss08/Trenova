@@ -1,0 +1,54 @@
+fragment RecordShareUserFields on User {
+  id
+  name
+  username
+  emailAddress
+  profilePicUrl
+  thumbnailUrl
+}
+
+fragment RecordShareFields on RecordShare {
+  id
+  recordId
+  path
+  note
+  shareCount
+  firstSharedAt
+  lastSharedAt
+  removable
+  sharedWith {
+    ...RecordShareUserFields
+  }
+  sharedBy {
+    ...RecordShareUserFields
+  }
+}
+
+query RecordShares($kind: String!, $id: ID!) {
+  recordShares(kind: $kind, id: $id) {
+    ...RecordShareFields
+  }
+}
+
+query RecordShareCandidates($kind: String!, $id: ID!, $query: String, $first: Int) {
+  recordShareCandidates(kind: $kind, id: $id, query: $query, first: $first) {
+    ...RecordShareUserFields
+  }
+}
+
+mutation ShareRecord($input: ShareRecordInput!) {
+  shareRecord(input: $input) {
+    shares {
+      ...RecordShareFields
+    }
+    recipientCount
+    emailsQueued
+    emailStatus
+  }
+}
+
+mutation UnshareRecord($input: UnshareRecordInput!) {
+  unshareRecord(input: $input) {
+    ...RecordShareFields
+  }
+}

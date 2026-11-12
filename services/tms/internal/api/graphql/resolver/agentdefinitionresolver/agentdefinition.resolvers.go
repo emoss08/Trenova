@@ -258,7 +258,7 @@ func (r *QueryResolver) MyAgents(ctx context.Context, input gqlmodel.MyAgentsInp
 			Cursor:      tableInput.Cursor,
 			Columns:     myAgentColumns(ctx, "edges.node"),
 			EnabledOnly: true,
-			ChatOnly:    true,
+			ChatOnly:    len(input.Ids) == 0,
 			Audience:    usable.Audience(),
 		},
 	)

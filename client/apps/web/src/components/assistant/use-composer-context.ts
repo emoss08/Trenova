@@ -1,5 +1,6 @@
 import { useDocumentUpload } from "@/hooks/use-document-upload";
 import { globalSearchService } from "@/services/global-search";
+import { composerDrafts, draftKey, useDraftMentions } from "@/stores/composer-draft-store";
 import type { AssistantEntityRef } from "@/types/assistant";
 import type { UploadState } from "@/types/upload";
 import { useCallback, useMemo, useState } from "react";
@@ -46,7 +47,14 @@ export function useComposerContext(threadId: string) {
   const [documents, setDocuments] = useState<Map<string, { id: string; contentType: string }>>(
     () => new Map(),
   );
-  const [mentions, setMentions] = useState<AssistantEntityRef[]>([]);
+  // The records a draft names are kept with its words, so a draft that comes
+  // back after a reload still carries them.
+  const draftAt = draftKey.thread(threadId);
+  const mentions = useDraftMentions(draftAt);
+  const setMentions = useCallback(
+    (next: readonly AssistantEntityRef[]) => composerDrafts.setMentions(draftAt, next),
+    [draftAt],
+  );
 
   const { uploads, uploadFiles, cancelUpload, retryUpload, removeUpload, clearAll } =
     useDocumentUpload({
@@ -93,7 +101,7 @@ export function useComposerContext(threadId: string) {
     clearAll();
     setDocuments(new Map());
     setMentions([]);
-  }, [clearAll]);
+  }, [clearAll, setMentions]);
 
   const searchMentions = useCallback(async (query: string): Promise<MentionCandidate[]> => {
     const response = await globalSearchService.search(query, MENTION_RESULT_LIMIT);

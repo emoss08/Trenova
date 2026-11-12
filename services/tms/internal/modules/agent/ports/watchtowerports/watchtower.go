@@ -2,6 +2,7 @@ package watchtowerports
 
 import (
 	"context"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/caseowner"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -31,6 +32,9 @@ type ResolveMissingWatchtowerItemsRequest struct {
 // cursor is the last row's occurred_at and id, so a feed that grows while
 // it is read does not skip or repeat.
 type ListWatchtowerItemsQuery struct {
+	// Sight keeps the items about a record whose case is someone else's out
+	// of the list. Nil lists every item.
+	Sight      *caseowner.Sight
 	TenantInfo pagination.TenantInfo
 	// Kinds narrows the feed; empty means every kind the reader may see,
 	// which the service resolves before asking.
@@ -54,12 +58,20 @@ type ListWatchtowerItemsQuery struct {
 	AboutIDs    []pulid.ID
 	OrderByDue  bool
 	BeforeDueAt int64
+	// AgentRunID keeps only the items handed to this run.
+	AgentRunID pulid.ID
+	// AgentWorking keeps only the items an agent's run is working on now: a
+	// run that finished, failed or waits on a person is not working.
+	AgentWorking bool
 }
 
 // CountWatchtowerItemsRequest asks how much is open, and how much of it is
 // critical and unseen by a reader whose cursor is SeenAt.
 type CountWatchtowerItemsRequest struct {
 	TenantInfo pagination.TenantInfo
+	// Sight counts as the reader sees: an item about someone else's case is
+	// not theirs to count. Nil counts every item.
+	Sight      *caseowner.Sight
 	Kinds      []watchtower.SourceKind
 	SeenAt     int64
 	AssigneeID pulid.ID

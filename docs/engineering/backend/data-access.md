@@ -56,7 +56,13 @@ Shape: an fx `Params{DB *postgres.Connection; Logger}`, an unexported `repositor
   `keel.ErrNoScope` without one. `pagination.TenantInfo` on a request is not a filter: never add
   `organization_id`/`business_unit_id` predicates. Cross-tenant code declares `dbscope.WithSystem`,
   says `AllTenants()` on each query (keel refuses a system-scope query without it) and filters the
-  tenant itself; it is listed in `rlslint`'s allowlist. A query that relies on a row-level security
+  tenant itself; it is listed in `rlslint`'s allowlist. Code that runs under either scope (a
+  projection refresh called by a request and by a seed) takes its scope from the context: each
+  query and subquery goes through `tenantscope.Scoped(ctx, q)`, and a subquery correlates its
+  tenant columns to the outer row under `dbscope.IsSystem(ctx)`, where keel adds no tenant filter
+  (`shipmentprojection.Refresh`). Never a tenancy flag or an `…AcrossTenants` twin, and never
+  set a `readonly` column on a model to stand in for the refresh that owns it: keel does not write
+  it. A query that relies on a row-level security
   policy wider than the tenant scope (a person reads their own memberships in every organization)
   writes the policy's rule into the query and runs under a system scope
   (`userrepository.membershipReadScope`).
@@ -226,7 +232,7 @@ struct.
   `BANK_RECEIPT_SOURCE`).
 - **Code that pages to a total** never stops at an estimate: an estimate can sit below the rows
   that match when statistics are stale. Stop at a short or empty page, or at `Total` only when
-  `TotalExact` (`invoiceshareservice/candidates.go`), and say whether there is a next page with
+  `TotalExact` (`recordshareservice/candidates.go`), and say whether there is a next page with
   `pagination.HasMore(result, page)`, which trusts `Total` only when it was counted.
 - **Filters, search and relation paths.** `listquery` resolves a request's JSON field names
   through the generated schema: a field filters when it has a JSON name and is a stored, selectable

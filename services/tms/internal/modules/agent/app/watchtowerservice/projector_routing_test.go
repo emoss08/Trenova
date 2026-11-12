@@ -41,6 +41,7 @@ func newRoutingProjector(
 ) (*Projector, *fakeControlRepo) {
 	controls := &fakeControlRepo{control: control}
 	projector := NewProjector(ProjectorParams{
+		Owners:        &agenttest.OpenCases{},
 		Logger:        zap.NewNop(),
 		Repo:          repo,
 		Router:        NewRouter(RouterParams{Logger: zap.NewNop(), Controls: controls}),

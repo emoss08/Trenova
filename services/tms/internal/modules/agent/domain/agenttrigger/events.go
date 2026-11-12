@@ -38,6 +38,7 @@ const (
 	EventFactoringSubmissionFunded    = EventKind("factoring.submission_funded")
 	EventFactoringChargebackDue       = EventKind("factoring.chargeback_due")
 	EventFactoringRemittanceStaged    = EventKind("factoring.remittance_staged")
+	EventShipmentPODMissing           = EventKind("shipment.pod_missing")
 )
 
 type EventDescriptor struct {
@@ -107,6 +108,12 @@ var knownEvents = []EventDescriptor{
 		SubjectType: agent.SubjectBankReceipt,
 		Label:       "Bank receipt needs matching",
 		Description: "An imported bank receipt could not be matched to a customer payment on its own and is waiting in the reconciliation queue.",
+	},
+	{
+		Kind:        EventShipmentPODMissing,
+		SubjectType: agent.SubjectShipment,
+		Label:       "Proof of delivery missing",
+		Description: "A shipment was delivered and no proof of delivery is on file once the grace for paperwork ran out, so it cannot be billed.",
 	},
 	{
 		Kind:        EventDetentionOccurrenceOpened,

@@ -1,7 +1,8 @@
 import { useMapStyle } from "@/hooks/use-map-style";
 import { integration } from "@/lib/queries/integration";
 import { useQuery } from "@tanstack/react-query";
-import { AdvancedMarker, APIProvider, Map } from "@vis.gl/react-google-maps";
+import { AdvancedMarker } from "@/components/map/advanced-marker";
+import { APIProvider, Map } from "@vis.gl/react-google-maps";
 
 interface LazyMapProps {
   apiKey: string;

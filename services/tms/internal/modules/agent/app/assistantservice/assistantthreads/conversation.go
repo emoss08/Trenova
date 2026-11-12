@@ -30,6 +30,37 @@ const (
 	maxPageLimit     = 200
 )
 
+// caseConversation is the conversation the person already has with this
+// agent about this record on the Desk. A record's case has one conversation
+// per person: a second question asked beside the same record continues it,
+// so the rail lists the work once and the earlier answers stay in front of
+// the next one. A hand-off always opens its own conversation, and a lookup
+// that fails opens a new one rather than losing the question.
+func (s *Service) caseConversation(
+	ctx context.Context,
+	req *assistantports.StartThreadRequest,
+	actor *permissionports.RequestActor,
+	origin conversation.ThreadOrigin,
+) *conversation.Thread {
+	if origin != conversation.ThreadOriginDesk || req.SubjectID.IsNil() || req.SubjectType == "" ||
+		req.HandedFromThreadID.IsNotNil() || s.pageThreads == nil {
+		return nil
+	}
+	existing, err := s.pageThreads.LatestSubjectThread(ctx, &conversationports.SubjectThreadKey{
+		TenantInfo:        req.TenantInfo,
+		UserID:            actor.UserID,
+		Origin:            origin,
+		AgentDefinitionID: req.AgentDefinitionID,
+		SubjectType:       req.SubjectType,
+		SubjectID:         req.SubjectID,
+	})
+	if err != nil {
+		return nil
+	}
+
+	return existing
+}
+
 func (s *Service) StartThread(
 	ctx context.Context,
 	req *assistantports.StartThreadRequest,
@@ -51,9 +82,6 @@ func (s *Service) StartThread(
 			"Agent {0} is disabled and cannot be used", definition.Name,
 		)
 	}
-	if err = agentaccess.AssertChatAgent(definition); err != nil {
-		return nil, err
-	}
 	if err = s.access().AssertMayUseAgent(ctx, actor, definition); err != nil {
 		return nil, err
 	}
@@ -67,6 +95,11 @@ func (s *Service) StartThread(
 	if origin == "" {
 		origin = conversation.ThreadOriginPanel
 	}
+	if existing := s.caseConversation(ctx, req, actor, origin); existing != nil {
+		existing.MarkContinuable()
+
+		return existing, nil
+	}
 
 	thread := &conversation.Thread{
 		OrganizationID:     req.TenantInfo.OrgID,
@@ -74,6 +107,7 @@ func (s *Service) StartThread(
 		UserID:             actor.UserID,
 		AgentDefinitionID:  definition.ID,
 		Title:              strings.TrimSpace(req.Title),
+		TitleSource:        givenTitleSource(req.Title),
 		Status:             conversation.ThreadStatusActive,
 		Origin:             origin,
 		SubjectType:        req.SubjectType,
@@ -319,6 +353,7 @@ func (s *Service) UpdateThread(
 
 	if req.Title != nil {
 		thread.Title = strings.TrimSpace(*req.Title)
+		thread.TitleSource = conversation.TitleFromPerson
 	}
 	if req.Pinned != nil {
 		thread.Pinned = *req.Pinned
@@ -417,4 +452,15 @@ func (s *Service) withdrawPending(
 				zap.String("thread", threadID.String()), zap.Error(err))
 		}
 	}
+}
+
+// givenTitleSource is where a new conversation's title came from: one it was
+// opened with was chosen for it and is kept; with none, the first question
+// names it until the model has read that question.
+func givenTitleSource(title string) conversation.TitleSource {
+	if strings.TrimSpace(title) == "" {
+		return conversation.TitleFromQuestion
+	}
+
+	return conversation.TitleFromPerson
 }

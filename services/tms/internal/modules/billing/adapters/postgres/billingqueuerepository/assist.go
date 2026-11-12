@@ -180,14 +180,12 @@ func (r *repository) GetBrief(
 func (r *repository) SaveBrief(ctx context.Context, brief *billingqueue.QueueBrief) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		qb := billingqueuedb.QueueBriefs
-		n, err := qb.Where(
-			qb.OrganizationID.Eq(brief.OrganizationID),
-			qb.BusinessUnitID.Eq(brief.BusinessUnitID),
-		).Update(
+		n, err := qb.Where(keel.True()).Update(
 			ctx,
 			r.db.Keel(ctx),
 			qb.Text.To(brief.Text),
 			qb.InputHash.To(brief.InputHash),
+			qb.LanesHash.To(brief.LanesHash),
 			qb.GeneratedAt.To(brief.GeneratedAt),
 		)
 		if err != nil {

@@ -1,9 +1,10 @@
 import type { BillingTransferRun } from "@/lib/graphql/billing-transfer";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   heldTotal,
   pickStageGroup,
   stageCountsOf,
+  TransferStageEngine,
   stageDeficit,
   type StageCounts,
 } from "../bulk-billing-transfer-stage-engine";
@@ -110,10 +111,10 @@ describe("pickStageGroup", () => {
     expect(pickStageGroup(waiting, 1)?.code).toBe("RateValidation");
   });
 
-  // Half of everything waiting, so a backlog halves with every bill the desk reads and the
-  // stage is never more than a poll or two behind the run.
-  it("carries half of what is waiting, but no more than its outcome has", () => {
-    expect(pickStageGroup(waiting, 0)).toEqual({ code: null, count: 4 });
+  // Everything waiting with its outcome, so the desk never queues sheets the run answered
+  // long ago and the stage stays within one sheet of the run.
+  it("carries everything waiting with the outcome it picks", () => {
+    expect(pickStageGroup(waiting, 0)).toEqual({ code: null, count: 6 });
     expect(pickStageGroup(waiting, 0.9)).toEqual({ code: "RateValidation", count: 2 });
   });
 
@@ -126,6 +127,31 @@ describe("pickStageGroup", () => {
 
   it("sends nothing when nothing is waiting", () => {
     expect(pickStageGroup([], 0.5)).toBeNull();
+  });
+});
+
+describe("TransferStageEngine", () => {
+  it("lands a finished run at once with the run's own counts, then hands over", () => {
+    vi.useFakeTimers();
+    try {
+      const onLanded = vi.fn();
+      const onSettled = vi.fn();
+      const engine = new TransferStageEngine(
+        { anchors: () => null, onSteps: vi.fn(), onLanded, onSettled },
+        counts(),
+      );
+      const finished = counts({ transferred: 17, held: { AlreadyTransferred: 4 } });
+
+      engine.update(finished, true);
+
+      expect(onLanded).toHaveBeenLastCalledWith(finished);
+      expect(onSettled).not.toHaveBeenCalled();
+      vi.advanceTimersByTime(900);
+      expect(onSettled).toHaveBeenCalledOnce();
+      engine.dispose();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
 

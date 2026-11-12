@@ -96,7 +96,7 @@ func everySectionPage() *briefing.Briefing {
 			),
 			section(briefing.SectionToday, "Today"),
 			section(briefing.SectionCoverage, "The next day"),
-			section(briefing.SectionDecisions, "Waiting on you"),
+			section(briefing.SectionDecisions, "Decisions waiting"),
 			section(briefing.SectionCompliance, "Credentials"),
 			section(briefing.SectionBilling, "Billing queue"),
 			section(briefing.SectionCash, "Cash received yesterday"),

@@ -278,7 +278,6 @@
   "Take back the approval for {0}": "Retirar la aprobación de {0}",
   "Take counter": "Aceptar contraoferta",
   "Take counter-offer": "Aceptar la contraoferta",
-  "Tender exhausted": "Oferta de carga agotada",
   "Tender needs review": "La oferta de carga necesita revisión",
   "The accepting carrier could not be assigned to the move automatically — the move may have gained coverage in the meantime, or the assignment was blocked. Assign the carrier manually with the regular carrier-assign flow, or cancel this tender.": "No se pudo asignar automáticamente al tramo el transportista que aceptó: es posible que el tramo se cubriera mientras tanto o que la asignación quedara bloqueada. Asigne el transportista manualmente con el flujo habitual de asignación, o cancele esta oferta de carga.",
   "The board didn't load": "El tablero no se cargó",

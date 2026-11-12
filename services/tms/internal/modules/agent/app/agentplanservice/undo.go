@@ -267,14 +267,25 @@ func (s *Service) ownApproving(
 			"Only a human user can decide on agent plans",
 		)
 	}
-	if err := s.AssertOwnPlan(ctx, req.PlanID, req.TenantInfo, actor); err != nil {
-		return nil, err
+	if !req.AsDecider {
+		if err := s.AssertOwnPlan(ctx, req.PlanID, req.TenantInfo, actor); err != nil {
+			return nil, err
+		}
 	}
 
-	return s.plans.GetByID(ctx, agentplanports.GetAgentPlanByIDRequest{
+	plan, err := s.plans.GetByID(ctx, agentplanports.GetAgentPlanByIDRequest{
 		ID:         req.PlanID,
 		TenantInfo: req.TenantInfo,
 	})
+	if err != nil {
+		return nil, err
+	}
+	if req.AsDecider && plan.Status == agentplan.PlanStatusApproving &&
+		(plan.DecidedByUserID == nil || *plan.DecidedByUserID != actor.UserID) {
+		return nil, errortypes.NewNotFoundError("That approval is not yours to take back")
+	}
+
+	return plan, nil
 }
 
 // reopenPlan moves a plan from Approving back to Pending: undone by the

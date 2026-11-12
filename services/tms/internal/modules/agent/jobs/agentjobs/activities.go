@@ -42,6 +42,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/paletteports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/recordcaseports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
@@ -97,12 +98,17 @@ type ActivitiesParams struct {
 	PaletteQuestions paletteports.QuestionRepository
 	// Watchtower puts a run that could not finish on the feed, so a
 	// failure nobody was watching for still reaches someone.
-	Watchtower    watchtowerports.WatchtowerProjector
+	Watchtower watchtowerports.WatchtowerProjector
+	// Conditions closes what was handed to a run that proposed nothing.
+	Conditions    watchtowerports.RunSettler
 	Reflections   agentreflectionports.AgentReflectionScheduler
 	Schedules     *agentcontract.DefinitionSchedules
 	PlatformPlans platformplanports.PlanService
 	// Waits reads the wait whose ending started a run that picks up work.
 	Waits agentwaitports.AgentWaitRepository
+	// CaseOptions reads the option a person chose on a record's case, for a
+	// run that drafts its plan.
+	CaseOptions recordcaseports.RecordCaseRepository
 }
 
 type Activities struct {
@@ -130,10 +136,12 @@ type Activities struct {
 	subjects         agentruntimeports.AgentSubjectDescriber
 	activity         agentactivityports.AgentActivityPublisher
 	watchtower       watchtowerports.WatchtowerProjector
+	conditions       watchtowerports.RunSettler
 	reflections      agentreflectionports.AgentReflectionScheduler
 	schedules        *agentcontract.DefinitionSchedules
 	platformPlans    platformplanports.PlanService
 	waits            agentwaitports.AgentWaitRepository
+	caseOptions      recordcaseports.RecordCaseRepository
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
@@ -167,10 +175,12 @@ func NewActivities(p ActivitiesParams) *Activities {
 		subjects:         p.Subjects,
 		activity:         p.Activity,
 		watchtower:       p.Watchtower,
+		conditions:       p.Conditions,
 		reflections:      p.Reflections,
 		schedules:        p.Schedules,
 		platformPlans:    p.PlatformPlans,
 		waits:            p.Waits,
+		caseOptions:      p.CaseOptions,
 	}
 }
 
@@ -270,6 +280,13 @@ func (a *Activities) runRequest(
 		input += "\n\n" + resumed.ResumeNote()
 		taint = resumed.Taint.Clone()
 		outsideText = resumed.CarriesOutsideText()
+	}
+	if payload.CaseOptionID.IsNotNil() {
+		option, oErr := a.caseOptions.GetOption(ctx, tenant, payload.CaseOptionID)
+		if oErr != nil {
+			return nil, fmt.Errorf("read the case option this run drafts: %w", oErr)
+		}
+		input += "\n\n" + option.DraftNote()
 	}
 	runtimeContext, err := a.contexts.Build(ctx, &agentruntimeports.RuntimeContextRequest{
 		Definition: definition,
@@ -444,6 +461,24 @@ func emitRunRoot(
 	})
 }
 
+// failAbandonedRuns ends the runs still marked as working long after any run
+// finishes, so nothing says an agent is working that is not.
+func (a *Activities) failAbandonedRuns(ctx context.Context, now int64) {
+	ended, err := a.runRepo.FailAbandoned(ctx, agentruntimeports.FailAbandonedRunsRequest{
+		StartedBefore: now - agent.AbandonedRunSeconds,
+		Now:           now,
+		Reason:        "The run stopped without finishing.",
+	})
+	if err != nil {
+		a.logger.Warn("could not end abandoned agent runs", zap.Error(err))
+
+		return
+	}
+	if ended > 0 {
+		a.logger.Info("ended agent runs abandoned in a working status", zap.Int("ended", ended))
+	}
+}
+
 // PendingProposalsActivity counts the run's proposals still waiting on a
 // person.
 func (a *Activities) PendingProposalsActivity(
@@ -574,12 +609,55 @@ func (a *Activities) CompleteRunActivity(ctx context.Context, input *CompleteRun
 	}
 
 	a.projectFailedRun(ctx, input.TenantInfo, completed)
+	a.settleEmptyRun(ctx, input, completed)
 	a.reflections.AfterRun(ctx, &agentreflectionports.ReflectOnRunRequest{
 		TenantInfo: input.TenantInfo,
 		RunID:      input.RunID,
 	})
 
 	return nil
+}
+
+// settleEmptyRun closes what was handed to a run that ended without asking
+// for any change: the agent looked and found nothing to do, so the item is
+// not left saying work is under way. A run that left a wait open is paused,
+// not finished, and keeps its item.
+func (a *Activities) settleEmptyRun(
+	ctx context.Context,
+	input *CompleteRunInput,
+	run *agent.AgentRun,
+) {
+	if run == nil || !input.ProposedNothing || run.Status != agent.RunStatusCompleted {
+		return
+	}
+
+	waiting, err := a.waits.HasOpenForRun(ctx, input.TenantInfo, run.ID)
+	if err != nil {
+		a.logger.Warn("could not tell whether a finished run is waiting on something",
+			zap.String("run", run.ID.String()), zap.Error(err))
+
+		return
+	}
+	if waiting {
+		return
+	}
+
+	actor, err := a.unattendedActor(ctx, input.TenantInfo, nil)
+	if err != nil {
+		a.logger.Warn("could not close what a finished run was working",
+			zap.String("run", run.ID.String()), zap.Error(err))
+
+		return
+	}
+	if run.AgentDefinitionID.IsNotNil() {
+		actor.PrincipalID = run.AgentDefinitionID
+	}
+
+	a.conditions.SettleRun(ctx, &watchtowerports.SettleRunRequest{
+		TenantInfo: input.TenantInfo,
+		RunID:      run.ID,
+		Note:       run.Summary,
+	}, actor)
 }
 
 // projectFailedRun puts a run that could not finish on the watchtower. A
@@ -926,6 +1004,7 @@ func (a *Activities) ExpireStaleProposalsActivity(
 	}
 
 	a.purgeOrphanBaselines(ctx, input.Now)
+	a.failAbandonedRuns(ctx, input.Now)
 
 	// A plan outlives none of its steps: once they have expired, so has it.
 	expiredPlans, planErr := a.plans.ExpirePending(ctx, agentplanports.ExpireAgentPlansRequest{

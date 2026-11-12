@@ -237,10 +237,12 @@ export function threadShelfQuery(filter: ThreadListFilter) {
  * begins at, newest first. Cached under the list's key, so whatever refreshes
  * the list refreshes the counts.
  */
-export function threadShelfCountsQuery(edges: readonly number[]) {
+export function threadShelfCountsQuery(edges: readonly number[], aboutRecord?: boolean) {
   return queryOptions({
-    ...assistant.threads()._ctx.shelfCounts(edges),
-    queryFn: ({ signal }) => assistantService.countThreadShelves(edges, { signal }),
+    ...assistant
+      .threads()
+      ._ctx.shelfCounts(edges, aboutRecord === undefined ? "all" : aboutRecord ? "cases" : "chats"),
+    queryFn: ({ signal }) => assistantService.countThreadShelves(edges, { signal, aboutRecord }),
   });
 }
 
@@ -545,10 +547,17 @@ function isShelfCounts(data: unknown): data is AssistantThreadShelfCounts {
   );
 }
 
-/** The edges a cache entry of shelf counts was read for: the last part of its key. */
+/** The edges a cache entry of shelf counts was read for: the part of its key before the half. */
 function shelfCountEdges(queryKey: QueryKey): readonly number[] | null {
-  const edges = queryKey.at(-1);
+  const edges = queryKey.at(-2);
   return Array.isArray(edges) && edges.every((edge) => typeof edge === "number") ? edges : null;
+}
+
+/** Whether a set of shelf counts, read for one half of the conversations, counts this one. */
+function countsThread(queryKey: QueryKey, thread: AssistantThread): boolean {
+  const half = queryKey.at(-1);
+
+  return half === "cases" ? Boolean(thread.subjectId) : half !== "chats" || !thread.subjectId;
 }
 
 /**
@@ -564,7 +573,11 @@ export function countCachedThread(
 ): void {
   for (const query of queryClient.getQueryCache().findAll({ queryKey: threadListRoot() })) {
     const edges = shelfCountEdges(query.queryKey);
-    if (edges === null || !isShelfCounts(query.state.data)) {
+    if (
+      edges === null ||
+      !isShelfCounts(query.state.data) ||
+      !countsThread(query.queryKey, thread)
+    ) {
       continue;
     }
     queryClient.setQueryData<AssistantThreadShelfCounts>(query.queryKey, (counts) => {

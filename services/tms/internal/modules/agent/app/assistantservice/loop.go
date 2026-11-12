@@ -98,6 +98,7 @@ func (s *Service) admit(
 			TenantInfo: req.Actor.TenantInfo(),
 			Input:      req.Input,
 			Recent:     recentTurns(req.History),
+			About:      aboutOf(req),
 		}
 		if !agentguard.EvaluateDeterministic(req.Input).Allowed {
 			return s.guard.Evaluate(ctx, evaluate), nil
@@ -237,6 +238,30 @@ func (s *Service) buildContext(
 	}
 
 	return runtimeContext
+}
+
+// aboutOf names what the person had in front of them for the scope guard: the
+// record the conversation was opened from, the page they asked on and the
+// records they named, as labels only.
+func aboutOf(req *TurnRequest) string {
+	parts := make([]string, 0, 2+len(req.Mentions))
+	if req.Subject != nil && req.Subject.Label != "" {
+		parts = append(parts, "a conversation about "+req.Subject.Label)
+	}
+	if req.Page != nil && req.Page.Title != "" {
+		page := req.Page.Title
+		if req.Page.EntityType != "" {
+			page = textcase.HumanizeSnakeCase(req.Page.EntityType) + " " + page
+		}
+		parts = append(parts, "the page of "+page)
+	}
+	for i := range req.Mentions {
+		if req.Mentions[i].Label != "" {
+			parts = append(parts, "named: "+req.Mentions[i].Label)
+		}
+	}
+
+	return strings.Join(parts, "; ")
 }
 
 // describeSubject reads the record a thread was opened from, so the model

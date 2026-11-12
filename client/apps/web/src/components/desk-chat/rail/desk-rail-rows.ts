@@ -26,13 +26,28 @@ export type DeskRailShelf = {
   paging: DeskShelfPaging;
 };
 
+/** One case on the rail: a record, what it needs, and the conversation asked on it. */
+export type DeskRailCase = {
+  to: string;
+  /** The record the row is a case of; empty for a view. */
+  recordId: string;
+  title: string;
+  /** A plan or a single change about the record waits on a person. */
+  waiting: boolean;
+  /** Something an agent composed, opened on the canvas, rather than a record's case. */
+  view: boolean;
+  /** The person's conversation on the case, when they have asked on it. */
+  thread: AssistantThread | null;
+};
+
 /**
- * One line of the rail's conversation list: a shelf's heading, a
- * conversation, or the place the rest of a shelf arrives.
+ * One line of the rail's list: a shelf's heading, a conversation, a case, or
+ * the place the rest of a shelf arrives.
  */
 export type DeskRailRow =
   | { kind: "shelf"; key: DeskShelfKey }
   | { kind: "thread"; thread: AssistantThread }
+  | { kind: "case"; case: DeskRailCase }
   | { kind: "more"; shelf: DeskShelfKey; loading: boolean; failed: boolean };
 
 /**
@@ -79,6 +94,8 @@ export function deskRailRowKey(row: DeskRailRow): string {
       return `s:${row.key}`;
     case "thread":
       return `c:${row.thread.id}`;
+    case "case":
+      return `r:${row.case.to}`;
     default:
       return `more:${row.shelf}`;
   }

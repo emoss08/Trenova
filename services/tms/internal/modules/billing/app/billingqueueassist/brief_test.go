@@ -1,12 +1,14 @@
 package billingqueueassist
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func briefFixture() *briefFacts {
@@ -58,6 +60,137 @@ func TestABriefIsToldTheQueueInTheBillersWordsWithEachShipmentByItsNumber(t *tes
 func TestAnEmptyQueueNeedsNoModel(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(t, 0, openCount(&briefFacts{}))
-	assert.Equal(t, 32, openCount(briefFixture()))
+	assert.Equal(t, 0, laneCount(nil))
+	assert.Equal(t, 32, laneCount(briefFixture().Lanes))
+}
+
+func storedBrief(t *testing.T, lanes []*billingqueueports.BillingQueueLaneStat) *billingqueue.QueueBrief {
+	t.Helper()
+
+	hash, err := lanesHash(lanes)
+	require.NoError(t, err)
+
+	return &billingqueue.QueueBrief{
+		Text:        "21 are ready to approve and 11 need you.",
+		LanesHash:   hash,
+		GeneratedAt: 1_000,
+	}
+}
+
+func lanesNow(t *testing.T, lanes []*billingqueueports.BillingQueueLaneStat) string {
+	t.Helper()
+
+	hash, err := lanesHash(lanes)
+	require.NoError(t, err)
+
+	return hash
+}
+
+func TestABriefWrittenForTheseLanesIsShownAsWritten(t *testing.T) {
+	t.Parallel()
+
+	lanes := briefFixture().Lanes
+	view, current := briefView(storedBrief(t, lanes), lanes, lanesNow(t, lanes), 5_000)
+
+	assert.True(t, current)
+	assert.Equal(t, &billingqueueports.QueueBriefView{
+		Available:   true,
+		Text:        "21 are ready to approve and 11 need you.",
+		GeneratedAt: 1_000,
+	}, view)
+}
+
+func TestAnEmptiedQueueSaysNothingIsWaitingWhateverWasStored(t *testing.T) {
+	t.Parallel()
+
+	view, current := briefView(storedBrief(t, briefFixture().Lanes), nil, lanesNow(t, nil), 5_000)
+
+	assert.False(t, current, "the stored brief is rewritten for the empty queue")
+	assert.Equal(t, &billingqueueports.QueueBriefView{
+		Available:   true,
+		Text:        "Nothing is waiting to be billed.",
+		GeneratedAt: 1_000,
+	}, view)
+}
+
+func TestAnEmptyQueueWithNoBriefSaysNothingIsWaitingNow(t *testing.T) {
+	t.Parallel()
+
+	view, current := briefView(nil, nil, lanesNow(t, nil), 5_000)
+
+	assert.False(t, current)
+	assert.Equal(t, &billingqueueports.QueueBriefView{
+		Available:   true,
+		Text:        "Nothing is waiting to be billed.",
+		GeneratedAt: 5_000,
+	}, view)
+}
+
+func TestABriefWrittenForOtherLanesIsShownStale(t *testing.T) {
+	t.Parallel()
+
+	moved := []*billingqueueports.BillingQueueLaneStat{
+		{Lane: billingqueue.LaneReady, Count: 4, Total: decimal.RequireFromString("16735.08")},
+	}
+	view, current := briefView(storedBrief(t, briefFixture().Lanes), moved, lanesNow(t, moved), 5_000)
+
+	assert.False(t, current)
+	assert.Equal(t, &billingqueueports.QueueBriefView{
+		Available:   true,
+		Text:        "21 are ready to approve and 11 need you.",
+		GeneratedAt: 1_000,
+		Stale:       true,
+	}, view)
+}
+
+func TestAQueueWithItemsAndNoBriefHasNoTextYet(t *testing.T) {
+	t.Parallel()
+
+	lanes := briefFixture().Lanes
+	view, current := briefView(nil, lanes, lanesNow(t, lanes), 5_000)
+
+	assert.False(t, current)
+	assert.Equal(t, &billingqueueports.QueueBriefView{Available: true}, view)
+}
+
+func TestADraftThatKeepsToItsFiguresIsTheBrief(t *testing.T) {
+	t.Parallel()
+
+	allowed := allowedNumbers(briefFixture())
+
+	assert.Empty(t, draftProblem("21 are ready to approve and 11 need you.", allowed))
+}
+
+func TestADraftIsSentBackWithWhatWasWrong(t *testing.T) {
+	t.Parallel()
+
+	allowed := allowedNumbers(briefFixture())
+
+	assert.Equal(t, "The draft was empty. Write two to four sentences.", draftProblem("", allowed))
+	assert.Equal(t,
+		"The draft was too long. Keep it under 700 characters.",
+		draftProblem(strings.Repeat("a", 701), allowed),
+	)
+	assert.Equal(t,
+		"The draft used figures you were not given: 32. Use only the figures listed, "+
+			"written exactly as given; never count, add or compute one.",
+		draftProblem("32 items are waiting.", allowed),
+	)
+}
+
+func TestABriefNovaCannotWriteIsWrittenFromTheFigures(t *testing.T) {
+	t.Parallel()
+
+	facts := briefFixture()
+	facts.Lanes = append(facts.Lanes, &billingqueueports.BillingQueueLaneStat{
+		Lane:  billingqueue.LaneHeld,
+		Count: 1,
+		Total: decimal.RequireFromString("450"),
+	})
+
+	assert.Equal(t,
+		"Ready to approve: 21 items, $104,880.00. Needs the biller: 11 items, $58,302.50. "+
+			"On hold: 1 item, $450.00.",
+		factsBrief(facts),
+	)
 }

@@ -57,7 +57,6 @@ interface AssistantState {
   /** Suggestion prompts the person closed; they stay closed across sessions. */
   dismissedSuggestions: string[];
   /** What was typed but not sent, per conversation, so switching loses nothing. */
-  drafts: Record<string, string>;
   /** The agent this person last started a conversation with, on either surface. */
   lastAgentId: string | null;
   /** A question asked before its conversation existed. Never persisted. */
@@ -88,7 +87,6 @@ interface AssistantState {
   noteReplied: (threadId: string) => void;
   setActiveThreadId: (id: string | null) => void;
   dismissSuggestion: (prompt: string) => void;
-  setDraft: (threadId: string, draft: string) => void;
   setLastAgentId: (agentId: string | null) => void;
   setOpeningQuestion: (question: AssistantOpeningQuestion | null) => void;
   setDock: (dock: AssistantDock) => void;
@@ -102,7 +100,6 @@ interface AssistantState {
 
 const MAX_DISMISSED = 50;
 /** Drafts kept for the most recently typed-in conversations. */
-const MAX_DRAFTS = 20;
 /** Deferred decisions remembered; the oldest are forgotten first. */
 export const MAX_DEFERRED_DECISIONS = 200;
 
@@ -119,28 +116,6 @@ export function resumeKeys(deferred: readonly string[], keys: readonly string[])
   const removing = new Set(keys);
 
   return deferred.filter((key) => !removing.has(key));
-}
-
-/**
- * Stores a draft, or forgets it when emptied, keeping the newest few. The
- * newest is the one just written, so the oldest key is the first inserted.
- */
-export function rememberDraft(
-  drafts: Record<string, string>,
-  threadId: string,
-  draft: string,
-): Record<string, string> {
-  const { [threadId]: _previous, ...rest } = drafts;
-  if (draft === "") {
-    return rest;
-  }
-  const next = { ...rest, [threadId]: draft };
-  const entries = Object.entries(next);
-  if (entries.length <= MAX_DRAFTS) {
-    return next;
-  }
-
-  return Object.fromEntries(entries.slice(entries.length - MAX_DRAFTS));
 }
 
 /**
@@ -200,7 +175,6 @@ export const useAssistantStore = create<AssistantState>()(
       dismissedSuggestions: [],
       lastAgentId: null,
       openingQuestion: null,
-      drafts: {},
       dock: DEFAULT_ASSISTANT_DOCK,
       launcherHidden: false,
       panelSize: null,
@@ -221,7 +195,6 @@ export const useAssistantStore = create<AssistantState>()(
         set({
           activeThreadId: null,
           dismissedSuggestions: [],
-          drafts: {},
           lastAgentId: null,
           deferredDecisions: [],
         }),
@@ -233,8 +206,6 @@ export const useAssistantStore = create<AssistantState>()(
                 dismissedSuggestions: [...state.dismissedSuggestions, prompt].slice(-MAX_DISMISSED),
               },
         ),
-      setDraft: (threadId, draft) =>
-        set((state) => ({ drafts: rememberDraft(state.drafts, threadId, draft) })),
       setLastAgentId: (agentId) => set({ lastAgentId: agentId }),
       setOpeningQuestion: (question) => set({ openingQuestion: question }),
       setDock: (dock) => set({ dock }),
@@ -265,7 +236,6 @@ export const useAssistantStore = create<AssistantState>()(
         sidebarCollapsed: state.sidebarCollapsed,
         activeThreadId: state.activeThreadId,
         dismissedSuggestions: state.dismissedSuggestions,
-        drafts: state.drafts,
         lastAgentId: state.lastAgentId,
         dock: state.dock,
         launcherHidden: state.launcherHidden,

@@ -623,7 +623,7 @@ func (r *repository) Cancel(
 			sp.CancelReason.To(req.CancelReason),
 		)
 		if err == nil {
-			err = r.cancelShipmentComponents(ctx, []pulid.ID{req.ShipmentID}, scopedTenant)
+			err = r.cancelShipmentComponents(ctx, []pulid.ID{req.ShipmentID})
 		}
 		if err != nil {
 			return nil, busy(err, req.ShipmentID)

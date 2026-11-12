@@ -214,6 +214,7 @@ func newHarness(t *testing.T, stepCount int, shadow bool) *harness {
 		proposals:  h.steps,
 		decisions:  h.decider,
 		shadow:     fakeShadow{shadow: shadow},
+		owners:     &agenttest.OpenCases{},
 		activity:   &announcedPlans{},
 		watchtower: agenttest.QuietWatchtower{},
 		followUps:  agenttest.QuietFollowUps{},

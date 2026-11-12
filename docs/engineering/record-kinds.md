@@ -74,3 +74,47 @@ feature's table:
 A new table of kinds belongs to one of the owners above. Key it by
 `RecordKind` (client) or `recordkind.Kind` (server), and add it to
 `recordkinds_test.go`, rather than writing another list of strings.
+
+## Sharing a record
+
+Sharing is one resource and one dialog for every kind of record. There is no per-kind share
+table, endpoint or dialog; an invoice, a shipment and a worker's case are shared the same way.
+
+- **Resource.** `record_shares` (`agent/domain/recordshare`): one row per record and recipient,
+  with the sharer, the note, the `path` inside the app the link opens (the tab or the Desk page
+  the sharer was on), and a count and dates that move each time it is shared again. `path` is
+  validated as an address inside the app (`recordshare.ValidPath`, and a check constraint),
+  because the email joins it to the app's own origin.
+- **Service.** `recordshareservice` reads the record with the sharer's own access
+  (`deskrecords.Labeler`), so nobody shares what they cannot open; offers and accepts only
+  teammates whose own role lets them read that kind (`kind.Resource()`), since a share sends
+  a link and never grants access; records the shares, audits them on the record's resource,
+  then tells each recipient in the app (`record_shared`) and by email. Both messages are
+  document templates any organization can reword (`notification.record_shared`,
+  `record.share.email`), told what the record is in words (`RecordTitle`), not per kind.
+- **API.** GraphQL `recordShares(kind, id)`, `recordShareCandidates(kind, id, query)` and
+  `shareRecord(input)`; each checks read on the kind's own resource. Agents share an invoice
+  through `invoice_share` and `invoice_list_share_candidates`, which call the same service.
+- **Taking a share back.** `unshareRecord(input)` marks the share revoked (`revoked_at`,
+  `revoked_by_id`); the row is never deleted, so who could read a case through a share, and
+  until when, stays on record. Every read of standing shares filters on `revoked_at IS NULL`:
+  the dialog's list, `SharedWith`, and the case's sight (`caseownerquery.InSight`), so the
+  recipient stops reading the case at once. Sharing with the same person again clears the mark.
+  The sharer may take their own share back; the case's owner, and anyone who may give cases to
+  people (`Standing.CanAssign`), may take back any. `RecordShare.removable` tells the dialog which
+  rows get **Remove**. It is audited on the record's resource like the share was.
+- **Client.** `ShareDialog` (`components/share/share-dialog.tsx`) takes the record
+  (`kind`, `id`, a title) and the `path` to open. Use it for any new share button. With no
+  record it offers the link alone, for a page that is no one record.
+
+- **A share brings the record's case into view.** Desk cases have one owner, and other
+  people's cases are hidden from a reader who does not see every case. A record shared with
+  someone is the exception: its case is in their sight to read and ask about, and its owner
+  still decides it. `caseowner.Sight.Viewer` carries the reader, `caseownerquery.InSight` lets
+  a row through when a share for them exists (one probe of `uq_record_shares_recipient`), and
+  `caseownerservice.Standing`/`Standings` set `CanSee` the same way, with `CanWork` unchanged.
+  This is the only thing a share adds, and it adds nothing to what a role permits: the
+  recipient must still be able to read that kind of record.
+
+A kind becomes shareable by being a record kind: nothing else is registered.
+

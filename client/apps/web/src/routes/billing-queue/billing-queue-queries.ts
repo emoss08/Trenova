@@ -48,7 +48,7 @@ export type BillingQueueListFilters = {
   billType: string | null;
   payer?: string | null;
   search: string;
-  includePosted: boolean;
+  includeClosed: boolean;
   minAmount?: string | null;
   maxAmount?: string | null;
   createdBefore?: number | null;
@@ -118,7 +118,7 @@ export function billingQueueLaneQuery(lane: BillingQueueLane, filters: BillingQu
     billType: filters.billType,
     payer: filters.payer ?? null,
     search: filters.search.trim(),
-    includePosted: filters.includePosted,
+    includeClosed: filters.includeClosed,
     minAmount: filters.minAmount ?? null,
     maxAmount: filters.maxAmount ?? null,
     createdBefore: filters.createdBefore ?? null,
@@ -138,7 +138,7 @@ export function billingQueueLaneQuery(lane: BillingQueueLane, filters: BillingQu
           fieldFilters: fieldFiltersOf(scope),
           filter: {
             lanes: [lane],
-            includePosted: scope.includePosted,
+            includeClosed: scope.includeClosed,
             minAmount: scope.minAmount ?? undefined,
             maxAmount: scope.maxAmount ?? undefined,
             createdBefore: scope.createdBefore ?? undefined,
@@ -183,7 +183,7 @@ export function billingQueueItemsByShipmentQuery(shipmentId: string) {
   return {
     queryKey: [BILLING_QUEUE_BY_SHIPMENT_KEY, shipmentId] as const,
     queryFn: async () => {
-      const params = new URLSearchParams({ limit: "20", includePosted: "true" });
+      const params = new URLSearchParams({ limit: "20", includeClosed: "true" });
       params.set(
         "fieldFilters",
         JSON.stringify([{ field: "shipmentId", operator: "eq", value: shipmentId }]),

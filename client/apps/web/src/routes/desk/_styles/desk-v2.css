@@ -81,15 +81,6 @@
     linear-gradient(-45deg, transparent 4px, var(--dsk-card) 0) 0 0/8px 8px repeat-x,
     linear-gradient(45deg, transparent 4px, var(--dsk-card) 0) 0 0/8px 8px repeat-x;
 }
-.dk-rl .dk-n {
-  color: var(--dsk-faint);
-}
-.dk-rl .dk-v {
-  color: var(--dsk-fg2);
-}
-.dk-rl.dk-link {
-  cursor: pointer;
-}
 .dk-ac:hover {
   transform: translateY(-2px) rotate(-0.4deg);
   box-shadow: var(--dsk-lift-hi);
@@ -3388,13 +3379,6 @@
   height: 100%;
   border-top: 1px solid var(--dsk-b-sub);
 }
-.dk-dc2-q {
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  border-right: 1px solid var(--dsk-b-sub);
-  background: color-mix(in srgb, var(--dsk-sunken) 40%, var(--dsk-canvas));
-}
 .dk-dc2-qh {
   display: flex;
   align-items: baseline;
@@ -3407,28 +3391,6 @@
   border-radius: 2px;
   background: var(--dsk-b-sub);
   overflow: hidden;
-}
-.dk-dc2-ql {
-  flex: 1;
-  min-height: 0;
-  overflow: auto;
-  padding: 0 8px 16px;
-  scrollbar-width: thin;
-}
-.dk-dc2-g {
-  margin-top: 10px;
-}
-.dk-dc2-gh {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 8px;
-  font-size: 11px;
-  color: var(--dsk-subtle);
-}
-.dk-dc2-gh code {
-  font: 10.5px var(--dk-plex);
-  color: var(--dsk-muted);
 }
 .dk-dc2-new {
   width: 6px;
@@ -3526,17 +3488,6 @@
   font-weight: 500;
   color: var(--dsk-subtle);
   background: var(--dsk-sunken);
-}
-.dk-dc2-rev {
-  font-size: 11px;
-  padding: 2px 8px;
-  border-radius: var(--radius-label);
-  color: var(--dsk-success-fg);
-  background: var(--dsk-success-sub);
-}
-.dk-dc2-rev.dk-hard {
-  color: oklch(0.55 0.2 25);
-  background: oklch(0.6 0.21 25/0.12);
 }
 .dk-dc2-dr {
   display: grid;
@@ -3768,11 +3719,6 @@
   .dk-limit .dk-limit-bar {
     display: none;
   }
-}
-/* phone: the rail slides over the page from a menu button in the top strip */
-.dk-rail-scrim {
-  background: color-mix(in srgb, #000 38%, transparent);
-  animation: dk-fadein 200ms ease both;
 }
 /* decisions: a write the card can't draw as one field, the plan's steps, paging the queue */
 .dk-dc2-full {
@@ -4332,45 +4278,6 @@ button.dk-dx-c:hover {
   font-size: 12px;
   font-weight: 500;
   animation: dk-pop 200ms var(--dk-spring) both;
-}
-/* ---- an artifact on its own page ---- */
-.dk-apage {
-  display: block;
-  height: 100%;
-  overflow: auto;
-  background: var(--dsk-canvas);
-}
-.dk-apage-in {
-  width: min(880px, 100%);
-  margin: 0 auto;
-  padding: 28px 24px 48px;
-}
-/* the extraction shows the document beside the reading, so its page is given the room for both */
-.dk-apage-in:has(> .dk-apage-body > .dk-ex) {
-  width: min(1280px, 100%);
-}
-/*
- * The window scrolls this page, so nothing between it and the document may be a scroll
- * container of its own: the page lets its overflow show and the body clips rather than hides,
- * and the document stays in view while the reading scrolls past it.
- */
-.dk-apage:has(.dk-ex) {
-  overflow: visible;
-}
-.dk-apage-body:has(> .dk-ex) {
-  overflow: clip;
-}
-.dk-apage-h {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 18px;
-}
-.dk-apage-body {
-  border-radius: 16px;
-  background: var(--dsk-card);
-  box-shadow: 0 0 0 1px var(--dsk-b-sub);
-  overflow: hidden;
 }
 /* A Desk record card (the billing queue item, the formula template) and the queue table's selection, as designed (billitem.css) */
 .dk-rec {

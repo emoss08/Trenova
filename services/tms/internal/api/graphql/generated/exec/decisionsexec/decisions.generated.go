@@ -158,6 +158,18 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalOAgentDefinition2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentdefinitionᚐDefinition),
 			},
+			{
+				Name:       "subjectLabel",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agent.AgentRun)
+					return gqlexec.Resolver[AgentRunResolver](ec, "AgentRun@decisions").SubjectLabel(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
 		}},
 		{Object: "Mutation", Fields: []*gqlexec.Field{
 			{
@@ -536,6 +548,7 @@ type AgentProposalResolver interface {
 type AgentRunResolver interface {
 	Definition(ctx context.Context, obj *agent.AgentRun) (*agentdefinition.Definition, error)
 	HandedBy(ctx context.Context, obj *agent.AgentRun) (*agentdefinition.Definition, error)
+	SubjectLabel(ctx context.Context, obj *agent.AgentRun) (string, error)
 }
 
 type MutationResolver interface {

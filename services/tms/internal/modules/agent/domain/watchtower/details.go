@@ -1,6 +1,7 @@
 package watchtower
 
 import (
+	"github.com/emoss08/trenova/shared/recordids"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
@@ -67,7 +68,7 @@ func NormalizeFacts(facts []Fact) []Fact {
 	out := make([]Fact, 0, min(len(facts), MaxFacts))
 	for _, fact := range facts {
 		label := stringutils.Ellipsize(strings.TrimSpace(fact.Label), maxFactLabel)
-		value := stringutils.Ellipsize(strings.TrimSpace(fact.Value), maxFactValue)
+		value := stringutils.Ellipsize(Plain(fact.Value), maxFactValue)
 		at := max(fact.At, 0)
 		if label == "" || (value == "" && at == 0) {
 			continue
@@ -83,7 +84,7 @@ func NormalizeFacts(facts []Fact) []Fact {
 func NormalizeImpact(impact []string) []string {
 	out := make([]string, 0, min(len(impact), MaxImpact))
 	for _, entry := range impact {
-		entry = stringutils.Ellipsize(strings.TrimSpace(entry), maxImpactLength)
+		entry = stringutils.Ellipsize(Plain(entry), maxImpactLength)
 		if entry == "" {
 			continue
 		}
@@ -102,7 +103,7 @@ func NormalizeTrail(trail []TrailEvent) []TrailEvent {
 	}
 	out := make([]TrailEvent, 0, len(trail)-start)
 	for _, event := range trail[start:] {
-		text := stringutils.Ellipsize(strings.TrimSpace(event.Text), maxTrailText)
+		text := stringutils.Ellipsize(Plain(event.Text), maxTrailText)
 		if text == "" {
 			continue
 		}
@@ -117,4 +118,14 @@ func NormalizeDueLabel(label string) string {
 
 func NormalizeRecordLabel(label string) string {
 	return stringutils.Ellipsize(strings.TrimSpace(label), maxRecordLabel)
+}
+
+// Plain is text as a person reads it on the Watchtower: with no internal
+// record id in it. Every item passes its title, summary, facts, impact and
+// trail through here as it is stored, so no source can put an id on the
+// feed whatever it was handed: a fact that held nothing but an id is left
+// with no value and is dropped, since the item's link already opens that
+// record.
+func Plain(text string) string {
+	return strings.TrimSpace(recordids.Strip(text))
 }

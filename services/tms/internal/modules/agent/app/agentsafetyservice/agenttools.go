@@ -200,6 +200,7 @@ func newAgentToolTable(resources []string) *memtable.Table[agentToolRow] {
 					agenttoolpolicy.HeldByTainted,
 					agenttoolpolicy.HeldByToolTier,
 					agenttoolpolicy.HeldByPersonalExemption,
+					agenttoolpolicy.HeldByConversation,
 					agenttoolpolicy.HeldByShadowMode,
 					agenttoolpolicy.HeldBySimulationMode,
 				},

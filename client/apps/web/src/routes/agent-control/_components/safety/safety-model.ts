@@ -118,6 +118,7 @@ export const HELD_BY_KEYS = [
   "tainted",
   "tool_tier",
   "personal_exemption",
+  "conversation",
   "shadow_mode",
   "simulation_mode",
   "money_unbounded",
@@ -160,6 +161,8 @@ export function heldByLabel(t: TranslateFn, key: string): string {
       return t("Tool tier on the agent");
     case "personal_exemption":
       return t("Own records, person present");
+    case "conversation":
+      return t("Asked for in a conversation");
     case "shadow_mode":
       return t("Shadow mode");
     case "simulation_mode":

@@ -2,6 +2,7 @@ package watchtowershipment
 
 import (
 	"context"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtoweritem"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -276,9 +277,11 @@ func DescribeMissedStop(
 ) watchtowerports.WatchtowerItemInput {
 	what := "pickup"
 	title := "Missed pickup"
+	role := watchtower.StopRolePickup
 	if kind == watchtower.SourceMissedDelivery {
 		what = "delivery"
 		title = "Missed delivery"
+		role = watchtower.StopRoleDelivery
 	}
 	late := max(now-stop.Cutoff, 0)
 	summary := "The " + what + " window at " + missedStopPlace(stop) +
@@ -298,6 +301,15 @@ func DescribeMissedStop(
 		Facts: []watchtower.Fact{
 			watchtoweritem.Fact("Stop", missedStopPlace(stop)),
 			watchtoweritem.FactAt("Window closed", stop.Cutoff),
+		},
+		Panel: &watchtower.Panel{
+			Kind: watchtower.PanelStop,
+			Stop: &watchtower.StopPanel{
+				Role:      role,
+				Verdict:   watchtower.StopMissed,
+				Place:     missedStopPlace(stop),
+				WindowEnd: stop.Cutoff,
+			},
 		},
 		OccurredAt: stop.Cutoff + grace,
 		OwnerID:    stop.OwnerID,
@@ -324,11 +336,21 @@ func DescribeMissingPOD(
 		Summary:     summary,
 		SubjectType: agent.SubjectShipment,
 		SubjectID:   row.ShipmentID,
+		EventKind:   agenttrigger.EventShipmentPODMissing,
+		RaisesEvent: true,
 		Path:        shipmentPath(row.ShipmentID),
 		Record:      watchtoweritem.ShipmentRecord(row.ProNumber),
 		Facts: []watchtower.Fact{
 			watchtoweritem.Fact("Customer", row.CustomerName),
 			watchtoweritem.FactAt("Delivered", row.DeliveredAt),
+		},
+		Panel: &watchtower.Panel{
+			Kind: watchtower.PanelPaper,
+			Paper: &watchtower.PaperPanel{
+				Customer:    row.CustomerName,
+				DeliveredAt: row.DeliveredAt,
+				Papers:      []watchtower.Paper{{Name: "Proof of delivery"}},
+			},
 		},
 		OccurredAt: row.DeliveredAt + grace,
 		OwnerID:    row.OwnerID,
@@ -353,6 +375,10 @@ func DescribeExhaustedTender(
 		Record:      watchtoweritem.ShipmentRecord(row.ProNumber),
 		Facts: []watchtower.Fact{
 			watchtoweritem.FactAt("Exhausted", row.ExhaustedAt),
+		},
+		Panel: &watchtower.Panel{
+			Kind:     watchtower.PanelCoverage,
+			Coverage: &watchtower.CoveragePanel{Exhausted: true, EndedAt: row.ExhaustedAt},
 		},
 		OccurredAt: row.ExhaustedAt,
 		OwnerID:    row.OwnerID,

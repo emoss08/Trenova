@@ -26,6 +26,11 @@ type WatchtowerItemInput struct {
 	SubjectType agent.SubjectType
 	SubjectID   pulid.ID
 	EventKind   agenttrigger.EventKind
+	// RaisesEvent has the projector publish EventKind to the agents that
+	// subscribe to it when the item is first raised, and again when it
+	// reopens. It is for a source with no moment of its own to publish from:
+	// a sweep that finds a condition rather than a service that causes it.
+	RaisesEvent bool
 	Path        string
 	OccurredAt  int64
 	OwnerID     pulid.ID
@@ -35,6 +40,10 @@ type WatchtowerItemInput struct {
 	Facts       []watchtower.Fact
 	Impact      []string
 	Trail       []watchtower.TrailEvent
+	// Panel is what is happening, in the shape made for it: a stop and its
+	// window, a clock, a paper that is missing. Left nil, the item is read
+	// from its facts.
+	Panel *watchtower.Panel
 }
 
 // WatchtowerProjector is what a source calls as its records open and close.
@@ -88,6 +97,7 @@ type ListWatchtowerItemsRequest struct {
 	SubjectID      pulid.ID
 	AboutIDs       []pulid.ID
 	OrderByDue     bool
+	AgentWorking   bool
 }
 
 type WatchtowerPage struct {
@@ -320,4 +330,50 @@ type ExceptionSweeper interface {
 		tenant pagination.TenantInfo,
 		now int64,
 	) (*ExceptionSweepResult, error)
+}
+
+// SettleRecordRequest closes what is open about one record because the work
+// that answers it has been done.
+type SettleRecordRequest struct {
+	TenantInfo pagination.TenantInfo
+	// RecordID is the record the conditions are about.
+	RecordID pulid.ID
+	// Note says what settled them, in the trail of each item it closes.
+	Note string
+}
+
+// RecordSettler closes the conditions open about a record when a plan about
+// it has run to its end. Decisions waiting on a person are left alone: they
+// are other work, not the condition the plan answered. A source that still
+// finds the problem raises it again.
+type RecordSettler interface {
+	SettleRecord(
+		ctx context.Context,
+		req *SettleRecordRequest,
+		actor *permissionports.RequestActor,
+	) int
+}
+
+// SettleRunRequest closes what was handed to an agent's run that looked and
+// found nothing to change.
+type SettleRunRequest struct {
+	TenantInfo pagination.TenantInfo
+	// RunID is the run the items were handed to.
+	RunID pulid.ID
+	// Note is what the agent found, kept in the trail of each item it closes.
+	Note string
+}
+
+// RunSettler closes the items an agent's run was working once the run ends
+// having proposed nothing: the agent looked, there was nothing to change, and
+// leaving the item in progress would say work is under way that is not. The
+// item is closed as a person's Done closes it, so it stays closed while the
+// source keeps reporting the same problem and comes back when the problem
+// clears and returns.
+type RunSettler interface {
+	SettleRun(
+		ctx context.Context,
+		req *SettleRunRequest,
+		actor *permissionports.RequestActor,
+	) int
 }

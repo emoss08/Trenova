@@ -1,4 +1,4 @@
-import { INVOICE_DETAIL_TABS, type InvoiceDetailTab } from "@trenova/shared/types/invoice-share";
+import { INVOICE_DETAIL_TABS, type InvoiceDetailTab } from "@trenova/shared/types/invoice-detail-tab";
 import { parseAsBoolean, parseAsString, parseAsStringLiteral } from "nuqs";
 
 export function isInvoiceDetailTab(value: unknown): value is InvoiceDetailTab {

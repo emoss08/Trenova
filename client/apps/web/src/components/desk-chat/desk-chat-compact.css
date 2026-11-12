@@ -53,7 +53,7 @@
   font-size: 14px;
   line-height: 1.65;
 }
-.dk-dense .dk-cmp textarea {
+.dk-dense .dk-cmp .dk-ed {
   font-size: 13.5px;
   padding: 12px 14px 2px;
   min-height: 42px;

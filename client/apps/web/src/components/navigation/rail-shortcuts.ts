@@ -8,7 +8,6 @@ import type { ModuleId } from "@/config/navigation.types";
 export const MODULE_GO_KEYS: Partial<Record<ModuleId, string>> = {
   home: "H",
   desk: "D",
-  inbox: "T",
   intake: "I",
   shipment: "S",
   dispatch: "P",

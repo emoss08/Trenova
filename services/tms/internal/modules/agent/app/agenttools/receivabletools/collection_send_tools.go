@@ -29,8 +29,10 @@ const (
 	maxCustomerEmailNoteChars = 2000
 )
 
+// reminderView is what a reminder is made of, as a person approving it reads
+// it. The currency is in the record's label and in each amount, so it has no
+// row of its own.
 type reminderView struct {
-	Currency          string   `json:"currency"`
 	Invoices          []string `json:"invoices"`
 	TotalOverdue      string   `json:"totalOverdue"`
 	OldestDaysPastDue int      `json:"oldestDaysPastDue"`
@@ -180,7 +182,6 @@ func renderReminders(
 				preview.CurrencyCode,
 			),
 		}, &reminderView{
-			Currency:          preview.CurrencyCode,
 			Invoices:          preview.InvoiceNumbers,
 			TotalOverdue:      preview.TotalOverdue,
 			OldestDaysPastDue: preview.OldestDaysPastDue,

@@ -1,6 +1,8 @@
 import { fetchWatchtowerItem, type WatchtowerItem } from "@/lib/graphql/watchtower";
+import { aiControl } from "@/lib/queries/ai-control";
 import { attention } from "@/lib/queries/attention";
 import { deskAttention } from "@/lib/queries/desk-attention";
+import { deskCase } from "@/lib/queries/desk-case";
 import { watchtower } from "@/lib/queries/watchtower";
 import {
   cachedQueueItem,
@@ -30,10 +32,22 @@ const COALESCE_MS = 250;
 const BURST_LIMIT = 8;
 
 const QUEUE_ROOT: QueryKeyRoot = watchtower.queue.queryKey;
+/**
+ * What says which runs are working: how many, and the rows they are on. Only
+ * these two, never every Desk list: every reader in a tenant hears every run's
+ * notice, most runs are on no item at all, and a wider refresh would have each
+ * of them read Needs you again for someone else's conversation.
+ */
+const RUN_ROOTS: readonly QueryKeyRoot[] = [
+  watchtower.counts().queryKey,
+  deskAttention.working.queryKey,
+  aiControl.workingRuns().queryKey,
+];
 const SUMMARY_ROOTS: readonly QueryKeyRoot[] = [
   watchtower.counts().queryKey,
   attention._def,
   deskAttention._def,
+  deskCase._def,
 ];
 
 export function isWatchtowerEvent(event: ResourceInvalidationEvent): boolean {
@@ -92,7 +106,9 @@ function queueOnScreen(queryClient: QueryClient): boolean {
  * notice costs is multiplied by everyone online.
  *
  * Agent progress arrives as the run's own notice; the rows that run is working
- * are read again, so the step bar moves as the run does. A bulk notice names
+ * are read again, so the step bar moves as the run does, and so are the count
+ * of working runs and the Desk's rows, so "Nova is working on" lists a run
+ * from the moment it starts until the moment it stops. A bulk notice names
  * no item, so it refreshes the queue on screen.
  */
 export function createWatchtowerPatcher({
@@ -186,6 +202,9 @@ export function createWatchtowerPatcher({
       for (const item of cachedQueueItemsForRun(queryClient, runId)) {
         schedule(item.id);
       }
+      // A run that started, moved a step or ended changes what Nova is working
+      // on wherever that is drawn, the queue on screen or not.
+      invalidate(RUN_ROOTS, true);
     },
     dispose: () => {
       disposed = true;

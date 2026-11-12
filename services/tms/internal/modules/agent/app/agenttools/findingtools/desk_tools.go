@@ -563,6 +563,10 @@ type workerHolder interface {
 		ctx context.Context,
 		req workerservice.DispatchHoldRequest,
 	) (*worker.Worker, error)
+	CheckDispatchHold(
+		ctx context.Context,
+		req workerservice.DispatchHoldRequest,
+	) (*worker.Worker, error)
 	Get(ctx context.Context, req workerports.GetWorkerByIDRequest) (*worker.Worker, error)
 }
 

@@ -144,7 +144,10 @@ export function useDeskChapters({
       ) : null;
     },
     liveTurnId: shown && liveTurnId !== null && byTurn.has(liveTurnId) ? liveTurnId : null,
-    rail: (nav) => <DeskChapterRail entries={entries} nav={nav} />,
+    // Nothing while there are too few chapters to move between, so the
+    // conversation draws no empty slot for a rail that is not there.
+    rail: (nav) =>
+      entries.length < MIN_SHOWN_CHAPTERS ? null : <DeskChapterRail entries={entries} nav={nav} />,
     startAt: (message: AssistantMessage) =>
       opensChapter(message) || open.isPending ? undefined : () => open.mutate(message.id),
     linkedTurnId,

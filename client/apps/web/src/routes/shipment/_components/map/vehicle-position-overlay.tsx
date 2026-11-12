@@ -5,7 +5,7 @@ import { formatTimeAgo } from "@/lib/time-utils";
 import { Separator } from "@trenova/shared/components/ui/separator";
 import { cn } from "@trenova/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
-import { AdvancedMarker } from "@vis.gl/react-google-maps";
+import { AdvancedMarker } from "@/components/map/advanced-marker";
 import {
   MarkerPin01Icon,
   Truck01Icon,

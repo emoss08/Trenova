@@ -899,6 +899,7 @@ Two axes, neither of them a colour.
 <Badge variant="success" appearance="solid">Paid</Badge> // tone, solid fill
 <Badge variant="neutral" appearance="outline">Draft</Badge>
 <Badge variant="accent-teal">Yard move</Badge>           // categorical
+<Badge variant="warning" dot>Awaiting your approval</Badge> // a state: led by a dot
 ```
 
 `variant` is a tone or a categorical accent; `appearance` is `subtle` (default),
@@ -911,6 +912,43 @@ every caller answered differently. That is what the split above prevents.
 A badge is a label with a 4px corner (`rounded-badge`), tighter than a control's,
 so it reads as a mark on the row rather than as something to press. It is never a
 pill.
+
+A badge that says a **state** (a status, a standing, a warning such as "Permanent") takes
+`dot`, which leads the label with a dot in the badge's own ink. Leave it off when the badge
+already leads with an icon, a spinner or Nova's mark, and for a plain label or a count. Never
+hand-draw the dot, and never build a badge from a `span` and a stylesheet class: the Desk's
+own badge classes (`dk-w-bdg`, `dk-dc2-rev`) were removed for `Badge`.
+
+## Button
+
+Every variant names its own ink. `outline` and `ghost` are `text-foreground`; they used to
+take the colour of whatever they sat in, so an action under a warning was amber and then
+changed colour on hover. For another ink pass it in `className` (it wins over the variant's),
+use `quiet` for a muted control, `link` for an action or a place set in a line of text, and
+`ghostInvert` on a dark dock. Never rely on a parent's text colour reaching a button.
+
+## The Desk's styles
+
+The Desk was ported from a prototype as plain stylesheets (`dk-*` classes). It is moving to
+Tailwind an area at a time, when that area is touched: the rail is done (`rail/rail-classes.ts`,
+`desk-rail.tsx`, `rail-row.tsx`; there is no `rail.css`). Write new Desk UI in Tailwind and
+keep plain CSS only for what Tailwind cannot say: view-transition pseudo-elements
+(`_styles/desk-motion.css`), keyframes, and rules that reach into markup the component does
+not own. The Desk's colours are utilities (`text-dsk-fg2`, `bg-dsk-hover`, `border-dsk-b-sub`),
+and its two half-pixel sizes are theme tokens, `text-dsk-sm` (11.5px) and `text-dsk-base`
+(12.5px), so no arbitrary font size is needed. A converted element must draw exactly as its
+CSS did.
+
+**No empty elements.** A Desk component draws nothing when it has nothing to show: no
+wrapper around an empty list, no slot for a part that is not there, no column beside the
+page with nothing in it. Decide at the parent (`{rail && <div className="…">{rail}</div>}`,
+`data.exhibits.length > 0 && <CaseExhibits … />`) and let the layout close up, as the case
+page gives the reading the whole width when there is no evidence. `CaseFooter` follows it
+too: with no note and no actions it renders nothing.
+
+**A sentence and its actions.** Where a foot holds a sentence and buttons, the buttons are
+one group (`CaseFooter`): beside the sentence when both fit on a line, under it together
+when they do not. Never let a row of buttons split around the sentence.
 
 ## Status metadata
 

@@ -7,10 +7,13 @@ import {
 } from "@/components/assistant/composer-commands";
 import type { Suggestion } from "@/components/assistant/suggestions";
 import { Button } from "@trenova/shared/components/ui/button";
-import { useT } from "@trenova/shared/i18n/use-t";
+import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import { Fragment, useState, type KeyboardEvent, type RefObject } from "react";
+import { Fragment, useState, type RefObject } from "react";
 import { DeskIcon, type DeskIconName } from "../desk-icons";
+import { listMove } from "./desk-mentions";
+import type { DeskEditorCommand, DeskEditorHandle } from "./editor/desk-editor";
+import { useMenuSide } from "./use-menu-side";
 
 const COMMAND_ICONS: Record<string, DeskIconName> = {
   schedule: "receipt",
@@ -29,13 +32,8 @@ const NO_COMMANDS: readonly SlashCommand[] = [];
 /** A slash typed while the box was otherwise empty: what it offers and what has been filled. */
 export type DeskSlash = ReturnType<typeof useDeskSlash>;
 
-function placeCaretAtEnd(textarea: HTMLTextAreaElement | null) {
-  requestAnimationFrame(() => {
-    if (textarea) {
-      textarea.focus();
-      textarea.setSelectionRange(textarea.value.length, textarea.value.length);
-    }
-  });
+function placeCaretAtEnd(editor: DeskEditorHandle | null) {
+  requestAnimationFrame(() => editor?.setCaret(editor.text().length));
 }
 
 /**
@@ -48,7 +46,7 @@ function placeCaretAtEnd(textarea: HTMLTextAreaElement | null) {
 export function useDeskSlash({
   value,
   onChange,
-  textareaRef,
+  editorRef,
   onSendText,
   suggestions,
   enabled,
@@ -56,7 +54,7 @@ export function useDeskSlash({
 }: {
   value: string;
   onChange: (value: string) => void;
-  textareaRef: RefObject<HTMLTextAreaElement | null>;
+  editorRef: RefObject<DeskEditorHandle | null>;
   onSendText: (text: string) => void;
   suggestions: readonly Suggestion[];
   enabled: boolean;
@@ -93,22 +91,22 @@ export function useDeskSlash({
       return;
     }
     onChange(`/${entry.command.name} `);
-    placeCaretAtEnd(textareaRef.current);
+    placeCaretAtEnd(editorRef.current);
   };
 
   /** True when the key was the menu's to handle. */
-  const onKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>): boolean => {
-    if (!active) {
+  const onKeyDown = (event: KeyboardEvent): boolean => {
+    if (!active || event.isComposing) {
       return false;
     }
     if (parsed && started) {
-      const textarea = textareaRef.current;
-      const caret = textarea ? textarea.selectionStart : value.length;
+      const editor = editorRef.current;
+      const caret = editor ? editor.caret() : value.length;
       const commandEnd = parsed.command.name.length + 2;
       if (
         event.key === "Backspace" &&
-        textarea &&
-        textarea.selectionStart === textarea.selectionEnd &&
+        editor &&
+        editor.collapsed() &&
         caret <= commandEnd &&
         value.slice(commandEnd).trim() === ""
       ) {
@@ -131,14 +129,10 @@ export function useDeskSlash({
       }
       return false;
     }
-    if (event.key === "ArrowDown") {
+    const move = listMove(event.key, highlighted, entries.length - 1);
+    if (move !== null) {
       event.preventDefault();
-      setHighlighted((index) => Math.min(entries.length - 1, index + 1));
-      return true;
-    }
-    if (event.key === "ArrowUp") {
-      event.preventDefault();
-      setHighlighted((index) => Math.max(0, index - 1));
+      setHighlighted(move);
       return true;
     }
     if ((event.key === "Enter" && !event.shiftKey) || event.key === "Tab") {
@@ -180,6 +174,7 @@ function CommandGlyph({ name }: { name: string }) {
 /** The list over the box while a slash is open, or the filling guide once a command is chosen. */
 export function DeskSlashMenu({ slash, agentName }: { slash: DeskSlash; agentName: string }) {
   const t = useT();
+  const { attach, below } = useMenuSide();
   if (!slash.active) {
     return null;
   }
@@ -188,7 +183,11 @@ export function DeskSlashMenu({ slash, agentName }: { slash: DeskSlash; agentNam
     const { command } = parsed;
     const filled = parsed.args.filter(Boolean).length;
     return (
-      <div className="dk-sl dk-sl-fill" onMouseDown={(event) => event.preventDefault()}>
+      <div
+        ref={attach}
+        className={cn("dk-sl dk-sl-fill", below && "dk-menu-below")}
+        onMouseDown={(event) => event.preventDefault()}
+      >
         <div className="dk-sl-fh">
           <CommandGlyph name={command.name} />
           <b>{"/" + command.name}</b>
@@ -229,7 +228,12 @@ export function DeskSlashMenu({ slash, agentName }: { slash: DeskSlash; agentNam
   }
   const firstQuestion = slash.entries.findIndex((entry) => entry.kind === "question");
   return (
-    <div className="dk-sl" role="listbox" onMouseDown={(event) => event.preventDefault()}>
+    <div
+      ref={attach}
+      className={cn("dk-sl", below && "dk-menu-below")}
+      role="listbox"
+      onMouseDown={(event) => event.preventDefault()}
+    >
       <div className="dk-sl-l">
         {slash.entries.some((entry) => entry.kind === "command") && (
           <div className="dk-mn-h">{t("Commands")}</div>
@@ -291,24 +295,19 @@ export function DeskSlashMenu({ slash, agentName }: { slash: DeskSlash; agentNam
 }
 
 /**
- * The command as typed, drawn over the textarea: the command name set apart,
- * then what has been typed, then the empty slots as a ghost hint.
+ * What the box draws over a command being filled in: how much of the draft
+ * is the command's name, and its empty slots as a hint after the caret.
  */
-export function DeskSlashMirror({ slash }: { slash: DeskSlash }) {
-  const t = useT();
+export function slashCommandMarks(slash: DeskSlash, t: TranslateFn): DeskEditorCommand | null {
   const { parsed } = slash;
   if (!slash.active || !parsed || !slash.started) {
     return null;
   }
-  const hint = parsed.command.slots
-    .filter((_, index) => !parsed.args[index])
-    .map((slot) => t(slot.hint))
-    .join("  ");
-  return (
-    <div className="dk-sl-mirror" aria-hidden>
-      <span className="dk-sl-cmd">{"/" + parsed.command.name}</span>
-      <span className="dk-sl-typed">{" " + slash.query.slice(parsed.command.name.length + 1)}</span>
-      {hint && <span className="dk-sl-ghost">{(slash.query.endsWith(" ") ? "" : " ") + hint}</span>}
-    </div>
-  );
+  return {
+    length: parsed.command.name.length + 1,
+    hint: parsed.command.slots
+      .filter((_, index) => !parsed.args[index])
+      .map((slot) => t(slot.hint))
+      .join("  "),
+  };
 }

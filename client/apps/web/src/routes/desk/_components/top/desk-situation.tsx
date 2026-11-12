@@ -1,10 +1,12 @@
 import type { BriefingSection } from "@/lib/graphql/briefing";
 import { briefing as briefingQueries } from "@/lib/queries/briefing";
+import { usePermission } from "@/hooks/use-permission";
+import { aiControl } from "@/lib/queries/ai-control";
 import { watchtower } from "@/lib/queries/watchtower";
 import { useQuery } from "@tanstack/react-query";
-import { NovaBadge } from "@trenova/shared/components/ui/nova-badge";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
+import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useNavigate } from "react-router";
 
 /** How many of the morning's figures the line carries before the live ones. */
@@ -38,7 +40,11 @@ export function DeskSituation({ canWatch, needsYou }: { canWatch: boolean; needs
   const briefingQuery = useQuery({ ...briefingQueries.today(), retry: false });
   const countsQuery = useQuery({ ...watchtower.counts(), enabled: canWatch });
   const cells = briefingCells(briefingQuery.data?.sections ?? []);
-  const withAgents = countsQuery.data?.withAgents ?? 0;
+  // How many runs are working, the number AI control shows: the runs
+  // themselves for whoever may read them, else the items a run is working.
+  const { allowed: canSeeRuns } = usePermission(Resource.AgentRun, Operation.Read);
+  const runsQuery = useQuery({ ...aiControl.workingRuns(), enabled: canWatch && canSeeRuns });
+  const working = canSeeRuns ? (runsQuery.data?.length ?? 0) : (countsQuery.data?.withAgents ?? 0);
 
   if (cells.length === 0 && !canWatch) {
     return null;
@@ -73,9 +79,16 @@ export function DeskSituation({ canWatch, needsYou }: { canWatch: boolean; needs
             className="dk-tb-md ui-focus-ring"
             onClick={() => void navigate("/desk#dk-dy-working")}
           >
-            <NovaBadge size="xs" spin={withAgents > 0 ? "always" : "none"} />
-            <span className="dk-tb-sit-l">{t("Working")}</span>
-            <span className="dk-tb-sit-v">{withAgents}</span>
+            {/* Agents are the organization's own; Nova's mark is kept for Nova. */}
+            <span
+              aria-hidden
+              className={cn(
+                "size-1.5 flex-none rounded-full",
+                working > 0 ? "animate-pulse bg-dsk-agent" : "bg-dsk-b-strong",
+              )}
+            />
+            <span className="dk-tb-sit-l">{t("Agents working")}</span>
+            <span className="dk-tb-sit-v">{working}</span>
           </button>
         </>
       )}

@@ -259,7 +259,11 @@ input MyAgentsInput {
   origin: MyAgentOrigin = All
   "Agents already shown, so a page never repeats them. At most 100."
   excludeIds: [ID!]
-  "Only these agents. At most 100."
+  """
+  Only these agents, at most 100. An agent named here is listed when the caller
+  may use it even if it runs on its own: a case names the agent working it, and
+  the person asks that agent.
+  """
   ids: [ID!]
 }
 
@@ -442,7 +446,7 @@ extend type Query {
   replaces the agent the way any edit does. Saves nothing.
   """
   agentDefinitionVersionDraft(agentId: ID!, version: Int!): AgentDefinition!
-  "The chat agents the caller may use, enabled and by name."
+  "The agents the caller may ask, enabled and by name: the chat agents, or the ones named by id."
   myAgents(input: MyAgentsInput!): MyAgentConnection!
   """
   How well the chat agents the caller may use fit a question: another agent

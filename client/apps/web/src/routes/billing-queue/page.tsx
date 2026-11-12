@@ -34,8 +34,8 @@ import {
   queueSidebarSearchParamsParser,
   queueViewSearchParamsParser,
   statementSelectionSearchParamsParser,
-  transferRunSearchParamsParser,
 } from "./use-billing-queue-state";
+import { useTransferDialog } from "./use-transfer-dialog";
 import { BillingQueueViewSwitch } from "./_components/billing-queue-view-switch";
 import { BulkBillingTransferAction } from "./_components/bulk-transfer/bulk-billing-transfer-action";
 import { BillingQueueRedetectSignaturesAction } from "./_components/billing-queue-redetect-signatures-action";
@@ -70,7 +70,7 @@ export const prefetch: RoutePrefetch = ({ request }) => {
     billType,
     billers,
     payer,
-    includePosted,
+    includeClosed,
     lanes,
     minAmount,
     maxAmount,
@@ -95,7 +95,7 @@ export const prefetch: RoutePrefetch = ({ request }) => {
     billType,
     payer,
     search: query,
-    includePosted,
+    includeClosed,
     minAmount,
     maxAmount,
     createdBefore,
@@ -145,23 +145,10 @@ export function BillingQueuePage() {
     statementSelectionSearchParamsParser,
   );
   const [sidebarParams, setSidebarParams] = useQueryStates(queueSidebarSearchParamsParser);
-  const [transferParams, setTransferParams] = useQueryStates(transferRunSearchParamsParser);
+  const transfer = useTransferDialog();
   const { view } = viewParams;
   const { item: selectedItemId } = selectionParams;
   const { customer: selectedCustomerId } = statementParams;
-  const { transferRun } = transferParams;
-
-  // A run id in the URL means somebody followed the completion toast back to a
-  // report, so the dialog opens on it rather than waiting to be asked.
-  const [transferDialogOpen, setTransferDialogOpen] = useState(() => Boolean(transferRun));
-
-  const handleTransferRunChange = useCallback(
-    (runId: string | null) => {
-      void setTransferParams({ transferRun: runId });
-      if (runId) setTransferDialogOpen(true);
-    },
-    [setTransferParams],
-  );
 
   const nowSeconds = useNowSeconds();
   const { data: queueStats } = useQuery({
@@ -178,10 +165,10 @@ export function BillingQueuePage() {
     <div className="flex items-center gap-2">
       <BillingQueueRedetectSignaturesAction />
       <BulkBillingTransferAction
-        open={transferDialogOpen}
-        onOpenChange={setTransferDialogOpen}
-        runId={transferRun}
-        onRunIdChange={handleTransferRunChange}
+        open={transfer.open}
+        onOpenChange={transfer.onOpenChange}
+        runId={transfer.runId}
+        onRunIdChange={transfer.onRunIdChange}
       />
       <BillingQueueViewSwitch
         view={view}

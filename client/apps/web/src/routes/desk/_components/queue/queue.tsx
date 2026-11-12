@@ -1,6 +1,7 @@
 import { CheckIcon } from "@trenova/shared/components/icons";
 import { cn } from "@trenova/shared/lib/utils";
 import type { ReactNode } from "react";
+import { DeskListPane } from "../list/desk-list";
 import type { QueueLeave } from "./use-queue-cursor";
 
 /**
@@ -22,10 +23,11 @@ export function QueueLayout({
 }) {
   return (
     <div className={cn("dk-dc2", className)}>
-      <aside className="dk-dc2-q" aria-label={label}>
+      <DeskListPane className="dk-dc2-q" role="complementary" aria-label={label}>
         {aside}
-      </aside>
-      <main className="dk-dc2-main">{children}</main>
+      </DeskListPane>
+      {/* The Desk's layout is the page's one main landmark; this is a part of it. */}
+      <div className="dk-dc2-main">{children}</div>
     </div>
   );
 }

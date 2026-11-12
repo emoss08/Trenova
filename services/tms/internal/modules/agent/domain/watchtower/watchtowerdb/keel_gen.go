@@ -1078,6 +1078,7 @@ var itemsTable = schema.Table{
 		{Name: "facts", Quoted: `"facts"`, Field: "Facts", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Facts`, JSON: `facts`},
 		{Name: "impact", Quoted: `"impact"`, Field: "Impact", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Impact`, JSON: `impact`},
 		{Name: "trail", Quoted: `"trail"`, Field: "Trail", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Trail`, JSON: `trail`},
+		{Name: "panel", Quoted: `"panel"`, Field: "Panel", Kind: schema.KindJSON, Flags: schema.FlagNullable | schema.FlagJSONB, Label: `Panel`, JSON: `panel`},
 		{Name: "agent_definition_id", Quoted: `"agent_definition_id"`, Field: "AgentDefinitionID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Agent Definition ID`, JSON: `agentDefinitionId`},
 		{Name: "agent_run_id", Quoted: `"agent_run_id"`, Field: "AgentRunID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Agent Run ID`, JSON: `agentRunId`},
 		{Name: "agent_handed_at", Quoted: `"agent_handed_at"`, Field: "AgentHandedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Agent Handed At`, JSON: `agentHandedAt`},
@@ -1090,14 +1091,14 @@ var itemsTable = schema.Table{
 	},
 	PK:           []int32{0, 1, 2},
 	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 40},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 41},
 	Returning:    nil,
-	Version:      38,
+	Version:      39,
 	AutoID:       0,
-	AutoCreate:   39,
-	AutoUpdate:   40,
+	AutoCreate:   40,
+	AutoUpdate:   41,
 	IDPrefix:     "wt_",
 	New:          newItem,
 	NewN:         newNItem,
@@ -1146,6 +1147,7 @@ type ItemsTable struct {
 	Facts             keel.JSONBCol
 	Impact            keel.JSONBCol
 	Trail             keel.JSONBCol
+	Panel             keel.JSONBCol
 	AgentDefinitionID keelkinds.PulidIDCol
 	AgentRunID        keelkinds.PulidIDCol
 	AgentHandedAt     keel.Int64Col
@@ -1194,15 +1196,16 @@ var Items = &ItemsTable{
 	Facts:             keel.JSONBCol{Col: keel.Col{Ref: &itemsRef, Index: 31}},
 	Impact:            keel.JSONBCol{Col: keel.Col{Ref: &itemsRef, Index: 32}},
 	Trail:             keel.JSONBCol{Col: keel.Col{Ref: &itemsRef, Index: 33}},
-	AgentDefinitionID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &itemsRef, Index: 34}}},
-	AgentRunID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &itemsRef, Index: 35}}},
-	AgentHandedAt:     keel.Int64Col{Col: keel.Col{Ref: &itemsRef, Index: 36}},
-	AgentHandedByID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &itemsRef, Index: 37}}},
-	Version:           keel.Int64Col{Col: keel.Col{Ref: &itemsRef, Index: 38}},
-	CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: &itemsRef, Index: 39}},
-	UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: &itemsRef, Index: 40}},
-	Inserted:          keel.BoolCol{Col: keel.Col{Ref: &itemsRef, Index: 41}},
-	Reopened:          keel.BoolCol{Col: keel.Col{Ref: &itemsRef, Index: 42}},
+	Panel:             keel.JSONBCol{Col: keel.Col{Ref: &itemsRef, Index: 34}},
+	AgentDefinitionID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &itemsRef, Index: 35}}},
+	AgentRunID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &itemsRef, Index: 36}}},
+	AgentHandedAt:     keel.Int64Col{Col: keel.Col{Ref: &itemsRef, Index: 37}},
+	AgentHandedByID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &itemsRef, Index: 38}}},
+	Version:           keel.Int64Col{Col: keel.Col{Ref: &itemsRef, Index: 39}},
+	CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: &itemsRef, Index: 40}},
+	UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: &itemsRef, Index: 41}},
+	Inserted:          keel.BoolCol{Col: keel.Col{Ref: &itemsRef, Index: 42}},
+	Reopened:          keel.BoolCol{Col: keel.Col{Ref: &itemsRef, Index: 43}},
 }
 
 // BuildItems builds the table of watchtower_items for ref. Generated relation and alias methods call it.
@@ -1243,15 +1246,16 @@ func BuildItems(r *keel.Ref) *ItemsTable {
 		Facts:             keel.JSONBCol{Col: keel.Col{Ref: r, Index: 31}},
 		Impact:            keel.JSONBCol{Col: keel.Col{Ref: r, Index: 32}},
 		Trail:             keel.JSONBCol{Col: keel.Col{Ref: r, Index: 33}},
-		AgentDefinitionID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 34}}},
-		AgentRunID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 35}}},
-		AgentHandedAt:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 36}},
-		AgentHandedByID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 37}}},
-		Version:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 38}},
-		CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 39}},
-		UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 40}},
-		Inserted:          keel.BoolCol{Col: keel.Col{Ref: r, Index: 41}},
-		Reopened:          keel.BoolCol{Col: keel.Col{Ref: r, Index: 42}},
+		Panel:             keel.JSONBCol{Col: keel.Col{Ref: r, Index: 34}},
+		AgentDefinitionID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 35}}},
+		AgentRunID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 36}}},
+		AgentHandedAt:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 37}},
+		AgentHandedByID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 38}}},
+		Version:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 39}},
+		CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 40}},
+		UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 41}},
+		Inserted:          keel.BoolCol{Col: keel.Col{Ref: r, Index: 42}},
+		Reopened:          keel.BoolCol{Col: keel.Col{Ref: r, Index: 43}},
 	}
 }
 
@@ -1709,22 +1713,24 @@ func ptrItem(p unsafe.Pointer, c int32) any {
 	case 33:
 		return &r.Trail
 	case 34:
-		return (*string)(unsafe.Pointer(&r.AgentDefinitionID))
+		return &r.Panel
 	case 35:
-		return (*string)(unsafe.Pointer(&r.AgentRunID))
+		return (*string)(unsafe.Pointer(&r.AgentDefinitionID))
 	case 36:
-		return &r.AgentHandedAt
+		return (*string)(unsafe.Pointer(&r.AgentRunID))
 	case 37:
-		return (*string)(unsafe.Pointer(&r.AgentHandedByID))
+		return &r.AgentHandedAt
 	case 38:
-		return &r.Version
+		return (*string)(unsafe.Pointer(&r.AgentHandedByID))
 	case 39:
-		return &r.CreatedAt
+		return &r.Version
 	case 40:
-		return &r.UpdatedAt
+		return &r.CreatedAt
 	case 41:
-		return &r.Inserted
+		return &r.UpdatedAt
 	case 42:
+		return &r.Inserted
+	case 43:
 		return &r.Reopened
 	}
 	return nil
@@ -1874,34 +1880,39 @@ func valueItem(p unsafe.Pointer, c int32) any {
 		}
 		return r.Trail
 	case 34:
+		if r.Panel == nil {
+			return nil
+		}
+		return *r.Panel
+	case 35:
 		if r.AgentDefinitionID == "" {
 			return nil
 		}
 		return string(r.AgentDefinitionID)
-	case 35:
+	case 36:
 		if r.AgentRunID == "" {
 			return nil
 		}
 		return string(r.AgentRunID)
-	case 36:
+	case 37:
 		if r.AgentHandedAt == nil {
 			return nil
 		}
 		return *r.AgentHandedAt
-	case 37:
+	case 38:
 		if r.AgentHandedByID == "" {
 			return nil
 		}
 		return string(r.AgentHandedByID)
-	case 38:
-		return r.Version
 	case 39:
-		return r.CreatedAt
+		return r.Version
 	case 40:
-		return r.UpdatedAt
+		return r.CreatedAt
 	case 41:
-		return r.Inserted
+		return r.UpdatedAt
 	case 42:
+		return r.Inserted
+	case 43:
 		return r.Reopened
 	}
 	return nil
@@ -2450,6 +2461,7 @@ var enumAgenttriggerEventKind = [...]schema.EnumValue{
 	{Value: `factoring.submission_funded`, Label: `Event Factoring Submission Funded`},
 	{Value: `factoring.chargeback_due`, Label: `Event Factoring Chargeback Due`},
 	{Value: `factoring.remittance_staged`, Label: `Event Factoring Remittance Staged`},
+	{Value: `shipment.pod_missing`, Label: `Event Shipment POD Missing`},
 }
 
 var enumDueSource = [...]schema.EnumValue{
@@ -2572,7 +2584,6 @@ var enumSourceKind = [...]schema.EnumValue{
 	{Value: `ServiceFailure`, Label: `Source Service Failure`},
 	{Value: `CarrierIntelEvent`, Label: `Source Carrier Intel Event`},
 	{Value: `HOSViolation`, Label: `Source HOS Violation`},
-	{Value: `WeatherAlert`, Label: `Source Weather Alert`},
 	{Value: `EDIInboundQuarantined`, Label: `Source EDI Inbound Quarantined`},
 	{Value: `BillingException`, Label: `Source Billing Exception`},
 	{Value: `DetentionOccurrence`, Label: `Source Detention Occurrence`},

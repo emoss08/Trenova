@@ -3,7 +3,7 @@ import { shortDigest } from "@/lib/digest";
 import type { AssistantProposal } from "@/types/assistant";
 import { formatList } from "@trenova/shared/i18n/format";
 import { translate } from "@trenova/shared/i18n/runtime";
-import { argumentRows, humanizeToolName } from "./proposal-state";
+import { argumentRows, humanizeToolName, isRecordId, isRecordIdList } from "./proposal-state";
 import { defineLabels, translateLabel } from "@trenova/shared/i18n/labels";
 
 export type ProposalFact = { label: string; value: string };
@@ -63,21 +63,20 @@ function facts(...entries: (ProposalFact | null)[]): ProposalFact[] {
 }
 
 /**
- * A PULID is a storage key, not a name. Putting one in a sentence asks a person
- * to match 26 characters by eye to decide whether a change is the one they
- * meant, so the reference is shortened to its tail, which is what distinguishes
- * two ids anyway, and the full value stays in the details.
+ * A PULID is a storage key, not a name, and no part of one is ever shown: a
+ * person cannot tell two records apart by six characters of an id any better
+ * than by twenty-six. The record itself is named where the change is previewed,
+ * from the server's own read of it.
  */
-const PULID = /^[a-z]{2,8}_[0-9A-HJKMNP-TV-Z]{26}$/;
-
 export function isOpaqueId(value: string): boolean {
-  return PULID.test(value.trim());
+  return isRecordId(value.trim());
 }
 
-export function shortRef(value: string): string {
+/** What an argument names, when it is a name a person would know; nothing when it is an id. */
+export function namedRef(value: string): string {
   const trimmed = value.trim();
 
-  return isOpaqueId(trimmed) ? `…${trimmed.slice(-6)}` : trimmed;
+  return isOpaqueId(trimmed) ? "" : trimmed;
 }
 
 /** Splits `MissingBOL` into `Missing BOL` without breaking the initialism. */
@@ -414,7 +413,7 @@ const PRESENTERS: Record<string, Presenter> = {
       highlights: facts(
         fact("Name", name),
         fact("Address", [street, place].filter((part) => part !== "").join(", ")),
-        fact("Category", shortRef(text(args.locationCategoryId))),
+        fact("Category", namedRef(text(args.locationCategoryId))),
       ),
       covered: [
         "name",
@@ -446,7 +445,7 @@ const PRESENTERS: Record<string, Presenter> = {
     title: "Resolve a service failure",
     summary: "Close this service failure with the reason and note below.",
     highlights: facts(
-      fact("Reason code", shortRef(text(args.reasonCodeId))),
+      fact("Reason code", namedRef(text(args.reasonCodeId))),
       fact("Note", text(args.note)),
     ),
     covered: ["serviceFailureId", "reasonCodeId", "note"],
@@ -455,14 +454,14 @@ const PRESENTERS: Record<string, Presenter> = {
 
   worker_send_message: (args) => {
     const priority = text(args.priority);
+    const driver = namedRef(text(args.workerId));
 
     return {
       title: "Message the driver",
-      summary: translate(
-        "Send driver {0} “{1}” in Dash.",
-        shortRef(text(args.workerId)) || "?",
-        text(args.title),
-      ),
+      summary:
+        driver === ""
+          ? translate("Send the driver “{0}” in Dash.", text(args.title))
+          : translate("Send driver {0} “{1}” in Dash.", driver, text(args.title)),
       severity:
         priority === "critical" || priority === "high"
           ? { label: humanizeEnum(priority[0].toUpperCase() + priority.slice(1)), tone: "warning" }
@@ -564,7 +563,7 @@ const PRESENTERS: Record<string, Presenter> = {
         const entry = (charge ?? {}) as Args;
         const name =
           text(entry.description) ||
-          shortRef(text(entry.accessorialChargeId)) ||
+          namedRef(text(entry.accessorialChargeId)) ||
           translate("Charge {0}", index + 1);
         const amount = text(entry.amount);
 
@@ -575,19 +574,62 @@ const PRESENTERS: Record<string, Presenter> = {
     };
   },
 
+  shipment_reschedule_stop: (args) => ({
+    title: "Move the appointment",
+    summary: "Move this stop's planned window; the load's trading partners are told of the change.",
+    highlights: facts(
+      fact("Window opens", text(args.windowStart)),
+      fact("Window closes", text(args.windowEnd)),
+    ),
+    covered: ["shipmentId", "stopId", "windowStart", "windowEnd"],
+    reversible: true,
+  }),
+
+  receivable_send_payment_reminder: (args) => ({
+    title: "Send a payment reminder",
+    summary: "Email this customer a reminder of what is past due.",
+    highlights: facts(fact("Note", text(args.note))),
+    covered: ["customerId", "note"],
+    reversible: false,
+  }),
+
+  receivable_schedule_follow_up: (args) => ({
+    title: "Schedule a follow-up",
+    summary: "Put this customer back in front of collections on the day given.",
+    highlights: facts(fact("Follow up on", text(args.followUpOn)), fact("Note", text(args.note))),
+    covered: ["customerId", "followUpOn", "note"],
+    reversible: true,
+  }),
+
+  invoice_resolve_dispute: (args) => ({
+    title: "Resolve the dispute",
+    summary: "Close this invoice dispute with the resolution given.",
+    highlights: facts(
+      fact("Resolution", humanizeEnum(text(args.resolution))),
+      fact("Notes", text(args.resolutionNotes)),
+    ),
+    covered: ["disputeId", "resolution", "resolutionAdjustmentId", "resolutionNotes"],
+    reversible: false,
+  }),
+
   dispatch_assign_move: (args) => {
-    const driver = shortRef(text(args.primaryWorkerId));
-    const tractor = shortRef(text(args.tractorId));
-    const trailer = shortRef(text(args.trailerId));
+    const driver = namedRef(text(args.primaryWorkerId));
+    const tractor = namedRef(text(args.tractorId));
+    const trailer = namedRef(text(args.trailerId));
 
     return {
       title: "Assign a driver",
-      summary: tractor
-        ? translate("Put driver {0} on this move with tractor {1}.", driver || "?", tractor)
-        : translate("Put driver {0} on this move.", driver || "?"),
+      summary:
+        driver === ""
+          ? tractor
+            ? translate("Put the chosen driver on this move with tractor {0}.", tractor)
+            : translate("Put the chosen driver on this move.")
+          : tractor
+            ? translate("Put driver {0} on this move with tractor {1}.", driver, tractor)
+            : translate("Put driver {0} on this move.", driver),
       highlights: facts(
         fact("Driver", driver),
-        fact("Second driver", shortRef(text(args.secondaryWorkerId))),
+        fact("Second driver", namedRef(text(args.secondaryWorkerId))),
         fact("Tractor", tractor),
         fact("Trailer", trailer),
       ),
@@ -609,12 +651,12 @@ const PRESENTERS: Record<string, Presenter> = {
       title: "Enter a shipment",
       summary: createShipmentSummary(bol, stops, Boolean(args.sourceDocumentId)),
       highlights: facts(
-        fact("Customer", shortRef(text(draft.customerId))),
-        fact("Service type", shortRef(text(draft.serviceTypeId))),
+        fact("Customer", namedRef(text(draft.customerId))),
+        fact("Service type", namedRef(text(draft.serviceTypeId))),
         fact("Pieces", text(draft.pieces)),
         fact("Weight", text(draft.weight) ? translate("{0} lb", text(draft.weight)) : ""),
         fact("Freight charge", text(draft.freightChargeAmount)),
-        fact("Source document", shortRef(text(args.sourceDocumentId))),
+        fact("Source document", namedRef(text(args.sourceDocumentId))),
       ),
       covered: ["shipment", "sourceDocumentId"],
       reversible: false,
@@ -634,9 +676,9 @@ const PRESENTERS: Record<string, Presenter> = {
               changed.map((key) => midSentence(humanizeEnum(key))).join(", "),
             ),
       highlights: facts(
-        fact("Customer", shortRef(text(args.customerId))),
-        fact("Service type", shortRef(text(args.serviceTypeId))),
-        fact("Shipment type", shortRef(text(args.shipmentTypeId))),
+        fact("Customer", namedRef(text(args.customerId))),
+        fact("Service type", namedRef(text(args.serviceTypeId))),
+        fact("Shipment type", namedRef(text(args.shipmentTypeId))),
         fact("BOL", text(args.bol)),
         fact("Pieces", text(args.pieces)),
         fact("Weight", text(args.weight) ? translate("{0} lb", text(args.weight)) : ""),
@@ -664,15 +706,19 @@ const PRESENTERS: Record<string, Presenter> = {
 
   dispatch_create_tender_from_routing_guide: (args) => ({
     title: "Tender down the routing guide",
-    summary: args.routingGuideId
+    summary: namedRef(text(args.routingGuideId))
       ? translate(
           "Offer this move to carriers down routing guide {0}, in the guide's order at its rates.",
-          shortRef(text(args.routingGuideId)),
+          namedRef(text(args.routingGuideId)),
         )
-      : translate(
-          "Offer this move to carriers down the lane's routing guide, in the guide's order at its rates.",
-        ),
-    highlights: facts(fact("Routing guide", shortRef(text(args.routingGuideId)))),
+      : args.routingGuideId
+        ? translate(
+            "Offer this move to carriers down the chosen routing guide, in the guide's order at its rates.",
+          )
+        : translate(
+            "Offer this move to carriers down the lane's routing guide, in the guide's order at its rates.",
+          ),
+    highlights: facts(fact("Routing guide", namedRef(text(args.routingGuideId)))),
     covered: ["shipmentMoveId", "routingGuideId"],
     reversible: true,
   }),
@@ -697,7 +743,7 @@ const PRESENTERS: Record<string, Presenter> = {
           fact(
             translate("Carrier {0}", index + 1),
             [
-              shortRef(text(line.carrierId)),
+              namedRef(text(line.carrierId)),
               text(line.rate)
                 ? `${text(line.rate)}${text(line.rateMethod) === "PerMile" ? "/mi" : ""}`
                 : "",
@@ -906,6 +952,34 @@ const PRESENTERS: Record<string, Presenter> = {
     };
   },
 
+  worker_place_dispatch_hold: (args) => ({
+    title: "Place a dispatch hold",
+    summary: translate(
+      "Take this driver off dispatch. They get no new freight until someone lifts the hold.",
+    ),
+    highlights: facts(fact("Reason", text(args.reason))),
+    covered: ["workerId", "reason"],
+    reversible: false,
+  }),
+
+  worker_request_credential_renewal: (args) => {
+    const papers = Array.isArray(args.credentialIds) ? args.credentialIds.length : 0;
+
+    return {
+      title: "Ask for renewed papers",
+      summary:
+        papers > 0
+          ? translate(
+              "Ask the driver, in one message, to renew {0, plural, one {# credential} other {# credentials}}. Nothing on file changes.",
+              papers,
+            )
+          : translate("Ask the driver to renew their papers. Nothing on file changes."),
+      highlights: facts(fact("Message", text(args.note))),
+      covered: ["workerId", "credentialIds", "note"],
+      reversible: false,
+    };
+  },
+
   attach_document_to_bqi: (args) => {
     const file = text(args.fileName);
 
@@ -934,8 +1008,11 @@ const PRESENTERS: Record<string, Presenter> = {
 
 export function presentProposal(proposal: AssistantProposal): ProposalView {
   const args = (proposal.arguments ?? {}) as Args;
+  // A key that names ids ("credentialIds") is said as what it counts.
   const rows = argumentRows(args).map((row) => ({
-    label: humanizeEnum(row.key),
+    label: humanizeEnum(
+      isRecordIdList(args[row.key]) ? row.key.replace(/(?<=[a-z])Ids$/u, "") : row.key,
+    ),
     value: row.value,
     key: row.key,
   }));

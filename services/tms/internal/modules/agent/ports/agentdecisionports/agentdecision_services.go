@@ -37,6 +37,9 @@ type DecideAgentProposalRequest struct {
 	StepPreview           *agentpreview.ProposalPreview
 	StepPreviewReviewed   bool
 	ExpectedTargetVersion *int64
+	// UndoWindow asks for an approval to wait out the undo window before it
+	// runs, as an approval from the person's own conversation does.
+	UndoWindow bool
 }
 
 // DecisionOutcome is a recorded decision plus what happened when it ran.

@@ -131,6 +131,8 @@ export function aiUsageFeatureLabel(feature: AiUsageFeature | null, t: Translate
       return t("Command palette answers");
     case "InsightNarration":
       return t("Insight wording");
+    case "CaseReading":
+      return t("Case readings");
     case null:
       return t("Other");
   }

@@ -967,6 +967,7 @@ var threadsTable = schema.Table{
 		{Name: "user_id", Quoted: `"user_id"`, Field: "UserID", Kind: schema.KindString, Flags: 0, Label: `User ID`, JSON: `userId`},
 		{Name: "agent_definition_id", Quoted: `"agent_definition_id"`, Field: "AgentDefinitionID", Kind: schema.KindString, Flags: 0, Label: `Agent Definition ID`, JSON: `agentDefinitionId`},
 		{Name: "title", Quoted: `"title"`, Field: "Title", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Title`, JSON: `title`},
+		{Name: "title_source", Quoted: `"title_source"`, Field: "TitleSource", Kind: schema.KindString, Flags: schema.FlagNullZero | schema.FlagDefault, Label: `Title Source`, Doc: `TitleSource is where the title came from. The model's name for a conversation replaces one taken from its first question, never one a person gave.`, JSON: `titleSource`, Enum: enumTitleSource[:]},
 		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, JSON: `status`, Enum: enumThreadStatus[:]},
 		{Name: "last_message_at", Quoted: `"last_message_at"`, Field: "LastMessageAt", Kind: schema.KindInt64, Flags: 0, Label: `Last Message At`, Doc: `LastMessageAt orders a user's thread list without a join onto messages.`, JSON: `lastMessageAt`},
 		{Name: "last_read_at", Quoted: `"last_read_at"`, Field: "LastReadAt", Kind: schema.KindInt64, Flags: 0, Label: `Last Read At`, JSON: `lastReadAt`},
@@ -994,14 +995,14 @@ var threadsTable = schema.Table{
 	},
 	PK:           []int32{0, 1, 2},
 	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 26},
-	Returning:    nil,
-	Version:      24,
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 27},
+	Returning:    []int32{6},
+	Version:      25,
 	AutoID:       0,
-	AutoCreate:   25,
-	AutoUpdate:   26,
+	AutoCreate:   26,
+	AutoUpdate:   27,
 	IDPrefix:     "athr_",
 	New:          newThread,
 	NewN:         newNThread,
@@ -1023,6 +1024,7 @@ type ThreadsTable struct {
 	UserID              keelkinds.PulidIDCol
 	AgentDefinitionID   keelkinds.PulidIDCol
 	Title               keel.StringCol
+	TitleSource         TitleSourceCol
 	Status              ThreadStatusCol
 	LastMessageAt       keel.Int64Col
 	LastReadAt          keel.Int64Col
@@ -1055,27 +1057,28 @@ var Threads = &ThreadsTable{
 	UserID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &threadsRef, Index: 3}}},
 	AgentDefinitionID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &threadsRef, Index: 4}}},
 	Title:               keel.StringCol{Col: keel.Col{Ref: &threadsRef, Index: 5}},
-	Status:              ThreadStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &threadsRef, Index: 6}}},
-	LastMessageAt:       keel.Int64Col{Col: keel.Col{Ref: &threadsRef, Index: 7}},
-	LastReadAt:          keel.Int64Col{Col: keel.Col{Ref: &threadsRef, Index: 8}},
-	PreferredProviderID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &threadsRef, Index: 9}}},
-	Origin:              ThreadOriginCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &threadsRef, Index: 10}}},
-	Pinned:              keel.BoolCol{Col: keel.Col{Ref: &threadsRef, Index: 11}},
-	SubjectType:         agentdb.SubjectTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &threadsRef, Index: 12}}},
-	SubjectID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &threadsRef, Index: 13}}},
-	SnoozedUntil:        keel.Int64Col{Col: keel.Col{Ref: &threadsRef, Index: 14}},
-	SnoozeAnchor:        deskcasedb.SnoozeAnchorCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &threadsRef, Index: 15}}},
-	SnoozeStopID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &threadsRef, Index: 16}}},
-	PinnedFacts:         keel.JSONBCol{Col: keel.Col{Ref: &threadsRef, Index: 17}},
-	WorkingSet:          keel.JSONBCol{Col: keel.Col{Ref: &threadsRef, Index: 18}},
-	ContextUsage:        keel.JSONBCol{Col: keel.Col{Ref: &threadsRef, Index: 19}},
-	AutoCompactOff:      keel.BoolCol{Col: keel.Col{Ref: &threadsRef, Index: 20}},
-	HandedFromThreadID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &threadsRef, Index: 21}}},
-	Taint:               keel.JSONBCol{Col: keel.Col{Ref: &threadsRef, Index: 22}},
-	TaintedAt:           keel.Int64Col{Col: keel.Col{Ref: &threadsRef, Index: 23}},
-	Version:             keel.Int64Col{Col: keel.Col{Ref: &threadsRef, Index: 24}},
-	CreatedAt:           keel.Int64Col{Col: keel.Col{Ref: &threadsRef, Index: 25}},
-	UpdatedAt:           keel.Int64Col{Col: keel.Col{Ref: &threadsRef, Index: 26}},
+	TitleSource:         TitleSourceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &threadsRef, Index: 6}}},
+	Status:              ThreadStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &threadsRef, Index: 7}}},
+	LastMessageAt:       keel.Int64Col{Col: keel.Col{Ref: &threadsRef, Index: 8}},
+	LastReadAt:          keel.Int64Col{Col: keel.Col{Ref: &threadsRef, Index: 9}},
+	PreferredProviderID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &threadsRef, Index: 10}}},
+	Origin:              ThreadOriginCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &threadsRef, Index: 11}}},
+	Pinned:              keel.BoolCol{Col: keel.Col{Ref: &threadsRef, Index: 12}},
+	SubjectType:         agentdb.SubjectTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &threadsRef, Index: 13}}},
+	SubjectID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &threadsRef, Index: 14}}},
+	SnoozedUntil:        keel.Int64Col{Col: keel.Col{Ref: &threadsRef, Index: 15}},
+	SnoozeAnchor:        deskcasedb.SnoozeAnchorCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &threadsRef, Index: 16}}},
+	SnoozeStopID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &threadsRef, Index: 17}}},
+	PinnedFacts:         keel.JSONBCol{Col: keel.Col{Ref: &threadsRef, Index: 18}},
+	WorkingSet:          keel.JSONBCol{Col: keel.Col{Ref: &threadsRef, Index: 19}},
+	ContextUsage:        keel.JSONBCol{Col: keel.Col{Ref: &threadsRef, Index: 20}},
+	AutoCompactOff:      keel.BoolCol{Col: keel.Col{Ref: &threadsRef, Index: 21}},
+	HandedFromThreadID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &threadsRef, Index: 22}}},
+	Taint:               keel.JSONBCol{Col: keel.Col{Ref: &threadsRef, Index: 23}},
+	TaintedAt:           keel.Int64Col{Col: keel.Col{Ref: &threadsRef, Index: 24}},
+	Version:             keel.Int64Col{Col: keel.Col{Ref: &threadsRef, Index: 25}},
+	CreatedAt:           keel.Int64Col{Col: keel.Col{Ref: &threadsRef, Index: 26}},
+	UpdatedAt:           keel.Int64Col{Col: keel.Col{Ref: &threadsRef, Index: 27}},
 }
 
 // BuildThreads builds the table of assistant_threads for ref. Generated relation and alias methods call it.
@@ -1088,27 +1091,28 @@ func BuildThreads(r *keel.Ref) *ThreadsTable {
 		UserID:              keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		AgentDefinitionID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		Title:               keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
-		Status:              ThreadStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		LastMessageAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
-		LastReadAt:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
-		PreferredProviderID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
-		Origin:              ThreadOriginCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
-		Pinned:              keel.BoolCol{Col: keel.Col{Ref: r, Index: 11}},
-		SubjectType:         agentdb.SubjectTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 12}}},
-		SubjectID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 13}}},
-		SnoozedUntil:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
-		SnoozeAnchor:        deskcasedb.SnoozeAnchorCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 15}}},
-		SnoozeStopID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 16}}},
-		PinnedFacts:         keel.JSONBCol{Col: keel.Col{Ref: r, Index: 17}},
-		WorkingSet:          keel.JSONBCol{Col: keel.Col{Ref: r, Index: 18}},
-		ContextUsage:        keel.JSONBCol{Col: keel.Col{Ref: r, Index: 19}},
-		AutoCompactOff:      keel.BoolCol{Col: keel.Col{Ref: r, Index: 20}},
-		HandedFromThreadID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 21}}},
-		Taint:               keel.JSONBCol{Col: keel.Col{Ref: r, Index: 22}},
-		TaintedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 23}},
-		Version:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 24}},
-		CreatedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 25}},
-		UpdatedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 26}},
+		TitleSource:         TitleSourceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		Status:              ThreadStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		LastMessageAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
+		LastReadAt:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
+		PreferredProviderID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		Origin:              ThreadOriginCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 11}}},
+		Pinned:              keel.BoolCol{Col: keel.Col{Ref: r, Index: 12}},
+		SubjectType:         agentdb.SubjectTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 13}}},
+		SubjectID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 14}}},
+		SnoozedUntil:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
+		SnoozeAnchor:        deskcasedb.SnoozeAnchorCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 16}}},
+		SnoozeStopID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 17}}},
+		PinnedFacts:         keel.JSONBCol{Col: keel.Col{Ref: r, Index: 18}},
+		WorkingSet:          keel.JSONBCol{Col: keel.Col{Ref: r, Index: 19}},
+		ContextUsage:        keel.JSONBCol{Col: keel.Col{Ref: r, Index: 20}},
+		AutoCompactOff:      keel.BoolCol{Col: keel.Col{Ref: r, Index: 21}},
+		HandedFromThreadID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 22}}},
+		Taint:               keel.JSONBCol{Col: keel.Col{Ref: r, Index: 23}},
+		TaintedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 24}},
+		Version:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 25}},
+		CreatedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 26}},
+		UpdatedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 27}},
 	}
 }
 
@@ -1513,46 +1517,48 @@ func ptrThread(p unsafe.Pointer, c int32) any {
 	case 5:
 		return &r.Title
 	case 6:
-		return (*string)(unsafe.Pointer(&r.Status))
+		return (*string)(unsafe.Pointer(&r.TitleSource))
 	case 7:
-		return &r.LastMessageAt
+		return (*string)(unsafe.Pointer(&r.Status))
 	case 8:
-		return &r.LastReadAt
+		return &r.LastMessageAt
 	case 9:
-		return (*string)(unsafe.Pointer(&r.PreferredProviderID))
+		return &r.LastReadAt
 	case 10:
-		return (*string)(unsafe.Pointer(&r.Origin))
+		return (*string)(unsafe.Pointer(&r.PreferredProviderID))
 	case 11:
-		return &r.Pinned
+		return (*string)(unsafe.Pointer(&r.Origin))
 	case 12:
-		return (*string)(unsafe.Pointer(&r.SubjectType))
+		return &r.Pinned
 	case 13:
-		return (*string)(unsafe.Pointer(&r.SubjectID))
+		return (*string)(unsafe.Pointer(&r.SubjectType))
 	case 14:
-		return &r.SnoozedUntil
+		return (*string)(unsafe.Pointer(&r.SubjectID))
 	case 15:
-		return (*string)(unsafe.Pointer(&r.SnoozeAnchor))
+		return &r.SnoozedUntil
 	case 16:
-		return (*string)(unsafe.Pointer(&r.SnoozeStopID))
+		return (*string)(unsafe.Pointer(&r.SnoozeAnchor))
 	case 17:
-		return &r.PinnedFacts
+		return (*string)(unsafe.Pointer(&r.SnoozeStopID))
 	case 18:
-		return &r.WorkingSet
+		return &r.PinnedFacts
 	case 19:
-		return &r.ContextUsage
+		return &r.WorkingSet
 	case 20:
-		return &r.AutoCompactOff
+		return &r.ContextUsage
 	case 21:
-		return (*string)(unsafe.Pointer(&r.HandedFromThreadID))
+		return &r.AutoCompactOff
 	case 22:
-		return &r.Taint
+		return (*string)(unsafe.Pointer(&r.HandedFromThreadID))
 	case 23:
-		return &r.TaintedAt
+		return &r.Taint
 	case 24:
-		return &r.Version
+		return &r.TaintedAt
 	case 25:
-		return &r.CreatedAt
+		return &r.Version
 	case 26:
+		return &r.CreatedAt
+	case 27:
 		return &r.UpdatedAt
 	}
 	return nil
@@ -1577,82 +1583,87 @@ func valueThread(p unsafe.Pointer, c int32) any {
 		}
 		return r.Title
 	case 6:
-		return string(r.Status)
+		if r.TitleSource == "" {
+			return nil
+		}
+		return string(r.TitleSource)
 	case 7:
-		return r.LastMessageAt
+		return string(r.Status)
 	case 8:
-		return r.LastReadAt
+		return r.LastMessageAt
 	case 9:
+		return r.LastReadAt
+	case 10:
 		if r.PreferredProviderID == "" {
 			return nil
 		}
 		return string(r.PreferredProviderID)
-	case 10:
-		return string(r.Origin)
 	case 11:
-		return r.Pinned
+		return string(r.Origin)
 	case 12:
+		return r.Pinned
+	case 13:
 		if r.SubjectType == "" {
 			return nil
 		}
 		return string(r.SubjectType)
-	case 13:
+	case 14:
 		if r.SubjectID == "" {
 			return nil
 		}
 		return string(r.SubjectID)
-	case 14:
+	case 15:
 		if r.SnoozedUntil == nil {
 			return nil
 		}
 		return *r.SnoozedUntil
-	case 15:
+	case 16:
 		if r.SnoozeAnchor == "" {
 			return nil
 		}
 		return string(r.SnoozeAnchor)
-	case 16:
+	case 17:
 		if r.SnoozeStopID == "" {
 			return nil
 		}
 		return string(r.SnoozeStopID)
-	case 17:
+	case 18:
 		if r.PinnedFacts == nil {
 			return nil
 		}
 		return r.PinnedFacts
-	case 18:
+	case 19:
 		if r.WorkingSet == nil {
 			return nil
 		}
 		return r.WorkingSet
-	case 19:
+	case 20:
 		if r.ContextUsage == nil {
 			return nil
 		}
 		return *r.ContextUsage
-	case 20:
-		return r.AutoCompactOff
 	case 21:
+		return r.AutoCompactOff
+	case 22:
 		if r.HandedFromThreadID == "" {
 			return nil
 		}
 		return string(r.HandedFromThreadID)
-	case 22:
+	case 23:
 		if r.Taint == nil {
 			return nil
 		}
 		return *r.Taint
-	case 23:
+	case 24:
 		if r.TaintedAt == nil {
 			return nil
 		}
 		return *r.TaintedAt
-	case 24:
-		return r.Version
 	case 25:
-		return r.CreatedAt
+		return r.Version
 	case 26:
+		return r.CreatedAt
+	case 27:
 		return r.UpdatedAt
 	}
 	return nil
@@ -1744,6 +1755,12 @@ var enumThreadOrigin = [...]schema.EnumValue{
 var enumThreadStatus = [...]schema.EnumValue{
 	{Value: `Active`, Label: `Active`},
 	{Value: `Archived`, Label: `Archived`},
+}
+
+var enumTitleSource = [...]schema.EnumValue{
+	{Value: `Question`, Label: `Title From Question`},
+	{Value: `Model`, Label: `Title From Model`},
+	{Value: `Person`, Label: `Title From Person`},
 }
 
 // AssistantTurnStatusCol is a column of conversation.AssistantTurnStatus values.
@@ -1876,5 +1893,28 @@ func (c ThreadStatusCol) In(vs ...conversation.ThreadStatus) keel.Pred {
 	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c ThreadStatusCol) NotIn(vs ...conversation.ThreadStatus) keel.Pred {
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
+}
+
+// TitleSourceCol is a column of conversation.TitleSource values.
+type TitleSourceCol struct{ keel.TypedStringCol }
+
+func (c TitleSourceCol) Eq(v conversation.TitleSource) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c TitleSourceCol) Ne(v conversation.TitleSource) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c TitleSourceCol) Gt(v conversation.TitleSource) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c TitleSourceCol) Gte(v conversation.TitleSource) keel.Pred { return c.Text().Gte(string(v)) }
+func (c TitleSourceCol) Lt(v conversation.TitleSource) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c TitleSourceCol) Lte(v conversation.TitleSource) keel.Pred { return c.Text().Lte(string(v)) }
+func (c TitleSourceCol) IsDistinctFrom(v conversation.TitleSource) keel.Pred {
+	return c.Text().IsDistinctFrom(string(v))
+}
+func (c TitleSourceCol) Between(lo, hi conversation.TitleSource) keel.Pred {
+	return c.Text().Between(string(lo), string(hi))
+}
+func (c TitleSourceCol) To(v conversation.TitleSource) keel.Assignment { return c.Text().To(string(v)) }
+func (c TitleSourceCol) In(vs ...conversation.TitleSource) keel.Pred {
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
+}
+func (c TitleSourceCol) NotIn(vs ...conversation.TitleSource) keel.Pred {
 	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

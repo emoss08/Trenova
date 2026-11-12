@@ -52,9 +52,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aituneupports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/briefingports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/caseownerports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/deskactivityports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/deskattentionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/recordcaseports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/recordshareports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/shipmentbriefports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
@@ -411,6 +414,9 @@ type Params struct {
 	BoardCards                        *boardcardservice.Service
 	DeskAttentionService              deskattentionports.DeskAttentionService
 	DeskActivityService               deskactivityports.DeskActivityService
+	RecordCaseService                 recordcaseports.RecordCaseService
+	RecordShareService                recordshareports.Service
+	CaseOwners                        caseownerports.Service
 	JournalReview                     journalentryports.JournalReviewService
 	JournalReversalService            *journalreversalservice.Service
 	AuditService                      auditports.AuditService
@@ -711,6 +717,9 @@ type Services struct {
 	BoardCards                        *boardcardservice.Service
 	DeskAttentionService              deskattentionports.DeskAttentionService
 	DeskActivityService               deskactivityports.DeskActivityService
+	RecordCaseService                 recordcaseports.RecordCaseService
+	RecordShareService                recordshareports.Service
+	CaseOwners                        caseownerports.Service
 	JournalReview                     journalentryports.JournalReviewService
 	JournalReversalService            *journalreversalservice.Service
 	AuditService                      auditports.AuditService
@@ -1017,6 +1026,9 @@ func newServices(p *Params) *Services {
 		BoardCards:                        p.BoardCards,
 		DeskAttentionService:              p.DeskAttentionService,
 		DeskActivityService:               p.DeskActivityService,
+		RecordCaseService:                 p.RecordCaseService,
+		RecordShareService:                p.RecordShareService,
+		CaseOwners:                        p.CaseOwners,
 		JournalReview:                     p.JournalReview,
 		JournalReversalService:            p.JournalReversalService,
 		AuditService:                      p.AuditService,

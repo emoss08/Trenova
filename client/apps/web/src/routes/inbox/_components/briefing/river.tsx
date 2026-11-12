@@ -26,8 +26,7 @@ type RiverProps = {
 function novaDotStyle(x: number, index: number): CSSProperties {
   return {
     left: `${x + (index % 3) * 0.4}%`,
-    top: `${8 + (index % 4) * 5}px`,
-    animationDelay: `${index * 22}ms`,
+    top: `${8 + (index % 4) * 4}px`,
   };
 }
 
@@ -36,7 +35,6 @@ function novaDotStyle(x: number, index: number): CSSProperties {
  * top lane, and what was left for you below, coloured by kind, ringed amber
  * once over its target and checked once done. Hovering a dot says what it
  * is, under the dot and inside the river; clicking it opens the message.
- * Dots are placed once and only their transform and opacity move.
  */
 export const River = memo(function River({ briefing, now, onOpenMessage }: RiverProps) {
   const t = useT();
@@ -47,7 +45,7 @@ export const River = memo(function River({ briefing, now, onOpenMessage }: River
 
   return (
     <div
-      className="relative pt-5.5 pb-1 pl-(--tb-river-pad) [--tb-river-pad:3.5rem] @max-2xl:[--tb-river-pad:0px]"
+      className="relative pl-(--river-pad) [--river-pad:3rem] @max-2xl:[--river-pad:0px]"
       aria-label={t("Today so far")}
       role="group"
     >
@@ -55,44 +53,43 @@ export const River = memo(function River({ briefing, now, onOpenMessage }: River
         {ticks.map((tick) => (
           <span
             key={tick.at}
-            className="text-2xs text-foreground-subtle absolute -translate-x-1/2 font-mono"
+            className="absolute -translate-x-1/2 text-2xs text-dsk-faint tabular-nums"
             style={{ left: `${tick.x}%` }}
           >
             {formatUnixInUserTimezone(tick.at, { hour: "numeric" }, "")}
           </span>
         ))}
         <span
-          className="text-2xs text-foreground-subtle absolute -translate-x-1/2 font-mono"
+          className="absolute -translate-x-1/2 text-2xs text-dsk-subtle"
           style={{ left: `${riverX(now, window)}%` }}
         >
           {t("now")}
         </span>
       </div>
 
-      <div className="tb-lane-nova relative mb-1.5 h-8 rounded-full">
-        <span className="text-foreground-subtle absolute top-1/2 -left-14 -translate-y-1/2 text-xs @max-2xl:sr-only">
+      <div className="relative mb-1.5 h-8 rounded-[6px] border border-dsk-b-sub bg-dsk-card">
+        <span className="absolute top-1/2 -left-12 -translate-y-1/2 text-xs text-dsk-subtle @max-2xl:sr-only">
           {t("Nova")}
         </span>
         {briefing.novaPoints.map((point, index) => (
           <i
             key={point.messageId}
             aria-hidden
-            className="tb-nova-dot absolute -ml-0.75 size-1.5 rounded-full"
+            className="absolute -ml-0.75 size-1.5 rounded-full bg-dsk-agent"
             style={novaDotStyle(riverX(point.receivedAt, window), index)}
           />
         ))}
       </div>
 
-      <div className="bg-surface-hover relative h-9 rounded-full">
-        <span className="text-foreground-subtle absolute top-1/2 -left-14 -translate-y-1/2 text-xs @max-2xl:sr-only">
+      <div className="relative h-8 rounded-[6px] border border-dsk-b-sub bg-dsk-card">
+        <span className="absolute top-1/2 -left-12 -translate-y-1/2 text-xs text-dsk-subtle @max-2xl:sr-only">
           {t("You")}
         </span>
-        {briefing.yours.map((point, index) => (
+        {briefing.yours.map((point) => (
           <YourDot
             key={point.messageId}
             point={point}
             x={riverX(point.receivedAt, window)}
-            index={index}
             now={now}
             onHover={setHovered}
             onOpen={onOpenMessage}
@@ -105,9 +102,9 @@ export const River = memo(function River({ briefing, now, onOpenMessage }: River
 
       <span
         aria-hidden
-        className="bg-foreground pointer-events-none absolute top-9 bottom-0 w-px -translate-x-1/2 opacity-50"
+        className="pointer-events-none absolute top-4.5 bottom-0 w-px -translate-x-1/2 bg-dsk-b-strong"
         style={{
-          left: `calc(var(--tb-river-pad) + (100% - var(--tb-river-pad)) * ${riverX(now, window) / 100})`,
+          left: `calc(var(--river-pad) + (100% - var(--river-pad)) * ${riverX(now, window) / 100})`,
         }}
       />
     </div>
@@ -117,14 +114,12 @@ export const River = memo(function River({ briefing, now, onOpenMessage }: River
 const YourDot = memo(function YourDot({
   point,
   x,
-  index,
   now,
   onHover,
   onOpen,
 }: {
   point: RiverPoint;
   x: number;
-  index: number;
   now: number;
   onHover: (id: string | null) => void;
   onOpen: (id: string) => void;
@@ -147,12 +142,12 @@ const YourDot = memo(function YourDot({
       onFocus={() => onHover(point.messageId)}
       onBlur={() => onHover(null)}
       onClick={() => onOpen(point.messageId)}
-      className="tb-your-dot ui-focus-ring group absolute top-1/2 -mt-1.75 -ml-1.75 size-3.5 rounded-full"
-      style={{ left: `${x}%`, animationDelay: `${300 + index * 50}ms` }}
+      className="group absolute top-1/2 -mt-1.5 -ml-1.5 size-3 rounded-full ui-focus-ring"
+      style={{ left: `${x}%` }}
     >
       <span
         className={cn(
-          "ring-canvas flex size-full items-center justify-center rounded-full ring-3 transition-transform duration-200 ease-spring group-hover:scale-150 group-focus-visible:scale-150",
+          "flex size-full items-center justify-center rounded-full ring-2 ring-dsk-card transition-transform duration-200 ease-spring group-hover:scale-150 group-focus-visible:scale-150",
           state === "done"
             ? "bg-success text-foreground-on-solid opacity-70"
             : CLASSIFICATION_DOT[point.classification ?? "Other"],
@@ -163,7 +158,7 @@ const YourDot = memo(function YourDot({
       {state === "over" && (
         <span
           aria-hidden
-          className="tb-over-ring border-warning pointer-events-none absolute -inset-1.25 rounded-full border-[1.5px]"
+          className="pointer-events-none absolute -inset-1 rounded-full border border-dsk-warn"
         />
       )}
     </button>
@@ -177,13 +172,13 @@ function RiverTip({ point, x, now }: { point: RiverPoint; x: number; now: number
 
   return (
     <div
-      className="dark pointer-events-none absolute top-[calc(100%+6px)] z-40"
+      className="pointer-events-none absolute top-[calc(100%+6px)] z-40"
       style={{ left: `${x}%` }}
     >
       <div
         role="tooltip"
         className={cn(
-          "animate-pop-in bg-raised text-foreground border-border-strong ui-lift-float relative flex max-w-70 flex-col gap-px rounded-lg border px-2.75 py-2 text-sm",
+          "relative flex max-w-70 animate-pop-in flex-col gap-px rounded-[8px] border border-dsk-b bg-dsk-raised px-2.75 py-2 text-dsk-base text-dsk-fg ui-lift-float",
           align === "center" && "-translate-x-1/2",
           align === "start" && "-translate-x-3.5",
           align === "end" && "-translate-x-[calc(100%-0.875rem)]",
@@ -192,20 +187,20 @@ function RiverTip({ point, x, now }: { point: RiverPoint; x: number; now: number
         <span
           aria-hidden
           className={cn(
-            "bg-raised border-border-strong absolute -top-1.25 size-2 rotate-45 border-t border-l",
+            "absolute -top-1.25 size-2 rotate-45 border-t border-l border-dsk-b bg-dsk-raised",
             align === "center" && "left-1/2 -ml-1",
             align === "start" && "left-2.5",
             align === "end" && "right-2.5",
           )}
         />
-        <b className="truncate font-semibold">{senderName(point)}</b>
-        <span className="text-foreground-subtle truncate">
+        <b className="truncate font-medium">{senderName(point)}</b>
+        <span className="truncate text-dsk-subtle">
           {point.subject.trim() === "" ? t("(no subject)") : point.subject}
         </span>
         <em
           className={cn(
-            "text-2xs font-mono not-italic",
-            state === "over" ? "text-warning" : "text-foreground-subtle",
+            "text-xs not-italic tabular-nums",
+            state === "over" ? "text-dsk-warn-fg" : "text-dsk-subtle",
           )}
         >
           {state === "done"

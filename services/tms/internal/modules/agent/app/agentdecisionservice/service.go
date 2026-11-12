@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/caseownerports"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aimetrics"
@@ -70,6 +71,9 @@ type Params struct {
 	// the decision records what was approved and refuses what moved on.
 	Previews agentruntimeports.ProposalPreviewService
 	Metrics  *metrics.Registry
+	// Owners refuses a decision on a change to a record whose case is someone
+	// else's.
+	Owners caseownerports.Service
 }
 
 type Service struct {
@@ -80,6 +84,7 @@ type Service struct {
 	threads      conversationports.ConversationRepository
 	definitions  agentdefinitionports.AgentDefinitionRepository
 	shadow       *agentshadow.Resolver
+	owners       caseownerports.Service
 	permissions  permissionports.PermissionEngine
 	workflows    kernelports.WorkflowStarter
 	executor     *proposalexecutor.Service
@@ -103,6 +108,7 @@ func New(p Params) agentdecisionports.AgentDecisionService {
 		threads:      p.Conversations,
 		definitions:  p.Definitions,
 		shadow:       p.Shadow,
+		owners:       p.Owners,
 		permissions:  p.Permissions,
 		workflows:    p.Workflows,
 		executor:     p.Executor,
@@ -138,25 +144,33 @@ func (s *Service) DecideOwn(
 	// window; nothing it approved runs until the window closes. One refused
 	// because its record moved on is refused at once, and says so.
 	if s.Defers(req.Decision) {
-		results, err := s.ApproveDeferred(
-			ctx,
-			[]*agentdecisionports.DecideAgentProposalRequest{req},
-			actor,
-		)
-		if err != nil {
-			return nil, err
-		}
-		if results[0].Err != nil {
-			return nil, results[0].Err
-		}
-
-		return &agentdecisionports.DecisionOutcome{
-			Decision:       results[0].Decision,
-			ExecutionError: results[0].ExecutionError,
-		}, nil
+		return s.decideDeferred(ctx, req, actor)
 	}
 
 	return s.DecideWithOutcome(ctx, req, actor)
+}
+
+func (s *Service) decideDeferred(
+	ctx context.Context,
+	req *agentdecisionports.DecideAgentProposalRequest,
+	actor *permissionports.RequestActor,
+) (*agentdecisionports.DecisionOutcome, error) {
+	results, err := s.ApproveDeferred(
+		ctx,
+		[]*agentdecisionports.DecideAgentProposalRequest{req},
+		actor,
+	)
+	if err != nil {
+		return nil, err
+	}
+	if results[0].Err != nil {
+		return nil, results[0].Err
+	}
+
+	return &agentdecisionports.DecisionOutcome{
+		Decision:       results[0].Decision,
+		ExecutionError: results[0].ExecutionError,
+	}, nil
 }
 
 // AssertOwnProposal refuses a proposal not raised in one of the actor's own
@@ -263,6 +277,10 @@ func (s *Service) DecideWithOutcome(
 	req *agentdecisionports.DecideAgentProposalRequest,
 	actor *permissionports.RequestActor,
 ) (*agentdecisionports.DecisionOutcome, error) {
+	if req.UndoWindow && !req.WithinPlan && s.Defers(req.Decision) {
+		return s.decideDeferred(ctx, req, actor)
+	}
+
 	ctx, rec, span, err := s.record(ctx, req, actor, nil)
 	if span != nil {
 		defer span.End()
@@ -328,6 +346,12 @@ func (s *Service) record(
 	}
 	if verdict.Shadow() {
 		return ctx, nil, nil, shadowRefusal(verdict)
+	}
+	if err = s.owners.AssertMayWork(ctx, caseownerports.RecordRequest{
+		TenantInfo: req.TenantInfo,
+		RecordID:   proposal.TargetID,
+	}, actor); err != nil {
+		return ctx, nil, nil, err
 	}
 
 	req, err = s.settleModifications(ctx, proposal, req, actor)

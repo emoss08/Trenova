@@ -66,5 +66,17 @@ type AgentRunRepository interface {
 	Create(ctx context.Context, entity *agent.AgentRun) (*agent.AgentRun, error)
 	Update(ctx context.Context, entity *agent.AgentRun) (*agent.AgentRun, error)
 	CountOpen(ctx context.Context, req *CountOpenAgentRunsRequest) (int, error)
+	// FailAbandoned ends, in every organization, the runs still marked as
+	// working long after any run finishes: their workflow is gone, and left
+	// as they are they would say an agent is working for ever.
+	FailAbandoned(ctx context.Context, req FailAbandonedRunsRequest) (int, error)
 	CountSince(ctx context.Context, req CountAgentRunsSinceRequest) (int, error)
+}
+
+// FailAbandonedRunsRequest names the runs to end: those still working that
+// were created before StartedBefore.
+type FailAbandonedRunsRequest struct {
+	StartedBefore int64
+	Now           int64
+	Reason        string
 }

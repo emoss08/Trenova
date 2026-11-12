@@ -5,6 +5,22 @@ export function casePath(kind: string, id: string): string {
   return `/desk/r/${encodeURIComponent(kind)}/${encodeURIComponent(id)}`;
 }
 
+/**
+ * What the Watchtower sends with a person it takes to a case: they came to
+ * work it, so a case no agent has looked at is handed over as it opens. A
+ * link from anywhere else (the rail, a card, a pasted address) only reads it.
+ */
+export const START_CASE = { startCase: true } as const;
+
+/** True when the case was opened to be worked (router state from `START_CASE`). */
+export function startsCase(state: unknown): boolean {
+  return (
+    typeof state === "object" &&
+    state !== null &&
+    (state as { startCase?: unknown }).startCase === true
+  );
+}
+
 /** Where one item opens in Needs you, chosen in the list with its detail beside it. */
 export function needsItemPath(itemId: string): string {
   return `/desk/needs?item=${encodeURIComponent(itemId)}`;

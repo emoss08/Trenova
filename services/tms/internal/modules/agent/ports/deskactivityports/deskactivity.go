@@ -53,6 +53,9 @@ type EntryRequest struct {
 type Change struct {
 	ProposalID pulid.ID
 	Record     *deskattentionports.Record
+	What       string
+	Why        string
+	ProposedAt int64
 	At         int64
 	Outcome    Outcome
 	Error      string

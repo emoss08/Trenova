@@ -187,6 +187,7 @@ func (s *Dispatcher) dispatchAction(
 		Definition:     req.Definition,
 		HolderCeiling:  p.beyond,
 		Unattended:     req.Unattended,
+		Conversation:   req.ThreadID.IsNotNil() && !req.Unattended,
 		Taint:          toolaccess.DecisionTaint(p.taint, p.afterExternal),
 		MoneyAllowance: s.MoneyAllowance(req, p.moneySpent),
 		FromScript:     p.scriptStepKey != "",

@@ -12,6 +12,7 @@ var coreTools = [...]string{
 	"agent_open_page",
 	"agent_create_wait",
 	"agent_cancel_wait",
+	"agent_offer_options",
 	"agent_create_schedule",
 	"agent_read_attachment",
 }

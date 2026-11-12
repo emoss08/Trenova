@@ -135,7 +135,7 @@ describe("preview warnings", () => {
   it("translates every code the contract names, never falling back to the English", () => {
     for (const code of PREVIEW_WARNING_CODES) {
       const text = previewWarningText(
-        { code, args: [], message: "SERVER ENGLISH", reasons: [] },
+        { code, args: [], message: "SERVER ENGLISH", reasons: [], remedies: [] },
         t,
       );
       expect(text, code).not.toBe("SERVER ENGLISH");
@@ -145,11 +145,14 @@ describe("preview warnings", () => {
 
   it("carries the step and the reason a warning names", () => {
     expect(
-      previewWarningText({ code: "depends_on_step", args: ["2"], message: "", reasons: [] }, t),
+      previewWarningText(
+        { code: "depends_on_step", args: ["2"], message: "", reasons: [], remedies: [] },
+        t,
+      ),
     ).toBe("Step 2 changes this record first; it is shown as it would be after that step.");
     expect(
       previewWarningText(
-        { code: "would_fail", args: ["Rate not found"], message: "", reasons: [] },
+        { code: "would_fail", args: ["Rate not found"], message: "", reasons: [], remedies: [] },
         t,
       ),
     ).toBe("This would not go through as it stands: Rate not found");
@@ -160,37 +163,50 @@ describe("preview warnings", () => {
           args: ["No rate agreement covers this lane, so this shipment is priced at zero"],
           message: "",
           reasons: [],
+          remedies: [],
         },
         t,
       ),
     ).toBe(
       "The rate needs review: No rate agreement covers this lane, so this shipment is priced at zero",
     );
-    expect(previewWarningTone({ code: "rate_coverage", args: [], message: "", reasons: [] })).toBe(
-      "warning",
-    );
+    expect(
+      previewWarningTone({
+        code: "rate_coverage",
+        args: [],
+        message: "",
+        reasons: [],
+        remedies: [],
+      }),
+    ).toBe("warning");
   });
 
   it("shows the server's words for a code this client does not know", () => {
-    const warning = { code: "new_kind", args: [], message: "A new thing to know.", reasons: [] };
+    const warning = {
+      code: "new_kind",
+      args: [],
+      message: "A new thing to know.",
+      reasons: [],
+      remedies: [],
+    };
 
     expect(previewWarningText(warning, t)).toBe("A new thing to know.");
     expect(previewWarningTone(warning)).toBe("warning");
   });
 
   it("draws a write that will not do what was asked as danger", () => {
-    expect(previewWarningTone({ code: "would_fail", args: [], message: "", reasons: [] })).toBe(
-      "danger",
-    );
-    expect(previewWarningTone({ code: "unpinned", args: [], message: "", reasons: [] })).toBe(
-      "info",
-    );
+    expect(
+      previewWarningTone({ code: "would_fail", args: [], message: "", reasons: [], remedies: [] }),
+    ).toBe("danger");
+    expect(
+      previewWarningTone({ code: "unpinned", args: [], message: "", reasons: [], remedies: [] }),
+    ).toBe("info");
   });
 
   it("drops the dependency warning inside a plan, where the step says it", () => {
     const warnings = [
-      { code: "depends_on_step", args: ["1"], message: "", reasons: [] },
-      { code: "withheld", args: [], message: "", reasons: [] },
+      { code: "depends_on_step", args: ["1"], message: "", reasons: [], remedies: [] },
+      { code: "withheld", args: [], message: "", reasons: [], remedies: [] },
     ];
 
     expect(visibleWarnings(warnings, { inPlan: true }).map((w) => w.code)).toEqual(["withheld"]);

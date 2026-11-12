@@ -41,6 +41,8 @@ type DeskAttentionGroup {
   "True when any of its items is new to the reader."
   unseen: Boolean!
   items: [WatchtowerItem!]!
+  "Whose case the record is and how the reader stands to it; null when the row is about no record."
+  ownership: DeskCaseOwnership
 }
 
 "Open items in each of the Desk's lenses, as the reader may see them."
@@ -71,6 +73,8 @@ input DeskAttentionInput {
   first: Int = 50
   "One record's row, for its case: every open item about it."
   recordId: ID
+  "Only rows with an item an agent's run is working on right now. A run that finished, failed or waits on a person is not working."
+  working: Boolean = false
 }
 
 "How a write an agent made ended."
@@ -121,6 +125,13 @@ type DeskActivityChange {
   proposalId: ID!
   "Null when the write named no record."
   record: DeskRecord
+  "What the write made, in words: the record it made or changed, or what the tool does."
+  what: String!
+  "Why the agent made it; empty when it gave no reason."
+  why: String!
+  "When the agent proposed it."
+  proposedAt: Timestamp!
+  "When it settled."
   at: Timestamp!
   outcome: DeskActivityOutcome!
   "Why it did not go through; empty when it did."

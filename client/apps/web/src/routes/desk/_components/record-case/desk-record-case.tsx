@@ -1,180 +1,317 @@
+import { recordSpace } from "@/stores/composer-draft-store";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
+import { CaseUnworked } from "./case-unworked";
+import { CaseOwner } from "./case-owner";
+import type { DeskStartExtras } from "@/components/desk-chat/desk-home-ask";
 import { DeskIcon } from "@/components/desk-chat/desk-icons";
+import { AiMarkdown } from "@/components/elements/ai-markdown";
 import { isRecordEntityType, recordPath } from "@/config/record-links";
+import { handleMutationError } from "@/hooks/use-api-mutation";
 import { usePermission } from "@/hooks/use-permission";
-import type { DeskAttentionItem } from "@/lib/graphql/desk-attention";
 import { isTypingTarget } from "@/lib/dom";
+import {
+  acceptDeskCaseRisk,
+  bringBackDeskCase,
+  putAwayDeskCase,
+  chooseDeskCaseOption,
+  type DeskCase,
+  type DeskCaseOption,
+} from "@/lib/graphql/desk-case";
+import { assistant } from "@/lib/queries/assistant";
+import { attention } from "@/lib/queries/attention";
 import { deskAttention } from "@/lib/queries/desk-attention";
+import { deskCase } from "@/lib/queries/desk-case";
+import { watchtower } from "@/lib/queries/watchtower";
+import { assistantService } from "@/services/assistant";
 import { useDeskMarginStore } from "@/stores/desk-margin-store";
-import { useDeskStore } from "@/stores/desk-store";
 import { useDeskSetting } from "@/stores/desk-settings-store";
-import { useQuery } from "@tanstack/react-query";
-import { NovaBadge } from "@trenova/shared/components/ui/nova-badge";
+import { useDeskStore } from "@/stores/desk-store";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNow } from "@trenova/shared/hooks/use-now";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { formatMinutesSpan, formatUnixTime, resolveUserTimezone } from "@trenova/shared/lib/date";
+import { resolveUserTimezone } from "@trenova/shared/lib/date";
+import { describeError } from "@trenova/shared/lib/error-presentation";
 import { cn } from "@trenova/shared/lib/utils";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router";
-import { InPlaceRecord, recordCardFor, usePreloadRecordCard } from "../artifacts/cards/registry";
-import { casePath } from "../attention/attention-record";
-import { dueTone } from "../attention/attention-row";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import { Link, Navigate, useLocation } from "react-router";
+import { useClaimOnOpen } from "./use-claim-on-open";
+import { casePath, startsCase } from "../attention/attention-record";
 import { DeclineDialog } from "../attention/decline-dialog";
-import { lensLabel } from "../attention/lens";
-import { useItemDecision } from "../attention/use-item-decision";
 import { useDesk } from "../desk-layout";
-import { formatCountdown, formatFactTime, minutesLeft } from "../watchtower/lanes";
+import { AcceptRiskDialog } from "./accept-risk-dialog";
+import { CaseDock } from "./case-dock";
 import { CaseExhibits } from "./case-exhibits";
-import { CasePlan } from "./case-plan";
-import { casePageContext, caseSubjectOf } from "./case-subject";
+import { CaseFinding } from "./case-finding";
+import { CaseHead } from "./case-head";
+import { CaseOptions } from "./case-options";
+import { CasePlan, CasePlanDrafting, CasePlanNone } from "./case-plan";
+import { CaseAwayNotice, CasePutAway } from "./case-put-away";
+import { CaseSkeleton } from "./case-skeleton";
+import {
+  CASE_TRANSITION_CLASS,
+  casePageContext,
+  caseThreadOf,
+  threadSubjectOf,
+} from "./case-subject";
+import { useCaseDecision } from "./use-case-decision";
+import "./case.css";
 
-/** The finding's citations, each a numbered exhibit beside it. */
-function Cites({
-  count,
-  lit,
-  onLight,
-}: {
-  count: number;
-  lit: number | null;
-  onLight: (n: number | null) => void;
-}) {
-  const t = useT();
+/** How often the case is read again while something on it is in motion. */
+const MOVING_REFETCH_MS = 2000;
+
+// The shipment's own upload, read only when a person opens it from a case.
+const CasePodUpload = lazy(() => import("./case-pod-upload"));
+
+/** How long the page watches for an agent's work after handing a case to it. */
+const HANDED_WATCH_MS = 30 * 1000;
+
+/** True while an agent the person just put on the case has drafted nothing yet. */
+function awaitingAgent(data: DeskCase | undefined, handedAt: number | null): boolean {
   return (
-    <>
-      {Array.from({ length: count }, (_, index) => index + 1).map((n) => (
-        <button
-          key={n}
-          type="button"
-          className={cn("dk-w-cite ui-focus-ring", lit === n && "dk-on")}
-          aria-label={t("Exhibit {0}", n)}
-          onMouseEnter={() => onLight(n)}
-          onMouseLeave={() => onLight(null)}
-          onFocus={() => onLight(n)}
-          onBlur={() => onLight(null)}
-          onClick={() =>
-            document.getElementById(`dk-w-exh-${n}`)?.scrollIntoView({ block: "nearest" })
-          }
-        >
-          {n}
-        </button>
-      ))}
-    </>
+    handedAt !== null &&
+    Date.now() - handedAt < HANDED_WATCH_MS &&
+    data !== undefined &&
+    data.decision === null &&
+    data.options.length === 0
+  );
+}
+
+/** True while the server is doing something the page is waiting to draw. */
+function inMotion(data: DeskCase | undefined): boolean {
+  if (!data) {
+    return false;
+  }
+  const phase = data.decision?.phase;
+
+  return (
+    data.drafting ||
+    phase === "Undoable" ||
+    phase === "Running" ||
+    data.finding?.readingStatus === "Writing" ||
+    (data.handOff?.working === true && data.decision === null && data.options.length === 0)
   );
 }
 
 /**
  * A record's case: one record and every open signal about it, read as one
  * decision. Its head says what the record is and how long is left; under it,
- * what the agent found, with each claim numbered to the exhibit it rests on;
- * why it matters and what it proposes; the plan to approve or decline as
- * written; and the record itself. The exhibits run down the side, and the box
- * at the foot asks Nova in the margin with the record attached.
+ * what was found, each claim numbered to the exhibit it rests on, and why it
+ * can be acted on; what could happen; and the plan to approve or decline as
+ * written. The evidence runs down the side, and the box at the foot asks
+ * Nova in the margin with the record attached. The page serves a late
+ * shipment, an invoice past due and a disputed invoice alike: the server
+ * decides what a case of each kind is made of.
  */
 export function DeskRecordCase({ kind, id }: { kind: string; id: string }) {
   const t = useT();
-  const navigate = useNavigate();
   const desk = useDesk();
+  const queryClient = useQueryClient();
   const user = useAuthStore((state) => state.user);
   const timezone = resolveUserTimezone(user?.timezone);
   const now = useNow("minute");
   const { allowed: canWatch } = usePermission(Resource.Watchtower, Operation.Read);
-  const { allowed: canDecide } = usePermission(Resource.AgentProposal, Operation.Update);
+  const { allowed: mayResolve } = usePermission(Resource.Watchtower, Operation.Update);
+  const { allowed: mayDecide } = usePermission(Resource.AgentProposal, Operation.Update);
   const preferredAgent = useDeskSetting("agent");
-  const entry = recordCardFor(kind);
-  usePreloadRecordCard(entry);
+  // Opened from the Watchtower to be worked: an unworked case starts at once.
+  const startOnOpen = startsCase(useLocation().state);
 
-  const attention = useQuery({ ...deskAttention.list({ recordId: id }), enabled: canWatch });
-  const group = attention.data?.groups[0] ?? null;
-  const items: DeskAttentionItem[] = group?.items ?? [];
-  const record = group?.record ?? null;
-  const label = record?.readable && record.label !== "" ? record.label : id;
-  const decisionItem = items.find((item) => item.deskLens === "Decisions") ?? null;
-  const decision = useItemDecision(decisionItem);
-  const finder = decisionItem?.agentWork ?? items.find((item) => item.agentWork)?.agentWork ?? null;
-  const condition = items.find((item) => item.deskLens === "Watchtower") ?? null;
+  // When the person handed the case to an agent from this page: the page
+  // watches for what the agent drafts until it lands or the wait runs out.
+  const handedAt = useRef<number | null>(null);
+  const query = useQuery({
+    ...deskCase.detail(kind, id, timezone),
+    enabled: canWatch,
+    refetchInterval: (current) =>
+      inMotion(current.state.data) || awaitingAgent(current.state.data, handedAt.current)
+        ? MOVING_REFETCH_MS
+        : false,
+  });
+  const data = query.data;
+  // A case someone else owns is read, not decided: its owner, or whoever
+  // covers for them, works it.
+  const ownCase = data?.ownership.canWork ?? true;
+  const canDecide = mayDecide && ownCase;
+  const canResolve = mayResolve && ownCase;
+  const decision = data?.decision ?? null;
+  const state = useCaseDecision(decision);
   const [lit, setLit] = useState<number | null>(null);
   const [declining, setDeclining] = useState(false);
-  const minutes = minutesLeft(group?.dueAt, now);
-  const countdown = formatCountdown(t, minutes);
+  const [accepting, setAccepting] = useState(false);
+  const [uploadingPod, setUploadingPod] = useState(false);
+  const [acceptBusy, setAcceptBusy] = useState(false);
+  const [acceptFailure, setAcceptFailure] = useState("");
+  const [choosing, setChoosing] = useState<string | null>(null);
+  const [chooseFailure, setChooseFailure] = useState("");
+  const sending = useRef(false);
+  const label = data?.record.label ?? "";
+  const caseAgentId = decision?.agent?.id ?? data?.finding?.agent?.id ?? null;
   const pageLink = isRecordEntityType(kind) ? recordPath(kind, id) : null;
+  const chosen = data?.options.find((option) => option.chosen) ?? null;
+  const agentName = decision?.agent?.name ?? data?.finding?.agent?.name ?? null;
+  const optionsOpen =
+    decision === null || decision.phase === "Awaiting" || decision.phase === "Declined";
 
   // The case is what ⌘J and Ask take with them, and it joins Open work.
-  const setPageSubject = useDeskMarginStore((state) => state.setPageSubject);
-  const noteOpenWork = useDeskMarginStore((state) => state.noteOpenWork);
+  const setPageSubject = useDeskMarginStore((store) => store.setPageSubject);
+  const setCasePage = useDeskMarginStore((store) => store.setCasePage);
+  const noteOpenWork = useDeskMarginStore((store) => store.noteOpenWork);
   useEffect(() => {
-    const subject = { kind, id, label };
-    setPageSubject(subject);
-    if (record?.readable) {
-      noteOpenWork(subject);
+    if (label === "") {
+      return;
     }
-  }, [id, kind, label, noteOpenWork, record?.readable, setPageSubject]);
-  useEffect(() => () => setPageSubject(null), [setPageSubject]);
+    const subject = { kind, id, label, agentId: caseAgentId ?? undefined };
+    setPageSubject(subject);
+    setCasePage(subject);
+    noteOpenWork(subject);
+  }, [caseAgentId, id, kind, label, noteOpenWork, setCasePage, setPageSubject]);
+  useEffect(
+    () => () => {
+      setPageSubject(null);
+      setCasePage(null);
+    },
+    [setCasePage, setPageSubject],
+  );
 
-  // ⌘Enter approves the plan in front of the person; D declines it.
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      if (event.defaultPrevented || declining || decision.phase !== "idle" || !canDecide) {
-        return;
-      }
-      if (decision.proposals.length === 0) {
-        return;
-      }
-      const unseen = decision.tally.loading + decision.tally.failed + decision.tally.stale;
-      if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
-        const box = event.target instanceof HTMLTextAreaElement ? event.target : null;
-        if (box && box.value.trim() !== "") {
-          return;
-        }
-        event.preventDefault();
-        if (unseen === 0) {
-          void decision.approve();
-        }
-        return;
-      }
-      if (
-        event.key.toLowerCase() === "d" &&
-        !event.metaKey &&
-        !event.ctrlKey &&
-        !event.altKey &&
-        !isTypingTarget(event.target)
-      ) {
-        event.preventDefault();
-        setDeclining(true);
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+  const refresh = () =>
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: deskCase._def }),
+      queryClient.invalidateQueries({ queryKey: deskAttention._def }),
+      queryClient.invalidateQueries({ queryKey: watchtower._def }),
+      queryClient.invalidateQueries({ queryKey: attention._def }),
+    ]);
+
+  useClaimOnOpen({
+    kind,
+    id,
+    ownership: data?.ownership,
+    enabled: startOnOpen,
+    onClaimed: refresh,
   });
 
-  const ask = (question: string) => {
-    const subject = { kind, id, label };
-    const caseType = caseSubjectOf(kind);
-    const existing =
-      caseType === null
-        ? null
-        : (desk.threads.find(
-            (thread) => thread.subjectType === caseType && thread.subjectId === id,
-          ) ?? null);
+  const choose = async (option: DeskCaseOption, redraft = false) => {
+    if (sending.current || !canDecide || (option.chosen && !redraft)) {
+      return;
+    }
+    sending.current = true;
+    setChoosing(option.id);
+    setChooseFailure("");
+    try {
+      await chooseDeskCaseOption(kind, id, option.id);
+    } catch (error) {
+      setChooseFailure(describeError(error).message);
+    } finally {
+      await refresh();
+      sending.current = false;
+      setChoosing(null);
+    }
+  };
+
+  // Putting a case away takes it out of Needs you for everyone (its open
+  // conditions are snoozed) and off this person's rail: their conversation on
+  // the case is put away with it, and a row only this session added is
+  // dropped. Bringing it back undoes both.
+  const [awayBusy, setAwayBusy] = useState(false);
+  const caseThread = caseThreadOf(desk.threads, kind, id, caseAgentId);
+  const moveAway = async (until: number | null) => {
+    if (sending.current) {
+      return;
+    }
+    sending.current = true;
+    setAwayBusy(true);
+    try {
+      if (until === null) {
+        await bringBackDeskCase(kind, id);
+        if (caseThread?.case?.state === "Snoozed") {
+          await assistantService.wakeCase(caseThread.id);
+        }
+      } else {
+        await putAwayDeskCase(kind, id, until);
+        if (caseThread?.case) {
+          await assistantService.snoozeCase(caseThread.id, { anchor: "Time", until });
+        }
+        useDeskMarginStore.getState().forgetOpenWork(kind, id);
+      }
+    } catch (error) {
+      handleMutationError({ error, resourceName: "Case" });
+    } finally {
+      await Promise.all([
+        refresh(),
+        queryClient.invalidateQueries({ queryKey: assistant.threads().queryKey }),
+      ]);
+      sending.current = false;
+      setAwayBusy(false);
+    }
+  };
+  // The person has done what they can for now: the plan ran or was declined,
+  // or the agent looked and proposed nothing. With something still open, the
+  // case can be put away rather than left sitting in front.
+  const restsForNow =
+    decision !== null
+      ? decision.phase === "Done" || decision.phase === "Declined"
+      : (data?.handOff?.note ?? "") !== "";
+  const canPutAway =
+    canResolve && data !== undefined && data.away === null && data.open > 0 && restsForNow;
+
+  const accept = async (reason: string) => {
+    if (sending.current) {
+      return;
+    }
+    sending.current = true;
+    setAcceptBusy(true);
+    setAcceptFailure("");
+    try {
+      await acceptDeskCaseRisk(kind, id, reason);
+      setAccepting(false);
+    } catch (error) {
+      setAcceptFailure(describeError(error).message);
+    } finally {
+      await refresh();
+      sending.current = false;
+      setAcceptBusy(false);
+    }
+  };
+
+  const ask = (question: string, agentId?: string, extras?: DeskStartExtras) => {
+    const trimmed = question.trim();
+    if (trimmed === "" || label === "") {
+      return;
+    }
+    const subject = { kind, id, label, agentId: caseAgentId ?? undefined };
+    const caseType = threadSubjectOf(kind);
+    const existing = caseThreadOf(desk.threads, kind, id, caseAgentId);
     const margin = useDeskMarginStore.getState();
-    const open = margin.margin?.threadId ?? existing?.id ?? null;
-    if (open !== null) {
-      useDeskStore.getState().askAgent(open, question);
+    // The margin may be holding another conversation (another agent's, or
+    // another record's); only the case's own is continued.
+    const open = existing?.id ?? null;
+    if (open !== null && (extras?.files.length ?? 0) === 0) {
+      useDeskStore.getState().askAgent(open, trimmed);
       margin.showThread(open, subject);
       return;
     }
-    const agent = desk.agents.find((choice) => choice.id === preferredAgent) ?? desk.agents[0];
-    if (!agent) {
-      margin.openMargin(subject);
+    // The agent on the case is the only one asked about it, whether it is
+    // one people chat with or one that runs on its own. A record with no
+    // agent on it takes the composer's pick.
+    const target =
+      caseAgentId ??
+      agentId ??
+      desk.agents.find((choice) => choice.id === preferredAgent)?.id ??
+      desk.agents[0]?.id;
+    margin.openMargin(subject);
+    if (!target) {
       return;
     }
-    margin.openMargin(subject);
     desk.startInMargin(
-      agent.id,
-      question,
-      { files: [], providerId: "", mentions: [{ type: kind, id, label }] },
+      target,
+      trimmed,
       {
-        title: label,
+        files: extras?.files ?? [],
+        providerId: extras?.providerId ?? "",
+        mentions: [{ type: kind, id, label }, ...(extras?.mentions ?? [])],
+      },
+      {
         subjectType: caseType ?? undefined,
         subjectId: caseType ? id : undefined,
         page: casePageContext(casePath(kind, id), kind, id, label),
@@ -182,276 +319,315 @@ export function DeskRecordCase({ kind, id }: { kind: string; id: string }) {
     );
   };
 
-  const raisedAt = condition ? formatFactTime(t, condition.occurredAt, now, timezone) : "";
-  const trust = [
-    condition && condition.impact.length > 0
-      ? { key: "matters", label: t("Why it matters"), value: condition.impact.join(" · ") }
-      : null,
-    countdown !== null && minutes !== null && group?.dueLabel
-      ? {
-          key: "nothing",
-          label: t("If nothing changes"),
-          value:
-            minutes >= 0
-              ? t("{0} in {1}.", group.dueLabel, countdown)
-              : t("{0}: already past, {1} ago.", group.dueLabel, formatMinutesSpan(-minutes)),
+  /** "Change values" is said in words: the box at the foot takes it to the agent. */
+  const focusAsk = () => {
+    const box = document.querySelector<HTMLElement>('#dk-cz-ask [role="textbox"]');
+    box?.focus();
+    box?.scrollIntoView({ block: "nearest" });
+  };
+
+  // ⌘Enter approves the plan in front of the person, D declines it, and
+  // 1–3 choose among what could happen.
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.defaultPrevented || declining || accepting || !canDecide || !data) {
+        return;
+      }
+      const awaiting = decision?.phase === "Awaiting";
+      if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+        // Words in the box at the foot are a question to send, not a plan to approve.
+        const box = event.target instanceof HTMLElement ? event.target : null;
+        if (box?.isContentEditable && box.textContent?.trim() !== "") {
+          return;
         }
-      : null,
-    decisionItem && finder?.agent
-      ? { key: "proposes", label: t("{0} proposes", finder.agent.name), value: decisionItem.title }
-      : null,
-    decisionItem
-      ? {
-          key: "why",
-          label: t("Needs your approval because"),
-          value: t("AI control lets this agent only propose this change; a person approves it."),
+        if (awaiting && !state.blocked && state.busy === null && state.steps.length > 0) {
+          event.preventDefault();
+          void state.approve();
         }
-      : null,
-  ].filter((cell): cell is { key: string; label: string; value: string } => cell !== null);
+        return;
+      }
+      if (event.metaKey || event.ctrlKey || event.altKey || isTypingTarget(event.target)) {
+        return;
+      }
+      if (event.key.toLowerCase() === "d" && awaiting && state.busy === null) {
+        event.preventDefault();
+        setDeclining(true);
+        return;
+      }
+      if (/^[1-3]$/.test(event.key) && optionsOpen) {
+        const option = data.options[Number(event.key) - 1];
+        if (option) {
+          event.preventDefault();
+          void choose(option);
+        }
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  });
+
+  // An invoice in dispute is worked as its dispute: the server answers with
+  // the case that holds the plan, and the address follows it.
+  if (data && (data.record.kind !== kind || data.record.id !== id)) {
+    return <Navigate replace to={casePath(data.record.kind, data.record.id)} />;
+  }
+
+  if (!canWatch) {
+    return (
+      <div className="dk-cz-scroll">
+        <div className="dk-cz">
+          <div className="dk-cz-main">
+            <div className="dk-w-banner">
+              <DeskIcon name="lock" size={14} />
+              <span>{t("You need access to Needs you to read a record's case.")}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  if (query.isPending) {
+    return <CaseSkeleton />;
+  }
+  if (query.isError || !data) {
+    return (
+      <div className="dk-cz-scroll">
+        <div className="dk-cz">
+          <div className="dk-cz-main">
+            <div className="dk-w-banner">
+              <DeskIcon name="alert" size={14} />
+              <span>
+                <b className="font-medium">{t("This case could not be read.")}</b>{" "}
+                {query.error ? describeError(query.error).message : ""}{" "}
+                <Link className="dk-w-alnk ui-focus-ring" to="/desk/needs">
+                  {t("Back to Needs you")}
+                </Link>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const unchanged = data.finding?.trust.find((cell) => cell.key === "Unchanged")?.text ?? "";
 
   return (
-    <div className="dk-w-case-scroll">
-      <div className="dk-w-case">
-        <div className="dk-w-case-main">
-          <div className="dk-w-chead">
-            <div>
-              <div className="dk-w-chead-k">
-                <span>{record?.noun ?? kind}</span>
-                <span>·</span>
-                <span className="dk-w-mono">{label}</span>
-                {record?.readable && record.status !== "" && (
-                  <>
-                    <span>·</span>
-                    <span>{record.status}</span>
-                  </>
+    <div className={cn("dk-cz-page", CASE_TRANSITION_CLASS)}>
+      {/* With no evidence there is no second column: the reading takes the page. */}
+      <div className={cn("dk-cz animate-rise", data.exhibits.length === 0 && "grid-cols-1!")}>
+        <ScrollArea className="dk-cz-col" maskVariant="card">
+          <div className="dk-cz-main">
+            <CaseHead
+              data={data}
+              now={now}
+              recordPath={pageLink}
+              owner={
+                <CaseOwner
+                  kind={kind}
+                  id={id}
+                  label={label}
+                  ownership={data.ownership}
+                  onChanged={refresh}
+                />
+              }
+            />
+            {data.away && (
+              <CaseAwayNotice
+                until={data.away.until}
+                timezone={timezone}
+                canBringBack={canResolve}
+                pending={awayBusy}
+                onBringBack={() => void moveAway(null)}
+              />
+            )}
+            {!ownCase && (
+              <p className="dk-cz-ro" role="status">
+                <DeskIcon name="lock" size={13} />
+                {t(
+                  "{0} owns this case and decides it. You can read it and ask about it.",
+                  data.ownership.owner?.name ?? t("Someone else"),
                 )}
+              </p>
+            )}
+            <CaseFinding data={data} timezone={timezone} lit={lit} onLight={setLit} />
+
+            <CaseOptions
+              options={data.options}
+              disabled={!optionsOpen || !canDecide || state.busy !== null}
+              pendingId={choosing}
+              onChoose={(option) => void choose(option)}
+            />
+            {chooseFailure !== "" && (
+              <div className="dk-w-banner">
+                <DeskIcon name="alert" size={14} />
+                <span>{chooseFailure}</span>
               </div>
-              <h1>{record?.readable && record.subtitle !== "" ? record.subtitle : label}</h1>
-              <div className="dk-w-chead-sub">
-                {group ? (
-                  <span
-                    className={cn(
-                      "dk-w-bdg",
-                      group.severity === "Critical"
-                        ? "dk-crit"
-                        : group.severity === "Warning"
-                          ? "dk-warn"
-                          : "dk-blue",
-                    )}
-                  >
-                    {t("{0, plural, one {# thing open} other {# things open}}", items.length)}
-                  </span>
-                ) : (
-                  attention.isSuccess && <span className="dk-w-bdg dk-ok">{t("Nothing open")}</span>
-                )}
-                <span>
-                  {items
-                    .map((item) => lensLabel(t, item.deskLens))
-                    .filter((lens, index, all) => all.indexOf(lens) === index)
-                    .join(" · ")}
-                </span>
-                {pageLink && (
-                  <Link className="dk-w-alnk ui-focus-ring" to={pageLink}>
-                    {t("Open the record")}
-                  </Link>
-                )}
+            )}
+
+            {chosen?.kind === "Leave" ? (
+              <CasePlanNone
+                title={
+                  unchanged !== "" ? t("Nothing changes. {0}", unchanged) : t("Nothing changes.")
+                }
+                note={
+                  data.open > 0
+                    ? t(
+                        "Nothing is drafted for this choice. Mark the risk accepted to clear it from Needs you, with a reason the team can read.",
+                      )
+                    : t("Nothing is drafted for this choice, and nothing is open about the record.")
+                }
+                action={
+                  canResolve && data.open > 0
+                    ? {
+                        label: t("Accept the risk…"),
+                        pending: false,
+                        onClick: () => setAccepting(true),
+                      }
+                    : null
+                }
+              />
+            ) : data.drafting || choosing !== null ? (
+              <CasePlanDrafting agentName={agentName ?? t("The agent")} />
+            ) : decision ? (
+              <CasePlan
+                data={data}
+                decision={decision}
+                state={state}
+                canDecide={canDecide}
+                timezone={timezone}
+                recordPath={pageLink}
+                onDecline={() => setDeclining(true)}
+                onChange={focusAsk}
+                onAsk={ask}
+              />
+            ) : chosen ? (
+              <CasePlanNone
+                title={
+                  data.draftNote !== ""
+                    ? t(
+                        "{0} finished without drafting a plan for this option.",
+                        agentName ?? t("The agent"),
+                      )
+                    : t("No plan is drafted for this option yet.")
+                }
+                note={
+                  data.draftNote !== "" ? (
+                    <AiMarkdown content={data.draftNote} className="text-xs" deskSubset />
+                  ) : (
+                    t("The agent drafts it against the record as it is now, for you to approve.")
+                  )
+                }
+                action={
+                  canDecide
+                    ? {
+                        label: data.draftNote !== "" ? t("Try again") : t("Draft the plan"),
+                        pending: choosing !== null,
+                        onClick: () => void choose(chosen, true),
+                      }
+                    : null
+                }
+              />
+            ) : data.handOff && data.options.length === 0 ? (
+              <CaseUnworked
+                key={data.handOff.itemId}
+                handOff={data.handOff}
+                canHandOff={canResolve}
+                autoStart={startOnOpen}
+                onHanded={() => {
+                  handedAt.current = Date.now();
+                  void refresh();
+                }}
+                onAcceptRisk={canResolve && data.open > 0 ? () => setAccepting(true) : null}
+                actions={
+                  data.handOff.kind === "PodMissing" && kind === "shipment"
+                    ? [
+                        { label: t("Upload the POD"), onClick: () => setUploadingPod(true) },
+                        {
+                          label: t("Request the driver's paperwork"),
+                          onClick: () =>
+                            ask(
+                              t(
+                                "The proof of delivery for {0} is missing. Ask its driver for the paperwork, or the carrier if a carrier hauled it, and draft the message for me to approve.",
+                                label,
+                              ),
+                            ),
+                        },
+                      ]
+                    : undefined
+                }
+              />
+            ) : null}
+            {canPutAway && (
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2.5 px-0.5">
+                <div className="min-w-0 flex-auto text-dsk-sm text-dsk-subtle">
+                  {t(
+                    "You have done what can be done here for now. Put the case away and it comes back when its time is up, or sooner if anything new is raised.",
+                  )}
+                </div>
+                <CasePutAway
+                  now={now}
+                  pending={awayBusy}
+                  onPutAway={(until) => void moveAway(until)}
+                />
               </div>
-            </div>
-            {countdown !== null && (
-              <div className="dk-w-chead-clk">
-                <div className={cn("dk-w-chead-v", dueTone(minutes))}>{countdown}</div>
-                <div className="dk-w-chead-l">{group?.dueLabel || t("until its deadline")}</div>
+            )}
+            {decision && decision.others > 0 && (
+              <div className="dk-cz-plan-more">
+                {t(
+                  "{0, plural, one {# other decision waits} other {# other decisions wait}} on this record.",
+                  decision.others,
+                )}{" "}
+                <Link className="dk-w-alnk ui-focus-ring" to="/desk/needs?lens=decisions">
+                  {t("See them in Needs you")}
+                </Link>
               </div>
             )}
           </div>
+        </ScrollArea>
 
-          {attention.isPending && canWatch ? (
-            <div className="dk-w-sk" aria-busy aria-label={t("Reading the case")}>
-              <i className="dk-sk" />
-              <i className="dk-sk" />
-            </div>
-          ) : items.length === 0 ? (
-            <div className="dk-w-find">
-              <div className="dk-w-banner">
-                <DeskIcon name="check" size={14} />
-                <span>
-                  {t("Nothing is open about this record. Ask Nova below if something looks wrong.")}
-                </span>
-              </div>
-            </div>
-          ) : finder?.agent && decisionItem ? (
-            <div className="dk-w-find">
-              <div className="dk-w-find-who">
-                <NovaBadge size="lg" />
-                <b>{finder.agent.name}</b>
-                {t(
-                  "found this at {0} from {1, plural, one {# source} other {# sources}}",
-                  formatUnixTime(decisionItem.occurredAt, { timezone }),
-                  items.length,
-                )}
-              </div>
-              <p className="dk-w-verdict">
-                {decision.proposals[0]?.rationale || decisionItem.summary || decisionItem.title}
-                <Cites count={items.length} lit={lit} onLight={setLit} />
-              </p>
-              {trust.length > 0 && (
-                <div className="dk-w-trust">
-                  {trust.map((cell) => (
-                    <div key={cell.key}>
-                      <span className="dk-w-trust-k">{cell.label}</span>
-                      {cell.value}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="dk-w-find">
-              <div className="dk-w-banner">
-                <DeskIcon name="radar" size={14} />
-                <span>
-                  {condition ? (
-                    <>
-                      <b className="font-medium">{t("Watchtower raised this {0}.", raisedAt)}</b>{" "}
-                      {condition.summary || condition.title}
-                    </>
-                  ) : (
-                    items[0]?.summary || items[0]?.title
-                  )}
-                  <Cites count={items.length} lit={lit} onLight={setLit} />
-                </span>
-              </div>
-              {trust.length > 0 && (
-                <div className="dk-w-trust">
-                  {trust.map((cell) => (
-                    <div key={cell.key}>
-                      <span className="dk-w-trust-k">{cell.label}</span>
-                      {cell.value}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {decisionItem && (
-            <CasePlan
-              item={decisionItem}
-              decision={decision}
-              canDecide={canDecide}
-              timezone={timezone}
-              onDecline={() => setDeclining(true)}
-            />
-          )}
-
-          {entry && (
-            <section aria-label={t("The record")} className="dk-w-case-rec">
-              <div className="dk-w-sh">
-                <h2>{t("The record")}</h2>
-              </div>
-              <InPlaceRecord
-                entry={entry}
-                recordId={id}
-                order={[id]}
-                onSelect={() => undefined}
-                onBack={() => void navigate("/desk/needs")}
-                backLabel={t("Needs you")}
-              />
-            </section>
-          )}
-        </div>
-
-        <CaseExhibits items={items} lit={lit} now={now} timezone={timezone} />
+        {data.exhibits.length > 0 && (
+          <CaseExhibits data={data} lit={lit} now={now} timezone={timezone} />
+        )}
       </div>
 
-      <CaseDock label={label} onAsk={ask} />
+      <CaseDock
+        space={recordSpace(kind, id)}
+        label={label}
+        starters={data.starters}
+        agentId={caseAgentId}
+        agentName={agentName}
+        onAsk={ask}
+      />
 
       <DeclineDialog
         open={declining}
-        agentName={finder?.agent?.name ?? null}
-        pending={decision.phase === "deciding"}
+        agentName={decision?.agent?.name ?? null}
+        pending={state.busy === "decline"}
         onOpenChange={setDeclining}
         onDecline={async (reason) => {
-          await decision.decline(reason);
+          await state.decline(reason);
           setDeclining(false);
         }}
       />
-    </div>
-  );
-}
-
-/**
- * The box at the foot of the case: a few questions worth asking about it and
- * a line to ask your own. The answer opens in Nova's margin, beside the case,
- * with the record attached.
- */
-function CaseDock({ label, onAsk }: { label: string; onAsk: (question: string) => void }) {
-  const t = useT();
-  const [draft, setDraft] = useState("");
-  const starters = [
-    t("What happens if nothing changes?"),
-    t("What are my options here?"),
-    t("Draft a note to the customer about this"),
-  ];
-  const send = (question: string) => {
-    const trimmed = question.trim();
-    if (trimmed === "") {
-      return;
-    }
-    setDraft("");
-    onAsk(trimmed);
-  };
-
-  return (
-    <div className="dk-w-dock">
-      <div className="dk-w-chips" aria-label={t("Suggested questions")}>
-        {starters.map((question) => (
-          <button
-            key={question}
-            type="button"
-            className="dk-w-chip ui-focus-ring"
-            onClick={() => send(question)}
-          >
-            {question}
-          </button>
-        ))}
-      </div>
-      <div className="dk-w-cmp">
-        <label className="sr-only" htmlFor="dk-w-case-ask">
-          {t("Ask about {0}", label)}
-        </label>
-        <textarea
-          id="dk-w-case-ask"
-          rows={1}
-          value={draft}
-          placeholder={t("Ask about {0}, or tell the agent what to change…", label)}
-          onChange={(event) => setDraft(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === "Enter" && !event.shiftKey && !event.metaKey && !event.ctrlKey) {
-              event.preventDefault();
-              send(draft);
-            }
-            if (event.key === "Escape") {
-              event.currentTarget.blur();
-            }
-          }}
-        />
-        <div className="dk-w-cmp-row">
-          <span className="dk-w-cmp-ctx" title={t("Shared with the question")}>
-            <DeskIcon name="pin" size={11} />
-            {label}
-          </span>
-          <span className="dk-w-sp" />
-          <button
-            type="button"
-            className={cn("dk-w-send ui-focus-ring", draft.trim() !== "" && "dk-on")}
-            aria-label={t("Send")}
-            onClick={() => send(draft)}
-          >
-            <DeskIcon name="up" size={14} />
-          </button>
-        </div>
-      </div>
+      {uploadingPod && (
+        <Suspense fallback={null}>
+          <CasePodUpload
+            shipmentId={id}
+            open={uploadingPod}
+            onClose={() => setUploadingPod(false)}
+            onUploaded={() => void refresh()}
+          />
+        </Suspense>
+      )}
+      <AcceptRiskDialog
+        open={accepting}
+        label={label}
+        pending={acceptBusy}
+        failure={acceptFailure}
+        onOpenChange={setAccepting}
+        onAccept={accept}
+      />
     </div>
   );
 }

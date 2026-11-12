@@ -3,6 +3,7 @@ package agentplanrepository
 import (
 	"context"
 	"fmt"
+	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/caseownerquery"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
@@ -127,7 +128,9 @@ func (r *repository) ListConnection(
 			result, err := listquery.Connection(
 				ctx,
 				r.db.Keel(ctx),
-				agentplandb.AgentPlans.Query(),
+				agentplandb.AgentPlans.Where(
+					caseownerquery.InSight(agentplandb.AgentPlans.TargetID, req.Sight),
+				),
 				&listquery.Request[agentplan.AgentPlan]{
 					Filter:  req.Filter,
 					Cursor:  req.Cursor,

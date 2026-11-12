@@ -1,3 +1,4 @@
+import { CaseViewers } from "../record-case/case-viewers";
 import { DeleteConversationCard } from "@/components/assistant/delete-conversation-card";
 import { useDeleteConversation } from "@/components/assistant/use-delete-conversation";
 import { DeskAgentTile } from "@/components/desk-chat/desk-agent-tile";
@@ -14,7 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@trenova/shared/components/ui/dropdown-menu";
 import { NovaBadge } from "@trenova/shared/components/ui/nova-badge";
-import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
+import { useT } from "@trenova/shared/i18n/use-t";
 import { resolveUserTimezone } from "@trenova/shared/lib/date";
 import { isMacPlatform } from "@trenova/shared/lib/shortcuts";
 import { cn } from "@trenova/shared/lib/utils";
@@ -27,6 +28,8 @@ import { DeskCaseMenu } from "../case/desk-case-menu";
 import { DeskThreadTitle } from "../desk-thread-title";
 import { DeskHandoffMenu } from "../handoff/desk-handoff-menu";
 import type { DeskPlace } from "../rail/desk-rail";
+import { DeskShare } from "./desk-share";
+import { placeName } from "./desk-title";
 import { DeskSituation } from "./desk-situation";
 import "./top.css";
 
@@ -80,21 +83,6 @@ function Crumbs({ lead, page }: { lead?: ReactNode; page: ReactNode }) {
       <b>{page}</b>
     </>
   );
-}
-
-function placeName(t: TranslateFn, place: DeskPlace): string {
-  switch (place) {
-    case "triage":
-      return t("Triage");
-    case "decisions":
-      return t("Decisions");
-    case "scheduled":
-      return t("Scheduled");
-    case "memory":
-      return t("Memory");
-    default:
-      return t("Today");
-  }
 }
 
 export type DeskTopProps = {
@@ -155,6 +143,7 @@ export function DeskTop({
   const t = useT();
   const [search] = useSearchParams();
   const subject = useDeskMarginStore((state) => state.pageSubject);
+  const pageTitle = useDeskMarginStore((state) => state.pageTitle);
   const marginOpen = useDeskMarginStore((state) => state.margin !== null);
   const toggleMargin = useDeskMarginStore((state) => state.toggleMargin);
   const deletion = useDeleteConversation(onDelete);
@@ -197,9 +186,11 @@ export function DeskTop({
     <Crumbs lead={<span className="dk-tb-c">{t("Case")}</span>} page={subject?.label ?? ""} />
   ) : place === "handled" ? (
     <Crumbs
-      lead={<span className="dk-tb-c">{t("Nova handled")}</span>}
-      page={t("What an agent did")}
+      lead={<span className="dk-tb-c">{t("Agents handled")}</span>}
+      page={pageTitle ?? t("What an agent did")}
     />
+  ) : place === "view" ? (
+    <Crumbs lead={<span className="dk-tb-c">{t("View")}</span>} page={pageTitle ?? ""} />
   ) : (
     <Crumbs page={placeName(t, place)} />
   );
@@ -215,6 +206,20 @@ export function DeskTop({
         </TopIconButton>
       )}
       <div className="dk-tb-ttl">{crumbs}</div>
+      {place === "case" && canWatch && <CaseViewers />}
+      {place !== "today" && (
+        <DeskShare
+          record={
+            subject
+              ? {
+                  kind: subject.kind,
+                  id: subject.id,
+                  title: subject.label,
+                }
+              : null
+          }
+        />
+      )}
 
       {!inThread && <DeskSituation canWatch={canWatch} needsYou={needsYou} />}
       <button

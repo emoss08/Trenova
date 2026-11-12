@@ -1,7 +1,7 @@
 import type { DeskAttentionGroup, DeskAttentionItem } from "@/lib/graphql/desk-attention";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { describe, expect, it } from "vitest";
-import { groupLenses, groupName, lensFromParam, lensParam, DESK_LENSES } from "../lens";
+import { groupLenses, groupName, lensFromParam, lensParam, NEEDS_LENSES } from "../lens";
 
 const t = ((text: string, ...args: unknown[]) =>
   text.replace(/\{(\d+)\}/g, (_, index: string) => String(args[Number(index)]))) as TranslateFn;
@@ -27,15 +27,21 @@ function group(overrides: Partial<DeskAttentionGroup>): DeskAttentionGroup {
     dueLabel: null,
     unseen: false,
     items: [item({})],
+    ownership: null,
     ...overrides,
   };
 }
 
 describe("Needs you lenses", () => {
   it("reads every lens back from the address it writes", () => {
-    for (const lens of DESK_LENSES) {
+    for (const lens of NEEDS_LENSES) {
       expect(lensFromParam(lensParam(lens) || null)).toBe(lens);
     }
+  });
+
+  it("has no lens for messages, which are worked in Triage", () => {
+    expect(NEEDS_LENSES).toEqual(["Everything", "Watchtower", "Decisions"]);
+    expect(lensFromParam("triage")).toBe("Everything");
   });
 
   it("falls back to everything for an address it does not know", () => {
@@ -92,7 +98,9 @@ describe("a row's name", () => {
 
   it("is what its lead item is about when it is about nothing beyond itself", () => {
     const row = group({
-      items: [item({ record: { kind: "inbound_message", noun: "Message", label: "Rate con for S-1" } })],
+      items: [
+        item({ record: { kind: "inbound_message", noun: "Message", label: "Rate con for S-1" } }),
+      ],
     });
 
     expect(groupName(t, row)).toBe("Rate con for S-1");

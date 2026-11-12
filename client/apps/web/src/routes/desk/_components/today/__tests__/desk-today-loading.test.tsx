@@ -1,3 +1,4 @@
+import { writeInBox } from "@/components/desk-chat/composer/editor/editor-test-kit";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
@@ -30,6 +31,10 @@ vi.mock("@/lib/queries/briefing", () => ({
 vi.mock("@/lib/queries/assistant", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/queries/assistant")>()),
   assistant: {
+    mentionSearch: (query: string, tab: string) => ({
+      queryKey: ["mention-search", query, tab],
+      queryFn: () => [],
+    }),
     commands: (agentId: string) => ({
       queryKey: ["assistant-commands", agentId],
       queryFn: () => ({ commands: [] }),
@@ -338,7 +343,7 @@ describe("Desk home composer", () => {
     renderHome({ onStart });
 
     const box = await screen.findByRole("textbox", { name: "Message Dispatch" });
-    fireEvent.change(box, { target: { value: "Who is free near Joliet?" } });
+    writeInBox(box, "Who is free near Joliet?");
     fireEvent.keyDown(box, { key: "Enter" });
 
     await waitFor(() =>

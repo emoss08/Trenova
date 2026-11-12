@@ -99,6 +99,7 @@ func DescribeAccountingDriftAttention(
 		SubjectID:   group.SampleID,
 		EventKind:   agenttrigger.EventAccountingDriftDetected,
 		Path:        AccountingDriftPath,
+		Panel:       booksPanel(provider, int64(group.Count), group.OldestDetectedAt),
 		OccurredAt:  group.OldestDetectedAt,
 	}, true
 }

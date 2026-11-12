@@ -1,9 +1,10 @@
 import { DeskConversationSkeleton } from "@/components/desk-chat/desk-skeletons";
 import { conversationAtPath } from "@/lib/conversation-path";
 import { useT } from "@trenova/shared/i18n/use-t";
+import { cn } from "@trenova/shared/lib/utils";
 import { useLocation } from "react-router";
 import "@/components/desk-chat/desk-frame.css";
-import "./_components/rail/rail.css";
+import { RAIL_LIST_CLASS, RAIL_TOP_CLASS, railClass } from "./_components/rail/rail-classes";
 import "./_components/today/today.css";
 import "./_components/top/top.css";
 
@@ -55,15 +56,15 @@ export function DeskLoadingScreen() {
       <span role="status" className="sr-only">
         {t("Opening the desk")}
       </span>
-      <aside className="dk-rl" aria-hidden>
-        <div className="dk-rl-top">
+      <aside className={railClass("pinned")} aria-hidden>
+        <div className={RAIL_TOP_CLASS}>
           <i className="dk-sk dk-sk-ic" />
           <i className="dk-sk dk-sk-logo" />
           <span className="dk-sk-sp" />
           <i className="dk-sk dk-sk-ic" />
           <i className="dk-sk dk-sk-ic" />
         </div>
-        <div className="dk-rl-list dk-skr-list">
+        <div className={cn(RAIL_LIST_CLASS, "dk-skr-list")}>
           {PLACE_WIDTHS.map((width) => (
             <div key={width} className="dk-skr">
               <i className="dk-sk dk-sk-glyph" />

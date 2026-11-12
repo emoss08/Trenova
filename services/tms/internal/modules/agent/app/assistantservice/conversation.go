@@ -20,6 +20,7 @@ func (s *Service) titleIfUnnamed(
 	}
 
 	thread.Title = conversation.TitleFrom(firstMessage)
+	thread.TitleSource = conversation.TitleFromQuestion
 	if _, err := s.conversations.UpdateThread(ctx, thread); err != nil {
 		// A missing title is cosmetic, so it must not fail a turn that otherwise
 		// succeeded and is already saved.

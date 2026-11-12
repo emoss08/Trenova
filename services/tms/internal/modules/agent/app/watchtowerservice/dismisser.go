@@ -2,6 +2,7 @@ package watchtowerservice
 
 import (
 	"context"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/caseownerports"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
@@ -30,6 +31,7 @@ func NewDismisser(p DismisserParams) *Dismisser {
 
 type kindAccess struct {
 	permissions permissionports.PermissionEngine
+	owners      caseownerports.Service
 }
 
 // visibleKinds is the kinds this reader may be shown: those whose source
@@ -123,6 +125,9 @@ func (d *Dismisser) PlanDismiss(
 	if err != nil {
 		return nil, err
 	}
+	if err = d.exceptions.access.assertMayWork(ctx, actor, item); err != nil {
+		return nil, err
+	}
 
 	dismissed := *item
 	if !dismissed.IsResolved() {
@@ -151,6 +156,33 @@ func (a kindAccess) assertMaySee(
 	if len(kinds) == 0 {
 		return errortypes.NewAuthorizationError("You cannot see this watchtower item")
 	}
+	if item.AboutID.IsNil() {
+		return nil
+	}
+
+	standing, err := a.owners.Standing(ctx, caseownerports.RecordRequest{
+		TenantInfo: actor.TenantInfo(),
+		RecordID:   item.AboutID,
+	}, actor)
+	if err != nil {
+		return err
+	}
+	if !standing.CanSee {
+		return errortypes.NewAuthorizationError("This item belongs to a case someone else owns")
+	}
 
 	return nil
+}
+
+// assertMayWork refuses a change to an item about a record whose case is
+// someone else's: its owner works what is open about it.
+func (a kindAccess) assertMayWork(
+	ctx context.Context,
+	actor *permissionports.RequestActor,
+	item *watchtower.Item,
+) error {
+	return a.owners.AssertMayWork(ctx, caseownerports.RecordRequest{
+		TenantInfo: actor.TenantInfo(),
+		RecordID:   item.AboutID,
+	}, actor)
 }

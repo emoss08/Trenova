@@ -40,11 +40,7 @@ func (r *repository) Raise(
 	ctx context.Context,
 	review *audit.Review,
 ) (*audit.Review, bool, error) {
-	type raised struct {
-		review  *audit.Review
-		created bool
-	}
-	out, err := dbtx.Write(ctx, r.db, func(ctx context.Context) (raised, error) {
+	return dbtx.Write2(ctx, r.db, func(ctx context.Context) (*audit.Review, bool, error) {
 		rv := auditdb.Reviews
 		inserted, err := rv.CreateOrSkip(
 			ctx,
@@ -55,29 +51,29 @@ func (r *repository) Raise(
 			rv.DedupeKey,
 		)
 		if err != nil {
-			return raised{}, reviewErrors.Map(err, review.DedupeKey)
+			return nil, false, r.raiseFailed(review, err)
 		}
 		if inserted > 0 {
-			return raised{review: review, created: true}, nil
+			return review, true, nil
 		}
 
 		existing, err := rv.Where(rv.DedupeKey.Eq(review.DedupeKey)).One(ctx, r.db.Keel(ctx))
 		if err != nil {
-			return raised{}, reviewErrors.Map(err, review.DedupeKey)
+			return nil, false, r.raiseFailed(review, err)
 		}
 
-		return raised{review: existing}, nil
+		return existing, false, nil
 	})
-	if err != nil {
-		r.l.Error(
-			"failed to raise an audit review",
-			zap.String("kind", string(review.Kind)),
-			zap.Error(err),
-		)
-		return nil, false, err
-	}
+}
 
-	return out.review, out.created, nil
+func (r *repository) raiseFailed(review *audit.Review, err error) error {
+	r.l.Error(
+		"failed to raise an audit review",
+		zap.String("kind", string(review.Kind)),
+		zap.Error(err),
+	)
+
+	return reviewErrors.Map(err, review.DedupeKey)
 }
 
 func (r *repository) List(

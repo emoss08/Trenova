@@ -1,7 +1,7 @@
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import type { BillingQueueLane } from "@trenova/shared/types/billing-queue";
 
-/** Each open lane's place on the queue's bar and beside its heading. */
+/** Each lane's place on the queue's bar and beside its heading. */
 export const LANE_DOT: Record<BillingQueueLane, string> = {
   NeedsYou: "bg-warning",
   Ready: "bg-success",
@@ -13,7 +13,7 @@ export const LANE_DOT: Record<BillingQueueLane, string> = {
 };
 
 /** Lanes that start folded: nobody works them item by item. */
-export const LANES_FOLDED_BY_DEFAULT: readonly BillingQueueLane[] = ["Held", "Approved"];
+export const LANES_FOLDED_BY_DEFAULT: readonly BillingQueueLane[] = ["Held", "Approved", "Closed"];
 
 export function laneLabel(lane: BillingQueueLane, t: TranslateFn): string {
   switch (lane) {

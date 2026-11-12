@@ -1,7 +1,10 @@
 "use no memo";
+import { RAIL_LIST_CLASS } from "./rail-classes";
+import { HoverGlideGroup } from "@/components/hover-glide";
 import { deskRailRowKey, type DeskRailRow } from "@/components/desk-chat/rail/desk-rail-rows";
 import { DESK_SHELF_KEYS, type DeskShelfKey } from "@/components/desk-chat/rail/desk-threads";
 import { useVirtualizer } from "@tanstack/react-virtual";
+import { cn } from "@trenova/shared/lib/utils";
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 
 /** Rows from the place a shelf's next page arrives at which it is asked for. */
@@ -13,6 +16,7 @@ const INITIAL_HEIGHT = 900;
 const ROW_ESTIMATE: Record<DeskRailRow["kind"], number> = {
   shelf: 37,
   thread: 44,
+  case: 44,
   more: 30,
 };
 
@@ -27,6 +31,8 @@ type RailListProps = {
   empty: ReactNode;
   /** Told which conversations are drawn, overscan included, and told none when the list goes. */
   onThreadsInView?: (threadIds: readonly string[]) => void;
+  /** Names the list as the region that moves when the rail changes view. */
+  className?: string;
 };
 
 /**
@@ -42,6 +48,7 @@ export function RailList({
   onLoadMore,
   empty,
   onThreadsInView,
+  className,
 }: RailListProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const navRef = useRef<HTMLDivElement>(null);
@@ -117,21 +124,25 @@ export function RailList({
   useEffect(() => () => onThreadsInView?.([]), [onThreadsInView]);
 
   return (
-    <div className="dk-rl-list" ref={scrollRef}>
-      <div ref={navRef}>{nav}</div>
-      <div ref={bodyRef} className="relative" style={{ height: totalSize }}>
-        {items.map((item) => (
-          <div
-            key={item.key}
-            data-index={item.index}
-            ref={virtualizer.measureElement}
-            className="absolute inset-x-0 top-0"
-            style={{ transform: `translateY(${item.start - scrollMargin}px)` }}
-          >
-            {renderRow(rows[item.index])}
-          </div>
-        ))}
-      </div>
+    <div className={cn(RAIL_LIST_CLASS, className)} ref={scrollRef}>
+      <HoverGlideGroup className="bg-transparent" glideClassName="rounded-[8px] bg-dsk-hover">
+        <div ref={navRef} className="flex flex-col gap-1">
+          {nav}
+        </div>
+        <div ref={bodyRef} className="relative" style={{ height: totalSize }}>
+          {items.map((item) => (
+            <div
+              key={item.key}
+              data-index={item.index}
+              ref={virtualizer.measureElement}
+              className="absolute inset-x-0 top-0"
+              style={{ transform: `translateY(${item.start - scrollMargin}px)` }}
+            >
+              {renderRow(rows[item.index])}
+            </div>
+          ))}
+        </div>
+      </HoverGlideGroup>
       {rows.length === 0 && empty}
     </div>
   );

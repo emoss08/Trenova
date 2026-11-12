@@ -3,6 +3,10 @@ package watchtowerservice
 import (
 	"context"
 	"strconv"
+	"strings"
+
+	"github.com/emoss08/trenova/internal/modules/agent/ports/caseownerports"
+	"github.com/emoss08/trenova/shared/stringutils"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
@@ -12,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -37,6 +42,7 @@ type ExceptionsParams struct {
 	Permissions   permissionports.PermissionEngine
 	Audit         auditports.AuditService
 	Notifications *notificationservice.Service
+	Owners        caseownerports.Service
 }
 
 type Exceptions struct {
@@ -60,7 +66,7 @@ func NewExceptions(
 		projector:     p.Projector,
 		router:        p.Router,
 		permissions:   p.Permissions,
-		access:        kindAccess{permissions: p.Permissions},
+		access:        kindAccess{permissions: p.Permissions, owners: p.Owners},
 		audit:         p.Audit,
 		notifications: p.Notifications,
 		now:           timeutils.NowUnix,
@@ -70,6 +76,114 @@ func NewExceptions(
 var _ watchtowerports.ExceptionService = (*Exceptions)(nil)
 
 func AsExceptionService(e *Exceptions) watchtowerports.ExceptionService { return e }
+
+func AsRecordSettler(e *Exceptions) watchtowerports.RecordSettler { return e }
+
+func AsRunSettler(e *Exceptions) watchtowerports.RunSettler { return e }
+
+const maxSettledItems = 25
+
+// SettleRecord resolves every condition open about a record as fixed, by the
+// person whose approval ran the plan and through the path their own Resolve
+// takes, so each close is permission-checked, audited and on the item's trail.
+// It reports how many it closed; one it may not close, or that moved since it
+// was read, stays open and is logged.
+func (s *Exceptions) SettleRecord(
+	ctx context.Context,
+	req *watchtowerports.SettleRecordRequest,
+	actor *permissionports.RequestActor,
+) int {
+	if req == nil || req.RecordID.IsNil() || actor == nil {
+		return 0
+	}
+
+	scoped := dbscope.WithTenant(ctx, req.TenantInfo.DBTenant())
+	open, err := s.repo.List(scoped, watchtowerports.ListWatchtowerItemsQuery{
+		TenantInfo:     req.TenantInfo,
+		UnresolvedOnly: true,
+		AboutIDs:       []pulid.ID{req.RecordID},
+		Limit:          maxSettledItems,
+	})
+	if err != nil {
+		s.l.Warn("could not read what is open about a record a plan finished on",
+			zap.String("record", req.RecordID.String()), zap.Error(err))
+
+		return 0
+	}
+
+	settled := 0
+	for _, item := range open {
+		if item.SourceKind.DeskLens() == watchtower.DeskLensDecisions {
+			continue
+		}
+		if _, err = s.ResolveException(ctx, &watchtowerports.ResolveExceptionRequest{
+			ExceptionTarget: watchtowerports.ExceptionTarget{
+				TenantInfo:      req.TenantInfo,
+				ItemID:          item.ID,
+				ExpectedVersion: item.Version,
+			},
+			Code: watchtower.ResolutionFixed,
+			Note: req.Note,
+		}, actor); err != nil {
+			s.l.Warn("a finished plan left a condition open",
+				zap.String("item", item.ID.String()), zap.Error(err))
+
+			continue
+		}
+		settled++
+	}
+
+	return settled
+}
+
+func (s *Exceptions) SettleRun(
+	ctx context.Context,
+	req *watchtowerports.SettleRunRequest,
+	actor *permissionports.RequestActor,
+) int {
+	if req == nil || req.RunID.IsNil() || actor == nil {
+		return 0
+	}
+
+	scoped := dbscope.WithTenant(ctx, req.TenantInfo.DBTenant())
+	handed, err := s.repo.List(scoped, watchtowerports.ListWatchtowerItemsQuery{
+		TenantInfo:     req.TenantInfo,
+		UnresolvedOnly: true,
+		AgentRunID:     req.RunID,
+		Limit:          maxSettledItems,
+	})
+	if err != nil {
+		s.l.Warn("could not read what a finished run was working",
+			zap.String("run", req.RunID.String()), zap.Error(err))
+
+		return 0
+	}
+
+	note := stringutils.Ellipsize(strings.TrimSpace(req.Note), watchtower.MaxNoteLength)
+	settled := 0
+	for _, item := range handed {
+		if item.SourceKind.DeskLens() == watchtower.DeskLensDecisions {
+			continue
+		}
+		if _, err = s.ResolveException(ctx, &watchtowerports.ResolveExceptionRequest{
+			ExceptionTarget: watchtowerports.ExceptionTarget{
+				TenantInfo:      req.TenantInfo,
+				ItemID:          item.ID,
+				ExpectedVersion: item.Version,
+			},
+			Code: watchtower.ResolutionNoActionNeeded,
+			Note: note,
+		}, actor); err != nil {
+			s.l.Warn("a run that proposed nothing left its item in progress",
+				zap.String("item", item.ID.String()), zap.Error(err))
+
+			continue
+		}
+		settled++
+	}
+
+	return settled
+}
 
 type exceptionChange struct {
 	target *watchtowerports.ExceptionTarget
@@ -95,6 +209,9 @@ func (s *Exceptions) applyException(
 		TenantInfo: change.target.TenantInfo,
 	}, change.actor)
 	if err != nil {
+		return nil, err
+	}
+	if err = s.access.assertMayWork(ctx, change.actor, before); err != nil {
 		return nil, err
 	}
 

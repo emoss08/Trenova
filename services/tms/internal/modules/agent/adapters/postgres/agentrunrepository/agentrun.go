@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -249,6 +250,33 @@ func closedRunStatuses() []agent.RunStatus {
 		agent.RunStatusShadowCompleted,
 		agent.RunStatusFailed,
 	}
+}
+
+func (r *repository) FailAbandoned(
+	ctx context.Context,
+	req agentruntimeports.FailAbandonedRunsRequest,
+) (int, error) {
+	ctx = dbscope.WithSystem(ctx, "end abandoned agent runs across every organization")
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
+		run := agentdb.AgentRuns
+		n, err := run.AllTenants().
+			Where(
+				run.Status.In(agent.WorkingRunStatuses()...),
+				run.CreatedAt.Lt(req.StartedBefore),
+			).
+			Update(ctx, r.db.Keel(ctx),
+				run.Status.To(agent.RunStatusFailed),
+				run.ErrorMessage.To(req.Reason),
+				run.CompletedAt.To(req.Now),
+			)
+		if err != nil {
+			r.l.Error("failed to end abandoned agent runs",
+				zap.Int64("startedBefore", req.StartedBefore), zap.Error(err))
+			return 0, err
+		}
+
+		return int(n), nil
+	})
 }
 
 func (r *repository) CountOpen(

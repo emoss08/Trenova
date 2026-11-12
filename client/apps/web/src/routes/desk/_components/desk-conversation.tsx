@@ -209,7 +209,7 @@ export function DeskConversation({
       agent={agent}
       agentsUnavailable={agentsUnavailable}
       threads={desk.threads}
-      onSwitchAgent={desk.start}
+      onSwitchAgent={thread.subjectId ? undefined : desk.start}
       onHandOff={handOff}
       onStartNew={onStartNew}
       onWorkingChange={desk.setWorking}

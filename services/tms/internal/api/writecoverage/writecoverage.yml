@@ -131,6 +131,18 @@ writes:
   "mutation approveAgentMemorySuggestion":
     exempt: agent-administration
     reason: "A person curating what agents remember; an agent writes memory through agent_create_memory, agent_edit_memory and agent_retire_memory."
+  "mutation assignDeskCase":
+    exempt: agent-administration
+    reason: "Who owns a case decides who may approve what an agent proposes on its record; an agent cannot choose its own approver."
+  "mutation releaseDeskCase":
+    exempt: agent-administration
+    reason: "Letting a case go changes who may approve what an agent proposes on its record; a person gives that up, never an agent."
+  "mutation chooseDeskCaseOption":
+    exempt: agent-administration
+    reason: "Choosing among the options an agent offered on a record's case is the person's call; the agent drafts the plan for what they chose."
+  "mutation commitAgentDecisionNow":
+    exempt: agent-administration
+    reason: "Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work."
   "mutation commitMyDecisionNow":
     exempt: agent-administration
     reason: "Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work."
@@ -165,6 +177,9 @@ writes:
     reason: "A person vouching for what an agent wrote after reading outside content; an agent clearing the taint on what it will read would undo the hold."
   "mutation setAgentMemoryStatus":
     tools: [agent_retire_memory]
+  "mutation undoAgentDecision":
+    exempt: agent-administration
+    reason: "Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work."
   "mutation undoMyDecision":
     exempt: agent-administration
     reason: "Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work."
@@ -2116,10 +2131,6 @@ writes:
   "POST /api/v1/billing/statements/:customerID/bill/":
     tools: [invoice_bill_statement]
 
-  # invoiceshare
-  "POST /api/v1/billing/invoices/:invoiceID/shares/":
-    tools: [invoice_share]
-
   # journalentry
   "mutation approveJournalEntries":
     exempt: attestation
@@ -3035,6 +3046,18 @@ writes:
     reason: "User accounts, their status, memberships and passwords decide who can sign in and to what."
 
   # watchtower
+  "mutation acceptDeskCaseRisk":
+    tools: [exception_resolve]
+  "mutation shareRecord":
+    tools: [invoice_share]
+  "mutation unshareRecord":
+    exempt: attestation
+    reason: "A person taking back what was shared with a teammate; an agent does not decide who may keep reading a person's case."
+  "mutation putAwayDeskCase":
+    tools: [exception_snooze]
+  "mutation bringBackDeskCase":
+    exempt: attestation
+    reason: "A person bringing back a case they put away, before its time; an agent does not decide what a person looks at again."
   "mutation acknowledgeWatchtowerItem":
     exempt: attestation
     reason: "A person saying they have seen an exception, and taking it if nobody owns it; an agent cannot see on someone's behalf."

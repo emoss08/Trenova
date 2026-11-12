@@ -120,7 +120,7 @@ func ListRequestFromFilter(
 		}
 		req.Lanes = append(req.Lanes, lane)
 	}
-	req.IncludePosted = filter.IncludePosted != nil && *filter.IncludePosted
+	req.IncludeClosed = filter.IncludeClosed != nil && *filter.IncludeClosed
 
 	var err error
 	if req.MinAmount, err = amountFilter("filter.minAmount", filter.MinAmount); err != nil {

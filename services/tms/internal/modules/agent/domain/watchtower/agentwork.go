@@ -88,9 +88,6 @@ func (i *Item) AgentWorkFrom(run *agent.AgentRun) *AgentWork {
 	}
 
 	switch run.Status {
-	case agent.RunStatusPending, agent.RunStatusGatheringContext:
-		work.Status = AgentStatusWorking
-		work.Step = 0
 	case agent.RunStatusDiagnosing:
 		work.Status = AgentStatusWorking
 		work.Step = 1
@@ -108,8 +105,13 @@ func (i *Item) AgentWorkFrom(run *agent.AgentRun) *AgentWork {
 		work.Step = len(steps)
 		work.Note = strings.TrimSpace(run.Summary)
 	default:
-		work.Status = AgentStatusWorking
-		work.Step = 0
+		if run.Status.IsWorking() {
+			work.Status = AgentStatusWorking
+			work.Step = 0
+			break
+		}
+		work.Status = AgentStatusDone
+		work.Step = len(steps)
 	}
 
 	return work

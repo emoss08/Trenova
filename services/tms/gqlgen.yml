@@ -3122,6 +3122,72 @@ models:
   WatchtowerAgentStatus:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/watchtower.AgentStatus
+  WatchtowerPanel:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtower.Panel
+  WatchtowerPanelKind:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtower.PanelKind
+  WatchtowerStopRole:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtower.StopRole
+  WatchtowerStopVerdict:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtower.StopVerdict
+  WatchtowerStopPanel:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtower.StopPanel
+  WatchtowerClockPanel:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtower.ClockPanel
+  WatchtowerPaper:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtower.Paper
+  WatchtowerPaperPanel:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtower.PaperPanel
+  WatchtowerMessagePanel:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtower.MessagePanel
+  WatchtowerExpiringPaper:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtower.ExpiringPaper
+  WatchtowerExpiryPanel:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtower.ExpiryPanel
+  WatchtowerCoveragePanel:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtower.CoveragePanel
+  WatchtowerContactPanel:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtower.ContactPanel
+  WatchtowerRunPanel:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtower.RunPanel
+  WatchtowerBooksPanel:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtower.BooksPanel
+  WatchtowerMoneyStake:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtower.MoneyStake
+  WatchtowerMoneyPanel:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtower.MoneyPanel
+  WatchtowerChangePanel:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtower.ChangePanel
+  WatchtowerAskPanel:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtower.AskPanel
+  WatchtowerFindingPanel:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtower.FindingPanel
+  WatchtowerFilePanel:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtower.FilePanel
+  WatchtowerSightingPanel:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtower.SightingPanel
   WatchtowerAgentStep:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/watchtower.AgentStep
@@ -3206,6 +3272,128 @@ models:
     fields:
       tool:
         fieldName: ToolName
+  DeskCaseTone:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/recordcase.Tone
+  DeskCaseDecisionPhase:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/recordcase.DecisionPhase
+  DeskCaseDecisionKind:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/recordcase.DecisionKind
+  DeskCaseExhibitKind:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/recordcase.ExhibitKind
+  DeskCasePointState:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/recordcase.PointState
+  DeskCaseReadingStatus:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/recordcase.ReadingStatus
+  DeskCaseTrustKey:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/recordcase.TrustKey
+  DeskCaseOptionKind:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/recordcase.OptionKind
+  DeskCaseDeadline:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/recordcase.Deadline
+  DeskCaseHead:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/recordcase.Head
+  DeskCaseSegment:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/recordcase.Segment
+    fields:
+      cite:
+        resolver: true
+  DeskCaseTrustCell:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/recordcase.TrustCell
+  DeskCaseFinding:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/recordcase.Finding
+    fields:
+      agent:
+        resolver: true
+      reading:
+        fieldName: Segments
+  DeskCaseOption:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/recordcase.Option
+  DeskCaseHandOff:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/recordcase.HandOff
+    fields:
+      agent:
+        resolver: true
+  DeskCaseAway:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/recordcase.Away
+  RecordShare:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/recordshare.Share
+  ShareRecordResult:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/ports/recordshareports.ShareResult
+  RecordShareEmailStatus:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/ports/recordshareports.EmailStatus
+  DeskCaseOwnership:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/recordcase.Ownership
+    fields:
+      owner:
+        resolver: true
+  DeskCaseDecision:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/recordcase.Decision
+    fields:
+      agent:
+        resolver: true
+      decidedBy:
+        resolver: true
+      itemId:
+        resolver: true
+      failedStep:
+        resolver: true
+  DeskCaseRoutePoint:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/recordcase.RoutePoint
+  DeskCaseRouteMarker:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/recordcase.RouteMarker
+  DeskCaseRoute:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/recordcase.Route
+  DeskCaseMeter:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/recordcase.Meter
+  DeskCaseMessage:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/recordcase.Message
+    fields:
+      replyAgent:
+        resolver: true
+  DeskCaseTimelineRow:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/recordcase.TimelineRow
+  DeskCaseFact:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/recordcase.Fact
+  DeskCaseExhibit:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/recordcase.Exhibit
+    fields:
+      at:
+        resolver: true
+  DeskCase:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/recordcase.Case
+    fields:
+      record:
+        resolver: true
   CaptureDevice:
     model:
       - github.com/emoss08/trenova/internal/modules/documents/domain/capture.CaptureDevice
@@ -3848,6 +4036,9 @@ models:
   AgentPreviewReason:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview.PreviewReason
+  AgentPreviewRemedy:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview.PreviewRemedy
   AgentPreviewRecordLink:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord.RecordRef

@@ -215,7 +215,7 @@ func TestPromptSnapshots(t *testing.T) {
 					[]byte(system),
 					*updatePrompts,
 					"go test -run TestPromptSnapshots "+
-						"./internal/modules/agent/domain/agentdefinition/ -update",
+						"./internal/modules/agent/domain/agentprompt/ -update",
 				)
 			})
 		}
@@ -270,29 +270,29 @@ func snapshotMemories() ([]*agentmemory.Memory, []agentmemory.MemorySubject) {
 	outside.Tainted = true
 
 	return []*agentmemory.Memory{
-			memory("amem_01JSNAPSHOTMEMORY00000008", agentmemory.MemoryKindFact,
-				"The yard closes at 18:00."),
-			holdFix,
-			long,
-			assignFix,
-			memory("amem_01JSNAPSHOTMEMORY00000009", agentmemory.MemoryKindInstruction,
-				"Quote every lane in US dollars."),
-			outside,
-			dockRule,
-			aboutCustomer,
-			customerRule,
-		}, []agentmemory.MemorySubject{
-			{
-				Type:     agentmemory.MemorySubjectCustomer,
-				ID:       customer,
-				Relation: agentmemory.MemoryRelationDirect,
-			},
-			{
-				Type:     agentmemory.MemorySubjectLocation,
-				ID:       location,
-				Relation: agentmemory.MemoryRelationRelated,
-			},
-		}
+		memory("amem_01JSNAPSHOTMEMORY00000008", agentmemory.MemoryKindFact,
+			"The yard closes at 18:00."),
+		holdFix,
+		long,
+		assignFix,
+		memory("amem_01JSNAPSHOTMEMORY00000009", agentmemory.MemoryKindInstruction,
+			"Quote every lane in US dollars."),
+		outside,
+		dockRule,
+		aboutCustomer,
+		customerRule,
+	}, []agentmemory.MemorySubject{
+		{
+			Type:     agentmemory.MemorySubjectCustomer,
+			ID:       customer,
+			Relation: agentmemory.MemoryRelationDirect,
+		},
+		{
+			Type:     agentmemory.MemorySubjectLocation,
+			ID:       location,
+			Relation: agentmemory.MemoryRelationRelated,
+		},
+	}
 }
 
 func TestPromptSnapshots_MemoryGrouping(t *testing.T) {
@@ -316,7 +316,7 @@ func TestPromptSnapshots_MemoryGrouping(t *testing.T) {
 		[]byte(system),
 		*updatePrompts,
 		"go test -run TestPromptSnapshots "+
-			"./internal/modules/agent/domain/agentdefinition/ -update",
+			"./internal/modules/agent/domain/agentprompt/ -update",
 	)
 }
 
@@ -340,7 +340,7 @@ func TestPromptSnapshots_AgentsItCanAsk(t *testing.T) {
 		[]byte(system),
 		*updatePrompts,
 		"go test -run TestPromptSnapshots "+
-			"./internal/modules/agent/domain/agentdefinition/ -update",
+			"./internal/modules/agent/domain/agentprompt/ -update",
 	)
 }
 
@@ -371,6 +371,6 @@ func TestPromptSnapshots_ProposalsAwaitingADecision(t *testing.T) {
 		[]byte(system),
 		*updatePrompts,
 		"go test -run TestPromptSnapshots "+
-			"./internal/modules/agent/domain/agentdefinition/ -update",
+			"./internal/modules/agent/domain/agentprompt/ -update",
 	)
 }

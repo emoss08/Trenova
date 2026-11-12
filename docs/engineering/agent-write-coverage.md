@@ -89,33 +89,33 @@ matches anything fails too, so the file cannot drift behind the tools.
 | `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 247 |
 | `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 40 |
 | `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 49 |
-| `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 103 |
+| `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 108 |
 | `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 35 |
 | `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 48 |
-| `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 53 |
+| `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 54 |
 | `duplicate` | Another surface for a write listed elsewhere that the analysis could not merge on its own. The reason names the write it duplicates. | 10 |
 
 ## Totals
 
-1132 writes: 672 GraphQL mutations and 460 REST writes, after merging 27 REST routes into the mutation they duplicate.
+1140 writes: 681 GraphQL mutations and 459 REST writes, after merging 27 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
-| Covered by a tool | 444 |
-| Exempt | 684 |
+| Covered by a tool | 446 |
+| Exempt | 690 |
 | — Security | 99 |
 | — Configuration | 247 |
 | — User preference | 40 |
 | — Infrastructure | 49 |
-| — Agent administration | 103 |
+| — Agent administration | 108 |
 | — Counterparty | 35 |
 | — Read-only | 48 |
-| — Attestation | 53 |
+| — Attestation | 54 |
 | — Duplicate | 10 |
 | **Pending** | **4** |
-| Total | 1132 |
+| Total | 1140 |
 
-Of the 448 writes an agent should be able to make, 444 have a tool (99%).
+Of the 450 writes an agent should be able to make, 446 have a tool (99%).
 
 ## Pending
 
@@ -137,7 +137,7 @@ The writes no tool performs yet, and what the tool would do.
 | accountingsync | 33 | 20 | 13 | 0 |
 | accountingwebhook | 1 | 0 | 1 | 0 |
 | accounttype | 4 | 0 | 4 | 0 |
-| agent | 16 | 2 | 14 | 0 |
+| agent | 18 | 2 | 16 | 0 |
 | agentdefinition | 13 | 0 | 13 | 0 |
 | agentextension | 8 | 1 | 7 | 0 |
 | agentprofile | 8 | 2 | 6 | 0 |
@@ -183,6 +183,7 @@ The writes no tool performs yet, and what the tool would do.
 | dataentrycontrol | 1 | 0 | 1 | 0 |
 | dataretention | 1 | 0 | 1 | 0 |
 | decisions | 1 | 0 | 1 | 0 |
+| deskcase | 6 | 2 | 4 | 0 |
 | deskmemory | 6 | 3 | 3 | 0 |
 | detention | 8 | 4 | 4 | 0 |
 | dispatchconsole | 7 | 4 | 1 | 2 |
@@ -235,7 +236,6 @@ The writes no tool performs yet, and what the tool would do.
 | invoiceadjustmentcontrol | 1 | 0 | 1 | 0 |
 | invoicedispute | 3 | 3 | 0 | 0 |
 | invoicerun | 1 | 1 | 0 | 0 |
-| invoiceshare | 1 | 1 | 0 | 0 |
 | journalentry | 2 | 0 | 2 | 0 |
 | journalreversal | 5 | 3 | 2 | 0 |
 | jurisdictionrule | 6 | 0 | 6 | 0 |
@@ -265,6 +265,7 @@ The writes no tool performs yet, and what the tool would do.
 | ratesimulation | 1 | 1 | 0 | 0 |
 | ratezone | 2 | 0 | 2 | 0 |
 | realtime | 4 | 0 | 4 | 0 |
+| recordshare | 1 | 1 | 0 | 0 |
 | recurringshipment | 5 | 4 | 1 | 0 |
 | report | 19 | 13 | 6 | 0 |
 | role | 11 | 0 | 11 | 0 |
@@ -314,6 +315,7 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Tool | Resource | Operation |
 | --- | --- | --- |
+| `agent_offer_options` | agent_run | read |
 | `agent_raise_exception` | agent_exception | create |
 | `detention_escalate` | detention | update |
 | `dispatch_set_move_status` | shipment_move | update |
@@ -407,6 +409,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | Write | Decision |
 | --- | --- |
 | `mutation approveAgentMemorySuggestion` | Exempt, agent-administration: A person curating what agents remember; an agent writes memory through agent_create_memory, agent_edit_memory and agent_retire_memory. |
+| `mutation commitAgentDecisionNow` | Exempt, agent-administration: Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work. |
 | `mutation commitMyDecisionNow` | Exempt, agent-administration: Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work. |
 | `mutation createAgentMemory` | Tool: `agent_create_memory` |
 | `mutation decideAgentPlan` | Exempt, agent-administration: Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work. |
@@ -419,6 +422,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation resolveAgentException` | Exempt, agent-administration: An agent exception is an agent handing a case to a person; the person resolves it. |
 | `mutation reviewAgentMemory` | Exempt, agent-administration: A person vouching for what an agent wrote after reading outside content; an agent clearing the taint on what it will read would undo the hold. |
 | `mutation setAgentMemoryStatus` | Tool: `agent_retire_memory` |
+| `mutation undoAgentDecision` | Exempt, agent-administration: Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work. |
 | `mutation undoMyDecision` | Exempt, agent-administration: Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work. |
 | `mutation updateAgentControl` | Exempt, agent-administration: The organization-wide switches and ceilings every agent runs under. |
 | `mutation updateAgentMemory` | Exempt, agent-administration: A person curating what agents remember; an agent writes memory through agent_create_memory, agent_edit_memory and agent_retire_memory. |
@@ -893,6 +897,17 @@ Tools that change something no person-facing write does, such as sending a messa
 | Write | Decision |
 | --- | --- |
 | `mutation decideAgentProposals` | Exempt, agent-administration: Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work. |
+
+### deskcase
+
+| Write | Decision |
+| --- | --- |
+| `mutation acceptDeskCaseRisk` | Tool: `exception_resolve` |
+| `mutation assignDeskCase` | Exempt, agent-administration: Who owns a case decides who may approve what an agent proposes on its record; an agent cannot choose its own approver. |
+| `mutation bringBackDeskCase` | Exempt, attestation: A person bringing back a case they put away, before its time; an agent does not decide what a person looks at again. |
+| `mutation chooseDeskCaseOption` | Exempt, agent-administration: Choosing among the options an agent offered on a record's case is the person's call; the agent drafts the plan for what they chose. |
+| `mutation putAwayDeskCase` | Tool: `exception_snooze` |
+| `mutation releaseDeskCase` | Exempt, agent-administration: Letting a case go changes who may approve what an agent proposes on its record; a person gives that up, never an agent. |
 
 ### deskmemory
 
@@ -1575,12 +1590,6 @@ Tools that change something no person-facing write does, such as sending a messa
 | --- | --- |
 | `POST /api/v1/billing/statements/:customerID/bill/`<br>invoicerunhandler.billStatement | Tool: `invoice_bill_statement` |
 
-### invoiceshare
-
-| Write | Decision |
-| --- | --- |
-| `POST /api/v1/billing/invoices/:invoiceID/shares/`<br>invoicesharehandler.share | Tool: `invoice_share` |
-
 ### journalentry
 
 | Write | Decision |
@@ -1846,6 +1855,12 @@ Tools that change something no person-facing write does, such as sending a messa
 | `DELETE /api/v1/realtime/presence/:resource/:recordID/`<br>realtimehandler.leaveRecord | Exempt, infrastructure: Presence and typing signals a browser sends while a person is on the page. |
 | `POST /api/v1/realtime/presence/:resource/`<br>realtimehandler.joinView | Exempt, infrastructure: Presence and typing signals a browser sends while a person is on the page. |
 | `POST /api/v1/realtime/presence/:resource/:recordID/`<br>realtimehandler.joinRecord | Exempt, infrastructure: Presence and typing signals a browser sends while a person is on the page. |
+
+### recordshare
+
+| Write | Decision |
+| --- | --- |
+| `mutation shareRecord` | Tool: `invoice_share` |
 
 ### recurringshipment
 

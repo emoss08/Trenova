@@ -396,9 +396,9 @@ func TestSetMine_AWatchtowerItemNotRaisedByAIIsRefused(t *testing.T) {
 	actor := person(tenant)
 	h.watchtower.item = &watchtower.Item{
 		ID:         pulid.MustNew("wt_"),
-		SourceKind: watchtower.SourceWeatherAlert,
-		SourceID:   pulid.MustNew("wal_").String(),
-		Title:      "Ice storm",
+		SourceKind: watchtower.SourceMissedPickup,
+		SourceID:   pulid.MustNew("shp_").String(),
+		Title:      "Missed pickup",
 	}
 	h.permissions.allowed[permission.ResourceWatchtower] = true
 	h.permissions.allowed[permission.ResourceShipment] = true

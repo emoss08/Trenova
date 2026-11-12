@@ -47,6 +47,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/decisionsexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/deskattentionexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/deskboardexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/deskcaseexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/deskmemoryexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/detentionexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/dispatchconsoleexec"
@@ -99,6 +100,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/performancereviewexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/ptopolicyexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/rateexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/recordshareexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/recurringshipmentexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/reportexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/roleexec"
@@ -183,6 +185,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/decisionsresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/deskattentionresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/deskboardresolver"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/deskcaseresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/deskmemoryresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/detentionresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/dispatchconsoleresolver"
@@ -235,6 +238,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/performancereviewresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/ptopolicyresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/rateresolver"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/recordshareresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/recurringshipmentresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/reportresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/roleresolver"
@@ -319,6 +323,7 @@ func FromServices(s *Services) *Resolver {
 	}
 	agentDeps := &agentresolver.Deps{
 		Core:                      s.Core,
+		CaseOwners:                s.CaseOwners,
 		AgentRunService:           s.AgentRunService,
 		AgentTrustService:         s.AgentTrustService,
 		AgentProposalService:      s.AgentProposalService,
@@ -538,6 +543,10 @@ func FromServices(s *Services) *Resolver {
 	deskboardDeps := &deskboardresolver.Deps{
 		Core:       s.Core,
 		BoardCards: s.BoardCards,
+	}
+	deskcaseDeps := &deskcaseresolver.Deps{
+		Core:              s.Core,
+		RecordCaseService: s.RecordCaseService,
 	}
 	deskmemoryDeps := &deskmemoryresolver.Deps{
 		Core:               s.Core,
@@ -813,6 +822,10 @@ func FromServices(s *Services) *Resolver {
 		RateZoneService:      s.RateZoneService,
 		RateMatrixService:    s.RateMatrixService,
 		RateQuoteService:     s.RateQuoteService,
+	}
+	recordshareDeps := &recordshareresolver.Deps{
+		Core:               s.Core,
+		RecordShareService: s.RecordShareService,
 	}
 	recurringshipmentDeps := &recurringshipmentresolver.Deps{
 		Core:                     s.Core,
@@ -1180,6 +1193,14 @@ func FromServices(s *Services) *Resolver {
 	workerdqfDQFItem := &workerdqfresolver.DQFItemResolver{Deps: workerdqfDeps}
 	deskattentionDeskActivityEntry := &deskattentionresolver.DeskActivityEntryResolver{Deps: deskattentionDeps}
 	deskattentionDeskAttentionGroup := &deskattentionresolver.DeskAttentionGroupResolver{Deps: deskattentionDeps}
+	deskcaseDeskCase := &deskcaseresolver.DeskCaseResolver{Deps: deskcaseDeps}
+	deskcaseDeskCaseDecision := &deskcaseresolver.DeskCaseDecisionResolver{Deps: deskcaseDeps}
+	deskcaseDeskCaseExhibit := &deskcaseresolver.DeskCaseExhibitResolver{Deps: deskcaseDeps}
+	deskcaseDeskCaseFinding := &deskcaseresolver.DeskCaseFindingResolver{Deps: deskcaseDeps}
+	deskcaseDeskCaseHandOff := &deskcaseresolver.DeskCaseHandOffResolver{Deps: deskcaseDeps}
+	deskcaseDeskCaseMessage := &deskcaseresolver.DeskCaseMessageResolver{Deps: deskcaseDeps}
+	deskcaseDeskCaseOwnership := &deskcaseresolver.DeskCaseOwnershipResolver{Deps: deskcaseDeps}
+	deskcaseDeskCaseSegment := &deskcaseresolver.DeskCaseSegmentResolver{Deps: deskcaseDeps}
 	deskattentionDeskRecord := &deskattentionresolver.DeskRecordResolver{Deps: deskattentionDeps}
 	detentionDetentionOccurrence := &detentionresolver.DetentionOccurrenceResolver{Deps: detentionDeps}
 	detentionDetentionPreviewResult := &detentionresolver.DetentionPreviewResultResolver{Deps: detentionDeps}
@@ -1313,6 +1334,7 @@ func FromServices(s *Services) *Resolver {
 	customerpaymentMutation := &customerpaymentresolver.MutationResolver{Deps: customerpaymentDeps}
 	customertrackingMutation := &customertrackingresolver.MutationResolver{Deps: customertrackingDeps}
 	decisionsMutation := &decisionsresolver.MutationResolver{Deps: decisionsDeps}
+	deskcaseMutation := &deskcaseresolver.MutationResolver{Deps: deskcaseDeps}
 	deskmemoryMutation := &deskmemoryresolver.MutationResolver{Deps: deskmemoryDeps}
 	detentionMutation := &detentionresolver.MutationResolver{Deps: detentionDeps}
 	dispatchconsoleMutation := &dispatchconsoleresolver.MutationResolver{Deps: dispatchconsoleDeps}
@@ -1348,6 +1370,7 @@ func FromServices(s *Services) *Resolver {
 	orgstructureMutation := &orgstructureresolver.MutationResolver{Deps: orgstructureDeps}
 	performancereviewMutation := &performancereviewresolver.MutationResolver{Deps: performancereviewDeps}
 	ptopolicyMutation := &ptopolicyresolver.MutationResolver{Deps: ptopolicyDeps}
+	recordshareMutation := &recordshareresolver.MutationResolver{Deps: recordshareDeps}
 	reportMutation := &reportresolver.MutationResolver{Deps: reportDeps}
 	schedulingMutation := &schedulingresolver.MutationResolver{Deps: schedulingDeps}
 	selfserviceMutation := &selfserviceresolver.MutationResolver{Deps: selfserviceDeps}
@@ -1440,6 +1463,7 @@ func FromServices(s *Services) *Resolver {
 	decisionsQuery := &decisionsresolver.QueryResolver{Deps: decisionsDeps}
 	deskattentionQuery := &deskattentionresolver.QueryResolver{Deps: deskattentionDeps}
 	deskboardQuery := &deskboardresolver.QueryResolver{Deps: deskboardDeps}
+	deskcaseQuery := &deskcaseresolver.QueryResolver{Deps: deskcaseDeps}
 	deskmemoryQuery := &deskmemoryresolver.QueryResolver{Deps: deskmemoryDeps}
 	detentionQuery := &detentionresolver.QueryResolver{Deps: detentionDeps}
 	dispatchconsoleQuery := &dispatchconsoleresolver.QueryResolver{Deps: dispatchconsoleDeps}
@@ -1491,6 +1515,7 @@ func FromServices(s *Services) *Resolver {
 	performancereviewQuery := &performancereviewresolver.QueryResolver{Deps: performancereviewDeps}
 	ptopolicyQuery := &ptopolicyresolver.QueryResolver{Deps: ptopolicyDeps}
 	rateQuery := &rateresolver.QueryResolver{Deps: rateDeps}
+	recordshareQuery := &recordshareresolver.QueryResolver{Deps: recordshareDeps}
 	recurringshipmentQuery := &recurringshipmentresolver.QueryResolver{Deps: recurringshipmentDeps}
 	reportQuery := &reportresolver.QueryResolver{Deps: reportDeps}
 	roleQuery := &roleresolver.QueryResolver{Deps: roleDeps}
@@ -1724,6 +1749,14 @@ func FromServices(s *Services) *Resolver {
 			"DQFItem@workerdqf":                                    workerdqfDQFItem,
 			"DeskActivityEntry@deskattention":                      deskattentionDeskActivityEntry,
 			"DeskAttentionGroup@deskattention":                     deskattentionDeskAttentionGroup,
+			"DeskCase@deskcase":                                    deskcaseDeskCase,
+			"DeskCaseDecision@deskcase":                            deskcaseDeskCaseDecision,
+			"DeskCaseExhibit@deskcase":                             deskcaseDeskCaseExhibit,
+			"DeskCaseFinding@deskcase":                             deskcaseDeskCaseFinding,
+			"DeskCaseHandOff@deskcase":                             deskcaseDeskCaseHandOff,
+			"DeskCaseMessage@deskcase":                             deskcaseDeskCaseMessage,
+			"DeskCaseOwnership@deskcase":                           deskcaseDeskCaseOwnership,
+			"DeskCaseSegment@deskcase":                             deskcaseDeskCaseSegment,
 			"DeskRecord@deskattention":                             deskattentionDeskRecord,
 			"DetentionOccurrence@detention":                        detentionDetentionOccurrence,
 			"DetentionPreviewResult@detention":                     detentionDetentionPreviewResult,
@@ -1857,6 +1890,7 @@ func FromServices(s *Services) *Resolver {
 			"Mutation@customerpayment":                             customerpaymentMutation,
 			"Mutation@customertracking":                            customertrackingMutation,
 			"Mutation@decisions":                                   decisionsMutation,
+			"Mutation@deskcase":                                    deskcaseMutation,
 			"Mutation@deskmemory":                                  deskmemoryMutation,
 			"Mutation@detention":                                   detentionMutation,
 			"Mutation@dispatchconsole":                             dispatchconsoleMutation,
@@ -1892,6 +1926,7 @@ func FromServices(s *Services) *Resolver {
 			"Mutation@orgstructure":                                orgstructureMutation,
 			"Mutation@performancereview":                           performancereviewMutation,
 			"Mutation@ptopolicy":                                   ptopolicyMutation,
+			"Mutation@recordshare":                                 recordshareMutation,
 			"Mutation@report":                                      reportMutation,
 			"Mutation@scheduling":                                  schedulingMutation,
 			"Mutation@selfservice":                                 selfserviceMutation,
@@ -1984,6 +2019,7 @@ func FromServices(s *Services) *Resolver {
 			"Query@decisions":                                      decisionsQuery,
 			"Query@deskattention":                                  deskattentionQuery,
 			"Query@deskboard":                                      deskboardQuery,
+			"Query@deskcase":                                       deskcaseQuery,
 			"Query@deskmemory":                                     deskmemoryQuery,
 			"Query@detention":                                      detentionQuery,
 			"Query@dispatchconsole":                                dispatchconsoleQuery,
@@ -2035,6 +2071,7 @@ func FromServices(s *Services) *Resolver {
 			"Query@performancereview":                              performancereviewQuery,
 			"Query@ptopolicy":                                      ptopolicyQuery,
 			"Query@rate":                                           rateQuery,
+			"Query@recordshare":                                    recordshareQuery,
 			"Query@recurringshipment":                              recurringshipmentQuery,
 			"Query@report":                                         reportQuery,
 			"Query@role":                                           roleQuery,
@@ -2273,6 +2310,14 @@ var (
 	_ workerdqfexec.DQFItemResolver                                    = (*workerdqfresolver.DQFItemResolver)(nil)
 	_ deskattentionexec.DeskActivityEntryResolver                      = (*deskattentionresolver.DeskActivityEntryResolver)(nil)
 	_ deskattentionexec.DeskAttentionGroupResolver                     = (*deskattentionresolver.DeskAttentionGroupResolver)(nil)
+	_ deskcaseexec.DeskCaseResolver                                    = (*deskcaseresolver.DeskCaseResolver)(nil)
+	_ deskcaseexec.DeskCaseDecisionResolver                            = (*deskcaseresolver.DeskCaseDecisionResolver)(nil)
+	_ deskcaseexec.DeskCaseExhibitResolver                             = (*deskcaseresolver.DeskCaseExhibitResolver)(nil)
+	_ deskcaseexec.DeskCaseFindingResolver                             = (*deskcaseresolver.DeskCaseFindingResolver)(nil)
+	_ deskcaseexec.DeskCaseHandOffResolver                             = (*deskcaseresolver.DeskCaseHandOffResolver)(nil)
+	_ deskcaseexec.DeskCaseMessageResolver                             = (*deskcaseresolver.DeskCaseMessageResolver)(nil)
+	_ deskcaseexec.DeskCaseOwnershipResolver                           = (*deskcaseresolver.DeskCaseOwnershipResolver)(nil)
+	_ deskcaseexec.DeskCaseSegmentResolver                             = (*deskcaseresolver.DeskCaseSegmentResolver)(nil)
 	_ deskattentionexec.DeskRecordResolver                             = (*deskattentionresolver.DeskRecordResolver)(nil)
 	_ detentionexec.DetentionOccurrenceResolver                        = (*detentionresolver.DetentionOccurrenceResolver)(nil)
 	_ detentionexec.DetentionPreviewResultResolver                     = (*detentionresolver.DetentionPreviewResultResolver)(nil)
@@ -2406,6 +2451,7 @@ var (
 	_ customerpaymentexec.MutationResolver                             = (*customerpaymentresolver.MutationResolver)(nil)
 	_ customertrackingexec.MutationResolver                            = (*customertrackingresolver.MutationResolver)(nil)
 	_ decisionsexec.MutationResolver                                   = (*decisionsresolver.MutationResolver)(nil)
+	_ deskcaseexec.MutationResolver                                    = (*deskcaseresolver.MutationResolver)(nil)
 	_ deskmemoryexec.MutationResolver                                  = (*deskmemoryresolver.MutationResolver)(nil)
 	_ detentionexec.MutationResolver                                   = (*detentionresolver.MutationResolver)(nil)
 	_ dispatchconsoleexec.MutationResolver                             = (*dispatchconsoleresolver.MutationResolver)(nil)
@@ -2441,6 +2487,7 @@ var (
 	_ orgstructureexec.MutationResolver                                = (*orgstructureresolver.MutationResolver)(nil)
 	_ performancereviewexec.MutationResolver                           = (*performancereviewresolver.MutationResolver)(nil)
 	_ ptopolicyexec.MutationResolver                                   = (*ptopolicyresolver.MutationResolver)(nil)
+	_ recordshareexec.MutationResolver                                 = (*recordshareresolver.MutationResolver)(nil)
 	_ reportexec.MutationResolver                                      = (*reportresolver.MutationResolver)(nil)
 	_ schedulingexec.MutationResolver                                  = (*schedulingresolver.MutationResolver)(nil)
 	_ selfserviceexec.MutationResolver                                 = (*selfserviceresolver.MutationResolver)(nil)
@@ -2533,6 +2580,7 @@ var (
 	_ decisionsexec.QueryResolver                                      = (*decisionsresolver.QueryResolver)(nil)
 	_ deskattentionexec.QueryResolver                                  = (*deskattentionresolver.QueryResolver)(nil)
 	_ deskboardexec.QueryResolver                                      = (*deskboardresolver.QueryResolver)(nil)
+	_ deskcaseexec.QueryResolver                                       = (*deskcaseresolver.QueryResolver)(nil)
 	_ deskmemoryexec.QueryResolver                                     = (*deskmemoryresolver.QueryResolver)(nil)
 	_ detentionexec.QueryResolver                                      = (*detentionresolver.QueryResolver)(nil)
 	_ dispatchconsoleexec.QueryResolver                                = (*dispatchconsoleresolver.QueryResolver)(nil)
@@ -2584,6 +2632,7 @@ var (
 	_ performancereviewexec.QueryResolver                              = (*performancereviewresolver.QueryResolver)(nil)
 	_ ptopolicyexec.QueryResolver                                      = (*ptopolicyresolver.QueryResolver)(nil)
 	_ rateexec.QueryResolver                                           = (*rateresolver.QueryResolver)(nil)
+	_ recordshareexec.QueryResolver                                    = (*recordshareresolver.QueryResolver)(nil)
 	_ recurringshipmentexec.QueryResolver                              = (*recurringshipmentresolver.QueryResolver)(nil)
 	_ reportexec.QueryResolver                                         = (*reportresolver.QueryResolver)(nil)
 	_ roleexec.QueryResolver                                           = (*roleresolver.QueryResolver)(nil)

@@ -27,10 +27,21 @@ type PprofServer struct {
 	logger *zap.Logger
 }
 
+// NewPprofServer serves the API's profiles on monitoring.pprof.port.
 func NewPprofServer(p PprofServerParams) *PprofServer {
+	return newPprofServer(p, p.MonitoringConfig.Pprof.GetPort(), "pprof-server")
+}
+
+// NewWorkerPprofServer serves the worker's profiles on monitoring.pprof.workerPort, so
+// both processes can be profiled on one host.
+func NewWorkerPprofServer(p PprofServerParams) *PprofServer {
+	return newPprofServer(p, p.MonitoringConfig.Pprof.GetWorkerPort(), "worker-pprof-server")
+}
+
+func newPprofServer(p PprofServerParams, port int, name string) *PprofServer {
 	s := &PprofServer{
 		cfg:    p.MonitoringConfig,
-		logger: p.Logger.Named("pprof-server"),
+		logger: p.Logger.Named(name),
 	}
 
 	mux := http.NewServeMux()
@@ -46,11 +57,7 @@ func NewPprofServer(p PprofServerParams) *PprofServer {
 	mux.Handle("/debug/pprof/mutex", pprof.Handler("mutex"))
 
 	s.server = &http.Server{
-		Addr: fmt.Sprintf(
-			"%s:%d",
-			p.MonitoringConfig.Pprof.GetHost(),
-			p.MonitoringConfig.Pprof.GetPort(),
-		),
+		Addr:              fmt.Sprintf("%s:%d", p.MonitoringConfig.Pprof.GetHost(), port),
 		Handler:           mux,
 		ReadHeaderTimeout: 5 * time.Second,
 	}

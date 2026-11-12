@@ -1,3 +1,4 @@
+import { Badge } from "@trenova/shared/components/ui/badge";
 import { PlanPreview } from "@/components/assistant/proposal-preview/plan-preview";
 import {
   canApprove,
@@ -303,9 +304,9 @@ function ProposalCard({
                     ?.fields.find((field) => !field.withheld && field.path !== OUTCOME_FIELD)
                     ?.label ?? ""}
                 </span>
-                <span className={cn("dk-dc2-rev", !view.reversible && "dk-hard")}>
+                <Badge variant={view.reversible ? "success" : "warning"} dot>
                   {view.reversible ? t("Reversible") : t("Can't be undone")}
-                </span>
+                </Badge>
               </div>
               {rows.slice(0, SHOWN_ROWS).map((row, index) => (
                 <div

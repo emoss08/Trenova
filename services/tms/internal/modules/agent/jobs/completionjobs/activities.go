@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/briefingports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/recordcaseports"
 	"go.uber.org/fx"
 )
 
@@ -17,12 +18,14 @@ type ActivitiesParams struct {
 	Completion llmports.CompletionService
 	Providers  aiproviderports.AIProviderProbe
 	Briefings  briefingports.BriefingService
+	Readings   recordcaseports.ReadingWriter
 }
 
 type Activities struct {
 	completion llmports.CompletionService
 	providers  aiproviderports.AIProviderProbe
 	briefings  briefingports.BriefingService
+	readings   recordcaseports.ReadingWriter
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
@@ -30,6 +33,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 		completion: p.Completion,
 		providers:  p.Providers,
 		briefings:  p.Briefings,
+		readings:   p.Readings,
 	}
 }
 
@@ -105,4 +109,14 @@ func (a *Activities) WriteBriefingActivity(
 	defer stop()
 
 	return a.briefings.WriteForDay(ctx, payload.Request)
+}
+
+func (a *Activities) WriteCaseReadingActivity(
+	ctx context.Context,
+	payload *completioncontract.WriteCaseReadingPayload,
+) error {
+	stop := modelcall.Heartbeat(ctx)
+	defer stop()
+
+	return a.readings.WriteReading(ctx, payload.Request)
 }

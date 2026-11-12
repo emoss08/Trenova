@@ -1,6 +1,6 @@
 import type { AssistantProposal } from "@/types/assistant";
 import { describe, expect, it } from "vitest";
-import { presentProposal, shortRef } from "../proposal-presenters";
+import { namedRef, presentProposal } from "../proposal-presenters";
 
 function proposal(overrides: Partial<AssistantProposal>): AssistantProposal {
   return {
@@ -52,7 +52,6 @@ describe("presentProposal", () => {
     expect(view.highlights).toEqual([
       { label: "Name", value: "Acme DC" },
       { label: "Address", value: "1 Main St, Dock 4, Dallas, TX 75201" },
-      { label: "Category", value: shortRef("lc_01J8ZABCDEFGHJKMNPQRSTVWXY") },
     ]);
     expect(view.reversible).toBe(true);
   });
@@ -163,7 +162,8 @@ describe("presentProposal", () => {
       }),
     );
 
-    expect(view.summary).toBe("Put driver …B817QE on this move.");
+    expect(view.summary).toBe("Put the chosen driver on this move.");
+    expect(view.summary).not.toContain("B817QE");
     expect(view.summary).not.toContain("wrk_01M2PRNXAMQNKK9HK9V5B817QE");
   });
 
@@ -452,7 +452,7 @@ describe("presentProposal for monitoring tools", () => {
     );
 
     expect(view.title).toBe("Message the driver");
-    expect(view.summary).toBe("Send driver …DGH1ZF “Delivery moved to 3 PM” in Dash.");
+    expect(view.summary).toBe("Send the driver “Delivery moved to 3 PM” in Dash.");
     expect(view.severity).toEqual({ label: "High", tone: "warning" });
     expect(view.highlights).toEqual([
       { label: "Message", value: "Houston DC moved your appointment to 3 PM. No need to rush." },
@@ -541,7 +541,6 @@ describe("presentProposal for monitoring tools", () => {
     );
     expect(resolve.title).toBe("Resolve a service failure");
     expect(resolve.highlights).toEqual([
-      { label: "Reason code", value: "…DGH1ZF" },
       { label: "Note", value: "Shipper closed early; driver waited until opening." },
     ]);
 
@@ -589,11 +588,12 @@ describe("presentProposal for settlement bulk tools", () => {
   });
 });
 
-describe("shortRef", () => {
-  it("shortens a PULID and leaves a human reference alone", () => {
-    expect(shortRef("shp_01M2PRNXAMQNKK9HK9V5B817QE")).toBe("…B817QE");
-    expect(shortRef("SEED-SHP-001")).toBe("SEED-SHP-001");
-    expect(shortRef("")).toBe("");
+/** No part of a record's id is ever shown: a name is kept, an id says nothing. */
+describe("namedRef", () => {
+  it("keeps a name a person would know and drops a record id whole", () => {
+    expect(namedRef("shp_01M2PRNXAMQNKK9HK9V5B817QE")).toBe("");
+    expect(namedRef("SEED-SHP-001")).toBe("SEED-SHP-001");
+    expect(namedRef("")).toBe("");
   });
 });
 
@@ -621,7 +621,7 @@ describe("presentProposal — intake and tendering", () => {
       "Enter a new shipment for BOL BOL-778 with 2 stops, read from an uploaded document.",
     );
     expect(view.highlights).toContainEqual({ label: "Weight", value: "18000 lb" });
-    expect(view.highlights).toContainEqual({ label: "Source document", value: "…MNPQRS" });
+    expect(view.highlights.map((row) => row.label)).not.toContain("Source document");
     expect(view.reversible).toBe(false);
   });
 
@@ -659,8 +659,8 @@ describe("presentProposal — intake and tendering", () => {
       "Offer this move to 2 carriers one after another at the rates below.",
     );
     expect(view.highlights).toEqual([
-      { label: "Carrier 1", value: "…MNPQRS at 1450.00" },
-      { label: "Carrier 2", value: "…MNPQRT at 2.15/mi" },
+      { label: "Carrier 1", value: "1450.00" },
+      { label: "Carrier 2", value: "2.15/mi" },
     ]);
   });
 
@@ -727,5 +727,53 @@ describe("presentProposal — intake and tendering", () => {
       }),
     );
     expect(two.title).toBe("Approve driver settlements");
+  });
+});
+
+/**
+ * A record id is a storage key. The Desk draws the record a step is about from
+ * the step's own preview, so no id is ever put on the face of a step.
+ */
+describe("presentProposal never shows a record id", () => {
+  const worker = "wrk_01M717A1ADDJS2ZTZ8FYHQXNS0";
+  const credentials = ["wcred_01M717A1KKB0HYG1ADW310EEYW", "wcred_01M717A1KMT63J1VTD9JPV1A5G"];
+
+  it("words a renewal request from worker_request_credential_renewal's schema", () => {
+    const view = presentProposal(
+      proposal({
+        toolName: "worker_request_credential_renewal",
+        arguments: {
+          workerId: worker,
+          credentialIds: credentials,
+          note: "Your DOT Medical Card expired on 2026-11-05. Please send the new one.",
+        },
+      }),
+    );
+
+    expect(view.title).toBe("Ask for renewed papers");
+    expect(view.summary).toBe(
+      "Ask the driver, in one message, to renew 2 credentials. Nothing on file changes.",
+    );
+    expect(view.highlights).toEqual([
+      {
+        label: "Message",
+        value: "Your DOT Medical Card expired on 2026-11-05. Please send the new one.",
+      },
+    ]);
+  });
+
+  it("leaves a lone id out of a tool it has no words for and counts a list of them", () => {
+    const view = presentProposal(
+      proposal({
+        toolName: "some_tool_nobody_worded",
+        arguments: { workerId: worker, credentialIds: credentials, reason: "Lapsed" },
+      }),
+    );
+
+    expect(view.highlights).toEqual([
+      { label: "credential", value: "2 records" },
+      { label: "reason", value: "Lapsed" },
+    ]);
+    expect(JSON.stringify(view)).not.toMatch(/wrk_|wcred_/u);
   });
 });

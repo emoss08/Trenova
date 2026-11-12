@@ -30,6 +30,7 @@ function group(
     dueLabel: "Relay must leave",
     unseen: false,
     items,
+    ownership: null,
     ...overrides,
   };
 }
@@ -71,6 +72,22 @@ describe("a row of Needs you, on its page and on Today", () => {
     ).toHaveTextContent("2112");
   });
 
+  it("tells assistive tech where it sits in a list whose other rows are not mounted", () => {
+    render(
+      <AttentionRow
+        group={group([item()])}
+        now={NOW}
+        selected={false}
+        position={{ index: 4, size: 230 }}
+        onOpen={vi.fn()}
+      />,
+    );
+
+    const row = screen.getByRole("option");
+    expect(row).toHaveAttribute("aria-posinset", "5");
+    expect(row).toHaveAttribute("aria-setsize", "230");
+  });
+
   it("names the record and what the server says of it on one line", () => {
     render(<AttentionRow group={group([item()])} now={NOW} onOpen={vi.fn()} />);
 
@@ -85,7 +102,7 @@ describe("a row of Needs you, on its page and on Today", () => {
     );
 
     expect(screen.getByText("Needs your approval")).toBeInTheDocument();
-    expect(screen.getByText("47m")).toHaveClass("dk-crit");
+    expect(screen.getByText("47m")).toHaveClass("text-danger-subtle-foreground");
   });
 
   it("names a record the reader may not open without its label", () => {
@@ -124,5 +141,102 @@ describe("a row of Needs you, on its page and on Today", () => {
     render(<AttentionRow group={group([item()])} now={NOW} selected onOpen={vi.fn()} />);
 
     expect(screen.getByRole("option")).toHaveAttribute("aria-selected", "true");
+  });
+
+  it("says whose case it is once someone has picked it up", () => {
+    render(
+      <AttentionRow
+        group={group([item()], {
+          ownership: { owner: { id: "usr_1", name: "Dana Ruiz" }, auto: false, canWork: false },
+        })}
+        now={NOW}
+        onOpen={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByLabelText("Dana Ruiz's case").textContent).toBe("Dana Ruiz");
+  });
+
+  it("says nothing about a case nobody has picked up", () => {
+    render(
+      <AttentionRow
+        group={group([item()], {
+          ownership: { owner: { id: "usr_1", name: "Dana Ruiz" }, auto: true, canWork: false },
+        })}
+        now={NOW}
+        onOpen={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByLabelText(/case$/)).toBeNull();
+  });
+
+  describe("read through the Decisions lens", () => {
+    const decision = () =>
+      item({
+        id: "ap_1",
+        deskLens: "Decisions",
+        title: "Dispatch desk wants to request worker credential renewal",
+        facts: [
+          { label: "Agent", value: "Dispatch desk", at: null },
+          { label: "Change", value: "request worker credential renewal", at: null },
+        ],
+      });
+
+    it("leads with the change and names who proposes it, instead of saying it waits", () => {
+      render(
+        <AttentionRow group={group([decision()])} now={NOW} lens="Decisions" onOpen={vi.fn()} />,
+      );
+
+      const row = screen.getByRole("button");
+      expect(within(row).getByText("Request worker credential renewal")).toBeInTheDocument();
+      expect(within(row).queryByText(/wants to/)).toBeNull();
+      expect(
+        within(row).getByText("Dispatch desk · S-240412 · Dallas, TX → Memphis, TN · In transit"),
+      ).toBeInTheDocument();
+      expect(within(row).queryByText("Needs your approval")).toBeNull();
+    });
+
+    it("still says what is not the same on every row: a write that failed", () => {
+      const failed = item({
+        id: "wt_2",
+        agentWork: { failed: true, status: "NeedsYou" } as DeskAttentionItem["agentWork"],
+      });
+      render(
+        <AttentionRow
+          group={group([decision(), failed])}
+          now={NOW}
+          lens="Decisions"
+          onOpen={vi.fn()}
+        />,
+      );
+
+      expect(screen.getByText("Didn't go through")).toBeInTheDocument();
+    });
+
+    it("reads as it does everywhere else when the item names no change", () => {
+      const bare = item({
+        id: "ap_2",
+        deskLens: "Decisions",
+        title: "An agent proposes",
+        facts: [],
+      });
+      render(<AttentionRow group={group([bare])} now={NOW} lens="Decisions" onOpen={vi.fn()} />);
+
+      expect(screen.getByText("An agent proposes")).toBeInTheDocument();
+    });
+  });
+
+  it("keeps the approval badge outside the Decisions lens, where rows differ", () => {
+    render(
+      <AttentionRow
+        group={group([item({ deskLens: "Decisions" })])}
+        now={NOW}
+        lens="Everything"
+        onOpen={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("Needs your approval")).toBeInTheDocument();
   });
 });

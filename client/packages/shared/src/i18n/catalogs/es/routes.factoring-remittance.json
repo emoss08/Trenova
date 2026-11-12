@@ -61,6 +61,5 @@
   "{0, plural, one {# line is} other {# lines are}} still to resolve and stay open.": "{0, plural, one {# línea sigue por resolver y permanece abierta.} other {# líneas siguen por resolver y permanecen abiertas.}}",
   "{0, plural, one {# line matched} other {# lines matched}}, {1, plural, one {# to resolve} other {# to resolve}}.": "{0, plural, one {# línea emparejada} other {# líneas emparejadas}}, {1, plural, one {# por resolver} other {# por resolver}}.",
   "{0} and {1} use the same column.": "{0} y {1} usan la misma columna.",
-  "{0} report from {1}": "Informe de {0} de {1}",
-  "{0} · {1, plural, one {# invoice} other {# invoices}}": "{0} · {1, plural, one {# factura} other {# facturas}}"
+  "{0} report from {1}": "Informe de {0} de {1}"
 }

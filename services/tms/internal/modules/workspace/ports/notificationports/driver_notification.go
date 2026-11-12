@@ -12,10 +12,14 @@ type DriverNotificationPreview struct {
 	WorkerID   pulid.ID
 	WorkerName string
 	Reachable  bool
-	Title      string
-	Message    string
-	Priority   notification.Priority
-	Link       string
+	// InvitedAt and InvitedEmail are the portal invitation still open for a
+	// driver who cannot be reached yet: zero and empty when none is.
+	InvitedAt    int64
+	InvitedEmail string
+	Title        string
+	Message      string
+	Priority     notification.Priority
+	Link         string
 }
 
 // DriverSMSPreview is a text message as it would be sent to a driver's

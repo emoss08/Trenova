@@ -243,7 +243,7 @@ export function InvoiceReconciliationPage() {
                   ) : null}
                   {selectedRow.rebillQueueItemId ? (
                     <LinkButton
-                      to={`/billing/queue?item=${selectedRow.rebillQueueItemId}&includePosted=true`}
+                      to={`/billing/queue?item=${selectedRow.rebillQueueItemId}&includeClosed=true`}
                     >
                       {t("Rebill queue item")}
                     </LinkButton>

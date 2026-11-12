@@ -269,6 +269,16 @@ func DescribeFactoringUnfunded(
 			row.SubmissionID,
 			pathFactoringQueue,
 		),
+		Panel: &watchtower.Panel{
+			Kind: watchtower.PanelMoney,
+			Money: &watchtower.MoneyPanel{
+				Stake:  watchtower.StakeAdvance,
+				Party:  row.FactorName,
+				Amount: money.FormatMinor(row.ExpectedAdvanceMinor, row.CurrencyCode),
+				Count:  int64(row.PendingCount),
+				DueAt:  row.DueAt,
+			},
+		},
 		OccurredAt: row.DueAt,
 	}, true
 }
@@ -308,7 +318,16 @@ func DescribeFactoringChargebackDue(
 		SubjectID:   row.InvoiceID,
 		EventKind:   agenttrigger.EventFactoringChargebackDue,
 		Path:        factoringRecordPath("invoice", row.InvoiceID, pathFactoringInvoices),
-		OccurredAt:  max(row.DeadlineAt-FactoringChargebackWarningSeconds(), row.FundedOn, 1),
+		Panel: &watchtower.Panel{
+			Kind: watchtower.PanelMoney,
+			Money: &watchtower.MoneyPanel{
+				Stake:  watchtower.StakeChargeback,
+				Party:  stringutils.FirstNonEmpty(row.CustomerName, row.FactorName),
+				Amount: money.FormatMinor(row.RepurchaseMinor, row.CurrencyCode),
+				DueAt:  row.DeadlineAt,
+			},
+		},
+		OccurredAt: max(row.DeadlineAt-FactoringChargebackWarningSeconds(), row.FundedOn, 1),
 	}, true
 }
 

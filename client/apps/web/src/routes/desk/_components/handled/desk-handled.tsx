@@ -16,9 +16,10 @@ import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useEffect } from "react";
 import { Link, useNavigate } from "react-router";
+import { aiControlAgentPath } from "@/routes/agent-control/ai-control-tabs";
 import { casePath } from "../attention/attention-record";
 import { LifeBadge, outcomeLife } from "../attention/life-badge";
-import { recordLine } from "./handled-lines";
+import { recordLine, runTrail } from "./handled-lines";
 
 function whyTitle(t: TranslateFn, detail: DeskActivityDetail): string {
   switch (detail.entry.outcome) {
@@ -63,6 +64,12 @@ export function DeskHandled({ id }: { id: string }) {
   const query = useQuery(deskActivity.entry(id));
   const detail = query.data ?? null;
   const setPageSubject = useDeskMarginStore((state) => state.setPageSubject);
+  const setPageTitle = useDeskMarginStore((state) => state.setPageTitle);
+  const title = detail?.entry.title ?? null;
+  useEffect(() => {
+    setPageTitle(title);
+    return () => setPageTitle(null);
+  }, [title, setPageTitle]);
   const first = detail?.entry.records.find((record) => record.readable) ?? null;
   useEffect(() => {
     setPageSubject(first ? { kind: first.kind, id: first.id, label: first.label } : null);
@@ -95,6 +102,9 @@ export function DeskHandled({ id }: { id: string }) {
 
   const { entry } = detail;
   const records = recordLine(t, entry);
+  const trail = runTrail(t, detail);
+  const reasons = new Set(detail.changes.map((change) => change.why).filter((why) => why !== ""));
+  const eachHasItsReason = reasons.size > 1;
 
   return (
     <div className="dk-w-case-scroll">
@@ -115,7 +125,7 @@ export function DeskHandled({ id }: { id: string }) {
           />
         </div>
         <h1 className="dk-w-det-h">{entry.title}</h1>
-        {entry.detail !== "" && entry.outcome !== "Failed" && (
+        {entry.detail !== "" && entry.outcome !== "Failed" && !eachHasItsReason && (
           <p className="dk-w-det-sum">{entry.detail}</p>
         )}
 
@@ -140,8 +150,13 @@ export function DeskHandled({ id }: { id: string }) {
               <span>
                 {t("Anyone with AI control access.")}{" "}
                 {canSeeControl && (
-                  <Link className="dk-w-alnk ui-focus-ring" to="/admin/agent-control">
-                    {t("Open AI control")}
+                  <Link
+                    className="dk-w-alnk ui-focus-ring"
+                    to={aiControlAgentPath(entry.agent?.id)}
+                  >
+                    {entry.agent
+                      ? t("Open {0} in AI control", entry.agent.name)
+                      : t("Open AI control")}
                   </Link>
                 )}
               </span>
@@ -158,7 +173,8 @@ export function DeskHandled({ id }: { id: string }) {
             <table>
               <thead>
                 <tr>
-                  <th>{t("What it changed")}</th>
+                  <th>{t("Record")}</th>
+                  <th>{t("What it did")}</th>
                   <th>{t("When")}</th>
                   <th>{t("How it ended")}</th>
                 </tr>
@@ -175,9 +191,17 @@ export function DeskHandled({ id }: { id: string }) {
                           {change.record.label}
                         </Link>
                       ) : change.record ? (
-                        <span className="dk-w-mono">{t("A record you can't open")}</span>
+                        <span>{t("A record you can't open")}</span>
                       ) : (
-                        <span>{t("No record")}</span>
+                        <span className="dk-w-tbl-none" aria-label={t("No record")}>
+                          —
+                        </span>
+                      )}
+                    </td>
+                    <td>
+                      <span className="dk-w-tbl-what">{change.what}</span>
+                      {eachHasItsReason && change.why !== "" && (
+                        <span className="dk-w-tbl-why">{change.why}</span>
                       )}
                     </td>
                     <td className="dk-w-mono">{formatUnixTime(change.at, { timezone })}</td>
@@ -190,6 +214,18 @@ export function DeskHandled({ id }: { id: string }) {
               </tbody>
             </table>
           </div>
+        </section>
+
+        <section className="dk-w-blk">
+          <div className="dk-w-blk-h">{t("The run")}</div>
+          <ol className="dk-w-trail dk-w-trail-top">
+            {trail.map((step) => (
+              <li key={step.key}>
+                <span className="dk-w-mono">{formatUnixTime(step.at, { timezone })}</span>
+                {step.text}
+              </li>
+            ))}
+          </ol>
         </section>
 
         <div className="dk-w-blk dk-w-led-acts">

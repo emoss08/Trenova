@@ -473,7 +473,7 @@ function ApprovalDetail({
               ) : null}
               {selectedRow.rebillQueueItemId ? (
                 <ArtifactLink
-                  to={`/billing/queue?item=${selectedRow.rebillQueueItemId}&includePosted=true`}
+                  to={`/billing/queue?item=${selectedRow.rebillQueueItemId}&includeClosed=true`}
                   label={t("Rebill queue")}
                 />
               ) : null}

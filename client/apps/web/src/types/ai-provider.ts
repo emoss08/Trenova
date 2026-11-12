@@ -141,6 +141,7 @@ export const aiTaskSchema = z.enum([
   "RemittanceExtraction",
   "PaperworkReading",
   "PaletteAnswer",
+  "CaseReading",
   "EvaluationJudge",
   "Embedding",
   "General",

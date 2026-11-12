@@ -768,7 +768,7 @@ cases:
     expect: [report_delete_table_change_alert]
   - request: which change alerts do I have set up
     expect: [report_list_table_change_alerts]
-  - request: dismiss the weather item on the watchtower feed
+  - request: dismiss the no check call item on the watchtower feed
     expect: [exception_dismiss_watchtower_item]
   - request: file the scanned PODs from capture intake onto their shipments
     expect: [inbox_file_capture_item]

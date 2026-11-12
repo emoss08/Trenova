@@ -23,7 +23,7 @@ describe("ShipmentBillingQueueStatus", () => {
     expect(screen.getByText("Sent back to ops")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /view in billing queue/i })).toHaveAttribute(
       "href",
-      "/billing/queue?query=PRO%201001%2FA&includePosted=true",
+      "/billing/queue?query=PRO%201001%2FA&includeClosed=true",
     );
   });
 

@@ -23,6 +23,14 @@ const maxTitleLength = 200
 // opened with, so the rail shows a name rather than a paragraph.
 const DerivedTitleRunes = 60
 
+type TitleSource string
+
+const (
+	TitleFromQuestion = TitleSource("Question")
+	TitleFromModel    = TitleSource("Model")
+	TitleFromPerson   = TitleSource("Person")
+)
+
 // TitleFrom names a conversation from what it was opened with: the first
 // question asked in it, or the request first scheduled in it.
 func TitleFrom(text string) string {
@@ -45,8 +53,12 @@ type Thread struct {
 	UserID            pulid.ID `json:"userId"            keel:"user_id"`
 	AgentDefinitionID pulid.ID `json:"agentDefinitionId" keel:"agent_definition_id"`
 
-	Title  string       `json:"title"  keel:"title,nullzero"`
-	Status ThreadStatus `json:"status" keel:"status"`
+	Title string `json:"title" keel:"title,nullzero"`
+	// TitleSource is where the title came from. The model's name for a
+	// conversation replaces one taken from its first question, never one a
+	// person gave.
+	TitleSource TitleSource  `json:"titleSource" keel:"title_source,nullzero,default"`
+	Status      ThreadStatus `json:"status" keel:"status"`
 
 	// LastMessageAt orders a user's thread list without a join onto messages.
 	LastMessageAt int64 `json:"lastMessageAt" keel:"last_message_at"`

@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/notificationtemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/portalaccessports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
@@ -25,6 +26,7 @@ type Params struct {
 
 	Logger        *zap.Logger
 	WorkerRepo    workerports.WorkerRepository
+	Portal        portalaccessports.PortalAccessRepository
 	Notifications *notificationservice.Service
 	Templates     documenttemplateports.DocumentTemplateResolver
 }
@@ -32,6 +34,7 @@ type Params struct {
 type Service struct {
 	l             *zap.Logger
 	workerRepo    workerports.WorkerRepository
+	portal        portalaccessports.PortalAccessRepository
 	notifications *notificationservice.Service
 	templates     documenttemplateports.DocumentTemplateResolver
 }
@@ -40,6 +43,7 @@ func New(p Params) *Service {
 	return &Service{
 		l:             p.Logger.Named("service.driver-notification"),
 		workerRepo:    p.WorkerRepo,
+		portal:        p.Portal,
 		notifications: p.Notifications,
 		templates:     p.Templates,
 	}

@@ -46,12 +46,15 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/assistantturnrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/briefingrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/casechecklistrepository"
+	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/caseownerrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/conversationrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/conversationschedulerepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/exceptionsourcerepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/insightrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/palettequestionrepository"
+	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/recordcaserepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/recordlabelrepository"
+	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/recordsharerepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/recordsummaryrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/roleagentgrantrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/shipmentbriefrepository"
@@ -133,6 +136,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/briefingservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/briefingservice/briefingwriter"
 	"github.com/emoss08/trenova/internal/modules/agent/app/casechecklistservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/caseownerservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/conversationscheduleservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/deskactivityservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/deskattentionservice"
@@ -154,6 +158,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/proposalpreviewservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/proposalrecorder"
 	"github.com/emoss08/trenova/internal/modules/agent/app/recordanchorservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/recordcaseservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/recordcaseservice/casereading"
+	"github.com/emoss08/trenova/internal/modules/agent/app/recordshareservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/retrievalquery"
 	"github.com/emoss08/trenova/internal/modules/agent/app/retrievalservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/scriptrunner"
@@ -188,6 +195,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/dispatchconsoleports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/formulastudioports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/recordcaseports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentimportassistantports"
@@ -237,6 +245,7 @@ func SharedOptions() fx.Option {
 			func(d *completioncontract.Dispatcher) llmports.StructuredCompleter { return d },
 			func(d *completioncontract.Dispatcher) aiproviderports.AIProviderTester { return d },
 			func(d *completioncontract.Dispatcher) briefingports.BriefingDayWriter { return d },
+			func(d *completioncontract.Dispatcher) recordcaseports.ReadingStarter { return d },
 			assistantqueuerepository.New,
 			agentwaitrepository.New,
 			agentrunrepository.New,
@@ -310,6 +319,9 @@ func SharedOptions() fx.Option {
 			watchtowerrepository.New,
 			exceptionsourcerepository.New,
 			briefingrepository.New,
+			recordcaserepository.New,
+			caseownerrepository.New,
+			recordsharerepository.New,
 			agentprofilerepository.NewProfiles,
 			agentprofilerepository.NewGuidance,
 			agentprofilerepository.NewFacts,
@@ -394,6 +406,8 @@ func SharedOptions() fx.Option {
 			watchtowerservice.NewRouter,
 			watchtowerservice.NewExceptions,
 			watchtowerservice.AsExceptionService,
+			watchtowerservice.AsRecordSettler,
+			watchtowerservice.AsRunSettler,
 			watchtowerservice.AsExceptionSweeper,
 			watchtowerservice.AsProjector,
 			watchtowerservice.AsSubjectReconciler,
@@ -401,6 +415,15 @@ func SharedOptions() fx.Option {
 			deskrecords.New,
 			deskattentionservice.New,
 			deskactivityservice.New,
+			recordcaseservice.New,
+			recordcaseservice.AsService,
+			caseownerservice.New,
+			caseownerservice.AsService,
+			recordshareservice.New,
+			recordshareservice.AsService,
+			recordcaseservice.NewOfferer,
+			recordcaseservice.AsComposer,
+			casereading.New,
 			briefingwriter.New,
 			briefingservice.New,
 			briefingservice.AsService,

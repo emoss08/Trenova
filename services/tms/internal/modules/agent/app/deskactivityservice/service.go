@@ -292,6 +292,9 @@ func (s *Service) Entry(
 	for _, member := range members {
 		change := &deskactivityports.Change{
 			ProposalID: member.ID,
+			What:       whatOf(member),
+			Why:        strings.TrimSpace(member.Rationale),
+			ProposedAt: member.CreatedAt,
 			At:         settledAt(member),
 			Outcome:    outcomeOf(member),
 			Error:      member.ExecutionError,
@@ -458,6 +461,17 @@ func detailOf(p *agent.AgentProposal) string {
 	}
 
 	return strings.TrimSpace(p.Rationale)
+}
+
+func whatOf(p *agent.AgentProposal) string {
+	result := p.ExecutionResult
+	if result != nil && result.Action != "" && result.Kind != "" {
+		return strings.TrimSpace(
+			textcase.CapitalizeFirst(result.Action) + " " + result.Kind + " " + result.Name,
+		)
+	}
+
+	return textcase.CapitalizeFirst(toolPhrase(p.ToolName))
 }
 
 func toolPhrase(toolName string) string {

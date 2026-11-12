@@ -2,7 +2,7 @@ import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import { stubLayout } from "@/test/layout";
 import type { AssistantThread } from "@/types/assistant";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter, useLocation } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type {
@@ -17,7 +17,8 @@ import {
   type DeskShelfKey,
 } from "@/components/desk-chat/rail/desk-threads";
 import { useDeskMarginStore } from "@/stores/desk-margin-store";
-import { DeskRail, type DeskRailProps } from "../desk-rail";
+import { useDeskRailSlotStore } from "@/stores/desk-rail-slot-store";
+import { DeskRail, type DeskRailProps, railViewOf } from "../desk-rail";
 
 const DAY = 24 * 60 * 60;
 
@@ -139,13 +140,22 @@ function RailHarness({
     <MemoryRouter initialEntries={["/desk"]}>
       <DeskRail
         place="today"
+        view="chats"
+        edges={edges}
+        onSetPinned={vi.fn()}
+        onRename={vi.fn()}
+        onDownload={vi.fn()}
+        onDelete={vi.fn()}
         agentsById={agents}
         activeThreadId={null}
         canWatch
         canDecide
         canTriage
-        lensCounts={{ everything: 0, watchtower: 0, triage: 0, decisions: 0 }}
+        lensCounts={{ everything: 0, watchtower: 0, decisions: 0 }}
+        triageWaiting={0}
         folded={false}
+        mode="pinned"
+        open={false}
         shelves={shelves}
         today={edges.today}
         noConversations={shelves.every((shelf) => shelf.threads.length === 0 && shelf.count === 0)}
@@ -216,7 +226,9 @@ describe("DeskRail", () => {
       ],
     });
 
-    const headings = [...document.querySelectorAll(".dk-rl-gh")].map((node) => node.textContent);
+    const headings = [...document.querySelectorAll('[data-slot="rail-heading"]')].map(
+      (node) => node.textContent,
+    );
     expect(headings).toEqual(["Pinned", "Today", "Previous 7 days"]);
     expect(screen.getByText("Pinned question")).toBeInTheDocument();
   });
@@ -245,14 +257,17 @@ describe("DeskRail", () => {
     });
 
     const dot = (title: string) =>
-      screen.getByText(title).closest(".dk-rl-th")?.querySelector(".dk-rl-d");
-    expect(dot("Working one")).not.toHaveClass("dk-on");
-    expect(dot("Waiting one")).toHaveClass("dk-on");
-    expect(dot("Failed one")).not.toHaveClass("dk-on");
-    expect(dot("Unread one")).toHaveClass("dk-on");
-    expect(screen.getByText("Waiting one").closest(".dk-rl-th")?.getAttribute("title")).toMatch(
-      /^Billing desk · Needs your approval · /,
-    );
+      screen
+        .getByText(title)
+        .closest('[data-slot="rail-row"]')
+        ?.querySelector('[data-slot="rail-dot"]');
+    expect(dot("Working one")).not.toHaveAttribute("data-on");
+    expect(dot("Waiting one")).toHaveAttribute("data-on");
+    expect(dot("Failed one")).not.toHaveAttribute("data-on");
+    expect(dot("Unread one")).toHaveAttribute("data-on");
+    expect(
+      screen.getByText("Waiting one").closest('[data-slot="rail-row"]')?.getAttribute("title"),
+    ).toMatch(/^Billing desk · Needs your approval · /);
   });
 
   it("says in words, with the agent's name, what a conversation needs or is doing", () => {
@@ -280,7 +295,10 @@ describe("DeskRail", () => {
     });
 
     const note = (title: string) =>
-      screen.getByText(title).closest(".dk-rl-th")?.querySelector(".dk-rl-s")?.textContent ?? null;
+      screen
+        .getByText(title)
+        .closest('[data-slot="rail-row"]')
+        ?.querySelector('[data-slot="rail-sub"]')?.textContent ?? null;
     expect(note("Working one")).toBe("Billing desk · Writing a reply");
     expect(note("Waiting one")).toBe("Billing desk · Needs your approval");
     expect(note("Failed one")).toBe("Billing desk · Last reply failed");
@@ -289,17 +307,30 @@ describe("DeskRail", () => {
     expect(note("Quiet one")).toBe("Billing desk");
   });
 
-  it("opens a conversation in Nova's margin beside the page, and follows the link from a conversation", () => {
+  it("opens a conversation as its own page on a click, from Today as from anywhere", () => {
+    useDeskMarginStore.getState().clearSession();
+    renderRail({
+      place: "today",
+      threads: [thread({ id: "full", title: "Full one" })],
+    });
+
+    const row = screen.getByRole("link", { name: /^Full one/ });
+    expect(row).toHaveAttribute("href", "/desk/t/full");
+    // The click is the link's own: nothing takes it over to open the margin.
+    fireEvent.click(row);
+    expect(useDeskMarginStore.getState().margin).toBeNull();
+  });
+
+  it("lights the conversation that is open beside the page", () => {
     useDeskMarginStore.getState().clearSession();
     renderRail({
       place: "today",
       threads: [thread({ id: "beside", title: "Beside one" })],
     });
 
-    fireEvent.click(screen.getByRole("link", { name: /^Beside one/ }));
+    act(() => useDeskMarginStore.getState().showThread("beside", null));
 
-    expect(useDeskMarginStore.getState().margin).toEqual({ threadId: "beside", subject: null });
-    expect(screen.getByText("Beside one").closest(".dk-rl-th")).toHaveAttribute(
+    expect(screen.getByText("Beside one").closest('[data-slot="rail-row"]')).toHaveAttribute(
       "aria-current",
       "page",
     );
@@ -339,9 +370,9 @@ describe("DeskRail", () => {
       ],
     });
 
-    const row = screen.getByText("Open one").closest(".dk-rl-th");
+    const row = screen.getByText("Open one").closest('[data-slot="rail-row"]');
     expect(row).toHaveAttribute("aria-current", "page");
-    expect(row?.querySelector(".dk-rl-d")).not.toHaveClass("dk-on");
+    expect(row?.querySelector('[data-slot="rail-dot"]')).not.toHaveAttribute("data-on");
   });
 
   // The same rail, drawn again as the person moves: the row must follow the
@@ -353,13 +384,13 @@ describe("DeskRail", () => {
       attention: { pendingDecisions: 0, lastTurnFailed: false, unread: true },
     });
     const { update } = renderRail({ threads: [unread] });
-    const row = () => screen.getByText("Unread one").closest(".dk-rl-th");
+    const row = () => screen.getByText("Unread one").closest('[data-slot="rail-row"]');
 
-    expect(row()?.querySelector(".dk-rl-d")).toHaveClass("dk-on");
+    expect(row()?.querySelector('[data-slot="rail-dot"]')).toHaveAttribute("data-on");
 
     update({ threads: [unread], place: "thread", activeThreadId: "new" });
     expect(row()).toHaveAttribute("aria-current", "page");
-    expect(row()?.querySelector(".dk-rl-d")).not.toHaveClass("dk-on");
+    expect(row()?.querySelector('[data-slot="rail-dot"]')).not.toHaveAttribute("data-on");
 
     const read = {
       ...unread,
@@ -367,7 +398,7 @@ describe("DeskRail", () => {
     };
     update({ threads: [read], place: "today", activeThreadId: null });
     expect(row()).not.toHaveAttribute("aria-current");
-    expect(row()?.querySelector(".dk-rl-d")).not.toHaveClass("dk-on");
+    expect(row()?.querySelector('[data-slot="rail-dot"]')).not.toHaveAttribute("data-on");
   });
 
   it("marks a reply that arrives later in a conversation already listed", () => {
@@ -377,21 +408,42 @@ describe("DeskRail", () => {
       attention: { pendingDecisions: 0, lastTurnFailed: false, unread: false },
     });
     const { update } = renderRail({ threads: [seen] });
-    const dot = () => screen.getByText("Seen one").closest(".dk-rl-th")?.querySelector(".dk-rl-d");
+    const dot = () =>
+      screen
+        .getByText("Seen one")
+        .closest('[data-slot="rail-row"]')
+        ?.querySelector('[data-slot="rail-dot"]');
 
-    expect(dot()).not.toHaveClass("dk-on");
+    expect(dot()).not.toHaveAttribute("data-on");
     update({
       threads: [
         { ...seen, attention: { pendingDecisions: 0, lastTurnFailed: false, unread: true } },
       ],
     });
-    expect(dot()).toHaveClass("dk-on");
+    expect(dot()).toHaveAttribute("data-on");
   });
 
-  it("shows the places with what waits at each, each lens opening Needs you on it", () => {
+  it("shows the way into cases on the conversations' rail, with what waits there", () => {
     renderRail({
-      lensCounts: { everything: 19, watchtower: 11, triage: 2, decisions: 6 },
+      lensCounts: { everything: 19, watchtower: 11, decisions: 6 },
     });
+
+    expect(screen.getByRole("link", { name: /Cases/ })).toHaveTextContent("19");
+    expect(screen.getByRole("link", { name: /Cases/ })).toHaveAttribute("href", "/desk/needs");
+    expect(screen.queryByRole("link", { name: /Watchtower/ })).toBeNull();
+    expect(screen.getByRole("link", { name: "Scheduled" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Memory" })).toBeTruthy();
+  });
+
+  it("shows Needs you with what waits at each lens on the cases' rail", () => {
+    renderRail({
+      view: "cases",
+      place: "needs",
+      lensCounts: { everything: 19, watchtower: 11, decisions: 6 },
+    });
+
+    expect(screen.getByRole("link", { name: "Back to chats" })).toHaveAttribute("href", "/desk");
+    expect(screen.queryByRole("link", { name: "Scheduled" })).toBeNull();
 
     expect(screen.getByRole("link", { name: /Needs you/ })).toHaveTextContent("19");
     expect(screen.getByRole("link", { name: /Watchtower/ })).toHaveTextContent("11");
@@ -399,24 +451,68 @@ describe("DeskRail", () => {
       "href",
       "/desk/needs?lens=watchtower",
     );
-    expect(screen.getByRole("link", { name: /Triage/ })).toHaveAttribute(
-      "href",
-      "/desk/needs?lens=triage",
-    );
     expect(screen.getByRole("link", { name: /Decisions/ })).toHaveAttribute(
       "href",
       "/desk/needs?lens=decisions",
     );
-    expect(screen.getByRole("link", { name: /Triage/ })).toHaveTextContent("2");
     const decisions = screen.getByRole("link", { name: /Decisions/ });
     expect(decisions).toHaveTextContent("6");
   });
 
-  it("shows no count at a place where nothing waits", () => {
-    renderRail({ lensCounts: { everything: 0, watchtower: 0, triage: 0, decisions: 0 } });
+  it("opens Triage's room from either rail, with what waits on a person there", () => {
+    const { unmount } = renderRail({ triageWaiting: 4 });
 
-    expect(screen.getByRole("link", { name: "Watchtower" }).querySelector(".dk-rl-n")).toBeNull();
-    expect(screen.getByRole("link", { name: "Decisions" }).querySelector(".dk-rl-n")).toBeNull();
+    expect(screen.getByRole("link", { name: /Triage/ })).toHaveAttribute("href", "/desk/triage");
+    expect(screen.getByRole("link", { name: /Triage/ })).toHaveTextContent("4");
+    unmount();
+
+    renderRail({ view: "cases", place: "needs", triageWaiting: 4 });
+
+    expect(screen.getByRole("link", { name: /Triage/ })).toHaveAttribute("href", "/desk/triage");
+    expect(screen.getByRole("link", { name: /Triage/ })).toHaveTextContent("4");
+  });
+
+  it("gives the rail to Triage's folders while Triage is in front", () => {
+    renderRail({
+      view: "triage",
+      place: "triage",
+      lensCounts: { everything: 19, watchtower: 11, decisions: 6 },
+    });
+
+    expect(screen.getByRole("link", { name: "Back to chats" })).toHaveAttribute("href", "/desk");
+    expect(screen.getByRole("link", { name: /Needs you/ })).toHaveTextContent("19");
+    expect(screen.queryByRole("link", { name: /Watchtower/ })).toBeNull();
+    expect(useDeskRailSlotStore.getState().slot).toBeInstanceOf(HTMLElement);
+  });
+
+  it("leads back from Triage to the page it was opened from, and names the view that page is in", () => {
+    renderRail({
+      view: "triage",
+      place: "triage",
+      triageBack: { view: "cases", to: "/desk/r/shipment/shp_1?item=wt_1" },
+    });
+
+    expect(screen.getByRole("link", { name: "Back to cases" })).toHaveAttribute(
+      "href",
+      "/desk/r/shipment/shp_1?item=wt_1",
+    );
+    expect(screen.queryByRole("link", { name: "Back to chats" })).toBeNull();
+    expect(screen.queryByRole("link", { name: /Needs you/ })).toBeNull();
+  });
+
+  it("shows no count at a place where nothing waits", () => {
+    renderRail({
+      view: "cases",
+      place: "needs",
+      lensCounts: { everything: 0, watchtower: 0, decisions: 0 },
+    });
+
+    expect(
+      screen.getByRole("link", { name: "Watchtower" }).querySelector('[data-slot="rail-count"]'),
+    ).toBeNull();
+    expect(
+      screen.getByRole("link", { name: "Decisions" }).querySelector('[data-slot="rail-count"]'),
+    ).toBeNull();
   });
 
   it("opens the scheduled requests from their place, and lights it while they are open", () => {
@@ -487,6 +583,33 @@ describe("DeskRail fold", () => {
     useDeskMarginStore.getState().clearSession();
   });
 
+  it("floats over the page as a card, out of reach until it is shown", () => {
+    renderRail({ mode: "floating", open: false });
+
+    const rail = screen.getByRole("complementary", { hidden: true });
+    expect(rail).toHaveAttribute("data-mode", "floating");
+    expect(rail).not.toHaveAttribute("data-open");
+    expect(rail).toHaveAttribute("inert");
+    expect(rail).toHaveClass("fixed", "rounded-xl");
+  });
+
+  it("is in reach once a floating rail is shown", () => {
+    renderRail({ mode: "floating", open: true });
+
+    const rail = screen.getByRole("complementary");
+    expect(rail).toHaveAttribute("data-open");
+    expect(rail).not.toHaveAttribute("inert");
+  });
+
+  it("sits beside the page when pinned, taking its width", () => {
+    renderRail();
+
+    const rail = screen.getByRole("complementary");
+    expect(rail).toHaveAttribute("data-mode", "pinned");
+    expect(rail).toHaveClass("w-58", "border-r");
+    expect(rail).not.toHaveClass("rounded-xl");
+  });
+
   it("takes no focus while folded", () => {
     renderRail({ folded: true });
 
@@ -530,7 +653,7 @@ describe("DeskRail paging", () => {
   it("mounts only the conversations near the viewport", () => {
     renderRail({ threads: many(300) });
 
-    const mounted = document.querySelectorAll(".dk-rl-th");
+    const mounted = document.querySelectorAll('[data-slot="rail-row"]');
     expect(mounted.length).toBeGreaterThan(0);
     expect(mounted.length).toBeLessThan(40);
     expect(screen.getByText("Conversation 0")).toBeInTheDocument();
@@ -567,7 +690,9 @@ describe("DeskRail paging", () => {
   it("shows a shelf's first page loading under its heading", () => {
     renderRail({ counts: { today: 4 }, paging: { today: { loading: true } } });
 
-    expect(screen.getByText("Today", { selector: ".dk-rl-gh" })).toBeInTheDocument();
+    expect(
+      screen.getByText("Today", { selector: '[data-slot="rail-heading"]' }),
+    ).toBeInTheDocument();
     expect(screen.getByRole("status", { name: "Loading more..." })).toBeInTheDocument();
   });
 
@@ -602,25 +727,44 @@ describe("DeskRail shelf counts", () => {
     renderRail({ threads: many(1), counts: { week: 0 } });
 
     expect(
-      screen.queryByText("Previous 7 days", { selector: ".dk-rl-gh" }),
+      screen.queryByText("Previous 7 days", { selector: '[data-slot="rail-heading"]' }),
     ).not.toBeInTheDocument();
   });
 
   it("keeps the heading of a shelf that could not be counted", () => {
     renderRail({ threads: many(1), counts: { older: "unknown" } });
 
-    expect(screen.getByText("Older", { selector: ".dk-rl-gh" })).toBeInTheDocument();
+    expect(
+      screen.getByText("Older", { selector: '[data-slot="rail-heading"]' }),
+    ).toBeInTheDocument();
   });
 
   it("draws no heading for a shelf still being counted with nothing read", () => {
     renderRail({ threads: many(1), counts: { older: "counting" } });
 
-    expect(screen.queryByText("Older", { selector: ".dk-rl-gh" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Older", { selector: '[data-slot="rail-heading"]' }),
+    ).not.toBeInTheDocument();
   });
 
   it("does not say there are no chats until every shelf is counted", () => {
     renderRail({ counts: { today: "counting" } });
 
     expect(screen.queryByText(/Your chats will show up here/)).not.toBeInTheDocument();
+  });
+});
+
+describe("which rail a place belongs to", () => {
+  it("keeps the cases' rail for a conversation asked on a record's case", () => {
+    expect(railViewOf("thread", true)).toBe("cases");
+    expect(railViewOf("thread", false)).toBe("chats");
+    expect(railViewOf("thread")).toBe("chats");
+  });
+
+  it("is the cases' rail for case work and the conversations' everywhere else", () => {
+    expect(railViewOf("case")).toBe("cases");
+    expect(railViewOf("needs")).toBe("cases");
+    expect(railViewOf("today", true)).toBe("chats");
+    expect(railViewOf("memory")).toBe("chats");
   });
 });

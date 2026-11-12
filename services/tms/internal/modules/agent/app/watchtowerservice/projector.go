@@ -2,6 +2,8 @@ package watchtowerservice
 
 import (
 	"context"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/caseownerports"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentactivityports"
@@ -30,6 +32,10 @@ type ProjectorParams struct {
 	Permissions   permissionports.PermissionEngine
 	Realtime      realtimeports.RealtimeService
 	Notifications *notificationservice.Service
+	Owners        caseownerports.Service
+	// Events wakes the agents that subscribe to an item's event when a sweep
+	// first raises it.
+	Events agenteventports.AgentEventPublisher
 }
 
 // Projector is the watchtower's write face: what the sources put on the
@@ -52,6 +58,8 @@ type Projector struct {
 	access        kindAccess
 	realtime      realtimeports.RealtimeService
 	notifications *notificationservice.Service
+	owners        caseownerports.Service
+	events        agenteventports.AgentEventPublisher
 	now           func() int64
 }
 
@@ -60,9 +68,11 @@ func NewProjector(p ProjectorParams) *Projector {
 		l:             p.Logger.Named("service.watchtower.projector"),
 		repo:          p.Repo,
 		router:        p.Router,
-		access:        kindAccess{permissions: p.Permissions},
+		access:        kindAccess{permissions: p.Permissions, owners: p.Owners},
 		realtime:      p.Realtime,
 		notifications: p.Notifications,
+		owners:        p.Owners,
+		events:        p.Events,
 		now:           timeutils.NowUnix,
 	}
 }
@@ -92,6 +102,7 @@ func ItemFromInput(input watchtowerports.WatchtowerItemInput) *watchtower.Item {
 		Facts:          input.Facts,
 		Impact:         input.Impact,
 		Trail:          input.Trail,
+		Panel:          input.Panel,
 	}
 	if input.Record != nil {
 		item.RecordKind = input.Record.Kind
@@ -141,12 +152,31 @@ func (p *Projector) project(
 	}
 
 	ctx = dbscope.WithTenant(ctx, input.TenantInfo.DBTenant())
+	if record := p.caseRecord(ctx, &input, item.AboutID); record != item.AboutID {
+		item.SetAbout(record)
+	}
 	saved, inserted, err := p.repo.Upsert(ctx, item)
 	if err != nil {
 		return nil, "", err
 	}
 
 	saved = p.route(ctx, saved, input.OwnerID, inserted)
+	if inserted && saved.AboutID.IsNotNil() && !saved.IsResolved() {
+		p.owners.Route(ctx, caseownerports.CandidatesRequest{
+			TenantInfo: input.TenantInfo,
+			Kind:       saved.AboutKind,
+			RecordID:   saved.AboutID,
+		}, input.OwnerID)
+	}
+	if input.RaisesEvent && (inserted || saved.Reopened) && !saved.IsResolved() &&
+		saved.EventKind != "" && saved.SubjectID.IsNotNil() {
+		agenteventports.PublishAgentEvent(ctx, p.events, agenteventports.AgentEvent{
+			Kind:       saved.EventKind,
+			SubjectID:  saved.SubjectID,
+			TenantInfo: input.TenantInfo,
+			Detail:     saved.Title,
+		})
+	}
 	if saved.Unchanged {
 		return nil, "", nil
 	}
@@ -253,3 +283,44 @@ func (p *Projector) notifyCritical(ctx context.Context, item *watchtower.Item) {
 			zap.String("item", item.ID.String()), zap.Error(err))
 	}
 }
+
+/*
+caseRecord is the record a decision's case is on. An agent proposes on the
+thing it works: a detention desk on the detention occurrence, not on the
+load. The occurrence's own item already says which record it is about, so a
+plan or a change about the occurrence is filed under that record, where the
+person finds the case, rather than under a record with no case of its own.
+Only decisions are looked up; a condition says what it is about itself.
+*/
+func (p *Projector) caseRecord(
+	ctx context.Context,
+	input *watchtowerports.WatchtowerItemInput,
+	about pulid.ID,
+) pulid.ID {
+	if about.IsNil() || (input.SourceKind != watchtower.SourceAgentProposal &&
+		input.SourceKind != watchtower.SourceAgentPlan) {
+		return about
+	}
+
+	raised, err := p.repo.List(ctx, watchtowerports.ListWatchtowerItemsQuery{
+		TenantInfo: input.TenantInfo,
+		SubjectID:  about,
+		Limit:      caseRecordLookups,
+	})
+	if err != nil {
+		p.l.Warn("could not read what a decision's record is about",
+			zap.String("record", about.String()), zap.Error(err))
+
+		return about
+	}
+	for _, item := range raised {
+		if item.AboutID.IsNotNil() && item.AboutID != about &&
+			item.SourceKind.DeskLens() == watchtower.DeskLensWatchtower {
+			return item.AboutID
+		}
+	}
+
+	return about
+}
+
+const caseRecordLookups = 5

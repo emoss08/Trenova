@@ -15,6 +15,7 @@ import type { QueueMode } from "@/components/assistant/use-conversation-queue";
 import { dictationIssueText } from "@/components/assistant/dictation-issue-text";
 import { useComposerDictation } from "@/components/assistant/use-composer-dictation";
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
+import { assistant } from "@/lib/queries/assistant";
 import { useDeskSettingsStore } from "@/stores/desk-settings-store";
 import { useDeskStore } from "@/stores/desk-store";
 import type { AssistantEntityRef } from "@/types/assistant";
@@ -26,16 +27,19 @@ import { useRichT } from "@trenova/shared/i18n/rich";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatAltShortcut, formatShortcut, isMacPlatform } from "@trenova/shared/lib/shortcuts";
 import { cn } from "@trenova/shared/lib/utils";
-import { useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { DeskIcon } from "../desk-icons";
+import { DeskAgentTile } from "../desk-agent-tile";
 import { DeskAgentPicker } from "./desk-agent-picker";
 import { MAX_ATTACHMENTS, type DeskAttachments } from "./desk-attachments";
 import { deskIconClass, deskIconOnClass, deskLinkClass } from "../desk-button-styles";
 import { ComposerPopoverContext } from "../desk-popover";
 import { DeskCapturePanel, type DeskScans } from "./desk-capture";
 import { DeskDictate } from "./desk-dictate";
-import { DeskMentionMirror, DeskMentionPicker, useDeskMentions } from "./desk-mentions";
-import { DeskSlashMenu, DeskSlashMirror, useDeskSlash } from "./desk-slash";
+import { DeskMentionPicker, prefetchMentions, useDeskMentions } from "./desk-mentions";
+import { DeskSlashMenu, slashCommandMarks, useDeskSlash } from "./desk-slash";
+import { DeskEditor, type DeskEditorHandle } from "./editor/desk-editor";
 import { DeskAttachMenu, DeskAttachRow, DeskDropGhosts, type DragState } from "./desk-uploads";
 import { useDeskExtensionCommands } from "./use-desk-extension-commands";
 import { useTypewriter } from "./use-typewriter";
@@ -85,6 +89,8 @@ export type DeskComposerProps = {
   onSteer?: (content: string, payload: ComposerPayload, mode: QueueMode) => void;
   agent: AgentChoice | null;
   onAgentChange?: (agent: AgentChoice) => void;
+  /** The agent is the only one this box asks: it is named, and cannot be changed. */
+  agentFixed?: boolean;
   recentAgentIds?: readonly string[];
   agentLastUsedAt?: ReadonlyMap<string, number>;
   /** An agent is working on a reply: the border lights and send becomes stop. */
@@ -141,6 +147,11 @@ export type DeskComposerProps = {
    * empty box: Tab or → puts it in, to send as it is or edit first.
    */
   suggestedAnswer?: string;
+  /**
+   * The last thing the person said in this conversation. ↑ in the empty box
+   * puts it back, to send again or reword.
+   */
+  recall?: string;
 };
 
 /**
@@ -154,9 +165,15 @@ export type DeskComposerProps = {
  * it outright. A slash lists commands, an @ names a record, the plus attaches
  * files or scans paper, and the microphone writes what is said into the box.
  * An answer the agent proposes to its own question waits in the empty box,
- * and Tab or → takes it. Enter sends, Shift+Enter breaks a line. While the
- * agent works, Enter steers the reply under way and Option+Enter queues the
- * message for after it.
+ * and Tab or → takes it. Enter sends, Shift+Enter breaks a line, and ↑ in
+ * the empty box brings back what was last said. While the agent works, Enter
+ * steers the reply under way and Option+Enter queues the message for after it.
+ *
+ * The box is Tiptap over plain lines (`DeskEditor`): it holds its own words,
+ * so typing never waits on a render. A paste arrives as clean text, a file
+ * or picture pasted in is attached, and a paste too long to be a message
+ * rides as a text file. The first time the box takes the focus it reads what
+ * a bare @ lists, so the picker opens on records.
  */
 export function DeskComposer({
   value,
@@ -166,6 +183,7 @@ export function DeskComposer({
   onSteer,
   agent,
   onAgentChange,
+  agentFixed = false,
   recentAgentIds = [],
   agentLastUsedAt,
   busy,
@@ -195,10 +213,12 @@ export function DeskComposer({
   dictation: dictationAllowed = true,
   typewriter = false,
   suggestedAnswer = "",
+  recall = "",
 }: DeskComposerProps) {
   const t = useT();
   const offerId = useId();
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const queryClient = useQueryClient();
+  const editorRef = useRef<DeskEditorHandle>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [menu, setMenu] = useState<"menu" | "capture" | null>(null);
   // The composer its menus hang over; in a dense Desk they span it.
@@ -280,7 +300,7 @@ export function DeskComposer({
   const slash = useDeskSlash({
     value,
     onChange,
-    textareaRef,
+    editorRef,
     onSendText: send,
     suggestions,
     enabled: !typing && settings.slash === "on",
@@ -289,7 +309,7 @@ export function DeskComposer({
   const mention = useDeskMentions({
     value,
     onChange,
-    textareaRef,
+    editorRef,
     mentions,
     onMentionsChange: onMentionsChange ?? (() => undefined),
     enabled: onMentionsChange !== undefined && settings.mentions === "on",
@@ -303,7 +323,7 @@ export function DeskComposer({
 
   useEffect(() => {
     if (focusSignal > 0) {
-      textareaRef.current?.focus();
+      editorRef.current?.focus();
     }
   }, [focusSignal]);
 
@@ -323,37 +343,34 @@ export function DeskComposer({
 
   const acceptSuggestion = () => {
     onChange(suggestedAnswer);
-    textareaRef.current?.focus();
+    editorRef.current?.focus();
   };
 
-  const onKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
+  /** A key before the box acts on it; true when it was the composer's. */
+  const onKey = (event: KeyboardEvent): boolean => {
     if (mention.onKeyDown(event) || slash.onKeyDown(event)) {
-      return;
+      return true;
     }
+    if (event.isComposing) {
+      return false;
+    }
+    const bare = !event.shiftKey && !event.altKey && !event.metaKey && !event.ctrlKey;
     // Esc stops the reply under way, whatever is in the box: a correction half
     // typed never stands between the person and stopping the agent.
-    if (event.key === "Escape" && busy && onStop && !event.nativeEvent.isComposing) {
+    if (event.key === "Escape" && busy && onStop) {
       event.preventDefault();
       onStop();
-      return;
+      return true;
     }
-    if (
-      offering &&
-      (event.key === "Tab" || event.key === "ArrowRight") &&
-      !event.shiftKey &&
-      !event.altKey &&
-      !event.metaKey &&
-      !event.ctrlKey &&
-      !event.nativeEvent.isComposing
-    ) {
+    if (offering && (event.key === "Tab" || event.key === "ArrowRight") && bare) {
       event.preventDefault();
       acceptSuggestion();
-      return;
+      return true;
     }
     if (typing && event.key === "Tab" && !event.shiftKey) {
       event.preventDefault();
       onChange(typed.full);
-      return;
+      return true;
     }
     if (
       typing &&
@@ -363,16 +380,49 @@ export function DeskComposer({
     ) {
       event.preventDefault();
       send(presets[Number(event.key) - 1]);
-      return;
+      return true;
     }
-    if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
+    // The box's own words, not the render's: Enter can land before the last
+    // keystroke has been rendered.
+    const text = editorRef.current?.text() ?? value;
+    if (event.key === "ArrowUp" && bare && text === "" && recall !== "" && !disabled) {
+      event.preventDefault();
+      onChange(recall);
+      return true;
+    }
+    if (event.key === "Enter" && !event.shiftKey) {
       const withModifier = event.metaKey || event.ctrlKey;
       if ((settings.send === "mod") === withModifier) {
         event.preventDefault();
-        send(value, event.altKey ? "queue" : undefined);
+        send(text, event.altKey ? "queue" : undefined);
+        return true;
       }
     }
+    return false;
   };
+
+  // What the box's menus list is read the first time it takes the focus, so
+  // an @ opens on records and the agent list on agents, not on a skeleton.
+  const warmed = useRef(false);
+  const warm = () => {
+    if (warmed.current) {
+      return;
+    }
+    warmed.current = true;
+    if (onMentionsChange !== undefined && settings.mentions === "on") {
+      prefetchMentions(queryClient);
+    }
+    if (onAgentChange !== undefined && !agentFixed) {
+      void queryClient.prefetchQuery(assistant.myAgents());
+    }
+  };
+
+  const boxPlaceholder =
+    typing || offering || steering
+      ? ""
+      : compacting
+        ? t("You can reply once compacting finishes")
+        : (placeholder ?? (agent ? t("Reply to {0}…", agent.name) : t("Ask the Desk anything…")));
 
   const stopButton = (
     <Button
@@ -519,41 +569,29 @@ export function DeskComposer({
             <div className="dk-cmp-ta">
               <DeskMentionPicker mentions={mention} />
               <DeskSlashMenu slash={slash} agentName={agent?.name ?? t("the agent")} />
-              {slash.parsed && slash.started ? (
-                <DeskSlashMirror slash={slash} />
-              ) : (
-                <DeskMentionMirror value={value} mentions={mentions} />
-              )}
-              <textarea
-                ref={textareaRef}
-                rows={2}
+              <DeskEditor
+                ref={editorRef}
                 value={value}
                 disabled={disabled || Boolean(compacting)}
-                className={slash.parsed && slash.started ? "dk-sl-on" : undefined}
-                placeholder={
-                  typing || offering
-                    ? ""
-                    : compacting
-                      ? t("You can reply once compacting finishes")
-                      : steering
-                        ? ""
-                        : (placeholder ??
-                          (agent ? t("Reply to {0}…", agent.name) : t("Ask the Desk anything…")))
-                }
-                aria-label={agent ? t("Message {0}", agent.name) : t("Message the Desk")}
-                aria-describedby={offering ? offerId : undefined}
-                aria-keyshortcuts={offering ? "Tab ArrowRight" : undefined}
-                onChange={(event) => {
+                placeholder={boxPlaceholder}
+                label={agent ? t("Message {0}", agent.name) : t("Message the Desk")}
+                describedBy={offering ? offerId : undefined}
+                keyShortcuts={offering ? "Tab ArrowRight" : undefined}
+                mentions={mentions}
+                command={slashCommandMarks(slash, t)}
+                onChange={(text, caret) => {
                   if (dictation.phase !== "idle") {
                     dictation.release();
                   }
-                  onChange(event.target.value);
-                  mention.detect(event.target.value, event.target.selectionStart);
+                  onChange(text);
+                  mention.detect(text, caret);
                 }}
-                onSelect={(event) =>
-                  mention.detect(event.currentTarget.value, event.currentTarget.selectionStart)
-                }
-                onKeyDown={onKeyDown}
+                onCaret={mention.detect}
+                onKey={onKey}
+                onFocus={warm}
+                onFiles={attachments ? (files) => attachments.add(files) : undefined}
+                longPasteAsFile={!full}
+                pastedFileName={t("Pasted text.txt")}
               />
               {steering && !typing && !compacting && value === "" && (
                 <div className="dk-tw dk-steer-ph" aria-hidden>
@@ -654,7 +692,16 @@ export function DeskComposer({
                 </DeskAttachMenu>
               </Popover>
             )}
-            {agent && onAgentChange && (
+            {agent && agentFixed && (
+              <span
+                className="inline-flex h-7 max-w-55 items-center gap-1.75 pr-1.75 pl-1 text-sm text-dsk-fg2"
+                aria-label={t("Asking {0}", agent.name)}
+              >
+                <DeskAgentTile key={agent.id} agent={agent} size="xs" />
+                <span className="dk-ap-bn">{agent.name}</span>
+              </span>
+            )}
+            {agent && onAgentChange && !agentFixed && (
               <DeskAgentPicker
                 agent={agent}
                 onSelect={onAgentChange}

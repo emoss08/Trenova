@@ -268,7 +268,7 @@ func (b *Builder) decisions(ctx context.Context, req Request, facts *Facts) {
 
 	facts.add(briefing.Section{
 		Key:     briefing.SectionDecisions,
-		Title:   "Waiting on you",
+		Title:   "Decisions waiting",
 		Summary: line,
 		Items:   items,
 		Path:    decisionsPath,

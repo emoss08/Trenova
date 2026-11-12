@@ -50,8 +50,11 @@ type Params struct {
 	Users           tenantports.UserRepository
 	BillingControls tenantports.BillingControlRepository
 	EmailService    emailports.EmailService
-	Templates       documenttemplateports.DocumentTemplateResolver
-	Logger          *zap.Logger
+	// Senders says whether a reminder has a profile to go out on, so a
+	// preview refuses what the send would.
+	Senders   emailports.EmailSenderResolver
+	Templates documenttemplateports.DocumentTemplateResolver
+	Logger    *zap.Logger
 }
 
 type Service struct {
@@ -63,6 +66,7 @@ type Service struct {
 	users           tenantports.UserRepository
 	billingControls tenantports.BillingControlRepository
 	emailService    emailports.EmailService
+	senders         emailports.EmailSenderResolver
 	templates       documenttemplateports.DocumentTemplateResolver
 	l               *zap.Logger
 }
@@ -80,6 +84,7 @@ func New(p Params) *Service {
 		users:           p.Users,
 		billingControls: p.BillingControls,
 		emailService:    p.EmailService,
+		senders:         p.Senders,
 		templates:       p.Templates,
 		l:               p.Logger.Named("service.payment-reminder"),
 	}
@@ -236,6 +241,17 @@ func (s *Service) PreviewSendNow(
 	}
 
 	recipients := batch.customer.EmailProfile.Recipients()
+	if s.senders != nil {
+		if _, err = s.senders.ResolveSender(ctx, &emailports.SendEmailRequest{
+			TenantInfo: batch.from.tenant,
+			Purpose:    email.PurposeBilling,
+			To:         recipients.To,
+			CC:         recipients.CC,
+			BCC:        recipients.BCC,
+		}); err != nil {
+			return nil, err
+		}
+	}
 	previews := make([]*paymentreminderports.SendNowPreview, 0, len(batch.reminders))
 	for _, rem := range batch.reminders {
 		rendered, renderErr := s.render(ctx, batch.from, rem)

@@ -85,7 +85,8 @@ monitoring:
   pprof:
     enabled: false
     host: 127.0.0.1
-    port: 6060
+    port: 6060 # The API's profiles
+    workerPort: 6061 # The worker's profiles, so both can be profiled on one host
   tracing:
     enabled: false # Export traces over OpenTelemetry
     provider: otlp # jaeger, otlp, otlp-grpc or stdout
@@ -483,7 +484,7 @@ edi:
 # https. Turn this on only to reach a provider over a private link; link-local and cloud metadata
 # addresses stay refused either way.
 integrations:
-    allowPrivateNetworks: true # The local Samsara simulator listens on localhost
+    allowPrivateNetworks: true # The local Samsara and mail simulators listen on localhost
 
 # Driver portal (Dash) settings
 portal:

@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/tenantscope"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol/shipmentcontroldb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
@@ -43,7 +44,7 @@ func (r *repository) DelayShipments(
 			return nil, err
 		}
 
-		return r.markDelayed(ctx, entities, scopedTenant)
+		return r.markDelayed(ctx, entities)
 	})
 }
 
@@ -105,7 +106,7 @@ func (r *repository) RunAutoDelayShipmentsForTenant(
 		}
 
 		sp := shipmentdb.Shipments
-		candidates := autoDelayedShipmentIDs(timeutils.NowUnix(), scopedTenant).Limit(limit)
+		candidates := autoDelayedShipmentIDs(ctx, timeutils.NowUnix()).Limit(limit)
 		entities, err := sp.Where(sp.ID.InQuery(candidates)).
 			Order(sp.ID.Asc()).
 			Limit(limit).
@@ -114,14 +115,13 @@ func (r *repository) RunAutoDelayShipmentsForTenant(
 			return nil, err
 		}
 
-		return r.markDelayed(ctx, entities, scopedTenant)
+		return r.markDelayed(ctx, entities)
 	})
 }
 
 func (r *repository) markDelayed(
 	ctx context.Context,
 	entities []*shipment.Shipment,
-	t tenancy,
 ) ([]*shipment.Shipment, error) {
 	if len(entities) == 0 {
 		return entities, nil
@@ -129,7 +129,7 @@ func (r *repository) markDelayed(
 
 	currentTime := timeutils.NowUnix()
 	sp := shipmentdb.Shipments
-	if _, err := scoped(sp.Where(sp.ID.In(shipmentIDsFromEntities(entities)...)), t).Update(
+	if _, err := tenantscope.Scoped(ctx, sp.Where(sp.ID.In(shipmentIDsFromEntities(entities)...))).Update(
 		ctx,
 		r.db.Keel(ctx),
 		sp.Status.To(shipmentvocab.StatusDelayed),
@@ -179,7 +179,7 @@ func delayedShipments(
 	).Order(sp.ID.Asc()).Limit(limit)
 }
 
-func autoDelayedShipmentIDs(currentTime int64, t tenancy) keel.Query[*shipment.Stop] {
+func autoDelayedShipmentIDs(ctx context.Context, currentTime int64) keel.Query[*shipment.Stop] {
 	st := shipmentdb.Stops.As("auto_stp")
 	sm := shipmentdb.ShipmentMoves.As("auto_sm")
 	sp := shipmentdb.Shipments.As("auto_sp")
@@ -203,7 +203,7 @@ func autoDelayedShipmentIDs(currentTime int64, t tenancy) keel.Query[*shipment.S
 			sp.Status.NotIn(shipmentstate.DelayedExcludedShipmentStatuses()...),
 		)
 
-	return scoped(q, t)
+	return tenantscope.Scoped(ctx, q)
 }
 
 func tenantScope(ctx context.Context, tenantInfo pagination.TenantInfo) context.Context {

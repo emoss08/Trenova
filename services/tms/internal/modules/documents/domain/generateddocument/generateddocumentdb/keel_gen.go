@@ -780,7 +780,7 @@ var enumDeliveryMethod = [...]schema.EnumValue{
 var enumDocumenttemplateKind = [...]schema.EnumValue{
 	{Value: `invoice.pdf`, Label: `Invoice PDF`, Doc: `KindInvoicePDF is the customer invoice document.`},
 	{Value: `invoice.email`, Label: `Invoice Email`, Doc: `KindInvoiceEmail is the message that delivers an invoice.`},
-	{Value: `invoice.share.email`, Label: `Invoice Share Email`},
+	{Value: `record.share.email`, Label: `Record Share Email`, Doc: `KindRecordShareEmail tells a teammate someone shared a record with them.`},
 	{Value: `invoice.reminder.email`, Label: `Payment Reminder Email`, Doc: `KindPaymentReminderEmail reminds a customer that invoices are past due.`},
 	{Value: `customer.statement.pdf`, Label: `Customer Statement PDF`, Doc: `KindCustomerStatementPDF is a customer's account statement: what it was billed and paid over a period and what is still open.`},
 	{Value: `customer.statement.email`, Label: `Customer Statement Email`, Doc: `KindCustomerStatementEmail is the message that delivers a statement.`},
@@ -810,6 +810,7 @@ var enumDocumenttemplateKind = [...]schema.EnumValue{
 	{Value: `notification.dash.pto_reviewed`, Label: `Notification PTO Reviewed`, Doc: `KindNotificationPTOReviewed answers a time-off request.`},
 	{Value: `notification.dash.pto_cancelled`, Label: `Notification PTO Cancelled`, Doc: `KindNotificationPTOCancelled tells a driver approved or pending time off was withdrawn.`},
 	{Value: `notification.dash.credential_expiring`, Label: `Notification Credential Expiring`, Doc: `KindNotificationCredentialExpiring warns about a lapsing credential.`},
+	{Value: `notification.dash.credential_renewal_requested`, Label: `Notification Credential Renewal Requested`, Doc: `KindNotificationCredentialRenewalRequested asks a driver, in the office's own words, to renew papers that have lapsed or are about to.`},
 	{Value: `notification.dash.training_due`, Label: `Notification Training Due`, Doc: `KindNotificationTrainingDue nudges a driver about a course that is due or a certification that is lapsing.`},
 	{Value: `notification.dash.review_submitted`, Label: `Notification Review Submitted`, Doc: `KindNotificationReviewSubmitted asks a driver to read and sign off on a performance review.`},
 	{Value: `notification.dash.recognition`, Label: `Notification Recognition`, Doc: `KindNotificationRecognition shares praise the office recorded for a driver.`},
@@ -834,7 +835,7 @@ var enumDocumenttemplateKind = [...]schema.EnumValue{
 	{Value: `notification.report_needs_attention`, Label: `Notification Report Needs Attention`, Doc: `KindNotificationReportNeedsAttention tells an owner their saved reports no longer validate against the report catalog.`},
 	{Value: `notification.shipment_comment_mention`, Label: `Notification Comment Mention`, Doc: `KindNotificationCommentMention tells someone they were named in a comment.`},
 	{Value: `notification.shipment_comment_reply`, Label: `Notification Comment Reply`, Doc: `KindNotificationCommentReply tells someone their comment got a reply.`},
-	{Value: `notification.invoice_shared`, Label: `Notification Invoice Shared`},
+	{Value: `notification.record_shared`, Label: `Notification Record Shared`, Doc: `KindNotificationRecordShared tells someone a teammate shared a record with them.`},
 }
 
 var enumGenerationStatus = [...]schema.EnumValue{

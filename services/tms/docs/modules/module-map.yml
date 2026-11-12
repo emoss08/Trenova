@@ -933,7 +933,6 @@ modules:
       - invoicedispute
       - invoicerealtime
       - invoicerun
-      - invoiceshare
       - latecharge
       - paymentreminder
     service:
@@ -984,7 +983,6 @@ modules:
       - invoicequeryservice
       - invoicerunservice
       - invoicesendservice
-      - invoiceshareservice
       - invoicevalidation
       - invoicevoid
       - invoicevoidservice
@@ -1016,7 +1014,6 @@ modules:
       - invoicedisputerepository
       - invoicerepository
       - invoicerunrepository
-      - invoicesharerepository
       - journalrepairrepository
       - latechargerepository
       - paymentreminderrepository
@@ -1147,6 +1144,7 @@ modules:
       - extensionportal
       - extensionwebwatch
       - insight
+      - recordshare
       - shipmentbrief
       - shipmentimportchat
       - watchtower
@@ -1248,6 +1246,7 @@ modules:
       - proposalrecorder
       - querytools
       - recordanchorservice
+      - recordshareservice
       - retrievalquery
       - retrievalservice
       - runstepledger
@@ -1333,6 +1332,7 @@ modules:
       - exceptionsourcerepository
       - insightrepository
       - recordlabelrepository
+      - recordsharerepository
       - roleagentgrantrepository
       - shipmentbriefrepository
       - shipmentimportchatrepository

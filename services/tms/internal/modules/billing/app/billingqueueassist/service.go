@@ -36,6 +36,7 @@ type Params struct {
 	Comments     shipmentcommentports.ShipmentCommentRepository
 	Batches      llmports.TaskBatcher
 	Generator    billingqueueports.NovaGenerator
+	Briefs       billingqueueports.BriefRequester
 }
 
 type Service struct {
@@ -52,6 +53,7 @@ type Service struct {
 	comments     shipmentcommentports.ShipmentCommentRepository
 	batches      llmports.TaskBatcher
 	generator    billingqueueports.NovaGenerator
+	briefs       billingqueueports.BriefRequester
 }
 
 var _ billingqueueports.BillingQueueAssistService = (*Service)(nil)
@@ -72,6 +74,7 @@ func New(p Params) billingqueueports.BillingQueueAssistService {
 		comments:     p.Comments,
 		batches:      p.Batches,
 		generator:    p.Generator,
+		briefs:       p.Briefs,
 	}
 }
 

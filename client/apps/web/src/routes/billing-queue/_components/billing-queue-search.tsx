@@ -56,7 +56,7 @@ export function BillingQueueSearch() {
       setUnresolved(intent.unresolved || null);
       void setParams({
         ...CLEARED_QUEUE_FILTERS,
-        includePosted: params.includePosted,
+        includeClosed: params.includeClosed,
         query: intent.search,
         lanes: intent.lanes.filter((lane) =>
           (BILLING_QUEUE_OPEN_LANES as readonly string[]).includes(lane),

@@ -55,7 +55,7 @@ export const CLEARED_QUEUE_FILTERS: QueueFilterValues = {
   billType: null,
   payer: null,
   query: "",
-  includePosted: false,
+  includeClosed: false,
   preset: null,
   lanes: [],
   minAmount: null,
@@ -74,7 +74,7 @@ export function activeQueueFilterCount(params: QueueFilterValues): number {
     (params.billers.length > 0 ? 1 : 0) +
     (params.billType ? 1 : 0) +
     (params.payer ? 1 : 0) +
-    (params.includePosted ? 1 : 0) +
+    (params.includeClosed ? 1 : 0) +
     (params.lanes.length > 0 ? 1 : 0) +
     (params.minAmount || params.maxAmount ? 1 : 0) +
     (params.createdBefore ? 1 : 0) +
@@ -163,7 +163,7 @@ export function BillingQueueFilters() {
       pickedUp: parseDateWindow(f.pickedUp as string | undefined),
       queued: parseDateWindow(f.queued as string | undefined),
       query: (f.search as string) ?? "",
-      includePosted: f.includePosted === true,
+      includeClosed: f.includeClosed === true,
       preset: preset.id,
     });
   };
@@ -178,7 +178,7 @@ export function BillingQueueFilters() {
     pickedUp: params.pickedUp ? serializeDateWindow(params.pickedUp) : null,
     queued: params.queued ? serializeDateWindow(params.queued) : null,
     search: params.query || null,
-    includePosted: params.includePosted ? "true" : null,
+    includeClosed: params.includeClosed ? "true" : null,
   };
 
   return (
@@ -314,13 +314,13 @@ export function BillingQueueFilters() {
               </div>
               <label className="flex items-start gap-2 rounded-md border p-2.5">
                 <Checkbox
-                  checked={params.includePosted}
-                  onCheckedChange={(checked) => void setParams({ includePosted: checked === true })}
+                  checked={params.includeClosed}
+                  onCheckedChange={(checked) => void setParams({ includeClosed: checked === true })}
                 />
                 <div className="space-y-0.5">
-                  <p className="text-xs font-medium">{t("Include posted items")}</p>
+                  <p className="text-xs font-medium">{t("Include closed items")}</p>
                   <p className="text-muted-foreground text-xs">
-                    {t("Show historical queue records that already produced a posted invoice.")}
+                    {t("Show queue records that were posted or canceled, in a Closed lane.")}
                   </p>
                 </div>
               </label>

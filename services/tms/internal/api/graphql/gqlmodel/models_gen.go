@@ -1274,6 +1274,8 @@ type AgentPlanDecisionInput struct {
 	PreviewDigest *string `json:"previewDigest,omitempty"`
 	// What the decider tells the agent with the decision, such as why they turned it down; at most 2000 characters. Recorded on every step's decision.
 	Note *string `json:"note,omitempty"`
+	// An approval waits out the undo window before any step runs, and can be taken back with undoAgentDecision until one does.
+	UndoWindow *bool `json:"undoWindow,omitempty"`
 }
 
 // What came of deciding a plan.
@@ -1324,6 +1326,8 @@ type AgentProposalDecisionInput struct {
 	PreviewDigest *string `json:"previewDigest,omitempty"`
 	// What the decider tells the agent with the decision, such as why they turned it down; at most 2000 characters. The conversation's follow-up turn reads it as data, never as instructions.
 	Note *string `json:"note,omitempty"`
+	// An approval waits out the undo window before it runs, and can be taken back with undoAgentDecision until it does.
+	UndoWindow *bool `json:"undoWindow,omitempty"`
 }
 
 // What came of deciding one proposal, on its own or in a batch.
@@ -2039,8 +2043,8 @@ type BillingQueueItemEdge struct {
 type BillingQueueItemsFilterInput struct {
 	// The lanes to include; empty includes every lane.
 	Lanes []billingqueue.Lane `json:"lanes,omitempty"`
-	// Include items whose invoice already posted.
-	IncludePosted *bool `json:"includePosted,omitempty"`
+	// Include closed items: posted or canceled.
+	IncludeClosed *bool `json:"includeClosed,omitempty"`
 	// Smallest amount, in the bill-to's currency.
 	MinAmount *string `json:"minAmount,omitempty"`
 	// Largest amount, in the bill-to's currency.
@@ -3641,6 +3645,8 @@ type DeskAttentionInput struct {
 	First *int `json:"first,omitempty"`
 	// One record's row, for its case: every open item about it.
 	RecordID *string `json:"recordId,omitempty"`
+	// Only rows with an item an agent's run is working on right now. A run that finished, failed or waits on a person is not working.
+	Working *bool `json:"working,omitempty"`
 }
 
 // A button an actions block offers. It sends its request as the person's own message
@@ -7717,6 +7723,10 @@ type InviteWorkerToPortalInput struct {
 	WorkerID string `json:"workerId"`
 	// Overrides the email on the worker record when provided.
 	Email *string `json:"email,omitempty"`
+	// Sends the invitation again: an invitation still pending is voided and a new
+	// one, with a new link, replaces it. Without it a pending invitation refuses a
+	// second.
+	ReplacePending *bool `json:"replacePending,omitempty"`
 }
 
 type InvoiceAdjustmentApprovalQueueConnection struct {
@@ -8123,7 +8133,9 @@ type MyAgentsInput struct {
 	Origin *MyAgentOrigin `json:"origin,omitempty"`
 	// Agents already shown, so a page never repeats them. At most 100.
 	ExcludeIds []string `json:"excludeIds,omitempty"`
-	// Only these agents. At most 100.
+	// Only these agents, at most 100. An agent named here is listed when the caller
+	// may use it even if it runs on its own: a case names the agent working it, and
+	// the person asks that agent.
 	Ids []string `json:"ids,omitempty"`
 }
 
@@ -10385,6 +10397,18 @@ type SettlementDisputeConnection struct {
 type SettlementDisputeEdge struct {
 	Node   *driversettlement.Dispute `json:"node"`
 	Cursor string                    `json:"cursor"`
+}
+
+type ShareRecordInput struct {
+	// The record kind, as the record-link registry names it: invoice, shipment, worker.
+	Kind string `json:"kind"`
+	ID   string `json:"id"`
+	// The teammates, from recordShareCandidates. At most 25.
+	UserIds []string `json:"userIds"`
+	// A note for them, sent by email and kept with the share. At most 1000 characters.
+	Note *string `json:"note,omitempty"`
+	// Where in the app the link opens: the record's page on the tab, or the Desk page, the sharer is on.
+	Path string `json:"path"`
 }
 
 type ShiftTemplateInput struct {
@@ -12989,6 +13013,14 @@ type UncoveredWindowSummary struct {
 	EndMinutes *int   `json:"endMinutes,omitempty"`
 	Count      int    `json:"count"`
 	Revenue    string `json:"revenue"`
+}
+
+type UnshareRecordInput struct {
+	// The record kind, as the record-link registry names it: invoice, shipment, worker.
+	Kind string `json:"kind"`
+	ID   string `json:"id"`
+	// The share to remove, from recordShares.
+	ShareID string `json:"shareId"`
 }
 
 type UpcomingWorkerPTOInput struct {

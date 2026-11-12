@@ -1,3 +1,4 @@
+import { leadFacts } from "./reading-lead";
 import { FactoringRemittanceStatusBadge } from "@/components/factoring/factoring-badges";
 import { recordPath } from "@/config/record-links";
 import { usePermission } from "@/hooks/use-permission";
@@ -42,7 +43,7 @@ function RowIcon({ children, open }: { children: React.ReactNode; open?: boolean
     <span
       aria-hidden
       className={cn(
-        "text-foreground-muted flex size-6.5 shrink-0 items-center justify-center rounded-md",
+        "flex size-6.5 shrink-0 items-center justify-center rounded-md text-foreground-muted",
         open ? "bg-canvas" : "bg-surface-hover",
       )}
     >
@@ -142,7 +143,7 @@ function ShipmentRow({
         {...trigger}
         onClick={() => setOpen((value) => !value)}
         className={cn(
-          "ui-focus-ring flex w-full items-center gap-2.5 rounded-lg p-2 text-left",
+          "flex w-full items-center gap-2.5 rounded-lg ui-focus-ring p-2 text-left",
           !open && "hover:bg-surface-hover",
         )}
       >
@@ -151,7 +152,7 @@ function ShipmentRow({
         </RowIcon>
         <span className="flex min-w-0 flex-1 flex-col leading-snug">
           <span className="truncate font-mono text-base font-medium">{shipment.proNumber}</span>
-          <span className="text-foreground-subtle truncate text-xs">
+          <span className="truncate text-xs text-foreground-subtle">
             {lane(t, shipment)}
             {meta !== null && (
               <span className={cn(peek?.late === true && "text-warning")}>{t(" · {0}", meta)}</span>
@@ -159,9 +160,9 @@ function ShipmentRow({
           </span>
         </span>
         {open ? (
-          <ChevronDownIcon aria-hidden className="text-foreground-subtle size-3" />
+          <ChevronDownIcon aria-hidden className="size-3 text-foreground-subtle" />
         ) : (
-          <ChevronRightIcon aria-hidden className="text-foreground-subtle size-3" />
+          <ChevronRightIcon aria-hidden className="size-3 text-foreground-subtle" />
         )}
       </button>
       {open && (
@@ -177,7 +178,7 @@ function ShipmentRow({
           <button
             type="button"
             onClick={openPeek}
-            className="text-foreground-subtle hover:text-foreground ui-focus-ring mt-1 ml-11 inline-flex items-center gap-1 rounded-sm text-xs"
+            className="mt-1 ml-11 inline-flex items-center gap-1 rounded-sm ui-focus-ring text-xs text-foreground-subtle hover:text-foreground"
           >
             {t("Open shipment")}
             <ArrowRightIcon aria-hidden className="size-2.75" />
@@ -249,18 +250,18 @@ function CustomerButton({
       type="button"
       {...trigger}
       onClick={onOpen}
-      className="hover:bg-surface-hover ui-focus-ring flex w-full items-center gap-2.5 rounded-lg p-2 text-left"
+      className="flex w-full items-center gap-2.5 rounded-lg ui-focus-ring p-2 text-left hover:bg-surface-hover"
     >
       <RowIcon>
         <Building07Icon className="size-3.25" />
       </RowIcon>
       <span className="flex min-w-0 flex-1 flex-col leading-snug">
         <span className="truncate text-base font-medium">{name}</span>
-        <span className="text-foreground-subtle truncate text-xs">
+        <span className="truncate text-xs text-foreground-subtle">
           {code === "" ? t("Customer") : t("Customer · {0}", code)}
         </span>
       </span>
-      <LinkExternal01Icon aria-hidden className="text-foreground-subtle size-3" />
+      <LinkExternal01Icon aria-hidden className="size-3 text-foreground-subtle" />
     </button>
   );
 }
@@ -279,7 +280,7 @@ function RemittanceRows({ messageId }: { messageId: string }) {
       key={remittance.id}
       type="button"
       onClick={() => void navigate(recordPath("factoring_remittance", remittance.id))}
-      className="hover:bg-surface-hover ui-focus-ring flex w-full items-center gap-2.5 rounded-lg p-2 text-left"
+      className="flex w-full items-center gap-2.5 rounded-lg ui-focus-ring p-2 text-left hover:bg-surface-hover"
     >
       <RowIcon>
         <CoinsHandIcon className="size-3.25" />
@@ -288,7 +289,7 @@ function RemittanceRows({ messageId }: { messageId: string }) {
         <span className="truncate text-base font-medium">
           {remittance.fileName || t("Factor remittance")}
         </span>
-        <span className="text-foreground-subtle truncate text-xs">
+        <span className="truncate text-xs text-foreground-subtle">
           {t(
             "Remittance · {0}",
             remittance.factoringCompany?.name ?? remittance.factoringCompanyId,
@@ -296,7 +297,7 @@ function RemittanceRows({ messageId }: { messageId: string }) {
         </span>
       </span>
       <FactoringRemittanceStatusBadge status={remittance.status} />
-      <LinkExternal01Icon aria-hidden className="text-foreground-subtle size-3" />
+      <LinkExternal01Icon aria-hidden className="size-3 text-foreground-subtle" />
     </button>
   ));
 }
@@ -309,7 +310,16 @@ type FactCell = {
   flagged: boolean;
 };
 
-function Fact({ messageId, fact }: { messageId: string; fact: FactCell }) {
+function Fact({
+  messageId,
+  fact,
+  lead = false,
+}: {
+  messageId: string;
+  fact: FactCell;
+  /** One of the facts this kind of message leads with: drawn larger, on its own row. */
+  lead?: boolean;
+}) {
   const t = useT();
   const actions = useTriageActions();
   const trigger = useContextMenuTrigger(() => ({
@@ -350,12 +360,16 @@ function Fact({ messageId, fact }: { messageId: string; fact: FactCell }) {
       {...trigger}
       title={t("Copy")}
       onClick={() => actions.copyText(fact.value)}
-      className="bg-surface-hover hover:bg-surface-active ui-focus-ring flex min-w-0 flex-col gap-px rounded-md px-2.25 py-1.75 text-left transition-colors"
+      className={cn(
+        "flex min-w-0 flex-col gap-px rounded-md ui-focus-ring bg-surface-hover px-2.25 text-left transition-colors hover:bg-surface-active",
+        lead ? "py-2.5" : "py-1.75",
+      )}
     >
-      <span className="text-foreground-subtle truncate text-2xs">{fact.label}</span>
+      <span className="truncate text-2xs text-foreground-subtle">{fact.label}</span>
       <span
         className={cn(
-          "truncate text-sm font-medium",
+          "truncate font-medium",
+          lead ? "text-lg/tight font-semibold" : "text-sm",
           fact.warning && "text-warning",
           fact.flagged && "line-through decoration-1",
         )}
@@ -397,17 +411,30 @@ function Facts({ message }: { message: InboundMessageDetail }) {
     }));
   }
 
+  const led = leadFacts(message.classification, facts);
+
   return (
     <div className="mt-2.5 flex flex-col gap-2">
-      <div className="text-foreground-subtle flex items-center gap-1.5 pl-0.5 text-xs">
-        <AssistMark aria-hidden className="text-accent-violet size-3" />
+      <div className="flex items-center gap-1.5 pl-0.5 text-xs text-foreground-subtle">
+        <AssistMark aria-hidden className="size-3 text-accent-violet" />
         <span className="truncate">{title}</span>
       </div>
-      <div className="grid grid-cols-2 gap-1">
-        {facts.map((fact) => (
-          <Fact key={`${fact.key ?? fact.label}`} messageId={message.id} fact={fact} />
-        ))}
-      </div>
+      {/* What this kind of message is read for comes first and larger: a tender's
+          lane, an invoice's amount, the money in a dispute. */}
+      {led.lead.length > 0 && (
+        <div className="grid grid-cols-2 gap-1">
+          {led.lead.map((fact) => (
+            <Fact key={`${fact.key ?? fact.label}`} messageId={message.id} fact={fact} lead />
+          ))}
+        </div>
+      )}
+      {led.rest.length > 0 && (
+        <div className="grid grid-cols-2 gap-1">
+          {led.rest.map((fact) => (
+            <Fact key={`${fact.key ?? fact.label}`} messageId={message.id} fact={fact} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -427,7 +454,7 @@ export function Information({ message }: { message: InboundMessageDetail }) {
 
   return (
     <section aria-label={t("Information")}>
-      <h2 className="text-foreground-subtle mb-2 text-xs font-medium">{t("Information")}</h2>
+      <h2 className="mb-2 text-xs font-medium text-foreground-subtle">{t("Information")}</h2>
       <div className="flex flex-col gap-0.5">
         {shipment !== null && <ShipmentRow message={message} shipment={shipment} />}
         <CustomerRow message={message} />

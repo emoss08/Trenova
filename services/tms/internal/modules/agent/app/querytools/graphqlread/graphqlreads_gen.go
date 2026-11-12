@@ -4789,7 +4789,7 @@ var Reads = map[string]Read{
 			{Name: "briefingDate", Type: "String", Kind: "scalar", List: false, NonNull: true, Selected: true, Description: "The organization's local day, as YYYY-MM-DD."},
 			{Name: "status", Type: "BriefingStatus", Kind: "enum", List: false, NonNull: true, Selected: true, Enum: []string{"Pending", "Ready", "Failed"}},
 			{Name: "headline", Type: "String", Kind: "scalar", List: false, NonNull: true, Selected: true, Description: "Empty while any section is withheld."},
-			{Name: "headlineLinks", Type: "BriefingHeadlineLink", Kind: "object", List: true, NonNull: true, Description: "The phrases of the headline that open what they are about, in the order they appear; empty while the headline is."},
+			{Name: "headlineLinks", Type: "BriefingHeadlineLink", Kind: "object", List: true, NonNull: true, Selected: true, Description: "The phrases of the headline that open what they are about, in the order they appear; empty while the headline is."},
 			{Name: "sections", Type: "BriefingSection", Kind: "object", List: true, NonNull: true, Selected: true},
 			{Name: "narrated", Type: "Boolean", Kind: "scalar", List: false, NonNull: true, Selected: true, Description: "True when a model's wording was accepted for any part of the page the reader is shown."},
 			{Name: "withheldSections", Type: "BriefingWithheldSection", Kind: "object", List: true, NonNull: true, Selected: true, Description: "The sections left out or cut short for this reader; empty when they see the whole page."},

@@ -272,7 +272,7 @@ describe("ProposalPreview", () => {
       <ProposalPreview
         preview={preview({
           coverage: "Unavailable",
-          warnings: [{ code: "preview_failed", args: [], message: "", reasons: [] }],
+          warnings: [{ code: "preview_failed", args: [], message: "", reasons: [], remedies: [] }],
           tool: "agent_raise_exception",
           changes: [],
         })}
@@ -397,6 +397,7 @@ describe("ProposalPreview", () => {
           warnings: [
             warning({
               reasons: [],
+              remedies: [],
               message:
                 "This would be refused as it stands: validation failed:\n- Rate not found\n- Customer is inactive",
             }),

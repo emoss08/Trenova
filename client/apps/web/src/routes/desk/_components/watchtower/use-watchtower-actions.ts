@@ -66,6 +66,19 @@ export function resolveWatchtowerKey(press: {
 
 type Clear = "done" | "snooze";
 
+/**
+ * Whether a command is left alone because the item is worked somewhere else:
+ * Done, Snooze and Hand off on an item in a case. Moving on is never held.
+ */
+export function heldBack(
+  command: WatchtowerCommand,
+  itemId: string | null,
+  held: ReadonlySet<string> | undefined,
+): boolean {
+  const clears = command === "done" || command === "snooze" || command === "handOff";
+  return clears && itemId !== null && (held?.has(itemId) ?? false);
+}
+
 export type WatchtowerActionsOptions = {
   items: readonly WatchtowerItem[];
   now: number;
@@ -74,6 +87,11 @@ export type WatchtowerActionsOptions = {
   since: number;
   /** Whether the keys are live: off while a dialog or menu owns the keyboard. */
   keysEnabled: boolean;
+  /**
+   * Items worked somewhere else (in a record's case), by id. Done, Snooze and
+   * Hand off leave them alone, by key as by button; moving through them works.
+   */
+  held?: ReadonlySet<string>;
 };
 
 /**
@@ -93,6 +111,7 @@ export function useWatchtowerActions({
   timezone,
   since,
   keysEnabled,
+  held,
 }: WatchtowerActionsOptions) {
   const t = useT();
   const queryClient = useQueryClient();
@@ -245,6 +264,9 @@ export function useWatchtowerActions({
   };
 
   const run = (command: WatchtowerCommand) => {
+    if (heldBack(command, current?.id ?? null, held)) {
+      return;
+    }
     switch (command) {
       case "next":
         cursor.go(1);

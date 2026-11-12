@@ -79,7 +79,7 @@ Each of the 176 agent read tools mapped to the Query root field that reads the s
 
 | tool | class | root field | operation (or proposed new op name) | paging | filter shape | notes (missing params / reason) |
 |---|---|---|---|---|---|---|
-| `exception_list_watchtower_items` | partial | watchtowerItems | WatchtowerFeed | cursor | bespoke WatchtowerItemsInput | Same WatchtowerService.List. kinds, severities, assignedToMe, unassigned, overdueOnly, orderByDue, includeResolved (-> unresolvedOnly:false) map; unseenOnly has no input (connection returns seenAt, so it can only be filtered client-side). Stays on the repository path (Operations PR): each item carries taint from its own source (inbound mail, an EDI file, a weather alert, an agent run, the run behind a proposal or plan), worked out per item from the run records, which the GraphQL path's one record kind per binding cannot mark; and unseenOnly needs an input. |
+| `exception_list_watchtower_items` | partial | watchtowerItems | WatchtowerFeed | cursor | bespoke WatchtowerItemsInput | Same WatchtowerService.List. kinds, severities, assignedToMe, unassigned, overdueOnly, orderByDue, includeResolved (-> unresolvedOnly:false) map; unseenOnly has no input (connection returns seenAt, so it can only be filtered client-side). Stays on the repository path (Operations PR): each item carries taint from its own source (inbound mail, an EDI file, an agent run, the run behind a proposal or plan), worked out per item from the run records, which the GraphQL path's one record kind per binding cannot mark; and unseenOnly needs an input. |
 
 ## home
 
@@ -98,7 +98,7 @@ Each of the 176 agent read tools mapped to the Query root field that reads the s
 |---|---|---|---|---|---|---|
 | `insight_get` | partial | watchtowerItem | WatchtowerItemDetail | n/a | id | No insight Query root; insights reach GraphQL only as watchtower items of kind Insight. InsightService.GetDetail (evidence, detector detail) is not exposed. |
 | `insight_list` | partial | watchtowerItems (kinds:[Insight]) | WatchtowerFeed | cursor | bespoke WatchtowerItemsInput | No insight list root; InsightService.List (category/status browse) differs. severity maps to severities; category and insight status do not. |
-| `insight_list_weather_alerts` | partial | watchtowerItems (kinds:[WeatherAlert]) | WatchtowerFeed | cursor | bespoke WatchtowerItemsInput | No weather root; WeatherAlertService.GetActiveAlerts is a feed read. severity maps; query does not. |
+| `insight_list_weather_alerts` | none | — | — | — | — | No weather root: WeatherAlertService.GetActiveAlerts is its own read, and the watchtower feed carries no weather. |
 
 ## intake
 

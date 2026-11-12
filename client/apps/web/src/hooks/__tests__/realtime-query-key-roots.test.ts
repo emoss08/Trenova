@@ -101,7 +101,7 @@ describe("RESOURCE_QUERY_KEY_MAP addresses keys the app actually caches under", 
   it("reads every factory module, the app's and the shared package's", () => {
     const scopes = appFactories();
     expect(scopes.get("shipment")?._def).toEqual(["shipment"]);
-    expect(scopes.get("invoice-share")?._def).toEqual(["invoice-share"]);
+    expect(scopes.get("record-share")?._def).toEqual(["record-share"]);
     expect(scopes.get("notification")?._def).toEqual(["notification"]);
   });
 

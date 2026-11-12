@@ -120,15 +120,6 @@ export const routes: RouteObject[] = withPathScopedRevalidation([
             },
           },
           {
-            // Triage lives in the Desk now; the links people saved keep working.
-            path: "/triage",
-            loader: ({ request }) => redirect(`/desk/triage${new URL(request.url).search}`),
-          },
-          {
-            path: "/inbox",
-            loader: ({ request }) => redirect(`/desk/triage${new URL(request.url).search}`),
-          },
-          {
             path: "/intake",
             loader: combineLoaders(
               protectedLoader,
@@ -2337,18 +2328,6 @@ export const routes: RouteObject[] = withPathScopedRevalidation([
         loader: protectedLoader,
         children: [
           {
-            // An artifact on a page of its own, without the conversation.
-            path: "/desk/c/:threadId/a/:slug/page",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.Assistant, Operation.Read),
-            ),
-            async lazy() {
-              const { DeskArtifactPage } = await import("@/routes/desk/artifact-page");
-              return { Component: DeskArtifactPage };
-            },
-          },
-          {
             path: "/desk",
             loader: combineLoaders(
               protectedLoader,
@@ -2381,6 +2360,15 @@ export const routes: RouteObject[] = withPathScopedRevalidation([
                 async lazy() {
                   const { DeskArtifactLinkPage } = await import("@/routes/desk/artifact-link-page");
                   return { Component: DeskArtifactLinkPage };
+                },
+              },
+              {
+                // What an agent laid out, on the canvas, with the conversation
+                // that made it in the margin.
+                path: "v/:viewThreadId/:slug",
+                async lazy() {
+                  const { DeskViewPage } = await import("@/routes/desk/view-page");
+                  return { Component: DeskViewPage };
                 },
               },
               {

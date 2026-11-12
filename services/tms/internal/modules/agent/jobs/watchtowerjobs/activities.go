@@ -39,6 +39,11 @@ var shipmentExceptionKinds = []watchtower.SourceKind{
 	watchtower.SourceTenderExhausted,
 }
 
+var decisionKinds = []watchtower.SourceKind{
+	watchtower.SourceAgentProposal,
+	watchtower.SourceAgentPlan,
+}
+
 type ActivitiesParams struct {
 	fx.In
 
@@ -180,12 +185,34 @@ func (a *Activities) ExceptionAttentionActivity(
 func (a *Activities) ShipmentExceptionSweepActivity(
 	ctx context.Context,
 ) (*WatchtowerSweepResult, error) {
-	return a.sweepAll(ctx, func(
+	return a.sweepAll(ctx, a.reconcileKinds(shipmentExceptionKinds))
+}
+
+/*
+DecisionSweepActivity takes off the feed every proposal and plan that no
+longer waits on a person. Approving or declining one settles its item at
+once; expiring does not, and a decision expires because its window ran out,
+because its agent was retired or because its conversation was deleted, none
+of which projects anything. Left to the nightly reconcile, an expired
+proposal went on saying "needs your approval" for up to a day, on the feed
+and on its record's case.
+*/
+func (a *Activities) DecisionSweepActivity(
+	ctx context.Context,
+) (*WatchtowerSweepResult, error) {
+	return a.sweepAll(ctx, a.reconcileKinds(decisionKinds))
+}
+
+// reconcileKinds corrects several kinds for one organization as one sweep.
+func (a *Activities) reconcileKinds(
+	kinds []watchtower.SourceKind,
+) func(context.Context, pagination.TenantInfo) (*watchtowerports.WatchtowerSweepResult, error) {
+	return func(
 		ctx context.Context,
 		tenant pagination.TenantInfo,
 	) (*watchtowerports.WatchtowerSweepResult, error) {
 		merged := &watchtowerports.WatchtowerSweepResult{}
-		for _, kind := range shipmentExceptionKinds {
+		for _, kind := range kinds {
 			swept, err := a.watchtower.ReconcileKind(ctx, tenant, kind)
 			if err != nil {
 				return nil, err
@@ -194,8 +221,9 @@ func (a *Activities) ShipmentExceptionSweepActivity(
 			merged.Resolved += swept.Resolved
 			merged.Failed = append(merged.Failed, swept.Failed...)
 		}
+
 		return merged, nil
-	})
+	}
 }
 
 func (a *Activities) FactoringSweepActivity(

@@ -5,22 +5,18 @@ import { assistantService } from "@/services/assistant";
 import { useAssistantStore } from "@/stores/assistant-store";
 import { useDeskAttachedPageStore } from "@/stores/desk-attached-page-store";
 import { useDeskHandoffStore } from "@/stores/desk-handoff-store";
-import type {
-  AssistantPageContext,
-  AssistantThread,
-  CaseSubjectType,
-  ThreadOrigin,
-} from "@/types/assistant";
+import type { AssistantPageContext, AssistantThread, ThreadOrigin } from "@/types/assistant";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 
 /**
- * What a conversation is about from its first turn: a title, the case it
- * belongs to, and the page every question in it carries.
+ * What a conversation is about from its first turn: the case it belongs to
+ * and the page every question in it carries. Its title is not given: the
+ * first question names it, and the model's name for it follows.
  */
 export type StartBinding = {
-  title?: string;
-  subjectType?: CaseSubjectType;
+  /** The server's subject type of the record the conversation is about. */
+  subjectType?: string;
   subjectId?: string;
   page?: AssistantPageContext;
 };
@@ -60,7 +56,6 @@ export function useStartConversation({
     mutationFn: ({ agentId, binding }: StartVariables) =>
       assistantService.startThread(agentId, {
         origin,
-        title: binding?.title,
         subjectType: binding?.subjectType,
         subjectId: binding?.subjectId,
       }),

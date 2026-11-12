@@ -726,6 +726,8 @@ export const billingQueueBriefSchema = z.object({
   available: z.boolean().default(false),
   text: z.string().default(""),
   generatedAt: z.number().default(0),
+  /** Written for a queue that has since moved; a rewrite is on its way. */
+  stale: z.boolean().default(false),
 });
 export type BillingQueueBrief = z.infer<typeof billingQueueBriefSchema>;
 

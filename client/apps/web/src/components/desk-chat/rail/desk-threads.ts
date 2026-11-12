@@ -66,8 +66,29 @@ export function threadTouchedAt(thread: Pick<AssistantThread, "lastMessageAt" | 
   return Math.max(thread.lastMessageAt, thread.createdAt);
 }
 
-/** What the server is asked for to read one shelf. */
-export function deskShelfFilter(key: DeskShelfKey, edges: DeskShelfEdges): ThreadListFilter {
+/**
+ * What the server is asked for to read one shelf. A shelf holds one half of
+ * the person's conversations: those about no record, or, with `cases`, those
+ * asked on a record's case, which the rail lists as cases.
+ */
+export function deskShelfFilter(
+  key: DeskShelfKey,
+  edges: DeskShelfEdges,
+  cases = false,
+): ThreadListFilter {
+  return { ...shelfRange(key, edges), aboutRecord: cases };
+}
+
+/** The shelf an instant falls on, for what is shelved without being a conversation. */
+export function deskShelfAt(at: number, edges: DeskShelfEdges): DeskShelfKey {
+  if (at >= edges.today) return "today";
+  if (at >= edges.yesterday) return "yesterday";
+  if (at >= edges.week) return "week";
+  if (at >= edges.month) return "month";
+  return "older";
+}
+
+function shelfRange(key: DeskShelfKey, edges: DeskShelfEdges): ThreadListFilter {
   switch (key) {
     case "pinned":
       return { pinned: true };

@@ -21,7 +21,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/weatheralertports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -264,8 +263,12 @@ func unique(ids []pulid.ID) []pulid.ID {
 	return out
 }
 
-// FailedRunSource puts recent agent failures on the tower, so a desk that
-// relies on an agent learns when it stopped working.
+// FailedRunSource puts an agent that has stopped working on the tower, so a
+// desk that relies on it learns of it. A run that failed is only that news
+// while it is the last word: an agent that has since finished a run is
+// working again, and a timeout it got over days ago is nothing for a person
+// to do. So a failure is on the tower until the agent's next run that ends
+// well, or until it ages out of the window.
 type FailedRunSource struct {
 	runs        agentruntimeports.AgentRunRepository
 	definitions agentdefinitionports.AgentDefinitionRepository
@@ -323,15 +326,103 @@ func (s *FailedRunSource) Snapshot(
 		}
 	}
 
-	items := make([]watchtowerports.WatchtowerItemInput, 0, len(result.Items))
-	for _, run := range result.Items {
-		if run == nil {
-			continue
-		}
+	latest, err := s.stillFailing(ctx, tenant, latestFailurePerAgent(result.Items))
+	if err != nil {
+		return nil, err
+	}
+	items := make([]watchtowerports.WatchtowerItemInput, 0, len(latest))
+	for _, run := range latest {
 		items = append(items, DescribeFailedRun(run, names[run.AgentDefinitionID]))
 	}
 
 	return items, nil
+}
+
+// stillFailing keeps the failures no later run of the same agent has got
+// past. One read covers every failing agent: its runs that ended well since
+// the oldest of the failures.
+func (s *FailedRunSource) stillFailing(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	failures []*agent.AgentRun,
+) ([]*agent.AgentRun, error) {
+	if len(failures) == 0 {
+		return failures, nil
+	}
+
+	agents := make([]string, 0, len(failures))
+	oldest := failures[0].CreatedAt
+	for _, run := range failures {
+		agents = append(agents, run.AgentDefinitionID.String())
+		oldest = min(oldest, run.CreatedAt)
+	}
+
+	filter := tenantQuery(tenant, watchtoweritem.SnapshotLimit)
+	filter.FieldFilters = []domaintypes.FieldFilter{
+		{Field: "status", Operator: dbtype.OpIn, Value: []string{
+			string(agent.RunStatusCompleted),
+			string(agent.RunStatusShadowCompleted),
+			string(agent.RunStatusAwaitingDecision),
+		}},
+		{Field: "agentDefinitionId", Operator: dbtype.OpIn, Value: agents},
+		{Field: "createdAt", Operator: dbtype.OpGreaterThan, Value: oldest},
+	}
+	recovered, err := s.runs.List(ctx, &agentruntimeports.ListAgentRunRequest{
+		Filter: filter,
+		Reader: agentruntimeports.PersonRunRead(pulid.Nil),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return failuresNotGotPast(failures, recovered.Items), nil
+}
+
+// failuresNotGotPast drops each failure its agent has finished a run after.
+func failuresNotGotPast(failures, finished []*agent.AgentRun) []*agent.AgentRun {
+	lastGood := make(map[pulid.ID]int64, len(failures))
+	for _, run := range finished {
+		if run != nil && run.CreatedAt > lastGood[run.AgentDefinitionID] {
+			lastGood[run.AgentDefinitionID] = run.CreatedAt
+		}
+	}
+
+	out := make([]*agent.AgentRun, 0, len(failures))
+	for _, run := range failures {
+		if lastGood[run.AgentDefinitionID] <= run.CreatedAt {
+			out = append(out, run)
+		}
+	}
+
+	return out
+}
+
+// latestFailurePerAgent keeps one failed run for each agent, its newest. An
+// agent that fails five runs in a row has one problem, and five items saying
+// so bury the rest of the feed; the earlier failures clear as the sweep finds
+// them gone from here, and the run list in AI control still holds them all.
+func latestFailurePerAgent(runs []*agent.AgentRun) []*agent.AgentRun {
+	newest := make(map[pulid.ID]*agent.AgentRun, len(runs))
+	order := make([]pulid.ID, 0, len(runs))
+	for _, run := range runs {
+		if run == nil {
+			continue
+		}
+		known, seen := newest[run.AgentDefinitionID]
+		if !seen {
+			order = append(order, run.AgentDefinitionID)
+		}
+		if !seen || run.CreatedAt > known.CreatedAt {
+			newest[run.AgentDefinitionID] = run
+		}
+	}
+
+	out := make([]*agent.AgentRun, 0, len(order))
+	for _, id := range order {
+		out = append(out, newest[id])
+	}
+
+	return out
 }
 
 // ExceptionSource puts open agent exceptions on the tower.
@@ -445,42 +536,6 @@ func (s *CarrierIntelSource) Snapshot(
 			continue
 		}
 		items = append(items, DescribeCarrierIntelEvent(entity))
-	}
-
-	return items, nil
-}
-
-// WeatherSource puts severe and extreme alerts on the tower.
-type WeatherSource struct {
-	repo weatheralertports.WeatherAlertRepository
-}
-
-func NewWeatherSource(
-	repo weatheralertports.WeatherAlertRepository,
-) watchtowerports.WatchtowerSource {
-	return &WeatherSource{repo: repo}
-}
-
-func (s *WeatherSource) Kind() watchtower.SourceKind { return watchtower.SourceWeatherAlert }
-
-func (s *WeatherSource) Snapshot(
-	ctx context.Context,
-	tenant pagination.TenantInfo,
-) ([]watchtowerports.WatchtowerItemInput, error) {
-	alerts, err := s.repo.GetActiveAlerts(ctx, tenant)
-	if err != nil {
-		return nil, err
-	}
-
-	items := make([]watchtowerports.WatchtowerItemInput, 0, len(alerts))
-	for _, alert := range alerts {
-		if alert == nil {
-			continue
-		}
-		if _, worthy := WeatherSeverity(alert); !worthy {
-			continue
-		}
-		items = append(items, DescribeWeatherAlert(alert))
 	}
 
 	return items, nil

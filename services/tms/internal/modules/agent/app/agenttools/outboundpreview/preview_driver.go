@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/workercredential"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
+	"github.com/emoss08/trenova/pkg/remedy"
 )
 
 // driverMessageSend is a Dash message to one driver, as the driver would
@@ -39,9 +40,33 @@ func WarnDriverUnreachable(
 		return
 	}
 
-	toolpreview.Warn(preview, agentpreview.PreviewWarningDriverUnreachable,
-		DriverName(notice)+" has no Dash access, so the message would not reach them.",
-		notice.WorkerID.String())
+	// The argument is what a person reads in the warning: the driver's name,
+	// never the record's id. With no name on file the warning says "the
+	// driver" and carries no argument.
+	args := make([]string, 0, 1)
+	if name := strings.TrimSpace(notice.WorkerName); name != "" {
+		args = append(args, name)
+	}
+	if preview == nil {
+		return
+	}
+	invite := agentpreview.PreviewRemedy{
+		Kind:        string(remedy.InviteDriverToPortal),
+		RecordKind:  string(permission.ResourceWorker),
+		RecordID:    notice.WorkerID.String(),
+		RecordLabel: DriverName(notice),
+	}
+	if notice.InvitedAt > 0 {
+		invitedAt := notice.InvitedAt
+		invite.TakenAt = &invitedAt
+		invite.TakenNote = notice.InvitedEmail
+	}
+	preview.AddWarning(&agentpreview.PreviewWarning{
+		Code:     agentpreview.PreviewWarningDriverUnreachable,
+		Args:     args,
+		Message:  DriverName(notice) + " has no Dash access, so the message would not reach them.",
+		Remedies: []agentpreview.PreviewRemedy{invite},
+	})
 }
 
 func DriverName(notice *notificationports.DriverNotificationPreview) string {

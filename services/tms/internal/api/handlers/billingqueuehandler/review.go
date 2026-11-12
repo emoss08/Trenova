@@ -140,7 +140,7 @@ func (h *Handler) neighbors(c *gin.Context) {
 		&billingqueueports.GetBillingQueueNeighborsRequest{
 			ItemID:        itemID,
 			Filter:        pagination.NewQueryOptions(c, authCtx),
-			IncludePosted: helpers.QueryBool(c, "includePosted"),
+			IncludeClosed: helpers.QueryBool(c, "includeClosed"),
 		},
 	)
 	if err != nil {

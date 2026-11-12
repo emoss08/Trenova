@@ -348,9 +348,9 @@ const EXACT_REGISTRY: Record<string, NotificationDescriptor> = {
     tileClass: "bg-warning-subtle",
     getLink: invoiceLink,
   },
-  invoice_shared: {
-    label: "Someone shares an invoice with you",
-    category: "Billing",
+  record_shared: {
+    label: "Someone shares a record with you",
+    category: "Shared with you",
     icon: Share07Icon,
     iconClass: "text-brand",
     tileClass: "bg-brand/10",
@@ -359,7 +359,7 @@ const EXACT_REGISTRY: Record<string, NotificationDescriptor> = {
       const name = notificationDataString(n, "sharedByName");
       return userId || name ? { userId: userId ?? undefined, name: name ?? undefined } : null;
     },
-    getLink: (n) => notificationDataString(n, "link") ?? invoiceLink(n),
+    getLink: (n) => notificationDataString(n, "link") ?? null,
   },
   billing_exception_recorded: {
     label: "A billing exception is recorded",
@@ -605,6 +605,14 @@ const CATEGORY_LOOKS: readonly CategoryLook[] = [
     label: "Mentions",
     description: "When a teammate @mentions you",
     icon: AtSignIcon,
+    iconClass: "text-brand",
+    tileClass: "bg-brand-subtle",
+  },
+  {
+    name: "Shared with you",
+    label: "Shared with you",
+    description: "When a teammate shares a record with you",
+    icon: Share07Icon,
     iconClass: "text-brand",
     tileClass: "bg-brand-subtle",
   },

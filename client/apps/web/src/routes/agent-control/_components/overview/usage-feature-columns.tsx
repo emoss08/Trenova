@@ -34,6 +34,7 @@ const FEATURES: AiUsageFeature[] = [
   "InboundMail",
   "PaletteAnswer",
   "InsightNarration",
+  "CaseReading",
 ];
 
 /** The share of the busiest feature's calls a bar may never fall below, so a failure shows. */

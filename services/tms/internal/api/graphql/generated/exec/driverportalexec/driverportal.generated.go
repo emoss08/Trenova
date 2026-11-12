@@ -4583,7 +4583,7 @@ func unmarshalInputInviteWorkerToPortalInput(ctx context.Context, ec *gqlexec.Ex
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"workerId", "email"}
+	fieldsInOrder := [...]string{"workerId", "email", "replacePending"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -4604,6 +4604,13 @@ func unmarshalInputInviteWorkerToPortalInput(ctx context.Context, ec *gqlexec.Ex
 				return it, err
 			}
 			it.Email = data
+		case "replacePending":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("replacePending"))
+			data, err := unmarshalOBoolean2ᚖbool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.ReplacePending = data
 		}
 	}
 	return it, nil
@@ -5440,6 +5447,14 @@ func unmarshalNUpdateDashControlInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinterna
 func unmarshalNUpdateMyContactInfoInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐUpdateMyContactInfoInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.UpdateMyContactInfoInput, error) {
 	res, err := unmarshalInputUpdateMyContactInfoInput(ctx, ec, v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOBoolean2ᚖbool(ctx context.Context, ec *gqlexec.Exec, v any) (*bool, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalBoolean(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func unmarshalODisputeAdjustmentInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐDisputeAdjustmentInput(ctx context.Context, ec *gqlexec.Exec, v any) (*gqlmodel.DisputeAdjustmentInput, error) {

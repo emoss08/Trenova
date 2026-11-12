@@ -14,6 +14,21 @@ export function stepName(t: TranslateFn, step: WatchtowerAgentStep): string {
   }
 }
 
+/** What a working run is doing now, in words. */
+export function runDoing(
+  t: TranslateFn,
+  work: NonNullable<DeskAttentionItem["agentWork"]>,
+): string {
+  switch (work.steps[work.step]) {
+    case "Read":
+      return t("Reading the record");
+    case "Decide":
+      return t("Working out what to do");
+    default:
+      return t("Working");
+  }
+}
+
 /** A run's real progress: steps done, the one under way, and what is left. */
 export function RunSteps({ work }: { work: NonNullable<DeskAttentionItem["agentWork"]> }) {
   const t = useT();

@@ -299,7 +299,7 @@ function InvoiceAdjustmentLatestCard({
         ) : null}
         {latestAdjustment.rebillQueueItemId ? (
           <ArtifactLink
-            to={`/billing/queue?item=${latestAdjustment.rebillQueueItemId}&includePosted=true`}
+            to={`/billing/queue?item=${latestAdjustment.rebillQueueItemId}&includeClosed=true`}
             label={t("Rebill queue")}
           />
         ) : null}

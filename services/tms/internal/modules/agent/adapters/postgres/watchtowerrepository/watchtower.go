@@ -3,12 +3,15 @@ package watchtowerrepository
 import (
 	"context"
 	"fmt"
+	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/caseownerquery"
 
 	"github.com/emoss08/trenova/pkg/keelexpr"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower/watchtowerdb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
@@ -143,6 +146,7 @@ func (r *repository) raise(ctx context.Context, db *keel.DB, item *watchtower.It
 		it.Facts,
 		it.Impact,
 		it.Trail,
+		it.Panel,
 		it.Severity,
 	))
 	if err != nil {
@@ -218,6 +222,7 @@ func applyUpsert(existing, incoming *watchtower.Item, plan upsertPlan) *watchtow
 	merged.Facts = incoming.Facts
 	merged.Impact = incoming.Impact
 	merged.Trail = incoming.Trail
+	merged.Panel = incoming.Panel
 	if !plan.keepSeverity {
 		merged.Severity = incoming.Severity
 	}
@@ -666,6 +671,9 @@ func listQuery(req *watchtowerports.ListWatchtowerItemsQuery) keel.Query[*watcht
 		overdue,
 		keel.When(req.SubjectID.IsNotNil(), it.SubjectID.Eq(req.SubjectID)),
 		keel.When(len(req.AboutIDs) > 0, it.AboutID.In(req.AboutIDs...)),
+		caseownerquery.InSight(watchtowerdb.Items.AboutID, req.Sight),
+		keel.When(req.AgentRunID.IsNotNil(), it.AgentRunID.Eq(req.AgentRunID)),
+		keel.When(req.AgentWorking, agentWorking()),
 		before,
 	)
 	if req.OrderByDue {
@@ -675,6 +683,16 @@ func listQuery(req *watchtowerports.ListWatchtowerItemsQuery) keel.Query[*watcht
 	}
 
 	return q.Limit(limit)
+}
+
+func agentWorking() keel.Pred {
+	it := watchtowerdb.Items
+	run := agentdb.AgentRuns
+
+	return keel.Exists(run.Where(
+		run.ID.EqCol(it.AgentRunID),
+		run.Status.In(agent.WorkingRunStatuses()...),
+	))
 }
 
 func dueSortExpr() keel.Int64Expr {
@@ -700,6 +718,7 @@ func openItems(req *watchtowerports.CountWatchtowerItemsRequest) keel.Query[*wat
 	return it.Where(
 		it.ResolvedAt.IsNull(),
 		keel.When(len(req.Kinds) > 0, it.SourceKind.In(req.Kinds...)),
+		caseownerquery.InSight(watchtowerdb.Items.AboutID, req.Sight),
 	)
 }
 
@@ -731,10 +750,7 @@ func countTotalsQuery(
 		keel.Count().Filter(it.AssigneeID.IsNull()),
 		keel.Count().Filter(mine),
 		keel.Count().Filter(keel.And(mine, active, overdue)),
-		keel.Count().Filter(keel.And(
-			it.AgentRunID.IsNotNull(),
-			it.Status.Eq(watchtower.StatusInProgress),
-		)),
+		keel.Count().Filter(agentWorking()),
 	)
 }
 

@@ -26,11 +26,12 @@ import { useLatestCallback } from "@trenova/shared/hooks/use-latest-callback";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
-import { DeskRail, type DeskRailProps } from "./desk-rail";
+import { caseOfThread } from "../record-case/case-subject";
+import { DeskRail, railViewOf, type DeskRailProps } from "./desk-rail";
 
 export type DeskRailThreadsProps = Omit<
   DeskRailProps,
-  "shelves" | "today" | "noConversations" | "onLoadMore" | "onThreadsInView"
+  "shelves" | "today" | "noConversations" | "onLoadMore" | "onThreadsInView" | "view" | "edges"
 > & {
   /** The open conversation, however it was read, so its row shows even on a shelf never read. */
   activeThread: AssistantThread | null;
@@ -64,9 +65,9 @@ const NO_THREADS: AssistantThread[] = [];
  * its pages, one array per cache entry, so a shelf that did not change keeps
  * its array.
  */
-function useShelfQuery(key: DeskShelfKey, edges: DeskShelfEdges) {
+function useShelfQuery(key: DeskShelfKey, edges: DeskShelfEdges, cases: boolean) {
   return useInfiniteQuery({
-    ...threadShelfQuery(deskShelfFilter(key, edges)),
+    ...threadShelfQuery(deskShelfFilter(key, edges, cases)),
     select: threadsOf,
   });
 }
@@ -85,14 +86,23 @@ export function DeskRailThreads({ activeThread, ...props }: DeskRailThreadsProps
   const today = useCalendarDay(timezone);
   const edges = useMemo(() => deskShelfEdges(today, timezone), [today, timezone]);
 
-  const counts = useQuery(threadShelfCountsQuery(deskShelfEdgeList(edges)));
+  // The rail is the cases' or the conversations', by the place in front, and
+  // lists that half of the person's work: conversations about no record, or
+  // the ones asked on a record's case, which it draws as cases. Each half is
+  // shelved, counted and paged on its own.
+  const view = railViewOf(
+    props.place,
+    activeThread !== null && caseOfThread(activeThread) !== null,
+  );
+  const cases = view === "cases";
+  const counts = useQuery(threadShelfCountsQuery(deskShelfEdgeList(edges), cases));
   const queries = {
-    pinned: useShelfQuery("pinned", edges),
-    today: useShelfQuery("today", edges),
-    yesterday: useShelfQuery("yesterday", edges),
-    week: useShelfQuery("week", edges),
-    month: useShelfQuery("month", edges),
-    older: useShelfQuery("older", edges),
+    pinned: useShelfQuery("pinned", edges, cases),
+    today: useShelfQuery("today", edges, cases),
+    yesterday: useShelfQuery("yesterday", edges, cases),
+    week: useShelfQuery("week", edges, cases),
+    month: useShelfQuery("month", edges, cases),
+    older: useShelfQuery("older", edges, cases),
   };
 
   const pinned = queries.pinned.data ?? NO_THREADS;
@@ -104,7 +114,7 @@ export function DeskRailThreads({ activeThread, ...props }: DeskRailThreadsProps
   const grouped = shelveLatest(
     [pinned, todays, yesterdays, week, month, older],
     edges,
-    activeThread ? [activeThread] : [],
+    activeThread && Boolean(activeThread.subjectId) === cases ? [activeThread] : [],
   );
 
   const shelves: DeskRailShelf[] = DESK_SHELF_KEYS.map((key) => {
@@ -144,6 +154,8 @@ export function DeskRailThreads({ activeThread, ...props }: DeskRailThreadsProps
   return (
     <DeskRail
       {...props}
+      view={view}
+      edges={edges}
       shelves={shelves}
       today={today}
       noConversations={noConversations}

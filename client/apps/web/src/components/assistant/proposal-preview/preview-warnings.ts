@@ -1,7 +1,7 @@
 import type { PreviewReason, PreviewWarning, ProposalPreview } from "@/lib/graphql/agent-preview";
 import type { ProposalField } from "@/types/assistant";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
-import { humanizeToolName } from "../proposal-state";
+import { humanizeToolName, isRecordId } from "../proposal-state";
 
 /**
  * The server names what a person deciding should know with a code and sends
@@ -60,9 +60,13 @@ export function previewWarningTone(warning: PreviewWarning): PreviewWarningTone 
   return isPreviewWarningCode(warning.code) ? TONES[warning.code] : "warning";
 }
 
-/** The warning's first argument, when the server sent one worth reading. */
+/**
+ * The warning's first argument, when the server sent one worth reading. A
+ * record id is never one: a warning names a person or a record by what it is
+ * called, and says "the driver" when it has no name to give.
+ */
 function firstArg(warning: PreviewWarning): string {
-  return warning.args.find((arg) => arg.trim() !== "")?.trim() ?? "";
+  return warning.args.find((arg) => arg.trim() !== "" && !isRecordId(arg.trim()))?.trim() ?? "";
 }
 
 /**

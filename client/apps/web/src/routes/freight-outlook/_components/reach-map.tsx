@@ -7,14 +7,8 @@ import { integration } from "@/lib/queries/integration";
 import { useQuery } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import {
-  AdvancedMarker,
-  AdvancedMarkerAnchorPoint,
-  APIProvider,
-  Map,
-  useMap,
-  useMapsLibrary,
-} from "@vis.gl/react-google-maps";
+import { AdvancedMarker } from "@/components/map/advanced-marker";
+import { AdvancedMarkerAnchorPoint, APIProvider, Map, useMap, useMapsLibrary } from "@vis.gl/react-google-maps";
 import { Fragment, useEffect } from "react";
 import { reachBounds } from "./outlook-model";
 import { ReachMapSkeleton } from "./reach-map-skeleton";

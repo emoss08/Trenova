@@ -11,11 +11,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceshare"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/recordshareports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/latechargeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/billingcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -142,29 +142,29 @@ func TestAssessLateCharges_RefusesARunThatChargesNothing(t *testing.T) {
 
 type fakeSharer struct {
 	guard   *agenttoolstest.WriteGuard
-	plan    *invoiceports.InvoiceSharePreview
-	shared  *invoiceports.ShareInvoiceRequest
+	plan    *recordshareports.Preview
+	shared  *recordshareports.ShareRequest
 	refusal error
 }
 
 func (f *fakeSharer) Share(
 	_ context.Context,
-	req *invoiceports.ShareInvoiceRequest,
+	req *recordshareports.ShareRequest,
 	_ *permissionports.RequestActor,
-) (*invoiceports.ShareInvoiceResult, error) {
+) (*recordshareports.ShareResult, error) {
 	if err := f.guard.Write(); err != nil {
 		return nil, err
 	}
 	f.shared = req
 
-	return &invoiceports.ShareInvoiceResult{}, nil
+	return &recordshareports.ShareResult{}, nil
 }
 
 func (f *fakeSharer) PreviewShare(
 	context.Context,
-	*invoiceports.ShareInvoiceRequest,
+	*recordshareports.ShareRequest,
 	*permissionports.RequestActor,
-) (*invoiceports.InvoiceSharePreview, error) {
+) (*recordshareports.Preview, error) {
 	if f.refusal != nil {
 		return nil, f.refusal
 	}
@@ -179,13 +179,17 @@ func TestShareInvoice_PreviewsWhatEachTeammateReceives(t *testing.T) {
 	dana := pulid.MustNew("usr_")
 	sharer := &fakeSharer{
 		guard: &agenttoolstest.WriteGuard{},
-		plan: &invoiceports.InvoiceSharePreview{
-			Invoice:         inv,
+		plan: &recordshareports.Preview{
+			Record: &recordshareports.Record{
+				Kind:  recordkind.Kind(permission.ResourceInvoice),
+				ID:    inv.ID,
+				Label: "INV-2026-1042",
+			},
 			SharedByName:    "Marcus Bell",
 			Note:            "Check the detention line",
-			Tab:             invoiceshare.ShareTabCharges,
+			Path:            invoiceSharePath(inv.ID, shareTabCharges),
 			EmailConfigured: true,
-			Recipients: []invoiceports.InvoiceShareRecipientPreview{{
+			Recipients: []recordshareports.RecipientPreview{{
 				UserID: dana, Name: "Dana Whitfield", EmailAddress: "dana@example.com",
 				Emailed: true, Subject: "Marcus shared an invoice", Body: "Check the detention line",
 			}},
@@ -196,7 +200,7 @@ func TestShareInvoice_PreviewsWhatEachTeammateReceives(t *testing.T) {
 		toolparams.ParamInvoiceID: inv.ID.String(),
 		paramUserIDs:              []any{dana.String()},
 		toolparams.ParamNote:      "Check the detention line",
-		paramTab:                  string(invoiceshare.ShareTabCharges),
+		paramTab:                  string(shareTabCharges),
 	})
 
 	preview := agenttoolstest.PreviewWithoutWrites(
@@ -206,7 +210,7 @@ func TestShareInvoice_PreviewsWhatEachTeammateReceives(t *testing.T) {
 			return tool.(agenttoolports.ToolPreviewer).Preview(t.Context(), params)
 		},
 	)
-	assert.Contains(t, preview.Summary, "Would share Invoice INV-2026-1042 with Dana Whitfield")
+	assert.Contains(t, preview.Summary, "Would share invoice INV-2026-1042 with Dana Whitfield")
 	change := agenttoolstest.PreviewChange(t, preview, 0)
 	require.NotNil(t, change.Message)
 	assert.Equal(t, []string{"dana@example.com"}, change.Message.To)
@@ -217,7 +221,11 @@ func TestShareInvoice_PreviewsWhatEachTeammateReceives(t *testing.T) {
 	require.NoError(t, tool.Execute(t.Context(), params))
 	require.NotNil(t, sharer.shared)
 	assert.Equal(t, []pulid.ID{dana}, sharer.shared.UserIDs)
-	assert.Equal(t, invoiceshare.ShareTabCharges, sharer.shared.Tab)
+	// An invoice is shared as a record of its kind, and the tab asked for is
+	// where the link opens.
+	assert.Equal(t, recordkind.Kind(permission.ResourceInvoice), sharer.shared.Kind)
+	assert.Equal(t, inv.ID, sharer.shared.RecordID)
+	assert.Equal(t, "/billing/invoices?item="+inv.ID.String()+"&tab=charges", sharer.shared.Path)
 
 	policy := tool.Policy()
 	assert.Equal(t, permission.ResourceInvoice, policy.Resource)

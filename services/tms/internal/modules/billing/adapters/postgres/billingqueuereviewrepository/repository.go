@@ -391,7 +391,7 @@ func neighborQueries(
 		base: func() keel.Query[*billingqueue.BillingQueueItem] {
 			return listquery.Filter(
 				ctx,
-				bq.Where(keel.When(!req.IncludePosted, bq.Status.Ne(billingqueue.StatusPosted))),
+				bq.Where(billingqueueprojection.Unclosed(req.IncludeClosed)),
 				req.Filter,
 			)
 		},

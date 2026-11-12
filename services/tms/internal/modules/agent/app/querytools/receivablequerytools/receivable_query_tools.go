@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/listtool"
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytool"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/recordshareports"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicerunservice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
@@ -20,6 +21,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoicerunports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/listcatalog"
@@ -71,11 +74,14 @@ type invoiceRunReader interface {
 	) ([]*invoicerunports.OpenStatement, error)
 }
 
+// shareCandidateLister is who a record can be shared with; the tool asks it
+// about an invoice.
 type shareCandidateLister interface {
 	ListCandidates(
 		ctx context.Context,
-		req *invoiceports.ListShareCandidatesRequest,
-	) (*pagination.ListResult[*invoiceports.ShareCandidate], error)
+		req *recordshareports.CandidatesRequest,
+		actor *permissionports.RequestActor,
+	) ([]*tenant.User, error)
 }
 
 type amounts struct {
@@ -834,20 +840,21 @@ func (t *listInvoiceShareCandidatesTool) Query(
 		return nil, err
 	}
 
-	result, err := t.shares.ListCandidates(ctx, &invoiceports.ListShareCandidatesRequest{
+	candidates, err := t.shares.ListCandidates(ctx, &recordshareports.CandidatesRequest{
 		TenantInfo: querytool.TenantOf(params),
-		InvoiceID:  invoiceID,
+		Kind:       recordkind.Kind(permission.ResourceInvoice),
+		RecordID:   invoiceID,
 		Query: strings.TrimSpace(
 			querytool.OptionalString(params.Params, querytool.ParamQuery),
 		),
-		Pagination: pagination.Info{Limit: receivableLimit(params.Params)},
-	})
+		Limit: receivableLimit(params.Params),
+	}, params.Actor)
 	if err != nil {
 		return nil, err
 	}
 
-	rows := make([]shareCandidateRow, 0, len(result.Items))
-	for _, candidate := range result.Items {
+	rows := make([]shareCandidateRow, 0, len(candidates))
+	for _, candidate := range candidates {
 		if candidate == nil {
 			continue
 		}
@@ -909,7 +916,7 @@ func provideListOpenStatementsTool(
 }
 
 func provideListInvoiceShareCandidatesTool(
-	shares invoiceports.InvoiceShareService,
+	shares recordshareports.Service,
 ) agenttoolports.AgentQueryTool {
 	return newListInvoiceShareCandidatesTool(shares)
 }

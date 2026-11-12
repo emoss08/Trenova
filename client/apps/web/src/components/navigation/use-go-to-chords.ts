@@ -17,7 +17,10 @@ function isTypingTarget(target: EventTarget | null): boolean {
  * ignored while a field has focus, so typing a g into a search box never
  * moves the page.
  */
-export function useGoToChords(targets: ReadonlyMap<string, string>) {
+export function useGoToChords(
+  targets: ReadonlyMap<string, string>,
+  { viewTransition = false }: { viewTransition?: boolean } = {},
+) {
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -35,7 +38,7 @@ export function useGoToChords(targets: ReadonlyMap<string, string>) {
         const path = targets.get(key);
         if (path) {
           event.preventDefault();
-          void navigate(path);
+          void navigate(path, { viewTransition });
         }
         return;
       }
@@ -47,5 +50,5 @@ export function useGoToChords(targets: ReadonlyMap<string, string>) {
 
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, [targets, navigate]);
+  }, [targets, navigate, viewTransition]);
 }

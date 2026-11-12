@@ -1,6 +1,10 @@
 import { escapeRegExp } from "@trenova/shared/lib/regexp";
 import { mentionToken } from "@/components/assistant/composer-types";
-import { assistantService } from "@/services/assistant";
+import { assistant } from "@/lib/queries/assistant";
+import { useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
+import { useDebounce } from "@trenova/shared/hooks/use-debounce";
+import type { DeskEditorHandle } from "./editor/desk-editor";
+import { useMenuSide } from "./use-menu-side";
 import {
   isMentionKind,
   mentionSearchTypes,
@@ -12,15 +16,7 @@ import { MentionKindTab, type MentionKind } from "@trenova/shared/types/generate
 import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import {
-  Fragment,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  type KeyboardEvent,
-  type RefObject,
-} from "react";
+import { Fragment, useCallback, useEffect, useRef, useState, type RefObject } from "react";
 import { DeskIcon, type DeskIconName } from "../desk-icons";
 import { defineLabels } from "@trenova/shared/i18n/labels";
 
@@ -60,6 +56,36 @@ export function MentionGlyph({ type, size = 13 }: { type: string; size?: number 
   return <DeskIcon name={isMentionKind(type) ? TYPE_ICONS[type] : "link"} size={size} stroke={2} />;
 }
 
+/** How many rows Page Up and Page Down move the highlight in a composer menu. */
+const PAGE_ROWS = 5;
+
+/**
+ * Where a key moves the highlight in a composer menu of `last + 1` rows, or
+ * null when the key is not one that moves it. The arrows wrap; Home, End and
+ * the page keys do not.
+ */
+export function listMove(key: string, at: number, last: number): number | null {
+  if (last < 0) {
+    return null;
+  }
+  switch (key) {
+    case "ArrowDown":
+      return at >= last ? 0 : at + 1;
+    case "ArrowUp":
+      return at <= 0 ? last : at - 1;
+    case "PageDown":
+      return Math.min(last, at + PAGE_ROWS);
+    case "PageUp":
+      return Math.max(0, at - PAGE_ROWS);
+    case "Home":
+      return 0;
+    case "End":
+      return last;
+    default:
+      return null;
+  }
+}
+
 /** The @ token at the caret: where it starts in the draft and what follows the @. */
 type MentionToken = { start: number; query: string };
 
@@ -70,44 +96,54 @@ function tokenAt(draft: string, caret: number): MentionToken | null {
 
 export type DeskMentions = ReturnType<typeof useDeskMentions>;
 
+/** How long an answered search is shown again without asking. */
+export const MENTION_SEARCH_STALE_MS = 30_000;
+
+const NO_RECORDS: MentionCandidateRecord[] = [];
+
 /**
- * The records the @ search finds for what is typed, once typing settles, and
- * which of them the keyboard is on. A null query searches nothing. The caller
- * sets `loading` the moment the words change, so the list never shows the
- * last search's records as the answer to the new one.
+ * Reads what a bare @ lists before anyone types one, so the picker opens on
+ * records and not on a skeleton. Called when the box takes the focus.
+ */
+export function prefetchMentions(client: QueryClient): void {
+  void client.prefetchQuery({
+    ...assistant.mentionSearch("", "all"),
+    staleTime: MENTION_SEARCH_STALE_MS,
+  });
+}
+
+/**
+ * The records the @ search finds for what is typed, and which of them the
+ * keyboard is on. A null query searches nothing. Words are searched once
+ * typing settles, except words already answered, which are shown at once;
+ * the list is `loading` from the moment the words change until their own
+ * answer is in, so it never shows the last search's records as this one's.
  */
 export function useMentionSearch(query: string | null, tab: MentionSearchType) {
+  const client = useQueryClient();
   const [highlighted, setHighlighted] = useState(0);
-  const [results, setResults] = useState<MentionCandidateRecord[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [shown, setShown] = useState("");
+  const settled = useDebounce(query, SEARCH_DEBOUNCE_MS);
+  const answered =
+    query !== null &&
+    client.getQueryData(assistant.mentionSearch(query, tab).queryKey) !== undefined;
+  const asked = answered ? query : settled;
+  const search = useQuery({
+    ...assistant.mentionSearch(asked ?? "", tab),
+    enabled: query !== null && asked !== null,
+    staleTime: MENTION_SEARCH_STALE_MS,
+  });
+  const current = query !== null && asked === query;
+  const results = (current ? search.data : undefined) ?? NO_RECORDS;
+  const loading = query !== null && (!current || search.isPending);
 
-  useEffect(() => {
-    if (query === null) {
-      return;
-    }
-    const controller = new AbortController();
-    const timer = window.setTimeout(() => {
-      assistantService
-        .searchMentions(query, tab, { signal: controller.signal })
-        .then((found) => {
-          setResults(found);
-          setHighlighted(0);
-          setLoading(false);
-        })
-        .catch(() => {
-          if (!controller.signal.aborted) {
-            setResults([]);
-            setLoading(false);
-          }
-        });
-    }, SEARCH_DEBOUNCE_MS);
-    return () => {
-      controller.abort();
-      window.clearTimeout(timer);
-    };
-  }, [query, tab]);
+  const key = query === null ? "" : tab + "\n" + query;
+  if (key !== shown) {
+    setShown(key);
+    setHighlighted(0);
+  }
 
-  return { results, loading, setLoading, highlighted, setHighlighted };
+  return { results, loading, highlighted, setHighlighted };
 }
 
 /**
@@ -120,14 +156,14 @@ export function useMentionSearch(query: string | null, tab: MentionSearchType) {
 export function useDeskMentions({
   value,
   onChange,
-  textareaRef,
+  editorRef,
   mentions,
   onMentionsChange,
   enabled,
 }: {
   value: string;
   onChange: (value: string) => void;
-  textareaRef: RefObject<HTMLTextAreaElement | null>;
+  editorRef: RefObject<DeskEditorHandle | null>;
   mentions: readonly AssistantEntityRef[];
   onMentionsChange: (mentions: AssistantEntityRef[]) => void;
   enabled: boolean;
@@ -135,20 +171,16 @@ export function useDeskMentions({
   const [token, setToken] = useState<MentionToken | null>(null);
   const [tab, setTab] = useState<MentionSearchType>("all");
   const query = token?.query ?? null;
-  const { results, loading, setLoading, highlighted, setHighlighted } = useMentionSearch(
-    query,
-    tab,
-  );
+  const { results, loading, highlighted, setHighlighted } = useMentionSearch(query, tab);
 
   const detect = (draft: string, caret: number) => {
     if (!enabled) {
       return;
     }
     const next = tokenAt(draft, caret);
-    if (next && (!token || token.query !== next.query || token.start !== next.start)) {
-      setLoading(true);
+    if (next?.start !== token?.start || next?.query !== token?.query) {
+      setToken(next);
     }
-    setToken(next);
   };
 
   const close = useCallback(() => {
@@ -156,17 +188,18 @@ export function useDeskMentions({
     setTab("all");
   }, []);
 
-  const changeTab = (next: MentionSearchType) => {
-    setLoading(true);
-    setTab(next);
+  /** The tab beside the one open, wrapping at either end. */
+  const stepTab = (by: 1 | -1) => {
+    const at = TABS.indexOf(tab);
+    setTab(TABS[(at + by + TABS.length) % TABS.length]);
   };
 
   const pick = (record: MentionCandidateRecord | undefined) => {
     if (!token || !record) {
       return;
     }
-    const textarea = textareaRef.current;
-    const caret = textarea ? textarea.selectionStart : value.length;
+    const editor = editorRef.current;
+    const caret = editor ? editor.caret() : value.length;
     const inserted = `${mentionToken(record.label)} `;
     onChange(value.slice(0, token.start) + inserted + value.slice(caret));
     if (!mentions.some((mention) => mention.type === record.type && mention.id === record.id)) {
@@ -174,45 +207,41 @@ export function useDeskMentions({
     }
     const position = token.start + inserted.length;
     close();
-    requestAnimationFrame(() => {
-      if (textarea) {
-        textarea.focus();
-        textarea.setSelectionRange(position, position);
-      }
-    });
+    requestAnimationFrame(() => editor?.setCaret(position));
   };
 
   /** Writes an @ at the caret and opens the search, for the button that offers it. */
   const open = () => {
-    const textarea = textareaRef.current;
-    const caret = textarea ? textarea.selectionStart : value.length;
+    const editor = editorRef.current;
+    const caret = editor ? editor.caret() : value.length;
     const before = value.slice(0, caret);
     const added = (before && !/\s$/.test(before) ? " " : "") + "@";
     const next = before + added + value.slice(caret);
     onChange(next);
     requestAnimationFrame(() => {
-      if (textarea) {
-        textarea.focus();
-        const position = caret + added.length;
-        textarea.setSelectionRange(position, position);
-        detect(next, position);
-      }
+      const position = caret + added.length;
+      editor?.setCaret(position);
+      detect(next, position);
     });
   };
 
   /** True when the key was the picker's to handle. */
-  const onKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>): boolean => {
-    if (!token) {
+  const onKeyDown = (event: KeyboardEvent): boolean => {
+    if (!token || event.isComposing) {
       return false;
     }
-    if (event.key === "ArrowDown") {
+    const last = results.length - 1;
+    const move = listMove(event.key, highlighted, last);
+    if (move !== null) {
       event.preventDefault();
-      setHighlighted((index) => Math.min(results.length - 1, index + 1));
+      setHighlighted(move);
       return true;
     }
-    if (event.key === "ArrowUp") {
+    // With nothing typed after the @ there is no word for the caret to move
+    // through, so the arrows walk the kinds instead.
+    if (token.query === "" && (event.key === "ArrowLeft" || event.key === "ArrowRight")) {
       event.preventDefault();
-      setHighlighted((index) => Math.max(0, index - 1));
+      stepTab(event.key === "ArrowRight" ? 1 : -1);
       return true;
     }
     if ((event.key === "Enter" || event.key === "Tab") && results[highlighted] && !loading) {
@@ -232,7 +261,7 @@ export function useDeskMentions({
     open: token !== null,
     query: token?.query ?? "",
     tab,
-    setTab: changeTab,
+    setTab,
     highlighted,
     setHighlighted,
     results,
@@ -417,11 +446,16 @@ export function DeskMentionOption({
 /** The list over the box while an @ is being typed. */
 export function DeskMentionPicker({ mentions }: { mentions: DeskMentions }) {
   const t = useT();
+  const { attach, below } = useMenuSide();
   if (!mentions.open) {
     return null;
   }
   return (
-    <div className="dk-mn" onMouseDown={(event) => event.preventDefault()}>
+    <div
+      ref={attach}
+      className={cn("dk-mn", below && "dk-menu-below")}
+      onMouseDown={(event) => event.preventDefault()}
+    >
       <MentionTabs tab={mentions.tab} onChange={mentions.setTab} />
       <div className="dk-mn-l" role="listbox">
         {mentions.loading && <DeskMentionLoading />}
@@ -502,28 +536,6 @@ function splitMentions(
   }
   parts.push(text.slice(at));
   return parts;
-}
-
-/** The draft drawn under the textarea with each named record marked, so the @labels read as chips. */
-export function DeskMentionMirror({
-  value,
-  mentions,
-}: {
-  value: string;
-  mentions: readonly AssistantEntityRef[];
-}) {
-  return (
-    <div className="dk-mn-mirror" aria-hidden>
-      {splitMentions(value, mentions).map((part, index) =>
-        typeof part === "string" ? (
-          <Fragment key={index}>{part}</Fragment>
-        ) : (
-          <mark key={part.at}>{"@" + part.mention.label}</mark>
-        ),
-      )}
-      {"​"}
-    </div>
-  );
 }
 
 /** A sent question with each named record as a chip in place of its @label. */

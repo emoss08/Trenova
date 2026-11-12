@@ -210,30 +210,38 @@ describe("deskShelfEdges", () => {
 describe("deskShelfFilter", () => {
   const edges = deskShelfEdges(NOW, "UTC");
 
-  it("reads the pinned shelf by its pin alone", () => {
-    expect(deskShelfFilter("pinned", edges)).toEqual({ pinned: true });
+  it("reads the pinned shelf by its pin, among conversations about no record", () => {
+    expect(deskShelfFilter("pinned", edges)).toEqual({ pinned: true, aboutRecord: false });
   });
 
   it("reads each dated shelf between its own edge and the one above it", () => {
-    expect(deskShelfFilter("today", edges)).toEqual({ pinned: false, touchedFrom: edges.today });
+    expect(deskShelfFilter("today", edges)).toEqual({
+      pinned: false,
+      touchedFrom: edges.today,
+      aboutRecord: false,
+    });
     expect(deskShelfFilter("yesterday", edges)).toEqual({
       pinned: false,
       touchedFrom: edges.yesterday,
       touchedBefore: edges.today,
+      aboutRecord: false,
     });
     expect(deskShelfFilter("week", edges)).toEqual({
       pinned: false,
       touchedFrom: edges.week,
       touchedBefore: edges.yesterday,
+      aboutRecord: false,
     });
     expect(deskShelfFilter("month", edges)).toEqual({
       pinned: false,
       touchedFrom: edges.month,
       touchedBefore: edges.week,
+      aboutRecord: false,
     });
     expect(deskShelfFilter("older", edges)).toEqual({
       pinned: false,
       touchedBefore: edges.month,
+      aboutRecord: false,
     });
   });
 

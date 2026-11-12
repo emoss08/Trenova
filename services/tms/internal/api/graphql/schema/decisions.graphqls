@@ -124,6 +124,8 @@ extend type AgentRun {
   definition: AgentDefinition
   "The agent that handed the run its task, for the run of an agent a conversation's agent asked; absent otherwise, and for an agent deleted since."
   handedBy: AgentDefinition
+  "The name of the record the run is on, such as a shipment's PRO number. Empty for a run on the organization or a conversation, for a kind of record with no name of its own, and for a reader who may not read the record."
+  subjectLabel: String!
 }
 
 extend type Query {

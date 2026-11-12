@@ -8,6 +8,7 @@ import {
   previewWarningText,
   previewWarningTone,
 } from "@/components/assistant/proposal-preview/preview-warnings";
+import { PreviewRemedies } from "@/components/assistant/proposal-preview/preview-remedies";
 import { HiddenValue, ValueChange } from "@/components/assistant/proposal-preview/value-change";
 import type { PreviewRecordChange } from "@/lib/graphql/agent-preview";
 import {
@@ -234,7 +235,10 @@ export function PlanStep({
               className={cn("dk-pln-warn", previewWarningTone(warning) === "danger" && "dk-bad")}
             >
               <AlertTriangleIcon aria-hidden className="size-3" />
-              <span>{previewWarningText(warning, t)}</span>
+              <span>
+                {previewWarningText(warning, t)}
+                <PreviewRemedies warning={warning} />
+              </span>
             </div>
           ))}
         <StepChanges step={step} folded={folded} />

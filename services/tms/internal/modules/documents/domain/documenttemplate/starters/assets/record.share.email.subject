@@ -1,0 +1,1 @@
+{{ if .SharedByName }}{{ t "{0} shared {1} with you" .SharedByName .RecordTitle }}{{ else }}{{ t "A teammate shared {0} with you" .RecordTitle }}{{ end }}

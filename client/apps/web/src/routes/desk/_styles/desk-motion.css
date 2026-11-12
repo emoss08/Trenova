@@ -1,0 +1,141 @@
+/* How the Desk moves from one page to the next. These rules address the
+   browser's view-transition layer, which only plain CSS can reach.
+
+   A navigation that asks for a view transition (the rail's links, Open the
+   case) animates the one region named below and nothing else: the page around
+   it changes at once, as it always has. A case leaves to the left as the next
+   arrives from the right, so going from case to case reads as moving along a
+   row of them rather than as the page blinking. A browser without view
+   transitions changes the page at once. */
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+}
+
+/* The region is named dk-case by the case page itself (CASE_TRANSITION_CLASS),
+   and left unnamed under reduced motion, so nothing is animated then. */
+
+::view-transition-group(dk-case) {
+  animation-duration: 0s;
+}
+::view-transition-old(dk-case) {
+  animation: dk-case-out 150ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+::view-transition-new(dk-case) {
+  animation: dk-case-in 260ms cubic-bezier(0.2, 0.8, 0.2, 1) 70ms both;
+}
+@keyframes dk-case-out {
+  to {
+    opacity: 0;
+    transform: translateX(-28px);
+  }
+}
+@keyframes dk-case-in {
+  from {
+    opacity: 0;
+    transform: translateX(28px);
+  }
+}
+
+/* ---------- From one view of the Desk to another ----------
+   The chats, the cases and Triage each name the rail's body and the page
+   after themselves (desk-motion.ts). A navigation inside a view finds the same
+   name on both sides and changes at once. One that changes the view has one
+   region only in the old page and another only in the new (:only-child), and
+   those two move.
+
+   The chats are the Desk's home and the cases and Triage are one step in from
+   them, so the rail reads as a step in and a step back: the chats leave and
+   come back on the left, the cases and Triage arrive from and leave to the
+   right. The page under it fades and rises, whichever way the step goes. */
+
+::view-transition-group(dk-rail-chats),
+::view-transition-group(dk-rail-cases),
+::view-transition-group(dk-rail-triage),
+::view-transition-group(dk-page-chats),
+::view-transition-group(dk-page-cases),
+::view-transition-group(dk-page-triage) {
+  animation-duration: 0s;
+}
+::view-transition-old(dk-rail-chats),
+::view-transition-old(dk-rail-cases),
+::view-transition-old(dk-rail-triage),
+::view-transition-old(dk-page-chats),
+::view-transition-old(dk-page-cases),
+::view-transition-old(dk-page-triage) {
+  display: none;
+}
+::view-transition-new(dk-rail-chats),
+::view-transition-new(dk-rail-cases),
+::view-transition-new(dk-rail-triage),
+::view-transition-new(dk-page-chats),
+::view-transition-new(dk-page-cases),
+::view-transition-new(dk-page-triage) {
+  animation: none;
+}
+
+::view-transition-old(dk-rail-chats):only-child {
+  display: block;
+  animation: dk-rail-out-left 140ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+::view-transition-new(dk-rail-chats):only-child {
+  animation: dk-rail-in-left 240ms cubic-bezier(0.2, 0.8, 0.2, 1) 60ms both;
+}
+::view-transition-old(dk-rail-cases):only-child,
+::view-transition-old(dk-rail-triage):only-child {
+  display: block;
+  animation: dk-rail-out-right 140ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+::view-transition-new(dk-rail-cases):only-child,
+::view-transition-new(dk-rail-triage):only-child {
+  animation: dk-rail-in-right 240ms cubic-bezier(0.2, 0.8, 0.2, 1) 60ms both;
+}
+
+::view-transition-old(dk-page-chats):only-child,
+::view-transition-old(dk-page-cases):only-child,
+::view-transition-old(dk-page-triage):only-child {
+  display: block;
+  animation: dk-page-out 120ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+::view-transition-new(dk-page-chats):only-child,
+::view-transition-new(dk-page-cases):only-child,
+::view-transition-new(dk-page-triage):only-child {
+  animation: dk-page-in 260ms cubic-bezier(0.2, 0.8, 0.2, 1) 80ms both;
+}
+
+@keyframes dk-rail-out-left {
+  to {
+    opacity: 0;
+    transform: translateX(-16px);
+  }
+}
+@keyframes dk-rail-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(-16px);
+  }
+}
+@keyframes dk-rail-out-right {
+  to {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+}
+@keyframes dk-rail-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+}
+@keyframes dk-page-out {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes dk-page-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}

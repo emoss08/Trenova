@@ -50,6 +50,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/decisionsexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/deskattentionexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/deskboardexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/deskcaseexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/deskmemoryexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/detentionexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/dispatchconsoleexec"
@@ -103,6 +104,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/preludeexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/ptopolicyexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/rateexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/recordshareexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/recurringshipmentexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/reportexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/roleexec"
@@ -205,6 +207,7 @@ var registry = sync.OnceValues(func() (*gqlexec.Registry, error) {
 		decisionsexec.Shard,
 		deskattentionexec.Shard,
 		deskboardexec.Shard,
+		deskcaseexec.Shard,
 		deskmemoryexec.Shard,
 		detentionexec.Shard,
 		dispatchconsoleexec.Shard,
@@ -258,6 +261,7 @@ var registry = sync.OnceValues(func() (*gqlexec.Registry, error) {
 		preludeexec.Shard,
 		ptopolicyexec.Shard,
 		rateexec.Shard,
+		recordshareexec.Shard,
 		recurringshipmentexec.Shard,
 		reportexec.Shard,
 		roleexec.Shard,

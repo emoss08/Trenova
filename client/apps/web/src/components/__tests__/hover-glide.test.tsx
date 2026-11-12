@@ -124,4 +124,27 @@ describe("the hover glide", () => {
     expect(glide).toHaveClass("transition-opacity");
     expect(glide).not.toHaveClass("transition-[transform,opacity]");
   });
+
+  // A click that swaps the list for another never fires a pointer-leave, so
+  // the glide used to stay lit over where the old row had been.
+  it("goes with its tile when the tile is taken away under the pointer", () => {
+    const tiles = (names: string[]) => (
+      <HoverGlideGroup>
+        {names.map((name) => (
+          <button key={name} type="button" data-glide-target>
+            {name}
+          </button>
+        ))}
+      </HoverGlideGroup>
+    );
+    const view = render(tiles(["Detention at Phoenix", "Short on the BOL"]));
+    const glide = view.container.querySelector('[data-slot="hover-glide"]') as HTMLElement;
+
+    fireEvent.pointerOver(screen.getByRole("button", { name: "Detention at Phoenix" }));
+    expect(glide).toHaveAttribute("data-state", "shown");
+
+    view.rerender(tiles(["Late loads this week"]));
+
+    expect(glide).toHaveAttribute("data-state", "hidden");
+  });
 });

@@ -59,7 +59,14 @@ export function AssistantHome({
   const t = useT();
   const timezone = useUserTimezone();
   const [now] = useState(nowInSeconds);
-  const ask = useDeskHomeAsk({ agents, threads, isLoading, pageSource: "screen", onStart });
+  const ask = useDeskHomeAsk({
+    agents,
+    threads,
+    isLoading,
+    pageSource: "screen",
+    space: "assistant-home",
+    onStart,
+  });
   const { drag } = ask;
   const recent = useMemo(
     () => [...threads].sort((a, b) => touchedAt(b) - touchedAt(a)).slice(0, RECENT_LIMIT),

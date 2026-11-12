@@ -143,7 +143,6 @@
   "{0, plural, one {# arrival} other {# arrivals}}": "{0, plural, other {# 次到達}}",
   "{0, plural, one {# charge held} other {# charges held}}": "{0, plural, other {# 筆費用遭保留}}",
   "{0, plural, one {# facility} other {# facilities}} · {1} of the hours": "{0, plural, one {# 個設施} other {# 個設施}} · 佔時數 {1}",
-  "{0, plural, one {# more} other {# more}}": "{0, plural, other {另外 # 個}}",
   "{0, plural, one {# policy change} other {# policy changes}}": "{0, plural, other {# 項政策變更}}",
   "{0, plural, one {# stop} other {# stops}} · {1, plural, one {# detained} other {# detained}}": "{0, plural, one {# 個停靠點} other {# 個停靠點}} · {1, plural, one {# 個滯留} other {# 個滯留}}",
   "{0, plural, one {# waiver} other {# waivers}}": "{0, plural, other {# 筆免除}}",

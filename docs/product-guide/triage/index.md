@@ -1,6 +1,6 @@
 ---
 path: /desk/triage
-aliases: [triage in desk, inbox, email, mail, inbound email, monitored mailbox, shared inbox, customer emails, tenders by email, queue, nova]
+aliases: [triage, triage in desk, inbox, email, mail, inbound email, monitored mailbox, shared inbox, customer emails, tenders by email, queue, nova]
 related:
   - /desk
   - /shipment-management/shipments
@@ -10,9 +10,9 @@ related:
 ## What it's for
 Triage is where messages from your connected sources arrive. Today a source is an inbound email address; Nova reads every message, works out what kind it is (tender, rate confirmation, proof of delivery, invoice, status request, detention dispute or other) and which shipment or customer it is about, and handles whatever a rule allows. Anything left over waits for a person with its next step already worked out. Customer service, dispatch and billing staff use it to clear the queue.
 
-Triage opens on the **Briefing**: a ring with how many messages are left for you, Nova's line about the day (who has waited longest and roughly how long the rest will take), a timeline of today with what Nova handled on one lane and what was yours on the other, and a deck of cards that each clear a group at once (**File all**, **Draft all**, **Start**, **Link**, **Review**). Under the deck sit what Nova handled on its own (**Spot-check**), corrections this week, sources that stopped receiving mail (**Fix**) and a rule Nova suggests (**Hand it to Nova**). At the end of the day the deck becomes **Carrying over**, with a button to hand what is left to the person on call.
+Triage opens on the **Briefing**, laid out like the Desk's Today: a headline with how many messages are waiting on you, Nova's line about the day (who has waited longest and roughly how long the rest will take), and a strip of the day's figures, each opening the folder behind it (**Waiting on you**, **Cleared by you**, **Handled by Nova** to **Spot-check**, **Corrections this week** and **Coming back later**). **Worth a look** holds sources that stopped receiving mail (**Fix**) and a rule Nova suggests (**Preview**, **Hand it to Nova**). **What is left, by what it needs** lists every group with the people in it and the one button that clears it (**File all**, **Draft all**, **Start**, **Link**, **Review**). **Today so far** is a timeline of what Nova handled on one lane and what was yours on the other. At the end of the day the groups become **Carrying over**, with a button to hand what is left to the person on call.
 
-The rail on the left holds the **Briefing**, the lanes (**Waiting on you**, **Assigned to me**, **Waiting on them**, **Snoozed**, **Handled**, **Ignored**, **Everything**), the kinds still **Waiting**, saved **Views**, your **Sources** and **Rules**. Triage opens inside the [Desk](/desk), under the Desk's own rail: press G then T to get there, and ⌘B (Ctrl+B) folds the Desk's rail away to give Triage the room. On a phone the lanes run along the top and the rest of the rail opens from the menu button beside them. Each message's response target counts down beside it: what is past its target is listed under **Over target**.
+Triage is a room of the [Desk](/desk) and the only place mail is worked: select **Triage** in the Desk's rail, or press G then T in the Desk. While it is open the Desk's rail holds Triage's own places: the **Briefing**, the lanes (**Waiting on you**, **Assigned to me**, **Waiting on them**, **Snoozed**, **Handled**, **Ignored**, **Everything**), the kinds still **Waiting**, saved **Views**, your **Sources** and **Rules**, with **Back to chats** and **Needs you** above them. ⌘B (Ctrl+B) folds the rail away to give Triage the room; while it is folded, and on a phone, the Briefing and the lanes run along the top and the rest is in the rail. A message about a record also shows on that record's row in [Needs you](/desk/needs), where **Open in Triage** brings you here. Each message's response target counts down beside it: what is past its target is listed under **Over target**.
 
 An open message shows its subject, sender and thread, the kind Nova read it as, the words, its files and what happened to it. Beside it (above it on a narrow screen, in a sheet on a phone) are its **Actions**, a numbered list of steps each finished in place, and its **Information**: the shipment and customer it is about and the facts Nova read from it. A bar along the foot of the message always holds the next step.
 
@@ -21,9 +21,9 @@ An open message shows its subject, sender and thread, the kind Nova read it as, 
 ### Clear a group from the Briefing
 Keywords: briefing, file all, draft all, deck, what is left
 1. Open [Triage](/desk/triage). The **Briefing** is the first thing you see.
-2. Read the front card in the deck: who is in the group, the time left on each, and roughly how long it takes.
-3. Select its button (**File all**, **Draft all**, **Start**, **Link** or **Review**). A finished card turns into a chip, and the next card comes forward.
-4. Select a name in Nova's line or a dot on the timeline to open that message.
+2. Read the first group under **What is left, by what it needs**: who is in it, the time left on each, and roughly how long it takes.
+3. Select its button (**File all**, **Draft all**, **Start**, **Link** or **Review**). A finished group leaves the list and a badge under it opens its first message again.
+4. Select a name in Nova's line, a row in a group or a dot on the timeline to open that message.
 
 ### Work through what is waiting on you
 Keywords: triage email, review inbound messages, clear the queue, next message

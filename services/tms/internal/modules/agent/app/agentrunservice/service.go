@@ -163,6 +163,7 @@ func (s *Service) StartForDefinition(
 		SubjectID:    subjectID,
 		EventKind:    req.EventKind,
 		WaitID:       req.WaitID,
+		CaseOptionID: req.CaseOptionID,
 		Origin:       aitrace.Traceparent(ctx),
 	}
 

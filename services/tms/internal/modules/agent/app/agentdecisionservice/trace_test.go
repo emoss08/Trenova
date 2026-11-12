@@ -220,6 +220,7 @@ func newDecideHarness(t *testing.T) *decideHarness {
 			proposalRepo: proposals,
 			runRepo:      runs,
 			shadow:       agentshadow.New(agentshadow.Params{Control: traceControls{}, Runs: runs}),
+			owners:       &agenttest.OpenCases{},
 			executor:     executor,
 			audit:        traceAudit{},
 			previews:     &fakePreviews{},

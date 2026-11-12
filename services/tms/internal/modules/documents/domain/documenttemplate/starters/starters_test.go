@@ -1,7 +1,11 @@
 package starters
 
 import (
+	"io/fs"
+	"os"
+	"path/filepath"
 	"reflect"
+	"regexp"
 	"slices"
 	"strings"
 	"testing"
@@ -543,6 +547,7 @@ func TestNotificationKindsAreKeyedByEventType(t *testing.T) {
 		"dash.pto_reviewed",
 		"dash.pto_cancelled",
 		"dash.credential_expiring",
+		"dash.credential_renewal_requested",
 		"dash.training_due",
 		"dash.review_submitted",
 		"dash.recognition",
@@ -719,4 +724,62 @@ func TestNeedsAttentionNamesTheReportAndCountsTheRest(t *testing.T) {
 	assert.Equal(t, "Revenue by Customer and 2 other reports use fields that no longer exist "+
 		"and cannot run until they are repaired. Open the report builder to see what changed.",
 		manyBody)
+}
+
+// officeNotices are events a driver's own action raises for the office. They
+// are written where they are sent and go through no template, so they are the
+// only "dash." events with no kind.
+var officeNotices = map[string]struct{}{
+	"dash.pto_requested": {},
+	"dash.load_declined": {},
+}
+
+// A driver notification is rendered from the template kind its event names,
+// and an event with no kind is refused when it is sent: the renewal request an
+// agent proposes could never go out, because "dash.credential_renewal_requested"
+// was sent and never registered. The list a person keeps by hand missed it, so
+// this reads the events out of the source instead: every "dash." event written
+// anywhere in the service has a registered kind and a starter to render it.
+func TestEveryDriverEventInTheSourceHasAKindAndAStarter(t *testing.T) {
+	registry := templateregistry.NewRegistry()
+	event := regexp.MustCompile(`"(dash\.[a-z_]+)"`)
+
+	root := filepath.Join("..", "..", "..", "..", "..", "..")
+	_, err := os.Stat(filepath.Join(root, "internal", "modules"))
+	require.NoError(t, err, "the walk starts at the service's root")
+
+	seen := map[string]string{}
+	err = filepath.WalkDir(filepath.Join(root, "internal"), func(path string, d fs.DirEntry, walkErr error) error {
+		if walkErr != nil {
+			return walkErr
+		}
+		if d.IsDir() || !strings.HasSuffix(path, ".go") || strings.HasSuffix(path, "_test.go") ||
+			strings.HasSuffix(path, "_gen.go") {
+			return nil
+		}
+		source, readErr := os.ReadFile(path)
+		if readErr != nil {
+			return readErr
+		}
+		for _, match := range event.FindAllSubmatch(source, -1) {
+			seen[string(match[1])] = path
+		}
+
+		return nil
+	})
+	require.NoError(t, err)
+	require.NotEmpty(t, seen)
+
+	for name, path := range seen {
+		if _, office := officeNotices[name]; office {
+			continue
+		}
+		kind := documenttemplate.Kind("notification." + name)
+		_, registered := registry.Get(kind)
+		assert.Truef(t, registered, "%s is sent from %s and has no template kind", name, path)
+		if registered {
+			_, starterErr := For(kind)
+			assert.NoErrorf(t, starterErr, "%s has a kind and no starter to render it", name)
+		}
+	}
 }

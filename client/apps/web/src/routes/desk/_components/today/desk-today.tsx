@@ -9,6 +9,7 @@ import { usePermission } from "@/hooks/use-permission";
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import { briefing as briefingQueries } from "@/lib/queries/briefing";
 import { deskActivity } from "@/lib/queries/desk-activity";
+import { aiControl } from "@/lib/queries/ai-control";
 import { deskAttention } from "@/lib/queries/desk-attention";
 import { watchtower } from "@/lib/queries/watchtower";
 import { useDeskSetting } from "@/stores/desk-settings-store";
@@ -34,7 +35,7 @@ import { usePendingDecisionSummary } from "../decisions/use-pending-decisions";
 import { BriefingHeadline } from "./briefing-headline";
 import { DayStrip } from "./day-strip";
 import { NovaHandled } from "./nova-handled";
-import { NovaWorking } from "./nova-working";
+import { AgentsWorking, workingItems, workingRows } from "./agents-working";
 import { SinceYouLeft } from "./since-you-left";
 import { greeting, withheldNote } from "./today-headline";
 import { TodayRowsSkeleton, TodaySection } from "./today-section";
@@ -90,6 +91,10 @@ export function DeskToday({ agents, threads, isLoading, isStarting, onStart }: D
   const briefing = briefingQuery.data ?? null;
   const summaryQuery = usePendingDecisionSummary(canDecide);
   const attentionQuery = useQuery({ ...deskAttention.list(), enabled: canWatch });
+  // Its own read, so a run on a record far down Needs you is still listed.
+  const workingQuery = useQuery({ ...deskAttention.working, enabled: canWatch });
+  const { allowed: canSeeRuns } = usePermission(Resource.AgentRun, Operation.Read);
+  const runsQuery = useQuery({ ...aiControl.workingRuns(), enabled: canWatch && canSeeRuns });
   const countsQuery = useQuery({ ...watchtower.counts(), enabled: canWatch });
   const seenAt = countsQuery.data?.seenAt ?? 0;
   const clearedQuery = useQuery({ ...watchtower.cleared(seenAt), enabled: canWatch && seenAt > 0 });
@@ -99,7 +104,14 @@ export function DeskToday({ agents, threads, isLoading, isStarting, onStart }: D
   });
 
   const preferredAgent = useDeskSetting("agent");
-  const ask = useDeskHomeAsk({ agents, threads, isLoading, preferId: preferredAgent, onStart });
+  const ask = useDeskHomeAsk({
+    agents,
+    threads,
+    isLoading,
+    preferId: preferredAgent,
+    space: "desk-today",
+    onStart,
+  });
 
   const dateline = new Intl.DateTimeFormat(undefined, {
     weekday: "long",
@@ -134,9 +146,6 @@ export function DeskToday({ agents, threads, isLoading, isStarting, onStart }: D
     (canDecide && summaryQuery.isPending);
 
   const groups = attentionQuery.data?.groups ?? [];
-  const working = groups
-    .flatMap((group) => group.items)
-    .filter((item) => item.agentWork !== null && !item.agentWork.failed);
   const entries = activityQuery.data?.entries ?? [];
   const sinceEntries = entries.filter((entry) => entry.at > seenAt);
   const approvedByOthers = sinceEntries.filter(
@@ -149,9 +158,21 @@ export function DeskToday({ agents, threads, isLoading, isStarting, onStart }: D
     ? t("{0}+", entries.length)
     : String(entries.length);
   const pathOfWork = (itemId: string) => {
-    const group = groups.find((candidate) => candidate.items.some((item) => item.id === itemId));
+    const group = workingQuery.data?.groups.find((candidate) =>
+      candidate.items.some((item) => item.id === itemId),
+    );
     return group ? attentionPath(group) : "/desk/needs";
   };
+  // The runs AI control lists as working are the truth; the items say which of
+  // them is on something in Needs you. A reader who may not read runs sees the
+  // items alone.
+  const working = workingRows(
+    canSeeRuns ? (runsQuery.data ?? []) : null,
+    workingItems(workingQuery.data?.groups ?? []),
+    (item) => pathOfWork(item.id),
+  );
+  const workingPending = workingQuery.isPending || (canSeeRuns && runsQuery.isPending);
+  const workingFailed = canSeeRuns ? runsQuery.isError : workingQuery.isError;
 
   return (
     <div className="dk-dy-w">
@@ -234,7 +255,7 @@ export function DeskToday({ agents, threads, isLoading, isStarting, onStart }: D
           {canDecide && (
             <TodaySection
               id="dk-dy-handled"
-              title={t("Nova handled")}
+              title={t("Agents handled")}
               count={entries.length > 0 ? handledCount : undefined}
               aside={t("since midnight")}
             >
@@ -253,17 +274,19 @@ export function DeskToday({ agents, threads, isLoading, isStarting, onStart }: D
           {canWatch && (
             <TodaySection
               id="dk-dy-working"
-              title={t("Nova is working on")}
+              title={t("Agents are working on")}
               count={working.length > 0 ? String(working.length) : undefined}
             >
-              {attentionQuery.isPending ? (
+              {workingPending ? (
                 <TodayRowsSkeleton rows={2} />
+              ) : workingFailed ? (
+                <p className="dk-dy-quiet">{t("What agents are working on could not be read.")}</p>
               ) : working.length === 0 ? (
                 <p className="dk-dy-quiet">
-                  {t("No agent is working on anything open. Hand an item off from Needs you.")}
+                  {t("No agent is working on anything right now. Hand an item off from Needs you.")}
                 </p>
               ) : (
-                <NovaWorking items={working} pathOf={(item) => pathOfWork(item.id)} />
+                <AgentsWorking rows={working} />
               )}
             </TodaySection>
           )}

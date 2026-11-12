@@ -894,6 +894,8 @@ input AgentProposalDecisionInput {
   previewDigest: String
   "What the decider tells the agent with the decision, such as why they turned it down; at most 2000 characters. The conversation's follow-up turn reads it as data, never as instructions."
   note: String
+  "An approval waits out the undo window before it runs, and can be taken back with undoAgentDecision until it does."
+  undoWindow: Boolean = false
 }
 
 input AgentPlanDecisionInput {
@@ -904,6 +906,8 @@ input AgentPlanDecisionInput {
   previewDigest: String
   "What the decider tells the agent with the decision, such as why they turned it down; at most 2000 characters. Recorded on every step's decision."
   note: String
+  "An approval waits out the undo window before any step runs, and can be taken back with undoAgentDecision until one does."
+  undoWindow: Boolean = false
 }
 
 input AgentExceptionResolveInput {
@@ -1030,6 +1034,17 @@ extend type Mutation {
   that was undone is a conflict.
   """
   commitMyDecisionNow(proposalId: ID, planId: ID): Boolean!
+  """
+  Takes back an approval the caller made from the decision queue or a record's
+  case with an undo window, while the window is open; it waits on a person
+  again. Name one of the two. Once it has gone through it is a conflict.
+  """
+  undoAgentDecision(proposalId: ID, planId: ID): Boolean!
+  """
+  Ends the undo window on an approval the caller made from the decision queue
+  or a record's case, so it goes through now.
+  """
+  commitAgentDecisionNow(proposalId: ID, planId: ID): Boolean!
   "Replays a recorded run against its agent as it is now; every write is simulated."
   replayAgentRun(runId: ID!): AgentEvaluation!
   createAgentMemory(input: AgentMemoryInput!): AgentMemory!

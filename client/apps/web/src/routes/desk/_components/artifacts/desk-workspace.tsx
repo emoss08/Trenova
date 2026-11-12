@@ -50,6 +50,8 @@ import { DeskRateBody } from "./kinds/rate/desk-rate-body";
 import { DeskRecordBody } from "./kinds/record/desk-record-body";
 import { DeskReportRunBody } from "./kinds/report/desk-report-run-body";
 import { DeskViewBody } from "./kinds/view/desk-view-body";
+import { viewPath } from "../view/view-path";
+import { Link } from "react-router";
 import { DeskDocBody } from "./kinds/document/desk-doc-body";
 import { VERSION_OPTION_CLASS, versionTriggerClass } from "./desk-version-classes";
 import { ConnectionDraftSkeleton } from "./kinds/edi-connection-draft/connection-draft-skeleton";
@@ -82,11 +84,11 @@ export function artifactLink(
   return `/desk/c/${artifact.threadId}/a/${artifact.slug || artifact.lineageId || artifact.id}`;
 }
 
-/** The artifact on a page of its own, the whole of it and nothing else. */
+/** The artifact on the Desk's canvas, the whole of it, with its conversation in the margin. */
 export function artifactPageLink(
   artifact: Pick<AssistantArtifact, "threadId" | "slug" | "id" | "lineageId">,
 ): string {
-  return `${artifactLink(artifact)}/page`;
+  return viewPath(artifact.threadId, artifact.slug || artifact.lineageId || artifact.id);
 }
 
 /** The session's recently opened lineages per conversation; gone with the tab. */
@@ -857,19 +859,17 @@ export function DeskWorkspace({
                 <ArtIcon name="dl" size={14} />
               </Button>
             )}
-            <a
+            <Link
               className={cn(
                 buttonVariants({ variant: "quiet", size: "icon-sm" }),
                 "text-dsk-subtle",
               )}
-              href={artifactPageLink(artifact)}
-              target="_blank"
-              rel="noreferrer"
-              title={t("Open on its own page")}
-              aria-label={t("Open on its own page")}
+              to={artifactPageLink(artifact)}
+              title={t("Open on the canvas")}
+              aria-label={t("Open on the canvas")}
             >
               <ArtIcon name="ext" size={14} />
-            </a>
+            </Link>
           </div>
         </>
       )}

@@ -18,6 +18,7 @@ import type { PersistQueryClientOptions, Persister } from "@tanstack/react-query
 import { currentProfile, useAuthStore } from "@trenova/shared/stores/auth-store";
 import type { User } from "@trenova/shared/types/user";
 import { useAssistantStore } from "@/stores/assistant-store";
+import { composerDrafts } from "@/stores/composer-draft-store";
 import { useDeskAttachedPageStore } from "@/stores/desk-attached-page-store";
 import { useDeskMarginStore } from "@/stores/desk-margin-store";
 import { useDeskSettingsStore } from "@/stores/desk-settings-store";
@@ -162,6 +163,7 @@ export const sessionPersistence = createSessionPersistence(
  */
 export function forgetSessionStores(): void {
   useAssistantStore.getState().clearSession();
+  composerDrafts.clear();
   useDeskAttachedPageStore.getState().clear();
   useDeskMarginStore.getState().clearSession();
   useDeskSettingsStore.getState().clearSession();

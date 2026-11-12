@@ -1,5 +1,6 @@
 import type { AssistantMessage, AssistantPlan, AssistantProposal } from "@/types/assistant";
 import { toolNameInReadingOrder } from "@/lib/tool-names";
+import { translate } from "@trenova/shared/i18n/runtime";
 
 /**
  * What a proposal card should show.
@@ -230,6 +231,10 @@ export function humanizeToolName(toolName: string): string {
  * Values are stringified rather than rendered structurally: the approver needs to
  * see exactly what would be sent, and a nested object shown as `[object Object]`
  * hides precisely the part worth checking.
+ *
+ * A record id is never one of them. An id tells a person nothing and the record
+ * it names is drawn by the step's own preview, so a lone id is left out and a
+ * list of them is said as how many.
  */
 export function argumentRows(
   argumentsValue: AssistantProposal["arguments"],
@@ -239,8 +244,21 @@ export function argumentRows(
   }
 
   return Object.entries(argumentsValue)
+    .filter(([, value]) => !isRecordId(value))
     .map(([key, value]) => ({ key, value: stringifyArgument(value) }))
     .sort((left, right) => left.key.localeCompare(right.key));
+}
+
+const RECORD_ID = /^[a-z][a-z0-9]{1,11}_[0-9A-HJKMNP-TV-Z]{26}$/u;
+
+/** Whether a value is one of Trenova's record ids: a short prefix and a ULID. */
+export function isRecordId(value: unknown): value is string {
+  return typeof value === "string" && RECORD_ID.test(value);
+}
+
+/** A list of record ids, which is said as how many records it names. */
+export function isRecordIdList(value: unknown): value is string[] {
+  return Array.isArray(value) && value.length > 0 && value.every(isRecordId);
 }
 
 function stringifyArgument(value: unknown): string {
@@ -254,6 +272,10 @@ function stringifyArgument(value: unknown): string {
 
   if (typeof value === "number" || typeof value === "boolean") {
     return String(value);
+  }
+
+  if (isRecordIdList(value)) {
+    return translate("{0, plural, one {# record} other {# records}}", value.length);
   }
 
   return JSON.stringify(value);

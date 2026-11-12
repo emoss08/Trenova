@@ -254,6 +254,12 @@ input InviteWorkerToPortalInput {
   Overrides the email on the worker record when provided.
   """
   email: String
+  """
+  Sends the invitation again: an invitation still pending is voided and a new
+  one, with a new link, replaces it. Without it a pending invitation refuses a
+  second.
+  """
+  replacePending: Boolean
 }
 
 input CreateMyLoadCommentInput {

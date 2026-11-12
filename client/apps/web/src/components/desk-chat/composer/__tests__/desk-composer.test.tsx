@@ -9,6 +9,7 @@ import { registerCatalogSource, setLocale, translate } from "@trenova/shared/i18
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { useDeskAttachments } from "../desk-attachments";
 import { DeskComposer } from "../desk-composer";
+import { placeholderOf, textInBox, writeInBox } from "../editor/editor-test-kit";
 
 afterEach(cleanup);
 
@@ -113,7 +114,7 @@ describe("DeskComposer while a reply is being written", () => {
     fireEvent.keyDown(box, { key: "Escape" });
 
     expect(onStop).toHaveBeenCalledTimes(1);
-    expect(box).toHaveValue("Skip anyone without a reefer");
+    expect(textInBox(box)).toBe("Skip anyone without a reefer");
   });
 
   it("leaves Esc alone when nothing is under way", () => {
@@ -132,7 +133,7 @@ describe("DeskComposer while a reply is being written", () => {
     fireEvent.keyDown(box, { key: "Enter" });
 
     expect(onSend).not.toHaveBeenCalled();
-    expect(box).toHaveValue("And the next one?");
+    expect(textInBox(box)).toBe("And the next one?");
   });
 });
 
@@ -171,7 +172,7 @@ describe("DeskComposer steering while a reply is being written", () => {
       "steer",
     );
     expect(onSend).not.toHaveBeenCalled();
-    expect(box).toHaveValue("");
+    expect(textInBox(box)).toBe("");
   });
 
   it("queues on Option+Enter and from the queue button", () => {
@@ -181,7 +182,7 @@ describe("DeskComposer steering while a reply is being written", () => {
     fireEvent.keyDown(box, { key: "Enter", altKey: true });
     expect(onSteer).toHaveBeenLastCalledWith("Then bill it", expect.anything(), "queue");
 
-    fireEvent.change(box, { target: { value: "And email Acme" } });
+    writeInBox(box, "And email Acme");
     fireEvent.click(screen.getByRole("button", { name: "Queue a follow-up" }));
     expect(onSteer).toHaveBeenLastCalledWith("And email Acme", expect.anything(), "queue");
   });
@@ -224,7 +225,7 @@ describe("DeskComposer sending", () => {
 
     fireEvent.keyDown(box, { key: "Enter" });
     expect(onSend).toHaveBeenCalledWith("Where is PRO-1001?", { attachments: [], mentions: [] });
-    expect(box).toHaveValue("");
+    expect(textInBox(box)).toBe("");
   });
 
   it("sends the ready documents with the message", () => {
@@ -295,11 +296,11 @@ describe("DeskComposer with the agent's suggested answer", () => {
   it("shows the suggestion in the empty box and says how to take it", () => {
     const box = renderComposer({ suggestedAnswer: "MERITOR", onSend: vi.fn() });
 
-    expect(box).toHaveAttribute("placeholder", "");
+    expect(placeholderOf(box)).toBe("");
     expect(box).toHaveAccessibleDescription("Suggested answer: MERITOR. Press Tab to use it.");
     expect(box).toHaveAttribute("aria-keyshortcuts", "Tab ArrowRight");
     expect(screen.getByRole("button", { name: "Use the suggested answer" })).toBeInTheDocument();
-    expect(box).toHaveValue("");
+    expect(textInBox(box)).toBe("");
   });
 
   it("puts it in the box on Tab, without sending it", () => {
@@ -308,7 +309,7 @@ describe("DeskComposer with the agent's suggested answer", () => {
 
     fireEvent.keyDown(box, { key: "Tab" });
 
-    expect(box).toHaveValue("MERITOR");
+    expect(textInBox(box)).toBe("MERITOR");
     expect(onSend).not.toHaveBeenCalled();
   });
 
@@ -327,7 +328,7 @@ describe("DeskComposer with the agent's suggested answer", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Use the suggested answer" }));
 
-    expect(box).toHaveValue("MERITOR");
+    expect(textInBox(box)).toBe("MERITOR");
   });
 
   it("leaves Shift+Tab and a modified arrow to the browser", () => {
@@ -336,7 +337,7 @@ describe("DeskComposer with the agent's suggested answer", () => {
     expect(fireEvent.keyDown(box, { key: "Tab", shiftKey: true })).toBe(true);
     expect(fireEvent.keyDown(box, { key: "ArrowRight", altKey: true })).toBe(true);
     expect(fireEvent.keyDown(box, { key: "ArrowRight", metaKey: true })).toBe(true);
-    expect(box).toHaveValue("");
+    expect(textInBox(box)).toBe("");
   });
 
   it("gives way once the person types their own answer", () => {
@@ -344,7 +345,7 @@ describe("DeskComposer with the agent's suggested answer", () => {
 
     expect(fireEvent.keyDown(box, { key: "Tab" })).toBe(true);
     expect(fireEvent.keyDown(box, { key: "ArrowRight" })).toBe(true);
-    expect(box).toHaveValue("MER");
+    expect(textInBox(box)).toBe("MER");
     expect(box).not.toHaveAttribute("aria-describedby");
     expect(screen.queryByRole("button", { name: "Use the suggested answer" })).toBeNull();
   });
@@ -363,8 +364,8 @@ describe("DeskComposer with the agent's suggested answer", () => {
     const box = renderComposer({ onSend: vi.fn() });
 
     expect(fireEvent.keyDown(box, { key: "ArrowRight" })).toBe(true);
-    expect(box).toHaveValue("");
-    expect(box).toHaveAttribute("placeholder", "Ask the Desk anything…");
+    expect(textInBox(box)).toBe("");
+    expect(placeholderOf(box)).toBe("Ask the Desk anything…");
   });
 });
 
@@ -438,5 +439,78 @@ describe("DeskComposer's attach menu", () => {
 
     await waitFor(() => expect(screen.queryByRole("menu")).toBeNull());
     expect(attach).toHaveFocus();
+  });
+});
+
+describe("DeskComposer's box", () => {
+  it("brings back what was last said on ↑ in the empty box, and leaves a draft alone", () => {
+    const onSend = vi.fn();
+    const { unmount } = render(
+      <QueryClientProvider client={new QueryClient()}>
+        <MemoryRouter>
+          <DeskComposer
+            value=""
+            onChange={onSend}
+            onSend={vi.fn()}
+            agent={null}
+            busy={false}
+            recall="Where is PRO-1001?"
+          />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    fireEvent.keyDown(screen.getByRole("textbox"), { key: "ArrowUp" });
+    expect(onSend).toHaveBeenCalledWith("Where is PRO-1001?");
+    unmount();
+
+    const onChange = vi.fn();
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <MemoryRouter>
+          <DeskComposer
+            value="half a thought"
+            onChange={onChange}
+            onSend={vi.fn()}
+            agent={null}
+            busy={false}
+            recall="Where is PRO-1001?"
+          />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    fireEvent.keyDown(screen.getByRole("textbox"), { key: "ArrowUp" });
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it("takes one Backspace to remove a named record whole", () => {
+    function Box() {
+      const [value, setValue] = useState("Where is @PRO-1001");
+      return (
+        <DeskComposer
+          value={value}
+          onChange={setValue}
+          onSend={vi.fn()}
+          agent={null}
+          busy={false}
+          mentions={[shipment]}
+          onMentionsChange={vi.fn()}
+        />
+      );
+    }
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <MemoryRouter>
+          <Box />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+    const box = screen.getByRole("textbox");
+    writeInBox(box, "Where is @PRO-1001");
+
+    fireEvent.keyDown(box, { key: "Backspace", keyCode: 8 });
+
+    expect(textInBox(box)).toBe("Where is ");
   });
 });

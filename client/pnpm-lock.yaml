@@ -418,6 +418,18 @@ importers:
       '@tanstack/react-virtual':
         specifier: ^3.14.21
         version: 3.14.26(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      '@tiptap/core':
+        specifier: ^3.32.0
+        version: 3.32.2(@tiptap/pm@3.32.2)
+      '@tiptap/pm':
+        specifier: ^3.32.0
+        version: 3.32.2
+      '@tiptap/react':
+        specifier: ^3.32.0
+        version: 3.32.2(@floating-ui/dom@1.8.0)(@tiptap/core@3.32.2(@tiptap/pm@3.32.2))(@tiptap/pm@3.32.2)(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      '@tiptap/starter-kit':
+        specifier: ^3.32.0
+        version: 3.32.2
       '@trenova/edition':
         specifier: workspace:*
         version: link:../../packages/edition

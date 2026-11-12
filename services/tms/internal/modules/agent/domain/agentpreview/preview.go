@@ -30,6 +30,7 @@ const (
 	MaxPreviewSummaryRunes    = 500
 	MaxPreviewWarnings        = 20
 	MaxPreviewReasons         = 20
+	MaxPreviewRemedies        = 4
 	MaxPreviewListEntries     = 50
 	MaxPreviewLabelRunes      = 200
 	MaxPreviewMoneyLines      = 40
@@ -145,6 +146,26 @@ type PreviewWarning struct {
 	// rule the write breaks, so a person can be told each and change the
 	// value it names. Message keeps the whole refusal as it was worded.
 	Reasons []PreviewReason `json:"reasons,omitempty"`
+	// Remedies are what a person could do to put the warning right, when
+	// something would: the surface that shows the warning offers each to a
+	// reader who may take it.
+	Remedies []PreviewRemedy `json:"remedies,omitempty"`
+}
+
+// PreviewRemedy is one fix for a warning: its kind (remedy.Kind) and the
+// record it is done to, named so nobody is shown an id. A remedy done to no
+// record, such as setting up an email profile, leaves the record empty.
+type PreviewRemedy struct {
+	Kind        string `json:"kind"`
+	RecordKind  string `json:"recordKind,omitempty"`
+	RecordID    string `json:"recordId,omitempty"`
+	RecordLabel string `json:"recordLabel,omitempty"`
+	// TakenAt is when the remedy was last taken and is still waiting to take
+	// effect, such as an invitation sent and not yet accepted; nil when it
+	// has not been. TakenNote is what a person is told about it: who it went
+	// to. The surface then says so and offers it again.
+	TakenAt   *int64 `json:"takenAt,omitempty"`
+	TakenNote string `json:"takenNote,omitempty"`
 }
 
 // PreviewReason is one rule a write would break. Field is the path the rule
@@ -576,6 +597,17 @@ func boundedWarning(warning *PreviewWarning) PreviewWarning {
 	}
 	if len(warning.Args) > 0 {
 		out.Args = boundedList(warning.Args)
+	}
+	if len(warning.Remedies) > 0 {
+		remedies := warning.Remedies
+		if len(remedies) > MaxPreviewRemedies {
+			remedies = remedies[:MaxPreviewRemedies]
+		}
+		out.Remedies = make([]PreviewRemedy, 0, len(remedies))
+		for _, fix := range remedies {
+			fix.RecordLabel = stringutils.TruncateRunes(fix.RecordLabel, MaxPreviewLabelRunes)
+			out.Remedies = append(out.Remedies, fix)
+		}
 	}
 	if len(warning.Reasons) > 0 {
 		reasons := warning.Reasons

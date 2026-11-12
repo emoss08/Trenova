@@ -1,23 +1,32 @@
 import type { DeskAttentionGroup, DeskAttentionItem, DeskLens } from "@/lib/graphql/desk-attention";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 
-/** The lenses in the order the page shows them; the keys 1–4 pick them in this order. */
+/** Where an item came from, in the order a row draws its signals. */
 export const DESK_LENSES: readonly DeskLens[] = ["Everything", "Watchtower", "Triage", "Decisions"];
 
-const PARAM: Record<DeskLens, string> = {
+/**
+ * A lens Needs you can be narrowed to. Messages are not one of them: they are
+ * read, filed and answered in Triage, which is a room of its own, so here a
+ * message is only ever a signal on the row of the record it is about.
+ */
+export type NeedsLens = Exclude<DeskLens, "Triage">;
+
+/** The lenses in the order the page shows them; the keys 1–3 pick them in this order. */
+export const NEEDS_LENSES: readonly NeedsLens[] = ["Everything", "Watchtower", "Decisions"];
+
+const PARAM: Record<NeedsLens, string> = {
   Everything: "",
   Watchtower: "watchtower",
-  Triage: "triage",
   Decisions: "decisions",
 };
 
 /** The lens a `?lens=` address names; anything else is Everything. */
-export function lensFromParam(value: string | null): DeskLens {
-  const found = DESK_LENSES.find((lens) => PARAM[lens] !== "" && PARAM[lens] === value);
+export function lensFromParam(value: string | null): NeedsLens {
+  const found = NEEDS_LENSES.find((lens) => PARAM[lens] !== "" && PARAM[lens] === value);
   return found ?? "Everything";
 }
 
-export function lensParam(lens: DeskLens): string {
+export function lensParam(lens: NeedsLens): string {
   return PARAM[lens];
 }
 

@@ -64,7 +64,7 @@ func SamplingForTask(task aitask.Task) Sampling {
 		temperature = 0.2
 	case aitask.TaskAssistantChat, aitask.TaskPaletteAnswer, aitask.TaskGeneral:
 		temperature = 0.3
-	case aitask.TaskOperationalInsights, aitask.TaskDailyBriefing:
+	case aitask.TaskOperationalInsights, aitask.TaskDailyBriefing, aitask.TaskCaseReading:
 		// Prose, whose numbers are checked against the computed facts after
 		// the fact, so it can afford to read like a person wrote it.
 		temperature = 0.6

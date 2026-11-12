@@ -285,6 +285,21 @@ var eventPlaybooks = map[agenttrigger.EventKind]Playbook{
 		Need: "read the detention occurrence, its stop times and notices; send a detention " +
 			"notice; escalate a detention occurrence",
 	},
+	agenttrigger.EventShipmentPODMissing: {
+		ID:   "chase-a-proof-of-delivery",
+		Goal: "Get the signed proof of delivery onto the shipment so it can be billed.",
+		Steps: []string{
+			"Read the shipment: who hauled the delivery move, a driver or a carrier, and " +
+				"what paperwork is already on file.",
+			"Ask once for the signed proof of delivery: message the driver who delivered " +
+				"it, or email the carrier that hauled it.",
+			"Say who was asked and how, and raise an exception when nobody can be reached.",
+		},
+		Done: "the request for the proof of delivery is proposed, or an exception says why " +
+			"nobody can be asked.",
+		Need: "read the shipment, its moves and assigned driver or carrier; send a message " +
+			"to a driver; request missing documents by email",
+	},
 	agenttrigger.EventDetentionNoticeDue: {
 		ID:   "send-a-detention-notice",
 		Goal: "Send the detention notice that is due, if it still should go.",

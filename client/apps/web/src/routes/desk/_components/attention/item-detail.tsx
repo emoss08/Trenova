@@ -1,4 +1,5 @@
-import { DeskAgentTile } from "@/components/desk-chat/desk-agent-tile";
+import { ItemPanel } from "./panels/item-panel";
+import { AgentWorkBlock } from "./agent-work";
 import { DeskIcon } from "@/components/desk-chat/desk-icons";
 import {
   ReviewBlocker,
@@ -7,19 +8,19 @@ import {
 } from "@/components/assistant/proposal-preview/reviewed-change";
 import { presentProposal } from "@/components/assistant/proposal-presenters";
 import type { DeskAttentionGroup, DeskAttentionItem } from "@/lib/graphql/desk-attention";
+import { CornerDownLeftIcon } from "@trenova/shared/components/icons";
 import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 import { Button } from "@trenova/shared/components/ui/button";
-import { NovaBadge } from "@trenova/shared/components/ui/nova-badge";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { formatUnixTime } from "@trenova/shared/lib/date";
+import { formatMinutesSpan, formatUnixTime } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import type { ReactNode } from "react";
-import { Link, useNavigate } from "react-router";
+import { useNavigate } from "react-router";
 import { WatchtowerHandOff } from "../watchtower/hand-off-menu";
 import { formatCountdown, formatFactTime, minutesLeft } from "../watchtower/lanes";
 import type { WatchtowerActions } from "../watchtower/use-watchtower-actions";
-import { RunSteps } from "./run-steps";
-import { casePath } from "./attention-record";
+import { casePath, START_CASE } from "./attention-record";
+import { caseWorkOf } from "./case-work";
 import { dueTone, recordContext } from "./attention-row";
 import { DeclineDialog } from "./decline-dialog";
 import { LifeBadge, itemLife } from "./life-badge";
@@ -62,7 +63,7 @@ function Rows({ rows }: { rows: readonly { key: string; label: string; value: Re
 }
 
 /** Kbd-style hint inside a button, inverted on an ink button. */
-function Key({ k, inv = false }: { k: string; inv?: boolean }) {
+function Key({ k, inv = false }: { k: ReactNode; inv?: boolean }) {
   return <span className={cn("dk-w-kbd", inv && "dk-inv")}>{k}</span>;
 }
 
@@ -106,26 +107,15 @@ export function ItemDetail({
   const record = group.record;
   const readable = (record?.readable ?? false) && record?.label !== "";
   const isDecision = item.deskLens === "Decisions";
+  // Worked in its case: it is closed there, not cleared or handed off here.
+  const caseWork = caseWorkOf(group);
   const isMessage = item.deskLens === "Triage";
-  const isCondition = item.deskLens === "Watchtower";
+  const panelSaysIt = item.panel?.kind === "Ask" || item.panel?.kind === "Finding";
   const work = item.agentWork;
   const proposal = decision.proposals[0] ?? null;
   const view = proposal ? presentProposal(proposal) : null;
   const unseenPreviews = decision.tally.loading + decision.tally.failed + decision.tally.stale;
   const raised = formatFactTime(t, item.occurredAt, now, timezone);
-  const conditionRows = [
-    ...item.impact.map((stake, index) => ({
-      key: `i${index}`,
-      label: t("At stake"),
-      value: stake,
-    })),
-    ...item.facts.map((fact, index) => ({
-      key: `f${index}`,
-      label: fact.label,
-      value: fact.value ?? (fact.at !== null ? formatFactTime(t, fact.at, now, timezone) : ""),
-    })),
-  ];
-
   return (
     <div className="dk-w-det-w">
       <div className="dk-w-det">
@@ -148,59 +138,35 @@ export function ItemDetail({
           <LifeBadge life={decision.phase === "done" ? "done" : itemLife(item)} />
         </div>
         <h1 className="dk-w-det-h">{item.title}</h1>
-        {item.summary !== "" && !isMessage && <p className="dk-w-det-sum">{item.summary}</p>}
-
-        {countdown !== null && (
-          <div className="dk-w-clock">
-            <span className="dk-w-clock-l">
-              {item.dueLabel ||
-                (minutes !== null && minutes < 0 ? t("Past its deadline") : t("Due"))}
-            </span>
-            <span className={cn("dk-w-clock-v", dueTone(minutes))}>{countdown}</span>
-          </div>
+        {/* An agent's ask and an insight say their sentence in their own panel. */}
+        {item.summary !== "" && !isMessage && !panelSaysIt && (
+          <p className="dk-w-det-sum">{item.summary}</p>
         )}
 
-        {isCondition && (conditionRows.length > 0 || item.trail.length > 0) && (
-          <Block
-            icon={<DeskIcon name="radar" size={14} />}
-            title={t("Condition")}
-            source={t("Watchtower · raised {0}", raised)}
-          >
-            {conditionRows.length > 0 && <Rows rows={conditionRows} />}
-            {item.trail.length > 0 && (
-              <ol className="dk-w-trail" aria-label={t("How it got here")}>
-                {item.trail.map((step, index) => (
-                  <li key={index}>
-                    <span className="dk-w-mono">{formatUnixTime(step.at, { timezone })}</span>
-                    {step.text}
-                  </li>
-                ))}
-              </ol>
-            )}
-          </Block>
-        )}
-
-        {work && (
-          <Block
-            icon={<DeskAgentTile agent={work.agent} size="xs" />}
-            title={
-              work.failed
-                ? t("{0} could not finish", work.agent?.name ?? t("The agent"))
-                : t("{0} is on it", work.agent?.name ?? t("An agent"))
-            }
-          >
-            <div className="dk-w-run dk-w-run-flat">
-              <DeskAgentTile agent={work.agent} size="sm" />
-              <span className="dk-w-run-main">
-                <span className="dk-w-run-ti">{item.title}</span>
-                <span className="dk-w-run-nt">
-                  {work.note !== "" ? work.note : t("It will ask you before it changes anything.")}
-                </span>
+        {/* A deadline the record itself sets (free time, a window, a start) is the
+            clock a person works against, and is drawn large. One set by policy is
+            how long the item has waited, which its row already says, so it is one
+            quiet line here. */}
+        {countdown !== null &&
+          (item.dueSource === "Source" ? (
+            <div className="dk-w-clock">
+              <span className="dk-w-clock-l">
+                {item.dueLabel ||
+                  (minutes !== null && minutes < 0 ? t("Past its deadline") : t("Due"))}
               </span>
-              <RunSteps work={work} />
+              <span className={cn("dk-w-clock-v", dueTone(minutes))}>{countdown}</span>
             </div>
-          </Block>
-        )}
+          ) : (
+            <p className="mt-2 text-dsk-sm text-dsk-subtle">
+              {minutes !== null && minutes < 0
+                ? t("Waiting on someone, {0} past its target.", formatMinutesSpan(-minutes))
+                : t("Due in {0}.", countdown)}
+            </p>
+          ))}
+
+        {!isDecision && <ItemPanel item={item} now={now} timezone={timezone} />}
+
+        {work && <AgentWorkBlock work={work} />}
 
         {!work && item.suggestedAgent && !isDecision && (
           <section className="dk-w-blk">
@@ -214,31 +180,6 @@ export function ItemDetail({
               </span>
             </div>
           </section>
-        )}
-
-        {isMessage && (
-          <Block
-            icon={<DeskIcon name="mail" size={14} />}
-            title={t("Message")}
-            source={t("Triage · {0}", raised)}
-          >
-            <div className="dk-w-msg">
-              <div className="dk-w-msg-h">
-                <b>{item.facts.find((fact) => fact.value)?.value ?? item.kindLabel}</b>
-                <span className="dk-w-mono">{formatUnixTime(item.occurredAt, { timezone })}</span>
-              </div>
-              <div className="dk-w-msg-b">{item.summary || item.title}</div>
-              <div className="dk-w-msg-f">
-                <NovaBadge size="xs" />
-                <span>{t("Nova read it as: {0}.", item.kindLabel)}</span>
-                {item.path !== "" && (
-                  <Link className="dk-w-alnk ui-focus-ring" to={item.path}>
-                    {t("Open in Triage")}
-                  </Link>
-                )}
-              </div>
-            </div>
-          </Block>
         )}
 
         {isDecision && (
@@ -357,51 +298,81 @@ export function ItemDetail({
         <span className="dk-w-bar-note">
           {isDecision
             ? t("You approve exactly what is shown here.")
-            : t("Done clears it for everyone; it comes back if the problem returns.")}
+            : isMessage
+              ? t("A message is answered, filed or set aside in Triage, which clears it here.")
+              : caseWork !== null
+                ? caseWork.owner !== null && !caseWork.mine
+                  ? t(
+                      "{0} is working this in its case. It is closed there, by approving the plan or accepting the risk.",
+                      caseWork.owner.name,
+                    )
+                  : t(
+                      "This is being worked in its case. Close it there, by approving the plan or accepting the risk.",
+                    )
+                : t("Done clears it for everyone; it comes back if the problem returns.")}
         </span>
-        {isDecision && decision.phase === "idle" && canDecide && proposal !== null ? (
-          <>
-            <ReviewBlocker tally={decision.tally} plan={decision.planId !== null} />
+        <div className="dk-w-bar-acts">
+          {isDecision && decision.phase === "idle" && canDecide && proposal !== null ? (
+            <>
+              <ReviewBlocker tally={decision.tally} plan={decision.planId !== null} />
+              <Button
+                variant="ghost"
+                className="text-danger-foreground"
+                onClick={() => onDecliningChange(true)}
+              >
+                {t("Decline")} <Key k="D" />
+              </Button>
+              <Button disabled={unseenPreviews > 0} onClick={() => void decision.approve()}>
+                {t("Approve")} <Key k="A" inv />
+              </Button>
+            </>
+          ) : isDecision && decision.phase === "deciding" ? (
+            <Button isLoading>{t("Approve")}</Button>
+          ) : null}
+          {!isDecision && !isMessage && canAct && caseWork === null && (
+            <>
+              <Button variant="ghost" onClick={actions.snooze}>
+                <DeskIcon name="clock" size={13} />
+                {t("Snooze")} <Key k="S" />
+              </Button>
+              {item.agentWork === null && item.subjectId !== null && (
+                <WatchtowerHandOff
+                  suggested={item.suggestedAgent}
+                  open={actions.menuOpen}
+                  onOpenChange={actions.setMenuOpen}
+                  onHandOff={actions.handOff}
+                  disabled={actions.handingOff}
+                />
+              )}
+              <Button variant={readable ? "outline" : "default"} onClick={actions.done}>
+                <DeskIcon name="check" size={13} />
+                {t("Done")} <Key k="E" inv={!readable} />
+              </Button>
+            </>
+          )}
+          {isMessage && item.path !== "" && (
             <Button
-              variant="ghost"
-              className="text-danger-foreground"
-              onClick={() => onDecliningChange(true)}
+              variant={readable ? "secondary" : "default"}
+              onClick={() => void navigate(item.path)}
             >
-              {t("Decline")} <Key k="D" />
+              <DeskIcon name="mail" size={13} />
+              {t("Open in Triage")}
+              {!readable && <Key k={<CornerDownLeftIcon aria-hidden />} inv />}
             </Button>
-            <Button disabled={unseenPreviews > 0} onClick={() => void decision.approve()}>
-              {t("Approve")} <Key k="A" inv />
+          )}
+          {record && readable && (
+            <Button
+              onClick={() =>
+                void navigate(casePath(record.kind, record.id), {
+                  state: START_CASE,
+                  viewTransition: true,
+                })
+              }
+            >
+              {t("Open the case")} <Key k={<CornerDownLeftIcon aria-hidden />} inv />
             </Button>
-          </>
-        ) : isDecision && decision.phase === "deciding" ? (
-          <Button isLoading>{t("Approve")}</Button>
-        ) : null}
-        {!isDecision && canAct && (
-          <>
-            <Button variant="ghost" onClick={actions.snooze}>
-              <DeskIcon name="clock" size={13} />
-              {t("Snooze")} <Key k="S" />
-            </Button>
-            {item.agentWork === null && item.subjectId !== null && (
-              <WatchtowerHandOff
-                suggested={item.suggestedAgent}
-                open={actions.menuOpen}
-                onOpenChange={actions.setMenuOpen}
-                onHandOff={actions.handOff}
-                disabled={actions.handingOff}
-              />
-            )}
-            <Button variant={readable ? "outline" : "default"} onClick={actions.done}>
-              <DeskIcon name="check" size={13} />
-              {t("Done")} <Key k="E" inv={!readable} />
-            </Button>
-          </>
-        )}
-        {record && readable && (
-          <Button onClick={() => void navigate(casePath(record.kind, record.id))}>
-            {t("Open the case")} <Key k="↵" inv />
-          </Button>
-        )}
+          )}
+        </div>
       </div>
 
       <DeclineDialog

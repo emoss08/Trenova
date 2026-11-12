@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/tenantscope"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentprojection"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
@@ -14,21 +15,6 @@ import (
 	"github.com/emoss08/trenova/shared/sliceutils"
 )
 
-type tenancy bool
-
-const (
-	scopedTenant tenancy = false
-	everyTenant  tenancy = true
-)
-
-func scoped[T any](q keel.Query[*T], t tenancy) keel.Query[*T] {
-	if t == everyTenant {
-		return q.AllTenants()
-	}
-
-	return q
-}
-
 func restoredShipmentStatus(req *shipmentports.UncancelShipmentRequest) shipmentvocab.Status {
 	if req.RestoredStatus == "" || req.RestoredStatus == shipmentvocab.StatusCanceled {
 		return shipmentvocab.StatusNew
@@ -37,15 +23,14 @@ func restoredShipmentStatus(req *shipmentports.UncancelShipmentRequest) shipment
 	return req.RestoredStatus
 }
 
-func movesOf(shipmentIDs []pulid.ID, t tenancy) keel.Query[*shipment.ShipmentMove] {
+func movesOf(ctx context.Context, shipmentIDs []pulid.ID) keel.Query[*shipment.ShipmentMove] {
 	sm := shipmentdb.ShipmentMoves.As("cancel_sm")
-	return scoped(sm.Pick(sm.ID).Where(sm.ShipmentID.In(shipmentIDs...)), t)
+	return tenantscope.Scoped(ctx, sm.Pick(sm.ID).Where(sm.ShipmentID.In(shipmentIDs...)))
 }
 
 func (r *repository) cancelShipmentComponents(
 	ctx context.Context,
 	shipmentIDs []pulid.ID,
-	t tenancy,
 ) error {
 	if len(shipmentIDs) == 0 {
 		return nil
@@ -54,32 +39,28 @@ func (r *repository) cancelShipmentComponents(
 	db := r.db.Keel(ctx)
 
 	sm := shipmentdb.ShipmentMoves
-	if _, err := scoped(sm.Where(
+	if _, err := tenantscope.Scoped(ctx, sm.Where(
 		sm.ShipmentID.In(shipmentIDs...),
 		sm.Status.NotIn(shipmentstate.CancelPreservedMoveStatuses()...),
-	), t).Update(ctx, db, sm.Status.To(shipmentvocab.MoveStatusCanceled)); err != nil {
+	)).Update(ctx, db, sm.Status.To(shipmentvocab.MoveStatusCanceled)); err != nil {
 		return err
 	}
 
 	a := shipmentdb.Assignments
-	if _, err := scoped(a.Where(
-		a.ShipmentMoveID.InQuery(movesOf(shipmentIDs, t)),
+	if _, err := tenantscope.Scoped(ctx, a.Where(
+		a.ShipmentMoveID.InQuery(movesOf(ctx, shipmentIDs)),
 		a.ArchivedAt.IsNull(),
 		a.Status.NotIn(shipmentstate.CancelPreservedAssignmentStatuses()...),
-	), t).Update(ctx, db, a.Status.To(shipmentvocab.AssignmentStatusCanceled)); err != nil {
+	)).Update(ctx, db, a.Status.To(shipmentvocab.AssignmentStatusCanceled)); err != nil {
 		return err
 	}
 
 	st := shipmentdb.Stops
-	if _, err := scoped(st.Where(
-		st.ShipmentMoveID.InQuery(movesOf(shipmentIDs, t)),
+	if _, err := tenantscope.Scoped(ctx, st.Where(
+		st.ShipmentMoveID.InQuery(movesOf(ctx, shipmentIDs)),
 		st.Status.NotIn(shipmentstate.CancelPreservedStopStatuses()...),
-	), t).Update(ctx, db, st.Status.To(shipmentvocab.StopStatusCanceled)); err != nil {
+	)).Update(ctx, db, st.Status.To(shipmentvocab.StopStatusCanceled)); err != nil {
 		return err
-	}
-
-	if t == everyTenant {
-		return shipmentprojection.RefreshAcrossTenants(ctx, db, shipmentIDs...)
 	}
 
 	return shipmentprojection.Refresh(ctx, db, shipmentIDs...)
@@ -90,7 +71,7 @@ func (r *repository) uncancelShipmentComponents(
 	req *shipmentports.UncancelShipmentRequest,
 ) error {
 	db := r.db.Keel(ctx)
-	moves := movesOf([]pulid.ID{req.ShipmentID}, scopedTenant)
+	moves := movesOf(ctx, []pulid.ID{req.ShipmentID})
 
 	if err := restoreMoveStatuses(ctx, db, req.ShipmentID, req.MoveStatuses); err != nil {
 		return err
@@ -174,7 +155,7 @@ func restoreStopStatuses(
 
 		if _, err := st.Where(
 			st.ID.In(ids...),
-			st.ShipmentMoveID.InQuery(movesOf([]pulid.ID{shipmentID}, scopedTenant)),
+			st.ShipmentMoveID.InQuery(movesOf(ctx, []pulid.ID{shipmentID})),
 			st.Status.Eq(shipmentvocab.StopStatusCanceled),
 		).Update(ctx, db, st.Status.To(status)); err != nil {
 			return err

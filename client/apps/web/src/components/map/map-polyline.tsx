@@ -44,8 +44,15 @@ export function MapPolyline({
     const listener = line.addListener("click", () => click());
     lineRef.current = line;
     return () => {
-      listener.remove();
-      line.setMap(null);
+      // A map torn down first leaves Google's objects half gone: the listener
+      // may never have been made and taking the line off the map can throw.
+      // There is nothing left to clean up then, so neither stops the page.
+      try {
+        listener?.remove();
+        line.setMap(null);
+      } catch {
+        // the map is already gone
+      }
       lineRef.current = null;
     };
     // The path is keyed by its coordinates, not by the array's identity.

@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/recordids"
 )
 
 // subjectKinds are the kinds of record a case can be about, read from the
@@ -249,7 +250,7 @@ func (t *RaiseExceptionTool) request(
 		Severity:       severity,
 		SubjectType:    subjectType,
 		SubjectID:      subjectID,
-		AttemptSummary: summary,
+		AttemptSummary: recordids.Strip(summary),
 		Evidence:       evidence,
 		BlastRadius:    int(toolparams.OptionalInt64(params.Params, "blastRadius")),
 		TenantInfo: pagination.TenantInfo{
@@ -288,7 +289,7 @@ func givenEvidence(params map[string]any) ([]agentevidence.EvidenceRef, error) {
 		ref := &evidence[idx]
 		ref.Type = strings.TrimSpace(ref.Type)
 		ref.ID = strings.TrimSpace(ref.ID)
-		ref.Note = strings.TrimSpace(ref.Note)
+		ref.Note = recordids.Strip(strings.TrimSpace(ref.Note))
 		if ref.Type == "" || ref.ID == "" {
 			return nil, fmt.Errorf(
 				"parameter %q item %d needs both a type and an id",

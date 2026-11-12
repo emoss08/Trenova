@@ -7,9 +7,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/portalaccessports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
+	"github.com/emoss08/trenova/shared/timeutils"
 )
 
 var errRenderingNotConfigured = errors.New(
@@ -37,7 +39,7 @@ func (s *Service) Preview(
 		return nil, err
 	}
 
-	return &notificationports.DriverNotificationPreview{
+	preview := &notificationports.DriverNotificationPreview{
 		WorkerID:   wrk.ID,
 		WorkerName: strings.TrimSpace(wrk.FirstName + " " + wrk.LastName),
 		Reachable:  reachable(wrk),
@@ -45,7 +47,34 @@ func (s *Service) Preview(
 		Message:    message,
 		Priority:   notificationPriority(req),
 		Link:       req.Link,
-	}, nil
+	}
+	if !preview.Reachable {
+		preview.InvitedAt, preview.InvitedEmail = s.openInvitation(ctx, req)
+	}
+
+	return preview, nil
+}
+
+// openInvitation is the portal invitation a driver has not accepted yet, so
+// whoever reads "the message would not reach them" is told they were already
+// asked in, and when. A driver never invited, and a read that fails, answer
+// with nothing: the warning stands either way.
+func (s *Service) openInvitation(ctx context.Context, req *DriverNotification) (int64, string) {
+	if s.portal == nil {
+		return 0, ""
+	}
+	pending, err := s.portal.GetPendingInvitationForWorker(
+		ctx,
+		portalaccessports.GetPendingPortalInvitationRequest{
+			TenantInfo: req.TenantInfo,
+			WorkerID:   req.WorkerID,
+		},
+	)
+	if err != nil || pending == nil || !pending.IsAcceptable(timeutils.NowUnix()) {
+		return 0, ""
+	}
+
+	return pending.CreatedAt, pending.Email
 }
 
 func (s *Service) recipient(ctx context.Context, req *DriverNotification) (*worker.Worker, error) {

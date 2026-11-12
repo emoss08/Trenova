@@ -677,3 +677,9 @@ membership revokes the person's roles there, the hourly
 `orphaned-organization-access-sweep` revokes any that a failed removal left behind, and a
 sign-in session is re-checked against membership and account status every five minutes.
 The details are in [security-audit.md](security-audit.md#when-access-ends).
+
+## The Desk's bundles open the Desk
+
+Triage, Decisions and Case lead are worked inside the Desk, so each of those bundles carries read
+access to the Desk itself (`deskRoom()` in `platformbundles/bundles.go`). A role built from one of
+them alone can open the room its work is in; a new bundle for work done in the Desk does the same.

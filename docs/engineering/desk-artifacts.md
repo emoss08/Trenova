@@ -271,9 +271,9 @@ pager) count the fields to check on each page.
 
 **The layout.** The card is a container (`dkex`): at 900px or wider the document stands on the
 left and stays in view (`position: sticky`) while the reading scrolls beside it; narrower, the
-reading comes first and the document follows. The artifact's own page widens to 1280px for this
-card, and its scrolling frames give way (`.dk-apage` visible, `.dk-apage-body` clip) so the page
-scrolls with the window and sticky has a scroller to stick in.
+reading comes first and the document follows. The view on the canvas (`view/view.css`) widens to
+1280px for this card, and the frame around the body clips rather than hides (`.dk-vw-body`), so the
+canvas is the one scroller and sticky has it to stick in.
 
 **The shipment.** `shipment-stage.ts` works out where it stands from the server and the
 conversation, never from the component: the newest `shipment_create` proposal whose

@@ -338,15 +338,14 @@ func (s *Service) ArtifactBySlug(
 		return nil, err
 	}
 
-	slug = strings.ToLower(strings.TrimSpace(slug))
+	named := strings.TrimSpace(slug)
 	root, err := s.artifacts.FindBySlug(ctx, assistantartifactports.SlugRequest{
 		ThreadID:   req.ID,
 		TenantInfo: req.TenantInfo,
-		Slug:       slug,
+		Slug:       strings.ToLower(named),
 	})
 	if err != nil {
-		// An old link names an artifact by its id rather than its slug.
-		id, parseErr := pulid.Parse(slug)
+		id, parseErr := pulid.Parse(named)
 		if parseErr != nil {
 			return nil, err
 		}

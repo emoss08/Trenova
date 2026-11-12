@@ -298,6 +298,7 @@ type listThreadsQuery struct {
 	Pinned        *bool  `form:"pinned"`
 	TouchedFrom   int64  `form:"touchedFrom"`
 	TouchedBefore int64  `form:"touchedBefore"`
+	AboutRecord   *bool  `form:"aboutRecord"`
 }
 
 func (h *Handler) listThreads(c *gin.Context) {
@@ -318,6 +319,7 @@ func (h *Handler) listThreads(c *gin.Context) {
 		Pinned:        query.Pinned,
 		TouchedFrom:   query.TouchedFrom,
 		TouchedBefore: query.TouchedBefore,
+		AboutRecord:   query.AboutRecord,
 	})
 	if err != nil {
 		h.eh.HandleError(c, err)
@@ -328,7 +330,8 @@ func (h *Handler) listThreads(c *gin.Context) {
 }
 
 type threadShelvesQuery struct {
-	Edges []int64 `form:"edge"`
+	Edges       []int64 `form:"edge"`
+	AboutRecord *bool   `form:"aboutRecord"`
 }
 
 func (h *Handler) countThreadShelves(c *gin.Context) {
@@ -343,9 +346,10 @@ func (h *Handler) countThreadShelves(c *gin.Context) {
 	result, err := h.service.CountThreadShelves(
 		c.Request.Context(),
 		&conversationports.CountThreadShelvesRequest{
-			UserID:     authCtx.UserID,
-			TenantInfo: tenantFromAuthContext(authCtx),
-			Edges:      query.Edges,
+			UserID:      authCtx.UserID,
+			TenantInfo:  tenantFromAuthContext(authCtx),
+			Edges:       query.Edges,
+			AboutRecord: query.AboutRecord,
 		},
 	)
 	if err != nil {

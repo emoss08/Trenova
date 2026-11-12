@@ -72,20 +72,40 @@ const badgeVariants = cva(
 type BadgeProps = useRender.ComponentProps<"span"> &
   VariantProps<typeof badgeVariants> & {
     icon?: React.ReactNode;
+    /**
+     * Leads the label with a dot in the badge's own ink: the mark of a state
+     * (a status, a standing, a warning) as against a plain label or a count.
+     * Leave it off when the badge already leads with an icon or a spinner.
+     */
+    dot?: boolean;
   };
 
 function Badge({
   className,
   variant = "neutral",
   appearance = "subtle",
+  dot = false,
   render,
+  children,
   ...props
 }: BadgeProps) {
   return useRender({
     defaultTagName: "span",
     props: mergeProps<"span">(
       {
-        className: cn(badgeVariants({ appearance, className, variant })),
+        className: cn(badgeVariants({ appearance, className, variant }), dot && "gap-1.5"),
+        children: dot ? (
+          <>
+            <span
+              aria-hidden
+              data-slot="badge-dot"
+              className="size-1.5 shrink-0 rounded-full bg-current"
+            />
+            {children}
+          </>
+        ) : (
+          children
+        ),
       },
       props,
     ),

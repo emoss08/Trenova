@@ -7,7 +7,6 @@ import type { PlatformMode } from "@trenova/shared/types/platform";
 export type ModuleId =
   | "home"
   | "desk"
-  | "inbox"
   | "intake"
   | "dispatch"
   | "hr"

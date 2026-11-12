@@ -107,6 +107,10 @@ func (s *DeskSeed) Run(ctx context.Context, sr *seed.Run) error {
 		}
 	}
 
+	if err = s.credentialsAsTheQueueSaysThem(ctx, db, refs); err != nil {
+		return err
+	}
+
 	return s.insertBriefing(ctx, db, refs)
 }
 
@@ -406,7 +410,7 @@ func briefingFor(refs *deskSeedRefs) *briefing.Briefing {
 			},
 			{
 				Key:   briefing.SectionDecisions,
-				Title: "Waiting on you",
+				Title: "Decisions waiting",
 				Summary: fmt.Sprintf(
 					"%d messages and %d decisions are waiting on a person.",
 					waiting, decisions,

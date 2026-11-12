@@ -10,9 +10,6 @@ const (
 	// ContinueAgentDisabled is a conversation whose agent an administrator
 	// turned off.
 	ContinueAgentDisabled = ContinueRefusal("AgentDisabled")
-	// ContinueAgentNotConversational is a conversation whose agent now runs on
-	// a schedule or an event and takes no conversations.
-	ContinueAgentNotConversational = ContinueRefusal("AgentNotConversational")
 	// ContinueNoAccess is a conversation whose reader may no longer use its
 	// agent, or the assistant at all.
 	ContinueNoAccess = ContinueRefusal("NoAccess")
@@ -22,7 +19,6 @@ func (r ContinueRefusal) IsValid() bool {
 	switch r {
 	case ContinueAgentDeleted,
 		ContinueAgentDisabled,
-		ContinueAgentNotConversational,
 		ContinueNoAccess:
 		return true
 	default:

@@ -361,6 +361,10 @@ func tenantOfParams(params *agenttoolports.ToolExecuteParams) pagination.TenantI
 func (s *Service) assemble(d *draft, tool agenttoolports.AgentTool, found *snapshotResult) {
 	preview := d.preview
 	switch {
+	// A preview that came back with one of the write's own refusals (a rule it
+	// breaks, a sender that is not set up, a record that is gone) has worked out
+	// what the write would do: fail. Any other error is a preview that could
+	// not be made.
 	case found.previewErr != nil:
 		s.l.Warn("a tool's preview failed; showing its parameters instead",
 			zap.String("tool", tool.Name()),
@@ -368,6 +372,12 @@ func (s *Service) assemble(d *draft, tool agenttoolports.AgentTool, found *snaps
 			zap.Error(found.previewErr),
 		)
 		s.fallback(d, tool)
+		if errortypes.IsRefusal(found.previewErr) {
+			refusal := toolpreview.WouldFail(found.previewErr)
+			preview.AddWarning(&refusal)
+
+			return
+		}
 		preview.AddWarning(&agentpreview.PreviewWarning{
 			Code: agentpreview.PreviewWarningPreviewFailed,
 			Args: []string{previewFailure(found.previewErr)},

@@ -53,16 +53,40 @@ export function deckEntries(deck: readonly DeckCard[], acted: ReadonlySet<string
 }
 
 /**
- * How far through the day's work you are: what cleared against what was
- * yours today. Nothing waiting is a full ring, however the day went.
+ * The day's figures the briefing leads with. What you cleared is counted from
+ * today's messages; what is over its target from everything still waiting,
+ * which the deck holds, since a message can wait from an earlier day.
  */
-export function ringProgress(cleared: number, waiting: number): number {
-  if (waiting <= 0) {
-    return 1;
-  }
-  const done = Math.max(0, cleared);
+export type DayFigures = {
+  /** Yours and closed today. */
+  cleared: number;
+  /** Still open and past its response target. */
+  overTarget: number;
+};
 
-  return done / (done + waiting);
+export function dayFigures(
+  yours: readonly RiverPoint[],
+  deck: readonly DeckCard[],
+  now: number,
+): DayFigures {
+  const over = new Set<string>();
+  let cleared = 0;
+  for (const point of yours) {
+    if (point.done) {
+      cleared += 1;
+    } else if (point.dueAt !== null && point.dueAt < now) {
+      over.add(point.messageId);
+    }
+  }
+  for (const card of deck) {
+    for (const item of card.items) {
+      if (item.dueAt !== null && item.dueAt < now) {
+        over.add(item.messageId);
+      }
+    }
+  }
+
+  return { cleared, overTarget: over.size };
 }
 
 const HOUR = 3600;

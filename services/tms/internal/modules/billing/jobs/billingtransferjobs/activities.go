@@ -6,8 +6,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingtransferservice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingtransfer"
 	"github.com/emoss08/trenova/internal/modules/billing/jobs/billingtransferjobs/billingtransfercontract"
+	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingtransferports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -17,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.temporal.io/sdk/activity"
 	"go.temporal.io/sdk/temporal"
@@ -38,6 +41,7 @@ type ActivitiesParams struct {
 	fx.In
 
 	RunRepo             billingtransferports.BillingTransferRunRepository
+	Queue               billingqueueports.BillingQueueRepository
 	BillingControls     tenantports.BillingControlRepository
 	Users               tenantports.UserRepository
 	Transfers           *billingtransferservice.Service
@@ -49,6 +53,7 @@ type ActivitiesParams struct {
 
 type Activities struct {
 	runRepo      billingtransferports.BillingTransferRunRepository
+	queue        billingqueueports.BillingQueueRepository
 	controls     tenantports.BillingControlRepository
 	users        tenantports.UserRepository
 	transfers    *billingtransferservice.Service
@@ -61,6 +66,7 @@ type Activities struct {
 func NewActivities(p ActivitiesParams) *Activities {
 	return &Activities{
 		runRepo:      p.RunRepo,
+		queue:        p.Queue,
 		controls:     p.BillingControls,
 		users:        p.Users,
 		transfers:    p.Transfers,
@@ -221,6 +227,13 @@ func (a *Activities) ProcessBatchActivity(
 		if len(pending) == 0 {
 			return nil
 		}
+
+		claimed, claimErr := a.claimOwnTransfers(ctx, tenant, run, pending)
+		if claimErr != nil {
+			return claimErr
+		}
+		result.Transferred += claimed
+		result.NotTransferred -= claimed
 
 		progress, recErr := a.runRepo.RecordItemOutcomes(
 			ctx,
@@ -386,6 +399,77 @@ const (
 	zombieRunCutoffSeconds = 30 * 60
 	zombieRunSweepLimit    = 100
 )
+
+// claimOwnTransfers records as transferred each shipment reported already
+// transferred that this run put in the queue itself. An attempt that is retried
+// after it transferred a shipment but before it recorded the outcome finds that
+// shipment queued, and it was this run's work, not a reason to look at it.
+func (a *Activities) claimOwnTransfers(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	run *billingtransfer.BillingTransferRun,
+	outcomes []billingtransferports.BillingTransferItemOutcome,
+) (int, error) {
+	if run.StartedAt == nil {
+		return 0, nil
+	}
+	shipmentIDs := make([]pulid.ID, 0, len(outcomes))
+	for i := range outcomes {
+		if reportedAlreadyTransferred(&outcomes[i]) {
+			shipmentIDs = append(shipmentIDs, outcomes[i].ShipmentID)
+		}
+	}
+	if len(shipmentIDs) == 0 {
+		return 0, nil
+	}
+
+	queued, err := a.queue.ListActiveInvoiceItemsByShipmentIDs(
+		ctx,
+		&billingqueueports.ListActiveInvoiceItemsRequest{TenantInfo: tenant, ShipmentIDs: shipmentIDs},
+	)
+	if err != nil {
+		return 0, err
+	}
+
+	return claimQueuedSince(outcomes, queued, *run.StartedAt), nil
+}
+
+// claimQueuedSince turns each "already transferred" outcome whose shipment has a
+// queue item created at or after the run started into the transfer it was, and
+// says how many it turned.
+func claimQueuedSince(
+	outcomes []billingtransferports.BillingTransferItemOutcome,
+	queued map[pulid.ID][]*billingqueue.BillingQueueItem,
+	startedAt int64,
+) int {
+	claimed := 0
+	for i := range outcomes {
+		outcome := &outcomes[i]
+		if !reportedAlreadyTransferred(outcome) {
+			continue
+		}
+		for _, item := range queued[outcome.ShipmentID] {
+			if item.CreatedAt < startedAt {
+				continue
+			}
+			outcome.Status = billingtransfer.ItemStatusTransferred
+			outcome.FailureCode = ""
+			outcome.ErrorMessage = ""
+			outcome.BillingQueueItemID = item.ID
+			outcome.BillingQueueNumber = item.Number
+			outcome.BillingQueueStatus = item.Status
+			claimed++
+			break
+		}
+	}
+
+	return claimed
+}
+
+func reportedAlreadyTransferred(outcome *billingtransferports.BillingTransferItemOutcome) bool {
+	return outcome.Status == billingtransfer.ItemStatusNotTransferred &&
+		outcome.FailureCode == billingtransfer.FailureAlreadyTransferred
+}
 
 func itemOutcomeFrom(
 	result *shipmentbillingports.BulkTransferToBillingResult,

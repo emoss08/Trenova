@@ -85,6 +85,7 @@ func DescribeAccountingInboundAttention(
 		SubjectID:   group.SampleID,
 		EventKind:   agenttrigger.EventAccountingPaymentProposed,
 		Path:        AccountingInboundPath,
+		Panel:       booksPanel(provider, int64(group.Count), group.OldestDetectedAt),
 		OccurredAt:  group.OldestDetectedAt,
 	}, true
 }

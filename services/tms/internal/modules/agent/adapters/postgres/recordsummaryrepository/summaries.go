@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/boardassemble"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/recordsummaryports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicedispute/invoicedisputedb"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor/tractordb"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer/trailerdb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -134,6 +135,11 @@ var plain = map[permission.Resource]func(ids []pulid.ID) projection{
 		t := trailerdb.Trailers
 		return t.Pick(t.ID, text(t.Code), text(keel.ConcatWS(" ", t.Make, t.Model)), text(t.Status)).
 			Where(t.ID.In(ids...))
+	},
+	permission.ResourceInvoiceDispute: func(ids []pulid.ID) projection {
+		t := invoicedisputedb.InvoiceDisputes
+		label := keel.Text("Dispute on ").Cat(t.Invoice().Number)
+		return t.Pick(t.ID, text(label), text(t.ReasonCode), text(t.Status)).Where(t.ID.In(ids...))
 	},
 	permission.ResourceLocation: func(ids []pulid.ID) projection {
 		t := locationdb.Locations

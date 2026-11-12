@@ -172,7 +172,7 @@ function DeskAskRecordPicker({
   const inputRef = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
-  const { results, loading, setLoading, highlighted, setHighlighted } = useMentionSearch(
+  const { results, loading, highlighted, setHighlighted } = useMentionSearch(
     open ? query : null,
     MentionKindTab[kind],
   );
@@ -183,7 +183,6 @@ function DeskAskRecordPicker({
 
   const search = (next: string) => {
     setQuery(next);
-    setLoading(true);
     setOpen(true);
   };
 

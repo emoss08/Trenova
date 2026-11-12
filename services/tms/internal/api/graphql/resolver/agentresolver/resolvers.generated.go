@@ -18,11 +18,13 @@ import (
 	agentruntimeports "github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	agenttoolports "github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	agenttrustports "github.com/emoss08/trenova/internal/modules/agent/ports/agenttrustports"
+	caseownerports "github.com/emoss08/trenova/internal/modules/agent/ports/caseownerports"
 	tenantports "github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 )
 
 type Deps struct {
 	*resolvercore.Core
+	CaseOwners                caseownerports.Service
 	AgentRunService           agentruntimeports.AgentRunService
 	AgentTrustService         agenttrustports.AgentTrustService
 	AgentProposalService      agentproposalports.AgentProposalService

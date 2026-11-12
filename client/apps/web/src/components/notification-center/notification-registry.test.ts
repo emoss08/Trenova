@@ -105,38 +105,6 @@ describe("notification registry — generic link handling", () => {
 });
 
 describe("notification registry — invoice notifications", () => {
-  it("files a shared invoice under Billing with the sharer as its avatar", () => {
-    const descriptor = getNotificationDescriptor("invoice_shared");
-    const shared = notification({
-      eventType: "invoice_shared",
-      data: { sharedById: "usr_marcus", sharedByName: "Marcus Bell" },
-    });
-
-    expect(descriptor).not.toBe(getNotificationDescriptor("some.unregistered.event"));
-    expect(descriptor.category).toBe("Billing");
-    expect(descriptor.avatar?.(shared)).toEqual({ userId: "usr_marcus", name: "Marcus Bell" });
-  });
-
-  it("opens a shared invoice on the tab the sharer linked", () => {
-    const link = getNotificationLink(
-      notification({
-        eventType: "invoice_shared",
-        data: { link: "/billing/invoices?item=inv_1&tab=charges" },
-        relatedEntities: { invoiceId: "inv_1" },
-      }),
-    );
-
-    expect(link).toBe("/billing/invoices?item=inv_1&tab=charges");
-  });
-
-  it("opens a shared invoice from its id when the link is missing", () => {
-    const link = getNotificationLink(
-      notification({ eventType: "invoice_shared", relatedEntities: { invoiceId: "inv_1" } }),
-    );
-
-    expect(link).toBe("/billing/invoices?item=inv_1");
-  });
-
   it("selects the invoice for a reconciliation warning using the parameter the page reads", () => {
     const link = getNotificationLink(
       notification({
@@ -149,9 +117,6 @@ describe("notification registry — invoice notifications", () => {
   });
 
   it("falls back to the invoice list when no invoice is named", () => {
-    expect(getNotificationLink(notification({ eventType: "invoice_shared" }))).toBe(
-      "/billing/invoices",
-    );
     expect(getNotificationLink(notification({ eventType: "invoice_reconciliation_warning" }))).toBe(
       "/billing/invoices",
     );
@@ -394,8 +359,9 @@ describe("notification catalog", () => {
   });
 
   it("orders categories the way the settings page reads them and gives each a description", () => {
-    expect(catalog.map((category) => category.name).slice(0, 3)).toEqual([
+    expect(catalog.map((category) => category.name).slice(0, 4)).toEqual([
       "Mentions",
+      "Shared with you",
       "Assistant",
       "Dispatch",
     ]);
@@ -446,5 +412,31 @@ describe("notification registry — reports that need attention", () => {
     ).toBe("/reports");
     expect(getNotificationLink(needsAttention({ reportCount: 1 }))).toBe("/reports");
     expect(getNotificationLink(needsAttention({ definitionIds: [""] }))).toBe("/reports");
+  });
+});
+
+describe("notification registry — a record shared with you", () => {
+  it("files a share under its own category with the sharer as its avatar", () => {
+    const descriptor = getNotificationDescriptor("record_shared");
+    const shared = notification({
+      eventType: "record_shared",
+      data: { sharedById: "usr_marcus", sharedByName: "Marcus Bell" },
+    });
+
+    expect(descriptor).not.toBe(getNotificationDescriptor("some.unregistered.event"));
+    expect(descriptor.category).toBe("Shared with you");
+    expect(descriptor.avatar?.(shared)).toEqual({ userId: "usr_marcus", name: "Marcus Bell" });
+  });
+
+  it("opens where the sharer was, whatever kind of record it is", () => {
+    for (const link of ["/billing/invoices?item=inv_1&tab=charges", "/desk/r/shipment/shp_1"]) {
+      expect(
+        getNotificationLink(notification({ eventType: "record_shared", data: { link } })),
+      ).toBe(link);
+    }
+  });
+
+  it("opens nothing when the share carries no link", () => {
+    expect(getNotificationLink(notification({ eventType: "record_shared" }))).toBeNull();
   });
 });

@@ -114,3 +114,33 @@ func TestHandTo_StartsTheExceptionAndRefusesAResolvedOne(t *testing.T) {
 		resolved.HandTo(pulid.MustNew("adef_"), pulid.MustNew("ar_"), pulid.Nil, testNow),
 	)
 }
+
+func TestAgentWorkFrom_WorksExactlyWhileTheRunIsWorking(t *testing.T) {
+	t.Parallel()
+
+	statuses := []agent.RunStatus{
+		agent.RunStatusPending,
+		agent.RunStatusGatheringContext,
+		agent.RunStatusDiagnosing,
+		agent.RunStatusAwaitingDecision,
+		agent.RunStatusCompleted,
+		agent.RunStatusShadowCompleted,
+		agent.RunStatusFailed,
+		agent.RunStatus("SomethingNew"),
+	}
+	for _, status := range statuses {
+		item, run := handedItem(t)
+		run.Status = status
+
+		assert.Equal(t, status.IsWorking(), item.AgentWorkFrom(run).Active(), string(status))
+	}
+	assert.Equal(
+		t,
+		[]agent.RunStatus{
+			agent.RunStatusPending,
+			agent.RunStatusGatheringContext,
+			agent.RunStatusDiagnosing,
+		},
+		agent.WorkingRunStatuses(),
+	)
+}

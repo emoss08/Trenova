@@ -114,6 +114,19 @@ func WriteBriefingWorkflow(
 	return &result, nil
 }
 
+func WriteCaseReadingWorkflow(
+	ctx workflow.Context,
+	payload *completioncontract.WriteCaseReadingPayload,
+) error {
+	var a *Activities
+	writeCtx := workflow.WithActivityOptions(ctx, waitedOptions(
+		ctx, payload.Request.TenantInfo.OrgID, writeAttempts, "Read the case",
+	))
+
+	return workflow.ExecuteActivity(writeCtx, a.WriteCaseReadingActivity, payload).
+		Get(writeCtx, nil)
+}
+
 // waitedOptions spend the whole of the workflow's time on its one activity:
 // the caller stops waiting when the workflow's execution timeout passes, so
 // no attempt may outlast it.

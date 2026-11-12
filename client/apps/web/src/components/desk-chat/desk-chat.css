@@ -297,53 +297,6 @@
 .dk-rc-h .dk-el {
   margin-left: auto;
 }
-.dk-rl {
-  display: grid;
-  grid-template-columns: 16px minmax(0, 1fr) auto;
-  gap: 6px;
-  font: 10.5px/19px var(--font-mono);
-  color: var(--dsk-muted);
-  padding: 2px 4px;
-  margin: 0 -4px;
-  border-radius: 5px;
-  animation: dk-printl 360ms var(--dk-settle) both;
-  transition:
-    background 160ms,
-    color 160ms;
-}
-.dk-rl:first-of-type {
-  margin-top: 6px;
-}
-.dk-rl .dk-k {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.dk-rl.dk-hot {
-  background: var(--dsk-ink);
-  color: var(--dsk-ink-fg);
-}
-.dk-rl.dk-hot .dk-n,
-.dk-rl.dk-hot .dk-v {
-  color: var(--dsk-ink-fg);
-}
-.dk-rl .dk-pend {
-  display: block;
-  width: 26px;
-  height: 19px;
-  position: relative;
-  overflow: hidden;
-}
-.dk-rl .dk-pend::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 9px;
-  width: 14px;
-  height: 1px;
-  background: var(--dsk-fg);
-  animation: dk-sweep 1.2s var(--dk-ease) infinite;
-}
 .dk-rc-f {
   display: flex;
   justify-content: space-between;
@@ -474,23 +427,6 @@
 .dk-cmp.dk-hm .dk-cmp-ring {
   opacity: 1;
   --spin-gradient: conic-gradient(var(--dk-rainbow));
-}
-.dk-cmp textarea {
-  display: block;
-  width: 100%;
-  resize: none;
-  border: 0;
-  outline: none;
-  background: transparent;
-  color: var(--dsk-fg);
-  font: inherit;
-  font-size: 14px;
-  line-height: 1.5;
-  padding: 13px 16px 2px;
-  min-height: 44px;
-}
-.dk-cmp textarea::placeholder {
-  color: var(--dsk-subtle);
 }
 .dk-cmp-st {
   display: flex;
@@ -738,21 +674,6 @@
   align-items: center;
   gap: 6px 10px;
   margin-left: auto;
-}
-/* Permanent stands on its own, before the buttons, so nothing can cut it off; its tooltip
-   says what it means. */
-.dk-dcx-perm {
-  flex-shrink: 0;
-  cursor: help;
-  padding: 1px 6px;
-  border: 1px solid color-mix(in oklch, var(--dsk-warn) 55%, transparent);
-  border-radius: 4px;
-  background: color-mix(in oklch, var(--dsk-card) 60%, transparent);
-  color: var(--dsk-warn-fg);
-  font-size: 11px;
-  font-weight: 600;
-  line-height: 16px;
-  white-space: nowrap;
 }
 .dk-dcx-d s {
   text-decoration-color: color-mix(in oklch, var(--dsk-subtle) 60%, transparent);
@@ -4118,9 +4039,6 @@
   background: var(--dsk-sunken);
 }
 /* composer variants */
-.dk-cmp.dk-ec textarea {
-  min-height: 44px;
-}
 .dk-cmp.dk-ec .dk-mp2-b {
   pointer-events: none;
 }
@@ -6240,34 +6158,6 @@
 .dk-cmp-ta {
   position: relative;
 }
-.dk-cmp-ta textarea {
-  position: relative;
-  z-index: 1;
-  background: transparent;
-}
-.dk-mn-mirror {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  padding: 13px 16px 2px;
-  font: inherit;
-  font-size: 14px;
-  line-height: 1.5;
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  color: transparent;
-  pointer-events: none;
-  overflow: hidden;
-}
-.dk-cmp.dk-hm .dk-mn-mirror {
-  font-size: 14px;
-}
-.dk-mn-mirror mark {
-  color: transparent;
-  background: oklch(0.62 0.17 255/0.16);
-  border-radius: 4px;
-  box-shadow: 0 0 0 2px oklch(0.62 0.17 255/0.16);
-}
 .dk-mn {
   position: absolute;
   left: 8px;
@@ -6581,21 +6471,6 @@
   color: var(--dsk-subtle);
   margin-bottom: 2px;
 }
-.dk-cmp-ta textarea.dk-sl-on {
-  color: transparent;
-  caret-color: var(--dsk-fg);
-}
-.dk-sl-mirror {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  padding: 13px 16px 2px;
-  font-size: 14px;
-  line-height: 1.5;
-  white-space: pre-wrap;
-  pointer-events: none;
-  overflow: hidden;
-}
 .dk-sl-cmd {
   font-family: var(--dk-plex);
   font-size: 13px;
@@ -6607,9 +6482,6 @@
 }
 .dark .dk-sl-cmd {
   color: oklch(0.8 0.1 262);
-}
-.dk-sl-typed {
-  color: var(--dsk-fg);
 }
 .dk-sl-ghost {
   color: var(--dsk-faint);
@@ -6658,10 +6530,6 @@
   font: inherit !important;
   font-size: inherit !important;
   font-weight: inherit !important;
-  letter-spacing: inherit;
-}
-.dk-sl-mirror {
-  font-family: inherit;
   letter-spacing: inherit;
 }
 
@@ -6738,9 +6606,6 @@
 .dk-dc2-who .dk-ec-link {
   margin-left: auto;
   font-size: 11.5px;
-}
-.dark .dk-dc2-rev.dk-hard {
-  color: oklch(0.78 0.13 25);
 }
 .dk-dc2-dr i {
   font-style: normal;
@@ -8221,10 +8086,10 @@
   position: relative;
   overflow: hidden;
 }
-.dk-cmp.dk-cmpg textarea {
+.dk-cmp.dk-cmpg .dk-ed {
   cursor: not-allowed;
 }
-.dk-cmp.dk-cmpg textarea::placeholder {
+.dk-cmp.dk-cmpg .dk-ed-empty::before {
   color: var(--dsk-faint);
 }
 .dk-cx-drain {

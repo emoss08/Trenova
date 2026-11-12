@@ -2019,22 +2019,27 @@
         "AuditAlertPolicies",
         "AuditChainStatus",
         "AuditEntryDetail",
+        "AuditEntryReview",
         "AuditExportDownload",
         "AuditExportTable",
         "AuditFieldHistory",
         "AuditLegalHoldTable",
         "AuditLogTable",
+        "AuditOverview",
         "AuditRequestEntries",
+        "AuditReviews",
         "BulkEditFields",
         "DataTableAggregates",
         "DataTableFacets",
         "DataTableInsightFields",
         "ExportTableView",
+        "MarkAuditReviewReviewed",
         "MyBulkEdit",
         "MyTableLayout",
         "PlaceAuditLegalHold",
         "PreviewBulkEdit",
         "ReleaseAuditLegalHold",
+        "ReopenAuditReview",
         "RequestAuditExport",
         "ResetMyTableLayout",
         "SaveMyTableLayout",
@@ -3910,12 +3915,17 @@
         "DeskInvoiceCard",
         "DraftFactoringNoa",
         "ExportTableView",
+        "FactoringAgreementActivity",
         "FactoringAgreementOwner",
         "FactoringAgreements",
         "FactoringChargebackPlan",
         "FactoringChargebackReversalPlan",
+        "FactoringCompanyCustomers",
+        "FactoringCompanyOverview",
         "FactoringCompanyRecord",
+        "FactoringCompanySchedules",
         "FactoringFundingPlan",
+        "FactoringFundingPreview",
         "FactoringInvoiceStateTable",
         "FactoringNoaOwner",
         "FactoringNoas",
@@ -3927,6 +3937,7 @@
         "FactoringRemittances",
         "FactoringReserveBalance",
         "FactoringReserveEntries",
+        "FactoringReserveHistory",
         "FactoringSubmissionDetail",
         "FactoringSubmissionPlan",
         "FactoringSubmissionTable",
@@ -4095,25 +4106,76 @@
         }
       ],
       "operations": [
+        "BulkEditFields",
+        "DataTableAggregates",
+        "DataTableFacets",
+        "DataTableInsightFields",
+        "ExportTableView",
+        "FactoringCompanyTable",
+        "MyBulkEdit",
+        "MyTableLayout",
+        "PreviewBulkEdit",
+        "ResetMyTableLayout",
+        "SaveMyTableLayout",
+        "ScheduleTableView",
+        "StartBulkEdit",
+        "UndoMyBulkEdit"
+      ],
+      "rest": [
+        {
+          "method": "GET",
+          "path": "/tables/"
+        },
+        {
+          "method": "POST",
+          "path": "/tables/:param/compose/"
+        }
+      ]
+    },
+    {
+      "path": "/billing/configuration-files/factoring-companies/:id",
+      "name": "Factoring company",
+      "requires": [
+        {
+          "resource": "factoring_company",
+          "operation": "read"
+        }
+      ],
+      "operations": [
         "AcknowledgeFactoringNoa",
         "ActivateFactoringAgreement",
+        "AuditAlertPolicies",
+        "AuditChainStatus",
+        "AuditEntryDetail",
+        "AuditEntryReview",
+        "AuditExportTable",
+        "AuditFieldHistory",
+        "AuditLegalHoldTable",
+        "AuditLogTable",
+        "AuditOverview",
+        "AuditRequestEntries",
+        "AuditReviews",
         "BulkEditFields",
         "CreateFactoringAgreement",
-        "CreateFactoringCompany",
         "CreateFactoringRemittance",
         "DataTableAggregates",
         "DataTableFacets",
         "DataTableInsightFields",
+        "DeskRecordActivity",
         "DraftFactoringNoa",
         "EndFactoringAgreement",
         "ExportTableView",
+        "FactoringAgreementActivity",
         "FactoringAgreementOwner",
         "FactoringAgreements",
         "FactoringChargebackPlan",
         "FactoringChargebackReversalPlan",
+        "FactoringCompanyCustomers",
+        "FactoringCompanyOverview",
         "FactoringCompanyRecord",
-        "FactoringCompanyTable",
+        "FactoringCompanySchedules",
         "FactoringFundingPlan",
+        "FactoringFundingPreview",
         "FactoringInvoiceStateTable",
         "FactoringNoaOwner",
         "FactoringNoas",
@@ -4125,6 +4187,7 @@
         "FactoringRemittances",
         "FactoringReserveBalance",
         "FactoringReserveEntries",
+        "FactoringReserveHistory",
         "FactoringSubmissionDetail",
         "FactoringSubmissionPlan",
         "FactoringSubmissionTable",
@@ -4185,6 +4248,104 @@
           "path": "/tables/:param/compose/"
         }
       ]
+    },
+    {
+      "path": "/billing/configuration-files/factoring-companies/agreements/:id",
+      "name": "",
+      "requires": [
+        {
+          "resource": "factoring_agreement",
+          "operation": "read"
+        }
+      ],
+      "operations": [
+        "FactoringAgreementActivity",
+        "FactoringAgreementOwner",
+        "FactoringAgreements",
+        "FactoringChargebackPlan",
+        "FactoringChargebackReversalPlan",
+        "FactoringCompanyCustomers",
+        "FactoringCompanyOverview",
+        "FactoringCompanyRecord",
+        "FactoringCompanySchedules",
+        "FactoringFundingPlan",
+        "FactoringFundingPreview",
+        "FactoringInvoiceStateTable",
+        "FactoringNoaOwner",
+        "FactoringNoas",
+        "FactoringReleasePlan",
+        "FactoringRemittanceDetail",
+        "FactoringRemittanceLines",
+        "FactoringRemittancePlan",
+        "FactoringRemittanceTable",
+        "FactoringRemittances",
+        "FactoringReserveBalance",
+        "FactoringReserveEntries",
+        "FactoringReserveHistory",
+        "FactoringSubmissionDetail",
+        "FactoringSubmissionPlan",
+        "FactoringSubmissionTable",
+        "FactoringSummary",
+        "FactoringTransport",
+        "InvoiceFactoring"
+      ],
+      "rest": []
+    },
+    {
+      "path": "/billing/configuration-files/factoring-companies/new",
+      "name": "New factoring company",
+      "requires": [
+        {
+          "resource": "factoring_company",
+          "operation": "create"
+        }
+      ],
+      "operations": [
+        "CreateFactoringCompany"
+      ],
+      "rest": []
+    },
+    {
+      "path": "/billing/configuration-files/factoring-companies/notices/:id",
+      "name": "",
+      "requires": [
+        {
+          "resource": "factoring_noa",
+          "operation": "read"
+        }
+      ],
+      "operations": [
+        "FactoringAgreementActivity",
+        "FactoringAgreementOwner",
+        "FactoringAgreements",
+        "FactoringChargebackPlan",
+        "FactoringChargebackReversalPlan",
+        "FactoringCompanyCustomers",
+        "FactoringCompanyOverview",
+        "FactoringCompanyRecord",
+        "FactoringCompanySchedules",
+        "FactoringFundingPlan",
+        "FactoringFundingPreview",
+        "FactoringInvoiceStateTable",
+        "FactoringNoaOwner",
+        "FactoringNoas",
+        "FactoringReleasePlan",
+        "FactoringRemittanceDetail",
+        "FactoringRemittanceLines",
+        "FactoringRemittancePlan",
+        "FactoringRemittanceTable",
+        "FactoringRemittances",
+        "FactoringReserveBalance",
+        "FactoringReserveEntries",
+        "FactoringReserveHistory",
+        "FactoringSubmissionDetail",
+        "FactoringSubmissionPlan",
+        "FactoringSubmissionTable",
+        "FactoringSummary",
+        "FactoringTransport",
+        "InvoiceFactoring"
+      ],
+      "rest": []
     },
     {
       "path": "/billing/configuration-files/formula-libraries",
@@ -6023,12 +6184,17 @@
         "DataTableFacets",
         "DataTableInsightFields",
         "ExportTableView",
+        "FactoringAgreementActivity",
         "FactoringAgreementOwner",
         "FactoringAgreements",
         "FactoringChargebackPlan",
         "FactoringChargebackReversalPlan",
+        "FactoringCompanyCustomers",
+        "FactoringCompanyOverview",
         "FactoringCompanyRecord",
+        "FactoringCompanySchedules",
         "FactoringFundingPlan",
+        "FactoringFundingPreview",
         "FactoringInvoiceStateTable",
         "FactoringNoaOwner",
         "FactoringNoas",
@@ -6040,6 +6206,7 @@
         "FactoringRemittances",
         "FactoringReserveBalance",
         "FactoringReserveEntries",
+        "FactoringReserveHistory",
         "FactoringSubmissionDetail",
         "FactoringSubmissionPlan",
         "FactoringSubmissionTable",
@@ -6110,12 +6277,17 @@
         "ApplyFactoringRemittance",
         "CreateFactoringRemittance",
         "DiscardFactoringRemittance",
+        "FactoringAgreementActivity",
         "FactoringAgreementOwner",
         "FactoringAgreements",
         "FactoringChargebackPlan",
         "FactoringChargebackReversalPlan",
+        "FactoringCompanyCustomers",
+        "FactoringCompanyOverview",
         "FactoringCompanyRecord",
+        "FactoringCompanySchedules",
         "FactoringFundingPlan",
+        "FactoringFundingPreview",
         "FactoringInvoiceStateTable",
         "FactoringNoaOwner",
         "FactoringNoas",
@@ -6127,6 +6299,7 @@
         "FactoringRemittances",
         "FactoringReserveBalance",
         "FactoringReserveEntries",
+        "FactoringReserveHistory",
         "FactoringSubmissionDetail",
         "FactoringSubmissionPlan",
         "FactoringSubmissionTable",
@@ -6179,12 +6352,17 @@
       ],
       "operations": [
         "CancelFactoringSubmission",
+        "FactoringAgreementActivity",
         "FactoringAgreementOwner",
         "FactoringAgreements",
         "FactoringChargebackPlan",
         "FactoringChargebackReversalPlan",
+        "FactoringCompanyCustomers",
+        "FactoringCompanyOverview",
         "FactoringCompanyRecord",
+        "FactoringCompanySchedules",
         "FactoringFundingPlan",
+        "FactoringFundingPreview",
         "FactoringInvoiceStateTable",
         "FactoringNoaOwner",
         "FactoringNoas",
@@ -6196,6 +6374,7 @@
         "FactoringRemittances",
         "FactoringReserveBalance",
         "FactoringReserveEntries",
+        "FactoringReserveHistory",
         "FactoringSubmissionDetail",
         "FactoringSubmissionPlan",
         "FactoringSubmissionTable",
@@ -6348,11 +6527,14 @@
         "AuditAlertPolicies",
         "AuditChainStatus",
         "AuditEntryDetail",
+        "AuditEntryReview",
         "AuditExportTable",
         "AuditFieldHistory",
         "AuditLegalHoldTable",
         "AuditLogTable",
+        "AuditOverview",
         "AuditRequestEntries",
+        "AuditReviews",
         "BillingQueueFormulaTemplate",
         "BillingQueueItems",
         "BillingQueueRateAgreement",
@@ -6365,12 +6547,17 @@
         "CustomerTrackingLinks",
         "DeskInvoiceCard",
         "DeskRecordActivity",
+        "FactoringAgreementActivity",
         "FactoringAgreementOwner",
         "FactoringAgreements",
         "FactoringChargebackPlan",
         "FactoringChargebackReversalPlan",
+        "FactoringCompanyCustomers",
+        "FactoringCompanyOverview",
         "FactoringCompanyRecord",
+        "FactoringCompanySchedules",
         "FactoringFundingPlan",
+        "FactoringFundingPreview",
         "FactoringInvoiceStateTable",
         "FactoringNoaOwner",
         "FactoringNoas",
@@ -6382,6 +6569,7 @@
         "FactoringRemittances",
         "FactoringReserveBalance",
         "FactoringReserveEntries",
+        "FactoringReserveHistory",
         "FactoringSubmissionDetail",
         "FactoringSubmissionPlan",
         "FactoringSubmissionTable",
@@ -6776,11 +6964,14 @@
         "AuditAlertPolicies",
         "AuditChainStatus",
         "AuditEntryDetail",
+        "AuditEntryReview",
         "AuditExportTable",
         "AuditFieldHistory",
         "AuditLegalHoldTable",
         "AuditLogTable",
+        "AuditOverview",
         "AuditRequestEntries",
+        "AuditReviews",
         "BillingQueueFormulaTemplate",
         "BillingQueueItems",
         "BillingQueueRateAgreement",
@@ -7684,1724 +7875,6 @@
         "CarrierInvoiceMatches",
         "CarrierSettlementDetail",
         "CarrierTrackingLink",
-        "CreateCaptureRequest",
-        "CustomerStatusNotifications",
-        "CustomerTrackingLinks",
-        "CustomerTrackingProfile",
-        "DecideMyPlan",
-        "DecideMyProposal",
-        "DecideMyProposals",
-        "DeskBoardCard",
-        "DeskCarrierCard",
-        "DeskCarrierEligibility",
-        "DeskCarrierIntel",
-        "DeskCarrierSettlementCard",
-        "DeskCarrierSettlements",
-        "DeskCustomerCard",
-        "DeskCustomerRateAgreements",
-        "DeskDetentionCard",
-        "DeskDriverSettlementCard",
-        "DeskEdiPartnerCard",
-        "DeskEdiPartnerMessages",
-        "DeskFuelCardCard",
-        "DeskFuelPurchaseCard",
-        "DeskInvoiceCard",
-        "DeskJournalEntryCard",
-        "DeskLocationCard",
-        "DeskLocationDwell",
-        "DeskLocationPolicies",
-        "DeskManualJournalCard",
-        "DeskOrderCard",
-        "DeskRateAgreementPricing",
-        "DeskRecordActivity",
-        "DeskRecordFailures",
-        "DeskRecordShipments",
-        "DeskServiceFailureCard",
-        "DeskTractorCard",
-        "DeskTractorInspections",
-        "DeskTractorPosition",
-        "DeskTrailerCard",
-        "DeskWorkerCard",
-        "DeskWorkerCredentials",
-        "DeskWorkerHos",
-        "DeskWorkerStanding",
-        "DetachPayEventFromSettlement",
-        "DetentionIntelligence",
-        "DriverSettlementDetail",
-        "EdiPartnerScorecards",
-        "EdiSummary",
-        "EdiVolumeSeries",
-        "ExportCarrierSettlementBatchCsv",
-        "InvoiceArContext",
-        "JournalEntriesBySource",
-        "JournalEntryDetail",
-        "JournalReviewSummary",
-        "JournalReviewTable",
-        "JournalSourceByObject",
-        "LateChargePreview",
-        "MarkCarrierSettlementPaid",
-        "MarkDriverSettlementPaid",
-        "MyCaptureAccess",
-        "MyCaptureDevices",
-        "MyPlanPreview",
-        "MyProposalPreview",
-        "PendingDecisionSummary",
-        "PostCarrierSettlement",
-        "PostDriverSettlement",
-        "PostJournalEntries",
-        "RecalculateCarrierSettlement",
-        "RecalculateDriverSettlement",
-        "RecordMyAgentSuggestion",
-        "RejectCarrierSettlement",
-        "RejectDriverSettlement",
-        "RemoveCarrierSettlementAdjustment",
-        "RemoveDriverSettlementAdjustment",
-        "ResolveFuelPurchaseImportRows",
-        "SendInvoiceEdi",
-        "SettleMyAgentSuggestion",
-        "ShipmentCheckCalls",
-        "ShipmentCustomerBillingRules",
-        "ShipmentInvoices",
-        "ShipmentProfitability",
-        "SubmitCarrierSettlement",
-        "SubmitDriverSettlement",
-        "TodaysBriefing",
-        "UndoMyDecision",
-        "UpcomingWorkerPto",
-        "VoidCarrierSettlement",
-        "VoidDriverSettlement",
-        "VoidInvoice",
-        "WorkerCredentialTypeChoices",
-        "WorkerPtoChartData",
-        "WorkerPtoTable"
-      ],
-      "rest": [
-        {
-          "method": "POST",
-          "path": "/accounting/journal-reversals/"
-        },
-        {
-          "method": "GET",
-          "path": "/accounting/manual-journals/:param/"
-        },
-        {
-          "method": "POST",
-          "path": "/accounting/manual-journals/:param/approve/"
-        },
-        {
-          "method": "POST",
-          "path": "/accounting/manual-journals/:param/cancel/"
-        },
-        {
-          "method": "POST",
-          "path": "/accounting/manual-journals/:param/post/"
-        },
-        {
-          "method": "POST",
-          "path": "/accounting/manual-journals/:param/reject/"
-        },
-        {
-          "method": "POST",
-          "path": "/accounting/manual-journals/:param/submit/"
-        },
-        {
-          "method": "GET",
-          "path": "/agent-analysis/runs/:param/"
-        },
-        {
-          "method": "POST",
-          "path": "/agent-definitions/"
-        },
-        {
-          "method": "DELETE",
-          "path": "/agent-definitions/:param/"
-        },
-        {
-          "method": "GET",
-          "path": "/agent-definitions/:param/"
-        },
-        {
-          "method": "PUT",
-          "path": "/agent-definitions/:param/"
-        },
-        {
-          "method": "GET",
-          "path": "/agent-definitions/:param/budget/"
-        },
-        {
-          "method": "GET",
-          "path": "/agent-definitions/:param/trust/"
-        },
-        {
-          "method": "GET",
-          "path": "/agent-definitions/event-kinds/"
-        },
-        {
-          "method": "GET",
-          "path": "/agent-definitions/system/:param/"
-        },
-        {
-          "method": "GET",
-          "path": "/agent-definitions/templates/"
-        },
-        {
-          "method": "GET",
-          "path": "/agent-definitions/tools/"
-        },
-        {
-          "method": "GET",
-          "path": "/agent-extensions/:param/config/"
-        },
-        {
-          "method": "GET",
-          "path": "/agent-extensions/catalog/"
-        },
-        {
-          "method": "GET",
-          "path": "/agent-portals/runs/:param"
-        },
-        {
-          "method": "GET",
-          "path": "/agent-portals/runs/:param/"
-        },
-        {
-          "method": "GET",
-          "path": "/agent-portals/runs/:param/live/"
-        },
-        {
-          "method": "GET",
-          "path": "/agent-portals/runs/:param/recording/"
-        },
-        {
-          "method": "POST",
-          "path": "/agent-portals/runs/:param/sign-in-code/"
-        },
-        {
-          "method": "GET",
-          "path": "/agent-portals/sites/"
-        },
-        {
-          "method": "GET",
-          "path": "/agent-web-watches/:param"
-        },
-        {
-          "method": "GET",
-          "path": "/agent-web-watches/:param/findings/"
-        },
-        {
-          "method": "GET",
-          "path": "/assistant/agents/:param/commands/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/ask/"
-        },
-        {
-          "method": "DELETE",
-          "path": "/assistant/ask/:param/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/ask/:param/keep/"
-        },
-        {
-          "method": "GET",
-          "path": "/assistant/mentions/"
-        },
-        {
-          "method": "GET",
-          "path": "/assistant/providers/"
-        },
-        {
-          "method": "GET",
-          "path": "/assistant/schedules/"
-        },
-        {
-          "method": "DELETE",
-          "path": "/assistant/schedules/:param/"
-        },
-        {
-          "method": "PATCH",
-          "path": "/assistant/schedules/:param/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/schedules/:param/run/"
-        },
-        {
-          "method": "GET",
-          "path": "/assistant/search/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/threads/"
-        },
-        {
-          "method": "GET",
-          "path": "/assistant/threads/:param"
-        },
-        {
-          "method": "DELETE",
-          "path": "/assistant/threads/:param/"
-        },
-        {
-          "method": "GET",
-          "path": "/assistant/threads/:param/"
-        },
-        {
-          "method": "PATCH",
-          "path": "/assistant/threads/:param/"
-        },
-        {
-          "method": "GET",
-          "path": "/assistant/threads/:param/artifacts/:param"
-        },
-        {
-          "method": "GET",
-          "path": "/assistant/threads/:param/artifacts/:param/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/threads/:param/artifacts/:param/pin/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/threads/:param/artifacts/:param/restore/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/threads/:param/artifacts/:param/rewrite/"
-        },
-        {
-          "method": "GET",
-          "path": "/assistant/threads/:param/artifacts/:param/rows/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/threads/:param/artifacts/:param/run/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/threads/:param/artifacts/:param/versions/"
-        },
-        {
-          "method": "GET",
-          "path": "/assistant/threads/:param/artifacts/by-slug/:param/"
-        },
-        {
-          "method": "GET",
-          "path": "/assistant/threads/:param/budget/"
-        },
-        {
-          "method": "DELETE",
-          "path": "/assistant/threads/:param/case/"
-        },
-        {
-          "method": "GET",
-          "path": "/assistant/threads/:param/case/"
-        },
-        {
-          "method": "PUT",
-          "path": "/assistant/threads/:param/case/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/threads/:param/case/await-reply/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/threads/:param/case/snooze/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/threads/:param/case/ticks/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/threads/:param/case/wake/"
-        },
-        {
-          "method": "GET",
-          "path": "/assistant/threads/:param/chapters/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/threads/:param/chapters/"
-        },
-        {
-          "method": "DELETE",
-          "path": "/assistant/threads/:param/chapters/:param/"
-        },
-        {
-          "method": "PATCH",
-          "path": "/assistant/threads/:param/chapters/:param/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/threads/:param/compact/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/threads/:param/handoff/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/threads/:param/messages/"
-        },
-        {
-          "method": "GET",
-          "path": "/assistant/threads/:param/messages/:param"
-        },
-        {
-          "method": "GET",
-          "path": "/assistant/threads/:param/plans/"
-        },
-        {
-          "method": "GET",
-          "path": "/assistant/threads/:param/proposals/"
-        },
-        {
-          "method": "PUT",
-          "path": "/assistant/threads/:param/proposals/:param/edits/"
-        },
-        {
-          "method": "GET",
-          "path": "/assistant/threads/:param/queue/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/threads/:param/queue/"
-        },
-        {
-          "method": "DELETE",
-          "path": "/assistant/threads/:param/queue/:param/"
-        },
-        {
-          "method": "PATCH",
-          "path": "/assistant/threads/:param/queue/:param/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/threads/:param/queue/:param/send/"
-        },
-        {
-          "method": "PUT",
-          "path": "/assistant/threads/:param/queue/order/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/threads/:param/read/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/threads/:param/requests/"
-        },
-        {
-          "method": "GET",
-          "path": "/assistant/threads/:param/schedules/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/threads/:param/schedules/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/threads/:param/turns/"
-        },
-        {
-          "method": "GET",
-          "path": "/assistant/threads/:param/turns/active/"
-        },
-        {
-          "method": "GET",
-          "path": "/assistant/threads/:param/waits/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/threads/:param/waits/:param/cancel/"
-        },
-        {
-          "method": "GET",
-          "path": "/assistant/threads/shelves/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/turns/:param/stop/"
-        },
-        {
-          "method": "GET",
-          "path": "/assistant/turns/active/"
-        },
-        {
-          "method": "GET",
-          "path": "/billing-queue/:param/activity/"
-        },
-        {
-          "method": "POST",
-          "path": "/billing-queue/:param/issues/:param/resolve/"
-        },
-        {
-          "method": "POST",
-          "path": "/billing-queue/:param/issues/:param/undo/"
-        },
-        {
-          "method": "GET",
-          "path": "/billing-queue/:param/neighbors/:param"
-        },
-        {
-          "method": "POST",
-          "path": "/billing-queue/:param/post/"
-        },
-        {
-          "method": "POST",
-          "path": "/billing-queue/:param/release/"
-        },
-        {
-          "method": "PUT",
-          "path": "/billing-queue/:param/status/"
-        },
-        {
-          "method": "GET",
-          "path": "/billing-queue/assist/"
-        },
-        {
-          "method": "GET",
-          "path": "/billing-queue/brief/"
-        },
-        {
-          "method": "POST",
-          "path": "/billing-queue/bulk/"
-        },
-        {
-          "method": "GET",
-          "path": "/billing-queue/bulk/:param/"
-        },
-        {
-          "method": "POST",
-          "path": "/billing-queue/bulk/:param/cancel/"
-        },
-        {
-          "method": "GET",
-          "path": "/billing-queue/recommendations/"
-        },
-        {
-          "method": "GET",
-          "path": "/billing-queue/summaries/"
-        },
-        {
-          "method": "GET",
-          "path": "/billing/invoices/:param/"
-        },
-        {
-          "method": "GET",
-          "path": "/billing/invoices/:param/email-attempts/:param"
-        },
-        {
-          "method": "POST",
-          "path": "/billing/invoices/:param/generate-pdf/"
-        },
-        {
-          "method": "GET",
-          "path": "/billing/invoices/:param/post-preview/"
-        },
-        {
-          "method": "POST",
-          "path": "/billing/invoices/:param/post/"
-        },
-        {
-          "method": "GET",
-          "path": "/billing/invoices/:param/send-plan/"
-        },
-        {
-          "method": "POST",
-          "path": "/billing/invoices/:param/send/"
-        },
-        {
-          "method": "GET",
-          "path": "/case-checklists/"
-        },
-        {
-          "method": "PUT",
-          "path": "/case-checklists/"
-        },
-        {
-          "method": "DELETE",
-          "path": "/case-checklists/:param/"
-        },
-        {
-          "method": "DELETE",
-          "path": "/documents/:param/"
-        },
-        {
-          "method": "GET",
-          "path": "/documents/:param/"
-        },
-        {
-          "method": "POST",
-          "path": "/documents/:param/approve/"
-        },
-        {
-          "method": "POST",
-          "path": "/documents/:param/attach-to-shipment/"
-        },
-        {
-          "method": "GET",
-          "path": "/documents/:param/content/"
-        },
-        {
-          "method": "POST",
-          "path": "/documents/:param/delivery-facts/"
-        },
-        {
-          "method": "GET",
-          "path": "/documents/:param/import-assistant/history/"
-        },
-        {
-          "method": "POST",
-          "path": "/documents/:param/import-assistant/thread/"
-        },
-        {
-          "method": "GET",
-          "path": "/documents/:param/reading/"
-        },
-        {
-          "method": "POST",
-          "path": "/documents/:param/reject/"
-        },
-        {
-          "method": "POST",
-          "path": "/documents/:param/restore/"
-        },
-        {
-          "method": "GET",
-          "path": "/documents/:param/shipment-draft/"
-        },
-        {
-          "method": "POST",
-          "path": "/documents/:param/shipment-draft/reextract/"
-        },
-        {
-          "method": "POST",
-          "path": "/documents/:param/signature/"
-        },
-        {
-          "method": "GET",
-          "path": "/documents/:param/versions/"
-        },
-        {
-          "method": "POST",
-          "path": "/documents/bulk-delete/"
-        },
-        {
-          "method": "GET",
-          "path": "/documents/extraction-status/"
-        },
-        {
-          "method": "GET",
-          "path": "/documents/resource/:param/:param/packet-summary/"
-        },
-        {
-          "method": "POST",
-          "path": "/documents/uploads/"
-        },
-        {
-          "method": "GET",
-          "path": "/documents/uploads/:param/"
-        },
-        {
-          "method": "POST",
-          "path": "/documents/uploads/:param/cancel/"
-        },
-        {
-          "method": "POST",
-          "path": "/documents/uploads/:param/complete/"
-        },
-        {
-          "method": "POST",
-          "path": "/documents/uploads/:param/parts/"
-        },
-        {
-          "method": "GET",
-          "path": "/documents/uploads/active/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/communication-profiles/:param/poll/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/communication-profiles/:param/test-connection/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/connections/:param"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/inbound-files/:param/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/inbound-files/:param/inspect/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/messages/:param"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/messages/:param/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/messages/:param/inspect/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/partners/:param/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/partners/:param/mapping-profile/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/transfers/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/transfers/:param/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/transfers/:param/mapping-preview/"
-        },
-        {
-          "method": "GET",
-          "path": "/locations/"
-        },
-        {
-          "method": "GET",
-          "path": "/rate-agreements/:param/"
-        },
-        {
-          "method": "GET",
-          "path": "/rate-agreements/:param/lanes/"
-        },
-        {
-          "method": "GET",
-          "path": "/rate-agreements/:param/lanes/summary/"
-        },
-        {
-          "method": "GET",
-          "path": "/rate-agreements/:param/versions/"
-        },
-        {
-          "method": "GET",
-          "path": "/service-failures/"
-        },
-        {
-          "method": "GET",
-          "path": "/service-failures/:param/"
-        },
-        {
-          "method": "GET",
-          "path": "/service-failures/:param/edi-214-readiness/:param"
-        },
-        {
-          "method": "GET",
-          "path": "/service-failures/:param/edi-214-status/"
-        },
-        {
-          "method": "GET",
-          "path": "/shipment-moves/:param/rate-confirmations/"
-        },
-        {
-          "method": "GET",
-          "path": "/shipments/:param/customer-tracking/preview/"
-        },
-        {
-          "method": "GET",
-          "path": "/shipments/:param/eta/"
-        },
-        {
-          "method": "GET",
-          "path": "/shipments/:param/permit-assessment/"
-        },
-        {
-          "method": "GET",
-          "path": "/shipments/:param/permit-requirements/"
-        },
-        {
-          "method": "GET",
-          "path": "/shipments/:param/permits/"
-        }
-      ]
-    },
-    {
-      "path": "/desk/agents/:agentId",
-      "name": "",
-      "requires": [
-        {
-          "resource": "assistant",
-          "operation": "read"
-        }
-      ],
-      "operations": [],
-      "rest": []
-    },
-    {
-      "path": "/desk/c/:threadId/a/:slug",
-      "name": "",
-      "requires": [
-        {
-          "resource": "assistant",
-          "operation": "read"
-        }
-      ],
-      "operations": [],
-      "rest": []
-    },
-    {
-      "path": "/desk/c/:threadId/a/:slug/page",
-      "name": "",
-      "requires": [
-        {
-          "resource": "assistant",
-          "operation": "read"
-        }
-      ],
-      "operations": [
-        "AccountingBackfills",
-        "AccountingBriefing",
-        "AccountingDriftFinding",
-        "AccountingDriftFixPreview",
-        "AccountingDriftOverview",
-        "AccountingInboundApplyPreview",
-        "AccountingInboundChange",
-        "AccountingInboundOverview",
-        "AccountingMappingSummary",
-        "AccountingReferenceObjects",
-        "AccountingSyncAttempts",
-        "AccountingSyncObjectStates",
-        "AccountingSyncRecord",
-        "AccountingSyncStatus",
-        "AccountingSyncSummary",
-        "AddCarrierSettlementAdjustment",
-        "AddDriverSettlementAdjustment",
-        "AgentPlanPreview",
-        "AgentProposalPreview",
-        "ApproveCarrierSettlement",
-        "ApproveDriverSettlement",
-        "ApproveJournalEntries",
-        "ArAgingSummary",
-        "ArAgingTrend",
-        "ArCashFlowForecast",
-        "ArCollectionsWorklist",
-        "ArCustomerLedger",
-        "ArCustomerProfile",
-        "ArCustomerStatement",
-        "ArDashboardKpis",
-        "ArDsoTrend",
-        "ArOpenItems",
-        "ArPaymentStats",
-        "ArTopOverdueCustomers",
-        "AssignBillingQueueBiller",
-        "AssignFuelCard",
-        "BillingQueueFormulaTemplate",
-        "BillingQueueRateAgreement",
-        "BillingQueueShipment",
-        "CarrierInvoiceMatches",
-        "CarrierSettlementDetail",
-        "CarrierTrackingLink",
-        "CustomerStatusNotifications",
-        "CustomerTrackingLinks",
-        "CustomerTrackingProfile",
-        "DecideMyPlan",
-        "DecideMyProposal",
-        "DecideMyProposals",
-        "DeskBoardCard",
-        "DeskCarrierCard",
-        "DeskCarrierEligibility",
-        "DeskCarrierIntel",
-        "DeskCarrierSettlementCard",
-        "DeskCarrierSettlements",
-        "DeskCustomerCard",
-        "DeskCustomerRateAgreements",
-        "DeskDetentionCard",
-        "DeskDriverSettlementCard",
-        "DeskEdiPartnerCard",
-        "DeskEdiPartnerMessages",
-        "DeskFuelCardCard",
-        "DeskFuelPurchaseCard",
-        "DeskInvoiceCard",
-        "DeskJournalEntryCard",
-        "DeskLocationCard",
-        "DeskLocationDwell",
-        "DeskLocationPolicies",
-        "DeskManualJournalCard",
-        "DeskOrderCard",
-        "DeskRateAgreementPricing",
-        "DeskRecordActivity",
-        "DeskRecordFailures",
-        "DeskRecordShipments",
-        "DeskServiceFailureCard",
-        "DeskTractorCard",
-        "DeskTractorInspections",
-        "DeskTractorPosition",
-        "DeskTrailerCard",
-        "DeskWorkerCard",
-        "DeskWorkerCredentials",
-        "DeskWorkerHos",
-        "DeskWorkerStanding",
-        "DetachPayEventFromSettlement",
-        "DetentionIntelligence",
-        "DriverSettlementDetail",
-        "EdiPartnerScorecards",
-        "EdiSummary",
-        "EdiVolumeSeries",
-        "ExportCarrierSettlementBatchCsv",
-        "InvoiceArContext",
-        "JournalEntriesBySource",
-        "JournalEntryDetail",
-        "JournalReviewSummary",
-        "JournalReviewTable",
-        "JournalSourceByObject",
-        "LateChargePreview",
-        "MarkCarrierSettlementPaid",
-        "MarkDriverSettlementPaid",
-        "MyPlanPreview",
-        "MyProposalPreview",
-        "PostCarrierSettlement",
-        "PostDriverSettlement",
-        "PostJournalEntries",
-        "RecalculateCarrierSettlement",
-        "RecalculateDriverSettlement",
-        "RejectCarrierSettlement",
-        "RejectDriverSettlement",
-        "RemoveCarrierSettlementAdjustment",
-        "RemoveDriverSettlementAdjustment",
-        "ResolveFuelPurchaseImportRows",
-        "SendInvoiceEdi",
-        "ShipmentCheckCalls",
-        "ShipmentCustomerBillingRules",
-        "ShipmentInvoices",
-        "ShipmentProfitability",
-        "SubmitCarrierSettlement",
-        "SubmitDriverSettlement",
-        "UndoMyDecision",
-        "UpcomingWorkerPto",
-        "VoidCarrierSettlement",
-        "VoidDriverSettlement",
-        "VoidInvoice",
-        "WorkerCredentialTypeChoices",
-        "WorkerPtoChartData",
-        "WorkerPtoTable"
-      ],
-      "rest": [
-        {
-          "method": "POST",
-          "path": "/accounting/journal-reversals/"
-        },
-        {
-          "method": "GET",
-          "path": "/accounting/manual-journals/:param/"
-        },
-        {
-          "method": "POST",
-          "path": "/accounting/manual-journals/:param/approve/"
-        },
-        {
-          "method": "POST",
-          "path": "/accounting/manual-journals/:param/cancel/"
-        },
-        {
-          "method": "POST",
-          "path": "/accounting/manual-journals/:param/post/"
-        },
-        {
-          "method": "POST",
-          "path": "/accounting/manual-journals/:param/reject/"
-        },
-        {
-          "method": "POST",
-          "path": "/accounting/manual-journals/:param/submit/"
-        },
-        {
-          "method": "GET",
-          "path": "/agent-analysis/runs/:param/"
-        },
-        {
-          "method": "POST",
-          "path": "/agent-definitions/"
-        },
-        {
-          "method": "DELETE",
-          "path": "/agent-definitions/:param/"
-        },
-        {
-          "method": "GET",
-          "path": "/agent-definitions/:param/"
-        },
-        {
-          "method": "PUT",
-          "path": "/agent-definitions/:param/"
-        },
-        {
-          "method": "GET",
-          "path": "/agent-definitions/:param/budget/"
-        },
-        {
-          "method": "GET",
-          "path": "/agent-definitions/:param/trust/"
-        },
-        {
-          "method": "GET",
-          "path": "/agent-definitions/event-kinds/"
-        },
-        {
-          "method": "GET",
-          "path": "/agent-definitions/system/:param/"
-        },
-        {
-          "method": "GET",
-          "path": "/agent-definitions/templates/"
-        },
-        {
-          "method": "GET",
-          "path": "/agent-definitions/tools/"
-        },
-        {
-          "method": "GET",
-          "path": "/agent-extensions/:param/config/"
-        },
-        {
-          "method": "GET",
-          "path": "/agent-extensions/catalog/"
-        },
-        {
-          "method": "GET",
-          "path": "/agent-portals/runs/:param"
-        },
-        {
-          "method": "GET",
-          "path": "/agent-portals/runs/:param/"
-        },
-        {
-          "method": "GET",
-          "path": "/agent-portals/runs/:param/live/"
-        },
-        {
-          "method": "GET",
-          "path": "/agent-portals/runs/:param/recording/"
-        },
-        {
-          "method": "POST",
-          "path": "/agent-portals/runs/:param/sign-in-code/"
-        },
-        {
-          "method": "GET",
-          "path": "/agent-portals/sites/"
-        },
-        {
-          "method": "GET",
-          "path": "/agent-web-watches/:param"
-        },
-        {
-          "method": "GET",
-          "path": "/agent-web-watches/:param/findings/"
-        },
-        {
-          "method": "GET",
-          "path": "/assistant/agents/:param/commands/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/ask/"
-        },
-        {
-          "method": "DELETE",
-          "path": "/assistant/ask/:param/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/ask/:param/keep/"
-        },
-        {
-          "method": "GET",
-          "path": "/assistant/mentions/"
-        },
-        {
-          "method": "GET",
-          "path": "/assistant/providers/"
-        },
-        {
-          "method": "GET",
-          "path": "/assistant/schedules/"
-        },
-        {
-          "method": "DELETE",
-          "path": "/assistant/schedules/:param/"
-        },
-        {
-          "method": "PATCH",
-          "path": "/assistant/schedules/:param/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/schedules/:param/run/"
-        },
-        {
-          "method": "GET",
-          "path": "/assistant/search/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/threads/"
-        },
-        {
-          "method": "GET",
-          "path": "/assistant/threads/:param"
-        },
-        {
-          "method": "DELETE",
-          "path": "/assistant/threads/:param/"
-        },
-        {
-          "method": "GET",
-          "path": "/assistant/threads/:param/"
-        },
-        {
-          "method": "PATCH",
-          "path": "/assistant/threads/:param/"
-        },
-        {
-          "method": "GET",
-          "path": "/assistant/threads/:param/artifacts/:param"
-        },
-        {
-          "method": "GET",
-          "path": "/assistant/threads/:param/artifacts/:param/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/threads/:param/artifacts/:param/pin/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/threads/:param/artifacts/:param/restore/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/threads/:param/artifacts/:param/rewrite/"
-        },
-        {
-          "method": "GET",
-          "path": "/assistant/threads/:param/artifacts/:param/rows/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/threads/:param/artifacts/:param/run/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/threads/:param/artifacts/:param/versions/"
-        },
-        {
-          "method": "GET",
-          "path": "/assistant/threads/:param/artifacts/by-slug/:param/"
-        },
-        {
-          "method": "GET",
-          "path": "/assistant/threads/:param/budget/"
-        },
-        {
-          "method": "DELETE",
-          "path": "/assistant/threads/:param/case/"
-        },
-        {
-          "method": "GET",
-          "path": "/assistant/threads/:param/case/"
-        },
-        {
-          "method": "PUT",
-          "path": "/assistant/threads/:param/case/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/threads/:param/case/await-reply/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/threads/:param/case/snooze/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/threads/:param/case/ticks/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/threads/:param/case/wake/"
-        },
-        {
-          "method": "GET",
-          "path": "/assistant/threads/:param/chapters/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/threads/:param/chapters/"
-        },
-        {
-          "method": "DELETE",
-          "path": "/assistant/threads/:param/chapters/:param/"
-        },
-        {
-          "method": "PATCH",
-          "path": "/assistant/threads/:param/chapters/:param/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/threads/:param/compact/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/threads/:param/handoff/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/threads/:param/messages/"
-        },
-        {
-          "method": "GET",
-          "path": "/assistant/threads/:param/messages/:param"
-        },
-        {
-          "method": "GET",
-          "path": "/assistant/threads/:param/plans/"
-        },
-        {
-          "method": "GET",
-          "path": "/assistant/threads/:param/proposals/"
-        },
-        {
-          "method": "PUT",
-          "path": "/assistant/threads/:param/proposals/:param/edits/"
-        },
-        {
-          "method": "GET",
-          "path": "/assistant/threads/:param/queue/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/threads/:param/queue/"
-        },
-        {
-          "method": "DELETE",
-          "path": "/assistant/threads/:param/queue/:param/"
-        },
-        {
-          "method": "PATCH",
-          "path": "/assistant/threads/:param/queue/:param/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/threads/:param/queue/:param/send/"
-        },
-        {
-          "method": "PUT",
-          "path": "/assistant/threads/:param/queue/order/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/threads/:param/read/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/threads/:param/requests/"
-        },
-        {
-          "method": "GET",
-          "path": "/assistant/threads/:param/schedules/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/threads/:param/schedules/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/threads/:param/turns/"
-        },
-        {
-          "method": "GET",
-          "path": "/assistant/threads/:param/turns/active/"
-        },
-        {
-          "method": "GET",
-          "path": "/assistant/threads/:param/waits/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/threads/:param/waits/:param/cancel/"
-        },
-        {
-          "method": "GET",
-          "path": "/assistant/threads/shelves/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/turns/:param/stop/"
-        },
-        {
-          "method": "GET",
-          "path": "/assistant/turns/active/"
-        },
-        {
-          "method": "GET",
-          "path": "/billing-queue/:param/activity/"
-        },
-        {
-          "method": "POST",
-          "path": "/billing-queue/:param/issues/:param/resolve/"
-        },
-        {
-          "method": "POST",
-          "path": "/billing-queue/:param/issues/:param/undo/"
-        },
-        {
-          "method": "GET",
-          "path": "/billing-queue/:param/neighbors/:param"
-        },
-        {
-          "method": "POST",
-          "path": "/billing-queue/:param/post/"
-        },
-        {
-          "method": "POST",
-          "path": "/billing-queue/:param/release/"
-        },
-        {
-          "method": "PUT",
-          "path": "/billing-queue/:param/status/"
-        },
-        {
-          "method": "GET",
-          "path": "/billing-queue/assist/"
-        },
-        {
-          "method": "GET",
-          "path": "/billing-queue/brief/"
-        },
-        {
-          "method": "POST",
-          "path": "/billing-queue/bulk/"
-        },
-        {
-          "method": "GET",
-          "path": "/billing-queue/bulk/:param/"
-        },
-        {
-          "method": "POST",
-          "path": "/billing-queue/bulk/:param/cancel/"
-        },
-        {
-          "method": "GET",
-          "path": "/billing-queue/recommendations/"
-        },
-        {
-          "method": "GET",
-          "path": "/billing-queue/summaries/"
-        },
-        {
-          "method": "GET",
-          "path": "/billing/invoices/:param/"
-        },
-        {
-          "method": "GET",
-          "path": "/billing/invoices/:param/email-attempts/:param"
-        },
-        {
-          "method": "POST",
-          "path": "/billing/invoices/:param/generate-pdf/"
-        },
-        {
-          "method": "GET",
-          "path": "/billing/invoices/:param/post-preview/"
-        },
-        {
-          "method": "POST",
-          "path": "/billing/invoices/:param/post/"
-        },
-        {
-          "method": "GET",
-          "path": "/billing/invoices/:param/send-plan/"
-        },
-        {
-          "method": "POST",
-          "path": "/billing/invoices/:param/send/"
-        },
-        {
-          "method": "DELETE",
-          "path": "/documents/:param/"
-        },
-        {
-          "method": "GET",
-          "path": "/documents/:param/"
-        },
-        {
-          "method": "POST",
-          "path": "/documents/:param/approve/"
-        },
-        {
-          "method": "POST",
-          "path": "/documents/:param/attach-to-shipment/"
-        },
-        {
-          "method": "GET",
-          "path": "/documents/:param/content/"
-        },
-        {
-          "method": "POST",
-          "path": "/documents/:param/delivery-facts/"
-        },
-        {
-          "method": "GET",
-          "path": "/documents/:param/import-assistant/history/"
-        },
-        {
-          "method": "POST",
-          "path": "/documents/:param/import-assistant/thread/"
-        },
-        {
-          "method": "GET",
-          "path": "/documents/:param/reading/"
-        },
-        {
-          "method": "POST",
-          "path": "/documents/:param/reject/"
-        },
-        {
-          "method": "POST",
-          "path": "/documents/:param/restore/"
-        },
-        {
-          "method": "GET",
-          "path": "/documents/:param/shipment-draft/"
-        },
-        {
-          "method": "POST",
-          "path": "/documents/:param/shipment-draft/reextract/"
-        },
-        {
-          "method": "POST",
-          "path": "/documents/:param/signature/"
-        },
-        {
-          "method": "GET",
-          "path": "/documents/:param/versions/"
-        },
-        {
-          "method": "POST",
-          "path": "/documents/bulk-delete/"
-        },
-        {
-          "method": "GET",
-          "path": "/documents/extraction-status/"
-        },
-        {
-          "method": "GET",
-          "path": "/documents/resource/:param/:param/packet-summary/"
-        },
-        {
-          "method": "POST",
-          "path": "/documents/uploads/"
-        },
-        {
-          "method": "GET",
-          "path": "/documents/uploads/:param/"
-        },
-        {
-          "method": "POST",
-          "path": "/documents/uploads/:param/cancel/"
-        },
-        {
-          "method": "POST",
-          "path": "/documents/uploads/:param/complete/"
-        },
-        {
-          "method": "POST",
-          "path": "/documents/uploads/:param/parts/"
-        },
-        {
-          "method": "GET",
-          "path": "/documents/uploads/active/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/communication-profiles/:param/poll/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/communication-profiles/:param/test-connection/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/connections/:param"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/inbound-files/:param/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/inbound-files/:param/inspect/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/messages/:param"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/messages/:param/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/messages/:param/inspect/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/partners/:param/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/partners/:param/mapping-profile/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/transfers/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/transfers/:param/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/transfers/:param/mapping-preview/"
-        },
-        {
-          "method": "GET",
-          "path": "/locations/"
-        },
-        {
-          "method": "GET",
-          "path": "/rate-agreements/:param/"
-        },
-        {
-          "method": "GET",
-          "path": "/rate-agreements/:param/lanes/"
-        },
-        {
-          "method": "GET",
-          "path": "/rate-agreements/:param/lanes/summary/"
-        },
-        {
-          "method": "GET",
-          "path": "/rate-agreements/:param/versions/"
-        },
-        {
-          "method": "GET",
-          "path": "/service-failures/"
-        },
-        {
-          "method": "GET",
-          "path": "/service-failures/:param/"
-        },
-        {
-          "method": "GET",
-          "path": "/service-failures/:param/edi-214-readiness/:param"
-        },
-        {
-          "method": "GET",
-          "path": "/service-failures/:param/edi-214-status/"
-        },
-        {
-          "method": "GET",
-          "path": "/shipment-moves/:param/rate-confirmations/"
-        },
-        {
-          "method": "GET",
-          "path": "/shipments/:param/customer-tracking/preview/"
-        },
-        {
-          "method": "GET",
-          "path": "/shipments/:param/eta/"
-        },
-        {
-          "method": "GET",
-          "path": "/shipments/:param/permit-assessment/"
-        },
-        {
-          "method": "GET",
-          "path": "/shipments/:param/permit-requirements/"
-        },
-        {
-          "method": "GET",
-          "path": "/shipments/:param/permits/"
-        }
-      ]
-    },
-    {
-      "path": "/desk/decisions",
-      "name": "",
-      "requires": [
-        {
-          "resource": "assistant",
-          "operation": "read"
-        },
-        {
-          "resource": "agent_proposal",
-          "operation": "read"
-        }
-      ],
-      "operations": [
-        "AgentPlanPreview",
-        "AgentProposalPreview",
-        "DecideAgentPlan",
-        "DecideAgentProposal",
-        "DecideAgentProposals",
-        "MyPlanPreview",
-        "MyProposalPreview",
-        "PendingDecisions",
-        "PlanSteps",
-        "RecentDecisions"
-      ],
-      "rest": []
-    },
-    {
-      "path": "/desk/memory",
-      "name": "",
-      "requires": [
-        {
-          "resource": "assistant",
-          "operation": "read"
-        }
-      ],
-      "operations": [
-        "AddAgentOrganizationProfileGuidance",
-        "AddMyAgentProfileGuidance",
-        "AgentOrganizationProfile",
-        "AgentOrganizationProfileHistory",
-        "ApproveAgentOrganizationProfileGuidance",
-        "CreateDeskMemory",
-        "DeskMemories",
-        "DeskMemorySettings",
-        "DismissAgentOrganizationProfileGuidance",
-        "DismissDeskMemory",
-        "MyAgentProfile",
-        "RegenerateAgentOrganizationProfile",
-        "RegenerateMyAgentProfile",
-        "RetireAgentOrganizationProfileGuidance",
-        "RetireMyAgentProfileGuidance",
-        "ReviseDeskMemory",
-        "SetDeskMemoryStatus",
-        "SetMemorySavingMode"
-      ],
-      "rest": []
-    },
-    {
-      "path": "/desk/scheduled",
-      "name": "",
-      "requires": [
-        {
-          "resource": "assistant",
-          "operation": "read"
-        }
-      ],
-      "operations": [],
-      "rest": [
-        {
-          "method": "GET",
-          "path": "/assistant/schedules/"
-        },
-        {
-          "method": "DELETE",
-          "path": "/assistant/schedules/:param/"
-        },
-        {
-          "method": "PATCH",
-          "path": "/assistant/schedules/:param/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/schedules/:param/run/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/threads/:param/schedules/"
-        }
-      ]
-    },
-    {
-      "path": "/desk/t/:threadId",
-      "name": "",
-      "requires": [
-        {
-          "resource": "assistant",
-          "operation": "read"
-        }
-      ],
-      "operations": [
-        "AccountingBackfills",
-        "AccountingBriefing",
-        "AccountingDriftFinding",
-        "AccountingDriftFixPreview",
-        "AccountingDriftOverview",
-        "AccountingInboundApplyPreview",
-        "AccountingInboundChange",
-        "AccountingInboundOverview",
-        "AccountingMappingSummary",
-        "AccountingReferenceObjects",
-        "AccountingSyncAttempts",
-        "AccountingSyncObjectStates",
-        "AccountingSyncRecord",
-        "AccountingSyncStatus",
-        "AccountingSyncSummary",
-        "AddCarrierSettlementAdjustment",
-        "AddDriverSettlementAdjustment",
-        "AgentPlanPreview",
-        "AgentProposalPreview",
-        "ApproveCarrierSettlement",
-        "ApproveDriverSettlement",
-        "ApproveJournalEntries",
-        "ArAgingSummary",
-        "ArAgingTrend",
-        "ArCashFlowForecast",
-        "ArCollectionsWorklist",
-        "ArCustomerLedger",
-        "ArCustomerProfile",
-        "ArCustomerStatement",
-        "ArDashboardKpis",
-        "ArDsoTrend",
-        "ArOpenItems",
-        "ArPaymentStats",
-        "ArTopOverdueCustomers",
-        "AssignBillingQueueBiller",
-        "AssignFuelCard",
-        "AvailableCaptureProfiles",
-        "BillingQueueFormulaTemplate",
-        "BillingQueueRateAgreement",
-        "BillingQueueShipment",
-        "CancelCaptureRequest",
-        "CaptureAgentRelease",
-        "CaptureBatch",
-        "CaptureBatchCount",
-        "CaptureBatches",
-        "CaptureDevicePairing",
-        "CaptureDevices",
-        "CaptureProfiles",
-        "CaptureRequestsForTarget",
-        "CarrierInvoiceMatches",
-        "CarrierSettlementDetail",
-        "CarrierTrackingLink",
         "CommitMyDecisionNow",
         "ConfirmDeskMemory",
         "CreateCaptureRequest",
@@ -9468,6 +7941,7 @@
         "MyCaptureDevices",
         "MyPlanPreview",
         "MyProposalPreview",
+        "PendingDecisionSummary",
         "PostCarrierSettlement",
         "PostDriverSettlement",
         "PostJournalEntries",
@@ -9489,6 +7963,7 @@
         "ShipmentProfitability",
         "SubmitCarrierSettlement",
         "SubmitDriverSettlement",
+        "TodaysBriefing",
         "UndoMyDecision",
         "UpcomingWorkerPto",
         "VoidCarrierSettlement",
@@ -10170,7 +8645,105 @@
       ]
     },
     {
-      "path": "/desk/watchtower",
+      "path": "/desk/agents/:agentId",
+      "name": "",
+      "requires": [
+        {
+          "resource": "assistant",
+          "operation": "read"
+        }
+      ],
+      "operations": [],
+      "rest": []
+    },
+    {
+      "path": "/desk/c/:threadId/a/:slug",
+      "name": "",
+      "requires": [
+        {
+          "resource": "assistant",
+          "operation": "read"
+        }
+      ],
+      "operations": [],
+      "rest": []
+    },
+    {
+      "path": "/desk/decisions",
+      "name": "",
+      "requires": [
+        {
+          "resource": "assistant",
+          "operation": "read"
+        },
+        {
+          "resource": "agent_proposal",
+          "operation": "read"
+        }
+      ],
+      "operations": [
+        "AgentPlanPreview",
+        "AgentProposalPreview",
+        "DecideAgentPlan",
+        "DecideAgentProposal",
+        "DecideAgentProposals",
+        "MyPlanPreview",
+        "MyProposalPreview",
+        "PendingDecisions",
+        "PlanSteps",
+        "RecentDecisions"
+      ],
+      "rest": []
+    },
+    {
+      "path": "/desk/handled/:id",
+      "name": "",
+      "requires": [
+        {
+          "resource": "assistant",
+          "operation": "read"
+        },
+        {
+          "resource": "agent_proposal",
+          "operation": "read"
+        }
+      ],
+      "operations": [],
+      "rest": []
+    },
+    {
+      "path": "/desk/memory",
+      "name": "",
+      "requires": [
+        {
+          "resource": "assistant",
+          "operation": "read"
+        }
+      ],
+      "operations": [
+        "AddAgentOrganizationProfileGuidance",
+        "AddMyAgentProfileGuidance",
+        "AgentOrganizationProfile",
+        "AgentOrganizationProfileHistory",
+        "ApproveAgentOrganizationProfileGuidance",
+        "CreateDeskMemory",
+        "DeskMemories",
+        "DeskMemorySettings",
+        "DismissAgentOrganizationProfileGuidance",
+        "DismissDeskMemory",
+        "MyAgentProfile",
+        "RegenerateAgentOrganizationProfile",
+        "RegenerateMyAgentProfile",
+        "RetireAgentOrganizationProfileGuidance",
+        "RetireMyAgentProfileGuidance",
+        "ReviseDeskMemory",
+        "SetDeskMemoryStatus",
+        "SetMemorySavingMode"
+      ],
+      "rest": []
+    },
+    {
+      "path": "/desk/needs",
       "name": "",
       "requires": [
         {
@@ -10182,11 +8755,3046 @@
           "operation": "read"
         }
       ],
-      "operations": [],
+      "operations": [
+        "AgentPlanPreview",
+        "AgentProposalPreview",
+        "DecideAgentPlan",
+        "DecideAgentProposal",
+        "MyPlanPreview",
+        "MyProposalPreview",
+        "PlanSteps"
+      ],
       "rest": [
         {
           "method": "POST",
           "path": "/assistant/threads/"
+        }
+      ]
+    },
+    {
+      "path": "/desk/r/:kind/:id",
+      "name": "",
+      "requires": [
+        {
+          "resource": "assistant",
+          "operation": "read"
+        }
+      ],
+      "operations": [
+        "AccountingBackfills",
+        "AccountingBriefing",
+        "AccountingDriftFinding",
+        "AccountingDriftFixPreview",
+        "AccountingDriftOverview",
+        "AccountingInboundApplyPreview",
+        "AccountingInboundChange",
+        "AccountingInboundOverview",
+        "AccountingMappingSummary",
+        "AccountingReferenceObjects",
+        "AccountingSyncAttempts",
+        "AccountingSyncObjectStates",
+        "AccountingSyncRecord",
+        "AccountingSyncStatus",
+        "AccountingSyncSummary",
+        "AddCarrierSettlementAdjustment",
+        "AddDriverSettlementAdjustment",
+        "AgentPlanPreview",
+        "AgentProposalPreview",
+        "ApproveCarrierSettlement",
+        "ApproveDriverSettlement",
+        "ApproveJournalEntries",
+        "ArAgingSummary",
+        "ArAgingTrend",
+        "ArCashFlowForecast",
+        "ArCollectionsWorklist",
+        "ArCustomerLedger",
+        "ArCustomerProfile",
+        "ArCustomerStatement",
+        "ArDashboardKpis",
+        "ArDsoTrend",
+        "ArOpenItems",
+        "ArPaymentStats",
+        "ArTopOverdueCustomers",
+        "AssignBillingQueueBiller",
+        "AssignFuelCard",
+        "AvailableCaptureProfiles",
+        "BillingQueueFormulaTemplate",
+        "BillingQueueRateAgreement",
+        "BillingQueueShipment",
+        "CancelCaptureRequest",
+        "CaptureAgentRelease",
+        "CaptureBatch",
+        "CaptureBatchCount",
+        "CaptureBatches",
+        "CaptureDevicePairing",
+        "CaptureDevices",
+        "CaptureProfiles",
+        "CaptureRequestsForTarget",
+        "CarrierInvoiceMatches",
+        "CarrierSettlementDetail",
+        "CarrierTrackingLink",
+        "CommitMyDecisionNow",
+        "ConfirmDeskMemory",
+        "CreateCaptureRequest",
+        "CustomerStatusNotifications",
+        "CustomerTrackingLinks",
+        "CustomerTrackingProfile",
+        "DecideAgentPlan",
+        "DecideAgentProposal",
+        "DecideMyPlan",
+        "DecideMyProposal",
+        "DecideMyProposals",
+        "DeskBoardCard",
+        "DeskCarrierCard",
+        "DeskCarrierEligibility",
+        "DeskCarrierIntel",
+        "DeskCarrierSettlementCard",
+        "DeskCarrierSettlements",
+        "DeskCustomerCard",
+        "DeskCustomerRateAgreements",
+        "DeskDetentionCard",
+        "DeskDriverSettlementCard",
+        "DeskEdiPartnerCard",
+        "DeskEdiPartnerMessages",
+        "DeskFuelCardCard",
+        "DeskFuelPurchaseCard",
+        "DeskInvoiceCard",
+        "DeskJournalEntryCard",
+        "DeskLocationCard",
+        "DeskLocationDwell",
+        "DeskLocationPolicies",
+        "DeskManualJournalCard",
+        "DeskMemoriesByIds",
+        "DeskMemorySettings",
+        "DeskOrderCard",
+        "DeskRateAgreementPricing",
+        "DeskRecordActivity",
+        "DeskRecordFailures",
+        "DeskRecordShipments",
+        "DeskServiceFailureCard",
+        "DeskTractorCard",
+        "DeskTractorInspections",
+        "DeskTractorPosition",
+        "DeskTrailerCard",
+        "DeskWorkerCard",
+        "DeskWorkerCredentials",
+        "DeskWorkerHos",
+        "DeskWorkerStanding",
+        "DetachPayEventFromSettlement",
+        "DetentionIntelligence",
+        "DismissDeskMemory",
+        "DriverSettlementDetail",
+        "EdiPartnerScorecards",
+        "EdiSummary",
+        "EdiVolumeSeries",
+        "ExportCarrierSettlementBatchCsv",
+        "InvoiceArContext",
+        "JournalEntriesBySource",
+        "JournalEntryDetail",
+        "JournalReviewSummary",
+        "JournalReviewTable",
+        "JournalSourceByObject",
+        "LateChargePreview",
+        "MarkCarrierSettlementPaid",
+        "MarkDriverSettlementPaid",
+        "MyCaptureAccess",
+        "MyCaptureDevices",
+        "MyPlanPreview",
+        "MyProposalPreview",
+        "PlanSteps",
+        "PostCarrierSettlement",
+        "PostDriverSettlement",
+        "PostJournalEntries",
+        "RecalculateCarrierSettlement",
+        "RecalculateDriverSettlement",
+        "RecordMyAgentSuggestion",
+        "RejectCarrierSettlement",
+        "RejectDriverSettlement",
+        "RemoveCarrierSettlementAdjustment",
+        "RemoveDriverSettlementAdjustment",
+        "ResolveFuelPurchaseImportRows",
+        "ReviseDeskMemory",
+        "SendInvoiceEdi",
+        "SetDeskMemoryStatus",
+        "SettleMyAgentSuggestion",
+        "ShipmentCheckCalls",
+        "ShipmentCustomerBillingRules",
+        "ShipmentInvoices",
+        "ShipmentProfitability",
+        "SubmitCarrierSettlement",
+        "SubmitDriverSettlement",
+        "TodaysBriefing",
+        "UndoMyDecision",
+        "UpcomingWorkerPto",
+        "VoidCarrierSettlement",
+        "VoidDriverSettlement",
+        "VoidInvoice",
+        "WorkerCredentialTypeChoices",
+        "WorkerPtoChartData",
+        "WorkerPtoTable"
+      ],
+      "rest": [
+        {
+          "method": "POST",
+          "path": "/accounting/journal-reversals/"
+        },
+        {
+          "method": "GET",
+          "path": "/accounting/manual-journals/:param/"
+        },
+        {
+          "method": "POST",
+          "path": "/accounting/manual-journals/:param/approve/"
+        },
+        {
+          "method": "POST",
+          "path": "/accounting/manual-journals/:param/cancel/"
+        },
+        {
+          "method": "POST",
+          "path": "/accounting/manual-journals/:param/post/"
+        },
+        {
+          "method": "POST",
+          "path": "/accounting/manual-journals/:param/reject/"
+        },
+        {
+          "method": "POST",
+          "path": "/accounting/manual-journals/:param/submit/"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-analysis/runs/:param/"
+        },
+        {
+          "method": "POST",
+          "path": "/agent-definitions/"
+        },
+        {
+          "method": "DELETE",
+          "path": "/agent-definitions/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-definitions/:param/"
+        },
+        {
+          "method": "PUT",
+          "path": "/agent-definitions/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-definitions/:param/budget/"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-definitions/:param/trust/"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-definitions/event-kinds/"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-definitions/system/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-definitions/templates/"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-definitions/tools/"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-extensions/:param/config/"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-extensions/catalog/"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-portals/runs/:param"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-portals/runs/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-portals/runs/:param/live/"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-portals/runs/:param/recording/"
+        },
+        {
+          "method": "POST",
+          "path": "/agent-portals/runs/:param/sign-in-code/"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-portals/sites/"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-web-watches/:param"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-web-watches/:param/findings/"
+        },
+        {
+          "method": "POST",
+          "path": "/agent-web-watches/:param/stop/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/agents/:param/commands/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/ask/"
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/ask/:param/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/ask/:param/keep/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/mentions/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/providers/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/schedules/"
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/schedules/:param/"
+        },
+        {
+          "method": "PATCH",
+          "path": "/assistant/schedules/:param/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/schedules/:param/run/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/search/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param"
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/threads/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/"
+        },
+        {
+          "method": "PATCH",
+          "path": "/assistant/threads/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/artifacts/:param"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/artifacts/:param/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/artifacts/:param/pin/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/artifacts/:param/restore/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/artifacts/:param/rewrite/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/artifacts/:param/rows/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/artifacts/:param/run/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/artifacts/:param/versions/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/artifacts/by-slug/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/budget/"
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/threads/:param/case/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/case/"
+        },
+        {
+          "method": "PUT",
+          "path": "/assistant/threads/:param/case/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/case/await-reply/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/case/snooze/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/case/ticks/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/case/wake/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/chapters/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/chapters/"
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/threads/:param/chapters/:param/"
+        },
+        {
+          "method": "PATCH",
+          "path": "/assistant/threads/:param/chapters/:param/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/compact/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/handoff/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/messages/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/messages/:param"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/plans/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/proposals/"
+        },
+        {
+          "method": "PUT",
+          "path": "/assistant/threads/:param/proposals/:param/edits/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/queue/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/queue/"
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/threads/:param/queue/:param/"
+        },
+        {
+          "method": "PATCH",
+          "path": "/assistant/threads/:param/queue/:param/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/queue/:param/send/"
+        },
+        {
+          "method": "PUT",
+          "path": "/assistant/threads/:param/queue/order/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/read/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/requests/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/schedules/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/schedules/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/turns/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/turns/active/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/waits/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/waits/:param/cancel/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/shelves/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/turns/:param/stop/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/turns/active/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/:param/activity/"
+        },
+        {
+          "method": "POST",
+          "path": "/billing-queue/:param/issues/:param/resolve/"
+        },
+        {
+          "method": "POST",
+          "path": "/billing-queue/:param/issues/:param/undo/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/:param/neighbors/:param"
+        },
+        {
+          "method": "POST",
+          "path": "/billing-queue/:param/post/"
+        },
+        {
+          "method": "POST",
+          "path": "/billing-queue/:param/release/"
+        },
+        {
+          "method": "PUT",
+          "path": "/billing-queue/:param/status/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/assist/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/brief/"
+        },
+        {
+          "method": "POST",
+          "path": "/billing-queue/bulk/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/bulk/:param/"
+        },
+        {
+          "method": "POST",
+          "path": "/billing-queue/bulk/:param/cancel/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/recommendations/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/summaries/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing/invoices/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing/invoices/:param/email-attempts/:param"
+        },
+        {
+          "method": "POST",
+          "path": "/billing/invoices/:param/generate-pdf/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing/invoices/:param/post-preview/"
+        },
+        {
+          "method": "POST",
+          "path": "/billing/invoices/:param/post/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing/invoices/:param/send-plan/"
+        },
+        {
+          "method": "POST",
+          "path": "/billing/invoices/:param/send/"
+        },
+        {
+          "method": "GET",
+          "path": "/case-checklists/"
+        },
+        {
+          "method": "PUT",
+          "path": "/case-checklists/"
+        },
+        {
+          "method": "DELETE",
+          "path": "/case-checklists/:param/"
+        },
+        {
+          "method": "DELETE",
+          "path": "/documents/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/documents/:param/"
+        },
+        {
+          "method": "POST",
+          "path": "/documents/:param/approve/"
+        },
+        {
+          "method": "POST",
+          "path": "/documents/:param/attach-to-shipment/"
+        },
+        {
+          "method": "GET",
+          "path": "/documents/:param/content/"
+        },
+        {
+          "method": "POST",
+          "path": "/documents/:param/delivery-facts/"
+        },
+        {
+          "method": "GET",
+          "path": "/documents/:param/import-assistant/history/"
+        },
+        {
+          "method": "POST",
+          "path": "/documents/:param/import-assistant/thread/"
+        },
+        {
+          "method": "GET",
+          "path": "/documents/:param/reading/"
+        },
+        {
+          "method": "POST",
+          "path": "/documents/:param/reject/"
+        },
+        {
+          "method": "POST",
+          "path": "/documents/:param/restore/"
+        },
+        {
+          "method": "GET",
+          "path": "/documents/:param/shipment-draft/"
+        },
+        {
+          "method": "POST",
+          "path": "/documents/:param/shipment-draft/reextract/"
+        },
+        {
+          "method": "POST",
+          "path": "/documents/:param/signature/"
+        },
+        {
+          "method": "GET",
+          "path": "/documents/:param/versions/"
+        },
+        {
+          "method": "POST",
+          "path": "/documents/bulk-delete/"
+        },
+        {
+          "method": "GET",
+          "path": "/documents/extraction-status/"
+        },
+        {
+          "method": "GET",
+          "path": "/documents/resource/:param/:param/packet-summary/"
+        },
+        {
+          "method": "POST",
+          "path": "/documents/uploads/"
+        },
+        {
+          "method": "GET",
+          "path": "/documents/uploads/:param/"
+        },
+        {
+          "method": "POST",
+          "path": "/documents/uploads/:param/cancel/"
+        },
+        {
+          "method": "POST",
+          "path": "/documents/uploads/:param/complete/"
+        },
+        {
+          "method": "POST",
+          "path": "/documents/uploads/:param/parts/"
+        },
+        {
+          "method": "GET",
+          "path": "/documents/uploads/active/"
+        },
+        {
+          "method": "POST",
+          "path": "/edi/communication-profiles/:param/poll/"
+        },
+        {
+          "method": "POST",
+          "path": "/edi/communication-profiles/:param/test-connection/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/connections/:param"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/inbound-files/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/inbound-files/:param/inspect/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/messages/:param"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/messages/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/messages/:param/inspect/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/partners/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/partners/:param/mapping-profile/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/transfers/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/transfers/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/transfers/:param/mapping-preview/"
+        },
+        {
+          "method": "GET",
+          "path": "/locations/"
+        },
+        {
+          "method": "GET",
+          "path": "/rate-agreements/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/rate-agreements/:param/lanes/"
+        },
+        {
+          "method": "GET",
+          "path": "/rate-agreements/:param/lanes/summary/"
+        },
+        {
+          "method": "GET",
+          "path": "/rate-agreements/:param/versions/"
+        },
+        {
+          "method": "GET",
+          "path": "/search/global/"
+        },
+        {
+          "method": "GET",
+          "path": "/service-failures/"
+        },
+        {
+          "method": "GET",
+          "path": "/service-failures/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/service-failures/:param/edi-214-readiness/:param"
+        },
+        {
+          "method": "GET",
+          "path": "/service-failures/:param/edi-214-status/"
+        },
+        {
+          "method": "GET",
+          "path": "/shipment-moves/:param/rate-confirmations/"
+        },
+        {
+          "method": "GET",
+          "path": "/shipments/:param/customer-tracking/preview/"
+        },
+        {
+          "method": "GET",
+          "path": "/shipments/:param/eta/"
+        },
+        {
+          "method": "GET",
+          "path": "/shipments/:param/permit-assessment/"
+        },
+        {
+          "method": "GET",
+          "path": "/shipments/:param/permit-requirements/"
+        },
+        {
+          "method": "GET",
+          "path": "/shipments/:param/permits/"
+        }
+      ]
+    },
+    {
+      "path": "/desk/scheduled",
+      "name": "",
+      "requires": [
+        {
+          "resource": "assistant",
+          "operation": "read"
+        }
+      ],
+      "operations": [],
+      "rest": [
+        {
+          "method": "GET",
+          "path": "/assistant/schedules/"
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/schedules/:param/"
+        },
+        {
+          "method": "PATCH",
+          "path": "/assistant/schedules/:param/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/schedules/:param/run/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/schedules/"
+        }
+      ]
+    },
+    {
+      "path": "/desk/t/:threadId",
+      "name": "",
+      "requires": [
+        {
+          "resource": "assistant",
+          "operation": "read"
+        }
+      ],
+      "operations": [
+        "AccountingBackfills",
+        "AccountingBriefing",
+        "AccountingDriftFinding",
+        "AccountingDriftFixPreview",
+        "AccountingDriftOverview",
+        "AccountingInboundApplyPreview",
+        "AccountingInboundChange",
+        "AccountingInboundOverview",
+        "AccountingMappingSummary",
+        "AccountingReferenceObjects",
+        "AccountingSyncAttempts",
+        "AccountingSyncObjectStates",
+        "AccountingSyncRecord",
+        "AccountingSyncStatus",
+        "AccountingSyncSummary",
+        "AddCarrierSettlementAdjustment",
+        "AddDriverSettlementAdjustment",
+        "AgentPlanPreview",
+        "AgentProposalPreview",
+        "ApproveCarrierSettlement",
+        "ApproveDriverSettlement",
+        "ApproveJournalEntries",
+        "ArAgingSummary",
+        "ArAgingTrend",
+        "ArCashFlowForecast",
+        "ArCollectionsWorklist",
+        "ArCustomerLedger",
+        "ArCustomerProfile",
+        "ArCustomerStatement",
+        "ArDashboardKpis",
+        "ArDsoTrend",
+        "ArOpenItems",
+        "ArPaymentStats",
+        "ArTopOverdueCustomers",
+        "AssignBillingQueueBiller",
+        "AssignFuelCard",
+        "AvailableCaptureProfiles",
+        "BillingQueueFormulaTemplate",
+        "BillingQueueRateAgreement",
+        "BillingQueueShipment",
+        "CancelCaptureRequest",
+        "CaptureAgentRelease",
+        "CaptureBatch",
+        "CaptureBatchCount",
+        "CaptureBatches",
+        "CaptureDevicePairing",
+        "CaptureDevices",
+        "CaptureProfiles",
+        "CaptureRequestsForTarget",
+        "CarrierInvoiceMatches",
+        "CarrierSettlementDetail",
+        "CarrierTrackingLink",
+        "CommitMyDecisionNow",
+        "ConfirmDeskMemory",
+        "CreateCaptureRequest",
+        "CustomerStatusNotifications",
+        "CustomerTrackingLinks",
+        "CustomerTrackingProfile",
+        "DecideMyPlan",
+        "DecideMyProposal",
+        "DecideMyProposals",
+        "DeskBoardCard",
+        "DeskCarrierCard",
+        "DeskCarrierEligibility",
+        "DeskCarrierIntel",
+        "DeskCarrierSettlementCard",
+        "DeskCarrierSettlements",
+        "DeskCustomerCard",
+        "DeskCustomerRateAgreements",
+        "DeskDetentionCard",
+        "DeskDriverSettlementCard",
+        "DeskEdiPartnerCard",
+        "DeskEdiPartnerMessages",
+        "DeskFuelCardCard",
+        "DeskFuelPurchaseCard",
+        "DeskInvoiceCard",
+        "DeskJournalEntryCard",
+        "DeskLocationCard",
+        "DeskLocationDwell",
+        "DeskLocationPolicies",
+        "DeskManualJournalCard",
+        "DeskMemoriesByIds",
+        "DeskMemorySettings",
+        "DeskOrderCard",
+        "DeskRateAgreementPricing",
+        "DeskRecordActivity",
+        "DeskRecordFailures",
+        "DeskRecordShipments",
+        "DeskServiceFailureCard",
+        "DeskTractorCard",
+        "DeskTractorInspections",
+        "DeskTractorPosition",
+        "DeskTrailerCard",
+        "DeskWorkerCard",
+        "DeskWorkerCredentials",
+        "DeskWorkerHos",
+        "DeskWorkerStanding",
+        "DetachPayEventFromSettlement",
+        "DetentionIntelligence",
+        "DismissDeskMemory",
+        "DriverSettlementDetail",
+        "EdiPartnerScorecards",
+        "EdiSummary",
+        "EdiVolumeSeries",
+        "ExportCarrierSettlementBatchCsv",
+        "InvoiceArContext",
+        "JournalEntriesBySource",
+        "JournalEntryDetail",
+        "JournalReviewSummary",
+        "JournalReviewTable",
+        "JournalSourceByObject",
+        "LateChargePreview",
+        "MarkCarrierSettlementPaid",
+        "MarkDriverSettlementPaid",
+        "MyCaptureAccess",
+        "MyCaptureDevices",
+        "MyPlanPreview",
+        "MyProposalPreview",
+        "PostCarrierSettlement",
+        "PostDriverSettlement",
+        "PostJournalEntries",
+        "RecalculateCarrierSettlement",
+        "RecalculateDriverSettlement",
+        "RecordMyAgentSuggestion",
+        "RejectCarrierSettlement",
+        "RejectDriverSettlement",
+        "RemoveCarrierSettlementAdjustment",
+        "RemoveDriverSettlementAdjustment",
+        "ResolveFuelPurchaseImportRows",
+        "ReviseDeskMemory",
+        "SendInvoiceEdi",
+        "SetDeskMemoryStatus",
+        "SettleMyAgentSuggestion",
+        "ShipmentCheckCalls",
+        "ShipmentCustomerBillingRules",
+        "ShipmentInvoices",
+        "ShipmentProfitability",
+        "SubmitCarrierSettlement",
+        "SubmitDriverSettlement",
+        "TodaysBriefing",
+        "UndoMyDecision",
+        "UpcomingWorkerPto",
+        "VoidCarrierSettlement",
+        "VoidDriverSettlement",
+        "VoidInvoice",
+        "WorkerCredentialTypeChoices",
+        "WorkerPtoChartData",
+        "WorkerPtoTable"
+      ],
+      "rest": [
+        {
+          "method": "POST",
+          "path": "/accounting/journal-reversals/"
+        },
+        {
+          "method": "GET",
+          "path": "/accounting/manual-journals/:param/"
+        },
+        {
+          "method": "POST",
+          "path": "/accounting/manual-journals/:param/approve/"
+        },
+        {
+          "method": "POST",
+          "path": "/accounting/manual-journals/:param/cancel/"
+        },
+        {
+          "method": "POST",
+          "path": "/accounting/manual-journals/:param/post/"
+        },
+        {
+          "method": "POST",
+          "path": "/accounting/manual-journals/:param/reject/"
+        },
+        {
+          "method": "POST",
+          "path": "/accounting/manual-journals/:param/submit/"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-analysis/runs/:param/"
+        },
+        {
+          "method": "POST",
+          "path": "/agent-definitions/"
+        },
+        {
+          "method": "DELETE",
+          "path": "/agent-definitions/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-definitions/:param/"
+        },
+        {
+          "method": "PUT",
+          "path": "/agent-definitions/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-definitions/:param/budget/"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-definitions/:param/trust/"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-definitions/event-kinds/"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-definitions/system/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-definitions/templates/"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-definitions/tools/"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-extensions/:param/config/"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-extensions/catalog/"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-portals/runs/:param"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-portals/runs/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-portals/runs/:param/live/"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-portals/runs/:param/recording/"
+        },
+        {
+          "method": "POST",
+          "path": "/agent-portals/runs/:param/sign-in-code/"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-portals/sites/"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-web-watches/:param"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-web-watches/:param/findings/"
+        },
+        {
+          "method": "POST",
+          "path": "/agent-web-watches/:param/stop/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/agents/:param/commands/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/ask/"
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/ask/:param/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/ask/:param/keep/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/mentions/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/providers/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/schedules/"
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/schedules/:param/"
+        },
+        {
+          "method": "PATCH",
+          "path": "/assistant/schedules/:param/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/schedules/:param/run/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/search/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param"
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/threads/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/"
+        },
+        {
+          "method": "PATCH",
+          "path": "/assistant/threads/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/artifacts/:param"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/artifacts/:param/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/artifacts/:param/pin/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/artifacts/:param/restore/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/artifacts/:param/rewrite/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/artifacts/:param/rows/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/artifacts/:param/run/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/artifacts/:param/versions/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/artifacts/by-slug/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/budget/"
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/threads/:param/case/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/case/"
+        },
+        {
+          "method": "PUT",
+          "path": "/assistant/threads/:param/case/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/case/await-reply/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/case/snooze/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/case/ticks/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/case/wake/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/chapters/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/chapters/"
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/threads/:param/chapters/:param/"
+        },
+        {
+          "method": "PATCH",
+          "path": "/assistant/threads/:param/chapters/:param/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/compact/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/handoff/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/messages/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/messages/:param"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/plans/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/proposals/"
+        },
+        {
+          "method": "PUT",
+          "path": "/assistant/threads/:param/proposals/:param/edits/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/queue/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/queue/"
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/threads/:param/queue/:param/"
+        },
+        {
+          "method": "PATCH",
+          "path": "/assistant/threads/:param/queue/:param/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/queue/:param/send/"
+        },
+        {
+          "method": "PUT",
+          "path": "/assistant/threads/:param/queue/order/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/read/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/requests/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/schedules/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/schedules/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/turns/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/turns/active/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/waits/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/waits/:param/cancel/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/shelves/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/turns/:param/stop/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/turns/active/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/:param/activity/"
+        },
+        {
+          "method": "POST",
+          "path": "/billing-queue/:param/issues/:param/resolve/"
+        },
+        {
+          "method": "POST",
+          "path": "/billing-queue/:param/issues/:param/undo/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/:param/neighbors/:param"
+        },
+        {
+          "method": "POST",
+          "path": "/billing-queue/:param/post/"
+        },
+        {
+          "method": "POST",
+          "path": "/billing-queue/:param/release/"
+        },
+        {
+          "method": "PUT",
+          "path": "/billing-queue/:param/status/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/assist/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/brief/"
+        },
+        {
+          "method": "POST",
+          "path": "/billing-queue/bulk/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/bulk/:param/"
+        },
+        {
+          "method": "POST",
+          "path": "/billing-queue/bulk/:param/cancel/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/recommendations/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/summaries/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing/invoices/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing/invoices/:param/email-attempts/:param"
+        },
+        {
+          "method": "POST",
+          "path": "/billing/invoices/:param/generate-pdf/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing/invoices/:param/post-preview/"
+        },
+        {
+          "method": "POST",
+          "path": "/billing/invoices/:param/post/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing/invoices/:param/send-plan/"
+        },
+        {
+          "method": "POST",
+          "path": "/billing/invoices/:param/send/"
+        },
+        {
+          "method": "GET",
+          "path": "/case-checklists/"
+        },
+        {
+          "method": "PUT",
+          "path": "/case-checklists/"
+        },
+        {
+          "method": "DELETE",
+          "path": "/case-checklists/:param/"
+        },
+        {
+          "method": "DELETE",
+          "path": "/documents/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/documents/:param/"
+        },
+        {
+          "method": "POST",
+          "path": "/documents/:param/approve/"
+        },
+        {
+          "method": "POST",
+          "path": "/documents/:param/attach-to-shipment/"
+        },
+        {
+          "method": "GET",
+          "path": "/documents/:param/content/"
+        },
+        {
+          "method": "POST",
+          "path": "/documents/:param/delivery-facts/"
+        },
+        {
+          "method": "GET",
+          "path": "/documents/:param/import-assistant/history/"
+        },
+        {
+          "method": "POST",
+          "path": "/documents/:param/import-assistant/thread/"
+        },
+        {
+          "method": "GET",
+          "path": "/documents/:param/reading/"
+        },
+        {
+          "method": "POST",
+          "path": "/documents/:param/reject/"
+        },
+        {
+          "method": "POST",
+          "path": "/documents/:param/restore/"
+        },
+        {
+          "method": "GET",
+          "path": "/documents/:param/shipment-draft/"
+        },
+        {
+          "method": "POST",
+          "path": "/documents/:param/shipment-draft/reextract/"
+        },
+        {
+          "method": "POST",
+          "path": "/documents/:param/signature/"
+        },
+        {
+          "method": "GET",
+          "path": "/documents/:param/versions/"
+        },
+        {
+          "method": "POST",
+          "path": "/documents/bulk-delete/"
+        },
+        {
+          "method": "GET",
+          "path": "/documents/extraction-status/"
+        },
+        {
+          "method": "GET",
+          "path": "/documents/resource/:param/:param/packet-summary/"
+        },
+        {
+          "method": "POST",
+          "path": "/documents/uploads/"
+        },
+        {
+          "method": "GET",
+          "path": "/documents/uploads/:param/"
+        },
+        {
+          "method": "POST",
+          "path": "/documents/uploads/:param/cancel/"
+        },
+        {
+          "method": "POST",
+          "path": "/documents/uploads/:param/complete/"
+        },
+        {
+          "method": "POST",
+          "path": "/documents/uploads/:param/parts/"
+        },
+        {
+          "method": "GET",
+          "path": "/documents/uploads/active/"
+        },
+        {
+          "method": "POST",
+          "path": "/edi/communication-profiles/:param/poll/"
+        },
+        {
+          "method": "POST",
+          "path": "/edi/communication-profiles/:param/test-connection/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/connections/:param"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/inbound-files/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/inbound-files/:param/inspect/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/messages/:param"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/messages/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/messages/:param/inspect/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/partners/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/partners/:param/mapping-profile/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/transfers/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/transfers/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/transfers/:param/mapping-preview/"
+        },
+        {
+          "method": "GET",
+          "path": "/locations/"
+        },
+        {
+          "method": "GET",
+          "path": "/rate-agreements/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/rate-agreements/:param/lanes/"
+        },
+        {
+          "method": "GET",
+          "path": "/rate-agreements/:param/lanes/summary/"
+        },
+        {
+          "method": "GET",
+          "path": "/rate-agreements/:param/versions/"
+        },
+        {
+          "method": "GET",
+          "path": "/search/global/"
+        },
+        {
+          "method": "GET",
+          "path": "/service-failures/"
+        },
+        {
+          "method": "GET",
+          "path": "/service-failures/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/service-failures/:param/edi-214-readiness/:param"
+        },
+        {
+          "method": "GET",
+          "path": "/service-failures/:param/edi-214-status/"
+        },
+        {
+          "method": "GET",
+          "path": "/shipment-moves/:param/rate-confirmations/"
+        },
+        {
+          "method": "GET",
+          "path": "/shipments/:param/customer-tracking/preview/"
+        },
+        {
+          "method": "GET",
+          "path": "/shipments/:param/eta/"
+        },
+        {
+          "method": "GET",
+          "path": "/shipments/:param/permit-assessment/"
+        },
+        {
+          "method": "GET",
+          "path": "/shipments/:param/permit-requirements/"
+        },
+        {
+          "method": "GET",
+          "path": "/shipments/:param/permits/"
+        }
+      ]
+    },
+    {
+      "path": "/desk/triage",
+      "name": "",
+      "requires": [
+        {
+          "resource": "assistant",
+          "operation": "read"
+        },
+        {
+          "resource": "inbound_message",
+          "operation": "read"
+        }
+      ],
+      "operations": [
+        "AgentPlanPreview",
+        "AgentProposalPreview",
+        "AvailableCaptureProfiles",
+        "CancelCaptureRequest",
+        "CaptureAgentRelease",
+        "CaptureBatch",
+        "CaptureBatchCount",
+        "CaptureBatches",
+        "CaptureDevicePairing",
+        "CaptureDevices",
+        "CaptureProfiles",
+        "CaptureRequestsForTarget",
+        "CommitMyDecisionNow",
+        "ConfirmDeskMemory",
+        "CreateCaptureRequest",
+        "DecideMyPlan",
+        "DecideMyProposal",
+        "DecideMyProposals",
+        "DeskMemoriesByIds",
+        "DeskMemorySettings",
+        "DismissDeskMemory",
+        "FactoringAgreementActivity",
+        "FactoringAgreementOwner",
+        "FactoringAgreements",
+        "FactoringChargebackPlan",
+        "FactoringChargebackReversalPlan",
+        "FactoringCompanyCustomers",
+        "FactoringCompanyOverview",
+        "FactoringCompanyRecord",
+        "FactoringCompanySchedules",
+        "FactoringFundingPlan",
+        "FactoringFundingPreview",
+        "FactoringInvoiceStateTable",
+        "FactoringNoaOwner",
+        "FactoringNoas",
+        "FactoringReleasePlan",
+        "FactoringRemittanceDetail",
+        "FactoringRemittanceLines",
+        "FactoringRemittancePlan",
+        "FactoringRemittanceTable",
+        "FactoringRemittances",
+        "FactoringReserveBalance",
+        "FactoringReserveEntries",
+        "FactoringReserveHistory",
+        "FactoringSubmissionDetail",
+        "FactoringSubmissionPlan",
+        "FactoringSubmissionTable",
+        "FactoringSummary",
+        "FactoringTransport",
+        "InvoiceFactoring",
+        "MyCaptureAccess",
+        "MyCaptureDevices",
+        "MyPlanPreview",
+        "MyProposalPreview",
+        "RecordMyAgentSuggestion",
+        "ReviseDeskMemory",
+        "SetDeskMemoryStatus",
+        "SettleMyAgentSuggestion",
+        "UndoMyDecision"
+      ],
+      "rest": [
+        {
+          "method": "POST",
+          "path": "/agent-definitions/"
+        },
+        {
+          "method": "DELETE",
+          "path": "/agent-definitions/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-definitions/:param/"
+        },
+        {
+          "method": "PUT",
+          "path": "/agent-definitions/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-definitions/:param/budget/"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-definitions/:param/trust/"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-definitions/event-kinds/"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-definitions/system/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-definitions/templates/"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-definitions/tools/"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-extensions/:param/config/"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-extensions/catalog/"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-portals/runs/:param"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-portals/runs/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-portals/runs/:param/live/"
+        },
+        {
+          "method": "POST",
+          "path": "/agent-portals/runs/:param/sign-in-code/"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-portals/sites/"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-web-watches/:param"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-web-watches/:param/findings/"
+        },
+        {
+          "method": "POST",
+          "path": "/agent-web-watches/:param/stop/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/agents/:param/commands/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/ask/"
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/ask/:param/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/ask/:param/keep/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/mentions/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/providers/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/schedules/"
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/schedules/:param/"
+        },
+        {
+          "method": "PATCH",
+          "path": "/assistant/schedules/:param/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/schedules/:param/run/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/search/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param"
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/threads/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/"
+        },
+        {
+          "method": "PATCH",
+          "path": "/assistant/threads/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/artifacts/:param"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/artifacts/:param/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/artifacts/:param/pin/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/artifacts/:param/restore/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/artifacts/:param/rewrite/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/artifacts/:param/rows/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/artifacts/:param/run/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/artifacts/:param/versions/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/artifacts/by-slug/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/budget/"
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/threads/:param/case/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/case/"
+        },
+        {
+          "method": "PUT",
+          "path": "/assistant/threads/:param/case/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/case/await-reply/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/case/snooze/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/case/ticks/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/case/wake/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/chapters/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/chapters/"
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/threads/:param/chapters/:param/"
+        },
+        {
+          "method": "PATCH",
+          "path": "/assistant/threads/:param/chapters/:param/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/compact/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/handoff/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/messages/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/messages/:param"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/plans/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/proposals/"
+        },
+        {
+          "method": "PUT",
+          "path": "/assistant/threads/:param/proposals/:param/edits/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/queue/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/queue/"
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/threads/:param/queue/:param/"
+        },
+        {
+          "method": "PATCH",
+          "path": "/assistant/threads/:param/queue/:param/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/queue/:param/send/"
+        },
+        {
+          "method": "PUT",
+          "path": "/assistant/threads/:param/queue/order/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/read/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/requests/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/schedules/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/schedules/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/turns/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/turns/active/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/waits/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/waits/:param/cancel/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/shelves/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/turns/:param/stop/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/turns/active/"
+        },
+        {
+          "method": "DELETE",
+          "path": "/documents/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/documents/:param/"
+        },
+        {
+          "method": "POST",
+          "path": "/documents/:param/approve/"
+        },
+        {
+          "method": "POST",
+          "path": "/documents/:param/attach-to-shipment/"
+        },
+        {
+          "method": "GET",
+          "path": "/documents/:param/content/"
+        },
+        {
+          "method": "POST",
+          "path": "/documents/:param/delivery-facts/"
+        },
+        {
+          "method": "GET",
+          "path": "/documents/:param/import-assistant/history/"
+        },
+        {
+          "method": "POST",
+          "path": "/documents/:param/import-assistant/thread/"
+        },
+        {
+          "method": "GET",
+          "path": "/documents/:param/reading/"
+        },
+        {
+          "method": "POST",
+          "path": "/documents/:param/reject/"
+        },
+        {
+          "method": "POST",
+          "path": "/documents/:param/restore/"
+        },
+        {
+          "method": "GET",
+          "path": "/documents/:param/shipment-draft/"
+        },
+        {
+          "method": "POST",
+          "path": "/documents/:param/shipment-draft/reextract/"
+        },
+        {
+          "method": "POST",
+          "path": "/documents/:param/signature/"
+        },
+        {
+          "method": "GET",
+          "path": "/documents/:param/versions/"
+        },
+        {
+          "method": "POST",
+          "path": "/documents/bulk-delete/"
+        },
+        {
+          "method": "GET",
+          "path": "/documents/extraction-status/"
+        },
+        {
+          "method": "GET",
+          "path": "/documents/resource/:param/:param/packet-summary/"
+        },
+        {
+          "method": "POST",
+          "path": "/documents/uploads/"
+        },
+        {
+          "method": "GET",
+          "path": "/documents/uploads/:param/"
+        },
+        {
+          "method": "POST",
+          "path": "/documents/uploads/:param/cancel/"
+        },
+        {
+          "method": "POST",
+          "path": "/documents/uploads/:param/complete/"
+        },
+        {
+          "method": "POST",
+          "path": "/documents/uploads/:param/parts/"
+        },
+        {
+          "method": "GET",
+          "path": "/documents/uploads/active/"
+        },
+        {
+          "method": "GET",
+          "path": "/search/global/"
+        }
+      ]
+    },
+    {
+      "path": "/desk/v/:viewThreadId/:slug",
+      "name": "",
+      "requires": [
+        {
+          "resource": "assistant",
+          "operation": "read"
+        }
+      ],
+      "operations": [
+        "AccountingBackfills",
+        "AccountingBriefing",
+        "AccountingDriftFinding",
+        "AccountingDriftFixPreview",
+        "AccountingDriftOverview",
+        "AccountingInboundApplyPreview",
+        "AccountingInboundChange",
+        "AccountingInboundOverview",
+        "AccountingMappingSummary",
+        "AccountingReferenceObjects",
+        "AccountingSyncAttempts",
+        "AccountingSyncObjectStates",
+        "AccountingSyncRecord",
+        "AccountingSyncStatus",
+        "AccountingSyncSummary",
+        "AddCarrierSettlementAdjustment",
+        "AddDriverSettlementAdjustment",
+        "AgentPlanPreview",
+        "AgentProposalPreview",
+        "ApproveCarrierSettlement",
+        "ApproveDriverSettlement",
+        "ApproveJournalEntries",
+        "ArAgingSummary",
+        "ArAgingTrend",
+        "ArCashFlowForecast",
+        "ArCollectionsWorklist",
+        "ArCustomerLedger",
+        "ArCustomerProfile",
+        "ArCustomerStatement",
+        "ArDashboardKpis",
+        "ArDsoTrend",
+        "ArOpenItems",
+        "ArPaymentStats",
+        "ArTopOverdueCustomers",
+        "AssignBillingQueueBiller",
+        "AssignFuelCard",
+        "AvailableCaptureProfiles",
+        "BillingQueueFormulaTemplate",
+        "BillingQueueRateAgreement",
+        "BillingQueueShipment",
+        "CancelCaptureRequest",
+        "CaptureAgentRelease",
+        "CaptureBatch",
+        "CaptureBatchCount",
+        "CaptureBatches",
+        "CaptureDevicePairing",
+        "CaptureDevices",
+        "CaptureProfiles",
+        "CaptureRequestsForTarget",
+        "CarrierInvoiceMatches",
+        "CarrierSettlementDetail",
+        "CarrierTrackingLink",
+        "CommitMyDecisionNow",
+        "ConfirmDeskMemory",
+        "CreateCaptureRequest",
+        "CustomerStatusNotifications",
+        "CustomerTrackingLinks",
+        "CustomerTrackingProfile",
+        "DecideMyPlan",
+        "DecideMyProposal",
+        "DecideMyProposals",
+        "DeskBoardCard",
+        "DeskCarrierCard",
+        "DeskCarrierEligibility",
+        "DeskCarrierIntel",
+        "DeskCarrierSettlementCard",
+        "DeskCarrierSettlements",
+        "DeskCustomerCard",
+        "DeskCustomerRateAgreements",
+        "DeskDetentionCard",
+        "DeskDriverSettlementCard",
+        "DeskEdiPartnerCard",
+        "DeskEdiPartnerMessages",
+        "DeskFuelCardCard",
+        "DeskFuelPurchaseCard",
+        "DeskInvoiceCard",
+        "DeskJournalEntryCard",
+        "DeskLocationCard",
+        "DeskLocationDwell",
+        "DeskLocationPolicies",
+        "DeskManualJournalCard",
+        "DeskMemoriesByIds",
+        "DeskMemorySettings",
+        "DeskOrderCard",
+        "DeskRateAgreementPricing",
+        "DeskRecordActivity",
+        "DeskRecordFailures",
+        "DeskRecordShipments",
+        "DeskServiceFailureCard",
+        "DeskTractorCard",
+        "DeskTractorInspections",
+        "DeskTractorPosition",
+        "DeskTrailerCard",
+        "DeskWorkerCard",
+        "DeskWorkerCredentials",
+        "DeskWorkerHos",
+        "DeskWorkerStanding",
+        "DetachPayEventFromSettlement",
+        "DetentionIntelligence",
+        "DismissDeskMemory",
+        "DriverSettlementDetail",
+        "EdiPartnerScorecards",
+        "EdiSummary",
+        "EdiVolumeSeries",
+        "ExportCarrierSettlementBatchCsv",
+        "InvoiceArContext",
+        "JournalEntriesBySource",
+        "JournalEntryDetail",
+        "JournalReviewSummary",
+        "JournalReviewTable",
+        "JournalSourceByObject",
+        "LateChargePreview",
+        "MarkCarrierSettlementPaid",
+        "MarkDriverSettlementPaid",
+        "MyCaptureAccess",
+        "MyCaptureDevices",
+        "MyPlanPreview",
+        "MyProposalPreview",
+        "PostCarrierSettlement",
+        "PostDriverSettlement",
+        "PostJournalEntries",
+        "RecalculateCarrierSettlement",
+        "RecalculateDriverSettlement",
+        "RecordMyAgentSuggestion",
+        "RejectCarrierSettlement",
+        "RejectDriverSettlement",
+        "RemoveCarrierSettlementAdjustment",
+        "RemoveDriverSettlementAdjustment",
+        "ResolveFuelPurchaseImportRows",
+        "ReviseDeskMemory",
+        "SendInvoiceEdi",
+        "SetDeskMemoryStatus",
+        "SettleMyAgentSuggestion",
+        "ShipmentCheckCalls",
+        "ShipmentCustomerBillingRules",
+        "ShipmentInvoices",
+        "ShipmentProfitability",
+        "SubmitCarrierSettlement",
+        "SubmitDriverSettlement",
+        "TodaysBriefing",
+        "UndoMyDecision",
+        "UpcomingWorkerPto",
+        "VoidCarrierSettlement",
+        "VoidDriverSettlement",
+        "VoidInvoice",
+        "WorkerCredentialTypeChoices",
+        "WorkerPtoChartData",
+        "WorkerPtoTable"
+      ],
+      "rest": [
+        {
+          "method": "POST",
+          "path": "/accounting/journal-reversals/"
+        },
+        {
+          "method": "GET",
+          "path": "/accounting/manual-journals/:param/"
+        },
+        {
+          "method": "POST",
+          "path": "/accounting/manual-journals/:param/approve/"
+        },
+        {
+          "method": "POST",
+          "path": "/accounting/manual-journals/:param/cancel/"
+        },
+        {
+          "method": "POST",
+          "path": "/accounting/manual-journals/:param/post/"
+        },
+        {
+          "method": "POST",
+          "path": "/accounting/manual-journals/:param/reject/"
+        },
+        {
+          "method": "POST",
+          "path": "/accounting/manual-journals/:param/submit/"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-analysis/runs/:param/"
+        },
+        {
+          "method": "POST",
+          "path": "/agent-definitions/"
+        },
+        {
+          "method": "DELETE",
+          "path": "/agent-definitions/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-definitions/:param/"
+        },
+        {
+          "method": "PUT",
+          "path": "/agent-definitions/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-definitions/:param/budget/"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-definitions/:param/trust/"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-definitions/event-kinds/"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-definitions/system/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-definitions/templates/"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-definitions/tools/"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-extensions/:param/config/"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-extensions/catalog/"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-portals/runs/:param"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-portals/runs/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-portals/runs/:param/live/"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-portals/runs/:param/recording/"
+        },
+        {
+          "method": "POST",
+          "path": "/agent-portals/runs/:param/sign-in-code/"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-portals/sites/"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-web-watches/:param"
+        },
+        {
+          "method": "GET",
+          "path": "/agent-web-watches/:param/findings/"
+        },
+        {
+          "method": "POST",
+          "path": "/agent-web-watches/:param/stop/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/agents/:param/commands/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/ask/"
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/ask/:param/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/ask/:param/keep/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/mentions/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/providers/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/schedules/"
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/schedules/:param/"
+        },
+        {
+          "method": "PATCH",
+          "path": "/assistant/schedules/:param/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/schedules/:param/run/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/search/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param"
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/threads/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/"
+        },
+        {
+          "method": "PATCH",
+          "path": "/assistant/threads/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/artifacts/:param"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/artifacts/:param/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/artifacts/:param/pin/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/artifacts/:param/restore/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/artifacts/:param/rewrite/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/artifacts/:param/rows/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/artifacts/:param/run/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/artifacts/:param/versions/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/artifacts/by-slug/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/budget/"
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/threads/:param/case/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/case/"
+        },
+        {
+          "method": "PUT",
+          "path": "/assistant/threads/:param/case/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/case/await-reply/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/case/snooze/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/case/ticks/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/case/wake/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/chapters/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/chapters/"
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/threads/:param/chapters/:param/"
+        },
+        {
+          "method": "PATCH",
+          "path": "/assistant/threads/:param/chapters/:param/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/compact/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/handoff/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/messages/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/messages/:param"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/plans/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/proposals/"
+        },
+        {
+          "method": "PUT",
+          "path": "/assistant/threads/:param/proposals/:param/edits/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/queue/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/queue/"
+        },
+        {
+          "method": "DELETE",
+          "path": "/assistant/threads/:param/queue/:param/"
+        },
+        {
+          "method": "PATCH",
+          "path": "/assistant/threads/:param/queue/:param/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/queue/:param/send/"
+        },
+        {
+          "method": "PUT",
+          "path": "/assistant/threads/:param/queue/order/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/read/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/requests/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/schedules/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/schedules/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/turns/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/turns/active/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/:param/waits/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/waits/:param/cancel/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/threads/shelves/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/turns/:param/stop/"
+        },
+        {
+          "method": "GET",
+          "path": "/assistant/turns/active/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/:param/activity/"
+        },
+        {
+          "method": "POST",
+          "path": "/billing-queue/:param/issues/:param/resolve/"
+        },
+        {
+          "method": "POST",
+          "path": "/billing-queue/:param/issues/:param/undo/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/:param/neighbors/:param"
+        },
+        {
+          "method": "POST",
+          "path": "/billing-queue/:param/post/"
+        },
+        {
+          "method": "POST",
+          "path": "/billing-queue/:param/release/"
+        },
+        {
+          "method": "PUT",
+          "path": "/billing-queue/:param/status/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/assist/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/brief/"
+        },
+        {
+          "method": "POST",
+          "path": "/billing-queue/bulk/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/bulk/:param/"
+        },
+        {
+          "method": "POST",
+          "path": "/billing-queue/bulk/:param/cancel/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/recommendations/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing-queue/summaries/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing/invoices/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing/invoices/:param/email-attempts/:param"
+        },
+        {
+          "method": "POST",
+          "path": "/billing/invoices/:param/generate-pdf/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing/invoices/:param/post-preview/"
+        },
+        {
+          "method": "POST",
+          "path": "/billing/invoices/:param/post/"
+        },
+        {
+          "method": "GET",
+          "path": "/billing/invoices/:param/send-plan/"
+        },
+        {
+          "method": "POST",
+          "path": "/billing/invoices/:param/send/"
+        },
+        {
+          "method": "GET",
+          "path": "/case-checklists/"
+        },
+        {
+          "method": "PUT",
+          "path": "/case-checklists/"
+        },
+        {
+          "method": "DELETE",
+          "path": "/case-checklists/:param/"
+        },
+        {
+          "method": "DELETE",
+          "path": "/documents/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/documents/:param/"
+        },
+        {
+          "method": "POST",
+          "path": "/documents/:param/approve/"
+        },
+        {
+          "method": "POST",
+          "path": "/documents/:param/attach-to-shipment/"
+        },
+        {
+          "method": "GET",
+          "path": "/documents/:param/content/"
+        },
+        {
+          "method": "POST",
+          "path": "/documents/:param/delivery-facts/"
+        },
+        {
+          "method": "GET",
+          "path": "/documents/:param/import-assistant/history/"
+        },
+        {
+          "method": "POST",
+          "path": "/documents/:param/import-assistant/thread/"
+        },
+        {
+          "method": "GET",
+          "path": "/documents/:param/reading/"
+        },
+        {
+          "method": "POST",
+          "path": "/documents/:param/reject/"
+        },
+        {
+          "method": "POST",
+          "path": "/documents/:param/restore/"
+        },
+        {
+          "method": "GET",
+          "path": "/documents/:param/shipment-draft/"
+        },
+        {
+          "method": "POST",
+          "path": "/documents/:param/shipment-draft/reextract/"
+        },
+        {
+          "method": "POST",
+          "path": "/documents/:param/signature/"
+        },
+        {
+          "method": "GET",
+          "path": "/documents/:param/versions/"
+        },
+        {
+          "method": "POST",
+          "path": "/documents/bulk-delete/"
+        },
+        {
+          "method": "GET",
+          "path": "/documents/extraction-status/"
+        },
+        {
+          "method": "GET",
+          "path": "/documents/resource/:param/:param/packet-summary/"
+        },
+        {
+          "method": "POST",
+          "path": "/documents/uploads/"
+        },
+        {
+          "method": "GET",
+          "path": "/documents/uploads/:param/"
+        },
+        {
+          "method": "POST",
+          "path": "/documents/uploads/:param/cancel/"
+        },
+        {
+          "method": "POST",
+          "path": "/documents/uploads/:param/complete/"
+        },
+        {
+          "method": "POST",
+          "path": "/documents/uploads/:param/parts/"
+        },
+        {
+          "method": "GET",
+          "path": "/documents/uploads/active/"
+        },
+        {
+          "method": "POST",
+          "path": "/edi/communication-profiles/:param/poll/"
+        },
+        {
+          "method": "POST",
+          "path": "/edi/communication-profiles/:param/test-connection/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/connections/:param"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/inbound-files/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/inbound-files/:param/inspect/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/messages/:param"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/messages/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/messages/:param/inspect/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/partners/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/partners/:param/mapping-profile/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/transfers/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/transfers/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/transfers/:param/mapping-preview/"
+        },
+        {
+          "method": "GET",
+          "path": "/locations/"
+        },
+        {
+          "method": "GET",
+          "path": "/rate-agreements/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/rate-agreements/:param/lanes/"
+        },
+        {
+          "method": "GET",
+          "path": "/rate-agreements/:param/lanes/summary/"
+        },
+        {
+          "method": "GET",
+          "path": "/rate-agreements/:param/versions/"
+        },
+        {
+          "method": "GET",
+          "path": "/search/global/"
+        },
+        {
+          "method": "GET",
+          "path": "/service-failures/"
+        },
+        {
+          "method": "GET",
+          "path": "/service-failures/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/service-failures/:param/edi-214-readiness/:param"
+        },
+        {
+          "method": "GET",
+          "path": "/service-failures/:param/edi-214-status/"
+        },
+        {
+          "method": "GET",
+          "path": "/shipment-moves/:param/rate-confirmations/"
+        },
+        {
+          "method": "GET",
+          "path": "/shipments/:param/customer-tracking/preview/"
+        },
+        {
+          "method": "GET",
+          "path": "/shipments/:param/eta/"
+        },
+        {
+          "method": "GET",
+          "path": "/shipments/:param/permit-assessment/"
+        },
+        {
+          "method": "GET",
+          "path": "/shipments/:param/permit-requirements/"
+        },
+        {
+          "method": "GET",
+          "path": "/shipments/:param/permits/"
         }
       ]
     },
@@ -16589,11 +18197,14 @@
         "AuditAlertPolicies",
         "AuditChainStatus",
         "AuditEntryDetail",
+        "AuditEntryReview",
         "AuditExportTable",
         "AuditFieldHistory",
         "AuditLegalHoldTable",
         "AuditLogTable",
+        "AuditOverview",
         "AuditRequestEntries",
+        "AuditReviews",
         "BulkEditFields",
         "CancelOrder",
         "CloseOrder",
@@ -16757,11 +18368,14 @@
         "AuditAlertPolicies",
         "AuditChainStatus",
         "AuditEntryDetail",
+        "AuditEntryReview",
         "AuditExportTable",
         "AuditFieldHistory",
         "AuditLegalHoldTable",
         "AuditLogTable",
+        "AuditOverview",
         "AuditRequestEntries",
+        "AuditReviews",
         "AvailableCaptureProfiles",
         "BillingQueueFormulaTemplate",
         "BillingQueueItems",
@@ -17235,497 +18849,6 @@
         "DeskMemoriesByIds",
         "DeskMemorySettings",
         "DismissDeskMemory",
-        "MyCaptureAccess",
-        "MyCaptureDevices",
-        "MyPlanPreview",
-        "MyProposalPreview",
-        "RecordMyAgentSuggestion",
-        "ReviseDeskMemory",
-        "SetDeskMemoryStatus",
-        "SettleMyAgentSuggestion",
-        "UndoMyDecision"
-      ],
-      "rest": [
-        {
-          "method": "POST",
-          "path": "/agent-definitions/"
-        },
-        {
-          "method": "DELETE",
-          "path": "/agent-definitions/:param/"
-        },
-        {
-          "method": "GET",
-          "path": "/agent-definitions/:param/"
-        },
-        {
-          "method": "PUT",
-          "path": "/agent-definitions/:param/"
-        },
-        {
-          "method": "GET",
-          "path": "/agent-definitions/:param/budget/"
-        },
-        {
-          "method": "GET",
-          "path": "/agent-definitions/:param/trust/"
-        },
-        {
-          "method": "GET",
-          "path": "/agent-definitions/event-kinds/"
-        },
-        {
-          "method": "GET",
-          "path": "/agent-definitions/system/:param/"
-        },
-        {
-          "method": "GET",
-          "path": "/agent-definitions/templates/"
-        },
-        {
-          "method": "GET",
-          "path": "/agent-definitions/tools/"
-        },
-        {
-          "method": "GET",
-          "path": "/agent-extensions/:param/config/"
-        },
-        {
-          "method": "GET",
-          "path": "/agent-extensions/catalog/"
-        },
-        {
-          "method": "GET",
-          "path": "/agent-portals/runs/:param"
-        },
-        {
-          "method": "GET",
-          "path": "/agent-portals/runs/:param/"
-        },
-        {
-          "method": "GET",
-          "path": "/agent-portals/runs/:param/live/"
-        },
-        {
-          "method": "POST",
-          "path": "/agent-portals/runs/:param/sign-in-code/"
-        },
-        {
-          "method": "GET",
-          "path": "/agent-portals/sites/"
-        },
-        {
-          "method": "GET",
-          "path": "/agent-web-watches/:param"
-        },
-        {
-          "method": "GET",
-          "path": "/agent-web-watches/:param/findings/"
-        },
-        {
-          "method": "POST",
-          "path": "/agent-web-watches/:param/stop/"
-        },
-        {
-          "method": "GET",
-          "path": "/assistant/agents/:param/commands/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/ask/"
-        },
-        {
-          "method": "DELETE",
-          "path": "/assistant/ask/:param/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/ask/:param/keep/"
-        },
-        {
-          "method": "GET",
-          "path": "/assistant/mentions/"
-        },
-        {
-          "method": "GET",
-          "path": "/assistant/providers/"
-        },
-        {
-          "method": "GET",
-          "path": "/assistant/schedules/"
-        },
-        {
-          "method": "DELETE",
-          "path": "/assistant/schedules/:param/"
-        },
-        {
-          "method": "PATCH",
-          "path": "/assistant/schedules/:param/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/schedules/:param/run/"
-        },
-        {
-          "method": "GET",
-          "path": "/assistant/search/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/threads/"
-        },
-        {
-          "method": "GET",
-          "path": "/assistant/threads/:param"
-        },
-        {
-          "method": "DELETE",
-          "path": "/assistant/threads/:param/"
-        },
-        {
-          "method": "GET",
-          "path": "/assistant/threads/:param/"
-        },
-        {
-          "method": "PATCH",
-          "path": "/assistant/threads/:param/"
-        },
-        {
-          "method": "GET",
-          "path": "/assistant/threads/:param/artifacts/:param"
-        },
-        {
-          "method": "GET",
-          "path": "/assistant/threads/:param/artifacts/:param/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/threads/:param/artifacts/:param/pin/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/threads/:param/artifacts/:param/restore/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/threads/:param/artifacts/:param/rewrite/"
-        },
-        {
-          "method": "GET",
-          "path": "/assistant/threads/:param/artifacts/:param/rows/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/threads/:param/artifacts/:param/run/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/threads/:param/artifacts/:param/versions/"
-        },
-        {
-          "method": "GET",
-          "path": "/assistant/threads/:param/artifacts/by-slug/:param/"
-        },
-        {
-          "method": "GET",
-          "path": "/assistant/threads/:param/budget/"
-        },
-        {
-          "method": "DELETE",
-          "path": "/assistant/threads/:param/case/"
-        },
-        {
-          "method": "GET",
-          "path": "/assistant/threads/:param/case/"
-        },
-        {
-          "method": "PUT",
-          "path": "/assistant/threads/:param/case/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/threads/:param/case/await-reply/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/threads/:param/case/snooze/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/threads/:param/case/ticks/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/threads/:param/case/wake/"
-        },
-        {
-          "method": "GET",
-          "path": "/assistant/threads/:param/chapters/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/threads/:param/chapters/"
-        },
-        {
-          "method": "DELETE",
-          "path": "/assistant/threads/:param/chapters/:param/"
-        },
-        {
-          "method": "PATCH",
-          "path": "/assistant/threads/:param/chapters/:param/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/threads/:param/compact/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/threads/:param/handoff/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/threads/:param/messages/"
-        },
-        {
-          "method": "GET",
-          "path": "/assistant/threads/:param/messages/:param"
-        },
-        {
-          "method": "GET",
-          "path": "/assistant/threads/:param/plans/"
-        },
-        {
-          "method": "GET",
-          "path": "/assistant/threads/:param/proposals/"
-        },
-        {
-          "method": "PUT",
-          "path": "/assistant/threads/:param/proposals/:param/edits/"
-        },
-        {
-          "method": "GET",
-          "path": "/assistant/threads/:param/queue/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/threads/:param/queue/"
-        },
-        {
-          "method": "DELETE",
-          "path": "/assistant/threads/:param/queue/:param/"
-        },
-        {
-          "method": "PATCH",
-          "path": "/assistant/threads/:param/queue/:param/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/threads/:param/queue/:param/send/"
-        },
-        {
-          "method": "PUT",
-          "path": "/assistant/threads/:param/queue/order/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/threads/:param/read/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/threads/:param/requests/"
-        },
-        {
-          "method": "GET",
-          "path": "/assistant/threads/:param/schedules/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/threads/:param/schedules/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/threads/:param/turns/"
-        },
-        {
-          "method": "GET",
-          "path": "/assistant/threads/:param/turns/active/"
-        },
-        {
-          "method": "GET",
-          "path": "/assistant/threads/:param/waits/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/threads/:param/waits/:param/cancel/"
-        },
-        {
-          "method": "GET",
-          "path": "/assistant/threads/shelves/"
-        },
-        {
-          "method": "POST",
-          "path": "/assistant/turns/:param/stop/"
-        },
-        {
-          "method": "GET",
-          "path": "/assistant/turns/active/"
-        },
-        {
-          "method": "DELETE",
-          "path": "/documents/:param/"
-        },
-        {
-          "method": "GET",
-          "path": "/documents/:param/"
-        },
-        {
-          "method": "POST",
-          "path": "/documents/:param/approve/"
-        },
-        {
-          "method": "POST",
-          "path": "/documents/:param/attach-to-shipment/"
-        },
-        {
-          "method": "GET",
-          "path": "/documents/:param/content/"
-        },
-        {
-          "method": "POST",
-          "path": "/documents/:param/delivery-facts/"
-        },
-        {
-          "method": "GET",
-          "path": "/documents/:param/import-assistant/history/"
-        },
-        {
-          "method": "POST",
-          "path": "/documents/:param/import-assistant/thread/"
-        },
-        {
-          "method": "GET",
-          "path": "/documents/:param/reading/"
-        },
-        {
-          "method": "POST",
-          "path": "/documents/:param/reject/"
-        },
-        {
-          "method": "POST",
-          "path": "/documents/:param/restore/"
-        },
-        {
-          "method": "GET",
-          "path": "/documents/:param/shipment-draft/"
-        },
-        {
-          "method": "POST",
-          "path": "/documents/:param/shipment-draft/reextract/"
-        },
-        {
-          "method": "POST",
-          "path": "/documents/:param/signature/"
-        },
-        {
-          "method": "GET",
-          "path": "/documents/:param/versions/"
-        },
-        {
-          "method": "POST",
-          "path": "/documents/bulk-delete/"
-        },
-        {
-          "method": "GET",
-          "path": "/documents/extraction-status/"
-        },
-        {
-          "method": "GET",
-          "path": "/documents/resource/:param/:param/packet-summary/"
-        },
-        {
-          "method": "POST",
-          "path": "/documents/uploads/"
-        },
-        {
-          "method": "GET",
-          "path": "/documents/uploads/:param/"
-        },
-        {
-          "method": "POST",
-          "path": "/documents/uploads/:param/cancel/"
-        },
-        {
-          "method": "POST",
-          "path": "/documents/uploads/:param/complete/"
-        },
-        {
-          "method": "POST",
-          "path": "/documents/uploads/:param/parts/"
-        },
-        {
-          "method": "GET",
-          "path": "/documents/uploads/active/"
-        },
-        {
-          "method": "GET",
-          "path": "/search/global/"
-        }
-      ]
-    },
-    {
-      "path": "/triage",
-      "name": "Triage",
-      "requires": [
-        {
-          "resource": "inbound_message",
-          "operation": "read"
-        }
-      ],
-      "operations": [
-        "AgentPlanPreview",
-        "AgentProposalPreview",
-        "AvailableCaptureProfiles",
-        "CancelCaptureRequest",
-        "CaptureAgentRelease",
-        "CaptureBatch",
-        "CaptureBatchCount",
-        "CaptureBatches",
-        "CaptureDevicePairing",
-        "CaptureDevices",
-        "CaptureProfiles",
-        "CaptureRequestsForTarget",
-        "CommitMyDecisionNow",
-        "ConfirmDeskMemory",
-        "CreateCaptureRequest",
-        "DecideMyPlan",
-        "DecideMyProposal",
-        "DecideMyProposals",
-        "DeskMemoriesByIds",
-        "DeskMemorySettings",
-        "DismissDeskMemory",
-        "FactoringAgreementOwner",
-        "FactoringAgreements",
-        "FactoringChargebackPlan",
-        "FactoringChargebackReversalPlan",
-        "FactoringCompanyRecord",
-        "FactoringFundingPlan",
-        "FactoringInvoiceStateTable",
-        "FactoringNoaOwner",
-        "FactoringNoas",
-        "FactoringReleasePlan",
-        "FactoringRemittanceDetail",
-        "FactoringRemittanceLines",
-        "FactoringRemittancePlan",
-        "FactoringRemittanceTable",
-        "FactoringRemittances",
-        "FactoringReserveBalance",
-        "FactoringReserveEntries",
-        "FactoringSubmissionDetail",
-        "FactoringSubmissionPlan",
-        "FactoringSubmissionTable",
-        "FactoringSummary",
-        "FactoringTransport",
-        "InvoiceFactoring",
         "MyCaptureAccess",
         "MyCaptureDevices",
         "MyPlanPreview",

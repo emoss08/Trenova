@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/billing/jobs/billingqueuejobs/billingqueuecontract"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -95,5 +96,11 @@ func (a *Activities) RefreshBriefActivity(
 	tenant := payload.Tenant()
 	ctx = dbscope.WithTenant(ctx, tenant.DBTenant())
 
-	return a.assist.RefreshBrief(ctx, tenant)
+	written, err := a.assist.RefreshBrief(ctx, tenant)
+	if err != nil || !written {
+		return err
+	}
+	a.publishTenantChanged(ctx, tenant, permission.ResourceBillingQueue.String())
+
+	return nil
 }

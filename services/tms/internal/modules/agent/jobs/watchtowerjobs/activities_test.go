@@ -294,3 +294,45 @@ func TestFactoringSweepIsScheduled(t *testing.T) {
 	}
 	assert.True(t, registered)
 }
+
+/*
+A proposal or a plan that expired stops waiting on a person without anything
+being decided, so nothing takes its item off the feed. The decision sweep
+reconciles both decision kinds for every organization, each under its own
+scope, so an expired one stops saying it needs approval within minutes.
+*/
+func TestDecisionSweepReconcilesProposalsAndPlansForEachOrganization(t *testing.T) {
+	t.Parallel()
+
+	first, second := tenantInfo(), tenantInfo()
+	tower := &fakeWatchtower{}
+	a := &Activities{
+		watchtower: tower,
+		tenants: &fakeTenantSync{organizations: []tenant.SyncOrganization{
+			{ID: first.OrgID, BusinessUnitID: first.BuID},
+			{ID: second.OrgID, BusinessUnitID: second.BuID},
+		}},
+		l: zap.NewNop(),
+	}
+
+	suite := &testsuite.WorkflowTestSuite{}
+	env := suite.NewTestActivityEnvironment()
+	env.RegisterActivity(a)
+	value, err := env.ExecuteActivity(a.DecisionSweepActivity)
+	require.NoError(t, err)
+	result := new(WatchtowerSweepResult)
+	require.NoError(t, value.Get(result))
+
+	assert.Equal(t, 2, result.OrganizationsProcessed)
+	assert.Equal(t, 4, result.Resolved, "one per kind per organization")
+	require.Len(t, tower.calls, 4)
+	kinds := make([]watchtower.SourceKind, 0, len(tower.calls))
+	for _, call := range tower.calls {
+		kinds = append(kinds, call.kind)
+		assert.True(t, call.scoped, "each organization runs under its own scope")
+	}
+	assert.Equal(t, []watchtower.SourceKind{
+		watchtower.SourceAgentProposal, watchtower.SourceAgentPlan,
+		watchtower.SourceAgentProposal, watchtower.SourceAgentPlan,
+	}, kinds)
+}

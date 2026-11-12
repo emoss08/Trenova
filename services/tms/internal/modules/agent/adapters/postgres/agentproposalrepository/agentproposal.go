@@ -3,6 +3,7 @@ package agentproposalrepository
 import (
 	"context"
 	"fmt"
+	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/caseownerquery"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
@@ -101,7 +102,9 @@ func (r *repository) ListConnection(
 			result, err := listquery.Connection(
 				ctx,
 				r.db.Keel(ctx),
-				agentdb.AgentProposals.Query(),
+				agentdb.AgentProposals.Where(
+					caseownerquery.InSight(agentdb.AgentProposals.TargetID, req.Sight),
+				),
 				&listquery.Request[agent.AgentProposal]{
 					Filter:  req.Filter,
 					Cursor:  req.Cursor,
@@ -592,6 +595,36 @@ func (r *repository) ListFailedByTargets(
 			r.l.Error("failed to list failed proposals by target", zap.Error(err))
 
 			return nil, fmt.Errorf("list failed proposals by target: %w", err)
+		}
+
+		return proposals, nil
+	})
+}
+
+func (r *repository) ListStandingByDefinition(
+	ctx context.Context,
+	req *agentproposalports.ListStandingByDefinitionRequest,
+) ([]*agent.AgentProposal, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentProposal, error) {
+		if len(req.ToolNames) == 0 || req.DefinitionID.IsNil() {
+			return []*agent.AgentProposal{}, nil
+		}
+
+		p := agentdb.AgentProposals
+		proposals, err := p.Where(
+			p.Status.Eq(agent.ProposalStatusPending),
+			p.ToolName.In(req.ToolNames...),
+			p.Run().AgentDefinitionID.Eq(req.DefinitionID),
+			keel.Or(p.ExpiresAt.IsNull(), p.ExpiresAt.Gt(req.Now)),
+		).
+			Order(p.CreatedAt.Desc(), p.ID.Desc()).
+			Limit(max(req.Limit, 1)).
+			List(ctx, r.db.Keel(ctx))
+		if err != nil {
+			r.l.Error("failed to list an agent's standing proposals",
+				zap.String("agentDefinitionId", req.DefinitionID.String()), zap.Error(err))
+
+			return nil, fmt.Errorf("list standing proposals by definition: %w", err)
 		}
 
 		return proposals, nil

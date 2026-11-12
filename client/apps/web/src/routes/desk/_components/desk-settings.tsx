@@ -329,7 +329,26 @@ export function DeskSettingsDialog({
                     ]}
                   />
                 </Row>
-                <Row title={t("Text size")} detail={t("Size of message text in the conversation.")}>
+                <Row
+                  title={t("Rail")}
+                  detail={t(
+                    "Pinned sits beside the page. Floating stays out of the way: move to the left edge of the screen to bring it out, and away from it to put it back.",
+                  )}
+                >
+                  <Seg
+                    label={t("Rail")}
+                    value={settings.rail}
+                    onChange={(value) => set("rail", value)}
+                    options={[
+                      ["pinned", t("Pinned")],
+                      ["floating", t("Floating")],
+                    ]}
+                  />
+                </Row>
+                <Row
+                  title={t("Text size")}
+                  detail={t("Size of the text you read in a conversation and in a case.")}
+                >
                   <Seg
                     label={t("Text size")}
                     value={settings.text}

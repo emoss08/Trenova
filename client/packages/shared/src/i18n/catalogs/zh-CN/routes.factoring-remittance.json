@@ -61,6 +61,5 @@
   "{0, plural, one {# line is} other {# lines are}} still to resolve and stay open.": "{0, plural, one {# 行} other {# 行}}仍待处理，保持未结状态。",
   "{0, plural, one {# line matched} other {# lines matched}}, {1, plural, one {# to resolve} other {# to resolve}}.": "{0, plural, one {已匹配 # 行} other {已匹配 # 行}}，{1, plural, one {# 行待处理} other {# 行待处理}}。",
   "{0} and {1} use the same column.": "{0} 和 {1} 使用了同一列。",
-  "{0} report from {1}": "来自 {1} 的{0}报告",
-  "{0} · {1, plural, one {# invoice} other {# invoices}}": "{0} · {1, plural, one {# 张发票} other {# 张发票}}"
+  "{0} report from {1}": "来自 {1} 的{0}报告"
 }

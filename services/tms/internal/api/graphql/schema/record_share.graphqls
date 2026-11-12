@@ -1,0 +1,85 @@
+"Whether the emails a share sends could be queued."
+enum RecordShareEmailStatus {
+  "Every recipient's email was queued."
+  Queued
+  "Some emails were queued and some were not."
+  Partial
+  "No email could be queued."
+  Failed
+  "The app does not know its own address, so no email is sent for shares."
+  NotConfigured
+}
+
+"""
+One record shared with one teammate: who sent it, with what note, and where in
+the app the link opens. Sharing it again with the same person counts and
+re-dates the same share. A share lets its recipient read the record's case
+until it is removed.
+"""
+type RecordShare {
+  id: ID!
+  recordId: ID!
+  "The address inside the app the share opens."
+  path: String!
+  note: String!
+  "How many times this record has been shared with this person."
+  shareCount: Int!
+  firstSharedAt: Timestamp!
+  lastSharedAt: Timestamp!
+  sharedWith: User
+  sharedBy: User
+  "Whether the reader may remove this share: they shared it, the case is theirs, or they may give cases to people."
+  removable: Boolean!
+}
+
+type ShareRecordResult {
+  "Everyone the record is now shared with, newest first."
+  shares: [RecordShare!]!
+  recipientCount: Int!
+  emailsQueued: Int!
+  emailStatus: RecordShareEmailStatus!
+}
+
+input ShareRecordInput {
+  "The record kind, as the record-link registry names it: invoice, shipment, worker."
+  kind: String!
+  id: ID!
+  "The teammates, from recordShareCandidates. At most 25."
+  userIds: [ID!]!
+  "A note for them, sent by email and kept with the share. At most 1000 characters."
+  note: String
+  "Where in the app the link opens: the record's page on the tab, or the Desk page, the sharer is on."
+  path: String!
+}
+
+input UnshareRecordInput {
+  "The record kind, as the record-link registry names it: invoice, shipment, worker."
+  kind: String!
+  id: ID!
+  "The share to remove, from recordShares."
+  shareId: ID!
+}
+
+extend type Query {
+  "Who a record has been shared with, newest first. The reader must be able to read the record."
+  recordShares(kind: String!, id: ID!): [RecordShare!]!
+  """
+  The teammates a record can be shared with: active members other than the
+  reader whose own role lets them open that kind of record.
+  """
+  recordShareCandidates(kind: String!, id: ID!, query: String, first: Int = 10): [User!]!
+}
+
+extend type Mutation {
+  """
+  Shares a record with teammates: each gets a notification and, where email is
+  set up, an email with the note and a link, and may read the record's case.
+  """
+  shareRecord(input: ShareRecordInput!): ShareRecordResult!
+  """
+  Removes a share: its recipient no longer reads the record's case through it.
+  The share is kept as a record of who could see it and when. Returns who the
+  record is still shared with.
+  """
+  unshareRecord(input: UnshareRecordInput!): [RecordShare!]!
+}

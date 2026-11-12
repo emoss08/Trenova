@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { DeskListPane, DeskListStill } from "../list/desk-list";
 
 const ROWS = 6;
 
@@ -8,7 +9,7 @@ export function NeedsSkeleton() {
 
   return (
     <div className="dk-w-nq" aria-busy aria-label={t("Reading what needs you")}>
-      <div className="dk-w-nq-l">
+      <DeskListPane className="dk-w-nq-l">
         <div>
           <div className="dk-w-nq-h">
             <span className="dk-w-sk-line dk-w-sk-short ui-shimmer" />
@@ -20,12 +21,12 @@ export function NeedsSkeleton() {
             <span key={index} className="dk-w-sk-chip ui-shimmer" />
           ))}
         </div>
-        <div className="dk-w-nq-list">
+        <DeskListStill>
           {Array.from({ length: ROWS }, (_, index) => (
             <span key={index} className="dk-w-sk-row ui-shimmer" />
           ))}
-        </div>
-      </div>
+        </DeskListStill>
+      </DeskListPane>
       <div className="dk-w-nq-d" />
     </div>
   );

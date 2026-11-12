@@ -335,6 +335,16 @@ func watchtowerResource() *permissionspec.ResourceDefinition {
 				DisplayName: "Update",
 				Description: "Mark the feed seen, dismiss an item, or hand one to an agent",
 			},
+			{
+				Operation:   permission.OpAssign,
+				DisplayName: "Assign cases",
+				Description: "Give a case to someone, or take over one that is owned by another person",
+			},
+			{
+				Operation:   permission.OpManage,
+				DisplayName: "See every case",
+				Description: "See and open the cases other people own, read-only unless it is assigned to you",
+			},
 		},
 		DefaultSensitivity: permission.SensitivityInternal,
 	}

@@ -33,6 +33,9 @@ const (
 	// only the clock can raise.
 	ShipmentExceptionSweepWorkflowName = "ShipmentExceptionSweepWorkflow"
 	FactoringSweepWorkflowName         = "FactoringSweepWorkflow"
+	// DecisionSweepWorkflowName clears the proposals and plans that stopped
+	// waiting on a person without anything being decided: the expired ones.
+	DecisionSweepWorkflowName = "DecisionSweepWorkflow"
 )
 
 // WatchtowerBackfillInput names the tenant to fill. An empty organization

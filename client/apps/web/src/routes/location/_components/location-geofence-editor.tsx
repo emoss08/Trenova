@@ -14,15 +14,8 @@ import type {
 } from "@trenova/shared/types/location";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQuery } from "@tanstack/react-query";
-import {
-  AdvancedMarker,
-  APIProvider,
-  Circle,
-  Map,
-  Polygon,
-  Rectangle,
-  useMap,
-} from "@vis.gl/react-google-maps";
+import { AdvancedMarker } from "@/components/map/advanced-marker";
+import { APIProvider, Circle, Map, Polygon, Rectangle, useMap } from "@vis.gl/react-google-maps";
 import { CircleIcon, PenTool01Icon, PlusIcon, SquareIcon } from "@trenova/shared/components/icons";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useFormContext, useFormState, useWatch, type Path, type PathValue } from "react-hook-form";

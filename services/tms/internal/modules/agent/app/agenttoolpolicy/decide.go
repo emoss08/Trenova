@@ -27,6 +27,11 @@ const (
 	// HeldByScriptIntent marks a write a script prepared: it waits for a
 	// person to approve the script's batch, whatever else would let it run.
 	HeldByScriptIntent = "script_intent"
+	// HeldByConversation marks a write an agent that runs on its own was asked
+	// for in a conversation. The autonomy it holds was set and earned for its
+	// own runs; a person talking to it does not borrow it, so the write waits
+	// for that person.
+	HeldByConversation = "conversation"
 )
 
 type MoneyAllowanceReader func(context.Context) (agenttooltrust.MoneyAllowance, error)
@@ -43,6 +48,9 @@ type DecideInput struct {
 	// FromScript is set for an intent a script prepared, which never runs
 	// before a person approves the batch it is filed in.
 	FromScript bool
+	// Conversation is set for a call made in a conversation a person is
+	// reading, where an agent that runs on its own never writes unasked.
+	Conversation bool
 }
 
 type Decision struct {
@@ -96,6 +104,10 @@ func Decide(ctx context.Context, in DecideInput) Decision {
 
 	if policy.Condition != nil && policy.Condition.Limit != nil {
 		decision.lower(conditionLimit(ctx, policy.Condition, in.Params), HeldByCondition)
+	}
+
+	if in.Conversation && in.Definition != nil && in.Definition.IsBackground() {
+		decision.lower(agent.TierActWithApproval, HeldByConversation)
 	}
 
 	if runsUnasked(&in, call) {

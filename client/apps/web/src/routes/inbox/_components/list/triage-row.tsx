@@ -1,3 +1,4 @@
+import { deskListRow } from "@/routes/desk/_components/list/desk-list";
 import type { InboundMessageRow } from "@/lib/graphql/inbox";
 import { isAwaitingReply, isSnoozed, isWaiting, senderName } from "@/lib/triage/message-state";
 import {
@@ -90,7 +91,7 @@ function PresenceAvatar({ member }: { member: TriagePresenceMember }) {
         {getNameInitials(member.name, "?")}
         <span
           aria-hidden
-          className="bg-success ring-canvas absolute -right-0.5 -bottom-0.5 size-1.5 rounded-full ring-1"
+          className="bg-success ring-dsk-canvas absolute -right-0.5 -bottom-0.5 size-1.5 rounded-full ring-1"
         />
       </TooltipTrigger>
       <TooltipContent>{text}</TooltipContent>
@@ -237,7 +238,7 @@ export const TriageRow = memo(function TriageRow({
     <div
       data-leaving={leaving || undefined}
       className={cn(
-        "relative mx-1.5 overflow-hidden rounded-lg transition-[opacity,transform] duration-240 ease-swift",
+        "relative overflow-hidden rounded-[8px] transition-[opacity,transform] duration-240 ease-swift",
         "data-leaving:-translate-x-3 data-leaving:opacity-0",
         arriving && "animate-arrive",
       )}
@@ -291,10 +292,15 @@ export const TriageRow = memo(function TriageRow({
           setDx(0);
         }}
         style={dx === 0 ? undefined : { transform: `translateX(${dx}px)`, transition: "none" }}
+        data-glide-target
         className={cn(
-          "group/row ui-inset-focus-ring bg-canvas relative z-1 grid cursor-pointer touch-pan-y grid-cols-[minmax(0,1fr)_auto] gap-x-2.5 gap-y-px rounded-lg px-3 py-2.5 transition-[transform,background-color] select-none",
+          "group/row ui-inset-focus-ring z-1 grid cursor-pointer touch-pan-y grid-cols-[minmax(0,1fr)_auto] gap-x-2.5 gap-y-px px-3 py-2.5 transition-[transform,background-color] select-none",
           "duration-260 ease-spring",
-          active ? "bg-nav-active" : picked ? "bg-surface-selected" : "hover:bg-surface-hover",
+          deskListRow(active).className,
+          // The list's glide is the hover. A picked row holds its own surface, and a
+          // row being swiped covers what the swipe uncovers behind it.
+          !active && picked && "bg-surface-selected",
+          !active && !picked && dx !== 0 && "bg-dsk-canvas",
         )}
       >
         {arriving && (

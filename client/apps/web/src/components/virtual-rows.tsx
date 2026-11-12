@@ -32,7 +32,7 @@ export type VirtualRowsHandle = {
   scrollToKey: (key: string, options?: { align?: "start" | "center" | "end" | "auto" }) => void;
 };
 
-type VirtualRowsProps = {
+export type VirtualRowsProps = {
   rows: readonly VirtualRow[];
   /** A guess at a row's height before it is measured. */
   estimateSize?: number;
@@ -48,6 +48,8 @@ type VirtualRowsProps = {
   /** The scroll container's role, such as "listbox" for a list of choosable rows. */
   role?: string;
   "aria-multiselectable"?: boolean;
+  /** The id of the chosen row's element, for a listbox whose focus stays on the list. */
+  "aria-activedescendant"?: string;
   /** Imperative handle for scrolling a row into view. */
   handleRef?: Ref<VirtualRowsHandle>;
   /** The scroll container itself, for callers that observe it. */
@@ -62,6 +64,10 @@ type VirtualRowsProps = {
    * rail's does, drawn inside the scrolled body so it scrolls with the row it sits on.
    */
   hoverGlide?: boolean;
+  /** The glide's own fill and corner, where the surface is not the app's default. */
+  glideClassName?: string;
+  /** Classes on what scrolls (the rows and the footer): the list's gutter lives here. */
+  contentClassName?: string;
   /**
    * Scrolls the rows inside a `ScrollArea` whose edges fade into this surface,
    * so the list shows there is more above or below it.
@@ -101,12 +107,15 @@ export function VirtualRows({
   "aria-label": ariaLabel,
   role,
   "aria-multiselectable": ariaMultiselectable,
+  "aria-activedescendant": ariaActiveDescendant,
   handleRef,
   scrollRef: outerScrollRef,
   onEndReached,
   endReachedThreshold = 5,
   footer,
   hoverGlide = false,
+  glideClassName,
+  contentClassName,
   mask,
   maskClassName,
   maskHeight,
@@ -207,7 +216,9 @@ export function VirtualRows({
             ref={measureRow}
             className={cn(
               "group/vrow",
-              pinned ? "sticky top-0 z-10" : "absolute inset-x-0 top-0",
+              // Above the scroll area's fade (z-10), which would otherwise wash out a pinned
+              // heading; the rows scrolling under it still fade.
+              pinned ? "sticky top-0 z-20" : "absolute inset-x-0 top-0",
               rowClassName,
             )}
             style={pinned ? undefined : { transform: `translateY(${item.start}px)` }}
@@ -219,7 +230,12 @@ export function VirtualRows({
     </div>
   );
   const body = hoverGlide ? (
-    <HoverGlideGroup className="w-full">{rowsBody}</HoverGlideGroup>
+    <HoverGlideGroup
+      className={cn("w-full", glideClassName !== undefined && "bg-transparent")}
+      glideClassName={glideClassName}
+    >
+      {rowsBody}
+    </HoverGlideGroup>
   ) : (
     rowsBody
   );
@@ -234,7 +250,13 @@ export function VirtualRows({
         className={className}
         viewportClassName="overscroll-contain"
       >
-        <div role={role} aria-label={ariaLabel} aria-multiselectable={ariaMultiselectable}>
+        <div
+          role={role}
+          aria-label={ariaLabel}
+          aria-multiselectable={ariaMultiselectable}
+          aria-activedescendant={ariaActiveDescendant}
+          className={contentClassName}
+        >
           {body}
           {footer}
         </div>
@@ -248,7 +270,8 @@ export function VirtualRows({
       role={role}
       aria-label={ariaLabel}
       aria-multiselectable={ariaMultiselectable}
-      className={cn("scrollbar-overlay overflow-y-auto overscroll-contain", className)}
+      aria-activedescendant={ariaActiveDescendant}
+      className={cn("scrollbar-overlay overflow-y-auto overscroll-contain", contentClassName, className)}
     >
       {body}
       {footer}

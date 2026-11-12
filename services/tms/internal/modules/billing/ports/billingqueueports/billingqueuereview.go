@@ -59,7 +59,7 @@ type BillingQueueEventPage struct {
 type GetBillingQueueNeighborsRequest struct {
 	ItemID        pulid.ID
 	Filter        *pagination.QueryOptions
-	IncludePosted bool
+	IncludeClosed bool
 }
 
 type BillingQueueNeighbors struct {

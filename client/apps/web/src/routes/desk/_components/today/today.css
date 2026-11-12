@@ -324,41 +324,6 @@ a.dk-dy-more:hover {
   color: var(--dsk-fg);
 }
 
-/* runs agents have in hand */
-.dk-dy-run {
-  display: grid;
-  grid-template-columns: 24px minmax(0, 1fr) 150px;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 12px;
-  border-radius: 8px;
-}
-.dk-dy-run:hover {
-  background: var(--dsk-hover);
-}
-.dk-dy-run-main {
-  min-width: 0;
-}
-.dk-dy-run-ti {
-  display: block;
-  font-size: 13px;
-  color: var(--dsk-fg);
-}
-.dk-dy-run-nt {
-  display: block;
-  margin-top: 1px;
-  font-size: 11.5px;
-  color: var(--dsk-subtle);
-}
-@container mainc (max-width: 560px) {
-  .dk-dy-run {
-    grid-template-columns: 24px minmax(0, 1fr);
-  }
-  .dk-dy-run > .dk-w-steps {
-    grid-column: 2;
-  }
-}
-
 /* the loading screen's Today: the head's own sizes, in shimmer */
 .dk-dy-skh {
   align-items: center;

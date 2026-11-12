@@ -30,7 +30,7 @@ export function ShipmentBillingQueueStatus({ shipment }: { shipment: Shipment })
     <div className="flex items-center gap-1.5">
       <ShipmentBillingQueueBadge status={shipment.billingTransferStatus} />
       <Link
-        to={`/billing/queue?query=${encodeURIComponent(shipment.proNumber ?? "")}&includePosted=true`}
+        to={`/billing/queue?query=${encodeURIComponent(shipment.proNumber ?? "")}&includeClosed=true`}
         className="text-2xs text-primary inline-flex items-center gap-0.5 underline-offset-4 hover:underline"
       >
         {t("View in billing queue")}

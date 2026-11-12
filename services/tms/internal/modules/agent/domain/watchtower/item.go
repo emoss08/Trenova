@@ -78,6 +78,7 @@ type Item struct {
 	Facts     []Fact          `json:"facts"       keel:"facts,jsonb"`
 	Impact    []string        `json:"impact"      keel:"impact,jsonb"`
 	Trail     []TrailEvent    `json:"trail"       keel:"trail,jsonb"`
+	Panel     *Panel          `json:"panel"       keel:"panel,jsonb"`
 
 	AgentDefinitionID pulid.ID `json:"agentDefinitionId" keel:"agent_definition_id,nullzero"`
 	AgentRunID        pulid.ID `json:"agentRunId"        keel:"agent_run_id,nullzero"`
@@ -116,8 +117,8 @@ func (i *Item) BeforeCreate(ctx context.Context) error {
 // Normalize trims what a person reads and bounds it to what the columns
 // hold, so a source whose summary runs long is cut rather than refused.
 func (i *Item) Normalize() {
-	i.Title = stringutils.Ellipsize(i.Title, maxTitleLength)
-	i.Summary = stringutils.Ellipsize(i.Summary, maxSummaryLength)
+	i.Title = stringutils.Ellipsize(Plain(i.Title), maxTitleLength)
+	i.Summary = stringutils.Ellipsize(Plain(i.Summary), maxSummaryLength)
 	i.SourceID = strings.TrimSpace(i.SourceID)
 	i.Path = strings.TrimSpace(i.Path)
 	i.DueLabel = NormalizeDueLabel(i.DueLabel)
@@ -125,6 +126,7 @@ func (i *Item) Normalize() {
 	i.Facts = NormalizeFacts(i.Facts)
 	i.Impact = NormalizeImpact(i.Impact)
 	i.Trail = NormalizeTrail(i.Trail)
+	i.Panel = NormalizePanel(i.Panel)
 }
 
 func (i *Item) ApplyDeadline(deadline *Deadline) {
@@ -150,7 +152,8 @@ func (i *Item) SameDescription(other *Item) bool {
 		i.AboutID == other.AboutID &&
 		slices.Equal(i.Facts, other.Facts) &&
 		slices.Equal(i.Impact, other.Impact) &&
-		slices.Equal(i.Trail, other.Trail)
+		slices.Equal(i.Trail, other.Trail) &&
+		SamePanel(i.Panel, other.Panel)
 }
 
 func (i *Item) SetAbout(id pulid.ID) {

@@ -1456,7 +1456,7 @@ func (s *DriverPaySeed) createPaidShipments(
 			})
 		}
 
-		if err = shipmentprojection.RefreshAcrossTenants(ctx, db, shp.ID); err != nil {
+		if err = shipmentprojection.Refresh(ctx, db, shp.ID); err != nil {
 			return nil, fmt.Errorf("refresh shipment projections for %s: %w", def.pro, err)
 		}
 	}

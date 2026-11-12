@@ -654,8 +654,16 @@ func (s *AIAnalyticsSeed) write(
 			status = agent.RunStatusFailed
 		}
 		agentType := agent.TypeAssistantChat
+		summary := "Answered a question about the day's loads."
 		if unit.Task == aitask.TaskBillingDiagnosis {
 			agentType = agent.TypeBillingException
+			summary = "Worked out why an invoice was held from billing."
+		}
+		errorMessage := ""
+		if status == agent.RunStatusFailed {
+			summary = ""
+			errorMessage = "The provider returned no completion after four attempts: " +
+				"context deadline exceeded."
 		}
 		runs = append(runs, &agent.AgentRun{
 			ID:                pulid.ID(unit.ID),
@@ -667,7 +675,8 @@ func (s *AIAnalyticsSeed) write(
 			SubjectType:       agent.SubjectOrganization,
 			SubjectID:         refs.org,
 			Status:            status,
-			Summary:           "Analytics seed run",
+			Summary:           summary,
+			ErrorMessage:      errorMessage,
 			ModelIdentifier:   unit.Model,
 			PromptVersion:     "seed/v1",
 			InputContextHash:  analyticsSeedMarker + unit.ID,

@@ -6,6 +6,8 @@ export type DeskSettings = {
   width: "narrow" | "default" | "wide";
   text: "small" | "medium" | "large";
   motion: "full" | "reduced";
+  /** The rail beside the page, taking its width, or floating over it when asked for. */
+  rail: "pinned" | "floating";
   send: "enter" | "mod";
   refs: "on" | "off";
   start: "today" | "last";
@@ -35,6 +37,7 @@ export const DESK_SETTINGS_DEFAULTS: DeskSettings = {
   width: "default",
   text: "medium",
   motion: "full",
+  rail: "pinned",
   send: "enter",
   refs: "on",
   start: "today",
@@ -101,7 +104,13 @@ export const useDeskSettingsStore = create<DeskSettingsState>()(
         const saved = persisted as Partial<DeskSettingsState> | undefined;
         return {
           ...current,
-          settings: { ...DESK_SETTINGS_DEFAULTS, ...saved?.settings },
+          settings: {
+            ...DESK_SETTINGS_DEFAULTS,
+            ...saved?.settings,
+            // Pinned unless floating was chosen: a visit from before the
+            // setting existed, or a kept value that is neither, is pinned.
+            rail: saved?.settings?.rail === "floating" ? "floating" : DESK_SETTINGS_DEFAULTS.rail,
+          },
           recentSearches: Array.isArray(saved?.recentSearches) ? saved.recentSearches : [],
           railFolded: saved?.railFolded === true,
         };

@@ -204,14 +204,14 @@ func TestRefresh_KeepsTheShipmentVersionAndStamp(t *testing.T) {
 	assert.Equal(t, before.UpdatedAt, after.UpdatedAt)
 }
 
-func TestRefreshAcrossTenants_RefreshesUnderASystemScope(t *testing.T) {
+func TestRefresh_RefreshesUnderASystemScope(t *testing.T) {
 	h := newHarness(t)
 
 	h.arrive(t, h.graph.Moves[1].Stops[1], 7_000)
 	system := dbscope.WithSystem(context.Background(), "refresh shipment projections in a test")
 	require.NoError(
 		t,
-		shipmentprojection.RefreshAcrossTenants(system, h.db, h.graph.Shipment.ID),
+		shipmentprojection.Refresh(system, h.db, h.graph.Shipment.ID),
 	)
 
 	got := h.read(t)
@@ -262,7 +262,7 @@ func TestRefresh_StoresTheFirstPickupWindowAndWhenTheLastDeliveryLands(t *testin
 	assert.Nil(t, got.DeliveryAt)
 }
 
-func TestRefreshAcrossTenants_StoresThePickupAndDeliveryTimes(t *testing.T) {
+func TestRefresh_StoresThePickupAndDeliveryTimesUnderASystemScope(t *testing.T) {
 	h := newHarness(t)
 
 	h.schedule(t, h.graph.Moves[0].Stops[0], 1_500)
@@ -270,7 +270,7 @@ func TestRefreshAcrossTenants_StoresThePickupAndDeliveryTimes(t *testing.T) {
 	system := dbscope.WithSystem(context.Background(), "refresh shipment projections in a test")
 	require.NoError(
 		t,
-		shipmentprojection.RefreshAcrossTenants(system, h.db, h.graph.Shipment.ID),
+		shipmentprojection.Refresh(system, h.db, h.graph.Shipment.ID),
 	)
 
 	got := h.read(t)

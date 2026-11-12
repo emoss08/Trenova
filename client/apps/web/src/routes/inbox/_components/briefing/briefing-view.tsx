@@ -1,34 +1,27 @@
-import { NovaBadge } from "@trenova/shared/components/ui/nova-badge";
-import "../../_styles/triage-briefing.css";
+import "@/routes/desk/_components/today/today.css";
 import { useNowSeconds } from "@/hooks/use-now-seconds";
 import type { TriageBriefing, TriageRuleInput } from "@/lib/graphql/inbox";
+import { TodaySection } from "@/routes/desk/_components/today/today-section";
 import { useTriageStore } from "@/stores/triage-store";
-import { CheckIcon } from "@trenova/shared/components/icons";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
+import { NovaBadge } from "@trenova/shared/components/ui/nova-badge";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { formatUnixTime } from "@trenova/shared/lib/date";
+import type { TranslateFn } from "@trenova/shared/i18n/runtime";
+import { formatUnixInUserTimezone, formatUnixTime } from "@trenova/shared/lib/date";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { TriageFolder } from "../folders";
 import { useTriageActions } from "../use-triage-actions";
 import { useTriageBriefing, useTriageCounts } from "../use-triage-data";
-import {
-  deckEntries,
-  firstDayStage,
-  novaLine,
-  ringProgress,
-  type DeckEntry,
-  type DeckGroup,
-} from "./briefing-model";
+import { dayFigures, deckEntries, firstDayStage, novaLine, type DeckEntry } from "./briefing-model";
+import { BriefingStrip } from "./briefing-strip";
 import { CarryingOver } from "./carrying-over";
 import { Deck, DeckChips, type DeckChip } from "./deck";
 import { FirstDay } from "./first-day";
-import { FooterPills } from "./footer-pills";
-import { Motes } from "./motes";
 import { NovaLineText } from "./nova-line";
-import { Ring } from "./ring";
+import { BriefingNotices, hasNotices } from "./notices";
 import { River } from "./river";
-import { usePausedWhenAway } from "./use-briefing-motion";
 
 /**
  * The Briefing's contract with the page: it opens messages and folders
@@ -42,32 +35,22 @@ export type BriefingViewProps = {
   onOpenFolder: (folder: TriageFolder) => void;
 };
 
-/** How long a card takes to leave the stack after "File all". */
-const FLY_MS = 420;
 /** How long "Done reading" shows before the first briefing. */
 const DONE_READING_MS = 1100;
 
 type Filed = { ids: string[]; count: number };
 
-function Stage({
-  on,
-  delay,
-  className,
-  children,
-}: {
-  on: boolean;
-  delay: number;
-  className?: string;
-  children: ReactNode;
-}) {
-  return (
-    <div
-      className={["tb-stage", className].filter(Boolean).join(" ")}
-      data-on={on}
-      style={{ "--tb-delay": `${delay}ms` } as CSSProperties}
-    >
-      {on && children}
-    </div>
+/** The briefing's one-line headline: how much is yours, in the Desk's greeting type. */
+function headline(t: TranslateFn, briefing: TriageBriefing): string {
+  if (briefing.phase === "EndOfDay") {
+    return t("Wrapping up the day");
+  }
+  if (briefing.waiting === 0) {
+    return t("You're all caught up");
+  }
+  return t(
+    "{0, plural, one {# message is waiting on you} other {# messages are waiting on you}}",
+    briefing.waiting,
   );
 }
 
@@ -78,8 +61,6 @@ function Stage({
  * carries over and who it is handed to.
  */
 export function BriefingView({ onOpenMessage, onOpenFolder }: BriefingViewProps) {
-  const root = useRef<HTMLDivElement>(null);
-  const paused = usePausedWhenAway(root);
   const briefing = useTriageBriefing().data;
   const counts = useTriageCounts().data;
   const now = useNowSeconds(30_000);
@@ -112,22 +93,20 @@ export function BriefingView({ onOpenMessage, onOpenFolder }: BriefingViewProps)
     useTriageStore.getState().openOverlay({ kind: "connect", mailboxId: null });
 
   return (
-    <div
-      ref={root}
-      data-paused={paused}
-      className="tb-briefing scrollbar-overlay relative min-h-0 flex-1 overflow-x-hidden overflow-y-auto"
-    >
-      <Motes />
-      {stage !== null && stage !== "briefing" ? (
-        <FirstDay stage={stage} counts={counts} canConnect={canConnect} onConnect={openConnect} />
-      ) : (
-        <BriefingMain
-          briefing={briefing}
-          now={now}
-          onOpenMessage={onOpenMessage}
-          onOpenFolder={onOpenFolder}
-        />
-      )}
+    <div className="dk-dy-w @container min-h-0 flex-1">
+      {/* The Desk's scroll area, so the page scrolls as its lists do, fading at an edge with more beyond it. */}
+      <ScrollArea className="min-h-0" maskClassName="before:from-dsk-canvas after:from-dsk-canvas">
+        {stage !== null && stage !== "briefing" ? (
+          <FirstDay stage={stage} counts={counts} canConnect={canConnect} onConnect={openConnect} />
+        ) : (
+          <BriefingMain
+            briefing={briefing}
+            now={now}
+            onOpenMessage={onOpenMessage}
+            onOpenFolder={onOpenFolder}
+          />
+        )}
+      </ScrollArea>
     </div>
   );
 }
@@ -148,8 +127,6 @@ function BriefingMain({
   const counts = useTriageCounts().data;
   const [filed, setFiled] = useState<Filed | null>(null);
   const [drafting, setDrafting] = useState<readonly string[] | null>(null);
-  const [flying, setFlying] = useState<DeckGroup | null>(null);
-  const ready = briefing !== undefined;
 
   const serverDrafts = briefing?.deck.find((card) => card.group === "Draft")?.messageIds;
   const draftsDone =
@@ -178,7 +155,6 @@ function BriefingMain({
       group: "File",
       label: t("{0, plural, one {Filed # document} other {Filed # documents}}", filed.count),
       firstId: filed.ids[0] ?? null,
-      busy: false,
     });
   }
   if (draftsDone && drafting !== null) {
@@ -186,7 +162,6 @@ function BriefingMain({
       group: "Draft",
       label: t("{0, plural, one {# draft ready} other {# drafts ready}}", drafting.length),
       firstId: drafting[0] ?? null,
-      busy: false,
     });
   }
 
@@ -195,14 +170,10 @@ function BriefingMain({
     switch (entry.group) {
       case "File": {
         const ids = entry.messageIds;
-        setFlying("File");
-        setTimeout(() => {
-          setFlying(null);
-          setFiled((current) => ({
-            ids: [...(current?.ids ?? []), ...ids],
-            count: (current?.count ?? 0) + ids.length,
-          }));
-        }, FLY_MS);
+        setFiled((current) => ({
+          ids: [...(current?.ids ?? []), ...ids],
+          count: (current?.count ?? 0) + ids.length,
+        }));
         actions.fileMany(ids).catch(() => {
           setFiled((current) => {
             if (current === null) {
@@ -238,95 +209,131 @@ function BriefingMain({
   const preview = (input: TriageRuleInput) =>
     useTriageStore.getState().openOverlay({ kind: "ruleMatches", target: { input } });
 
-  const line =
-    briefing === undefined ? null : novaLine({ ...briefing, onCall: briefing.onCall ?? null });
-  const cleared = briefing?.yours.filter((point) => point.done).length ?? 0;
-  const endOfDay = briefing?.phase === "EndOfDay";
+  if (briefing === undefined) {
+    return <BriefingSkeleton />;
+  }
+
+  const line = novaLine({ ...briefing, onCall: briefing.onCall ?? null });
+  const figures = dayFigures(briefing.yours, briefing.deck, now);
+  const endOfDay = briefing.phase === "EndOfDay";
+  const quietDay = briefing.novaPoints.length === 0 && briefing.yours.length === 0;
 
   return (
-    <div className="relative mx-auto flex w-full max-w-220 flex-col gap-7.5 px-8 pt-11 pb-18 @max-2xl:gap-6 @max-2xl:px-4 @max-2xl:pt-6">
-      <header className="flex items-center gap-7 @max-2xl:flex-col @max-2xl:items-start @max-2xl:gap-4">
-        <Ring
-          progress={briefing === undefined ? 0 : ringProgress(cleared, briefing.waiting)}
-          count={briefing?.waiting ?? 0}
-          busy={!ready}
-        />
-        <div className="min-w-0 flex-1">
-          <div className="text-foreground-subtle flex items-center gap-2 text-sm">
-            <NovaBadge size="sm" spin={ready ? "none" : "always"} />
-            <b className="text-foreground font-medium">{t("Nova")}</b>
-            <span className="text-2xs font-mono tabular-nums">{formatUnixTime(now)}</span>
-          </div>
-          <NovaLineText line={line} now={now} onOpenMessage={onOpenMessage} />
-        </div>
-      </header>
-
-      <Stage on={ready} delay={80}>
-        {briefing !== undefined && (
-          <River briefing={briefing} now={now} onOpenMessage={onOpenMessage} />
+    <div className="dk-dy animate-rise">
+      <div className="dk-dy-date">
+        {t(
+          "Triage · {0}",
+          formatUnixInUserTimezone(now, { weekday: "long", month: "long", day: "numeric" }, ""),
         )}
-      </Stage>
+      </div>
+      <h1 className="dk-dy-greet">{headline(t, briefing)}</h1>
+      <NovaLineText line={line} now={now} onOpenMessage={onOpenMessage} />
+      <p className="dk-dy-hl-note">
+        <NovaBadge size="xs" />
+        {t("Nova, as of {0}", formatUnixTime(now))}
+      </p>
 
-      <Stage
-        on={ready}
-        delay={260}
-        className="flex min-h-84 flex-col items-center gap-3.5 @max-2xl:min-h-0"
-      >
-        {briefing !== undefined &&
-          (endOfDay ? (
-            <CarryingOver
-              items={briefing.carryOver}
-              onCall={briefing.onCall ?? null}
-              now={now}
-              onOpenMessage={onOpenMessage}
-              onHandOff={actions.handOff}
-            />
-          ) : entries.length > 0 ? (
-            <Deck
-              entries={entries}
-              now={now}
-              drafting={drafting !== null && !draftsDone}
-              flying={flying}
-              onAct={act}
-              onOpenMessage={onOpenMessage}
-            />
-          ) : (
-            <div className="animate-confirm flex flex-col items-center gap-2 py-12 text-center">
-              <span className="bg-success-subtle text-success flex size-11 items-center justify-center rounded-full">
-                <CheckIcon aria-hidden className="size-5" strokeWidth={2.4} />
-              </span>
-              <b className="text-lg font-semibold">{t("Nothing left in the deck")}</b>
-              <span className="text-foreground-subtle text-base">
-                {t(
-                  "{0, plural, one {Nova is watching # source} other {Nova is watching # sources}}",
-                  briefing.activeSources,
-                )}
-              </span>
-            </div>
-          ))}
-        {!endOfDay && (
-          <DeckChips
-            chips={chips}
-            onOpen={(chip) => {
-              if (chip.firstId !== null) {
-                onOpenMessage(chip.firstId);
-              }
-            }}
-          />
-        )}
-      </Stage>
+      <BriefingStrip
+        briefing={briefing}
+        counts={counts}
+        figures={figures}
+        onOpenFolder={onOpenFolder}
+      />
 
-      <Stage on={ready} delay={460}>
-        {briefing !== undefined && (
-          <FooterPills
+      {hasNotices(briefing) && (
+        <TodaySection id="triage-notices" title={t("Worth a look")}>
+          <BriefingNotices
             briefing={briefing}
-            counts={counts}
             onOpenFolder={onOpenFolder}
             onPreview={preview}
             onTeach={actions.createRule}
           />
+        </TodaySection>
+      )}
+
+      {endOfDay ? (
+        <TodaySection
+          id="triage-carrying-over"
+          title={t("Carrying over")}
+          count={String(briefing.carryOver.length)}
+        >
+          <CarryingOver
+            items={briefing.carryOver}
+            onCall={briefing.onCall ?? null}
+            now={now}
+            onOpenMessage={onOpenMessage}
+            onHandOff={actions.handOff}
+          />
+        </TodaySection>
+      ) : (
+        <TodaySection
+          id="triage-left"
+          title={t("What is left, by what it needs")}
+          count={entries.length > 0 ? String(briefing.waiting) : undefined}
+          aside={
+            line.kind === "day" && line.minutes > 0
+              ? t("{0, plural, one {About # minute} other {About # minutes}}", line.minutes)
+              : undefined
+          }
+        >
+          <div className="flex flex-col gap-2.5">
+            {entries.length > 0 ? (
+              <Deck
+                entries={entries}
+                now={now}
+                drafting={drafting !== null && !draftsDone}
+                onAct={act}
+                onOpenMessage={onOpenMessage}
+              />
+            ) : (
+              <p className="dk-dy-quiet">
+                {t(
+                  "{0, plural, one {Nothing left. Nova is watching # source.} other {Nothing left. Nova is watching # sources.}}",
+                  briefing.activeSources,
+                )}
+              </p>
+            )}
+            {chips.length > 0 && (
+              <DeckChips
+                chips={chips}
+                onOpen={(chip) => {
+                  if (chip.firstId !== null) {
+                    onOpenMessage(chip.firstId);
+                  }
+                }}
+              />
+            )}
+          </div>
+        </TodaySection>
+      )}
+
+      <TodaySection
+        id="triage-day"
+        title={t("Today so far")}
+        aside={quietDay ? undefined : t("Nova's work above, yours below")}
+      >
+        {quietDay ? (
+          <p className="dk-dy-quiet">{t("No mail has arrived today.")}</p>
+        ) : (
+          <River briefing={briefing} now={now} onOpenMessage={onOpenMessage} />
         )}
-      </Stage>
+      </TodaySection>
+    </div>
+  );
+}
+
+/** The briefing while it is read: the page's own shape, in shimmer. */
+function BriefingSkeleton() {
+  const t = useT();
+
+  return (
+    <div className="dk-dy" aria-busy aria-label={t("Going through the day")}>
+      <span className="mx-auto h-3 w-40 ui-shimmer rounded-[4px]" />
+      <span className="mx-auto mt-4 h-11 w-[min(30rem,90%)] ui-shimmer rounded-[6px]" />
+      <span className="mx-auto mt-4 h-4.5 w-[min(26rem,80%)] ui-shimmer rounded-[4px]" />
+      <span className="mt-9 h-18 ui-shimmer rounded-[6px]" />
+      <span className="mt-9 h-28 ui-shimmer rounded-[8px]" />
+      <span className="mt-2.5 h-28 ui-shimmer rounded-[8px]" />
     </div>
   );
 }

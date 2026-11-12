@@ -128,6 +128,7 @@ enum AITask {
   RemittanceExtraction
   PaperworkReading
   PaletteAnswer
+  CaseReading
   EvaluationJudge
   Embedding
   AssistantChat

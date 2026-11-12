@@ -156,7 +156,11 @@ func DescribeAccountingConnectionHealth(
 		SubjectID:   conn.ID,
 		EventKind:   agenttrigger.EventAccountingConnectionDegraded,
 		Path:        accountingprovider.SetupPath(conn.IntegrationType),
-		OccurredAt:  occurredAt,
+		Panel: &watchtower.Panel{
+			Kind:  watchtower.PanelBooks,
+			Books: &watchtower.BooksPanel{System: provider, Since: occurredAt, Down: true},
+		},
+		OccurredAt: occurredAt,
 	}, true
 }
 
@@ -190,6 +194,20 @@ func DescribeAccountingReconnect(
 		SubjectID:   conn.ID,
 		EventKind:   agenttrigger.EventAccountingConnectionDegraded,
 		Path:        accountingprovider.SetupPath(conn.IntegrationType),
-		OccurredAt:  conn.RefreshTokenAbsoluteExpiresAt - conn.ReconnectWarningSeconds(),
+		Panel: &watchtower.Panel{
+			Kind: watchtower.PanelBooks,
+			Books: &watchtower.BooksPanel{
+				System:    provider,
+				ExpiresAt: conn.RefreshTokenAbsoluteExpiresAt,
+			},
+		},
+		OccurredAt: conn.RefreshTokenAbsoluteExpiresAt - conn.ReconnectWarningSeconds(),
 	}, true
+}
+
+func booksPanel(provider string, count, since int64) *watchtower.Panel {
+	return &watchtower.Panel{
+		Kind:  watchtower.PanelBooks,
+		Books: &watchtower.BooksPanel{System: provider, Count: count, Since: since},
+	}
 }

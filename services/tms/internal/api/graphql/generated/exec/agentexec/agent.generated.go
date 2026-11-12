@@ -3853,6 +3853,30 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
 			{
+				Name:       "undoAgentDecision",
+				NonNull:    true,
+				IsResolver: true,
+				ChildErr:   errNoChild4,
+				Args:       field_Mutation_undoAgentDecision_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@agent").UndoAgentDecision(ctx, fc.Args["proposalId"].(*string), fc.Args["planId"].(*string))
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:       "commitAgentDecisionNow",
+				NonNull:    true,
+				IsResolver: true,
+				ChildErr:   errNoChild4,
+				Args:       field_Mutation_commitAgentDecisionNow_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@agent").CommitAgentDecisionNow(ctx, fc.Args["proposalId"].(*string), fc.Args["planId"].(*string))
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
 				Name:       "replayAgentRun",
 				NonNull:    true,
 				IsResolver: true,
@@ -4287,6 +4311,8 @@ type MutationResolver interface {
 	DecideMyPlan(ctx context.Context, id string, input gqlmodel.AgentPlanDecisionInput) (*gqlmodel.AgentPlanDecisionResult, error)
 	UndoMyDecision(ctx context.Context, proposalID *string, planID *string) (bool, error)
 	CommitMyDecisionNow(ctx context.Context, proposalID *string, planID *string) (bool, error)
+	UndoAgentDecision(ctx context.Context, proposalID *string, planID *string) (bool, error)
+	CommitAgentDecisionNow(ctx context.Context, proposalID *string, planID *string) (bool, error)
 	ReplayAgentRun(ctx context.Context, runID string) (*agentevaluation.Evaluation, error)
 	CreateAgentMemory(ctx context.Context, input gqlmodel.AgentMemoryInput) (*agentmemory.Memory, error)
 	UpdateAgentMemory(ctx context.Context, id string, input gqlmodel.AgentMemoryInput) (*agentmemory.Memory, error)
@@ -4483,6 +4509,48 @@ func field_Mutation_undoMyDecision_args(ctx context.Context, ec *gqlexec.Exec, r
 }
 
 func field_Mutation_commitMyDecisionNow_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "proposalId",
+		func(ctx context.Context, v any) (*string, error) {
+			return unmarshalOID2ᚖstring(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["proposalId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "planId",
+		func(ctx context.Context, v any) (*string, error) {
+			return unmarshalOID2ᚖstring(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["planId"] = arg1
+	return args, nil
+}
+
+func field_Mutation_undoAgentDecision_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "proposalId",
+		func(ctx context.Context, v any) (*string, error) {
+			return unmarshalOID2ᚖstring(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["proposalId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "planId",
+		func(ctx context.Context, v any) (*string, error) {
+			return unmarshalOID2ᚖstring(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["planId"] = arg1
+	return args, nil
+}
+
+func field_Mutation_commitAgentDecisionNow_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
 	args := make(map[string]any, 2)
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "proposalId",
 		func(ctx context.Context, v any) (*string, error) {
@@ -5089,8 +5157,11 @@ func unmarshalInputAgentPlanDecisionInput(ctx context.Context, ec *gqlexec.Exec,
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
 	}
+	if _, present := asMap["undoWindow"]; !present {
+		asMap["undoWindow"] = false
+	}
 
-	fieldsInOrder := [...]string{"decision", "reasonCode", "previewDigest", "note"}
+	fieldsInOrder := [...]string{"decision", "reasonCode", "previewDigest", "note", "undoWindow"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -5125,6 +5196,13 @@ func unmarshalInputAgentPlanDecisionInput(ctx context.Context, ec *gqlexec.Exec,
 				return it, err
 			}
 			it.Note = data
+		case "undoWindow":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("undoWindow"))
+			data, err := unmarshalOBoolean2ᚖbool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.UndoWindow = data
 		}
 	}
 	return it, nil
@@ -5140,8 +5218,11 @@ func unmarshalInputAgentProposalDecisionInput(ctx context.Context, ec *gqlexec.E
 	for k, v := range obj.(map[string]any) {
 		asMap[k] = v
 	}
+	if _, present := asMap["undoWindow"]; !present {
+		asMap["undoWindow"] = false
+	}
 
-	fieldsInOrder := [...]string{"decision", "modifications", "reasonCode", "previewDigest", "note"}
+	fieldsInOrder := [...]string{"decision", "modifications", "reasonCode", "previewDigest", "note", "undoWindow"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -5183,6 +5264,13 @@ func unmarshalInputAgentProposalDecisionInput(ctx context.Context, ec *gqlexec.E
 				return it, err
 			}
 			it.Note = data
+		case "undoWindow":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("undoWindow"))
+			data, err := unmarshalOBoolean2ᚖbool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.UndoWindow = data
 		}
 	}
 	return it, nil

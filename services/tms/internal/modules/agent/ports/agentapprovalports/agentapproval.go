@@ -55,6 +55,10 @@ type SettleApprovalRequest struct {
 	ProposalID pulid.ID
 	PlanID     pulid.ID
 	TenantInfo pagination.TenantInfo
+	// AsDecider settles an approval the actor made from the decision queue
+	// or a record's case: it is theirs because they approved it, not because
+	// it was raised in one of their conversations.
+	AsDecider bool
 }
 
 // ApprovalCommitter carries out approvals once their undo window closes, and

@@ -919,6 +919,7 @@ var enumAitaskTask = [...]schema.EnumValue{
 	{Value: `RemittanceExtraction`, Label: `Remittance Extraction`, Doc: `TaskRemittanceExtraction reads the lines of a factor's PDF remittance. It is kept apart from DocumentExtraction so its usage and its training data are its own: a remittance is not the kind of document extraction reads. What it reads is matched to schedule items and a person applies it, so it never books anything on its own.`},
 	{Value: `PaperworkReading`, Label: `Paperwork Reading`, Doc: `TaskPaperworkReading reads a shipment's billing paperwork (a proof of delivery, a bill of lading, a receipt) for the facts billing checks, in a single structured call that reads the file itself, without waiting for the document to be converted.`},
 	{Value: `PaletteAnswer`, Label: `Palette Answer`, Doc: `TaskPaletteAnswer answers a quick question typed into the command palette: a short streamed answer from a few read-only lookups, run through the Nova harness rather than as a Desk turn.`},
+	{Value: `CaseReading`, Label: `Case Reading`, Doc: `TaskCaseReading writes Nova's reading of a record's case: the verdict a person reads first, citing the numbered evidence beside it. It produces wording only, and every number it writes is checked against that evidence afterwards.`},
 	{Value: `EvaluationJudge`, Label: `Evaluation Judge`},
 	{Value: `Embedding`, Label: `Embedding`},
 	{Value: `General`, Label: `General`},
@@ -949,6 +950,7 @@ var enumFeature = [...]schema.EnumValue{
 	{Value: `InboundMail`, Label: `Inbound Mail`},
 	{Value: `PaletteAnswer`, Label: `Palette Answer`},
 	{Value: `InsightNarration`, Label: `Insight Narration`},
+	{Value: `CaseReading`, Label: `Case Reading`},
 }
 
 var enumSubjectType = [...]schema.EnumValue{

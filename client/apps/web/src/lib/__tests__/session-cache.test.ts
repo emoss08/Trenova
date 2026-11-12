@@ -1,3 +1,4 @@
+import { composerDrafts, draftKey, DRAFT_STORAGE_KEY } from "@/stores/composer-draft-store";
 import type { KeyValueStore } from "@/lib/indexed-db-store";
 import { attention } from "@/lib/queries/attention";
 import { homeLayout } from "@/lib/queries/home-layout";
@@ -232,8 +233,9 @@ describe("session persistence", () => {
 
 describe("forgetSessionStores", () => {
   it("drops what a person typed and opened, and keeps their layout", () => {
+    composerDrafts.setText(draftKey.thread("thread_1"), "Rebook PRO 4512 for Acme");
+    composerDrafts.flush();
     useAssistantStore.setState({
-      drafts: { thread_1: "Rebook PRO 4512 for Acme" },
       activeThreadId: "thread_1",
       sidebarCollapsed: true,
     });
@@ -245,7 +247,8 @@ describe("forgetSessionStores", () => {
 
     forgetSessionStores();
 
-    expect(useAssistantStore.getState().drafts).toEqual({});
+    expect(composerDrafts.text(draftKey.thread("thread_1"))).toBe("");
+    expect(localStorage.getItem(DRAFT_STORAGE_KEY)).toBeNull();
     expect(useAssistantStore.getState().activeThreadId).toBeNull();
     expect(useAssistantStore.getState().sidebarCollapsed).toBe(true);
     expect(useDeskSettingsStore.getState().recentSearches).toEqual([]);

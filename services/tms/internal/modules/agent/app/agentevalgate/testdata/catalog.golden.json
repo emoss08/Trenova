@@ -3231,6 +3231,159 @@
       }
     },
     {
+      "name": "agent_offer_options",
+      "description": "Offer the two or three ways a record's open problem can go, on its case in the Desk, when you propose a plan for one of them. Use it when there is a real choice (recover a late load by a relay, by moving the appointment, or not at all; settle a dispute by a credit, a rebill, or upholding the invoice), in the same turn as the plan for the option you recommend, and never for a problem with one sensible fix. Say what each leads to and what it costs from what you read, never from a guess, and include leaving it as it is when that is a choice a person could make. The person picks one; if it is not the one you drafted, you are started again to draft that plan. Offering again replaces what you offered before.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "options": {
+            "description": "Two or three options, the recommended one among them, in the order a person should read them.",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "cost": {
+                  "description": "What it costs, in a few words: \"+$85 deadhead\", \"No fee if they confirm\".",
+                  "maxLength": 80,
+                  "type": "string"
+                },
+                "description": {
+                  "description": "One or two sentences on what would happen and who does what.",
+                  "maxLength": 400,
+                  "type": "string"
+                },
+                "key": {
+                  "description": "A short name for the option that stays the same if you offer again: relay, reschedule, leave.",
+                  "maxLength": 40,
+                  "type": "string"
+                },
+                "kind": {
+                  "description": "Plan for an option you would draft a plan for; Leave for leaving the record as it is.",
+                  "enum": [
+                    "Plan",
+                    "Leave"
+                  ],
+                  "type": "string",
+                  "x-enumOf": "case_option_kinds"
+                },
+                "label": {
+                  "description": "The option in a few words, as a choice: \"Relay at the Little Rock yard\".",
+                  "maxLength": 120,
+                  "type": "string"
+                },
+                "outcome": {
+                  "description": "What it leads to, as the figure a person compares: an arrival time, an amount. \"1:40 PM\".",
+                  "maxLength": 60,
+                  "type": "string"
+                },
+                "outcomeNote": {
+                  "description": "What that figure means: \"on time\", \"4h late\", \"rescheduled\".",
+                  "maxLength": 60,
+                  "type": "string"
+                },
+                "recommended": {
+                  "description": "True for the one option you recommend and drafted the plan for.",
+                  "type": "boolean"
+                },
+                "step": {
+                  "additionalProperties": false,
+                  "description": "For an option that adds a step to the record's timeline, such as a relay stop: what it is, when, and where.",
+                  "properties": {
+                    "label": {
+                      "description": "The step: \"Relay · Little Rock yard\".",
+                      "maxLength": 120,
+                      "type": "string"
+                    },
+                    "latitude": {
+                      "description": "Where it is, from the location you read.",
+                      "type": "number"
+                    },
+                    "longitude": {
+                      "description": "Where it is, from the location you read.",
+                      "type": "number"
+                    },
+                    "when": {
+                      "description": "When it would happen, as a person reads it: \"10:30 AM\".",
+                      "maxLength": 60,
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "label"
+                  ],
+                  "type": "object"
+                },
+                "tone": {
+                  "description": "How the outcome reads: Good when it fixes the problem, Warning when it trades it for another, Bad when the problem stands.",
+                  "enum": [
+                    "Good",
+                    "Warning",
+                    "Bad",
+                    "Neutral"
+                  ],
+                  "type": "string",
+                  "x-enumOf": "case_option_tones"
+                },
+                "window": {
+                  "description": "For an option that moves an appointment or a due date: the new one as a person reads it, \"Tue 7:00–8:00 AM\".",
+                  "maxLength": 60,
+                  "type": "string"
+                }
+              },
+              "required": [
+                "key",
+                "kind",
+                "label",
+                "tone",
+                "description",
+                "recommended"
+              ],
+              "type": "object"
+            },
+            "maxItems": 3,
+            "minItems": 2,
+            "type": "array"
+          },
+          "recordId": {
+            "description": "The record the options are about: the run subject, or the id shipment_get, invoice_get or another tool returned.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "recordId",
+          "options"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "alternatives",
+        "what could happen",
+        "recovery options",
+        "ways to fix it"
+      ],
+      "policy": {
+        "kind": "action",
+        "resource": "agent_run",
+        "operation": "read",
+        "scope": "run",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "internal"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "change",
+        "artifact": "agent_run",
+        "reversible": true,
+        "idempotent": false,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Writes the choices an agent lays out on a record's case; it changes no record and reaches nobody, and every option still needs its plan approved."
+      }
+    },
+    {
       "name": "agent_open_page",
       "description": "Give the person a link to a page or a record in Trenova, such as the shipments page or one customer, to open if they choose; the app does not move on its own. Use it only when they ask to go to or open a page; to show them a record, fetch it with its get tool instead. Pass a page's path from agent_find_page, or a record's entity and id from the tool that found it; action create opens the page's create form. It refuses a page they may not open.",
       "parameters": {
@@ -17095,7 +17248,7 @@
     },
     {
       "name": "exception_dismiss_watchtower_item",
-      "description": "Take an item off the watchtower feed once it has been dealt with; the record behind it is left alone. Use it for a weather alert that has passed or a message already answered. Items about agents' own runs, proposals and exceptions stay for a person to clear.",
+      "description": "Take an item off the watchtower feed once it has been dealt with; the record behind it is left alone. Use it for a check call that has since come in or a message already answered. Items about agents' own runs, proposals and exceptions stay for a person to clear.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -17814,7 +17967,7 @@
     },
     {
       "name": "exception_list_watchtower_items",
-      "description": "List the watchtower feed of open items that need attention now, newest first: failed agent runs, proposals awaiting a decision, exceptions and service failures. It also carries weather, quarantined EDI files, inbound email to review and coverage at risk, missed stops, missing PODs and exhausted tenders. Each exception shows its status, owner, due time and whether it is overdue. Narrow it by kind, severity, owner or overdue, or order it by due time. It never marks anything seen.",
+      "description": "List the watchtower feed of open items that need attention now, newest first: failed agent runs, proposals awaiting a decision, exceptions and service failures. It also carries quarantined EDI files, inbound email to review and coverage at risk, missed stops, missing PODs and exhausted tenders. Each exception shows its status, owner, due time and whether it is overdue. Narrow it by kind, severity, owner or overdue, or order it by due time. It never marks anything seen.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -17842,7 +17995,6 @@
                 "ServiceFailure",
                 "CarrierIntelEvent",
                 "HOSViolation",
-                "WeatherAlert",
                 "EDIInboundQuarantined",
                 "BillingException",
                 "DetentionOccurrence",
@@ -17930,11 +18082,10 @@
         "source": "inbound_message",
         "sources": [
           "edi",
-          "weather",
           "run_record"
         ],
         "carriesTaint": false,
-        "rationale": "Reads the watchtower feed, whose headlines can quote an inbound email, an EDI file, a weather alert or a run that read outside text; it changes nothing, not even what the person has seen."
+        "rationale": "Reads the watchtower feed, whose headlines can quote an inbound email, an EDI file or a run that read outside text; it changes nothing, not even what the person has seen."
       }
     },
     {

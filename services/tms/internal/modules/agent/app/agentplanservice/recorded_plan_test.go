@@ -169,6 +169,7 @@ func TestRecordedTurn_FilesOnePlanThatApproveAllRuns(t *testing.T) {
 		proposals:  &proposals.fakeSteps,
 		decisions:  decider,
 		shadow:     fakeShadow{},
+		owners:     &agenttest.OpenCases{},
 		activity:   &announcedPlans{},
 		watchtower: agenttest.QuietWatchtower{},
 		followUps:  agenttest.QuietFollowUps{},

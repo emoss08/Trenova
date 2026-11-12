@@ -164,7 +164,7 @@ func buildBillingQueueList(
 			}
 			result, err := lister.List(ctx, &billingqueueports.ListBillingQueueItemsRequest{
 				Filter:        opts,
-				IncludePosted: asksForPosted(opts.FieldFilters),
+				IncludeClosed: asksForClosed(opts.FieldFilters),
 			})
 			if err != nil {
 				return listtool.Page{}, err
@@ -180,25 +180,27 @@ func buildBillingQueueList(
 	})
 }
 
-// asksForPosted reports whether a status filter could match a posted item,
-// which the queue leaves out unless asked.
-func asksForPosted(filters []domaintypes.FieldFilter) bool {
+// asksForClosed reports whether a status filter could match a closed item,
+// posted or canceled, which the queue leaves out unless asked.
+func asksForClosed(filters []domaintypes.FieldFilter) bool {
 	for _, filter := range filters {
 		if filter.Field != querytool.ParamStatus {
 			continue
 		}
 		switch value := filter.Value.(type) {
 		case string:
-			if strings.EqualFold(value, string(billingqueue.StatusPosted)) {
+			if isClosedStatus(value) {
 				return filter.Operator == dbtype.OpEqual
 			}
 		case []any:
-			if filter.Operator == dbtype.OpIn && slices.ContainsFunc(value, isPosted) {
+			if filter.Operator == dbtype.OpIn && slices.ContainsFunc(value, func(v any) bool {
+				text, ok := v.(string)
+				return ok && isClosedStatus(text)
+			}) {
 				return true
 			}
 		case []string:
-			if filter.Operator == dbtype.OpIn &&
-				slices.Contains(value, string(billingqueue.StatusPosted)) {
+			if filter.Operator == dbtype.OpIn && slices.ContainsFunc(value, isClosedStatus) {
 				return true
 			}
 		}
@@ -207,10 +209,10 @@ func asksForPosted(filters []domaintypes.FieldFilter) bool {
 	return false
 }
 
-func isPosted(value any) bool {
-	text, ok := value.(string)
-
-	return ok && strings.EqualFold(text, string(billingqueue.StatusPosted))
+func isClosedStatus(text string) bool {
+	return slices.ContainsFunc(billingqueue.ClosedStatuses(), func(status billingqueue.Status) bool {
+		return strings.EqualFold(text, string(status))
+	})
 }
 
 func billingQueueRowFrom(

@@ -421,6 +421,7 @@ func newWindowHarness(t *testing.T, count int) *windowHarness {
 			threads:      windowThreads{},
 			definitions:  windowDefinitions{mode: agentdefinition.AccessEveryone},
 			permissions:  &agenttest.StubPermissions{},
+			owners:       &agenttest.OpenCases{},
 			shadow: agentshadow.New(agentshadow.Params{
 				Control:     controls,
 				Runs:        runs,

@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust/agenttooltrustdb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detention/detentiondb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
@@ -59,15 +60,26 @@ const (
 type AgentActivitySeed struct {
 }
 
+// activityShipments are the loads the seeded decisions are about. They are
+// named, so a shipment another seed adds never takes one of their places, and
+// they are the detention loads because two of the decisions send a notice for
+// an occurrence on them.
+var activityShipments = []string{"SEED-DET-001", "SEED-DET-002", "SEED-DET-003", "SEED-DET-004"}
+
+const maxSeedOccurrences = 16
+
 type activitySeedRefs struct {
 	org       *tenant.Organization
 	admin     *tenant.User
 	dispatch  *agentdefinition.Definition
 	billing   *agentdefinition.Definition
 	shipments []*shipment.Shipment
-	customers []*customer.Customer
-	worker    *worker.Worker
-	now       int64
+	// occurrences is the detention occurrence each notice is sent for, by
+	// shipment: the one value detention_send_notice takes.
+	occurrences map[pulid.ID]pulid.ID
+	customers   []*customer.Customer
+	worker      *worker.Worker
+	now         int64
 }
 
 func (s *AgentActivitySeed) Run(ctx context.Context, sr *seed.Run) error {
@@ -134,11 +146,35 @@ func (s *AgentActivitySeed) loadRefs(
 	if refs.shipments, err = shipmentdb.Shipments.AllTenants().Where(
 		shipmentdb.Shipments.OrganizationID.Eq(org.ID),
 		shipmentdb.Shipments.BusinessUnitID.Eq(org.BusinessUnitID),
-	).Order(shipmentdb.Shipments.ProNumber.Asc()).Limit(4).List(ctx, db); err != nil {
+		shipmentdb.Shipments.ProNumber.In(activityShipments...),
+	).Order(shipmentdb.Shipments.ProNumber.Asc()).Limit(len(activityShipments)).List(ctx, db); err != nil {
 		return nil, fmt.Errorf("load shipments: %w", err)
 	}
-	if len(refs.shipments) < 4 {
-		return nil, fmt.Errorf("need four seeded shipments: %w", tenantfixtures.ErrFixtureMissing)
+	if len(refs.shipments) < len(activityShipments) {
+		return nil, fmt.Errorf("need the seeded detention shipments: %w", tenantfixtures.ErrFixtureMissing)
+	}
+
+	occurrences, err := detentiondb.DetentionOccurrences.AllTenants().Where(
+		detentiondb.DetentionOccurrences.OrganizationID.Eq(org.ID),
+		detentiondb.DetentionOccurrences.BusinessUnitID.Eq(org.BusinessUnitID),
+		detentiondb.DetentionOccurrences.ShipmentID.In(
+			refs.shipments[0].ID, refs.shipments[2].ID,
+		),
+	).Order(detentiondb.DetentionOccurrences.ID.Asc()).Limit(maxSeedOccurrences).List(ctx, db)
+	if err != nil {
+		return nil, fmt.Errorf("load detention occurrences: %w", err)
+	}
+	refs.occurrences = make(map[pulid.ID]pulid.ID, 2)
+	for _, occurrence := range occurrences {
+		if _, seen := refs.occurrences[occurrence.ShipmentID]; !seen {
+			refs.occurrences[occurrence.ShipmentID] = occurrence.ID
+		}
+	}
+	if len(refs.occurrences) < 2 {
+		return nil, fmt.Errorf(
+			"need a detention occurrence on each notice's shipment: %w",
+			tenantfixtures.ErrFixtureMissing,
+		)
 	}
 
 	refs.customers = make([]*customer.Customer, 0, 2)
@@ -276,10 +312,7 @@ func decisionSpecs(refs *activitySeedRefs) []runSpec {
 		"The trailer has been on the dock four hours past free time and the customer's "+
 			"agreement bills detention hourly. The notice is what starts the clock they agreed to.",
 		map[string]any{
-			"shipmentId": refs.shipments[0].ID.String(),
-			"customerId": refs.customers[0].ID.String(),
-			"hours":      4,
-			"subject":    "Detention accruing on " + refs.shipments[0].ProNumber,
+			"occurrenceId": refs.occurrences[refs.shipments[0].ID].String(),
 		},
 		[]agentevidence.EvidenceRef{
 			{
@@ -348,10 +381,7 @@ func decisionSpecs(refs *activitySeedRefs) []runSpec {
 		"Same dock, same customer, a different load. The free time expired two hours ago and "+
 			"nothing on the shipment says the delay was ours.",
 		map[string]any{
-			"shipmentId": refs.shipments[2].ID.String(),
-			"customerId": refs.customers[0].ID.String(),
-			"hours":      2,
-			"subject":    "Detention accruing on " + refs.shipments[2].ProNumber,
+			"occurrenceId": refs.occurrences[refs.shipments[2].ID].String(),
 		},
 		[]agentevidence.EvidenceRef{
 			{Type: "Shipment", ID: refs.shipments[2].ID.String(), Note: "Free time expired 15:40"},

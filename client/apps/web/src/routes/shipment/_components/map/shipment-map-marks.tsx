@@ -1,5 +1,5 @@
 import { cn } from "@trenova/shared/lib/utils";
-import { AdvancedMarker } from "@vis.gl/react-google-maps";
+import { AdvancedMarker } from "@/components/map/advanced-marker";
 import { STAGE_META } from "@/lib/shipment-board/stage";
 import { useShipmentBoardStore } from "../board/store";
 import { useMapFocusStore } from "./map-focus-store";

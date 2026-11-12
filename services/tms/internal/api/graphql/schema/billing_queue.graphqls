@@ -48,8 +48,8 @@ type BillingQueueItemConnection {
 input BillingQueueItemsFilterInput {
   "The lanes to include; empty includes every lane."
   lanes: [BillingQueueLane!]
-  "Include items whose invoice already posted."
-  includePosted: Boolean = false
+  "Include closed items: posted or canceled."
+  includeClosed: Boolean = false
   "Smallest amount, in the bill-to's currency."
   minAmount: Decimal
   "Largest amount, in the bill-to's currency."

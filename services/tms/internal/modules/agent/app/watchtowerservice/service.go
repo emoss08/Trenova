@@ -3,6 +3,7 @@ package watchtowerservice
 import (
 	"context"
 	"fmt"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/caseownerports"
 	"slices"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
@@ -61,6 +62,7 @@ type Params struct {
 	Sources     []watchtowerports.WatchtowerSource `                group:"watchtower_sources"`
 	Dismisser   *Dismisser
 	Exceptions  *Exceptions
+	Owners      caseownerports.Service
 }
 
 // Service is the watchtower's read face: what a reader may see of it, where
@@ -82,6 +84,7 @@ type Service struct {
 	exceptions  *Exceptions
 	events      agenteventports.AgentEventPublisher
 	sources     map[watchtower.SourceKind]watchtowerports.WatchtowerSource
+	owners      caseownerports.Service
 	now         func() int64
 }
 
@@ -93,7 +96,7 @@ func New(p Params) *Service {
 		}
 	}
 
-	access := kindAccess{permissions: p.Permissions}
+	access := kindAccess{permissions: p.Permissions, owners: p.Owners}
 	svc := &Service{
 		l:           p.Logger.Named("service.watchtower"),
 		repo:        p.Repo,
@@ -107,6 +110,7 @@ func New(p Params) *Service {
 		events:      p.Events,
 		sources:     sources,
 		dismisser:   p.Dismisser,
+		owners:      p.Owners,
 		now:         timeutils.NowUnix,
 	}
 
@@ -199,8 +203,14 @@ func (s *Service) List(
 		first = maxPageSize
 	}
 
+	sight, err := s.owners.Sight(ctx, actor)
+	if err != nil {
+		return nil, err
+	}
+
 	listReq := watchtowerports.ListWatchtowerItemsQuery{
 		TenantInfo:     req.TenantInfo,
+		Sight:          &sight,
 		Kinds:          kinds,
 		Severities:     req.Severities,
 		UnresolvedOnly: req.UnresolvedOnly,
@@ -212,6 +222,7 @@ func (s *Service) List(
 		SubjectID:      req.SubjectID,
 		AboutIDs:       req.AboutIDs,
 		OrderByDue:     req.OrderByDue,
+		AgentWorking:   req.AgentWorking,
 	}
 	if req.OverdueOnly {
 		listReq.OverdueAt = s.now()
@@ -291,8 +302,14 @@ func (s *Service) Counts(
 		return counts, nil
 	}
 
+	sight, err := s.owners.Sight(ctx, actor)
+	if err != nil {
+		return nil, err
+	}
+
 	stored, err := s.repo.Counts(ctx, watchtowerports.CountWatchtowerItemsRequest{
 		TenantInfo: tenant,
+		Sight:      &sight,
 		Kinds:      kinds,
 		SeenAt:     cursor.SeenAt,
 		AssigneeID: actor.UserID,
@@ -366,9 +383,10 @@ func (s *Service) PlanDismiss(
 }
 
 // HandOff gives an item to an agent. A named agent runs on the item's
-// subject at once. Otherwise the item's event is published to whoever
-// subscribes to it; with no subscriber, the answer is who could take it,
-// so the person can pick rather than be told nothing happened.
+// subject at once. Otherwise the first agent that subscribes to the item's
+// event is started on it the same way, so the item says which run has it
+// and when that run ends; with no subscriber, the answer is who could take
+// it, so the person can pick rather than be told nothing happened.
 func (s *Service) HandOff(
 	ctx context.Context,
 	req watchtowerports.HandOffWatchtowerItemRequest,
@@ -382,6 +400,9 @@ func (s *Service) HandOff(
 		return nil, err
 	}
 	if err = s.access.assertMaySee(ctx, actor, item); err != nil {
+		return nil, err
+	}
+	if err = s.access.assertMayWork(ctx, actor, item); err != nil {
 		return nil, err
 	}
 	if item.SubjectType == "" || item.SubjectID.IsNil() {
@@ -408,14 +429,18 @@ func (s *Service) HandOff(
 			return nil, lErr
 		}
 		if len(subscribers) > 0 {
-			agenteventports.PublishAgentEvent(ctx, s.events, agenteventports.AgentEvent{
-				Kind:       item.EventKind,
-				SubjectID:  item.SubjectID,
-				TenantInfo: req.TenantInfo,
-			})
-			result.Subscribers = subscribers
+			// The agent that takes this kind of thing is started on it
+			// directly. Publishing the event again would not do: an event
+			// that already happened is not delivered twice, so the person
+			// would be told an agent has it when no run began.
+			req.AgentDefinitionID = subscribers[0].ID
+			handed, hErr := s.handOffToAgent(ctx, req, item, actor)
+			if hErr != nil {
+				return nil, hErr
+			}
+			handed.Subscribers = subscribers[:1]
 
-			return result, nil
+			return handed, nil
 		}
 		for _, template := range agenttemplate.AllTemplates() {
 			for _, kind := range agentpreset.StarterEvents(template) {

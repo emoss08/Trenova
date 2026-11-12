@@ -2,10 +2,10 @@ import type { TriageBriefing } from "@/lib/graphql/inbox";
 import { describe, expect, it } from "vitest";
 import {
   carryOverRows,
+  dayFigures,
   deckEntries,
   firstDayStage,
   novaLine,
-  ringProgress,
   riverTicks,
   riverWindow,
   riverX,
@@ -58,16 +58,34 @@ function point(messageId: string, done: boolean, dueAt: number | null): Point {
   };
 }
 
-describe("the ring", () => {
-  it("fills as the morning's messages clear and is full when nothing waits", () => {
-    expect(ringProgress(0, 8)).toBe(0);
-    expect(ringProgress(6, 8)).toBeCloseTo(6 / 14);
-    expect(ringProgress(6, 0)).toBe(1);
-    expect(ringProgress(0, 0)).toBe(1);
+describe("the day's figures", () => {
+  it("counts what you closed, and what is still open past its target", () => {
+    const yours = [
+      point("a", true, NOW - HOUR),
+      point("b", true, null),
+      point("c", false, NOW - 60),
+      point("d", false, NOW + HOUR),
+      point("e", false, null),
+    ];
+
+    expect(dayFigures(yours, [], NOW)).toEqual({ cleared: 2, overTarget: 1 });
   });
 
-  it("never reads a negative count as progress", () => {
-    expect(ringProgress(-3, 4)).toBe(0);
+  it("counts a message waiting from an earlier day, which only the deck holds, and each once", () => {
+    const yours = [point("c", false, NOW - 60)];
+    const deck = [
+      {
+        ...card("File", ["c", "old"], 2),
+        items: [item("c", NOW - 60), item("old", NOW - 30 * HOUR)],
+      },
+      { ...card("Decide", ["later"], 4), items: [item("later", NOW + HOUR)] },
+    ];
+
+    expect(dayFigures(yours, deck, NOW)).toEqual({ cleared: 0, overTarget: 2 });
+  });
+
+  it("is nothing on a day with nothing of yours", () => {
+    expect(dayFigures([], [], NOW)).toEqual({ cleared: 0, overTarget: 0 });
   });
 });
 

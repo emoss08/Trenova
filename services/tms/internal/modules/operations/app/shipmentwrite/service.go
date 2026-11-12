@@ -647,6 +647,7 @@ func (s *Service) finishShipmentUpdate(
 	)
 
 	s.effects.EmitStatusChangeEvent(ctx, original, updatedEntity, auditActor)
+	s.effects.EmitUpdatedEvent(ctx, original, updatedEntity, auditActor)
 	if err := s.effects.RecomputeOrdersForShipments(
 		ctx,
 		pagination.TenantInfo{

@@ -2795,6 +2795,8 @@ input AgentProposalDecisionInput {
   previewDigest: String
   "What the decider tells the agent with the decision, such as why they turned it down; at most 2000 characters. The conversation's follow-up turn reads it as data, never as instructions."
   note: String
+  "An approval waits out the undo window before it runs, and can be taken back with undoAgentDecision until it does."
+  undoWindow: Boolean = false
 }
 
 input AgentPlanDecisionInput {
@@ -2805,6 +2807,8 @@ input AgentPlanDecisionInput {
   previewDigest: String
   "What the decider tells the agent with the decision, such as why they turned it down; at most 2000 characters. Recorded on every step's decision."
   note: String
+  "An approval waits out the undo window before any step runs, and can be taken back with undoAgentDecision until one does."
+  undoWindow: Boolean = false
 }
 
 input AgentExceptionResolveInput {
@@ -2931,6 +2935,17 @@ extend type Mutation {
   that was undone is a conflict.
   """
   commitMyDecisionNow(proposalId: ID, planId: ID): Boolean!
+  """
+  Takes back an approval the caller made from the decision queue or a record's
+  case with an undo window, while the window is open; it waits on a person
+  again. Name one of the two. Once it has gone through it is a conflict.
+  """
+  undoAgentDecision(proposalId: ID, planId: ID): Boolean!
+  """
+  Ends the undo window on an approval the caller made from the decision queue
+  or a record's case, so it goes through now.
+  """
+  commitAgentDecisionNow(proposalId: ID, planId: ID): Boolean!
   "Replays a recorded run against its agent as it is now; every write is simulated."
   replayAgentRun(runId: ID!): AgentEvaluation!
   createAgentMemory(input: AgentMemoryInput!): AgentMemory!
@@ -3376,7 +3391,11 @@ input MyAgentsInput {
   origin: MyAgentOrigin = All
   "Agents already shown, so a page never repeats them. At most 100."
   excludeIds: [ID!]
-  "Only these agents. At most 100."
+  """
+  Only these agents, at most 100. An agent named here is listed when the caller
+  may use it even if it runs on its own: a case names the agent working it, and
+  the person asks that agent.
+  """
   ids: [ID!]
 }
 
@@ -3559,7 +3578,7 @@ extend type Query {
   replaces the agent the way any edit does. Saves nothing.
   """
   agentDefinitionVersionDraft(agentId: ID!, version: Int!): AgentDefinition!
-  "The chat agents the caller may use, enabled and by name."
+  "The agents the caller may ask, enabled and by name: the chat agents, or the ones named by id."
   myAgents(input: MyAgentsInput!): MyAgentConnection!
   """
   How well the chat agents the caller may use fit a question: another agent
@@ -3849,6 +3868,27 @@ type AgentPreviewWarning {
   message: String!
   "What a would_fail warning is made of: one reason per rule the write breaks. Empty for every other code."
   reasons: [AgentPreviewReason!]!
+  "What a person could do to put the warning right, when something would. Empty otherwise."
+  remedies: [AgentPreviewRemedy!]!
+}
+
+"""
+One fix for a warning. The client keeps what each kind is called, who may take
+it and how it is taken; the server says which applies and to which record.
+"""
+type AgentPreviewRemedy {
+  "invite_driver_to_portal or set_up_email_profile."
+  kind: String!
+  "The kind of record the fix is done to, as the record-link registry names it; empty when it is done to none."
+  recordKind: String!
+  "That record's id; empty when the fix is done to no record."
+  recordId: String!
+  "What that record is called, so no id is ever shown; empty when there is no record."
+  recordLabel: String!
+  "When the fix was last taken and is still waiting to take effect (an invitation sent, not yet accepted); null when it has not been."
+  takenAt: Timestamp
+  "What a person is told about a fix already taken: who it went to. Empty otherwise."
+  takenNote: String!
 }
 
 """
@@ -6425,6 +6465,7 @@ enum AITask {
   RemittanceExtraction
   PaperworkReading
   PaletteAnswer
+  CaseReading
   EvaluationJudge
   Embedding
   AssistantChat
@@ -6977,6 +7018,7 @@ enum AIUsageFeature {
   InboundMail
   PaletteAnswer
   InsightNarration
+  CaseReading
 }
 
 """
@@ -7785,8 +7827,8 @@ type BillingQueueItemConnection {
 input BillingQueueItemsFilterInput {
   "The lanes to include; empty includes every lane."
   lanes: [BillingQueueLane!]
-  "Include items whose invoice already posted."
-  includePosted: Boolean = false
+  "Include closed items: posted or canceled."
+  includeClosed: Boolean = false
   "Smallest amount, in the bill-to's currency."
   minAmount: Decimal
   "Largest amount, in the bill-to's currency."
@@ -12270,6 +12312,8 @@ extend type AgentRun {
   definition: AgentDefinition
   "The agent that handed the run its task, for the run of an agent a conversation's agent asked; absent otherwise, and for an agent deleted since."
   handedBy: AgentDefinition
+  "The name of the record the run is on, such as a shipment's PRO number. Empty for a run on the organization or a conversation, for a kind of record with no name of its own, and for a reader who may not read the record."
+  subjectLabel: String!
 }
 
 extend type Query {
@@ -12333,6 +12377,8 @@ type DeskAttentionGroup {
   "True when any of its items is new to the reader."
   unseen: Boolean!
   items: [WatchtowerItem!]!
+  "Whose case the record is and how the reader stands to it; null when the row is about no record."
+  ownership: DeskCaseOwnership
 }
 
 "Open items in each of the Desk's lenses, as the reader may see them."
@@ -12363,6 +12409,8 @@ input DeskAttentionInput {
   first: Int = 50
   "One record's row, for its case: every open item about it."
   recordId: ID
+  "Only rows with an item an agent's run is working on right now. A run that finished, failed or waits on a person is not working."
+  working: Boolean = false
 }
 
 "How a write an agent made ended."
@@ -12413,6 +12461,13 @@ type DeskActivityChange {
   proposalId: ID!
   "Null when the write named no record."
   record: DeskRecord
+  "What the write made, in words: the record it made or changed, or what the tool does."
+  what: String!
+  "Why the agent made it; empty when it gave no reason."
+  why: String!
+  "When the agent proposed it."
+  proposedAt: Timestamp!
+  "When it settled."
   at: Timestamp!
   outcome: DeskActivityOutcome!
   "Why it did not go through; empty when it did."
@@ -12667,6 +12722,365 @@ type DeskBoardBlock {
 extend type Query {
   "A board in one of the person's conversations, read now with their access."
   deskBoardCard(threadId: ID!, artifactId: ID!): DeskBoardCard!
+}
+`, BuiltIn: false},
+	{Name: "../schema/desk_case.graphqls", Input: `"How a line of a case reads: good news, a warning, bad news, or neither."
+enum DeskCaseTone {
+  Neutral
+  Good
+  Warning
+  Bad
+  Info
+}
+
+"Where the plan about a record stands."
+enum DeskCaseDecisionPhase {
+  "Waiting on a person."
+  Awaiting
+  "Approved; nothing has run and it can still be undone."
+  Undoable
+  "Approved and running."
+  Running
+  "Every step ran and was confirmed."
+  Done
+  "A step did not go through, so it stopped."
+  Failed
+  "Declined; nothing ran."
+  Declined
+  Expired
+}
+
+enum DeskCaseDecisionKind {
+  "Several changes decided as one."
+  Plan
+  "One change."
+  Proposal
+}
+
+enum DeskCaseExhibitKind {
+  "The route and where the truck is on it."
+  Route
+  "Amounts left of a limit: a driver's hours, what is paid of an invoice."
+  Meters
+  "A message someone sent about the record."
+  Message
+  "What happened and what is still to come, in order."
+  Timeline
+  "Labelled facts."
+  Facts
+}
+
+enum DeskCasePointState {
+  Done
+  Ahead
+  "Added by the chosen option; not on the record yet."
+  Proposed
+}
+
+"Whether Nova's reading of the case is written."
+enum DeskCaseReadingStatus {
+  "Being written now; the case updates when it lands."
+  Writing
+  Ready
+  "Nova is off, has no provider, or its wording was refused."
+  Unavailable
+}
+
+enum DeskCaseTrustKey {
+  "Why it matters."
+  Matters
+  "If nothing changes."
+  Unchanged
+  "What the agent proposes."
+  Proposes
+  "Why it needs a person's approval."
+  Approval
+}
+
+enum DeskCaseOptionKind {
+  "An alternative an agent drafts a plan for."
+  Plan
+  "Leave the record as it is."
+  Leave
+}
+
+type DeskCaseDeadline {
+  at: Timestamp!
+  "What the time is until, in the source's words."
+  label: String!
+}
+
+type DeskCaseHead {
+  "The customer, a reference number: what tells this record from the next."
+  references: [String!]!
+  title: String!
+  status: String!
+  statusTone: DeskCaseTone!
+  "Who is on it, what comes next."
+  details: [String!]!
+  deadline: DeskCaseDeadline
+}
+
+"One run of the reading: plain text, text worth marking, or the number of the exhibit a claim rests on."
+type DeskCaseSegment {
+  text: String!
+  highlight: Boolean!
+  "Null for text; the exhibit's number for a citation."
+  cite: Int
+}
+
+type DeskCaseTrustCell {
+  key: DeskCaseTrustKey!
+  text: String!
+}
+
+type DeskCaseFinding {
+  "The agent that found it; null when only the Watchtower did."
+  agent: AgentDefinition
+  foundAt: Timestamp!
+  "How many exhibits the finding rests on."
+  sources: Int!
+  "What the Watchtower raised, said plainly; shown when there is no reading."
+  raised: String!
+  computed: String!
+  readingStatus: DeskCaseReadingStatus!
+  "Nova's reading; empty until it is written."
+  reading: [DeskCaseSegment!]!
+  trust: [DeskCaseTrustCell!]!
+}
+
+type DeskCaseOption {
+  id: ID!
+  kind: DeskCaseOptionKind!
+  label: String!
+  "What it leads to: an arrival time, an amount."
+  outcome: String!
+  outcomeNote: String!
+  tone: DeskCaseTone!
+  cost: String!
+  description: String!
+  recommended: Boolean!
+  chosen: Boolean!
+}
+
+"The plan, or the single change, that waits on or was decided for the record."
+type DeskCaseDecision {
+  kind: DeskCaseDecisionKind!
+  "The plan's id or the proposal's."
+  id: ID!
+  title: String!
+  phase: DeskCaseDecisionPhase!
+  agent: AgentDefinition
+  proposedAt: Timestamp!
+  stepCount: Int!
+  completedSteps: Int!
+  "The number of the step that did not go through, counted from one as a plan records it."
+  failedStep: Int
+  failureError: String!
+  "When an approval in its undo window starts to run."
+  commitsAt: Timestamp
+  decidedAt: Timestamp
+  decidedBy: User
+  "What the decider told the agent, such as why they declined."
+  note: String!
+  "The Needs you item the decision stands behind, while it is open."
+  itemId: ID
+  "Other decisions still waiting about the same record."
+  others: Int!
+}
+
+type DeskCaseRoutePoint {
+  label: String!
+  "Across the sketch, 0 at the left edge and 1 at the right."
+  x: Float!
+  "Down the sketch, 0 at the top and 1 at the bottom."
+  y: Float!
+  "Where the stop is, for a map."
+  latitude: Float!
+  longitude: Float!
+  state: DeskCasePointState!
+}
+
+type DeskCaseRouteMarker {
+  x: Float!
+  y: Float!
+  "Where the truck last reported, for a map."
+  latitude: Float!
+  longitude: Float!
+}
+
+type DeskCaseRoute {
+  points: [DeskCaseRoutePoint!]!
+  truck: DeskCaseRouteMarker
+  callout: String!
+  calloutTone: DeskCaseTone!
+}
+
+type DeskCaseMeter {
+  label: String!
+  value: String!
+  "How much is left, 0 to 1."
+  fraction: Float!
+  tone: DeskCaseTone!
+}
+
+type DeskCaseMessage {
+  quote: String!
+  from: String!
+  "The agent that has the message, when one does."
+  replyAgent: AgentDefinition
+  reply: String!
+}
+
+type DeskCaseTimelineRow {
+  label: String!
+  sub: String!
+  when: String!
+  tone: DeskCaseTone!
+  state: DeskCasePointState!
+}
+
+type DeskCaseFact {
+  label: String!
+  value: String!
+  at: Timestamp
+  tone: DeskCaseTone!
+}
+
+"One piece of evidence beside the finding, numbered so the reading can cite it."
+type DeskCaseExhibit {
+  key: String!
+  number: Int!
+  kind: DeskCaseExhibitKind!
+  title: String!
+  source: String!
+  at: Timestamp
+  "True when ` + "`" + `at` + "`" + ` is when the source was read rather than when something happened."
+  read: Boolean!
+  route: DeskCaseRoute
+  meters: [DeskCaseMeter!]!
+  message: DeskCaseMessage
+  timeline: [DeskCaseTimelineRow!]!
+  facts: [DeskCaseFact!]!
+  note: String!
+  path: String!
+}
+
+"""
+What lets a person put an agent on a case nobody has worked: the Watchtower
+item to hand off with ` + "`" + `handOffWatchtowerItem` + "`" + `, and whether an agent has it now.
+"""
+type DeskCaseHandOff {
+  itemId: ID!
+  "What kind of condition it is, which decides what a person can do about it themselves."
+  kind: WatchtowerSourceKind!
+  "True while an agent has the item and has not finished."
+  working: Boolean!
+  "The agent that has it, or last had it."
+  agent: AgentDefinition
+  "What that agent said when it finished and proposed nothing; markdown. Empty otherwise."
+  note: String!
+}
+
+"""
+Who a case belongs to and how its reader stands to it. A case has one owner;
+the owner, and whoever covers for them while they are away, decide it.
+"""
+type DeskCaseOwnership {
+  "Null while the case is unowned."
+  owner: User
+  "True when the owner came from the record (its owner, its fleet's manager, its biller or collector) rather than a person's choice."
+  auto: Boolean!
+  "True when the reader works the case in its owner's place while the owner is away."
+  covering: Boolean!
+  "False when the case is someone else's: the reader sees it and decides nothing on it."
+  canWork: Boolean!
+  "True when the case is unowned and the reader may take it."
+  canClaim: Boolean!
+  "True when the reader may give the case to someone, take it over, or leave it unowned."
+  canAssign: Boolean!
+}
+
+"A case that was put away, and when it comes back if nothing new happens first."
+type DeskCaseAway {
+  until: Timestamp!
+}
+
+"""
+A record's case: the record and every open signal about it, read as one decision.
+What is wrong and why, what could happen, the plan to approve, and the evidence
+beside it. The same anatomy serves a late shipment, an invoice past due and a
+disputed invoice.
+"""
+type DeskCase {
+  record: DeskRecord!
+  ownership: DeskCaseOwnership!
+  "Set while the case is put away: everything still open about the record is snoozed."
+  away: DeskCaseAway
+  "The condition an agent can be asked to work; null when nothing open about the record can be handed to one."
+  handOff: DeskCaseHandOff
+  head: DeskCaseHead!
+  "Null when nothing is open about the record."
+  finding: DeskCaseFinding
+  options: [DeskCaseOption!]!
+  "True while an agent drafts the plan for the chosen option."
+  drafting: Boolean!
+  "What the agent said when it finished without drafting a plan for the chosen option; markdown."
+  draftNote: String!
+  decision: DeskCaseDecision
+  exhibits: [DeskCaseExhibit!]!
+  "What the Watchtower says about the condition, for the foot of the evidence."
+  note: String!
+  "Questions worth asking about the record."
+  starters: [String!]!
+  "Open items about the record."
+  open: Int!
+  severity: WatchtowerSeverity!
+}
+
+extend type Query {
+  """
+  A record's case, in one read. ` + "`" + `timezone` + "`" + ` is the reader's IANA zone, which the
+  times in its wording are told in; the organization's when left out.
+  """
+  deskCase(kind: String!, id: ID!, timezone: String): DeskCase!
+}
+
+extend type Mutation {
+  """
+  Chooses one of the options on a record's case. Choosing one no plan was
+  drafted for asks the agent that offered it to draft that plan against the
+  record as it is now.
+  """
+  chooseDeskCaseOption(kind: String!, id: ID!, optionId: ID!): Boolean!
+  """
+  Accepts the risk on a record: marks the conditions the Watchtower holds
+  about it as needing no action, with a reason the team can read. Returns how
+  many it cleared.
+  """
+  acceptDeskCaseRisk(kind: String!, id: ID!, reason: String!): Int!
+  """
+  Gives a record's case to an owner. With no ` + "`" + `ownerId` + "`" + ` the caller claims it:
+  an unowned case is anyone's to claim who may work cases, and one that has an
+  owner is taken over, or given to another person, only by someone who may
+  assign cases.
+  """
+  assignDeskCase(kind: String!, id: ID!, ownerId: ID): Boolean!
+  """
+  Leaves a record's case unowned, for the next person to claim. Its owner may
+  let it go, and so may someone who assigns cases.
+  """
+  releaseDeskCase(kind: String!, id: ID!): Boolean!
+  """
+  Puts a record's case away once the person has done what they can: every
+  condition still open about the record is snoozed until ` + "`" + `until` + "`" + `, so the case
+  leaves Needs you. Nothing is closed. It comes back at that time, or sooner
+  when something new is raised about the record. Refused while a change waits
+  to be approved. Returns how many conditions it put away.
+  """
+  putAwayDeskCase(kind: String!, id: ID!, until: Timestamp!): Int!
+  "Brings a put-away case back in front before its time. Returns how many conditions it woke."
+  bringBackDeskCase(kind: String!, id: ID!): Int!
 }
 `, BuiltIn: false},
 	{Name: "../schema/desk_memory.graphqls", Input: `"How a person wants memories an agent picks up in their conversations kept."
@@ -15494,6 +15908,12 @@ input InviteWorkerToPortalInput {
   Overrides the email on the worker record when provided.
   """
   email: String
+  """
+  Sends the invitation again: an invitation still pending is voided and a new
+  one, with a new link, replaces it. Without it a pending invitation refuses a
+  second.
+  """
+  replacePending: Boolean
 }
 
 input CreateMyLoadCommentInput {
@@ -25533,6 +25953,7 @@ enum ApprovalScope {
   All
   TimeOff
   Expenses
+  Cases
 }
 
 """
@@ -26882,6 +27303,92 @@ extend type Query {
   "The formula template versions that pin a rate matrix, or one of its versions."
   rateMatrixUsages(rateMatrixId: ID!, versionNumber: Int): [RateMatrixUsage!]!
   rateQuotes(input: DataTableConnectionInput!): RateQuoteConnection!
+}
+`, BuiltIn: false},
+	{Name: "../schema/record_share.graphqls", Input: `"Whether the emails a share sends could be queued."
+enum RecordShareEmailStatus {
+  "Every recipient's email was queued."
+  Queued
+  "Some emails were queued and some were not."
+  Partial
+  "No email could be queued."
+  Failed
+  "The app does not know its own address, so no email is sent for shares."
+  NotConfigured
+}
+
+"""
+One record shared with one teammate: who sent it, with what note, and where in
+the app the link opens. Sharing it again with the same person counts and
+re-dates the same share. A share lets its recipient read the record's case
+until it is removed.
+"""
+type RecordShare {
+  id: ID!
+  recordId: ID!
+  "The address inside the app the share opens."
+  path: String!
+  note: String!
+  "How many times this record has been shared with this person."
+  shareCount: Int!
+  firstSharedAt: Timestamp!
+  lastSharedAt: Timestamp!
+  sharedWith: User
+  sharedBy: User
+  "Whether the reader may remove this share: they shared it, the case is theirs, or they may give cases to people."
+  removable: Boolean!
+}
+
+type ShareRecordResult {
+  "Everyone the record is now shared with, newest first."
+  shares: [RecordShare!]!
+  recipientCount: Int!
+  emailsQueued: Int!
+  emailStatus: RecordShareEmailStatus!
+}
+
+input ShareRecordInput {
+  "The record kind, as the record-link registry names it: invoice, shipment, worker."
+  kind: String!
+  id: ID!
+  "The teammates, from recordShareCandidates. At most 25."
+  userIds: [ID!]!
+  "A note for them, sent by email and kept with the share. At most 1000 characters."
+  note: String
+  "Where in the app the link opens: the record's page on the tab, or the Desk page, the sharer is on."
+  path: String!
+}
+
+input UnshareRecordInput {
+  "The record kind, as the record-link registry names it: invoice, shipment, worker."
+  kind: String!
+  id: ID!
+  "The share to remove, from recordShares."
+  shareId: ID!
+}
+
+extend type Query {
+  "Who a record has been shared with, newest first. The reader must be able to read the record."
+  recordShares(kind: String!, id: ID!): [RecordShare!]!
+  """
+  The teammates a record can be shared with: active members other than the
+  reader whose own role lets them open that kind of record.
+  """
+  recordShareCandidates(kind: String!, id: ID!, query: String, first: Int = 10): [User!]!
+}
+
+extend type Mutation {
+  """
+  Shares a record with teammates: each gets a notification and, where email is
+  set up, an email with the note and a link, and may read the record's case.
+  """
+  shareRecord(input: ShareRecordInput!): ShareRecordResult!
+  """
+  Removes a share: its recipient no longer reads the record's case through it.
+  The share is kept as a record of who could see it and when. Returns who the
+  record is still shared with.
+  """
+  unshareRecord(input: UnshareRecordInput!): [RecordShare!]!
 }
 `, BuiltIn: false},
 	{Name: "../schema/recurring_shipment.graphqls", Input: `enum RecurringShipmentStatus {
@@ -33397,7 +33904,6 @@ enum WatchtowerSourceKind {
   ServiceFailure
   CarrierIntelEvent
   HOSViolation
-  WeatherAlert
   EDIInboundQuarantined
   BillingException
   DetentionOccurrence
@@ -33494,6 +34000,250 @@ enum WatchtowerAgentStep {
   Decide
   "Asking a person to approve what it drafted."
   Approve
+}
+
+"Which view an item's panel is drawn with."
+enum WatchtowerPanelKind {
+  "A stop and its window: missed, projected late, or at risk."
+  Stop
+  "A detention clock: free time, then billable time."
+  Clock
+  "Paperwork a record is waiting on."
+  Paper
+  "A message that arrived and waits on a person."
+  Message
+  "Credentials coming due for one person."
+  Expiry
+  "A move with nobody on it, or a tender every carrier passed on."
+  Coverage
+  "A carrier that has stopped checking in."
+  Contact
+  "An agent run that could not finish."
+  Run
+  "The accounting system: documents waiting, or the connection itself."
+  Books
+  "Money waiting on someone: an advance, a chargeback, an invoice that cannot go out."
+  Money
+  "Something on a record changed from one value to another."
+  Change
+  "An agent stopped and needs a person."
+  Ask
+  "A finding with advice."
+  Finding
+  "A file that could not be processed."
+  File
+  "A truck seen at a place with no arrival or departure recorded."
+  Sighting
+}
+
+enum WatchtowerStopRole {
+  Pickup
+  Delivery
+}
+
+enum WatchtowerStopVerdict {
+  "The window closed with no arrival recorded."
+  Missed
+  "Projected to arrive after the window closes."
+  Late
+  "Projected to arrive with little to spare."
+  AtRisk
+  "Arrived after the window closed."
+  ArrivedLate
+}
+
+"A stop and its window. A time of 0 is not known."
+type WatchtowerStopPanel {
+  role: WatchtowerStopRole!
+  verdict: WatchtowerStopVerdict!
+  place: String!
+  windowEnd: Timestamp!
+  "The projected arrival."
+  estimatedAt: Timestamp!
+  "When it arrived, for a stop that arrived late."
+  arrivedAt: Timestamp!
+  "The last position or check call the projection worked from."
+  lastHeardAt: Timestamp!
+  milesRemaining: Int!
+  "The projection is working from old information."
+  stale: Boolean!
+}
+
+"A detention clock. A time of 0 has not happened."
+type WatchtowerClockPanel {
+  place: String!
+  customer: String!
+  arrivedAt: Timestamp!
+  freeEndsAt: Timestamp!
+  departedAt: Timestamp!
+  freeMinutes: Int!
+  billableMinutes: Int!
+  "What has accrued, as money in words; empty while nothing has."
+  accrued: String!
+}
+
+type WatchtowerPaper {
+  name: String!
+  onFile: Boolean!
+}
+
+"Paperwork a delivered load is waiting on."
+type WatchtowerPaperPanel {
+  customer: String!
+  deliveredAt: Timestamp!
+  papers: [WatchtowerPaper!]!
+  "What the missing paper holds up, in words; empty when nothing is known to wait on it."
+  holds: String!
+}
+
+"A message that waits on a person."
+type WatchtowerMessagePanel {
+  fromName: String!
+  fromAddress: String!
+  subject: String!
+  "What Nova read the message as; empty when it could not say."
+  readAs: String!
+  "Why it waits on a person, in the source's words."
+  why: String!
+  receivedAt: Timestamp!
+  "Held back as unsafe."
+  held: Boolean!
+}
+
+type WatchtowerExpiringPaper {
+  name: String!
+  expiresAt: Timestamp!
+  "Whole days until it expires; negative once it has."
+  daysLeft: Int!
+}
+
+"One person's credentials coming due."
+type WatchtowerExpiryPanel {
+  who: String!
+  papers: [WatchtowerExpiringPaper!]!
+}
+
+"A move with nobody on it."
+type WatchtowerCoveragePanel {
+  startsAt: Timestamp!
+  reason: String!
+  "Every carrier in the routing guide passed or let the offer lapse."
+  exhausted: Boolean!
+  endedAt: Timestamp!
+}
+
+"A carrier that has gone quiet."
+type WatchtowerContactPanel {
+  who: String!
+  lastHeardAt: Timestamp!
+  "How often a check call is expected, in hours."
+  everyHours: Int!
+  "When the next check call was due."
+  dueAt: Timestamp!
+}
+
+"An agent run that could not finish."
+type WatchtowerRunPanel {
+  agent: String!
+  reason: String!
+  failedAt: Timestamp!
+}
+
+"The accounting system and what waits in it."
+type WatchtowerBooksPanel {
+  system: String!
+  "How many documents or payments wait; 0 when it is the connection itself."
+  count: Int!
+  since: Timestamp!
+  "When the authorization or certificate expires."
+  expiresAt: Timestamp!
+  "The connection is failing or was revoked."
+  down: Boolean!
+}
+
+enum WatchtowerMoneyStake {
+  "Advances a factor has not funded."
+  Advance
+  "What the organization would owe if a factor charges an invoice back."
+  Chargeback
+  "An invoice that cannot go out as it stands."
+  Invoice
+}
+
+"Money waiting on someone."
+type WatchtowerMoneyPanel {
+  stake: WatchtowerMoneyStake!
+  "Who it waits on: the factor, the customer."
+  party: String!
+  "The amount as money in words; empty when none is known."
+  amount: String!
+  "How many invoices it covers."
+  count: Int!
+  dueAt: Timestamp!
+  reason: String!
+}
+
+"Something that changed, from one value to another."
+type WatchtowerChangePanel {
+  who: String!
+  what: String!
+  from: String!
+  to: String!
+  "What identifies who: a DOT number."
+  ref: String!
+  at: Timestamp!
+}
+
+"An agent that stopped and needs a person."
+type WatchtowerAskPanel {
+  category: String!
+  "What it tried before it stopped."
+  tried: String!
+}
+
+"A finding and what to do about it."
+type WatchtowerFindingPanel {
+  advice: String!
+  detail: String!
+}
+
+"A file that could not be processed."
+type WatchtowerFilePanel {
+  name: String!
+  reason: String!
+  receivedAt: Timestamp!
+}
+
+"A truck seen at a place with nothing recorded."
+type WatchtowerSightingPanel {
+  "A departure was seen; otherwise an arrival."
+  departure: Boolean!
+  place: String!
+  seenAt: Timestamp!
+  why: String!
+}
+
+"""
+What is happening on an item, in the shape made for it. Exactly one of the
+fields named by ` + "`" + `kind` + "`" + ` is set.
+"""
+type WatchtowerPanel {
+  kind: WatchtowerPanelKind!
+  stop: WatchtowerStopPanel
+  clock: WatchtowerClockPanel
+  paper: WatchtowerPaperPanel
+  message: WatchtowerMessagePanel
+  expiry: WatchtowerExpiryPanel
+  coverage: WatchtowerCoveragePanel
+  contact: WatchtowerContactPanel
+  run: WatchtowerRunPanel
+  books: WatchtowerBooksPanel
+  money: WatchtowerMoneyPanel
+  change: WatchtowerChangePanel
+  ask: WatchtowerAskPanel
+  finding: WatchtowerFindingPanel
+  file: WatchtowerFilePanel
+  sighting: WatchtowerSightingPanel
 }
 
 "One fact about the record behind an item, as the source reports it."
@@ -33611,6 +34361,8 @@ type WatchtowerItem {
   impact: [String!]!
   "The events that led here, oldest first."
   trail: [WatchtowerTrailEvent!]!
+  "What is happening, typed for the view made for it; absent when the item is read from its facts."
+  panel: WatchtowerPanel
   "The agent best placed to take the item: one that subscribes to its event."
   suggestedAgentId: ID
   suggestedAgent: AgentDefinition

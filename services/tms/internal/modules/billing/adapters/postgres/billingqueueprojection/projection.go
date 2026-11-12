@@ -6,6 +6,7 @@ import (
 	"slices"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/tenantscope"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -24,11 +25,11 @@ func Refresh(ctx context.Context, db *keel.DB, itemIDs ...pulid.ID) error {
 	}
 
 	bq := billingqueuedb.BillingQueueItems
-	lane := LaneExpr(bq)
-	if _, err := bq.Where(
+	lane := laneExpr(ctx, bq)
+	if _, err := tenantscope.Scoped(ctx, bq.Where(
 		bq.ID.In(ids...),
 		bq.Lane.Text().IsDistinctFromExpr(lane),
-	).Update(
+	)).Update(
 		ctx,
 		db,
 		bq.Lane.ToExpr(lane),
@@ -48,7 +49,7 @@ func MarkChecked(ctx context.Context, db *keel.DB, at int64, itemIDs ...pulid.ID
 	}
 
 	bq := billingqueuedb.BillingQueueItems
-	if _, err := bq.Where(bq.ID.In(ids...)).Update(
+	if _, err := tenantscope.Scoped(ctx, bq.Where(bq.ID.In(ids...))).Update(
 		ctx,
 		db,
 		bq.CheckedAt.To(at),
@@ -61,44 +62,46 @@ func MarkChecked(ctx context.Context, db *keel.DB, at int64, itemIDs ...pulid.ID
 	return Refresh(ctx, db, ids...)
 }
 
-func LaneExpr(bq *billingqueuedb.BillingQueueItemsTable) keel.StringExpr {
+func laneExpr(ctx context.Context, bq *billingqueuedb.BillingQueueItemsTable) keel.StringExpr {
 	return keel.CaseString().
 		When(bq.Status.In(billingqueue.ClosedStatuses()...), lane(billingqueue.LaneClosed)).
 		When(bq.Status.Eq(billingqueue.StatusApproved), lane(billingqueue.LaneApproved)).
 		When(bq.Status.In(billingqueue.HeldStatuses()...), lane(billingqueue.LaneHeld)).
 		When(bq.CheckedAt.IsNull(), lane(billingqueue.LaneChecking)).
 		When(
-			keel.Or(bq.AssignedBillerID.IsNull(), HasActionableIssue(bq)),
+			keel.Or(bq.AssignedBillerID.IsNull(), HasActionableIssue(ctx, bq)),
 			lane(billingqueue.LaneNeedsYou),
 		).
-		When(HasOpenIssue(bq), lane(billingqueue.LaneWaiting)).
+		When(keel.Exists(openIssues(ctx, bq)), lane(billingqueue.LaneWaiting)).
 		Else(lane(billingqueue.LaneReady))
 }
 
-func HasOpenIssue(bq *billingqueuedb.BillingQueueItemsTable) keel.Pred {
-	return keel.Exists(openIssues(bq))
+func HasActionableIssue(ctx context.Context, bq *billingqueuedb.BillingQueueItemsTable) keel.Pred {
+	return keel.Exists(actionableIssues(ctx, bq))
 }
 
-func HasActionableIssue(bq *billingqueuedb.BillingQueueItemsTable) keel.Pred {
-	return keel.Exists(actionableIssues(bq))
-}
-
-func openIssues(bq *billingqueuedb.BillingQueueItemsTable) keel.Query[*billingqueue.Issue] {
+func openIssues(
+	ctx context.Context,
+	bq *billingqueuedb.BillingQueueItemsTable,
+) keel.Query[*billingqueue.Issue] {
 	iss := billingqueuedb.Issues.As(openIssueAlias)
 
-	return iss.Pick(iss.ID).Where(
+	return tenantscope.Scoped(ctx, iss.Pick(iss.ID).Where(
 		iss.ItemID.EqCol(bq.ID),
 		iss.OrganizationID.EqCol(bq.OrganizationID),
 		iss.BusinessUnitID.EqCol(bq.BusinessUnitID),
 		iss.ResolutionKey.IsNull(),
 		iss.Code.NotIn(billingqueue.SuggestionIssueCodes()...),
-	)
+	))
 }
 
-func actionableIssues(bq *billingqueuedb.BillingQueueItemsTable) keel.Query[*billingqueue.Issue] {
+func actionableIssues(
+	ctx context.Context,
+	bq *billingqueuedb.BillingQueueItemsTable,
+) keel.Query[*billingqueue.Issue] {
 	iss := billingqueuedb.Issues.As(actionableIssueAlias)
 
-	return iss.Pick(iss.ID).Where(
+	return tenantscope.Scoped(ctx, iss.Pick(iss.ID).Where(
 		iss.ItemID.EqCol(bq.ID),
 		iss.OrganizationID.EqCol(bq.OrganizationID),
 		iss.BusinessUnitID.EqCol(bq.BusinessUnitID),
@@ -106,7 +109,15 @@ func actionableIssues(bq *billingqueuedb.BillingQueueItemsTable) keel.Query[*bil
 		iss.RequestedAt.IsNull(),
 		iss.Code.NotIn(billingqueue.WaitingIssueCodes()...),
 		iss.Code.NotIn(billingqueue.SuggestionIssueCodes()...),
-	)
+	))
+}
+
+// Unclosed leaves out the items in the closed lane, posted or canceled, unless
+// they are asked for.
+func Unclosed(includeClosed bool) keel.Pred {
+	bq := billingqueuedb.BillingQueueItems
+
+	return keel.When(!includeClosed, bq.Lane.Ne(billingqueue.LaneClosed))
 }
 
 func lane(l billingqueue.Lane) keel.StringExpr {

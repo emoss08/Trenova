@@ -38,8 +38,7 @@ export function PhaseBadge({ phase }: { phase: PeekPhase }) {
   const t = useT();
 
   return (
-    <Badge variant={PHASE_TONE[phase]} className="gap-1.5">
-      <span aria-hidden className="size-1.5 rounded-full bg-current" />
+    <Badge variant={PHASE_TONE[phase]} dot>
       {phaseLabel(t, phase)}
     </Badge>
   );

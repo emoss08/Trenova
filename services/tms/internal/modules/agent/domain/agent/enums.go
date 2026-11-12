@@ -1,6 +1,10 @@
 package agent
 
-import "github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+import (
+	"slices"
+
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+)
 
 type Type string
 
@@ -235,6 +239,19 @@ func (s RunStatus) IsValid() bool {
 	default:
 		return false
 	}
+}
+
+// AbandonedRunSeconds is how long a run may stay in a working status before
+// it is taken for abandoned. A run reads, decides and proposes in minutes;
+// one still "working" hours later has lost its workflow.
+const AbandonedRunSeconds = 6 * 60 * 60
+
+func WorkingRunStatuses() []RunStatus {
+	return []RunStatus{RunStatusPending, RunStatusGatheringContext, RunStatusDiagnosing}
+}
+
+func (s RunStatus) IsWorking() bool {
+	return slices.Contains(WorkingRunStatuses(), s)
 }
 
 type ProposalStatus string

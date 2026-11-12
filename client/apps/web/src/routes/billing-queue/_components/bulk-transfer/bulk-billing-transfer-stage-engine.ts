@@ -18,8 +18,9 @@ import {
  *
  * The run reports counts, never the shipments behind them, so the stage animates the
  * difference between what the run has answered and what the stage has already shown. Each
- * sheet carries shipments that share one outcome, and as many of them as keeps the stage
- * within a poll of the run, so a fast run never leaves the animation playing catch-up.
+ * sheet carries every waiting shipment that shares its outcome, so while the run works the
+ * stage is at most one sheet behind it, and a finished run lands what is still in the air at
+ * once: the stage never says a run is still going after the queue already holds its work.
  */
 
 export type StageCounts = {
@@ -104,23 +105,20 @@ export function stageDeficit(target: StageCounts, dispatched: StageCounts): Stag
 
 /**
  * The next sheet. Its outcome is drawn in proportion to what is waiting, so held-back sheets
- * are spread through the run rather than all arriving at the end, and it carries half of
- * everything waiting (at least one, at most what its outcome has), so the backlog halves with
- * every sheet the desk reads.
+ * are spread through the run rather than all arriving at the end, and it carries everything
+ * waiting with that outcome, so the desk never queues up sheets the run answered long ago.
  */
 export function pickStageGroup(deficit: StageGroup[], roll: number): StageGroup | null {
   const total = deficit.reduce((sum, group) => sum + group.count, 0);
   if (total === 0) return null;
 
-  const per = Math.max(1, Math.ceil(total / 2));
   let point = Math.min(Math.max(roll, 0), 0.999_999) * total;
   for (const group of deficit) {
-    if (point < group.count) return { code: group.code, count: Math.min(group.count, per) };
+    if (point < group.count) return { ...group };
     point -= group.count;
   }
 
-  const last = deficit[deficit.length - 1];
-  return { code: last.code, count: Math.min(last.count, per) };
+  return { ...deficit[deficit.length - 1] };
 }
 
 function addGroup(counts: StageCounts, group: StageGroup): StageCounts {
@@ -173,10 +171,8 @@ function pose(point: Point, { dy = 0, rotate = 0, scale = 1 } = {}): string {
 
 export class TransferStageEngine {
   private target: StageCounts;
-  private terminal = false;
   private landed: StageCounts;
   private dispatched: StageCounts;
-  private inFlight = 0;
   private desk: Promise<void> = Promise.resolve();
   private readonly timers = new Set<ReturnType<typeof setTimeout>>();
   private readonly animations = new Set<Animation>();
@@ -195,17 +191,39 @@ export class TransferStageEngine {
 
   update(target: StageCounts, terminal: boolean) {
     this.target = target;
-    this.terminal = terminal;
+    if (terminal) {
+      this.finish();
+      return;
+    }
     if (!this.pumping && !this.disposed) {
       this.pumping = true;
       this.options.onLanded(this.landed);
       this.pump();
     }
-    this.maybeSettle();
   }
 
   dispose() {
     this.disposed = true;
+    this.clearStage();
+  }
+
+  /**
+   * A finished run is shown as it finished: the sheets still in the air are taken off, the
+   * stacks take the run's own counts, and the stage hands over to the results.
+   */
+  private finish() {
+    if (this.disposed || this.settled) return;
+
+    this.settled = true;
+    this.clearStage();
+    this.dispatched = this.target;
+    this.landed = this.target;
+    this.options.onSteps(IDLE_STEPS);
+    this.options.onLanded(this.landed);
+    this.later(this.options.onSettled, TIMING.handover);
+  }
+
+  private clearStage() {
     for (const timer of this.timers) clearTimeout(timer);
     this.timers.clear();
     for (const animation of this.animations) animation.cancel();
@@ -220,7 +238,6 @@ export class TransferStageEngine {
     const group = pickStageGroup(stageDeficit(this.target, this.dispatched), Math.random());
     if (group) {
       this.dispatched = addGroup(this.dispatched, group);
-      this.inFlight += 1;
       void this.fly(group);
     }
     this.later(this.pump, group ? CYCLE_MS : TIMING.idle);
@@ -379,18 +396,9 @@ export class TransferStageEngine {
   }
 
   private land(group: StageGroup) {
-    this.inFlight -= 1;
+    if (this.settled) return;
     this.landed = addGroup(this.landed, group);
     this.options.onLanded(this.landed);
-    this.maybeSettle();
-  }
-
-  private maybeSettle() {
-    if (!this.terminal || this.settled || this.disposed || this.inFlight > 0) return;
-    if (stageDeficit(this.target, this.dispatched).length > 0) return;
-
-    this.settled = true;
-    this.later(this.options.onSettled, TIMING.handover);
   }
 
   /** Runs one move, then writes its end onto the bill and drops the animation, so the bill is

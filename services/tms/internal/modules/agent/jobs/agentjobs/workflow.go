@@ -303,6 +303,10 @@ func (w *Workflows) AgentRunWorkflow(
 	}
 
 	if finished.PendingProposals == 0 {
+		if finished.ProposalsRaised == 0 {
+			return completeEmptyRun(keep, a, payload.RunID, tenant)
+		}
+
 		return completeRun(keep, a, payload.RunID, agent.RunStatusCompleted, tenant)
 	}
 
@@ -535,6 +539,23 @@ func completeRun(
 		RunID:      runID,
 		Status:     status,
 		TenantInfo: tenant,
+	}).Get(completeCtx, nil)
+}
+
+// completeEmptyRun completes a run that asked for no change at all, which
+// closes what was handed to it.
+func completeEmptyRun(
+	ctx workflow.Context,
+	a *Activities,
+	runID pulid.ID,
+	tenant pagination.TenantInfo,
+) error {
+	completeCtx := workflow.WithActivityOptions(ctx, persistActivityOptions)
+	return workflow.ExecuteActivity(completeCtx, a.CompleteRunActivity, &CompleteRunInput{
+		RunID:           runID,
+		Status:          agent.RunStatusCompleted,
+		TenantInfo:      tenant,
+		ProposedNothing: true,
 	}).Get(completeCtx, nil)
 }
 

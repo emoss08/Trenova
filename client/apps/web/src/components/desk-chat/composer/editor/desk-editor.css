@@ -1,0 +1,69 @@
+/* The composer's box: Tiptap's document of plain lines, drawn as the textarea
+   it replaced. Its chips and hints are ProseMirror decorations, which only
+   take a class, so they are styled here and not with utilities. */
+.dk-ed-w {
+  position: relative;
+  z-index: 1;
+}
+.dk-ed {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  /* Grows with what is typed, then scrolls: never more than the room the
+     conversation above it can spare. */
+  max-height: min(38dvh, 320px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  padding: 13px 16px 2px;
+  outline: none;
+  color: var(--dsk-fg);
+  font-size: 14px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  caret-color: var(--dsk-fg);
+}
+.dk-ed[contenteditable="false"] {
+  cursor: default;
+}
+.dk-ed p {
+  margin: 0;
+  min-height: 21px;
+}
+.dk-ed-empty::before {
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  color: var(--dsk-subtle);
+  pointer-events: none;
+  white-space: nowrap;
+}
+.dk-ed-mn {
+  color: oklch(0.45 0.16 255);
+  background: oklch(0.62 0.17 255 / 0.14);
+  border-radius: 4px;
+  box-shadow: 0 0 0 2px oklch(0.62 0.17 255 / 0.14);
+}
+.dark .dk-ed-mn {
+  color: oklch(0.82 0.09 255);
+  background: oklch(0.62 0.17 255 / 0.2);
+  box-shadow: 0 0 0 2px oklch(0.62 0.17 255 / 0.2);
+}
+.dk-ed .dk-sl-ghost {
+  pointer-events: none;
+  user-select: none;
+}
+
+/* The composer's menus: in quickly, since they follow typing, and under the
+   box where there is no room over it. */
+.dk-cmp .dk-mn,
+.dk-cmp .dk-sl {
+  animation-duration: 110ms;
+}
+/* Measured from the text, so the menu clears the bar of buttons under it. */
+.dk-cmp .dk-menu-below {
+  top: calc(100% + 52px);
+  bottom: auto;
+  transform-origin: top left;
+}

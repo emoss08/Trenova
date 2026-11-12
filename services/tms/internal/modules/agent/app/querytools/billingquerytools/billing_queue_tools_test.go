@@ -145,25 +145,27 @@ func TestListBillingQueueItems_ShowsTheQueueAndWithholdsTheAmount(t *testing.T) 
 	assert.Equal(t, int64(3), row.AgeDays)
 	assert.Empty(t, row.Amount)
 	assert.Equal(t, []string{"amount"}, outcome.Withheld)
-	assert.False(t, queue.captured.IncludePosted)
+	assert.False(t, queue.captured.IncludeClosed)
 	assert.Equal(t, "billing_queue", string(permission.ResourceBillingQueue))
 }
 
-// The queue page hides posted items; a question about posted ones must still
-// find them.
-func TestListBillingQueueItems_IncludesPostedOnlyWhenAsked(t *testing.T) {
+// The queue page hides closed items, posted or canceled; a question about
+// them must still find them.
+func TestListBillingQueueItems_IncludesClosedOnlyWhenAsked(t *testing.T) {
 	t.Parallel()
 
-	queue := &fakeBillingQueue{}
-	tool := buildBillingQueueList(queue, fieldgate.NewAccess(&querytooltest.FakePermissions{}))
+	for _, values := range [][]any{{"Approved", "Posted"}, {"Canceled"}} {
+		queue := &fakeBillingQueue{}
+		tool := buildBillingQueueList(queue, fieldgate.NewAccess(&querytooltest.FakePermissions{}))
 
-	_, err := tool.Query(t.Context(), querytooltest.AgentParams(map[string]any{
-		"filters": []any{map[string]any{
-			"field": "status", "operator": "in", "values": []any{"Approved", "Posted"},
-		}},
-	}, permission.SensitivityRestricted))
-	require.NoError(t, err)
-	assert.True(t, queue.captured.IncludePosted)
+		_, err := tool.Query(t.Context(), querytooltest.AgentParams(map[string]any{
+			"filters": []any{map[string]any{
+				"field": "status", "operator": "in", "values": values,
+			}},
+		}, permission.SensitivityRestricted))
+		require.NoError(t, err)
+		assert.True(t, queue.captured.IncludeClosed, "status in %v", values)
+	}
 }
 
 func TestListBillingQueueItems_FiltersByIDs(t *testing.T) {

@@ -147,8 +147,9 @@ func (s *Access) UsableDefinition(
 	return s.UsableAgent(ctx, thread.AgentDefinitionID, actor, req.TenantInfo)
 }
 
-// UsableAgent is an agent the person may talk to: enabled, a chat agent,
-// and one their roles give them.
+// UsableAgent is an agent the person may talk to: enabled, and one their
+// roles give them. One that runs on its own may be talked to as well; what it
+// writes in a conversation waits for the person (agenttoolpolicy.Decide).
 func (s *Access) UsableAgent(
 	ctx context.Context,
 	id pulid.ID,
@@ -169,9 +170,6 @@ func (s *Access) UsableAgent(
 		return nil, errortypes.NewBusinessError(
 			"Agent {0} is disabled and cannot be used", definition.Name,
 		)
-	}
-	if err = AssertChatAgent(definition); err != nil {
-		return nil, err
 	}
 	if err = s.AssertMayUseAgent(ctx, actor, definition); err != nil {
 		return nil, err

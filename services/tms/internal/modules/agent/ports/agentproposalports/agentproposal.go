@@ -2,6 +2,7 @@ package agentproposalports
 
 import (
 	"context"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/caseowner"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
@@ -15,6 +16,9 @@ type ListAgentProposalRequest struct {
 }
 
 type ListAgentProposalConnectionRequest struct {
+	// Sight keeps a change to a record whose case is someone else's out of
+	// the list. Nil lists every proposal.
+	Sight   *caseowner.Sight         `json:"-"`
 	Filter  *pagination.QueryOptions `json:"filter"`
 	Cursor  pagination.CursorInfo    `json:"-"`
 	Columns []string                 `json:"-"`
@@ -188,6 +192,17 @@ type ListPendingByTargetsRequest struct {
 	Now            int64
 }
 
+// ListStandingByDefinitionRequest reads what one agent still has waiting on a
+// person from the named tools, newest first, so a run of that agent that
+// reaches the same write again adds nothing to what is already waiting.
+type ListStandingByDefinitionRequest struct {
+	TenantInfo   pagination.TenantInfo
+	DefinitionID pulid.ID
+	ToolNames    []string
+	Now          int64
+	Limit        int
+}
+
 type ListFailedByTargetsRequest struct {
 	TenantInfo     pagination.TenantInfo
 	ToolName       string
@@ -220,6 +235,10 @@ type AgentProposalRepository interface {
 	ListPendingByTargets(
 		ctx context.Context,
 		req *ListPendingByTargetsRequest,
+	) ([]*agent.AgentProposal, error)
+	ListStandingByDefinition(
+		ctx context.Context,
+		req *ListStandingByDefinitionRequest,
 	) ([]*agent.AgentProposal, error)
 	ListFailedByTargets(
 		ctx context.Context,

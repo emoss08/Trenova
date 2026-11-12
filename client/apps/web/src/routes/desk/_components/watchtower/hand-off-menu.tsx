@@ -2,8 +2,10 @@ import { DeskAgentTile } from "@/components/desk-chat/desk-agent-tile";
 import type { WatchtowerAgent } from "@/lib/graphql/watchtower";
 import { watchtower } from "@/lib/queries/watchtower";
 import { useQuery } from "@tanstack/react-query";
+import { DeskIcon } from "@/components/desk-chat/desk-icons";
 import { ChevronUpIcon } from "@trenova/shared/components/icons";
-import { ButtonGroup, ButtonGroupSeparator } from "@trenova/shared/components/ui/button-group";
+import { Button } from "@trenova/shared/components/ui/button";
+import { ButtonGroup } from "@trenova/shared/components/ui/button-group";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,11 +14,10 @@ import {
 } from "@trenova/shared/components/ui/dropdown-menu";
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { ReactNode } from "react";
-import { QueueButton } from "../queue/queue-bar";
 
 /**
- * Hand off. With an agent suggested it is a button group: the button hands the
- * item to that agent and the caret opens the other agents, upward, over the
+ * Hand off. With an agent suggested it is a button group: the button names that
+ * agent and hands the item to it and the caret opens the other agents, upward, over the
  * bar. With none suggested there is nothing for a first half to do that the
  * list does not, so it is one button that opens the list.
  */
@@ -67,16 +68,20 @@ export function WatchtowerHandOff({
         <DropdownMenuTrigger
           disabled={disabled}
           render={
-            <QueueButton
-              ink
-              shortcut="H"
+            <Button
+              variant="outline"
               disabled={disabled}
+              aria-keyshortcuts="H"
               title={t("Choose an agent to hand it to")}
             />
           }
         >
+          <DeskIcon name="handoff" size={13} />
           {t("Hand off")}
-          <ChevronUpIcon className="-ml-1 size-3" strokeWidth={2.6} />
+          <span className="dk-w-kbd" aria-hidden>
+            H
+          </span>
+          <ChevronUpIcon className="size-3" strokeWidth={2.4} />
         </DropdownMenuTrigger>
         {menu}
       </DropdownMenu>
@@ -84,30 +89,33 @@ export function WatchtowerHandOff({
   }
 
   return (
-    <ButtonGroup className="flex-none">
-      <QueueButton
-        ink
-        shortcut="H"
+    <ButtonGroup className="min-w-0 flex-none">
+      <Button
+        variant="outline"
+        className="min-w-0"
         disabled={disabled}
-        title={t("Hand to {0}", suggested.name)}
+        aria-keyshortcuts="H"
         onClick={() => onHandOff(suggested.id)}
       >
-        {t("Hand off")}
-      </QueueButton>
-      <ButtonGroupSeparator className="bg-ink-foreground/25" />
+        <DeskIcon name="handoff" size={13} />
+        <span className="truncate">{t("Hand off to {0}", suggested.name)}</span>
+        <span className="dk-w-kbd" aria-hidden>
+          H
+        </span>
+      </Button>
       <DropdownMenu open={open} onOpenChange={onOpenChange}>
         <DropdownMenuTrigger
           disabled={disabled}
           render={
-            <QueueButton
-              ink
+            <Button
+              variant="outline"
+              size="icon"
               disabled={disabled}
-              className="px-2.5 @max-[900px]/mainc:pl-2.5"
               aria-label={t("Choose who to hand it to")}
             />
           }
         >
-          <ChevronUpIcon className="size-3" strokeWidth={2.6} />
+          <ChevronUpIcon className="size-3" strokeWidth={2.4} />
         </DropdownMenuTrigger>
         {menu}
       </DropdownMenu>

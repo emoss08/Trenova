@@ -54,9 +54,9 @@ func TestDismissWatchtowerItem_LeavesAgentOversightForAPerson(t *testing.T) {
 
 	items := &fakeWatchtower{guard: &agenttoolstest.WriteGuard{}, item: &watchtower.Item{
 		ID:         pulid.MustNew("wti_"),
-		SourceKind: watchtower.SourceWeatherAlert,
+		SourceKind: watchtower.SourceNoCheckCall,
 		Severity:   watchtower.Severity("Warning"),
-		Title:      "Ice storm in Amarillo",
+		Title:      "No check call on SEED-SHP-010",
 		Version:    1,
 	}}
 	tool := NewDismissWatchtowerItemTool(items)

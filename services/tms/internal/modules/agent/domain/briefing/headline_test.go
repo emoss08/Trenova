@@ -26,7 +26,7 @@ func page() []briefing.Section {
 		},
 		{
 			Key:     briefing.SectionDecisions,
-			Title:   "Waiting on you",
+			Title:   "Decisions waiting",
 			Summary: "3 decisions wait.",
 			Path:    "/desk/decisions",
 		},

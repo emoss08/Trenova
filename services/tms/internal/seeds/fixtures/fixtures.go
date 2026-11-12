@@ -330,6 +330,14 @@ var Desk = Seeds.Add(seed.Seed{
 	Run:         (&deskfixtures.DeskSeed{}).Run,
 })
 
+var DeskCase = Seeds.Add(seed.Seed{
+	Name:        "desk_case",
+	Kind:        seed.Fixture,
+	Description: "Seeds a late shipment, a past-due invoice and a disputed invoice as Desk cases",
+	After:       []*seed.Seed{Desk, Receivables, AgentDefinition},
+	Run:         (&deskfixtures.DeskCaseSeed{}).Run,
+})
+
 var AssistantArtifact = Seeds.Add(seed.Seed{
 	Name:        "assistant_artifact",
 	Kind:        seed.Fixture,

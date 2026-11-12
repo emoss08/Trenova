@@ -120,7 +120,10 @@ Copyable patterns for the common tasks are in [patterns.md](patterns.md).
   that endpoint.
 - Nothing about a business record or a person is ever written to browser storage. The
   persisted shell cache is an allow-list (`SHELL_QUERIES`); every session end goes through
-  `clearSessionCache()`.
+  `clearSessionCache()`. The one exception is what the person themselves typed and has not
+  sent: composer drafts (`stores/composer-draft-store.ts`), with the records they named in
+  them, are kept in `localStorage` so a reload does not lose them, and are cleared with the
+  session. Anything else a person would lose on reload goes there, not into a new store.
 - `setPartialErrorReporter` is telemetry only; never drive UI from it.
 
 ## Forms
@@ -208,10 +211,19 @@ rest of the app stays fast only if each page brings only what it uses.
   through any other property name (the old `createSelectors` `store.use.field()`) is cached
   as a plain call, runs only on the first render, and shifts every hook after it — the
   dispatch console crashed with "reading 'next'" on its second render.
+- A view a person leaves and comes back to keeps its state with React's `<Activity>`, not by
+  lifting that state up: wrap it in `Kept` (`components/kept.tsx`), which mounts it the first time
+  it is shown and hides it after, so a view never opened reads nothing. Use `<Activity>` directly
+  for a disclosure whose content should be ready the moment it opens (the agent's report on a
+  Needs you item, a Briefing group's people). Don't keep alive what is cheap to rebuild.
 - Side effects live in effects, not in render or `useMemo`. Object URLs come from
   `useObjectUrl`, which survives StrictMode's double mount; a `useMemo` that creates one and an
   effect that revokes it leaves a revoked URL in use.
 - Don't name a local `document` or `window`.
+- A map marker is `AdvancedMarker` from `@/components/map/advanced-marker`, never the library's
+  own. Google's marker throws ("reading 'getRootNode'") when it is taken off a map whose element
+  is already gone, which is every map torn down by a page change; the wrapper makes that one
+  detach safe for every marker on the site.
 - Sanitize nothing by hand: render text as elements. `dangerouslySetInnerHTML` needs a
   reviewed reason. A `blob:` URL runs as the app's origin, so type it explicitly (PDFs are
   re-typed `application/pdf`). External links open with `rel="noopener noreferrer"`.

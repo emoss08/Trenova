@@ -132,6 +132,14 @@ func (s *Service) planOpened(
 		plan.Opens = true
 		plan.Fallback = conversationchapter.ChapterTitleFrom(question)
 		plan.FallbackSource = conversationchapter.ChapterTitleQuestion
+		// The first chapter's name is the conversation's name in the rail, so
+		// it is asked for as the conversation opens rather than when a second
+		// chapter makes the first one show.
+		if auto {
+			plan.NamesThread = true
+			plan.ModelSource = conversationchapter.ChapterTitleModel
+			plan.Task = nameTask(&plan.Turn, question, "")
+		}
 
 		return plan, nil
 	}
@@ -303,6 +311,8 @@ func (s *Service) Apply(
 			return s.open(ctx, plan, plan.Fallback, plan.FallbackSource, outcome)
 		}
 
+		s.nameThread(ctx, plan, answer.Title)
+
 		return s.open(ctx, plan, answer.Title, plan.ModelSource, outcome)
 	case answer.Title != "":
 		if _, err := s.chapters.Retitle(ctx, &assistantchapterports.RetitleChapterRequest{
@@ -399,4 +409,24 @@ func contents(messages []conversation.Message) []string {
 	}
 
 	return out
+}
+
+// nameThread gives the conversation the name the model gave its first
+// chapter. A title a person chose is left alone, and a failure costs only
+// the name: the conversation keeps the one taken from its question.
+func (s *Service) nameThread(
+	ctx context.Context,
+	plan *assistantchapterports.ChapterPlan,
+	title string,
+) {
+	if !plan.NamesThread || plan.ModelSource != conversationchapter.ChapterTitleModel {
+		return
+	}
+	if _, err := s.conversations.NameThread(ctx, &conversationports.NameThreadRequest{
+		ThreadID:   plan.Turn.ThreadID,
+		TenantInfo: plan.Turn.TenantInfo,
+		Title:      title,
+	}); err != nil {
+		s.l.Warn("could not name a conversation after its first chapter", zap.Error(err))
+	}
 }

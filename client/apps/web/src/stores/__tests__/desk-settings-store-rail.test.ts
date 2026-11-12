@@ -1,4 +1,4 @@
-import { useDeskSettingsStore } from "@/stores/desk-settings-store";
+import { DESK_SETTINGS_DEFAULTS, useDeskSettingsStore } from "@/stores/desk-settings-store";
 import { afterEach, describe, expect, it } from "vitest";
 
 const STORAGE_KEY = "trenova-desk-settings";
@@ -16,7 +16,7 @@ async function rehydrateFrom(state: Record<string, unknown>) {
 }
 
 afterEach(() => {
-  useDeskSettingsStore.setState({ railFolded: false });
+  useDeskSettingsStore.setState({ railFolded: false, settings: DESK_SETTINGS_DEFAULTS });
   localStorage.clear();
 });
 
@@ -46,5 +46,36 @@ describe("the Desk rail's fold", () => {
     await rehydrateFrom({ railFolded: "yes" });
 
     expect(useDeskSettingsStore.getState().railFolded).toBe(false);
+  });
+});
+
+/** The rail is pinned beside the page unless the person chose to float it. */
+describe("where the Desk's rail sits", () => {
+  it("is pinned by default, and goes back to pinned on reset", () => {
+    expect(DESK_SETTINGS_DEFAULTS.rail).toBe("pinned");
+
+    useDeskSettingsStore.getState().set("rail", "floating");
+    useDeskSettingsStore.getState().reset();
+
+    expect(useDeskSettingsStore.getState().settings.rail).toBe("pinned");
+  });
+
+  it("is pinned for a visit kept before the setting existed", async () => {
+    await rehydrateFrom({ settings: { width: "wide" } });
+
+    expect(useDeskSettingsStore.getState().settings.rail).toBe("pinned");
+    expect(useDeskSettingsStore.getState().settings.width).toBe("wide");
+  });
+
+  it("floats when that was kept", async () => {
+    await rehydrateFrom({ settings: { rail: "floating" } });
+
+    expect(useDeskSettingsStore.getState().settings.rail).toBe("floating");
+  });
+
+  it("reads anything but floating as pinned", async () => {
+    await rehydrateFrom({ settings: { rail: "sideways" } });
+
+    expect(useDeskSettingsStore.getState().settings.rail).toBe("pinned");
   });
 });

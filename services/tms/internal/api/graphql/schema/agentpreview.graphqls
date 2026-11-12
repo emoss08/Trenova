@@ -40,6 +40,27 @@ type AgentPreviewWarning {
   message: String!
   "What a would_fail warning is made of: one reason per rule the write breaks. Empty for every other code."
   reasons: [AgentPreviewReason!]!
+  "What a person could do to put the warning right, when something would. Empty otherwise."
+  remedies: [AgentPreviewRemedy!]!
+}
+
+"""
+One fix for a warning. The client keeps what each kind is called, who may take
+it and how it is taken; the server says which applies and to which record.
+"""
+type AgentPreviewRemedy {
+  "invite_driver_to_portal or set_up_email_profile."
+  kind: String!
+  "The kind of record the fix is done to, as the record-link registry names it; empty when it is done to none."
+  recordKind: String!
+  "That record's id; empty when the fix is done to no record."
+  recordId: String!
+  "What that record is called, so no id is ever shown; empty when there is no record."
+  recordLabel: String!
+  "When the fix was last taken and is still waiting to take effect (an invitation sent, not yet accepted); null when it has not been."
+  takenAt: Timestamp
+  "What a person is told about a fix already taken: who it went to. Empty otherwise."
+  takenNote: String!
 }
 
 """

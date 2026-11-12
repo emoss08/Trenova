@@ -47,6 +47,7 @@ import (
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/typeutils"
 )
 
 func (r *AgentDecisionResolver) TraceURL(ctx context.Context, obj *agentdecision.AgentDecision) (*string, error) {
@@ -209,6 +210,7 @@ func (r *MutationResolver) DecideAgentProposal(ctx context.Context, id string, i
 		Note:          stringutils.FromPtr(input.Note),
 		TenantInfo:    resolvercore.TenantInfo(authCtx),
 		PreviewDigest: stringutils.FromPtr(input.PreviewDigest),
+		UndoWindow:    typeutils.ValueOrZero(input.UndoWindow),
 	}, actorutil.FromAuthContext(authCtx))
 	if err != nil {
 		return nil, err
@@ -237,6 +239,7 @@ func (r *MutationResolver) DecideAgentPlan(ctx context.Context, id string, input
 		Note:          stringutils.FromPtr(input.Note),
 		TenantInfo:    resolvercore.TenantInfo(authCtx),
 		PreviewDigest: stringutils.FromPtr(input.PreviewDigest),
+		UndoWindow:    typeutils.ValueOrZero(input.UndoWindow),
 	}, actorutil.FromAuthContext(authCtx))
 	if err != nil {
 		return nil, err
@@ -347,6 +350,44 @@ func (r *MutationResolver) CommitMyDecisionNow(ctx context.Context, proposalID *
 	if err != nil {
 		return false, err
 	}
+
+	if err = r.ApprovalCommitter.CommitOwnApprovalNow(ctx, req, actorutil.FromAuthContext(authCtx)); err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
+func (r *MutationResolver) UndoAgentDecision(ctx context.Context, proposalID *string, planID *string) (bool, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentProposal, permission.OpUpdate)
+	if err != nil {
+		return false, err
+	}
+
+	req, err := settleApprovalRequest(proposalID, planID, resolvercore.TenantInfo(authCtx))
+	if err != nil {
+		return false, err
+	}
+	req.AsDecider = true
+
+	if err = r.ApprovalCommitter.UndoOwnApproval(ctx, req, actorutil.FromAuthContext(authCtx)); err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
+func (r *MutationResolver) CommitAgentDecisionNow(ctx context.Context, proposalID *string, planID *string) (bool, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentProposal, permission.OpUpdate)
+	if err != nil {
+		return false, err
+	}
+
+	req, err := settleApprovalRequest(proposalID, planID, resolvercore.TenantInfo(authCtx))
+	if err != nil {
+		return false, err
+	}
+	req.AsDecider = true
 
 	if err = r.ApprovalCommitter.CommitOwnApprovalNow(ctx, req, actorutil.FromAuthContext(authCtx)); err != nil {
 		return false, err
@@ -634,9 +675,15 @@ func (r *QueryResolver) AgentProposals(ctx context.Context, input gqlmodel.DataT
 		return nil, err
 	}
 
+	sight, err := r.CaseOwners.Sight(ctx, actorutil.FromAuthContext(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
 	result, err := r.AgentProposalService.ListConnection(
 		ctx,
 		&agentproposalports.ListAgentProposalConnectionRequest{
+			Sight:   &sight,
 			Filter:  tableInput.Filter,
 			Cursor:  tableInput.Cursor,
 			Columns: agentProposalColumns(ctx, "edges.node"),
@@ -686,9 +733,15 @@ func (r *QueryResolver) AgentPlans(ctx context.Context, input gqlmodel.DataTable
 		return nil, err
 	}
 
+	sight, err := r.CaseOwners.Sight(ctx, actorutil.FromAuthContext(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
 	result, err := r.AgentPlanService.ListConnection(
 		ctx,
 		&agentplanports.ListAgentPlanConnectionRequest{
+			Sight:   &sight,
 			Filter:  tableInput.Filter,
 			Cursor:  tableInput.Cursor,
 			Columns: agentPlanColumns(ctx, "edges.node"),

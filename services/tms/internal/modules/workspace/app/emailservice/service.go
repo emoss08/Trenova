@@ -35,6 +35,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
+	"github.com/emoss08/trenova/pkg/remedy"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/fileutils"
 	"github.com/emoss08/trenova/shared/jsonutils"
@@ -1069,12 +1070,14 @@ func (s *Service) resolveProfile(
 
 // noEmailProfile says what a send with no profile behind it is missing.
 // "EmailProfile not found" told an agent nothing it could act on, and it
-// kept trying; this says nothing can be emailed until one is set up.
+// kept trying; this says nothing can be emailed until one is set up. A person
+// reads the same sentence on a step that failed, so it speaks to them and
+// carries no instruction for the model.
 func noEmailProfile() error {
-	return errortypes.NewBusinessError(
-		"No email profile is set up for this organization, so nothing can be emailed until " +
-			"an admin adds one in the email settings. Say so, and offer another way to reach them",
-	).WithInternal(emailports.ErrNoEmailProfile)
+	return remedy.Mark(errortypes.NewBusinessError(
+		"No email profile is set up for this organization, so nothing can be emailed until "+
+			"an administrator adds one in the email settings.",
+	), remedy.SetUpEmailProfile).WithInternal(emailports.ErrNoEmailProfile)
 }
 
 func (s *Service) markFailed(

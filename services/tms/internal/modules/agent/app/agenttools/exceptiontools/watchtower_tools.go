@@ -61,7 +61,7 @@ func NewDismissWatchtowerItemTool(items WatchtowerDismisser) agenttoolports.Agen
 		Name:   "exception_dismiss_watchtower_item",
 		Recipe: []string{"exception_list_watchtower_items", "exception_dismiss_watchtower_item"},
 		Description: "Take an item off the watchtower feed once it has been dealt with; the " +
-			"record behind it is left alone. Use it for a weather alert that has passed or a " +
+			"record behind it is left alone. Use it for a check call that has since come in or a " +
 			"message already answered. Items about agents' own runs, proposals and " +
 			"exceptions stay for a person to clear.",
 		Resource:    permission.ResourceWatchtower,

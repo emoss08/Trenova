@@ -812,7 +812,8 @@ describe("DeskApprovalCard says what a change is for and what it can't take back
 
     await waitFor(() => expect(approve()).toBeEnabled());
     const permanent = screen.getByText("Permanent");
-    expect(permanent).toHaveClass("dk-dcx-perm");
+    expect(permanent).toHaveClass("[--badge:var(--warning)]");
+    expect(permanent.querySelector('[data-slot="badge-dot"]')).not.toBeNull();
     expect(permanent.closest(".dk-dcx-acts")).not.toBeNull();
     expect(screen.queryByText(/can't be undone/)).toBeNull();
 

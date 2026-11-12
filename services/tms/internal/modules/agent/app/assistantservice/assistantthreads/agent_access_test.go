@@ -186,8 +186,7 @@ func TestGetThread_SaysWhyItCannotContinue(t *testing.T) {
 	f.agent.Enabled = true
 	f.agent.TriggerMode = agentdefinition.TriggerScheduled
 	thread = read()
-	assert.False(t, thread.CanContinue)
-	assert.Equal(t, conversation.ContinueAgentNotConversational, thread.CannotContinueReason)
+	assert.True(t, thread.CanContinue, "an agent that runs on its own can still be asked")
 
 	f.agent.TriggerMode = agentdefinition.TriggerChat
 	thread = read()

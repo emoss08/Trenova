@@ -86,6 +86,14 @@ fragment AgentProposalPreviewFields on AgentProposalPreview {
       message
       param
     }
+    remedies {
+      kind
+      recordKind
+      recordId
+      recordLabel
+      takenAt
+      takenNote
+    }
   }
   stale
   staleness {

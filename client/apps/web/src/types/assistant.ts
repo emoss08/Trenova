@@ -138,15 +138,9 @@ export const threadOriginSchema = z.enum([
 
 /**
  * Why a reader may no longer ask a conversation's agent anything: it was
- * removed, it was turned off, it now runs on its own rather than in
- * conversation, or the reader may no longer use it.
+ * removed, it was turned off, or the reader may no longer use it.
  */
-export const cannotContinueReasonSchema = z.enum([
-  "AgentDeleted",
-  "AgentDisabled",
-  "AgentNotConversational",
-  "NoAccess",
-]);
+export const cannotContinueReasonSchema = z.enum(["AgentDeleted", "AgentDisabled", "NoAccess"]);
 
 /** What an artifact is, which decides how the Desk renders it. */
 export const artifactKindSchema = z.enum([

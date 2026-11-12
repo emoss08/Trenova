@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  cn,
   chunk,
   clampInteger,
   limitUtf8Bytes,
@@ -438,5 +439,19 @@ describe("clampInteger", () => {
   it("reads anything that is not a number as the fallback", () => {
     expect(clampInteger(Number.NaN, 200, 340, 232)).toBe(232);
     expect(clampInteger(Number.POSITIVE_INFINITY, 200, 340, 232)).toBe(232);
+  });
+});
+
+describe("cn with the type sizes tokens.css adds", () => {
+  it("keeps a Desk type size beside a colour instead of reading it as one", () => {
+    expect(cn("text-dsk-sm text-dsk-subtle")).toBe("text-dsk-sm text-dsk-subtle");
+    expect(cn("text-dsk-base", "text-dsk-fg2")).toBe("text-dsk-base text-dsk-fg2");
+    expect(cn("text-2xs text-muted-foreground")).toBe("text-2xs text-muted-foreground");
+  });
+
+  it("lets a later size replace an earlier one, and a later colour an earlier one", () => {
+    expect(cn("text-dsk-base", "text-sm")).toBe("text-sm");
+    expect(cn("text-2xs", "text-dsk-sm")).toBe("text-dsk-sm");
+    expect(cn("text-dsk-subtle", "text-dsk-fg")).toBe("text-dsk-fg");
   });
 });

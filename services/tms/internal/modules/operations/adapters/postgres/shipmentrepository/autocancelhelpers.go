@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/tenantscope"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/shipmentcontrol/shipmentcontroldb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
@@ -46,7 +47,7 @@ func (r *repository) AutoCancelShipments(
 			return nil, err
 		}
 
-		return r.autoCancel(ctx, entities, currentTime, scopedTenant)
+		return r.autoCancel(ctx, entities, currentTime)
 	})
 }
 
@@ -74,7 +75,7 @@ func (r *repository) RunAutoCancelShipmentsForTenant(
 
 		currentTime := timeutils.NowUnix()
 		sp := shipmentdb.Shipments
-		candidates := controlledAutoCancelIDs(currentTime, scopedTenant).Limit(limit)
+		candidates := controlledAutoCancelIDs(ctx, currentTime).Limit(limit)
 		entities, err := sp.Where(sp.ID.InQuery(candidates)).
 			Order(sp.ID.Asc()).
 			Limit(limit).
@@ -83,7 +84,7 @@ func (r *repository) RunAutoCancelShipmentsForTenant(
 			return nil, err
 		}
 
-		return r.autoCancel(ctx, entities, currentTime, scopedTenant)
+		return r.autoCancel(ctx, entities, currentTime)
 	})
 }
 
@@ -91,7 +92,6 @@ func (r *repository) autoCancel(
 	ctx context.Context,
 	entities []*shipment.Shipment,
 	currentTime int64,
-	t tenancy,
 ) ([]*shipment.Shipment, error) {
 	if len(entities) == 0 {
 		return entities, nil
@@ -99,7 +99,7 @@ func (r *repository) autoCancel(
 
 	ids := shipmentIDsFromEntities(entities)
 	sp := shipmentdb.Shipments
-	if _, err := scoped(sp.Where(sp.ID.In(ids...)), t).Update(
+	if _, err := tenantscope.Scoped(ctx, sp.Where(sp.ID.In(ids...))).Update(
 		ctx,
 		r.db.Keel(ctx),
 		sp.Status.To(shipmentvocab.StatusCanceled),
@@ -112,7 +112,7 @@ func (r *repository) autoCancel(
 		return nil, err
 	}
 
-	if err := r.cancelShipmentComponents(ctx, ids, t); err != nil {
+	if err := r.cancelShipmentComponents(ctx, ids); err != nil {
 		return nil, err
 	}
 
@@ -146,7 +146,7 @@ func autoCancelableShipments(
 	).Order(sp.ID.Asc()).Limit(limit)
 }
 
-func controlledAutoCancelIDs(currentTime int64, t tenancy) keel.Query[*shipment.Shipment] {
+func controlledAutoCancelIDs(ctx context.Context, currentTime int64) keel.Query[*shipment.Shipment] {
 	sp := shipmentdb.Shipments.As("cancel_sp")
 	sc := shipmentcontroldb.ShipmentControls.As("cancel_sc")
 	days := sc.AutoCancelShipmentsThreshold.Coalesce(shipmentstate.DefaultAutoCancelThresholdDays)
@@ -162,5 +162,5 @@ func controlledAutoCancelIDs(currentTime int64, t tenancy) keel.Query[*shipment.
 		).
 		Order(sp.ID.Asc())
 
-	return scoped(q, t)
+	return tenantscope.Scoped(ctx, q)
 }

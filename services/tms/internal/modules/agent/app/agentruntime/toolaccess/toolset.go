@@ -264,6 +264,7 @@ var deferredCoreTools = []string{
 	"agent_raise_exception",
 	"agent_create_schedule",
 	"agent_create_wait",
+	"agent_offer_options",
 }
 
 func defersCoreTool(name string, unattended bool) bool {

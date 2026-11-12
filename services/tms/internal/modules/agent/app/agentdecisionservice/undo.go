@@ -491,8 +491,10 @@ func (s *Service) ownWindow(
 			"Only a human user can decide on agent proposals",
 		)
 	}
-	if err := s.AssertOwnProposal(ctx, req.ProposalID, req.TenantInfo, actor); err != nil {
-		return nil, err
+	if !req.AsDecider {
+		if err := s.AssertOwnProposal(ctx, req.ProposalID, req.TenantInfo, actor); err != nil {
+			return nil, err
+		}
 	}
 
 	decisions, err := s.decisionRepo.ListByProposals(
@@ -512,6 +514,9 @@ func (s *Service) ownWindow(
 	}
 
 	latest := decisions[0]
+	if req.AsDecider && latest.DecidedByUserID != actor.UserID {
+		return nil, errortypes.NewNotFoundError("That approval is not yours to take back")
+	}
 	if latest.CommitWorkflowID == "" || latest.CommitsAt == nil {
 		return nil, nil
 	}

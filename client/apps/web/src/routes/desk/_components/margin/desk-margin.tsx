@@ -10,6 +10,7 @@ import { deskIconClass } from "@/components/desk-chat/desk-button-styles";
 import { conversationPath } from "@/lib/conversation-path";
 import { assistant } from "@/lib/queries/assistant";
 import { useDeskSetting } from "@/stores/desk-settings-store";
+import { recordSpace } from "@/stores/composer-draft-store";
 import { useDeskMarginStore, type DeskSubject } from "@/stores/desk-margin-store";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -18,7 +19,8 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { useNavigate } from "react-router";
 import { useDesk } from "../desk-layout";
 import { casePath } from "../attention/attention-record";
-import { casePageContext, caseSubjectOf } from "../record-case/case-subject";
+import { viewPath } from "../view/view-path";
+import { casePageContext, caseThreadOf, threadSubjectOf } from "../record-case/case-subject";
 
 /** The record a margin question carries, as the composer's mention of it. */
 function subjectMention(subject: DeskSubject | null) {
@@ -39,13 +41,9 @@ export function DeskMargin() {
   const subject = margin?.subject ?? null;
   // A record a case can be about keeps one conversation: the margin opens on
   // it rather than starting another.
-  const caseType = subject ? caseSubjectOf(subject.kind) : null;
-  const caseThread =
-    subject && caseType
-      ? (desk.threads.find(
-          (thread) => thread.subjectType === caseType && thread.subjectId === subject.id,
-        ) ?? null)
-      : null;
+  const caseThread = subject
+    ? caseThreadOf(desk.threads, subject.kind, subject.id, subject.agentId)
+    : null;
   const threadId = margin?.threadId ?? caseThread?.id ?? null;
   const threadQuery = useQuery({
     ...assistant.thread(threadId ?? ""),
@@ -129,13 +127,16 @@ export function DeskMargin() {
             threads={desk.threads}
             pageSource="none"
             surface="Desk"
+            agentModelOnly={Boolean(subject?.agentId)}
             onOpenInDesk={(artifactId) => {
+              // What the agent made opens on the canvas, beside the
+              // conversation that made it; the conversation alone opens full width.
+              if (artifactId) {
+                void navigate(viewPath(thread.id, artifactId));
+                return;
+              }
               closeMargin();
-              void navigate(
-                artifactId
-                  ? `${conversationPath(thread.id)}?a=${encodeURIComponent(artifactId)}`
-                  : conversationPath(thread.id),
-              );
+              void navigate(conversationPath(thread.id));
             }}
           />
         </div>
@@ -158,9 +159,11 @@ function MarginAsk({ subject }: { subject: DeskSubject | null }) {
     threads: desk.threads,
     isLoading: desk.isLoading,
     preferId: preferredAgent,
+    subjectAgentId: subject?.agentId,
     pageSource: "screen",
+    space: subject ? recordSpace(subject.kind, subject.id) : "desk-margin",
     onStart: (agentId: string, question?: string, extras?: DeskStartExtras) => {
-      const caseType = subject ? caseSubjectOf(subject.kind) : null;
+      const caseType = subject ? threadSubjectOf(subject.kind) : null;
       desk.startInMargin(
         agentId,
         question,
@@ -171,7 +174,6 @@ function MarginAsk({ subject }: { subject: DeskSubject | null }) {
         },
         subject
           ? {
-              title: subject.label,
               subjectType: caseType ?? undefined,
               subjectId: caseType ? subject.id : undefined,
               page: casePageContext(

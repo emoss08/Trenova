@@ -1,0 +1,197 @@
+fragment DeskCaseExhibitFields on DeskCaseExhibit {
+  key
+  number
+  kind
+  title
+  source
+  at
+  read
+  route {
+    points {
+      label
+      x
+      y
+      latitude
+      longitude
+      state
+    }
+    truck {
+      x
+      y
+      latitude
+      longitude
+    }
+    callout
+    calloutTone
+  }
+  meters {
+    label
+    value
+    fraction
+    tone
+  }
+  message {
+    quote
+    from
+    replyAgent {
+      ...WatchtowerAgentFields
+    }
+    reply
+  }
+  timeline {
+    label
+    sub
+    when
+    tone
+    state
+  }
+  facts {
+    label
+    value
+    at
+    tone
+  }
+  note
+  path
+}
+
+fragment DeskCaseDecisionFields on DeskCaseDecision {
+  kind
+  id
+  title
+  phase
+  agent {
+    ...WatchtowerAgentFields
+  }
+  proposedAt
+  stepCount
+  completedSteps
+  failedStep
+  failureError
+  commitsAt
+  decidedAt
+  decidedBy {
+    id
+    name
+  }
+  note
+  itemId
+  others
+}
+
+query DeskCase($kind: String!, $id: ID!, $timezone: String) {
+  deskCase(kind: $kind, id: $id, timezone: $timezone) {
+    record {
+      ...DeskRecordFields
+    }
+    handOff {
+      itemId
+      kind
+      working
+      agent {
+        ...WatchtowerAgentFields
+      }
+      note
+    }
+    away {
+      until
+    }
+    ownership {
+      owner {
+        id
+        name
+      }
+      auto
+      covering
+      canWork
+      canClaim
+      canAssign
+    }
+    head {
+      references
+      title
+      status
+      statusTone
+      details
+      deadline {
+        at
+        label
+      }
+    }
+    finding {
+      agent {
+        ...WatchtowerAgentFields
+      }
+      foundAt
+      sources
+      raised
+      computed
+      readingStatus
+      reading {
+        text
+        highlight
+        cite
+      }
+      trust {
+        key
+        text
+      }
+    }
+    options {
+      id
+      kind
+      label
+      outcome
+      outcomeNote
+      tone
+      cost
+      description
+      recommended
+      chosen
+    }
+    drafting
+    draftNote
+    decision {
+      ...DeskCaseDecisionFields
+    }
+    exhibits {
+      ...DeskCaseExhibitFields
+    }
+    note
+    starters
+    open
+    severity
+  }
+}
+
+mutation ChooseDeskCaseOption($kind: String!, $id: ID!, $optionId: ID!) {
+  chooseDeskCaseOption(kind: $kind, id: $id, optionId: $optionId)
+}
+
+mutation AcceptDeskCaseRisk($kind: String!, $id: ID!, $reason: String!) {
+  acceptDeskCaseRisk(kind: $kind, id: $id, reason: $reason)
+}
+
+mutation PutAwayDeskCase($kind: String!, $id: ID!, $until: Timestamp!) {
+  putAwayDeskCase(kind: $kind, id: $id, until: $until)
+}
+
+mutation BringBackDeskCase($kind: String!, $id: ID!) {
+  bringBackDeskCase(kind: $kind, id: $id)
+}
+
+mutation AssignDeskCase($kind: String!, $id: ID!, $ownerId: ID) {
+  assignDeskCase(kind: $kind, id: $id, ownerId: $ownerId)
+}
+
+mutation ReleaseDeskCase($kind: String!, $id: ID!) {
+  releaseDeskCase(kind: $kind, id: $id)
+}
+
+mutation UndoAgentDecision($proposalId: ID, $planId: ID) {
+  undoAgentDecision(proposalId: $proposalId, planId: $planId)
+}
+
+mutation CommitAgentDecisionNow($proposalId: ID, $planId: ID) {
+  commitAgentDecisionNow(proposalId: $proposalId, planId: $planId)
+}

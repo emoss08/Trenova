@@ -78,6 +78,17 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 			},
 		},
 		{
+			ID:            "decision-sweep",
+			Description:   "Clear proposals and plans that expired without a decision",
+			Spec:          schedule.Every(10 * time.Minute),
+			Workflow:      DecisionSweepWorkflow,
+			TaskQueue:     temporaltype.TaskQueueSystem.String(),
+			OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,
+			Memo: map[string]any{
+				"purpose": "decision-sweep",
+			},
+		},
+		{
 			ID:          "watchtower-retention",
 			Description: "Remove watchtower items resolved more than a month ago",
 			// Weekly is often enough for a month-long window, and it keeps

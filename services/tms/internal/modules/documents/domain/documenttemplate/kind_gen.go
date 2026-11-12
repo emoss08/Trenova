@@ -18,8 +18,9 @@ const (
 	// KindInvoicePDF is the customer invoice document.
 	KindInvoicePDF Kind = "invoice.pdf"
 	// KindInvoiceEmail is the message that delivers an invoice.
-	KindInvoiceEmail      Kind = "invoice.email"
-	KindInvoiceShareEmail Kind = "invoice.share.email"
+	KindInvoiceEmail Kind = "invoice.email"
+	// KindRecordShareEmail tells a teammate someone shared a record with them.
+	KindRecordShareEmail Kind = "record.share.email"
 	// KindPaymentReminderEmail reminds a customer that invoices are past due.
 	KindPaymentReminderEmail Kind = "invoice.reminder.email"
 	// KindCustomerStatementPDF is a customer's account statement: what it was
@@ -125,6 +126,8 @@ const (
 	KindNotificationPTOCancelled Kind = "notification.dash.pto_cancelled"
 	// KindNotificationCredentialExpiring warns about a lapsing credential.
 	KindNotificationCredentialExpiring Kind = "notification.dash.credential_expiring"
+	// KindNotificationCredentialRenewalRequested asks a driver, in the office's own words, to renew papers that have lapsed or are about to.
+	KindNotificationCredentialRenewalRequested Kind = "notification.dash.credential_renewal_requested"
 	// KindNotificationTrainingDue nudges a driver about a course that is due or a certification that is lapsing.
 	KindNotificationTrainingDue Kind = "notification.dash.training_due"
 	// KindNotificationReviewSubmitted asks a driver to read and sign off on a performance review.
@@ -182,7 +185,8 @@ const (
 	// KindNotificationCommentReply tells someone their comment got a reply.
 	KindNotificationCommentReply Kind = "notification.shipment_comment_reply"
 
-	KindNotificationInvoiceShared Kind = "notification.invoice_shared"
+	// KindNotificationRecordShared tells someone a teammate shared a record with them.
+	KindNotificationRecordShared Kind = "notification.record_shared"
 )
 
 func (k Kind) String() string { return string(k) }
@@ -193,7 +197,7 @@ func AllKinds() []Kind {
 	return []Kind{
 		KindInvoicePDF,
 		KindInvoiceEmail,
-		KindInvoiceShareEmail,
+		KindRecordShareEmail,
 		KindPaymentReminderEmail,
 		KindCustomerStatementPDF,
 		KindCustomerStatementEmail,
@@ -247,6 +251,6 @@ func AllKinds() []Kind {
 		KindNotificationReportNeedsAttention,
 		KindNotificationCommentMention,
 		KindNotificationCommentReply,
-		KindNotificationInvoiceShared,
+		KindNotificationRecordShared,
 	}
 }

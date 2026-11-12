@@ -1,8 +1,14 @@
+import { Metadata } from "@/components/metadata";
+import { deskTitle } from "./top/desk-title";
+import "../_styles/desk-motion.css";
+import { ContextMenuHost } from "@trenova/shared/components/context-menu/context-menu-host";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { usePermission } from "@/hooks/use-permission";
 import { conversationPath } from "@/lib/conversation-path";
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import { assistant } from "@/lib/queries/assistant";
+import { deskAttention } from "@/lib/queries/desk-attention";
+import { inbox } from "@/lib/queries/inbox";
 import { watchtower } from "@/lib/queries/watchtower";
 import {
   cachedThread,
@@ -28,7 +34,15 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { KeyboardShortcutsDialog } from "@/components/keyboard-shortcuts-dialog";
 import { isTypingTarget } from "@/lib/dom";
 import { useAppDialogsStore } from "@/stores/app-dialogs-store";
@@ -40,6 +54,7 @@ import {
 } from "@/components/assistant/use-start-conversation";
 import { forgetThreadSchedules } from "@/components/assistant/thread-schedules";
 import type { DeskPlace } from "./rail/desk-rail";
+import { RAIL_WAITING_CASES } from "./rail/open-work";
 import { DeskRailThreads } from "./rail/rail-threads";
 import {
   DeskSettingsDialog,
@@ -49,17 +64,25 @@ import {
 } from "./desk-settings";
 import { DeskTop } from "./top/desk-top";
 import { CommandPaletteMount } from "@/components/command-palette/command-palette-mount";
+import { PAGE_TRANSITION_CLASS } from "./desk-motion";
+import { caseOfThread } from "./record-case/case-subject";
+import { railViewOf, TRIAGE_BACK_HOME, type TriageBack } from "./rail/desk-rail";
 import { useGoToChords } from "@/components/navigation/use-go-to-chords";
 import { useCommandPaletteStore } from "@/stores/command-palette-store";
 import { useDeskMarginStore } from "@/stores/desk-margin-store";
 import { DeskMargin } from "./margin/desk-margin";
 
 /** G, then a letter, goes to a place in the Desk; the app's own chords go to modules. */
+/** How long the mouse rests on the left edge before a floating rail comes out. */
+const RAIL_HOVER_OPEN_MS = 90;
+/** How long the mouse is off a floating rail before it goes back. */
+const RAIL_HOVER_CLOSE_MS = 260;
+
 const DESK_CHORDS: ReadonlyMap<string, string> = new Map([
   ["D", "/desk"],
   ["N", "/desk/needs"],
   ["W", "/desk/needs?lens=watchtower"],
-  ["T", "/desk/needs?lens=triage"],
+  ["T", "/desk/triage"],
 ]);
 
 export type DeskContextValue = {
@@ -167,6 +190,9 @@ function placeFor(pathname: string, activeThreadId: string | null): DeskPlace {
   if (pathname.startsWith("/desk/handled/")) {
     return "handled";
   }
+  if (pathname.startsWith("/desk/v/")) {
+    return "view";
+  }
   if (pathname.startsWith("/desk/triage")) {
     return "triage";
   }
@@ -202,7 +228,7 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
   const t = useT();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
   const pane = useDeskStore((state) => state.pane);
   const setPane = useDeskStore((state) => state.setPane);
   const setActiveArtifact = useDeskStore((state) => state.setActiveArtifact);
@@ -213,14 +239,21 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
     ...watchtower.counts(),
     enabled: canWatch,
   });
+  const { data: waiting } = useQuery({
+    ...deskAttention.list({
+      lens: "Decisions",
+      kinds: ["AgentPlan", "AgentProposal"],
+      first: RAIL_WAITING_CASES,
+    }),
+    enabled: canWatch && canDecide,
+  });
+  const { data: triageCounts } = useQuery({ ...inbox.counts(), enabled: canTriage });
   const lensCounts = useMemo(() => {
-    const counts = { everything: 0, watchtower: 0, triage: 0, decisions: 0 };
+    const counts = { everything: 0, watchtower: 0, decisions: 0 };
     for (const row of watchtowerCounts?.byKind ?? []) {
       counts.everything += row.count;
       if (row.deskLens === "Watchtower") {
         counts.watchtower += row.count;
-      } else if (row.deskLens === "Triage") {
-        counts.triage += row.count;
       } else if (row.deskLens === "Decisions") {
         counts.decisions += row.count;
       }
@@ -233,8 +266,9 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
   const [pendingLookups, setPendingLookups] = useState<ReadonlySet<string>>(NO_PENDING_LOOKUPS);
   const [artifactCount, setArtifactCount] = useState(0);
   const [newArtifact, setNewArtifact] = useState(false);
-  // On a phone the rail slides over the page instead of sitting beside it,
-  // and folds away again once a place in it is chosen.
+  // On a phone, and at any width when the rail floats, the rail slides over
+  // the page instead of sitting beside it, and is put away again once a place
+  // in it is chosen.
   const [railOpen, setRailOpen] = useState(false);
   const [railPath, setRailPath] = useState(pathname);
   useEffect(() => {
@@ -253,7 +287,37 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
   // again; its sheet on a phone is never folded.
   const railFoldKept = useDeskSettingsStore((state) => state.railFolded);
   const setRailFolded = useDeskSettingsStore((state) => state.setRailFolded);
-  const railFolded = railFoldKept && !railOpen;
+  const caseLabel = useDeskMarginStore((state) => state.casePage?.label ?? null);
+  const deskPageTitle = useDeskMarginStore((state) => state.pageTitle);
+  const railMode = useDeskSettingsStore((state) => state.settings.rail);
+  const railFloats = railMode === "floating";
+  // A floating rail comes out when the mouse reaches the left edge of the
+  // screen and goes back once it has left the rail. Both wait a moment, so
+  // brushing the edge does not open it and a slip off it does not close it.
+  // Touch and pen never hover; they use the button and a tap outside.
+  const railHover = useRef<number | null>(null);
+  const railHoverSoon = (open: boolean, wait: number) => {
+    if (railHover.current !== null) {
+      window.clearTimeout(railHover.current);
+    }
+    railHover.current = window.setTimeout(() => {
+      railHover.current = null;
+      // A menu or dialog opened from the rail is drawn outside it: the rail
+      // stays while one is up.
+      if (!open && document.querySelector('[role="menu"], [role="dialog"]') !== null) {
+        return;
+      }
+      setRailOpen(open);
+    }, wait);
+  };
+  const railHoverStay = () => {
+    if (railHover.current !== null) {
+      window.clearTimeout(railHover.current);
+      railHover.current = null;
+    }
+  };
+  useEffect(() => railHoverStay, []);
+  const railFolded = !railFloats && railFoldKept && !railOpen;
   // Settings open on the section a link asks for (`/desk?settings=checklists`
   // is where the retired case checklist page now sends people), else on the
   // first. The request is taken off the address once it has opened them.
@@ -285,7 +349,31 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
   const agentsQuery = useQuery(assistant.myAgents());
   const { threads, listedThread } = threadsQuery;
   const agents = useMemo(() => agentsQuery.data ?? [], [agentsQuery.data]);
-  const agentsById = useMemo(() => new Map(agents.map((agent) => [agent.id, agent])), [agents]);
+  // A conversation with an agent that runs on its own (the one working a
+  // case) is named too: those are left out of the list of chat agents, so the
+  // ones the conversations on screen need are read by id.
+  const unnamedAgentIds = useMemo(() => {
+    if (agentsQuery.data === undefined) {
+      return [];
+    }
+    const known = new Set(agentsQuery.data.map((agent) => agent.id));
+    const missing = new Set<string>();
+    for (const thread of threads) {
+      if (thread.agentDefinitionId !== "" && !known.has(thread.agentDefinitionId)) {
+        missing.add(thread.agentDefinitionId);
+      }
+    }
+    return [...missing].sort();
+  }, [agentsQuery.data, threads]);
+  const { data: namedAgents } = useQuery({
+    ...assistant.agentChoicesByIds(unnamedAgentIds),
+    enabled: unnamedAgentIds.length > 0,
+    staleTime: 60_000,
+  });
+  const agentsById = useMemo(
+    () => new Map([...agents, ...(namedAgents ?? [])].map((agent) => [agent.id, agent])),
+    [agents, namedAgents],
+  );
 
   // A conversation being deleted leaves the lists before the Desk has moved
   // off it; it is neither read on its own nor drawn as open meanwhile.
@@ -316,6 +404,15 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
     ? (agentsById.get(activeThread.agentDefinitionId) ?? null)
     : null;
   const place = placeFor(pathname, activeThreadId);
+  // The same view the rail draws, so the page and the rail change view together.
+  const view = railViewOf(place, activeThread !== null && caseOfThread(activeThread) !== null);
+  // The page a person was on before Triage, kept while they are in it, so its
+  // way back is theirs. Held in memory only: an address can name a record.
+  const [triageBack, setTriageBack] = useState<TriageBack>(TRIAGE_BACK_HOME);
+  const here = pathname + search;
+  if (view !== "triage" && triageBack.to !== here) {
+    setTriageBack({ view, to: here });
+  }
   const pageAgentId = agentPageId(pathname);
   const pageAgent = pageAgentId !== null ? (agentsById.get(pageAgentId) ?? null) : null;
 
@@ -600,13 +697,13 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
   // about, and folds it again.
   const askNova = useCallback(() => {
     if (activeThreadId !== null) {
-      document.querySelector<HTMLTextAreaElement>(".dk-mainc .dk-cmp textarea")?.focus();
+      document.querySelector<HTMLElement>('.dk-mainc .dk-cmp [role="textbox"]')?.focus();
       return;
     }
     useDeskMarginStore.getState().toggleMargin();
   }, [activeThreadId]);
 
-  useGoToChords(DESK_CHORDS);
+  useGoToChords(DESK_CHORDS, { viewTransition: true });
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -643,6 +740,10 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
         // Ctrl+N belongs to the browser, which opens a window and never hands
         // the key to the page. A new conversation opens in Nova's margin.
         event.preventDefault();
+        if (useDeskMarginStore.getState().casePage !== null) {
+          void navigate("/desk");
+          return;
+        }
         useDeskMarginStore.getState().openMargin(null);
       } else if (key === "\\" && useDeskMarginStore.getState().margin !== null) {
         event.preventDefault();
@@ -655,8 +756,12 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
         setPane(next.open ? "open" : "closed");
       } else if (key === "b" && !event.shiftKey) {
         event.preventDefault();
-        const { railFolded: folded, setRailFolded: fold } = useDeskSettingsStore.getState();
-        fold(!folded);
+        const desk = useDeskSettingsStore.getState();
+        if (desk.settings.rail === "floating") {
+          setRailOpen((shown) => !shown);
+        } else {
+          desk.setRailFolded(!desk.railFolded);
+        }
       } else if (key === "j") {
         event.preventDefault();
         askNova();
@@ -724,6 +829,16 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
 
   return (
     <DeskContext.Provider value={value}>
+      <Metadata
+        title={deskTitle(t, {
+          place,
+          threadTitle: activeThread?.title ?? null,
+          agentName: pageAgent?.name ?? null,
+          caseLabel,
+          pageTitle: deskPageTitle,
+          lens: searchParams.get("lens"),
+        })}
+      />
       <div
         className={cn(
           "dsk",
@@ -741,6 +856,13 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
           canDecide={canDecide}
           canTriage={canTriage}
           lensCounts={lensCounts}
+          triageWaiting={triageCounts?.waiting ?? 0}
+          triageBack={triageBack}
+          waitingCases={waiting?.groups}
+          onSetPinned={(thread, pinned) => pinMutation.mutate({ thread, pinned })}
+          onRename={(thread, title) => renameMutation.mutate({ thread, title })}
+          onDownload={(thread) => downloadAssistantTranscript(thread.id)}
+          onDelete={(thread) => deleteMutation.mutate(thread)}
           onSearch={() => {
             setRailOpen(false);
             useCommandPaletteStore.getState().openOn("conversations");
@@ -751,29 +873,68 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
           }}
           activeThread={activeThread}
           folded={railFolded}
+          mode={railMode}
+          open={railOpen}
+          onPointerEnter={railFloats ? railHoverStay : undefined}
+          onPointerLeave={
+            railFloats
+              ? (event) => {
+                  if (event.pointerType === "mouse") {
+                    railHoverSoon(false, RAIL_HOVER_CLOSE_MS);
+                  }
+                }
+              : undefined
+          }
           onFold={() => {
-            if (railOpen) {
+            if (railOpen || railFloats) {
               setRailOpen(false);
             } else {
               setRailFolded(true);
             }
           }}
         />
+        {railFloats && !railOpen && (
+          <div
+            aria-hidden
+            data-slot="rail-edge"
+            className="fixed inset-y-0 left-0 z-39 w-2 max-[720px]:hidden"
+            onPointerEnter={(event) => {
+              if (event.pointerType === "mouse") {
+                railHoverSoon(true, RAIL_HOVER_OPEN_MS);
+              }
+            }}
+            onPointerLeave={railHoverStay}
+          />
+        )}
         {railOpen && (
           <Button
             variant="bare"
             size="bare"
-            className="dk-rail-scrim fixed inset-0 z-39 hidden max-[720px]:block"
+            className={cn(
+              "fixed inset-0 z-39",
+              // A floating rail leaves the page readable under it: the page is
+              // only covered so a click on it puts the rail away.
+              railFloats
+                ? "max-[720px]:animate-[dk-fadein_200ms_ease_both] max-[720px]:bg-scrim"
+                : "hidden animate-[dk-fadein_200ms_ease_both] bg-scrim max-[720px]:block",
+            )}
             aria-label={t("Close the menu")}
             onClick={() => setRailOpen(false)}
           />
         )}
-        <div className="dk-mainc">
+        {/* A floating rail is out of the room's grid, so the page takes both columns. */}
+        <div className={cn("dk-mainc", railFloats && "col-span-full")}>
           <DeskTop
             onOpenRail={() => setRailOpen(true)}
             canWatch={canWatch}
             needsYou={lensCounts.everything}
-            onUnfoldRail={railFolded ? () => setRailFolded(false) : undefined}
+            onUnfoldRail={
+              railFloats
+                ? () => setRailOpen(true)
+                : railFolded
+                  ? () => setRailFolded(false)
+                  : undefined
+            }
             place={place}
             thread={activeThread}
             agent={place === "agent" ? pageAgent : activeAgent}
@@ -799,8 +960,14 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
             }
             onDelete={(thread) => deleteMutation.mutate(thread)}
           />
-          {/* The page's main landmark; `contents` keeps the column's layout as it was. */}
-          <main className="contents">
+          {/* The page's main landmark: one cell the page fills, named for the Desk's
+              view so the page moves with the rail when the view changes. */}
+          <main
+            className={cn(
+              "grid min-h-0 min-w-0 grid-cols-[minmax(0,1fr)] grid-rows-[minmax(0,1fr)]",
+              PAGE_TRANSITION_CLASS[view],
+            )}
+          >
             <Outlet />
           </main>
           <KeyboardShortcutsDialog />
@@ -815,6 +982,7 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
           )}
         </div>
         <DeskMargin />
+        <ContextMenuHost />
       </div>
     </DeskContext.Provider>
   );

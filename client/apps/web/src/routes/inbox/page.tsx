@@ -1,4 +1,5 @@
 import type { VirtualRowsHandle } from "@/components/virtual-rows";
+import { Kept } from "@/components/kept";
 import { handleMutationError } from "@/hooks/use-api-mutation";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { useNowSeconds } from "@/hooks/use-now-seconds";
@@ -11,6 +12,9 @@ import { inbox } from "@/lib/queries/inbox";
 import { inboxMessagesQuery } from "@/lib/queries/inbox";
 import type { RoutePrefetch, RoutePrefetchEntry } from "@/lib/route-prefetch";
 import { knownRow } from "@/lib/triage/cache";
+import { DeskListPane } from "@/routes/desk/_components/list/desk-list";
+import { useDeskRailSlotStore } from "@/stores/desk-rail-slot-store";
+import { useDeskSettingsStore } from "@/stores/desk-settings-store";
 import { useTriageStore } from "@/stores/triage-store";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -37,6 +41,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate, useSearchParams } from "react-router";
 import { USER_FORMATTERS } from "./_components/action-copy";
 import { folderTitle } from "./_components/folder-labels";
@@ -78,7 +83,7 @@ import type { RowHandlers } from "./_components/list/triage-row";
 import { rowMenu } from "./_components/menus";
 import { TriageOverlayHost } from "./_components/overlays/overlay-host";
 import { LaneStrip } from "./_components/sidebar/lane-strip";
-import { TriageSidebar } from "./_components/sidebar/triage-sidebar";
+import { TriageFolders } from "./_components/sidebar/triage-folders";
 import { TriageNavigationContext, type TriageNavigation } from "./_components/triage-navigation";
 import {
   TriageActionsProvider,
@@ -252,6 +257,11 @@ function TriageWorkspace({
   const autoOpened = useRef<string | null>(null);
 
   const { folder, messageId: openId, search } = location;
+  // Triage's folders are drawn in the Desk's rail, which offers the place for them.
+  const railSlot = useDeskRailSlotStore((store) => store.slot);
+  const railAway = useDeskSettingsStore(
+    (store) => store.railFolded || store.settings.rail === "floating",
+  );
   const counts = useTriageCounts().data;
   const mailboxesQuery = useTriageMailboxes();
   const mailboxes = mailboxesQuery.data ?? [];
@@ -601,47 +611,36 @@ function TriageWorkspace({
 
   return (
     <div className="flex min-h-0 flex-1">
-      <aside className="hidden w-58 shrink-0 flex-col overflow-hidden border-r border-border bg-canvas md:flex">
-        <div className="flex min-h-0 w-58 flex-1 flex-col">
-          <p aria-hidden className="px-4.25 pt-4 pb-1 text-base font-semibold tracking-tight">
-            {t("Triage")}
-          </p>
-          <TriageSidebar
-            folder={folder}
-            onSelect={selectFolder}
-            onShortcuts={() => useTriageStore.getState().openOverlay({ kind: "shortcuts" })}
-          />
-        </div>
-      </aside>
+      {railSlot !== null &&
+        createPortal(<TriageFolders folder={folder} onSelect={selectFolder} />, railSlot)}
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <div className="md:hidden">
-          <LaneStrip
-            folder={folder}
-            onSelect={selectFolder}
-            onShortcuts={() => useTriageStore.getState().openOverlay({ kind: "shortcuts" })}
-          />
+        <div className={cn(!railAway && "min-[721px]:hidden")}>
+          <LaneStrip folder={folder} onSelect={selectFolder} />
         </div>
 
-        {folder.kind === "briefing" && (
+        {/* The Briefing and Rules keep what was done in them (a group just filed,
+            a rule half written, where the page was scrolled) while the queue is
+            in front. */}
+        <Kept shown={folder.kind === "briefing"}>
           <Lazy>
             <BriefingView
               onOpenMessage={(id) => navigationOpenInQueue(update, id)}
               onOpenFolder={selectFolder}
             />
           </Lazy>
-        )}
-        {folder.kind === "rules" && (
+        </Kept>
+        <Kept shown={folder.kind === "rules"}>
           <Lazy>
             <RulesView />
           </Lazy>
-        )}
+        </Kept>
         {queueFolder !== null && (
-          <div className="flex min-h-0 flex-1">
-            <div
+          <div className="flex min-h-0 flex-1 border-t border-dsk-b-sub">
+            <DeskListPane
               className={cn(
-                "border-border-subtle min-h-0 flex-col lg:flex lg:w-96 lg:shrink-0 lg:border-r",
-                openId !== null && !wide ? "hidden" : "flex flex-1 lg:flex-none",
+                "max-lg:border-r-0 lg:w-100 lg:flex-none",
+                openId !== null && !wide ? "hidden" : "flex-1",
               )}
             >
               <TriageList
@@ -665,7 +664,7 @@ function TriageWorkspace({
                 banner={banner}
                 empty={empty()}
               />
-            </div>
+            </DeskListPane>
             <section
               aria-label={t("Message")}
               className={cn(
@@ -735,7 +734,7 @@ function NothingOpen({
 
   if (!empty) {
     return (
-      <div className="text-foreground-subtle flex flex-1 flex-col items-center justify-center gap-2 p-8 text-center text-sm">
+      <div className="flex flex-1 flex-col items-center justify-center gap-2 p-8 text-center text-sm text-foreground-subtle">
         <p>{t("Choose a message to read")}</p>
         <p className="flex items-center gap-1 text-xs">
           {rt("Press <k>J</k> to open the next one.", { k: (chunks) => <Kbd>{chunks}</Kbd> })}
@@ -745,14 +744,14 @@ function NothingOpen({
   }
 
   return (
-    <div className="animate-rise flex flex-1 flex-col items-center justify-center gap-2 p-8 text-center">
-      <span className="bg-success-subtle text-success mb-1 flex size-10 items-center justify-center rounded-full">
+    <div className="flex flex-1 animate-rise flex-col items-center justify-center gap-2 p-8 text-center">
+      <span className="mb-1 flex size-10 items-center justify-center rounded-full bg-success-subtle text-success">
         <CheckIcon aria-hidden className="size-4.5" strokeWidth={2.2} />
       </span>
       <p className="text-base font-semibold">
         {waitingLane ? t("You're all caught up") : t("Nothing in {0}", title.toLocaleLowerCase())}
       </p>
-      <p className="text-foreground-subtle max-w-xs text-sm">
+      <p className="max-w-xs text-sm text-foreground-subtle">
         {waitingLane
           ? t("Nova brings the next one here the moment it lands.")
           : t("Messages show up here as they match.")}

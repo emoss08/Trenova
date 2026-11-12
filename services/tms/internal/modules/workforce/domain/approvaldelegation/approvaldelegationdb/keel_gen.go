@@ -638,6 +638,7 @@ var enumApprovalScope = [...]schema.EnumValue{
 	{Value: `All`, Label: `All`},
 	{Value: `TimeOff`, Label: `Time Off`},
 	{Value: `Expenses`, Label: `Expenses`},
+	{Value: `Cases`, Label: `Cases`, Doc: `ApprovalScopeCases hands over the cases the delegator owns at the Desk: the delegate sees them and decides them while the delegation runs.`},
 }
 
 // ApprovalScopeCol is a column of approvaldelegation.ApprovalScope values.

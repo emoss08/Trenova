@@ -159,7 +159,7 @@ export type DeskThreadChapters = {
   heading: (turnId: string) => ReactNode;
   /** The turn the reply being written opens a chapter with, when it does. */
   liveTurnId: string | null;
-  /** The rail of chapters, given the one in view and a way to move to another. */
+  /** The rail of chapters, given the one in view and a way to move to another; null when there is none to draw. */
   rail: (nav: DeskChapterNav) => ReactNode;
   /** Starts a chapter where a reply was asked; undefined where its turn already opens one. */
   startAt: (message: AssistantMessage) => (() => void) | undefined;
@@ -194,6 +194,11 @@ export type DeskThreadProps = {
    * carrying the draft. Left out, the agent is fixed.
    */
   onSwitchAgent?: (agentId: string, draft?: string) => void;
+  /**
+   * The conversation is a case's, asked of the agent working it: it answers on
+   * the model that agent runs on, so the box offers no other.
+   */
+  agentModelOnly?: boolean;
   /**
    * Hands the conversation to another agent and asks it the reply being
    * written there. With it, a reply another agent holds the tools for is
@@ -311,6 +316,7 @@ export function DeskThread({
   density = "regular",
   threads,
   onSwitchAgent,
+  agentModelOnly = false,
   onHandOff,
   onStartNew,
   onWorkingChange,
@@ -525,6 +531,11 @@ export function DeskThread({
 
   const replies = entries.filter((entry) => entry.kind === "assistant").length;
   const ownMessages = entries.filter((entry) => entry.kind === "user").length + (turn ? 1 : 0);
+  // What the person last said here, for ↑ in the empty box to bring back.
+  const lastSaid =
+    turn?.userContent ||
+    entries.filter((entry) => entry.kind === "user").at(-1)?.message.content ||
+    "";
   const { scrollRef, away, unread, jumpToLatest } = useStickToBottom({
     replies,
     ownMessages,
@@ -569,6 +580,8 @@ export function DeskThread({
   const linkedTurn = chapters?.linkedTurnId ?? null;
   const onLinkShown = chapters?.onLinkShown;
   const { reveal: revealChapter } = chapterNav;
+  // Null while there is no rail to draw, so no empty slot is drawn for one.
+  const chapterRail = chapters ? chapters.rail(chapterNav) : null;
   const historyReady = !model.historyLoading;
   useEffect(() => {
     if (linkedTurn === null || !historyReady) {
@@ -688,8 +701,8 @@ export function DeskThread({
   }, [entries]);
   const ask = useCallback(
     (text: string, options?: { directedAgentId?: string }) =>
-      void model.send(text, undefined, model.providerId, options),
-    [model],
+      void model.send(text, undefined, agentModelOnly ? "" : model.providerId, options),
+    [agentModelOnly, model],
   );
   const retryFor = (id: string) => {
     const question = questionBefore.get(id) ?? "";
@@ -1042,7 +1055,7 @@ export function DeskThread({
                       : ({ "--dk-dock-h": `${dockHeight}px` } as CSSProperties)
                   }
                 >
-                  {chapters && <div className="dk-chap-rail-slot">{chapters.rail(chapterNav)}</div>}
+                  {chapterRail && <div className="dk-chap-rail-slot">{chapterRail}</div>}
                   <div
                     className="dk-scroll"
                     ref={scrollRef}
@@ -1725,7 +1738,12 @@ export function DeskThread({
                             void suggestion.route(content, payload.mentions).then((handed) => {
                               if (!handed) {
                                 suggestion.sentHere();
-                                void model.send(content, undefined, model.providerId, payload);
+                                void model.send(
+                                  content,
+                                  undefined,
+                                  agentModelOnly ? "" : model.providerId,
+                                  payload,
+                                );
                               }
                             });
                             composerContext.clear();
@@ -1774,6 +1792,7 @@ export function DeskThread({
                                       ? t("Rephrase, or ask another agent…")
                                       : undefined
                           }
+                          recall={lastSaid}
                           suggestedAnswer={
                             dockedAsk && !suggestion.routing && !suggestion.handingOff && !showCard
                               ? dockedAsk.suggestion
@@ -1804,14 +1823,16 @@ export function DeskThread({
                             )
                           }
                           model={
-                            <DeskModelPicker
-                              options={model.providers}
-                              value={model.providerId}
-                              onChange={model.setProviderId}
-                              hasReplies={replies > 0}
-                              disabled={isActive}
-                              openSignal={pickerSignal}
-                            />
+                            agentModelOnly ? undefined : (
+                              <DeskModelPicker
+                                options={model.providers}
+                                value={model.providerId}
+                                onChange={model.setProviderId}
+                                hasReplies={replies > 0}
+                                disabled={isActive}
+                                openSignal={pickerSignal}
+                              />
+                            )
                           }
                           meter={
                             composerKit === "page" ? undefined : (

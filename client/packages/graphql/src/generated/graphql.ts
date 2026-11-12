@@ -395,6 +395,7 @@ export type AiTask =
   | 'AccountingMapping'
   | 'AssistantChat'
   | 'BillingDiagnosis'
+  | 'CaseReading'
   | 'ChapterTitling'
   | 'DailyBriefing'
   | 'DocumentClassification'
@@ -468,6 +469,7 @@ export type AiUsageFeature =
   | 'BillingQueueBrief'
   | 'BillingQueueReview'
   | 'BillingQueueSearch'
+  | 'CaseReading'
   | 'ConversationChapters'
   | 'DocumentIntelligenceExtract'
   | 'DocumentIntelligenceRoute'
@@ -1311,6 +1313,8 @@ export type AgentPlanDecisionInput = {
   /** The digest of the plan preview the decider was shown. An approval whose digest no longer matches is refused and nothing is recorded. */
   previewDigest?: string | null | undefined;
   reasonCode: string;
+  /** An approval waits out the undo window before any step runs, and can be taken back with undoAgentDecision until one does. */
+  undoWindow?: boolean | null | undefined;
 };
 
 export type AgentPlanStatus =
@@ -1398,6 +1402,8 @@ export type AgentProposalDecisionInput = {
   /** The digest of the preview the decider was shown. An approval whose digest no longer matches is refused and nothing is recorded; one without a digest is recorded as not reviewed. */
   previewDigest?: string | null | undefined;
   reasonCode: string;
+  /** An approval waits out the undo window before it runs, and can be taken back with undoAgentDecision until it does. */
+  undoWindow?: boolean | null | undefined;
 };
 
 /** The control a parameter takes when edited: the schema's type, read for a form. */
@@ -1709,6 +1715,7 @@ export type ApplyCustomerPaymentInput = {
  */
 export type ApprovalScope =
   | 'All'
+  | 'Cases'
   | 'Expenses'
   | 'TimeOff';
 
@@ -1957,8 +1964,8 @@ export type BillingQueueHoldReasonCode =
 export type BillingQueueItemsFilterInput = {
   /** Only items queued before this time. */
   createdBefore?: number | null | undefined;
-  /** Include items whose invoice already posted. */
-  includePosted?: boolean | null | undefined;
+  /** Include closed items: posted or canceled. */
+  includeClosed?: boolean | null | undefined;
   /** The lanes to include; empty includes every lane. */
   lanes?: Array<BillingQueueLane> | null | undefined;
   /** Largest amount, in the bill-to's currency. */
@@ -3709,7 +3716,81 @@ export type DeskAttentionInput = {
   recordId?: string | number | null | undefined;
   /** Rows with an item of one of these severities. Empty is every severity. */
   severities?: Array<WatchtowerSeverity> | null | undefined;
+  /** Only rows with an item an agent's run is working on right now. A run that finished, failed or waits on a person is not working. */
+  working?: boolean | null | undefined;
 };
+
+export type DeskCaseDecisionKind =
+  /** Several changes decided as one. */
+  | 'Plan'
+  /** One change. */
+  | 'Proposal';
+
+/** Where the plan about a record stands. */
+export type DeskCaseDecisionPhase =
+  /** Waiting on a person. */
+  | 'Awaiting'
+  /** Declined; nothing ran. */
+  | 'Declined'
+  /** Every step ran and was confirmed. */
+  | 'Done'
+  | 'Expired'
+  /** A step did not go through, so it stopped. */
+  | 'Failed'
+  /** Approved and running. */
+  | 'Running'
+  /** Approved; nothing has run and it can still be undone. */
+  | 'Undoable';
+
+export type DeskCaseExhibitKind =
+  /** Labelled facts. */
+  | 'Facts'
+  /** A message someone sent about the record. */
+  | 'Message'
+  /** Amounts left of a limit: a driver's hours, what is paid of an invoice. */
+  | 'Meters'
+  /** The route and where the truck is on it. */
+  | 'Route'
+  /** What happened and what is still to come, in order. */
+  | 'Timeline';
+
+export type DeskCaseOptionKind =
+  /** Leave the record as it is. */
+  | 'Leave'
+  /** An alternative an agent drafts a plan for. */
+  | 'Plan';
+
+export type DeskCasePointState =
+  | 'Ahead'
+  | 'Done'
+  /** Added by the chosen option; not on the record yet. */
+  | 'Proposed';
+
+/** Whether Nova's reading of the case is written. */
+export type DeskCaseReadingStatus =
+  | 'Ready'
+  /** Nova is off, has no provider, or its wording was refused. */
+  | 'Unavailable'
+  /** Being written now; the case updates when it lands. */
+  | 'Writing';
+
+/** How a line of a case reads: good news, a warning, bad news, or neither. */
+export type DeskCaseTone =
+  | 'Bad'
+  | 'Good'
+  | 'Info'
+  | 'Neutral'
+  | 'Warning';
+
+export type DeskCaseTrustKey =
+  /** Why it needs a person's approval. */
+  | 'Approval'
+  /** Why it matters. */
+  | 'Matters'
+  /** What the agent proposes. */
+  | 'Proposes'
+  /** If nothing changes. */
+  | 'Unchanged';
 
 /** Which of the Desk's queues an item belongs to, by what raised it. Everything is all of them. */
 export type DeskLens =
@@ -5884,6 +5965,12 @@ export type InspectionResult =
 export type InviteWorkerToPortalInput = {
   /** Overrides the email on the worker record when provided. */
   email?: string | null | undefined;
+  /**
+   * Sends the invitation again: an invitation still pending is voided and a new
+   * one, with a new link, replaces it. Without it a pending invitation refuses a
+   * second.
+   */
+  replacePending?: boolean | null | undefined;
   workerId: string | number;
 };
 
@@ -6345,7 +6432,11 @@ export type MyAgentsInput = {
   /** Agents already shown, so a page never repeats them. At most 100. */
   excludeIds?: Array<string | number> | null | undefined;
   first?: number | null | undefined;
-  /** Only these agents. At most 100. */
+  /**
+   * Only these agents, at most 100. An agent named here is listed when the caller
+   * may use it even if it runs on its own: a case names the agent working it, and
+   * the person asks that agent.
+   */
   ids?: Array<string | number> | null | undefined;
   origin?: MyAgentOrigin | null | undefined;
   /** Matched against the agent's name and description. */
@@ -7124,6 +7215,17 @@ export type RecordSafetyViolationInput = {
   safetyEventId: string | number;
   severityWeight?: number | null | undefined;
 };
+
+/** Whether the emails a share sends could be queued. */
+export type RecordShareEmailStatus =
+  /** No email could be queued. */
+  | 'Failed'
+  /** The app does not know its own address, so no email is sent for shares. */
+  | 'NotConfigured'
+  /** Some emails were queued and some were not. */
+  | 'Partial'
+  /** Every recipient's email was queued. */
+  | 'Queued';
 
 export type RecordTimeEntryInput = {
   breakMinutes?: number | null | undefined;
@@ -7933,6 +8035,18 @@ export type SettlementPayTrigger =
   | 'PODReceived'
   | 'ShipmentDelivered'
   | 'ShipmentInvoiced';
+
+export type ShareRecordInput = {
+  id: string | number;
+  /** The record kind, as the record-link registry names it: invoice, shipment, worker. */
+  kind: string;
+  /** A note for them, sent by email and kept with the share. At most 1000 characters. */
+  note?: string | null | undefined;
+  /** Where in the app the link opens: the record's page on the tab, or the Desk page, the sharer is on. */
+  path: string;
+  /** The teammates, from recordShareCandidates. At most 25. */
+  userIds: Array<string | number>;
+};
 
 /**
  * How far a swap has got. Two acceptances are needed — the colleague's and a
@@ -8965,6 +9079,14 @@ export type UncoveredPickupWindow =
   | 'TwoToSixHours'
   | 'UnderTwoHours';
 
+export type UnshareRecordInput = {
+  id: string | number;
+  /** The record kind, as the record-link registry names it: invoice, shipment, worker. */
+  kind: string;
+  /** The share to remove, from recordShares. */
+  shareId: string | number;
+};
+
 export type UpcomingWorkerPtoInput = {
   after?: string | null | undefined;
   endDate?: number | null | undefined;
@@ -9575,6 +9697,47 @@ export type WatchtowerItemsInput = {
   unresolvedOnly?: boolean | null | undefined;
 };
 
+export type WatchtowerMoneyStake =
+  /** Advances a factor has not funded. */
+  | 'Advance'
+  /** What the organization would owe if a factor charges an invoice back. */
+  | 'Chargeback'
+  /** An invoice that cannot go out as it stands. */
+  | 'Invoice';
+
+/** Which view an item's panel is drawn with. */
+export type WatchtowerPanelKind =
+  /** An agent stopped and needs a person. */
+  | 'Ask'
+  /** The accounting system: documents waiting, or the connection itself. */
+  | 'Books'
+  /** Something on a record changed from one value to another. */
+  | 'Change'
+  /** A detention clock: free time, then billable time. */
+  | 'Clock'
+  /** A carrier that has stopped checking in. */
+  | 'Contact'
+  /** A move with nobody on it, or a tender every carrier passed on. */
+  | 'Coverage'
+  /** Credentials coming due for one person. */
+  | 'Expiry'
+  /** A file that could not be processed. */
+  | 'File'
+  /** A finding with advice. */
+  | 'Finding'
+  /** A message that arrived and waits on a person. */
+  | 'Message'
+  /** Money waiting on someone: an advance, a chargeback, an invoice that cannot go out. */
+  | 'Money'
+  /** Paperwork a record is waiting on. */
+  | 'Paper'
+  /** An agent run that could not finish. */
+  | 'Run'
+  /** A truck seen at a place with no arrival or departure recorded. */
+  | 'Sighting'
+  /** A stop and its window: missed, projected late, or at risk. */
+  | 'Stop';
+
 /**
  * Why an exception was closed. Cleared is the system's own code for a source
  * that stopped reporting the problem; a person picks one of the others, and
@@ -9632,8 +9795,21 @@ export type WatchtowerSourceKind =
   | 'ServiceFailure'
   | 'TelematicsStopVisit'
   | 'TenderExhausted'
-  | 'WeatherAlert'
   | 'WorkerCredential';
+
+export type WatchtowerStopRole =
+  | 'Delivery'
+  | 'Pickup';
+
+export type WatchtowerStopVerdict =
+  /** Arrived after the window closed. */
+  | 'ArrivedLate'
+  /** Projected to arrive with little to spare. */
+  | 'AtRisk'
+  /** Projected to arrive after the window closes. */
+  | 'Late'
+  /** The window closed with no arrival recorded. */
+  | 'Missed';
 
 export type WithdrawInvoiceDisputeInput = {
   disputeId: string | number;
@@ -11161,7 +11337,7 @@ export type DeskRecordFieldsFragment = { kind: string, noun: string, id: string,
 export type DeskAttentionGroupFieldsFragment = { key: string, severity: WatchtowerSeverity, dueAt: number | null, dueLabel: string | null, unseen: boolean, record: { ' $fragmentRefs'?: { 'DeskRecordFieldsFragment': DeskRecordFieldsFragment } } | null, items: Array<(
     { deskLens: DeskLens, aboutId: string | null }
     & { ' $fragmentRefs'?: { 'WatchtowerItemFieldsFragment': WatchtowerItemFieldsFragment } }
-  )> } & { ' $fragmentName'?: 'DeskAttentionGroupFieldsFragment' };
+  )>, ownership: { auto: boolean, canWork: boolean, owner: { id: string, name: string } | null } | null } & { ' $fragmentName'?: 'DeskAttentionGroupFieldsFragment' };
 
 export type DeskAttentionQueryVariables = Exact<{
   input: DeskAttentionInput;
@@ -11177,7 +11353,7 @@ export type DeskActivityEntryQueryVariables = Exact<{
 }>;
 
 
-export type DeskActivityEntryQuery = { deskActivityEntry: { tool: string, ranBefore: number, ranSince: number, entry: { ' $fragmentRefs'?: { 'DeskActivityEntryFieldsFragment': DeskActivityEntryFieldsFragment } }, changes: Array<{ proposalId: string, at: number, outcome: DeskActivityOutcome, error: string, record: { ' $fragmentRefs'?: { 'DeskRecordFieldsFragment': DeskRecordFieldsFragment } } | null }> } };
+export type DeskActivityEntryQuery = { deskActivityEntry: { tool: string, ranBefore: number, ranSince: number, entry: { ' $fragmentRefs'?: { 'DeskActivityEntryFieldsFragment': DeskActivityEntryFieldsFragment } }, changes: Array<{ proposalId: string, what: string, why: string, proposedAt: number, at: number, outcome: DeskActivityOutcome, error: string, record: { ' $fragmentRefs'?: { 'DeskRecordFieldsFragment': DeskRecordFieldsFragment } } | null }> } };
 
 export type DeskActivityQueryVariables = Exact<{
   since: number;
@@ -11194,6 +11370,87 @@ export type DeskBoardCardQueryVariables = Exact<{
 
 
 export type DeskBoardCardQuery = { deskBoardCard: { artifactId: string, threadId: string, title: string, author: string, question: string, answeredAt: number, readAt: number, markdown: string, verdict: Array<{ text: string, numeral: number, tone: string, struck: boolean }>, blocks: Array<{ type: string, title: string, half: boolean, numeral: number, state: string, tone: string, measure: string, chart: unknown, noteTone: string, source: { kind: string, resource: string, count: number, readable: number, title: string }, figures: Array<{ label: string, tone: string, value: { kind: string, number: string, currency: string, text: string } | null, was: { kind: string, number: string, currency: string, text: string } | null }>, rows: Array<{ resource: string, id: string, readable: boolean, label: string, subtitle: string, status: string, measure: { measure: string, state: string, place: string, at: number | null, tone: string, value: { kind: string, number: string, currency: string, text: string } } | null }>, compare: { wins: Array<number>, columns: Array<{ resource: string, id: string, readable: boolean, label: string, subtitle: string, status: string, measure: { measure: string, state: string, place: string, at: number | null, tone: string, value: { kind: string, number: string, currency: string, text: string } } | null }>, lines: Array<{ label: string, better: string, wins: Array<boolean>, cells: Array<{ kind: string, number: string, currency: string, text: string } | null> }> } | null, table: { table: unknown, total: number, artifactId: string | null } | null, events: Array<{ at: number, operation: string, actor: string, principalType: string, comment: string, changes: unknown }>, checks: Array<{ title: string, tone: string, detail: string, hidden: number, count: { kind: string, number: string, currency: string, text: string } | null, was: { kind: string, number: string, currency: string, text: string } | null, records: Array<{ resource: string, id: string, readable: boolean, label: string, subtitle: string, status: string, measure: { measure: string, state: string, place: string, at: number | null, tone: string, value: { kind: string, number: string, currency: string, text: string } } | null }> }>, meter: { clear: number, total: number, tones: Array<string>, percent: { kind: string, number: string, currency: string, text: string } | null } | null, text: Array<{ text: string, numeral: number, tone: string, struck: boolean }>, chips: Array<{ resource: string, id: string, readable: boolean, label: string, subtitle: string, status: string, measure: { measure: string, state: string, place: string, at: number | null, tone: string, value: { kind: string, number: string, currency: string, text: string } } | null }>, work: Array<{ tone: string, dueAt: number | null, row: { resource: string, id: string, readable: boolean, label: string, subtitle: string, status: string }, signals: Array<{ lens: DeskLens, title: string, tone: string, dueAt: number | null }> }>, actions: Array<{ label: string, ask: string, records: Array<{ resource: string, id: string, readable: boolean, label: string }> }> }> } };
+
+export type DeskCaseExhibitFieldsFragment = { key: string, number: number, kind: DeskCaseExhibitKind, title: string, source: string, at: number | null, read: boolean, note: string, path: string, route: { callout: string, calloutTone: DeskCaseTone, points: Array<{ label: string, x: number, y: number, latitude: number, longitude: number, state: DeskCasePointState }>, truck: { x: number, y: number, latitude: number, longitude: number } | null } | null, meters: Array<{ label: string, value: string, fraction: number, tone: DeskCaseTone }>, message: { quote: string, from: string, reply: string, replyAgent: { ' $fragmentRefs'?: { 'WatchtowerAgentFieldsFragment': WatchtowerAgentFieldsFragment } } | null } | null, timeline: Array<{ label: string, sub: string, when: string, tone: DeskCaseTone, state: DeskCasePointState }>, facts: Array<{ label: string, value: string, at: number | null, tone: DeskCaseTone }> } & { ' $fragmentName'?: 'DeskCaseExhibitFieldsFragment' };
+
+export type DeskCaseDecisionFieldsFragment = { kind: DeskCaseDecisionKind, id: string, title: string, phase: DeskCaseDecisionPhase, proposedAt: number, stepCount: number, completedSteps: number, failedStep: number | null, failureError: string, commitsAt: number | null, decidedAt: number | null, note: string, itemId: string | null, others: number, agent: { ' $fragmentRefs'?: { 'WatchtowerAgentFieldsFragment': WatchtowerAgentFieldsFragment } } | null, decidedBy: { id: string, name: string } | null } & { ' $fragmentName'?: 'DeskCaseDecisionFieldsFragment' };
+
+export type DeskCaseQueryVariables = Exact<{
+  kind: string;
+  id: string | number;
+  timezone?: string | null | undefined;
+}>;
+
+
+export type DeskCaseQuery = { deskCase: { drafting: boolean, draftNote: string, note: string, starters: Array<string>, open: number, severity: WatchtowerSeverity, record: { ' $fragmentRefs'?: { 'DeskRecordFieldsFragment': DeskRecordFieldsFragment } }, handOff: { itemId: string, kind: WatchtowerSourceKind, working: boolean, note: string, agent: { ' $fragmentRefs'?: { 'WatchtowerAgentFieldsFragment': WatchtowerAgentFieldsFragment } } | null } | null, away: { until: number } | null, ownership: { auto: boolean, covering: boolean, canWork: boolean, canClaim: boolean, canAssign: boolean, owner: { id: string, name: string } | null }, head: { references: Array<string>, title: string, status: string, statusTone: DeskCaseTone, details: Array<string>, deadline: { at: number, label: string } | null }, finding: { foundAt: number, sources: number, raised: string, computed: string, readingStatus: DeskCaseReadingStatus, agent: { ' $fragmentRefs'?: { 'WatchtowerAgentFieldsFragment': WatchtowerAgentFieldsFragment } } | null, reading: Array<{ text: string, highlight: boolean, cite: number | null }>, trust: Array<{ key: DeskCaseTrustKey, text: string }> } | null, options: Array<{ id: string, kind: DeskCaseOptionKind, label: string, outcome: string, outcomeNote: string, tone: DeskCaseTone, cost: string, description: string, recommended: boolean, chosen: boolean }>, decision: { ' $fragmentRefs'?: { 'DeskCaseDecisionFieldsFragment': DeskCaseDecisionFieldsFragment } } | null, exhibits: Array<{ ' $fragmentRefs'?: { 'DeskCaseExhibitFieldsFragment': DeskCaseExhibitFieldsFragment } }> } };
+
+export type ChooseDeskCaseOptionMutationVariables = Exact<{
+  kind: string;
+  id: string | number;
+  optionId: string | number;
+}>;
+
+
+export type ChooseDeskCaseOptionMutation = { chooseDeskCaseOption: boolean };
+
+export type AcceptDeskCaseRiskMutationVariables = Exact<{
+  kind: string;
+  id: string | number;
+  reason: string;
+}>;
+
+
+export type AcceptDeskCaseRiskMutation = { acceptDeskCaseRisk: number };
+
+export type PutAwayDeskCaseMutationVariables = Exact<{
+  kind: string;
+  id: string | number;
+  until: number;
+}>;
+
+
+export type PutAwayDeskCaseMutation = { putAwayDeskCase: number };
+
+export type BringBackDeskCaseMutationVariables = Exact<{
+  kind: string;
+  id: string | number;
+}>;
+
+
+export type BringBackDeskCaseMutation = { bringBackDeskCase: number };
+
+export type AssignDeskCaseMutationVariables = Exact<{
+  kind: string;
+  id: string | number;
+  ownerId?: string | number | null | undefined;
+}>;
+
+
+export type AssignDeskCaseMutation = { assignDeskCase: boolean };
+
+export type ReleaseDeskCaseMutationVariables = Exact<{
+  kind: string;
+  id: string | number;
+}>;
+
+
+export type ReleaseDeskCaseMutation = { releaseDeskCase: boolean };
+
+export type UndoAgentDecisionMutationVariables = Exact<{
+  proposalId?: string | number | null | undefined;
+  planId?: string | number | null | undefined;
+}>;
+
+
+export type UndoAgentDecisionMutation = { undoAgentDecision: boolean };
+
+export type CommitAgentDecisionNowMutationVariables = Exact<{
+  proposalId?: string | number | null | undefined;
+  planId?: string | number | null | undefined;
+}>;
+
+
+export type CommitAgentDecisionNowMutation = { commitAgentDecisionNow: boolean };
 
 export type DeskMemoryFieldsFragment = { id: string, content: string, kind: AgentMemoryKind, scope: AgentMemoryScope, roleId: string | null, roleName: string, status: AgentMemoryStatus, source: AgentMemorySource, sourceTitle: string, useCount: number, lastUsedAt: number | null, createdAt: number, version: number, editable: boolean, reason: string, quotes: Array<string>, replaces: { id: string, content: string, status: AgentMemoryStatus } | null, replacedBy: { id: string, content: string, status: AgentMemoryStatus } | null } & { ' $fragmentName'?: 'DeskMemoryFieldsFragment' };
 
@@ -11473,7 +11730,7 @@ export type DecideAgentPlanMutationVariables = Exact<{
 
 export type DecideAgentPlanMutation = { decideAgentPlan: { refused: boolean, plan: { id: string, status: AgentPlanStatus, stepCount: number, completedSteps: number, failedStep: number | null, failureError: string, decidedByUserId: string | null, decidedAt: number | null, version: number, updatedAt: number } } };
 
-export type AgentProposalPreviewFieldsFragment = { proposalId: string, tool: string, summary: string, coverage: AgentPreviewCoverage, stale: boolean, targetVersion: number | null, withheldCount: number, omittedRecords: number, recorded: boolean, computedAt: number, digest: string, reviewRequired: boolean, changes: Array<{ resource: string, entityId: string | null, label: string, operation: AgentPreviewOperation, version: number | null, withheld: boolean, dependsOnStep: number, omittedFields: number, record: { entityType: string, id: string } | null, fields: Array<{ path: string, label: string, valueType: string, before: unknown, after: unknown, withheld: boolean, volatile: boolean, truncated: boolean, changedSinceProposed: boolean, proposedBefore: unknown, projectedFromStep: number, beforeRef: { resource: string, id: string, label: string | null, withheld: boolean, record: { entityType: string, id: string } | null } | null, afterRef: { resource: string, id: string, label: string | null, withheld: boolean, record: { entityType: string, id: string } | null } | null }>, message: { channel: AgentPreviewMessageChannel, from: string, to: Array<string>, cc: Array<string>, bcc: Array<string>, attachments: Array<string>, subject: string, body: string, bodyTruncated: boolean, visibility: string, cadence: string, templateVersionId: string | null } | null, money: { currency: string, totalBefore: string | null, totalAfter: string | null, delta: string | null, withheld: boolean, lines: Array<{ label: string, before: string | null, after: string | null }> } | null }>, warnings: Array<{ code: string, args: Array<string>, message: string, reasons: Array<{ field: string, label: string, message: string, param: string }> }>, staleness: { pinned: boolean, proposedVersion: number, currentVersion: number, missing: boolean } | null } & { ' $fragmentName'?: 'AgentProposalPreviewFieldsFragment' };
+export type AgentProposalPreviewFieldsFragment = { proposalId: string, tool: string, summary: string, coverage: AgentPreviewCoverage, stale: boolean, targetVersion: number | null, withheldCount: number, omittedRecords: number, recorded: boolean, computedAt: number, digest: string, reviewRequired: boolean, changes: Array<{ resource: string, entityId: string | null, label: string, operation: AgentPreviewOperation, version: number | null, withheld: boolean, dependsOnStep: number, omittedFields: number, record: { entityType: string, id: string } | null, fields: Array<{ path: string, label: string, valueType: string, before: unknown, after: unknown, withheld: boolean, volatile: boolean, truncated: boolean, changedSinceProposed: boolean, proposedBefore: unknown, projectedFromStep: number, beforeRef: { resource: string, id: string, label: string | null, withheld: boolean, record: { entityType: string, id: string } | null } | null, afterRef: { resource: string, id: string, label: string | null, withheld: boolean, record: { entityType: string, id: string } | null } | null }>, message: { channel: AgentPreviewMessageChannel, from: string, to: Array<string>, cc: Array<string>, bcc: Array<string>, attachments: Array<string>, subject: string, body: string, bodyTruncated: boolean, visibility: string, cadence: string, templateVersionId: string | null } | null, money: { currency: string, totalBefore: string | null, totalAfter: string | null, delta: string | null, withheld: boolean, lines: Array<{ label: string, before: string | null, after: string | null }> } | null }>, warnings: Array<{ code: string, args: Array<string>, message: string, reasons: Array<{ field: string, label: string, message: string, param: string }>, remedies: Array<{ kind: string, recordKind: string, recordId: string, recordLabel: string, takenAt: number | null, takenNote: string }> }>, staleness: { pinned: boolean, proposedVersion: number, currentVersion: number, missing: boolean } | null } & { ' $fragmentName'?: 'AgentProposalPreviewFieldsFragment' };
 
 export type AgentPlanPreviewFieldsFragment = { planId: string, digest: string, stale: boolean, withheldCount: number, computedAt: number, reviewRequired: boolean, steps: Array<{ proposalId: string, step: number, preview: { ' $fragmentRefs'?: { 'AgentProposalPreviewFieldsFragment': AgentProposalPreviewFieldsFragment } } }> } & { ' $fragmentName'?: 'AgentPlanPreviewFieldsFragment' };
 
@@ -11769,6 +12026,15 @@ export type AgentActivitySummaryQueryVariables = Exact<{
 
 
 export type AgentActivitySummaryQuery = { agentActivitySummary: { since: number, runs: number, runsFailed: number, runsWorking: number, runsAwaiting: number, pendingProposals: number | null, oldestPendingAt: number | null, openExceptions: number | null, decisionWindowDays: number, decided: number | null, approvedAsProposed: number | null } };
+
+export type WorkingAgentRunFieldsFragment = { id: string, agentDefinitionId: string, trigger: AgentRunTrigger, summary: string, subjectType: AgentSubjectType, subjectLabel: string, status: AgentRunStatus, startedAt: number | null, createdAt: number, definition: { id: string, name: string, icon: string, accent: string, template: AgentTemplate | null } | null } & { ' $fragmentName'?: 'WorkingAgentRunFieldsFragment' };
+
+export type WorkingAgentRunsQueryVariables = Exact<{
+  input: DataTableConnectionInput;
+}>;
+
+
+export type WorkingAgentRunsQuery = { agentRuns: { edges: Array<{ node: { ' $fragmentRefs'?: { 'WorkingAgentRunFieldsFragment': WorkingAgentRunFieldsFragment } } }> } };
 
 export type AgentToolPolicyFieldsFragment = { id: string, name: string, title: string, kind: AgentToolKind, scope: AgentToolScope, defaultTier: AgentAutonomyTier, maxTier: AgentAutonomyTier, promotableTier: AgentAutonomyTier, egress: Array<AgentEgressClass>, leavesOrganization: boolean, hasClassify: boolean, hasCondition: boolean, conditionDescription: string | null, personalExemption: boolean, effect: AgentToolEffect, artifact: string, reversible: boolean, idempotent: boolean, readsExternal: AgentExternalRead, source: AgentTaintSource | null, carriesTaint: boolean, rationale: string, explanation: string, declaredMaxTier: AgentAutonomyTier, declaredReadsExternal: AgentExternalRead, ruleVersion: number, needs: { resource: string, operation: string } | null, rule: { maxTier: AgentAutonomyTier | null, readsExternal: AgentExternalRead | null, reason: string, updatedAt: number, updatedBy: { id: string, name: string } | null } | null } & { ' $fragmentName'?: 'AgentToolPolicyFieldsFragment' };
 
@@ -18089,6 +18355,42 @@ export type DeskRecordActivityQueryVariables = Exact<{
 
 export type DeskRecordActivityQuery = { auditEntriesByResourceId: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { id: string, operation: string, timestamp: number, changes: unknown, comment: string | null, principalType: string, actorName: string | null, channel: string, user: { id: string, name: string } | null } }>, pageInfo: { hasNextPage: boolean, endCursor: string | null } } };
 
+export type RecordShareUserFieldsFragment = { id: string, name: string, username: string, emailAddress: string | null, profilePicUrl: string, thumbnailUrl: string } & { ' $fragmentName'?: 'RecordShareUserFieldsFragment' };
+
+export type RecordShareFieldsFragment = { id: string, recordId: string, path: string, note: string, shareCount: number, firstSharedAt: number, lastSharedAt: number, removable: boolean, sharedWith: { ' $fragmentRefs'?: { 'RecordShareUserFieldsFragment': RecordShareUserFieldsFragment } } | null, sharedBy: { ' $fragmentRefs'?: { 'RecordShareUserFieldsFragment': RecordShareUserFieldsFragment } } | null } & { ' $fragmentName'?: 'RecordShareFieldsFragment' };
+
+export type RecordSharesQueryVariables = Exact<{
+  kind: string;
+  id: string | number;
+}>;
+
+
+export type RecordSharesQuery = { recordShares: Array<{ ' $fragmentRefs'?: { 'RecordShareFieldsFragment': RecordShareFieldsFragment } }> };
+
+export type RecordShareCandidatesQueryVariables = Exact<{
+  kind: string;
+  id: string | number;
+  query?: string | null | undefined;
+  first?: number | null | undefined;
+}>;
+
+
+export type RecordShareCandidatesQuery = { recordShareCandidates: Array<{ ' $fragmentRefs'?: { 'RecordShareUserFieldsFragment': RecordShareUserFieldsFragment } }> };
+
+export type ShareRecordMutationVariables = Exact<{
+  input: ShareRecordInput;
+}>;
+
+
+export type ShareRecordMutation = { shareRecord: { recipientCount: number, emailsQueued: number, emailStatus: RecordShareEmailStatus, shares: Array<{ ' $fragmentRefs'?: { 'RecordShareFieldsFragment': RecordShareFieldsFragment } }> } };
+
+export type UnshareRecordMutationVariables = Exact<{
+  input: UnshareRecordInput;
+}>;
+
+
+export type UnshareRecordMutation = { unshareRecord: Array<{ ' $fragmentRefs'?: { 'RecordShareFieldsFragment': RecordShareFieldsFragment } }> };
+
 export type DeskRecurringShipmentsQueryVariables = Exact<{
   input: DataTableConnectionInput;
   includeTotalCount: boolean;
@@ -19853,7 +20155,7 @@ export type UserTableQueryVariables = Exact<{
 
 export type UserTableQuery = { users: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'UserTableRowFieldsFragment': UserTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
-export type WatchtowerItemFieldsFragment = { id: string, sourceKind: WatchtowerSourceKind, sourceId: string, severity: WatchtowerSeverity, title: string, summary: string, subjectType: AgentSubjectType | null, subjectId: string | null, eventKind: string | null, path: string, occurredAt: number, resolvedAt: number | null, seen: boolean, kindLabel: string, version: number, status: WatchtowerItemStatus, assigneeId: string | null, dueAt: number | null, overdue: boolean, snoozedUntil: number | null, acknowledgedAt: number | null, resolutionCode: WatchtowerResolutionCode | null, resolutionNote: string | null, resolvedById: string | null, sourceClearedAt: number | null, escalationLevel: number, lastEscalatedAt: number | null, dueLabel: string | null, dueSource: WatchtowerDueSource | null, impact: Array<string>, suggestedAgentId: string | null, assignee: { id: string, name: string } | null, resolvedBy: { id: string, name: string } | null, record: { kind: string, noun: string, label: string } | null, facts: Array<{ label: string, value: string | null, at: number | null }>, trail: Array<{ at: number | null, text: string }>, suggestedAgent: { id: string, name: string, description: string | null, icon: string, accent: string, template: AgentTemplate | null } | null, agentWork: { agentId: string, runId: string, status: WatchtowerAgentStatus, step: number, steps: Array<WatchtowerAgentStep>, note: string, failed: boolean, handedAt: number, agent: { id: string, name: string, description: string | null, icon: string, accent: string, template: AgentTemplate | null } | null } | null } & { ' $fragmentName'?: 'WatchtowerItemFieldsFragment' };
+export type WatchtowerItemFieldsFragment = { id: string, sourceKind: WatchtowerSourceKind, sourceId: string, severity: WatchtowerSeverity, title: string, summary: string, subjectType: AgentSubjectType | null, subjectId: string | null, eventKind: string | null, path: string, occurredAt: number, resolvedAt: number | null, seen: boolean, kindLabel: string, version: number, status: WatchtowerItemStatus, assigneeId: string | null, dueAt: number | null, overdue: boolean, snoozedUntil: number | null, acknowledgedAt: number | null, resolutionCode: WatchtowerResolutionCode | null, resolutionNote: string | null, resolvedById: string | null, sourceClearedAt: number | null, escalationLevel: number, lastEscalatedAt: number | null, dueLabel: string | null, dueSource: WatchtowerDueSource | null, impact: Array<string>, suggestedAgentId: string | null, assignee: { id: string, name: string } | null, resolvedBy: { id: string, name: string } | null, record: { kind: string, noun: string, label: string } | null, facts: Array<{ label: string, value: string | null, at: number | null }>, trail: Array<{ at: number | null, text: string }>, panel: { kind: WatchtowerPanelKind, stop: { role: WatchtowerStopRole, verdict: WatchtowerStopVerdict, place: string, windowEnd: number, estimatedAt: number, arrivedAt: number, lastHeardAt: number, milesRemaining: number, stale: boolean } | null, clock: { place: string, customer: string, arrivedAt: number, freeEndsAt: number, departedAt: number, freeMinutes: number, billableMinutes: number, accrued: string } | null, paper: { customer: string, deliveredAt: number, holds: string, papers: Array<{ name: string, onFile: boolean }> } | null, message: { fromName: string, fromAddress: string, subject: string, readAs: string, why: string, receivedAt: number, held: boolean } | null, expiry: { who: string, papers: Array<{ name: string, expiresAt: number, daysLeft: number }> } | null, coverage: { startsAt: number, reason: string, exhausted: boolean, endedAt: number } | null, contact: { who: string, lastHeardAt: number, everyHours: number, dueAt: number } | null, run: { agent: string, reason: string, failedAt: number } | null, books: { system: string, count: number, since: number, expiresAt: number, down: boolean } | null, money: { stake: WatchtowerMoneyStake, party: string, amount: string, count: number, dueAt: number, reason: string } | null, change: { who: string, what: string, from: string, to: string, ref: string, at: number } | null, ask: { category: string, tried: string } | null, finding: { advice: string, detail: string } | null, file: { name: string, reason: string, receivedAt: number } | null, sighting: { departure: boolean, place: string, seenAt: number, why: string } | null } | null, suggestedAgent: { id: string, name: string, description: string | null, icon: string, accent: string, template: AgentTemplate | null } | null, agentWork: { agentId: string, runId: string, status: WatchtowerAgentStatus, step: number, steps: Array<WatchtowerAgentStep>, note: string, failed: boolean, handedAt: number, agent: { id: string, name: string, description: string | null, icon: string, accent: string, template: AgentTemplate | null } | null } | null } & { ' $fragmentName'?: 'WatchtowerItemFieldsFragment' };
 
 export type WatchtowerAgentFieldsFragment = { id: string, name: string, description: string | null, icon: string, accent: string, template: AgentTemplate | null } & { ' $fragmentName'?: 'WatchtowerAgentFieldsFragment' };
 
@@ -21014,6 +21316,7 @@ export { PendingProposalFieldsFragmentDoc, PendingPlanFieldsFragmentDoc, Pending
 export { AgentDefinitionCardFieldsFragmentDoc, AgentChoiceFieldsFragmentDoc, AgentDefinitionCardsDocument, AgentChoicesDocument, AgentDefinitionCountDocument, AgentRunCountDocument, AgentProposalCountDocument } from "./documents/agent/definitions";
 export { DeskRecordFieldsFragmentDoc, DeskAttentionGroupFieldsFragmentDoc, DeskActivityEntryFieldsFragmentDoc, DeskAttentionDocument, DeskActivityEntryDocument, DeskActivityDocument } from "./documents/agent/desk-attention";
 export { DeskBoardCardDocument } from "./documents/agent/desk-board";
+export { DeskCaseExhibitFieldsFragmentDoc, DeskCaseDecisionFieldsFragmentDoc, DeskCaseDocument, ChooseDeskCaseOptionDocument, AcceptDeskCaseRiskDocument, PutAwayDeskCaseDocument, BringBackDeskCaseDocument, AssignDeskCaseDocument, ReleaseDeskCaseDocument, UndoAgentDecisionDocument, CommitAgentDecisionNowDocument } from "./documents/agent/desk-case";
 export { DeskMemoryFieldsFragmentDoc, DeskMemorySettingsFieldsFragmentDoc, DeskMemoriesDocument, DeskMemoriesByIdsDocument, DeskMemorySettingsDocument, CreateDeskMemoryDocument, ReviseDeskMemoryDocument, SetDeskMemoryStatusDocument, ConfirmDeskMemoryDocument, DismissDeskMemoryDocument, SetMemorySavingModeDocument } from "./documents/agent/desk-memory";
 export { AgentEvalCaseTableRowFieldsFragmentDoc, AgentEvalCaseDetailFieldsFragmentDoc, AgentEvalCaseTableDocument, AgentEvalCaseDetailDocument, CreateAgentEvalCaseDocument, UpdateAgentEvalCaseDocument, SetAgentEvalCaseStatusDocument, ReplayAgentEvalCaseDocument } from "./documents/agent/eval-cases";
 export { AgentEvaluationTableRowFieldsFragmentDoc, AgentEvaluationTableDocument, AgentEvaluationDetailDocument, ReplayAgentRunDocument } from "./documents/agent/evaluations";
@@ -21025,7 +21328,7 @@ export { AgentProfileVersionFieldsFragmentDoc, AgentProfileGuidanceFieldsFragmen
 export { AgentEvidenceRefFieldsFragmentDoc, AgentProposalTableRowFieldsFragmentDoc, AgentProposalDetailFieldsFragmentDoc, AgentProposalTableDocument, AgentProposalDetailDocument, DecideAgentProposalDocument } from "./documents/agent/proposals";
 export { AgentSuiteRunFieldsFragmentDoc, AgentQualityPointFieldsFragmentDoc, AgentWorstRatedAnswerFieldsFragmentDoc, AgentQualityControlFieldsFragmentDoc, AgentSuiteRunCaseFieldsFragmentDoc, AgentQualityOverviewDocument, AgentQualityAgentTableDocument, AgentWorstRatedAnswerTableDocument, AgentQualityDocument, AgentSuiteRunTableDocument, AgentSuiteRunDocument, AgentSuiteRunCaseTableDocument, AgentQualityControlDocument, UpdateAgentQualityControlDocument, RunAgentSuiteDocument } from "./documents/agent/quality";
 export { AiRetrievalStatusFieldsFragmentDoc, AiRetrievalFailedEntryFieldsFragmentDoc, AiRetrievalStatusDocument, AiRetrievalReindexEstimateDocument, AiRetrievalFailedEntryTableDocument, UpdateAiRetrievalSettingsDocument, ReindexAiRetrievalSourceDocument } from "./documents/agent/retrieval";
-export { AgentRunTableRowFieldsFragmentDoc, AgentRunTranscriptFieldsFragmentDoc, AgentRunTableDocument, AgentRunDetailDocument, AgentActivitySummaryDocument } from "./documents/agent/runs";
+export { AgentRunTableRowFieldsFragmentDoc, AgentRunTranscriptFieldsFragmentDoc, WorkingAgentRunFieldsFragmentDoc, AgentRunTableDocument, AgentRunDetailDocument, AgentActivitySummaryDocument, WorkingAgentRunsDocument } from "./documents/agent/runs";
 export { AgentToolRuleImpactFieldsFragmentDoc, AgentSafetyHeaderFieldsFragmentDoc, AgentToolPolicyFieldsFragmentDoc, AgentToolAutonomyFieldsFragmentDoc, AgentToolSafetyRowFieldsFragmentDoc, AgentToolRuleTableDocument, AgentToolSafetyTableDocument, AgentSafetySummaryDocument, AgentSafetyDocument, AgentToolHoldersDocument, AgentToolRuleImpactDocument, SaveAgentToolRuleDocument } from "./documents/agent/safety";
 export { MyAiFeedbackFieldsFragmentDoc, AiFeedbackTableRowFieldsFragmentDoc, MyAiFeedbackDocument, SetMyAiFeedbackDocument, ClearMyAiFeedbackDocument, AiFeedbackTableDocument, AgentFeedbackSummaryDocument } from "./documents/ai-feedback/ai-feedback";
 export { AiProviderCardFieldsFragmentDoc, AiProviderLimitFieldsFragmentDoc, AiProviderCardsDocument, AiProviderDetailDocument, AiProviderLimitsDocument, AiRoutePreviewDocument, AiProviderModelsDocument, AiProviderUsageDailyDocument, TestAiProviderDraftDocument, ReorderAiProvidersDocument, PatchAiProviderDocument } from "./documents/ai-provider/providers";
@@ -21178,6 +21481,7 @@ export { DeskRateAgreementPricingDocument, DeskRateAgreementsDocument, DeskRateA
 export { RateMatrixRecordDocument, RateMatrixVersionAxesDocument } from "./documents/rate/matrix-record";
 export { RateAgreementRowFieldsFragmentDoc, RateZoneRowFieldsFragmentDoc, RateMatrixRowFieldsFragmentDoc, RateQuoteRowFieldsFragmentDoc, RateAgreementTableDocument, RateZoneTableDocument, RateMatrixTableDocument, RateQuoteTableDocument } from "./documents/rate/table";
 export { DeskRecordActivityDocument } from "./documents/record-activity/desk";
+export { RecordShareUserFieldsFragmentDoc, RecordShareFieldsFragmentDoc, RecordSharesDocument, RecordShareCandidatesDocument, ShareRecordDocument, UnshareRecordDocument } from "./documents/record-share/record-share";
 export { DeskRecurringShipmentsDocument } from "./documents/recurring-shipment/desk";
 export { RecurringShipmentTableRowFieldsFragmentDoc, RecurringShipmentTableDocument } from "./documents/recurring-shipment/table";
 export { InboundMailboxReferenceFragmentDoc, JournalEntryReferenceFragmentDoc, AccessorialChargeReferenceFragmentDoc, AgentProposalReferenceFragmentDoc, AgentDefinitionReferenceFragmentDoc, AgentRunReferenceFragmentDoc, BenefitPlanReferenceFragmentDoc, BusinessUnitReferenceFragmentDoc, CaptureDeviceReferenceFragmentDoc, CarrierReferenceFragmentDoc, CarrierInvoiceMatchReferenceFragmentDoc, CarrierSettlementReferenceFragmentDoc, CommodityReferenceFragmentDoc, CustomerReferenceFragmentDoc, CustomerPaymentReferenceFragmentDoc, DotRandomDrawReferenceFragmentDoc, DotRandomDrawEntryReferenceFragmentDoc, DotRandomPoolReferenceFragmentDoc, DocumentTypeReferenceFragmentDoc, DriverPayEventReferenceFragmentDoc, DriverSettlementReferenceFragmentDoc, EdiCarrierInvoiceReferenceFragmentDoc, EdiCommunicationProfileReferenceFragmentDoc, EdiFlowInstanceReferenceFragmentDoc, EdiInboundFileReferenceFragmentDoc, EdiLadingProjectReferenceFragmentDoc, EdiLadingVersionReferenceFragmentDoc, EdiMessageReferenceFragmentDoc, EdiPartnerCustomerReferenceFragmentDoc, EdiTransferReferenceFragmentDoc, EmailProfileReferenceFragmentDoc, EquipmentManufacturerReferenceFragmentDoc, EquipmentTypeReferenceFragmentDoc, EscrowAccountReferenceFragmentDoc, FactoringCompanyReferenceFragmentDoc, FactoringInvoiceStateReferenceFragmentDoc, FactoringSubmissionReferenceFragmentDoc, FiscalPeriodReferenceFragmentDoc, FuelCardReferenceFragmentDoc, FuelIndexPriceReferenceFragmentDoc, FuelProgramCurrentRateReferenceFragmentDoc, FuelPurchaseReferenceFragmentDoc, FuelPurchaseImportBatchReferenceFragmentDoc, FuelSurchargeProgramReferenceFragmentDoc, InboundShipmentRefReferenceFragmentDoc, InvoiceReferenceFragmentDoc, InvoiceAdjustmentReferenceFragmentDoc, InvoiceDisputeReferenceFragmentDoc, JournalReversalReferenceFragmentDoc, LocationReferenceFragmentDoc, LocationCategoryReferenceFragmentDoc, ManualJournalReferenceFragmentDoc, OrganizationReferenceFragmentDoc, PtoPolicyReferenceFragmentDoc, PayAdvanceReferenceFragmentDoc, PayCodeReferenceFragmentDoc, PerformanceReviewReferenceFragmentDoc, PerformanceReviewTemplateReferenceFragmentDoc, RoleReferenceFragmentDoc, RoutingGuideReferenceFragmentDoc, ServiceFailureReasonCodeReferenceFragmentDoc, ServiceFailureShipmentReferenceFragmentDoc, SettlementDisputeReferenceFragmentDoc, ShiftTemplateReferenceFragmentDoc, ShipmentReferenceFragmentDoc, ShipmentAccessorialChargeReferenceFragmentDoc, ShipmentCommodityDetailReferenceFragmentDoc, EdiPartnerReferenceFragmentDoc, ShipmentCustomerReferenceFragmentDoc, ShipmentEventShipmentReferenceReferenceFragmentDoc, TractorReferenceFragmentDoc, TrailerReferenceFragmentDoc, TrainingCourseReferenceFragmentDoc, UserReferenceFragmentDoc, FleetCodeReferenceFragmentDoc, WorkerReferenceFragmentDoc, WorkerChecklistReferenceFragmentDoc, WorkerCredentialReferenceFragmentDoc, WorkerCredentialTypeReferenceFragmentDoc, WorkerDisciplinaryActionReferenceFragmentDoc, WorkerEarningsSummaryReferenceFragmentDoc, WorkerInjuryReferenceFragmentDoc, WorkerPolicyReferenceFragmentDoc, WorkerSafetyViolationReferenceFragmentDoc, WorkerSafetyEventReferenceFragmentDoc } from "./documents/reference/reference";

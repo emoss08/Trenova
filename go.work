@@ -2,6 +2,7 @@ go 1.27.1
 
 use (
 	./dev/edi-partner-sim
+	./dev/mail-sim
 	./dev/samsara-sim
 	./services/tms
 	./shared

@@ -26,7 +26,13 @@ func sectionTitles(req *llmports.NovaTask) []string {
 	return titles
 }
 
-func TestPlan_TheFirstQuestionOpensAQuietChapterWithoutAskingTheModel(t *testing.T) {
+/*
+A conversation's first question opens its first chapter under the question's
+own words. With naming on the model is asked for a name at once, because that
+name is the conversation's name on the rail; with naming off nothing is asked
+and the question's words stay.
+*/
+func TestPlan_TheFirstQuestionOpensAChapterAndAsksForTheConversationsName(t *testing.T) {
 	t.Parallel()
 
 	for name, off := range map[string]bool{"naming on": false, "naming off": true} {
@@ -53,8 +59,13 @@ func TestPlan_TheFirstQuestionOpensAQuietChapterWithoutAskingTheModel(t *testing
 			assert.False(t, plan.Decides)
 			assert.Equal(t, "Why is load 1200 late?", plan.Fallback)
 			assert.Equal(t, conversationchapter.ChapterTitleQuestion, plan.FallbackSource)
-			assert.Nil(t, plan.Task)
-			assert.False(t, plan.NeedsModel())
+			assert.Equal(t, !off, plan.NeedsModel())
+			assert.Equal(t, !off, plan.NamesThread)
+			if off {
+				assert.Nil(t, plan.Task)
+			} else {
+				assert.Equal(t, conversationchapter.ChapterTitleModel, plan.ModelSource)
+			}
 			assert.True(t, plan.NameEarlier.IsNil())
 		})
 	}

@@ -266,7 +266,7 @@ func (h *Handler) list(c *gin.Context) {
 				c.Request.Context(),
 				&billingqueueports.ListBillingQueueItemsRequest{
 					Filter:        req,
-					IncludePosted: helpers.QueryBool(c, "includePosted"),
+					IncludeClosed: helpers.QueryBool(c, "includeClosed"),
 					Lanes:         lanes,
 					MinAmount:     minAmount,
 					MaxAmount:     maxAmount,

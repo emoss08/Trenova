@@ -21,6 +21,9 @@ type DecideAgentPlanRequest struct {
 	TenantInfo pagination.TenantInfo
 	// PreviewDigest is the digest of the plan preview the decider was shown.
 	PreviewDigest string
+	// UndoWindow asks for an approval to wait out the undo window before any
+	// step runs, as an approval from the person's own conversation does.
+	UndoWindow bool
 }
 
 type AgentPlanService interface {

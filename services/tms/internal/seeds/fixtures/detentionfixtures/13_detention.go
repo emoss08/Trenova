@@ -1300,7 +1300,7 @@ func (s *DetentionSeed) createDetentionShipment(
 		return 0, err
 	}
 
-	if err := shipmentprojection.RefreshAcrossTenants(ctx, db, shp.ID); err != nil {
+	if err := shipmentprojection.Refresh(ctx, db, shp.ID); err != nil {
 		return 0, err
 	}
 

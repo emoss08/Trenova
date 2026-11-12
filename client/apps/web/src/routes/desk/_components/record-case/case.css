@@ -1,0 +1,1059 @@
+/* A record's case, ported rule for rule from the approved prototype
+   (design-plans/desk-workspace: .case, .chead, .find, .verdict, .cite, .hl,
+   .trust, .opts, .opt, .plan, .segs, .step, .chg, .plan-f, .exh, .route,
+   .meter, .tl, .quote, .dock). Every colour is a --dsk-* or tone token. The
+   faces are Trenova's sans, but for the finding's verdict, which is set in
+   the serif the prototype gives it (Newsreader, as Today's greeting is) with
+   its citations in mono; figures keep tabular numerals. The badges, key
+   hints, banners, chips and outcomes are the room's shared ones. */
+
+.dk-cz-scroll,
+.dk-cz-scroll :where(:not(code, kbd, pre)),
+.dk-cz-page,
+.dk-cz-page :where(:not(code, kbd, pre)) {
+  font-family: var(--font-sans);
+}
+/* Text size (Desk settings, Appearance) reaches the case as it reaches a
+   conversation. Every size in this file is multiplied by --dk-cz-ts, and the
+   shared type tokens are rescaled for the reading columns, so a badge, a
+   button and an agent's note inside the case grow and shrink with the rest.
+   The box to ask in is the conversation's own and keeps its size. */
+.dsk.dk-t-small .dk-cz-page {
+  --dk-cz-ts: 0.92;
+}
+.dsk.dk-t-large .dk-cz-page {
+  --dk-cz-ts: 1.1;
+}
+.dk-cz-page > .dk-cz {
+  --text-2xs: calc(0.625rem * var(--dk-cz-ts, 1));
+  --text-2xs--line-height: calc(0.875rem * var(--dk-cz-ts, 1));
+  --text-xs: calc(0.6875rem * var(--dk-cz-ts, 1));
+  --text-xs--line-height: calc(1rem * var(--dk-cz-ts, 1));
+  --text-sm: calc(0.75rem * var(--dk-cz-ts, 1));
+  --text-sm--line-height: calc(1.0625rem * var(--dk-cz-ts, 1));
+  --text-base: calc(0.8125rem * var(--dk-cz-ts, 1));
+  --text-base--line-height: calc(1.125rem * var(--dk-cz-ts, 1));
+  --text-dsk-sm: calc(0.71875rem * var(--dk-cz-ts, 1));
+  --text-dsk-base: calc(0.78125rem * var(--dk-cz-ts, 1));
+  --text-lg: calc(0.9375rem * var(--dk-cz-ts, 1));
+  --text-lg--line-height: calc(1.25rem * var(--dk-cz-ts, 1));
+}
+/* The case as it is read: the reading and the evidence each scroll in their
+   own column, so a claim's evidence is brought beside it without losing the
+   place, and the box to ask in sits under both rather than over them. */
+.dk-cz-page {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  min-height: 0;
+  overflow: hidden;
+}
+.dk-cz-page > .dk-cz {
+  height: 100%;
+  min-height: 0;
+  padding-top: 0;
+}
+.dk-cz-col {
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+}
+.dk-cz-page .dk-cz-main,
+.dk-cz-page .dk-cz-side {
+  padding-top: 26px;
+  /* room for the column's own scrollbar, which is drawn over its edge */
+  padding-right: 14px;
+}
+.dk-cz-exh {
+  scroll-margin-top: 26px;
+}
+.dk-cz-scroll {
+  position: relative;
+  min-height: 0;
+  overflow: auto;
+  scrollbar-gutter: stable both-edges;
+  scrollbar-width: thin;
+  scrollbar-color: var(--dsk-b) transparent;
+}
+/* The Desk's width setting carries to a case: the same three steps the
+   conversation column takes, sized so the finding's lines stay readable
+   beside the evidence at each. */
+.dsk.dk-w-narrow {
+  --dk-case-w: 980px;
+}
+.dsk.dk-w-wide {
+  --dk-case-w: 1380px;
+}
+.dk-cz {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 28px;
+  width: 100%;
+  max-width: var(--dk-case-w, 1180px);
+  margin-inline: auto;
+  padding: 26px 32px 0;
+}
+@container mainc (max-width: 1080px) {
+  .dk-cz {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  /* One column: the page scrolls as a whole, the evidence under the reading. */
+  .dk-cz-page > .dk-cz {
+    overflow: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--dsk-b) transparent;
+  }
+  .dk-cz-col {
+    height: auto;
+    overflow: visible;
+  }
+}
+.dk-cz-main {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 22px;
+  padding-bottom: 24px;
+}
+.dk-cz-side {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 14px;
+  padding-bottom: 24px;
+}
+.dk-cz-num {
+  font-variant-numeric: tabular-nums;
+}
+
+/* the head: what the record is, where it stands, and how long is left */
+.dk-cz-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 16px;
+}
+.dk-cz-key {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: calc(11px * var(--dk-cz-ts, 1));
+  color: var(--dsk-subtle);
+}
+.dk-cz-head h1 {
+  margin: 6px 0 0;
+  font-size: calc(22px * var(--dk-cz-ts, 1));
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.016em;
+}
+.dk-cz-sub {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  font-size: calc(12px * var(--dk-cz-ts, 1));
+  color: var(--dsk-subtle);
+}
+.dk-cz-own {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 22px;
+  padding: 0 8px;
+  border: 1px solid var(--dsk-b);
+  border-radius: 999px;
+  background: transparent;
+  font-size: calc(12px * var(--dk-cz-ts, 1));
+  color: var(--dsk-fg);
+}
+button.dk-cz-own {
+  cursor: pointer;
+}
+button.dk-cz-own:hover:not(:disabled) {
+  background: var(--dsk-sunken);
+}
+button.dk-cz-own:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+.dk-cz-own-none {
+  width: 12px;
+  height: 12px;
+  border: 1px dashed var(--dsk-subtle);
+  border-radius: 999px;
+}
+.dk-cz-ro {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 14px 0 0;
+  padding: 8px 12px;
+  border: 1px solid var(--dsk-b);
+  border-radius: 8px;
+  font-size: calc(12.5px * var(--dk-cz-ts, 1));
+  color: var(--dsk-subtle);
+}
+.dk-cz-clk {
+  text-align: right;
+}
+.dk-cz-clk-v {
+  font-size: calc(22px * var(--dk-cz-ts, 1));
+  font-weight: 500;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.dk-cz-clk-v.dk-crit {
+  color: var(--danger-subtle-foreground);
+}
+.dk-cz-clk-v.dk-warn {
+  color: var(--dsk-warn-fg);
+}
+.dk-cz-clk-v.dk-ok {
+  color: var(--dsk-success-fg);
+}
+.dk-cz-clk-l {
+  max-width: 220px;
+  margin-top: 6px;
+  margin-left: auto;
+  font-size: calc(11.5px * var(--dk-cz-ts, 1));
+  color: var(--dsk-subtle);
+}
+
+/* the finding: who found it, the reading, and why it can be trusted */
+.dk-cz-find {
+  padding-top: 18px;
+  border-top: 1px solid var(--dsk-b-sub);
+}
+.dk-cz-who {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: calc(12px * var(--dk-cz-ts, 1));
+  color: var(--dsk-subtle);
+}
+.dk-cz-who b {
+  font-weight: 500;
+  color: var(--dsk-fg);
+}
+.dk-cz-verdict,
+.dk-cz-verdict :where(span) {
+  font-family: var(--font-newsreader);
+}
+.dk-cz-verdict {
+  margin: 10px 0 0;
+  font-size: calc(20px * var(--dk-cz-ts, 1));
+  font-weight: 400;
+  line-height: 1.45;
+  letter-spacing: -0.01em;
+  color: var(--dsk-fg);
+  text-wrap: pretty;
+}
+.dk-cz-verdict .dk-cz-cite {
+  font-family: var(--font-mono);
+}
+.dk-cz-verdict-sk {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+.dk-cz-verdict-sk .dk-sk {
+  height: 20px;
+}
+.dk-cz-verdict-sk .dk-sk:last-child {
+  width: 62%;
+}
+.dk-cz-cite {
+  display: inline-grid;
+  width: 17px;
+  height: 17px;
+  margin: 0 2px;
+  place-items: center;
+  border: 1px solid var(--dsk-b-strong);
+  border-radius: 50%;
+  background: var(--dsk-card);
+  font-size: calc(10px * var(--dk-cz-ts, 1));
+  font-weight: 500;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--dsk-subtle);
+  vertical-align: 3px;
+}
+.dk-cz-cite:hover,
+.dk-cz-cite.dk-on {
+  border-color: var(--dsk-fg2);
+  color: var(--dsk-fg);
+}
+.dk-cz-hl {
+  background-image: linear-gradient(var(--dsk-warn-sub), var(--dsk-warn-sub));
+  background-repeat: no-repeat;
+  background-position: 0 88%;
+  background-size: 100% 42%;
+}
+.dk-cz-trust {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 16px;
+  border: 1px solid var(--dsk-b);
+  border-radius: 6px;
+  background: var(--dsk-card);
+}
+.dk-cz-trust > div {
+  padding: 10px 12px;
+  border-top: 1px solid var(--dsk-b-sub);
+  border-left: 1px solid var(--dsk-b-sub);
+  font-size: calc(12.5px * var(--dk-cz-ts, 1));
+  line-height: 1.5;
+  color: var(--dsk-fg2);
+}
+.dk-cz-trust > div:nth-child(-n + 2) {
+  border-top: 0;
+}
+.dk-cz-trust > div:nth-child(odd) {
+  border-left: 0;
+}
+.dk-cz-trust > div:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+}
+.dk-cz-trust-k {
+  display: block;
+  margin-bottom: 2px;
+  font-size: calc(11px * var(--dk-cz-ts, 1));
+  font-weight: 500;
+  color: var(--dsk-subtle);
+}
+@container mainc (max-width: 640px) {
+  .dk-cz-trust {
+    grid-template-columns: 1fr;
+  }
+  .dk-cz-trust > div {
+    border-top: 1px solid var(--dsk-b-sub);
+    border-left: 0;
+  }
+  .dk-cz-trust > div:nth-child(2) {
+    border-top: 1px solid var(--dsk-b-sub);
+  }
+  .dk-cz-trust > div:first-child {
+    border-top: 0;
+  }
+}
+
+/* a section's label line */
+.dk-cz-sh {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 0 2px 8px 0;
+}
+.dk-cz-sh h2 {
+  margin: 0;
+  font-size: calc(10.5px * var(--dk-cz-ts, 1));
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  color: var(--dsk-faint);
+}
+.dk-cz-sh-more {
+  margin-left: auto;
+  font-size: calc(11.5px * var(--dk-cz-ts, 1));
+  color: var(--dsk-subtle);
+}
+
+/* what could happen: the options, one chosen */
+.dk-cz-opts {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.dk-cz-opt {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 4px 12px;
+  padding: 11px 12px;
+  border: 1px solid var(--dsk-b);
+  border-radius: 6px;
+  background: var(--dsk-card);
+  color: var(--dsk-fg);
+  text-align: left;
+}
+.dk-cz-opt:hover:not(:disabled) {
+  border-color: var(--dsk-b-strong);
+}
+.dk-cz-opt:disabled {
+  cursor: default;
+}
+.dk-cz-opt[aria-checked="true"] {
+  border-color: var(--dsk-fg2);
+  /* design-tokens-ignore: the chosen option's second ring, as the prototype draws it; not an elevation. */
+  box-shadow: 0 0 0 1px var(--dsk-fg2);
+}
+.dk-cz-opt-rd {
+  display: grid;
+  width: 14px;
+  height: 14px;
+  margin-top: 2px;
+  place-items: center;
+  border: 1.5px solid var(--dsk-b-strong);
+  border-radius: 50%;
+}
+.dk-cz-opt[aria-checked="true"] .dk-cz-opt-rd {
+  border-color: var(--dsk-fg);
+}
+.dk-cz-opt[aria-checked="true"] .dk-cz-opt-rd::after {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--dsk-fg);
+  content: "";
+}
+.dk-cz-opt-t {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: calc(13px * var(--dk-cz-ts, 1));
+  font-weight: 500;
+}
+.dk-cz-opt-d {
+  grid-column: 2;
+  font-size: calc(12px * var(--dk-cz-ts, 1));
+  line-height: 1.5;
+  color: var(--dsk-subtle);
+}
+.dk-cz-opt-d span {
+  color: var(--dsk-fg2);
+}
+.dk-cz-opt-f {
+  font-size: calc(12px * var(--dk-cz-ts, 1));
+  text-align: right;
+}
+.dk-cz-opt-f b {
+  display: block;
+  font-size: calc(12.5px * var(--dk-cz-ts, 1));
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+  color: var(--dsk-fg);
+}
+.dk-cz-opt-f .dk-ok {
+  color: var(--dsk-success-fg);
+}
+.dk-cz-opt-f .dk-bad {
+  color: var(--danger-subtle-foreground);
+}
+.dk-cz-opt-f .dk-meh {
+  color: var(--dsk-warn-fg);
+}
+
+/* the plan: what would change, step by step, and the way to decide it */
+.dk-cz-plan {
+  overflow: hidden;
+  border: 1px solid var(--dsk-b);
+  border-radius: 6px;
+  background: var(--dsk-card);
+}
+.dk-cz-plan-h {
+  padding: 14px 16px 12px;
+  border-bottom: 1px solid var(--dsk-b-sub);
+}
+.dk-cz-plan-k {
+  font-size: calc(11px * var(--dk-cz-ts, 1));
+  color: var(--dsk-subtle);
+}
+.dk-cz-plan-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin-top: 6px;
+}
+.dk-cz-plan-row h3 {
+  flex: 1;
+  margin: 0;
+  font-size: calc(16px * var(--dk-cz-ts, 1));
+  font-weight: 600;
+  line-height: 1.3;
+  text-wrap: balance;
+}
+.dk-cz-plan-fig {
+  text-align: right;
+}
+.dk-cz-plan-fig b {
+  font-size: calc(20px * var(--dk-cz-ts, 1));
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+.dk-cz-plan-fig small {
+  display: block;
+  font-size: calc(11px * var(--dk-cz-ts, 1));
+  color: var(--dsk-subtle);
+}
+.dk-cz-segs {
+  display: grid;
+  gap: 3px;
+  margin-top: 12px;
+}
+.dk-cz-segs i {
+  height: 3px;
+  border-radius: 2px;
+  background: var(--dsk-b);
+  transition: background-color 300ms;
+}
+.dk-cz-segs i.dk-ran {
+  background: var(--dsk-success);
+}
+.dk-cz-segs i.dk-run {
+  background: var(--dsk-blue);
+}
+.dk-cz-segs i.dk-bad {
+  background: var(--danger);
+}
+.dk-cz-plan-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  font-size: calc(11.5px * var(--dk-cz-ts, 1));
+  color: var(--dsk-subtle);
+}
+.dk-cz-spin {
+  width: 10px;
+  height: 10px;
+  border: 1.5px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  /* design-tokens-ignore: a spinner beside the step that is running, gone when the server answers. */
+  animation: dk-cz-turn 0.8s linear infinite;
+}
+@keyframes dk-cz-turn {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.dk-cz-draft {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+}
+.dk-cz-draft-l {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: calc(12.5px * var(--dk-cz-ts, 1));
+  color: var(--dsk-subtle);
+}
+.dk-cz-draft .dk-sk {
+  height: 54px;
+}
+.dk-cz-step {
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr) auto;
+  gap: 4px 10px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--dsk-b-sub);
+}
+.dk-cz-step:first-of-type {
+  border-top: 0;
+}
+.dk-cz-step-nd {
+  display: grid;
+  width: 22px;
+  height: 22px;
+  place-items: center;
+  border: 1px solid var(--dsk-b-strong);
+  border-radius: 50%;
+  background: var(--dsk-card);
+  font-size: calc(11px * var(--dk-cz-ts, 1));
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--dsk-subtle);
+}
+.dk-cz-step-nd.dk-ran {
+  border-color: transparent;
+  background: var(--dsk-success-sub);
+  color: var(--dsk-success-fg);
+}
+.dk-cz-step-nd.dk-run {
+  border-color: var(--dsk-blue);
+  color: var(--dsk-blue-fg);
+}
+.dk-cz-step-nd.dk-bad {
+  border-color: transparent;
+  background: var(--danger-subtle);
+  color: var(--danger-subtle-foreground);
+}
+.dk-cz-step-t {
+  font-size: calc(13px * var(--dk-cz-ts, 1));
+  font-weight: 500;
+  line-height: calc(22px * var(--dk-cz-ts, 1));
+}
+.dk-cz-step-st {
+  font-size: calc(11.5px * var(--dk-cz-ts, 1));
+  line-height: calc(22px * var(--dk-cz-ts, 1));
+  color: var(--dsk-subtle);
+  white-space: nowrap;
+}
+.dk-cz-step-st.dk-ok {
+  color: var(--dsk-success-fg);
+}
+.dk-cz-step-st.dk-bad {
+  color: var(--danger-subtle-foreground);
+}
+.dk-cz-step-st.dk-run {
+  color: var(--dsk-blue-fg);
+}
+.dk-cz-chg {
+  grid-column: 2 / 4;
+  margin-top: 4px;
+  border: 1px solid var(--dsk-b);
+  border-radius: 6px;
+}
+.dk-cz-chg-h {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--dsk-b-sub);
+  border-radius: 6px 6px 0 0;
+  background: var(--dsk-sunken);
+  font-size: calc(11.5px * var(--dk-cz-ts, 1));
+  font-variant-numeric: tabular-nums;
+  color: var(--dsk-fg2);
+}
+.dk-cz-chg-h:last-child {
+  border-bottom: 0;
+  border-radius: 6px;
+}
+.dk-cz-chg-r {
+  display: grid;
+  grid-template-columns: 140px minmax(0, 1fr);
+  gap: 10px;
+  padding: 6px 10px;
+  font-size: calc(12px * var(--dk-cz-ts, 1));
+}
+.dk-cz-chg-k {
+  color: var(--dsk-subtle);
+}
+.dk-cz-chg-v {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.dk-cz-was {
+  margin-right: 6px;
+  color: var(--dsk-faint);
+  text-decoration: line-through;
+}
+.dk-cz-arrow {
+  margin-right: 6px;
+  color: var(--dsk-faint);
+}
+.dk-cz-nw {
+  color: var(--dsk-fg);
+}
+.dk-cz-chg-note {
+  display: block;
+  margin-top: 2px;
+  font-size: calc(11.5px * var(--dk-cz-ts, 1));
+  color: var(--dsk-warn-fg);
+}
+.dk-cz-step-warn {
+  display: flex;
+  grid-column: 2 / 4;
+  align-items: flex-start;
+  gap: 6px;
+  margin-top: 4px;
+  font-size: calc(12px * var(--dk-cz-ts, 1));
+  line-height: 1.5;
+  /* Words take the warning's text colour, which reads on a light card; the
+     fill colour is for the mark beside them. */
+  color: var(--dsk-warn-fg);
+}
+/* Only the warning's own mark: a remedy under it colours its own icons. */
+.dk-cz-step-warn > svg {
+  flex: none;
+  margin-top: 3px;
+  color: var(--dsk-warn);
+}
+.dk-cz-step-warn.dk-bad,
+.dk-cz-step-warn.dk-bad > svg {
+  color: var(--danger-subtle-foreground);
+}
+.dk-cz-step-why {
+  grid-column: 2 / 4;
+  margin-top: 2px;
+  font-size: calc(12px * var(--dk-cz-ts, 1));
+  line-height: 1.5;
+  color: var(--danger-subtle-foreground);
+}
+.dk-cz-plan-f {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--dsk-b-sub);
+  background: var(--dsk-canvas);
+}
+.dk-cz-said {
+  padding: 12px 16px;
+  border-top: 1px solid var(--dsk-b-sub);
+  color: var(--dsk-fg);
+}
+.dk-cz-pick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0 16px 14px;
+  background: var(--dsk-canvas);
+}
+.dk-cz-plan-f.dk-block {
+  display: block;
+}
+.dk-cz-plan-f .dk-w-outcome {
+  flex: 1;
+  margin-top: 0;
+}
+.dk-cz-plan-more {
+  padding: 0 2px;
+  font-size: calc(11.5px * var(--dk-cz-ts, 1));
+  color: var(--dsk-subtle);
+}
+
+/* exhibits on folder tabs, as the board draws them */
+.dk-cz-exh {
+  position: relative;
+  padding-top: 22px;
+}
+.dk-cz-exh-tab {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  height: 23px;
+  align-items: center;
+  gap: 7px;
+  padding: 0 10px 0 6px;
+  border: 1px solid var(--dsk-b);
+  border-bottom: 0;
+  border-radius: 6px 6px 0 0;
+  background: var(--dsk-card);
+  font-size: calc(11.5px * var(--dk-cz-ts, 1));
+  font-weight: 500;
+}
+.dk-cz-exh-tab .dk-cz-cite {
+  margin: 0;
+  vertical-align: 0;
+}
+.dk-cz-exh-b {
+  padding: 12px;
+  border: 1px solid var(--dsk-b);
+  border-radius: 0 6px 6px 6px;
+  background: var(--dsk-card);
+}
+.dk-cz-exh.dk-lit .dk-cz-exh-b,
+.dk-cz-exh.dk-lit .dk-cz-exh-tab {
+  border-color: var(--dsk-fg2);
+}
+/* evidence the finding did not draw on: its number is quieter, so the eye
+   goes to the exhibits the reading cites */
+.dk-cz-exh.dk-uncited .dk-cz-exh-tab .dk-cz-cite {
+  opacity: 0.55;
+}
+.dk-cz-exh-src {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+  font-size: calc(10.5px * var(--dk-cz-ts, 1));
+  color: var(--dsk-faint);
+}
+.dk-cz-exh-line {
+  margin-top: 6px;
+  font-size: calc(12px * var(--dk-cz-ts, 1));
+  color: var(--dsk-fg2);
+}
+.dk-cz-exh-quiet {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: calc(11.5px * var(--dk-cz-ts, 1));
+  color: var(--dsk-subtle);
+}
+.dk-cz-route {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.dk-cz-route text {
+  font-family: var(--font-sans);
+}
+.dk-cz-meter {
+  margin-top: 8px;
+}
+.dk-cz-meter:first-of-type {
+  margin-top: 0;
+}
+.dk-cz-meter-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+  font-size: calc(12px * var(--dk-cz-ts, 1));
+}
+.dk-cz-meter-tr {
+  height: 6px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: var(--dsk-sunken);
+}
+.dk-cz-meter-tr i {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+  background: var(--dsk-fg2);
+}
+.dk-cz-meter-tr i.dk-warn {
+  background: var(--dsk-warn);
+}
+.dk-cz-meter-tr i.dk-bad {
+  background: var(--danger);
+}
+.dk-cz-meter-tr i.dk-ok {
+  background: var(--dsk-success);
+}
+.dk-cz-tl {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dk-cz-tl li {
+  display: grid;
+  grid-template-columns: 14px minmax(0, 1fr) auto;
+  gap: 8px;
+  padding: 5px 0;
+  font-size: calc(12px * var(--dk-cz-ts, 1));
+}
+.dk-cz-tl-n {
+  width: 9px;
+  height: 9px;
+  margin-top: 4px;
+  border: 1.5px solid var(--dsk-b-strong);
+  border-radius: 50%;
+}
+.dk-cz-tl-n.dk-done {
+  border-color: var(--dsk-fg2);
+  background: var(--dsk-fg2);
+}
+.dk-cz-tl-n.dk-new {
+  border-style: dashed;
+  border-color: var(--dsk-blue);
+}
+.dk-cz-tl-sub {
+  display: block;
+  color: var(--dsk-subtle);
+}
+.dk-cz-tl-prop {
+  color: var(--dsk-blue-fg);
+}
+.dk-cz-tl-w {
+  font-size: calc(11px * var(--dk-cz-ts, 1));
+  font-variant-numeric: tabular-nums;
+  color: var(--dsk-subtle);
+  text-align: right;
+  white-space: nowrap;
+}
+.dk-cz-tl-w.dk-bad {
+  color: var(--danger-subtle-foreground);
+}
+.dk-cz-tl-w.dk-ok {
+  color: var(--dsk-success-fg);
+}
+.dk-cz-tl-w.dk-meh {
+  color: var(--dsk-warn-fg);
+}
+.dk-cz-quote {
+  margin: 6px 0 8px;
+  padding-left: 10px;
+  border-left: 2px solid var(--dsk-b);
+  font-size: calc(12.5px * var(--dk-cz-ts, 1));
+  line-height: 1.55;
+  color: var(--dsk-fg2);
+}
+.dk-cz-facts {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+}
+.dk-cz-facts div {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 10px;
+  font-size: calc(12px * var(--dk-cz-ts, 1));
+}
+.dk-cz-facts dt {
+  color: var(--dsk-subtle);
+}
+.dk-cz-facts dd {
+  margin: 0;
+  color: var(--dsk-fg);
+  overflow-wrap: anywhere;
+}
+.dk-cz-facts dd.dk-meh {
+  color: var(--dsk-warn-fg);
+}
+.dk-cz-facts dd.dk-bad {
+  color: var(--danger-subtle-foreground);
+}
+.dk-cz-foot {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 0 2px;
+  font-size: calc(11.5px * var(--dk-cz-ts, 1));
+  color: var(--dsk-subtle);
+}
+.dk-cz-foot svg {
+  flex: none;
+  margin-top: 2px;
+}
+
+/* the box at the foot of the case */
+.dk-cz-dock {
+  padding: 10px 32px 16px;
+}
+/* The questions sit on one line over the box: the row is as wide as the case
+   allows, and a question too long for its share is cut short rather than
+   pushed onto a second line. */
+.dk-cz-chips {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.dk-cz-chips .dk-w-chip {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+/* The box keeps the width a conversation's box has; the questions over it
+   take the width of the case, so they stay on one line beside each other. */
+.dk-cz-cmp {
+  width: 100%;
+  max-width: var(--dk-chat-w, 760px);
+  margin-inline: auto;
+}
+.dk-cz-chips {
+  width: 100%;
+  max-width: var(--dk-case-w, 1180px);
+  margin-inline: auto;
+}
+
+/* the case before it is read */
+.dk-cz-sk-head {
+  display: grid;
+  gap: 8px;
+}
+.dk-cz-sk-head .dk-sk:nth-child(1) {
+  width: 240px;
+  height: 11px;
+}
+.dk-cz-sk-head .dk-sk:nth-child(2) {
+  width: 320px;
+  height: 26px;
+}
+.dk-cz-sk-head .dk-sk:nth-child(3) {
+  width: 420px;
+  max-width: 100%;
+  height: 20px;
+}
+.dk-cz-sk-block {
+  height: 132px;
+}
+.dk-cz-sk-plan {
+  height: 240px;
+}
+.dk-cz-sk-exh {
+  height: 148px;
+  margin-top: 22px;
+}
+
+@media (max-width: 900px) {
+  .dk-cz {
+    padding-right: 16px;
+    padding-left: 16px;
+  }
+  .dk-cz-dock {
+    padding-right: 16px;
+    padding-left: 16px;
+  }
+  .dk-cz-head {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .dk-cz-clk {
+    text-align: left;
+  }
+  .dk-cz-clk-l {
+    margin-left: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dk-cz-spin {
+    animation: none;
+  }
+  .dk-cz-segs i {
+    transition: none;
+  }
+}
+
+/* where it is, on a map */
+.dk-cz-map {
+  position: relative;
+  height: 208px;
+  overflow: hidden;
+  border-radius: var(--radius-control);
+  background: var(--dsk-sunken);
+}
+.dk-cz-map-stop {
+  display: block;
+  width: 10px;
+  height: 10px;
+  border: 2px solid var(--dsk-fg2);
+  border-radius: 50%;
+  background: var(--dsk-canvas);
+}
+.dk-cz-map-stop.dk-done {
+  background: var(--dsk-fg);
+  border-color: var(--dsk-fg);
+}
+.dk-cz-map-stop.dk-new {
+  border-style: dashed;
+  border-color: var(--info);
+}
+.dk-cz-map-truck {
+  display: block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--dsk-canvas);
+  border-radius: 4px;
+  background: var(--dsk-fg);
+}
+.dk-cz-map-note {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 2px 6px;
+  border-radius: var(--radius-badge);
+  background: var(--dsk-canvas);
+  font-size: calc(11px * var(--dk-cz-ts, 1));
+  font-weight: 500;
+  color: var(--dsk-fg2);
+}
+.dk-cz-map-note.dk-warn {
+  color: var(--dsk-warn-fg);
+}
+.dk-cz-map-note.dk-bad {
+  color: var(--danger-subtle-foreground);
+}

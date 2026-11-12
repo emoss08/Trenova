@@ -102,6 +102,10 @@ type StopSnapshot struct {
 	Location string `json:"location,omitempty"`
 	City     string `json:"city,omitempty"`
 	State    string `json:"state,omitempty"`
+	// Timezone is the stop location's own zone, empty when it has none. A
+	// stop's window is kept on the clock at the stop, so whoever words one
+	// for a person reads it there, falling back to the organization's zone.
+	Timezone string `json:"timezone,omitempty"`
 	// Windows and actuals are epoch seconds with a rendered text beside
 	// each, so the model has both what to compare and what to say.
 	ScheduledStart     int64  `json:"scheduledStart"`
@@ -354,6 +358,7 @@ func buildStop(stop *shipment.Stop, moveID pulid.ID, in Input) StopSnapshot {
 	if stop.Location != nil {
 		ss.Location = stop.Location.Name
 		ss.City = stop.Location.City
+		ss.Timezone = stop.Location.Timezone
 		if stop.Location.State != nil {
 			ss.State = stop.Location.State.Abbreviation
 		}
@@ -616,4 +621,12 @@ func canceledOf(sp *shipment.Shipment) *CanceledSnapshot {
 	}
 
 	return canceled
+}
+
+func (s *StopSnapshot) Coordinates() (latitude, longitude float64, ok bool) {
+	if s.latitude == nil || s.longitude == nil {
+		return 0, 0, false
+	}
+
+	return *s.latitude, *s.longitude, true
 }

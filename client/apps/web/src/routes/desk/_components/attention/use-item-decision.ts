@@ -11,17 +11,11 @@ import {
   useReviewReports,
   type ReviewTally,
 } from "@/components/assistant/proposal-preview/reviewed-change";
-import { getFragmentData } from "@trenova/graphql/fragment-data";
-import {
-  PendingProposalFieldsFragmentDoc,
-  PlanStepsDocument,
-} from "@trenova/graphql/generated/graphql";
 import type { AssistantProposal } from "@/types/assistant";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { requestGraphQL } from "@trenova/shared/lib/graphql";
+import { useQueryClient } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useRef, useState } from "react";
-import { asAssistantProposal } from "../decisions/decision-presenters";
+import { useDecisionSteps } from "./use-decision-steps";
 import {
   PENDING_DECISIONS_KEY,
   PENDING_DECISION_SUMMARY_KEY,
@@ -50,35 +44,13 @@ export type ItemDecision = {
 
 /** The changes an item of the Decisions lens stands for: its proposal, or every step of its plan. */
 function useDecisionChanges(item: DeskAttentionItem | null) {
-  const proposalId = item?.sourceKind === "AgentProposal" ? item.sourceId : null;
-  const planId = item?.sourceKind === "AgentPlan" ? item.sourceId : null;
-  const filter = proposalId
-    ? { field: "id", value: proposalId }
-    : planId
-      ? { field: "planId", value: planId }
-      : null;
-
-  return useQuery({
-    queryKey: ["agent-proposal-list", "needs-decision", filter?.field ?? "", filter?.value ?? ""],
-    queryFn: ({ signal }) =>
-      requestGraphQL({
-        document: PlanStepsDocument,
-        operationName: "PlanSteps",
-        variables: {
-          input: {
-            first: 50,
-            fieldFilters: [{ field: filter?.field ?? "id", operator: "eq", value: filter?.value }],
-            sort: [{ field: "planStep", direction: "asc" }],
-          },
-        },
-        signal,
-      }),
-    enabled: filter !== null,
-    select: (data): AssistantProposal[] =>
-      data.agentProposals.edges.map((edge) =>
-        asAssistantProposal(getFragmentData(PendingProposalFieldsFragmentDoc, edge.node)),
-      ),
-  });
+  return useDecisionSteps(
+    item?.sourceKind === "AgentProposal"
+      ? { proposalId: item.sourceId }
+      : item?.sourceKind === "AgentPlan"
+        ? { planId: item.sourceId }
+        : null,
+  );
 }
 
 /**

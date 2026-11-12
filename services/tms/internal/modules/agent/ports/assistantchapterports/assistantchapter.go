@@ -49,6 +49,9 @@ type ChapterPlan struct {
 	// question: a chapter shows only once there is a second, so the first
 	// is named when the next one opens.
 	NameEarlier pulid.ID `json:"nameEarlier,omitempty"`
+	// NamesThread is set on the plan of a conversation's first chapter: the
+	// name the model gives it is the conversation's too.
+	NamesThread bool `json:"namesThread,omitempty"`
 
 	Task *llmports.NovaTask `json:"task,omitempty"`
 }

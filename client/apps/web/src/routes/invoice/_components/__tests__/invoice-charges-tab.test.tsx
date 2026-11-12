@@ -520,7 +520,7 @@ describe("InvoiceChargesTab", () => {
     expect(screen.getByRole("heading", { name: "No charges on this invoice" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Open queue item" })).toHaveAttribute(
       "href",
-      "/billing/queue?item=bqi_1&includePosted=true",
+      "/billing/queue?item=bqi_1&includeClosed=true",
     );
     expect(screen.queryByRole("region", { name: "Invoice totals" })).not.toBeInTheDocument();
   });

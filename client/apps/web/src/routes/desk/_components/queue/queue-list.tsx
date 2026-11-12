@@ -1,4 +1,5 @@
-import { VirtualRows, type VirtualRow, type VirtualRowsHandle } from "@/components/virtual-rows";
+import type { VirtualRow, VirtualRowsHandle } from "@/components/virtual-rows";
+import { DeskList, DeskListHeading, DeskListStill, deskListRow } from "../list/desk-list";
 import { Button } from "@trenova/shared/components/ui/button";
 import { cn } from "@trenova/shared/lib/utils";
 import { useEffect, useMemo, useRef, type ReactNode } from "react";
@@ -10,13 +11,12 @@ const OVERSCAN = 6;
 export type QueueSection = {
   key: string;
   header: ReactNode;
-  className?: string;
   rows: readonly { key: string; render: () => ReactNode }[];
 };
 
 /**
- * The queue's rows, mounted only near the viewport so a queue of a thousand
- * reads as fast as one of ten. The selected row is kept in view as the person
+ * The queue's rows, in the Desk's one list pane (list/desk-list.tsx), mounted
+ * only near the viewport so a queue of a thousand reads as fast as one of ten. The selected row is kept in view as the person
  * walks the queue from the keyboard.
  */
 export function QueueList({
@@ -40,7 +40,7 @@ export function QueueList({
       sections.flatMap((section) => [
         {
           key: `section:${section.key}`,
-          render: () => <div className={cn("dk-dc2-g", section.className)}>{section.header}</div>,
+          render: () => <DeskListHeading>{section.header}</DeskListHeading>,
         },
         ...section.rows,
       ]),
@@ -54,14 +54,13 @@ export function QueueList({
   }, [selectedKey]);
 
   return (
-    <VirtualRows
+    <DeskList
       rows={rows}
       handleRef={handle}
       estimateSize={ROW_ESTIMATE}
       overscan={OVERSCAN}
-      className="dk-dc2-ql"
       aria-label={label}
-      empty={<div className="dk-dc2-ql">{empty}</div>}
+      empty={<DeskListStill>{empty}</DeskListStill>}
       footer={footer}
       onEndReached={onEndReached}
     />
@@ -71,10 +70,10 @@ export function QueueList({
 /** A section's heading and how many rows are under it. */
 export function QueueGroupHeader({ label, count }: { label: ReactNode; count: number }) {
   return (
-    <div className="dk-dc2-gh">
+    <span className="flex items-center gap-1.5">
       {label}
-      <i>{count}</i>
-    </div>
+      <i className="text-dsk-subtle not-italic tabular-nums">{count}</i>
+    </span>
   );
 }
 
@@ -105,9 +104,11 @@ export function QueueRow({
     <Button
       variant="bare"
       size="bare"
+      data-glide-target
       className={cn(
-        "dk-dc2-qi relative flex w-full gap-2.25 rounded-lg px-2 py-1.75 text-left transition-colors duration-100",
-        selected ? "dk-on bg-dsk-card ring-1 ring-dsk-b" : "hover:bg-dsk-hover",
+        "dk-dc2-qi flex w-full gap-2.25 px-2 py-1.75",
+        deskListRow(selected).className,
+        selected && "dk-on",
         marked && "dk-in",
         className,
       )}

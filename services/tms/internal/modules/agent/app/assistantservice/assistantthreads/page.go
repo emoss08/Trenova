@@ -96,10 +96,6 @@ func (s *Service) assertPageAgentUsable(
 			"{0} is turned off. An administrator can turn it on in AI Control.", definition.Name,
 		)
 	}
-	if err := agentaccess.AssertChatAgent(definition); err != nil {
-		return err
-	}
-
 	return s.access().AssertMayUseAgent(ctx, actor, definition)
 }
 

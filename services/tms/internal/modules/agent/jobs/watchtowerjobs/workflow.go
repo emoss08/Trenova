@@ -63,6 +63,12 @@ func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 			Description: "Raise and clear factoring items: late ready invoices and notices of assignment",
 		},
 		{
+			Name:        DecisionSweepWorkflowName,
+			Fn:          DecisionSweepWorkflow,
+			TaskQueue:   temporaltype.TaskQueueSystem.String(),
+			Description: "Clear proposals and plans that expired without a decision",
+		},
+		{
 			Name:        WatchtowerRetentionWorkflowName,
 			Fn:          WatchtowerRetentionWorkflow,
 			TaskQueue:   temporaltype.TaskQueueSystem.String(),
@@ -156,6 +162,21 @@ func ShipmentExceptionSweepWorkflow(ctx workflow.Context) (*WatchtowerSweepResul
 	if err := workflow.ExecuteActivity(ctx, a.ShipmentExceptionSweepActivity).
 		Get(ctx, result); err != nil {
 		workflow.GetLogger(ctx).Error("Shipment exception sweep workflow failed", "error", err)
+
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func DecisionSweepWorkflow(ctx workflow.Context) (*WatchtowerSweepResult, error) {
+	ctx = workflow.WithActivityOptions(ctx, watchtowerActivityOptions)
+
+	var a *Activities
+	result := new(WatchtowerSweepResult)
+	if err := workflow.ExecuteActivity(ctx, a.DecisionSweepActivity).
+		Get(ctx, result); err != nil {
+		workflow.GetLogger(ctx).Error("Decision sweep workflow failed", "error", err)
 
 		return nil, err
 	}

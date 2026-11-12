@@ -61,7 +61,7 @@ Keywords: add accessorial, edit charge, re-rate, change formula template, tariff
 Keywords: search PRO, BOL lookup, filter by biller, filter preset
 1. Open [Billing queue](/billing/queue).
 2. Type a PRO or BOL number in the search box above the list.
-3. Select **Filters** to narrow by **Status**, **Bill type**, **Payer** or **Assigned billers**, or turn on **Include posted items** to see records that already produced a posted invoice.
+3. Select **Filters** to narrow by **Status**, **Bill type**, **Payer** or **Assigned billers**, or turn on **Include closed items** to add a **Closed** lane with the records that were posted or canceled.
 4. To reuse a combination, save it as a preset with the save icon in the filters panel; pick a saved preset from the preset picker there. **Clear all** removes every filter.
 
 ### Transfer completed shipments into the queue

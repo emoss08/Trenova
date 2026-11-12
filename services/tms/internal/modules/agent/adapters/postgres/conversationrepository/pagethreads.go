@@ -30,6 +30,28 @@ func pageKeyValid(key *conversationports.PageThreadKey) bool {
 		key.UserID.IsNotNil() && key.TenantInfo.OrgID.IsNotNil() && key.TenantInfo.BuID.IsNotNil()
 }
 
+func (r *repository) LatestSubjectThread(
+	ctx context.Context,
+	key *conversationports.SubjectThreadKey,
+) (*conversation.Thread, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*conversation.Thread, error) {
+		th := conversationdb.Threads
+		entity, err := th.Where(
+			th.UserID.Eq(key.UserID),
+			th.SubjectID.Eq(key.SubjectID),
+			th.SubjectType.Eq(key.SubjectType),
+			th.Origin.Eq(key.Origin),
+			th.AgentDefinitionID.Eq(key.AgentDefinitionID),
+			th.Status.Eq(conversation.ThreadStatusActive),
+		).Order(th.LastMessageAt.Desc()).First(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, dberror.HandleNotFoundError(err, "Thread")
+		}
+
+		return entity, nil
+	})
+}
+
 func (r *repository) GetPageThread(
 	ctx context.Context,
 	key *conversationports.PageThreadKey,

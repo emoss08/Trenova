@@ -90,6 +90,10 @@ func (r *AgentRunResolver) HandedBy(ctx context.Context, obj *agent.AgentRun) (*
 	return definition, nil
 }
 
+func (r *AgentRunResolver) SubjectLabel(ctx context.Context, obj *agent.AgentRun) (string, error) {
+	return r.Core.SubjectLabel(ctx, obj.SubjectType, obj.SubjectID), nil
+}
+
 func (r *MutationResolver) DecideAgentProposals(ctx context.Context, ids []string, input gqlmodel.DecideAgentProposalsInput) ([]*gqlmodel.AgentProposalDecisionResult, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentProposal, permission.OpUpdate)
 	if err != nil {

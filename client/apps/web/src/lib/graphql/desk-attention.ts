@@ -75,6 +75,8 @@ export type DeskAttentionFilter = {
   severities?: readonly WatchtowerSeverity[];
   first?: number;
   recordId?: string | null;
+  /** Only rows with an item an agent's run is working on right now. */
+  working?: boolean;
 };
 
 export async function fetchDeskAttention(
@@ -92,6 +94,7 @@ export async function fetchDeskAttention(
           filter.severities && filter.severities.length > 0 ? [...filter.severities] : null,
         first: filter.first ?? null,
         recordId: filter.recordId ?? null,
+        working: filter.working ?? false,
       },
     },
     signal: options?.signal,
@@ -150,6 +153,9 @@ export async function fetchDeskActivity(
 export type DeskActivityChange = {
   proposalId: string;
   record: DeskRecord | null;
+  what: string;
+  why: string;
+  proposedAt: number;
   at: number;
   outcome: DeskActivityOutcome;
   error: string;

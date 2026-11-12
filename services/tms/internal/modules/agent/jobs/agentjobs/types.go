@@ -74,6 +74,9 @@ type CompleteRunInput struct {
 	Status     agent.RunStatus       `json:"status"`
 	Error      string                `json:"error,omitempty"`
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
+	// ProposedNothing says the run ended without asking for any change, so
+	// what was handed to it is closed rather than left in progress.
+	ProposedNothing bool `json:"proposedNothing,omitempty"`
 }
 
 type ExpireProposalsInput struct {

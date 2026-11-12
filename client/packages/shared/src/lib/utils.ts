@@ -2,7 +2,16 @@ import { formatNumber, numberFormatter } from "@trenova/shared/i18n/format";
 import { translate } from "@trenova/shared/i18n/runtime";
 import type { Location } from "@trenova/shared/types/location";
 import { clsx, type ClassValue } from "clsx";
-import { twMerge } from "tailwind-merge";
+import { extendTailwindMerge } from "tailwind-merge";
+
+/*
+The type sizes tokens.css adds to the scale. tailwind-merge has to be told
+they are sizes: left to guess, it reads `text-dsk-sm` as a colour and drops it
+when a real colour (`text-dsk-subtle`) follows in the same class list.
+*/
+const twMerge = extendTailwindMerge({
+  extend: { theme: { text: ["3xs", "2xs", "dsk-sm", "dsk-base"] } },
+});
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));

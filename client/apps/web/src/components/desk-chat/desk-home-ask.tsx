@@ -9,7 +9,13 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useDeskSetting } from "@/stores/desk-settings-store";
-import { useEffect, useState, type ReactNode } from "react";
+import {
+  composerDrafts,
+  draftKey,
+  useDraftMentions,
+  useDraftText,
+} from "@/stores/composer-draft-store";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { Link } from "react-router";
 import {
   agentToAsk,
@@ -47,8 +53,20 @@ export type DeskHomeAskOptions = {
   isLoading: boolean;
   /** The agent to offer first, when the person chose one in their settings. */
   preferId?: string;
+  /**
+   * The agent the surface is about, such as the one working the case the box
+   * sits under. It is the only agent the box asks: no other can be picked,
+   * none is suggested and a question is never moved to another.
+   */
+  subjectAgentId?: string;
   /** The page the question carries: the one the person came from, or the one on screen. */
   pageSource?: "recent" | "screen";
+  /**
+   * The space the box sits in: the Desk's front page, a record's case, a
+   * page's margin. What is typed here and not sent is kept under it, so each
+   * space has its own draft and a case's draft is still there on return.
+   */
+  space: string;
   onStart: (agentId: string, question?: string, extras?: DeskStartExtras) => void;
 };
 
@@ -74,13 +92,24 @@ export function useDeskHomeAsk({
   threads,
   isLoading,
   preferId,
+  subjectAgentId,
   pageSource = "recent",
+  space,
   onStart,
 }: DeskHomeAskOptions) {
-  const askable = useAskableAgent({ threads, preferId });
+  const askable = useAskableAgent({ threads, preferId: subjectAgentId ?? preferId });
   const noAgents = !isLoading && (agents.length === 0 || askable.noneAvailable);
-  const [draft, setDraft] = useState("");
-  const [mentions, setMentions] = useState<AssistantEntityRef[]>([]);
+  const draftAt = draftKey.space(space);
+  const draft = useDraftText(draftAt);
+  const mentions = useDraftMentions(draftAt);
+  const setDraft = useCallback(
+    (value: string) => composerDrafts.setText(draftAt, value),
+    [draftAt],
+  );
+  const setMentions = useCallback(
+    (next: readonly AssistantEntityRef[]) => composerDrafts.setMentions(draftAt, next),
+    [draftAt],
+  );
   const [providerId, setProviderId] = useState("");
   const providersQuery = useQuery(assistant.providers());
   const held = useHeldAttachments();
@@ -88,10 +117,12 @@ export function useDeskHomeAsk({
   const deskPage = useDeskPage({ onScreen: pageSource === "screen" });
   const drag = useDeskDrop(noAgents ? null : attachments.add);
   const agentId = askable.agent?.id ?? null;
-  const mode = suggestionMode({
+  const agentFixed = Boolean(subjectAgentId) && agentId === subjectAgentId;
+  const settingMode = suggestionMode({
     autoSwitchAgent: useDeskSetting("autoSwitchAgent"),
     suggestAgent: useDeskSetting("suggestAgent"),
   });
+  const mode = agentFixed ? "off" : settingMode;
   const record = useSuggestionRecord("Home");
   // A pick from the picker pins the agent: Enter goes to it, though a better
   // fit is still named. So does the agent the person set to start with, unless
@@ -103,7 +134,9 @@ export function useDeskHomeAsk({
   // question afresh.
   const [picked, setPicked] = useState(false);
   const pinned =
-    picked || (mode !== "auto" && Boolean(preferId) && agentId !== null && agentId === preferId);
+    picked ||
+    agentFixed ||
+    (mode !== "auto" && Boolean(preferId) && agentId !== null && agentId === preferId);
   const [keptOver, setKeptOver] = useState<readonly string[]>([]);
   const [nobodyDismissed, setNobodyDismissed] = useState(false);
   const [routing, setRouting] = useState(false);
@@ -121,7 +154,7 @@ export function useDeskHomeAsk({
   });
   const offered: OfferedMatch | null =
     showsSuggestion(mode) && offersAgent(advice.match, agentId, keptOver) ? advice.match : null;
-  const nobody = noAgentFits(advice.match) && !nobodyDismissed;
+  const nobody = !agentFixed && noAgentFits(advice.match) && !nobodyDismissed;
   const offeredId = offered?.agent.id ?? null;
 
   useEffect(() => {
@@ -141,6 +174,9 @@ export function useDeskHomeAsk({
   };
 
   const choose = (agent: AgentChoice) => {
+    if (agentFixed) {
+      return;
+    }
     askable.choose(agent);
     setPicked(true);
   };
@@ -196,7 +232,7 @@ export function useDeskHomeAsk({
     onStart(target.id, content, {
       files,
       mentions: payloadMentions,
-      providerId,
+      providerId: agentFixed ? "" : providerId,
     });
     held.clear();
     attachments.clear();
@@ -205,6 +241,9 @@ export function useDeskHomeAsk({
   return {
     askable,
     noAgents,
+    agentFixed,
+    /** The subject's agent is still being read: the box names nobody until it is. */
+    agentPending: Boolean(subjectAgentId) && !agentFixed && askable.choices.isLoading,
     choose,
     offered,
     nobody,
@@ -235,7 +274,16 @@ export type DeskHomeAsk = ReturnType<typeof useDeskHomeAsk>;
  * the placeholder. Tab takes the one on screen and ⌘1–9 asks it outright.
  * With no agent to ask, it says so, and where to turn one on.
  */
-export function DeskHomeComposer({ ask, isStarting }: { ask: DeskHomeAsk; isStarting: boolean }) {
+export function DeskHomeComposer({
+  ask,
+  isStarting,
+  placeholder,
+}: {
+  ask: DeskHomeAsk;
+  isStarting: boolean;
+  /** What the empty box says where the page has its own subject; the agent's starters otherwise. */
+  placeholder?: string;
+}) {
   const t = useT();
   const { allowed: canManageAgents } = usePermission(Resource.AgentDefinition, Operation.Read);
   const { allowed: canAddTools } = usePermission(Resource.AgentDefinition, Operation.Update);
@@ -286,39 +334,52 @@ export function DeskHomeComposer({ ask, isStarting }: { ask: DeskHomeAsk; isStar
         home
         value={ask.draft}
         onChange={ask.setDraft}
-        agent={askable.agent}
-        onAgentChange={ask.choose}
+        agent={ask.agentPending ? null : askable.agent}
+        onAgentChange={ask.agentFixed ? undefined : ask.choose}
+        agentFixed={ask.agentFixed}
         recentAgentIds={askable.recency.ids}
         agentLastUsedAt={askable.recency.lastUsedAt}
         busy={false}
-        disabled={isStarting || ask.routing || askable.agent === null}
+        disabled={isStarting || ask.routing || ask.agentPending || askable.agent === null}
         focusSignal={ask.focusSignal}
-        placeholder={ask.routing ? t("Finding the agent with the tools for this…") : undefined}
-        presets={askable.agent?.starters?.map((starter) => starter.prompt) ?? []}
-        suggestions={askable.agent?.starters?.map((starter) => ({
-          label: starter.label,
-          prompt: starter.prompt,
-        }))}
+        placeholder={ask.routing ? t("Finding the agent with the tools for this…") : placeholder}
+        presets={
+          placeholder === undefined
+            ? (askable.agent?.starters?.map((starter) => starter.prompt) ?? [])
+            : []
+        }
+        suggestions={
+          placeholder === undefined
+            ? askable.agent?.starters?.map((starter) => ({
+                label: starter.label,
+                prompt: starter.prompt,
+              }))
+            : undefined
+        }
         attachments={ask.attachments}
         mentions={ask.mentions}
         onMentionsChange={ask.setMentions}
         drag={ask.drag}
         extras={
-          <DeskPageChip
-            page={deskPage.page}
-            share={deskPage.share}
-            onShareChange={deskPage.setShare}
-            onExplain={explain ? () => ask.setDraft(fillCommand(explain, [])) : undefined}
-            onScreen={deskPage.onScreen}
-          />
+          ask.agentFixed ? undefined : (
+            <DeskPageChip
+              page={deskPage.page}
+              share={deskPage.share}
+              onShareChange={deskPage.setShare}
+              onExplain={explain ? () => ask.setDraft(fillCommand(explain, [])) : undefined}
+              onScreen={deskPage.onScreen}
+            />
+          )
         }
         model={
-          <DeskModelPicker
-            options={ask.providers}
-            value={ask.providerId}
-            onChange={ask.setProviderId}
-            hasReplies={false}
-          />
+          ask.agentFixed ? undefined : (
+            <DeskModelPicker
+              options={ask.providers}
+              value={ask.providerId}
+              onChange={ask.setProviderId}
+              hasReplies={false}
+            />
+          )
         }
         onSend={(content, payload) => {
           void ask.send(content, payload.mentions);

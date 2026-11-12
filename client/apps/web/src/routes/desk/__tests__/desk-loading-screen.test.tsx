@@ -57,7 +57,7 @@ describe("Desk first load", () => {
     expect(screen.queryByText("The Desk")).toBeNull();
     const frame = document.querySelector('[data-slot="desk-loading-screen"]');
     expect(frame).toHaveClass("dsk");
-    expect(frame?.querySelector(".dk-rl")).not.toBeNull();
+    expect(frame?.querySelector("aside")).not.toBeNull();
     expect(frame?.querySelector(".dk-tb")).not.toBeNull();
   });
 });
@@ -87,14 +87,17 @@ async function openAt(path: string) {
 describe("Desk loading screen", () => {
   it("fills the rail: its places, every shelf of conversations, the person's row", async () => {
     const frame = await openAt("/desk");
-    const rail = frame.querySelector(".dk-rl") as HTMLElement;
+    // The rail is drawn with utilities, so it is found by what it is: the frame's aside,
+    // its top row first and its list after.
+    const rail = frame.querySelector("aside") as HTMLElement;
+    const top = rail.firstElementChild as HTMLElement;
 
-    expect(rail.querySelectorAll(".dk-rl-top .dk-sk-ic")).toHaveLength(3);
-    expect(rail.querySelector(".dk-rl-top")?.firstElementChild).toHaveClass("dk-sk-ic");
+    expect(top.querySelectorAll(".dk-sk-ic")).toHaveLength(3);
+    expect(top.firstElementChild).toHaveClass("dk-sk-ic");
     expect(rail.querySelectorAll(".dk-skr .dk-sk-glyph")).toHaveLength(5);
     expect(rail.querySelectorAll(".dk-skr-gh")).toHaveLength(6);
     expect(rail.querySelectorAll(".dk-skr .dk-sk-dot")).toHaveLength(34);
-    expect(rail.querySelector(".dk-rl-list")).toHaveClass("dk-skr-list");
+    expect(top.nextElementSibling).toHaveClass("dk-skr-list");
     expect(rail.querySelector(".dk-skr-me .dk-sk-me")).not.toBeNull();
   });
 

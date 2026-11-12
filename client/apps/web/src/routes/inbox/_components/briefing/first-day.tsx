@@ -1,6 +1,7 @@
 import type { InboundMessageCounts } from "@/lib/graphql/inbox";
 import { CheckIcon, PlusIcon } from "@trenova/shared/components/icons";
 import { Button } from "@trenova/shared/components/ui/button";
+import { NovaBadge } from "@trenova/shared/components/ui/nova-badge";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import {
@@ -75,38 +76,25 @@ export function FirstDay({
           : t("Your first briefing is ready.");
 
   return (
-    <section className="grid min-h-full place-items-center" aria-live="polite">
-      <div className="animate-rise flex w-full max-w-130 flex-col items-center gap-3.5 px-7 py-12 text-center">
-        <div className="relative mb-1.5 grid size-24 place-items-center">
-          <span
-            aria-hidden
-            data-reading={stage === "reading"}
-            className="tb-orb-ring absolute inset-0 rounded-full"
-          />
-          <span className="relative font-mono text-4xl font-semibold tabular-nums">
-            {stage === "done" ? (
-              <CheckIcon
-                aria-label={t("Done")}
-                className="animate-confirm size-7"
-                strokeWidth={2.4}
-              />
-            ) : stage === "empty" ? (
-              0
-            ) : (
-              shown
-            )}
-          </span>
-        </div>
-        <h2 className="text-2xl font-semibold">{heading}</h2>
-        <p className="text-foreground-subtle max-w-[44ch] text-base leading-relaxed">{lead}</p>
+    <section className="dk-dy" aria-live="polite">
+      <div className="flex animate-rise flex-col items-center gap-3.5 text-center">
+        <div className="dk-dy-date">{t("Triage")}</div>
+        <h1 className="dk-dy-greet">{heading}</h1>
+        <p className="dk-dy-hl">{lead}</p>
+        {(stage === "reading" || stage === "done") && (
+          <p className="dk-dy-hl-note">
+            <NovaBadge size="xs" spin={stage === "reading" ? "always" : "none"} />
+            {t("{0, plural, one {# message read} other {# messages read}}", shown)}
+          </p>
+        )}
         {stage === "empty" &&
           (canConnect ? (
-            <Button size="lg" onClick={onConnect}>
+            <Button onClick={onConnect}>
               <PlusIcon className="size-3.5" />
               {t("Add a source")}
             </Button>
           ) : (
-            <p className="text-foreground-muted text-sm">
+            <p className="text-dsk-base text-dsk-subtle">
               {t("Ask an administrator to add a source; adding one needs mailbox access.")}
             </p>
           ))}
@@ -121,13 +109,13 @@ export function FirstDay({
                 <li
                   key={kind}
                   className={cn(
-                    "bg-surface-hover inline-flex h-7 items-center gap-2 rounded-badge px-2.5 text-sm transition-opacity duration-300",
+                    "inline-flex h-7 items-center gap-2 rounded-[6px] border border-dsk-b-sub bg-dsk-card px-2.5 text-dsk-base text-dsk-fg2 transition-opacity duration-300",
                     count === 0 && "opacity-35",
                   )}
                 >
                   <span aria-hidden className={cn("size-2 rounded-xs", CLASSIFICATION_DOT[kind])} />
                   <span>{classificationLabel(t, kind)}</span>
-                  <b className="font-mono text-xs font-semibold tabular-nums">{count}</b>
+                  <b className="text-xs font-medium text-dsk-fg tabular-nums">{count}</b>
                 </li>
               );
             })}
@@ -142,19 +130,19 @@ export function FirstDay({
                 key={step}
                 aria-current={on ? "step" : undefined}
                 className={cn(
-                  "flex items-center gap-1.75 text-sm",
-                  done ? "text-success" : on ? "text-foreground" : "text-foreground-subtle",
+                  "flex items-center gap-1.75 text-dsk-base",
+                  done ? "text-dsk-success-fg" : on ? "text-dsk-fg" : "text-dsk-subtle",
                 )}
               >
                 <i
                   aria-hidden
                   className={cn(
-                    "flex size-4.5 items-center justify-center rounded-full border font-mono text-2xs not-italic",
+                    "flex size-4.5 items-center justify-center rounded-full border text-2xs not-italic tabular-nums",
                     done
-                      ? "bg-success border-success text-foreground-on-solid"
+                      ? "border-dsk-success bg-dsk-success text-dsk-on-solid"
                       : on
-                        ? "bg-ink border-ink text-ink-foreground"
-                        : "border-border-strong",
+                        ? "border-dsk-ink bg-dsk-ink text-dsk-ink-fg"
+                        : "border-dsk-b-strong",
                   )}
                 >
                   {done ? <CheckIcon className="size-2.5" strokeWidth={3} /> : index + 1}

@@ -20,7 +20,7 @@ import {
   type ArtifactRowsKey,
   type ThreadListFilter,
 } from "@/services/assistant";
-import type { DeskSearchKind, MentionPageKind } from "@/types/assistant";
+import type { DeskSearchKind, MentionPageKind, MentionSearchType } from "@/types/assistant";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
 
 export const assistant = createQueryKeys("assistant", {
@@ -35,8 +35,8 @@ export const assistant = createQueryKeys("assistant", {
       shelf: (filter: ThreadListFilter) => ({
         queryKey: [filter],
       }),
-      shelfCounts: (edges: readonly number[]) => ({
-        queryKey: [[...edges]],
+      shelfCounts: (edges: readonly number[], aboutRecord: "cases" | "chats" | "all") => ({
+        queryKey: [[...edges], aboutRecord],
       }),
     },
   }),
@@ -274,6 +274,14 @@ export const assistant = createQueryKeys("assistant", {
   agentTemplates: () => ({
     queryKey: ["agent-templates"],
     queryFn: () => agentDefinitionService.templates(),
+  }),
+  // The records an @ finds for what is typed under one tab. Kept a short
+  // while, so the picker opens on an answer it already has and a word typed,
+  // deleted and typed again is not asked for twice.
+  mentionSearch: (query: string, tab: MentionSearchType) => ({
+    queryKey: [query, tab],
+    queryFn: ({ signal }: { signal?: AbortSignal }) =>
+      assistantService.searchMentions(query, tab, { signal }),
   }),
 });
 

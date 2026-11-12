@@ -338,7 +338,7 @@ export function MailboxCard({
           variant="ghost"
           className="-mr-1.5 shrink-0"
           nativeButton={false}
-          render={<Link to={`/inbox?mailbox=${encodeURIComponent(mailbox.id)}`} />}
+          render={<Link to={`/desk/triage?mailbox=${encodeURIComponent(mailbox.id)}`} />}
         >
           {t("Open its mail")}
           <ArrowRightIcon className="size-3.5" />

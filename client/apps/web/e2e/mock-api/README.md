@@ -465,7 +465,8 @@ node e2e/mock-api/desk-cards-screenshots.mjs [outDir] [name,name,...]
 ```
 
 It opens each card where people see it, beside the conversation that looked the record up
-(`/desk/c/thr_desk_cards/a/<slug>`), and on its own page at full length (`…/page`), and shoots
+(`/desk/c/thr_desk_cards/a/<slug>`), and on the canvas at full length
+(`/desk/v/thr_desk_cards/<slug>`), and shoots
 it loaded in light and dark, with something wrong on it, empty, as its skeleton, unreadable and
 in a 1000px window. It writes to `e2e/mock-api/screenshots/desk-cards` by default. The records
 are in `fixtures/desk-cards.mjs`: each card has a conversation for the record loaded, one with

@@ -56,7 +56,12 @@ const (
 	// TaskPaletteAnswer answers a quick question typed into the command
 	// palette: a short streamed answer from a few read-only lookups, run
 	// through the Nova harness rather than as a Desk turn.
-	TaskPaletteAnswer   = Task("PaletteAnswer")
+	TaskPaletteAnswer = Task("PaletteAnswer")
+	// TaskCaseReading writes Nova's reading of a record's case: the verdict
+	// a person reads first, citing the numbered evidence beside it. It
+	// produces wording only, and every number it writes is checked against
+	// that evidence afterwards.
+	TaskCaseReading     = Task("CaseReading")
 	TaskEvaluationJudge = Task("EvaluationJudge")
 	TaskEmbedding       = Task("Embedding")
 	TaskGeneral         = Task("General")
@@ -91,7 +96,8 @@ func (t Task) Nova() bool {
 		TaskAccountingMapping,
 		TaskRemittanceExtraction,
 		TaskPaperworkReading,
-		TaskPaletteAnswer:
+		TaskPaletteAnswer,
+		TaskCaseReading:
 		return true
 	case TaskScopeClassification,
 		TaskAssistantChat,
@@ -121,6 +127,7 @@ func (t Task) IsValid() bool {
 		TaskRemittanceExtraction,
 		TaskPaperworkReading,
 		TaskPaletteAnswer,
+		TaskCaseReading,
 		TaskEvaluationJudge,
 		TaskEmbedding,
 		TaskGeneral:
@@ -148,6 +155,7 @@ func AllTasks() []Task {
 		TaskRemittanceExtraction,
 		TaskPaperworkReading,
 		TaskPaletteAnswer,
+		TaskCaseReading,
 		TaskEvaluationJudge,
 		TaskEmbedding,
 		TaskGeneral,

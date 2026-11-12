@@ -68,6 +68,31 @@ func BuildShipmentCreated(
 	}
 }
 
+// BuildShipmentUpdated builds the event for an edit that left the status where
+// it was: a window moved, a stop changed, a charge added. It is what tells the
+// listeners that follow a shipment (the arrival projection, the customer's
+// status page, the billing queue, the Watchtower) to look again; without it an
+// edit changed the record and nothing that reads the record noticed.
+func BuildShipmentUpdated(
+	tenant TenantRef,
+	sh *shipment.Shipment,
+	actor kernelports.AuditActor,
+) *shipmenteventports.RecordShipmentEventParams {
+	return &shipmenteventports.RecordShipmentEventParams{
+		OrganizationID: tenant.OrganizationID,
+		BusinessUnitID: tenant.BusinessUnitID,
+		ShipmentID:     sh.ID,
+		Type:           shipmentevent.TypeShipmentUpdated,
+		Severity:       shipmentevent.SeverityMuted,
+		Summary:        "Shipment updated",
+		Metadata: map[string]any{
+			"proNumber": sh.ProNumber,
+			"status":    string(sh.Status),
+		},
+		Actor: actor,
+	}
+}
+
 // BuildStatusChanged emits a status transition event.
 // Selects severity based on the new status.
 func BuildStatusChanged(

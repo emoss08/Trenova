@@ -67,6 +67,9 @@ func (r *MutationResolver) InviteWorkerToPortal(ctx context.Context, input gqlmo
 	if input.Email != nil {
 		req.Email = *input.Email
 	}
+	if input.ReplacePending != nil {
+		req.ReplacePending = *input.ReplacePending
+	}
 	return r.DriverPortalInvitationService.InviteWorker(ctx, req, actorutil.FromAuthContext(authCtx))
 }
 

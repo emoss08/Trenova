@@ -26,6 +26,7 @@ const (
 	briefMaxTokens = 400
 	briefRunes     = 700
 	briefConcerns  = 5
+	briefAttempts  = 2
 	emptyQueueText = "Nothing is waiting to be billed."
 )
 
@@ -62,62 +63,119 @@ func (s *Service) GetBrief(
 		return &billingqueueports.QueueBriefView{}, nil
 	}
 
-	brief, err := s.repo.GetBrief(ctx, tenantInfo)
+	lanes, err := s.repo.GetLaneStats(ctx, tenantInfo)
 	if err != nil {
-		if errortypes.IsNotFoundError(err) {
-			return &billingqueueports.QueueBriefView{Available: true}, nil
-		}
 		return nil, err
+	}
+	lanesNow, err := lanesHash(lanes)
+	if err != nil {
+		return nil, err
+	}
+	brief, err := s.repo.GetBrief(ctx, tenantInfo)
+	if err != nil && !errortypes.IsNotFoundError(err) {
+		return nil, err
+	}
+
+	view, current := briefView(brief, lanes, lanesNow, timeutils.NowUnix())
+	if !current {
+		s.briefs.RequestBrief(ctx, tenantInfo)
+	}
+
+	return view, nil
+}
+
+// briefView is the brief as the queue stands now, and whether the stored one
+// was written for these lanes. An empty queue says so whatever was stored; a
+// brief written for other lanes is shown marked stale until its rewrite lands.
+func briefView(
+	brief *billingqueue.QueueBrief,
+	lanes []*billingqueueports.BillingQueueLaneStat,
+	lanesNow string,
+	now int64,
+) (*billingqueueports.QueueBriefView, bool) {
+	if brief != nil && brief.LanesHash == lanesNow {
+		return &billingqueueports.QueueBriefView{
+			Available:   true,
+			Text:        brief.Text,
+			GeneratedAt: brief.GeneratedAt,
+		}, true
+	}
+	if laneCount(lanes) == 0 {
+		generatedAt := now
+		if brief != nil {
+			generatedAt = brief.GeneratedAt
+		}
+		return &billingqueueports.QueueBriefView{
+			Available:   true,
+			Text:        emptyQueueText,
+			GeneratedAt: generatedAt,
+		}, false
+	}
+	if brief == nil {
+		return &billingqueueports.QueueBriefView{Available: true}, false
 	}
 
 	return &billingqueueports.QueueBriefView{
 		Available:   true,
 		Text:        brief.Text,
 		GeneratedAt: brief.GeneratedAt,
-	}, nil
+		Stale:       true,
+	}, false
 }
 
-func (s *Service) RefreshBrief(ctx context.Context, tenantInfo pagination.TenantInfo) error {
+// RefreshBrief writes the brief for the queue as it stands, when its figures
+// moved since the last one, and reports whether it wrote one.
+func (s *Service) RefreshBrief(ctx context.Context, tenantInfo pagination.TenantInfo) (bool, error) {
 	available, err := s.Availability(ctx, tenantInfo)
 	if err != nil || !available.Brief {
-		return err
+		return false, err
 	}
 
 	facts, err := s.briefFacts(ctx, tenantInfo)
 	if err != nil {
-		return err
+		return false, err
 	}
 	hash, err := factsHash(facts)
 	if err != nil {
-		return err
+		return false, err
+	}
+	lanes, err := lanesHash(facts.Lanes)
+	if err != nil {
+		return false, err
 	}
 
 	current, err := s.repo.GetBrief(ctx, tenantInfo)
 	if err != nil && !errortypes.IsNotFoundError(err) {
-		return err
+		return false, err
 	}
-	if current != nil && current.InputHash == hash {
-		return nil
-	}
-
-	text := emptyQueueText
-	if openCount(facts) > 0 {
-		text, err = s.writeBrief(ctx, tenantInfo, facts)
-		if err != nil {
-			return err
-		}
-		if text == "" {
-			return nil
-		}
+	if current != nil && current.InputHash == hash && current.LanesHash == lanes {
+		return false, nil
 	}
 
-	return s.repo.SaveBrief(ctx, &billingqueue.QueueBrief{
+	brief := &billingqueue.QueueBrief{
 		OrganizationID: tenantInfo.OrgID,
 		BusinessUnitID: tenantInfo.BuID,
-		Text:           text,
 		InputHash:      hash,
+		LanesHash:      lanes,
 		GeneratedAt:    timeutils.NowUnix(),
-	})
+	}
+	switch {
+	case current != nil && current.InputHash == hash:
+		brief.Text, brief.GeneratedAt = current.Text, current.GeneratedAt
+	case laneCount(facts.Lanes) == 0:
+		brief.Text = emptyQueueText
+	default:
+		brief.Text, err = s.writeBrief(ctx, tenantInfo, facts)
+		if err != nil || brief.Text == "" {
+			return false, err
+		}
+	}
+
+	if err = s.repo.SaveBrief(ctx, brief); err != nil {
+		return false, err
+	}
+
+	return true, nil
 }
 
 func (s *Service) briefFacts(
@@ -149,11 +207,49 @@ func (s *Service) briefFacts(
 	return &briefFacts{Lanes: lanes, Issues: issues, Concerns: concerns, Batches: batches}, nil
 }
 
+// writeBrief asks Nova for the brief, and once more with what was wrong when a
+// draft uses a figure it was not given or runs long. A brief that still fails is
+// written from the figures alone, so the queue never keeps a brief for figures it
+// no longer has.
 func (s *Service) writeBrief(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	facts *briefFacts,
 ) (string, error) {
+	allowed := allowedNumbers(facts)
+	problem := ""
+	for range briefAttempts {
+		text, err := s.draftBrief(ctx, tenantInfo, facts, problem)
+		if err != nil {
+			return "", err
+		}
+		problem = draftProblem(text, allowed)
+		if problem == "" {
+			return text, nil
+		}
+		s.l.Warn("rejected a billing queue brief draft", zap.String("problem", problem))
+	}
+
+	return factsBrief(facts), nil
+}
+
+func (s *Service) draftBrief(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	facts *briefFacts,
+	problem string,
+) (string, error) {
+	sections := []llmports.ContextSection{
+		{Title: "The queue now", Trusted: true, Content: briefLines(facts)},
+	}
+	if problem != "" {
+		sections = append(sections, llmports.ContextSection{
+			Title:   "What was wrong with your last draft",
+			Trusted: true,
+			Content: problem,
+		})
+	}
+
 	var answer briefAnswer
 	if _, err := s.nova.Run(ctx, &llmports.NovaTask{
 		Name:         aitask.TaskDailyBriefing,
@@ -166,25 +262,51 @@ func (s *Service) writeBrief(
 			"required":             []string{"text"},
 			"additionalProperties": false,
 		},
-		MaxTokens: briefMaxTokens,
-		Context: llmports.DelimitedContext{Sections: []llmports.ContextSection{
-			{Title: "The queue now", Trusted: true, Content: briefLines(facts)},
-		}},
+		MaxTokens:  briefMaxTokens,
+		Context:    llmports.DelimitedContext{Sections: sections},
 		TenantInfo: tenantInfo,
 	}, &answer); err != nil {
 		return "", fmt.Errorf("write billing queue brief: %w", err)
 	}
-	text := strings.TrimSpace(answer.Text)
-	if text == "" || len([]rune(text)) > briefRunes {
-		return "", nil
+
+	return strings.TrimSpace(answer.Text), nil
+}
+
+// draftProblem is what keeps a draft from being the brief, said so Nova can fix
+// it, or empty when the draft will do.
+func draftProblem(text string, allowed map[string]struct{}) string {
+	if text == "" {
+		return "The draft was empty. Write two to four sentences."
 	}
-	if bad := unknownNumbers(text, allowedNumbers(facts)); len(bad) > 0 {
-		s.l.Warn("discarded a billing queue brief with figures it was not given",
-			zap.Strings("figures", bad))
-		return "", nil
+	if len([]rune(text)) > briefRunes {
+		return fmt.Sprintf("The draft was too long. Keep it under %d characters.", briefRunes)
+	}
+	if bad := unknownNumbers(text, allowed); len(bad) > 0 {
+		return "The draft used figures you were not given: " + strings.Join(bad, ", ") +
+			". Use only the figures listed, written exactly as given; never count, add or compute one."
 	}
 
-	return text, nil
+	return ""
+}
+
+// factsBrief is the brief written from the figures alone, for when Nova cannot
+// write one that keeps to them.
+func factsBrief(facts *briefFacts) string {
+	parts := make([]string, 0, len(facts.Lanes))
+	for _, lane := range facts.Lanes {
+		parts = append(parts, fmt.Sprintf("%s: %s, %s.",
+			laneName(lane.Lane), itemCount(lane.Count), billingqueuereview.FormatMoney(lane.Total)))
+	}
+
+	return strings.Join(parts, " ")
+}
+
+func itemCount(n int) string {
+	if n == 1 {
+		return "1 item"
+	}
+
+	return fmt.Sprintf("%d items", n)
 }
 
 func briefLines(facts *briefFacts) string {
@@ -284,9 +406,9 @@ func laneName(lane billingqueue.Lane) string {
 	}
 }
 
-func openCount(facts *briefFacts) int {
+func laneCount(lanes []*billingqueueports.BillingQueueLaneStat) int {
 	total := 0
-	for _, lane := range facts.Lanes {
+	for _, lane := range lanes {
 		total += lane.Count
 	}
 
@@ -294,7 +416,15 @@ func openCount(facts *briefFacts) int {
 }
 
 func factsHash(facts *briefFacts) (string, error) {
-	raw, err := sonic.Marshal(facts)
+	return hashOf(facts)
+}
+
+func lanesHash(lanes []*billingqueueports.BillingQueueLaneStat) (string, error) {
+	return hashOf(lanes)
+}
+
+func hashOf(v any) (string, error) {
+	raw, err := sonic.Marshal(v)
 	if err != nil {
 		return "", err
 	}

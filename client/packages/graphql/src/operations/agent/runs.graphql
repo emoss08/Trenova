@@ -93,3 +93,32 @@ query AgentActivitySummary($since: Timestamp!) {
     approvedAsProposed
   }
 }
+
+fragment WorkingAgentRunFields on AgentRun {
+  id
+  agentDefinitionId
+  trigger
+  summary
+  subjectType
+  subjectLabel
+  status
+  startedAt
+  createdAt
+  definition {
+    id
+    name
+    icon
+    accent
+    template
+  }
+}
+
+query WorkingAgentRuns($input: DataTableConnectionInput!) {
+  agentRuns(input: $input) {
+    edges {
+      node {
+        ...WorkingAgentRunFields
+      }
+    }
+  }
+}

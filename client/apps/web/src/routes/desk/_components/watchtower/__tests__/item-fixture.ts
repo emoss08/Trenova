@@ -35,6 +35,7 @@ export function watchtowerItem(overrides: Partial<WatchtowerItem> = {}): Watchto
     dueLabel: "Minneapolis dock closes",
     dueSource: "Source",
     record: { kind: "shipment", noun: "Shipment", label: "SEED-SHP-007" },
+    panel: null,
     facts: [
       { label: "Customer", value: "Northline Foods", at: null },
       { label: "Appointment", value: null, at: 1_800_000_000 + 3600 },

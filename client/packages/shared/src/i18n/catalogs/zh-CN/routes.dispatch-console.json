@@ -278,7 +278,6 @@
   "Take back the approval for {0}": "撤回 {0} 的批准",
   "Take counter": "接受还价",
   "Take counter-offer": "接受还价",
-  "Tender exhausted": "派车要约已用尽",
   "Tender needs review": "派车要约需要审查",
   "The accepting carrier could not be assigned to the move automatically — the move may have gained coverage in the meantime, or the assignment was blocked. Assign the carrier manually with the regular carrier-assign flow, or cancel this tender.": "无法自动将接受要约的承运商分配至该运程 — 该运程可能已在此期间获得承接，或分配被阻止。请以常规的承运商分配流程手动分配，或取消此派车要约。",
   "The board didn't load": "看板无法加载",

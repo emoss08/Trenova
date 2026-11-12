@@ -12,7 +12,6 @@ enum WatchtowerSourceKind {
   ServiceFailure
   CarrierIntelEvent
   HOSViolation
-  WeatherAlert
   EDIInboundQuarantined
   BillingException
   DetentionOccurrence
@@ -109,6 +108,250 @@ enum WatchtowerAgentStep {
   Decide
   "Asking a person to approve what it drafted."
   Approve
+}
+
+"Which view an item's panel is drawn with."
+enum WatchtowerPanelKind {
+  "A stop and its window: missed, projected late, or at risk."
+  Stop
+  "A detention clock: free time, then billable time."
+  Clock
+  "Paperwork a record is waiting on."
+  Paper
+  "A message that arrived and waits on a person."
+  Message
+  "Credentials coming due for one person."
+  Expiry
+  "A move with nobody on it, or a tender every carrier passed on."
+  Coverage
+  "A carrier that has stopped checking in."
+  Contact
+  "An agent run that could not finish."
+  Run
+  "The accounting system: documents waiting, or the connection itself."
+  Books
+  "Money waiting on someone: an advance, a chargeback, an invoice that cannot go out."
+  Money
+  "Something on a record changed from one value to another."
+  Change
+  "An agent stopped and needs a person."
+  Ask
+  "A finding with advice."
+  Finding
+  "A file that could not be processed."
+  File
+  "A truck seen at a place with no arrival or departure recorded."
+  Sighting
+}
+
+enum WatchtowerStopRole {
+  Pickup
+  Delivery
+}
+
+enum WatchtowerStopVerdict {
+  "The window closed with no arrival recorded."
+  Missed
+  "Projected to arrive after the window closes."
+  Late
+  "Projected to arrive with little to spare."
+  AtRisk
+  "Arrived after the window closed."
+  ArrivedLate
+}
+
+"A stop and its window. A time of 0 is not known."
+type WatchtowerStopPanel {
+  role: WatchtowerStopRole!
+  verdict: WatchtowerStopVerdict!
+  place: String!
+  windowEnd: Timestamp!
+  "The projected arrival."
+  estimatedAt: Timestamp!
+  "When it arrived, for a stop that arrived late."
+  arrivedAt: Timestamp!
+  "The last position or check call the projection worked from."
+  lastHeardAt: Timestamp!
+  milesRemaining: Int!
+  "The projection is working from old information."
+  stale: Boolean!
+}
+
+"A detention clock. A time of 0 has not happened."
+type WatchtowerClockPanel {
+  place: String!
+  customer: String!
+  arrivedAt: Timestamp!
+  freeEndsAt: Timestamp!
+  departedAt: Timestamp!
+  freeMinutes: Int!
+  billableMinutes: Int!
+  "What has accrued, as money in words; empty while nothing has."
+  accrued: String!
+}
+
+type WatchtowerPaper {
+  name: String!
+  onFile: Boolean!
+}
+
+"Paperwork a delivered load is waiting on."
+type WatchtowerPaperPanel {
+  customer: String!
+  deliveredAt: Timestamp!
+  papers: [WatchtowerPaper!]!
+  "What the missing paper holds up, in words; empty when nothing is known to wait on it."
+  holds: String!
+}
+
+"A message that waits on a person."
+type WatchtowerMessagePanel {
+  fromName: String!
+  fromAddress: String!
+  subject: String!
+  "What Nova read the message as; empty when it could not say."
+  readAs: String!
+  "Why it waits on a person, in the source's words."
+  why: String!
+  receivedAt: Timestamp!
+  "Held back as unsafe."
+  held: Boolean!
+}
+
+type WatchtowerExpiringPaper {
+  name: String!
+  expiresAt: Timestamp!
+  "Whole days until it expires; negative once it has."
+  daysLeft: Int!
+}
+
+"One person's credentials coming due."
+type WatchtowerExpiryPanel {
+  who: String!
+  papers: [WatchtowerExpiringPaper!]!
+}
+
+"A move with nobody on it."
+type WatchtowerCoveragePanel {
+  startsAt: Timestamp!
+  reason: String!
+  "Every carrier in the routing guide passed or let the offer lapse."
+  exhausted: Boolean!
+  endedAt: Timestamp!
+}
+
+"A carrier that has gone quiet."
+type WatchtowerContactPanel {
+  who: String!
+  lastHeardAt: Timestamp!
+  "How often a check call is expected, in hours."
+  everyHours: Int!
+  "When the next check call was due."
+  dueAt: Timestamp!
+}
+
+"An agent run that could not finish."
+type WatchtowerRunPanel {
+  agent: String!
+  reason: String!
+  failedAt: Timestamp!
+}
+
+"The accounting system and what waits in it."
+type WatchtowerBooksPanel {
+  system: String!
+  "How many documents or payments wait; 0 when it is the connection itself."
+  count: Int!
+  since: Timestamp!
+  "When the authorization or certificate expires."
+  expiresAt: Timestamp!
+  "The connection is failing or was revoked."
+  down: Boolean!
+}
+
+enum WatchtowerMoneyStake {
+  "Advances a factor has not funded."
+  Advance
+  "What the organization would owe if a factor charges an invoice back."
+  Chargeback
+  "An invoice that cannot go out as it stands."
+  Invoice
+}
+
+"Money waiting on someone."
+type WatchtowerMoneyPanel {
+  stake: WatchtowerMoneyStake!
+  "Who it waits on: the factor, the customer."
+  party: String!
+  "The amount as money in words; empty when none is known."
+  amount: String!
+  "How many invoices it covers."
+  count: Int!
+  dueAt: Timestamp!
+  reason: String!
+}
+
+"Something that changed, from one value to another."
+type WatchtowerChangePanel {
+  who: String!
+  what: String!
+  from: String!
+  to: String!
+  "What identifies who: a DOT number."
+  ref: String!
+  at: Timestamp!
+}
+
+"An agent that stopped and needs a person."
+type WatchtowerAskPanel {
+  category: String!
+  "What it tried before it stopped."
+  tried: String!
+}
+
+"A finding and what to do about it."
+type WatchtowerFindingPanel {
+  advice: String!
+  detail: String!
+}
+
+"A file that could not be processed."
+type WatchtowerFilePanel {
+  name: String!
+  reason: String!
+  receivedAt: Timestamp!
+}
+
+"A truck seen at a place with nothing recorded."
+type WatchtowerSightingPanel {
+  "A departure was seen; otherwise an arrival."
+  departure: Boolean!
+  place: String!
+  seenAt: Timestamp!
+  why: String!
+}
+
+"""
+What is happening on an item, in the shape made for it. Exactly one of the
+fields named by `kind` is set.
+"""
+type WatchtowerPanel {
+  kind: WatchtowerPanelKind!
+  stop: WatchtowerStopPanel
+  clock: WatchtowerClockPanel
+  paper: WatchtowerPaperPanel
+  message: WatchtowerMessagePanel
+  expiry: WatchtowerExpiryPanel
+  coverage: WatchtowerCoveragePanel
+  contact: WatchtowerContactPanel
+  run: WatchtowerRunPanel
+  books: WatchtowerBooksPanel
+  money: WatchtowerMoneyPanel
+  change: WatchtowerChangePanel
+  ask: WatchtowerAskPanel
+  finding: WatchtowerFindingPanel
+  file: WatchtowerFilePanel
+  sighting: WatchtowerSightingPanel
 }
 
 "One fact about the record behind an item, as the source reports it."
@@ -226,6 +469,8 @@ type WatchtowerItem {
   impact: [String!]!
   "The events that led here, oldest first."
   trail: [WatchtowerTrailEvent!]!
+  "What is happening, typed for the view made for it; absent when the item is read from its facts."
+  panel: WatchtowerPanel
   "The agent best placed to take the item: one that subscribes to its event."
   suggestedAgentId: ID
   suggestedAgent: AgentDefinition

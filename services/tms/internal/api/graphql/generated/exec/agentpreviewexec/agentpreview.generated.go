@@ -29,6 +29,7 @@ var Shard = &gqlexec.Shard{
 		{Name: "AgentPreviewRecordChange", Implementors: []string{"AgentPreviewRecordChange"}},
 		{Name: "AgentPreviewRecordLink", Implementors: []string{"AgentPreviewRecordLink"}},
 		{Name: "AgentPreviewRef", Implementors: []string{"AgentPreviewRef"}},
+		{Name: "AgentPreviewRemedy", Implementors: []string{"AgentPreviewRemedy"}},
 		{Name: "AgentPreviewStaleness", Implementors: []string{"AgentPreviewStaleness"}},
 		{Name: "AgentPreviewWarning", Implementors: []string{"AgentPreviewWarning"}},
 		{Name: "AgentProposalPreview", Implementors: []string{"AgentProposalPreview"}},
@@ -770,6 +771,67 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
 		}},
+		{Object: "AgentPreviewRemedy", Fields: []*gqlexec.Field{
+			{
+				Name:     "kind",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agentpreview.PreviewRemedy)
+					return obj.Kind, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "recordKind",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agentpreview.PreviewRemedy)
+					return obj.RecordKind, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "recordId",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agentpreview.PreviewRemedy)
+					return obj.RecordID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "recordLabel",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agentpreview.PreviewRemedy)
+					return obj.RecordLabel, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "takenAt",
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agentpreview.PreviewRemedy)
+					return obj.TakenAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
+			},
+			{
+				Name:     "takenNote",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agentpreview.PreviewRemedy)
+					return obj.TakenNote, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+		}},
 		{Object: "AgentPreviewStaleness", Fields: []*gqlexec.Field{
 			{
 				Name:     "pinned",
@@ -855,6 +917,17 @@ var Shard = &gqlexec.Shard{
 					return obj.Reasons, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentPreviewReason2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentpreviewᚐPreviewReasonᚄ),
+			},
+			{
+				Name:      "remedies",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "AgentPreviewRemedy",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agentpreview.PreviewWarning)
+					return obj.Remedies, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNAgentPreviewRemedy2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentpreviewᚐPreviewRemedyᚄ),
 			},
 		}},
 		{Object: "AgentProposalPreview", Fields: []*gqlexec.Field{
@@ -1357,6 +1430,18 @@ func marshalNAgentPreviewRecordChange2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinte
 	}.Marshal(ctx, ec, sel, v)
 }
 
+func marshalNAgentPreviewRemedy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentpreviewᚐPreviewRemedy(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agentpreview.PreviewRemedy) graphql.Marshaler {
+	return ec.MarshalType(ctx, sel, "AgentPreviewRemedy", &v)
+}
+
+func marshalNAgentPreviewRemedy2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentpreviewᚐPreviewRemedyᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []agentpreview.PreviewRemedy) graphql.Marshaler {
+	return gqlexec.List[agentpreview.PreviewRemedy]{
+		Elem:        marshalNAgentPreviewRemedy2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentpreviewᚐPreviewRemedy,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
 func marshalNAgentPreviewWarning2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentpreviewᚐPreviewWarning(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agentpreview.PreviewWarning) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "AgentPreviewWarning", &v)
 }
@@ -1510,5 +1595,13 @@ func marshalOInt2ᚖint64(ctx context.Context, ec *gqlexec.Exec, sel ast.Selecti
 
 func marshalOString2string(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v string) graphql.Marshaler {
 	res := graphql.MarshalString(v)
+	return res
+}
+
+func marshalOTimestamp2ᚖint64(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *int64) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalInt64(*v)
 	return res
 }

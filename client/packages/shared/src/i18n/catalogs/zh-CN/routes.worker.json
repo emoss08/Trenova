@@ -929,6 +929,7 @@
   "The query ID on the Clearinghouse response.": "Clearinghouse 回复上的查询 ID。",
   "The query ID the Clearinghouse assigned, for matching the answer when it comes back.": "Clearinghouse 分配的查询 ID，用于在收到答复时进行比对。",
   "The reason recorded on the event itself.": "记录于事件本身的原因。",
+  "The record": "记录",
   "The record stays as it is. The driver is told, with your reason.": "记录保持原样。系统会连同您填写的原因一并通知驾驶员。",
   "The report could not be loaded. Try again in a moment.": "无法加载报表。请稍后再试。",
   "The required courses come from the driver type's course matrix; a required course that was never assigned shows as Missing. One record speaks for each course: an open assignment first, otherwise the strongest closed record, with a completion or waiver outranking a lapsed one and a lapsed one outranking a failure.": "必修课程来自司机类型的课程矩阵；从未分配的必修课程会显示为“缺失”。每门课程以一条记录为准：优先采用开设中的分配，否则采用最具效力的已结束记录，其中“已完成”或“已豁免”优先于“已失效”，“已失效”又优先于“未通过”。",

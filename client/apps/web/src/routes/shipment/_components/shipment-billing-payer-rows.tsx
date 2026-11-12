@@ -85,7 +85,7 @@ export function ShipmentBillingPayerRows({
                 </Link>
               ) : queueItem ? (
                 <Link
-                  to={`/billing/queue?item=${queueItem.id}&includePosted=true`}
+                  to={`/billing/queue?item=${queueItem.id}&includeClosed=true`}
                   className="inline-flex items-center gap-1 hover:underline"
                 >
                   <PlainBillingQueueStatusBadge status={queueItem.status} />

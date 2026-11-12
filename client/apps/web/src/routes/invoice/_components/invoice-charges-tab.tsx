@@ -500,7 +500,7 @@ function InvoiceChargesEmpty({ invoice }: { invoice: Invoice }) {
   // linking to it would send the biller to one shipment of many.
   const queueItemAction = invoiceBillsSingleShipment(invoice.scope) ? (
     <Link
-      to={`/billing/queue?item=${invoice.billingQueueItemId}&includePosted=true`}
+      to={`/billing/queue?item=${invoice.billingQueueItemId}&includeClosed=true`}
       className={buttonVariants({ variant: "outline", size: "sm" })}
     >
       {t("Open queue item")}

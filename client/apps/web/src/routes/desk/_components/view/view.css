@@ -1,0 +1,116 @@
+/*
+ * A composed view on the Desk's canvas: what an agent laid out in answer to a
+ * question, read at full width with its conversation in Nova's margin.
+ * Prototype: `.cv`, `.cv-ask`, `.prov`, `.live`.
+ */
+.dk-vw-scroll {
+  height: 100%;
+  min-height: 0;
+  overflow: auto;
+  background: var(--dsk-canvas);
+}
+.dk-vw {
+  max-width: 1080px;
+  padding: 26px 32px 48px;
+}
+.dk-vw-ask {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-size: 12px;
+  color: var(--dsk-subtle);
+}
+.dk-vw-ask > span:first-child {
+  flex: none;
+}
+.dk-vw-q {
+  overflow: hidden;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: var(--dsk-sunken);
+  font-size: 12.5px;
+  color: var(--dsk-fg);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dk-vw-h {
+  margin: 14px 0 0;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.018em;
+  color: var(--dsk-fg);
+  text-wrap: balance;
+}
+.dk-vw-prov {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
+.dk-vw-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 20px;
+  padding: 0 7px;
+  border: 1px solid var(--dsk-b);
+  border-radius: 4px;
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--dsk-subtle);
+}
+.dk-vw-live i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--dsk-success-fg);
+}
+.dk-vw-sp {
+  flex: 1;
+}
+.dk-vw-body {
+  overflow: hidden;
+  margin-top: 20px;
+  border: 1px solid var(--dsk-b);
+  border-radius: 6px;
+  background: var(--dsk-card);
+}
+/* An extraction keeps its document in view while the reading scrolls, so nothing here may scroll or hide it. */
+.dk-vw:has(.dk-ex) {
+  max-width: 1280px;
+}
+.dk-vw-body:has(> .dk-ex) {
+  overflow: clip;
+}
+.dk-vw-sk {
+  display: grid;
+  gap: 10px;
+  margin-top: 24px;
+}
+.dk-vw-sk span {
+  display: block;
+  border-radius: 6px;
+}
+.dk-vw-sk span:nth-child(1) {
+  width: 60%;
+  height: 34px;
+}
+.dk-vw-sk span:nth-child(2) {
+  height: 64px;
+}
+.dk-vw-sk span:nth-child(3) {
+  height: 220px;
+}
+@container mainc (max-width: 720px) {
+  .dk-vw {
+    padding: 20px 16px 40px;
+  }
+  .dk-vw-h {
+    font-size: 20px;
+  }
+}

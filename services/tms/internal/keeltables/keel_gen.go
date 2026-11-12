@@ -55,6 +55,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/analysis/analysisdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact/assistantartifactdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/briefing/briefingdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/caseowner/caseownerdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationchapter/conversationchapterdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationqueue/conversationqueuedb"
@@ -65,6 +66,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/extensionwebwatch/extensionwebwatchdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/insight/insightdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/palettequestion/palettequestiondb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/recordcase/recordcasedb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/recordshare/recordsharedb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/shipmentbrief/shipmentbriefdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/shipmentimportchat/shipmentimportchatdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower/watchtowerdb"
@@ -90,7 +93,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment/invoiceadjustmentdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicedispute/invoicedisputedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicerun/invoicerundb"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceshare/invoicesharedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/latecharge/latechargedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/paymentreminder/paymentreminderdb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture/capturedb"
@@ -594,7 +596,6 @@ func All() []*schema.Table {
 		invoicerundb.InvoiceRunGroupItemsSchema(),
 		invoicerundb.InvoiceRunGroupsSchema(),
 		invoicerundb.InvoiceRunsSchema(),
-		invoicesharedb.InvoiceSharesSchema(),
 		invoicedb.InvoicesSchema(),
 		workerdb.JobPositionsSchema(),
 		journalentrydb.JournalBatchesSchema(),
@@ -656,6 +657,10 @@ func All() []*schema.Table {
 		ratesimulationdb.RateSimulationsSchema(),
 		ratezonedb.RateZoneMembersSchema(),
 		ratezonedb.RateZonesSchema(),
+		recordcasedb.OptionsSchema(),
+		caseownerdb.OwnersSchema(),
+		recordcasedb.ReadingsSchema(),
+		recordsharedb.SharesSchema(),
 		recurringpaydb.RecurringDeductionsSchema(),
 		recurringpaydb.RecurringEarningsSchema(),
 		recurringshipmentdb.RecurringShipmentRunsSchema(),

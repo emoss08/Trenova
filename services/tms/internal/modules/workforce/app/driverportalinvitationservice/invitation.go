@@ -32,6 +32,10 @@ type InviteWorkerRequest struct {
 	TenantInfo pagination.TenantInfo
 	WorkerID   pulid.ID
 	Email      string
+	// ReplacePending sends the invitation again: an invitation still open is
+	// voided and a new one, with a new link, takes its place. Without it a
+	// pending invitation refuses a second.
+	ReplacePending bool
 }
 
 type InviteWorkerResult struct {
@@ -222,6 +226,10 @@ func (s *Service) ensureNoPendingInvitation(
 		return err
 	}
 	if existing.IsAcceptable(timeutils.NowUnix()) {
+		if req.ReplacePending {
+			return s.portalRepo.RevokePortalAccess(ctx, req.TenantInfo, req.WorkerID)
+		}
+
 		return errortypes.NewValidationError(
 			"workerId",
 			errortypes.ErrInvalidOperation,

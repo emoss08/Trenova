@@ -3,6 +3,7 @@ import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import { assistant } from "@/lib/queries/assistant";
 import { useSharedItems } from "@/hooks/use-keyed-sharing";
 import { useAssistantStore } from "@/stores/assistant-store";
+import { composerDrafts, draftKey, useDraftText } from "@/stores/composer-draft-store";
 import { useRealtimeStore } from "@/stores/realtime-store";
 import type {
   AssistantArtifactEvent,
@@ -128,12 +129,12 @@ export function useThreadModel({
   const t = useT();
   const dismissed = useAssistantStore((state) => state.dismissedSuggestions);
   const dismissSuggestion = useAssistantStore((state) => state.dismissSuggestion);
-  const draft = useAssistantStore((state) => state.drafts[thread.id] ?? "");
-  const setDraft = useAssistantStore((state) => state.setDraft);
+  const draftAt = draftKey.thread(thread.id);
+  const draft = useDraftText(draftAt);
   const timezone = useAuthStore((state) => state.user?.timezone) || "UTC";
   const onDraftChange = useCallback(
-    (value: string) => setDraft(thread.id, value),
-    [setDraft, thread.id],
+    (value: string) => composerDrafts.setText(draftAt, value),
+    [draftAt],
   );
 
   const queryClient = useQueryClient();

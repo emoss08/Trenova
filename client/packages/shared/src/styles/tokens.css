@@ -1007,6 +1007,11 @@
      a `tracking-tight` at every call site. */
   --text-*: initial;
 
+  /* The Desk's two half-pixel sizes, from its approved prototype. They carry
+     no line-height of their own: the Desk sets that where the text sits. */
+  --text-dsk-sm: 0.71875rem; /* 11.5px */
+  --text-dsk-base: 0.78125rem; /* 12.5px */
+
   --text-3xs: 0.5625rem; /* 9px  */
   --text-3xs--line-height: 0.875rem;
   --text-2xs: 0.625rem; /* 10px */

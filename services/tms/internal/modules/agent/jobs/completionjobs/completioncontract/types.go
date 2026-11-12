@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/briefingports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/recordcaseports"
 )
 
 const (
@@ -23,9 +24,14 @@ const (
 	ListAIProviderModelsWorkflowName = "ListAIProviderModelsWorkflow"
 	TestAIProviderDraftWorkflowName  = "TestAIProviderDraftWorkflow"
 	WriteBriefingWorkflowName        = "WriteBriefingWorkflow"
+	WriteCaseReadingWorkflowName     = "WriteCaseReadingWorkflow"
 )
 
 const (
+	// caseReadingTimeout bounds writing one case's reading, which nobody
+	// waits on: the case shows what was computed until it lands.
+	caseReadingTimeout = 3 * time.Minute
+
 	// DefaultWait is how long a caller without a deadline of its own waits,
 	// the API's own request timeout.
 	DefaultWait = 55 * time.Second
@@ -61,4 +67,8 @@ type TestAIProviderDraftPayload struct {
 
 type WriteBriefingPayload struct {
 	Request briefingports.WriteBriefingRequest `json:"request"`
+}
+
+type WriteCaseReadingPayload struct {
+	Request *recordcaseports.WriteReadingRequest `json:"request"`
 }

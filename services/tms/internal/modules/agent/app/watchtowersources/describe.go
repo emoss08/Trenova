@@ -5,6 +5,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/emoss08/trenova/shared/money"
+
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtoweritem"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentexception"
@@ -21,7 +23,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/weatheralert"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintelevent"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -52,7 +54,7 @@ const (
 	pathEDIInbound      = "/edi/inbound-files"
 	pathBillingQueue    = "/billing/queue"
 	pathDetentionDesk   = "/detention/desk"
-	pathInbox           = "/inbox"
+	pathInbox           = "/desk/triage"
 )
 
 const (
@@ -96,7 +98,11 @@ func DescribeInsight(entity *insight.Insight) watchtowerports.WatchtowerItemInpu
 		SubjectID:   entity.ID,
 		EventKind:   agenttrigger.EventInsightDetected,
 		Path:        path,
-		OccurredAt:  entity.DetectedAt,
+		Panel: &watchtower.Panel{
+			Kind:    watchtower.PanelFinding,
+			Finding: &watchtower.FindingPanel{Advice: entity.Recommendation, Detail: entity.Narrative},
+		},
+		OccurredAt: entity.DetectedAt,
 	}
 }
 
@@ -164,6 +170,7 @@ func DescribePlan(
 		Path:       pathDecisions + "?run=" + entity.RunID.String(),
 		Facts: []watchtower.Fact{
 			watchtoweritem.Fact("Agent", who),
+			watchtoweritem.Fact("Change", title),
 			watchtoweritem.Fact("Steps", strconv.Itoa(entity.StepCount)),
 		},
 		OccurredAt: entity.CreatedAt,
@@ -189,7 +196,11 @@ func DescribeFailedRun(
 	if entity.StartedAt > 0 {
 		trail = append(trail, watchtower.TrailEvent{At: entity.StartedAt, Text: who + " started"})
 	}
-	if reason := strings.TrimSpace(entity.ErrorMessage); reason != "" {
+	reason := RunFailureReason(entity.ErrorMessage)
+	summary := reason
+	if reason == "" {
+		summary = runFailedWithoutReason
+	} else {
 		trail = append(trail, watchtower.TrailEvent{At: occurredAt, Text: reason})
 	}
 
@@ -202,16 +213,19 @@ func DescribeFailedRun(
 		SourceID:    entity.ID.String(),
 		Severity:    watchtower.SeverityWarning,
 		Title:       who + " could not finish a run",
-		Summary:     stringutils.FirstNonEmpty(entity.ErrorMessage, entity.Summary),
+		Summary:     summary,
 		SubjectType: entity.SubjectType,
 		SubjectID:   entity.SubjectID,
 		Path:        pathAgentControl + "?tab=activity&view=runs&run=" + entity.ID.String(),
 		Facts: []watchtower.Fact{
 			watchtoweritem.Fact("Agent", who),
-			watchtoweritem.Fact("Error", entity.ErrorMessage),
-			watchtoweritem.Fact("Run", entity.ID.String()),
+			watchtoweritem.Fact("Why", reason),
 		},
-		Trail:      trail,
+		Trail: trail,
+		Panel: &watchtower.Panel{
+			Kind: watchtower.PanelRun,
+			Run:  &watchtower.RunPanel{Agent: who, Reason: reason, FailedAt: occurredAt},
+		},
 		OccurredAt: occurredAt,
 	}
 }
@@ -232,16 +246,42 @@ func DescribeException(entity *agentexception.AgentException) watchtowerports.Wa
 		SourceKind:  watchtower.SourceAgentException,
 		SourceID:    entity.ID.String(),
 		Severity:    severity,
-		Title:       "Agent exception: " + textcase.HumanizeSnakeCase(string(entity.Category)),
+		Title:       exceptionTitle(entity.Category),
 		Summary:     entity.AttemptSummary,
 		SubjectType: entity.SubjectType,
 		SubjectID:   entity.SubjectID,
 		Path:        pathAgentControl + "?tab=activity&view=exceptions&exception=" + entity.ID.String(),
 		Facts: []watchtower.Fact{
-			watchtoweritem.Fact("Category", textcase.HumanizeSnakeCase(string(entity.Category))),
+			watchtoweritem.Fact("Category", textcase.HumanizeCamelCaseSentence(string(entity.Category))),
+		},
+		Panel: &watchtower.Panel{
+			Kind: watchtower.PanelAsk,
+			Ask: &watchtower.AskPanel{
+				Category: exceptionCategoryWords(entity.Category),
+				Tried:    entity.AttemptSummary,
+			},
 		},
 		OccurredAt: entity.CreatedAt,
 	}
+}
+
+func exceptionCategoryWords(category agentexception.ExceptionCategory) string {
+	if category == "" || category == agentexception.CategoryOther {
+		return ""
+	}
+
+	return textcase.HumanizeCamelCaseSentence(string(category))
+}
+
+// exceptionTitle says what an agent stopped on, in the words a person uses
+// for it rather than the category's own name.
+func exceptionTitle(category agentexception.ExceptionCategory) string {
+	if category == "" || category == agentexception.CategoryOther {
+		return "An agent needs a person"
+	}
+
+	return "An agent needs a person: " +
+		strings.ToLower(textcase.HumanizeCamelCaseSentence(string(category)))
 }
 
 // DescribeServiceFailure is a late or missed stop.
@@ -285,8 +325,27 @@ func DescribeServiceFailure(
 			watchtoweritem.Fact("Late by", watchtoweritem.MinutesPhrase(entity.LateMinutes)),
 			watchtoweritem.FactAt("Detected", entity.DetectedAt),
 		},
+		Panel:      serviceFailurePanel(entity),
 		OccurredAt: entity.DetectedAt,
 	}
+}
+
+func serviceFailurePanel(entity *servicefailure.ServiceFailure) *watchtower.Panel {
+	stop := &watchtower.StopPanel{
+		Role:      watchtower.StopRoleDelivery,
+		Verdict:   watchtower.StopArrivedLate,
+		WindowEnd: entity.ScheduledCutoff,
+		ArrivedAt: entity.ActualArrival,
+	}
+	if entity.StopType == shipmentvocab.StopTypePickup {
+		stop.Role = watchtower.StopRolePickup
+	}
+	if entity.Type == servicefailure.TypeMissedDelivery ||
+		entity.Type == servicefailure.TypeMissedPickup {
+		stop.Verdict = watchtower.StopMissed
+	}
+
+	return &watchtower.Panel{Kind: watchtower.PanelStop, Stop: stop}
 }
 
 // CarrierIntelEventOnTower reports whether a change belongs on the feed.
@@ -339,51 +398,25 @@ func DescribeCarrierIntelEvent(
 			watchtoweritem.Fact("Change", textcase.HumanizeSnakeCase(string(entity.Category))),
 			watchtoweritem.FactAt("Detected", entity.DetectedAt),
 		},
+		Panel: &watchtower.Panel{
+			Kind: watchtower.PanelChange,
+			Change: &watchtower.ChangePanel{
+				Who:  name,
+				What: textcase.HumanizeSnakeCase(string(entity.Category)),
+				Ref:  dotRef(entity.DOTNumber),
+				At:   entity.DetectedAt,
+			},
+		},
 		OccurredAt: entity.DetectedAt,
 	}
 }
 
-// WeatherSeverity maps the weather service's wording to the tower's. Only
-// a severe or extreme alert reaches the tower; the rest is the map's.
-func WeatherSeverity(alert *weatheralert.WeatherAlert) (watchtower.Severity, bool) {
-	switch strings.ToLower(alert.Severity) {
-	case "extreme":
-		return watchtower.SeverityCritical, true
-	case "severe":
-		return watchtower.SeverityWarning, true
-	default:
-		return "", false
-	}
-}
-
-// DescribeWeatherAlert is a severe or extreme weather alert in an area the
-// organization runs through.
-func DescribeWeatherAlert(entity *weatheralert.WeatherAlert) watchtowerports.WatchtowerItemInput {
-	severity, _ := WeatherSeverity(entity)
-	occurredAt := entity.CreatedAt
-	if entity.Effective != nil && *entity.Effective > 0 {
-		occurredAt = *entity.Effective
+func dotRef(number string) string {
+	if number == "" {
+		return ""
 	}
 
-	return watchtowerports.WatchtowerItemInput{
-		TenantInfo: pagination.TenantInfo{
-			OrgID: entity.OrganizationID,
-			BuID:  entity.BusinessUnitID,
-		},
-		SourceKind: watchtower.SourceWeatherAlert,
-		SourceID:   entity.ID.String(),
-		Severity:   severity,
-		Title:      stringutils.FirstNonEmpty(entity.Headline, entity.Event),
-		Summary:    entity.AreaDesc,
-		Path:       watchtoweritem.PathDispatchConsole,
-		Facts: []watchtower.Fact{
-			watchtoweritem.Fact("Event", entity.Event),
-			watchtoweritem.Fact("Severity", entity.Severity),
-			watchtoweritem.FactAtPtr("Ends", entity.Ends),
-		},
-		Deadline:   watchtoweritem.DeadlineAtPtr(entity.Expires, "Alert expires"),
-		OccurredAt: occurredAt,
-	}
+	return "DOT " + number
 }
 
 // DescribeQuarantinedFile is an EDI file that could not be processed.
@@ -414,6 +447,14 @@ func DescribeQuarantinedFile(
 				"Received",
 				intutils.FirstPositive(entity.ReceivedAt, entity.CreatedAt),
 			),
+		},
+		Panel: &watchtower.Panel{
+			Kind: watchtower.PanelFile,
+			File: &watchtower.FilePanel{
+				Name:       entity.FileName,
+				Reason:     entity.FailureReason,
+				ReceivedAt: intutils.FirstPositive(entity.ReceivedAt, entity.CreatedAt),
+			},
 		},
 		OccurredAt: intutils.FirstPositive(entity.ReceivedAt, entity.CreatedAt),
 	}
@@ -447,6 +488,13 @@ func DescribeBillingException(
 		Facts: []watchtower.Fact{
 			watchtoweritem.Fact("Reason", reason),
 		},
+		Panel: &watchtower.Panel{
+			Kind: watchtower.PanelMoney,
+			Money: &watchtower.MoneyPanel{
+				Stake:  watchtower.StakeInvoice,
+				Reason: stringutils.FirstNonEmpty(entity.ExceptionNotes, reason),
+			},
+		},
 		OccurredAt: entity.UpdatedAt,
 	}
 }
@@ -472,7 +520,7 @@ func DescribeDetentionOccurrence(
 		summary += " for " + entity.CustomerName
 	}
 	if !entity.BillableAmount.IsZero() {
-		summary += ", " + entity.BillableAmount.StringFixed(2) + " " + entity.Currency
+		summary += ", " + money.Display(entity.Currency, entity.BillableAmount)
 	}
 
 	accruing := entity.BillableMinutes > 0
@@ -489,7 +537,7 @@ func DescribeDetentionOccurrence(
 	}
 	impact := make([]string, 0, 2)
 	if !entity.BillableAmount.IsZero() {
-		accrued := entity.BillableAmount.StringFixed(2) + " " + entity.Currency
+		accrued := money.Display(entity.Currency, entity.BillableAmount)
 		facts = append(facts, watchtoweritem.Fact("Accrued", accrued))
 		impact = append(impact, accrued+" so far")
 	}
@@ -532,9 +580,31 @@ func DescribeDetentionOccurrence(
 		Facts:       facts,
 		Impact:      impact,
 		Trail:       trail,
+		Panel:       detentionPanel(entity, where),
 		Deadline:    watchtoweritem.DeadlineAt(entity.FreeTimeExpiresAt, dueLabel),
 		OccurredAt:  entity.ClockStartAt,
 	}
+}
+
+func detentionPanel(entity *detention.DetentionOccurrence, where string) *watchtower.Panel {
+	clock := &watchtower.ClockPanel{
+		Place:           where,
+		Customer:        entity.CustomerName,
+		FreeEndsAt:      entity.FreeTimeExpiresAt,
+		FreeMinutes:     int64(entity.FreeMinutesGranted),
+		BillableMinutes: int64(entity.BillableMinutes),
+	}
+	if entity.ArrivedAt != nil {
+		clock.ArrivedAt = *entity.ArrivedAt
+	}
+	if entity.DepartedAt != nil {
+		clock.DepartedAt = *entity.DepartedAt
+	}
+	if !entity.BillableAmount.IsZero() {
+		clock.Accrued = money.Display(entity.Currency, entity.BillableAmount)
+	}
+
+	return &watchtower.Panel{Kind: watchtower.PanelClock, Clock: clock}
 }
 
 // ExpiringPaper is one credential coming due, in the words the desk uses
@@ -612,8 +682,25 @@ func DescribeExpiringCredentials(entity ExpiringCredentials) watchtowerports.Wat
 		Path:        panelPath(pathWorkers, entity.WorkerID.String()),
 		Record:      watchtoweritem.ResourceRecord(permission.ResourceWorker, who),
 		Facts:       facts,
+		Panel:       expiryPanel(who, entity.Papers),
 		Deadline:    deadline,
 		OccurredAt:  entity.OccurredAt,
+	}
+}
+
+func expiryPanel(who string, papers []ExpiringPaper) *watchtower.Panel {
+	out := make([]watchtower.ExpiringPaper, 0, len(papers))
+	for _, paper := range papers {
+		out = append(out, watchtower.ExpiringPaper{
+			Name:      paper.Name,
+			ExpiresAt: paper.ExpiresAt,
+			DaysLeft:  paper.DaysLeft,
+		})
+	}
+
+	return &watchtower.Panel{
+		Kind:   watchtower.PanelExpiry,
+		Expiry: &watchtower.ExpiryPanel{Who: who, Papers: out},
 	}
 }
 
@@ -693,6 +780,10 @@ func DescribeMoveCoverageRisk(entity UncoveredMove) watchtowerports.WatchtowerIt
 			watchtoweritem.FactAt("Starts", entity.StartsAt),
 			watchtoweritem.Fact("Reason", entity.Reason),
 		},
+		Panel: &watchtower.Panel{
+			Kind:     watchtower.PanelCoverage,
+			Coverage: &watchtower.CoveragePanel{StartsAt: entity.StartsAt, Reason: entity.Reason},
+		},
 		Deadline:   watchtoweritem.DeadlineAt(entity.StartsAt, "Move starts"),
 		OccurredAt: entity.StartsAt,
 	}
@@ -732,25 +823,56 @@ func DescribeInboundMessage(
 		),
 		Facts: []watchtower.Fact{
 			watchtoweritem.Fact("From", entity.FromAddress),
-			watchtoweritem.Fact("Kind", string(entity.Classification)),
+			watchtoweritem.Fact(
+				"Kind",
+				textcase.HumanizeCamelCaseSentence(string(entity.Classification)),
+			),
 			watchtoweritem.FactAt(
 				"Received",
 				intutils.FirstPositive(entity.ReceivedAt, entity.CreatedAt),
 			),
 		},
+		Panel:      inboundMessagePanel(entity),
 		OccurredAt: intutils.FirstPositive(entity.ReceivedAt, entity.CreatedAt),
 	}
 }
 
+func inboundMessagePanel(entity *inboundmessage.InboundMessage) *watchtower.Panel {
+	readAs := ""
+	if entity.Classification != "" && entity.Classification != inboundmessage.ClassificationOther {
+		readAs = textcase.HumanizeCamelCaseSentence(string(entity.Classification))
+	}
+
+	return &watchtower.Panel{
+		Kind: watchtower.PanelMessage,
+		Message: &watchtower.MessagePanel{
+			FromName:    entity.FromName,
+			FromAddress: entity.FromAddress,
+			Subject:     entity.Subject,
+			ReadAs:      readAs,
+			Why: stringutils.FirstNonEmpty(
+				entity.ReviewNote,
+				entity.FailureText,
+				entity.MatchReason,
+			),
+			ReceivedAt: intutils.FirstPositive(entity.ReceivedAt, entity.CreatedAt),
+			Held:       entity.Status == inboundmessage.StatusQuarantined,
+		},
+	}
+}
+
 // inboundMessageTitle leads with what the message is, because that is what
-// decides who picks it up. An unclassified one says so rather than guessing.
+// decides who picks it up. One that is unclassified, or classed as nothing in
+// particular, says so rather than guessing.
 func inboundMessageTitle(entity *inboundmessage.InboundMessage) string {
 	subject := stringutils.FirstNonEmpty(entity.Subject, "(no subject)")
-	if entity.Classification == "" {
+	if entity.Classification == "" ||
+		entity.Classification == inboundmessage.ClassificationOther {
 		return "Message needs review: " + subject
 	}
 
-	return string(entity.Classification) + " needs review: " + subject
+	return textcase.HumanizeCamelCaseSentence(string(entity.Classification)) +
+		" needs review: " + subject
 }
 
 // inboundMessageSummary says who it is from and what, if anything, it was

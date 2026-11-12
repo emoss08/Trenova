@@ -1577,7 +1577,7 @@ func (s *ShipmentSeed) createShipments(
 	for i := range allShipments {
 		shipmentIDs = append(shipmentIDs, allShipments[i].ID)
 	}
-	if err = shipmentprojection.RefreshAcrossTenants(ctx, db, shipmentIDs...); err != nil {
+	if err = shipmentprojection.Refresh(ctx, db, shipmentIDs...); err != nil {
 		return fmt.Errorf("refresh shipment projections: %w", err)
 	}
 

@@ -56,7 +56,7 @@ func listQuery(
 	bq := billingqueuedb.BillingQueueItems
 
 	return bq.Where(
-		keel.When(!req.IncludePosted, bq.Status.Ne(billingqueue.StatusPosted)),
+		billingqueueprojection.Unclosed(req.IncludeClosed),
 		laneFilter(req),
 	)
 }

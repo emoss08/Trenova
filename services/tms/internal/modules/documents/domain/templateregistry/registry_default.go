@@ -28,7 +28,7 @@ func Default() *templatecatalog.Registry { return defaultRegistry() }
 func NewRegistry() *templatecatalog.Registry {
 	return templatecatalog.New(
 		invoicetemplate.RegisterBillingKinds,
-		invoicetemplate.RegisterInvoiceShareKinds,
+		notificationtemplate.RegisterRecordShareKinds,
 		invoicetemplate.RegisterPaymentReminderKinds,
 		statementtemplate.RegisterCustomerStatementKinds,
 		factoringtemplate.RegisterFactoringNoaKinds,

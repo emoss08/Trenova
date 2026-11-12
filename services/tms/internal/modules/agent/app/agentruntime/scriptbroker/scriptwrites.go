@@ -263,6 +263,7 @@ func (b *Broker) Settle(
 				Definition:     req.Definition,
 				HolderCeiling:  p.Beyond,
 				Unattended:     req.Unattended,
+				Conversation:   req.ThreadID.IsNotNil() && !req.Unattended,
 				Taint:          taint,
 				MoneyAllowance: b.s.MoneyAllowance(req, p.MoneySpent),
 				FromScript:     true,

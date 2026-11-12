@@ -65,7 +65,8 @@ export function mayMoveFocusWithin(scope: Element | null): boolean {
   return (
     !isTypingTarget(active) ||
     ((active instanceof HTMLTextAreaElement || active instanceof HTMLInputElement) &&
-      active.value === "")
+      active.value === "") ||
+    (active instanceof HTMLElement && active.isContentEditable && active.textContent === "")
   );
 }
 

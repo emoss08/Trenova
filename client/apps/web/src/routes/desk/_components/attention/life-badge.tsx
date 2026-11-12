@@ -2,7 +2,8 @@ import type { DeskActivityOutcome, DeskAttentionItem } from "@/lib/graphql/desk-
 import { DeskIcon, type DeskIconName } from "@/components/desk-chat/desk-icons";
 import { NovaBadge } from "@trenova/shared/components/ui/nova-badge";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
-import { cn } from "@trenova/shared/lib/utils";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import type { BadgeTone } from "@trenova/shared/types/badge";
 
 /**
  * Where a piece of work stands, in the one vocabulary the Desk uses for it
@@ -18,14 +19,14 @@ export type DeskLife =
   | "simulated"
   | "declined";
 
-const TONE: Record<DeskLife, string> = {
-  looking: "",
-  drafted: "dk-warn",
-  failed: "dk-crit",
-  auto: "dk-ok",
-  done: "dk-ok",
-  simulated: "dk-dash",
-  declined: "",
+const TONE: Record<DeskLife, BadgeTone> = {
+  looking: "neutral",
+  drafted: "warning",
+  failed: "danger",
+  auto: "success",
+  done: "success",
+  simulated: "neutral",
+  declined: "neutral",
 };
 
 const ICON: Partial<Record<DeskLife, DeskIconName>> = {
@@ -69,10 +70,20 @@ export function itemLife(item: DeskAttentionItem): DeskLife | null {
   return null;
 }
 
-/** A row's state: a change waiting on the person first, then an agent at work. */
-export function groupLife(items: readonly DeskAttentionItem[]): DeskLife | null {
+/**
+ * A row's state: a change waiting on the person first, then an agent at work.
+ * `besidesWaiting` leaves the waiting change out, for a list where every row
+ * waits on one and the row should say what else is true of it.
+ */
+export function groupLife(
+  items: readonly DeskAttentionItem[],
+  besidesWaiting = false,
+): DeskLife | null {
   const lives = items.map(itemLife);
-  for (const wanted of ["drafted", "failed", "looking"] as const) {
+  const order = besidesWaiting
+    ? (["failed", "looking"] as const)
+    : (["drafted", "failed", "looking"] as const);
+  for (const wanted of order) {
     if (lives.includes(wanted)) {
       return wanted;
     }
@@ -93,7 +104,11 @@ export function outcomeLife(outcome: DeskActivityOutcome): DeskLife {
   }
 }
 
-/** The label that says where a piece of work stands; never a pill, a 4px corner. */
+/**
+ * The label that says where a piece of work stands: the standard badge, led
+ * by its icon or Nova's mark where the state has one and by a dot otherwise.
+ * A preview that was never made is outlined, since nothing happened.
+ */
 export function LifeBadge({ life, extra }: { life: DeskLife | null; extra?: string }) {
   const t = useT();
   if (life === null) {
@@ -102,7 +117,11 @@ export function LifeBadge({ life, extra }: { life: DeskLife | null; extra?: stri
   const icon = ICON[life];
 
   return (
-    <span className={cn("dk-w-bdg", TONE[life])}>
+    <Badge
+      variant={TONE[life]}
+      appearance={life === "simulated" ? "outline" : "subtle"}
+      dot={life !== "looking" && !icon}
+    >
       {life === "looking" ? (
         <NovaBadge size="xs" spin="always" />
       ) : icon ? (
@@ -110,6 +129,6 @@ export function LifeBadge({ life, extra }: { life: DeskLife | null; extra?: stri
       ) : null}
       {lifeLabel(t, life)}
       {extra ? ` ${extra}` : null}
-    </span>
+    </Badge>
   );
 }

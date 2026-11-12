@@ -98,6 +98,11 @@ export type ThreadListFilter = {
   pinned?: boolean;
   touchedFrom?: number;
   touchedBefore?: number;
+  /**
+   * Splits the conversations in two: true reads only the ones asked on a
+   * record's case, false only the ones about no record. Left out, both.
+   */
+  aboutRecord?: boolean;
 };
 
 /** What narrows a page of a conversation's artifacts, on the server. */
@@ -302,6 +307,9 @@ export class AssistantService {
     if (filter?.touchedBefore !== undefined) {
       params.set("touchedBefore", String(filter.touchedBefore));
     }
+    if (filter?.aboutRecord !== undefined) {
+      params.set("aboutRecord", String(filter.aboutRecord));
+    }
     const query = params.size > 0 ? `?${params.toString()}` : "";
     const response = await api.get(`/assistant/threads/${query}`, { signal });
     return safeParse(assistantThreadPageSchema, response, "Assistant Thread");
@@ -310,11 +318,14 @@ export class AssistantService {
   /** How many conversations each shelf holds, banded by the edges given, newest first. */
   public async countThreadShelves(
     edges: readonly number[],
-    { signal }: { signal?: AbortSignal } = {},
+    { signal, aboutRecord }: { signal?: AbortSignal; aboutRecord?: boolean } = {},
   ) {
     const params = new URLSearchParams();
     for (const edge of edges) {
       params.append("edge", String(edge));
+    }
+    if (aboutRecord !== undefined) {
+      params.set("aboutRecord", String(aboutRecord));
     }
     const response = await api.get(`/assistant/threads/shelves/?${params.toString()}`, { signal });
     return safeParse(assistantThreadShelfCountsSchema, response, "Assistant Thread Shelves");

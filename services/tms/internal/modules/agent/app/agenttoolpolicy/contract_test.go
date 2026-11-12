@@ -139,7 +139,6 @@ func TestToolsThatReadOutsideTextSayWhere(t *testing.T) {
 	assert.Equal(t, agent.TaintSourceInboundMessage, watchtower.Source)
 	assert.ElementsMatch(t, []agent.TaintSource{
 		agent.TaintSourceEDI,
-		agent.TaintSourceWeather,
 		agent.TaintSourceRunRecord,
 	}, watchtower.Sources)
 	assert.True(t, registeredPolicy(t, "agent_create_memory").CarriesTaint)

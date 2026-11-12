@@ -345,11 +345,20 @@ describe("DeskTop places", () => {
     expect(screen.getByText("Decisions")).toBeInTheDocument();
   });
 
-  it("names what an agent did on Nova handled", () => {
+  it("names what an agent did on Agents handled", () => {
     renderPlace("handled", "/desk/handled/act_1");
 
-    expect(screen.getByText("Nova handled")).toBeInTheDocument();
+    expect(screen.getByText("Agents handled")).toBeInTheDocument();
     expect(screen.getByText("What an agent did")).toBeInTheDocument();
+  });
+
+  it("names the ledger line once the page has read it", () => {
+    useDeskMarginStore.getState().setPageTitle("Filed 11 rate confirmations");
+    renderPlace("handled", "/desk/handled/act_1");
+
+    expect(screen.getByText("Filed 11 rate confirmations")).toBeInTheDocument();
+    expect(screen.queryByText("What an agent did")).not.toBeInTheDocument();
+    useDeskMarginStore.getState().setPageTitle(null);
   });
 
   it("opens the command palette from Search or do", () => {

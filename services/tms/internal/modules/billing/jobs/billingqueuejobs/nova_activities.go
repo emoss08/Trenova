@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/dbscope"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/zap"
 )
 
@@ -96,18 +97,30 @@ func (a *Activities) PublishNovaProgressActivity(
 		resources = append(resources, permission.ResourceBillingQueue.String())
 	}
 	for _, resource := range resources {
-		if err := a.realtime.PublishResourceInvalidation(ctx, &realtimeports.PublishResourceInvalidationRequest{
-			OrganizationID: tenant.OrgID,
-			BusinessUnitID: tenant.BuID,
-			Resource:       resource,
-			Action:         "updated",
-		}); err != nil {
-			a.l.Warn("failed to publish billing queue Nova progress",
-				zap.String("organizationId", tenant.OrgID.String()), zap.Error(err))
-		}
+		a.publishTenantChanged(ctx, tenant, resource)
 	}
 
 	return nil
+}
+
+// publishTenantChanged tells a tenant's open screens that a resource changed,
+// so they refetch it.
+func (a *Activities) publishTenantChanged(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	resource string,
+) {
+	if err := a.realtime.PublishResourceInvalidation(ctx, &realtimeports.PublishResourceInvalidationRequest{
+		OrganizationID: tenant.OrgID,
+		BusinessUnitID: tenant.BuID,
+		Resource:       resource,
+		Action:         "updated",
+	}); err != nil {
+		a.l.Warn("failed to publish a billing queue change",
+			zap.String("organizationId", tenant.OrgID.String()),
+			zap.String("resource", resource),
+			zap.Error(err))
+	}
 }
 
 // RequestNovaGenerationsActivity starts a generation for each organization

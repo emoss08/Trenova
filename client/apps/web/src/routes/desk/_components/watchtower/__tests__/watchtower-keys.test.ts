@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { resolveWatchtowerKey } from "../use-watchtower-actions";
+import { heldBack, resolveWatchtowerKey } from "../use-watchtower-actions";
 
 const press = (key: string, extra: Partial<Parameters<typeof resolveWatchtowerKey>[0]> = {}) =>
   resolveWatchtowerKey({
@@ -32,5 +32,18 @@ describe("the Watchtower's keys", () => {
     expect(press("j", { ctrlKey: true })).toBeNull();
     expect(press("h", { altKey: true })).toBeNull();
     expect(press("x")).toBeNull();
+  });
+
+  it("leaves an item worked in a case alone, and still walks past it", () => {
+    const held = new Set(["wt_1"]);
+
+    expect(heldBack("done", "wt_1", held)).toBe(true);
+    expect(heldBack("snooze", "wt_1", held)).toBe(true);
+    expect(heldBack("handOff", "wt_1", held)).toBe(true);
+    expect(heldBack("next", "wt_1", held)).toBe(false);
+    expect(heldBack("previous", "wt_1", held)).toBe(false);
+    expect(heldBack("done", "wt_2", held)).toBe(false);
+    expect(heldBack("done", "wt_1", undefined)).toBe(false);
+    expect(heldBack("done", null, held)).toBe(false);
   });
 });

@@ -84,15 +84,15 @@ func (f memoryFixture) context(pool ...*agentmemory.Memory) *agentturn.RuntimeCo
 	}
 }
 
-func TestFitMemories_FollowsThePriorityOrder(t *testing.T) {
+func TestPlanMemories_FollowsThePriorityOrder(t *testing.T) {
 	t.Parallel()
 
 	f := newMemoryFixture()
 	d := definitionWithInstructions("Help.")
 
-	fitted := agentmemoryprompt.FitMemories(d, f.context(
+	fitted := agentmemoryprompt.PlanMemories(d, f.context(
 		f.orgFact, f.unloadedFix, f.loadedFix, f.orgInstruction, f.related, f.direct,
-	))
+	)).Carried
 
 	assert.Equal(t, []*agentmemory.Memory{
 		f.direct,
@@ -105,20 +105,20 @@ func TestFitMemories_FollowsThePriorityOrder(t *testing.T) {
 		"the tools in hand, then the rest in the order they were ranked")
 }
 
-func TestFitMemories_EveryHeldToolIsLoadedWhenNothingWasDisclosed(t *testing.T) {
+func TestPlanMemories_EveryHeldToolIsLoadedWhenNothingWasDisclosed(t *testing.T) {
 	t.Parallel()
 
 	f := newMemoryFixture()
 	rc := f.context(f.orgFact, f.unloadedFix, f.loadedFix)
 	rc.ToolsDisclosed = false
 
-	fitted := agentmemoryprompt.FitMemories(definitionWithInstructions("Help."), rc)
+	fitted := agentmemoryprompt.PlanMemories(definitionWithInstructions("Help."), rc).Carried
 
 	assert.Equal(t, []*agentmemory.Memory{f.unloadedFix, f.loadedFix, f.orgFact}, fitted,
 		"a turn that loaded every tool treats every tool's corrections as in hand")
 }
 
-func TestFitMemories_KeepsWithinTheBudgetAndFillsWhatIsLeft(t *testing.T) {
+func TestPlanMemories_KeepsWithinTheBudgetAndFillsWhatIsLeft(t *testing.T) {
 	t.Parallel()
 
 	f := newMemoryFixture()
@@ -136,13 +136,13 @@ func TestFitMemories_KeepsWithinTheBudgetAndFillsWhatIsLeft(t *testing.T) {
 		long(agentmemory.MemoryKindInstruction), long(agentmemory.MemoryKindInstruction),
 		long(agentmemory.MemoryKindInstruction)
 
-	fitted := agentmemoryprompt.FitMemories(d, f.context(first, second, third, fourth, f.orgFact))
+	fitted := agentmemoryprompt.PlanMemories(d, f.context(first, second, third, fourth, f.orgFact)).Carried
 
 	assert.Equal(t, []*agentmemory.Memory{first, second, third, f.orgFact}, fitted,
 		"the fourth long instruction does not fit, and a short fact after it still does")
 }
 
-func TestFitMemories_DefaultsToSixThousandTokens(t *testing.T) {
+func TestPlanMemories_DefaultsToSixThousandTokens(t *testing.T) {
 	t.Parallel()
 
 	d := definitionWithInstructions("Help.")
@@ -157,11 +157,11 @@ func TestFitMemories_DefaultsToSixThousandTokens(t *testing.T) {
 		})
 	}
 
-	fitted := agentmemoryprompt.FitMemories(d, &agentturn.RuntimeContext{Memories: pool})
+	fitted := agentmemoryprompt.PlanMemories(d, &agentturn.RuntimeContext{Memories: pool}).Carried
 	assert.Len(t, fitted, 22, "261 tokens each with the id, and the heading once, under 6000")
 }
 
-func TestFitMemories_CutsALongMemoryShortAndNamesItsID(t *testing.T) {
+func TestPlanMemories_CutsALongMemoryShortAndNamesItsID(t *testing.T) {
 	t.Parallel()
 
 	long := &agentmemory.Memory{
@@ -185,7 +185,7 @@ func TestFitMemories_CutsALongMemoryShortAndNamesItsID(t *testing.T) {
 // An agent that had been told two hundred one-line facts carried every one
 // of them, because each was short enough to fit the token budget. The prompt
 // now stops at MaxPromptMemories, keeping the best ranked.
-func TestFitMemories_CarriesNoMoreThanTheCapHoweverShortTheyAre(t *testing.T) {
+func TestPlanMemories_CarriesNoMoreThanTheCapHoweverShortTheyAre(t *testing.T) {
 	t.Parallel()
 
 	pool := make([]*agentmemory.Memory, 0, 200)
@@ -195,9 +195,9 @@ func TestFitMemories_CarriesNoMoreThanTheCapHoweverShortTheyAre(t *testing.T) {
 		})
 	}
 
-	fitted := agentmemoryprompt.FitMemories(definitionWithInstructions("Help."),
+	fitted := agentmemoryprompt.PlanMemories(definitionWithInstructions("Help."),
 		&agentturn.RuntimeContext{Memories: pool},
-	)
+	).Carried
 
 	require.Len(t, fitted, agentdefinition.MaxPromptMemories)
 	assert.Equal(t, pool[:agentdefinition.MaxPromptMemories], fitted,
@@ -208,7 +208,7 @@ func TestFitMemories_CarriesNoMoreThanTheCapHoweverShortTheyAre(t *testing.T) {
 // A fact from spring that no prompt had room for since is left out once
 // the facts beside it have been read for three months; recall still finds
 // it, and the prompt says so.
-func TestFitMemories_LeavesOutAMemoryThatWentStale(t *testing.T) {
+func TestPlanMemories_LeavesOutAMemoryThatWentStale(t *testing.T) {
 	t.Parallel()
 
 	const day = 24 * 60 * 60
@@ -223,7 +223,7 @@ func TestFitMemories_LeavesOutAMemoryThatWentStale(t *testing.T) {
 	d := definitionWithInstructions("Help.")
 	rc := agentturn.RuntimeContext{Memories: []*agentmemory.Memory{stale, fresh}}
 
-	assert.Equal(t, []*agentmemory.Memory{fresh}, agentmemoryprompt.FitMemories(d, &rc))
+	assert.Equal(t, []*agentmemory.Memory{fresh}, agentmemoryprompt.PlanMemories(d, &rc).Carried)
 
 	prompt := agentprompt.BuildSystemPrompt(d, rc)
 	assert.NotContains(t, prompt, "The old yard")
@@ -335,7 +335,7 @@ func TestValidate_BoundsTheMemoryTokenBudget(t *testing.T) {
 
 		hasBudgetError := false
 		for _, err := range me.Errors {
-			if err.Field == "memoryTokenBudget" {
+			if err.Field() == "memoryTokenBudget" {
 				hasBudgetError = true
 			}
 		}
@@ -400,12 +400,12 @@ func TestOrderMemoriesForPrompt_AnOrganizationProcedureIsCarriedOnlyWhenItBears(
 	rc := &agentturn.RuntimeContext{Memories: []*agentmemory.Memory{fact, procedure, instruction}}
 
 	assert.Equal(t, []*agentmemory.Memory{instruction, fact, procedure},
-		agentmemoryprompt.FitMemories(definitionWithInstructions("Help."), rc),
+		agentmemoryprompt.PlanMemories(definitionWithInstructions("Help."), rc).Carried,
 		"with nothing to judge by, every memory bears and the instruction leads")
 
 	rc.MemoryRelevance = judged(fact.ID)
 	assert.Equal(t, []*agentmemory.Memory{instruction, fact},
-		agentmemoryprompt.FitMemories(definitionWithInstructions("Help."), rc),
+		agentmemoryprompt.PlanMemories(definitionWithInstructions("Help."), rc).Carried,
 		"a procedure for no record or tool is carried only when it bears on the turn")
 }
 

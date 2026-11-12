@@ -27,13 +27,16 @@ const (
 	ApprovalScopeAll      = ApprovalScope("All")
 	ApprovalScopeTimeOff  = ApprovalScope("TimeOff")
 	ApprovalScopeExpenses = ApprovalScope("Expenses")
+	// ApprovalScopeCases hands over the cases the delegator owns at the Desk:
+	// the delegate sees them and decides them while the delegation runs.
+	ApprovalScopeCases = ApprovalScope("Cases")
 )
 
 func (s ApprovalScope) String() string { return string(s) }
 
 func (s ApprovalScope) IsValid() bool {
 	switch s {
-	case ApprovalScopeAll, ApprovalScopeTimeOff, ApprovalScopeExpenses:
+	case ApprovalScopeAll, ApprovalScopeTimeOff, ApprovalScopeExpenses, ApprovalScopeCases:
 		return true
 	default:
 		return false

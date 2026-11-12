@@ -418,6 +418,25 @@ services:
             timeout: 5s
             retries: 5
 
+    # Stands in for Resend, so a write that ends in an email can finish in
+    # development. Keeps what it is sent and shows it at http://localhost:8092/.
+    mail-sim:
+        build:
+            context: ..
+            dockerfile: dev/mail-sim/Dockerfile
+        container_name: mail-sim
+        profiles:
+            - mail-sim
+        ports:
+            - "8092:8092"
+        restart: unless-stopped
+        healthcheck:
+            test:
+                ["CMD", "wget", "-q", "--spider", "http://localhost:8092/_sim/health"]
+            interval: 30s
+            timeout: 5s
+            retries: 5
+
 volumes:
     pg_data: {}
     redis_data: {}

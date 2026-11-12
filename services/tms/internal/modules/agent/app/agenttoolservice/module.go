@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/bankreceipttools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/billingtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/billingtransfertools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/casetools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/dashboardtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/dispatchtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/documenttools"
@@ -47,6 +48,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/webwatchtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/insightservice"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/recordshareports"
 	"github.com/emoss08/trenova/internal/modules/billing/app/bankreceiptservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/bankreceiptworkitemservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingtransferservice"
@@ -58,7 +60,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicepostingservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicerunservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicesendservice"
-	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceshareservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicevoidservice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
@@ -153,6 +154,7 @@ func ToolProviders() []any {
 		exceptiontools.NewRaiseExceptionTool,
 		waittools.NewWaitUntilTool,
 		waittools.NewCancelWaitTool,
+		casetools.NewOfferOptionsTool,
 		scheduletools.NewCreateScheduleTool,
 		shipmentcommenttools.NewAddShipmentCommentTool,
 		shipmenttools.NewPlaceShipmentHoldTool,
@@ -697,7 +699,7 @@ func provideAssessLateChargesTool(
 	return receivabletools.NewAssessLateChargesTool(charges)
 }
 
-func provideShareInvoiceTool(shares *invoiceshareservice.Service) agenttoolports.AgentTool {
+func provideShareInvoiceTool(shares recordshareports.Service) agenttoolports.AgentTool {
 	return receivabletools.NewShareInvoiceTool(shares)
 }
 

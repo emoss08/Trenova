@@ -13,6 +13,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/caseownerports"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aimetrics"
@@ -129,10 +130,16 @@ type Params struct {
 	// deciding their own.
 	Conversations conversationports.ConversationRepository
 	Shadow        *agentshadow.Resolver
-	AuditService  auditports.AuditService
-	Activity      agentactivityports.AgentActivityPublisher
+	// Owners refuses a decision on a plan about a record whose case is
+	// someone else's.
+	Owners       caseownerports.Service
+	AuditService auditports.AuditService
+	Activity     agentactivityports.AgentActivityPublisher
 	// Watchtower takes a decided plan off the feed.
 	Watchtower watchtowerports.WatchtowerProjector
+	// Conditions closes what was open about a record once a plan about it has
+	// run to its end.
+	Conditions watchtowerports.RecordSettler
 	// FollowUps has the conversation that raised the plan report its outcome.
 	FollowUps assistantports.DecisionFollowUps
 	// Previews says what the plan's steps would do, as the decider sees it,
@@ -153,9 +160,11 @@ type Service struct {
 	agents     definitionReader
 	access     agentAccessChecker
 	shadow     shadowReader
+	owners     caseGate
 	audit      actionLogger
 	activity   agentactivityports.AgentActivityPublisher
 	watchtower watchtowerports.WatchtowerProjector
+	conditions watchtowerports.RecordSettler
 	followUps  assistantports.DecisionFollowUps
 	previews   agentruntimeports.ProposalPreviewService
 	metrics    *aimetrics.ProposalPreview
@@ -172,9 +181,11 @@ func New(p Params) agentplanports.AgentPlanService {
 		proposals:  p.Proposals,
 		decisions:  decider,
 		shadow:     p.Shadow,
+		owners:     p.Owners,
 		audit:      p.AuditService,
 		activity:   p.Activity,
 		watchtower: p.Watchtower,
+		conditions: p.Conditions,
 		followUps:  p.FollowUps,
 		previews:   p.Previews,
 		workflows:  p.Workflows,
@@ -213,6 +224,10 @@ func (s *Service) Decide(
 	req *agentplanports.DecideAgentPlanRequest,
 	actor *permissionports.RequestActor,
 ) (*agentplan.AgentPlan, error) {
+	if req.UndoWindow && req.Decision == agentdecision.DecisionAccepted {
+		return s.approveDeferred(ctx, req, actor)
+	}
+
 	prepared, err := s.prepare(ctx, req, actor, agentplan.PlanStatusPending)
 	if err != nil {
 		return nil, err
@@ -223,6 +238,15 @@ func (s *Service) Decide(
 
 // preparedPlan is a plan checked for deciding: its steps and, for an
 // approval, the preview the decider approved.
+// caseGate says whether a person may change a record whose case has an owner.
+type caseGate interface {
+	AssertMayWork(
+		ctx context.Context,
+		req caseownerports.RecordRequest,
+		actor *permissionports.RequestActor,
+	) error
+}
+
 type preparedPlan struct {
 	plan  *agentplan.AgentPlan
 	steps []*agent.AgentProposal
@@ -288,6 +312,12 @@ func (s *Service) prepare(
 	}
 	if verdict.Shadow() {
 		return nil, shadowRefusal(verdict)
+	}
+	if err = s.owners.AssertMayWork(ctx, caseownerports.RecordRequest{
+		TenantInfo: req.TenantInfo,
+		RecordID:   plan.TargetID,
+	}, actor); err != nil {
+		return nil, err
 	}
 
 	steps, err := s.proposals.ListByPlan(ctx, agentproposalports.ListAgentProposalsByPlanRequest{
@@ -930,9 +960,24 @@ func (s *Service) complete(
 		progressed = r.plan
 	}
 
+	s.settle(ctx, r)
 	s.signal(ctx, r.plan, last, lastReq)
 
 	return progressed
+}
+
+// settle closes what was open about the plan's record: every step ran, so
+// the condition the plan answered has been worked. A plan that stopped
+// part-way or was declined settles nothing.
+func (s *Service) settle(ctx context.Context, r *stepRun) {
+	if s.conditions == nil || r.plan.TargetID.IsNil() || r.actor == nil {
+		return
+	}
+	s.conditions.SettleRecord(ctx, &watchtowerports.SettleRecordRequest{
+		TenantInfo: r.req.TenantInfo,
+		RecordID:   r.plan.TargetID,
+		Note:       "Worked by the plan: " + r.plan.Title,
+	}, r.actor)
 }
 
 func (s *Service) signal(

@@ -12,6 +12,7 @@ func All() []permissionspec.Bundle {
 		reportingReportsBundle(),
 		platformAssistantBundle(),
 		deskDecisionsBundle(),
+		deskCaseLeadBundle(),
 		deskTriageBundle(),
 		deskIntakeBundle(),
 		adminUsersBundle(),
@@ -164,6 +165,13 @@ func platformAssistantBundle() permissionspec.Bundle {
 	}
 }
 
+func deskRoom() permissionspec.BundleGrant {
+	return permissionspec.BundleGrant{
+		Resource:   permission.ResourceAssistant,
+		Operations: []permission.Operation{permission.OpRead},
+	}
+}
+
 func deskDecisionsBundle() permissionspec.Bundle {
 	return permissionspec.Bundle{
 		ID:          "desk.decisions",
@@ -171,6 +179,7 @@ func deskDecisionsBundle() permissionspec.Bundle {
 		Label:       "Decisions",
 		Description: "Approve or decline what the agents propose, and work the watchtower's exceptions.",
 		Grants: []permissionspec.BundleGrant{
+			deskRoom(),
 			{
 				Resource:   permission.ResourceAgentProposal,
 				Operations: []permission.Operation{permission.OpRead, permission.OpUpdate},
@@ -183,6 +192,27 @@ func deskDecisionsBundle() permissionspec.Bundle {
 	}
 }
 
+func deskCaseLeadBundle() permissionspec.Bundle {
+	return permissionspec.Bundle{
+		ID:          "desk.case-lead",
+		Module:      "Desk",
+		Label:       "Case lead",
+		Description: "See the cases other people own, give a case to someone and take one over.",
+		Grants: []permissionspec.BundleGrant{
+			deskRoom(),
+			{
+				Resource: permission.ResourceWatchtower,
+				Operations: []permission.Operation{
+					permission.OpRead,
+					permission.OpUpdate,
+					permission.OpAssign,
+					permission.OpManage,
+				},
+			},
+		},
+	}
+}
+
 func deskTriageBundle() permissionspec.Bundle {
 	return permissionspec.Bundle{
 		ID:          "desk.triage",
@@ -190,6 +220,7 @@ func deskTriageBundle() permissionspec.Bundle {
 		Label:       "Triage",
 		Description: "Work the messages that arrive from connected sources: link them to records, reply, hand them off and mark them handled.",
 		Grants: []permissionspec.BundleGrant{
+			deskRoom(),
 			{
 				Resource: permission.ResourceInboundMessage,
 				Operations: []permission.Operation{

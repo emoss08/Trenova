@@ -29,6 +29,7 @@ const (
 	FeatureInboundMail                 = Feature("InboundMail")
 	FeaturePaletteAnswer               = Feature("PaletteAnswer")
 	FeatureInsightNarration            = Feature("InsightNarration")
+	FeatureCaseReading                 = Feature("CaseReading")
 )
 
 func AllFeatures() []Feature {
@@ -57,6 +58,7 @@ func AllFeatures() []Feature {
 		FeatureInboundMail,
 		FeaturePaletteAnswer,
 		FeatureInsightNarration,
+		FeatureCaseReading,
 	}
 }
 

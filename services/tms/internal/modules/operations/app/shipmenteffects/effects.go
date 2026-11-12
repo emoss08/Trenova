@@ -297,6 +297,24 @@ func (s *Effects) EmitStatusChangeEvent(
 	))
 }
 
+// EmitUpdatedEvent records an edit that did not change the status. A status
+// change records its own event, and one event per save is enough to have the
+// shipment's followers read it again.
+func (s *Effects) EmitUpdatedEvent(
+	ctx context.Context,
+	original, updated *shipment.Shipment,
+	actor kernelports.AuditActor,
+) {
+	if original == nil || updated == nil || original.Status != updated.Status {
+		return
+	}
+	s.RecordShipmentEvent(ctx, shipmenteventservice.BuildShipmentUpdated(
+		TenantRefForShipment(updated),
+		updated,
+		actor,
+	))
+}
+
 func (s *Effects) HydrateShipmentCommodityDetails(
 	ctx context.Context,
 	entity *shipment.Shipment,

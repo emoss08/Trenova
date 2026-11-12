@@ -1,19 +1,17 @@
-import { senderFirstName } from "@/lib/triage/message-state";
+import { senderFirstName, senderName } from "@/lib/triage/message-state";
 import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
 import { useRichT } from "@trenova/shared/i18n/rich";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { cn } from "@trenova/shared/lib/utils";
 import type { ReactNode } from "react";
 import type { NovaLine } from "./briefing-model";
 
 function Bold({ children }: { children: ReactNode }) {
-  return <b className="text-foreground font-semibold">{children}</b>;
+  return <b className="font-medium text-dsk-fg">{children}</b>;
 }
 
 /**
- * What Nova says at the top of the briefing. It holds its height while the
- * briefing loads, so nothing under it moves when the words arrive. The name
- * of whoever waited longest opens their message.
+ * What Nova says under the briefing's headline, set as the Desk's Today sets
+ * the day's line. The name of whoever waited longest opens their message.
  */
 export function NovaLineText({
   line,
@@ -82,43 +80,26 @@ export function NovaLineText({
         <button
           type="button"
           onClick={() => onOpenMessage(longest.messageId)}
-          className={cn(
-            "ui-focus-ring cursor-pointer rounded-xs bg-linear-to-r bg-[length:100%_1.5px] bg-bottom bg-no-repeat transition-[background-size,color] duration-200 hover:bg-[length:100%_100%]",
-            over
-              ? "from-warning to-warning text-warning hover:text-warning-on-solid"
-              : "from-foreground to-foreground text-foreground hover:text-canvas",
-          )}
+          className={over ? "dk-dy-lnk ui-focus-ring text-dsk-warn-fg" : "dk-dy-lnk ui-focus-ring"}
         >
           {chunks}
         </button>
       );
-    const name = longest === null ? "" : senderFirstName(longest);
-    let yours: ReactNode;
-    if (line.waiting === 1) {
-      yours =
-        longest === null
-          ? rt("<b>One is</b> yours.", bold)
-          : rt(
-              "<b>One is</b> yours — <ref>{0}</ref> has waited longest.",
-              { ...bold, ref: reference },
-              name,
-            );
-    } else {
-      yours =
-        longest === null
-          ? rt("<b>{0} are</b> yours.", bold, line.waiting)
-          : rt(
-              "<b>{0} are</b> yours — <ref>{1}</ref> has waited longest.",
-              { ...bold, ref: reference },
-              line.waiting,
-              name,
-            );
-    }
+    // The whole name: a sender here is as often a company as a person, and the
+    // first word of "Partner Carrier EDI" names nobody.
+    const name = longest === null ? "" : senderName(longest);
+    // The headline above already says how many are waiting; this line adds
+    // what the count does not: who has waited longest, and how long it takes.
+    const yours: ReactNode =
+      longest === null
+        ? null
+        : rt("<ref>{0}</ref> has waited longest.", { ...bold, ref: reference }, name);
     words = (
       <>
-        {rt("I took care of <b>{0}</b> today.", bold, line.handled)} {yours}
+        {line.handled > 0 && <>{rt("I took care of <b>{0}</b> today.", bold, line.handled)} </>}
+        {yours}
         {line.minutes > 0 && (
-          <span className="text-foreground-subtle">
+          <span>
             {" "}
             {t(
               "{0, plural, one {About # minute of work.} other {About # minutes of work.}}",
@@ -131,10 +112,7 @@ export function NovaLineText({
   }
 
   return (
-    <p
-      aria-live="polite"
-      className="text-foreground-muted mt-2 min-h-16.5 text-3xl leading-snug text-pretty @max-2xl:min-h-13.5 @max-2xl:text-xl"
-    >
+    <p aria-live="polite" className="dk-dy-hl">
       {words}
     </p>
   );

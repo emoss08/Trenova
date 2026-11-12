@@ -40,6 +40,7 @@ import {
 } from "@/lib/proposal-cache";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ReasonDialog } from "@/components/reason-dialog";
+import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { formatShortcut } from "@trenova/shared/lib/shortcuts";
@@ -648,9 +649,9 @@ function PermanentPill() {
     <Tooltip>
       <TooltipTrigger
         render={
-          <span className="dk-dcx-perm ui-focus-ring" tabIndex={0}>
+          <Badge variant="warning" dot className="shrink-0 cursor-help" tabIndex={0}>
             {t("Permanent")}
-          </span>
+          </Badge>
         }
       />
       <TooltipContent className="max-w-64">

@@ -33,6 +33,9 @@ type StartAgentRunForDefinitionRequest struct {
 	TenantInfo pagination.TenantInfo
 	// WaitID is the wait whose ending starts a run that picks the work up.
 	WaitID pulid.ID
+	// CaseOptionID is the option a person chose on the record's case, which
+	// the run drafts the plan for.
+	CaseOptionID pulid.ID
 }
 
 // StartInlineAgentRunRequest opens a run for an agent whose reasoning happens in-process

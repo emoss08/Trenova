@@ -25,6 +25,7 @@ type QueueBriefView struct {
 	Available   bool   `json:"available"`
 	Text        string `json:"text"`
 	GeneratedAt int64  `json:"generatedAt"`
+	Stale       bool   `json:"stale"`
 }
 
 // SearchIntentRequest is a sentence to turn into queue filters, with the
@@ -96,7 +97,7 @@ type BillingQueueAssistService interface {
 		tenantInfo pagination.TenantInfo,
 		itemID pulid.ID,
 	) (*AutoApproveOutcome, error)
-	RefreshBrief(ctx context.Context, tenantInfo pagination.TenantInfo) error
+	RefreshBrief(ctx context.Context, tenantInfo pagination.TenantInfo) (bool, error)
 	GetBrief(ctx context.Context, tenantInfo pagination.TenantInfo) (*QueueBriefView, error)
 	ComposeSearch(ctx context.Context, req *SearchIntentRequest) (*SearchIntent, error)
 	SubmitReviews(ctx context.Context, req *SubmitReviewsRequest) (*ReviewSubmission, error)

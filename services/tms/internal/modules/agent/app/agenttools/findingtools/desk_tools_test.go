@@ -175,6 +175,18 @@ func (s *stubWorkerHolder) SetDispatchHold(
 	return s.held, nil
 }
 
+func (s *stubWorkerHolder) CheckDispatchHold(
+	_ context.Context,
+	req workerservice.DispatchHoldRequest,
+) (*worker.Worker, error) {
+	checked := *s.held
+	if err := workerservice.ApplyDispatchHold(&checked, &req); err != nil {
+		return nil, err
+	}
+
+	return &checked, nil
+}
+
 func (s *stubWorkerHolder) Get(
 	context.Context,
 	workerports.GetWorkerByIDRequest,

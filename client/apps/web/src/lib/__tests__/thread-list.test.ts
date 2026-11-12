@@ -337,7 +337,7 @@ describe("shelves", () => {
 
     expect(countThreadShelves).toHaveBeenCalledWith([4, 3, 2, 1], expect.anything());
     expect(counts).toEqual({ pinned: 2, bands: [1, 0, 3, 4, 5] });
-    expect(assistant.threads()._ctx.shelfCounts([4, 3, 2, 1]).queryKey.slice(0, 3)).toEqual(
+    expect(assistant.threads()._ctx.shelfCounts([4, 3, 2, 1], "all").queryKey.slice(0, 3)).toEqual(
       assistant.threads().queryKey,
     );
   });
@@ -346,7 +346,7 @@ describe("shelves", () => {
     const counts = { pinned: 0, bands: [1, 0, 0, 0, 1] };
     queryClient.setQueryData(shelfKey(today), pages([thread("a"), thread("b")]));
     queryClient.setQueryData(shelfKey(older), pages([thread("b")]));
-    queryClient.setQueryData(assistant.threads()._ctx.shelfCounts([2, 1]).queryKey, counts);
+    queryClient.setQueryData(assistant.threads()._ctx.shelfCounts([2, 1], "all").queryKey, counts);
 
     updateCachedThread(queryClient, "b", (item) => ({ ...item, title: "renamed" }));
 
@@ -359,9 +359,9 @@ describe("shelves", () => {
       "a",
     ]);
     expect(threadsOf(queryClient.getQueryData(shelfKey(older)))).toEqual([]);
-    expect(queryClient.getQueryData(assistant.threads()._ctx.shelfCounts([2, 1]).queryKey)).toBe(
-      counts,
-    );
+    expect(
+      queryClient.getQueryData(assistant.threads()._ctx.shelfCounts([2, 1], "all").queryKey),
+    ).toBe(counts);
   });
 
   it("knows every conversation any list holds, each once", () => {
@@ -416,7 +416,8 @@ describe("optimistic changes", () => {
   const today: ThreadListFilter = { pinned: false, touchedFrom: 1_000 };
   const pinnedShelf: ThreadListFilter = { pinned: true };
   const shelfKey = (filter: ThreadListFilter) => assistant.threads()._ctx.shelf(filter).queryKey;
-  const countsKey = (edges: number[]) => assistant.threads()._ctx.shelfCounts(edges).queryKey;
+  const countsKey = (edges: number[]) =>
+    assistant.threads()._ctx.shelfCounts(edges, "all").queryKey;
   const ids = (key: readonly unknown[]) =>
     threadsOf(queryClient.getQueryData<ThreadPages>(key)).map((item) => item.id);
 

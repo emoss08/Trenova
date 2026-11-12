@@ -1,5 +1,10 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { KpiStrip, KpiStripItem, KPI_VALUE_CLASS } from "@/components/kpi/kpi-strip";
+import {
+  KpiStrip,
+  KpiStripItem,
+  KPI_STRIP_CELL_CLASS,
+  KPI_VALUE_CLASS,
+} from "@/components/kpi/kpi-strip";
 import { useTypewriter } from "@/hooks/use-typewriter";
 import { billingQueue } from "@/lib/queries/billing-queue";
 import { billingQueueNova } from "@/lib/queries/billing-queue-nova";
@@ -197,6 +202,11 @@ function NovaBrief({
         </p>
         <span className="text-foreground-muted flex flex-wrap items-center gap-x-1.5 text-xs">
           <span>{t("Nova · written {0}", formatSecondsAgo(now - brief.generatedAt))}</span>
+          {brief.stale && !generation ? (
+            <span data-testid="billing-queue-brief-stale" aria-live="polite">
+              <TextShimmer as="span">{t("Updating for the queue as it is now")}</TextShimmer>
+            </span>
+          ) : null}
           {generation?.phase === "Left" ? (
             <span data-testid="billing-queue-nova-left">
               {t("Couldn't review some items · tries again after {0}", retryTime(generation))}
@@ -241,13 +251,19 @@ function QueuePulse({
 
   return (
     <KpiStrip bare aria-label={t("Queue pulse")} minItemWidth="9rem">
-      <div className="border-border col-span-2 flex min-w-0 flex-col gap-2 border-r border-b py-3 pr-4">
-        <div className="flex min-w-0 items-baseline gap-2">
-          <span className="text-foreground-subtle text-xs font-medium">{t("Waiting to bill")}</span>
-          <span className={KPI_VALUE_CLASS}>{formatCurrency(Number(stats?.openTotal ?? 0))}</span>
-          <span className="text-foreground-muted font-mono text-xs">
-            {t("{0, plural, one {# shipment} other {# shipments}}", stats?.openCount ?? 0)}
+      <div className={cn(KPI_STRIP_CELL_CLASS, "col-span-2 flex flex-col gap-2")}>
+        <div className="flex min-w-0 flex-col gap-1.5">
+          <span className="text-foreground-subtle truncate text-xs font-medium">
+            {t("Waiting to bill")}
           </span>
+          <div className="flex min-w-0 items-baseline gap-2">
+            <span className={cn("text-foreground", KPI_VALUE_CLASS)}>
+              {formatCurrency(Number(stats?.openTotal ?? 0))}
+            </span>
+            <span className="text-foreground-muted truncate font-mono text-xs">
+              {t("{0, plural, one {# shipment} other {# shipments}}", stats?.openCount ?? 0)}
+            </span>
+          </div>
         </div>
         <LaneBar stats={stats} activeLanes={activeLanes} onLaneSelect={onLaneSelect} />
       </div>

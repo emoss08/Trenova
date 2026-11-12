@@ -19,6 +19,7 @@ function attention(): DeskAttention {
         dueLabel: null,
         unseen: true,
         items: [item("wt_1", false), item("wt_2")],
+        ownership: null,
       },
       {
         key: "wt_3",
@@ -28,6 +29,7 @@ function attention(): DeskAttention {
         dueLabel: null,
         unseen: false,
         items: [item("wt_3")],
+        ownership: null,
       },
     ],
     counts: { everything: 3, watchtower: 3, triage: 0, decisions: 0 },
@@ -65,9 +67,9 @@ describe("the Needs you cache", () => {
 
     removeAttentionItem(client, "wt_3");
 
-    expect(client.getQueryData<DeskAttention>(everything)?.groups.map((group) => group.key)).toEqual([
-      "shp_1",
-    ]);
+    expect(
+      client.getQueryData<DeskAttention>(everything)?.groups.map((group) => group.key),
+    ).toEqual(["shp_1"]);
   });
 
   it("marks a row seen once the item that was new is opened", () => {

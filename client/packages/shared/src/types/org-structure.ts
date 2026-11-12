@@ -14,7 +14,7 @@ export const jobDepartmentSchema = z.enum([
 ]);
 export type JobDepartment = z.infer<typeof jobDepartmentSchema>;
 
-export const approvalScopeSchema = z.enum(["All", "TimeOff", "Expenses"]);
+export const approvalScopeSchema = z.enum(["All", "TimeOff", "Expenses", "Cases"]);
 export type ApprovalScopeValue = z.infer<typeof approvalScopeSchema>;
 
 /**

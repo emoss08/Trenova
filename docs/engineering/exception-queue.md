@@ -135,6 +135,22 @@ freight") and up to eight `trail` events that led to it. All are normalized in
 `watchtower.Item.Normalize` and refreshed on every upsert. `watchtowersources` fills them
 from the record being described, never with an extra read.
 
+Nothing an item says carries an internal record id. `Normalize` runs the title, the summary
+and every fact, impact phrase and trail event through `watchtower.Plain`, which takes ids out
+and drops a fact that held nothing else, so a source that quotes an error or an agent's own
+words cannot put one on the feed; the item's `path` is how a person reaches the record. A
+source also says things in a person's words: enum values are humanised, money goes through
+`money.Display`, and a failed run's reason is `watchtowersources.RunFailureReason` (what
+happened to the provider or the run, never the workflow's error text). A run that recorded
+no error says so; its summary is what it did, never why it stopped.
+
+A failing agent is one item, not one per run: `FailedRunSource` keeps each agent's newest
+failure in the window (`latestFailurePerAgent`), and the older runs' items clear on the same
+reconcile.
+
+Weather is not a Watchtower source. Alerts live with the weather alert service and the
+shipment map; the feed only carries things a person at the desk can act on.
+
 ## Agents on an item
 
 Handing an item to a named agent (`handOffWatchtowerItem` with `agentDefinitionId`) starts
@@ -193,7 +209,7 @@ An item at the cap stays overdue and is no longer picked up by the sweep.
 | `PodMissing` | the last delivery arrived more than `exception_pod_grace_hours` (default 24) ago, within 90 days, and no current, unrejected document of type `POD` is attached to the shipment | shipment | a POD is filed |
 | `TenderExhausted` | the move's latest tender is `Exhausted`, the move is still `New` with no live carrier assignment, and the shipment is open | tender | the move is covered or tendered again |
 | `NoCheckCall` | see [check-calls.md](check-calls.md) | move | a check call lands |
-| `EtaAtRisk` | see [eta.md](eta.md) | shipment | the projection recovers |
+| `EtaAtRisk` | see [eta.md](eta.md); a stop whose window closed more than the missed-stop grace ago is left to `MissedPickup`/`MissedDelivery` (`DescribeEtaRisks`), so one late stop is one item | shipment | the projection recovers, or its stop becomes a missed stop and no later stop is at risk |
 | `Factoring` | an invoice has been `Ready` in `factoring_invoice_states` for more than a day (`factoringreadiness.ReadyUnsubmittedSeconds`) and is still not submitted; critical after three days | `ready:<invoice>` | the invoice is submitted, stops being ready or is paid |
 | `Factoring` | a customer's billing profile names a factor, the customer is active, and there is no acknowledged, unexpired notice of assignment for that customer and factor; the summary says whether a notice is missing, drafted, sent or expired | `noa-missing:<customer>:<factor>` | a notice is acknowledged, or the profile stops naming that factor |
 | `Factoring` | an acknowledged notice expires within `factoring.NoaExpiryWarningDays` (30) days; critical inside seven | `noa-expiring:<notice>` | the notice is renewed, released or expires (it then shows as missing) |
@@ -207,6 +223,15 @@ top of the nightly reconcile. An invoice item is about the invoice (`factoring.i
 an expiring notice about the notice (`factoring.noa_expiring`); a missing notice is about the
 open notice when one exists and has no subject otherwise, because a customer is not an agent
 subject.
+
+Proposals and plans (`AgentProposal`, `AgentPlan`) are settled at once when one is approved or
+declined, but not when one expires: its window runs out, its agent is retired or its
+conversation is deleted, and none of those projects anything. `decision-sweep` reconciles both
+kinds for every organization every ten minutes (`DecisionSweepActivity`), so an expired one
+stops saying it needs approval on the feed and on its record's case within minutes rather than
+at the nightly reconcile. A proposal's item carries the facts `Agent` and `Change`, and a
+plan's `Agent`, `Change` (its title) and `Steps`; the Decisions lens leads each row with the
+change and names the agent under it (`decisionLine` in `attention-row.tsx`).
 
 The four shipment kinds are raised by `shipment-exception-sweep` every ten minutes, which
 reconciles every organization against `exceptionsourcerepository`. A shipment event (arrival,

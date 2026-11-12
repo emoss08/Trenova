@@ -122,19 +122,6 @@ export function deskComposerLock({
             </>
           ),
         };
-      case "AgentNotConversational":
-        return {
-          lock: (
-            <>
-              <DeskIcon name="lock" size={13} stroke={2} />
-              <span>
-                <b>{t("{0} now only runs on its own.", agentName)}</b>{" "}
-                {t("You can still read this conversation.")}
-              </span>
-              {link(t("Start with another agent"), startElsewhere)}
-            </>
-          ),
-        };
       default: {
         const when = budget?.disabledAt ? formatUnixMonthDay(budget.disabledAt, { timezone }) : "";
         const who = budget?.disabledBy ?? "";

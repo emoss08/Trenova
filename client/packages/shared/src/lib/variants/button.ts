@@ -11,11 +11,16 @@ export const buttonVariants = cva(
         default: "bg-ink text-ink-foreground hover:bg-ink-hover active:bg-ink-active",
         destructive:
           "bg-danger text-foreground-on-solid hover:bg-danger-hover [--ring:var(--ring-danger)]",
+        // Outline and ghost name their own ink. Without it they took the colour
+        // of whatever they sat in: amber inside a warning, grey inside a muted
+        // row, and then a different colour again on hover. A caller that wants
+        // another ink passes it in className, or uses `quiet` for muted.
         outline:
-          "border border-input bg-card hover:border-border-strong hover:bg-surface-hover active:bg-surface-active",
+          "border border-input bg-card text-foreground hover:border-border-strong hover:bg-surface-hover active:bg-surface-active",
         secondary:
           "bg-surface-active/70 text-secondary-foreground hover:bg-surface-active active:bg-border",
-        ghost: "hover:bg-surface-hover hover:text-accent-foreground active:bg-surface-active",
+        ghost:
+          "text-foreground hover:bg-surface-hover hover:text-accent-foreground active:bg-surface-active",
         ghostInvert: "bg-accent hover:bg-background/90 hover:text-accent-foreground",
         quiet:
           "text-muted-foreground hover:bg-surface-hover hover:text-foreground active:bg-surface-active",

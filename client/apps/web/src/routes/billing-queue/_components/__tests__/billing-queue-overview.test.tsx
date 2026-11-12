@@ -129,6 +129,36 @@ describe("BillingQueueOverview", () => {
     expect(screen.getByRole("region", { name: "Nova's brief" })).toBeInTheDocument();
   });
 
+  it("says the brief is being updated when it was written for a queue that has since moved", async () => {
+    mocks.brief.mockResolvedValue({
+      available: true,
+      text: "Two items need you.",
+      generatedAt: Math.floor(Date.now() / 1000),
+      stale: true,
+    });
+
+    renderOverview();
+
+    expect(await screen.findByTestId("billing-queue-brief-stale")).toHaveTextContent(
+      "Updating for the queue as it is now",
+    );
+    expect(screen.getByRole("region", { name: "Nova's brief" })).toBeInTheDocument();
+  });
+
+  it("says nothing of updating a brief written for the queue as it is", async () => {
+    mocks.brief.mockResolvedValue({
+      available: true,
+      text: "Two items need you.",
+      generatedAt: Math.floor(Date.now() / 1000),
+      stale: false,
+    });
+
+    renderOverview();
+
+    expect(await screen.findByRole("region", { name: "Nova's brief" })).toBeInTheDocument();
+    expect(screen.queryByTestId("billing-queue-brief-stale")).not.toBeInTheDocument();
+  });
+
   it("shows nothing of Nova when nothing is generating and there is no brief", async () => {
     renderOverview();
 

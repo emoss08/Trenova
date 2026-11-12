@@ -37,23 +37,56 @@ func (s *Service) SetDispatchHold(
 	ctx context.Context,
 	req DispatchHoldRequest,
 ) (*worker.Worker, error) {
+	entity, err := s.heldWorker(ctx, &req)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.UpdateFromEmployment(ctx, entity, req.Actor)
+}
+
+// CheckDispatchHold is SetDispatchHold up to the write: the driver as the hold
+// would leave them, or the reason it would be refused. A dry run calls it so
+// that what it promises is what the save then does, validation included.
+func (s *Service) CheckDispatchHold(
+	ctx context.Context,
+	req DispatchHoldRequest,
+) (*worker.Worker, error) {
+	entity, err := s.heldWorker(ctx, &req)
+	if err != nil {
+		return nil, err
+	}
+	if multiErr := s.validator.ValidateUpdate(ctx, entity); multiErr != nil {
+		return nil, multiErr
+	}
+
+	return entity, nil
+}
+
+// heldWorker reads the whole driver, profile included, and applies the hold.
+// A worker is saved whole, so one read without its profile fails validation
+// on a field the hold never touches.
+func (s *Service) heldWorker(
+	ctx context.Context,
+	req *DispatchHoldRequest,
+) (*worker.Worker, error) {
 	if strings.TrimSpace(req.Reason) == "" {
 		return nil, errDispatchHoldReason()
 	}
 
 	entity, err := s.repo.GetByID(ctx, workerports.GetWorkerByIDRequest{
-		ID:         req.WorkerID,
-		TenantInfo: req.TenantInfo,
+		ID:             req.WorkerID,
+		TenantInfo:     req.TenantInfo,
+		IncludeProfile: true,
 	})
 	if err != nil {
 		return nil, err
 	}
-
-	if err = ApplyDispatchHold(entity, &req); err != nil {
+	if err = ApplyDispatchHold(entity, req); err != nil {
 		return nil, err
 	}
 
-	return s.UpdateFromEmployment(ctx, entity, req.Actor)
+	return entity, nil
 }
 
 func ApplyDispatchHold(entity *worker.Worker, req *DispatchHoldRequest) error {

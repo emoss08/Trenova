@@ -5,10 +5,12 @@ import (
 	"fmt"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/tenantscope"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentpredicate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -26,35 +28,12 @@ const (
 	tenantRefreshBatch = 1000
 )
 
-type tenancy bool
-
-const (
-	scopedTenant tenancy = false
-	everyTenant  tenancy = true
-)
-
-func scoped[T any](q keel.Query[*T], t tenancy) keel.Query[*T] {
-	if t == everyTenant {
-		return q.AllTenants()
-	}
-
-	return q
-}
-
 func Refresh(ctx context.Context, db *keel.DB, shipmentIDs ...pulid.ID) error {
 	if len(shipmentIDs) == 0 {
 		return nil
 	}
 
-	return refresh(ctx, db, shipmentdb.Shipments.ID.In(shipmentIDs...), scopedTenant)
-}
-
-func RefreshAcrossTenants(ctx context.Context, db *keel.DB, shipmentIDs ...pulid.ID) error {
-	if len(shipmentIDs) == 0 {
-		return nil
-	}
-
-	return refresh(ctx, db, shipmentdb.Shipments.ID.In(shipmentIDs...), everyTenant)
+	return refresh(ctx, db, shipmentdb.Shipments.ID.In(shipmentIDs...))
 }
 
 func RefreshMoves(ctx context.Context, db *keel.DB, moveIDs ...pulid.ID) error {
@@ -65,8 +44,7 @@ func RefreshMoves(ctx context.Context, db *keel.DB, moveIDs ...pulid.ID) error {
 	return refresh(
 		ctx,
 		db,
-		shipmentdb.Shipments.ID.InQuery(shipmentsOfMoves(moveIDs)),
-		scopedTenant,
+		shipmentdb.Shipments.ID.InQuery(shipmentsOfMoves(ctx, moveIDs)),
 	)
 }
 
@@ -96,48 +74,48 @@ func tenantPage(after pulid.ID) keel.Query[*shipment.Shipment] {
 		Limit(tenantRefreshBatch)
 }
 
-func shipmentsOfMoves(moveIDs []pulid.ID) keel.Query[*shipment.ShipmentMove] {
+func shipmentsOfMoves(ctx context.Context, moveIDs []pulid.ID) keel.Query[*shipment.ShipmentMove] {
 	sm := shipmentdb.ShipmentMoves.As(touchedMoveAlias)
 
-	return sm.Pick(sm.ShipmentID).Where(sm.ID.In(moveIDs...))
+	return tenantscope.Scoped(ctx, sm.Pick(sm.ShipmentID).Where(sm.ID.In(moveIDs...)))
 }
 
-func refresh(ctx context.Context, db *keel.DB, target keel.Pred, t tenancy) error {
-	if _, err := refreshQuery(target, t).Update(ctx, db, refreshAssignments(t)...); err != nil {
+func refresh(ctx context.Context, db *keel.DB, target keel.Pred) error {
+	if _, err := refreshQuery(ctx, target).Update(ctx, db, refreshAssignments(ctx)...); err != nil {
 		return fmt.Errorf("refresh shipment projections: %w", err)
 	}
 
 	return nil
 }
 
-func refreshQuery(target keel.Pred, t tenancy) keel.Query[*shipment.Shipment] {
+func refreshQuery(ctx context.Context, target keel.Pred) keel.Query[*shipment.Shipment] {
 	sp := shipmentdb.Shipments
 
-	return scoped(sp.Where(
+	return tenantscope.Scoped(ctx, sp.Where(
 		target,
 		keel.Or(
-			sp.LastDeliveryArrivalAt.IsDistinctFromExpr(lastDeliveryArrival(sp, t)),
-			sp.PickupAt.IsDistinctFromExpr(pickupAt(sp, t)),
-			sp.DeliveryAt.IsDistinctFromExpr(deliveryAt(sp, t)),
-			sp.HasActiveAssignment.IsDistinctFromExpr(keel.BoolOf(hasActiveAssignment(sp, t))),
+			sp.LastDeliveryArrivalAt.IsDistinctFromExpr(lastDeliveryArrival(ctx, sp)),
+			sp.PickupAt.IsDistinctFromExpr(pickupAt(ctx, sp)),
+			sp.DeliveryAt.IsDistinctFromExpr(deliveryAt(ctx, sp)),
+			sp.HasActiveAssignment.IsDistinctFromExpr(keel.BoolOf(hasActiveAssignment(ctx, sp))),
 		),
-	), t)
+	))
 }
 
-func refreshAssignments(t tenancy) []keel.Assignment {
+func refreshAssignments(ctx context.Context) []keel.Assignment {
 	sp := shipmentdb.Shipments
 
 	return []keel.Assignment{
-		sp.LastDeliveryArrivalAt.ToExpr(lastDeliveryArrival(sp, t)),
-		sp.PickupAt.ToExpr(pickupAt(sp, t)),
-		sp.DeliveryAt.ToExpr(deliveryAt(sp, t)),
-		sp.HasActiveAssignment.ToExpr(hasActiveAssignment(sp, t)),
+		sp.LastDeliveryArrivalAt.ToExpr(lastDeliveryArrival(ctx, sp)),
+		sp.PickupAt.ToExpr(pickupAt(ctx, sp)),
+		sp.DeliveryAt.ToExpr(deliveryAt(ctx, sp)),
+		sp.HasActiveAssignment.ToExpr(hasActiveAssignment(ctx, sp)),
 		sp.Version.ToExpr(sp.Version),
 		sp.UpdatedAt.ToExpr(sp.UpdatedAt),
 	}
 }
 
-func lastDeliveryArrival(sp *shipmentdb.ShipmentsTable, t tenancy) keel.Int64Expr {
+func lastDeliveryArrival(ctx context.Context, sp *shipmentdb.ShipmentsTable) keel.Int64Expr {
 	stp := shipmentdb.Stops.As(deliveryStopAlias)
 	sm := shipmentdb.ShipmentMoves.As(deliveryMoveAlias)
 
@@ -145,7 +123,7 @@ func lastDeliveryArrival(sp *shipmentdb.ShipmentsTable, t tenancy) keel.Int64Exp
 		Join(sm, sm.ID.EqCol(stp.ShipmentMoveID)).
 		Where(
 			sm.ShipmentID.EqCol(sp.ID),
-			keel.When(t == everyTenant, keel.And(
+			keel.When(dbscope.IsSystem(ctx), keel.And(
 				stp.OrganizationID.EqCol(sp.OrganizationID),
 				stp.BusinessUnitID.EqCol(sp.BusinessUnitID),
 				sm.OrganizationID.EqCol(sp.OrganizationID),
@@ -159,48 +137,48 @@ func lastDeliveryArrival(sp *shipmentdb.ShipmentsTable, t tenancy) keel.Int64Exp
 		Order(sm.Sequence.Desc(), stp.Sequence.Desc()).
 		Limit(1)
 
-	return keel.Int64Of(keel.Scalar(scoped(q, t)))
+	return keel.Int64Of(keel.Scalar(tenantscope.Scoped(ctx, q)))
 }
 
 // pickupAt is when the shipment is scheduled to be picked up: the scheduled
 // window start of its first pickup stop. The pickup-window quick filters and
 // the next uncovered pickup read it from the shipment instead of finding the
 // first pickup stop of every uncovered shipment.
-func pickupAt(sp *shipmentdb.ShipmentsTable, t tenancy) keel.Int64Expr {
+func pickupAt(ctx context.Context, sp *shipmentdb.ShipmentsTable) keel.Int64Expr {
 	stp := shipmentdb.Stops.As(pickupAtStop)
 	sm := shipmentdb.ShipmentMoves.As(pickupAtMove)
 
 	q := shipmentpredicate.FirstPickupStop(stp, sm).
 		Pick(stp.ScheduledWindowStart).
-		Where(sameTenant(sp, stp, sm, t))
+		Where(sameTenant(ctx, sp, stp, sm))
 
-	return keel.Int64Of(keel.Scalar(scoped(q, t)))
+	return keel.Int64Of(keel.Scalar(tenantscope.Scoped(ctx, q)))
 }
 
 // deliveryAt is when the shipment delivers: the actual arrival of its last
 // delivery stop, or that stop's scheduled window start until it arrives. The
 // delivering-today and delivery-hour quick filters read it from the shipment
 // instead of finding the last delivery stop of every shipment they count.
-func deliveryAt(sp *shipmentdb.ShipmentsTable, t tenancy) keel.Int64Expr {
+func deliveryAt(ctx context.Context, sp *shipmentdb.ShipmentsTable) keel.Int64Expr {
 	stp := shipmentdb.Stops.As(deliveryAtStop)
 	sm := shipmentdb.ShipmentMoves.As(deliveryAtMove)
 
 	q := shipmentpredicate.LastDeliveryStop(stp, sm).
 		Pick(shipmentpredicate.DeliveryAt(stp)).
-		Where(sameTenant(sp, stp, sm, t))
+		Where(sameTenant(ctx, sp, stp, sm))
 
-	return keel.Int64Of(keel.Scalar(scoped(q, t)))
+	return keel.Int64Of(keel.Scalar(tenantscope.Scoped(ctx, q)))
 }
 
 // sameTenant ties a stop and its move to the shipment's tenant when the refresh
 // runs across tenants, where row-level security does not.
 func sameTenant(
+	ctx context.Context,
 	sp *shipmentdb.ShipmentsTable,
 	stp *shipmentdb.StopsTable,
 	sm *shipmentdb.ShipmentMovesTable,
-	t tenancy,
 ) keel.Pred {
-	return keel.When(t == everyTenant, keel.And(
+	return keel.When(dbscope.IsSystem(ctx), keel.And(
 		stp.OrganizationID.EqCol(sp.OrganizationID),
 		stp.BusinessUnitID.EqCol(sp.BusinessUnitID),
 		sm.OrganizationID.EqCol(sp.OrganizationID),
@@ -208,7 +186,7 @@ func sameTenant(
 	))
 }
 
-func hasActiveAssignment(sp *shipmentdb.ShipmentsTable, t tenancy) keel.Pred {
+func hasActiveAssignment(ctx context.Context, sp *shipmentdb.ShipmentsTable) keel.Pred {
 	sm := shipmentdb.ShipmentMoves.As(assignedMoveAlias)
 	a := shipmentdb.Assignments.As(assignmentAlias)
 
@@ -220,7 +198,7 @@ func hasActiveAssignment(sp *shipmentdb.ShipmentsTable, t tenancy) keel.Pred {
 	).
 		Where(
 			sm.ShipmentID.EqCol(sp.ID),
-			keel.When(t == everyTenant, keel.And(
+			keel.When(dbscope.IsSystem(ctx), keel.And(
 				sm.OrganizationID.EqCol(sp.OrganizationID),
 				sm.BusinessUnitID.EqCol(sp.BusinessUnitID),
 				a.OrganizationID.EqCol(sp.OrganizationID),
@@ -229,5 +207,5 @@ func hasActiveAssignment(sp *shipmentdb.ShipmentsTable, t tenancy) keel.Pred {
 			sm.Status.Ne(shipmentvocab.MoveStatusCanceled),
 		)
 
-	return keel.Exists(scoped(q, t))
+	return keel.Exists(tenantscope.Scoped(ctx, q))
 }

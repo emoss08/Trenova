@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/deskrecords"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/caseownerports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/deskattentionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -32,15 +33,17 @@ type Params struct {
 
 	Watchtower watchtowerports.WatchtowerService
 	Labels     *deskrecords.Labeler
+	Owners     caseownerports.Service
 }
 
 type Service struct {
 	watchtower watchtowerports.WatchtowerService
 	labels     *deskrecords.Labeler
+	owners     caseownerports.Service
 }
 
 func New(p Params) deskattentionports.DeskAttentionService {
-	return &Service{watchtower: p.Watchtower, labels: p.Labels}
+	return &Service{watchtower: p.Watchtower, labels: p.Labels, owners: p.Owners}
 }
 
 func (s *Service) Attention(
@@ -73,7 +76,7 @@ func (s *Service) Attention(
 
 	var items []*watchtower.Item
 	if len(req.RecordIDs) > 0 {
-		page, lErr := s.list(ctx, req, actor, nil, req.RecordIDs, nil)
+		page, lErr := s.list(ctx, req, actor, nil, req.RecordIDs, nil, false)
 		if lErr != nil {
 			return nil, lErr
 		}
@@ -83,7 +86,7 @@ func (s *Service) Attention(
 		if len(req.Kinds) > 0 && len(kinds) == 0 {
 			return out, nil
 		}
-		page, lErr := s.list(ctx, req, actor, kinds, nil, req.Severities)
+		page, lErr := s.list(ctx, req, actor, kinds, nil, req.Severities, req.Working)
 		if lErr != nil {
 			return nil, lErr
 		}
@@ -94,7 +97,7 @@ func (s *Service) Attention(
 
 		about := aboutIDs(items)
 		if len(about) > 0 {
-			filled, fErr := s.list(ctx, req, actor, nil, about, nil)
+			filled, fErr := s.list(ctx, req, actor, nil, about, nil, false)
 			if fErr != nil {
 				return nil, fErr
 			}
@@ -110,8 +113,45 @@ func (s *Service) Attention(
 	if err = s.labels.Label(ctx, req.TenantInfo, actor, records); err != nil {
 		return nil, err
 	}
+	if err = s.own(ctx, req, actor, out.Groups); err != nil {
+		return nil, err
+	}
 
 	return out, nil
+}
+
+// own says whose case each row's record is, for every row in one read, so the
+// queue can show a case someone has and send the reader to it.
+func (s *Service) own(
+	ctx context.Context,
+	req *deskattentionports.AttentionRequest,
+	actor *permissionports.RequestActor,
+	groups []*deskattentionports.Group,
+) error {
+	ids := make([]pulid.ID, 0, len(groups))
+	for _, g := range groups {
+		if g.Record != nil {
+			ids = append(ids, g.Record.ID)
+		}
+	}
+	standings, err := s.owners.Standings(ctx, caseownerports.RecordsRequest{
+		TenantInfo: req.TenantInfo,
+		RecordIDs:  ids,
+	}, actor)
+	if err != nil {
+		return err
+	}
+	for _, g := range groups {
+		if g.Record == nil {
+			continue
+		}
+		if standing, ok := standings[g.Record.ID]; ok {
+			ownership := standing.Ownership()
+			g.Ownership = &ownership
+		}
+	}
+
+	return nil
 }
 
 func (s *Service) list(
@@ -121,8 +161,10 @@ func (s *Service) list(
 	kinds []watchtower.SourceKind,
 	about []pulid.ID,
 	severities []watchtower.Severity,
+	working bool,
 ) (*watchtowerports.WatchtowerPage, error) {
 	return s.watchtower.List(ctx, watchtowerports.ListWatchtowerItemsRequest{
+		AgentWorking:   working,
 		TenantInfo:     req.TenantInfo,
 		Kinds:          kinds,
 		Severities:     severities,

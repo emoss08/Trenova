@@ -409,10 +409,6 @@ before converting: other work may have changed them.
   GET /billing/statements/
   GET /billing/statements/:customerID/
   POST /billing/statements/:customerID/bill/
-## invoicesharehandler
-  GET /billing/invoices/:invoiceID/shares/
-  POST /billing/invoices/:invoiceID/shares/
-  GET /billing/invoices/:invoiceID/shares/candidates/
 ## invoiceadjustmenthandler
   GET /billing/invoice-adjustments/:adjustmentID/
   POST /billing/invoice-adjustments/:adjustmentID/approve/

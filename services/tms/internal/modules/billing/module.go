@@ -21,7 +21,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/invoicedisputerepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/invoicerepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/invoicerunrepository"
-	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/invoicesharerepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/latechargerepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/paymentreminderrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/recordversionrepository"
@@ -68,7 +67,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicequeryservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicerunservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicesendservice"
-	"github.com/emoss08/trenova/internal/modules/billing/app/invoiceshareservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicevalidation"
 	"github.com/emoss08/trenova/internal/modules/billing/app/invoicevoidservice"
 	"github.com/emoss08/trenova/internal/modules/billing/app/latechargeservice"
@@ -108,8 +106,6 @@ func SharedOptions() fx.Option {
 				return s
 			},
 			detentionbillingservice.New,
-			invoiceshareservice.New,
-			func(s *invoiceshareservice.Service) invoiceports.InvoiceShareService { return s },
 			costingservice.New,
 			billingcontrolpolicyservice.New,
 			billingtransferrepository.New,
@@ -141,7 +137,6 @@ func SharedOptions() fx.Option {
 			invoicedisputerepository.New,
 			latechargerepository.New,
 			invoicerunrepository.New,
-			invoicesharerepository.New,
 			billingqueuerepository.New,
 			billingqueuereviewrepository.New,
 			customerpaymentservice.NewValidator,

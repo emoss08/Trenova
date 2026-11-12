@@ -1,5 +1,5 @@
 import type { Location } from "@trenova/shared/types/location";
-import { AdvancedMarker } from "@vis.gl/react-google-maps";
+import { AdvancedMarker } from "@/components/map/advanced-marker";
 import { MarkerPin01Icon } from "@trenova/shared/components/icons";
 
 export type AddressMarkerLocation = Pick<Location, "id" | "name" | "latitude" | "longitude">;

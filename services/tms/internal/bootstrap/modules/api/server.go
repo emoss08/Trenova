@@ -12,3 +12,8 @@ var PprofServerModule = fx.Module("api-pprof-server",
 	fx.Provide(api.NewPprofServer),
 	fx.Invoke(func(_ *api.PprofServer) {}),
 )
+
+var WorkerPprofServerModule = fx.Module("worker-pprof-server",
+	fx.Provide(api.NewWorkerPprofServer),
+	fx.Invoke(func(_ *api.PprofServer) {}),
+)

@@ -18,7 +18,7 @@ const thread = {
  */
 describe("assistantThreadSchema cannotContinueReason", () => {
   it("reads each reason the server gives", () => {
-    for (const reason of ["AgentDeleted", "AgentDisabled", "AgentNotConversational", "NoAccess"]) {
+    for (const reason of ["AgentDeleted", "AgentDisabled", "NoAccess"]) {
       const parsed = assistantThreadSchema.parse({
         ...thread,
         canContinue: false,

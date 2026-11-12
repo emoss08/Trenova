@@ -51,7 +51,6 @@ func TestContinueRefusal_EveryReasonIsValid(t *testing.T) {
 	for _, reason := range []conversation.ContinueRefusal{
 		conversation.ContinueAgentDeleted,
 		conversation.ContinueAgentDisabled,
-		conversation.ContinueAgentNotConversational,
 		conversation.ContinueNoAccess,
 	} {
 		assert.True(t, reason.IsValid(), reason)

@@ -24,6 +24,7 @@ enum ApprovalScope {
   All
   TimeOff
   Expenses
+  Cases
 }
 
 """

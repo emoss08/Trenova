@@ -227,7 +227,7 @@ const CARDS = [
 
 function shotsFor({ card, loaded, attention, empty, gone }) {
   const pane = (slug) => `/desk/c/${THREAD}/a/${slug}`;
-  const page = (slug) => `/desk/c/${THREAD}/a/${slug}/page`;
+  const page = (slug) => `/desk/v/${THREAD}/${slug}`;
   return [
     { name: `${card}-loaded-light`, path: pane(loaded), slug: loaded, colorScheme: "light" },
     { name: `${card}-loaded-dark`, path: pane(loaded), slug: loaded, colorScheme: "dark" },

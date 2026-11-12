@@ -635,7 +635,11 @@ function MenuRow({
     >
       <span
         aria-hidden
-        className="text-foreground-muted flex size-4 shrink-0 items-center justify-center [&_svg]:size-3.5"
+        className={cn(
+          "flex size-4 shrink-0 items-center justify-center [&_svg]:size-3.5",
+          // A destructive row's icon takes the row's colour, so the two read as one.
+          item.destructive === true ? "text-destructive" : "text-foreground-muted",
+        )}
       >
         {item.leading ?? (Icon === undefined ? null : <Icon />)}
       </span>

@@ -34,6 +34,7 @@ export function warning(overrides: Partial<PreviewWarning> = {}): PreviewWarning
     args: [],
     message: "This would be refused as it stands: validation failed",
     reasons: [],
+    remedies: [],
     ...overrides,
   };
 }

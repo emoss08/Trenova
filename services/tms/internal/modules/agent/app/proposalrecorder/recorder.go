@@ -74,6 +74,14 @@ type ScriptStepReader interface {
 	) (*agentrunstep.AgentRunStep, error)
 }
 
+// StandingReader reads what an agent still has waiting on a person.
+type StandingReader interface {
+	ListStandingByDefinition(
+		ctx context.Context,
+		req *agentproposalports.ListStandingByDefinitionRequest,
+	) ([]*agent.AgentProposal, error)
+}
+
 // PlanStore is the one write the recorder makes on plans.
 type PlanStore interface {
 	Create(ctx context.Context, entity *agentplan.AgentPlan) (*agentplan.AgentPlan, error)
@@ -84,6 +92,7 @@ type Service struct {
 	tx         kernelports.Transactor
 	runs       RunOpener
 	proposals  ProposalStore
+	standing   StandingReader
 	plans      PlanStore
 	trust      agenttrustports.AgentTrustService
 	notifier   agentproposalports.AgentProposalNotifier
@@ -95,6 +104,7 @@ type Service struct {
 func New(p Params) *Service {
 	svc := NewWithStores(p.Logger, p.Runs, p.Proposals)
 	svc.tx = p.DB
+	svc.standing = p.Proposals
 	svc.trust = p.Trust
 	svc.notifier = p.Notifier
 	svc.plans = p.Plans
@@ -190,6 +200,9 @@ type RecordResult struct {
 	Proposals []*agent.AgentProposal
 	// Plan is set when the run's pending proposals were grouped into one.
 	Plan *agentplan.AgentPlan
+	// Records are the plans of an unattended run that worked several records
+	// of one kind, one per record with two or more writes; Plan is nil then.
+	Records []*agentplan.AgentPlan
 	// Batches are the plans of a script's intents, one per script that
 	// prepared two or more; a script's single intent is a proposal.
 	Batches   []*agentplan.AgentPlan
@@ -294,19 +307,83 @@ func (s *Service) Record(ctx context.Context, req *RecordRequest) (*RecordResult
 }
 
 // filedPlans are the decisions a record opened: the turn's own plan of the
-// model's calls, and one batch for each script that prepared several writes.
+// model's calls, or one plan for each record an unattended run worked, and
+// one batch for each script that prepared several writes.
 type filedPlans struct {
 	turn    *agentplan.AgentPlan
+	records []*agentplan.AgentPlan
 	batches []*agentplan.AgentPlan
 }
 
 func (p filedPlans) all() []*agentplan.AgentPlan {
-	all := make([]*agentplan.AgentPlan, 0, len(p.batches)+1)
+	all := make([]*agentplan.AgentPlan, 0, len(p.records)+len(p.batches)+1)
 	if p.turn != nil {
 		all = append(all, p.turn)
 	}
+	all = append(all, p.records...)
 
 	return append(all, p.batches...)
+}
+
+// runsUnattended reports a run nobody asked for in a conversation: one an
+// event, a schedule or a person in AI Control started. A run whose trigger is
+// not known is treated as a conversation's, whose writes are one decision.
+func runsUnattended(own *runGroup) bool {
+	trigger := agent.RunTrigger("")
+	switch {
+	case own.run != nil:
+		trigger = own.run.Trigger
+	case own.open != nil:
+		trigger = own.open.Trigger
+	}
+
+	switch trigger {
+	case agent.RunTriggerEvent,
+		agent.RunTriggerScheduled,
+		agent.RunTriggerContinuous,
+		agent.RunTriggerManual:
+		return true
+	default:
+		return false
+	}
+}
+
+// stepsByRecord splits the writes of a run that went through several records
+// of one kind, a desk renewing three drivers' papers, into each record's own,
+// in the order the run first reached each record. Those are separate pieces
+// of work: one decision for all of them puts another driver's request in this
+// driver's case, and one step that fails stops the rest. A run whose writes
+// are not all about a record, or are about records of different kinds (a
+// shipment and its invoice), is one sequence and comes back whole.
+func stepsByRecord(steps []planStep) [][]planStep {
+	if len(steps) < 2 {
+		return nil
+	}
+
+	kind := steps[0].proposal.TargetResource
+	order := make([]pulid.ID, 0, len(steps))
+	byRecord := make(map[pulid.ID][]planStep, len(steps))
+	for _, step := range steps {
+		target := step.proposal.TargetID
+		if target.IsNil() || kind == "" || step.proposal.TargetResource != kind {
+			return nil
+		}
+		if _, seen := byRecord[target]; !seen {
+			order = append(order, target)
+		}
+		step.position = len(byRecord[target])
+		byRecord[target] = append(byRecord[target], step)
+	}
+	if len(order) < 2 {
+		return nil
+	}
+
+	split := make([][]planStep, 0, len(order))
+	for _, target := range order {
+		split = append(split, byRecord[target])
+	}
+
+	return split
 }
 
 func recordResult(groups []*runGroup, plans filedPlans) *RecordResult {
@@ -315,6 +392,7 @@ func recordResult(groups []*runGroup, plans filedPlans) *RecordResult {
 		Run:       own.run,
 		Proposals: own.proposals,
 		Plan:      plans.turn,
+		Records:   plans.records,
 		Batches:   plans.batches,
 	}
 	if result.Proposals == nil {
@@ -381,6 +459,11 @@ func (s *Service) write(
 		for idx := range group.actions {
 			proposal := s.proposalFor(req, group, &group.actions[idx], now)
 			group.proposals = append(group.proposals, proposal)
+		}
+		if err := s.standAside(ctx, req.Actor, group, now); err != nil {
+			return filedPlans{}, err
+		}
+		for idx, proposal := range group.proposals {
 			if proposal.Status != agent.ProposalStatusPending {
 				continue
 			}
@@ -406,17 +489,34 @@ func (s *Service) write(
 
 	orderSteps(steps, req.CallOrder)
 	var plans filedPlans
-	turn, err := s.planSteps(ctx, &planOpening{
-		actor:  req.Actor,
-		groups: groups,
-		steps:  steps,
-		title:  req.PlanTitle,
-		now:    now,
-	})
-	if err != nil {
-		return filedPlans{}, err
+	if byRecord := stepsByRecord(steps); len(byRecord) > 1 && runsUnattended(groups[0]) {
+		for _, recordSteps := range byRecord {
+			plan, err := s.planSteps(ctx, &planOpening{
+				actor:  req.Actor,
+				groups: groups,
+				steps:  recordSteps,
+				now:    now,
+			})
+			if err != nil {
+				return filedPlans{}, err
+			}
+			if plan != nil {
+				plans.records = append(plans.records, plan)
+			}
+		}
+	} else {
+		turn, err := s.planSteps(ctx, &planOpening{
+			actor:  req.Actor,
+			groups: groups,
+			steps:  steps,
+			title:  req.PlanTitle,
+			now:    now,
+		})
+		if err != nil {
+			return filedPlans{}, err
+		}
+		plans.turn = turn
 	}
-	plans.turn = turn
 	for _, key := range scriptOrder {
 		batch, batchErr := s.planSteps(ctx, &planOpening{
 			actor:         req.Actor,
@@ -845,7 +945,19 @@ func (s *Service) projectPlan(
 		return
 	}
 
-	s.watchtower.Upsert(ctx, watchtowersources.DescribePlan(plan, definitionName(definition)))
+	input := watchtowersources.DescribePlan(plan, definitionName(definition))
+	if !worksLive(definition) {
+		input.About = pulid.Nil
+	}
+	s.watchtower.Upsert(ctx, input)
+}
+
+// worksLive reports an agent whose writes a person can approve. One in shadow
+// or in simulation leaves what it would have done for review in AI Control,
+// where nobody can act on it; such a plan is about no record on the Desk, so
+// it opens no case and is never listed as work waiting on someone.
+func worksLive(definition *agentdefinition.Definition) bool {
+	return definition == nil || (!definition.SimulationMode && !definition.EffectiveShadow(false))
 }
 
 // project puts what is now waiting on a person onto the watchtower. A step
@@ -861,7 +973,11 @@ func (s *Service) project(
 			proposal.PlanID != nil {
 			continue
 		}
-		s.watchtower.Upsert(ctx, watchtowersources.DescribeProposal(proposal, name))
+		input := watchtowersources.DescribeProposal(proposal, name)
+		if !worksLive(definition) {
+			input.About = pulid.Nil
+		}
+		s.watchtower.Upsert(ctx, input)
 	}
 }
 

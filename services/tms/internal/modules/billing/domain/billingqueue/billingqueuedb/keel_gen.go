@@ -1742,6 +1742,7 @@ var queueBriefsTable = schema.Table{
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},
 		{Name: "text", Quoted: `"text"`, Field: "Text", Kind: schema.KindString, Flags: 0, Label: `Text`, JSON: `text`},
 		{Name: "input_hash", Quoted: `"input_hash"`, Field: "InputHash", Kind: schema.KindString, Flags: 0, Label: `Input Hash`},
+		{Name: "lanes_hash", Quoted: `"lanes_hash"`, Field: "LanesHash", Kind: schema.KindString, Flags: 0, Label: `Lanes Hash`},
 		{Name: "generated_at", Quoted: `"generated_at"`, Field: "GeneratedAt", Kind: schema.KindInt64, Flags: 0, Label: `Generated At`, JSON: `generatedAt`},
 		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, JSON: `version`},
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
@@ -1749,14 +1750,14 @@ var queueBriefsTable = schema.Table{
 	},
 	PK:         []int32{0, 1, 2},
 	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8},
-	Update:     []int32{3, 4, 5, 8},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
+	Update:     []int32{3, 4, 5, 6, 9},
 	Returning:  nil,
-	Version:    6,
+	Version:    7,
 	AutoID:     0,
-	AutoCreate: 7,
-	AutoUpdate: 8,
+	AutoCreate: 8,
+	AutoUpdate: 9,
 	IDPrefix:   "bqb_",
 	New:        newQueueBrief,
 	NewN:       newNQueueBrief,
@@ -1775,6 +1776,7 @@ type QueueBriefsTable struct {
 	OrganizationID keelkinds.PulidIDCol
 	Text           keel.StringCol
 	InputHash      keel.StringCol
+	LanesHash      keel.StringCol
 	GeneratedAt    keel.Int64Col
 	Version        keel.Int64Col
 	CreatedAt      keel.Int64Col
@@ -1789,10 +1791,11 @@ var QueueBriefs = &QueueBriefsTable{
 	OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &queueBriefsRef, Index: 2}}},
 	Text:           keel.StringCol{Col: keel.Col{Ref: &queueBriefsRef, Index: 3}},
 	InputHash:      keel.StringCol{Col: keel.Col{Ref: &queueBriefsRef, Index: 4}},
-	GeneratedAt:    keel.Int64Col{Col: keel.Col{Ref: &queueBriefsRef, Index: 5}},
-	Version:        keel.Int64Col{Col: keel.Col{Ref: &queueBriefsRef, Index: 6}},
-	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &queueBriefsRef, Index: 7}},
-	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &queueBriefsRef, Index: 8}},
+	LanesHash:      keel.StringCol{Col: keel.Col{Ref: &queueBriefsRef, Index: 5}},
+	GeneratedAt:    keel.Int64Col{Col: keel.Col{Ref: &queueBriefsRef, Index: 6}},
+	Version:        keel.Int64Col{Col: keel.Col{Ref: &queueBriefsRef, Index: 7}},
+	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &queueBriefsRef, Index: 8}},
+	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &queueBriefsRef, Index: 9}},
 }
 
 // BuildQueueBriefs builds the table of billing_queue_briefs for ref. Generated relation and alias methods call it.
@@ -1804,10 +1807,11 @@ func BuildQueueBriefs(r *keel.Ref) *QueueBriefsTable {
 		OrganizationID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		Text:           keel.StringCol{Col: keel.Col{Ref: r, Index: 3}},
 		InputHash:      keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
-		GeneratedAt:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 5}},
-		Version:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
-		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
-		UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
+		LanesHash:      keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
+		GeneratedAt:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
+		Version:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
+		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
+		UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
 	}
 }
 
@@ -2209,12 +2213,14 @@ func ptrQueueBrief(p unsafe.Pointer, c int32) any {
 	case 4:
 		return &r.InputHash
 	case 5:
-		return &r.GeneratedAt
+		return &r.LanesHash
 	case 6:
-		return &r.Version
+		return &r.GeneratedAt
 	case 7:
-		return &r.CreatedAt
+		return &r.Version
 	case 8:
+		return &r.CreatedAt
+	case 9:
 		return &r.UpdatedAt
 	}
 	return nil
@@ -2234,12 +2240,14 @@ func valueQueueBrief(p unsafe.Pointer, c int32) any {
 	case 4:
 		return r.InputHash
 	case 5:
-		return r.GeneratedAt
+		return r.LanesHash
 	case 6:
-		return r.Version
+		return r.GeneratedAt
 	case 7:
-		return r.CreatedAt
+		return r.Version
 	case 8:
+		return r.CreatedAt
+	case 9:
 		return r.UpdatedAt
 	}
 	return nil

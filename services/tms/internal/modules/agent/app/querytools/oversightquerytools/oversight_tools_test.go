@@ -228,7 +228,6 @@ func TestListWatchtowerItems_MarksEachRowFromOutsideWithItsOwnSource(t *testing.
 
 	email := towerItem(watchtower.SourceInboundMessage, "imsg_1", 100)
 	edi := towerItem(watchtower.SourceEDIInboundQuarantined, "edi_1", 99)
-	weather := towerItem(watchtower.SourceWeatherAlert, "wxa_1", 98)
 	failedTainted := towerItem(watchtower.SourceAgentRunFailed, taintedFailure.String(), 97)
 	failedClean := towerItem(watchtower.SourceAgentRunFailed, cleanFailure.String(), 96)
 	proposal := towerItem(watchtower.SourceAgentProposal, proposalID.String(), 95)
@@ -237,7 +236,7 @@ func TestListWatchtowerItems_MarksEachRowFromOutsideWithItsOwnSource(t *testing.
 	failure := towerItem(watchtower.SourceServiceFailure, "sf_1", 92)
 	orphan := towerItem(watchtower.SourceAgentProposal, missingProposal, 91)
 	fixture.feed.page.Items = []*watchtower.Item{
-		email, edi, weather, failedTainted, failedClean, proposal, plan, exception, failure,
+		email, edi, failedTainted, failedClean, proposal, plan, exception, failure,
 		orphan,
 	}
 
@@ -252,10 +251,6 @@ func TestListWatchtowerItems_MarksEachRowFromOutsideWithItsOwnSource(t *testing.
 		Source: agent.TaintSourceEDI,
 		Ref:    agentrecord.RecordRef{EntityType: agent.TaintEntityEDIInboundFile, ID: "edi_1"},
 	}, marks["edi_1"])
-	assert.Equal(t, agent.SourcedRef{
-		Source: agent.TaintSourceWeather,
-		Ref:    agentrecord.RecordRef{EntityType: agent.TaintEntityWeatherAlert, ID: "wxa_1"},
-	}, marks["wxa_1"])
 	for _, runID := range []pulid.ID{taintedFailure, proposalRun, exceptionRun} {
 		assert.Equal(t, agent.SourcedRef{
 			Source: agent.TaintSourceRunRecord,
@@ -423,7 +418,6 @@ func TestListWatchtowerItems_PolicyNamesEverySourceARowMayCarry(t *testing.T) {
 	assert.Equal(t, agent.TaintSourceInboundMessage, policy.Source)
 	assert.ElementsMatch(t, []agent.TaintSource{
 		agent.TaintSourceEDI,
-		agent.TaintSourceWeather,
 		agent.TaintSourceRunRecord,
 	}, policy.Sources)
 }

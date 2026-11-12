@@ -21,7 +21,7 @@ func TestListRequestFromFilterReadsEveryNarrowing(t *testing.T) {
 	before := 1_800_000_000
 	req, err := ListRequestFromFilter(&gqlmodel.BillingQueueItemsFilterInput{
 		Lanes:         []billingqueue.Lane{billingqueue.LaneReady, billingqueue.LaneNeedsYou},
-		IncludePosted: &include,
+		IncludeClosed: &include,
 		MinAmount:     &minAmount,
 		MaxAmount:     &maxAmount,
 		CreatedBefore: &before,
@@ -29,7 +29,7 @@ func TestListRequestFromFilterReadsEveryNarrowing(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.Equal(t, []billingqueue.Lane{billingqueue.LaneReady, billingqueue.LaneNeedsYou}, req.Lanes)
-	assert.True(t, req.IncludePosted)
+	assert.True(t, req.IncludeClosed)
 	require.True(t, req.MinAmount.Valid)
 	assert.Equal(t, "5000", req.MinAmount.Decimal.String())
 	require.True(t, req.MaxAmount.Valid)
@@ -45,7 +45,7 @@ func TestListRequestFromFilterWithoutAFilterNarrowsNothing(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.Empty(t, req.Lanes)
-	assert.False(t, req.IncludePosted)
+	assert.False(t, req.IncludeClosed)
 	assert.False(t, req.MinAmount.Valid)
 	assert.False(t, req.MaxAmount.Valid)
 	assert.Nil(t, req.CreatedBefore)

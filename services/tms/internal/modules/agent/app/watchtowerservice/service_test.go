@@ -181,8 +181,10 @@ func (r *stubRepo) List(
 	}
 	out := []*watchtower.Item{}
 	for _, item := range r.items {
-		if allowed[item.SourceKind] && (!req.UnresolvedOnly || item.ResolvedAt == nil) &&
-			(req.SubjectID.IsNil() || item.SubjectID == req.SubjectID) {
+		if (len(req.Kinds) == 0 || allowed[item.SourceKind]) &&
+			(!req.UnresolvedOnly || item.ResolvedAt == nil) &&
+			(req.SubjectID.IsNil() || item.SubjectID == req.SubjectID) &&
+			(req.AgentRunID.IsNil() || item.AgentRunID == req.AgentRunID) {
 			out = append(out, item)
 		}
 	}
@@ -361,6 +363,7 @@ func newService(
 	sources ...watchtowerports.WatchtowerSource,
 ) *Service {
 	projector := NewProjector(ProjectorParams{
+		Owners:        &agenttest.OpenCases{},
 		Logger:        zap.NewNop(),
 		Repo:          repo,
 		Realtime:      &recordingRealtime{},
@@ -372,6 +375,7 @@ func newService(
 
 	svc := New(Params{
 		Logger:      zap.NewNop(),
+		Owners:      &agenttest.OpenCases{},
 		Repo:        repo,
 		Projector:   projector,
 		Permissions: perms,
@@ -391,6 +395,7 @@ func newExceptions(
 	projector *Projector,
 ) *Exceptions {
 	exceptions := NewExceptions(ExceptionsParams{
+		Owners:        &agenttest.OpenCases{},
 		Logger:        zap.NewNop(),
 		Repo:          repo,
 		Projector:     projector,

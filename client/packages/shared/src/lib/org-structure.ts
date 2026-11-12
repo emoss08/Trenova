@@ -38,6 +38,7 @@ export const APPROVAL_SCOPE_LABELS: Record<string, string> = defineLabels({
   All: "Everything",
   TimeOff: "Time off only",
   Expenses: "Expenses only",
+  Cases: "Desk cases only",
 });
 
 export function approvalScopeLabel(value: string): string {
@@ -45,9 +46,10 @@ export function approvalScopeLabel(value: string): string {
 }
 
 export const APPROVAL_SCOPE_HINTS: Record<string, string> = defineLabels({
-  All: "Every approval this manager can make.",
+  All: "Every approval this manager can make, and the Desk cases they own.",
   TimeOff: "Time-off requests only. Expenses stay with the manager.",
   Expenses: "Expense claims only. Time off stays with the manager.",
+  Cases: "The Desk cases this person owns. Approvals stay with them.",
 });
 
 export function approvalScopeHint(value: string): string {

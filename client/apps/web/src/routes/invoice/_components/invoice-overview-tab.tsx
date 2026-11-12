@@ -136,7 +136,7 @@ export function InvoiceOverviewTab({
                 {billsSingleShipment ? (
                   <DescriptionItem label={t("Billing queue")}>
                     <Link
-                      to={`/billing/queue?item=${invoice.billingQueueItemId}&includePosted=true`}
+                      to={`/billing/queue?item=${invoice.billingQueueItemId}&includeClosed=true`}
                       className="inline-flex items-center gap-1 hover:underline"
                     >
                       {t("Queue item")}

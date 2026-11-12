@@ -16,7 +16,6 @@ const (
 	SourceServiceFailure         = SourceKind("ServiceFailure")
 	SourceCarrierIntelEvent      = SourceKind("CarrierIntelEvent")
 	SourceHOSViolation           = SourceKind("HOSViolation")
-	SourceWeatherAlert           = SourceKind("WeatherAlert")
 	SourceEDIInboundQuarantined  = SourceKind("EDIInboundQuarantined")
 	SourceBillingException       = SourceKind("BillingException")
 	SourceDetentionOccurrence    = SourceKind("DetentionOccurrence")
@@ -47,7 +46,6 @@ var readResources = map[SourceKind]permission.Resource{
 	SourceServiceFailure:         permission.ResourceServiceFailure,
 	SourceCarrierIntelEvent:      permission.ResourceCarrierIntelligence,
 	SourceHOSViolation:           permission.ResourceWorker,
-	SourceWeatherAlert:           permission.ResourceShipment,
 	SourceEDIInboundQuarantined:  permission.ResourceEDI,
 	SourceBillingException:       permission.ResourceBillingQueue,
 	SourceDetentionOccurrence:    permission.ResourceDetention,
@@ -98,8 +96,6 @@ func (k SourceKind) Label() string {
 		return "Carrier change"
 	case SourceHOSViolation:
 		return "Hours of service"
-	case SourceWeatherAlert:
-		return "Weather"
 	case SourceEDIInboundQuarantined:
 		return "EDI quarantined"
 	case SourceBillingException:
@@ -147,7 +143,6 @@ func AllSourceKinds() []SourceKind {
 		SourceServiceFailure,
 		SourceCarrierIntelEvent,
 		SourceHOSViolation,
-		SourceWeatherAlert,
 		SourceEDIInboundQuarantined,
 		SourceBillingException,
 		SourceDetentionOccurrence,
@@ -215,7 +210,6 @@ func (k SourceKind) OverseesAgents() bool {
 		SourceServiceFailure,
 		SourceCarrierIntelEvent,
 		SourceHOSViolation,
-		SourceWeatherAlert,
 		SourceEDIInboundQuarantined,
 		SourceBillingException,
 		SourceDetentionOccurrence,

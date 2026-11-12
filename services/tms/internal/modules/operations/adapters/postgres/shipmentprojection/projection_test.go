@@ -15,7 +15,7 @@ func TestRefreshQuery_ReadsTheLastDeliveredArrivalByMoveAndStopSequence(t *testi
 
 	sql, _ := keeltest.Render(
 		t,
-		refreshQuery(shipmentdb.Shipments.ID.In(pulid.ID("shp_1")), scopedTenant),
+		refreshQuery(t.Context(), shipmentdb.Shipments.ID.In(pulid.ID("shp_1"))),
 	)
 
 	assert.Contains(t, sql, `s."last_delivery_arrival_at" IS DISTINCT FROM (SELECT prj_stp."actual_arrival"`)
@@ -34,7 +34,7 @@ func TestRefreshQuery_ReadsWhenTheLastDeliveryLandsByMoveAndStopSequence(t *test
 
 	sql, _ := keeltest.Render(
 		t,
-		refreshQuery(shipmentdb.Shipments.ID.In(pulid.ID("shp_1")), scopedTenant),
+		refreshQuery(t.Context(), shipmentdb.Shipments.ID.In(pulid.ID("shp_1"))),
 	)
 
 	assert.Contains(
@@ -56,7 +56,7 @@ func TestRefreshQuery_ReadsTheFirstPickupWindowByMoveAndStopSequence(t *testing.
 
 	sql, _ := keeltest.Render(
 		t,
-		refreshQuery(shipmentdb.Shipments.ID.In(pulid.ID("shp_1")), scopedTenant),
+		refreshQuery(t.Context(), shipmentdb.Shipments.ID.In(pulid.ID("shp_1"))),
 	)
 
 	assert.Contains(
@@ -77,7 +77,7 @@ func TestRefreshQuery_FlagsALiveAssignmentOnAMoveStillRunning(t *testing.T) {
 
 	sql, _ := keeltest.Render(
 		t,
-		refreshQuery(shipmentdb.Shipments.ID.In(pulid.ID("shp_1")), scopedTenant),
+		refreshQuery(t.Context(), shipmentdb.Shipments.ID.In(pulid.ID("shp_1"))),
 	)
 
 	assert.Contains(t, sql, `s."has_active_assignment" IS DISTINCT FROM EXISTS (`)
@@ -96,8 +96,8 @@ func TestRefreshQuery_TargetsTheShipmentsOfTheMovesWritten(t *testing.T) {
 	sql, _ := keeltest.Render(
 		t,
 		refreshQuery(
-			shipmentdb.Shipments.ID.InQuery(shipmentsOfMoves([]pulid.ID{"sm_1", "sm_2"})),
-			scopedTenant,
+			t.Context(),
+			shipmentdb.Shipments.ID.InQuery(shipmentsOfMoves(t.Context(), []pulid.ID{"sm_1", "sm_2"})),
 		),
 	)
 
@@ -108,10 +108,11 @@ func TestRefreshQuery_TargetsTheShipmentsOfTheMovesWritten(t *testing.T) {
 func TestRefreshQuery_AcrossTenantsCorrelatesEveryTableByTenant(t *testing.T) {
 	t.Parallel()
 
+	system := dbscope.WithSystem(t.Context(), "render the projection refresh across tenants")
 	sql, _ := keeltest.RenderIn(
 		t,
-		dbscope.WithSystem(t.Context(), "render the projection refresh across tenants"),
-		refreshQuery(shipmentdb.Shipments.ID.In(pulid.ID("shp_1")), everyTenant),
+		system,
+		refreshQuery(system, shipmentdb.Shipments.ID.In(pulid.ID("shp_1"))),
 	)
 
 	assert.Contains(t, sql, `prj_stp."organization_id" = s."organization_id"`)
@@ -130,7 +131,7 @@ func TestRefreshQuery_ChangesOnlyRowsThatDiffer(t *testing.T) {
 
 	sql, _ := keeltest.Render(
 		t,
-		refreshQuery(shipmentdb.Shipments.ID.In(pulid.ID("shp_1")), scopedTenant),
+		refreshQuery(t.Context(), shipmentdb.Shipments.ID.In(pulid.ID("shp_1"))),
 	)
 
 	assert.Contains(t, sql, ` OR s."has_active_assignment" IS DISTINCT FROM EXISTS (`)
@@ -153,6 +154,5 @@ func TestRefresh_SkipsAnEmptyTarget(t *testing.T) {
 	t.Parallel()
 
 	assert.NoError(t, Refresh(t.Context(), nil))
-	assert.NoError(t, RefreshAcrossTenants(t.Context(), nil))
 	assert.NoError(t, RefreshMoves(t.Context(), nil))
 }

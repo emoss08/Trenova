@@ -43,6 +43,9 @@ type AgentRunPayload struct {
 	// WaitID is the wait whose ending started the run, on a run that picks
 	// up work an earlier run parked.
 	WaitID pulid.ID `json:"waitId,omitempty"`
+	// CaseOptionID is the option a person chose on the record's case, on a
+	// run that drafts the plan for it.
+	CaseOptionID pulid.ID `json:"caseOptionId,omitempty"`
 	// Origin is the W3C traceparent of whatever started the run: the
 	// request, the event or the schedule firing. Empty on a run started
 	// before it was kept, or from outside any trace.

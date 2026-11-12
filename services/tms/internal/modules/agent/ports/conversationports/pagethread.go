@@ -24,7 +24,21 @@ type ArchiveSubjectThreadsRequest struct {
 	SubjectID   pulid.ID
 }
 
+// SubjectThreadKey finds the conversation a person already has with an agent
+// about a record.
+type SubjectThreadKey struct {
+	TenantInfo        pagination.TenantInfo
+	UserID            pulid.ID
+	Origin            conversation.ThreadOrigin
+	AgentDefinitionID pulid.ID
+	SubjectType       agent.SubjectType
+	SubjectID         pulid.ID
+}
+
 type PageThreadRepository interface {
+	// LatestSubjectThread is the person's most recent live conversation with
+	// the agent about the record, or a not-found error when there is none.
+	LatestSubjectThread(ctx context.Context, key *SubjectThreadKey) (*conversation.Thread, error)
 	GetPageThread(ctx context.Context, key *PageThreadKey) (*conversation.Thread, error)
 	ClaimPageThread(ctx context.Context, thread *conversation.Thread) (*conversation.Thread, error)
 	ArchiveSubjectThreads(ctx context.Context, req *ArchiveSubjectThreadsRequest) (int, error)

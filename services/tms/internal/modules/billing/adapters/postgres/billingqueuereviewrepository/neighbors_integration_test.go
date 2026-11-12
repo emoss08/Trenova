@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/seededtest"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/billingqueueprojection"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -71,6 +72,7 @@ func TestGetNeighborsWalksTheQueueInItsOwnOrder(t *testing.T) {
 			Number:           fmt.Sprintf("BQ-NB-%d", i),
 		}
 		require.NoError(t, billingqueuedb.BillingQueueItems.Create(ctx, db, item))
+		require.NoError(t, billingqueueprojection.Refresh(ctx, db, item.ID))
 		_, err = keel.Pool(db).Exec(ctx,
 			"UPDATE billing_queue_items SET created_at = $1 WHERE id = $2",
 			4_000_000_000+int64(i)*60, item.ID)
@@ -81,9 +83,9 @@ func TestGetNeighborsWalksTheQueueInItsOwnOrder(t *testing.T) {
 	repo := New(Params{DB: postgres.WrapDB(db), Logger: zap.NewNop()})
 	filter := &pagination.QueryOptions{TenantInfo: tenant}
 
-	// With posted items: 3, 2, 1, 0 — item 2 sits second.
+	// With closed items: 3, 2, 1, 0 — item 2 sits second.
 	all, err := repo.GetNeighbors(ctx, &billingqueueports.GetBillingQueueNeighborsRequest{
-		ItemID: ids[2], Filter: filter, IncludePosted: true,
+		ItemID: ids[2], Filter: filter, IncludeClosed: true,
 	})
 	require.NoError(t, err)
 	require.NotNil(t, all.PrevID)
@@ -92,7 +94,7 @@ func TestGetNeighborsWalksTheQueueInItsOwnOrder(t *testing.T) {
 	require.Equal(t, ids[1], *all.NextID)
 	require.Equal(t, 2, all.Position)
 
-	// Without posted items: 3, 2, 0 — item 1 is skipped over.
+	// Without closed items: 3, 2, 0 — item 1 is skipped over.
 	open, err := repo.GetNeighbors(ctx, &billingqueueports.GetBillingQueueNeighborsRequest{
 		ItemID: ids[2], Filter: filter,
 	})

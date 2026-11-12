@@ -52,6 +52,7 @@ type queueSeedSpec struct {
 	eventKind agenttrigger.EventKind
 	seen      bool
 	agent     *queueSeedAgent
+	panel     func(now int64) *watchtower.Panel
 }
 
 type queueSeed struct {
@@ -61,6 +62,26 @@ type queueSeed struct {
 }
 
 func minutes(value int64) *int64 { return &value }
+
+func seedExpiry(who string, papers ...any) func(now int64) *watchtower.Panel {
+	return func(now int64) *watchtower.Panel {
+		out := make([]watchtower.ExpiringPaper, 0, len(papers)/2)
+		for i := 0; i+1 < len(papers); i += 2 {
+			name, _ := papers[i].(string)
+			days, _ := papers[i+1].(int)
+			out = append(out, watchtower.ExpiringPaper{
+				Name:      name,
+				DaysLeft:  int64(days),
+				ExpiresAt: now + int64(days)*24*60*deskSeedMinute,
+			})
+		}
+
+		return &watchtower.Panel{
+			Kind:   watchtower.PanelExpiry,
+			Expiry: &watchtower.ExpiryPanel{Who: who, Papers: out},
+		}
+	}
+}
 
 func (r *deskSeedRefs) loadQueueRefs(ctx context.Context, db *keel.DB) error {
 	shipments, err := shipmentdb.Shipments.AllTenants().Where(
@@ -247,6 +268,16 @@ func (r *deskSeedRefs) queueSpecs() []queueSeedSpec {
 			ago:      60,
 			record:   recordRef(permission.ResourceCustomer, "Bluewater Retail"),
 			facts:    seedFacts("Messages", "3 × 204", "Unknown code", "BW-DC-17"),
+			panel: func(now int64) *watchtower.Panel {
+				return &watchtower.Panel{
+					Kind: watchtower.PanelFile,
+					File: &watchtower.FilePanel{
+						Name:       "BW_204_batch.edi",
+						Reason:     "The 204s reference a location code that is not mapped (BW-DC-17).",
+						ReceivedAt: now - 60*deskSeedMinute,
+					},
+				}
+			},
 			due:      minutes(120),
 			dueLabel: "Tenders expire",
 			impact:   []string{"3 loads", "$7,900"},
@@ -260,6 +291,7 @@ func (r *deskSeedRefs) queueSpecs() []queueSeedSpec {
 			ago:      120,
 			record:   recordRef(permission.ResourceWorker, dana),
 			facts:    seedFacts("Expires", "in 12 days", "Next load", "SEED-SHP-004"),
+			panel:    seedExpiry(dana, "Medical card", 12, "CDL", 140),
 			due:      minutes(12 * 24 * 60),
 			dueLabel: "Medical card expires",
 			impact:   []string{"SEED-SHP-004"},
@@ -330,6 +362,7 @@ func (r *deskSeedRefs) queueSpecs() []queueSeedSpec {
 			ago:       300,
 			record:    recordRef(permission.ResourceWorker, tom),
 			facts:     seedFacts("Expires", "in 46 days"),
+			panel:     seedExpiry(tom, "Hazmat endorsement", 46),
 			due:       minutes(46 * 24 * 60),
 			dueLabel:  "Endorsement renews",
 			subject:   tomSubject,
@@ -375,6 +408,9 @@ func (s *DeskSeed) queueItems(refs *deskSeedRefs, readerID pulid.ID) *queueSeed 
 			Facts:          spec.facts,
 			Impact:         spec.impact,
 			Trail:          seedTrail(spec.trail),
+		}
+		if spec.panel != nil {
+			item.Panel = spec.panel(refs.now)
 		}
 		if spec.record != nil {
 			item.RecordKind = spec.record.Kind

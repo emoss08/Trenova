@@ -70,7 +70,8 @@ import { InvoiceDeliveryDialog } from "./invoice-delivery-dialog";
 import { InvoiceEdiDeliveryCard } from "./invoice-edi-delivery-card";
 import { InvoiceOverviewTab } from "./invoice-overview-tab";
 import { InvoicePaymentsTab } from "./invoice-payments-tab";
-import { InvoiceShareDialog } from "./invoice-share-dialog";
+import { ShareDialog } from "@/components/share/share-dialog";
+import { invoicePanelPath } from "@/lib/invoice-links";
 import { invoiceDetailTabSearchParamsParser, isInvoiceDetailTab } from "../use-invoice-state";
 
 const ShipmentRouteMap = lazy(() =>
@@ -80,6 +81,19 @@ const ShipmentRouteMap = lazy(() =>
 );
 
 const INVOICE_SEND_HISTORY_PAGE_SIZE = 20;
+
+/** Shares the invoice on the tab in front, the way every record is shared. */
+function InvoiceShare({ invoice }: { invoice: Invoice }) {
+  const t = useT();
+  const [{ tab }] = useQueryStates(invoiceDetailTabSearchParamsParser);
+
+  return (
+    <ShareDialog
+      record={{ kind: "invoice", id: invoice.id, title: t("invoice {0}", invoice.number) }}
+      path={invoicePanelPath(invoice.id, tab)}
+    />
+  );
+}
 
 export default function InvoiceDetailPane({
   selectedInvoiceId,
@@ -171,7 +185,7 @@ export default function InvoiceDetailPane({
             {postDialogOpen ? (
               <InvoicePostDialog invoiceId={invoice.id} open onOpenChange={setPostDialogOpen} />
             ) : null}
-            <InvoiceShareDialog invoice={invoice} />
+            <InvoiceShare invoice={invoice} />
             {isVoided ? null : <InvoiceAdjustmentPanel invoice={invoice} />}
             <InvoiceActionsMenu invoice={invoice} arContext={arContext} />
           </div>

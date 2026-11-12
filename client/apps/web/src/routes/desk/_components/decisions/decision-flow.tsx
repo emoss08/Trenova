@@ -38,6 +38,7 @@ import { Link, useSearchParams } from "react-router";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { DeskAgentTile } from "@/components/desk-chat/desk-agent-tile";
 import { AlertCircleIcon, CheckIcon, XCloseIcon } from "@trenova/shared/components/icons";
+import { humanizeToolName } from "@/components/assistant/proposal-state";
 import { QueueClear, QueueHeader, QueueLayout, QueueReading } from "../queue/queue";
 import { QueueBar, QueueBarSpacer, QueueButton, QueueKey, QueueNav } from "../queue/queue-bar";
 import {
@@ -73,13 +74,16 @@ type Item = {
   held: HoldSwitch | null;
 };
 
+/** The group a plan is filed under, beside the groups named after one kind of write. */
+const PLAN_GROUP = "plan";
+
 function itemOf(node: PendingDecisionNode): Item {
   const held = holdSwitchOf(node.hold, {
     agentId: node.run?.definition?.id ?? node.run?.agentDefinitionId ?? null,
     agentName: node.run?.definition?.name ?? null,
   });
   if (isPendingPlan(node)) {
-    return { node, id: node.id, tool: "plan", title: node.title, reversible: true, held };
+    return { node, id: node.id, tool: PLAN_GROUP, title: node.title, reversible: true, held };
   }
   const view = presentProposal(asAssistantProposal(node));
   return {
@@ -488,7 +492,12 @@ export function DecisionFlow() {
 
   const sections: QueueSection[] = groups.map((group) => ({
     key: group.tool,
-    header: <QueueGroupHeader label={<code>{group.tool}</code>} count={group.items.length} />,
+    header: (
+      <QueueGroupHeader
+        label={group.tool === PLAN_GROUP ? t("Plans") : humanizeToolName(group.tool)}
+        count={group.items.length}
+      />
+    ),
     rows: group.items.map((item) => ({
       key: item.id,
       render: () => (
@@ -513,7 +522,6 @@ export function DecisionFlow() {
   if (decided.length > 0) {
     sections.push({
       key: "decided",
-      className: "dk-done",
       header: <QueueGroupHeader label={t("Decided today")} count={decided.length} />,
       rows: decided.map((row) => {
         const ok = row.decision !== "Rejected";

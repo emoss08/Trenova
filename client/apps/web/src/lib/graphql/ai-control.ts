@@ -1,9 +1,6 @@
-import type { AgentRunRow } from "@/lib/graphql/agent-activity-tables";
 import {
   AgentPromotionPreviewDocument,
   AiAgentRosterDocument,
-  AgentRunTableDocument,
-  AgentRunTableRowFieldsFragmentDoc,
   AiControlSummaryDocument,
   AiTuneUpFieldsFragmentDoc,
   AiTuneUpsDocument,
@@ -21,6 +18,9 @@ import {
   type AiProviderFailureFieldsFragment,
   type AiTuneUpFieldsFragment,
   type AiUsageDailyQuery,
+  WorkingAgentRunFieldsFragmentDoc,
+  WorkingAgentRunsDocument,
+  type WorkingAgentRunFieldsFragment,
 } from "@trenova/graphql/generated/graphql";
 import { getFragmentData } from "@trenova/graphql/fragment-data";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
@@ -119,35 +119,55 @@ const WORKING_STATUSES = ["Pending", "GatheringContext", "Diagnosing"] as const;
 /** How many running agents the overview names; the rest are counted. */
 const WORKING_RUNS_SHOWN = 12;
 
+/**
+ * A run that is going: whose it is, what started it and the record it is on.
+ * The agent is the run's own, so a run of an agent the reader cannot ask (one
+ * that runs by itself) is still named and drawn as that agent.
+ */
 export type WorkingRun = Pick<
-  AgentRunRow,
-  "id" | "agentDefinitionId" | "status" | "summary" | "startedAt"
->;
+  WorkingAgentRunFieldsFragment,
+  | "id"
+  | "agentDefinitionId"
+  | "status"
+  | "summary"
+  | "trigger"
+  | "subjectType"
+  | "subjectLabel"
+  | "startedAt"
+  | "createdAt"
+> & {
+  /** The agent whose run it is; null once that agent has been deleted. */
+  agent: NonNullable<WorkingAgentRunFieldsFragment["definition"]> | null;
+};
 
 /** The runs going right now, newest first. */
 export async function fetchWorkingRuns(options?: RequestOptions): Promise<WorkingRun[]> {
   const data = await requestGraphQL({
-    document: AgentRunTableDocument,
-    operationName: "AgentRunTable",
+    document: WorkingAgentRunsDocument,
+    operationName: "WorkingAgentRuns",
     variables: {
       input: {
         first: WORKING_RUNS_SHOWN,
         fieldFilters: [{ field: "status", operator: "in", value: [...WORKING_STATUSES] }],
         sort: [{ field: "createdAt", direction: "desc" }],
       },
-      includeTotalCount: false,
     },
     signal: options?.signal,
   });
 
   return data.agentRuns.edges.map((edge) => {
-    const row = getFragmentData(AgentRunTableRowFieldsFragmentDoc, edge.node);
+    const row = getFragmentData(WorkingAgentRunFieldsFragmentDoc, edge.node);
     return {
       id: row.id,
       agentDefinitionId: row.agentDefinitionId,
       status: row.status,
       summary: row.summary,
+      trigger: row.trigger,
+      subjectType: row.subjectType,
+      subjectLabel: row.subjectLabel,
       startedAt: row.startedAt,
+      createdAt: row.createdAt,
+      agent: row.definition ?? null,
     };
   });
 }

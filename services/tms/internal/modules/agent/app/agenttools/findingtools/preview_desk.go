@@ -86,6 +86,10 @@ func (t *PlaceWorkerDispatchHoldTool) Preview(
 		return nil, err
 	}
 
+	if _, err = t.workers.CheckDispatchHold(ctx, request); err != nil {
+		return nil, err
+	}
+
 	driver, err := t.workers.Get(ctx, workerports.GetWorkerByIDRequest{
 		ID:         request.WorkerID,
 		TenantInfo: request.TenantInfo,

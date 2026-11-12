@@ -1,5 +1,7 @@
+import { aiControl } from "@/lib/queries/ai-control";
 import { attention } from "@/lib/queries/attention";
 import { deskAttention } from "@/lib/queries/desk-attention";
+import { deskCase } from "@/lib/queries/desk-case";
 import { watchtower, type WatchtowerQueuePages } from "@/lib/queries/watchtower";
 import { watchtowerItem } from "@/routes/desk/_components/watchtower/__tests__/item-fixture";
 import { QueryClient, QueryObserver } from "@tanstack/react-query";
@@ -39,8 +41,9 @@ const QUEUE_AND_SUMMARIES = [
   watchtower.counts().queryKey,
   attention._def,
   deskAttention._def,
+  deskCase._def,
 ];
-const SUMMARIES = [watchtower.counts().queryKey, attention._def, deskAttention._def];
+const SUMMARIES = [watchtower.counts().queryKey, attention._def, deskAttention._def, deskCase._def];
 
 afterEach(() => {
   observers.splice(0).forEach((unsubscribe) => unsubscribe());
@@ -142,6 +145,28 @@ describe("createWatchtowerPatcher", () => {
 
     expect(fetchItem).toHaveBeenCalledExactlyOnceWith("wt_a");
     expect(cachedQueueItems(queryClient)[0].agentWork?.step).toBe(1);
+    patcher.dispose();
+  });
+
+  it("reads again how many runs are working and which rows they are on when any run moves, and no wider list", () => {
+    const refresh = invalidate();
+    const patcher = createWatchtowerPatcher({
+      queryClient: new QueryClient(),
+      invalidate: refresh,
+      fetchItem: vi.fn(),
+      coalesceMs: 10,
+    });
+
+    patcher.handleRun(notice("agent_run", "ar_9"));
+
+    expect(refresh).toHaveBeenCalledExactlyOnceWith(
+      [
+        watchtower.counts().queryKey,
+        deskAttention.working.queryKey,
+        aiControl.workingRuns().queryKey,
+      ],
+      true,
+    );
     patcher.dispose();
   });
 

@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiproviderports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/briefingports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/recordcaseports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -40,6 +41,7 @@ var (
 	_ llmports.StructuredCompleter     = (*Dispatcher)(nil)
 	_ aiproviderports.AIProviderTester = (*Dispatcher)(nil)
 	_ briefingports.BriefingDayWriter  = (*Dispatcher)(nil)
+	_ recordcaseports.ReadingStarter   = (*Dispatcher)(nil)
 )
 
 func NewDispatcher(p DispatcherParams) *Dispatcher {
@@ -171,6 +173,34 @@ func briefingWriteID(req *briefingports.WriteBriefingRequest) string {
 		strings.Join(roles, ","),
 		day,
 	)
+}
+
+func (d *Dispatcher) StartReading(
+	ctx context.Context,
+	req *recordcaseports.WriteReadingRequest,
+) error {
+	_, err := d.workflows.StartWorkflow(ctx, client.StartWorkflowOptions{
+		ID: fmt.Sprintf(
+			"case-reading/%s/%s/%s",
+			req.TenantInfo.OrgID,
+			req.RecordID,
+			req.Fingerprint,
+		),
+		TaskQueue:                temporaltype.TaskQueueAgentChat.String(),
+		WorkflowExecutionTimeout: caseReadingTimeout,
+		WorkflowIDReusePolicy:    enums.WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE,
+		WorkflowIDConflictPolicy: enums.WORKFLOW_ID_CONFLICT_POLICY_USE_EXISTING,
+		StaticSummary:            "Read a record's case",
+		Priority: temporal.Priority{
+			PriorityKey: agentflowcontract.PriorityOneShot,
+			FairnessKey: req.TenantInfo.OrgID.String(),
+		},
+	}, WriteCaseReadingWorkflowName, &WriteCaseReadingPayload{Request: req})
+	if err != nil {
+		return fmt.Errorf("hand the case reading to a worker: %w", err)
+	}
+
+	return nil
 }
 
 // call is one workflow a request waits on.

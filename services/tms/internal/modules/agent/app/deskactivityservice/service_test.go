@@ -83,3 +83,18 @@ func TestAddRecord_CountsPastTheFirstFive(t *testing.T) {
 	assert.Len(t, entry.Records, recordsPerEntry)
 	assert.Equal(t, 2, entry.RecordsMore)
 }
+
+func TestWhatOf_NamesWhatTheWriteMadeOrFallsBackToTheTool(t *testing.T) {
+	made := proposal("ap_1", "arun_1", "triage_file_document", agent.TierAutoExecute, 10)
+	made.ExecutionResult.Name = "RC-1042"
+	assert.Equal(t, "Filed rate confirmation RC-1042", whatOf(made))
+
+	unnamed := proposal("ap_2", "arun_1", "triage_file_document", agent.TierAutoExecute, 10)
+	assert.Equal(t, "Filed rate confirmation", whatOf(unnamed))
+
+	silent := proposal("ap_3", "arun_1", "triage_file_document", agent.TierAutoExecute, 10)
+	silent.ExecutionResult = nil
+	fallback := whatOf(silent)
+	assert.NotEmpty(t, fallback)
+	assert.NotContains(t, fallback, "_")
+}

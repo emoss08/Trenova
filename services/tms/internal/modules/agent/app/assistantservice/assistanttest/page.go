@@ -52,6 +52,28 @@ func keyOf(thread *conversation.Thread) conversationports.PageThreadKey {
 	}
 }
 
+func (p *PageThreads) LatestSubjectThread(
+	_ context.Context,
+	key *conversationports.SubjectThreadKey,
+) (*conversation.Thread, error) {
+	var latest *conversation.Thread
+	for _, thread := range p.Live {
+		if thread.UserID != key.UserID || thread.Origin != key.Origin ||
+			thread.SubjectType != key.SubjectType || thread.SubjectID != key.SubjectID ||
+			thread.AgentDefinitionID != key.AgentDefinitionID {
+			continue
+		}
+		if latest == nil || thread.LastMessageAt > latest.LastMessageAt {
+			latest = thread
+		}
+	}
+	if latest == nil {
+		return nil, errortypes.NewNotFoundError("Thread not found")
+	}
+
+	return latest, nil
+}
+
 func (p *PageThreads) GetPageThread(
 	_ context.Context,
 	key *conversationports.PageThreadKey,
