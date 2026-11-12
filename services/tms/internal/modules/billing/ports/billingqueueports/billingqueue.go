@@ -25,6 +25,10 @@ type GetBillingQueueItemByIDRequest struct {
 	TenantInfo            pagination.TenantInfo `json:"-"`
 	ItemID                pulid.ID              `json:"itemId"`
 	ExpandShipmentDetails bool                  `json:"expandShipmentDetails"`
+	// Recheck marks the read as the item's checks running: what they find is
+	// stored and the item is stamped checked. A plain read stores only what
+	// changed and stamps nothing.
+	Recheck bool `json:"-"`
 }
 
 type GetBillingQueueStatsRequest struct {

@@ -17,10 +17,15 @@ import (
 // raised, an open one whose finding is gone is cleared, and one the checks
 // cleared before is reopened when its finding comes back. An issue a person
 // settled stays settled.
+// SyncBillingQueueIssuesRequest lands what the checks found on the item's
+// stored issues, writing only what changed. Checked stamps the item checked:
+// a recheck sets it, a read that only reconciles what it found does not, so
+// opening an item writes nothing when nothing moved.
 type SyncBillingQueueIssuesRequest struct {
 	TenantInfo pagination.TenantInfo
 	ItemID     pulid.ID
 	Findings   []*billingqueue.Issue
+	Checked    bool
 }
 
 // SyncBillingQueueIssuesResult is the item's issues after a sync, and which

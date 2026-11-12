@@ -90,12 +90,15 @@ func (r *repository) SyncIssues(
 
 			result := &billingqueueports.SyncBillingQueueIssuesResult{}
 			found := make(map[string]struct{}, len(req.Findings))
+			changed := false
 			for _, finding := range req.Findings {
 				key := finding.FindingKey()
 				found[key] = struct{}{}
-				if err = r.landFinding(ctx, req, byKey[key], finding, result); err != nil {
-					return nil, err
+				landed, lErr := r.landFinding(ctx, req, byKey[key], finding, result)
+				if lErr != nil {
+					return nil, lErr
 				}
+				changed = changed || landed
 			}
 
 			now := timeutils.NowUnix()
@@ -115,9 +118,20 @@ func (r *repository) SyncIssues(
 					return nil, err
 				}
 				result.Cleared = append(result.Cleared, issue)
+				changed = true
 			}
 
-			if err = billingqueueprojection.MarkChecked(ctx, r.db.Keel(ctx), now, req.ItemID); err != nil {
+			switch {
+			case req.Checked:
+				err = billingqueueprojection.MarkChecked(ctx, r.db.Keel(ctx), now, req.ItemID)
+			case changed:
+				err = billingqueueprojection.Refresh(ctx, r.db.Keel(ctx), req.ItemID)
+			default:
+				result.Issues = existing
+
+				return result, nil
+			}
+			if err != nil {
 				return nil, err
 			}
 
@@ -131,12 +145,14 @@ func (r *repository) SyncIssues(
 	)
 }
 
+// landFinding lands one finding on its stored issue and reports whether it
+// wrote anything.
 func (r *repository) landFinding(
 	ctx context.Context,
 	req *billingqueueports.SyncBillingQueueIssuesRequest,
 	current, finding *billingqueue.Issue,
 	result *billingqueueports.SyncBillingQueueIssuesResult,
-) error {
+) (bool, error) {
 	switch {
 	case current == nil:
 		finding.ItemID = req.ItemID
@@ -144,11 +160,13 @@ func (r *repository) landFinding(
 		n, err := iss.CreateOrSkip(ctx, r.db.Keel(ctx), []*billingqueue.Issue{finding},
 			iss.OrganizationID, iss.BusinessUnitID, iss.ItemID, iss.Code, iss.SubjectKey)
 		if err != nil {
-			return issueErrors.Map(err, finding.ID.String())
+			return false, issueErrors.Map(err, finding.ID.String())
 		}
 		if n > 0 {
 			result.Raised = append(result.Raised, finding)
 		}
+
+		return n > 0, nil
 	case current.ResolutionKey != nil && *current.ResolutionKey == billingqueue.ResolutionCleared:
 		current.ResolutionKey = nil
 		current.ResolutionText = ""
@@ -156,17 +174,21 @@ func (r *repository) landFinding(
 		current.ResolvedByID = nil
 		refreshFinding(current, finding)
 		if _, err := r.UpdateIssue(ctx, current); err != nil {
-			return err
+			return false, err
 		}
 		result.Reopened = append(result.Reopened, current)
+
+		return true, nil
 	case current.IsOpen() && findingChanged(current, finding):
 		refreshFinding(current, finding)
 		if _, err := r.UpdateIssue(ctx, current); err != nil {
-			return err
+			return false, err
 		}
-	}
 
-	return nil
+		return true, nil
+	default:
+		return false, nil
+	}
 }
 
 func refreshFinding(current, finding *billingqueue.Issue) {

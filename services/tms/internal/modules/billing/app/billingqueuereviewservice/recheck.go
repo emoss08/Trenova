@@ -14,7 +14,12 @@ func (s *Service) Recheck(
 	tenantInfo pagination.TenantInfo,
 	itemID pulid.ID,
 ) (*billingqueueports.RecheckResult, error) {
-	item, err := s.reviewedItem(ctx, itemID, tenantInfo)
+	item, err := s.queue.GetByID(ctx, &billingqueueports.GetBillingQueueItemByIDRequest{
+		ItemID:                itemID,
+		TenantInfo:            tenantInfo,
+		ExpandShipmentDetails: true,
+		Recheck:               true,
+	})
 	if err != nil {
 		return nil, err
 	}

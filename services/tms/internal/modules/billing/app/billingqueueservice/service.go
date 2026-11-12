@@ -233,7 +233,7 @@ func (s *Service) GetByID(
 	item.DetentionHolds = billingqueue.NewDetentionHolds(holds)
 	item.RatingReviewHold = billingqueue.NewRatingReviewHold(item)
 	item.RatedBy = s.ratedBy(ctx, item, req.TenantInfo)
-	s.readiness.Attach(ctx, item, req.TenantInfo)
+	s.readiness.Attach(ctx, item, req.TenantInfo, req.Recheck)
 
 	return item, nil
 }
@@ -1294,6 +1294,7 @@ func (s *Service) syncReview(
 		ItemID:                itemID,
 		TenantInfo:            tenantInfo,
 		ExpandShipmentDetails: true,
+		Recheck:               true,
 	}); err != nil {
 		s.l.Warn(
 			"failed to check billing queue item",

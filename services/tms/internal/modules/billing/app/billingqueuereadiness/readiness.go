@@ -78,17 +78,21 @@ const shipmentDocumentResource = "shipment"
 // paperwork, the terms and the invoice, the issues the checks raised, and the
 // five checks themselves. A part that cannot be read is logged and left out
 // rather than failing the read, the way the shipment details already are.
+//
+// recheck says the checks are running for the item: what they find is
+// stored and the item stamped checked. A plain read stores only what changed.
 func (s *Reviewer) Attach(
 	ctx context.Context,
 	item *billingqueue.BillingQueueItem,
 	tenantInfo pagination.TenantInfo,
+	recheck bool,
 ) {
 	if item == nil {
 		return
 	}
 
 	facts := s.reviewFacts(ctx, item, tenantInfo)
-	issues := s.storedIssues(ctx, item, tenantInfo, facts)
+	issues := s.storedIssues(ctx, item, tenantInfo, facts, recheck)
 	markLedger(facts.charges, issues)
 	facts.charges.Totals()
 
@@ -205,6 +209,7 @@ func (s *Reviewer) storedIssues(
 	item *billingqueue.BillingQueueItem,
 	tenantInfo pagination.TenantInfo,
 	facts *reviewFacts,
+	recheck bool,
 ) []*billingqueue.Issue {
 	if s.reviewRepo == nil {
 		return []*billingqueue.Issue{}
@@ -226,6 +231,7 @@ func (s *Reviewer) storedIssues(
 		TenantInfo: tenantInfo,
 		ItemID:     item.ID,
 		Findings:   billingqueuereview.Findings(&facts.findings),
+		Checked:    recheck,
 	})
 	if err != nil {
 		s.l.Warn(
