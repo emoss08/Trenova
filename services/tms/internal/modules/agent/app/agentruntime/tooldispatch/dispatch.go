@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/turnhistory"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/turntaint"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
+	"github.com/emoss08/trenova/internal/modules/agent/app/filterwords"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolsimulation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
@@ -38,6 +39,7 @@ import (
 	"github.com/emoss08/trenova/pkg/toolcoerce"
 	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
@@ -856,6 +858,7 @@ func (s *Dispatcher) runQueryToolWith(
 		Content: toolresult.Fence(call.Name, encoded) + content,
 		Data:    data,
 		Summary: toolsummary.Result(call.Name, document),
+		Asked:   s.asked(ctx, req, call, document),
 		Taint:   turntaint.Call(&policy, call, data, now),
 		Verdict: aitrace.OutcomeRan,
 	}
@@ -864,6 +867,29 @@ func (s *Dispatcher) runQueryToolWith(
 	}
 
 	return outcome
+}
+
+// asked is what a read was narrowed by, as the person reading the turn is
+// told it: each filter's label and its values, with every record by its name.
+// A read that cannot name them leaves them counted, never as ids.
+func (s *Dispatcher) asked(
+	ctx context.Context,
+	req *agentruntimeports.RunRequest,
+	call *llmports.ToolCall,
+	document any,
+) string {
+	filters := filterwords.OfResult(document, call.Arguments)
+	if len(filters) == 0 {
+		return ""
+	}
+	err := filterwords.NameRecords(ctx, s.labels, req.Actor.TenantInfo(), filters)
+	if err != nil {
+		s.logger.Warn("failed to name the records a read was narrowed by",
+			zap.String("tool", call.Name),
+			zap.Error(err))
+	}
+
+	return stringutils.Ellipsize(filterwords.Line(filters), maxAskedRunes)
 }
 
 // firstPage reports whether a list call reads its first page, which is where
@@ -878,6 +904,9 @@ func firstPage(arguments map[string]any) bool {
 
 const listAfterParam = "after"
 
+// maxAskedRunes bounds the line that says what a read was narrowed by.
+const maxAskedRunes = 240
+
 func (s *Dispatcher) executeAction(ctx context.Context, a *actionParams) toolcall.Result {
 	call := a.call
 	action := a.action
@@ -891,6 +920,8 @@ func (s *Dispatcher) executeAction(ctx context.Context, a *actionParams) toolcal
 		result    *agentrecord.ToolExecutionResult
 		saved     *agentmemoryports.SavedMemory
 		refreshed *agentmemory.Memory
+		replaced  pulid.ID
+		differs   *agentmemory.Memory
 		err       error
 	)
 	if recorder, records := a.tool.(agentmemoryports.MemoryRecordingTool); records {
@@ -898,6 +929,8 @@ func (s *Dispatcher) executeAction(ctx context.Context, a *actionParams) toolcal
 		memory, err = recorder.Record(writeCtx, a.executeParams())
 		if err == nil && memory != nil {
 			saved, refreshed = savedOrRefreshed(memory, call.ID)
+			replaced = pulid.ConvertFromPtr(memory.SupersedesID)
+			differs = memory.DiffersFrom
 		}
 	} else {
 		result, err = agenttoolports.ExecuteTool(writeCtx, a.tool, a.executeParams())
@@ -935,7 +968,8 @@ func (s *Dispatcher) executeAction(ctx context.Context, a *actionParams) toolcal
 		outcome.Content = refreshedContent(call.Name, refreshed)
 		outcome.Memories = []pulid.ID{refreshed.ID}
 	case saved != nil:
-		outcome.Content = savedMemoryContent(call.Name, saved)
+		outcome.Content = savedMemoryContent(call.Name, saved) + replacedNote(saved, replaced) +
+			differsNote(differs)
 	}
 	if note := a.argumentNote; note != "" {
 		outcome.Content += " " + note
@@ -951,10 +985,10 @@ func (s *Dispatcher) executeAction(ctx context.Context, a *actionParams) toolcal
 func savedMemoryContent(name string, saved *agentmemoryports.SavedMemory) string {
 	if saved.Pending {
 		return fmt.Sprintf(
-			"Tool %q ran: the memory is offered to the person on a card under your reply, "+
-				"because they asked to be asked before anything is kept for them. Nothing is "+
-				"kept until they choose Keep there. Tell them in a few words that it is there "+
-				"to keep or not; do not say it is remembered.",
+			"Tool %q ran: the memory is offered on a card under your reply, not kept yet: "+
+				"the person asked to be asked first, or it changes a memory shared with others. "+
+				"Nothing is kept until it is accepted there. Tell them in a few words that it "+
+				"is there to keep or not; do not say it is remembered.",
 			name,
 		)
 	}
@@ -966,6 +1000,53 @@ func savedMemoryContent(name string, saved *agentmemoryports.SavedMemory) string
 		name,
 	)
 }
+
+// replacedNote tells the model which kept memory the new one takes the place
+// of. The memory service replaces a memory the new one contradicts even when
+// the call named none, and a model not told so reported two conflicting notes.
+func replacedNote(saved *agentmemoryports.SavedMemory, replaced pulid.ID) string {
+	switch {
+	case replaced.IsNil():
+		return ""
+	case saved.Pending:
+		return fmt.Sprintf(
+			" Once accepted it takes the place of memory %s, which it changes or contradicts; "+
+				"until then that memory stands.",
+			replaced,
+		)
+	default:
+		return fmt.Sprintf(
+			" It took the place of memory %s, which it changed or contradicted and which is "+
+				"now retired, so the two do not conflict. Say what it replaced.",
+			replaced,
+		)
+	}
+}
+
+// differsNote tells the model that a memory kept for a wider audience says
+// otherwise. The new one is kept beside it, so the person hears that what
+// they just said and what their team or organization keeps disagree, and the
+// shared one gets corrected when it is the one out of date.
+func differsNote(differs *agentmemory.Memory) string {
+	if differs == nil {
+		return ""
+	}
+
+	audience := "the whole organization"
+	if differs.Scope == agentmemory.MemoryScopeRole {
+		audience = "the person's team"
+	}
+
+	return fmt.Sprintf(
+		" It differs from memory %s, kept for %s: %q. Both stand: this one is read with the "+
+			"other in this person's conversations, and only the other everywhere else. Tell "+
+			"the person the two differ, and ask whether the shared one is out of date and "+
+			"should be changed.",
+		differs.ID, audience, stringutils.Ellipsize(differs.Content, differingMemoryChars),
+	)
+}
+
+const differingMemoryChars = 400
 
 // heldReason says in one clause why a call became a proposal rather than
 // running, so the model can tell the person plainly instead of guessing at

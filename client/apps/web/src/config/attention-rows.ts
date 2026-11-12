@@ -1,3 +1,4 @@
+import { DESK_DECISIONS_PATH } from "@/lib/desk-paths";
 import type { AttentionSummaryQuery } from "@trenova/graphql/generated/graphql";
 
 export type AttentionSummary = AttentionSummaryQuery["attentionSummary"];
@@ -57,7 +58,7 @@ export const ATTENTION_ROWS: AttentionRowConfig[] = [
     key: "agentDecisions",
     label: "Decisions waiting",
     module: "Desk",
-    path: "/desk/decisions",
+    path: DESK_DECISIONS_PATH,
     tone: "warning",
   },
 ];

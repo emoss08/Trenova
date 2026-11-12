@@ -1,3 +1,5 @@
+import { seedPermissions } from "@/test/permissions";
+import { Operation } from "@trenova/shared/types/permission";
 import { waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
@@ -32,6 +34,7 @@ vi.mock("@trenova/shared/components/ui/toast", () => ({
 vi.mock("@/components/resolved-user-avatar", () => ({ ResolvedUserAvatar: () => null }));
 
 beforeEach(() => {
+  seedPermissions({ record_share: Operation.Read | Operation.Create });
   mocks.list.mockResolvedValue([]);
   mocks.candidates.mockResolvedValue([dana, priya]);
 });

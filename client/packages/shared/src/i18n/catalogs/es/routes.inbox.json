@@ -497,6 +497,8 @@
   "Write to {0}": "Escribir a {0}",
   "Yes, do it": "Sí, hacerlo",
   "Yes, open it": "Sí, abrirlo",
+  "You can read Triage, but your role can't act on messages.": "Puede leer Triage, pero su rol no puede actuar sobre los mensajes.",
+  "You can read this message, but your role can't act on it.": "Puede leer este mensaje, pero su rol no puede actuar sobre él.",
   "You don't have permission to do that.": "No tiene permiso para hacer eso.",
   "You filed {0} of {1} {2} from {3} by hand": "Usted archivó a mano {0} de {1} {2} de {3}",
   "You handled {0} of {1} {2} from {3} the same way by hand": "Usted gestionó a mano {0} de {1} {2} de {3} de la misma manera",

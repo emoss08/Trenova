@@ -1,4 +1,5 @@
 import { describeActivity, groupActivity, type ToolStep } from "@/components/assistant/activity";
+import { describeToolCall } from "@/components/assistant/tool-presentation";
 import { ReasoningDisclosure } from "@/components/assistant/reasoning-disclosure";
 import { ArtifactKindIcon } from "@/components/assistant/voice/artifact-chrome";
 import { MarkdownLink } from "@/components/elements/ai-markdown";
@@ -164,15 +165,16 @@ function StepSummary({
     const group = groupActivity([citation.step])[0];
     return group ? describeActivity(group, t) : null;
   }, [citation.step, t]);
+  const title = describeToolCall(citation.step.name, citation.step.arguments).title;
 
   return (
     <>
       <span className="dk-fnp-h">
         <span>{String(citation.n).padStart(2, "0")}</span>
-        <span>{citation.step.name}</span>
+        <span>{title}</span>
         <span className="dk-t">{stepDuration(citation.step)}</span>
       </span>
-      <span className="dk-fnp-b">{line?.phrase ?? citation.step.name}</span>
+      <span className="dk-fnp-b">{line?.phrase ?? title}</span>
       {(line?.detail || citation.step.summary) && (
         <span className="dk-fnp-q">
           {line?.detail && <span>{line.detail}</span>}

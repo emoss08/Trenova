@@ -45,6 +45,8 @@ type DispatcherParams struct {
 	Scripts llmports.ScriptProviders
 	// Brokers opens the broker a script's calls go through.
 	Brokers ScriptBrokers
+	// Labels names the records a read was narrowed by.
+	Labels agentruntimeports.RecordLabeler
 }
 
 // Dispatcher runs one tool call the loop has decided to make: it checks the
@@ -68,6 +70,7 @@ type Dispatcher struct {
 	scripts   llmports.ScriptProviders
 	shadow    ShadowVerdicts
 	brokers   ScriptBrokers
+	labels    agentruntimeports.RecordLabeler
 }
 
 func NewDispatcher(p *DispatcherParams) *Dispatcher {
@@ -87,6 +90,7 @@ func NewDispatcher(p *DispatcherParams) *Dispatcher {
 		scripts:     p.Scripts,
 		shadow:      p.Shadow,
 		brokers:     p.Brokers,
+		labels:      p.Labels,
 	}
 }
 

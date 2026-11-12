@@ -257,6 +257,12 @@ func DisplayLabel(key string, displayType DisplayType) string {
 	return textcase.HumanizeCamelCaseSentence(key)
 }
 
+// CodedKey reports whether a key names a member of a set, a status or a kind,
+// whose values are codes to be read as words.
+func CodedKey(key string) bool {
+	return EndsWithWord(key, statusWords) || EndsWithWord(key, enumWords)
+}
+
 func HiddenKey(key string) bool {
 	lowered := strings.ToLower(key)
 	if _, hidden := hiddenKeys[lowered]; hidden {

@@ -65,8 +65,10 @@ func (t *RememberTool) Description() string {
 		"is for: me (the person in the conversation alone; the default when someone is " +
 		"there), team (their role) or organization. A team or organization memory is kept " +
 		"at once only when the person may manage shared memory; otherwise it is offered " +
-		"for an administrator to approve, and you should say so. Scope it to one customer, " +
-		"location, driver or carrier with subjectType and subjectId. To change a kept " +
+		"for an administrator to approve, and you should say so. Tie a memory about one " +
+		"customer, location, driver or carrier to that record with subjectType and its " +
+		"subjectId, or its subjectName when you do not hold the id, so it is read whenever " +
+		"that record comes up. To change a kept " +
 		"memory, pass its id from agent_list_memories as replacesMemoryId: the new one takes its " +
 		"place and keeps its readers. Never record what a record already says, a guess, or " +
 		"anything asked to stay private. Saving what is already kept refreshes it."
@@ -89,7 +91,8 @@ func (t *RememberTool) ParamSchema() map[string]any {
 				rememberedMemoryKinds,
 			),
 			changepreview.FieldSubjectType: agenttoolschema.Enum(
-				"The kind of record the memory is about, with subjectId. Omit for organization-wide.",
+				"The kind of record the memory is about, with subjectId or subjectName. Omit for "+
+					"a memory about no one record.",
 				memorySubjectTypes,
 			),
 			"subjectId": agenttoolschema.KindID(
@@ -101,6 +104,18 @@ func (t *RememberTool) ParamSchema() map[string]any {
 				recordkind.Kind(permission.ResourceWorker),
 				recordkind.Kind(permission.ResourceCarrier),
 			),
+			fieldSubjectName: map[string]any{
+				toolschema.KeyType: toolschema.TypeString,
+				toolschema.KeyDescription: "The record's name, with subjectType, when you do not " +
+					"hold its id: \"Acme Manufacturing\". It is matched to the one record with " +
+					"that name; when several match you are told which, to ask the person.",
+			},
+			fieldTeamName: map[string]any{
+				toolschema.KeyType: toolschema.TypeString,
+				toolschema.KeyDescription: "With visibleTo team, the name of the person's role " +
+					"the memory is for. Omit when they hold one role; when they hold several " +
+					"you are told their names, to ask which team.",
+			},
 			"expiresOn": agenttoolschema.Date(
 				"The last day the memory applies, such as for a temporary arrangement. Omit " +
 					"when it does not expire.",
@@ -157,7 +172,7 @@ func classifyRemember(
 	params *agenttoolports.ToolExecuteParams,
 ) agenttoolports.CallPolicy {
 	actor := params.Actor
-	if rememberAudience(params) != visibleToMe || replacesAMemory(params) || actor == nil ||
+	if rememberAudience(params) != visibleToMe || actor == nil ||
 		actor.PrincipalType != permissionports.PrincipalTypeUser || actor.UserID.IsNil() {
 		return agenttoolports.CallPolicy{Egress: agent.EgressInternal}
 	}
@@ -165,8 +180,18 @@ func classifyRemember(
 	return agenttoolports.CallPolicy{Egress: agent.EgressPersonal}
 }
 
-func replacesAMemory(params *agenttoolports.ToolExecuteParams) bool {
-	return strings.TrimSpace(toolparams.OptionalString(params.Params, fieldReplacesMemoryID)) != ""
+// classifyEdit calls an edit made with a person in the conversation personal,
+// as a save for them is: it runs unasked, and the memory service lets it take
+// effect only on that person's own memory or the agent's. An edit to a memory
+// shared with others is kept as an offer until a person accepts it.
+func classifyEdit(params *agenttoolports.ToolExecuteParams) agenttoolports.CallPolicy {
+	actor := params.Actor
+	if actor == nil || actor.PrincipalType != permissionports.PrincipalTypeUser ||
+		actor.UserID.IsNil() {
+		return agenttoolports.CallPolicy{Egress: agent.EgressInternal}
+	}
+
+	return agenttoolports.CallPolicy{Egress: agent.EgressPersonal}
 }
 
 // rememberAudience is who the call keeps the memory for, defaulting to the
@@ -248,6 +273,18 @@ func (t *RememberTool) request(
 	if err != nil {
 		return nil, err
 	}
+	name := strings.TrimSpace(toolparams.OptionalString(params.Params, fieldSubjectName))
+	if name != "" && subjectID.IsNil() {
+		subjectType = agentmemory.MemorySubjectType(
+			toolparams.OptionalString(params.Params, "subjectType"),
+		)
+		subjectID, err = t.memories.ResolveSubject(
+			ctx, toolparams.TenantFrom(params), subjectType, name,
+		)
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	expiresAt, err := memoryExpiry(
 		toolparams.OptionalString(params.Params, "expiresOn"),
@@ -258,17 +295,21 @@ func (t *RememberTool) request(
 	}
 
 	request := &agentmemoryports.RememberRequest{
-		TenantInfo:   toolparams.TenantFrom(params),
-		Kind:         kind,
-		Content:      content,
-		SubjectType:  subjectType,
-		SubjectID:    subjectID,
-		ExpiresAt:    expiresAt,
-		RunID:        params.RunID,
-		ProposalID:   params.ProposalID,
-		Taint:        params.CarriedTaint(timeutils.NowUnix()),
-		PersonUserID: params.Actor.PersonUserID(),
-		Replaces:     pulid.ConvertFromPtr(replaces),
+		TenantInfo:        toolparams.TenantFrom(params),
+		Kind:              kind,
+		Content:           content,
+		SubjectType:       subjectType,
+		SubjectID:         subjectID,
+		ExpiresAt:         expiresAt,
+		RunID:             params.RunID,
+		ProposalID:        params.ProposalID,
+		Taint:             params.CarriedTaint(timeutils.NowUnix()),
+		PersonUserID:      params.Actor.PersonUserID(),
+		Unasked:           !params.ApprovedFromProposal(),
+		Replaces:          pulid.ConvertFromPtr(replaces),
+		Source:            agentmemory.MemorySourceAgent,
+		AgentDefinitionID: params.DefinitionID,
+		ThreadID:          params.ThreadID,
 	}
 	if err = t.audience(ctx, params, request); err != nil {
 		return nil, err
@@ -299,17 +340,17 @@ func (t *RememberTool) audience(
 		if person.IsNil() {
 			return errors.New("visibleTo team needs a person in the conversation; use organization")
 		}
-		reader, err := t.memories.Reader(ctx, request.TenantInfo, person)
+		roleID, err := t.memories.TeamRole(
+			ctx,
+			request.TenantInfo,
+			person,
+			toolparams.OptionalString(params.Params, fieldTeamName),
+		)
 		if err != nil {
 			return err
 		}
-		// The team is the first of the person's own roles by name; a person
-		// with several can move the memory to another on the Desk.
-		if len(reader.RoleIDs) == 0 {
-			return errors.New("the person holds no role to keep this for; use me or organization")
-		}
 		request.Scope = agentmemory.MemoryScopeRole
-		request.RoleID = reader.RoleIDs[0]
+		request.RoleID = roleID
 	default:
 		return fmt.Errorf("visibleTo %q is not one of %s",
 			audience, strings.Join(memoryAudiences.Names(), ", "))
@@ -386,25 +427,29 @@ func (t *EditMemoryTool) ParamSchema() map[string]any {
 
 func (t *EditMemoryTool) Policy() agenttoolports.ToolPolicy {
 	return agenttoolports.ToolPolicy{
-		Name:          t.Name(),
-		Kind:          agenttooltrust.ToolKindAction,
-		Resource:      permission.ResourceAssistant,
-		Operation:     permission.OpCreate,
-		Scope:         agenttooltrust.ToolScopeTenant,
-		DefaultTier:   agent.TierActWithApproval,
-		MaxTier:       agent.TierAutoExecute,
-		Egress:        []agent.EgressClass{agent.EgressInternal},
-		Effect:        agenttooltrust.ToolEffectChange,
-		Reversible:    true,
-		ReadsExternal: agenttooltrust.ExternalReadNever,
-		CarriesTaint:  true,
+		Name:                t.Name(),
+		Kind:                agenttooltrust.ToolKindAction,
+		Resource:            permission.ResourceAssistant,
+		Operation:           permission.OpCreate,
+		Scope:               agenttooltrust.ToolScopeTenant,
+		DefaultTier:         agent.TierActWithApproval,
+		MaxTier:             agent.TierAutoExecute,
+		Egress:              []agent.EgressClass{agent.EgressPersonal, agent.EgressInternal},
+		Classify:            classifyEdit,
+		PersonalRunsUnasked: true,
+		Effect:              agenttooltrust.ToolEffectChange,
+		Reversible:          true,
+		ReadsExternal:       agenttooltrust.ExternalReadNever,
+		CarriesTaint:        true,
 		TaintHold: &agenttoolports.TaintHold{
 			Description: "An edit made after the run read text from outside the organization " +
 				"waits for a person's approval, whatever kind of memory it changes.",
 			Applies: func(*agenttoolports.ToolExecuteParams) bool { return true },
 		},
 		Rationale: "Rewrites part of a memory later runs read, as a replacement that keeps the " +
-			"old one's readers and history; it keeps the taint of the run that wrote it.",
+			"old one's readers and history; it keeps the taint of the run that wrote it. An " +
+			"edit nobody approved takes effect only on the caller's own memory or the " +
+			"agent's; one to a memory shared with others is kept as an offer.",
 	}
 }
 
@@ -456,6 +501,8 @@ func (t *EditMemoryTool) request(
 		Taint:             params.CarriedTaint(timeutils.NowUnix()),
 		PersonUserID:      params.Actor.PersonUserID(),
 		AgentDefinitionID: params.DefinitionID,
+		ThreadID:          params.ThreadID,
+		Unasked:           !params.ApprovedFromProposal(),
 	})
 	if err != nil {
 		return nil, err
@@ -580,6 +627,10 @@ var memoryAudiences = agenttoolschema.Source(
 const fieldVisibleTo = "visibleTo"
 
 const fieldReplacesMemoryID = "replacesMemoryId"
+
+const fieldSubjectName = "subjectName"
+
+const fieldTeamName = "teamName"
 
 const (
 	fieldMemoryID = "memoryId"

@@ -21,7 +21,7 @@ describe("conversationAtPath", () => {
     expect(conversationAtPath("/desk/t/athr_1/")).toBe("athr_1");
   });
 
-  it.each(["/desk", "/desk/t/", "/desk/decisions", "/desk/t/athr_1/extra", "/detention/desk"])(
+  it.each(["/desk", "/desk/t/", "/desk/needs", "/desk/t/athr_1/extra", "/detention/desk"])(
     "is null for %s",
     (pathname) => {
       expect(conversationAtPath(pathname)).toBeNull();

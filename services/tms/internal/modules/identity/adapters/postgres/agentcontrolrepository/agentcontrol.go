@@ -100,6 +100,8 @@ func (r *repository) Update(
 			ac.PromotionThreshold,
 			ac.PersonMonthlyMessages,
 			ac.LearningOff,
+			ac.PassingLearningOff,
+			ac.AutoChaptersOff,
 			ac.AgentMoneyCallCeilingMinor,
 			ac.AgentMoneyRunCalls,
 			ac.AgentMoneyRunAmountMinor,

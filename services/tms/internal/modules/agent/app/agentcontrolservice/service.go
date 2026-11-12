@@ -98,6 +98,9 @@ func (s *Service) Update(
 	if req.LearningOff != nil {
 		control.LearningOff = *req.LearningOff
 	}
+	if req.PassingLearningOff != nil {
+		control.PassingLearningOff = *req.PassingLearningOff
+	}
 	if req.AutoChaptersOff != nil {
 		control.AutoChaptersOff = *req.AutoChaptersOff
 	}

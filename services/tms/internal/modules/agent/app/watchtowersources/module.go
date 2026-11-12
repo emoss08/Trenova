@@ -4,6 +4,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtoweraccounting"
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowerfactoring"
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowershipment"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"go.uber.org/fx"
 )
 
@@ -37,6 +38,10 @@ var Module = fx.Module("watchtower-sources",
 	fx.Provide(fx.Annotate(
 		watchtowershipment.NewShipmentExceptionObserver,
 		fx.ResultTags(`group:"shipment_event_observers"`),
+	)),
+	fx.Provide(fx.Annotate(
+		watchtowershipment.NewPodDocumentObserver,
+		fx.ResultTags(documentports.DocumentChangeObserverGroup),
 	)),
 	fx.Provide(fx.Annotate(
 		watchtowershipment.NewNoCheckCallObserver,

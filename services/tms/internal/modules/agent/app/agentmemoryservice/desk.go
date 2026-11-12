@@ -211,6 +211,14 @@ func (p *deskPerson) sees(memory *agentmemory.Memory) bool {
 	return p.reader.Reads(memory)
 }
 
+// keptForAgents reports whether a memory is one an agent keeps for its own
+// work. It is not the person's, so their list leaves it out, but a
+// conversation that used one names it, and the person may read what the
+// answer they got was built on.
+func keptForAgents(memory *agentmemory.Memory) bool {
+	return memory.Scope == agentmemory.MemoryScopeAgent && !memory.Status.IsSuggestion()
+}
+
 func (p *deskPerson) offeredTo(memory *agentmemory.Memory) bool {
 	return memory.CreatedByUserID != nil && *memory.CreatedByUserID == p.userID
 }
@@ -420,7 +428,7 @@ func (s *Service) deskByIDs(
 
 	byID := make(map[pulid.ID]*agentmemoryports.DeskMemoryRow, len(rows))
 	for _, row := range rows {
-		if person.sees(row.Memory) {
+		if person.sees(row.Memory) || keptForAgents(row.Memory) {
 			byID[row.Memory.ID] = row
 		}
 	}

@@ -971,6 +971,11 @@ export const assistantMessageSchema = z.object({
    * record's name, a page, a report, or a count. Never set on a failed call.
    */
   summary: z.string().optional(),
+  /**
+   * On a read's result: what it was narrowed by, in words the server wrote —
+   * each filter's label and values, with every record by its name.
+   */
+  asked: z.string().optional(),
   /** Which guard layer decided this turn, kept so a refusal can be explained. */
   scopeStage: z.string().optional().default(""),
   scopeCategory: z.string().optional().default(""),
@@ -1897,6 +1902,7 @@ export const assistantToolFinishedEventSchema = z.object({
   content: z.string().optional().default(""),
   effect: optionalToolEffect,
   summary: z.string().optional(),
+  asked: z.string().optional(),
   verdict: optionalToolVerdict,
   /** The person's other agents a find_tools answer named as holding what this agent lacks. */
   handOffAgents: z.array(z.string()).nullish().catch(null),

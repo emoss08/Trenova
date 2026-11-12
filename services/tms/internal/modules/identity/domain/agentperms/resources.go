@@ -20,6 +20,7 @@ func Resources() []*permissionspec.ResourceDefinition {
 		insightResource(),
 		watchtowerResource(),
 		briefingResource(),
+		recordShareResource(),
 		agentExtensionResource(),
 		webResearchResource(),
 		portalAutomationResource(),
@@ -315,6 +316,32 @@ func insightResource() *permissionspec.ResourceDefinition {
 	}
 }
 
+// Sharing a record sends a teammate its link and, for a record with a case,
+// brings a case they do not own into their view to read. The record's own
+// read permission is still asked of the person sharing; this one decides
+// whether they may put a record in front of someone else at all.
+func recordShareResource() *permissionspec.ResourceDefinition {
+	return &permissionspec.ResourceDefinition{
+		Resource:    permission.ResourceRecordShare.String(),
+		DisplayName: "Sharing",
+		Description: "Sharing a record with teammates from the Share button",
+		Category:    "Desk",
+		Operations: []permissionspec.OperationDefinition{
+			{
+				Operation:   permission.OpRead,
+				DisplayName: "View",
+				Description: "See who a record you can read is shared with",
+			},
+			{
+				Operation:   permission.OpCreate,
+				DisplayName: "Share records",
+				Description: "Share a record you can read with teammates, and unshare one you shared",
+			},
+		},
+		DefaultSensitivity: permission.SensitivityInternal,
+	}
+}
+
 // The watchtower is a feed over records a reader may already be allowed to
 // see: every item is filtered again by the permission on the source it came
 // from, so this one decides only whether a person gets the feed at all.
@@ -333,7 +360,7 @@ func watchtowerResource() *permissionspec.ResourceDefinition {
 			{
 				Operation:   permission.OpUpdate,
 				DisplayName: "Update",
-				Description: "Mark the feed seen, dismiss an item, or hand one to an agent",
+				Description: "Mark the feed seen, dismiss an item, hand one to an agent, assign yourself a case nobody owns, or release your own",
 			},
 			{
 				Operation:   permission.OpAssign,

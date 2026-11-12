@@ -30,6 +30,8 @@ type Result struct {
 	// written once the observer says what it kept.
 	Publishes bool
 	Summary   string
+	// Asked is what a read was narrowed by, in words a person reads.
+	Asked string
 	// DelegateReport is the bounded account of a delegate_task call, kept on
 	// the call's result message.
 	DelegateReport *conversation.DelegateReport
@@ -80,6 +82,7 @@ func (o *Result) Outcome() Outcome {
 		Batch:          o.Batch,
 		Publishes:      o.Publishes,
 		Summary:        o.Summary,
+		Asked:          o.Asked,
 		DelegateReport: o.DelegateReport,
 		Taint:          o.Taint,
 		Found:          o.Found,

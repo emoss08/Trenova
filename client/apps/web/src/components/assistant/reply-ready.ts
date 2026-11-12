@@ -67,19 +67,33 @@ export type ViewingState = {
   /** Whether the corner panel is open, and on which conversation. */
   panelOpen: boolean;
   panelThreadId: string | null;
+  /** The conversation open in the Desk's margin, beside whatever page is in front. */
+  marginThreadId?: string | null;
+  /** The record whose case is in front at the Desk. */
+  caseRecordId?: string | null;
 };
 
 /**
- * Whether the person is already looking at a conversation: open at the Desk,
- * or open in the corner panel. A notice that its reply is ready would then be
- * news about the thing in front of them.
+ * Whether the person is already looking at a conversation: open at the Desk
+ * as its own page, open in the Desk's margin beside the page in front, the
+ * conversation of the case in front (`subjectId` is the record a conversation
+ * is about), or open in the corner panel. A notice that its reply is ready
+ * would then be news about the thing in front of them.
  *
  * The panel's remembered state is ignored at the Desk, which has no panel:
  * the store can say "open on this thread" while nothing is drawing it.
  */
-export function isViewingThread(threadId: string, viewing: ViewingState): boolean {
+export function isViewingThread(
+  threadId: string,
+  viewing: ViewingState,
+  subjectId: string | null = null,
+): boolean {
   if (isDeskPath(viewing.pathname)) {
-    return conversationAtPath(viewing.pathname) === threadId;
+    return (
+      conversationAtPath(viewing.pathname) === threadId ||
+      viewing.marginThreadId === threadId ||
+      (subjectId !== null && subjectId !== "" && viewing.caseRecordId === subjectId)
+    );
   }
 
   return viewing.panelOpen && viewing.panelThreadId === threadId;

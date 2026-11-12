@@ -1091,6 +1091,8 @@ export type AgentControlInput = {
   earnedAutonomy?: boolean | null | undefined;
   /** Absent leaves whether agents learn from their work as it is. */
   learningOff?: boolean | null | undefined;
+  /** Absent leaves whether agents learn from what people mention in passing as it is. */
+  passingLearningOff?: boolean | null | undefined;
   /** Absent leaves the per-person monthly allowance as it is; 0 is unlimited. */
   personMonthlyMessages?: number | null | undefined;
   /** Absent leaves the promotion threshold as it is; 1 to 1000 approvals. */
@@ -1301,6 +1303,13 @@ export type AgentMemorySubjectType =
   | 'Location'
   | 'Worker';
 
+/** Why a memory is worth another look. */
+export type AgentMemoryUpkeepReason =
+  /** A fact with no end date that nobody has confirmed for 180 days or more. */
+  | 'Aging'
+  /** No turn has used it since it was recorded or last confirmed, 30 days ago or more. */
+  | 'NeverUsed';
+
 export type AgentOutputMode =
   | 'Conversational'
   | 'Report';
@@ -1456,9 +1465,10 @@ export type AgentReflectionAction =
   | 'Suggested';
 
 export type AgentReflectionSignalKind =
-  | 'LongTask'
   | 'NegativeFeedback'
   | 'PersonCorrected'
+  /** The person stated something while asking for something else. */
+  | 'PersonTold'
   | 'ProposalModified'
   | 'ProposalRejected'
   | 'StandingRequest';
@@ -11225,7 +11235,7 @@ export type UpdateAgentCapabilitiesMutationVariables = Exact<{
 
 export type UpdateAgentCapabilitiesMutation = { updateAgentCapabilities: { ' $fragmentRefs'?: { 'AgentCapabilitiesFieldsFragment': AgentCapabilitiesFieldsFragment } } };
 
-export type AgentControlFieldsFragment = { id: string, organizationId: string, businessUnitId: string, shadowMode: boolean, earnedAutonomy: boolean, promotionThreshold: number, personMonthlyMessages: number, learningOff: boolean, autoChaptersOff: boolean, agentMoneyCallCeiling: string, agentMoneyRunCalls: number, agentMoneyRunAmount: string, agentMoneyDayCalls: number, agentMoneyDayAmount: string, agentMoneyCurrency: string, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'AgentControlFieldsFragment' };
+export type AgentControlFieldsFragment = { id: string, organizationId: string, businessUnitId: string, shadowMode: boolean, earnedAutonomy: boolean, promotionThreshold: number, personMonthlyMessages: number, learningOff: boolean, passingLearningOff: boolean, autoChaptersOff: boolean, agentMoneyCallCeiling: string, agentMoneyRunCalls: number, agentMoneyRunAmount: string, agentMoneyDayCalls: number, agentMoneyDayAmount: string, agentMoneyCurrency: string, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'AgentControlFieldsFragment' };
 
 export type AgentControlSettingsQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -11626,7 +11636,7 @@ export type ResolveAgentExceptionMutationVariables = Exact<{
 
 export type ResolveAgentExceptionMutation = { resolveAgentException: { id: string, resolutionState: AgentResolutionState, resolutionNotes: string, version: number, updatedAt: number } };
 
-export type AgentMemoryTableRowFieldsFragment = { id: string, organizationId: string, businessUnitId: string, kind: AgentMemoryKind, source: AgentMemorySource, status: AgentMemoryStatus, scope: AgentMemoryScope, ownerUserId: string | null, roleId: string | null, subjectType: AgentMemorySubjectType | null, subjectId: string | null, subjectLabel: string, toolName: string, content: string, agentDefinitionId: string | null, tainted: boolean, taints: boolean, reviewedByUserId: string | null, reviewedAt: number | null, sourceRunId: string | null, sourceProposalId: string | null, sourceThreadId: string | null, reflectionId: string | null, supersedesId: string | null, createdByUserId: string | null, retiredByUserId: string | null, retiredAt: number | null, expiresAt: number | null, useCount: number, lastUsedAt: number | null, version: number, createdAt: number, updatedAt: number, supersedes: { id: string, content: string, status: AgentMemoryStatus } | null, replacedBy: { id: string, content: string, status: AgentMemoryStatus, createdAt: number } | null, evidence: { feedbackIds: Array<string>, patternKey: string, ratingCount: number, distinctUsers: number, distinctThreads: number, reason: string, quotes: Array<string>, firstRatedAt: number, lastRatedAt: number, signals: Array<string> } | null } & { ' $fragmentName'?: 'AgentMemoryTableRowFieldsFragment' };
+export type AgentMemoryTableRowFieldsFragment = { id: string, organizationId: string, businessUnitId: string, kind: AgentMemoryKind, source: AgentMemorySource, status: AgentMemoryStatus, scope: AgentMemoryScope, ownerUserId: string | null, roleId: string | null, subjectType: AgentMemorySubjectType | null, subjectId: string | null, subjectLabel: string, toolName: string, content: string, agentDefinitionId: string | null, tainted: boolean, taints: boolean, reviewedByUserId: string | null, reviewedAt: number | null, confirmedAt: number | null, sourceRunId: string | null, sourceProposalId: string | null, sourceThreadId: string | null, reflectionId: string | null, supersedesId: string | null, createdByUserId: string | null, retiredByUserId: string | null, retiredAt: number | null, expiresAt: number | null, useCount: number, lastUsedAt: number | null, version: number, createdAt: number, updatedAt: number, supersedes: { id: string, content: string, status: AgentMemoryStatus } | null, replacedBy: { id: string, content: string, status: AgentMemoryStatus, createdAt: number } | null, evidence: { feedbackIds: Array<string>, patternKey: string, ratingCount: number, distinctUsers: number, distinctThreads: number, reason: string, quotes: Array<string>, firstRatedAt: number, lastRatedAt: number, signals: Array<string> } | null } & { ' $fragmentName'?: 'AgentMemoryTableRowFieldsFragment' };
 
 export type AgentMemoryTableQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -11647,6 +11657,19 @@ export type AgentMemoryUsageQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type AgentMemoryUsageQuery = { agentMemoryUsage: { activeCount: number, activeSoftCap: number, warnAt: number } };
+
+export type AgentMemoryUpkeepQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type AgentMemoryUpkeepQuery = { agentMemoryUpkeep: Array<{ reason: AgentMemoryUpkeepReason, memory: { ' $fragmentRefs'?: { 'AgentMemoryTableRowFieldsFragment': AgentMemoryTableRowFieldsFragment } } }> };
+
+export type ConfirmAgentMemoryMutationVariables = Exact<{
+  id: string | number;
+  version: number;
+}>;
+
+
+export type ConfirmAgentMemoryMutation = { confirmAgentMemory: { ' $fragmentRefs'?: { 'AgentMemoryTableRowFieldsFragment': AgentMemoryTableRowFieldsFragment } } };
 
 export type CreateAgentMemoryMutationVariables = Exact<{
   input: AgentMemoryInput;
@@ -21328,7 +21351,7 @@ export { DeskMemoryFieldsFragmentDoc, DeskMemorySettingsFieldsFragmentDoc, DeskM
 export { AgentEvalCaseTableRowFieldsFragmentDoc, AgentEvalCaseDetailFieldsFragmentDoc, AgentEvalCaseTableDocument, AgentEvalCaseDetailDocument, CreateAgentEvalCaseDocument, UpdateAgentEvalCaseDocument, SetAgentEvalCaseStatusDocument, ReplayAgentEvalCaseDocument } from "./documents/agent/eval-cases";
 export { AgentEvaluationTableRowFieldsFragmentDoc, AgentEvaluationTableDocument, AgentEvaluationDetailDocument, ReplayAgentRunDocument } from "./documents/agent/evaluations";
 export { AgentExceptionTableRowFieldsFragmentDoc, AgentExceptionDetailFieldsFragmentDoc, AgentExceptionTableDocument, AgentExceptionDetailDocument, ResolveAgentExceptionDocument } from "./documents/agent/exceptions";
-export { AgentMemoryTableRowFieldsFragmentDoc, AgentReflectionRowFieldsFragmentDoc, AgentMemoryTableDocument, AgentMemoryCountDocument, AgentMemoryUsageDocument, CreateAgentMemoryDocument, UpdateAgentMemoryDocument, SetAgentMemoryStatusDocument, ReviewAgentMemoryDocument, ApproveAgentMemorySuggestionDocument, DismissAgentMemorySuggestionDocument, AgentReflectionsDocument } from "./documents/agent/memories";
+export { AgentMemoryTableRowFieldsFragmentDoc, AgentReflectionRowFieldsFragmentDoc, AgentMemoryTableDocument, AgentMemoryCountDocument, AgentMemoryUsageDocument, AgentMemoryUpkeepDocument, ConfirmAgentMemoryDocument, CreateAgentMemoryDocument, UpdateAgentMemoryDocument, SetAgentMemoryStatusDocument, ReviewAgentMemoryDocument, ApproveAgentMemorySuggestionDocument, DismissAgentMemorySuggestionDocument, AgentReflectionsDocument } from "./documents/agent/memories";
 export { AgentPlanTableRowFieldsFragmentDoc, AgentPlanTableDocument, AgentPlanDetailDocument, DecideAgentPlanDocument } from "./documents/agent/plans";
 export { AgentProposalPreviewFieldsFragmentDoc, AgentPlanPreviewFieldsFragmentDoc, AgentProposalPreviewDocument, AgentProposalPreviewsDocument, MyProposalPreviewDocument, AgentPlanPreviewDocument, MyPlanPreviewDocument } from "./documents/agent/previews";
 export { AgentProfileVersionFieldsFragmentDoc, AgentProfileGuidanceFieldsFragmentDoc, AgentProfileFieldsFragmentDoc, AgentOrganizationProfileDocument, AgentOrganizationProfileHistoryDocument, MyAgentProfileDocument, AddAgentOrganizationProfileGuidanceDocument, RetireAgentOrganizationProfileGuidanceDocument, RegenerateAgentOrganizationProfileDocument, ApproveAgentOrganizationProfileGuidanceDocument, DismissAgentOrganizationProfileGuidanceDocument, AddMyAgentProfileGuidanceDocument, RetireMyAgentProfileGuidanceDocument, RegenerateMyAgentProfileDocument } from "./documents/agent/profile";

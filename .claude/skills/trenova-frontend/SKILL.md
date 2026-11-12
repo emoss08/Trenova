@@ -153,6 +153,11 @@ of sight, a bulk outcome, or a result that carries its next step (Undo, Download
   `t("{0} saved", name)`), no English grammar in arguments, no sentence split around markup
   (use `useRichT()`). Plurals are ICU: `t("{0, plural, one {# stop} other {# stops}}", n)`,
   with every `{n}` outside the branches.
+- A record's internal id (`cus_01J…`), a field's code name (`customerId`) and an enum's code
+  (`PartiallyAssigned`) are never shown, except an id in a URL or on an administrator-only
+  page. Show the record's name; when the text comes from the server, have the server store it
+  in words, and pass text you did not write through `withoutRecordIds` (design-system.md →
+  "No record ids on screen").
 - Module-level label maps use `defineLabels` (`@trenova/shared/i18n/labels`); column builders
   take `t` and memoize on `[t]`.
 - New or changed text needs `task i18n`, translations for every locale in

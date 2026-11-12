@@ -68,6 +68,8 @@ type Params struct {
 	PaletteQuestions paletteports.QuestionRepository
 	Users            tenantports.UserRepository
 	Boards           assistantports.BoardFiller
+	// Labels names the records a table was narrowed by.
+	Labels agentruntimeports.RecordLabeler
 	// Memories describes the memories a reply used or saved.
 	Memories agentmemoryports.AgentMemoryService
 	Quota    platformplanports.QuotaGuard
@@ -113,6 +115,7 @@ type Service struct {
 	paletteQuestions paletteports.QuestionRepository
 	users            tenantports.UserRepository
 	boards           assistantports.BoardFiller
+	labels           agentruntimeports.RecordLabeler
 	memories         agentmemoryports.AgentMemoryService
 	quota            platformplanports.QuotaGuard
 	waits            agentwaitports.AgentWaitRepository
@@ -148,6 +151,7 @@ func New(p Params) *Service {
 		paletteQuestions: p.PaletteQuestions,
 		users:            p.Users,
 		boards:           p.Boards,
+		labels:           p.Labels,
 		memories:         p.Memories,
 		quota:            p.Quota,
 	}

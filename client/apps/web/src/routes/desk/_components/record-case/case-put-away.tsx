@@ -1,5 +1,6 @@
 import { DeskIcon } from "@/components/desk-chat/desk-icons";
 import { Button } from "@trenova/shared/components/ui/button";
+import { Spinner } from "@trenova/shared/components/ui/spinner";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,7 +38,8 @@ export function putAwayChoices(
 
 /**
  * Puts the case away once the person has done what they can and the problem
- * is still running: it leaves Needs you and the rail until the time chosen,
+ * is still running. It sits in the case's head beside whose case it is, as a
+ * thing done to the case and not a step of its plan: it leaves Needs you and the rail until the time chosen,
  * and comes back sooner if anything new is raised about the record. Nothing
  * is closed by it; that is what accepting the risk is for.
  */
@@ -54,11 +56,17 @@ export function CasePutAway({
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger render={<Button variant="outline" isLoading={pending} />}>
-        <DeskIcon name="clock" size={13} />
+      <DropdownMenuTrigger
+        render={<button type="button" className="dk-cz-own ui-focus-ring" disabled={pending} />}
+        title={t(
+          "You have done what can be done here for now. It comes back when its time is up, or sooner if anything new is raised.",
+        )}
+      >
+        {pending ? <Spinner className="size-3" /> : <DeskIcon name="clock" size={12} />}
         {t("Put away")}
+        <DeskIcon name="down" size={10} />
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" sideOffset={6} className="w-56">
+      <DropdownMenuContent align="start" sideOffset={6} className="w-56">
         {putAwayChoices(t, now).map((choice) => (
           <DropdownMenuItem
             key={choice.key}

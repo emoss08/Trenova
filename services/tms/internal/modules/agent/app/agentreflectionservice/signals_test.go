@@ -70,29 +70,6 @@ func TestReadSignals_ToolFailuresAreForTheToolNotForMemory(t *testing.T) {
 	assert.Empty(t, signals, "a refused or failed call is a defect in the tool, never a lesson")
 }
 
-func TestReadSignals_ALongTaskCountsOnlyTheCallsThatWorked(t *testing.T) {
-	t.Parallel()
-
-	messages := []conversation.Message{person("Rebill the Acme loads from last week")}
-	for range LongTaskToolCalls - 1 {
-		messages = append(messages, toolResult("shipment_get", false, aitrace.OutcomeRan))
-	}
-	messages = append(messages,
-		toolResult("invoice_send", true, aitrace.OutcomeFailed),
-		toolResult("invoice_send", false, aitrace.OutcomeInvalid),
-	)
-
-	short := ReadSignals(&Window{Messages: messages, HasPerson: true})
-	assert.Empty(t, short)
-
-	messages = append(messages, toolResult("invoice_send", false, aitrace.OutcomeProposed))
-	long := ReadSignals(&Window{Messages: messages, HasPerson: true})
-	assert.Equal(t, []agentreflection.ReflectionSignalKind{
-		agentreflection.ReflectionSignalLongTask,
-	}, signalKinds(long))
-	assert.Equal(t, LongTaskToolCalls, long[0].Count)
-}
-
 func TestReadSignals_RefusalsAreNotLessons(t *testing.T) {
 	t.Parallel()
 
@@ -170,16 +147,13 @@ func TestReadSignals_ARunWithNobodyInItReadsNoPersonSignals(t *testing.T) {
 	assert.Empty(t, signals)
 }
 
-func TestReadSignals_DecisionsFeedbackAndLongTasks(t *testing.T) {
+func TestReadSignals_DecisionsAndFeedback(t *testing.T) {
 	t.Parallel()
 
-	messages := make([]conversation.Message, 0, LongTaskToolCalls)
-	for range LongTaskToolCalls {
-		messages = append(messages, toolResult("shipment_get", false, aitrace.OutcomeRan))
-	}
-
 	signals := ReadSignals(&Window{
-		Messages: messages,
+		Messages: []conversation.Message{
+			toolResult("shipment_get", false, aitrace.OutcomeRan),
+		},
 		Proposals: []DecidedProposal{
 			{ToolName: "dispatch_assign_move", Outcome: agenttooltrust.TrustOutcomeModified},
 			{ToolName: "dispatch_assign_move", Outcome: agenttooltrust.TrustOutcomeModified},
@@ -198,21 +172,69 @@ func TestReadSignals_DecisionsFeedbackAndLongTasks(t *testing.T) {
 		agentreflection.ReflectionSignalProposalModified,
 		agentreflection.ReflectionSignalProposalRejected,
 		agentreflection.ReflectionSignalNegativeFeedback,
-		agentreflection.ReflectionSignalLongTask,
 	}, signalKinds(signals))
 	assert.Equal(t, 1, signals[0].Count)
 	assert.Equal(t, "dispatch_assign_move", signals[0].Detail)
 	assert.Equal(t, 2, signals[2].Count)
 }
 
-func TestReadSignals_ALongRunWithNobodyInItIsNoSignal(t *testing.T) {
+func TestTells_AStatementIsToldAndARequestQuestionOrReactionIsNot(t *testing.T) {
 	t.Parallel()
 
-	messages := make([]conversation.Message, 0, LongTaskToolCalls)
-	for range LongTaskToolCalls {
-		messages = append(messages, toolResult("shipment_get", false, aitrace.OutcomeRan))
+	for text, want := range map[string]bool{
+		"Acme's dock closes at 2pm on Fridays":                           true,
+		"book it for thursday. acme's dock closes at 2pm on fridays":     true,
+		"the driver for granite only runs texas and oklahoma":            true,
+		"FYI their receiving office wants a call an hour before arrival": true,
+		"what time does acme's dock close on fridays?":                   false,
+		"show me every open shipment for acme manufacturing":             false,
+		"can you book the load for thursday morning":                     false,
+		"i need the invoice for acme sent out today":                     false,
+		"ok thanks that looks good to me":                                false,
+		"that is exactly what i was looking for":                         false,
+		"closes at 2pm":                                                  false,
+		"":                                                               false,
+	} {
+		assert.Equal(t, want, Tells(text), text)
+	}
+}
+
+func TestReadSignals_WhatAPersonMentionsStartsALookBackOnlyWhenTheOrganizationLearnsThatWay(
+	t *testing.T,
+) {
+	t.Parallel()
+
+	messages := []conversation.Message{
+		person("Acme's dock closes at 2pm on Fridays, so book the load for Thursday"),
+		reply("Booked for Thursday."),
 	}
 
-	assert.Empty(t, ReadSignals(&Window{Messages: messages}),
-		"a run that only worked has nothing a person showed it to learn from")
+	on := ReadSignals(&Window{Messages: messages, HasPerson: true, InPassing: true})
+	assert.Equal(t, []agentreflection.ReflectionSignalKind{
+		agentreflection.ReflectionSignalPersonTold,
+	}, signalKinds(on))
+	assert.Equal(t, 1, on[0].Count)
+
+	assert.Empty(t, ReadSignals(&Window{Messages: messages, HasPerson: true}),
+		"with learning from mentions off, a statement alone starts nothing")
+	assert.Empty(t, ReadSignals(&Window{Messages: messages, InPassing: true}),
+		"a run with nobody in it was told nothing")
+}
+
+func TestReadSignals_ACorrectionOrStandingRequestIsNotCountedAgainAsAMention(t *testing.T) {
+	t.Parallel()
+
+	signals := ReadSignals(&Window{
+		Messages: []conversation.Message{
+			reply("Quoted Acme in US dollars."),
+			person("no, acme is always quoted in canadian dollars these days"),
+		},
+		HasPerson: true,
+		InPassing: true,
+	})
+
+	assert.Equal(t, []agentreflection.ReflectionSignalKind{
+		agentreflection.ReflectionSignalPersonCorrected,
+		agentreflection.ReflectionSignalStandingRequest,
+	}, signalKinds(signals))
 }

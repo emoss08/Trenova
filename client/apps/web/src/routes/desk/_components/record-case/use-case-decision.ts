@@ -21,7 +21,7 @@ import { watchtower } from "@/lib/queries/watchtower";
 import type { AssistantProposal } from "@/types/assistant";
 import { useQueryClient } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useDecisionSteps } from "../attention/use-decision-steps";
 import {
   PENDING_DECISIONS_KEY,
@@ -67,6 +67,11 @@ export type CaseDecision = {
 
 const EMPTY: ReadonlyMap<string, ProposalPreview> = new Map();
 
+/** How often the case is read again while a plan told to run now has not started. */
+const COMMIT_POLL_MS = 1500;
+/** How long that is waited on before the button is given back. */
+const COMMIT_WAIT_MS = 30_000;
+
 /**
  * Deciding the plan on a record's case. Where the plan stands always comes
  * from the server (`DeskCaseDecision.phase`); this holds only the request in
@@ -96,6 +101,28 @@ export function useCaseDecision(decision: DeskCaseDecision | null): CaseDecision
   const [busy, setBusy] = useState<CaseDecisionAction | null>(null);
   const [failure, setFailure] = useState("");
   const sending = useRef(false);
+  // "Do it now" is accepted before the plan starts: the server answers at
+  // once and the case still reads Undoable until the run picks it up. The
+  // button stays working for the decision it was pressed on until the case
+  // says it has moved on, so it never falls back to "Do it now" in between.
+  const [committed, setCommitted] = useState<string | null>(null);
+  const waitingOnCommit =
+    committed !== null && decision?.id === committed && decision.phase === "Undoable";
+  useEffect(() => {
+    if (!waitingOnCommit) {
+      return;
+    }
+    const started = Date.now();
+    const timer = setInterval(() => {
+      if (Date.now() - started > COMMIT_WAIT_MS) {
+        setCommitted(null);
+        return;
+      }
+      void queryClient.invalidateQueries({ queryKey: deskCase._def });
+    }, COMMIT_POLL_MS);
+
+    return () => clearInterval(timer);
+  }, [queryClient, waitingOnCommit]);
 
   let previews = EMPTY;
   let digest = "";
@@ -194,7 +221,7 @@ export function useCaseDecision(decision: DeskCaseDecision | null): CaseDecision
     stale,
     refusedStep,
     blocked: awaiting && (previewLoading || stale),
-    busy,
+    busy: busy ?? (waitingOnCommit ? "commit" : null),
     failure,
     approve: () => run("approve", decide(true, "")),
     decline: (reason) => run("decline", decide(false, reason)),
@@ -206,6 +233,7 @@ export function useCaseDecision(decision: DeskCaseDecision | null): CaseDecision
     doNow: () =>
       run("commit", async () => {
         await commitAgentDecisionNow(target);
+        setCommitted(decision?.id ?? null);
         return null;
       }),
   };

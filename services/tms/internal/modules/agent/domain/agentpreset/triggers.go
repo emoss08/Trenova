@@ -57,6 +57,7 @@ func StarterEvents(t agenttemplate.Template) []agenttrigger.EventKind {
 			agenttrigger.EventBillingQueueItemException,
 			agenttrigger.EventBillingQueueItemOnHold,
 			agenttrigger.EventAccountingConnectionDegraded,
+			agenttrigger.EventShipmentPODMissing,
 		}
 	case agenttemplate.TemplateShipmentIntake:
 		return []agenttrigger.EventKind{agenttrigger.EventDocumentExtracted}

@@ -55,8 +55,10 @@ type queryWord struct {
 // all say "shipment", asking about a shipment does not make every one of them
 // bear; two shared words always do. The turn's own message is read for its
 // words, and the one before it only when the message is too short to say
-// what it is about. With neither a vector nor a word to go on, nothing is
-// judged and every candidate bears.
+// what it is about. The name of the record a memory is filed under is not one
+// of its words: naming a customer puts its memories in the prompt, and one of
+// them bears only when the turn also asks about what it says. With neither a
+// vector nor a word to go on, nothing is judged and every candidate bears.
 func Relevance(
 	focus, text string,
 	ranked agentmemoryports.RankedMemories,
@@ -149,15 +151,14 @@ func RecallTerms(query string) []string {
 
 func memoryTokens(memory *agentmemory.Memory) map[string]struct{} {
 	tokens := agentsearch.TokenSet(memory.Content)
-	for _, text := range [...]string{
-		memory.SubjectLabel,
-		strings.ReplaceAll(memory.ToolName, "_", " "),
-	} {
-		if text == "" {
-			continue
-		}
-		for token := range agentsearch.TokenSet(text) {
+	if memory.ToolName != "" {
+		for token := range agentsearch.TokenSet(strings.ReplaceAll(memory.ToolName, "_", " ")) {
 			tokens[token] = struct{}{}
+		}
+	}
+	if memory.SubjectLabel != "" {
+		for token := range agentsearch.TokenSet(memory.SubjectLabel) {
+			delete(tokens, token)
 		}
 	}
 

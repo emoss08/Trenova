@@ -264,7 +264,12 @@ describe("the plan on a record's case", () => {
 
 describe("the plan slot with no plan in it", () => {
   it("says which agent is drafting the chosen option", () => {
-    render(<CasePlanDrafting agentName="Dispatch desk" />);
+    render(
+      <CasePlanDrafting
+        agentName="Dispatch desk"
+        writing={{ steps: [], checked: 0, tool: "", ended: false }}
+      />,
+    );
 
     expect(
       screen.getByText(

@@ -95,6 +95,18 @@ export function useMemoryCards(
   served: readonly MemoryNote[] | null | undefined,
   enabled = true,
 ): MemoryCard[] {
+  return useMemoryCardRead(ids, served, enabled).cards;
+}
+
+/**
+ * useMemoryCards with whether the read is still under way, so a list can tell
+ * "not read yet" from "nothing here the person can see".
+ */
+function useMemoryCardRead(
+  ids: readonly string[],
+  served: readonly MemoryNote[] | null | undefined,
+  enabled: boolean,
+): { cards: MemoryCard[]; pending: boolean } {
   const known = useMemo(() => new Map((served ?? []).map((note) => [note.id, note])), [served]);
   const missing = useMemo(() => ids.filter((id) => !known.has(id)), [ids, known]);
   const read = useQuery({
@@ -104,13 +116,15 @@ export function useMemoryCards(
     staleTime: 30_000,
   });
 
-  return useMemo(() => {
+  const cards = useMemo(() => {
     const fetched = new Map((read.data ?? []).map((memory) => [memory.id, cardOf(memory)]));
     return ids.flatMap((id) => {
       const card = known.get(id) ?? fetched.get(id);
       return card ? [card] : [];
     });
   }, [ids, known, read.data]);
+
+  return { cards, pending: enabled && missing.length > 0 && read.isPending };
 }
 
 /**
@@ -153,8 +167,9 @@ export function DeskMemoryRecall({
   const timezone = resolveUserTimezone(user?.timezone);
   const [open, setOpen] = useState(false);
   const [gone, setGone] = useState<Record<string, boolean>>({});
-  const cards = useMemoryCards(ids, served, open);
+  const { cards, pending } = useMemoryCardRead(ids, served, open);
   const live = ids.filter((id) => !gone[id]).length;
+  const unlisted = ids.length - cards.length;
 
   const forget = useApiMutation({
     mutationFn: ({ id, forgotten }: { id: string; forgotten: boolean }) =>
@@ -195,7 +210,7 @@ export function DeskMemoryRecall({
           <DeskIcon name="chevR" size={11} stroke={2} />
         </span>
       </Button>
-      {open && cards.length > 0 && (
+      {open && (pending || cards.length > 0 || unlisted > 0) && (
         <div className="dk-mrc-l">
           {cards.map((card) => (
             <div key={card.id} className={cn("dk-mrc-i", gone[card.id] && "dk-gone")}>
@@ -240,6 +255,26 @@ export function DeskMemoryRecall({
               </div>
             </div>
           ))}
+          {pending ? (
+            <div className="dk-mrc-i" aria-busy="true">
+              <div className="dk-mrc-m">
+                <span>{t("Reading the memories…")}</span>
+              </div>
+            </div>
+          ) : (
+            unlisted > 0 && (
+              <div className="dk-mrc-i">
+                <div className="dk-mrc-m">
+                  <span>
+                    {t(
+                      "{0, plural, one {# memory is not listed: it was deleted since.} other {# memories are not listed: they were deleted since.}}",
+                      unlisted,
+                    )}
+                  </span>
+                </div>
+              </div>
+            )
+          )}
         </div>
       )}
     </div>

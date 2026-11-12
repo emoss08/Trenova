@@ -243,7 +243,8 @@ func TestNotifyPending_TellsEveryDeciderOnce(t *testing.T) {
 	require.True(t, ok)
 	parsed, err := url.Parse(link)
 	require.NoError(t, err)
-	assert.Equal(t, "/desk/decisions", parsed.Path)
+	assert.Equal(t, "/desk/needs", parsed.Path)
+	assert.Equal(t, "decisions", parsed.Query().Get("lens"))
 	assert.Equal(t, h.run.ID.String(), parsed.Query().Get("run"),
 		"the link lands on the decisions queue filtered to this run",
 	)

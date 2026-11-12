@@ -33,6 +33,7 @@ var agentControlsTable = schema.Table{
 		{Name: "briefing_hour_local", Quoted: `"briefing_hour_local"`, Field: "BriefingHourLocal", Kind: schema.KindInt64, Flags: 0, Label: `Briefing Hour Local`, JSON: `briefingHourLocal`},
 		{Name: "person_monthly_messages", Quoted: `"person_monthly_messages"`, Field: "PersonMonthlyMessages", Kind: schema.KindInt64, Flags: 0, Label: `Person Monthly Messages`, Doc: `PersonMonthlyMessages is how many questions one person may ask the agents in a calendar month; nought leaves it unlimited.`, JSON: `personMonthlyMessages`},
 		{Name: "learning_off", Quoted: `"learning_off"`, Field: "LearningOff", Kind: schema.KindBool, Flags: 0, Label: `Learning Off`, JSON: `learningOff`},
+		{Name: "passing_learning_off", Quoted: `"passing_learning_off"`, Field: "PassingLearningOff", Kind: schema.KindBool, Flags: 0, Label: `Passing Learning Off`, Doc: `PassingLearningOff stops a look back that starts only because a person stated something while asking for something else. On by default: it is how agents learn about customers, locations, drivers and carriers, each lesson is only ever offered, and its cost shows under look backs in usage.`, JSON: `passingLearningOff`},
 		{Name: "auto_chapters_off", Quoted: `"auto_chapters_off"`, Field: "AutoChaptersOff", Kind: schema.KindBool, Flags: 0, Label: `Auto Chapters Off`, Doc: `AutoChaptersOff stops a model splitting Desk conversations into chapters and naming them. On by default: it is one short call per question on the cheapest model, and people can still start chapters by hand while it is off.`, JSON: `autoChaptersOff`},
 		{Name: "agent_money_call_ceiling_minor", Quoted: `"agent_money_call_ceiling_minor"`, Field: "AgentMoneyCallCeilingMinor", Kind: schema.KindInt64, Flags: 0, Label: `Agent Money Call Ceiling Minor`, JSON: `agentMoneyCallCeilingMinor`},
 		{Name: "agent_money_run_calls", Quoted: `"agent_money_run_calls"`, Field: "AgentMoneyRunCalls", Kind: schema.KindInt64, Flags: 0, Label: `Agent Money Run Calls`, JSON: `agentMoneyRunCalls`},
@@ -45,14 +46,14 @@ var agentControlsTable = schema.Table{
 	},
 	PK:           []int32{0, 1, 2},
 	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 18},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 19},
 	Returning:    nil,
-	Version:      16,
+	Version:      17,
 	AutoID:       0,
-	AutoCreate:   17,
-	AutoUpdate:   18,
+	AutoCreate:   18,
+	AutoUpdate:   19,
 	IDPrefix:     "agc_",
 	New:          newAgentControl,
 	NewN:         newNAgentControl,
@@ -77,6 +78,7 @@ type AgentControlsTable struct {
 	BriefingHourLocal          keel.Int64Col
 	PersonMonthlyMessages      keel.Int64Col
 	LearningOff                keel.BoolCol
+	PassingLearningOff         keel.BoolCol
 	AutoChaptersOff            keel.BoolCol
 	AgentMoneyCallCeilingMinor keel.Int64Col
 	AgentMoneyRunCalls         keel.Int64Col
@@ -101,15 +103,16 @@ var AgentControls = &AgentControlsTable{
 	BriefingHourLocal:          keel.Int64Col{Col: keel.Col{Ref: &agentControlsRef, Index: 7}},
 	PersonMonthlyMessages:      keel.Int64Col{Col: keel.Col{Ref: &agentControlsRef, Index: 8}},
 	LearningOff:                keel.BoolCol{Col: keel.Col{Ref: &agentControlsRef, Index: 9}},
-	AutoChaptersOff:            keel.BoolCol{Col: keel.Col{Ref: &agentControlsRef, Index: 10}},
-	AgentMoneyCallCeilingMinor: keel.Int64Col{Col: keel.Col{Ref: &agentControlsRef, Index: 11}},
-	AgentMoneyRunCalls:         keel.Int64Col{Col: keel.Col{Ref: &agentControlsRef, Index: 12}},
-	AgentMoneyRunAmountMinor:   keel.Int64Col{Col: keel.Col{Ref: &agentControlsRef, Index: 13}},
-	AgentMoneyDayCalls:         keel.Int64Col{Col: keel.Col{Ref: &agentControlsRef, Index: 14}},
-	AgentMoneyDayAmountMinor:   keel.Int64Col{Col: keel.Col{Ref: &agentControlsRef, Index: 15}},
-	Version:                    keel.Int64Col{Col: keel.Col{Ref: &agentControlsRef, Index: 16}},
-	CreatedAt:                  keel.Int64Col{Col: keel.Col{Ref: &agentControlsRef, Index: 17}},
-	UpdatedAt:                  keel.Int64Col{Col: keel.Col{Ref: &agentControlsRef, Index: 18}},
+	PassingLearningOff:         keel.BoolCol{Col: keel.Col{Ref: &agentControlsRef, Index: 10}},
+	AutoChaptersOff:            keel.BoolCol{Col: keel.Col{Ref: &agentControlsRef, Index: 11}},
+	AgentMoneyCallCeilingMinor: keel.Int64Col{Col: keel.Col{Ref: &agentControlsRef, Index: 12}},
+	AgentMoneyRunCalls:         keel.Int64Col{Col: keel.Col{Ref: &agentControlsRef, Index: 13}},
+	AgentMoneyRunAmountMinor:   keel.Int64Col{Col: keel.Col{Ref: &agentControlsRef, Index: 14}},
+	AgentMoneyDayCalls:         keel.Int64Col{Col: keel.Col{Ref: &agentControlsRef, Index: 15}},
+	AgentMoneyDayAmountMinor:   keel.Int64Col{Col: keel.Col{Ref: &agentControlsRef, Index: 16}},
+	Version:                    keel.Int64Col{Col: keel.Col{Ref: &agentControlsRef, Index: 17}},
+	CreatedAt:                  keel.Int64Col{Col: keel.Col{Ref: &agentControlsRef, Index: 18}},
+	UpdatedAt:                  keel.Int64Col{Col: keel.Col{Ref: &agentControlsRef, Index: 19}},
 }
 
 // BuildAgentControls builds the table of agent_controls for ref. Generated relation and alias methods call it.
@@ -126,15 +129,16 @@ func BuildAgentControls(r *keel.Ref) *AgentControlsTable {
 		BriefingHourLocal:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
 		PersonMonthlyMessages:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
 		LearningOff:                keel.BoolCol{Col: keel.Col{Ref: r, Index: 9}},
-		AutoChaptersOff:            keel.BoolCol{Col: keel.Col{Ref: r, Index: 10}},
-		AgentMoneyCallCeilingMinor: keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
-		AgentMoneyRunCalls:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
-		AgentMoneyRunAmountMinor:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
-		AgentMoneyDayCalls:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
-		AgentMoneyDayAmountMinor:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
-		Version:                    keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
-		CreatedAt:                  keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
-		UpdatedAt:                  keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
+		PassingLearningOff:         keel.BoolCol{Col: keel.Col{Ref: r, Index: 10}},
+		AutoChaptersOff:            keel.BoolCol{Col: keel.Col{Ref: r, Index: 11}},
+		AgentMoneyCallCeilingMinor: keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
+		AgentMoneyRunCalls:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
+		AgentMoneyRunAmountMinor:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
+		AgentMoneyDayCalls:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
+		AgentMoneyDayAmountMinor:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
+		Version:                    keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
+		CreatedAt:                  keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
+		UpdatedAt:                  keel.Int64Col{Col: keel.Col{Ref: r, Index: 19}},
 	}
 }
 
@@ -546,22 +550,24 @@ func ptrAgentControl(p unsafe.Pointer, c int32) any {
 	case 9:
 		return &r.LearningOff
 	case 10:
-		return &r.AutoChaptersOff
+		return &r.PassingLearningOff
 	case 11:
-		return &r.AgentMoneyCallCeilingMinor
+		return &r.AutoChaptersOff
 	case 12:
-		return (*int64)(unsafe.Pointer(&r.AgentMoneyRunCalls))
+		return &r.AgentMoneyCallCeilingMinor
 	case 13:
-		return &r.AgentMoneyRunAmountMinor
+		return (*int64)(unsafe.Pointer(&r.AgentMoneyRunCalls))
 	case 14:
-		return (*int64)(unsafe.Pointer(&r.AgentMoneyDayCalls))
+		return &r.AgentMoneyRunAmountMinor
 	case 15:
-		return &r.AgentMoneyDayAmountMinor
+		return (*int64)(unsafe.Pointer(&r.AgentMoneyDayCalls))
 	case 16:
-		return &r.Version
+		return &r.AgentMoneyDayAmountMinor
 	case 17:
-		return &r.CreatedAt
+		return &r.Version
 	case 18:
+		return &r.CreatedAt
+	case 19:
 		return &r.UpdatedAt
 	}
 	return nil
@@ -591,22 +597,24 @@ func valueAgentControl(p unsafe.Pointer, c int32) any {
 	case 9:
 		return r.LearningOff
 	case 10:
-		return r.AutoChaptersOff
+		return r.PassingLearningOff
 	case 11:
-		return r.AgentMoneyCallCeilingMinor
+		return r.AutoChaptersOff
 	case 12:
-		return int64(r.AgentMoneyRunCalls)
+		return r.AgentMoneyCallCeilingMinor
 	case 13:
-		return r.AgentMoneyRunAmountMinor
+		return int64(r.AgentMoneyRunCalls)
 	case 14:
-		return int64(r.AgentMoneyDayCalls)
+		return r.AgentMoneyRunAmountMinor
 	case 15:
-		return r.AgentMoneyDayAmountMinor
+		return int64(r.AgentMoneyDayCalls)
 	case 16:
-		return r.Version
+		return r.AgentMoneyDayAmountMinor
 	case 17:
-		return r.CreatedAt
+		return r.Version
 	case 18:
+		return r.CreatedAt
+	case 19:
 		return r.UpdatedAt
 	}
 	return nil

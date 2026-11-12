@@ -51,7 +51,8 @@ const (
 	EventProposalsReminder = "agent.proposals_reminder"
 
 	notificationSource = "agentproposalnotifier"
-	proposalsPath      = "/desk/decisions"
+	proposalsPath      = "/desk/needs"
+	proposalsLens      = "decisions"
 	maxListedTools     = 3
 	secondsPerHour     = 3600
 )
@@ -504,10 +505,11 @@ func (s *Service) brand(
 	}
 }
 
-// reviewPath opens the Desk's decisions queue on the run, so the person
+// reviewPath opens Needs you on its Decisions lens at the run, so the person
 // lands on exactly the rows they were told about.
 func reviewPath(runID string) string {
 	query := url.Values{}
+	query.Set("lens", proposalsLens)
 	query.Set("run", runID)
 
 	return proposalsPath + "?" + query.Encode()

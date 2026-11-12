@@ -17,8 +17,8 @@ export function reflectionSignalLabel(kind: string, t: TranslateFn): string {
       return t("A proposal was refused");
     case "NegativeFeedback":
       return t("A reply was rated unhelpful");
-    case "LongTask":
-      return t("A long task");
+    case "PersonTold":
+      return t("A person mentioned it in passing");
     default:
       return kind;
   }

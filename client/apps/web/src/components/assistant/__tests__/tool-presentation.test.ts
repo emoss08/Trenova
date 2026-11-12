@@ -117,8 +117,36 @@ describe("describeToolCall", () => {
       }),
     ).toEqual({
       title: "Find shipments",
-      subject: "status Delivered",
+      subject: "Status Delivered",
     });
+  });
+
+  // A list narrowed by records carries their ids, which name nothing a
+  // person can use: the filter reads as its field, never as the ids.
+  it("never shows a record id a filter narrows by", () => {
+    expect(
+      describeToolCall("shipment_list", {
+        filters: [
+          {
+            field: "customerId",
+            operator: "in",
+            values: ["cus_01JW3K18A8TPC7T7SPX7745V1H", "cus_01JSV4G0Q80KNYKQ254QWT5T0V"],
+          },
+          { field: "carrierId", operator: "eq", value: "car_01J3TA9AYRY47X0A6SSB8D0M0H" },
+        ],
+      }).subject,
+    ).toBe("Customer, Carrier");
+  });
+
+  it("reads a status filter's codes as words", () => {
+    expect(
+      describeToolCall("shipment_list", {
+        filters: [
+          { field: "status", operator: "in", values: ["New", "PartiallyAssigned", "InTransit"] },
+          { field: "name", operator: "contains", value: "McDonald" },
+        ],
+      }).subject,
+    ).toBe("Status New/Partially assigned/In transit, Name McDonald");
   });
 
   it("reads a relative window as a window", () => {
@@ -128,7 +156,7 @@ describe("describeToolCall", () => {
       }),
     ).toEqual({
       title: "List trailers",
-      subject: "registrationExpiry next 30d",
+      subject: "Registration expiry next 30d",
     });
   });
 
@@ -141,7 +169,7 @@ describe("describeToolCall", () => {
           { field: "city", operator: "contains", value: "Dallas" },
         ],
       }).subject,
-    ).toBe("status Active, type Employee +1");
+    ).toBe("Status Active, Type Employee +1");
   });
 
   it("names the report a run was started for", () => {
@@ -367,7 +395,7 @@ describe("readableEntries", () => {
     expect(hidden).toBe(0);
     expect(entries).toEqual([
       { key: "tags", label: "Tags", value: { kind: "text", text: "hazmat, team" } },
-      { key: "filters", label: "Filters", value: { kind: "text", text: "status Delivered" } },
+      { key: "filters", label: "Filters", value: { kind: "text", text: "Status Delivered" } },
       { key: "definition", label: "Definition", value: { kind: "fields", count: 2 } },
       { key: "rows", label: "Rows", value: { kind: "items", count: 2 } },
       {

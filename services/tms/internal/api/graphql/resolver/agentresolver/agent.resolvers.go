@@ -601,6 +601,7 @@ func (r *MutationResolver) UpdateAgentControl(ctx context.Context, input gqlmode
 		PromotionThreshold:    input.PromotionThreshold,
 		PersonMonthlyMessages: input.PersonMonthlyMessages,
 		LearningOff:           input.LearningOff,
+		PassingLearningOff:    input.PassingLearningOff,
 		AutoChaptersOff:       input.AutoChaptersOff,
 		AgentMoney: agentcontrolports.AgentMoneyLimitsUpdate{
 			CallCeilingMinor: callCeiling,
@@ -1075,4 +1076,31 @@ func (r *AgentPlanResolver) RunMode(ctx context.Context, obj *agentplan.AgentPla
 	}
 
 	return agentplan.PlanRunModeOf(steps), nil
+}
+
+func (r *MutationResolver) ConfirmAgentMemory(ctx context.Context, id string, version int) (*agentmemory.Memory, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentMemory, permission.OpManage)
+	if err != nil {
+		return nil, err
+	}
+
+	memoryID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.AgentMemoryService.Confirm(ctx, agentmemoryports.ReviewAgentMemoryRequest{
+		ID:         memoryID,
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+		Version:    int64(version),
+	}, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *QueryResolver) AgentMemoryUpkeep(ctx context.Context) ([]*agentmemoryports.MemoryUpkeep, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentMemory, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.AgentMemoryService.Upkeep(ctx, resolvercore.TenantInfo(authCtx))
 }

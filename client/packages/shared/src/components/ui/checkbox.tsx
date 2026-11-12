@@ -19,8 +19,11 @@ function Checkbox({ className, ...props }: CheckboxPrimitive.Root.Props) {
       <CheckboxPrimitive.Indicator
         data-slot="checkbox-indicator"
         className="grid animate-confirm place-content-center text-current transition-none [&>svg]:size-3.5 [&>svg]:stroke-[3]"
-        render={indeterminate ? <MinusIcon /> : checked ? <CheckIcon /> : undefined}
-      />
+      >
+        {/* The mark is the indicator's child, so the size and weight above reach it. Rendered
+            as the indicator itself it kept the icon's own 24px and spilled out of the box. */}
+        {indeterminate ? <MinusIcon /> : <CheckIcon />}
+      </CheckboxPrimitive.Indicator>
     </CheckboxPrimitive.Root>
   );
 }

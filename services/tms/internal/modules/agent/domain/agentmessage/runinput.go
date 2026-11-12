@@ -48,3 +48,15 @@ func BackgroundRunInput(
 
 	return builder.String()
 }
+
+// HandedNote tells a run what it was handed. A run a person starts from the
+// Watchtower is about one thing that was raised on the record, and an agent
+// told only which record it concerns works its routine and reports on
+// something else.
+func HandedNote(handed string) string {
+	return "A person handed you this from the Watchtower, and it is the thing to work: " +
+		strings.TrimSpace(handed) +
+		"\nWork this first. If you cannot settle it with the tools you hold, say plainly " +
+		"what a person has to do to settle it, and keep anything else you notice about " +
+		"the record to a line at the end."
+}

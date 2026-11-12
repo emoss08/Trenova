@@ -1,3 +1,4 @@
+import { useTriageAccess } from "./use-triage-access";
 import { recordPath } from "@/config/record-links";
 import { handleMutationError } from "@/hooks/use-api-mutation";
 import { useIdempotencyKey } from "@/hooks/use-idempotency-key";
@@ -275,6 +276,56 @@ export function useTriageActions(): TriageActions {
 
 /** Builds the actions once for the page; `useTriageActions` hands them out. */
 export function useTriageActionsController(): TriageActions {
+  const actions = useUnguardedTriageActions();
+  const { canWork } = useTriageAccess();
+  const t = useT();
+
+  // The buttons that work a message are not drawn for a reader who may not,
+  // but the keys still reach these (E, #, S). They are refused here, once,
+  // with the reason, instead of each sending a request the server refuses.
+  return useMemo<TriageActions>(() => {
+    if (canWork) {
+      return actions;
+    }
+    const refuse = () => {
+      toast.error(t("You can read Triage, but your role can't act on messages."), {
+        id: READ_ONLY_TOAST,
+      });
+    };
+    const guarded = { ...actions };
+    for (const name of WORK_ACTIONS) {
+      (guarded as Record<string, unknown>)[name] = refuse;
+    }
+
+    return guarded;
+  }, [actions, canWork, t]);
+}
+
+// i18n-ignore: a toast id, so repeated key presses show one toast; never shown to a person
+const READ_ONLY_TOAST = "triage-read-only";
+
+/** The actions that work a message and return nothing: what a key can reach. */
+const WORK_ACTIONS = [
+  "handle",
+  "ignore",
+  "reopen",
+  "handleFolder",
+  "snoozeFolder",
+  "snooze",
+  "snoozeUntilTomorrow",
+  "wake",
+  "waitForReply",
+  "stopWaiting",
+  "assign",
+  "assignToMe",
+  "correctKind",
+  "flagFact",
+  "unlink",
+  "unfile",
+  "blockSender",
+] as const satisfies readonly (keyof TriageActions)[];
+
+function useUnguardedTriageActions(): TriageActions {
   const t = useT();
   const queryClient = useQueryClient();
   const navigation = useTriageNavigation();

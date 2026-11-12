@@ -26,6 +26,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/agentcontrol"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -158,7 +159,7 @@ func (s *Service) PrepareThread(
 		Taint:             cleanOr(thread.Taint),
 	}
 
-	definition, skip, err := s.usableAgent(ctx, tenant, thread.AgentDefinitionID)
+	definition, control, skip, err := s.usableAgent(ctx, tenant, thread.AgentDefinitionID)
 	if err != nil {
 		return nil, err
 	}
@@ -172,6 +173,7 @@ func (s *Service) PrepareThread(
 		NegativeRatings: s.negativeRatings(ctx, tenant, person, messages),
 		HasPerson:       true,
 		Continues:       found,
+		InPassing:       !control.PassingLearningOff,
 	}
 
 	return s.ready(ctx, &readyParams{
@@ -224,7 +226,7 @@ func (s *Service) PrepareRun(
 		Taint:             runTaint(run),
 	}
 
-	definition, skip, err := s.usableAgent(ctx, tenant, run.AgentDefinitionID)
+	definition, _, skip, err := s.usableAgent(ctx, tenant, run.AgentDefinitionID)
 	if err != nil {
 		return nil, err
 	}
@@ -399,13 +401,13 @@ func (s *Service) usableAgent(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	agentID pulid.ID,
-) (*agentdefinition.Definition, agentreflection.ReflectionSkip, error) {
+) (*agentdefinition.Definition, *agentcontrol.AgentControl, agentreflection.ReflectionSkip, error) {
 	control, err := s.controls.GetOrCreate(ctx, tenant)
 	if err != nil {
-		return nil, "", fmt.Errorf("read the organization's agent control: %w", err)
+		return nil, nil, "", fmt.Errorf("read the organization's agent control: %w", err)
 	}
 	if control.LearningOff || control.ShadowMode {
-		return nil, agentreflection.ReflectionSkipLearningOff, nil
+		return nil, control, agentreflection.ReflectionSkipLearningOff, nil
 	}
 
 	definition, err := s.definitions.GetByID(
@@ -417,19 +419,19 @@ func (s *Service) usableAgent(
 	)
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
-			return nil, agentreflection.ReflectionSkipAgentUnavailable, nil
+			return nil, control, agentreflection.ReflectionSkipAgentUnavailable, nil
 		}
 
-		return nil, "", fmt.Errorf("read the agent: %w", err)
+		return nil, nil, "", fmt.Errorf("read the agent: %w", err)
 	}
 	if !definition.Enabled {
-		return definition, agentreflection.ReflectionSkipAgentUnavailable, nil
+		return definition, control, agentreflection.ReflectionSkipAgentUnavailable, nil
 	}
 	if definition.LearningOff {
-		return definition, agentreflection.ReflectionSkipLearningOff, nil
+		return definition, control, agentreflection.ReflectionSkipLearningOff, nil
 	}
 
-	return definition, "", nil
+	return definition, control, "", nil
 }
 
 func (s *Service) overBudget(ctx context.Context, definition *agentdefinition.Definition) bool {

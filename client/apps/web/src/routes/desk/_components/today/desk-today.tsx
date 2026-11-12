@@ -7,6 +7,7 @@ import { DeskDropOverlay } from "@/components/desk-chat/composer/desk-uploads";
 import { useAttentionSummary } from "@/hooks/use-attention";
 import { usePermission } from "@/hooks/use-permission";
 import type { AgentChoice } from "@/lib/graphql/agent-definition";
+import { DESK_DECISIONS_PATH } from "@/lib/desk-paths";
 import { briefing as briefingQueries } from "@/lib/queries/briefing";
 import { deskActivity } from "@/lib/queries/desk-activity";
 import { aiControl } from "@/lib/queries/ai-control";
@@ -126,7 +127,7 @@ export function DeskToday({ agents, threads, isLoading, isStarting, onStart }: D
   const headline = briefing?.headline ? (
     <BriefingHeadline headline={briefing.headline} links={briefing.headlineLinks} />
   ) : canDecide && waiting > 0 ? (
-    <Link to="/desk/decisions" className="dk-dy-lnk ui-focus-ring">
+    <Link to={DESK_DECISIONS_PATH} className="dk-dy-lnk ui-focus-ring">
       {t(
         "{0, plural, one {One decision is waiting on you.} other {# decisions are waiting on you.}}",
         waiting,

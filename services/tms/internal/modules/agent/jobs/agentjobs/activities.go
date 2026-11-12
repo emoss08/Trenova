@@ -291,6 +291,9 @@ func (a *Activities) runRequest(
 		taint = resumed.Taint.Clone()
 		outsideText = resumed.CarriesOutsideText()
 	}
+	if payload.Handed != "" {
+		input += "\n\n" + agentmessage.HandedNote(payload.Handed)
+	}
 	if payload.CaseOptionID.IsNotNil() {
 		option, oErr := a.caseOptions.GetOption(ctx, tenant, payload.CaseOptionID)
 		if oErr != nil {

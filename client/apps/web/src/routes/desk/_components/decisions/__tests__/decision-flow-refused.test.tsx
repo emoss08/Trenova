@@ -13,7 +13,7 @@ import { toast } from "@trenova/shared/components/ui/toast";
 import { DecisionFlow } from "../decision-flow";
 import type { PendingDecisionNode } from "../use-pending-decisions";
 import { planNode, proposalNode } from "./pending-fixtures";
-import { batchFrom, stubRowsInView } from "./sheet-test-kit";
+import { batchFrom } from "./preview-test-kit";
 
 const fetchProposalPreview =
   vi.fn<(request: ProposalPreviewRequest, options?: unknown) => Promise<ProposalPreview>>();
@@ -66,7 +66,6 @@ let error: MockInstance;
 let warning: MockInstance;
 
 beforeEach(() => {
-  stubRowsInView();
   fetchProposalPreviews.mockImplementation(batchFrom(fetchProposalPreview));
   info = vi.spyOn(toast, "info");
   error = vi.spyOn(toast, "error");
@@ -93,7 +92,7 @@ function renderFlow() {
   render(
     <QueryClientProvider client={client}>
       <MemoryRouter>
-        <DecisionFlow />
+        <DecisionFlow head={() => null} />
       </MemoryRouter>
     </QueryClientProvider>,
   );
@@ -283,8 +282,10 @@ describe("DecisionFlow when the server refuses an approval", () => {
     press("x");
     press("j");
     press("x");
-    await waitFor(() => expect(screen.getByRole("button", { name: /^Approve 2/ })).toBeEnabled());
-    press("a");
+    const review = screen.getByRole("button", { name: "Review and approve 2" });
+    await waitFor(() => expect(review).toBeEnabled());
+    fireEvent.click(review);
+    fireEvent.click(await screen.findByRole("button", { name: "Approve 2" }));
 
     await waitFor(() => expect(decideAgentProposals).toHaveBeenCalledTimes(1));
     await waitFor(() =>

@@ -3,6 +3,7 @@ import { notification } from "@trenova/shared/lib/queries/notification";
 import { cachedThreads } from "@/lib/thread-list";
 import { notificationService } from "@trenova/shared/services/notification";
 import { useAssistantStore } from "@/stores/assistant-store";
+import { useDeskMarginStore } from "@/stores/desk-margin-store";
 import type { AssistantLiveTurnList, AssistantThread } from "@/types/assistant";
 import type { QueryClient } from "@tanstack/react-query";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
@@ -61,7 +62,9 @@ export async function announceReplyReady(
 
   const conversation = cachedTitle ?? (await fetchConversationTitle(queryClient, reply.threadId));
 
-  if (isViewingThread(reply.threadId, (options.viewing ?? currentViewing)())) {
+  const subjectId =
+    cachedThreads(queryClient).find((thread) => thread.id === reply.threadId)?.subjectId ?? null;
+  if (isViewingThread(reply.threadId, (options.viewing ?? currentViewing)(), subjectId)) {
     markSeen(options);
     return "suppressed";
   }
@@ -152,11 +155,14 @@ async function fetchConversationTitle(
 
 function currentViewing(): ViewingState {
   const { open, activeThreadId } = useAssistantStore.getState();
+  const { margin, casePage } = useDeskMarginStore.getState();
 
   return {
     pathname: typeof window === "undefined" ? "" : window.location.pathname,
     panelOpen: open,
     panelThreadId: activeThreadId,
+    marginThreadId: margin?.threadId ?? null,
+    caseRecordId: casePage?.id ?? null,
   };
 }
 

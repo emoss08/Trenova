@@ -1,3 +1,4 @@
+import { useTriageAccess } from "../use-triage-access";
 import "@/routes/desk/_components/today/today.css";
 import { useNowSeconds } from "@/hooks/use-now-seconds";
 import type { TriageBriefing, TriageRuleInput } from "@/lib/graphql/inbox";
@@ -124,6 +125,7 @@ function BriefingMain({
 }) {
   const t = useT();
   const actions = useTriageActions();
+  const access = useTriageAccess();
   const counts = useTriageCounts().data;
   const [filed, setFiled] = useState<Filed | null>(null);
   const [drafting, setDrafting] = useState<readonly string[] | null>(null);
@@ -247,6 +249,7 @@ function BriefingMain({
             onOpenFolder={onOpenFolder}
             onPreview={preview}
             onTeach={actions.createRule}
+            canTeach={access.canManage}
           />
         </TodaySection>
       )}
@@ -263,6 +266,7 @@ function BriefingMain({
             now={now}
             onOpenMessage={onOpenMessage}
             onHandOff={actions.handOff}
+            canHandOff={access.canAssign}
           />
         </TodaySection>
       ) : (
@@ -282,6 +286,7 @@ function BriefingMain({
                 entries={entries}
                 now={now}
                 drafting={drafting !== null && !draftsDone}
+                canAct={access.canWork}
                 onAct={act}
                 onOpenMessage={onOpenMessage}
               />

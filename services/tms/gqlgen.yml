@@ -2348,6 +2348,12 @@ models:
   AgentMemoryUsage:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports.AgentMemoryUsage
+  AgentMemoryUpkeep:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports.MemoryUpkeep
+  AgentMemoryUpkeepReason:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory.MemoryUpkeepReason
   AgentReflection:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/agentreflection.Reflection

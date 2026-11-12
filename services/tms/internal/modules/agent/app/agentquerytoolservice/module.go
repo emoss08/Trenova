@@ -58,6 +58,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
 	"github.com/emoss08/trenova/internal/modules/rating/app/ratequoteservice"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/documenttypeports"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/telematicsservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
 	"go.uber.org/fx"
@@ -137,6 +138,7 @@ func coreToolProviders() []any {
 		provideGetBankReceiptTool,
 		inboxquerytools.ProvideListInboundMessagesTool,
 		provideSearchDocumentsTool,
+		provideShipmentDocumentsTool,
 		homequerytools.NewListHomeWidgetsTool,
 		guidequerytools.NewFindInTrenovaTool,
 		guidequerytools.NewOpenPageTool,
@@ -337,6 +339,14 @@ func provideGetBankReceiptTool(
 	items bankreceiptworkitemports.BankReceiptWorkItemRepository,
 ) agenttoolports.AgentQueryTool {
 	return receivablequerytools.NewGetBankReceiptTool(receipts, items)
+}
+
+func provideShipmentDocumentsTool(
+	documents documentports.DocumentRepository,
+	types documenttypeports.DocumentTypeRepository,
+	permissions permissionports.PermissionEngine,
+) agenttoolports.AgentQueryTool {
+	return documentquerytools.NewShipmentDocumentsTool(documents, types, permissions)
 }
 
 func provideSearchDocumentsTool(

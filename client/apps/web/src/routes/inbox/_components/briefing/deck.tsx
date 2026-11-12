@@ -90,6 +90,8 @@ type DeckProps = {
   now: number;
   /** Nova is drafting now; its group shows it is at work until the drafts are in. */
   drafting: boolean;
+  /** Whether the reader may work messages; without it a group has no button. */
+  canAct: boolean;
   onAct: (entry: DeckEntry) => void;
   onOpenMessage: (id: string) => void;
 };
@@ -99,7 +101,7 @@ type DeckProps = {
  * first, every group in sight. A group names the people it is about, how long
  * each has left, and the one thing that clears it.
  */
-export function Deck({ entries, now, drafting, onAct, onOpenMessage }: DeckProps) {
+export function Deck({ entries, now, drafting, canAct, onAct, onOpenMessage }: DeckProps) {
   return (
     <div className="flex flex-col gap-2.5">
       {entries.map((entry, index) => (
@@ -109,6 +111,7 @@ export function Deck({ entries, now, drafting, onAct, onOpenMessage }: DeckProps
           lead={index === 0}
           now={now}
           working={entry.group === "Draft" && drafting}
+          canAct={canAct}
           onAct={onAct}
           onOpenMessage={onOpenMessage}
         />
@@ -122,6 +125,7 @@ const DeckGroupCard = memo(function DeckGroupCard({
   lead,
   now,
   working,
+  canAct,
   onAct,
   onOpenMessage,
 }: {
@@ -130,6 +134,7 @@ const DeckGroupCard = memo(function DeckGroupCard({
   lead: boolean;
   now: number;
   working: boolean;
+  canAct: boolean;
   onAct: (entry: DeckEntry) => void;
   onOpenMessage: (id: string) => void;
 }) {
@@ -183,15 +188,17 @@ const DeckGroupCard = memo(function DeckGroupCard({
             {t("~{0} min", entry.estimateMinutes)}
           </span>
         )}
-        <Button
-          size="sm"
-          variant={lead ? "default" : "secondary"}
-          isLoading={working}
-          loadingText={t("Drafting…")}
-          onClick={() => onAct(entry)}
-        >
-          {deckButton(t, entry.group)}
-        </Button>
+        {canAct && (
+          <Button
+            size="sm"
+            variant={lead ? "default" : "secondary"}
+            isLoading={working}
+            loadingText={t("Drafting…")}
+            onClick={() => onAct(entry)}
+          >
+            {deckButton(t, entry.group)}
+          </Button>
+        )}
       </div>
       <Activity mode={open ? "visible" : "hidden"}>
         <ul id={listId} className="flex flex-col border-t border-dsk-b-sub p-1">

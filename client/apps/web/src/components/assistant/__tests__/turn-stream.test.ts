@@ -1008,3 +1008,28 @@ describe("turnCitedRecords", () => {
     expect(event.event === "tool_finished" && event.data.records).toBeNull();
   });
 });
+
+describe("what a finished read was narrowed by", () => {
+  it("keeps the server's account of it on the call", () => {
+    const state = run([
+      accepted,
+      { event: "tool_started", data: { callId: "c1", name: "shipment_list", arguments: {} } },
+      {
+        event: "tool_finished",
+        data: {
+          callId: "c1",
+          name: "shipment_list",
+          failed: false,
+          proposed: false,
+          content: "{}",
+          summary: "3 shipments",
+          asked: "Customer Granite Textiles",
+        },
+      },
+    ]);
+
+    expect(state.segments).toMatchObject([
+      { kind: "tool", callId: "c1", summary: "3 shipments", asked: "Customer Granite Textiles" },
+    ]);
+  });
+});

@@ -152,6 +152,7 @@ func TestTemplates_TheNewDesksWaitOnTheirOwnEvents(t *testing.T) {
 			agenttrigger.EventBillingQueueItemException,
 			agenttrigger.EventBillingQueueItemOnHold,
 			agenttrigger.EventAccountingConnectionDegraded,
+			agenttrigger.EventShipmentPODMissing,
 		},
 		agenttemplate.TemplateLoadEntryCheck: {
 			agenttrigger.EventShipmentCreated,

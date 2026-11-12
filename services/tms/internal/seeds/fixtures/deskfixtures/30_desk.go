@@ -420,10 +420,10 @@ func briefingFor(refs *deskSeedRefs) *briefing.Briefing {
 					{
 						Label: "Decisions pending",
 						Value: fmt.Sprint(decisions),
-						Path:  "/desk/decisions",
+						Path:  "/desk/needs?lens=decisions",
 					},
 				},
-				Path: "/desk/decisions",
+				Path: "/desk/needs?lens=decisions",
 			},
 			{
 				Key:     briefing.SectionCompliance,

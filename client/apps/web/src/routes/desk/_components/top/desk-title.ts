@@ -21,8 +21,6 @@ export function placeName(t: TranslateFn, place: DeskPlace): string {
   switch (place) {
     case "triage":
       return t("Triage");
-    case "decisions":
-      return t("Decisions");
     case "scheduled":
       return t("Scheduled");
     case "memory":

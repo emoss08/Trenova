@@ -46,7 +46,7 @@ stored.
 // Where each kind opens.
 const (
 	pathInsights        = "/insights"
-	pathDecisions       = "/desk/decisions"
+	pathDecisions       = "/desk/needs?lens=decisions"
 	pathAgentControl    = "/admin/agent-control"
 	pathServiceFailures = "/shipment-management/service-failures"
 	pathCarrierMonitor  = "/dispatch/carrier-monitoring"
@@ -130,7 +130,7 @@ func DescribeProposal(
 			agenttoolports.ReadingOrder(entity.ToolName),
 		),
 		Summary: entity.Rationale,
-		Path:    pathDecisions + "?run=" + entity.RunID.String(),
+		Path:    pathDecisions + "&run=" + entity.RunID.String(),
 		Facts: []watchtower.Fact{
 			watchtoweritem.Fact("Agent", who),
 			watchtoweritem.Fact(
@@ -167,7 +167,7 @@ func DescribePlan(
 		Severity:   watchtower.SeverityInfo,
 		Title:      who + " proposes a plan: " + title,
 		Summary:    entity.Summary,
-		Path:       pathDecisions + "?run=" + entity.RunID.String(),
+		Path:       pathDecisions + "&run=" + entity.RunID.String(),
 		Facts: []watchtower.Fact{
 			watchtoweritem.Fact("Agent", who),
 			watchtoweritem.Fact("Change", title),

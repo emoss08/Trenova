@@ -3,7 +3,6 @@ path: /desk
 aliases: [needs you, what needs me, case, record case, nova handled, since you left, AI assistant, assistant, agents, chat, ask AI, copilot, AI desk, suggested agent, best agent, which agent, conversations, steer the agent, steering, interrupt the agent, slash commands, at mention, dictate, compact conversation, pinned facts, snooze, hand off, handoff, chapter, delegate, artifacts, citations, morning briefing]
 related:
   - /desk/needs
-  - /desk/decisions
   - /desk/scheduled
   - /desk/triage
   - /admin/agent-control
@@ -25,7 +24,7 @@ The rail down the left holds its fold (⌘B / Ctrl+B), the logo (which leads bac
 
 **Needs you** puts everything waiting on people in one list, one row per record: a shipment's late warning, the customer's email about it and the plan an agent drafted to recover it are one row. Opening a record gives its case: what it is and how long is left, what was found with each point numbered to the evidence beside it, the ways it could go, and the plan to approve or decline as written.
 
-Each conversation opens in the middle, and anything an agent produces (a table, a draft, a document, a plan, a board) opens in the workspace beside it. Changes an agent wants to make to your records are not applied on their own: in a Desk conversation they wait in a card above the message box, and they are also listed on [Decisions](/desk/decisions).
+Each conversation opens in the middle, and anything an agent produces (a table, a draft, a document, a plan, a board) opens in the workspace beside it. Changes an agent wants to make to your records are not applied on their own: in a Desk conversation they wait in a card above the message box, and they are also listed in the Decisions lens of [Needs you](/desk/needs).
 
 While an agent replies you can steer it with a correction or queue the next question. The message box names records with @, takes slash commands, files, scans and dictation, and can share the page you came from. A conversation about a shipment, invoice or dispute becomes a case, with a ready-to-bill or ready-to-close checklist, snoozes and waiting on the customer's or carrier's reply. Conversations can also run a request on a schedule, be handed to another agent, keep pinned facts in mind, and compact themselves when they grow long. Each fact an agent looked up carries a number tying it to the step that found it.
 
@@ -68,7 +67,7 @@ Keywords: approve in desk, agent wants to change, review agent change, decline i
 1. While a change waits on you, a card stands above the message box. It names the change and the record it is for (or how many records it touches), and the value it would set. A change that can't be undone is marked **Permanent**; one that can says reversible.
 2. Select **Approve** once it has been checked against your records, or press ⌘Enter (Ctrl+Enter on Windows) while the message box is empty. With text in the box the key never approves, so a question about the change is never taken as a yes. A plan of several steps approves as one. For a few seconds after, a bar says when it goes through and **Undo** takes it back; the keyboard lands on **Undo**.
 3. Select **Decline** to turn it down. Say why: the agent reads it in the conversation, and so does whoever looks after the agent. A declined change never runs.
-4. Select **Review** to read the change in full in the workspace, or **Decide later** (the clock) to put it off; it then waits in the workspace and on [Decisions](/desk/decisions), where you can also change its values first.
+4. Select **Review** to read the change in full in the workspace, or **Decide later** (the clock) to put it off; it then waits in the workspace and in the Decisions lens of [Needs you](/desk/needs), where you can also change its values first.
 5. If the card says the change is out of date, what it was drafted against has changed since. Select the redraft button on the card to ask the agent to draft it again with the records as they are now.
 
 ### Answer a change an agent proposes in the floating assistant
@@ -76,7 +75,7 @@ Keywords: approve in chat, review agent change, preview before approving, what w
 1. The assistant on every page asks the same way the Desk does: while a change waits on you, a card stands above the message box. It names the change and the record it is for (or how many records it touches), and the value it would set. A change that can't be undone is marked **Permanent**; one that can says reversible.
 2. Select **Approve** once it has been checked against your records, or press ⌘Enter (Ctrl+Enter on Windows) while the message box is empty; Enter alone never approves. For a few seconds after, a bar says when it goes through: select **Undo** to take it back, or **Do it now** to let it go straight away.
 3. Select **Decline** to turn it down, and say why; the agent reads your reason.
-4. Select **Review** to read the change in full: the assistant opens the conversation on the [Desk](/desk) with the change beside it, where you can also change its values first. Select **Decide later** (the clock) to put it off; it waits on [Decisions](/desk/decisions), and a pill above the message box says how many changes wait on you.
+4. Select **Review** to read the change in full: the assistant opens the conversation on the [Desk](/desk) with the change beside it, where you can also change its values first. Select **Decide later** (the clock) to put it off; it waits in the Decisions lens of [Needs you](/desk/needs), and a pill above the message box says how many changes wait on you.
 5. If the card says the change is out of date, what it was drafted against has changed since. Select the redraft button on the card to ask the agent to draft it again with the records as they are now.
 
 ### Keep or undo what an agent learned
@@ -447,7 +446,7 @@ Keywords: find conversation, find chapter, find message, find artifact, find dec
 1. On [Desk](/desk), select **Search** in the rail, or press ⌘K (Ctrl+K). ⌘K opens the same command palette everywhere in Trenova; the rail's search opens it on **Conversations**.
 2. Type in **Find a conversation, a message or what an agent made…**. Each result says whether it is a conversation, chapter, message, artifact or decision, and which conversation it is in.
 3. Press Tab to move between **All**, the kinds of record, **Conversations**, **Pages** and **Commands**. On the Desk, **All** lists the top conversations beside records and pages.
-4. Use the arrow keys and Enter, or select a result. A conversation or message opens its conversation, a chapter opens its conversation at that chapter, an artifact opens the conversation with it beside it, and a decision opens [Decisions](/desk/decisions).
+4. Use the arrow keys and Enter, or select a result. A conversation or message opens its conversation, a chapter opens its conversation at that chapter, an artifact opens the conversation with it beside it, and a decision opens the Decisions lens of [Needs you](/desk/needs).
 5. With nothing typed, **Conversations** lists your recent conversations and artifacts.
 
 ### Change how the Desk looks and behaves
@@ -467,7 +466,7 @@ Needs read access to the assistant. If no agents are available, an administrator
 
 When an agent in your own conversation proposes a change, the card above the message box shows it the same way on the Desk and in the floating assistant: what it would set and whether it can be undone, checked against your records as they are now. **Approve** waits until that check has loaded. If the change was drafted against records that have changed since, the card says it is out of date and offers to redraft it instead. A plan of several steps, or several changes of one kind, is approved with one answer. You need only access to the assistant and to that agent, and each change still runs only if your own permissions allow it.
 
-The conversation marks each decided change with a line ("Approved"), and deciding on the card or on [Decisions](/desk/decisions) updates both.
+The conversation marks each decided change with a line ("Approved"), and deciding on the card or in the Decisions lens of [Needs you](/desk/needs) updates both.
 
 A long conversation eventually becomes read-only; select **Start a new conversation** to carry on. A conversation also becomes read-only when its agent is turned off, removed, set to run on its own, or no longer available to you, and the note in place of the message box says which, and whether an administrator can change it.
 

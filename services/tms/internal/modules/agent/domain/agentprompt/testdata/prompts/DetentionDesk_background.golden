@@ -48,8 +48,8 @@ What find_tools can load, by area of Trenova:
 - Triage (3 tools): customer communication, triage
 
 What a change you call does:
-- Changes that always record a proposal for a person to decide: agent_edit_memory, detention_send_notice, detention_escalate, detention_approve, detention_waive, shipment_add_comment, detention_open_dispute, detention_resolve_dispute
-- Changes that run at once when they touch only the person's own records, and otherwise record a proposal: agent_create_memory
+- Changes that always record a proposal for a person to decide: detention_send_notice, detention_escalate, detention_approve, detention_waive, shipment_add_comment, detention_open_dispute, detention_resolve_dispute
+- Changes that run at once when they touch only the person's own records, and otherwise record a proposal: agent_create_memory, agent_edit_memory
 - Changes that run at once whatever else waits, because they hand the run to a person in the organization: agent_raise_exception
 - Changes that run at once whatever else waits, because they act only on your own work: agent_create_wait, agent_cancel_wait, agent_offer_options
 

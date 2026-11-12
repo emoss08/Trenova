@@ -68,7 +68,10 @@ func MemorySection(memories []*agentmemory.Memory) string {
 			"Each memory names its id. One cut short is read whole with agent_list_memories " +
 			"and that id before relying on the part you cannot see. When a person says part of " +
 			"a memory is wrong or out of date, change it with agent_edit_memory and its id " +
-			"rather than saving a second memory beside it. Memories left unused for months, " +
+			"rather than saving a second memory beside it. When a memory for the person and " +
+			"one for their team or the organization disagree on more than the person's own " +
+			"preference, say that they differ rather than choosing between them silently. " +
+			"Memories left unused for months, " +
 			"any that do not bear on this message, and any that did not fit here, are " +
 			"not shown; agent_list_memories still finds them, so call it when the task may " +
 			"depend on a preference, a rule or a past correction that is not listed.",

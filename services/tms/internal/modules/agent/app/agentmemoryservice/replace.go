@@ -61,19 +61,19 @@ func (s *Service) planReplacement(
 		}
 	}
 
-	return replaced, !mayReplaceNow(replaced, entity, req.PersonUserID, actor, manages), nil
+	return replaced, !mayReplaceNow(replaced, entity, req, actor, manages), nil
 }
 
 func mayReplaceNow(
 	replaced, entity *agentmemory.Memory,
-	personUserID pulid.ID,
+	req *agentmemoryports.RememberRequest,
 	actor *permissionports.RequestActor,
 	manages bool,
 ) bool {
-	if ReplacedFreely(replaced, personUserID, entity.AgentDefinitionID) {
+	if ReplacedFreely(replaced, req.PersonUserID, entity.AgentDefinitionID) {
 		return true
 	}
-	if !actor.IsUser() {
+	if req.Unasked || !actor.IsUser() {
 		return false
 	}
 	if replaced.Scope == agentmemory.MemoryScopeUser {

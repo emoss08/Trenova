@@ -34,6 +34,7 @@ type lesson struct {
 	Audience    string `json:"audience"`
 	SubjectType string `json:"subjectType"`
 	SubjectID   string `json:"subjectId"`
+	SubjectName string `json:"subjectName"`
 	Replaces    string `json:"replaces"`
 	Evidence    string `json:"evidence"`
 	Why         string `json:"why"`
@@ -220,8 +221,9 @@ func (s *Service) lessonRequest(
 		},
 	}
 
-	if reason := subjectOf(plan, in, req); reason != "" {
-		return nil, reason, nil
+	reason, err := s.subjectOf(ctx, plan, in, req)
+	if err != nil || reason != "" {
+		return nil, reason, err
 	}
 	if reason := learnedAlone(plan, kind, req); reason != "" {
 		return nil, reason, nil
@@ -234,7 +236,7 @@ func (s *Service) lessonRequest(
 		req.Replaces = replaces
 	}
 
-	reason, err := s.audience(ctx, plan, in.Audience, req)
+	reason, err = s.audience(ctx, plan, in.Audience, req)
 	if err != nil || reason != "" {
 		return nil, reason, err
 	}
@@ -262,29 +264,52 @@ func learnedAlone(
 	}
 }
 
-func subjectOf(
+func (s *Service) subjectOf(
+	ctx context.Context,
 	plan *agentreflectionports.ReflectionPlan,
 	in *lesson,
 	req *agentmemoryports.RememberRequest,
-) string {
+) (string, error) {
+	subjectType := agentmemory.MemorySubjectType(strings.TrimSpace(in.SubjectType))
 	raw := strings.TrimSpace(in.SubjectID)
 	if raw == "" {
-		return ""
+		return "", s.namedSubject(ctx, plan, subjectType, in.SubjectName, req)
 	}
 
-	subjectType := agentmemory.MemorySubjectType(strings.TrimSpace(in.SubjectType))
-	id, err := pulid.Parse(raw)
-	if err != nil || !subjectType.IsValid() ||
-		!slices.Contains(plan.Subjects, agentreflectionports.ReflectionSubjectRef{
-			Type: subjectType,
-			ID:   id,
-		}) {
-		return "It names a record the work did not touch"
+	touched := agentreflectionports.ReflectionSubjectRef{Type: subjectType, ID: pulid.ID(raw)}
+	if !slices.Contains(plan.Subjects, touched) {
+		return "It names a record the work did not touch", nil
+	}
+	req.SubjectType = touched.Type
+	req.SubjectID = touched.ID
+
+	return "", nil
+}
+
+func (s *Service) namedSubject(
+	ctx context.Context,
+	plan *agentreflectionports.ReflectionPlan,
+	subjectType agentmemory.MemorySubjectType,
+	name string,
+	req *agentmemoryports.RememberRequest,
+) error {
+	name = strings.TrimSpace(name)
+	if name == "" || !subjectType.IsValid() || plan.PersonUserID.IsNil() {
+		return nil
+	}
+
+	id, err := s.memories.ResolveSubject(ctx, plan.TenantInfo, subjectType, name)
+	if err != nil {
+		if refused(err) {
+			return nil
+		}
+
+		return fmt.Errorf("find the record a lesson names: %w", err)
 	}
 	req.SubjectType = subjectType
 	req.SubjectID = id
 
-	return ""
+	return nil
 }
 
 func (s *Service) audience(
@@ -294,7 +319,7 @@ func (s *Service) audience(
 	req *agentmemoryports.RememberRequest,
 ) (string, error) {
 	person := plan.PersonUserID
-	suggest := plan.Tainted()
+	suggest := plan.Tainted() || plan.Signals.OnlyInPassing()
 
 	if person.IsNil() {
 		req.Scope = agentmemory.MemoryScopeAgent
@@ -310,17 +335,18 @@ func (s *Service) audience(
 	case audienceAgent:
 		req.Scope = agentmemory.MemoryScopeAgent
 	case audienceTeam:
-		reader, err := s.memories.Reader(ctx, plan.TenantInfo, person)
+		roleID, err := s.memories.TeamRole(ctx, plan.TenantInfo, person, "")
 		if err != nil {
-			return "", err
-		}
-		if len(reader.RoleIDs) == 0 {
+			if !refused(err) {
+				return "", err
+			}
 			req.Scope = agentmemory.MemoryScopeUser
 			req.OwnerUserID = person
+
 			break
 		}
 		req.Scope = agentmemory.MemoryScopeRole
-		req.RoleID = reader.RoleIDs[0]
+		req.RoleID = roleID
 		suggest = true
 	case audienceOrganization:
 		req.Scope = agentmemory.MemoryScopeOrganization

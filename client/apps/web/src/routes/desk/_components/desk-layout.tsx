@@ -9,7 +9,6 @@ import type { AgentChoice } from "@/lib/graphql/agent-definition";
 import { assistant } from "@/lib/queries/assistant";
 import { deskAttention } from "@/lib/queries/desk-attention";
 import { inbox } from "@/lib/queries/inbox";
-import { watchtower } from "@/lib/queries/watchtower";
 import {
   cachedThread,
   countCachedThread,
@@ -53,6 +52,7 @@ import {
   type StartBinding,
 } from "@/components/assistant/use-start-conversation";
 import { forgetThreadSchedules } from "@/components/assistant/thread-schedules";
+import { useLensCounts } from "./attention/use-lens-counts";
 import type { DeskPlace } from "./rail/desk-rail";
 import { RAIL_WAITING_CASES } from "./rail/open-work";
 import { DeskRailThreads } from "./rail/rail-threads";
@@ -178,9 +178,6 @@ function placeFor(pathname: string, activeThreadId: string | null): DeskPlace {
   if (activeThreadId !== null) {
     return "thread";
   }
-  if (pathname.startsWith("/desk/decisions")) {
-    return "decisions";
-  }
   if (pathname.startsWith("/desk/needs")) {
     return "needs";
   }
@@ -235,10 +232,7 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
   const { allowed: canDecide } = usePermission(Resource.AgentProposal, Operation.Read);
   const { allowed: canWatch } = usePermission(Resource.Watchtower, Operation.Read);
   const { allowed: canTriage } = usePermission(Resource.InboundMessage, Operation.Read);
-  const { data: watchtowerCounts } = useQuery({
-    ...watchtower.counts(),
-    enabled: canWatch,
-  });
+  const lensCounts = useLensCounts(canWatch);
   const { data: waiting } = useQuery({
     ...deskAttention.list({
       lens: "Decisions",
@@ -248,18 +242,6 @@ export function DeskLayout({ activeThreadId }: { activeThreadId: string | null }
     enabled: canWatch && canDecide,
   });
   const { data: triageCounts } = useQuery({ ...inbox.counts(), enabled: canTriage });
-  const lensCounts = useMemo(() => {
-    const counts = { everything: 0, watchtower: 0, decisions: 0 };
-    for (const row of watchtowerCounts?.byKind ?? []) {
-      counts.everything += row.count;
-      if (row.deskLens === "Watchtower") {
-        counts.watchtower += row.count;
-      } else if (row.deskLens === "Decisions") {
-        counts.decisions += row.count;
-      }
-    }
-    return counts;
-  }, [watchtowerCounts]);
 
   const [working, setWorking] = useState(false);
   const [liveArtifacts, setLiveArtifacts] = useState<LiveArtifacts>(NO_LIVE_ARTIFACTS);

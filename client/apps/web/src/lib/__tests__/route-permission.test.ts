@@ -1,4 +1,8 @@
-import { createPermissionLoader, ensurePermissionManifest } from "@/lib/route-permission";
+import {
+  anyOfLoaders,
+  createPermissionLoader,
+  ensurePermissionManifest,
+} from "@/lib/route-permission";
 import { ApiRequestError } from "@trenova/shared/lib/api";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import { Operation, Resource } from "@trenova/shared/types/permission";
@@ -136,5 +140,50 @@ describe("createPermissionLoader without a manifest loaded", () => {
     expect(thrown).toBeUndefined();
     expect(value).toBeInstanceOf(Response);
     expect((value as Response).headers.get("Location")).toBe("/login");
+  });
+});
+
+describe("anyOfLoaders, for a page whose parts answer to different permissions", () => {
+  const args = {
+    request: new Request("http://localhost/desk/needs"),
+    params: {},
+    context: undefined,
+  } as unknown as LoaderFunctionArgs;
+  const refuse = (what: string) => () => {
+    throw new Response(`Missing permission: ${what}`, { status: 403 });
+  };
+
+  it("lets the person in when a later gate does, though an earlier one refused", async () => {
+    const loader = anyOfLoaders(refuse("watchtower:Read"), () => null);
+
+    expect(await settle(Promise.resolve(loader(args)))).toEqual({ value: null, thrown: undefined });
+  });
+
+  it("refuses with the last gate's answer when every gate refuses", async () => {
+    const loader = anyOfLoaders(refuse("watchtower:Read"), refuse("agent_proposal:Read"));
+
+    const { thrown } = await settle(Promise.resolve(loader(args)));
+
+    expect(thrown).toBeInstanceOf(Response);
+    expect((thrown as Response).status).toBe(403);
+    expect(await (thrown as Response).text()).toBe("Missing permission: agent_proposal:Read");
+  });
+
+  it("obeys a gate that sends the person to sign in, without asking the next", async () => {
+    const next = vi.fn(() => null);
+    const toLogin = new Response(null, { status: 302, headers: { Location: "/login" } });
+    const loader = anyOfLoaders(() => toLogin, next);
+
+    expect(await loader(args)).toBe(toLogin);
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it("does not hide a failure that is not a refusal", async () => {
+    const failure = new TypeError("Failed to fetch");
+    const loader = anyOfLoaders(() => {
+      throw failure;
+    }, () => null);
+
+    expect((await settle(Promise.resolve(loader(args)))).thrown).toBe(failure);
   });
 });

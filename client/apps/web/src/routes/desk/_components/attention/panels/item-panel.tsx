@@ -73,15 +73,21 @@ export function ItemPanel({
   item,
   now,
   timezone,
+  lockedBy = "",
+  readable = true,
 }: {
   item: WatchtowerItem;
   now: number;
   timezone: string;
+  /** Whether the reader may read the record the panel links to; without it there is no link. */
+  readable?: boolean;
+  /** Why the reader cannot change the item (the case is someone else's); "" when they can. */
+  lockedBy?: string;
 }) {
   const t = useT();
   const label = whereLabel(t, item.panel);
   const action: ReactNode =
-    label !== null && item.path !== "" ? (
+    label !== null && item.path !== "" && readable ? (
       <Link
         to={item.path}
         className="flex items-center justify-between gap-2 rounded-b-[8px] border-t ui-focus-ring border-dsk-b-sub px-3.5 py-2 text-dsk-sm text-dsk-subtle hover:bg-dsk-hover hover:text-dsk-fg"
@@ -93,18 +99,29 @@ export function ItemPanel({
 
   return (
     <PanelActionContext.Provider value={action}>
-      <PanelOf item={item} now={now} timezone={timezone} />
+      <PanelOf item={item} now={now} timezone={timezone} lockedBy={lockedBy} />
     </PanelActionContext.Provider>
   );
 }
 
-function PanelOf({ item, now, timezone }: { item: WatchtowerItem; now: number; timezone: string }) {
+function PanelOf({
+  item,
+  now,
+  timezone,
+  lockedBy,
+}: {
+  item: WatchtowerItem;
+  now: number;
+  timezone: string;
+  lockedBy: string;
+}) {
   const panel = item.panel;
   const time = { now, timezone };
 
   if (panel?.stop) return <StopPanel stop={panel.stop} {...time} />;
   if (panel?.clock) return <ClockPanel clock={panel.clock} {...time} />;
-  if (panel?.paper) return <PaperPanel item={item} paper={panel.paper} {...time} />;
+  if (panel?.paper)
+    return <PaperPanel item={item} paper={panel.paper} lockedBy={lockedBy} {...time} />;
   if (panel?.message) return <MessagePanel message={panel.message} {...time} />;
   if (panel?.expiry) return <ExpiryPanel expiry={panel.expiry} {...time} />;
   if (panel?.coverage) return <CoveragePanel coverage={panel.coverage} {...time} />;

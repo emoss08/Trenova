@@ -67,10 +67,14 @@ func mapDispatchForecastCustomers(
 	return mapped
 }
 
-func mapDispatchForecastQuality(quality *demandforecast.Quality) *gqlmodel.DispatchForecastQuality {
+func mapDispatchForecastQuality(
+	quality *demandforecast.Quality,
+	refitting bool,
+) *gqlmodel.DispatchForecastQuality {
 	if quality == nil {
 		return &gqlmodel.DispatchForecastQuality{
-			Status: gqlmodel.DispatchForecastStatusInsufficientHistory,
+			Status:    gqlmodel.DispatchForecastStatusInsufficientHistory,
+			Refitting: refitting,
 		}
 	}
 
@@ -85,6 +89,7 @@ func mapDispatchForecastQuality(quality *demandforecast.Quality) *gqlmodel.Dispa
 		NaiveMeanAbsoluteError: quality.NaiveMAE,
 		Skill:                  quality.Skill,
 		FittedAt:               gqlscalar.NonZeroIntPtr(quality.FittedAt),
+		Refitting:              refitting,
 	}
 }
 
@@ -105,7 +110,7 @@ func mapDispatchFreightOutlook(
 	outlook *freightoutlookports.Outlook,
 ) *gqlmodel.DispatchFreightOutlook {
 	mapped := &gqlmodel.DispatchFreightOutlook{
-		Quality:      mapDispatchForecastQuality(outlook.Quality),
+		Quality:      mapDispatchForecastQuality(outlook.Quality, outlook.Refitting),
 		GeneratedAt:  int(outlook.GeneratedAt),
 		SlotStarts:   make([]int, 0, len(outlook.Starts)),
 		Network:      make([]*gqlmodel.DispatchFreightNetworkSlot, 0, len(outlook.Network)),
@@ -153,7 +158,7 @@ func mapDispatchFreightAreaDetail(
 	detail *freightoutlookports.AreaDetail,
 ) *gqlmodel.DispatchFreightAreaDetail {
 	mapped := &gqlmodel.DispatchFreightAreaDetail{
-		Quality:     mapDispatchForecastQuality(detail.Quality),
+		Quality:     mapDispatchForecastQuality(detail.Quality, detail.Refitting),
 		GeneratedAt: int(detail.GeneratedAt),
 		Area:        mapDispatchFreightArea(detail.Area),
 		Bounds: &gqlmodel.DispatchFreightAreaBounds{

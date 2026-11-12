@@ -51,6 +51,7 @@ var messagesTable = schema.Table{
 		{Name: "tool_failed", Quoted: `"tool_failed"`, Field: "ToolFailed", Kind: schema.KindBool, Flags: 0, Label: `Tool Failed`, JSON: `toolFailed`},
 		{Name: "tool_verdict", Quoted: `"tool_verdict"`, Field: "ToolVerdict", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Tool Verdict`, JSON: `toolVerdict`},
 		{Name: "tool_summary", Quoted: `"tool_summary"`, Field: "ToolSummary", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Tool Summary`, JSON: `summary`},
+		{Name: "tool_asked", Quoted: `"tool_asked"`, Field: "ToolAsked", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Tool Asked`, JSON: `asked`},
 		{Name: "found_tools", Quoted: `"found_tools"`, Field: "FoundTools", Kind: schema.KindJSON, Flags: schema.FlagJSONB | schema.FlagNullZero, Label: `Found Tools`, JSON: `foundTools`},
 		{Name: "hand_off_agents", Quoted: `"hand_off_agents"`, Field: "HandOffAgents", Kind: schema.KindJSON, Flags: schema.FlagJSONB | schema.FlagNullZero, Label: `Hand Off Agents`, Doc: `HandOffAgents are the person's other agents a find_tools answer named as holding what this agent could not call, set only on that call's result, so the Desk's hand-off menu offers them first.`, JSON: `handOffAgents`},
 		{Name: "scope_stage", Quoted: `"scope_stage"`, Field: "ScopeStage", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Scope Stage`, Doc: `ScopeStage, ScopeCategory and ScopeReason record the guard's verdict on a user turn, or on an assistant turn the output guard refused.`, JSON: `scopeStage`},
@@ -80,13 +81,13 @@ var messagesTable = schema.Table{
 	},
 	PK:           []int32{0, 1, 2},
 	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45},
 	Returning:    nil,
 	Version:      -1,
 	AutoID:       0,
-	AutoCreate:   45,
+	AutoCreate:   46,
 	AutoUpdate:   -1,
 	IDPrefix:     "amsg_",
 	New:          newMessage,
@@ -126,6 +127,7 @@ type MessagesTable struct {
 	ToolFailed        keel.BoolCol
 	ToolVerdict       keel.StringCol
 	ToolSummary       keel.StringCol
+	ToolAsked         keel.StringCol
 	FoundTools        keel.JSONBCol
 	HandOffAgents     keel.JSONBCol
 	ScopeStage        keel.StringCol
@@ -177,29 +179,30 @@ var Messages = &MessagesTable{
 	ToolFailed:        keel.BoolCol{Col: keel.Col{Ref: &messagesRef, Index: 20}},
 	ToolVerdict:       keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 21}},
 	ToolSummary:       keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 22}},
-	FoundTools:        keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 23}},
-	HandOffAgents:     keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 24}},
-	ScopeStage:        keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 25}},
-	ScopeCategory:     keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 26}},
-	ScopeReason:       keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 27}},
-	Refused:           keel.BoolCol{Col: keel.Col{Ref: &messagesRef, Index: 28}},
-	PageContext:       keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 29}},
-	Attachments:       keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 30}},
-	Mentions:          keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 31}},
-	Reasoning:         keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 32}},
-	Model:             keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 33}},
-	Truncated:         keel.BoolCol{Col: keel.Col{Ref: &messagesRef, Index: 34}},
-	FallbackFrom:      keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 35}},
-	Failure:           keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 36}},
-	ProviderID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &messagesRef, Index: 37}}},
-	InputTokens:       keel.Int64Col{Col: keel.Col{Ref: &messagesRef, Index: 38}},
-	OutputTokens:      keel.Int64Col{Col: keel.Col{Ref: &messagesRef, Index: 39}},
-	ProviderMessageID: keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 40}},
-	LatencyMs:         keel.Int64Col{Col: keel.Col{Ref: &messagesRef, Index: 41}},
-	CostUSD:           keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &messagesRef, Index: 42}}},
-	UsedMemoryIDs:     keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 43}},
-	SavedMemories:     keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 44}},
-	CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: &messagesRef, Index: 45}},
+	ToolAsked:         keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 23}},
+	FoundTools:        keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 24}},
+	HandOffAgents:     keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 25}},
+	ScopeStage:        keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 26}},
+	ScopeCategory:     keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 27}},
+	ScopeReason:       keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 28}},
+	Refused:           keel.BoolCol{Col: keel.Col{Ref: &messagesRef, Index: 29}},
+	PageContext:       keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 30}},
+	Attachments:       keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 31}},
+	Mentions:          keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 32}},
+	Reasoning:         keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 33}},
+	Model:             keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 34}},
+	Truncated:         keel.BoolCol{Col: keel.Col{Ref: &messagesRef, Index: 35}},
+	FallbackFrom:      keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 36}},
+	Failure:           keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 37}},
+	ProviderID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &messagesRef, Index: 38}}},
+	InputTokens:       keel.Int64Col{Col: keel.Col{Ref: &messagesRef, Index: 39}},
+	OutputTokens:      keel.Int64Col{Col: keel.Col{Ref: &messagesRef, Index: 40}},
+	ProviderMessageID: keel.StringCol{Col: keel.Col{Ref: &messagesRef, Index: 41}},
+	LatencyMs:         keel.Int64Col{Col: keel.Col{Ref: &messagesRef, Index: 42}},
+	CostUSD:           keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: &messagesRef, Index: 43}}},
+	UsedMemoryIDs:     keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 44}},
+	SavedMemories:     keel.JSONBCol{Col: keel.Col{Ref: &messagesRef, Index: 45}},
+	CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: &messagesRef, Index: 46}},
 }
 
 // BuildMessages builds the table of assistant_messages for ref. Generated relation and alias methods call it.
@@ -229,29 +232,30 @@ func BuildMessages(r *keel.Ref) *MessagesTable {
 		ToolFailed:        keel.BoolCol{Col: keel.Col{Ref: r, Index: 20}},
 		ToolVerdict:       keel.StringCol{Col: keel.Col{Ref: r, Index: 21}},
 		ToolSummary:       keel.StringCol{Col: keel.Col{Ref: r, Index: 22}},
-		FoundTools:        keel.JSONBCol{Col: keel.Col{Ref: r, Index: 23}},
-		HandOffAgents:     keel.JSONBCol{Col: keel.Col{Ref: r, Index: 24}},
-		ScopeStage:        keel.StringCol{Col: keel.Col{Ref: r, Index: 25}},
-		ScopeCategory:     keel.StringCol{Col: keel.Col{Ref: r, Index: 26}},
-		ScopeReason:       keel.StringCol{Col: keel.Col{Ref: r, Index: 27}},
-		Refused:           keel.BoolCol{Col: keel.Col{Ref: r, Index: 28}},
-		PageContext:       keel.JSONBCol{Col: keel.Col{Ref: r, Index: 29}},
-		Attachments:       keel.JSONBCol{Col: keel.Col{Ref: r, Index: 30}},
-		Mentions:          keel.JSONBCol{Col: keel.Col{Ref: r, Index: 31}},
-		Reasoning:         keel.JSONBCol{Col: keel.Col{Ref: r, Index: 32}},
-		Model:             keel.StringCol{Col: keel.Col{Ref: r, Index: 33}},
-		Truncated:         keel.BoolCol{Col: keel.Col{Ref: r, Index: 34}},
-		FallbackFrom:      keel.JSONBCol{Col: keel.Col{Ref: r, Index: 35}},
-		Failure:           keel.JSONBCol{Col: keel.Col{Ref: r, Index: 36}},
-		ProviderID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 37}}},
-		InputTokens:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 38}},
-		OutputTokens:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 39}},
-		ProviderMessageID: keel.StringCol{Col: keel.Col{Ref: r, Index: 40}},
-		LatencyMs:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 41}},
-		CostUSD:           keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 42}}},
-		UsedMemoryIDs:     keel.JSONBCol{Col: keel.Col{Ref: r, Index: 43}},
-		SavedMemories:     keel.JSONBCol{Col: keel.Col{Ref: r, Index: 44}},
-		CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 45}},
+		ToolAsked:         keel.StringCol{Col: keel.Col{Ref: r, Index: 23}},
+		FoundTools:        keel.JSONBCol{Col: keel.Col{Ref: r, Index: 24}},
+		HandOffAgents:     keel.JSONBCol{Col: keel.Col{Ref: r, Index: 25}},
+		ScopeStage:        keel.StringCol{Col: keel.Col{Ref: r, Index: 26}},
+		ScopeCategory:     keel.StringCol{Col: keel.Col{Ref: r, Index: 27}},
+		ScopeReason:       keel.StringCol{Col: keel.Col{Ref: r, Index: 28}},
+		Refused:           keel.BoolCol{Col: keel.Col{Ref: r, Index: 29}},
+		PageContext:       keel.JSONBCol{Col: keel.Col{Ref: r, Index: 30}},
+		Attachments:       keel.JSONBCol{Col: keel.Col{Ref: r, Index: 31}},
+		Mentions:          keel.JSONBCol{Col: keel.Col{Ref: r, Index: 32}},
+		Reasoning:         keel.JSONBCol{Col: keel.Col{Ref: r, Index: 33}},
+		Model:             keel.StringCol{Col: keel.Col{Ref: r, Index: 34}},
+		Truncated:         keel.BoolCol{Col: keel.Col{Ref: r, Index: 35}},
+		FallbackFrom:      keel.JSONBCol{Col: keel.Col{Ref: r, Index: 36}},
+		Failure:           keel.JSONBCol{Col: keel.Col{Ref: r, Index: 37}},
+		ProviderID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 38}}},
+		InputTokens:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 39}},
+		OutputTokens:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 40}},
+		ProviderMessageID: keel.StringCol{Col: keel.Col{Ref: r, Index: 41}},
+		LatencyMs:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 42}},
+		CostUSD:           keelkinds.DecimalDecimalCol{AnyCol: keel.AnyCol{Col: keel.Col{Ref: r, Index: 43}}},
+		UsedMemoryIDs:     keel.JSONBCol{Col: keel.Col{Ref: r, Index: 44}},
+		SavedMemories:     keel.JSONBCol{Col: keel.Col{Ref: r, Index: 45}},
+		CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 46}},
 	}
 }
 
@@ -692,50 +696,52 @@ func ptrMessage(p unsafe.Pointer, c int32) any {
 	case 22:
 		return &r.ToolSummary
 	case 23:
-		return &r.FoundTools
+		return &r.ToolAsked
 	case 24:
-		return &r.HandOffAgents
+		return &r.FoundTools
 	case 25:
-		return &r.ScopeStage
+		return &r.HandOffAgents
 	case 26:
-		return &r.ScopeCategory
+		return &r.ScopeStage
 	case 27:
-		return &r.ScopeReason
+		return &r.ScopeCategory
 	case 28:
-		return &r.Refused
+		return &r.ScopeReason
 	case 29:
-		return &r.PageContext
+		return &r.Refused
 	case 30:
-		return &r.Attachments
+		return &r.PageContext
 	case 31:
-		return &r.Mentions
+		return &r.Attachments
 	case 32:
-		return &r.Reasoning
+		return &r.Mentions
 	case 33:
-		return &r.Model
+		return &r.Reasoning
 	case 34:
-		return &r.Truncated
+		return &r.Model
 	case 35:
-		return &r.FallbackFrom
+		return &r.Truncated
 	case 36:
-		return &r.Failure
+		return &r.FallbackFrom
 	case 37:
-		return (*string)(unsafe.Pointer(&r.ProviderID))
+		return &r.Failure
 	case 38:
-		return (*int64)(unsafe.Pointer(&r.InputTokens))
+		return (*string)(unsafe.Pointer(&r.ProviderID))
 	case 39:
-		return (*int64)(unsafe.Pointer(&r.OutputTokens))
+		return (*int64)(unsafe.Pointer(&r.InputTokens))
 	case 40:
-		return &r.ProviderMessageID
+		return (*int64)(unsafe.Pointer(&r.OutputTokens))
 	case 41:
-		return &r.LatencyMs
+		return &r.ProviderMessageID
 	case 42:
-		return &r.CostUSD
+		return &r.LatencyMs
 	case 43:
-		return &r.UsedMemoryIDs
+		return &r.CostUSD
 	case 44:
-		return &r.SavedMemories
+		return &r.UsedMemoryIDs
 	case 45:
+		return &r.SavedMemories
+	case 46:
 		return &r.CreatedAt
 	}
 	return nil
@@ -836,104 +842,109 @@ func valueMessage(p unsafe.Pointer, c int32) any {
 		}
 		return r.ToolSummary
 	case 23:
+		if r.ToolAsked == "" {
+			return nil
+		}
+		return r.ToolAsked
+	case 24:
 		if r.FoundTools == nil {
 			return nil
 		}
 		return r.FoundTools
-	case 24:
+	case 25:
 		if r.HandOffAgents == nil {
 			return nil
 		}
 		return r.HandOffAgents
-	case 25:
+	case 26:
 		if r.ScopeStage == "" {
 			return nil
 		}
 		return r.ScopeStage
-	case 26:
+	case 27:
 		if r.ScopeCategory == "" {
 			return nil
 		}
 		return r.ScopeCategory
-	case 27:
+	case 28:
 		if r.ScopeReason == "" {
 			return nil
 		}
 		return r.ScopeReason
-	case 28:
-		return r.Refused
 	case 29:
+		return r.Refused
+	case 30:
 		if r.PageContext == nil {
 			return nil
 		}
 		return *r.PageContext
-	case 30:
+	case 31:
 		if r.Attachments == nil {
 			return nil
 		}
 		return r.Attachments
-	case 31:
+	case 32:
 		if r.Mentions == nil {
 			return nil
 		}
 		return r.Mentions
-	case 32:
+	case 33:
 		if r.Reasoning == nil {
 			return nil
 		}
 		return *r.Reasoning
-	case 33:
+	case 34:
 		if r.Model == "" {
 			return nil
 		}
 		return r.Model
-	case 34:
-		return r.Truncated
 	case 35:
+		return r.Truncated
+	case 36:
 		if r.FallbackFrom == nil {
 			return nil
 		}
 		return *r.FallbackFrom
-	case 36:
+	case 37:
 		if r.Failure == nil {
 			return nil
 		}
 		return *r.Failure
-	case 37:
+	case 38:
 		if r.ProviderID == "" {
 			return nil
 		}
 		return string(r.ProviderID)
-	case 38:
-		return int64(r.InputTokens)
 	case 39:
-		return int64(r.OutputTokens)
+		return int64(r.InputTokens)
 	case 40:
+		return int64(r.OutputTokens)
+	case 41:
 		if r.ProviderMessageID == "" {
 			return nil
 		}
 		return r.ProviderMessageID
-	case 41:
+	case 42:
 		if r.LatencyMs == 0 {
 			return nil
 		}
 		return r.LatencyMs
-	case 42:
+	case 43:
 		if r.CostUSD == nil {
 			return nil
 		}
 		return *r.CostUSD
-	case 43:
+	case 44:
 		if r.UsedMemoryIDs == nil {
 			return nil
 		}
 		return r.UsedMemoryIDs
-	case 44:
+	case 45:
 		if r.SavedMemories == nil {
 			return nil
 		}
 		return r.SavedMemories
-	case 45:
+	case 46:
 		return r.CreatedAt
 	}
 	return nil

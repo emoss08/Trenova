@@ -40,6 +40,7 @@ type Positioning struct {
 
 type Outlook struct {
 	Quality      *demandforecast.Quality
+	Refitting    bool
 	GeneratedAt  int64
 	Starts       []int64
 	Network      []demandforecast.NetworkSlot
@@ -59,6 +60,7 @@ type AreaRequest struct {
 
 type AreaDetail struct {
 	Quality             *demandforecast.Quality
+	Refitting           bool
 	GeneratedAt         int64
 	Area                *Area
 	Bounds              dispatchmarket.Bounds

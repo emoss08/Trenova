@@ -43,6 +43,12 @@ type AgentRunPayload struct {
 	// CaseOptionID is the option a person chose on the record's case, on a
 	// run that drafts the plan for it.
 	CaseOptionID pulid.ID `json:"caseOptionId,omitempty"`
+	// Handed is what a person handed the run to work, as the Watchtower
+	// states it.
+	Handed string `json:"handed,omitempty"`
+	// Watched says the run hosts a stream of what the agent writes, for the
+	// person waiting on it.
+	Watched bool `json:"watched,omitempty"`
 	// Origin is the W3C traceparent of whatever started the run: the
 	// request, the event or the schedule firing. Empty on a run started
 	// before it was kept, or from outside any trace.

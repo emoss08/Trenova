@@ -72,6 +72,8 @@ type Params struct {
 	// A held write's target is pinned, and what it would do kept as its baseline, in one read-only
 	// snapshot.
 	Previews agentruntimeports.ProposalPreviewService
+	// Labels names the records a read was narrowed by, for the step a person reads.
+	Labels agentruntimeports.RecordLabeler
 	// A tool an organization holds lower than its declared rule is decided and tainted by the
 	// organization's rule.
 	Rules agenttoolports.ToolRuleOverrides
@@ -136,6 +138,7 @@ func dispatcherParams(p *Params) tooldispatch.DispatcherParams {
 		Budgets:     p.Budgets,
 		Trust:       p.Trust,
 		Previews:    p.Previews,
+		Labels:      p.Labels,
 		Rules:       p.Rules,
 		CodeMode:    tooldispatch.CodeModeGate(p.AppConfig),
 		Shadow:      tooldispatch.ShadowFrom(p.Shadow),
@@ -849,7 +852,9 @@ func (s *Service) recordToolResult(
 	effect := s.access.ToolEffect(call.Name)
 	summary := toolsummary.Outcome(call, &outcome)
 	var records []agentpagecontext.EntityRef
+	asked := ""
 	if !outcome.Failed {
+		asked = outcome.Asked
 		records = toolresult.CitedRecords(outcome.Content)
 	}
 
@@ -863,6 +868,7 @@ func (s *Service) recordToolResult(
 			Content:       outcome.Content,
 			Effect:        effect,
 			Summary:       summary,
+			Asked:         asked,
 			Verdict:       outcome.Verdict,
 			HandOffAgents: outcome.HandOff,
 			Records:       records,
@@ -878,6 +884,7 @@ func (s *Service) recordToolResult(
 		ToolVerdict:    outcome.Verdict,
 		ToolEffect:     effect,
 		ToolSummary:    summary,
+		ToolAsked:      asked,
 		FoundTools:     outcome.Found,
 		HandOffAgents:  outcome.HandOff,
 		DelegateReport: outcome.DelegateReport,

@@ -61,13 +61,17 @@ export function caseWorkShort(t: TranslateFn, work: CaseWork): string {
 
 /**
  * The ids of the items the queue's keys leave alone, because they are closed
- * somewhere else: an item worked in a case is closed there, and a message is
+ * somewhere else or by someone else: an item worked in a case is closed
+ * there, an item of a case another person owns is theirs, and a message is
  * answered, filed or set aside in Triage, which clears it here.
  */
 export function itemsWorkedElsewhere(groups: readonly DeskAttentionGroup[]): Set<string> {
   const ids = new Set<string>();
   for (const group of groups) {
-    const inCase = caseWorkOf(group) !== null;
+    // Someone else's case, taken or given by the record, is theirs to close:
+    // the server refuses a clear or a snooze of it from here.
+    const inCase =
+      caseWorkOf(group) !== null || (group.ownership !== null && !group.ownership.canWork);
     for (const item of group.items) {
       if (inCase || item.deskLens === "Triage") {
         ids.add(item.id);

@@ -65,7 +65,6 @@ export function railViewOf(place: DeskPlace, onACase = false): RailView {
     case "needs":
     case "case":
     case "handled":
-    case "decisions":
       return "cases";
     case "triage":
       return "triage";
@@ -88,7 +87,6 @@ export type DeskPlace =
   | "handled"
   | "view"
   | "triage"
-  | "decisions"
   | "scheduled"
   | "memory"
   | "thread"
@@ -536,7 +534,7 @@ export function DeskRail({
                     {canDecide && (
                       <RailPlace
                         to="/desk/needs?lens=decisions"
-                        current={lens === "decisions" || place === "decisions"}
+                        current={lens === "decisions"}
                         label={t("Decisions")}
                         count={lensCounts.decisions}
                       />

@@ -1,5 +1,6 @@
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { formatWorkDuration } from "@/lib/ai-usage-format";
+import { withoutRecordIds } from "@/lib/record-ids";
 import type { AssistantMessage, DelegateReport, ToolEffect, ToolVerdict } from "@/types/assistant";
 import type { ToolExchange } from "./thread-view";
 import { describeToolCall, isWebTool, parseToolResult, WEB_READ_TOOL } from "./tool-presentation";
@@ -26,6 +27,11 @@ export type ToolStep = {
   effect: ToolEffect;
   /** The server's one-line account of the result, in English; empty when it gave none. */
   summary: string;
+  /**
+   * What a read was narrowed by, in words the server wrote with every record
+   * named; absent while the call runs and for a result saved before it was kept.
+   */
+  asked?: string;
   /** How long the call took, in seconds, when that is known. */
   durationSeconds: number | null;
   /**
@@ -157,6 +163,7 @@ export function stepsFromExchanges(tools: readonly ToolExchange[], askedAt: numb
       content: result?.content ?? "",
       effect: toolEffect(name, call.effect ?? result?.effect),
       summary: result?.summary ?? "",
+      asked: result?.asked,
       durationSeconds: timed ? Math.max(0, result.createdAt - askedAt) : null,
       verdict: result?.toolVerdict,
       reasoning: reasoning ?? "",
@@ -210,6 +217,7 @@ export function segmentStep(
     content: segment.content,
     effect: toolEffect(segment.name, segment.effect),
     summary: segment.summary ?? "",
+    asked: segment.asked,
     durationSeconds: timed ? (segment.finishedAt! - segment.startedAt!) / 1000 : null,
     verdict: segment.verdict,
     reasoning,
@@ -346,6 +354,17 @@ function subjectOf(step: ToolStep): string {
   return describeToolCall(step.name, step.arguments).subject;
 }
 
+/**
+ * What a finished read was narrowed by. The server's account names every
+ * record; the call's own arguments say the same without the names, for a step
+ * the server gave none. Neither ever shows a record's id.
+ */
+function narrowedBy(step: ToolStep): string {
+  const asked = withoutRecordIds(step.asked ?? "").trim();
+
+  return asked !== "" ? asked : describeToolCall(step.name, step.arguments).subject;
+}
+
 function titleOf(step: ToolStep): string {
   return describeToolCall(step.name, step.arguments).title;
 }
@@ -438,7 +457,7 @@ function lookupLine(group: ActivityGroup, t: TranslateFn): ActivityLine {
   if (settled.length === 1) {
     const step = settled[0];
     const counted = summaryCount(step.summary);
-    const subject = describeToolCall(step.name, step.arguments).subject;
+    const subject = narrowedBy(step);
     if (counted) {
       return {
         phrase:

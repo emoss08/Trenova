@@ -164,6 +164,8 @@ func (s *Service) StartForDefinition(
 		EventKind:    req.EventKind,
 		WaitID:       req.WaitID,
 		CaseOptionID: req.CaseOptionID,
+		Handed:       req.Handed,
+		Watched:      req.Watched,
 		Origin:       aitrace.Traceparent(ctx),
 	}
 

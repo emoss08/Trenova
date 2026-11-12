@@ -106,11 +106,44 @@ type FindActiveAgentMemoryRequest struct {
 
 var ErrMemoryAlreadyKept = errors.New("an active memory already says this for the same readers")
 
+// ListNamedMemorySubjectsRequest asks which records with memories a message
+// names in its own words: "acme manufacturing" for the customer of that name.
+// Only memories the prompt may carry count.
+type ListNamedMemorySubjectsRequest struct {
+	TenantInfo        pagination.TenantInfo
+	AgentDefinitionID pulid.ID
+	Reader            agentmemory.MemoryReader
+	Now               int64
+	Text              string
+	Limit             int
+}
+
 type ListAgentMemoryNeighborsRequest struct {
 	Same  *FindActiveAgentMemoryRequest
 	Terms []string
 	IDs   []pulid.ID
 	Limit int
+	// Wider reads, in place of the memories with the same readers, the ones
+	// kept for a wider audience those readers are part of: the organization's
+	// and, for one person's memory, their roles'.
+	Wider bool
+	// RoleIDs are the roles of the person a memory is kept for, read when
+	// Wider is set.
+	RoleIDs []pulid.ID
+}
+
+type ConfirmAgentMemoryQuery struct {
+	ID         pulid.ID
+	TenantInfo pagination.TenantInfo
+	ByUserID   pulid.ID
+	At         int64
+	Version    int64
+}
+
+type ListAgentMemoryUpkeepRequest struct {
+	TenantInfo pagination.TenantInfo
+	Window     agentmemory.MemoryUpkeepWindow
+	Limit      int
 }
 
 type SetAgentMemoryStatusQuery struct {
@@ -245,6 +278,10 @@ type AgentMemoryRepository interface {
 	) ([]*agentmemory.Memory, error)
 	Search(ctx context.Context, req *SearchAgentMemoriesRequest) ([]*agentmemory.Memory, error)
 	FindActive(ctx context.Context, req *FindActiveAgentMemoryRequest) (*agentmemory.Memory, error)
+	ListNamedSubjects(
+		ctx context.Context,
+		req *ListNamedMemorySubjectsRequest,
+	) ([]MemorySubjectRef, error)
 	ListNeighbors(
 		ctx context.Context,
 		req *ListAgentMemoryNeighborsRequest,
@@ -254,6 +291,11 @@ type AgentMemoryRepository interface {
 	// Review clears an Active or Paused memory's taint for the person who
 	// read it; a memory that does not taint, or that changed, is refused.
 	Review(ctx context.Context, req *ReviewAgentMemoryQuery) (*agentmemory.Memory, error)
+	Confirm(ctx context.Context, req *ConfirmAgentMemoryQuery) (*agentmemory.Memory, error)
+	ListUpkeep(
+		ctx context.Context,
+		req *ListAgentMemoryUpkeepRequest,
+	) ([]*agentmemory.Memory, error)
 	MarkUsed(ctx context.Context, req *MarkAgentMemoriesUsedRequest) error
 	ListSuggestionContext(
 		ctx context.Context,

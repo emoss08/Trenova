@@ -18,7 +18,7 @@ describe("reflectionSignalLabel", () => {
       "ProposalModified",
       "ProposalRejected",
       "NegativeFeedback",
-      "LongTask",
+      "PersonTold",
     ];
     const labels = kinds.map((kind) => reflectionSignalLabel(kind, t));
 
@@ -28,7 +28,7 @@ describe("reflectionSignalLabel", () => {
       "A proposal was changed",
       "A proposal was refused",
       "A reply was rated unhelpful",
-      "A long task",
+      "A person mentioned it in passing",
     ]);
   });
 

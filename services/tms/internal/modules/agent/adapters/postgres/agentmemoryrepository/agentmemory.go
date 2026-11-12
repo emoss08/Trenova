@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -23,6 +24,7 @@ import (
 const (
 	maxSuggestionContextLimit = 500
 	maxNeighborLimit          = 16
+	minNamedLabelRunes        = 3
 	keptContentConstraint     = "uq_agent_memories_kept_content"
 	memoryEntity              = "AgentMemory"
 )
@@ -400,11 +402,27 @@ func (r *repository) ListNeighbors(
 			)
 		}
 
+		readers := sameReaders(same)
+		suggested := same.IncludeSuggested
+		subject := sameSubject(same)
+		if req.Wider {
+			if readers = widerReaders(same, req.RoleIDs); readers == nil {
+				return []*agentmemory.Memory{}, nil
+			}
+			suggested = false
+			// A note filed under no record can still differ from a shared
+			// rule about one ("quote Acme in Canadian dollars" kept with no
+			// subject), so it is compared with shared memories about any.
+			if same.Subject == nil {
+				subject = nil
+			}
+		}
+
 		q := m.Where(
-			keptOnly(same.Now, same.IncludeSuggested),
-			sameReaders(same),
+			keptOnly(same.Now, suggested),
+			readers,
 			cleanFor(same),
-			sameSubject(same),
+			subject,
 			sameTool(same),
 			near,
 		)
@@ -421,6 +439,61 @@ func (r *repository) ListNeighbors(
 
 		return rows, nil
 	})
+}
+
+type namedSubjectRow struct {
+	SubjectType agentmemory.MemorySubjectType
+	SubjectID   pulid.ID
+}
+
+func (r *repository) ListNamedSubjects(
+	ctx context.Context,
+	req *agentmemoryports.ListNamedMemorySubjectsRequest,
+) ([]agentmemoryports.MemorySubjectRef, error) {
+	text := strings.Join(stringutils.SearchWords(req.Text), " ")
+	if text == "" {
+		return []agentmemoryports.MemorySubjectRef{}, nil
+	}
+	limit := req.Limit
+	if limit <= 0 || limit > agentmemory.MaxMemorySubjectsPerTurn {
+		limit = agentmemory.MaxMemorySubjectsPerTurn
+	}
+
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]agentmemoryports.MemorySubjectRef, error) {
+			m := agentmemorydb.Memories
+			named := keel.StringOf(keel.Text(" " + text + " ")).LikeExpr(
+				keel.StringOf(keel.Raw("'% ' || ? || ' %'", foldedContent(m.SubjectLabel))),
+			)
+
+			var rows []namedSubjectRow
+			q := m.Pick(m.SubjectType, m.SubjectID).
+				Where(
+					activeOnly(req.Now),
+					forAgent(req.AgentDefinitionID, req.Reader),
+					m.SubjectID.IsNotNull(),
+					keel.StringOf(m.SubjectLabel).Length().Gte(minNamedLabelRunes),
+					named,
+				).
+				Group(m.SubjectType, m.SubjectID).
+				Limit(limit)
+			if err := keel.Batch(ctx, r.db.Keel(ctx), keel.IntoSlice(q, &rows)); err != nil {
+				return nil, fmt.Errorf("list the memory subjects a message names: %w", err)
+			}
+
+			refs := make([]agentmemoryports.MemorySubjectRef, 0, len(rows))
+			for _, row := range rows {
+				refs = append(refs, agentmemoryports.MemorySubjectRef{
+					Type: row.SubjectType,
+					ID:   row.SubjectID,
+				})
+			}
+
+			return refs, nil
+		},
+	)
 }
 
 func (r *repository) CountActive(
@@ -734,6 +807,34 @@ func sameReaders(req *agentmemoryports.FindActiveAgentMemoryRequest) keel.Pred {
 		return keel.And(m.Scope.Eq(agentmemory.MemoryScopeRole), m.RoleID.Eq(req.RoleID))
 	default:
 		return m.Scope.Eq(agentmemory.MemoryScopeOrganization)
+	}
+}
+
+// widerReaders matches the memories kept for an audience the request's
+// readers are part of: the organization's, and for one person's memory their
+// roles' too. A memory for the organization or one agent has nothing wider.
+func widerReaders(
+	req *agentmemoryports.FindActiveAgentMemoryRequest,
+	roleIDs []pulid.ID,
+) keel.Pred {
+	m := agentmemorydb.Memories
+	organization := m.Scope.Eq(agentmemory.MemoryScopeOrganization)
+	switch req.Scope {
+	case agentmemory.MemoryScopeUser:
+		if len(roleIDs) == 0 {
+			return organization
+		}
+
+		return keel.Or(
+			organization,
+			keel.And(m.Scope.Eq(agentmemory.MemoryScopeRole), m.RoleID.In(roleIDs...)),
+		)
+	case agentmemory.MemoryScopeRole:
+		return organization
+	case agentmemory.MemoryScopeOrganization, agentmemory.MemoryScopeAgent:
+		return nil
+	default:
+		return nil
 	}
 }
 

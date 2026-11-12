@@ -6,15 +6,18 @@ import (
 )
 
 const (
-	PayloadTool        = "tool"
-	PayloadEntity      = "entity"
-	PayloadColumns     = "columns"
-	PayloadRows        = "rows"
-	PayloadRowCount    = "rowCount"
-	PayloadReadWith    = "readWith"
-	PayloadSearchedFor = "searchedFor"
-	PayloadTotals      = "totals"
-	PayloadName        = "name"
+	PayloadTool     = "tool"
+	PayloadEntity   = "entity"
+	PayloadColumns  = "columns"
+	PayloadRows     = "rows"
+	PayloadRowCount = "rowCount"
+	PayloadReadWith = "readWith"
+	// PayloadFilters is where a table keeps what its list was narrowed by,
+	// in words (filterwords). The terms a tool reports are for the model and
+	// are never stored.
+	PayloadFilters = "filters"
+	PayloadTotals  = "totals"
+	PayloadName    = "name"
 )
 
 func ColumnsFrom(value any) []assistantartifact.DisplayColumn {

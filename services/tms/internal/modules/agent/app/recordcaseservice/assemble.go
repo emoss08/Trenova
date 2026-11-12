@@ -36,6 +36,7 @@ func assemble(
 		Open:      len(built.items),
 		Severity:  severityOf(built.items),
 		UpdatedAt: built.now,
+		Stream:    built.stream,
 	}
 	if len(out.Starters) == 0 {
 		out.Starters = []string{

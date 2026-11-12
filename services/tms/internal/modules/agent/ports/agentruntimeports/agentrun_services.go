@@ -36,6 +36,16 @@ type StartAgentRunForDefinitionRequest struct {
 	// CaseOptionID is the option a person chose on the record's case, which
 	// the run drafts the plan for.
 	CaseOptionID pulid.ID
+	// Handed is what the run was handed to work, in a sentence or two: the
+	// Watchtower item a person passed to the agent. Without it the agent is
+	// told only which record the run concerns and follows its routine,
+	// whatever was raised.
+	Handed string
+	// Watched says a person is waiting on the run in front of them (a case
+	// handed to an agent, a case option's plan being drafted), so the run
+	// hosts a stream of what the agent writes. A run nobody watches hosts
+	// none: a stream costs history, and its close waits on a reader.
+	Watched bool
 }
 
 // StartInlineAgentRunRequest opens a run for an agent whose reasoning happens in-process

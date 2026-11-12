@@ -250,7 +250,7 @@ func TestFindInTrenova_AnswersAQuestionAboutOnePageFromAllOfIt(t *testing.T) {
 		Breadcrumb: []string{"Desk"},
 		Summary:    "Where you talk to agents.",
 		Notes:      "Only words can steer a reply under way.",
-		Related:    []string{"/desk/decisions"},
+		Related:    []string{"/desk/needs"},
 		Tasks: []productguide.Task{
 			{Title: "Ask an agent a question", Steps: []string{"Open Desk."}},
 			{
@@ -282,7 +282,7 @@ func TestFindInTrenova_AnswersAQuestionAboutOnePageFromAllOfIt(t *testing.T) {
 	assert.Equal(t, []string{"Type.", "Press Enter."}, answer.Task.Steps)
 	assert.Equal(t, []string{"Ask an agent a question", "Snooze a case"}, answer.OtherTasks)
 	assert.Equal(t, "Only words can steer a reply under way.", answer.Notes)
-	assert.Equal(t, []string{"/desk/decisions"}, answer.Related)
+	assert.Equal(t, []string{"/desk/needs"}, answer.Related)
 	assert.Contains(t, found.Note, "call again with its title as the question and the same page")
 	assert.Contains(t, found.Note, "call again without page")
 }

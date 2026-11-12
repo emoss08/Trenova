@@ -1,7 +1,7 @@
 import { decimalToCents } from "@/lib/decimal-cents";
 import type { AgentControl } from "@/lib/graphql/agent-control";
 import { formatCurrency } from "@trenova/shared/lib/utils";
-import { useT } from "@trenova/shared/i18n/use-t";
+import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { Ic, type IcName } from "../kit/ic";
 import { SecH } from "../kit/layout";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -39,7 +39,7 @@ export function OrganizationWide({
     {
       icon: "brain",
       label: t("Learn from their work"),
-      value: control.learningOff ? t("Off") : t("On"),
+      value: learningValue(control, t),
       on: !control.learningOff,
     },
     {
@@ -109,4 +109,15 @@ export function OrganizationWide({
       </div>
     </section>
   );
+}
+
+/** Whether agents learn, and whether only from corrections and decisions. */
+function learningValue(
+  control: Pick<AgentControl, "learningOff" | "passingLearningOff">,
+  t: TranslateFn,
+): string {
+  if (control.learningOff) {
+    return t("Off");
+  }
+  return control.passingLearningOff ? t("On · corrections and decisions only") : t("On");
 }

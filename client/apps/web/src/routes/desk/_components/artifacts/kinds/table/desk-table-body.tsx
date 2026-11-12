@@ -20,6 +20,7 @@ import { Link, useNavigate } from "react-router";
 import {
   reportPreviewFrom,
   tableViewFrom,
+  type TableFilter,
   type TablePaging,
   type ArtifactReader,
 } from "../../artifact-payloads";
@@ -63,8 +64,8 @@ export type Grid = {
   truncated: boolean;
   /** The row each total sits under, when the source sent one. */
   totals: Record<string, unknown> | null;
-  /** What the agent asked the list for, as it was read back. */
-  searchedFor: string[];
+  /** What the agent narrowed the list by, in words. */
+  filters: TableFilter[];
   /** Where the list goes on from the rows held; null for a table that is all there is. */
   paging: TablePaging | null;
   /** The agent that read the rows the table holds; null when the table does not say. */
@@ -108,7 +109,7 @@ export function gridOf(artifact: AssistantArtifact): Grid {
       totals: preview.totals
         ? Object.fromEntries(columns.map((column, at) => [column.key, preview.totals?.[at]]))
         : null,
-      searchedFor: [],
+      filters: [],
       paging: null,
       readBy: null,
       rereadable: false,
@@ -122,7 +123,7 @@ export function gridOf(artifact: AssistantArtifact): Grid {
     rowCount: view.rowCount,
     truncated: view.truncated,
     totals: null,
-    searchedFor: view.searchedFor,
+    filters: view.filters,
     paging: view.paging.hasMore ? view.paging : null,
     readBy: view.readBy,
     rereadable: view.rereadable,
@@ -759,15 +760,18 @@ function TableHead({ grid, pages }: { grid: Grid; pages: TablePages }) {
               : t("{0, plural, one {row} other {rows}}", figure)}
         </span>
       </div>
-      {grid.searchedFor.length > 0 && (
+      {grid.filters.length > 0 && (
         <span
           className="dk-tv-terms"
           aria-label={
             grid.readBy ? t("What {0} asked for", grid.readBy.name) : t("What was asked for")
           }
         >
-          {grid.searchedFor.map((term) => (
-            <span key={term}>{term}</span>
+          {grid.filters.map((filter) => (
+            <span key={`${filter.label}\u0000${filter.value}`}>
+              {filter.label !== "" && <span className="text-dsk-muted">{filter.label} </span>}
+              {filter.value}
+            </span>
           ))}
         </span>
       )}

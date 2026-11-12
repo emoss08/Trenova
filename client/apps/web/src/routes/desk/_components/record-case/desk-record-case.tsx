@@ -1,3 +1,4 @@
+import { withoutRecordIds } from "@/lib/record-ids";
 import { recordSpace } from "@/stores/composer-draft-store";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { CaseUnworked } from "./case-unworked";
@@ -43,7 +44,9 @@ import { useDesk } from "../desk-layout";
 import { AcceptRiskDialog } from "./accept-risk-dialog";
 import { CaseDock } from "./case-dock";
 import { CaseExhibits } from "./case-exhibits";
+import { CaseClosed } from "./case-closed";
 import { CaseFinding } from "./case-finding";
+import { useCaseWriting } from "./case-writing";
 import { CaseHead } from "./case-head";
 import { CaseOptions } from "./case-options";
 import { CasePlan, CasePlanDrafting, CasePlanNone } from "./case-plan";
@@ -148,7 +151,10 @@ export function DeskRecordCase({ kind, id }: { kind: string; id: string }) {
   const sending = useRef(false);
   const label = data?.record.label ?? "";
   const caseAgentId = decision?.agent?.id ?? data?.finding?.agent?.id ?? null;
-  const pageLink = isRecordEntityType(kind) ? recordPath(kind, id) : null;
+  // The record's own page is offered only to someone who may read the record.
+  const pageLink =
+    isRecordEntityType(kind) && (data?.record.readable ?? false) ? recordPath(kind, id) : null;
+  const { allowed: canFile } = usePermission(Resource.Document, Operation.Create);
   const chosen = data?.options.find((option) => option.chosen) ?? null;
   const agentName = decision?.agent?.name ?? data?.finding?.agent?.name ?? null;
   const optionsOpen =
@@ -248,6 +254,14 @@ export function DeskRecordCase({ kind, id }: { kind: string; id: string }) {
   // The person has done what they can for now: the plan ran or was declined,
   // or the agent looked and proposed nothing. With something still open, the
   // case can be put away rather than left sitting in front.
+  // What the agent on the case is writing, followed while one works it: the
+  // run the case was handed to, or the one drafting the chosen option.
+  const writing = useCaseWriting(
+    kind,
+    id,
+    data !== undefined && (data.drafting || (data.handOff?.working ?? false)),
+    () => void refresh(),
+  );
   const restsForNow =
     decision !== null
       ? decision.phase === "Done" || decision.phase === "Declined"
@@ -410,6 +424,28 @@ export function DeskRecordCase({ kind, id }: { kind: string; id: string }) {
     );
   }
 
+  // Why the reader cannot act on this case, said where the actions would be:
+  // someone else owns it, or their role reads cases without working them.
+  const locked = !ownCase
+    ? t(
+        "{0} owns this case, so only they can act on it. You can read it and ask about it; a case lead can give it to you.",
+        data.ownership.owner?.name ?? t("Someone else"),
+      )
+    : !mayDecide && !mayResolve
+      ? t("Your role can read this case but not act on it.")
+      : "";
+  const chosenOption = data.options.find((option) => option.chosen) ?? null;
+  const lockedInPlan =
+    !data.drafting &&
+    chosenOption?.kind !== "Leave" &&
+    ((data.decision?.phase === "Awaiting" && !canDecide) ||
+      (data.decision === null &&
+        chosenOption === null &&
+        data.handOff !== null &&
+        data.options.length === 0 &&
+        !data.handOff.working &&
+        !canResolve));
+
   const unchanged = data.finding?.trust.find((cell) => cell.key === "Unchanged")?.text ?? "";
 
   return (
@@ -423,13 +459,22 @@ export function DeskRecordCase({ kind, id }: { kind: string; id: string }) {
               now={now}
               recordPath={pageLink}
               owner={
-                <CaseOwner
-                  kind={kind}
-                  id={id}
-                  label={label}
-                  ownership={data.ownership}
-                  onChanged={refresh}
-                />
+                <>
+                  <CaseOwner
+                    kind={kind}
+                    id={id}
+                    label={label}
+                    ownership={data.ownership}
+                    onChanged={refresh}
+                  />
+                  {canPutAway && (
+                    <CasePutAway
+                      now={now}
+                      pending={awayBusy}
+                      onPutAway={(until) => void moveAway(until)}
+                    />
+                  )}
+                </>
               }
             />
             {data.away && (
@@ -441,16 +486,19 @@ export function DeskRecordCase({ kind, id }: { kind: string; id: string }) {
                 onBringBack={() => void moveAway(null)}
               />
             )}
-            {!ownCase && (
+            {/* Said once, where the actions would be. A case with no plan
+                card to say it in says it here. */}
+            {locked !== "" && !lockedInPlan && (
               <p className="dk-cz-ro" role="status">
                 <DeskIcon name="lock" size={13} />
-                {t(
-                  "{0} owns this case and decides it. You can read it and ask about it.",
-                  data.ownership.owner?.name ?? t("Someone else"),
-                )}
+                {locked}
               </p>
             )}
-            <CaseFinding data={data} timezone={timezone} lit={lit} onLight={setLit} />
+            {data.finding === null && data.decision === null && data.open === 0 ? (
+              <CaseClosed recordId={id} label={label} recordPath={pageLink} />
+            ) : (
+              <CaseFinding data={data} timezone={timezone} lit={lit} onLight={setLit} />
+            )}
 
             <CaseOptions
               options={data.options}
@@ -488,13 +536,14 @@ export function DeskRecordCase({ kind, id }: { kind: string; id: string }) {
                 }
               />
             ) : data.drafting || choosing !== null ? (
-              <CasePlanDrafting agentName={agentName ?? t("The agent")} />
+              <CasePlanDrafting agentName={agentName ?? t("The agent")} writing={writing} />
             ) : decision ? (
               <CasePlan
                 data={data}
                 decision={decision}
                 state={state}
                 canDecide={canDecide}
+                locked={locked}
                 timezone={timezone}
                 recordPath={pageLink}
                 onDecline={() => setDeclining(true)}
@@ -513,7 +562,11 @@ export function DeskRecordCase({ kind, id }: { kind: string; id: string }) {
                 }
                 note={
                   data.draftNote !== "" ? (
-                    <AiMarkdown content={data.draftNote} className="text-xs" deskSubset />
+                    <AiMarkdown
+                      content={withoutRecordIds(data.draftNote)}
+                      className="text-xs"
+                      deskSubset
+                    />
                   ) : (
                     t("The agent drafts it against the record as it is now, for you to approve.")
                   )
@@ -533,6 +586,8 @@ export function DeskRecordCase({ kind, id }: { kind: string; id: string }) {
                 key={data.handOff.itemId}
                 handOff={data.handOff}
                 canHandOff={canResolve}
+                locked={locked}
+                writing={writing}
                 autoStart={startOnOpen}
                 onHanded={() => {
                   handedAt.current = Date.now();
@@ -542,7 +597,10 @@ export function DeskRecordCase({ kind, id }: { kind: string; id: string }) {
                 actions={
                   data.handOff.kind === "PodMissing" && kind === "shipment"
                     ? [
-                        { label: t("Upload the POD"), onClick: () => setUploadingPod(true) },
+                        // Filing a paper takes document create, whoever owns the case.
+                        ...(canFile
+                          ? [{ label: t("Upload the POD"), onClick: () => setUploadingPod(true) }]
+                          : []),
                         {
                           label: t("Request the driver's paperwork"),
                           onClick: () =>
@@ -558,20 +616,6 @@ export function DeskRecordCase({ kind, id }: { kind: string; id: string }) {
                 }
               />
             ) : null}
-            {canPutAway && (
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-2.5 px-0.5">
-                <div className="min-w-0 flex-auto text-dsk-sm text-dsk-subtle">
-                  {t(
-                    "You have done what can be done here for now. Put the case away and it comes back when its time is up, or sooner if anything new is raised.",
-                  )}
-                </div>
-                <CasePutAway
-                  now={now}
-                  pending={awayBusy}
-                  onPutAway={(until) => void moveAway(until)}
-                />
-              </div>
-            )}
             {decision && decision.others > 0 && (
               <div className="dk-cz-plan-more">
                 {t(

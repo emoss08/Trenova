@@ -494,14 +494,40 @@ describe("tableViewFrom", () => {
 
   // Reading a filtered page as the whole fleet is the mistake the footer
   // exists to prevent, so the terms come through with the rows.
-  it("carries the terms the search applied", () => {
+  it("carries the filters the search applied", () => {
     const table = view({
       columns: ["proNumber"],
       rows: [{ proNumber: "P1" }],
-      searchedFor: ["status is InTransit", "", 7],
+      filters: [
+        { label: "Status", value: "In transit" },
+        { value: "running late" },
+        { label: "Customer", value: "" },
+        "status is InTransit",
+        7,
+      ],
     });
 
-    expect(table.searchedFor).toEqual(["status is InTransit"]);
+    expect(table.filters).toEqual([
+      { label: "Status", value: "In transit" },
+      { label: "", value: "running late" },
+    ]);
+  });
+
+  // The server names every record a filter narrows by. A table must not
+  // show an id even when one was stored: not in the value, and not as a
+  // filter with nothing else in it.
+  it("never shows a record id in a filter", () => {
+    const table = view({
+      columns: ["proNumber"],
+      rows: [{ proNumber: "P1" }],
+      filters: [
+        { label: "Customer", value: "Granite Textiles, cus_01JW3K18A8TPC7T7SPX7745V1H" },
+        { label: "Carrier", value: "car_01JSV4G0Q80KNYKQ254QWT5T0V" },
+      ],
+      searchedFor: ["customerId one of cus_01JW3K18A8TPC7T7SPX7745V1H"],
+    });
+
+    expect(table.filters).toEqual([{ label: "Customer", value: "Granite Textiles" }]);
   });
 
   it("reads a payload that promises nothing as an empty table", () => {

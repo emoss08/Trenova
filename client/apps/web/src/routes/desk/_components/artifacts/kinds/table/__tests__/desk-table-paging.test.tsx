@@ -91,7 +91,7 @@ function table(payload: Record<string, unknown>): AssistantArtifact {
         { key: "status", label: "Status", type: "status" },
         { key: "rate", label: "Rate", type: "money" },
       ],
-      searchedFor: ["status is Active or Inactive"],
+      filters: [{ label: "Status", value: "Active or Inactive" }],
       readBy: { id: "agd_dispatch", name: "Dispatch Desk", icon: "", accent: "teal" },
       readWith: { status: ["Active", "Inactive"] },
       ...payload,
@@ -166,7 +166,9 @@ describe("DeskTableBody paging a list", () => {
     });
     expect(screen.getByText("Page 1 of 3")).toBeInTheDocument();
     expect(screen.getByText("60")).toBeInTheDocument();
-    expect(screen.getByText("status is Active or Inactive")).toBeInTheDocument();
+    expect(screen.getByLabelText("What Dispatch Desk asked for")).toHaveTextContent(
+      "Status Active or Inactive",
+    );
 
     fireEvent.click(screen.getByRole("button", { name: "Next page" }));
     expect(screen.getByText("Commodity 26")).toBeInTheDocument();
@@ -313,7 +315,7 @@ describe("DeskTableBody paging a list", () => {
     await within(pager()).findByText("1–25 of 60");
 
     expect(screen.getByLabelText("What Dispatch Desk asked for")).toHaveTextContent(
-      "status is Active or Inactive",
+      "Status Active or Inactive",
     );
     expect(screen.getByRole("button", { name: "Page 1, read by Dispatch Desk" })).toHaveAttribute(
       "aria-current",

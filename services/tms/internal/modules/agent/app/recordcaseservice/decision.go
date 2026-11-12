@@ -160,7 +160,12 @@ func (s *Service) draftState(
 		agent.RunStatusGatheringContext,
 		agent.RunStatusDiagnosing,
 		agent.RunStatusAwaitingDecision:
-		return requested > built.now-draftLimitSeconds, ""
+		drafting = requested > built.now-draftLimitSeconds
+		if drafting {
+			built.stream = run.WorkflowID
+		}
+
+		return drafting, ""
 	default:
 		return false, ""
 	}

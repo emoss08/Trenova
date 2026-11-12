@@ -1,3 +1,5 @@
+import { usePermission } from "@/hooks/use-permission";
+import { Operation, Resource } from "@trenova/shared/types/permission";
 import { ResolvedUserAvatar } from "@/components/resolved-user-avatar";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
@@ -95,6 +97,11 @@ export type ShareDialogProps = {
 export function ShareDialog({ record = null, path, trigger, description }: ShareDialogProps) {
   const t = useT();
   const [open, setOpen] = useState(false);
+  // Inviting teammates to a record takes the Share records permission. Without
+  // it the dialog is the link alone, which anyone may copy: a link opens
+  // nothing its reader could not already open.
+  const { allowed: canShare } = usePermission(Resource.RecordShare, Operation.Create);
+  const shared = canShare ? record : null;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -106,7 +113,13 @@ export function ShareDialog({ record = null, path, trigger, description }: Share
           {t("Share")}
         </Button>
       )}
-      {open ? <ShareDialogContent record={record} path={path} description={description} /> : null}
+      {open ? (
+        <ShareDialogContent
+          record={shared}
+          path={path}
+          description={shared ? description : undefined}
+        />
+      ) : null}
     </Dialog>
   );
 }

@@ -1,5 +1,6 @@
 import { handleMutationError } from "@/hooks/use-api-mutation";
 import { conversationPath } from "@/lib/conversation-path";
+import { deskDecisionPath } from "@/lib/desk-paths";
 import {
   fetchWatchtowerItem,
   handOffWatchtowerItem,
@@ -331,7 +332,7 @@ export function useWatchtowerActions({
     reviewAndApprove: () => {
       const runId = current?.agentWork?.runId;
       if (runId) {
-        void navigate(`/desk/decisions?run=${encodeURIComponent(runId)}`);
+        void navigate(deskDecisionPath({ run: runId }));
       }
     },
   };

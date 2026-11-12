@@ -4,7 +4,7 @@ aliases: [dashboard, start page, landing page, home screen, my day, briefing]
 related:
   - /shipment-management/shipments
   - /shipment-management/service-failures
-  - /desk/decisions
+  - /desk/needs
   - /admin/home-layouts
 ---
 

@@ -1,3 +1,4 @@
+import { useTriageAccess } from "../use-triage-access";
 import { useUserTimezone } from "@/hooks/use-user-timezone";
 import { useTriageStore } from "@/stores/triage-store";
 import type { InboundMessageDetail } from "@/lib/graphql/inbox";
@@ -230,6 +231,7 @@ export function ActionBar({
   const [teach, setTeach] = useState(false);
   const mode = actionBarMode(message, panel.state.drafting);
   const ids = [message.id];
+  const { canWork } = useTriageAccess();
   const total = message.actions.length;
   const doneCount = message.actions.filter((step) => step.done).length;
   const teachRule = mode.kind === "done" && teach ? mode.teach : null;
@@ -498,6 +500,16 @@ export function ActionBar({
   }
 
   const key = noting ? "noting" : mode.kind === "next" ? mode.action.id : mode.kind;
+
+  // Every step and button on the bar works the message. A reader who may not
+  // is told so here, where the steps would be, and offered none of them.
+  if (!canWork) {
+    return (
+      <div className="text-foreground-subtle flex min-h-11 items-center px-4 text-sm" role="status">
+        {t("You can read this message, but your role can't act on it.")}
+      </div>
+    );
+  }
 
   return (
     <div

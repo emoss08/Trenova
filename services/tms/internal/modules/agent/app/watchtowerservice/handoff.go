@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
@@ -74,6 +75,8 @@ func (s *Service) handOffToAgent(
 		SubjectID:    item.SubjectID,
 		Trigger:      agent.RunTriggerManual,
 		EventKind:    item.EventKind,
+		Handed:       item.HandOffBrief(),
+		Watched:      true,
 		TenantInfo:   req.TenantInfo,
 	}, actor)
 	if err != nil {
@@ -154,4 +157,42 @@ func (s *Exceptions) recordHandOff(
 			}, nil
 		},
 	})
+}
+
+// handOffTemplates names the agent that works a kind of item no event
+// announces. A missed stop, a late projection, a quiet truck and a tender run
+// dry are found by a sweep, so no agent subscribes to them, and handing one
+// over used to answer "choose who works it" every time. They are a
+// dispatcher's exceptions, and the dispatch agent is the one that covers a
+// move, so a hand-off with no agent named goes to it. An exception an agent
+// raised is not listed: it already asked for a person.
+//
+//nolint:exhaustive // only the kinds no event announces and one agent plainly works
+var handOffTemplates = map[watchtower.SourceKind]agenttemplate.Template{
+	watchtower.SourceMissedPickup:    agenttemplate.TemplateDispatchAssignment,
+	watchtower.SourceMissedDelivery:  agenttemplate.TemplateDispatchAssignment,
+	watchtower.SourceEtaAtRisk:       agenttemplate.TemplateDispatchAssignment,
+	watchtower.SourceNoCheckCall:     agenttemplate.TemplateDispatchAssignment,
+	watchtower.SourceTenderExhausted: agenttemplate.TemplateDispatchAssignment,
+}
+
+// workerOf is the organization's agent that works this kind of item, among
+// the ones a hand-off may go to: the first, by name, built from the template
+// the kind is worked by. Nil when the kind has none or the organization runs
+// no such agent, and the person chooses.
+func workerOf(
+	kind watchtower.SourceKind,
+	candidates []*agentdefinition.Definition,
+) *agentdefinition.Definition {
+	template, ok := handOffTemplates[kind]
+	if !ok {
+		return nil
+	}
+	for _, candidate := range candidates {
+		if candidate != nil && candidate.Template == template {
+			return candidate
+		}
+	}
+
+	return nil
 }

@@ -91,6 +91,7 @@ type Message struct {
 	ToolVerdict string                    `json:"toolVerdict,omitempty" keel:"tool_verdict,nullzero"`
 	ToolEffect  agenttooltrust.ToolEffect `json:"effect,omitempty"`
 	ToolSummary string                    `json:"summary,omitempty"     keel:"tool_summary,nullzero"`
+	ToolAsked   string                    `json:"asked,omitempty"       keel:"tool_asked,nullzero"`
 	FoundTools  []string                  `json:"foundTools,omitempty"  keel:"found_tools,jsonb,nullzero"`
 	// HandOffAgents are the person's other agents a find_tools answer named
 	// as holding what this agent could not call, set only on that call's

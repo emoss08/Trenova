@@ -133,4 +133,31 @@ describe("isViewingThread", () => {
       isViewingThread("athr_1", { pathname: "/", panelOpen: true, panelThreadId: "athr_2" }),
     ).toBe(false);
   });
+
+  it("is viewing a conversation open in the Desk's margin, beside another page", () => {
+    const viewing = {
+      pathname: "/desk/r/shipment/shp_1",
+      panelOpen: false,
+      panelThreadId: null,
+      marginThreadId: "athr_1",
+      caseRecordId: "shp_1",
+    };
+
+    expect(isViewingThread("athr_1", viewing)).toBe(true);
+    expect(isViewingThread("athr_2", viewing)).toBe(false);
+  });
+
+  it("is viewing the conversation of the case in front, though the margin is shut", () => {
+    const viewing = {
+      pathname: "/desk/r/shipment/shp_1",
+      panelOpen: false,
+      panelThreadId: null,
+      marginThreadId: null,
+      caseRecordId: "shp_1",
+    };
+
+    expect(isViewingThread("athr_1", viewing, "shp_1")).toBe(true);
+    expect(isViewingThread("athr_1", viewing, "shp_2")).toBe(false);
+    expect(isViewingThread("athr_1", viewing, null)).toBe(false);
+  });
 });

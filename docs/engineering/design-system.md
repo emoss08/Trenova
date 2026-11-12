@@ -814,6 +814,28 @@ each child of a `DataTableLazyComponent` to its module (through `lazy`,
 `DataTable`, and it fails a `<Suspense>` with no `fallback`. A genuine exception takes
 `loading-skeleton-ignore: <reason>` in a comment on or above the line.
 
+## No record ids on screen
+
+A record's internal id (`cus_01JW3K18A8TPC7T7SPX7745V1H`) is never shown to a person. It may
+appear in exactly two places: a URL, and a page only an administrator can open, which a
+normal user never sees. Everywhere else a record is shown by its name or number, linked
+through `recordPath`, and a count ("2 selected") when it has neither.
+
+This holds for every surface that draws server text: a cell, a chip, a tooltip, a toast, an
+error, an export and an `aria-label`. The same goes for the other machine names that travel
+with an id: a field's name (`customerId` is "Customer") and an enum's code
+(`PartiallyAssigned` is "Partially assigned").
+
+- **The server owns the fix.** Text written for a model or a log is not text for a person.
+  When a surface shows something a tool reported, the server stores a projection of it in
+  words (a table's columns through `ProjectTable`; a table's filters and a step's "asked" line
+  through `filterwords`), naming records in one batched read
+  (`agentruntimeports.RecordLabeler`). It never stores the raw text for the client to tidy.
+- **The client is the last guard, not the mechanism.** A component that draws text it did
+  not write passes it through `withoutRecordIds` (`lib/record-ids.ts`; `shared/recordids` is
+  the server's copy) and renders nothing when nothing readable is left.
+- A test for such a surface asserts that an id in its input does not reach the screen.
+
 ## Icons
 
 Every icon is imported from `@trenova/shared/components/icons`. It exports each

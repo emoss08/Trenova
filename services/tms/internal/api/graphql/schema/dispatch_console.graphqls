@@ -699,6 +699,11 @@ type DispatchForecastQuality {
   skill: Float!
   "When it was last fitted; null before the first fit."
   fittedAt: Timestamp
+  """
+  True while the history is being read again: a forecast that is not Ready and was fitted more
+  than an hour ago is refitted when it is read. The figures are still those from fittedAt.
+  """
+  refitting: Boolean!
 }
 
 """

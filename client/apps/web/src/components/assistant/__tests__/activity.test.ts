@@ -127,7 +127,10 @@ describe("groupActivity", () => {
   });
 
   it("keeps consecutive actions on lines of their own", () => {
-    const groups = groupActivity([step({ name: "agent_open_page" }), step({ name: "agent_open_page" })]);
+    const groups = groupActivity([
+      step({ name: "agent_open_page" }),
+      step({ name: "agent_open_page" }),
+    ]);
 
     expect(groups).toHaveLength(2);
   });
@@ -367,7 +370,12 @@ describe("stepsFromExchanges", () => {
   it("reads effect, summary and time from the saved call and its result", () => {
     const exchanges: ToolExchange[] = [
       {
-        call: { id: "c1", name: "agent_open_page", arguments: { page: "/reports" }, effect: "navigate" },
+        call: {
+          id: "c1",
+          name: "agent_open_page",
+          arguments: { page: "/reports" },
+          effect: "navigate",
+        },
         result: saved({
           toolCallId: "c1",
           toolName: "agent_open_page",
@@ -591,5 +599,49 @@ describe("refusals", () => {
 
     expect(refused.status).toBe("failed");
     expect(toolRefusal(refused)).toBe("denied");
+  });
+});
+
+/**
+ * A list narrowed by records is called with their ids. The server says what
+ * it was narrowed by with each record named, and the line reads that; the
+ * call's own arguments are what is left for a step the server said nothing
+ * about, and they never show an id either.
+ */
+describe("what a finished search was narrowed by", () => {
+  const narrowed = {
+    name: "shipment_list",
+    summary: "3 shipments",
+    arguments: {
+      filters: [
+        {
+          field: "customerId",
+          operator: "in",
+          values: ["cus_01JW3K18A8TPC7T7SPX7745V1H", "cus_01JSV4G0Q80KNYKQ254QWT5T0V"],
+        },
+      ],
+    },
+  };
+
+  it("reads the server's account, with the records named", () => {
+    expect(
+      line([step({ ...narrowed, asked: "Customer Granite Textiles, Granite Brands" })]),
+    ).toMatchObject({
+      phrase: "Found 3 records",
+      detail: "Customer Granite Textiles, Granite Brands",
+    });
+  });
+
+  it("reads the call's arguments without their ids when the server gave no account", () => {
+    expect(line([step(narrowed)])).toMatchObject({
+      phrase: "Found 3 records",
+      detail: "Customer",
+    });
+  });
+
+  it("takes out an id the server's account still held", () => {
+    expect(
+      line([step({ ...narrowed, asked: "Customer cus_01JW3K18A8TPC7T7SPX7745V1H" })]).detail,
+    ).not.toContain("cus_01");
   });
 });

@@ -1,3 +1,4 @@
+import { withoutRecordIds } from "@/lib/record-ids";
 import { DeskAgentTile } from "@/components/desk-chat/desk-agent-tile";
 import { AiMarkdown } from "@/components/elements/ai-markdown";
 import type { DeskAttentionItem } from "@/lib/graphql/desk-attention";
@@ -77,7 +78,11 @@ export function AgentWorkBlock({ work }: { work: AgentWork }) {
               id={reportId}
               className="mt-2 max-h-80 animate-rise overflow-auto rounded-[8px] border border-dsk-b-sub bg-dsk-card px-3 py-2.5"
             >
-              <AiMarkdown content={work.note} className="text-xs text-dsk-fg2" deskSubset />
+              <AiMarkdown
+                content={withoutRecordIds(work.note)}
+                className="text-xs text-dsk-fg2"
+                deskSubset
+              />
             </div>
           </Activity>
         </div>

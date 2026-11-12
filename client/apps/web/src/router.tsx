@@ -1,6 +1,7 @@
 import { PlanCapability } from "@/lib/plan-capability";
 import { createPlanCapabilityLoader } from "@/lib/plan-capability-loader";
 import {
+  anyOfLoaders,
   combineLoaders,
   createCapabilityLoader,
   createPermissionLoader,
@@ -2372,14 +2373,6 @@ export const routes: RouteObject[] = withPathScopedRevalidation([
                 },
               },
               {
-                path: "decisions",
-                loader: createPermissionLoader(Resource.AgentProposal, Operation.Read),
-                async lazy() {
-                  const { DeskDecisionsPage } = await import("@/routes/desk/decisions-page");
-                  return { Component: DeskDecisionsPage };
-                },
-              },
-              {
                 path: "agents/:agentId",
                 async lazy() {
                   const { DeskAgentCapabilitiesPage } = await import("@/routes/desk/agent-page");
@@ -2417,7 +2410,12 @@ export const routes: RouteObject[] = withPathScopedRevalidation([
               },
               {
                 path: "needs",
-                loader: createPermissionLoader(Resource.Watchtower, Operation.Read),
+                // Its Decisions lens is for whoever may read proposals; the
+                // rest of the page is the Watchtower's.
+                loader: anyOfLoaders(
+                  createPermissionLoader(Resource.Watchtower, Operation.Read),
+                  createPermissionLoader(Resource.AgentProposal, Operation.Read),
+                ),
                 async lazy() {
                   const { DeskNeedsPage } = await import("@/routes/desk/needs-page");
                   return { Component: DeskNeedsPage };

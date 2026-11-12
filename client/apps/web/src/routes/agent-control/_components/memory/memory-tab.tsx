@@ -41,6 +41,7 @@ import { MemoryKindMark } from "./memory-kind";
 import { MemoryPanel } from "./memory-panel";
 import { MemorySuggestions } from "./memory-suggestions";
 import { MemoryTaintNotice } from "./memory-taint-notice";
+import { MemoryUpkeepNotice } from "./memory-upkeep-notice";
 import { MemoryUsageNotice } from "./memory-usage-notice";
 import { OrganizationProfile } from "./organization-profile";
 
@@ -158,6 +159,7 @@ export default function MemoryTab() {
       <MemoryUsageNotice />
       <MemoryTaintNotice canDecide={canManage} />
       <MemorySuggestions canDecide={canManage} />
+      <MemoryUpkeepNotice canDecide={canManage} />
       <AgentReflections />
       <section className="sec">
         {empty ? (

@@ -1,3 +1,4 @@
+import { DeskIcon } from "@/components/desk-chat/desk-icons";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { usePermission } from "@/hooks/use-permission";
 import type { WatchtowerItem, WatchtowerPaperPanel } from "@/lib/graphql/watchtower";
@@ -35,17 +36,25 @@ export function PaperPanel({
   paper,
   now,
   timezone,
+  lockedBy = "",
 }: {
   item: Pick<WatchtowerItem, "id" | "version" | "subjectType" | "subjectId" | "record">;
   paper: WatchtowerPaperPanel;
   now: number;
   timezone: string;
+  /** Why the reader cannot file on this item, in a sentence; "" when they can. */
+  lockedBy?: string;
 }) {
   const t = useT();
   const queryClient = useQueryClient();
   const shipmentId = item.subjectType === "Shipment" ? (item.subjectId ?? "") : "";
-  const { allowed: canFile } = usePermission(Resource.Document, Operation.Create);
-  const { allowed: canClose } = usePermission(Resource.Watchtower, Operation.Update);
+  const { allowed: mayFile } = usePermission(Resource.Document, Operation.Create);
+  const { allowed: mayClose } = usePermission(Resource.Watchtower, Operation.Update);
+  // Someone else's case is theirs to file on and to close. The panel says
+  // whose it is where the upload would be, so nobody is left looking for it.
+  const locked = lockedBy !== "";
+  const canFile = mayFile && !locked;
+  const canClose = mayClose && !locked;
   const readiness = useQuery({
     ...shipmentQueries.billingReadiness(shipmentId),
     enabled: shipmentId !== "",
@@ -123,6 +132,12 @@ export function PaperPanel({
           ))}
         </ul>
         {paper.holds !== "" && <p className="mt-2 text-dsk-sm text-dsk-subtle">{paper.holds}</p>}
+        {locked && missing > 0 && (
+          <p className="mt-2 flex items-start gap-2 text-dsk-sm text-dsk-subtle" role="status">
+            <DeskIcon name="lock" size={13} className="mt-0.5 shrink-0" />
+            {lockedBy}
+          </p>
+        )}
       </PanelBody>
     </PanelCard>
   );

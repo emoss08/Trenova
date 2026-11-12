@@ -194,4 +194,9 @@ type Case struct {
 	Open      int
 	Severity  watchtower.Severity
 	UpdatedAt int64
+	// Stream is the workflow whose stream carries what the agent on the case
+	// is writing right now: the run it was handed to, or the one drafting the
+	// chosen option's plan. Empty when no agent is working the case. It is
+	// read by the case's stream endpoint and never sent to a client.
+	Stream string
 }

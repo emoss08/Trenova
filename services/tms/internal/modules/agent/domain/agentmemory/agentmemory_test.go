@@ -38,7 +38,7 @@ func TestMemoryValidate_ContentLimitComesFromTheConstant(t *testing.T) {
 
 	var content *errortypes.Error
 	for _, err := range me.Errors {
-		if err.Field == "content" {
+		if err.Field() == "content" {
 			content = err
 		}
 	}

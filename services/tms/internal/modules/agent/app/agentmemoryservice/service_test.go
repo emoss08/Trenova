@@ -37,6 +37,8 @@ type fakeMemoryRepo struct {
 
 	neighbors    []*agentmemory.Memory
 	neighborAsks []*agentmemoryports.ListAgentMemoryNeighborsRequest
+	wider        []*agentmemory.Memory
+	widerAsks    []*agentmemoryports.ListAgentMemoryNeighborsRequest
 
 	activeCount int
 }
@@ -58,6 +60,11 @@ func (f *fakeMemoryRepo) ListNeighbors(
 	_ context.Context,
 	req *agentmemoryports.ListAgentMemoryNeighborsRequest,
 ) ([]*agentmemory.Memory, error) {
+	if req.Wider {
+		f.widerAsks = append(f.widerAsks, req)
+
+		return f.wider, nil
+	}
 	f.neighborAsks = append(f.neighborAsks, req)
 
 	return f.neighbors, nil
@@ -329,6 +336,14 @@ func tenant() pagination.TenantInfo {
 
 type fakeLinks struct {
 	links map[agentmemory.MemoryRecordKind][]agentmemoryports.MemoryRecordLink
+	named []agentmemoryports.MemorySubjectCandidate
+}
+
+func (f *fakeLinks) FindSubjectsByName(
+	context.Context,
+	*agentmemoryports.FindMemorySubjectsRequest,
+) ([]agentmemoryports.MemorySubjectCandidate, error) {
+	return f.named, nil
 }
 
 func (f *fakeLinks) ListRecordLinks(

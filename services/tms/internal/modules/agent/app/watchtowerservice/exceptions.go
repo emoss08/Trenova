@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/caseownerports"
 	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textcase"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
@@ -598,12 +599,23 @@ func (s *Exceptions) auditException(
 	}
 }
 
+// exceptionAuditComment is the change as the activity feed shows it to a
+// person: the event in words, with what it changed to when that is a value
+// someone can read. An event's value is often a record's id (who it was
+// assigned to, which agent took it), which is never shown.
 func exceptionAuditComment(event *watchtower.Event) string {
-	comment := "Exception " + event.Kind.String()
-	if event.ToValue != "" {
-		comment += ": " + event.ToValue
+	comment := "Watchtower item " + textcase.LowerFirst(
+		textcase.HumanizeCamelCaseSentence(event.Kind.String()),
+	)
+	value := strings.TrimSpace(event.ToValue)
+	if value == "" || pulid.LooksLike(value) {
+		return comment
 	}
-	return comment
+	if !strings.ContainsAny(value, " \t") {
+		value = textcase.LowerFirst(textcase.HumanizeCamelCaseSentence(value))
+	}
+
+	return comment + ": " + value
 }
 
 func exceptionState(item *watchtower.Item) map[string]any {

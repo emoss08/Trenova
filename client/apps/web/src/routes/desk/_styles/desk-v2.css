@@ -2949,9 +2949,6 @@
    only what it adds: deadline lanes, the agents on it, the deadline clock,
    what is at stake, the record, the trail and the agent's progress. */
 @container mainc (max-width:900px) {
-  .dk-dc2.dk-w3 {
-    grid-template-columns: 230px minmax(0, 1fr);
-  }
   .dk-w3-ask {
     width: 30px;
     padding: 0;
@@ -3372,26 +3369,6 @@
 }
 
 /* ---- decisions.css ---- */
-.dk-dc2 {
-  display: grid;
-  grid-template-columns: 280px minmax(0, 1fr);
-  min-height: 0;
-  height: 100%;
-  border-top: 1px solid var(--dsk-b-sub);
-}
-.dk-dc2-qh {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  padding: 16px 16px 8px;
-}
-.dk-dc2-prog {
-  height: 3px;
-  margin: 0 16px 8px;
-  border-radius: 2px;
-  background: var(--dsk-b-sub);
-  overflow: hidden;
-}
 .dk-dc2-new {
   width: 6px;
   height: 6px;
@@ -3457,37 +3434,22 @@
   color: var(--dsk-subtle);
 }
 .dk-dc2-card h1 {
-  margin: 14px 0 0;
-  font-size: 26px;
+  margin: 0;
+  font-size: 22px;
   line-height: 1.2;
   font-weight: 600;
-  letter-spacing: -0.025em;
+  letter-spacing: -0.015em;
+  text-wrap: balance;
 }
 .dk-dc2-card h1 span {
   color: var(--dsk-subtle);
   font-weight: 500;
-}
-.dk-dc2-why {
-  margin: 8px 0 0;
-  font-size: 14.5px;
-  line-height: 1.6;
-  color: var(--dsk-fg2);
 }
 .dk-dc2-diff {
   margin-top: 22px;
   border-radius: 12px;
   box-shadow: inset 0 0 0 1px var(--dsk-b);
   overflow: hidden;
-}
-.dk-dc2-dh {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 9px 14px;
-  font-size: 11.5px;
-  font-weight: 500;
-  color: var(--dsk-subtle);
-  background: var(--dsk-sunken);
 }
 .dk-dc2-dr {
   display: grid;
@@ -3504,72 +3466,6 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-.dk-dc2-dr s {
-  color: var(--dsk-subtle);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.dk-dc2-dr.dk-bad b {
-  color: oklch(0.58 0.2 25);
-}
-.dark .dk-dc2-dr.dk-bad b {
-  color: oklch(0.76 0.14 25);
-}
-.dk-dc2-more {
-  padding: 9px 14px;
-  font-size: 12px;
-  color: var(--dsk-subtle);
-  border-top: 1px solid var(--dsk-b-sub);
-}
-.dk-dc2-sim {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  margin-top: 12px;
-  padding: 11px 14px;
-  border-radius: 12px;
-  font-size: 13px;
-  line-height: 1.5;
-  color: var(--dsk-fg2);
-  background: var(--dsk-sunken);
-}
-.dk-dc2-sim.dk-warn {
-  color: var(--dsk-warn-fg);
-  background: var(--dsk-warn-sub);
-}
-.dk-dc2-simh {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  flex: none;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  padding-top: 2px;
-  opacity: 0.8;
-}
-.dk-dc2-pre {
-  margin: 8px 0 0;
-  padding: 12px 14px;
-  border-radius: 10px;
-  font: 11.5px/1.6 var(--dk-plex);
-  color: var(--dsk-fg2);
-  background: var(--dsk-sunken);
-  overflow: auto;
-}
-.dk-dc2-like {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-top: 18px;
-  padding: 10px 14px;
-  border-radius: 12px;
-  font-size: 12.5px;
-  color: var(--dsk-muted);
-  box-shadow: inset 0 0 0 1px var(--dsk-b-sub);
 }
 .dk-dc2-bar {
   display: flex;
@@ -3612,22 +3508,11 @@
   max-width: 340px;
 }
 @container mainc (max-width:900px) {
-  .dk-dc2 {
-    grid-template-columns: 220px minmax(0, 1fr);
-  }
   .dk-dc2-card {
     padding: 24px 22px;
   }
   .dk-dc2-bar {
     padding: 10px 22px 14px;
-  }
-}
-@container mainc (max-width:640px) {
-  .dk-dc2 {
-    grid-template-columns: minmax(0, 1fr);
-  }
-  .dk-dc2-q {
-    display: none;
   }
 }
 
@@ -3721,9 +3606,6 @@
   }
 }
 /* decisions: a write the card can't draw as one field, the plan's steps, paging the queue */
-.dk-dc2-full {
-  margin-top: 22px;
-}
 .dk-dc2-kv {
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
 }

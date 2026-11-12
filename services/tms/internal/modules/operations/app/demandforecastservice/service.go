@@ -31,6 +31,7 @@ type Params struct {
 
 	Logger        *zap.Logger
 	Repo          demandforecastports.Repository
+	Fits          demandforecastports.FitStarter
 	Controls      dispatchcontrolports.DispatchControlRepository
 	Organizations tenantports.OrganizationRepository
 }
@@ -38,6 +39,7 @@ type Params struct {
 type Service struct {
 	l             *zap.Logger
 	repo          demandforecastports.Repository
+	fits          demandforecastports.FitStarter
 	controls      dispatchcontrolports.DispatchControlRepository
 	organizations tenantports.OrganizationRepository
 	clock         func() int64
@@ -49,6 +51,7 @@ func New(p Params) *Service {
 	return &Service{
 		l:             p.Logger.Named("service.demand-forecast"),
 		repo:          p.Repo,
+		fits:          p.Fits,
 		controls:      p.Controls,
 		organizations: p.Organizations,
 		clock:         timeutils.NowUnix,
@@ -169,11 +172,27 @@ func labelOf(city, state string) string {
 	}
 }
 
-func (s *Service) Quality(
+func (s *Service) Standing(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-) (*demandforecast.Quality, error) {
-	return s.repo.Quality(ctx, tenantInfo)
+) (*demandforecast.Standing, error) {
+	quality, err := s.repo.Quality(ctx, tenantInfo)
+	if err != nil {
+		return nil, err
+	}
+	standing := &demandforecast.Standing{Quality: quality}
+	if !quality.Stale(s.clock()) {
+		return standing, nil
+	}
+
+	if err = s.fits.StartFitting(ctx, tenantInfo); err != nil {
+		s.l.Warn("the freight forecast will be fitted tonight instead of now",
+			zap.String("organizationId", tenantInfo.OrgID.String()), zap.Error(err))
+		return standing, nil
+	}
+	standing.Refitting = true
+
+	return standing, nil
 }
 
 func (s *Service) Forecaster(

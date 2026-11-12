@@ -455,6 +455,16 @@ func (s *Service) HandOff(
 	if err != nil {
 		return nil, err
 	}
+	if worker := workerOf(item.SourceKind, candidates); worker != nil {
+		req.AgentDefinitionID = worker.ID
+		handed, hErr := s.handOffToAgent(ctx, req, item, actor)
+		if hErr != nil {
+			return nil, hErr
+		}
+		handed.Subscribers = []*agentdefinition.Definition{worker}
+
+		return handed, nil
+	}
 	result.Candidates = candidates
 
 	return result, nil

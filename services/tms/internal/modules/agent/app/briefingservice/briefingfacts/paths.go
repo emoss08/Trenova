@@ -6,7 +6,7 @@ package briefingfacts
 // dead link on the first screen of the day.
 const (
 	watchtowerPath = "/desk/needs"
-	decisionsPath  = "/desk/decisions"
+	decisionsPath  = "/desk/needs?lens=decisions"
 	dispatchPath   = "/dispatch/console"
 	workersPath    = "/hr/workers"
 	billingPath    = "/billing/queue"

@@ -88,10 +88,10 @@ func TestReflectionSignals(t *testing.T) {
 
 	signals := ReflectionSignals{
 		{Kind: ReflectionSignalProposalModified, Count: 1},
-		{Kind: ReflectionSignalLongTask, Count: 0},
+		{Kind: ReflectionSignalPersonTold, Count: 0},
 	}
 	assert.True(t, signals.Has(ReflectionSignalProposalModified))
-	assert.False(t, signals.Has(ReflectionSignalLongTask))
+	assert.False(t, signals.Has(ReflectionSignalPersonTold))
 	assert.Equal(t, []string{"ProposalModified"}, signals.Kinds())
 }
 
@@ -104,11 +104,11 @@ func TestReflectionSignals_FromPeopleIsWhatAPersonSaidOrDecided(t *testing.T) {
 		ReflectionSignalProposalModified,
 		ReflectionSignalProposalRejected,
 		ReflectionSignalNegativeFeedback,
+		ReflectionSignalPersonTold,
 	} {
 		assert.True(t, ReflectionSignals{{Kind: kind, Count: 1}}.FromPeople(), kind)
 	}
 
-	assert.False(t, ReflectionSignals{{Kind: ReflectionSignalLongTask, Count: 7}}.FromPeople())
 	assert.False(t, ReflectionSignals{{Kind: ReflectionSignalPersonCorrected, Count: 0}}.FromPeople())
 	assert.False(t, ReflectionSignals{}.FromPeople())
 }
@@ -209,4 +209,22 @@ func TestNewestReplacements_KeepsTheNewestThatTookEffect(t *testing.T) {
 	)
 
 	assert.Equal(t, map[pulid.ID]*agentmemory.Memory{first: active}, newest)
+}
+
+func TestReflectionSignals_OnlyInPassingIsNothingButWhatAPersonMentioned(t *testing.T) {
+	t.Parallel()
+
+	told := ReflectionSignal{Kind: ReflectionSignalPersonTold, Count: 2}
+
+	assert.True(t, ReflectionSignals{told}.OnlyInPassing())
+	assert.True(t, ReflectionSignals{
+		told,
+		{Kind: ReflectionSignalPersonCorrected, Count: 0},
+	}.OnlyInPassing(), "a signal that did not fire does not count")
+	assert.False(t, ReflectionSignals{
+		told,
+		{Kind: ReflectionSignalStandingRequest, Count: 1},
+	}.OnlyInPassing(), "a person who also said how they want it done asked for it to be kept")
+	assert.False(t, ReflectionSignals{{Kind: ReflectionSignalPersonTold, Count: 0}}.OnlyInPassing())
+	assert.False(t, ReflectionSignals{}.OnlyInPassing())
 }

@@ -7,6 +7,7 @@ import {
   updateAgentControl,
 } from "@/lib/graphql/agent-control";
 import type { AgentDefinitionRow } from "@/lib/graphql/agent-definition";
+import { DESK_DECISIONS_PATH } from "@/lib/desk-paths";
 import { aiControl } from "@/lib/queries/ai-control";
 import { assistant } from "@/lib/queries/assistant";
 import { agentDefinitionService } from "@/services/assistant";
@@ -71,7 +72,6 @@ import {
 } from "./roster-model";
 import { TRIGGER_LABELS, TRIGGER_NOTES } from "./trigger-meta";
 
-const DESK_DECISIONS_PATH = "/desk/decisions";
 const SUMMARY_STALE_MS = 30_000;
 const PENDING_REFRESH_MS = 3_000;
 const WORKING_REFRESH_MS = 15_000;

@@ -28,7 +28,7 @@ func page() []briefing.Section {
 			Key:     briefing.SectionDecisions,
 			Title:   "Decisions waiting",
 			Summary: "3 decisions wait.",
-			Path:    "/desk/decisions",
+			Path:    "/desk/needs?lens=decisions",
 		},
 		{
 			Key:     briefing.SectionCash,
@@ -55,7 +55,7 @@ func TestLinkPhrases_OpensEachPhraseOnItsSectionInHeadlineOrder(t *testing.T) {
 		{
 			Text:    "3 decisions wait on you",
 			Section: briefing.SectionDecisions,
-			Path:    "/desk/decisions",
+			Path:    "/desk/needs?lens=decisions",
 		},
 	}, links)
 }

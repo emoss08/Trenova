@@ -1,3 +1,5 @@
+import type { CaseWriting as Writing } from "@/lib/desk-case-stream";
+import { CaseWritingCard } from "./case-writing";
 import { DeskIcon } from "@/components/desk-chat/desk-icons";
 import { CaseFooter } from "./case-footer";
 import { PreviewRemedies } from "@/components/assistant/proposal-preview/preview-remedies";
@@ -14,7 +16,6 @@ import type { DeskCase, DeskCaseDecision } from "@/lib/graphql/desk-case";
 import type { AssistantProposal } from "@/types/assistant";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
-import { NovaBadge } from "@trenova/shared/components/ui/nova-badge";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { formatCountdownClock, formatUnixTime } from "@trenova/shared/lib/date";
 import { formatShortcut } from "@trenova/shared/lib/shortcuts";
@@ -32,6 +33,8 @@ type PlanProps = {
   decision: DeskCaseDecision;
   state: CaseDecision;
   canDecide: boolean;
+  /** Why the reader cannot decide the plan, when the case says why. */
+  locked?: string;
   timezone: string;
   recordPath: string | null;
   onDecline: () => void;
@@ -144,6 +147,7 @@ export function CasePlan({
   decision,
   state,
   canDecide,
+  locked = "",
   timezone,
   recordPath,
   onDecline,
@@ -217,7 +221,12 @@ export function CasePlan({
                 : t("Checked: would go through as shown");
 
   return (
-    <section className="dk-cz-plan" aria-label={t("Plan")} tabIndex={-1} id="dk-cz-plan">
+    <section
+      className="dk-cz-plan animate-rise"
+      aria-label={t("Plan")}
+      tabIndex={-1}
+      id="dk-cz-plan"
+    >
       <div className="dk-cz-plan-h">
         <div className="dk-cz-plan-k">
           {count > 1
@@ -357,7 +366,11 @@ export function CasePlan({
         </CaseFooter>
       )}
       {decision.phase === "Awaiting" && !canDecide && (
-        <CaseFooter note={t("This waits on someone who may approve what agents propose.")} />
+        <CaseFooter
+          note={
+            locked !== "" ? locked : t("This waits on someone who may approve what agents propose.")
+          }
+        />
       )}
       {decision.phase === "Undoable" && (
         <CaseFooter
@@ -704,23 +717,14 @@ function StepChange({
 }
 
 /** The plan while the agent drafts the option the person chose. */
-export function CasePlanDrafting({ agentName }: { agentName: string }) {
+export function CasePlanDrafting({ agentName, writing }: { agentName: string; writing: Writing }) {
   const t = useT();
 
   return (
-    <section className="dk-cz-plan" aria-label={t("Plan")} aria-busy>
-      <div className="dk-cz-plan-h">
-        <div className="dk-cz-plan-k">{t("Plan")}</div>
-      </div>
-      <div className="dk-cz-draft">
-        <div className="dk-cz-draft-l">
-          <NovaBadge size="xs" />
-          {t("{0} is drafting this option against your records as they are now…", agentName)}
-        </div>
-        <i className="dk-sk" />
-        <i className="dk-sk" />
-      </div>
-    </section>
+    <CaseWritingCard
+      writing={writing}
+      lead={t("{0} is drafting this option against your records as they are now…", agentName)}
+    />
   );
 }
 

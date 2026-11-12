@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -12,7 +13,7 @@ import (
 func TestShownArtifact_CarriesATablesFirstColumn(t *testing.T) {
 	t.Parallel()
 
-	artifact := tableArtifact("call_1", "shipment_list", map[string]any{
+	artifact := tableArtifact(&llmports.ToolCall{ID: "call_1", Name: "shipment_list"}, map[string]any{
 		"columns": []any{"proNumber", "status"},
 		"count":   float64(2),
 		"items": []any{

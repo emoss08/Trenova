@@ -489,8 +489,25 @@ func DescribeCriteria(
 		if !present || raw == nil {
 			continue
 		}
-		criteria.Field(param.Name, fmt.Sprint(raw))
+		criteria.Field(param.Name, describeValue(raw))
 	}
 
 	return criteria
+}
+
+func describeValue(raw any) string {
+	var parts []string
+	switch typed := raw.(type) {
+	case []any:
+		parts = make([]string, 0, len(typed))
+		for _, entry := range typed {
+			parts = append(parts, fmt.Sprint(entry))
+		}
+	case []string:
+		parts = typed
+	default:
+		return fmt.Sprint(raw)
+	}
+
+	return strings.Join(parts, ", ")
 }

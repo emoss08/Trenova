@@ -27,6 +27,7 @@ type fakeMemories struct {
 	agentmemoryports.AgentMemoryService
 	mode       agentmemory.MemorySavingMode
 	roles      []pulid.ID
+	named      map[string]pulid.ID
 	remembered []*agentmemoryports.RememberRequest
 	refuse     error
 }
@@ -43,12 +44,34 @@ func (f *fakeMemories) SavingMode(
 	return f.mode, nil
 }
 
-func (f *fakeMemories) Reader(
+func (f *fakeMemories) TeamRole(
+	context.Context,
+	pagination.TenantInfo,
+	pulid.ID,
+	string,
+) (pulid.ID, error) {
+	if len(f.roles) != 1 {
+		return pulid.Nil, errortypes.NewValidationError(
+			"teamName", errortypes.ErrRequired, "The person holds no one role",
+		)
+	}
+
+	return f.roles[0], nil
+}
+
+func (f *fakeMemories) ResolveSubject(
 	_ context.Context,
 	_ pagination.TenantInfo,
-	userID pulid.ID,
-) (agentmemory.MemoryReader, error) {
-	return agentmemory.MemoryReader{UserID: userID, RoleIDs: f.roles}, nil
+	_ agentmemory.MemorySubjectType,
+	name string,
+) (pulid.ID, error) {
+	if id, ok := f.named[name]; ok {
+		return id, nil
+	}
+
+	return pulid.Nil, errortypes.NewValidationError(
+		"subjectName", errortypes.ErrInvalid, "No record has that name",
+	)
 }
 
 func (f *fakeMemories) Remember(
@@ -143,9 +166,7 @@ func threadPlan() *agentreflectionports.ReflectionPlan {
 
 func alonePlan() *agentreflectionports.ReflectionPlan {
 	plan := threadPlan()
-	plan.Signals = agentreflection.ReflectionSignals{
-		{Kind: agentreflection.ReflectionSignalLongTask, Count: 9},
-	}
+	plan.Signals = agentreflection.ReflectionSignals{}
 
 	return plan
 }
@@ -482,4 +503,64 @@ func TestFinish_AnUnreadableAnswerFailsTheLookBack(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, agentreflection.ReflectionStatusFailed, outcome.Status)
 	assert.NotEmpty(t, reflections.stored.ErrorMessage)
+}
+
+func TestLessonRequest_ATeamLessonFromSomeoneWithSeveralRolesIsKeptForThem(t *testing.T) {
+	t.Parallel()
+
+	plan := threadPlan()
+	svc := lessonService(
+		&fakeMemories{roles: []pulid.ID{pulid.MustNew("rol_"), pulid.MustNew("rol_")}},
+	)
+
+	req, reason, err := svc.lessonRequest(t.Context(), plan, procedure(audienceTeam))
+	require.NoError(t, err)
+	require.Empty(t, reason)
+	assert.Equal(t, agentmemory.MemoryScopeUser, req.Scope,
+		"a look back cannot ask which team, and never picks one for them")
+	assert.Equal(t, plan.PersonUserID, req.OwnerUserID)
+	assert.True(t, req.RoleID.IsNil())
+}
+
+func TestLessonRequest_WhatAPersonOnlyMentionedIsOfferedNeverKept(t *testing.T) {
+	t.Parallel()
+
+	plan := threadPlan()
+	plan.Signals = agentreflection.ReflectionSignals{
+		{Kind: agentreflection.ReflectionSignalPersonTold, Count: 1},
+	}
+	svc := lessonService(&fakeMemories{})
+
+	req, reason, err := svc.lessonRequest(t.Context(), plan, procedure(audienceMe))
+	require.NoError(t, err)
+	require.Empty(t, reason)
+	assert.True(t, req.Suggest, "nobody asked for it to be remembered, so they are asked")
+}
+
+func TestLessonRequest_ARecordThePersonNamedIsFiledUnderTheOneWithThatName(t *testing.T) {
+	t.Parallel()
+
+	plan := threadPlan()
+	acme := pulid.MustNew("cus_")
+	svc := lessonService(&fakeMemories{named: map[string]pulid.ID{"Acme Manufacturing": acme}})
+
+	lesson := procedure(audienceMe)
+	lesson.SubjectType = string(agentmemory.MemorySubjectCustomer)
+	lesson.SubjectName = "Acme Manufacturing"
+	req, reason, err := svc.lessonRequest(t.Context(), plan, lesson)
+	require.NoError(t, err)
+	require.Empty(t, reason)
+	assert.Equal(t, agentmemory.MemorySubjectCustomer, req.SubjectType)
+	assert.Equal(t, acme, req.SubjectID)
+
+	lesson.SubjectName = "Granite"
+	unnamed, reason, err := svc.lessonRequest(t.Context(), plan, lesson)
+	require.NoError(t, err)
+	require.Empty(
+		t,
+		reason,
+		"a name no one record answers to keeps the lesson, filed under nothing",
+	)
+	assert.True(t, unnamed.SubjectID.IsNil())
+	assert.Empty(t, unnamed.SubjectType)
 }

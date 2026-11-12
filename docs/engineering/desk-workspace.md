@@ -175,15 +175,29 @@ resource, is its own row with no record.
   record with no label is treated as no record: it names nothing and opens no case.
 - **The page** is two panes: lanes of rows on the left, the item on the right with its condition,
   the agent on it or the one that could take it, the message and the decision, and a sticky bar.
-  `useWatchtowerActions` owns J/K/E/S/H, done, snooze and hand-off; the page adds 1–3 for the lens,
-  Enter for the case and A/D for a decision, and refuses E and S on a decision.
+  `useWatchtowerActions` owns J/K/E/S/H, done, snooze and hand-off; the page adds Enter for the
+  case and A/D for a decision, and refuses E and S on a decision.
+- **One page, one head.** `DeskNeeds` (`attention/desk-needs.tsx`) reads the lens and draws
+  `NeedsAttention` (the rows by record) for Everything and Watchtower, and `DecisionFlow`
+  (`decisions/decision-flow.tsx`) for Decisions. Both sit in the same two-pane frame under
+  `NeedsHead`, which owns the name, the progress bar, the lens chips and the keys 1–3, so a lens
+  changes what the list holds and never the page. A person sees the lenses they may read
+  (Watchtower for the first two, agent proposals for Decisions); the route lets in whoever may
+  read either (`anyOfLoaders`, and the `or` requirement in `routeaccess`).
+- **The Decisions lens is the only place changes are decided together.** It lists the pending
+  queue (`pendingDecisions`) by the kind of write; changes are ticked in the list and decided
+  from the dock at its foot, and the page beside it reads one change
+  ([proposal-previews.md](proposal-previews.md)). There is no `/desk/decisions`: every link to
+  the queue is `/desk/needs?lens=decisions`, with `&proposal=<id>` or `&run=<id>` to open on one
+  change (`lib/desk-paths.ts`). A decision on a record's row under Everything still has its card
+  there, and links to its sheet.
 - **A message is a signal here, never a lens.** `DeskLens.Triage` says where an item came from, and
   a row draws it as mail beside the record it is about, but Needs you has no Triage lens
   (`NEEDS_LENSES`): mail is read, answered, filed and set aside in Triage and nowhere else. A
   message's item offers **Open in Triage** (Enter when the row opens no case) and takes no Done or
   Snooze (`itemsWorkedElsewhere`), because the Watchtower clears it when Triage settles the message.
 - **Deciding in place** (`useItemDecision`) reads the item's proposal, or every step of its plan,
-  and approves with `decideAgentProposal` / `decideAgentPlan` as the Decisions queue does, carrying
+  and approves with `decideAgentProposal` / `decideAgentPlan` as the Decisions lens does, carrying
   the digest of every preview the server asks to be shown (`ReviewedChange`/`ReviewedPlan` with
   the approver scope). Nothing reads as done until the server answers; a refusal is shown in the
   server's words. Decline asks why and sends it as the decision's note.

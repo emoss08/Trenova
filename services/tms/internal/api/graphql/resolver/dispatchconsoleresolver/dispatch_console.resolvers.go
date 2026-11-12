@@ -479,12 +479,12 @@ func (r *QueryResolver) DispatchForecastQuality(ctx context.Context) (*gqlmodel.
 		return nil, err
 	}
 
-	quality, err := r.DemandForecastService.Quality(ctx, resolvercore.TenantInfo(authCtx))
+	standing, err := r.DemandForecastService.Standing(ctx, resolvercore.TenantInfo(authCtx))
 	if err != nil {
 		return nil, err
 	}
 
-	return mapDispatchForecastQuality(quality), nil
+	return mapDispatchForecastQuality(standing.Quality, standing.Refitting), nil
 }
 
 func (r *MutationResolver) DispatchPositionDriver(ctx context.Context, input gqlmodel.DispatchPositionDriverInput) (*gqlmodel.DispatchPositioning, error) {

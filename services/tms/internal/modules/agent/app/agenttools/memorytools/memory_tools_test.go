@@ -2,6 +2,7 @@ package memorytools
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentmemoryservice"
@@ -33,6 +34,7 @@ type fakeMemories struct {
 	offers     bool
 	refuse     error
 	edited     *agentmemoryports.EditAgentMemoryRequest
+	teamNames  []string
 }
 
 func (f *fakeMemories) PlanEdit(
@@ -74,6 +76,22 @@ func (f *fakeMemories) Reader(
 	userID pulid.ID,
 ) (agentmemory.MemoryReader, error) {
 	return agentmemory.MemoryReader{UserID: userID, RoleIDs: f.roleIDs}, nil
+}
+
+func (f *fakeMemories) TeamRole(
+	_ context.Context,
+	_ pagination.TenantInfo,
+	_ pulid.ID,
+	name string,
+) (pulid.ID, error) {
+	f.teamNames = append(f.teamNames, name)
+	if len(f.roleIDs) != 1 && name == "" {
+		return pulid.Nil, errors.New(
+			"The person holds several roles: Billing, Dispatch. Ask which team this is for",
+		)
+	}
+
+	return f.roleIDs[0], nil
 }
 
 func (f *fakeMemories) Remember(
@@ -296,28 +314,6 @@ func TestRemember_KeepsItForThePersonUnlessToldWhoElse(t *testing.T) {
 	assert.Nil(t, memory.OwnerUserID)
 }
 
-// A replacement takes the readers of the memory it replaces, so "for me" says
-// nothing about who it reaches. Classified personal, an agent once rewrote an
-// organization memory without asking anyone; a replacement goes through the
-// tiers like any shared write.
-func TestRemember_AReplacementIsNeverClassifiedPersonal(t *testing.T) {
-	t.Parallel()
-
-	tool := NewRememberTool(&fakeMemories{})
-	for _, visibleTo := range []string{"", "me"} {
-		args := map[string]any{
-			"content":          "Quote Acme in Canadian dollars.",
-			"replacesMemoryId": pulid.MustNew("amem_").String(),
-		}
-		if visibleTo != "" {
-			args["visibleTo"] = visibleTo
-		}
-
-		assert.Equal(t, agent.EgressInternal,
-			policyOf(tool).Classified(agenttoolstest.MemoryParams(args)).Egress, visibleTo)
-	}
-}
-
 // Nobody in the conversation means nobody to keep it for: it is the
 // organization's, as it always was.
 func TestRemember_WithNobodyInTheConversationKeepsItForTheOrganization(t *testing.T) {
@@ -470,4 +466,29 @@ func TestEditMemory_RefusesWhatTheServiceRefuses(t *testing.T) {
 	_, err = NewEditMemoryTool(memories).(*EditMemoryTool).request(t.Context(),
 		agenttoolstest.MemoryParams(map[string]any{"memoryId": "nope", "old": "a", "new": "b"}))
 	require.Error(t, err)
+}
+
+// With several roles the tool does not pick one: the model is told the names
+// and asks, then names the team.
+func TestRemember_ATeamMemoryForSomeoneWithSeveralRolesAsksWhichTeam(t *testing.T) {
+	t.Parallel()
+
+	billing, dispatch := pulid.MustNew("rol_"), pulid.MustNew("rol_")
+	memories := &fakeMemories{roleIDs: []pulid.ID{billing, dispatch}}
+	tool := NewRememberTool(memories)
+
+	unnamed := agenttoolstest.MemoryParams(
+		map[string]any{"content": "Columbus loads need a lumper receipt.", "visibleTo": "team"},
+	)
+	_, err := tool.(agentmemoryports.MemoryRecordingTool).Record(t.Context(), unnamed)
+	require.ErrorContains(t, err, "Ask which team")
+
+	named := agenttoolstest.MemoryParams(map[string]any{
+		"content": "Columbus loads need a lumper receipt.", "visibleTo": "team",
+		"teamName": "Billing",
+	})
+	memory, err := tool.(agentmemoryports.MemoryRecordingTool).Record(t.Context(), named)
+	require.NoError(t, err)
+	assert.Equal(t, agentmemory.MemoryScopeRole, memory.Scope)
+	assert.Equal(t, []string{"", "Billing"}, memories.teamNames)
 }

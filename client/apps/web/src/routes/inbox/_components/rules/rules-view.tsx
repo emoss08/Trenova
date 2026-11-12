@@ -1,3 +1,4 @@
+import { useTriageAccess } from "../use-triage-access";
 import type { TriageRule, TriageRuleInput } from "@/lib/graphql/inbox";
 import { inbox } from "@/lib/queries/inbox";
 import { useNowSeconds } from "@/hooks/use-now-seconds";
@@ -50,6 +51,7 @@ function openMatches(target: { ruleId: string } | { input: TriageRuleInput }) {
  * `useTriageRules()` and changes rules only through `useTriageActions()`.
  */
 export function RulesView() {
+  const { canManage } = useTriageAccess();
   const t = useT();
   const rules = useTriageRules().data;
   const seed = useTriageStore((store) => store.ruleSeed);
@@ -88,11 +90,13 @@ export function RulesView() {
           )}
         </div>
 
-        {draft === null ? (
-          <AddRow onStart={() => setDraft(EMPTY_DRAFT)} />
-        ) : (
-          <NewRule draft={draft} onChange={setDraft} onDone={() => setDraft(null)} />
-        )}
+        {/* Writing, pausing and deleting rules takes manage; without it the rules are read. */}
+        {canManage &&
+          (draft === null ? (
+            <AddRow onStart={() => setDraft(EMPTY_DRAFT)} />
+          ) : (
+            <NewRule draft={draft} onChange={setDraft} onDone={() => setDraft(null)} />
+          ))}
 
         {rules === undefined ? (
           <div aria-busy="true" className="flex flex-col gap-6 py-6">
@@ -301,6 +305,7 @@ const RuleRow = memo(function RuleRow({
   index: number;
   now: number;
 }) {
+  const { canManage } = useTriageAccess();
   const t = useT();
   const actions = useTriageActions();
   const [leaving, setLeaving] = useState(false);
@@ -348,6 +353,7 @@ const RuleRow = memo(function RuleRow({
         <Switch
           checked={rule.enabled}
           aria-label={rule.enabled ? t("Pause this rule") : t("Turn this rule on")}
+          disabled={!canManage}
           onCheckedChange={(checked) => actions.setRuleEnabled(rule, checked)}
           className="origin-left scale-[1.375]"
         />
@@ -383,21 +389,23 @@ const RuleRow = memo(function RuleRow({
           </TooltipTrigger>
           <TooltipContent>{t("See what it matched")}</TooltipContent>
         </Tooltip>
-        <Tooltip>
-          <TooltipTrigger
-            render={
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                aria-label={t("Delete rule")}
-                onClick={remove}
-              />
-            }
-          >
-            <XCloseIcon className="size-3.5" />
-          </TooltipTrigger>
-          <TooltipContent>{t("Delete rule")}</TooltipContent>
-        </Tooltip>
+        {canManage && (
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label={t("Delete rule")}
+                  onClick={remove}
+                />
+              }
+            >
+              <XCloseIcon className="size-3.5" />
+            </TooltipTrigger>
+            <TooltipContent>{t("Delete rule")}</TooltipContent>
+          </Tooltip>
+        )}
       </div>
     </li>
   );

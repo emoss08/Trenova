@@ -1090,6 +1090,8 @@ type AgentControlInput struct {
 	PersonMonthlyMessages *int `json:"personMonthlyMessages,omitempty"`
 	// Absent leaves whether agents learn from their work as it is.
 	LearningOff *bool `json:"learningOff,omitempty"`
+	// Absent leaves whether agents learn from what people mention in passing as it is.
+	PassingLearningOff *bool `json:"passingLearningOff,omitempty"`
 	// Absent leaves whether a model splits Desk conversations into named chapters as it is.
 	AutoChaptersOff *bool `json:"autoChaptersOff,omitempty"`
 	// Absent leaves the most one automatic money change may move as it is.

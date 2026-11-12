@@ -3,8 +3,10 @@ import {
   AgentMemoryCountDocument,
   AgentMemoryTableDocument,
   AgentMemoryTableRowFieldsFragmentDoc,
+  AgentMemoryUpkeepDocument,
   AgentMemoryUsageDocument,
   ApproveAgentMemorySuggestionDocument,
+  ConfirmAgentMemoryDocument,
   CreateAgentMemoryDocument,
   DismissAgentMemorySuggestionDocument,
   ReviewAgentMemoryDocument,
@@ -14,6 +16,7 @@ import {
   type AgentMemoryKind,
   type AgentMemoryStatus,
   type AgentMemoryTableRowFieldsFragment,
+  type AgentMemoryUpkeepReason,
 } from "@trenova/graphql/generated/graphql";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
@@ -72,6 +75,47 @@ export async function reviewAgentMemory(id: string, version: number) {
   });
 
   return getFragmentData(AgentMemoryTableRowFieldsFragmentDoc, data.reviewAgentMemory);
+}
+
+/**
+ * Says a person has read an active memory and it still holds, so AI Control
+ * stops asking about it until it ages again.
+ */
+export async function confirmAgentMemory(id: string, version: number) {
+  const data = await requestGraphQL({
+    document: ConfirmAgentMemoryDocument,
+    operationName: "ConfirmAgentMemory",
+    variables: { id, version },
+  });
+
+  return getFragmentData(AgentMemoryTableRowFieldsFragmentDoc, data.confirmAgentMemory);
+}
+
+export const agentMemoryUpkeepQueryKey = [AGENT_MEMORY_LIST_KEY, "upkeep"] as const;
+
+export type AgentMemoryUpkeep = {
+  reason: AgentMemoryUpkeepReason;
+  memory: AgentMemoryTableRowFieldsFragment;
+};
+
+/**
+ * The shared memories worth another look: facts nobody has confirmed in a long
+ * time and memories no turn has used. It sits under the list's key, so
+ * whatever refreshes the list refreshes it too.
+ */
+export async function fetchAgentMemoryUpkeep(options?: {
+  signal?: AbortSignal;
+}): Promise<AgentMemoryUpkeep[]> {
+  const data = await requestGraphQL({
+    document: AgentMemoryUpkeepDocument,
+    operationName: "AgentMemoryUpkeep",
+    signal: options?.signal,
+  });
+
+  return data.agentMemoryUpkeep.map((item) => ({
+    reason: item.reason,
+    memory: getFragmentData(AgentMemoryTableRowFieldsFragmentDoc, item.memory),
+  }));
 }
 
 export const taintingAgentMemoriesQueryKey = [AGENT_MEMORY_LIST_KEY, "tainting"] as const;

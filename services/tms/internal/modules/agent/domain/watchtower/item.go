@@ -280,3 +280,17 @@ type Read struct {
 	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 	SeenAt         int64    `json:"seenAt"         keel:"seen_at"`
 }
+
+// HandOffBrief is the item as an agent is handed it: what was raised and the
+// sentence that says why.
+func (i *Item) HandOffBrief() string {
+	title, summary := strings.TrimSpace(i.Title), strings.TrimSpace(i.Summary)
+	switch {
+	case title == "":
+		return summary
+	case summary == "":
+		return title
+	default:
+		return title + ". " + summary
+	}
+}

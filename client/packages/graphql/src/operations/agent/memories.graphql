@@ -18,6 +18,7 @@ fragment AgentMemoryTableRowFields on AgentMemory {
   taints
   reviewedByUserId
   reviewedAt
+  confirmedAt
   sourceRunId
   sourceProposalId
   sourceThreadId
@@ -84,6 +85,21 @@ query AgentMemoryUsage {
     activeCount
     activeSoftCap
     warnAt
+  }
+}
+
+query AgentMemoryUpkeep {
+  agentMemoryUpkeep {
+    reason
+    memory {
+      ...AgentMemoryTableRowFields
+    }
+  }
+}
+
+mutation ConfirmAgentMemory($id: ID!, $version: Int!) {
+  confirmAgentMemory(id: $id, version: $version) {
+    ...AgentMemoryTableRowFields
   }
 }
 

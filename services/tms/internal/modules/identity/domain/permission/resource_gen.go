@@ -147,6 +147,7 @@ const (
 	ResourceInsight          Resource = "insight"
 	ResourceWatchtower       Resource = "watchtower"
 	ResourceBriefing         Resource = "briefing"
+	ResourceRecordShare      Resource = "record_share"
 
 	// Customers
 	ResourceCustomer         Resource = "customer"

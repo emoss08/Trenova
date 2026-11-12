@@ -33,6 +33,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/customfieldhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/dataentrycontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/dataretentionhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/deskcasehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/detentionhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/dispatchcontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/distancecontrolhandler"
@@ -240,6 +241,7 @@ type RouterParams struct {
 	ManualJournalHandler            *manualjournalhandler.Handler
 	BillingControlHandler           *billingcontrolhandler.Handler
 	CaseChecklistHandler            *casechecklisthandler.Handler
+	DeskCaseHandler                 *deskcasehandler.Handler
 	InvoiceAdjustmentControlHandler *invoiceadjustmentcontrolhandler.Handler
 	BillingQueueHandler             *billingqueuehandler.Handler
 	PaletteHandler                  *palettehandler.Handler
@@ -367,6 +369,7 @@ type Router struct {
 	manualJournalHandler            *manualjournalhandler.Handler
 	billingControlHandler           *billingcontrolhandler.Handler
 	caseChecklistHandler            *casechecklisthandler.Handler
+	deskCaseHandler                 *deskcasehandler.Handler
 	invoiceAdjustmentControlHandler *invoiceadjustmentcontrolhandler.Handler
 	billingQueueHandler             *billingqueuehandler.Handler
 	paletteHandler                  *palettehandler.Handler
@@ -496,6 +499,7 @@ func NewRouter(p RouterParams) *Router {
 		manualJournalHandler:            p.ManualJournalHandler,
 		billingControlHandler:           p.BillingControlHandler,
 		caseChecklistHandler:            p.CaseChecklistHandler,
+		deskCaseHandler:                 p.DeskCaseHandler,
 		invoiceAdjustmentControlHandler: p.InvoiceAdjustmentControlHandler,
 		billingQueueHandler:             p.BillingQueueHandler,
 		paletteHandler:                  p.PaletteHandler,
@@ -686,6 +690,7 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.manualJournalHandler.RegisterRoutes(protected)
 	r.billingControlHandler.RegisterRoutes(protected)
 	r.caseChecklistHandler.RegisterRoutes(protected)
+	r.deskCaseHandler.RegisterRoutes(protected)
 	r.invoiceAdjustmentControlHandler.RegisterRoutes(protected)
 	r.billingQueueHandler.RegisterRoutes(protected)
 	r.paletteHandler.RegisterRoutes(protected)

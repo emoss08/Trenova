@@ -4033,6 +4033,10 @@ type AgentControl {
   learningOff: Boolean!
   organizationId: ID!
   """
+  Agents no longer look back over a conversation only because a person stated something in passing.
+  """
+  passingLearningOff: Boolean!
+  """
   Questions one person may ask the agents each calendar month (UTC); 0 is unlimited.
   """
   personMonthlyMessages: Int!
@@ -4070,6 +4074,10 @@ input AgentControlInput {
   earnedAutonomy: Boolean
   """Absent leaves whether agents learn from their work as it is."""
   learningOff: Boolean
+  """
+  Absent leaves whether agents learn from what people mention in passing as it is.
+  """
+  passingLearningOff: Boolean
   """
   Absent leaves the per-person monthly allowance as it is; 0 is unlimited.
   """
@@ -4784,6 +4792,9 @@ memory.
 type AgentMemory {
   agentDefinitionId: ID
   businessUnitId: ID!
+  confirmedAt: Timestamp
+  """The person who last read the memory and said it still holds."""
+  confirmedByUserId: ID
   content: String!
   createdAt: Timestamp!
   createdByUserId: ID
@@ -4971,6 +4982,26 @@ enum AgentMemorySubjectType {
   Customer
   Location
   Worker
+}
+
+"""
+A shared, active memory a person should read again: confirm it still holds, change it or retire it.
+"""
+type AgentMemoryUpkeep {
+  memory: AgentMemory!
+  reason: AgentMemoryUpkeepReason!
+}
+
+"""Why a memory is worth another look."""
+enum AgentMemoryUpkeepReason {
+  """
+  A fact with no end date that nobody has confirmed for 180 days or more.
+  """
+  Aging
+  """
+  No turn has used it since it was recorded or last confirmed, 30 days ago or more.
+  """
+  NeverUsed
 }
 
 """
@@ -6012,9 +6043,10 @@ type AgentReflectionSignal {
 }
 
 enum AgentReflectionSignalKind {
-  LongTask
   NegativeFeedback
   PersonCorrected
+  """The person stated something while asking for something else."""
+  PersonTold
   ProposalModified
   ProposalRejected
   StandingRequest
@@ -24327,6 +24359,10 @@ type Mutation {
   Confirms Trenova's proposals as they were shown. A proposal that changed since is refused. At most 200 at a time.
   """
   confirmAccountingMappings(input: [ConfirmAccountingMappingInput!]!): [AccountingMapping!]!
+  """
+  Records that a person read an active memory and it still holds, so it is not asked about again until it ages. Refused for one changed since the version given.
+  """
+  confirmAgentMemory(id: ID!, version: Int!): AgentMemory!
   """Accepts a memory an agent offered in the person's conversation."""
   confirmDeskMemory(id: ID!, input: ConfirmDeskMemoryInput!): DeskMemory!
   """
@@ -27519,6 +27555,10 @@ type Query {
   agentInstructionLint(input: AgentInstructionLintInput!): [AgentInstructionFinding!]!
   agentMemories(input: DataTableConnectionInput!): AgentMemoryConnection!
   agentMemory(id: ID!): AgentMemory
+  """
+  The shared memories worth another look, oldest first, at most 25: facts nobody has confirmed in a long time and memories no turn has used.
+  """
+  agentMemoryUpkeep: [AgentMemoryUpkeep!]!
   """How many active memories the organization keeps, against its soft cap."""
   agentMemoryUsage: AgentMemoryUsage!
   """What agents are told about the organization's business."""

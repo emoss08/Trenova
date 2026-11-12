@@ -347,7 +347,7 @@ func deskIDs(memories []*agentmemoryports.DeskMemory) []pulid.ID {
 	return ids
 }
 
-func TestDeskMemories_ShowOnlyTheirOwnTheirRolesAndTheOrganizations(t *testing.T) {
+func TestDeskMemories_ShowTheirOwnTheirRolesTheOrganizationsAndWhatAnAgentKeeps(t *testing.T) {
 	t.Parallel()
 
 	w := newDeskWorld()
@@ -375,7 +375,8 @@ func TestDeskMemories_ShowOnlyTheirOwnTheirRolesAndTheOrganizations(t *testing.T
 		organization.ID, own.ID, someoneElses.ID, team.ID, otherTeam.ID, agentOnly.ID,
 	})
 	require.NoError(t, err)
-	assert.Equal(t, []pulid.ID{organization.ID, own.ID, team.ID}, deskIDs(shown))
+	assert.Equal(t, []pulid.ID{organization.ID, own.ID, team.ID, agentOnly.ID}, deskIDs(shown),
+		"a memory an agent keeps is read by the person whose answer it was used in")
 
 	editable := map[pulid.ID]bool{}
 	for _, memory := range shown {
@@ -383,7 +384,9 @@ func TestDeskMemories_ShowOnlyTheirOwnTheirRolesAndTheOrganizations(t *testing.T
 	}
 	assert.Equal(
 		t,
-		map[pulid.ID]bool{organization.ID: false, own.ID: true, team.ID: false},
+		map[pulid.ID]bool{
+			organization.ID: false, own.ID: true, team.ID: false, agentOnly.ID: false,
+		},
 		editable,
 		"without the permission only her own is hers to change",
 	)

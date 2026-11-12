@@ -27,7 +27,27 @@ type ListMemoryRecordLinksRequest struct {
 	IDs        []pulid.ID
 }
 
+// MemorySubjectCandidate is one record a name might mean.
+type MemorySubjectCandidate struct {
+	ID    pulid.ID
+	Label string
+	Code  string
+}
+
+// FindMemorySubjectsRequest asks which records of one kind a name could mean,
+// so a memory can be kept about a customer the caller knows only by name.
+type FindMemorySubjectsRequest struct {
+	TenantInfo pagination.TenantInfo
+	Type       agentmemory.MemorySubjectType
+	Name       string
+	Limit      int
+}
+
 type AgentMemorySubjectRepository interface {
+	FindSubjectsByName(
+		ctx context.Context,
+		req *FindMemorySubjectsRequest,
+	) ([]MemorySubjectCandidate, error)
 	ListRecordLinks(
 		ctx context.Context,
 		req *ListMemoryRecordLinksRequest,

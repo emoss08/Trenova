@@ -67,15 +67,21 @@ func (s *Service) consolidate(ctx context.Context, c *consolidation) {
 		return
 	}
 
-	judged := judgeable(neighbors)
-	if !c.judge || len(judged) == 0 {
+	if !c.judge {
+		return
+	}
+	judged := judgeable(neighbors, maxJudgedNeighbors)
+	wider := judgeable(s.widerNeighbors(ctx, c, same), maxJudgedNeighbors-len(judged))
+	if len(judged)+len(wider) == 0 {
 		return
 	}
 
 	judgement, err := s.judge.Judge(ctx, &agentmemoryports.JudgeMemoryRequest{
-		TenantInfo:  c.req.TenantInfo,
-		Memory:      entity,
-		Candidates:  judged,
+		TenantInfo: c.req.TenantInfo,
+		Memory:     entity,
+		Candidates: append(
+			append(make([]*agentmemory.Memory, 0, len(judged)+len(wider)), judged...),
+			wider...),
 		Attribution: consolidationAttribution(c.req, entity),
 	})
 	if err != nil {
@@ -89,6 +95,72 @@ func (s *Service) consolidate(ctx context.Context, c *consolidation) {
 	}
 
 	s.applyJudgement(c, judged, judgement)
+	if plan.Existing == nil && plan.Replaced == nil {
+		applyWiderJudgement(plan, wider, judgement)
+	}
+}
+
+// widerNeighbors reads the memories kept for a wider audience that the new
+// memory's readers also read, about the same record and tool: the ones a
+// personal or team memory can agree with or differ from without replacing.
+func (s *Service) widerNeighbors(
+	ctx context.Context,
+	c *consolidation,
+	same *agentmemoryports.FindActiveAgentMemoryRequest,
+) []*agentmemory.Memory {
+	entity := c.plan.Memory
+	if entity.Status != agentmemory.MemoryStatusActive ||
+		(entity.Scope != agentmemory.MemoryScopeUser && entity.Scope != agentmemory.MemoryScopeRole) {
+		return nil
+	}
+
+	var roleIDs []pulid.ID
+	if entity.Scope == agentmemory.MemoryScopeUser && entity.OwnerUserID != nil {
+		roleIDs = s.promptReader(ctx, c.req.TenantInfo, *entity.OwnerUserID).RoleIDs
+	}
+	wider, err := s.repo.ListNeighbors(ctx, &agentmemoryports.ListAgentMemoryNeighborsRequest{
+		Same:    same,
+		Terms:   agentmemoryrank.RecallTerms(entity.Content),
+		Limit:   neighborCandidates,
+		Wider:   true,
+		RoleIDs: roleIDs,
+	})
+	if err != nil {
+		s.l.Warn("agent memory: the shared memories beside a new one could not be read",
+			zap.String("organization", c.req.TenantInfo.OrgID.String()),
+			zap.Error(err),
+		)
+
+		return nil
+	}
+
+	return wider
+}
+
+// applyWiderJudgement settles a personal or team memory against what a wider
+// audience keeps. One that already says it is kept in place of a copy; one
+// that says otherwise stays, and the new memory is kept beside it and marked
+// as differing so the person hears that the two disagree.
+func applyWiderJudgement(
+	plan *agentmemoryports.RememberPlan,
+	wider []*agentmemory.Memory,
+	judgement *agentmemoryports.MemoryJudgement,
+) {
+	for _, neighbor := range wider {
+		if judgement.Verdict(neighbor.ID) == agentmemoryports.MemoryVerdictSame &&
+			neighbor.Kind == plan.Memory.Kind {
+			plan.Existing = neighbor
+
+			return
+		}
+	}
+	for _, neighbor := range wider {
+		if judgement.Verdict(neighbor.ID) == agentmemoryports.MemoryVerdictContradicts {
+			plan.Differs = neighbor
+
+			return
+		}
+	}
 }
 
 func (s *Service) applyJudgement(
@@ -140,7 +212,7 @@ func contradictionTakesEffect(c *consolidation, replaced *agentmemory.Memory) bo
 		return false
 	}
 
-	return mayReplaceNow(replaced, entity, c.req.PersonUserID, c.actor, c.manages)
+	return mayReplaceNow(replaced, entity, c.req, c.actor, c.manages)
 }
 
 func DuplicateOf(entity *agentmemory.Memory, neighbors []*agentmemory.Memory) *agentmemory.Memory {
@@ -177,16 +249,16 @@ func onlyFunctionWordsDiffer(a, b map[string]struct{}) bool {
 	return true
 }
 
-func judgeable(neighbors []*agentmemory.Memory) []*agentmemory.Memory {
-	judged := make([]*agentmemory.Memory, 0, min(len(neighbors), maxJudgedNeighbors))
+func judgeable(neighbors []*agentmemory.Memory, limit int) []*agentmemory.Memory {
+	judged := make([]*agentmemory.Memory, 0, max(min(len(neighbors), limit), 0))
 	for _, neighbor := range neighbors {
+		if len(judged) >= limit {
+			break
+		}
 		if neighbor == nil || strings.TrimSpace(neighbor.Content) == "" {
 			continue
 		}
 		judged = append(judged, neighbor)
-		if len(judged) == maxJudgedNeighbors {
-			break
-		}
 	}
 
 	return judged

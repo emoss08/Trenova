@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/replycheck"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/artifactpayload"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/recordviews"
+	"github.com/emoss08/trenova/internal/modules/agent/app/filterwords"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
@@ -463,7 +464,7 @@ func ArtifactFromObservation(
 	order := agenttoolports.ReadingOrder(call.Name)
 	if strings.HasPrefix(order, getToolPrefix) {
 		if isRowSet(result) {
-			return tableArtifact(call.ID, call.Name, result)
+			return tableArtifact(call, result)
 		}
 
 		return EntityCardArtifact(call.ID, call.Name, document)
@@ -478,7 +479,7 @@ func ArtifactFromObservation(
 			return card
 		}
 
-		return tableArtifact(call.ID, call.Name, result)
+		return tableArtifact(call, result)
 	}
 
 	return nil
@@ -548,7 +549,11 @@ func isRowSet(result map[string]any) bool {
 // The rows are the projection a person reads, not the ones the model did:
 // see artifact_display.go. A table with nothing readable left in it is not
 // one either.
-func tableArtifact(callID, toolName string, result map[string]any) *assistantartifact.Artifact {
+func tableArtifact(
+	call *llmports.ToolCall,
+	result map[string]any,
+) *assistantartifact.Artifact {
+	callID, toolName := call.ID, call.Name
 	rows, ok := result["items"].([]any)
 	if !ok || len(rows) == 0 {
 		return nil
@@ -571,9 +576,7 @@ func tableArtifact(callID, toolName string, result map[string]any) *assistantart
 		artifactpayload.PayloadColumns:  projection.Columns,
 		artifactpayload.PayloadRows:     projection.Rows,
 		artifactpayload.PayloadRowCount: result["count"],
-		artifactpayload.PayloadSearchedFor: artifactpayload.StringsOf(
-			result[artifactpayload.PayloadSearchedFor],
-		),
+		artifactpayload.PayloadFilters:  filterwords.OfResult(result, call.Arguments),
 	}
 	if projection.RecordEntity != "" {
 		payload["recordEntity"] = projection.RecordEntity
@@ -719,14 +722,13 @@ func candidateRankingArtifact(callID string, result map[string]any) *assistantar
 	}
 
 	payload := map[string]any{
-		payloadDisplay:                     assistantartifact.DisplayVersion,
-		artifactpayload.PayloadTool:        "dispatch_rank_candidates",
-		artifactpayload.PayloadEntity:      "workers",
-		artifactpayload.PayloadColumns:     projection.Columns,
-		artifactpayload.PayloadRows:        projection.Rows,
-		artifactpayload.PayloadRowCount:    float64(len(projection.Rows)),
-		artifactpayload.PayloadSearchedFor: []string{},
-		payloadRanked:                      true,
+		payloadDisplay:                  assistantartifact.DisplayVersion,
+		artifactpayload.PayloadTool:     "dispatch_rank_candidates",
+		artifactpayload.PayloadEntity:   "workers",
+		artifactpayload.PayloadColumns:  projection.Columns,
+		artifactpayload.PayloadRows:     projection.Rows,
+		artifactpayload.PayloadRowCount: float64(len(projection.Rows)),
+		payloadRanked:                   true,
 	}
 	if projection.RecordEntity != "" {
 		payload["recordEntity"] = projection.RecordEntity

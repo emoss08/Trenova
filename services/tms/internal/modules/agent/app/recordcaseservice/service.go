@@ -143,6 +143,7 @@ type composed struct {
 	standing  *caseownerports.Standing
 	handOff   *recordcase.HandOff
 	exhibits  []recordcase.Exhibit
+	stream    string
 	zone      *time.Location
 	now       int64
 }
@@ -527,6 +528,7 @@ func (s *Service) handOffOf(
 	}
 	if primary.AgentWorkFrom(run).Active() {
 		out.Working = true
+		built.stream = run.WorkflowID
 
 		return out
 	}

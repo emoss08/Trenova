@@ -95,37 +95,39 @@ type Params struct {
 }
 
 type Service struct {
-	l           *zap.Logger
-	repo        agentmemoryports.AgentMemoryRepository
-	runs        runReader
-	labeler     agentmemorysubjects.SubjectLabeler
-	audit       actionLogger
-	subjects    agentmemorysubjects.SubjectResolver
-	ranker      agentmemoryports.MemoryRanker
-	indexer     retrievalports.RetrievalIndexer
-	vectors     retrievalports.MemoryVectorSearcher
-	roles       roleReader
-	security    permissionports.SecurityAuditor
-	permissions permissionports.PermissionEngine
-	judge       agentmemoryports.MemoryJudge
+	l            *zap.Logger
+	repo         agentmemoryports.AgentMemoryRepository
+	runs         runReader
+	labeler      agentmemorysubjects.SubjectLabeler
+	audit        actionLogger
+	subjects     agentmemorysubjects.SubjectResolver
+	subjectNames agentmemoryports.AgentMemorySubjectRepository
+	ranker       agentmemoryports.MemoryRanker
+	indexer      retrievalports.RetrievalIndexer
+	vectors      retrievalports.MemoryVectorSearcher
+	roles        roleReader
+	security     permissionports.SecurityAuditor
+	permissions  permissionports.PermissionEngine
+	judge        agentmemoryports.MemoryJudge
 }
 
 //nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
 func New(p Params) agentmemoryports.AgentMemoryService {
 	return &Service{
-		l:           p.Logger.Named("service.agentmemory"),
-		repo:        p.Repo,
-		runs:        p.Runs,
-		labeler:     p.Labeler,
-		audit:       p.AuditService,
-		subjects:    agentmemorysubjects.NewSubjectResolver(p.Subjects),
-		ranker:      p.Ranker,
-		indexer:     p.Indexer,
-		vectors:     p.Vectors,
-		roles:       rolesOrNil(p.Roles),
-		security:    p.Security,
-		permissions: p.Permissions,
-		judge:       p.Judge,
+		l:            p.Logger.Named("service.agentmemory"),
+		repo:         p.Repo,
+		runs:         p.Runs,
+		labeler:      p.Labeler,
+		audit:        p.AuditService,
+		subjects:     agentmemorysubjects.NewSubjectResolver(p.Subjects),
+		subjectNames: p.Subjects,
+		ranker:       p.Ranker,
+		indexer:      p.Indexer,
+		vectors:      p.Vectors,
+		roles:        rolesOrNil(p.Roles),
+		security:     p.Security,
+		permissions:  p.Permissions,
+		judge:        p.Judge,
 	}
 }
 
@@ -226,6 +228,7 @@ func (s *Service) remember(
 		return nil, err
 	}
 
+	created.DiffersFrom = plan.Differs
 	s.log(ctx, created, actor, permission.OpCreate, "Agent memory recorded")
 	s.queueForRetrieval(ctx, created)
 	if created.Status == agentmemory.MemoryStatusActive && created.Replaces() {
@@ -1196,6 +1199,7 @@ func (s *Service) ForContext(
 	}
 
 	reader := s.promptReader(ctx, req.TenantInfo, req.ReaderUserID)
+	subjects = s.withNamedSubjects(ctx, req, reader, subjects, now)
 
 	memories, err := s.repo.ListActive(ctx, &agentmemoryports.ListActiveAgentMemoriesRequest{
 		TenantInfo:        req.TenantInfo,
@@ -1232,6 +1236,60 @@ func (s *Service) ForContext(
 		Subjects:  subjects,
 		Relevance: agentmemoryrank.Relevance(req.Focus, req.Text, ranked),
 	}, nil
+}
+
+// withNamedSubjects adds the records the turn's message names in words. A
+// memory about a customer is read when that customer is the page, the subject
+// or a mention; a person who types "acme manufacturing" means the same record,
+// and without this the memory kept about it was never a candidate.
+func (s *Service) withNamedSubjects(
+	ctx context.Context,
+	req *agentmemoryports.MemoryContextRequest,
+	reader agentmemory.MemoryReader,
+	subjects []agentmemory.MemorySubject,
+	now int64,
+) []agentmemory.MemorySubject {
+	room := agentmemory.MaxMemorySubjectsPerTurn - len(subjects)
+	text := strings.TrimSpace(req.Focus)
+	if text == "" {
+		text = strings.TrimSpace(req.Text)
+	}
+	if room <= 0 || text == "" {
+		return subjects
+	}
+
+	named, err := s.repo.ListNamedSubjects(ctx, &agentmemoryports.ListNamedMemorySubjectsRequest{
+		TenantInfo:        req.TenantInfo,
+		AgentDefinitionID: req.AgentDefinitionID,
+		Reader:            reader,
+		Now:               now,
+		Text:              text,
+		Limit:             room,
+	})
+	if err != nil {
+		s.l.Warn("agent memory: the records a message names could not be read",
+			zap.String("organization", req.TenantInfo.OrgID.String()),
+			zap.Error(err),
+		)
+
+		return subjects
+	}
+
+	for _, ref := range named {
+		known := slices.ContainsFunc(subjects, func(subject agentmemory.MemorySubject) bool {
+			return subject.Type == ref.Type && subject.ID == ref.ID
+		})
+		if known || len(subjects) >= agentmemory.MaxMemorySubjectsPerTurn {
+			continue
+		}
+		subjects = append(subjects, agentmemory.MemorySubject{
+			Type:     ref.Type,
+			ID:       ref.ID,
+			Relation: agentmemory.MemoryRelationRelated,
+		})
+	}
+
+	return subjects
 }
 
 func (s *Service) RecordUse(

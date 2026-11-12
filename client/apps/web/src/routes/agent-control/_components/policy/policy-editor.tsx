@@ -99,6 +99,7 @@ export function PolicyEditor({ open, control, onClose }: PolicyEditorProps) {
     earnedAutonomy: { label: t("Earned autonomy") },
     promotionThreshold: { label: t("Clean approvals") },
     learnsFromWork: { label: t("Learning") },
+    learnsFromMentions: { label: t("Learning from mentions") },
     chaptersByModel: { label: t("Desk chapters") },
     personMonthlyMessages: {
       label: t("Allowance"),
@@ -166,7 +167,7 @@ export function PolicyEditor({ open, control, onClose }: PolicyEditorProps) {
         <>
           <p className="es-note">
             {t(
-              "When a conversation settles, the agent keeps the lesson as memory. If something went wrong, took several tries or a person corrected it, the agent keeps a preference, a fact or the steps that worked. Lessons shared beyond one person wait for approval, and anything drawn from outside content is only ever offered. Each agent also has its own switch.",
+              "When a conversation settles, the agent looks back over it. If a person corrected it, said how they want something done, or changed or refused what it proposed, it keeps a preference, a fact or the steps as memory. Lessons shared beyond one person wait for approval, and anything drawn from outside content is only ever offered. Each agent also has its own switch.",
             )}
           </p>
           {!values.learnsFromWork && loaded.learnsFromWork && (
@@ -174,6 +175,32 @@ export function PolicyEditor({ open, control, onClose }: PolicyEditorProps) {
               {t(
                 "Every agent stops keeping lessons, whatever its own switch says. Memories already kept stay.",
               )}
+            </Callout>
+          )}
+        </>
+      ),
+    },
+    {
+      id: "mentions",
+      label: t("Learn from what people mention"),
+      keys: ["learnsFromMentions"],
+      actions: (
+        <HeaderSwitch
+          control={form.control}
+          name="learnsFromMentions"
+          label={t("Learn from what people mention")}
+        />
+      ),
+      content: (
+        <>
+          <p className="es-note">
+            {t(
+              "People say what matters while asking for something else: a dock that closes early on Fridays, a customer who wants a call before delivery. With this on, the agent also looks back over a conversation where a person stated something like that, and offers the fact for the customer, location, driver or carrier it is about. Nothing learned this way is kept until a person accepts it. It is one more model call for those conversations, and its cost shows under Agents learning from their work in usage.",
+            )}
+          </p>
+          {values.learnsFromMentions && !values.learnsFromWork && (
+            <Callout tone="i">
+              {t("Learn from their work is off, so agents don't look back at all.")}
             </Callout>
           )}
         </>
@@ -294,7 +321,7 @@ function HeaderSwitch({
   label,
 }: {
   control: Control<PolicyFormValues>;
-  name: "earnedAutonomy" | "learnsFromWork" | "chaptersByModel";
+  name: "earnedAutonomy" | "learnsFromWork" | "learnsFromMentions" | "chaptersByModel";
   label: string;
 }) {
   return (

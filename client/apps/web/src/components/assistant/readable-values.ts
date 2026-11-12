@@ -238,6 +238,11 @@ export function isRecordId(value: unknown): boolean {
   return typeof value === "string" && PULID.test(value.trim());
 }
 
+/** Whether a key names a status or a member of a set, whose values are codes to read as words. */
+export function isCodedKey(key: string): boolean {
+  return endsWithWord(key, STATUS_WORDS) || endsWithWord(key, ENUM_WORDS);
+}
+
 /** Whether key is one of words, or ends in one as a camel-case word of its own. */
 function endsWithWord(key: string, words: readonly string[]): boolean {
   const lowered = key.toLowerCase();

@@ -1239,20 +1239,14 @@ func (rr *RouteRegistry) registerDeskRoutes() {
 		Path:      "/desk/needs",
 		MatchType: RouteMatchExact,
 		Requirements: []RouteRequirement{
-			{Resource: permission.ResourceWatchtower, Operation: permission.OpRead},
-		},
-		DisplayName: "Needs you",
-		Category:    "Desk",
-		ParentRoute: "/desk",
-	})
-
-	_ = rr.Register(&RouteDefinition{
-		Path:      "/desk/decisions",
-		MatchType: RouteMatchExact,
-		Requirements: []RouteRequirement{
+			{
+				Resource:   permission.ResourceWatchtower,
+				Operation:  permission.OpRead,
+				Combinator: "or",
+			},
 			{Resource: permission.ResourceAgentProposal, Operation: permission.OpRead},
 		},
-		DisplayName: "Decisions",
+		DisplayName: "Needs you",
 		Category:    "Desk",
 		ParentRoute: "/desk",
 	})

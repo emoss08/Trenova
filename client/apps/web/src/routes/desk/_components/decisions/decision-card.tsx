@@ -1,19 +1,12 @@
-import { Badge } from "@trenova/shared/components/ui/badge";
 import { PlanPreview } from "@/components/assistant/proposal-preview/plan-preview";
 import {
   canApprove,
   gateDigest,
   reviewRequiredFor,
 } from "@/components/assistant/proposal-preview/preview-gate";
-import type { EditorFocus } from "@/components/assistant/proposal-editor";
-import {
-  askAgentMessage,
-  askAgentPlanMessage,
-  editableParam,
-} from "@/components/assistant/proposal-preview/preview-warnings";
+import { askAgentPlanMessage } from "@/components/assistant/proposal-preview/preview-warnings";
 import {
   PreviewLoadState,
-  ProposalPreview,
   type WouldFailActions,
 } from "@/components/assistant/proposal-preview/proposal-preview";
 import {
@@ -25,10 +18,8 @@ import { conversationPath } from "@/lib/conversation-path";
 import type { ProposalPreview as ProposalPreviewData } from "@/lib/graphql/agent-preview";
 import { agentRunPath } from "@/lib/record-paths";
 import { formatTimeAgo } from "@/lib/time-utils";
-import { Button } from "@trenova/shared/components/ui/button";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
-import { cn } from "@trenova/shared/lib/utils";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { Link } from "react-router";
 import {
   approvalFacts,
@@ -46,14 +37,10 @@ import {
   usePlanSteps,
   type PendingDecisionNode,
   type PendingPlanNode,
-  type PendingProposalNode,
 } from "./use-pending-decisions";
 import { useRichT } from "@trenova/shared/i18n/rich";
 import { QueueCard } from "../queue/queue";
 import type { QueueLeave } from "../queue/use-queue-cursor";
-
-/** The most record rows the card lists before it says how many more there are. */
-const SHOWN_ROWS = 5;
 
 /** What the card tells the bar about the decision on screen. */
 export type CardGate = {
@@ -77,7 +64,7 @@ export type CardProps = {
   onDeclineWith: (reason: string) => void;
 };
 
-function Who({ node }: { node: PendingDecisionNode }) {
+export function Who({ node }: { node: PendingDecisionNode }) {
   const t = useT();
   const rt = useRichT();
   const run = node.run;
@@ -104,39 +91,14 @@ function Who({ node }: { node: PendingDecisionNode }) {
   );
 }
 
-function RawArguments({ value }: { value: unknown }) {
-  const t = useT();
-  const [open, setOpen] = useState(false);
-  return (
-    <>
-      <Button
-        variant="bare"
-        size="bare"
-        className="mt-4 gap-1.5 text-sm text-dsk-subtle hover:text-dsk-fg"
-        aria-expanded={open}
-        onClick={() => setOpen((current) => !current)}
-      >
-        <span
-          aria-hidden
-          style={{ display: "inline-flex", transform: open ? "rotate(90deg)" : undefined }}
-        >
-          <DeskIcon name="chevR" size={10} stroke={2.4} />
-        </span>
-        {t("Arguments the agent sent")}
-      </Button>
-      {open && <pre className="dk-dc2-pre">{JSON.stringify(value, null, 2)}</pre>}
-    </>
-  );
-}
-
-type DiffRow = { key: string; before: string; after: string; refused: string | null };
+export type DiffRow = { key: string; before: string; after: string; refused: string | null };
 
 /**
  * The records a write touches, one line each with the value it sets, when
  * every record has the same field set; null when the full preview should
  * draw it instead.
  */
-function diffRows(preview: ProposalPreviewData, t: TranslateFn): DiffRow[] | null {
+export function diffRows(preview: ProposalPreviewData, t: TranslateFn): DiffRow[] | null {
   const changes = preview.changes.filter((change) => !change.withheld);
   const path = changes[0]?.fields.find(
     (field) => !field.withheld && field.path !== OUTCOME_FIELD,
@@ -171,7 +133,10 @@ function diffRows(preview: ProposalPreviewData, t: TranslateFn): DiffRow[] | nul
 }
 
 /** What the dry run says would happen, in one line, and whether it needs a look. */
-function dryRun(preview: ProposalPreviewData, t: TranslateFn): { text: string; warn: boolean } {
+export function dryRun(
+  preview: ProposalPreviewData,
+  t: TranslateFn,
+): { text: string; warn: boolean } {
   const facts = approvalFacts(preview, t);
   if (facts.wouldFail) {
     return { text: facts.wouldFail, warn: true };
@@ -206,108 +171,7 @@ function dryRun(preview: ProposalPreviewData, t: TranslateFn): { text: string; w
   return { text: t("It would go through as shown."), warn: false };
 }
 
-/**
- * What one change does, read whole, as its row in the decision sheet opens
- * it: who wants it and when, why, what it changes record by record, what the
- * dry run says would happen, the ways forward when it would be refused, and
- * the exact arguments behind it. The sheet reads the preview; until it is in,
- * or when it cannot be read, the change's own highlights stand in.
- */
-export function ProposalDetail({
-  node,
-  preview,
-  onDeclineWith,
-  onModify,
-  canChange,
-}: {
-  node: PendingProposalNode;
-  preview: ProposalPreviewData | null;
-  /** Turns the change down with a reason already written. */
-  onDeclineWith: (reason: string) => void;
-  /** Opens the editor, on one value when a refusal named it; absent when values can't be changed. */
-  onModify?: (focus?: EditorFocus) => void;
-  /** Whether the change can be approved as it stands, so a value it names can be edited. */
-  canChange: boolean;
-}) {
-  const t = useT();
-  const proposal = useMemo(() => asAssistantProposal(node), [node]);
-  const view = useMemo(() => presentProposal(proposal), [proposal]);
-  const facts = useMemo(() => approvalFacts(preview ?? undefined, t), [preview, t]);
-  const rows = useMemo(() => (preview ? diffRows(preview, t) : null), [preview, t]);
-
-  // A write that would be refused: change the value a reason names, or turn
-  // it down with the reasons so the agent learns what to fix.
-  const editable = proposal.fields.length > 0 && onModify !== undefined;
-  const wouldFail: WouldFailActions = {
-    canChange: editable ? (param) => editableParam(param, proposal.fields) : undefined,
-    onChange:
-      editable && canChange
-        ? (reason) => onModify?.({ param: reason.param, label: reason.label })
-        : undefined,
-    onAskAgent: (reasons) => onDeclineWith(askAgentMessage(proposal.toolName, reasons, t)),
-  };
-  const run = preview ? dryRun(preview, t) : null;
-
-  return (
-    <>
-      <Who node={node} />
-      <p className="dk-dc2-why">{node.rationale || view.summary}</p>
-
-      {preview === null ? (
-        <Highlights rows={view.highlights} />
-      ) : rows && rows.length > 0 ? (
-        <div className="dk-dc2-diff">
-          <div className="dk-dc2-dh">
-            <span>
-              {preview.changes
-                .find((change) => !change.withheld)
-                ?.fields.find((field) => !field.withheld && field.path !== OUTCOME_FIELD)?.label ??
-                ""}
-            </span>
-            <Badge variant={view.reversible ? "success" : "warning"} dot>
-              {view.reversible ? t("Reversible") : t("Can't be undone")}
-            </Badge>
-          </div>
-          {rows.slice(0, SHOWN_ROWS).map((row, index) => (
-            <div key={`${row.key}-${index}`} className={cn("dk-dc2-dr", row.refused && "dk-bad")}>
-              <span className="dk-dc2-dk">{row.key}</span>
-              <s>{row.before}</s>
-              <i aria-hidden>→</i>
-              <span className="sr-only">{t("to")}</span>
-              <b title={row.refused ?? undefined}>
-                {row.refused ? t("Refused") : row.after}
-                {row.refused && <span className="sr-only">: {row.refused}</span>}
-              </b>
-            </div>
-          ))}
-          {facts.count > Math.min(rows.length, SHOWN_ROWS) && (
-            <div className="dk-dc2-more">
-              {t("+ {0} more like these", facts.count - Math.min(rows.length, SHOWN_ROWS))}
-            </div>
-          )}
-        </div>
-      ) : (
-        <div className="dk-dc2-full">
-          <ProposalPreview preview={preview} wouldFail={wouldFail} />
-        </div>
-      )}
-
-      {run && (
-        <div className={cn("dk-dc2-sim", run.warn && "dk-warn")}>
-          <span className="dk-dc2-simh">
-            <DeskIcon name={run.warn ? "alert" : "shield"} size={12} stroke={2} />
-            {t("Dry run")}
-          </span>
-          {run.text}
-        </div>
-      )}
-
-      <RawArguments value={{ tool: node.toolName, ...proposal.arguments }} />
-    </>
-  );
-}
-
-function Highlights({ rows }: { rows: { label: string; value: string }[] }) {
+export function Highlights({ rows }: { rows: { label: string; value: string }[] }) {
   if (rows.length === 0) {
     return null;
   }
@@ -360,14 +224,20 @@ export function PlanCard({ node, leaving, onGate, onDeclineWith }: CardProps) {
   };
 
   return (
-    <QueueCard leaving={leaving}>
-      <Who node={node} />
-      <h1>
-        {node.title}
-        <span> · {t("{0, plural, one {# step} other {# steps}}", node.stepCount)}</span>
-      </h1>
-      {node.summary !== "" && <p className="dk-dc2-why">{node.summary}</p>}
-      <div className="dk-dc2-full">
+    <QueueCard leaving={leaving} className="flex flex-col gap-4.5">
+      <div className="flex flex-col gap-2.5">
+        <Who node={node} />
+        <h1>
+          {node.title}
+          <span> · {t("{0, plural, one {# step} other {# steps}}", node.stepCount)}</span>
+        </h1>
+        {node.summary !== "" && (
+          <p className="max-w-[60ch] text-base leading-relaxed break-words text-dsk-fg2">
+            {node.summary}
+          </p>
+        )}
+      </div>
+      <div className="overflow-hidden rounded-xl bg-dsk-raised p-4 shadow-(--dsk-lift)">
         <PreviewLoadState
           query={previewQuery}
           changed={approval.changed}
@@ -385,13 +255,12 @@ export function PlanCard({ node, leaving, onGate, onDeclineWith }: CardProps) {
           )}
         </PreviewLoadState>
       </div>
-      <div className="dk-dc2-sim">
-        <span className="dk-dc2-simh">
-          <DeskIcon name="info" size={12} stroke={2} />
-          {t("Plan")}
+      <p className="flex items-start gap-2 text-dsk-base text-dsk-subtle">
+        <span className="mt-0.5 shrink-0">
+          <DeskIcon name="info" size={13} stroke={2} />
         </span>
         {t("Decided as one: every step runs in order, or none does.")}
-      </div>
+      </p>
     </QueueCard>
   );
 }

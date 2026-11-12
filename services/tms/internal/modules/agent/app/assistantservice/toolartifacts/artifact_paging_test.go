@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/artifactpayload"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/assistanttest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -60,7 +61,7 @@ func TestTableArtifact_KeepsWhereTheListGoesOn(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			artifact := tableArtifact("call_1", "billing_list_queue_items", tc.result)
+			artifact := tableArtifact(&llmports.ToolCall{ID: "call_1", Name: "billing_list_queue_items"}, tc.result)
 			require.NotNil(t, artifact)
 			assert.Equal(t, tc.hasMore, artifact.Payload[artifactpayload.PayloadHasMore])
 			assert.Equal(t, tc.nextCursor, artifact.Payload[artifactpayload.PayloadNextCursor])
@@ -91,7 +92,7 @@ func TestTableArtifact_ATableCutToFitHasMoreButNoPlaceToGoOnFrom(t *testing.T) {
 		"nextCursor": "",
 	}
 
-	artifact := tableArtifact("call_1", "billing_list_queue_items", result)
+	artifact := tableArtifact(&llmports.ToolCall{ID: "call_1", Name: "billing_list_queue_items"}, result)
 	require.NotNil(t, artifact)
 	assert.Equal(t, true, artifact.Payload[artifactpayload.PayloadTruncated])
 	assert.Equal(t, true, artifact.Payload[artifactpayload.PayloadHasMore])

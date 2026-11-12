@@ -1,3 +1,4 @@
+import { useTriageAccess } from "../use-triage-access";
 import { useClearOfLauncher } from "@/components/assistant/launcher-clearance";
 import type { InboundMessageRow } from "@/lib/graphql/inbox";
 import { useTriageStore } from "@/stores/triage-store";
@@ -59,8 +60,10 @@ export function BulkBar({ messages }: { messages: readonly InboundMessageRow[] }
   const setSelected = useTriageStore((state) => state.setSelected);
   const clear = useTriageStore((state) => state.clearSelection);
   const clearOfLauncher = useClearOfLauncher();
+  const { canWork } = useTriageAccess();
 
-  if (selected.size === 0) {
+  // Every action on the bar works the messages, so a reader who may not has no bar.
+  if (selected.size === 0 || !canWork) {
     return null;
   }
 

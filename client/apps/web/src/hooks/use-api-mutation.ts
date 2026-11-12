@@ -180,8 +180,13 @@ export function handleMutationError<T extends FieldValues>({
   }
 
   if (apiProblem.isAuthorizationError(normalized)) {
+    // The server says why in words written for the person refused (whose case
+    // it is, which permission is missing); the stock sentence is only for a
+    // refusal that says nothing.
     toast.error(translate("Access denied"), {
-      description: translate("You don't have permission to perform this action."),
+      description:
+        (normalized.detail || normalized.message || "").trim() ||
+        translate("You don't have permission to perform this action."),
     });
     return;
   }

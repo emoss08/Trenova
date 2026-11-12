@@ -151,6 +151,7 @@ export const Resource = {
   Insight: "insight",
   Watchtower: "watchtower",
   Briefing: "briefing",
+  RecordShare: "record_share",
 
   // Customers
   Customer: "customer",

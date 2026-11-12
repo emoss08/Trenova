@@ -5,10 +5,10 @@ import { cn } from "@trenova/shared/lib/utils";
 import type { ComponentProps, ReactNode } from "react";
 
 export const QUEUE_NAV_CLASS =
-  "size-7.5 rounded-lg text-dsk-muted inset-ring inset-ring-dsk-b-sub hover:bg-dsk-hover hover:text-dsk-fg";
+  "size-7.5 rounded-lg bg-dsk-hover text-dsk-muted transition-colors hover:bg-(--dsk-active) hover:text-dsk-fg";
 const ACTION_CLASS = "h-9.5 gap-2.5 rounded-lg pr-2.5 pl-4 text-base @max-[900px]/mainc:pl-3";
-const OUTLINE_CLASS =
-  "text-dsk-fg inset-ring inset-ring-dsk-b hover:bg-dsk-hover hover:text-dsk-fg";
+const SOFT_CLASS = "bg-dsk-hover text-dsk-fg hover:bg-(--dsk-active) hover:text-dsk-fg";
+const QUIET_CLASS = "text-dsk-subtle hover:bg-dsk-hover hover:text-dsk-fg";
 
 /** The bar under the card: moving through the queue on the left, acting on the right. */
 export function QueueBar({ children }: { children: ReactNode }) {
@@ -63,23 +63,31 @@ export function QueueKey({ children }: { children: ReactNode }) {
 
 /**
  * One of the bar's actions with the key that does the same. The ink one is
- * the action the queue expects; the rest are outlined.
+ * the action the queue expects, the rest sit on a soft fill, and a quiet one
+ * is a side door (changing the values first) that takes no fill until pointed at.
  */
 export function QueueButton({
   shortcut,
   ink = false,
+  quiet = false,
   className,
   children,
   ...props
 }: Omit<ComponentProps<typeof Button>, "variant" | "size"> & {
   shortcut?: string;
   ink?: boolean;
+  quiet?: boolean;
 }) {
   return (
     <Button
       variant={ink ? "default" : "quiet"}
       size="lg"
-      className={cn(ACTION_CLASS, ink ? "dk-dc2-ok" : OUTLINE_CLASS, className)}
+      className={cn(
+        ACTION_CLASS,
+        "transition-[background-color,color,scale] active:scale-[0.98]",
+        ink ? "dk-dc2-ok" : quiet ? QUIET_CLASS : SOFT_CLASS,
+        className,
+      )}
       aria-keyshortcuts={shortcut}
       {...props}
     >

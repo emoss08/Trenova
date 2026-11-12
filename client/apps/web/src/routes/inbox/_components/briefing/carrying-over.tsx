@@ -34,12 +34,15 @@ export function CarryingOver({
   now,
   onOpenMessage,
   onHandOff,
+  canHandOff,
 }: {
   items: readonly DeckItem[];
   onCall: TriageUser | null;
   now: number;
   onOpenMessage: (id: string) => void;
   onHandOff: (to: TriageUser) => Promise<TriageHandOff>;
+  /** Whether the reader may give messages to someone else. */
+  canHandOff: boolean;
 }) {
   const t = useT();
   const rows = useMemo(() => carryOverRows(items), [items]);
@@ -81,7 +84,7 @@ export function CarryingOver({
                 rows.length,
               )}
             </span>
-          ) : onCall !== null && rows.length > 0 ? (
+          ) : canHandOff && onCall !== null && rows.length > 0 ? (
             <Button
               size="sm"
               isLoading={handing}

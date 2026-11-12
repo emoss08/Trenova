@@ -1,3 +1,5 @@
+import { clearPermissions, seedPermissions } from "@/test/permissions";
+import { Operation } from "@trenova/shared/types/permission";
 import { ApiRequestError } from "@trenova/shared/lib/api";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor, within } from "@testing-library/react";
@@ -38,12 +40,14 @@ vi.mock("@/components/resolved-user-avatar", () => ({ ResolvedUserAvatar: () => 
 const ORIGIN = window.location.origin;
 
 beforeEach(() => {
+  seedPermissions({ record_share: Operation.Read | Operation.Create });
   mocks.list.mockResolvedValue([]);
   mocks.candidates.mockResolvedValue([dana, priya]);
 });
 
 afterEach(() => {
   vi.clearAllMocks();
+  clearPermissions();
 });
 
 describe("the share dialog", () => {
@@ -367,5 +371,15 @@ describe("the share dialog", () => {
       within(dialog).getByText("A case someone else owns comes into their view."),
     ).toBeVisible();
     expect(within(dialog).queryByText(/Sharing doesn't change who can see it/)).toBeNull();
+  });
+
+  it("offers only the link to someone who may not share records", async () => {
+    clearPermissions();
+    seedPermissions({});
+    const { dialog } = await openDialog(invoicePath("charges"));
+
+    expect(within(dialog).getByDisplayValue(`${ORIGIN}${invoicePath("charges")}`)).toBeVisible();
+    expect(mocks.candidates).not.toHaveBeenCalled();
+    expect(mocks.list).not.toHaveBeenCalled();
   });
 });

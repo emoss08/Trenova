@@ -52,6 +52,8 @@ var memoriesTable = schema.Table{
 		{Name: "reviewed_by_user_id", Quoted: `"reviewed_by_user_id"`, Field: "ReviewedByUserID", Kind: schema.KindString, Flags: schema.FlagNullable, Label: `Reviewed By User ID`, Doc: `ReviewedByUserID is the person who read a tainted memory and kept it, approving it as a suggestion or reviewing it in AI Control. Tainted still says where it came from; a reviewed memory taints no turn.`, JSON: `reviewedByUserId`},
 		{Name: "reviewed_at", Quoted: `"reviewed_at"`, Field: "ReviewedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Reviewed At`, JSON: `reviewedAt`},
 		{Name: "expires_at", Quoted: `"expires_at"`, Field: "ExpiresAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Expires At`, JSON: `expiresAt`},
+		{Name: "confirmed_by_user_id", Quoted: `"confirmed_by_user_id"`, Field: "ConfirmedByUserID", Kind: schema.KindString, Flags: schema.FlagNullable, Label: `Confirmed By User ID`, JSON: `confirmedByUserId`},
+		{Name: "confirmed_at", Quoted: `"confirmed_at"`, Field: "ConfirmedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Confirmed At`, JSON: `confirmedAt`},
 		{Name: "use_count", Quoted: `"use_count"`, Field: "UseCount", Kind: schema.KindInt64, Flags: 0, Label: `Use Count`, JSON: `useCount`},
 		{Name: "last_used_at", Quoted: `"last_used_at"`, Field: "LastUsedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Last Used At`, JSON: `lastUsedAt`},
 		{Name: "evidence", Quoted: `"evidence"`, Field: "Evidence", Kind: schema.KindJSON, Flags: schema.FlagNullable | schema.FlagJSONB, Label: `Evidence`, JSON: `evidence`},
@@ -65,14 +67,14 @@ var memoriesTable = schema.Table{
 	},
 	PK:           []int32{0, 1, 2},
 	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 35, 36, 37},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 35, 36, 37},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 37},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 37, 38, 39},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 37, 38, 39},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 39},
 	Returning:    nil,
-	Version:      35,
+	Version:      37,
 	AutoID:       0,
-	AutoCreate:   36,
-	AutoUpdate:   37,
+	AutoCreate:   38,
+	AutoUpdate:   39,
 	IDPrefix:     "amem_",
 	New:          newMemory,
 	NewN:         newNMemory,
@@ -115,6 +117,8 @@ type MemoriesTable struct {
 	ReviewedByUserID  keelkinds.PulidIDCol
 	ReviewedAt        keel.Int64Col
 	ExpiresAt         keel.Int64Col
+	ConfirmedByUserID keelkinds.PulidIDCol
+	ConfirmedAt       keel.Int64Col
 	UseCount          keel.Int64Col
 	LastUsedAt        keel.Int64Col
 	Evidence          keel.JSONBCol
@@ -158,16 +162,18 @@ var Memories = &MemoriesTable{
 	ReviewedByUserID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &memoriesRef, Index: 25}}},
 	ReviewedAt:        keel.Int64Col{Col: keel.Col{Ref: &memoriesRef, Index: 26}},
 	ExpiresAt:         keel.Int64Col{Col: keel.Col{Ref: &memoriesRef, Index: 27}},
-	UseCount:          keel.Int64Col{Col: keel.Col{Ref: &memoriesRef, Index: 28}},
-	LastUsedAt:        keel.Int64Col{Col: keel.Col{Ref: &memoriesRef, Index: 29}},
-	Evidence:          keel.JSONBCol{Col: keel.Col{Ref: &memoriesRef, Index: 30}},
-	SearchVector:      keel.TSVectorCol{Col: keel.Col{Ref: &memoriesRef, Index: 31}},
-	ContentKey:        keel.StringCol{Col: keel.Col{Ref: &memoriesRef, Index: 32}},
-	SourceTitle:       keel.StringCol{Col: keel.Col{Ref: &memoriesRef, Index: 33}},
-	RoleName:          keel.StringCol{Col: keel.Col{Ref: &memoriesRef, Index: 34}},
-	Version:           keel.Int64Col{Col: keel.Col{Ref: &memoriesRef, Index: 35}},
-	CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: &memoriesRef, Index: 36}},
-	UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: &memoriesRef, Index: 37}},
+	ConfirmedByUserID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &memoriesRef, Index: 28}}},
+	ConfirmedAt:       keel.Int64Col{Col: keel.Col{Ref: &memoriesRef, Index: 29}},
+	UseCount:          keel.Int64Col{Col: keel.Col{Ref: &memoriesRef, Index: 30}},
+	LastUsedAt:        keel.Int64Col{Col: keel.Col{Ref: &memoriesRef, Index: 31}},
+	Evidence:          keel.JSONBCol{Col: keel.Col{Ref: &memoriesRef, Index: 32}},
+	SearchVector:      keel.TSVectorCol{Col: keel.Col{Ref: &memoriesRef, Index: 33}},
+	ContentKey:        keel.StringCol{Col: keel.Col{Ref: &memoriesRef, Index: 34}},
+	SourceTitle:       keel.StringCol{Col: keel.Col{Ref: &memoriesRef, Index: 35}},
+	RoleName:          keel.StringCol{Col: keel.Col{Ref: &memoriesRef, Index: 36}},
+	Version:           keel.Int64Col{Col: keel.Col{Ref: &memoriesRef, Index: 37}},
+	CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: &memoriesRef, Index: 38}},
+	UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: &memoriesRef, Index: 39}},
 }
 
 // BuildMemories builds the table of agent_memories for ref. Generated relation and alias methods call it.
@@ -202,16 +208,18 @@ func BuildMemories(r *keel.Ref) *MemoriesTable {
 		ReviewedByUserID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 25}}},
 		ReviewedAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 26}},
 		ExpiresAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 27}},
-		UseCount:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 28}},
-		LastUsedAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 29}},
-		Evidence:          keel.JSONBCol{Col: keel.Col{Ref: r, Index: 30}},
-		SearchVector:      keel.TSVectorCol{Col: keel.Col{Ref: r, Index: 31}},
-		ContentKey:        keel.StringCol{Col: keel.Col{Ref: r, Index: 32}},
-		SourceTitle:       keel.StringCol{Col: keel.Col{Ref: r, Index: 33}},
-		RoleName:          keel.StringCol{Col: keel.Col{Ref: r, Index: 34}},
-		Version:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 35}},
-		CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 36}},
-		UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 37}},
+		ConfirmedByUserID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 28}}},
+		ConfirmedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 29}},
+		UseCount:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 30}},
+		LastUsedAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 31}},
+		Evidence:          keel.JSONBCol{Col: keel.Col{Ref: r, Index: 32}},
+		SearchVector:      keel.TSVectorCol{Col: keel.Col{Ref: r, Index: 33}},
+		ContentKey:        keel.StringCol{Col: keel.Col{Ref: r, Index: 34}},
+		SourceTitle:       keel.StringCol{Col: keel.Col{Ref: r, Index: 35}},
+		RoleName:          keel.StringCol{Col: keel.Col{Ref: r, Index: 36}},
+		Version:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 37}},
+		CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 38}},
+		UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 39}},
 	}
 }
 
@@ -659,24 +667,28 @@ func ptrMemory(p unsafe.Pointer, c int32) any {
 	case 27:
 		return &r.ExpiresAt
 	case 28:
-		return (*int64)(unsafe.Pointer(&r.UseCount))
+		return (**string)(unsafe.Pointer(&r.ConfirmedByUserID))
 	case 29:
-		return &r.LastUsedAt
+		return &r.ConfirmedAt
 	case 30:
-		return &r.Evidence
+		return (*int64)(unsafe.Pointer(&r.UseCount))
 	case 31:
-		return &r.SearchVector
+		return &r.LastUsedAt
 	case 32:
-		return &r.ContentKey
+		return &r.Evidence
 	case 33:
-		return &r.SourceTitle
+		return &r.SearchVector
 	case 34:
-		return &r.RoleName
+		return &r.ContentKey
 	case 35:
-		return &r.Version
+		return &r.SourceTitle
 	case 36:
-		return &r.CreatedAt
+		return &r.RoleName
 	case 37:
+		return &r.Version
+	case 38:
+		return &r.CreatedAt
+	case 39:
 		return &r.UpdatedAt
 	}
 	return nil
@@ -799,36 +811,46 @@ func valueMemory(p unsafe.Pointer, c int32) any {
 		}
 		return *r.ExpiresAt
 	case 28:
-		return int64(r.UseCount)
+		if r.ConfirmedByUserID == nil {
+			return nil
+		}
+		return string(*r.ConfirmedByUserID)
 	case 29:
+		if r.ConfirmedAt == nil {
+			return nil
+		}
+		return *r.ConfirmedAt
+	case 30:
+		return int64(r.UseCount)
+	case 31:
 		if r.LastUsedAt == nil {
 			return nil
 		}
 		return *r.LastUsedAt
-	case 30:
+	case 32:
 		if r.Evidence == nil {
 			return nil
 		}
 		return *r.Evidence
-	case 31:
-		return r.SearchVector
-	case 32:
-		return r.ContentKey
 	case 33:
+		return r.SearchVector
+	case 34:
+		return r.ContentKey
+	case 35:
 		if r.SourceTitle == "" {
 			return nil
 		}
 		return r.SourceTitle
-	case 34:
+	case 36:
 		if r.RoleName == "" {
 			return nil
 		}
 		return r.RoleName
-	case 35:
-		return r.Version
-	case 36:
-		return r.CreatedAt
 	case 37:
+		return r.Version
+	case 38:
+		return r.CreatedAt
+	case 39:
 		return r.UpdatedAt
 	}
 	return nil

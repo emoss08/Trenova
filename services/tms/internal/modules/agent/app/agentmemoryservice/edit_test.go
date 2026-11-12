@@ -125,6 +125,7 @@ func TestPlanEdit_IsAReplacementThatKeepsTheMemorysReadersAndShape(t *testing.T)
 		OwnerUserID:  owner,
 		PersonUserID: owner,
 		Replaces:     memory.ID,
+		Source:       agentmemory.MemorySourceAgent,
 	}, req)
 }
 

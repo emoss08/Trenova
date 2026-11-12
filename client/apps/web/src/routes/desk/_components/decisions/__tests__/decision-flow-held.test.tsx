@@ -7,7 +7,7 @@ import type { ProposalPreview, ProposalPreviewRequest } from "@/lib/graphql/agen
 import { DecisionFlow } from "../decision-flow";
 import type { PendingDecisionNode } from "../use-pending-decisions";
 import { planNode, proposalNode } from "./pending-fixtures";
-import { batchFrom } from "./sheet-test-kit";
+import { batchFrom } from "./preview-test-kit";
 
 const fetchProposalPreview =
   vi.fn<(request: ProposalPreviewRequest, options?: unknown) => Promise<ProposalPreview>>();
@@ -62,7 +62,7 @@ function renderFlow() {
   render(
     <QueryClientProvider client={client}>
       <MemoryRouter>
-        <DecisionFlow />
+        <DecisionFlow head={() => null} />
       </MemoryRouter>
     </QueryClientProvider>,
   );

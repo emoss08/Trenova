@@ -95,3 +95,12 @@ type Quality struct {
 func (q *Quality) Ready() bool {
 	return q != nil && q.Status == StatusReady
 }
+
+func (q *Quality) Stale(now int64) bool {
+	return !q.Ready() && (q == nil || now-q.FittedAt >= RefitAfterSeconds)
+}
+
+type Standing struct {
+	Quality   *Quality
+	Refitting bool
+}

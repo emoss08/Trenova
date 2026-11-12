@@ -4,7 +4,12 @@ import { assistant } from "@/lib/queries/assistant";
 import type { AssistantMessage, MemoryNote } from "@/types/assistant";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { DeskMemorySaved, initialSaveState, type MemoryCard } from "../desk-memory-notes";
+import {
+  DeskMemoryRecall,
+  DeskMemorySaved,
+  initialSaveState,
+  type MemoryCard,
+} from "../desk-memory-notes";
 
 const api = vi.hoisted(() => ({
   fetchDeskMemoriesByIds: vi.fn(),
@@ -403,5 +408,62 @@ describe("an offer the person may not keep for others", () => {
         1,
       ),
     );
+  });
+});
+
+/*
+The chip counts the memories a turn used; the list shows the ones the server
+still returns to this person. A used memory deleted since, or kept for the
+agent and never listed on the Desk, left "Used 2 memories" opening to nothing.
+*/
+describe("DeskMemoryRecall", () => {
+  function renderRecall(ids: string[], served?: MemoryNote[]) {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    return render(
+      <QueryClientProvider client={client}>
+        <DeskMemoryRecall ids={ids} served={served} />
+      </QueryClientProvider>,
+    );
+  }
+
+  beforeEach(() => {
+    api.fetchDeskMemoriesByIds.mockReset();
+  });
+
+  it("says why nothing is listed when no used memory can be read any more", async () => {
+    api.fetchDeskMemoriesByIds.mockResolvedValue([]);
+    renderRecall(["amem_gone_1", "amem_gone_2"]);
+
+    fireEvent.click(screen.getByRole("button", { name: "Used 2 memories" }));
+
+    expect(
+      await screen.findByText("2 memories are not listed: they were deleted since."),
+    ).toBeInTheDocument();
+    expect(api.fetchDeskMemoriesByIds).toHaveBeenCalledWith(
+      ["amem_gone_1", "amem_gone_2"],
+      expect.anything(),
+    );
+  });
+
+  it("lists what it can read and counts the rest", async () => {
+    api.fetchDeskMemoriesByIds.mockResolvedValue([]);
+    renderRecall(["amem_1", "amem_gone"], [card({ id: "amem_1", scope: "User" }) as MemoryNote]);
+
+    fireEvent.click(screen.getByRole("button", { name: "Used 2 memories" }));
+
+    expect(screen.getByText("Read the move before assigning it.")).toBeInTheDocument();
+    expect(
+      await screen.findByText("1 memory is not listed: it was deleted since."),
+    ).toBeInTheDocument();
+  });
+
+  it("adds no note when every used memory is listed", () => {
+    renderRecall(["amem_1"], [card({ id: "amem_1", scope: "User" }) as MemoryNote]);
+
+    fireEvent.click(screen.getByRole("button", { name: "Used 1 memory" }));
+
+    expect(screen.getByText("Read the move before assigning it.")).toBeInTheDocument();
+    expect(screen.queryByText(/not listed/)).not.toBeInTheDocument();
+    expect(api.fetchDeskMemoriesByIds).not.toHaveBeenCalled();
   });
 });

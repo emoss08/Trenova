@@ -3,7 +3,9 @@ import { humanizeToolName } from "./proposal-state";
 import {
   classifyValues,
   displayLabel,
+  humanizeCode,
   humanizeKey,
+  isCodedKey,
   isHiddenKey,
   isRecordId,
   leadFirst,
@@ -230,6 +232,28 @@ type ToolFilter = {
   days?: unknown;
 };
 
+/** A filter's field as a person names it: "customerId" is "Customer". */
+function filterFieldLabel(field: string): string {
+  return humanizeKey(field.replace(/(?<=[a-z\d])I[Dd]s?$/u, "") || field);
+}
+
+/**
+ * One value a filter narrows by, as a person reads it. A record's id names
+ * nothing a person can use and is left out, so a filter on ids alone reads as
+ * its field; a status or kind's code reads as words.
+ */
+function filterValue(field: string, value: unknown): string {
+  if (typeof value !== "string" && typeof value !== "number") {
+    return "";
+  }
+  const text = String(value).trim();
+  if (isRecordId(text)) {
+    return "";
+  }
+
+  return isCodedKey(field) ? humanizeCode(text) : text;
+}
+
 /**
  * What a filter was asking for, in as few words as it takes to recognize it.
  *
@@ -238,10 +262,11 @@ type ToolFilter = {
  * asked for yesterday's deliveries or everything.
  */
 function describeFilter(filter: ToolFilter): string {
-  const field = typeof filter.field === "string" ? filter.field : "";
-  if (field === "") {
+  const name = typeof filter.field === "string" ? filter.field : "";
+  if (name === "") {
     return "";
   }
+  const field = filterFieldLabel(name);
 
   const operator = typeof filter.operator === "string" ? filter.operator : "";
 
@@ -252,10 +277,14 @@ function describeFilter(filter: ToolFilter): string {
       : translate("{0} next {1}d", field, filter.days);
   }
   if (Array.isArray(filter.values)) {
-    return `${field} ${filter.values.join("/")}`;
+    const values = filter.values
+      .map((value) => filterValue(name, value))
+      .filter((value) => value !== "");
+
+    return `${field} ${values.join("/")}`.trim();
   }
   if (typeof filter.value === "string" || typeof filter.value === "number") {
-    return `${field} ${filter.value}`;
+    return `${field} ${filterValue(name, filter.value)}`.trim();
   }
   if (operator === "isnull") {
     return translate("{0} empty", field);

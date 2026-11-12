@@ -12,8 +12,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall/modelcallcontract"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/runstream"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
+	"go.temporal.io/sdk/contrib/workflowstreams"
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
 )
@@ -230,6 +234,42 @@ func (w *Workflows) AgentRunWorkflow(
 	ctx workflow.Context,
 	payload *agentcontract.AgentRunPayload,
 ) error {
+	if !payload.Watched {
+		return w.run(ctx, payload, nil)
+	}
+
+	// A person is waiting on this run, so what the agent writes is streamed
+	// to them as it is written. The stream's last word is how the run ended,
+	// after everything it did has been filed.
+	stream, err := runstream.Host(ctx)
+	if err != nil {
+		workflow.GetLogger(ctx).Warn("a watched run could not host its stream",
+			"error", err.Error())
+
+		return w.run(ctx, payload, nil)
+	}
+
+	runErr := w.run(ctx, payload, stream.Events())
+	ending := temporaltype.StreamItem{
+		Event: assistantstreamports.AssistantEventDone,
+		Data:  map[string]any{},
+		At:    workflow.Now(ctx).Unix(),
+	}
+	if runErr != nil {
+		ending.Event = assistantstreamports.AssistantEventError
+		ending.Data = map[string]any{"message": "The agent stopped before it finished."}
+	}
+	stream.Publish(ctx, ending)
+	stream.Close(ctx)
+
+	return runErr
+}
+
+func (w *Workflows) run(
+	ctx workflow.Context,
+	payload *agentcontract.AgentRunPayload,
+	events *workflowstreams.WorkflowTopicHandle,
+) error {
 	var a *Activities
 	tenant := payload.TenantInfo()
 	keep, _ := workflow.NewDisconnectedContext(ctx)
@@ -266,7 +306,7 @@ func (w *Workflows) AgentRunWorkflow(
 		return err
 	}
 
-	outcome, runErr := agentflow.Run(runCtx, w.runtime, nil, opened.Run, opened.Turn)
+	outcome, runErr := agentflow.Run(runCtx, w.runtime, events, opened.Run, opened.Turn)
 	if runErr != nil && outOfTime {
 		runErr = temporal.NewApplicationError(
 			fmt.Sprintf("the run did not finish within %s", runTimeout(prepared.RunTimeoutSeconds)),

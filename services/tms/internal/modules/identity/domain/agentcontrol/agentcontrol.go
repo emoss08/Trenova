@@ -45,6 +45,13 @@ type AgentControl struct {
 
 	LearningOff bool `json:"learningOff" keel:"learning_off"`
 
+	// PassingLearningOff stops a look back that starts only because a person
+	// stated something while asking for something else. On by default: it is
+	// how agents learn about customers, locations, drivers and carriers, each
+	// lesson is only ever offered, and its cost shows under look backs in
+	// usage.
+	PassingLearningOff bool `json:"passingLearningOff" keel:"passing_learning_off"`
+
 	// AutoChaptersOff stops a model splitting Desk conversations into
 	// chapters and naming them. On by default: it is one short call per
 	// question on the cheapest model, and people can still start chapters
@@ -232,6 +239,16 @@ var AgentControlChangeRules = []editchange.Rule[AgentControl]{
 	{
 		Field: "learningOff", Label: "Learn from their work",
 		Same: func(a, b *AgentControl) bool { return a.LearningOff == b.LearningOff },
+	},
+	{
+		Field: "passingLearningOff", Label: "Learn from what people mention",
+		Same: func(a, b *AgentControl) bool {
+			return a.PassingLearningOff == b.PassingLearningOff
+		},
+	},
+	{
+		Field: "autoChaptersOff", Label: "Name Desk chapters",
+		Same: func(a, b *AgentControl) bool { return a.AutoChaptersOff == b.AutoChaptersOff },
 	},
 	{
 		Field: "personMonthlyMessages", Label: "Monthly allowance",

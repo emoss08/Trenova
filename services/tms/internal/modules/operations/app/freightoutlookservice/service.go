@@ -59,6 +59,7 @@ func New(p Params) *Service { //nolint:gocritic // fx requires an fx.In paramete
 type snapshot struct {
 	now        int64
 	quality    *demandforecast.Quality
+	refitting  bool
 	forecaster *demandforecast.Forecaster
 	starts     []int64
 	balances   []demandforecast.AreaBalance
@@ -76,6 +77,7 @@ func (s *Service) Outlook(
 	}
 	out := &freightoutlookports.Outlook{
 		Quality:      snap.quality,
+		Refitting:    snap.refitting,
 		GeneratedAt:  snap.now,
 		Starts:       demandforecast.OutlookStarts(snap.now),
 		Network:      []demandforecast.NetworkSlot{},
@@ -139,6 +141,7 @@ func (s *Service) Area(
 
 	detail := &freightoutlookports.AreaDetail{
 		Quality:     snap.quality,
+		Refitting:   snap.refitting,
 		GeneratedAt: snap.now,
 		Area:        s.area(snap, balance),
 		Bounds:      dispatchmarket.BoundsOf(req.Cell),
@@ -187,11 +190,17 @@ func (s *Service) snapshot(
 	tenantInfo pagination.TenantInfo,
 ) (*snapshot, error) {
 	now := s.clock()
-	quality, err := s.forecasts.Quality(ctx, tenantInfo)
+	standing, err := s.forecasts.Standing(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
 	}
-	snap := &snapshot{now: now, quality: quality, names: map[pulid.ID]string{}}
+	quality := standing.Quality
+	snap := &snapshot{
+		now:       now,
+		quality:   quality,
+		refitting: standing.Refitting,
+		names:     map[pulid.ID]string{},
+	}
 	if !quality.Ready() {
 		return snap, nil
 	}

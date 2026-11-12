@@ -59,6 +59,8 @@ type Outcome struct {
 	// written once it has been.
 	Publishes bool   `json:"publishes,omitempty"`
 	Summary   string `json:"summary,omitempty"`
+	// Asked is what a read was narrowed by, in words a person reads.
+	Asked string `json:"asked,omitempty"`
 	// DelegateReport is the bounded account of a delegate_task call.
 	DelegateReport *conversation.DelegateReport `json:"delegateReport,omitempty"`
 	// Taint is the outside content the call read.
@@ -94,6 +96,7 @@ func (o *Outcome) Result() Result {
 		Batch:          o.Batch,
 		Publishes:      o.Publishes,
 		Summary:        o.Summary,
+		Asked:          o.Asked,
 		DelegateReport: o.DelegateReport,
 		Taint:          o.Taint,
 		Found:          o.Found,

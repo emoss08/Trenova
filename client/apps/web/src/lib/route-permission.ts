@@ -109,3 +109,27 @@ export function combineLoaders(...loaders: LoaderFunction[]): LoaderFunction {
   };
   return loaders.some(isPathScopedLoader) ? pathScopedLoader(combined) : combined;
 }
+
+/**
+ * Lets a person in when any one of the gates does, for a page whose parts answer to
+ * different permissions and which shows each person the parts they may read. A gate
+ * that sends them elsewhere (to sign in) is obeyed; only when every gate refuses is the
+ * last refusal the answer.
+ */
+export function anyOfLoaders(...loaders: LoaderFunction[]): LoaderFunction {
+  const any: LoaderFunction = async (args) => {
+    let refusal: unknown = null;
+    for (const loader of loaders) {
+      try {
+        return await loader(args);
+      } catch (error) {
+        if (!(error instanceof Response) || error.status !== 403) {
+          throw error;
+        }
+        refusal = error;
+      }
+    }
+    throw refusal;
+  };
+  return loaders.some(isPathScopedLoader) ? pathScopedLoader(any) : any;
+}

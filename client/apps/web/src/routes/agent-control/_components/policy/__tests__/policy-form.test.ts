@@ -12,6 +12,7 @@ const loaded: PolicyFormValues = {
   earnedAutonomy: false,
   promotionThreshold: 10,
   learnsFromWork: true,
+  learnsFromMentions: true,
   chaptersByModel: true,
   personMonthlyMessages: 0,
   agentMoney: {
@@ -29,6 +30,7 @@ function servedControl(): Partial<AgentControl> {
     earnedAutonomy: false,
     promotionThreshold: 10,
     learningOff: false,
+    passingLearningOff: false,
     autoChaptersOff: false,
     personMonthlyMessages: 0,
     agentMoneyCallCeiling: "1000.00",
@@ -49,6 +51,7 @@ describe("toControlInput", () => {
       earnedAutonomy: false,
       promotionThreshold: 10,
       learningOff: true,
+      passingLearningOff: false,
       autoChaptersOff: false,
       personMonthlyMessages: 0,
       agentMoneyCallCeiling: "1000.00",
@@ -58,6 +61,17 @@ describe("toControlInput", () => {
       agentMoneyDayAmount: "25000.00",
       version: 4,
     });
+  });
+
+  it("sends learning from what people mention as its off switch", () => {
+    expect(toControlInput({ ...loaded, learnsFromMentions: false }, false)).toMatchObject({
+      passingLearningOff: true,
+      learningOff: false,
+    });
+    expect(
+      toPolicyForm({ ...servedControl(), passingLearningOff: true } as AgentControl)
+        .learnsFromMentions,
+    ).toBe(false);
   });
 
   it("sends chapters named by a model as their off switch", () => {

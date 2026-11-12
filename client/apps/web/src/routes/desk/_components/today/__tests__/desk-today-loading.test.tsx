@@ -213,7 +213,7 @@ describe("Desk home headline while its figures load", () => {
         headline: "142 loads are moving. Six may miss today's appointments, and 3 decisions wait.",
         headlineLinks: [
           { text: "Six may miss today's appointments", section: "Exceptions", path: "/desk/needs" },
-          { text: "3 decisions wait", section: "Decisions", path: "/desk/decisions" },
+          { text: "3 decisions wait", section: "Decisions", path: "/desk/needs?lens=decisions" },
         ],
       }),
     };
@@ -223,7 +223,7 @@ describe("Desk home headline while its figures load", () => {
     expect(risk).toHaveAttribute("href", "/desk/needs");
     expect(screen.getByRole("link", { name: "3 decisions wait" })).toHaveAttribute(
       "href",
-      "/desk/decisions",
+      "/desk/needs?lens=decisions",
     );
     expect(document.querySelector('[data-slot="desk-headline"]')).toHaveTextContent(
       "142 loads are moving. Six may miss today's appointments, and 3 decisions wait.",
@@ -256,7 +256,7 @@ describe("Desk home briefing cut to the reader's access", () => {
     renderHome();
 
     const link = await screen.findByRole("link", { name: "2 decisions are waiting on you." });
-    expect(link).toHaveAttribute("href", "/desk/decisions");
+    expect(link).toHaveAttribute("href", "/desk/needs?lens=decisions");
   });
 
   it("asks how it can help, with no link, when nothing waits", async () => {

@@ -123,6 +123,10 @@ skills read it directly) for any change under `client/`. Tokens, page anatomy an
 are in [design-system.md](docs/engineering/design-system.md); `pnpm lint:design` and
 `pnpm lint:skeletons` enforce them.
 
+**Never show a record's internal id** (`cus_01J…`), a field's code name or an enum's code to a
+person. An id belongs in a URL or on a page only an administrator can open; everywhere else
+the server stores the record's name. See "No record ids on screen" in design-system.md.
+
 ## Rust
 
 Read [rust.md](docs/engineering/rust.md) before adding or changing Rust, and

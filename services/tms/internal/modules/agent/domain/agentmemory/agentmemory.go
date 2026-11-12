@@ -374,6 +374,9 @@ type Memory struct {
 	ReviewedAt       *int64    `json:"reviewedAt"       keel:"reviewed_at"`
 	ExpiresAt        *int64    `json:"expiresAt"        keel:"expires_at"`
 
+	ConfirmedByUserID *pulid.ID `json:"confirmedByUserId" keel:"confirmed_by_user_id"`
+	ConfirmedAt       *int64    `json:"confirmedAt"       keel:"confirmed_at"`
+
 	UseCount   int    `json:"useCount"   keel:"use_count"`
 	LastUsedAt *int64 `json:"lastUsedAt" keel:"last_used_at"`
 
@@ -386,6 +389,11 @@ type Memory struct {
 	// active one already said the same thing for the same readers: that one
 	// was refreshed rather than a duplicate recorded beside it.
 	Refreshed bool `json:"-"`
+
+	// DiffersFrom is set, never stored, on the memory a save returns when a
+	// memory its readers also read, kept for a wider audience, says otherwise.
+	// Both stand, and the caller says so.
+	DiffersFrom *Memory `json:"-"`
 
 	SourceTitle string `json:"-" keel:"source_title,computed,nullzero"`
 	RoleName    string `json:"-" keel:"role_name,computed,nullzero"`

@@ -388,6 +388,7 @@ var starterTools = map[agenttemplate.Template][]string{
 		"billing_correct_charge_codes",
 		"billing_resolve_issue",
 		"billing_undo_issue",
+		"shipment_list_documents",
 		"shipment_request_documents",
 		"shipment_attach_document",
 		"inbox_list_email_profiles",

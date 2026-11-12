@@ -29,26 +29,27 @@ import { useLatestCallback } from "@trenova/shared/hooks/use-latest-callback";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Link, useSearchParams } from "react-router";
 import { toast } from "@trenova/shared/components/ui/toast";
-import { DeskAgentTile } from "@/components/desk-chat/desk-agent-tile";
 import { AlertCircleIcon, CheckIcon, XCloseIcon } from "@trenova/shared/components/icons";
+import { askAgentMessage } from "@/components/assistant/proposal-preview/preview-warnings";
 import { humanizeToolName } from "@/components/assistant/proposal-state";
-import { QueueClear, QueueHeader, QueueLayout, QueueReading } from "../queue/queue";
+import { DeskIcon } from "@/components/desk-chat/desk-icons";
+import { DeskListPane } from "../list/desk-list";
+import { QueueClear, QueueReading } from "../queue/queue";
 import { QueueBar, QueueBarSpacer, QueueButton, QueueNav } from "../queue/queue-bar";
-import {
-  QueueGroupHeader,
-  QueueList,
-  QueueRow,
-  QueueUnseenDot,
-  type QueueSection,
-} from "../queue/queue-list";
+import { QueueGroupHeader, QueueList, type QueueSection } from "../queue/queue-list";
 import { useQueueCursor, useQueueLeave } from "../queue/use-queue-cursor";
 import { MAX_BATCH } from "./batch-review-model";
+import { BulkReviewDialog, type BulkReviewRequest } from "./bulk-review-dialog";
 import { PlanCard, type CardGate } from "./decision-card";
-import { DecisionSheet, type SheetGate } from "./decision-sheet";
+import { DecisionChange } from "./decision-change";
+import { DecisionDock } from "./decision-dock";
+import { bulkGateOf, currentGateOf, flagOf, isHeld, refusalsOf } from "./decision-gates";
 import { asAssistantProposal } from "./decision-presenters";
+import { DecisionGroupHeading, DecisionRow, rowSubject } from "./decision-row";
+import { useDecisionPreviews } from "./use-decision-previews";
 import {
   isPendingPlan,
   isPendingProposal,
@@ -68,6 +69,8 @@ type Item = {
   id: string;
   tool: string;
   title: string;
+  /** What the change does, in a sentence; a row says it until its preview is read. */
+  summary: string;
   reversible: boolean;
   /** The switch keeping it from being decided; null when it can be decided now. */
   held: HoldSwitch | null;
@@ -82,7 +85,15 @@ function itemOf(node: PendingDecisionNode): Item {
     agentName: node.run?.definition?.name ?? null,
   });
   if (isPendingPlan(node)) {
-    return { node, id: node.id, tool: PLAN_GROUP, title: node.title, reversible: true, held };
+    return {
+      node,
+      id: node.id,
+      tool: PLAN_GROUP,
+      title: node.title,
+      summary: node.summary,
+      reversible: true,
+      held,
+    };
   }
   const view = presentProposal(asAssistantProposal(node));
   return {
@@ -90,6 +101,7 @@ function itemOf(node: PendingDecisionNode): Item {
     id: node.id,
     tool: node.toolName,
     title: view.title,
+    summary: view.summary,
     reversible: view.reversible,
     held,
   };
@@ -115,19 +127,37 @@ function errorText(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
+/** What the list's head is told: how much of today's deciding is done, and what still waits. */
+export type DecisionFlowProgress = {
+  progressLabel: string;
+  done: number;
+  total: number;
+  /** How many changes wait, as far as the queue has been read. */
+  waiting: number;
+  /** Off while a dialog is open over the queue. */
+  keysEnabled: boolean;
+};
+
 /**
- * What waits on a person. The queue on the left is grouped by the kind of
- * write, with how much of today's work is decided. In the middle is the
- * sheet of the open change's kind: one change reads whole, several read as
- * one with what they share shown once, and the open one drawn whole. The bar
- * under it approves or declines the open change, or the ticked ones together.
- * A plan is decided as one and keeps a card of its own.
+ * The Decisions lens of Needs you: what agents ask to change. The list on the
+ * left, under the head the page gives it, is grouped by the kind of write,
+ * with how much of today's work is decided. Each row leads with what is its
+ * own, and is where changes are ticked to decide several: a kind's heading
+ * ticks the kind, and the dock at the foot of the list declines the ticked
+ * changes or opens the one review an approval of several takes. The page
+ * beside the list only ever holds one change, read whole, with the bar under
+ * it deciding that one. A plan is decided as one and takes no tick.
  *
  * Approving sends the digest of each preview the person was shown, so a
  * record that moved since is caught rather than overwritten. Declining asks
  * why, because the reason goes back to the agent and to whoever owns it.
  */
-export function DecisionFlow() {
+export function DecisionFlow({
+  head,
+}: {
+  /** The page's head over the list: its name, progress and lenses. */
+  head: (progress: DecisionFlowProgress) => ReactNode;
+}) {
   const t = useT();
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -184,6 +214,16 @@ export function DecisionFlow() {
     }
   }, [currentId, requested, setSearchParams]);
 
+  // On a narrow window the list and the change take turns; a link to one
+  // change opens on the change.
+  const [showList, setShowList] = useState(
+    () => !searchParams.has("proposal") && !searchParams.has("run"),
+  );
+  const openChange = (id: string) => {
+    setCurrentId(id);
+    setShowList(false);
+  };
+
   // Rows not opened yet carry a dot; opening one puts it away for good.
   const [seen, setSeen] = useState(readSeen);
   const currentKey = current?.id;
@@ -192,60 +232,59 @@ export function DecisionFlow() {
   }
   useEffect(() => writeSeen(seen), [seen]);
 
-  // The sheet in front of the person: every change of the open one's kind,
-  // fifty at a time around it. A plan is decided as one and keeps a card.
-  const sheet = useMemo(() => {
-    if (!current || !isPendingProposal(current.node)) return null;
-    const kind = items.filter((item) => item.tool === current.tool && isPendingProposal(item.node));
-    const position = Math.max(
-      0,
-      kind.findIndex((item) => item.id === current.id),
-    );
-    const start = Math.floor(position / MAX_BATCH) * MAX_BATCH;
-    const nodes = kind
-      .slice(start, start + MAX_BATCH)
-      .flatMap((item) => (isPendingProposal(item.node) ? [item.node] : []));
-    return { key: `${current.tool}:${start}`, nodes, total: kind.length };
-  }, [current, items]);
-
-  // Ticked changes belong to one sheet; opening another kind lets them go.
-  const [tickedState, setTickedState] = useState<{ key: string; ids: ReadonlySet<string> }>({
-    key: "",
-    ids: EMPTY,
-  });
-  const ticked = sheet !== null && tickedState.key === sheet.key ? tickedState.ids : EMPTY;
-  const sheetKey = sheet?.key ?? "";
-  const tick = useCallback(
-    (ids: readonly string[], value: boolean) => {
-      if (sheetKey === "") return;
-      setTickedState((previous) => {
-        const next = new Set(previous.key === sheetKey ? previous.ids : EMPTY);
-        for (const id of ids) {
-          if (value) {
-            next.add(id);
-          } else {
-            next.delete(id);
-          }
-        }
-        return { key: sheetKey, ids: next };
-      });
-    },
-    [sheetKey],
+  // What each waiting change would do. A plan reads its own, in its card.
+  const proposals = useMemo(
+    () => items.flatMap((item) => (isPendingProposal(item.node) ? [item.node] : [])),
+    [items],
+  );
+  const previews = useDecisionPreviews(
+    useMemo(() => proposals.map((node) => node.id), [proposals]),
   );
 
+  // Ticked in the list to decide together: any change that is not a plan and
+  // not held, across kinds, as many as one decision carries.
+  const [tickedIds, setTickedIds] = useState<ReadonlySet<string>>(EMPTY);
+  const tickable = useMemo(
+    () => new Map(proposals.filter((node) => !isHeld(node)).map((node) => [node.id, node])),
+    [proposals],
+  );
+  const tickedNodes = useMemo(
+    () => [...tickedIds].flatMap((id) => tickable.get(id) ?? []),
+    [tickable, tickedIds],
+  );
+  const ticked = useMemo(() => new Set(tickedNodes.map((node) => node.id)), [tickedNodes]);
+  const tick = useCallback((ids: readonly string[], value: boolean) => {
+    setTickedIds((previous) => {
+      const next = new Set(previous);
+      for (const id of ids) {
+        if (value) {
+          next.add(id);
+        } else {
+          next.delete(id);
+        }
+      }
+      return new Set([...next].slice(0, MAX_BATCH));
+    });
+  }, []);
+  const bulk = bulkGateOf(tickedNodes, previews);
+
   const [gate, setGate] = useState<CardGate | null>(null);
-  const [sheetGate, setSheetGate] = useState<SheetGate | null>(null);
   const onPlan = current !== null && isPendingPlan(current.node);
-  // The open change is decided alone while nothing is ticked; the ticked
-  // changes are decided together once there are any.
-  const currentGate = onPlan ? gate : (sheetGate?.current ?? null);
-  const tickedGate = ticked.size > 0 ? (sheetGate?.ticked ?? null) : null;
+  const currentProposal = current !== null && isPendingProposal(current.node) ? current.node : null;
+  const currentGate = onPlan
+    ? gate
+    : currentProposal
+      ? currentGateOf(currentProposal, previews, t)
+      : null;
+  // A change that would be refused as it stands goes back to its agent with the reasons.
+  const refusals = currentProposal ? refusalsOf(previews.entry(currentProposal.id)) : [];
 
   const { leaving, leave } = useQueueLeave();
   const [leavingIds, setLeavingIds] = useState<ReadonlySet<string>>(EMPTY);
   const [busy, setBusy] = useState(false);
   const [dialog, setDialog] = useState<ReasonDialogRequest | null>(null);
   const [editor, setEditor] = useState<ProposalEditorRequest | null>(null);
+  const [review, setReview] = useState<BulkReviewRequest | null>(null);
 
   // An approved write runs after the decision is recorded, so whether it
   // went through is learned when the decisions are read again: a failure is
@@ -280,10 +319,7 @@ export function DecisionFlow() {
       leave(ok ? "ok" : "no", () => {
         setGone((previous) => new Set([...previous, ...ids]));
         setLeavingIds(EMPTY);
-        setTickedState((previous) => ({
-          key: previous.key,
-          ids: new Set([...previous.ids].filter((id) => !ids.includes(id))),
-        }));
+        setTickedIds((previous) => new Set([...previous].filter((id) => !ids.includes(id))));
         setGate(null);
         setCurrentId(next);
         void invalidateProposalViews(queryClient);
@@ -315,41 +351,15 @@ export function DecisionFlow() {
     [finish, t],
   );
 
-  const approve = useCallback(async () => {
-    if (!current || busy || !canDecide) return;
-    if (tickedGate !== null ? !tickedGate.approvable : current.held || !currentGate?.approvable) {
-      return;
-    }
+  const approve = async () => {
+    if (!current || busy || !canDecide || current.held || !currentGate?.approvable) return;
+    if (refusals.length > 0) return;
     setBusy(true);
     try {
-      if (tickedGate !== null) {
-        const results = await decideAgentProposals(tickedGate.approveIds, {
-          decision: "Accepted",
-          reasonCode: "approved_from_desk_batch",
-          previewDigests: tickedGate.digests,
-        });
-        const failed = results.filter((result) => result.error);
-        if (failed.length > 0) {
-          toast.warning(
-            t("{0} of {1} went through", results.length - failed.length, results.length),
-            {
-              description: failed.map((result) => result.error).join(" · "),
-            },
-          );
-        }
-        const done = results.filter((result) => !result.error).map((result) => result.proposalId);
-        // A change recorded as approved but refused or failed is decided too;
-        // it leaves the queue, and its failure was just said.
-        const notRun = failed
-          .filter((result) => result.decision)
-          .map((result) => result.proposalId);
-        if (done.length + notRun.length > 0) finish([...done, ...notRun], done.length > 0, done);
-        return;
-      }
       const input = {
         decision: "Accepted" as const,
         reasonCode: "approved_from_desk",
-        previewDigest: currentGate?.digest,
+        previewDigest: currentGate.digest,
       };
       if (isPendingPlan(current.node)) {
         const { plan, refused } = await decideAgentPlan(current.id, input);
@@ -360,7 +370,7 @@ export function DecisionFlow() {
         settle(current, failure === null ? null : { refused: result.refused, why: failure });
       }
     } catch (error) {
-      if (currentGate?.handleError(error)) {
+      if (currentGate.handleError(error)) {
         toast.info(t("This changed since you opened it"), {
           description: t("Look at it again before you approve."),
         });
@@ -370,19 +380,58 @@ export function DecisionFlow() {
     } finally {
       setBusy(false);
     }
-  }, [busy, canDecide, current, currentGate, finish, settle, t, tickedGate]);
+  };
 
   /**
-   * Turns down the ticked changes, or the open one while none is ticked or
-   * when `alone` says the reason is about the open one only.
+   * Opens the one review an approval of several takes: every ticked change
+   * that can be approved, as it was read. Confirming sends the digest of each.
    */
-  const decline = useCallback(
-    (initialReason?: string, alone = false) => {
-      if (!current || busy || !canDecide) return;
-      const together = tickedGate !== null && !alone;
-      const ids = together ? tickedGate.declineIds : current.held ? [] : [current.id];
-      if (ids.length === 0) return;
-      const node = current.node;
+  const reviewTicked = () => {
+    if (busy || !canDecide || bulk.reading || bulk.approveIds.length === 0) return;
+    const ids = bulk.approveIds;
+    const digests = bulk.digests;
+    setReview({
+      nodes: ids.flatMap((id) => tickable.get(id) ?? []),
+      entries: ids.map(
+        (id) => previews.entry(id) ?? { proposalId: id, preview: null, error: null },
+      ),
+      onConfirm: async () => {
+        try {
+          const results = await decideAgentProposals(ids, {
+            decision: "Accepted",
+            reasonCode: "approved_from_desk_batch",
+            previewDigests: digests,
+          });
+          const failed = results.filter((result) => result.error);
+          if (failed.length > 0) {
+            toast.warning(
+              t("{0} of {1} went through", results.length - failed.length, results.length),
+              { description: failed.map((result) => result.error).join(" · ") },
+            );
+          }
+          const done = results.filter((result) => !result.error).map((result) => result.proposalId);
+          // A change recorded as approved but refused or failed is decided too;
+          // it leaves the queue, and its failure was just said.
+          const notRun = failed
+            .filter((result) => result.decision)
+            .map((result) => result.proposalId);
+          if (done.length + notRun.length > 0) {
+            finish([...done, ...notRun], done.length > 0, done);
+          }
+        } catch (error) {
+          toast.error(t("The approval didn't go through"), { description: errorText(error) });
+          throw error;
+        }
+      },
+    });
+  };
+
+  const askWhy = useCallback(
+    (
+      ids: readonly string[],
+      initialReason: string | undefined,
+      run: (reason: string) => Promise<void>,
+    ) => {
       setDialog({
         title: ids.length > 1 ? t("Decline {0} changes?", ids.length) : t("Decline this change?"),
         description: t("Say why. The agent sees it, and so does whoever looks after the agent."),
@@ -391,37 +440,54 @@ export function DecisionFlow() {
         requireReason: true,
         destructive: true,
         initialReason,
-        onConfirm: async (reason) => {
-          if (together) {
-            const results = await decideAgentProposals(ids, {
-              decision: "Rejected",
-              reasonCode: reason,
-            });
-            finish(
-              results.filter((result) => !result.error).map((result) => result.proposalId),
-              false,
-            );
-            return;
-          }
-          const input = { decision: "Rejected" as const, reasonCode: reason };
-          if (isPendingPlan(node)) {
-            await decideAgentPlan(node.id, input);
-          } else {
-            await decideAgentProposal(node.id, input);
-          }
-          finish([node.id], false);
-        },
+        onConfirm: run,
       });
     },
-    [busy, canDecide, current, finish, t, tickedGate],
+    [t],
   );
+
+  /** Turns down the open change, with the reason already written when it is being sent back. */
+  const decline = useCallback(
+    (initialReason?: string) => {
+      if (!current || busy || !canDecide || current.held) return;
+      const node = current.node;
+      askWhy([node.id], initialReason, async (reason) => {
+        const input = { decision: "Rejected" as const, reasonCode: reason };
+        if (isPendingPlan(node)) {
+          await decideAgentPlan(node.id, input);
+        } else {
+          await decideAgentProposal(node.id, input);
+        }
+        finish([node.id], false);
+      });
+    },
+    [askWhy, busy, canDecide, current, finish],
+  );
+
+  /** Turns down every ticked change with one reason. */
+  const declineTicked = useCallback(() => {
+    if (busy || !canDecide || bulk.declineIds.length === 0) return;
+    const ids = bulk.declineIds;
+    askWhy(ids, undefined, async (reason) => {
+      const results = await decideAgentProposals(ids, { decision: "Rejected", reasonCode: reason });
+      finish(
+        results.filter((result) => !result.error).map((result) => result.proposalId),
+        false,
+      );
+    });
+  }, [askWhy, bulk.declineIds, busy, canDecide, finish]);
+
+  /** Sends the open change back to its agent with why it would be refused. */
+  const sendBack = () => {
+    if (!currentProposal || refusals.length === 0) return;
+    decline(askAgentMessage(currentProposal.toolName, refusals, t));
+  };
 
   const editable =
     current !== null &&
     current.held === null &&
     isPendingProposal(current.node) &&
-    current.node.parameterFields.length > 0 &&
-    ticked.size === 0;
+    current.node.parameterFields.length > 0;
   const modify = useCallback(
     (focus?: EditorFocus) => {
       if (!current || !isPendingProposal(current.node) || !editable) return;
@@ -451,10 +517,9 @@ export function DecisionFlow() {
 
   /** Ticks or unticks the open change, when it is one that can be decided with others. */
   const tickCurrent = useCallback(() => {
-    if (!current || current.held || !isPendingProposal(current.node) || sheet === null) return;
-    if (sheet.nodes.length < 2) return;
+    if (!current || !tickable.has(current.id)) return;
     tick([current.id], !ticked.has(current.id));
-  }, [current, sheet, tick, ticked]);
+  }, [current, tick, tickable, ticked]);
 
   // The listener stays attached while the queue is open and reads the latest
   // handlers, so a key pressed in the same frame the Approve button enables
@@ -490,48 +555,79 @@ export function DecisionFlow() {
   });
 
   useEffect(() => {
-    if (dialog || editor) return;
+    if (dialog || editor || review) return;
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [dialog, editor, onKey]);
+  }, [dialog, editor, onKey, review]);
 
   const decided = recent.data ?? [];
   const total = decided.length + items.length + (queue.hasNextPage ? 1 : 0);
-  const approveLabel = tickedGate
-    ? t("Approve {0}", tickedGate.approveIds.length)
-    : currentGate && currentGate.refused > 0 && currentGate.refused < currentGate.count
+  const approveLabel =
+    currentGate && currentGate.refused > 0 && currentGate.refused < currentGate.count
       ? t("Approve {0}, skip {1}", currentGate.count - currentGate.refused, currentGate.refused)
       : t("Approve");
+  const selecting = ticked.size > 0;
+  const tickedKinds = new Set(tickedNodes.map((node) => node.toolName));
 
-  const sections: QueueSection[] = groups.map((group) => ({
-    key: group.tool,
-    header: (
-      <QueueGroupHeader
-        label={group.tool === PLAN_GROUP ? t("Plans") : humanizeToolName(group.tool)}
-        count={group.items.length}
-      />
-    ),
-    rows: group.items.map((item) => ({
-      key: item.id,
-      render: () => (
-        <QueueRow
-          selected={current?.id === item.id}
-          marked={ticked.has(item.id)}
-          onSelect={() => setCurrentId(item.id)}
-          leading={<DeskAgentTile agent={item.node.run?.definition ?? null} size="xs" />}
-          title={item.title}
-          subtitle={
-            <>
-              {formatTimeAgo(item.node.createdAt * 1000)}
-              {item.reversible ? "" : ` · ${t("Can't be undone")}`}
-              {item.held && ` · ${t("Held, not yet decidable")}`}
-            </>
-          }
-          trailing={!seen.has(item.id) && <QueueUnseenDot label={t("Not opened yet")} />}
+  const sections: QueueSection[] = groups.map((group) => {
+    const canTick = group.items.filter((item) => tickable.has(item.id));
+    const clear = canTick.filter((item) => flagOf(previews.entry(item.id)) === null);
+    const all = canTick.length === 0 ? null : canTick.every((item) => ticked.has(item.id));
+    const ids = canTick.map((item) => item.id);
+
+    return {
+      key: group.tool,
+      header: (
+        <DecisionGroupHeading
+          label={group.tool === PLAN_GROUP ? t("Plans") : humanizeToolName(group.tool)}
+          count={group.items.length}
+          selecting={selecting}
+          clear={clear.length < canTick.length ? clear.length : 0}
+          all={all}
+          onSelectClear={() => {
+            tick(ids, false);
+            tick(
+              clear.map((item) => item.id),
+              true,
+            );
+          }}
+          onToggleAll={() => tick(ids, all !== true)}
         />
       ),
-    })),
-  }));
+      rows: group.items.map((item) => ({
+        key: item.id,
+        render: () => {
+          const entry = previews.entry(item.id);
+          const agentName = item.node.run?.definition?.name ?? "";
+          const subject = rowSubject(entry, { title: item.title, summary: agentName }, t);
+          const detail = subject.detail || item.summary;
+
+          return (
+            <DecisionRow
+              selected={current?.id === item.id}
+              ticked={ticked.has(item.id)}
+              tickable={tickable.has(item.id)}
+              selecting={selecting}
+              agent={item.node.run?.definition ?? null}
+              title={subject.title}
+              detail={
+                <>
+                  {detail !== "" && detail !== subject.title && `${detail} · `}
+                  {formatTimeAgo(item.node.createdAt * 1000)}
+                  {item.held && ` · ${t("Held, not yet decidable")}`}
+                </>
+              }
+              flag={flagOf(entry)}
+              unseen={!seen.has(item.id)}
+              leaving={leavingIds.has(item.id) ? leaving : null}
+              onOpen={() => openChange(item.id)}
+              onTick={(value) => tick([item.id], value)}
+            />
+          );
+        },
+      })),
+    };
+  });
   if (decided.length > 0) {
     sections.push({
       key: "decided",
@@ -570,129 +666,161 @@ export function DecisionFlow() {
 
   return (
     <>
-      <QueueLayout
-        label={t("Queue")}
-        aside={
-          <>
-            <QueueHeader
-              title={t("Queue")}
-              progressLabel={t("{0} of {1} decided", decided.length, total)}
-              done={decided.length}
-              total={total}
-            />
-            <QueueList
-              label={t("Waiting decisions")}
-              sections={sections}
-              selectedKey={current?.id ?? null}
-              empty={!queue.isLoading && <div className="dk-dc2-qe">{t("Queue clear")}</div>}
-              footer={
-                queue.hasNextPage && (
-                  <Button
-                    variant="bare"
-                    size="bare"
-                    className={cn(LINK_CLASS, "mx-2 mt-2.5")}
-                    onClick={() => void queue.fetchNextPage()}
-                    disabled={queue.isFetchingNextPage}
-                  >
-                    {t("Load more")}
-                  </Button>
-                )
-              }
-            />
-          </>
-        }
-      >
-        {queue.isLoading ? (
-          <QueueReading label={t("Reading the queue…")} />
-        ) : current && isPendingPlan(current.node) ? (
-          <PlanCard
-            key={current.id}
-            node={current.node}
-            leaving={leaving}
-            onGate={setGate}
-            onDeclineWith={(reason) => decline(reason, true)}
-          />
-        ) : current && sheet !== null ? (
-          <DecisionSheet
-            key={sheet.key}
-            nodes={sheet.nodes}
-            total={sheet.total}
-            currentId={current.id}
-            ticked={ticked}
-            onTick={tick}
-            onSelect={setCurrentId}
-            leaving={leaving}
-            leavingIds={leavingIds}
-            onGate={setSheetGate}
-            onDeclineWith={(reason) => decline(reason, true)}
-            onModify={editable ? modify : undefined}
-          />
-        ) : (
-          <QueueClear
-            title={t("Queue clear")}
-            body={
-              decided.length > 0
-                ? t(
-                    "{0, plural, one {# thing was decided today.} other {# things were decided today.}} Agents will ask here before they change anything else.",
-                    decided.length,
-                  )
-                : t("Agents will ask here before they change anything.")
+      <div className={cn("dk-w-nq", !showList && current && "dk-has-sel")}>
+        <DeskListPane className="dk-w-nq-l relative">
+          {head({
+            progressLabel: t("{0} of {1} decided", decided.length, total),
+            done: decided.length,
+            total,
+            waiting: queue.data?.totalCount ?? items.length,
+            keysEnabled: dialog === null && editor === null && review === null,
+          })}
+          <QueueList
+            label={t("Waiting decisions")}
+            sections={sections}
+            selectedKey={current?.id ?? null}
+            empty={!queue.isLoading && <div className="dk-dc2-qe">{t("Queue clear")}</div>}
+            footer={
+              (queue.hasNextPage || selecting) && (
+                // While changes are ticked the list keeps room under its last
+                // row, so the dock never covers one.
+                <div className={cn("flex", selecting && "pb-30")}>
+                  {queue.hasNextPage && (
+                    <Button
+                      variant="bare"
+                      size="bare"
+                      className={cn(LINK_CLASS, "mx-2 mt-2.5")}
+                      onClick={() => void queue.fetchNextPage()}
+                      disabled={queue.isFetchingNextPage}
+                    >
+                      {t("Load more")}
+                    </Button>
+                  )}
+                </div>
+              )
             }
           />
-        )}
-        {current && (
-          <QueueBar>
-            <QueueNav onPrevious={() => go(-1)} onNext={() => go(1)} />
-            <span className="dk-dc2-pos">
-              {index + 1} / {items.length}
-              {queue.hasNextPage ? "+" : ""}
-            </span>
-            <QueueBarSpacer />
-            {current.held && tickedGate === null ? (
-              <HeldBar
-                held={current.held}
-                canTurnOff={current.held.scope === "organization" ? canResume : canEditAgent}
-              />
-            ) : canDecide ? (
-              <>
-                {editable && (
-                  <Button
-                    variant="bare"
-                    size="bare"
-                    className={cn(LINK_CLASS, "@max-[900px]/mainc:hidden")}
-                    onClick={() => modify()}
-                  >
-                    {t("Change values")}
-                  </Button>
-                )}
-                <QueueButton
-                  shortcut="D"
-                  disabled={busy || (tickedGate !== null && tickedGate.declineIds.length === 0)}
-                  onClick={() => decline()}
-                >
-                  {tickedGate ? t("Decline {0}", tickedGate.declineIds.length) : t("Decline")}
-                </QueueButton>
-                <QueueButton
-                  ink
-                  shortcut="A"
-                  disabled={
-                    busy ||
-                    (tickedGate !== null ? !tickedGate.approvable : !currentGate?.approvable)
-                  }
-                  onClick={() => void approve()}
-                >
-                  {approveLabel}
-                </QueueButton>
-              </>
-            ) : (
-              <span className="dk-dc2-qe">{t("You can read these, but not decide them.")}</span>
-            )}
-          </QueueBar>
-        )}
-      </QueueLayout>
+          <DecisionDock
+            summary={{
+              count: bulk.count,
+              what:
+                tickedKinds.size === 1
+                  ? humanizeToolName([...tickedKinds][0] ?? "")
+                  : t(
+                      "{0, plural, one {# kind of change} other {# kinds of change}}",
+                      tickedKinds.size,
+                    ),
+              approvable: bulk.approveIds.length,
+              flagged: bulk.flagged,
+              blocked: bulk.blocked,
+              reading: bulk.reading,
+            }}
+            canDecide={canDecide}
+            busy={busy}
+            onClear={() => tick([...ticked], false)}
+            onDecline={declineTicked}
+            onReview={reviewTicked}
+          />
+        </DeskListPane>
+        {/* The Desk's layout is the page's one main landmark; this is a part of it. */}
+        <div className="dk-w-nq-d dk-dc2-main">
+          <button
+            type="button"
+            className="dk-w-det-back mx-4 mt-3 mb-0 self-start ui-focus-ring"
+            onClick={() => setShowList(true)}
+          >
+            <DeskIcon name="chevL" size={12} />
+            {t("All that needs you")}
+          </button>
+          {queue.isLoading ? (
+            <QueueReading label={t("Reading the queue…")} />
+          ) : current && isPendingPlan(current.node) ? (
+            <PlanCard
+              key={current.id}
+              node={current.node}
+              leaving={leaving}
+              onGate={setGate}
+              onDeclineWith={decline}
+            />
+          ) : currentProposal ? (
+            <DecisionChange
+              key={currentProposal.id}
+              node={currentProposal}
+              entry={previews.entry(currentProposal.id)}
+              reading={previews.reading(currentProposal.id)}
+              failed={previews.failed(currentProposal.id)}
+              onRetry={() => previews.refetch(currentProposal.id)}
+              leaving={leavingIds.has(currentProposal.id) ? leaving : null}
+              onModify={editable ? modify : undefined}
+              canChange={currentGate?.approvable ?? false}
+            />
+          ) : (
+            <QueueClear
+              title={t("Queue clear")}
+              body={
+                decided.length > 0
+                  ? t(
+                      "{0, plural, one {# thing was decided today.} other {# things were decided today.}} Agents will ask here before they change anything else.",
+                      decided.length,
+                    )
+                  : t("Agents will ask here before they change anything.")
+              }
+            />
+          )}
+          {current && (
+            <QueueBar>
+              <QueueNav onPrevious={() => go(-1)} onNext={() => go(1)} />
+              <span className="dk-dc2-pos">
+                {index + 1} / {items.length}
+                {queue.hasNextPage ? "+" : ""}
+              </span>
+              <QueueBarSpacer />
+              {current.held ? (
+                <HeldBar
+                  held={current.held}
+                  canTurnOff={current.held.scope === "organization" ? canResume : canEditAgent}
+                />
+              ) : canDecide ? (
+                <>
+                  {editable && (
+                    <QueueButton
+                      quiet
+                      shortcut="M"
+                      className="@max-[900px]/mainc:hidden"
+                      onClick={() => modify()}
+                    >
+                      {t("Change values")}
+                    </QueueButton>
+                  )}
+                  <QueueButton shortcut="D" disabled={busy} onClick={() => decline()}>
+                    {t("Decline")}
+                  </QueueButton>
+                  {refusals.length > 0 ? (
+                    <QueueButton ink disabled={busy} onClick={sendBack}>
+                      {t("Send back to the agent")}
+                    </QueueButton>
+                  ) : (
+                    <QueueButton
+                      ink
+                      shortcut="A"
+                      disabled={busy || !currentGate?.approvable}
+                      onClick={() => void approve()}
+                    >
+                      {approveLabel}
+                    </QueueButton>
+                  )}
+                </>
+              ) : (
+                <span className="dk-dc2-qe">{t("You can read these, but not decide them.")}</span>
+              )}
+            </QueueBar>
+          )}
+        </div>
+      </div>
 
       <ReasonDialog request={dialog} onClose={() => setDialog(null)} />
       <ProposalEditor request={editor} onClose={() => setEditor(null)} />
+      <BulkReviewDialog request={review} onClose={() => setReview(null)} />
     </>
   );
 }

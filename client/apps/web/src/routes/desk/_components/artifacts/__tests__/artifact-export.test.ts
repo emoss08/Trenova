@@ -49,7 +49,7 @@ describe("a table copied as CSV", () => {
       { id: "shp_01HX6", proNumber: "=PRO-2", status: "Delivered", weight: 7, hazmat: false },
     ],
     rowCount: 2,
-    searchedFor: ["status is InTransit"],
+    filters: [{ label: "Status", value: "In transit" }],
   });
 
   it("writes the column labels and every row's values as a person reads them", () => {

@@ -1,3 +1,4 @@
+import { useTriageAccess } from "../use-triage-access";
 import { useUserTimezone } from "@/hooks/use-user-timezone";
 import type { InboundMessageDetail } from "@/lib/graphql/inbox";
 import { downloadEml } from "@/lib/triage/eml";
@@ -117,7 +118,10 @@ export function ReaderToolbar({
   const assignees = useTriageAssignees().data ?? [];
   const documentTypes = useTriageDocumentTypes().data?.results ?? [];
   const underline = useTriageStore((state) => state.underlineFacts);
-  const waiting = message.needsReview;
+  // Assigning, snoozing, linking and ignoring are work on the message: a
+  // reader who may not work it is offered the message and its link only.
+  const { canWork } = useTriageAccess();
+  const waiting = message.needsReview && canWork;
   const snoozed = isSnoozed(message);
   const ids = [message.id];
 
@@ -185,14 +189,14 @@ export function ReaderToolbar({
       {
         label: t("More"),
         entries: [
-          {
+          canWork && {
             id: "reply",
             label: t("Reply"),
             icon: CornerDownLeftIcon,
             shortcut: "R",
             onSelect: onReply,
           },
-          {
+          canWork && {
             id: "link",
             label: t("Link by hand"),
             icon: Link01Icon,

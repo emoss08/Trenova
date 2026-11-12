@@ -4474,6 +4474,7 @@ var enumPermissionResource = [...]schema.EnumValue{
 	{Value: `insight`, Label: `Insight`},
 	{Value: `watchtower`, Label: `Watchtower`},
 	{Value: `briefing`, Label: `Briefing`},
+	{Value: `record_share`, Label: `Record Share`},
 	{Value: `customer`, Label: `Customer`, Doc: `Customers`},
 	{Value: `factoring_company`, Label: `Factoring Company`},
 	{Value: `carrier`, Label: `Carrier`, Doc: `Carriers`},

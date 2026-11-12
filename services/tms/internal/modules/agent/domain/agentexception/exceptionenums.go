@@ -111,3 +111,9 @@ func (c ExceptionCategory) IsValid() bool {
 		return false
 	}
 }
+
+// AboutDocuments reports whether an exception of this category says a paper
+// is missing from the record, so the paper arriving settles it.
+func (c ExceptionCategory) AboutDocuments() bool {
+	return c == CategoryMissingDocumentation || c == CategoryMissingRequiredDocument
+}

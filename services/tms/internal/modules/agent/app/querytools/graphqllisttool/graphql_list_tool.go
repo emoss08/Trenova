@@ -921,7 +921,7 @@ func (t *Tool) criteria(args map[string]any, query string) *filtercatalog.Criter
 	criteria := DescribeCriteria(t.Spec.EntityPlural, t.Params, args, query)
 	for idx := range t.Spec.Conditions {
 		if raw, present := args[t.Spec.Conditions[idx].Name]; present && raw != nil {
-			criteria.Field(t.Spec.Conditions[idx].Name, fmt.Sprint(raw))
+			criteria.Field(t.Spec.Conditions[idx].Name, describeValue(raw))
 		}
 	}
 

@@ -89,31 +89,31 @@ matches anything fails too, so the file cannot drift behind the tools.
 | `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 247 |
 | `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 40 |
 | `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 49 |
-| `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 108 |
+| `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 109 |
 | `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 35 |
 | `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 48 |
-| `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 54 |
+| `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 55 |
 | `duplicate` | Another surface for a write listed elsewhere that the analysis could not merge on its own. The reason names the write it duplicates. | 10 |
 
 ## Totals
 
-1140 writes: 681 GraphQL mutations and 459 REST writes, after merging 27 REST routes into the mutation they duplicate.
+1142 writes: 683 GraphQL mutations and 459 REST writes, after merging 27 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
 | Covered by a tool | 446 |
-| Exempt | 690 |
+| Exempt | 692 |
 | — Security | 99 |
 | — Configuration | 247 |
 | — User preference | 40 |
 | — Infrastructure | 49 |
-| — Agent administration | 108 |
+| — Agent administration | 109 |
 | — Counterparty | 35 |
 | — Read-only | 48 |
-| — Attestation | 54 |
+| — Attestation | 55 |
 | — Duplicate | 10 |
 | **Pending** | **4** |
-| Total | 1140 |
+| Total | 1142 |
 
 Of the 450 writes an agent should be able to make, 446 have a tool (99%).
 
@@ -137,7 +137,7 @@ The writes no tool performs yet, and what the tool would do.
 | accountingsync | 33 | 20 | 13 | 0 |
 | accountingwebhook | 1 | 0 | 1 | 0 |
 | accounttype | 4 | 0 | 4 | 0 |
-| agent | 18 | 2 | 16 | 0 |
+| agent | 19 | 2 | 17 | 0 |
 | agentdefinition | 13 | 0 | 13 | 0 |
 | agentextension | 8 | 1 | 7 | 0 |
 | agentprofile | 8 | 2 | 6 | 0 |
@@ -265,7 +265,7 @@ The writes no tool performs yet, and what the tool would do.
 | ratesimulation | 1 | 1 | 0 | 0 |
 | ratezone | 2 | 0 | 2 | 0 |
 | realtime | 4 | 0 | 4 | 0 |
-| recordshare | 1 | 1 | 0 | 0 |
+| recordshare | 2 | 1 | 1 | 0 |
 | recurringshipment | 5 | 4 | 1 | 0 |
 | report | 19 | 13 | 6 | 0 |
 | role | 11 | 0 | 11 | 0 |
@@ -411,6 +411,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation approveAgentMemorySuggestion` | Exempt, agent-administration: A person curating what agents remember; an agent writes memory through agent_create_memory, agent_edit_memory and agent_retire_memory. |
 | `mutation commitAgentDecisionNow` | Exempt, agent-administration: Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work. |
 | `mutation commitMyDecisionNow` | Exempt, agent-administration: Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work. |
+| `mutation confirmAgentMemory` | Exempt, agent-administration: A person vouching that a memory still holds; an agent confirming what it reads would make the question pointless. |
 | `mutation createAgentMemory` | Tool: `agent_create_memory` |
 | `mutation decideAgentPlan` | Exempt, agent-administration: Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work. |
 | `mutation decideAgentProposal` | Exempt, agent-administration: Deciding what an agent proposed is the human check on agents; an agent cannot approve its own work. |
@@ -1861,6 +1862,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | Write | Decision |
 | --- | --- |
 | `mutation shareRecord` | Tool: `invoice_share` |
+| `mutation unshareRecord` | Exempt, attestation: A person taking back what was shared with a teammate; an agent does not decide who may keep reading a person's case. |
 
 ### recurringshipment
 

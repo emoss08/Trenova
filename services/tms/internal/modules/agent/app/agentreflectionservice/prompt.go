@@ -82,6 +82,17 @@ func systemPrompt(in *promptInput) string {
 			"a carrier that the agent was told or had to find out and no record holds. A fact " +
 			"nobody told the agent is kept only about one of those records.\n\n",
 	)
+	if in.HasPerson {
+		b.WriteString("People state lasting facts while asking for something else (\"Acme's dock ")
+		b.WriteString("closes at 4 on Fridays, so book it for Thursday\"). Keep the fact, in a ")
+		b.WriteString(
+			"sentence that stands on its own and names the record, and leave the request ",
+		)
+		b.WriteString(
+			"out. What is true of one shipment, one day or the present situation only is ",
+		)
+		b.WriteString("not a lasting fact.\n\n")
+	}
 
 	b.WriteString("Never keep a one-off request; what a record already says; anything about ")
 	b.WriteString(
@@ -109,16 +120,21 @@ func systemPrompt(in *promptInput) string {
 		b.WriteString(
 			"preferences; agent for how this agent should do its work for everyone; team ",
 		)
-		b.WriteString("for everyone in the person's role; organization for everyone. Use team or ")
-		b.WriteString("organization only when the person said so; those wait for someone allowed ")
-		b.WriteString("to approve them.\n")
+		b.WriteString("for everyone in the person's role; organization for everyone. A fact about ")
+		b.WriteString("a customer, location, driver or carrier, or about how the organization ")
+		b.WriteString("works, is for the organization, since everyone working with that record ")
+		b.WriteString("needs it. Otherwise use team or organization only when the person said so. ")
+		b.WriteString("Both wait for someone allowed to approve them.\n")
 	} else {
 		b.WriteString("agent for how this agent should do its work, or organization for everyone, ")
 		b.WriteString("which waits for a person to approve it.\n")
 	}
 	b.WriteString("subjectType and subjectId name the one customer, location, worker (driver) or ")
-	b.WriteString("carrier a lesson is about, only from the records listed; otherwise leave both ")
-	b.WriteString("empty. replaces is a kept memory's id or empty.\n")
+	b.WriteString("carrier a lesson is about, only from the records listed. When the record is ")
+	b.WriteString("not listed but the person named it, set subjectType and put the name exactly ")
+	b.WriteString("as they wrote it in subjectName; the lesson is filed under the one record with ")
+	b.WriteString("that name. Otherwise leave all three empty. replaces is a kept memory's id or ")
+	b.WriteString("empty.\n")
 	b.WriteString("Write each lesson in plain sentences a reader with no other context ")
 	fmt.Fprintf(
 		&b,
@@ -394,13 +410,16 @@ func outputSchema(hasPerson bool) map[string]any {
 						"audience":    map[string]any{"type": "string", "enum": audiences},
 						"subjectType": map[string]any{"type": "string", "enum": subjectTypes},
 						"subjectId":   text("A listed record's id, or empty"),
-						"replaces":    text("A kept memory's id, or empty"),
-						"evidence":    text("A short quote from, or pointer to, what taught it"),
-						"why":         text("One sentence on how it helps next time"),
+						"subjectName": text(
+							"The record's name as the person wrote it when its id is not listed, or empty",
+						),
+						"replaces": text("A kept memory's id, or empty"),
+						"evidence": text("A short quote from, or pointer to, what taught it"),
+						"why":      text("One sentence on how it helps next time"),
 					},
 					"required": []string{
 						"kind", "content", "audience", "subjectType", "subjectId",
-						"replaces", "evidence", "why",
+						"subjectName", "replaces", "evidence", "why",
 					},
 					"additionalProperties": false,
 				},

@@ -19,6 +19,7 @@ export type ScrollAreaMaskVariant =
   | "background"
   | "card"
   | "field"
+  | "info"
   | "muted"
   | "popover"
   | "raised"
@@ -39,6 +40,7 @@ const scrollMaskVariantClassNames: Record<ScrollAreaMaskVariant, string> = {
   background: "before:from-background after:from-background",
   card: "before:from-card after:from-card",
   field: "before:from-field after:from-field",
+  info: "before:from-info-subtle after:from-info-subtle",
   muted: "before:from-muted after:from-muted",
   popover: "before:from-popover after:from-popover",
   raised: "before:from-raised after:from-raised",

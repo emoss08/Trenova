@@ -124,6 +124,7 @@ func (s *Service) draft(
 		SubjectID:    req.ID,
 		Trigger:      agent.RunTriggerManual,
 		CaseOptionID: option.ID,
+		Watched:      true,
 		TenantInfo:   req.TenantInfo,
 	}, actor)
 	if err != nil {

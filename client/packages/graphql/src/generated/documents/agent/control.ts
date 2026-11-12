@@ -2,5 +2,5 @@
 import type { TypedDocumentString, AgentControlFieldsFragment, AgentControlSettingsQuery, AgentControlSettingsQueryVariables, UpdateAgentControlMutation, UpdateAgentControlMutationVariables } from "../../graphql";
 
 export const AgentControlFieldsFragmentDoc = {"__meta__":{"fragmentName":"AgentControlFields"}} as unknown as TypedDocumentString<AgentControlFieldsFragment, unknown>;
-export const AgentControlSettingsDocument = {"__meta__":{"kind":"query","name":"AgentControlSettings","hash":"sha256:909410690b94896c29a7435eb71ddbfc076212d0a20038d7d3f931d678db5de6"}} as unknown as TypedDocumentString<AgentControlSettingsQuery, AgentControlSettingsQueryVariables>;
-export const UpdateAgentControlDocument = {"__meta__":{"kind":"mutation","name":"UpdateAgentControl","hash":"sha256:fa0fa61541243bf23e675dcc87e958229249c8943aad7f9ed63a061999f16778"}} as unknown as TypedDocumentString<UpdateAgentControlMutation, UpdateAgentControlMutationVariables>;
+export const AgentControlSettingsDocument = {"__meta__":{"kind":"query","name":"AgentControlSettings","hash":"sha256:477274c27e71726fe8e867519718d3002f62003227ec7426948d999c88d04d4b"}} as unknown as TypedDocumentString<AgentControlSettingsQuery, AgentControlSettingsQueryVariables>;
+export const UpdateAgentControlDocument = {"__meta__":{"kind":"mutation","name":"UpdateAgentControl","hash":"sha256:1270b1f268340fabaaa864b018bc890c3d098fc21fd8aaf640486c41a531d329"}} as unknown as TypedDocumentString<UpdateAgentControlMutation, UpdateAgentControlMutationVariables>;

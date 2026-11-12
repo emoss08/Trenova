@@ -42,6 +42,8 @@ export type ToolSegment = {
   effect?: ToolEffect;
   /** The server's one-line account of the result, once it has finished. */
   summary?: string;
+  /** What a read was narrowed by, in the server's words, once it has finished. */
+  asked?: string;
   /** How the runtime judged the call once it finished; absent from an older server. */
   verdict?: ToolVerdict;
   /** When this reader saw the call start and finish, in epoch milliseconds. */
@@ -247,6 +249,7 @@ function finishTool(segments: TurnSegment[], data: ToolFinishedData): TurnSegmen
           content: data.content,
           effect: data.effect ?? segment.effect,
           summary: data.summary || undefined,
+          asked: data.asked || undefined,
           verdict: data.verdict,
           handOffAgents:
             data.handOffAgents && data.handOffAgents.length > 0 ? data.handOffAgents : undefined,

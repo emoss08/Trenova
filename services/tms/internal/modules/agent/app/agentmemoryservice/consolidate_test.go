@@ -27,7 +27,11 @@ func keptFor(owner pulid.ID, kind agentmemory.MemoryKind, content string) *agent
 	}
 }
 
-func personal(actor *permissionports.RequestActor, kind agentmemory.MemoryKind, content string) *agentmemoryports.RememberRequest {
+func personal(
+	actor *permissionports.RequestActor,
+	kind agentmemory.MemoryKind,
+	content string,
+) *agentmemoryports.RememberRequest {
 	return &agentmemoryports.RememberRequest{
 		TenantInfo:  tenant(),
 		Kind:        kind,
@@ -306,10 +310,19 @@ func TestDuplicateOf_NeedsTheSameKindAndNearlyAllTheWords(t *testing.T) {
 		[]*agentmemory.Memory{other, instruction, fact},
 	))
 	assert.Nil(t, DuplicateOf(
-		&agentmemory.Memory{Kind: agentmemory.MemoryKindFact, Content: "Acme pays net 30 days, by check"},
+		&agentmemory.Memory{
+			Kind:    agentmemory.MemoryKindFact,
+			Content: "Acme pays net 30 days, by check",
+		},
 		[]*agentmemory.Memory{fact},
 	))
-	assert.Nil(t, DuplicateOf(&agentmemory.Memory{Kind: agentmemory.MemoryKindFact}, []*agentmemory.Memory{fact}))
+	assert.Nil(
+		t,
+		DuplicateOf(
+			&agentmemory.Memory{Kind: agentmemory.MemoryKindFact},
+			[]*agentmemory.Memory{fact},
+		),
+	)
 }
 
 // "Quote Acme in dollars" and "Quote Acme in Canadian dollars" share four of
@@ -318,14 +331,101 @@ func TestDuplicateOf_NeedsTheSameKindAndNearlyAllTheWords(t *testing.T) {
 func TestDuplicateOf_OneMeaningfulWordMakesItANewMemory(t *testing.T) {
 	t.Parallel()
 
-	kept := &agentmemory.Memory{Kind: agentmemory.MemoryKindInstruction, Content: "Quote Acme in dollars."}
+	kept := &agentmemory.Memory{
+		Kind:    agentmemory.MemoryKindInstruction,
+		Content: "Quote Acme in dollars.",
+	}
 
 	assert.Nil(t, DuplicateOf(
-		&agentmemory.Memory{Kind: agentmemory.MemoryKindInstruction, Content: "Quote Acme in Canadian dollars."},
+		&agentmemory.Memory{
+			Kind:    agentmemory.MemoryKindInstruction,
+			Content: "Quote Acme in Canadian dollars.",
+		},
 		[]*agentmemory.Memory{kept},
 	))
 	assert.Same(t, kept, DuplicateOf(
-		&agentmemory.Memory{Kind: agentmemory.MemoryKindInstruction, Content: "Quote Acme in the dollars."},
+		&agentmemory.Memory{
+			Kind:    agentmemory.MemoryKindInstruction,
+			Content: "Quote Acme in the dollars.",
+		},
 		[]*agentmemory.Memory{kept},
 	))
+}
+
+func sharedRule(kind agentmemory.MemoryKind, content string) *agentmemory.Memory {
+	return &agentmemory.Memory{
+		ID:      pulid.MustNew("amem_"),
+		Kind:    kind,
+		Status:  agentmemory.MemoryStatusActive,
+		Scope:   agentmemory.MemoryScopeOrganization,
+		Content: content,
+	}
+}
+
+// A note for one person never replaces what everyone else works under. When
+// it says otherwise than the organization's rule, both stand and the saved
+// note names the rule it differs from, so the person hears about it.
+func TestRemember_APersonalNoteThatDiffersFromASharedRuleIsKeptBesideIt(t *testing.T) {
+	t.Parallel()
+
+	actor := userActor()
+	rule := sharedRule(agentmemory.MemoryKindInstruction, "Quote Acme Foods in US dollars.")
+	judge := &fakeJudge{verdicts: map[pulid.ID]agentmemoryports.MemoryVerdict{
+		rule.ID: agentmemoryports.MemoryVerdictContradicts,
+	}}
+	svc, repo := consolidating(nil, judge)
+	repo.wider = []*agentmemory.Memory{rule}
+
+	got, err := svc.Remember(t.Context(), personal(actor, agentmemory.MemoryKindInstruction,
+		"Quote Acme Foods in Canadian dollars."), actor)
+
+	require.NoError(t, err)
+	require.Len(t, repo.created, 1)
+	assert.Nil(t, repo.created[0].SupersedesID, "the shared rule is not replaced")
+	assert.Equal(t, agentmemory.MemoryStatusActive, got.Status)
+	assert.Same(t, rule, got.DiffersFrom)
+	assert.Empty(t, repo.used)
+	require.Len(t, repo.widerAsks, 1)
+	assert.True(t, repo.widerAsks[0].Wider)
+	require.Len(t, judge.asked, 1, "one model call covers the person's own and the shared")
+	assert.Equal(t, []*agentmemory.Memory{rule}, judge.asked[0].Candidates)
+}
+
+func TestRemember_APersonalNoteTheOrganizationAlreadyKeepsIsNotKeptTwice(t *testing.T) {
+	t.Parallel()
+
+	actor := userActor()
+	rule := sharedRule(agentmemory.MemoryKindFact, "Acme's dock closes at 3pm.")
+	svc, repo := consolidating(nil, &fakeJudge{
+		verdicts: map[pulid.ID]agentmemoryports.MemoryVerdict{
+			rule.ID: agentmemoryports.MemoryVerdictSame,
+		},
+	})
+	repo.wider = []*agentmemory.Memory{rule}
+
+	got, err := svc.Remember(t.Context(), personal(actor, agentmemory.MemoryKindFact,
+		"Acme stops receiving at 15:00."), actor)
+
+	require.NoError(t, err)
+	assert.Equal(t, rule.ID, got.ID)
+	assert.True(t, got.Refreshed)
+	assert.Empty(t, repo.created)
+	assert.Equal(t, []pulid.ID{rule.ID}, repo.used)
+}
+
+func TestRemember_AMemoryForTheOrganizationHasNothingWiderToDifferFrom(t *testing.T) {
+	t.Parallel()
+
+	actor := userActor()
+	svc, repo := consolidating(nil, &fakeJudge{})
+
+	_, err := svc.remember(t.Context(), &agentmemoryports.RememberRequest{
+		TenantInfo: tenant(),
+		Kind:       agentmemory.MemoryKindFact,
+		Content:    "Acme's dock closes at 3pm.",
+		Scope:      agentmemory.MemoryScopeOrganization,
+	}, actor, true)
+
+	require.NoError(t, err)
+	assert.Empty(t, repo.widerAsks)
 }

@@ -299,25 +299,36 @@ approval would be recorded unreviewed. In the Desk:
   the approval carries every digest (`batchPreviewDigests`). What still holds it is said by
   cause (`ReviewBlocker`): a preview still loading, one that failed to load, and a record that
   moved since, which is shown but never counts and can only be set aside;
-- the Decisions queue has one view for every change (`decisions/decision-sheet.tsx`): the
-  sheet of the open change's kind, fifty at a time around it (`agentdecision.MaxBatch`,
-  `MAX_BATCH` on the client), beside the rail grouped by kind. The sheet reads every preview
-  in one request (`agentProposalPreviews`) and lays the changes out by `batchReview`: one
-  change reads as a card; several show what they have alike once (how a message goes out,
-  the values every change sets alike, and a message's subject and body as a template with
-  numbered places, `sharedTemplate` in `lib/shared-template.ts`) and each row shows what is
-  its own, with its warnings. The template is worked out from the texts and checked by
-  rebuilding every row's text from it; a row that does not come out exactly, or a message
-  worded differently from the rest, is shown whole, so the sheet can be awkward but never
-  shows anything other than the preview. Changes that differ in shape are each shown whole.
-  The open row is drawn whole (`ProposalDetail`: who asked, why, the record diff, the dry
-  run, the ways forward when it would be refused, the arguments). While nothing is ticked
-  the bar decides the open change alone, with its digest; rows ticked with X or "Select
-  all" are decided together, and a ticked row counts as reviewed once it has been on screen,
-  so Approve holds until each has been, then carries the digest of each. A row whose record
-  moved can only be declined; a held row cannot be ticked. When the read fails, internal
-  changes are approved unreviewed, as one card would be, and gated ones wait. A plan is
-  decided as one and keeps its own card (`PlanCard`).
+- the Decisions lens of Needs you (`decisions/decision-flow.tsx`) splits picking from reading.
+  The list is where changes are picked and ticked; the page beside it holds one change
+  (`DecisionChange`): who asked, why, whether it can be undone, what to know before deciding
+  (`DecisionNotices`: each warning once, with its remedy or the value to change beside it),
+  then the change itself, a message as it goes out, one value across records a line each,
+  anything else through `ProposalPreview`, and one line for what the dry run came to. The bar
+  under it decides that change alone, with its digest; a change that would be refused swaps
+  Approve for sending it back to the agent with the reasons.
+  - **Previews are read a batch at a time as changes arrive** (`useDecisionPreviews`,
+    `agentProposalPreviews`, at most `MAX_BATCH`, the server's `agentdecision.MaxBatch`). A
+    change stays in the batch it was first read with, so the queue shrinking or growing never
+    changes what a batch already read asks for. The list uses them to name each row by what
+    is its own (`rowSubject`) and to flag it (`flagOf`).
+  - **Ticking is in the list.** A row's agent mark cross-fades to a checkbox in the same box;
+    a kind's heading ticks the kind, or only the ones with nothing flagged. Any change that is
+    not a plan and not held can be ticked, across kinds, up to `MAX_BATCH`. The dock at the
+    foot of the list (`DecisionDock`) declines the ticked changes with one reason or opens
+    the review.
+  - **An approval of several takes one review** (`BulkReviewDialog`), laid out by
+    `batchReview`: what the changes have alike once (how a message goes out, the values every
+    change sets alike, and a message's subject and body as a template with numbered places,
+    `sharedTemplate` in `lib/shared-template.ts`), then each row with what is its own, the
+    flagged ones first. The template is worked out from the texts and checked by rebuilding
+    every row's text from it; a row that does not come out exactly, or a message worded
+    differently from the rest, is shown whole, and changes that differ in shape are each
+    shown whole, so the review never shows anything other than the preview. Confirming sends
+    the digest of each change shown. A change whose record moved, or that would be refused,
+    is left out of an approval and can only be declined. When the read fails, internal
+    changes are approved unreviewed, as one would be, and gated ones wait. A plan is decided
+    as one and keeps its own card (`PlanCard`).
 
 An approver's changes can never point the write at another record: `refuseRetarget`
 compares `Target(proposed)` with `Target(merged)` in `CheckModifications` and again where it

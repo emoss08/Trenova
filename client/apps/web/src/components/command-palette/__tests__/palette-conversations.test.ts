@@ -46,7 +46,9 @@ describe("a conversation in the command palette", () => {
   });
 
   it("opens a decision on Decisions", () => {
-    expect(conversationPage(hit({ kind: "dec", id: "ap_1" }), t).href).toBe("/desk/decisions");
+    expect(conversationPage(hit({ kind: "dec", id: "ap_1" }), t).href).toBe(
+      "/desk/needs?lens=decisions&proposal=ap_1",
+    );
   });
 
   it("names an untitled conversation rather than leaving the row blank", () => {

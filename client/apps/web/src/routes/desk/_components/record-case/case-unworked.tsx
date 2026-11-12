@@ -1,10 +1,13 @@
+import { withoutRecordIds } from "@/lib/record-ids";
+import { NOTHING_WRITTEN, type CaseWriting as Writing } from "@/lib/desk-case-stream";
+import { CaseWritingCard } from "./case-writing";
+import { DeskIcon } from "@/components/desk-chat/desk-icons";
 import { DeskAgentTile } from "@/components/desk-chat/desk-agent-tile";
 import { AiMarkdown } from "@/components/elements/ai-markdown";
 import type { DeskCaseHandOff } from "@/lib/graphql/desk-case";
 import { handOffWatchtowerItem, type HandOffResult } from "@/lib/graphql/watchtower";
 import { handleMutationError } from "@/hooks/use-api-mutation";
 import { Button } from "@trenova/shared/components/ui/button";
-import { NovaBadge } from "@trenova/shared/components/ui/nova-badge";
 import { useLatestCallback } from "@trenova/shared/hooks/use-latest-callback";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { newIdempotencyKey } from "@trenova/shared/lib/idempotency";
@@ -31,6 +34,8 @@ const NO_ACTIONS: readonly { label: string; onClick: () => void }[] = [];
 export function CaseUnworked({
   handOff,
   canHandOff,
+  locked = "",
+  writing = NOTHING_WRITTEN,
   autoStart = false,
   onHanded,
   onAcceptRisk,
@@ -39,6 +44,10 @@ export function CaseUnworked({
   handOff: DeskCaseHandOff;
   /** The person owns the case, or may work it, and may work the Watchtower. */
   canHandOff: boolean;
+  /** Why the reader cannot act on the case; said in place of the actions. */
+  locked?: string;
+  /** What the agent on the case is writing, while one is. */
+  writing?: Writing;
   /** Hand the case over as it opens, when no agent has looked at it yet. */
   autoStart?: boolean;
   /** Told once an agent has it, so the page watches for what it drafts. */
@@ -106,41 +115,36 @@ export function CaseUnworked({
     const name = handOff.agent?.name ?? handedTo ?? "";
 
     return (
-      <section className="dk-cz-plan" aria-label={t("Plan")} aria-busy>
-        <div className="dk-cz-plan-h">
-          <div className="dk-cz-plan-k">{t("Plan")}</div>
-        </div>
-        <div className="dk-cz-draft">
-          <div className="dk-cz-draft-l">
-            <NovaBadge size="xs" />
-            {name !== ""
-              ? t("{0} is working this case. What it proposes shows here for you to approve.", name)
-              : t("An agent is working this case. What it proposes shows here for you to approve.")}
-          </div>
-          <i className="dk-sk" />
-          <i className="dk-sk" />
-        </div>
-      </section>
+      <CaseWritingCard
+        writing={writing}
+        lead={
+          name !== ""
+            ? t("{0} is working this case. What it proposes shows here for you to approve.", name)
+            : t("An agent is working this case. What it proposes shows here for you to approve.")
+        }
+      />
     );
   }
 
   const note =
-    candidates !== null
-      ? candidates.length > 0
-        ? t("No agent takes this kind of thing on its own. Choose who works it.")
-        : t("No agent is set up to work this. Ask about it below, or turn one on in AI control.")
-      : handOff.note !== ""
-        ? t("Do it yourself, hand it to another agent, or accept the risk.")
-        : actions.length > 0
-          ? t(
-              "The Watchtower raised it and nobody has looked. Do it yourself, or hand it to an agent to lay out what could happen and draft a plan for you to approve.",
-            )
-          : t(
-              "The Watchtower raised it and nobody has looked. Hand it to an agent and it reads the record, lays out what could happen and drafts a plan for you to approve.",
-            );
+    !canHandOff && onAcceptRisk === null && locked !== ""
+      ? lockedNote(locked)
+      : candidates !== null
+        ? candidates.length > 0
+          ? t("No agent takes this kind of thing on its own. Choose who works it.")
+          : t("No agent is set up to work this. Ask about it below, or turn one on in AI control.")
+        : handOff.note !== ""
+          ? t("Do it yourself, hand it to another agent, or accept the risk.")
+          : actions.length > 0
+            ? t(
+                "The Watchtower raised it and nobody has looked. Do it yourself, or hand it to an agent to lay out what could happen and draft a plan for you to approve.",
+              )
+            : t(
+                "The Watchtower raised it and nobody has looked. Hand it to an agent and it reads the record, lays out what could happen and drafts a plan for you to approve.",
+              );
 
   return (
-    <section className="dk-cz-plan" aria-label={t("Plan")}>
+    <section className="dk-cz-plan animate-rise" aria-label={t("Plan")}>
       <div className="dk-cz-plan-h">
         <div className="dk-cz-plan-k">{t("No plan")}</div>
         <div className="dk-cz-plan-row">
@@ -153,7 +157,7 @@ export function CaseUnworked({
       </div>
       {handOff.note !== "" && (
         <div className="dk-cz-said">
-          <AiMarkdown content={handOff.note} className="text-xs" deskSubset />
+          <AiMarkdown content={withoutRecordIds(handOff.note)} className="text-xs" deskSubset />
         </div>
       )}
       <CaseFooter note={note}>
@@ -196,5 +200,15 @@ export function CaseUnworked({
         </div>
       )}
     </section>
+  );
+}
+
+/** Why nothing can be done here by this reader, where the actions would be. */
+function lockedNote(reason: string) {
+  return (
+    <span className="inline-flex items-start gap-2">
+      <DeskIcon name="lock" size={13} className="mt-0.5 shrink-0" />
+      {reason}
+    </span>
   );
 }

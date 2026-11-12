@@ -104,7 +104,7 @@ const (
 	ReflectionSignalProposalModified = ReflectionSignalKind("ProposalModified")
 	ReflectionSignalProposalRejected = ReflectionSignalKind("ProposalRejected")
 	ReflectionSignalNegativeFeedback = ReflectionSignalKind("NegativeFeedback")
-	ReflectionSignalLongTask         = ReflectionSignalKind("LongTask")
+	ReflectionSignalPersonTold       = ReflectionSignalKind("PersonTold")
 )
 
 func (k ReflectionSignalKind) IsValid() bool {
@@ -114,7 +114,7 @@ func (k ReflectionSignalKind) IsValid() bool {
 		ReflectionSignalProposalModified,
 		ReflectionSignalProposalRejected,
 		ReflectionSignalNegativeFeedback,
-		ReflectionSignalLongTask:
+		ReflectionSignalPersonTold:
 		return true
 	default:
 		return false
@@ -147,8 +147,10 @@ func (k ReflectionSignalKind) Describe() string {
 		return "a person refused a write the agent proposed"
 	case ReflectionSignalNegativeFeedback:
 		return "a person rated a reply as unhelpful"
-	case ReflectionSignalLongTask:
-		return "the agent took many steps to finish the task"
+	case ReflectionSignalPersonTold:
+		return "the person told the agent something in passing, while asking for something " +
+			"else, that may be a lasting fact about the organization or one of its " +
+			"customers, locations, drivers or carriers"
 	default:
 		return string(k)
 	}
@@ -177,7 +179,23 @@ func (s ReflectionSignals) FromPeople() bool {
 		s.Has(ReflectionSignalStandingRequest) ||
 		s.Has(ReflectionSignalProposalModified) ||
 		s.Has(ReflectionSignalProposalRejected) ||
-		s.Has(ReflectionSignalNegativeFeedback)
+		s.Has(ReflectionSignalNegativeFeedback) ||
+		s.Has(ReflectionSignalPersonTold)
+}
+
+func (s ReflectionSignals) OnlyInPassing() bool {
+	told := false
+	for _, signal := range s {
+		if signal.Count <= 0 {
+			continue
+		}
+		if signal.Kind != ReflectionSignalPersonTold {
+			return false
+		}
+		told = true
+	}
+
+	return told
 }
 
 func (s ReflectionSignals) Kinds() []string {

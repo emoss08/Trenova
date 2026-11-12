@@ -7,14 +7,15 @@ import (
 )
 
 const (
-	BacktestWeeks    = 8
-	MinHistoryWeeks  = 8
-	MinHistoryLoads  = 200
-	MinSkill         = 0.05
-	IntervalLow      = 0.1
-	IntervalHigh     = 0.9
-	minTrainingWeeks = 4
-	minScoredMean    = 0.25
+	BacktestWeeks     = 8
+	MinHistoryWeeks   = 8
+	MinHistoryLoads   = 200
+	RefitAfterSeconds = int64(3600)
+	MinSkill          = 0.05
+	IntervalLow       = 0.1
+	IntervalHigh      = 0.9
+	minTrainingWeeks  = 4
+	minScoredMean     = 0.25
 )
 
 type slotKey struct {

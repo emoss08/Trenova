@@ -7,7 +7,7 @@ import { useCitationOverrides } from "../desk-citations";
 
 afterEach(cleanup);
 
-function step(reasoning: string): ToolStep {
+function step(reasoning: string, call: Partial<ToolStep> = {}): ToolStep {
   return {
     id: "call_1",
     name: "shipment_get",
@@ -18,6 +18,7 @@ function step(reasoning: string): ToolStep {
     summary: "In transit",
     durationSeconds: 1.2,
     reasoning,
+    ...call,
   };
 }
 
@@ -28,8 +29,8 @@ function Mark({ citation }: { citation: Citation }): ReactNode {
   return <Link href={`${CITATION_HREF}1`}>1</Link>;
 }
 
-function openMark(reasoning: string) {
-  render(<Mark citation={{ n: 1, offset: 0, step: step(reasoning) }} />);
+function openMark(reasoning: string, call: Partial<ToolStep> = {}) {
+  render(<Mark citation={{ n: 1, offset: 0, step: step(reasoning, call) }} />);
   fireEvent.mouseEnter(screen.getByRole("button", { name: "Step 1" }).parentElement!);
 }
 
@@ -57,5 +58,62 @@ describe("a citation's step card", () => {
 
     expect(screen.getByRole("tooltip")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Thought it through" })).toBeNull();
+  });
+
+  // The card is read by the person the reply is for. The tool's code name
+  // and the ids the call was narrowed by mean nothing to them.
+  it("names the step in words, with no tool name and no record id", () => {
+    openMark("", {
+      name: "shipment_list",
+      summary: "3 shipments",
+      arguments: {
+        filters: [
+          {
+            field: "customerId",
+            operator: "in",
+            values: ["cus_01JW3K18A8TPC7T7SPX7745V1H", "cus_01JSV4G0Q80KNYKQ254QWT5T0V"],
+          },
+        ],
+      },
+    });
+
+    const card = screen.getByRole("tooltip");
+    expect(card).toHaveTextContent("Find shipments");
+    expect(card).toHaveTextContent("Customer");
+    expect(card).toHaveTextContent("3 shipments");
+    expect(card).not.toHaveTextContent("shipment_list");
+    expect(card).not.toHaveTextContent("customerId");
+    expect(card).not.toHaveTextContent("cus_01");
+  });
+
+  // The server names the records a read was narrowed by; the card says
+  // them, in place of the bare field the call's arguments alone can give.
+  it("names the records the server said the read was narrowed by", () => {
+    openMark("", {
+      name: "shipment_list",
+      summary: "3 shipments",
+      asked: "Customer Granite Textiles, Granite Brands · Status New, Delayed",
+      arguments: {
+        filters: [
+          { field: "customerId", operator: "in", values: ["cus_01JW3K18A8TPC7T7SPX7745V1H"] },
+        ],
+      },
+    });
+
+    expect(screen.getByRole("tooltip")).toHaveTextContent(
+      "Customer Granite Textiles, Granite Brands · Status New, Delayed",
+    );
+  });
+
+  it("takes out an id that reached the card in the server's account", () => {
+    openMark("", {
+      name: "shipment_list",
+      summary: "3 shipments",
+      asked: "Customer Granite Textiles, cus_01JW3K18A8TPC7T7SPX7745V1H",
+    });
+
+    const card = screen.getByRole("tooltip");
+    expect(card).toHaveTextContent("Customer Granite Textiles");
+    expect(card).not.toHaveTextContent("cus_01");
   });
 });

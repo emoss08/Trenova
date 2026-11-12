@@ -26,6 +26,14 @@ type Criteria struct {
 	terms []string
 }
 
+const unfilteredLead = "no filters: "
+
+// Unfiltered reports whether a described term is the filler for a list that
+// was not narrowed at all.
+func Unfiltered(term string) bool {
+	return strings.HasPrefix(term, unfilteredLead)
+}
+
 func NewCriteria(entity string) *Criteria {
 	return &Criteria{Entity: entity, terms: make([]string, 0, 4)}
 }
@@ -66,7 +74,7 @@ func (c *Criteria) Terms() []string {
 // caller reporting a short page as the whole population.
 func (c *Criteria) Describe() []string {
 	if len(c.terms) == 0 {
-		return []string{"no filters: the most recent " + c.Entity}
+		return []string{unfilteredLead + "the most recent " + c.Entity}
 	}
 
 	return c.terms

@@ -15,6 +15,7 @@ import { useProposalPreview } from "@/components/assistant/proposal-preview/use-
 import { RefreshCcw01Icon, Lock01Icon } from "@trenova/shared/components/icons";
 import { presentProposal } from "@/components/assistant/proposal-presenters";
 import type { DeskAttentionGroup, DeskAttentionItem } from "@/lib/graphql/desk-attention";
+import { deskDecisionPath } from "@/lib/desk-paths";
 import { CornerDownLeftIcon } from "@trenova/shared/components/icons";
 import { AssistMark } from "@trenova/shared/components/ui/assist-mark";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -22,7 +23,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { formatMinutesSpan, formatUnixTime } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import type { ReactNode } from "react";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { WatchtowerHandOff } from "../watchtower/hand-off-menu";
 import { formatCountdown, formatFactTime, minutesLeft } from "../watchtower/lanes";
 import type { WatchtowerActions } from "../watchtower/use-watchtower-actions";
@@ -155,6 +156,17 @@ function DecisionCard({
           <span className="ml-auto">{t("Proposed {0}", raised)}</span>
         </div>
       </div>
+      {/* The Decisions lens reads it on the sheet of its kind, beside the others like it. */}
+      {decision.planId === null && (
+        <p className="mt-2.5 px-1 text-dsk-sm">
+          <Link
+            className="dk-w-alnk ui-focus-ring"
+            to={deskDecisionPath({ proposal: proposal.id })}
+          >
+            {t("Approve several at once in Decisions")}
+          </Link>
+        </p>
+      )}
     </section>
   );
 }
@@ -207,6 +219,10 @@ export function ItemDetail({
   // Worked in its case: it is closed there, not cleared or handed off here.
   const caseWork = caseWorkOf(group);
   const isMessage = item.deskLens === "Triage";
+  // The case is someone else's, whether they took it or the record gave it to
+  // them, and the server refuses anything done to it from here. Nothing is
+  // offered that it would refuse, and the bar says whose it is.
+  const ownedElsewhere = group.ownership !== null && !group.ownership.canWork;
   const panelSaysIt = item.panel?.kind === "Ask" || item.panel?.kind === "Finding";
   const work = item.agentWork;
   const proposal = decision.proposals[0] ?? null;
@@ -264,7 +280,22 @@ export function ItemDetail({
             </p>
           ))}
 
-        {!isDecision && <ItemPanel item={item} now={now} timezone={timezone} />}
+        {!isDecision && (
+          <ItemPanel
+            item={item}
+            now={now}
+            timezone={timezone}
+            lockedBy={
+              ownedElsewhere
+                ? t(
+                    "{0} owns this case, so only they can file its papers. A case lead can give it to you.",
+                    group.ownership?.owner?.name ?? t("Someone else"),
+                  )
+                : ""
+            }
+            readable={record === null || readable}
+          />
+        )}
 
         {work && <AgentWorkBlock work={work} />}
 
@@ -337,16 +368,21 @@ export function ItemDetail({
               : t("You approve exactly what is shown here.")
             : isMessage
               ? t("A message is answered, filed or set aside in Triage, which clears it here.")
-              : caseWork !== null
-                ? caseWork.owner !== null && !caseWork.mine
-                  ? t(
-                      "{0} is working this in its case. It is closed there, by approving the plan or accepting the risk.",
-                      caseWork.owner.name,
-                    )
-                  : t(
-                      "This is being worked in its case. Close it there, by approving the plan or accepting the risk.",
-                    )
-                : t("Done clears it for everyone; it comes back if the problem returns.")}
+              : ownedElsewhere && caseWork === null
+                ? t(
+                    "{0} owns this case, so only they can act on it. You can read it; a case lead can give it to you.",
+                    group.ownership?.owner?.name ?? t("Someone else"),
+                  )
+                : caseWork !== null
+                  ? caseWork.owner !== null && !caseWork.mine
+                    ? t(
+                        "{0} is working this in its case. It is closed there, by approving the plan or accepting the risk.",
+                        caseWork.owner.name,
+                      )
+                    : t(
+                        "This is being worked in its case. Close it there, by approving the plan or accepting the risk.",
+                      )
+                  : t("Done clears it for everyone; it comes back if the problem returns.")}
         </span>
         <div className="dk-w-bar-acts">
           {isDecision && decision.phase === "idle" && canDecide && proposal !== null ? (
@@ -378,7 +414,7 @@ export function ItemDetail({
           ) : isDecision && decision.phase === "deciding" ? (
             <Button isLoading>{t("Approve")}</Button>
           ) : null}
-          {!isDecision && !isMessage && canAct && caseWork === null && (
+          {!isDecision && !isMessage && canAct && caseWork === null && !ownedElsewhere && (
             <>
               <Button variant="ghost" onClick={actions.snooze}>
                 <DeskIcon name="clock" size={13} />

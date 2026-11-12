@@ -168,7 +168,7 @@ type ForecasterRequest struct {
 
 type Service interface {
 	Fit(ctx context.Context, tenantInfo pagination.TenantInfo) (*demandforecast.Quality, error)
-	Quality(ctx context.Context, tenantInfo pagination.TenantInfo) (*demandforecast.Quality, error)
+	Standing(ctx context.Context, tenantInfo pagination.TenantInfo) (*demandforecast.Standing, error)
 	Forecaster(ctx context.Context, req *ForecasterRequest) (*demandforecast.Forecaster, error)
 	Location(ctx context.Context, tenantInfo pagination.TenantInfo) *time.Location
 	Economics(

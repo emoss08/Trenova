@@ -78,23 +78,33 @@ func TestRelevance_AMemoryNearInMeaningBearsWithoutSharedWords(t *testing.T) {
 	assert.False(t, relevance.Bears(far.ID))
 }
 
-func TestRelevance_ASubjectOrToolNameIsReadToo(t *testing.T) {
+func TestRelevance_AToolNameIsReadButTheRecordAMemoryIsFiledUnderIsNot(t *testing.T) {
 	t.Parallel()
 
-	about := &agentmemory.Memory{
-		ID: pulid.MustNew("amem_"), Content: "Pays on the 15th.", SubjectLabel: "Acme Foods",
+	pays := &agentmemory.Memory{
+		ID: pulid.MustNew("amem_"), Content: "Acme Foods pays on the 15th.",
+		SubjectLabel: "Acme Foods",
+	}
+	dock := &agentmemory.Memory{
+		ID: pulid.MustNew("amem_"), Content: "The dock at Acme Foods closes at 2pm on Fridays.",
+		SubjectLabel: "Acme Foods",
 	}
 	tool := &agentmemory.Memory{
-		ID: pulid.MustNew(
-			"amem_",
-		), Content: "Prefer the closest tractor.", ToolName: "dispatch_assign_move",
+		ID: pulid.MustNew("amem_"), Content: "Prefer the closest tractor.",
+		ToolName: "dispatch_assign_move",
 	}
 
-	relevance := Relevance("", "Assign a move for Acme", agentmemoryports.RankedMemories{
-		Memories: []*agentmemory.Memory{about, tool},
-	})
+	relevance := Relevance(
+		"",
+		"Assign a move to the Acme Foods dock",
+		agentmemoryports.RankedMemories{
+			Memories: []*agentmemory.Memory{pays, dock, tool},
+		},
+	)
 
-	assert.True(t, relevance.Bears(about.ID))
+	assert.False(t, relevance.Bears(pays.ID),
+		"naming the customer does not make every memory about it bear on the turn")
+	assert.True(t, relevance.Bears(dock.ID), "the turn asks about what this one says")
 	assert.True(t, relevance.Bears(tool.ID))
 }
 

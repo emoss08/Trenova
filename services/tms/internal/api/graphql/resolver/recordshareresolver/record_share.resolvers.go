@@ -27,6 +27,9 @@ func (r *MutationResolver) ShareRecord(ctx context.Context, input gqlmodel.Share
 	if err != nil {
 		return nil, err
 	}
+	if _, err = r.RequirePermission(ctx, permission.ResourceRecordShare, permission.OpCreate); err != nil {
+		return nil, err
+	}
 	recordID, err := gqlid.ParseIDField("id", input.ID)
 	if err != nil {
 		return nil, err
@@ -52,6 +55,9 @@ func (r *QueryResolver) RecordShares(ctx context.Context, kind string, id string
 	if err != nil {
 		return nil, err
 	}
+	if _, err = r.RequirePermission(ctx, permission.ResourceRecordShare, permission.OpRead); err != nil {
+		return nil, err
+	}
 	recordID, err := gqlid.ParseIDField("id", id)
 	if err != nil {
 		return nil, err
@@ -68,6 +74,9 @@ func (r *QueryResolver) RecordShareCandidates(ctx context.Context, kind string, 
 	recordKind := recordkind.Kind(kind)
 	authCtx, err := r.RequirePermission(ctx, shareResource(recordKind), permission.OpRead)
 	if err != nil {
+		return nil, err
+	}
+	if _, err = r.RequirePermission(ctx, permission.ResourceRecordShare, permission.OpCreate); err != nil {
 		return nil, err
 	}
 	recordID, err := gqlid.ParseIDField("id", id)
@@ -88,6 +97,9 @@ func (r *MutationResolver) UnshareRecord(ctx context.Context, input gqlmodel.Uns
 	kind := recordkind.Kind(input.Kind)
 	authCtx, err := r.RequirePermission(ctx, shareResource(kind), permission.OpRead)
 	if err != nil {
+		return nil, err
+	}
+	if _, err = r.RequirePermission(ctx, permission.ResourceRecordShare, permission.OpCreate); err != nil {
 		return nil, err
 	}
 	recordID, err := gqlid.ParseIDField("id", input.ID)

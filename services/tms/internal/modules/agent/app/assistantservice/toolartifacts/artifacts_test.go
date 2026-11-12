@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/artifactpayload"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/assistanttest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/filterwords"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
@@ -248,8 +249,13 @@ func TestArtifactFromObservation_AListBecomesATable(t *testing.T) {
 		{Key: "status", Label: "Status", Type: assistantartifact.DisplayStatus},
 	}, columns)
 	assert.Len(t, artifact.Payload["rows"], 2)
-	// The terms that were applied, so the table says what it is a table of.
-	assert.Equal(t, []string{"status is InTransit"}, artifact.Payload["searchedFor"])
+	// What was applied, so the table says what it is a table of.
+	filters, ok := artifact.Payload["filters"].([]filterwords.Filter)
+	require.True(t, ok)
+	require.Len(t, filters, 1)
+	assert.Empty(t, filters[0].Label)
+	assert.Equal(t, "status is InTransit", filters[0].Value)
+	assert.NotContains(t, artifact.Payload, "searchedFor")
 }
 
 /*

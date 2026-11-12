@@ -2492,7 +2492,7 @@
     },
     {
       "name": "agent_create_memory",
-      "description": "Record a standing instruction, a fact or a procedure for later runs. Kind Instruction is a rule a person gave you, Fact something told or confirmed that no record holds, Procedure the steps a person gave for a task. visibleTo says who it is for: me (the person in the conversation alone; the default when someone is there), team (their role) or organization. A team or organization memory is kept at once only when the person may manage shared memory; otherwise it is offered for an administrator to approve, and you should say so. Scope it to one customer, location, driver or carrier with subjectType and subjectId. To change a kept memory, pass its id from agent_list_memories as replacesMemoryId: the new one takes its place and keeps its readers. Never record what a record already says, a guess, or anything asked to stay private. Saving what is already kept refreshes it.",
+      "description": "Record a standing instruction, a fact or a procedure for later runs. Kind Instruction is a rule a person gave you, Fact something told or confirmed that no record holds, Procedure the steps a person gave for a task. visibleTo says who it is for: me (the person in the conversation alone; the default when someone is there), team (their role) or organization. A team or organization memory is kept at once only when the person may manage shared memory; otherwise it is offered for an administrator to approve, and you should say so. Tie a memory about one customer, location, driver or carrier to that record with subjectType and its subjectId, or its subjectName when you do not hold the id, so it is read whenever that record comes up. To change a kept memory, pass its id from agent_list_memories as replacesMemoryId: the new one takes its place and keeps its readers. Never record what a record already says, a guess, or anything asked to stay private. Saving what is already kept refreshes it.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
@@ -2533,8 +2533,12 @@
               "carrier"
             ]
           },
+          "subjectName": {
+            "description": "The record's name, with subjectType, when you do not hold its id: \"Acme Manufacturing\". It is matched to the one record with that name; when several match you are told which, to ask the person.",
+            "type": "string"
+          },
           "subjectType": {
-            "description": "The kind of record the memory is about, with subjectId. Omit for organization-wide.",
+            "description": "The kind of record the memory is about, with subjectId or subjectName. Omit for a memory about no one record.",
             "enum": [
               "Customer",
               "Location",
@@ -2543,6 +2547,10 @@
             ],
             "type": "string",
             "x-enumOf": "agent.memorySubjectType"
+          },
+          "teamName": {
+            "description": "With visibleTo team, the name of the person's role the memory is for. Omit when they hold one role; when they hold several you are told their names, to ask which team.",
+            "type": "string"
           },
           "visibleTo": {
             "description": "Who the memory reaches: me for the person in the conversation alone, team for everyone in their role, organization for everyone. Defaults to me when a person is in the conversation, organization otherwise.",
@@ -2829,10 +2837,11 @@
         "maxTier": "AutoExecute",
         "promotableTo": "AutoExecute",
         "egress": [
+          "personal",
           "internal"
         ],
-        "classifiesEachCall": false,
-        "personalRunsUnasked": false,
+        "classifiesEachCall": true,
+        "personalRunsUnasked": true,
         "heldWhenTainted": true,
         "taintHold": "An edit made after the run read text from outside the organization waits for a person's approval, whatever kind of memory it changes.",
         "effect": "change",
@@ -2840,7 +2849,7 @@
         "idempotent": false,
         "readsExternal": "never",
         "carriesTaint": true,
-        "rationale": "Rewrites part of a memory later runs read, as a replacement that keeps the old one's readers and history; it keeps the taint of the run that wrote it."
+        "rationale": "Rewrites part of a memory later runs read, as a replacement that keeps the old one's readers and history; it keeps the taint of the run that wrote it. An edit nobody approved takes effect only on the caller's own memory or the agent's; one to a memory shared with others is kept as an offer."
       }
     },
     {
@@ -52332,6 +52341,56 @@
         "source": "edi",
         "carriesTaint": false,
         "rationale": "Lists shipments, and one entered over EDI holds a trading partner's own text; nothing changes and nothing is sent."
+      }
+    },
+    {
+      "name": "shipment_list_documents",
+      "description": "List the documents on file for one shipment: each one's kind (proof of delivery, bill of lading, rate confirmation and so on), its status and when it was filed. Use it to tell whether a paper is on the shipment or missing, before asking anyone for it. A document with no kind was filed without one. It lists what is filed, not what billing requires: billing_get_queue_item says what a shipment still lacks for billing. Read a document's text with document_get.",
+      "parameters": {
+        "additionalProperties": false,
+        "properties": {
+          "shipmentId": {
+            "description": "The shipment's id, from shipment_get, shipment_list or this run's subject.",
+            "type": "string",
+            "x-recordOf": "shipment"
+          }
+        },
+        "required": [
+          "shipmentId"
+        ],
+        "type": "object"
+      },
+      "searchTerms": [
+        "documents on a shipment",
+        "papers on file",
+        "proof of delivery on file",
+        "pod missing",
+        "is the pod attached",
+        "bill of lading on file",
+        "rate confirmation on file",
+        "what documents does this shipment have",
+        "attached documents"
+      ],
+      "policy": {
+        "kind": "query",
+        "resource": "shipment",
+        "operation": "read",
+        "scope": "tenant",
+        "defaultTier": "AutoExecute",
+        "maxTier": "AutoExecute",
+        "promotableTo": "AutoExecute",
+        "egress": [
+          "none"
+        ],
+        "classifiesEachCall": false,
+        "personalRunsUnasked": false,
+        "heldWhenTainted": false,
+        "effect": "lookup",
+        "reversible": true,
+        "idempotent": true,
+        "readsExternal": "never",
+        "carriesTaint": false,
+        "rationale": "Reads which kinds of document are filed on a shipment and when; it returns no document's text or file name, changes nothing and sends nothing."
       }
     },
     {

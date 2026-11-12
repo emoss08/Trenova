@@ -43,7 +43,11 @@ type RememberRequest struct {
 	Suggest bool
 	// PersonUserID is the person whose conversation the memory was picked
 	// up in, recorded as who it came from; only they accept a suggestion.
-	PersonUserID      pulid.ID
+	PersonUserID pulid.ID
+	// Unasked marks an agent's own tool call that no person approved. It may
+	// replace the person's own memory or the agent's; a memory shared with
+	// others is replaced only once a person decides.
+	Unasked           bool
 	Replaces          pulid.ID
 	Source            agentmemory.MemorySource
 	AgentDefinitionID pulid.ID
@@ -62,6 +66,8 @@ type EditAgentMemoryRequest struct {
 	Taint             *agent.RunTaint
 	PersonUserID      pulid.ID
 	AgentDefinitionID pulid.ID
+	ThreadID          pulid.ID
+	Unasked           bool
 }
 
 type RememberPlan struct {
@@ -70,6 +76,14 @@ type RememberPlan struct {
 	Replaced     *agentmemory.Memory
 	Held         bool
 	Contradicted bool
+	// Differs is a memory kept for a wider audience that says otherwise. It
+	// is not replaced: the new memory is kept beside it and the caller is told.
+	Differs *agentmemory.Memory
+}
+
+type MemoryUpkeep struct {
+	Memory *agentmemory.Memory
+	Reason agentmemory.MemoryUpkeepReason
 }
 
 type MemoryVerdict string
@@ -398,6 +412,14 @@ type AgentMemoryService interface {
 		actor *permissionports.RequestActor,
 	) (*agentmemory.Memory, error)
 	PlanEdit(ctx context.Context, req *EditAgentMemoryRequest) (*RememberRequest, error)
+	// ResolveSubject finds the one record of a kind that a name means. A name
+	// that matches none, or several, is refused, naming the candidates.
+	ResolveSubject(
+		ctx context.Context,
+		tenant pagination.TenantInfo,
+		subjectType agentmemory.MemorySubjectType,
+		name string,
+	) (pulid.ID, error)
 	PreviewRemember(
 		ctx context.Context,
 		req *RememberRequest,
@@ -469,6 +491,23 @@ type AgentMemoryService interface {
 		tenant pagination.TenantInfo,
 		userID pulid.ID,
 	) (agentmemory.MemoryReader, error)
+	// TeamRole is the role a memory for the person's team is kept for: the
+	// one they hold, or the one of theirs with this name. A person with
+	// several and no name is refused with their names, so they can be asked.
+	TeamRole(
+		ctx context.Context,
+		tenant pagination.TenantInfo,
+		userID pulid.ID,
+		name string,
+	) (pulid.ID, error)
+	// Confirm records that a person read a memory and it still holds.
+	Confirm(
+		ctx context.Context,
+		req ReviewAgentMemoryRequest,
+		actor *permissionports.RequestActor,
+	) (*agentmemory.Memory, error)
+	// Upkeep lists the shared memories worth another look, oldest first.
+	Upkeep(ctx context.Context, tenant pagination.TenantInfo) ([]*MemoryUpkeep, error)
 	// SavingMode is how the person wants what agents pick up kept.
 	SavingMode(
 		ctx context.Context,

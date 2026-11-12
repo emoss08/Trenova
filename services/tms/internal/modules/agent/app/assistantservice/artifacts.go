@@ -18,6 +18,7 @@ func (s *Service) recorderReads() *artifactrecorder.Reads {
 		Boards:        s.boards,
 		Documents:     s.documents,
 		Contents:      s.contents,
+		Labels:        s.labels,
 	}
 }
 

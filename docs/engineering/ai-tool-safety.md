@@ -10,7 +10,7 @@ policies, so this page cannot drift from what runs: CI regenerates it and fails
 when it differs. Each tool is listed once, under the furthest class its work
 can reach.
 
-Tools listed: 643.
+Tools listed: 644.
 
 ## The model
 
@@ -88,8 +88,8 @@ and Confidential fields never reach a model at all.
 
 | Class | Means | Runs at most | Held once tainted | Tools that reach it |
 | --- | --- | --- | --- | --- |
-| Reads only | Looks something up. Nothing changes and nothing is sent. | Automatic | No | 216 |
-| The caller's own records | Changes only the records of the person using the agent. | Automatic | No | 11 |
+| Reads only | Looks something up. Nothing changes and nothing is sent. | Automatic | No | 217 |
+| The caller's own records | Changes only the records of the person using the agent. | Automatic | No | 12 |
 | Inside the organization | Changes records only people inside the organization see. | Automatic | No | 268 |
 | Seen by a customer | Changes something a customer can see. | Ask first | Yes | 5 |
 | Seen by a driver | Changes something a driver can see. | Ask first | Yes | 23 |
@@ -290,6 +290,7 @@ Looks something up. Nothing changes and nothing is sent.
 | Get shipment (`shipment_get`) | Reads only | Automatic | — | When the record is marked, from record note | Reads a shipment with its newest comments, some of which a driver, a trading partner or another system outside the organization wrote, and a shipment entered over EDI holds a partner's own text; nothing changes and nothing is sent. |
 | Get shipment tracking (`shipment_get_tracking`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List shipments (`shipment_list`) | Reads only | Automatic | — | When the record is marked, from EDI | Lists shipments, and one entered over EDI holds a trading partner's own text; nothing changes and nothing is sent. |
+| List shipment documents (`shipment_list_documents`) | Reads only | Automatic | — | — | Reads which kinds of document are filed on a shipment and when; it returns no document's text or file name, changes nothing and sends nothing. |
 | List shipment permits (`shipment_list_permits`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List shipment recurring (`shipment_list_recurring`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Match shipment records (`shipment_match_records`) | Reads only | Automatic | — | — | Matches the records a new shipment names against the organization's own; nothing changes and nothing is sent. |
@@ -359,7 +360,7 @@ Changes records only people inside the organization see.
 | Cancel agent wait (`agent_cancel_wait`) | Inside the organization | Automatic | Runs above the agent's ceiling: it acts only on the agent's own work, so it waits for no one unless a person set its tier on the agent. | Carries outside text into later runs | Cancels a wait the agent set on its own work; it changes no record and reaches nobody. |
 | Create agent memory (`agent_create_memory`) | The caller's own records, inside the organization | Automatic | Each call is classified by what it reaches. An Instruction, a Procedure or a Correction recorded after the run read text from outside the organization waits for a person's approval; a Fact is recorded and stays marked as drawn from outside text. A call on the caller's own records runs unasked while they are present. | Carries outside text into later runs | Saves a memory later runs read, so it keeps the taint of the run that wrote it. One kept for the caller alone is their own record; one for their team or the organization reaches colleagues' conversations. |
 | Create agent wait (`agent_create_wait`) | Inside the organization | Automatic | Runs above the agent's ceiling: it acts only on the agent's own work, so it waits for no one unless a person set its tier on the agent. | Carries outside text into later runs | Parks the agent's own work until something happens and starts it again then; it changes no record and reaches nobody. |
-| Edit agent memory (`agent_edit_memory`) | Inside the organization | Automatic | An edit made after the run read text from outside the organization waits for a person's approval, whatever kind of memory it changes. | Carries outside text into later runs | Rewrites part of a memory later runs read, as a replacement that keeps the old one's readers and history; it keeps the taint of the run that wrote it. |
+| Edit agent memory (`agent_edit_memory`) | The caller's own records, inside the organization | Automatic | Each call is classified by what it reaches. An edit made after the run read text from outside the organization waits for a person's approval, whatever kind of memory it changes. A call on the caller's own records runs unasked while they are present. | Carries outside text into later runs | Rewrites part of a memory later runs read, as a replacement that keeps the old one's readers and history; it keeps the taint of the run that wrote it. An edit nobody approved takes effect only on the caller's own memory or the agent's; one to a memory shared with others is kept as an offer. |
 | Guide agent profile (`agent_guide_profile`) | The caller's own records, inside the organization | Automatic | Each call is classified by what it reaches. Guidance recorded after the run read text from outside the organization waits for a person's approval, because every later prompt is written from it. A call on the caller's own records runs unasked while they are present. | Carries outside text into later runs | Adds a line every later write-up of a profile honours. Guidance about the person's own work reaches only their conversations; guidance about the organization reaches everyone's. |
 | Offer agent options (`agent_offer_options`) | Inside the organization | Automatic | Runs above the agent's ceiling: it acts only on the agent's own work, so it waits for no one unless a person set its tier on the agent. | — | Writes the choices an agent lays out on a record's case; it changes no record and reaches nobody, and every option still needs its plan approved. |
 | Raise agent exception (`agent_raise_exception`) | Inside the organization | Automatic | Runs above the agent's ceiling: it only puts the run in front of a person, so it waits for no one unless a person set its tier on the agent. | — | Records an exception against the run itself for a person inside the organization. |

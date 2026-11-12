@@ -569,6 +569,18 @@ the agent read. `tableArtifact` keeps the agent's rows with where the list goes 
 - **A paged table is always kept.** `ShownArtifact.Paged` makes it `MustBeLinked`, and `shownNote`
   tells the model the person pages through every row beside the conversation, so it reads another
   page only when its answer needs one.
+- **What the list was narrowed by is stored in words.** A list tool reports what it applied
+  (`searchedFor`) for the model: the tool's field names, operator phrases and the ids it was
+  given. A table never keeps that. `filterwords.OfResult` (`agent/app/filterwords`) reads each term against the
+  call's arguments into `filters`, a list of `{ label, value }`: a term that opens with one of
+  the call's fields is that field's filter ("Customer", "Status", with "one of" and "equals"
+  left out as understood and a status or kind's codes written as words), any other is a phrase
+  with no label ("running late: …"), and the filler for an unfiltered list is dropped. The
+  recorder then names the records the filters hold (`nameFilters`, through
+  `filterwords.NameRecords`: one `RecordLabeler` read for the table, at most `MaxRecords` ids); a record with no name, or a read that failed, is
+  counted ("Granite Textiles and 1 more", "2 selected"). The client draws the label muted and
+  the value beside it, and takes out an id that reached it anyway. See "No record ids on
+  screen" in [design-system.md](design-system.md).
 - **The person's pages are read again with their own access.** `GET
   /assistant/threads/:id/artifacts/:artifactId/rows/` (`ArtifactRows`) runs the tool the table came
   from with the arguments it ran with, as `UserActor` under the conversation agent's data

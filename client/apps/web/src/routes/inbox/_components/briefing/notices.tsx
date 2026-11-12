@@ -97,11 +97,14 @@ export function BriefingNotices({
   onOpenFolder,
   onPreview,
   onTeach,
+  canTeach,
 }: {
   briefing: Pick<TriageBriefing, "unhealthySources" | "suggestion">;
   onOpenFolder: (folder: TriageFolder) => void;
   onPreview: (input: TriageRuleInput) => void;
   onTeach: (input: TriageRuleInput) => Promise<unknown>;
+  /** Whether the reader may write rules; without it a suggestion is read, not taken. */
+  canTeach: boolean;
 }) {
   const t = useT();
   const sending = useRef(false);
@@ -180,9 +183,11 @@ export function BriefingNotices({
               >
                 {t("Preview")}
               </Button>
-              <Button size="sm" isLoading={teaching} onClick={() => teach(suggestion)}>
-                {t("Hand it to Nova")}
-              </Button>
+              {canTeach && (
+                <Button size="sm" isLoading={teaching} onClick={() => teach(suggestion)}>
+                  {t("Hand it to Nova")}
+                </Button>
+              )}
             </>
           )}
         </Notice>

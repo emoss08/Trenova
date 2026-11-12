@@ -855,7 +855,11 @@ subjects (`SubjectResolver`):
 | document | the record it is attached to, as above |
 
 The records a turn is about come first; the ones they name follow in the order
-a person reads the record. The links are batched reads
+a person reads the record. Last come the records the message names in words
+(`Service.withNamedSubjects`, `ListNamedSubjects`): a subject with kept memories whose label
+appears whole in the turn's own message ("acme manufacturing"), as a named record. Without
+it a memory tied to a customer was read only when that customer was the page, the subject or
+a mention, so tying a memory to its record made it harder to reach in plain conversation. The links are batched reads
 (`agentmemorysubjectrepository.ListRecordLinks`, one query per kind per hop). Up
 to 500 active, unexpired candidates are then read, subject rows first, and
 ordered by `agentmemoryports.MemoryRanker`: `retrievalservice.MemoryRanker` fuses
@@ -868,7 +872,12 @@ also returns the candidates at or above the embedding model's similarity floor
 **What bears on the turn.** `agentmemoryrank.Relevance` marks a candidate as
 bearing on the turn (`agentmemory.MemoryRelevance`, carried on
 `RuntimeContext.MemoryRelevance`) when it is at or above the similarity floor, or
-when its content, subject label or tool name shares enough of the turn's words.
+when its content or tool name shares enough of the turn's words. The name of the record
+a memory is filed under is not one of its words (`memoryTokens` drops the subject label's
+tokens, from the content too): naming a customer puts its memories in the prompt, and one
+bears only when the turn also asks about what it says. Counting the name made every memory
+about a customer "used" each time the customer came up, so `use_count` said nothing about
+which memories earn their place.
 The words are read from the turn's own message (`QueryVectorRequest.Focus`,
 carried as `MemoryContextRequest.Focus`); the message before it, which the
 embedded text also carries, is read too only when the turn's message has fewer
@@ -922,7 +931,12 @@ asked, so a rule about a shipment's customer is never missed, but it is shown
 and counted only when it bears: asked for a shipment's arrival, the Desk no
 longer says it used the customer's billing rule, each stop's dock note and the
 driver's preference. A standing Instruction that does not bear is likewise
-carried and followed, but is not shown or counted. The `ByTool` memories are kept on
+carried and followed, but is not shown or counted. The Desk reads the memories a reply
+used by id (`deskMemoriesByIds`): the person's own, their roles' and the organization's as
+elsewhere, and also one an agent keeps for its own work (`keptForAgents`), read-only unless
+the person manages shared memory, since their answer was built on it. Such a memory stays
+out of their own list. An id the read does not return was deleted since, and the chip says
+how many. The `ByTool` memories are kept on
 `TurnState.ToolMemories` and added to `UsedMemoryIDs` and announced when the turn calls
 that tool (`turnmemory.NoteTool`). A delegate's turn keeps its own `UsedMemoryIDs`
 without announcing them (the person's card shows what the conversation's own agent
@@ -989,6 +1003,46 @@ who manages shared memory) and the new memory is clean and active; otherwise it 
 suggestion, and approving it retires what it contradicts. A judge that fails or is refused
 leaves the save as it was, and a preview runs only the word check, so an approval card
 spends no model call.
+
+**A wider audience.** A memory for one person or one role is also judged, in the same call,
+against active memories for a wider audience its readers are part of: the organization's,
+and for a person's memory their roles' (`ListNeighbors` with `Wider`; about the same record
+and tool, or about any record when the new memory is filed under none). One of the same kind
+that already says it is refreshed in place of a personal copy. One that says otherwise is
+never replaced: the new memory is kept beside it, the save returns it as
+`Memory.DiffersFrom`, and the tool result tells the agent the two differ and to ask whether
+the shared one is out of date (`differsNote`). The prompt tells every agent to say so, rather
+than choose silently, when a personal memory and a shared one disagree on more than the
+person's own preference.
+
+**Which team.** `visibleTo` team keeps a memory for one of the person's roles.
+`AgentMemoryService.TeamRole` returns the one they hold, or the one named by `teamName`; a
+person with several and no name is refused with the names, so the agent asks. It never picks
+the first. A look back cannot ask, so a team lesson from someone with several roles is kept
+for them alone.
+
+**Upkeep.** A memory outlives what it describes and is followed either way. AI Control's
+Memory tab lists up to 25 shared, active memories worth another look
+(`agentMemoryUpkeep`, `Memory.UpkeepReason`): a Fact with no end date that nobody has stood
+behind for `AgingAfterDays` (180), and any memory no turn has used for `UnusedAfterDays`
+(30), both counted from `confirmed_at` or else `created_at`. "Still true"
+(`confirmAgentMemory`, `agent_memory:manage`, audited) stamps `confirmed_at` and
+`confirmed_by_user_id`, which takes it off the list until it ages again; Retire stops
+agents reading it. One person's own memories are theirs and are not listed.
+
+**Naming the record.** `agent_create_memory` takes `subjectName` with `subjectType` when the
+agent does not hold the record's id. `AgentMemoryService.ResolveSubject` reads up to ten
+records of that kind whose name or code contains it (the trigram indexes on each table) and
+takes the only one, or the only exact match; none, or several, is refused with the
+candidates and their ids, so a memory is never filed under a guess.
+
+**Who a tool call may replace.** A memory tool call in a conversation runs unasked when it is
+for the person (`visibleTo` me, or any edit), and the request says so
+(`RememberRequest.Unasked`). An unasked call replaces only the person's own memory or the
+agent's own (`mayReplaceNow`); a change to a memory shared with others is kept as an offer,
+whoever the person is, until someone accepts it on the card or approves it. The tools also
+record the agent, the conversation and source Agent on the request: a conversation turn has
+no run to read them from.
 
 **Editing.** `agent_edit_memory {memoryId, old, new}` changes part of a memory in place:
 `old` must appear in its current text exactly once (that is the guard against editing a
@@ -1072,6 +1126,7 @@ row; a Failed row is claimed again) and skip without calling a model when:
 | Skip reason | When |
 |---|---|
 | `LearningOff` | the organization's agent control or the agent's definition has `learning_off`, or the control is in shadow mode |
+| `NoSignal` (mentions off) | `passing_learning_off` leaves a window with only a mention without a signal |
 | `AgentUnavailable` | the agent's definition is missing or disabled |
 | `NothingToRead` | the window holds no new messages (a run that has not settled is not claimed at all) |
 | `NoSignal` | `ReadSignals` finds nothing worth a look |
@@ -1079,8 +1134,18 @@ row; a Failed row is claimed again) and skip without calling a model when:
 
 `ReadSignals` is cheap and reads only the window: a person correcting the agent
 after it answered; a person saying how they want it done from now on; a proposal
-modified or rejected; a reply rated unhelpful; and, in a conversation, a task of six
-or more successful tool calls. A tool that failed is not a signal: a refused call is a
+modified or rejected; a reply rated unhelpful; and, unless the organization turned it off
+(`AgentControl.PassingLearningOff`, "Learn from what people mention"), a person stating
+something in passing (`PersonTold`). `Tells` is structural, not a phrase list of facts: a
+sentence of five words or more that is not a question, does not open as a request ("show",
+"can you", "I need") or a reaction ("ok", "thanks", "that looks"), in a message that is
+neither a correction nor a standing request. Before it, a look back started only on a
+correction or a phrase such as "from now on", so "Acme's dock closes at 2 on Fridays, book
+it for Thursday" taught nothing and almost no memory was about the organization. The gate
+decides only whether to spend the call; the model decides whether anything stated is a
+lasting fact, and most such look backs keep nothing. A long task alone is not a signal:
+with nothing a person said or decided in it there is almost nothing a look back may keep,
+and five of six look backs it started kept nothing. A tool that failed is not a signal: a refused call is a
 defect Trenova fixes in the tool (AI analytics ranks tool failures by cause), and when
 it was one, 35 of the first 40 memories look backs kept described how to call a tool,
 learned again by every organization and kept after the tool was fixed. A run with
@@ -1116,7 +1181,13 @@ and the agent as its actor:
   lessons nobody saw learned, some of them wrong (DB-111), and an unscoped one
   reached every later turn of that agent;
 - a window that read outside content (or whose taint is unknown) only ever
-  suggests;
+  suggests, and so does a look back that started only because of what a person mentioned
+  (`ReflectionSignals.OnlyInPassing`): nobody asked for it to be remembered, so they are
+  asked;
+- a lesson may name its record by `subjectName` when the work did not touch it; it is filed
+  under the one record `ResolveSubject` finds, and under none when no one record answers to
+  the name. The prompt sends a fact about a customer, location, driver or carrier to the
+  organization, where it waits for someone who manages memory;
 - otherwise the person's saving mode decides: Automatic keeps, Ask first
   suggests.
 
@@ -2127,7 +2198,15 @@ a condition or the call's reach held it anyway.
 
 ### An empty list says what would have matched
 
-A list or search result names what it applied (`searchedFor`). When the first page of a
+A list or search result names what it applied (`searchedFor`), in the tool's own terms and
+for the model only. A person reads `filterwords`' wording of them, with each field as its
+label, a status's codes as words and every record by its name, never its id: the table stores it
+as `filters` (see "A table that pages" in [desk-artifacts.md](desk-artifacts.md)), and the
+dispatcher writes it on the call's result as `Asked` (`Dispatcher.asked`, one `RecordLabeler`
+read per call that names records), which the turn sends on `tool_finished` and saves on the
+tool message (`assistant_messages.tool_asked`, `asked` in JSON). The Desk shows it under the
+step and in a citation's card; a step with none falls back to the call's own arguments with the
+ids left out. When the first page of a
 `newListTool` list comes back empty with a text or a filter applied, the tool probes before it
 answers (`listnearmiss.go`), each probe one row at most: is there anything at all, and does
 dropping the text, or any one of the first four filters, find something. The note then says

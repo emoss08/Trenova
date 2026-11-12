@@ -249,7 +249,7 @@ func (b *Builder) decisions(ctx context.Context, req Request, facts *Facts) {
 		items = append(items, briefing.Item{
 			Label: agent.AgentName,
 			Value: strconv.Itoa(agent.Count),
-			Path:  decisionsPath + "?agent=" + agent.AgentDefinitionID.String(),
+			Path:  decisionsPath + "&agent=" + agent.AgentDefinitionID.String(),
 		})
 	}
 

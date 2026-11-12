@@ -22,6 +22,7 @@ import {
   analysisTablesSchema,
 } from "@/types/analysis";
 import { isAppPath } from "@/lib/app-path";
+import { withoutRecordIds } from "@/lib/record-ids";
 import type { AssistantArtifact } from "@/types/assistant";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 
@@ -140,12 +141,33 @@ export type TablePaging = {
 /** The agent that read a table's rows in the conversation, named as it was when it read them. */
 export type ArtifactReader = { id: string; name: string; icon: string; accent: string };
 
+/**
+ * One thing a table's list was narrowed by, in words: the field's label and
+ * its values ("Customer", "Granite Textiles"), or a phrase with no label.
+ */
+export type TableFilter = { label: string; value: string };
+
+/**
+ * The filters the server wrote for a table. It names every record and never
+ * stores an id; one that reached here anyway is taken out, and a filter left
+ * with nothing to say is dropped.
+ */
+function tableFiltersOf(value: unknown): TableFilter[] {
+  return listOf(value)
+    .filter(isRecord)
+    .map((entry) => ({
+      label: withoutRecordIds(stringOf(entry.label)).trim(),
+      value: withoutRecordIds(stringOf(entry.value)).trim(),
+    }))
+    .filter((filter) => filter.value !== "");
+}
+
 export type TableViewArtifact = {
   tool: string;
   entity: string;
   /** The record kind the rows are, when the registry knows it. */
   recordEntity: string;
-  searchedFor: string[];
+  filters: TableFilter[];
   columns: DisplayColumn[];
   rows: TableViewRow[];
   rowCount: number;
@@ -285,9 +307,7 @@ export function tableViewFrom(artifact: AssistantArtifact): TableViewArtifact {
     tool: stringOf(payload.tool),
     entity: stringOf(payload.entity),
     recordEntity: entity ?? "",
-    searchedFor: listOf(payload.searchedFor).filter(
-      (term): term is string => typeof term === "string" && term !== "",
-    ),
+    filters: tableFiltersOf(payload.filters),
     columns,
     rows,
     rowCount,

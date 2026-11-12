@@ -65,6 +65,7 @@ type Reads struct {
 	Boards        assistantports.BoardFiller
 	Documents     documentports.DocumentRepository
 	Contents      documentports.DocumentContentService
+	Labels        agentruntimeports.RecordLabeler
 }
 
 type Deps struct {
@@ -363,6 +364,7 @@ func (r *Recorder) Observe(
 		observation.Call.Arguments,
 	)
 	artifactpayload.NoteReadWith(artifact, observation.RanWith)
+	r.nameFilters(artifact)
 	r.noteReader(artifact)
 	if artifact.Kind == assistantartifact.KindEntityCard && len(observation.Earlier) > 0 {
 		return r.bunch(&observation, artifact)
