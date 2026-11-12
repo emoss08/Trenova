@@ -170,6 +170,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/tablequeryservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowerservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/agenteventjobs/agenteventcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentprofilejobs/agentprofilecontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentqualityjobs/agentqualitycontract"
@@ -179,6 +180,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/conversationschedulejobs/conversationschedulecontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/dispatchjobs/dispatchcoveragecontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/paperworkjobs/paperworkcontract"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/podchasejobs/podchasecontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/reflectionjobs/reflectioncontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdraftports"
@@ -323,6 +325,7 @@ func SharedOptions() fx.Option {
 			aiproviderrepository.New,
 			watchtowerrepository.New,
 			exceptionsourcerepository.New,
+			exceptionsourcerepository.NewPODChaseFacts,
 			briefingrepository.New,
 			recordcaserepository.New,
 			caseownerrepository.New,
@@ -397,6 +400,13 @@ func SharedOptions() fx.Option {
 			),
 			agentproposalservice.New,
 			dispatchcoveragecontract.NewRequester,
+			agenteventcontract.NewQueue,
+			func(q *agenteventcontract.Queue) agenteventports.EventRunQueue { return q },
+			podchasecontract.NewRoutine,
+			fx.Annotate(
+				func(r *podchasecontract.Routine) agenteventports.EventRoutine { return r },
+				fx.ResultTags(`group:"agent_event_routines"`),
+			),
 			fx.Annotate(
 				dispatchcoveragewatch.New,
 				fx.As(new(agenteventports.AgentEventObserver)),

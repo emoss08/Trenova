@@ -293,6 +293,8 @@ func (r *repository) CountOpen(
 			run.Status.NotIn(closedRunStatuses()...),
 			keel.When(req.SubjectID.IsNotNil(), run.SubjectID.Eq(req.SubjectID)),
 			keel.When(len(req.Triggers) > 0, run.Trigger.In(req.Triggers...)),
+			keel.When(req.WorkingOnly, run.Status.In(agent.WorkingRunStatuses()...)),
+			keel.When(req.WorkflowOnly, run.WorkflowID.IsNotNull()),
 		).Count(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to count open agent runs", zap.Error(err))
@@ -300,6 +302,29 @@ func (r *repository) CountOpen(
 		}
 
 		return int(count), nil
+	})
+}
+
+func (r *repository) ListOpenSubjects(
+	ctx context.Context,
+	req *agentruntimeports.ListOpenSubjectsRequest,
+) ([]pulid.ID, error) {
+	if len(req.SubjectIDs) == 0 {
+		return []pulid.ID{}, nil
+	}
+
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pulid.ID, error) {
+		run := agentdb.AgentRuns
+		return keel.Into[pulid.ID](ctx, r.db.Keel(ctx),
+			run.Pick(run.SubjectID).
+				Where(
+					run.AgentDefinitionID.Eq(req.DefinitionID),
+					run.SubjectID.In(req.SubjectIDs...),
+					run.Status.NotIn(closedRunStatuses()...),
+				).
+				Distinct().
+				Limit(len(req.SubjectIDs)),
+		)
 	})
 }
 

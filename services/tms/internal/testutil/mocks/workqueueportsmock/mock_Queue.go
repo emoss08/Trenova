@@ -173,6 +173,74 @@ func (_c *MockQueue_ListDue_Call) RunAndReturn(run func(ctx context.Context, req
 	return _c
 }
 
+// ListDueKinds provides a mock function for the type MockQueue
+func (_mock *MockQueue) ListDueKinds(ctx context.Context, req *workqueueports.ListDueKindsRequest) ([]workqueueports.TenantKind, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListDueKinds")
+	}
+
+	var r0 []workqueueports.TenantKind
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *workqueueports.ListDueKindsRequest) ([]workqueueports.TenantKind, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *workqueueports.ListDueKindsRequest) []workqueueports.TenantKind); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]workqueueports.TenantKind)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *workqueueports.ListDueKindsRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockQueue_ListDueKinds_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListDueKinds'
+type MockQueue_ListDueKinds_Call struct {
+	*mock.Call
+}
+
+// ListDueKinds is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *workqueueports.ListDueKindsRequest
+func (_e *MockQueue_Expecter) ListDueKinds(ctx any, req any) *MockQueue_ListDueKinds_Call {
+	return &MockQueue_ListDueKinds_Call{Call: _e.mock.On("ListDueKinds", ctx, req)}
+}
+
+func (_c *MockQueue_ListDueKinds_Call) Run(run func(ctx context.Context, req *workqueueports.ListDueKindsRequest)) *MockQueue_ListDueKinds_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *workqueueports.ListDueKindsRequest
+		if args[1] != nil {
+			arg1 = args[1].(*workqueueports.ListDueKindsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockQueue_ListDueKinds_Call) Return(tenantKinds []workqueueports.TenantKind, err error) *MockQueue_ListDueKinds_Call {
+	_c.Call.Return(tenantKinds, err)
+	return _c
+}
+
+func (_c *MockQueue_ListDueKinds_Call) RunAndReturn(run func(ctx context.Context, req *workqueueports.ListDueKindsRequest) ([]workqueueports.TenantKind, error)) *MockQueue_ListDueKinds_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ListDueTenants provides a mock function for the type MockQueue
 func (_mock *MockQueue) ListDueTenants(ctx context.Context, req *workqueueports.ListDueTenantsRequest) ([]pagination.TenantInfo, error) {
 	ret := _mock.Called(ctx, req)
@@ -241,16 +309,16 @@ func (_c *MockQueue_ListDueTenants_Call) RunAndReturn(run func(ctx context.Conte
 	return _c
 }
 
-// Settle provides a mock function for the type MockQueue
-func (_mock *MockQueue) Settle(ctx context.Context, req *workqueueports.SettleRequest) error {
+// SettleMany provides a mock function for the type MockQueue
+func (_mock *MockQueue) SettleMany(ctx context.Context, req *workqueueports.SettleManyRequest) error {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
-		panic("no return value specified for Settle")
+		panic("no return value specified for SettleMany")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *workqueueports.SettleRequest) error); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *workqueueports.SettleManyRequest) error); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		r0 = ret.Error(0)
@@ -258,27 +326,27 @@ func (_mock *MockQueue) Settle(ctx context.Context, req *workqueueports.SettleRe
 	return r0
 }
 
-// MockQueue_Settle_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Settle'
-type MockQueue_Settle_Call struct {
+// MockQueue_SettleMany_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SettleMany'
+type MockQueue_SettleMany_Call struct {
 	*mock.Call
 }
 
-// Settle is a helper method to define mock.On call
+// SettleMany is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *workqueueports.SettleRequest
-func (_e *MockQueue_Expecter) Settle(ctx any, req any) *MockQueue_Settle_Call {
-	return &MockQueue_Settle_Call{Call: _e.mock.On("Settle", ctx, req)}
+//   - req *workqueueports.SettleManyRequest
+func (_e *MockQueue_Expecter) SettleMany(ctx any, req any) *MockQueue_SettleMany_Call {
+	return &MockQueue_SettleMany_Call{Call: _e.mock.On("SettleMany", ctx, req)}
 }
 
-func (_c *MockQueue_Settle_Call) Run(run func(ctx context.Context, req *workqueueports.SettleRequest)) *MockQueue_Settle_Call {
+func (_c *MockQueue_SettleMany_Call) Run(run func(ctx context.Context, req *workqueueports.SettleManyRequest)) *MockQueue_SettleMany_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *workqueueports.SettleRequest
+		var arg1 *workqueueports.SettleManyRequest
 		if args[1] != nil {
-			arg1 = args[1].(*workqueueports.SettleRequest)
+			arg1 = args[1].(*workqueueports.SettleManyRequest)
 		}
 		run(
 			arg0,
@@ -288,12 +356,12 @@ func (_c *MockQueue_Settle_Call) Run(run func(ctx context.Context, req *workqueu
 	return _c
 }
 
-func (_c *MockQueue_Settle_Call) Return(err error) *MockQueue_Settle_Call {
+func (_c *MockQueue_SettleMany_Call) Return(err error) *MockQueue_SettleMany_Call {
 	_c.Call.Return(err)
 	return _c
 }
 
-func (_c *MockQueue_Settle_Call) RunAndReturn(run func(ctx context.Context, req *workqueueports.SettleRequest) error) *MockQueue_Settle_Call {
+func (_c *MockQueue_SettleMany_Call) RunAndReturn(run func(ctx context.Context, req *workqueueports.SettleManyRequest) error) *MockQueue_SettleMany_Call {
 	_c.Call.Return(run)
 	return _c
 }

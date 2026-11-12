@@ -18,6 +18,7 @@ type Item struct {
 	Kind           string   `json:"kind"           keel:"kind,pk"`
 	SubjectID      pulid.ID `json:"subjectId"      keel:"subject_id,pk"`
 	DueAt          int64    `json:"dueAt"          keel:"due_at"`
+	Detail         string   `json:"detail"         keel:"detail,nullzero"`
 	CreatedAt      int64    `json:"createdAt"      keel:"created_at,autocreate"`
 	UpdatedAt      int64    `json:"updatedAt"      keel:"updated_at,autoupdate"`
 }

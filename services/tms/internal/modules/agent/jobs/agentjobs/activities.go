@@ -26,9 +26,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentwait"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationtranscript"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/agenteventjobs/agenteventcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/podchasejobs/podchasecontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentactivityports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
@@ -100,9 +102,13 @@ type ActivitiesParams struct {
 	// failure nobody was watching for still reaches someone.
 	Watchtower watchtowerports.WatchtowerProjector
 	// Conditions closes what was handed to a run that proposed nothing.
-	Conditions    watchtowerports.RunSettler
-	Reflections   agentreflectionports.AgentReflectionScheduler
-	RunCloser     agentruntimeports.RunCloser
+	Conditions  watchtowerports.RunSettler
+	Reflections agentreflectionports.AgentReflectionScheduler
+	RunCloser   agentruntimeports.RunCloser
+	// Chases and EventRuns are the queued agent work whose lost wakes the
+	// expiry sweep makes up for.
+	Chases        *podchasecontract.Routine
+	EventRuns     *agenteventcontract.Queue
 	Schedules     *agentcontract.DefinitionSchedules
 	PlatformPlans platformplanports.PlanService
 	// Waits reads the wait whose ending started a run that picks up work.
@@ -140,6 +146,7 @@ type Activities struct {
 	conditions       watchtowerports.RunSettler
 	reflections      agentreflectionports.AgentReflectionScheduler
 	runCloser        agentruntimeports.RunCloser
+	queuedWork       []queuedWaker
 	schedules        *agentcontract.DefinitionSchedules
 	platformPlans    platformplanports.PlanService
 	waits            agentwaitports.AgentWaitRepository
@@ -180,6 +187,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 		conditions:       p.Conditions,
 		reflections:      p.Reflections,
 		runCloser:        p.RunCloser,
+		queuedWork:       []queuedWaker{p.Chases, p.EventRuns},
 		schedules:        p.Schedules,
 		platformPlans:    p.PlatformPlans,
 		waits:            p.Waits,
@@ -990,6 +998,7 @@ func (a *Activities) ExpireStaleProposalsActivity(
 	if _, err = a.runCloser.CloseSettled(ctx, input.Now); err != nil {
 		return nil, fmt.Errorf("close runs whose proposals expired: %w", err)
 	}
+	a.wakeQueuedWork(ctx)
 
 	// A plan outlives none of its steps: once they have expired, so has it.
 	expiredPlans, planErr := a.plans.ExpirePending(ctx, agentplanports.ExpireAgentPlansRequest{
@@ -1006,6 +1015,25 @@ func (a *Activities) ExpireStaleProposalsActivity(
 
 	return &ExpireStaleProposalsResult{Expired: expired}, nil
 }
+
+// queuedWaker wakes the drains of one kind of queued agent work that still
+// have work due.
+type queuedWaker interface {
+	WakeDue(ctx context.Context, limit int) (int, error)
+}
+
+// wakeQueuedWork wakes the tenant drains with agent work still queued, the
+// backstop for a wake lost between a commit and its signal. A failure is
+// logged; the next sweep tries again.
+func (a *Activities) wakeQueuedWork(ctx context.Context) {
+	for _, waker := range a.queuedWork {
+		if _, err := waker.WakeDue(ctx, queuedWakeLimit); err != nil {
+			a.logger.Warn("could not wake queued agent work", zap.Error(err))
+		}
+	}
+}
+
+const queuedWakeLimit = 1000
 
 // orphanBaselineAge is how long a baseline waits for its proposal. A baseline
 // is kept as its call is decided and the proposal is filed when the turn or

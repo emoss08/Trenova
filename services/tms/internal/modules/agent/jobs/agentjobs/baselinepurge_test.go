@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentplanports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -41,6 +42,36 @@ func (b *orphanBaselines) PurgeOrphans(
 	return 3, b.err
 }
 
+type sweptRuns struct {
+	agentruntimeports.AgentRunRepository
+}
+
+func (sweptRuns) FailAbandoned(context.Context, agentruntimeports.FailAbandonedRunsRequest) (int, error) {
+	return 0, nil
+}
+
+type closingRuns struct {
+	agentruntimeports.RunCloser
+
+	closed int
+}
+
+func (r *closingRuns) CloseSettled(context.Context, int64) (int, error) {
+	r.closed++
+
+	return 0, nil
+}
+
+type countingWaker struct {
+	woken int
+}
+
+func (w *countingWaker) WakeDue(context.Context, int) (int, error) {
+	w.woken++
+
+	return 0, nil
+}
+
 type noPlansToExpire struct {
 	agentplanports.AgentPlanRepository
 }
@@ -59,11 +90,16 @@ func TestExpireStaleProposalsActivity_PurgesBaselinesNoProposalWasFiledFor(t *te
 	t.Parallel()
 
 	baselines := &orphanBaselines{}
+	closer := &closingRuns{}
+	waker := &countingWaker{}
 	a := &Activities{
 		logger:       zap.NewNop(),
 		proposalRepo: &sweptProposals{expired: 2},
 		baselines:    baselines,
 		plans:        noPlansToExpire{},
+		runRepo:      sweptRuns{},
+		runCloser:    closer,
+		queuedWork:   []queuedWaker{waker},
 	}
 
 	now := int64(1_800_000_000)
@@ -74,6 +110,8 @@ func TestExpireStaleProposalsActivity_PurgesBaselinesNoProposalWasFiledFor(t *te
 	require.Len(t, baselines.asked, 1)
 	assert.Equal(t, now-int64(orphanBaselineAge.Seconds()), baselines.asked[0].Before,
 		"only a baseline older than its proposal could still arrive is an orphan")
+	assert.Equal(t, 1, closer.closed, "the sweep closes the runs its expiry settled")
+	assert.Equal(t, 1, waker.woken, "and wakes queued agent work whose wake was lost")
 }
 
 func TestExpireStaleProposalsActivity_APurgeThatFailsDoesNotFailTheSweep(t *testing.T) {
@@ -84,6 +122,8 @@ func TestExpireStaleProposalsActivity_APurgeThatFailsDoesNotFailTheSweep(t *test
 		proposalRepo: &sweptProposals{expired: 1},
 		baselines:    &orphanBaselines{err: errors.New("database unavailable")},
 		plans:        noPlansToExpire{},
+		runRepo:      sweptRuns{},
+		runCloser:    &closingRuns{},
 	}
 
 	result, err := a.ExpireStaleProposalsActivity(t.Context(), &ExpireStaleProposalsInput{

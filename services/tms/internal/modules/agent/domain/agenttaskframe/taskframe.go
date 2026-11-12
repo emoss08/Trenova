@@ -264,11 +264,12 @@ var eventPlaybooks = map[agenttrigger.EventKind]Playbook{
 		Steps: []string{
 			"Read the shipment: who hauled the delivery move, a driver or a carrier, and " +
 				"what paperwork is already on file.",
-			"Ask once for the signed proof of delivery: message the driver who delivered " +
-				"it, or email the carrier that hauled it.",
-			"Say who was asked and how, and raise an exception when nobody can be reached.",
+			"Pick one way to ask before writing anything: a Dash message reaches only a " +
+				"driver with portal access; otherwise email the carrier that hauled it.",
+			"Ask once, that one way. Raise an exception instead only when nobody can be " +
+				"reached; never both ask and raise one.",
 		},
-		Done: "the request for the proof of delivery is proposed, or an exception says why " +
+		Done: "one request for the proof of delivery is proposed, or one exception says why " +
 			"nobody can be asked.",
 		Need: "read the shipment, its moves and assigned driver or carrier; send a message " +
 			"to a driver; request missing documents by email",

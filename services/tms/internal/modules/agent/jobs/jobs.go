@@ -3,6 +3,7 @@ package jobs
 import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/runstepledger"
 	"github.com/emoss08/trenova/internal/modules/agent/app/scriptrunner"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/agenteventjobs"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentprofilejobs"
@@ -24,6 +25,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/insightjobs"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/palettejobs"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/paperworkjobs"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/podchasejobs"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/portaljobs"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/reflectionjobs"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/retrievaljobs"
@@ -38,6 +40,8 @@ func WorkerOptions() fx.Option {
 		agentwaitjobs.Module,
 		portaljobs.Module,
 		webwatchjobs.Module,
+		podchasejobs.Module,
+		agenteventjobs.Module,
 		agentjobs.Module,
 		reflectionjobs.Module,
 		evalcasejobs.Module,

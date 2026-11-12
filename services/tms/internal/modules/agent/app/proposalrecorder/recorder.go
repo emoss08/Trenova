@@ -624,13 +624,14 @@ func (s *Service) proposalFor(
 	return proposal
 }
 
-// decisionDeadline is when a proposal stops being decidable. A run carried by
-// a workflow gives what it files its agent's decision window, bounded by the
-// proposal TTL; the expiry sweep then closes the run. Anything else, a chat
-// turn or an inline run, keeps the TTL.
+// decisionDeadline is when a proposal stops being decidable. A run that
+// closes when decided gives what it files its agent's decision window,
+// bounded by the proposal TTL; the expiry sweep then closes the run.
+// Anything else, a chat turn or an inline run, keeps the TTL.
 func decisionDeadline(group *runGroup, now int64) int64 {
 	ttl := int64(agent.DefaultProposalTTL.Seconds())
-	if group == nil || group.run == nil || group.run.WorkflowID == "" || group.definition == nil {
+	if group == nil || group.run == nil || !group.run.ClosesWhenDecided() ||
+		group.definition == nil {
 		return now + ttl
 	}
 

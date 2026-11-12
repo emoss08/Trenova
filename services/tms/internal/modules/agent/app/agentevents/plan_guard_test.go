@@ -20,12 +20,12 @@ func TestPublishSkipsOrganizationsWithoutAutomatedAgents(t *testing.T) {
 	definitions := &fakeDefinitions{
 		items: []*agentdefinition.Definition{{ID: pulid.MustNew("agd_")}},
 	}
-	runs := &fakeRunService{}
+	runs := &fakeEventRuns{}
 	publisher := agentevents.New(agentevents.Params{
 		Logger:      zap.NewNop(),
 		Waits:       quietWaits{},
 		Definitions: definitions,
-		RunService:  runs,
+		EventRuns:   runs,
 		Plans:       plantest.Restricting(t, platformplan.CapabilityAgentAutomation),
 	})
 
@@ -35,6 +35,6 @@ func TestPublishSkipsOrganizationsWithoutAutomatedAgents(t *testing.T) {
 		TenantInfo: plantest.Tenant(),
 	})
 
-	assert.Empty(t, runs.started)
+	assert.Empty(t, runs.queued)
 	assert.Empty(t, definitions.lastReq.EventKind)
 }

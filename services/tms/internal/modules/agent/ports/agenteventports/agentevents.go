@@ -3,6 +3,7 @@ package agenteventports
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -30,6 +31,28 @@ type AgentEventPublisher interface {
 // run, such as planning dispatch coverage again.
 type AgentEventObserver interface {
 	ObserveAgentEvent(ctx context.Context, event *AgentEvent)
+}
+
+// EventRunQueue starts an agent's runs on events, queued per agent so it never
+// has more runs working at once than it allows (MaxConcurrentRuns). A burst
+// of events waits its turn instead of starting every run at once.
+type EventRunQueue interface {
+	Enqueue(ctx context.Context, req *EventRunRequest) error
+}
+
+type EventRunRequest struct {
+	TenantInfo   pagination.TenantInfo
+	DefinitionID pulid.ID
+	Kind         agenttrigger.EventKind
+	SubjectID    pulid.ID
+}
+
+// EventRoutine takes an event for an agent in code, before any model run:
+// the routine part of a job, such as asking for a missing proof of delivery,
+// which the agent's model is kept for when the routine cannot do it.
+type EventRoutine interface {
+	Handles(definition *agentdefinition.Definition, kind agenttrigger.EventKind) bool
+	Take(ctx context.Context, definition *agentdefinition.Definition, event *AgentEvent) error
 }
 
 // AttachmentExtractionObserver is told when a document's extraction is saved,

@@ -179,6 +179,7 @@ func (s *Service) StartForDefinition(
 			DefinitionID: definition.ID,
 			SubjectID:    subjectID,
 			Triggers:     []agent.RunTrigger{agent.RunTriggerEvent, agent.RunTriggerWait},
+			WorkflowOnly: true,
 		})
 		if cErr != nil {
 			return nil, cErr

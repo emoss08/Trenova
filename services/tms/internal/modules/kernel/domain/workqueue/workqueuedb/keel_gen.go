@@ -28,19 +28,20 @@ var itemsTable = schema.Table{
 		{Name: "kind", Quoted: `"kind"`, Field: "Kind", Kind: schema.KindString, Flags: schema.FlagPK, Label: `Kind`, JSON: `kind`},
 		{Name: "subject_id", Quoted: `"subject_id"`, Field: "SubjectID", Kind: schema.KindString, Flags: schema.FlagPK, Label: `Subject ID`, JSON: `subjectId`},
 		{Name: "due_at", Quoted: `"due_at"`, Field: "DueAt", Kind: schema.KindInt64, Flags: 0, Label: `Due At`, JSON: `dueAt`},
+		{Name: "detail", Quoted: `"detail"`, Field: "Detail", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Detail`, JSON: `detail`},
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
 	PK:         []int32{0, 1, 2, 3},
 	Tenant:     []int32{0, 1},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6},
-	Update:     []int32{4, 6},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7},
+	Update:     []int32{4, 5, 7},
 	Returning:  nil,
 	Version:    -1,
 	AutoID:     -1,
-	AutoCreate: 5,
-	AutoUpdate: 6,
+	AutoCreate: 6,
+	AutoUpdate: 7,
 	IDPrefix:   "",
 	New:        newItem,
 	NewN:       newNItem,
@@ -59,6 +60,7 @@ type ItemsTable struct {
 	Kind           keel.StringCol
 	SubjectID      keelkinds.PulidIDCol
 	DueAt          keel.Int64Col
+	Detail         keel.StringCol
 	CreatedAt      keel.Int64Col
 	UpdatedAt      keel.Int64Col
 }
@@ -71,8 +73,9 @@ var Items = &ItemsTable{
 	Kind:           keel.StringCol{Col: keel.Col{Ref: &itemsRef, Index: 2}},
 	SubjectID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &itemsRef, Index: 3}}},
 	DueAt:          keel.Int64Col{Col: keel.Col{Ref: &itemsRef, Index: 4}},
-	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &itemsRef, Index: 5}},
-	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &itemsRef, Index: 6}},
+	Detail:         keel.StringCol{Col: keel.Col{Ref: &itemsRef, Index: 5}},
+	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &itemsRef, Index: 6}},
+	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &itemsRef, Index: 7}},
 }
 
 // BuildItems builds the table of work_queue_items for ref. Generated relation and alias methods call it.
@@ -84,8 +87,9 @@ func BuildItems(r *keel.Ref) *ItemsTable {
 		Kind:           keel.StringCol{Col: keel.Col{Ref: r, Index: 2}},
 		SubjectID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		DueAt:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 4}},
-		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 5}},
-		UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
+		Detail:         keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
+		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
+		UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
 	}
 }
 
@@ -480,8 +484,10 @@ func ptrItem(p unsafe.Pointer, c int32) any {
 	case 4:
 		return &r.DueAt
 	case 5:
-		return &r.CreatedAt
+		return &r.Detail
 	case 6:
+		return &r.CreatedAt
+	case 7:
 		return &r.UpdatedAt
 	}
 	return nil
@@ -501,8 +507,13 @@ func valueItem(p unsafe.Pointer, c int32) any {
 	case 4:
 		return r.DueAt
 	case 5:
-		return r.CreatedAt
+		if r.Detail == "" {
+			return nil
+		}
+		return r.Detail
 	case 6:
+		return r.CreatedAt
+	case 7:
 		return r.UpdatedAt
 	}
 	return nil

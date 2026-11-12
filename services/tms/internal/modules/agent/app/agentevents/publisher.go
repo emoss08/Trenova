@@ -2,16 +2,13 @@ package agentevents
 
 import (
 	"context"
-	"errors"
 	"sync"
 	"sync/atomic"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
@@ -26,17 +23,19 @@ type Params struct {
 
 	Logger      *zap.Logger
 	Definitions agentdefinitionports.AgentDefinitionRepository
-	RunService  agentruntimeports.AgentRunService
+	EventRuns   agenteventports.EventRunQueue
 	Plans       platformplanports.PlanService
 	Waits       agentwaitports.AgentWaitNotifier
+	Routines    []agenteventports.EventRoutine `group:"agent_event_routines"`
 }
 
 type Publisher struct {
 	l           *zap.Logger
 	definitions agentdefinitionports.AgentDefinitionRepository
-	runService  agentruntimeports.AgentRunService
+	eventRuns   agenteventports.EventRunQueue
 	plans       platformplanports.PlanService
 	waits       agentwaitports.AgentWaitNotifier
+	routines    []agenteventports.EventRoutine
 	// attachments are bound after the graph is built, by
 	// RegisterAttachmentObservers: what shows an attached file's card
 	// depends, through its tools, on services that publish events.
@@ -50,9 +49,10 @@ func New(p Params) *Publisher {
 	return &Publisher{
 		l:           p.Logger.Named("service.agentevents"),
 		definitions: p.Definitions,
-		runService:  p.RunService,
+		eventRuns:   p.EventRuns,
 		plans:       p.Plans,
 		waits:       p.Waits,
+		routines:    p.Routines,
 	}
 }
 
@@ -182,6 +182,10 @@ func (p *Publisher) Publish(ctx context.Context, event *agenteventports.AgentEve
 	}
 }
 
+// startFor hands the event to the agent: to a routine that does that part of
+// the job in code when one does, or else to the agent's queue, which starts
+// its run when it has room. A subject keeps one open run at a time; that is
+// held where the run starts, so two events arriving together start one.
 func (p *Publisher) startFor(
 	ctx context.Context,
 	log *zap.Logger,
@@ -190,25 +194,23 @@ func (p *Publisher) startFor(
 ) {
 	log = log.With(zap.String("definitionId", definition.ID.String()))
 
-	// A subject takes one open run at a time. That is enforced where the run
-	// starts, by its workflow id, so two events arriving together cannot both
-	// pass a check and start two.
-	_, err := p.runService.StartForDefinition(
-		ctx,
-		&agentruntimeports.StartAgentRunForDefinitionRequest{
-			DefinitionID: definition.ID,
-			SubjectType:  event.Kind.SubjectType(),
-			SubjectID:    event.SubjectID,
-			Trigger:      agent.RunTriggerEvent,
-			EventKind:    event.Kind,
-			TenantInfo:   event.TenantInfo,
-		},
-		nil,
-	)
-	switch {
-	case errors.Is(err, agentruntimeports.ErrAgentRunAlreadyOpen):
-		log.Debug("agent already has an open run for this subject; event skipped")
-	case err != nil:
-		log.Error("failed to start agent run for event", zap.Error(err))
+	for _, routine := range p.routines {
+		if !routine.Handles(definition, event.Kind) {
+			continue
+		}
+		if err := routine.Take(ctx, definition, event); err != nil {
+			log.Error("failed to hand an agent event to its routine", zap.Error(err))
+		}
+
+		return
+	}
+
+	if err := p.eventRuns.Enqueue(ctx, &agenteventports.EventRunRequest{
+		TenantInfo:   event.TenantInfo,
+		DefinitionID: definition.ID,
+		Kind:         event.Kind,
+		SubjectID:    event.SubjectID,
+	}); err != nil {
+		log.Error("failed to queue an agent run for an event", zap.Error(err))
 	}
 }

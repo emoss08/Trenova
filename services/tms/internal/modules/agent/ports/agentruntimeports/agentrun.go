@@ -32,6 +32,12 @@ type CountOpenAgentRunsRequest struct {
 	SubjectID    pulid.ID
 	// Triggers limits the count to runs started these ways; empty counts all.
 	Triggers []agent.RunTrigger
+	// WorkingOnly counts only runs still working, not those waiting on a
+	// person's decision: an event agent's cap is on what it is doing.
+	WorkingOnly bool
+	// WorkflowOnly counts only runs a workflow carries, as the subject's
+	// one-open-run index does; an inline run is not the subject's run.
+	WorkflowOnly bool
 }
 
 // CountAgentRunsSinceRequest counts an agent's runs started at or after an
@@ -68,6 +74,9 @@ type AgentRunRepository interface {
 	Create(ctx context.Context, entity *agent.AgentRun) (*agent.AgentRun, error)
 	Update(ctx context.Context, entity *agent.AgentRun) (*agent.AgentRun, error)
 	CountOpen(ctx context.Context, req *CountOpenAgentRunsRequest) (int, error)
+	// ListOpenSubjects is which of the subjects already have an open run of
+	// the agent, in one read: what a batch skips rather than doubles up on.
+	ListOpenSubjects(ctx context.Context, req *ListOpenSubjectsRequest) ([]pulid.ID, error)
 	// FailAbandoned ends, in every organization, the runs still marked as
 	// working long after any run finishes: their workflow is gone, and left
 	// as they are they would say an agent is working for ever.
@@ -82,6 +91,12 @@ type AgentRunRepository interface {
 	// FailWaiting fails a run that waits on decisions; nil when it was not.
 	FailWaiting(ctx context.Context, req *FailWaitingRunRequest) (*agent.AgentRun, error)
 	CountSince(ctx context.Context, req CountAgentRunsSinceRequest) (int, error)
+}
+
+type ListOpenSubjectsRequest struct {
+	TenantInfo   pagination.TenantInfo
+	DefinitionID pulid.ID
+	SubjectIDs   []pulid.ID
 }
 
 type CloseDecidedRunRequest struct {

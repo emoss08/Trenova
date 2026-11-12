@@ -2691,21 +2691,50 @@ front of the prompt.
 
 The run is closed by `agentrunclose.Closer`, one conditional statement that
 completes a waiting run once none of its proposals is pending, so the two
-paths that race for it close it once:
+paths that race for it close it once. A run closes this way when it
+`ClosesWhenDecided`: a workflow carried it, or an event started it (a
+routine's inline run, a dispatch coverage refresh). A conversation's inline
+run keeps taking proposals and is closed by whoever started it.
 
 - the decision that leaves nothing pending (`agentdecisionservice.SettleRun`,
-  called once per plan by the plan service), which also has the run
-  reflected on;
+  called once per plan by the plan service); a run a model drove (one with a
+  workflow) is then reflected on, a routine's or a planner's is not;
 - the expiry sweep (`ExpireStaleProposalsWorkflow`, every 15 minutes), which
-  closes runs whose last proposals expired, without reflection.
+  closes runs whose last proposals expired, without reflection, and wakes the
+  queued agent work below whose wake was lost.
 
-A run started inline has no workflow and is never closed this way. Stopping a
-waiting run (`RunCloser.StopWaiting`, used by the bench) expires what it left
-pending and fails it ("The run was stopped while its proposals waited for a
-decision."). A subject keeps one open event or wait run per agent: the run
-service counts open runs before starting a workflow, and the partial unique
-index `uq_agent_runs_open_subject` refuses a second record that races past
-the count, whose workflow is then cancelled.
+Stopping a waiting run (`RunCloser.StopWaiting`, used by the bench) expires
+what it left pending and fails it ("The run was stopped while its proposals
+waited for a decision."). A subject keeps one open workflow-carried event or
+wait run per agent: the run service counts open runs before starting a
+workflow, and the partial unique index `uq_agent_runs_open_subject` (runs
+with a workflow only) refuses a second record that races past the count,
+whose workflow is then cancelled.
+
+### Events reach an agent through a routine or its queue
+
+`agentevents.Publisher` never starts a run directly. An event an
+`agenteventports.EventRoutine` handles is taken in code; any other goes to
+the agent's queue (`agenteventcontract.Queue`, a `work_queue_items` kind per
+agent, the event kind as the row's detail). `AgentEventDrainWorkflow` starts
+the queued runs as the agent has room: `MaxConcurrentRuns` less its runs
+still working, so a run waiting on a person takes no room. A full agent's
+drain claims nothing, reports itself blocked and looks again each debounce;
+a subject queued twice runs once, on the latest event. Scheduled runs keep
+counting waiting runs against the cap, so a scheduled agent never stacks
+runs nobody has decided.
+
+The proof-of-delivery chase (`podchasejobs`) is the first routine: the
+built-in billing exception agent's `shipment.pod_missing` events are queued
+per tenant, and `PODChaseDrainWorkflow` reads a page's facts in two round
+trips (still delivered with no POD on file, who hauled the last move, the
+billing sender), skips a shipment with an open run of the agent, and asks
+once: a Dash message to a driver with portal access, otherwise an email to
+the carrier. Each request is an inline event run about the shipment whose
+one call goes through `agentruntime.Service.DispatchStep`, so its tier,
+holds and egress are the runtime's own, and is recorded by the proposal
+recorder like a run's. A shipment nobody can be asked about goes to the
+agent's queue for its model. An agent an organization wrote keeps its model.
 
 An approved proposal is executed by the decision service, not by the run: that
 path carries the modification checks, the trust ledger, memory and follow-ups,

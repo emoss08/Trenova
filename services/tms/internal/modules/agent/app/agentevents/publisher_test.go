@@ -6,14 +6,11 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentevents"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentwaitports"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
@@ -34,28 +31,35 @@ func (f *fakeDefinitions) ListEnabledByTrigger(
 	return f.items, nil
 }
 
-type fakeRunService struct {
-	agentruntimeports.AgentRunService
-	started []*agentruntimeports.StartAgentRunForDefinitionRequest
-	err     error
-	// open are the definitions with a run already open, which the run
-	// service refuses to start again.
-	open map[pulid.ID]bool
+type fakeEventRuns struct {
+	queued []*agenteventports.EventRunRequest
+	err    error
 }
 
-func (f *fakeRunService) StartForDefinition(
+func (f *fakeEventRuns) Enqueue(_ context.Context, req *agenteventports.EventRunRequest) error {
+	f.queued = append(f.queued, req)
+
+	return f.err
+}
+
+// fakeRoutine takes one event kind for every agent.
+type fakeRoutine struct {
+	kind  agenttrigger.EventKind
+	taken []*agenteventports.AgentEvent
+}
+
+func (r *fakeRoutine) Handles(_ *agentdefinition.Definition, kind agenttrigger.EventKind) bool {
+	return kind == r.kind
+}
+
+func (r *fakeRoutine) Take(
 	_ context.Context,
-	req *agentruntimeports.StartAgentRunForDefinitionRequest,
-	_ *permissionports.RequestActor,
-) (*agent.AgentRun, error) {
-	f.started = append(f.started, req)
-	if f.open[req.DefinitionID] {
-		return nil, agentruntimeports.ErrAgentRunAlreadyOpen
-	}
-	if f.err != nil {
-		return nil, f.err
-	}
-	return &agent.AgentRun{ID: pulid.MustNew("ar_")}, nil
+	_ *agentdefinition.Definition,
+	event *agenteventports.AgentEvent,
+) error {
+	r.taken = append(r.taken, event)
+
+	return nil
 }
 
 type quietWaits struct {
@@ -68,20 +72,23 @@ var tenantInfo = pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid
 
 type fixture struct {
 	definitions *fakeDefinitions
-	runService  *fakeRunService
+	eventRuns   *fakeEventRuns
+	routine     *fakeRoutine
 	publisher   agenteventports.AgentEventPublisher
 }
 
 func newFixture(defs ...*agentdefinition.Definition) *fixture {
 	f := &fixture{
 		definitions: &fakeDefinitions{items: defs},
-		runService:  &fakeRunService{open: map[pulid.ID]bool{}},
+		eventRuns:   &fakeEventRuns{},
+		routine:     &fakeRoutine{kind: agenttrigger.EventShipmentPODMissing},
 	}
 	f.publisher = agentevents.New(agentevents.Params{
 		Logger:      zap.NewNop(),
 		Waits:       quietWaits{},
 		Definitions: f.definitions,
-		RunService:  f.runService,
+		EventRuns:   f.eventRuns,
+		Routines:    []agenteventports.EventRoutine{f.routine},
 	})
 	return f
 }
@@ -103,33 +110,30 @@ func TestPublish_StartsEachSubscribedDefinition(t *testing.T) {
 	require.Equal(t, agentdefinition.TriggerEvent, f.definitions.lastReq.Mode)
 	require.Equal(t, agenttrigger.EventBillingQueueItemException, f.definitions.lastReq.EventKind)
 	require.Equal(t, tenantInfo, f.definitions.lastReq.TenantInfo)
-	require.Len(t, f.runService.started, 2)
-	for _, req := range f.runService.started {
-		require.Equal(t, agent.RunTriggerEvent, req.Trigger)
-		require.Equal(t, agenttrigger.EventBillingQueueItemException, req.EventKind)
-		require.Equal(t, agent.SubjectBillingQueueItem, req.SubjectType)
+	require.Len(t, f.eventRuns.queued, 2, "each agent's run is queued behind its cap")
+	for i, req := range f.eventRuns.queued {
+		require.Equal(t, []pulid.ID{first.ID, second.ID}[i], req.DefinitionID)
+		require.Equal(t, agenttrigger.EventBillingQueueItemException, req.Kind)
 		require.Equal(t, subject, req.SubjectID)
 		require.Equal(t, tenantInfo, req.TenantInfo)
 	}
 }
 
-// A definition with a run already open for the subject is refused where the
-// run starts; the refusal is a skip, and the other definitions still run.
-func TestPublish_SkipsDefinitionWithOpenRunForSubject(t *testing.T) {
+// A routine that does an event's part of the job takes the event instead of
+// the agent's model run.
+func TestPublish_HandsAnEventARoutineTakesToTheRoutine(t *testing.T) {
 	t.Parallel()
 
-	busy := &agentdefinition.Definition{ID: pulid.MustNew("agd_")}
-	idle := &agentdefinition.Definition{ID: pulid.MustNew("agd_")}
-	f := newFixture(busy, idle)
-	f.runService.open[busy.ID] = true
+	f := newFixture(&agentdefinition.Definition{ID: pulid.MustNew("agd_")})
 
 	f.publisher.Publish(t.Context(), &agenteventports.AgentEvent{
-		Kind:       agenttrigger.EventShipmentMoveUnassigned,
-		SubjectID:  pulid.MustNew("smv_"),
+		Kind:       agenttrigger.EventShipmentPODMissing,
+		SubjectID:  pulid.MustNew("shp_"),
 		TenantInfo: tenantInfo,
 	})
 
-	require.Len(t, f.runService.started, 2, "both are asked; the open one refuses")
+	require.Len(t, f.routine.taken, 1)
+	require.Empty(t, f.eventRuns.queued, "the routine's event starts no model run")
 }
 
 func TestPublish_IgnoresUnknownKind(t *testing.T) {
@@ -143,7 +147,7 @@ func TestPublish_IgnoresUnknownKind(t *testing.T) {
 		TenantInfo: tenantInfo,
 	})
 
-	require.Empty(t, f.runService.started)
+	require.Empty(t, f.eventRuns.queued)
 }
 
 func TestPublish_IgnoresMissingSubjectOrTenant(t *testing.T) {
@@ -160,17 +164,17 @@ func TestPublish_IgnoresMissingSubjectOrTenant(t *testing.T) {
 		SubjectID: pulid.MustNew("shp_"),
 	})
 
-	require.Empty(t, f.runService.started)
+	require.Empty(t, f.eventRuns.queued)
 }
 
-func TestPublish_StartFailureDoesNotPanicOrStopOthers(t *testing.T) {
+func TestPublish_QueueFailureDoesNotPanicOrStopOthers(t *testing.T) {
 	t.Parallel()
 
 	f := newFixture(
 		&agentdefinition.Definition{ID: pulid.MustNew("agd_")},
 		&agentdefinition.Definition{ID: pulid.MustNew("agd_")},
 	)
-	f.runService.err = errors.New("temporal down")
+	f.eventRuns.err = errors.New("temporal down")
 
 	f.publisher.Publish(t.Context(), &agenteventports.AgentEvent{
 		Kind:       agenttrigger.EventDocumentExtracted,
@@ -178,5 +182,5 @@ func TestPublish_StartFailureDoesNotPanicOrStopOthers(t *testing.T) {
 		TenantInfo: tenantInfo,
 	})
 
-	require.Len(t, f.runService.started, 2)
+	require.Len(t, f.eventRuns.queued, 2)
 }

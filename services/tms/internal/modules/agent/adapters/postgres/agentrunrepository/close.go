@@ -77,9 +77,9 @@ func (r *repository) CloseSettled(
 	})
 }
 
-// awaitingWithNothingPending is a run carried by a workflow that waits on
-// decisions none of which is still pending. A run started inline has no
-// workflow and is closed by whoever started it.
+// awaitingWithNothingPending is a run that closes when decided
+// (agent.AgentRun.ClosesWhenDecided) and waits on decisions none of which is
+// still pending.
 func awaitingWithNothingPending(run *agentdb.AgentRunsTable, allTenants bool) keel.Pred {
 	p := agentdb.AgentProposals
 	pending := p.Pick(p.ID).Where(
@@ -94,7 +94,7 @@ func awaitingWithNothingPending(run *agentdb.AgentRunsTable, allTenants bool) ke
 
 	return keel.And(
 		run.Status.Eq(agent.RunStatusAwaitingDecision),
-		run.WorkflowID.IsNotNull(),
+		keel.Or(run.WorkflowID.IsNotNull(), run.Trigger.Eq(agent.RunTriggerEvent)),
 		keel.Not(keel.Exists(pending)),
 	)
 }

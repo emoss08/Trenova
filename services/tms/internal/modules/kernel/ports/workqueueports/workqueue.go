@@ -16,12 +16,28 @@ type Queue interface {
 	// work runs survives the settle.
 	Enqueue(ctx context.Context, req *EnqueueRequest) error
 	ListDue(ctx context.Context, req *ListDueRequest) ([]Due, error)
-	// Settle deletes the row, or moves it to RetryAt, only while it still
-	// holds the due time that was claimed.
-	Settle(ctx context.Context, req *SettleRequest) error
+	// SettleMany settles a page in two statements: it deletes the subjects
+	// that are done and moves the ones to retry to RetryAt, each only while
+	// it still holds the due time that was claimed.
+	SettleMany(ctx context.Context, req *SettleManyRequest) error
 	// ListDueTenants lists, across every tenant, the tenants with due work
 	// of the kind: the sweep's backstop for a wake that was lost.
 	ListDueTenants(ctx context.Context, req *ListDueTenantsRequest) ([]pagination.TenantInfo, error)
+	// ListDueKinds lists, across every tenant, the tenant and kind pairs with
+	// due work among the kinds that start with the prefix: the backstop for a
+	// family of kinds, one per agent.
+	ListDueKinds(ctx context.Context, req *ListDueKindsRequest) ([]TenantKind, error)
+}
+
+type ListDueKindsRequest struct {
+	Prefix string
+	Now    int64
+	Limit  int
+}
+
+type TenantKind struct {
+	TenantInfo pagination.TenantInfo
+	Kind       string
 }
 
 type EnqueueRequest struct {
@@ -29,6 +45,9 @@ type EnqueueRequest struct {
 	TenantInfo pagination.TenantInfo
 	SubjectIDs []pulid.ID
 	At         int64
+	// Detail is what the work needs beyond the subject; the latest request
+	// replaces it.
+	Detail string
 }
 
 type ListDueRequest struct {
@@ -41,14 +60,17 @@ type ListDueRequest struct {
 type Due struct {
 	SubjectID pulid.ID
 	DueAt     int64
+	Detail    string
 }
 
-type SettleRequest struct {
-	Kind         string
-	TenantInfo   pagination.TenantInfo
-	SubjectID    pulid.ID
-	ClaimedDueAt int64
-	RetryAt      *int64
+// SettleManyRequest is a page's outcome: Done and Retry are the claimed rows,
+// each with the due time it was claimed at.
+type SettleManyRequest struct {
+	Kind       string
+	TenantInfo pagination.TenantInfo
+	Done       []Due
+	Retry      []Due
+	RetryAt    int64
 }
 
 type ListDueTenantsRequest struct {

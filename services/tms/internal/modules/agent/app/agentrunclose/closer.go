@@ -73,10 +73,14 @@ func (c *Closer) CloseIfDecided(
 	}
 
 	c.announce(ctx, run)
-	c.reflections.AfterRun(ctx, &agentreflectionports.ReflectOnRunRequest{
-		TenantInfo: tenantInfo,
-		RunID:      run.ID,
-	})
+	// Only a run a model drove has behaviour to learn from; a routine's or a
+	// planner's run is code.
+	if run.WorkflowID != "" {
+		c.reflections.AfterRun(ctx, &agentreflectionports.ReflectOnRunRequest{
+			TenantInfo: tenantInfo,
+			RunID:      run.ID,
+		})
+	}
 
 	return nil
 }
@@ -118,10 +122,13 @@ func (c *Closer) StopWaiting(
 		return false, err
 	}
 
-	if _, err = c.proposals.ExpirePendingByRun(ctx, agentproposalports.ExpireAgentProposalsByRunRequest{
-		RunID:      runID,
-		TenantInfo: tenantInfo,
-	}); err != nil {
+	if _, err = c.proposals.ExpirePendingByRun(
+		ctx,
+		agentproposalports.ExpireAgentProposalsByRunRequest{
+			RunID:      runID,
+			TenantInfo: tenantInfo,
+		},
+	); err != nil {
 		return true, err
 	}
 	c.announce(ctx, run)

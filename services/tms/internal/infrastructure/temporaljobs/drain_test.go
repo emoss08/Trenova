@@ -116,7 +116,7 @@ func TestRunTenantDrainContinuesAsNewAfterItsRounds(t *testing.T) {
 }
 
 // DrainDue settles the subjects that were worked and pushes the failed ones
-// back, each only at the due time it claimed.
+// back in one call, each with the due time it claimed.
 func TestDrainDueSettlesEachSubject(t *testing.T) {
 	t.Parallel()
 
@@ -126,11 +126,10 @@ func TestDrainDueSettlesEachSubject(t *testing.T) {
 	queue.EXPECT().ListDue(mock.Anything, mock.MatchedBy(func(req *workqueueports.ListDueRequest) bool {
 		return req.Kind == "test" && req.Limit == 2 && req.TenantInfo == tenant
 	})).Return([]workqueueports.Due{{SubjectID: ok, DueAt: 100}, {SubjectID: bad, DueAt: 101}}, nil).Once()
-	queue.EXPECT().Settle(mock.Anything, mock.MatchedBy(func(req *workqueueports.SettleRequest) bool {
-		return req.SubjectID == ok && req.ClaimedDueAt == 100 && req.RetryAt == nil
-	})).Return(nil).Once()
-	queue.EXPECT().Settle(mock.Anything, mock.MatchedBy(func(req *workqueueports.SettleRequest) bool {
-		return req.SubjectID == bad && req.ClaimedDueAt == 101 && req.RetryAt != nil
+	queue.EXPECT().SettleMany(mock.Anything, mock.MatchedBy(func(req *workqueueports.SettleManyRequest) bool {
+		return len(req.Done) == 1 && req.Done[0].SubjectID == ok && req.Done[0].DueAt == 100 &&
+			len(req.Retry) == 1 && req.Retry[0].SubjectID == bad && req.Retry[0].DueAt == 101 &&
+			req.RetryAt > 0
 	})).Return(nil).Once()
 
 	page, err := DrainDue(t.Context(), &DrainDueParams{
@@ -139,7 +138,7 @@ func TestDrainDueSettlesEachSubject(t *testing.T) {
 		Tenant:     tenant,
 		PageSize:   2,
 		RetryAfter: time.Minute,
-		Handle: func(_ context.Context, subjects []pulid.ID) map[pulid.ID]error {
+		Handle: func(_ context.Context, subjects []pulid.ID, _ map[pulid.ID]string) map[pulid.ID]error {
 			assert.Equal(t, []pulid.ID{ok, bad}, subjects)
 			return map[pulid.ID]error{bad: errors.New("refused")}
 		},
@@ -147,4 +146,45 @@ func TestDrainDueSettlesEachSubject(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.Equal(t, &DrainPage{Done: 1, Failed: 1, Full: true}, page)
+}
+
+// A deferred subject is due again like a failed one but counts as blocked,
+// not failed, so the drain comes back for it.
+func TestDrainDueDefersWithoutFailing(t *testing.T) {
+	t.Parallel()
+
+	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
+	waiting := pulid.MustNew("shp_")
+	queue := workqueueportsmock.NewMockQueue(t)
+	queue.EXPECT().ListDue(mock.Anything, mock.Anything).
+		Return([]workqueueports.Due{{SubjectID: waiting, DueAt: 7, Detail: "kind"}}, nil).Once()
+	queue.EXPECT().SettleMany(mock.Anything, mock.MatchedBy(func(req *workqueueports.SettleManyRequest) bool {
+		return len(req.Done) == 0 && len(req.Retry) == 1 && req.Retry[0].SubjectID == waiting
+	})).Return(nil).Once()
+
+	page, err := DrainDue(t.Context(), &DrainDueParams{
+		Queue:      queue,
+		Kind:       "test",
+		Tenant:     tenant,
+		PageSize:   5,
+		RetryAfter: time.Second,
+		Handle: func(_ context.Context, subjects []pulid.ID, details map[pulid.ID]string) map[pulid.ID]error {
+			assert.Equal(t, "kind", details[waiting], "each subject's detail reaches the handler")
+			return map[pulid.ID]error{subjects[0]: ErrDeferred}
+		},
+	})
+
+	require.NoError(t, err)
+	assert.Equal(t, &DrainPage{Deferred: 1, Blocked: true}, page)
+}
+
+// A blocked round keeps the drain alive: it looks again after the debounce
+// until the subjects go through, then ends.
+func TestRunTenantDrainComesBackWhileBlocked(t *testing.T) {
+	t.Parallel()
+
+	result := runDrain(t, []DrainPage{{Deferred: 2, Blocked: true}, {Done: 2}}, 0, nil)
+
+	assert.Equal(t, 2, result.Totals.Done)
+	assert.False(t, result.Again)
 }

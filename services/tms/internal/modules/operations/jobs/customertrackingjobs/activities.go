@@ -92,7 +92,7 @@ func (a *Activities) DrainCustomerStatusActivity(
 		Tenant:     tenant,
 		PageSize:   drainPageSize,
 		RetryAfter: drainRetryAfter,
-		Handle: func(ctx context.Context, shipments []pulid.ID) map[pulid.ID]error {
+		Handle: func(ctx context.Context, shipments []pulid.ID, _ map[pulid.ID]string) map[pulid.ID]error {
 			failed := make(map[pulid.ID]error)
 			for _, shipmentID := range shipments {
 				if err := ctx.Err(); err != nil {

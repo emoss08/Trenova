@@ -34,7 +34,9 @@ in [module-architecture.md](../module-architecture.md). Agent work has its own r
   `temporaljobs.RunTenantDrain` is the workflow loop (debounce, pages per round,
   continue-as-new) and `temporaljobs.DrainDue` the activity page: it claims due rows, works
   them, and settles each only while it still holds the claimed due time, pushing a failed one
-  back. The job's sweep calls `DrainRequester.WakeDue` as the backstop for a lost wake
+  back; a handler that returns `temporaljobs.ErrDeferred` (no room under a cap) leaves the
+  page blocked, so the drain looks again each debounce instead of ending. A row's `detail`
+  carries what the work needs beyond its subject (the event kind of an agent's queued run). The job's sweep calls `DrainRequester.WakeDue` as the backstop for a lost wake
   (`etajobs.ShipmentEtaDrainWorkflow`). A queue that is a property of the row itself keeps it
   on the row instead (`billing_queue_items.recheck_due_at`, `BillingQueueTenantWorkflow`).
   Pass a tenant `FairnessKey` so one tenant's burst does not starve the rest.

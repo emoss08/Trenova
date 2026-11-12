@@ -84,7 +84,7 @@ func (a *Activities) DrainShipmentEtasActivity(
 		Tenant:     tenant,
 		PageSize:   drainPageSize,
 		RetryAfter: drainRetryAfter,
-		Handle: func(ctx context.Context, shipments []pulid.ID) map[pulid.ID]error {
+		Handle: func(ctx context.Context, shipments []pulid.ID, _ map[pulid.ID]string) map[pulid.ID]error {
 			if _, err := a.refresher.RefreshShipments(ctx, tenant, shipments); err != nil {
 				a.l.Warn("shipment eta refresh failed; the page is tried again shortly",
 					zap.String("organizationId", tenant.OrgID.String()),

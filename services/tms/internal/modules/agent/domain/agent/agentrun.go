@@ -68,6 +68,14 @@ type AgentRun struct {
 	Organization *tenant.Organization `json:"-"`
 }
 
+// ClosesWhenDecided reports a run that ends once none of its proposals is
+// pending: one a workflow carried, or one an event started, as a routine's
+// run is. A run started inline for a conversation keeps taking proposals and
+// is closed by whoever started it.
+func (r *AgentRun) ClosesWhenDecided() bool {
+	return r.WorkflowID != "" || r.Trigger == RunTriggerEvent
+}
+
 func (r *AgentRun) Validate(multiErr *errortypes.MultiError) {
 	multiErr.AddOzzoError(validation.ValidateStruct(
 		r,

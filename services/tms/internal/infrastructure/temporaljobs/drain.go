@@ -2,6 +2,7 @@ package temporaljobs
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -27,10 +28,12 @@ func DrainWorkflowID(kind string, tenant pagination.TenantInfo) string {
 	return "drain-" + kind + "-" + tenant.OrgID.String() + "-" + tenant.BuID.String()
 }
 
-// DrainPayload carries a tenant drain across continue-as-new.
+// DrainPayload carries a tenant drain across continue-as-new. Kind is the
+// queue it drains, for a drain whose workflow serves a family of kinds.
 type DrainPayload struct {
 	OrganizationID pulid.ID `json:"organizationId"`
 	BusinessUnitID pulid.ID `json:"businessUnitId"`
+	Kind           string   `json:"kind,omitempty"`
 	Iterations     int      `json:"iterations"`
 }
 
@@ -38,11 +41,19 @@ func (p *DrainPayload) TenantInfo() pagination.TenantInfo {
 	return pagination.TenantInfo{OrgID: p.OrganizationID, BuID: p.BusinessUnitID}
 }
 
-// DrainPage is what one page of a drain did.
+// ErrDeferred is what a handler returns for a subject it chose not to work
+// yet, such as one past a concurrency cap: the subject is due again after
+// RetryAfter and the drain stays alive to come back for it.
+var ErrDeferred = errors.New("deferred until there is room")
+
+// DrainPage is what one page of a drain did. Blocked says subjects were
+// deferred, so the drain must come back for them rather than end.
 type DrainPage struct {
-	Done   int  `json:"done"`
-	Failed int  `json:"failed"`
-	Full   bool `json:"full"`
+	Done     int  `json:"done"`
+	Failed   int  `json:"failed"`
+	Deferred int  `json:"deferred"`
+	Full     bool `json:"full"`
+	Blocked  bool `json:"blocked"`
 }
 
 // DrainTotals adds up a drain's pages.
@@ -66,8 +77,8 @@ type TenantDrainOptions struct {
 	Page func(ctx workflow.Context) (*DrainPage, error)
 }
 
-// RunTenantDrain runs rounds until nothing is due and no request arrived,
-// and reports whether the caller should continue as new.
+// RunTenantDrain runs rounds until nothing is due, nothing was deferred and
+// no request arrived, and reports whether the caller should continue as new.
 func RunTenantDrain(
 	ctx workflow.Context,
 	opts TenantDrainOptions,
@@ -87,6 +98,7 @@ func RunTenantDrain(
 		}
 		drainWakes(signals)
 
+		blocked := false
 		for range NormalizeLimit(opts.PagesPerRound, 1) {
 			page, err := opts.Page(ctx)
 			if err != nil {
@@ -94,13 +106,14 @@ func RunTenantDrain(
 			}
 			totals.Done += page.Done
 			totals.Failed += page.Failed
+			blocked = blocked || page.Blocked
 			backlog = page.Full
 			if !page.Full {
 				break
 			}
 		}
 
-		if !drainWakes(signals) && !backlog {
+		if !drainWakes(signals) && !backlog && !blocked {
 			return totals, false, nil
 		}
 	}
@@ -122,9 +135,10 @@ type DrainDueParams struct {
 	Tenant     pagination.TenantInfo
 	PageSize   int
 	RetryAfter time.Duration
-	// Handle works the page's subjects and returns the ones that failed;
-	// they are due again after RetryAfter, the rest are settled.
-	Handle func(ctx context.Context, subjects []pulid.ID) map[pulid.ID]error
+	// Handle works the page's subjects and returns the ones that failed or
+	// were deferred (ErrDeferred); they are due again after RetryAfter, the
+	// rest are settled. details holds each subject's queued detail.
+	Handle func(ctx context.Context, subjects []pulid.ID, details map[pulid.ID]string) map[pulid.ID]error
 }
 
 // DrainDue claims a page of the tenant's due subjects, works them and settles
@@ -142,32 +156,41 @@ func DrainDue(ctx context.Context, p *DrainDueParams) (*DrainPage, error) {
 	}
 
 	subjects := make([]pulid.ID, 0, len(due))
+	details := make(map[pulid.ID]string, len(due))
 	for _, item := range due {
 		subjects = append(subjects, item.SubjectID)
+		if item.Detail != "" {
+			details[item.SubjectID] = item.Detail
+		}
 	}
 	if activity.IsActivity(ctx) {
 		activity.RecordHeartbeat(ctx, len(subjects))
 	}
-	failures := p.Handle(ctx, subjects)
+	failures := p.Handle(ctx, subjects, details)
 
 	page := &DrainPage{Full: len(due) == p.PageSize}
-	retryAt := now + int64(p.RetryAfter.Seconds())
+	settle := &workqueueports.SettleManyRequest{
+		Kind:       p.Kind,
+		TenantInfo: p.Tenant,
+		RetryAt:    now + int64(p.RetryAfter.Seconds()),
+	}
 	for _, item := range due {
-		settle := &workqueueports.SettleRequest{
-			Kind:         p.Kind,
-			TenantInfo:   p.Tenant,
-			SubjectID:    item.SubjectID,
-			ClaimedDueAt: item.DueAt,
-		}
-		if _, failed := failures[item.SubjectID]; failed {
-			settle.RetryAt = &retryAt
+		failure, failed := failures[item.SubjectID]
+		switch {
+		case failed && errors.Is(failure, ErrDeferred):
+			settle.Retry = append(settle.Retry, item)
+			page.Deferred++
+			page.Blocked = true
+		case failed:
+			settle.Retry = append(settle.Retry, item)
 			page.Failed++
-		} else {
+		default:
+			settle.Done = append(settle.Done, item)
 			page.Done++
 		}
-		if err = p.Queue.Settle(ctx, settle); err != nil {
-			return nil, err
-		}
+	}
+	if err = p.Queue.SettleMany(ctx, settle); err != nil {
+		return nil, err
 	}
 
 	return page, nil
@@ -192,6 +215,17 @@ func (r *DrainRequester) Request(
 	tenant pagination.TenantInfo,
 	subjectIDs ...pulid.ID,
 ) error {
+	return r.RequestWithDetail(ctx, tenant, "", subjectIDs...)
+}
+
+// RequestWithDetail queues the subjects with what their work needs beyond
+// their ids, replacing any detail a subject was queued with before.
+func (r *DrainRequester) RequestWithDetail(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	detail string,
+	subjectIDs ...pulid.ID,
+) error {
 	if tenant.OrgID.IsNil() || tenant.BuID.IsNil() || len(subjectIDs) == 0 {
 		return nil
 	}
@@ -200,6 +234,7 @@ func (r *DrainRequester) Request(
 		TenantInfo: tenant,
 		SubjectIDs: subjectIDs,
 		At:         timeutils.NowUnix(),
+		Detail:     detail,
 	}); err != nil {
 		return err
 	}
@@ -231,7 +266,7 @@ func (r *DrainRequester) Wake(ctx context.Context, tenant pagination.TenantInfo)
 			Priority:      temporal.Priority{FairnessKey: tenant.OrgID.String()},
 		},
 		r.Workflow,
-		&DrainPayload{OrganizationID: tenant.OrgID, BusinessUnitID: tenant.BuID},
+		&DrainPayload{OrganizationID: tenant.OrgID, BusinessUnitID: tenant.BuID, Kind: r.Kind},
 	)
 
 	return err

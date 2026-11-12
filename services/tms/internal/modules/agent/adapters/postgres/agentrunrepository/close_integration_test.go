@@ -131,16 +131,24 @@ func TestCloseDecidedClosesOnlyWhenNothingIsPending(t *testing.T) {
 	assert.Nil(t, f.closeDecided(run.ID), "a closed run is closed once")
 }
 
-// A run started inline has no workflow and is closed by whoever started it,
-// never by a decision.
-func TestCloseDecidedLeavesInlineRunsToTheirOwner(t *testing.T) {
+// A run started inline for a conversation keeps taking proposals and is closed
+// by whoever started it, never by a decision; one an event started, a
+// routine's, closes like a workflow's.
+func TestCloseDecidedClosesOnlyRunsThatCloseWhenDecided(t *testing.T) {
 	t.Parallel()
 
 	f := setupCloseFixture(t)
-	run := f.waiting("")
-	f.propose(run.ID, agent.ProposalStatusAccepted)
+	chat, err := f.run(agent.RunTriggerChat, agent.RunStatusAwaitingDecision, "",
+		pulid.MustNew("agd_"), pulid.MustNew("shp_"))
+	require.NoError(t, err)
+	f.propose(chat.ID, agent.ProposalStatusAccepted)
+	assert.Nil(t, f.closeDecided(chat.ID), "a conversation's inline run stays open")
 
-	assert.Nil(t, f.closeDecided(run.ID))
+	routine := f.waiting("")
+	f.propose(routine.ID, agent.ProposalStatusAccepted)
+	closed := f.closeDecided(routine.ID)
+	require.NotNil(t, closed, "an event's inline run closes once decided")
+	assert.Equal(t, agent.RunStatusCompleted, closed.Status)
 }
 
 // The sweep closes, across organizations, waiting runs whose proposals all
@@ -204,4 +212,7 @@ func TestCreateRefusesASecondOpenRunForASubject(t *testing.T) {
 
 	_, err = f.run(agent.RunTriggerManual, agent.RunStatusPending, "wf-3", definitionID, subjectID)
 	require.NoError(t, err, "a manual run is not one of the subject's event runs")
+
+	_, err = f.run(agent.RunTriggerEvent, agent.RunStatusAwaitingDecision, "", definitionID, subjectID)
+	require.NoError(t, err, "an inline run carries no workflow and is not the subject's run")
 }
