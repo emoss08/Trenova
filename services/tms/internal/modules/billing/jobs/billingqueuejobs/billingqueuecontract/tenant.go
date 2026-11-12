@@ -32,7 +32,7 @@ type TenantPayload struct {
 	BusinessUnitID pulid.ID `json:"businessUnitId"`
 	Iterations     int      `json:"iterations"`
 	BriefPending   bool     `json:"briefPending"`
-	LastBriefAt    int64    `json:"lastBriefAt"`
+	LastBriefAtNs  int64    `json:"lastBriefAtNs"`
 }
 
 func (p *TenantPayload) Tenant() pagination.TenantInfo {

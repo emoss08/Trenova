@@ -159,7 +159,7 @@ func BillingQueueTenantWorkflow(
 					OrganizationID: payload.OrganizationID,
 					BusinessUnitID: payload.BusinessUnitID,
 					BriefPending:   payload.BriefPending,
-					LastBriefAt:    payload.LastBriefAt,
+					LastBriefAtNs:  payload.LastBriefAtNs,
 				},
 			)
 		}
@@ -220,16 +220,16 @@ func writeBrief(
 	}
 
 	payload.BriefPending = false
-	payload.LastBriefAt = workflow.Now(ctx).Unix()
+	payload.LastBriefAtNs = workflow.Now(ctx).UnixNano()
 	result.Briefs++
 }
 
 func briefWait(ctx workflow.Context, payload *billingqueuecontract.TenantPayload) time.Duration {
-	if payload.LastBriefAt == 0 {
+	if payload.LastBriefAtNs == 0 {
 		return 0
 	}
 
-	return time.Unix(payload.LastBriefAt, 0).Add(briefEvery).Sub(workflow.Now(ctx))
+	return time.Unix(0, payload.LastBriefAtNs).Add(briefEvery).Sub(workflow.Now(ctx))
 }
 
 // awaitBriefOrSignal waits out the brief's pace. It reports whether a signal
