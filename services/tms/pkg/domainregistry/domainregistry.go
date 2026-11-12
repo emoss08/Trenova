@@ -1,13 +1,13 @@
 package domainregistry
 
 import (
+	"github.com/emoss08/trenova/internal/modules/agent/domain/recordshare"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/shipmentimportchat"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringreadiness"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicerun"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceshare"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/generateddocument"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
@@ -68,7 +68,7 @@ func RegisterEntities() []any {
 		&invoice.EmailAttempt{},
 		&invoice.EmailAttemptAttachment{},
 		&invoice.DocumentShareToken{},
-		&invoiceshare.InvoiceShare{},
+		&recordshare.Share{},
 		&invoicerun.InvoiceRun{},
 		&invoicerun.InvoiceRunGroup{},
 		&invoicerun.InvoiceRunGroupItem{},
