@@ -125,7 +125,6 @@ func TestSnooze_ParksAndSchedulesTheWakeUp(t *testing.T) {
 	state := fakes.Queue.State(id)
 	assert.Equal(t, inboundmessage.ParkingSnoozed, state.Parked)
 	assert.Equal(t, inboundqueuetest.TestNow+7200, state.SnoozedUntil)
-	assert.Equal(t, []pulid.ID{id}, fakes.Wakes.Scheduled)
 	require.Len(t, fakes.Activities.Recorded, 1)
 	activity := fakes.Activities.Recorded[0]
 	assert.Equal(t, triage.ActivitySnoozed, activity.Kind)
@@ -177,7 +176,7 @@ func TestSnooze_WatchesTheMatchedShipmentForAnEvent(t *testing.T) {
 
 	parked := fakes.Queue.State(state.ID)
 	assert.Equal(t, state.MatchedShipmentID, parked.SnoozeWatchID)
-	assert.Empty(t, fakes.Wakes.Scheduled, "an event snooze has no timer")
+	assert.False(t, parked.HasTimer(), "an event snooze has no timer for the sweep to fire")
 }
 
 func TestWakeIfDue_IsIdempotent(t *testing.T) {
@@ -187,25 +186,22 @@ func TestWakeIfDue_IsIdempotent(t *testing.T) {
 	state.Parked = inboundmessage.ParkingSnoozed
 	state.SnoozedUntil = inboundqueuetest.TestNow + 600
 	svc, fakes := withQueue(&testService{}, state)
+	ids := []pulid.ID{state.ID}
 
-	early, err := svc.queue().
-		WakeIfDue(t.Context(), inboundqueuetest.QueueTenant, state.ID, inboundqueuetest.TestNow)
+	early, err := svc.queue().WakeIfDue(t.Context(), inboundqueuetest.QueueTenant, ids, inboundqueuetest.TestNow)
 	require.NoError(t, err)
-	assert.False(t, early.Woken)
-	assert.True(t, early.Schedule.Open)
-	assert.Equal(t, inboundqueuetest.TestNow+600, early.Schedule.WakeAt)
+	assert.Zero(t, early, "a message before its time stays parked")
 
 	woken, err := svc.queue().
-		WakeIfDue(t.Context(), inboundqueuetest.QueueTenant, state.ID, inboundqueuetest.TestNow+600)
+		WakeIfDue(t.Context(), inboundqueuetest.QueueTenant, ids, inboundqueuetest.TestNow+600)
 	require.NoError(t, err)
-	assert.True(t, woken.Woken)
+	assert.Equal(t, 1, woken)
 	assert.Empty(t, fakes.Queue.State(state.ID).Parked)
 
 	again, err := svc.queue().
-		WakeIfDue(t.Context(), inboundqueuetest.QueueTenant, state.ID, inboundqueuetest.TestNow+601)
+		WakeIfDue(t.Context(), inboundqueuetest.QueueTenant, ids, inboundqueuetest.TestNow+601)
 	require.NoError(t, err)
-	assert.False(t, again.Woken)
-	assert.False(t, again.Schedule.Open, "a woken message has nothing left to wait for")
+	assert.Zero(t, again, "a woken message has nothing left to wait for")
 	assert.Equal(t, []triage.ActivityKind{triage.ActivityWoken}, fakes.Activities.Kinds())
 }
 
@@ -217,29 +213,37 @@ func TestWakeIfDue_StopsWaitingOnAReplyThatNeverCame(t *testing.T) {
 	state.AwaitingUntil = inboundqueuetest.TestNow
 	svc, fakes := withQueue(&testService{}, state)
 
-	result, err := svc.queue().
-		WakeIfDue(t.Context(), inboundqueuetest.QueueTenant, state.ID, inboundqueuetest.TestNow)
+	woken, err := svc.queue().
+		WakeIfDue(t.Context(), inboundqueuetest.QueueTenant, []pulid.ID{state.ID}, inboundqueuetest.TestNow)
 	require.NoError(t, err)
-	assert.True(t, result.Woken)
+	assert.Equal(t, 1, woken)
 	assert.Equal(t, []triage.ActivityKind{triage.ActivityStoppedWaiting}, fakes.Activities.Kinds())
 	assert.Equal(t, triage.ActorSystem, fakes.Activities.Recorded[0].ActorKind)
 }
 
-func TestReconcileOverdueWakes_WakesWhatALostTimerMissed(t *testing.T) {
+// The minute sweep is the only timer: it wakes a message the moment its time
+// has come, with no grace, and leaves one whose time has not.
+func TestWakeDue_WakesMessagesWhoseTimeHasCome(t *testing.T) {
 	t.Parallel()
 
-	state := waitingState(newID("imsg_"))
-	state.Parked = inboundmessage.ParkingSnoozed
-	state.SnoozedUntil = inboundqueuetest.TestNow - 7200
-	svc, fakes := withQueue(&testService{}, state)
-	fakes.Queue.Overdue = []inboundmessageports.ParkedRef{{
-		ID: state.ID, OrganizationID: inboundqueuetest.QueueTenant.OrgID, BusinessUnitID: inboundqueuetest.QueueTenant.BuID,
-	}}
+	due := waitingState(newID("imsg_"))
+	due.Parked = inboundmessage.ParkingSnoozed
+	due.SnoozedUntil = inboundqueuetest.TestNow
+	early := waitingState(newID("imsg_"))
+	early.Parked = inboundmessage.ParkingSnoozed
+	early.SnoozedUntil = inboundqueuetest.TestNow + 60
+	svc, fakes := withQueue(&testService{}, due, early)
+	fakes.Queue.Overdue = []inboundmessageports.ParkedRef{
+		{ID: due.ID, OrganizationID: inboundqueuetest.QueueTenant.OrgID, BusinessUnitID: inboundqueuetest.QueueTenant.BuID},
+		{ID: early.ID, OrganizationID: inboundqueuetest.QueueTenant.OrgID, BusinessUnitID: inboundqueuetest.QueueTenant.BuID},
+	}
 
-	woken, err := svc.queue().ReconcileOverdueWakes(t.Context(), inboundqueuetest.TestNow)
+	woken, err := svc.queue().WakeDue(t.Context(), inboundqueuetest.TestNow)
 	require.NoError(t, err)
 	assert.Equal(t, 1, woken)
-	assert.Empty(t, fakes.Queue.State(state.ID).Parked)
+	assert.Empty(t, fakes.Queue.State(due.ID).Parked)
+	assert.Equal(t, inboundmessage.ParkingSnoozed, fakes.Queue.State(early.ID).Parked)
+	assert.Equal(t, 1, fakes.DB.Txs, "one transition for the tenant's page")
 }
 
 func TestResolveSelection_IsBounded(t *testing.T) {
@@ -303,7 +307,6 @@ func TestReviewMany_SettlesRecordsAndCancelsTimers(t *testing.T) {
 	assert.Equal(t, 1, fakes.DB.Txs, "one transaction for the whole selection")
 	require.Len(t, fakes.Queue.Updates, 1)
 	assert.Len(t, fakes.Queue.Updates[0].IDs, 2, "one statement for the whole selection")
-	assert.Equal(t, []pulid.ID{snoozed.ID}, fakes.Wakes.Cancelled)
 	assert.Equal(t,
 		[]triage.ActivityKind{triage.ActivityHandled, triage.ActivityHandled},
 		fakes.Activities.Kinds(),
@@ -519,7 +522,6 @@ func TestWaitForReply_ParksUntilTheSenderAnswers(t *testing.T) {
 	parked := fakes.Queue.State(state.ID)
 	assert.Equal(t, inboundmessage.ParkingAwaitingReply, parked.Parked)
 	assert.Equal(t, inboundqueuetest.TestNow+86400, parked.AwaitingUntil)
-	assert.Equal(t, []pulid.ID{state.ID}, fakes.Wakes.Scheduled)
 
 	_, err = svc.queue().StopWaiting(t.Context(), &MessageActionRequest{
 		TenantInfo: inboundqueuetest.QueueTenant,
@@ -527,7 +529,6 @@ func TestWaitForReply_ParksUntilTheSenderAnswers(t *testing.T) {
 	})
 	require.NoError(t, err)
 	assert.Empty(t, fakes.Queue.State(state.ID).Parked)
-	assert.Equal(t, []pulid.ID{state.ID}, fakes.Wakes.Cancelled)
 
 	_, err = svc.queue().
 		Wake(t.Context(), &MessageActionRequest{TenantInfo: inboundqueuetest.QueueTenant, MessageID: state.ID})
@@ -669,7 +670,7 @@ func TestUpdateResponseTargets_ValidatesAndRecomputes(t *testing.T) {
 	)
 	assert.Equal(t, [][]inboundmessage.Classification{{
 		inboundmessage.ClassificationTender, inboundmessage.ClassificationInvoice,
-	}}, fakes.Wakes.Recompute)
+	}}, fakes.Dues.Recompute)
 	assert.Len(t, views, len(inboundmessage.AllClassifications()))
 
 	tooShort := 1

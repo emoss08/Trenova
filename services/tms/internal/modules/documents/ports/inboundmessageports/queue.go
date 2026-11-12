@@ -418,9 +418,10 @@ type InboundDocumentTypeFinder interface {
 	) (map[pulid.ID]string, error)
 }
 
-type TriageWakeScheduler interface {
-	ScheduleWake(ctx context.Context, tenantInfo pagination.TenantInfo, messageID pulid.ID) error
-	CancelWake(ctx context.Context, messageID pulid.ID) error
+// TriageDueRecomputer recomputes a tenant's due times after it changes its
+// response targets. Snoozed and waiting messages need no scheduling: the
+// minute sweep wakes them from their parked columns.
+type TriageDueRecomputer interface {
 	RecomputeDue(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,

@@ -254,17 +254,17 @@ func TestNovaGeneration_ReviewsAtOnceForSomeoneWaitingAndOffersWhatNovaAgreesWit
 	})).
 		Return(&billingqueueports.ReviewSubmission{Inline: []pulid.ID{agreed, questioned}}, nil).
 		Once()
-	env.OnActivity(a.AgentReviewActivity, mock.Anything, mock.MatchedBy(func(in *billingqueuecontract.RecheckPayload) bool {
+	env.OnActivity(a.AgentReviewActivity, mock.Anything, mock.MatchedBy(func(in *billingqueuecontract.ItemPayload) bool {
 		return in.ItemID == agreed
 	})).
 		Return(&billingqueueports.AgentReviewOutcome{Reviewed: true, Verdict: billingqueue.AgentVerdictAgrees}, nil).
 		Once()
-	env.OnActivity(a.AgentReviewActivity, mock.Anything, mock.MatchedBy(func(in *billingqueuecontract.RecheckPayload) bool {
+	env.OnActivity(a.AgentReviewActivity, mock.Anything, mock.MatchedBy(func(in *billingqueuecontract.ItemPayload) bool {
 		return in.ItemID == questioned
 	})).
 		Return(&billingqueueports.AgentReviewOutcome{Reviewed: true, Verdict: billingqueue.AgentVerdictConcern}, nil).
 		Once()
-	env.OnActivity(a.AutoApproveActivity, mock.Anything, mock.MatchedBy(func(in *billingqueuecontract.RecheckPayload) bool {
+	env.OnActivity(a.AutoApproveActivity, mock.Anything, mock.MatchedBy(func(in *billingqueuecontract.ItemPayload) bool {
 		return in.ItemID == agreed
 	})).
 		Return(&billingqueueports.AutoApproveOutcome{}, nil).

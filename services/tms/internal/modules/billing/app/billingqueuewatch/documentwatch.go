@@ -82,13 +82,14 @@ func (o *DocumentObserver) DocumentsChanged(
 		retired[gone.ID] = gone.ReplacedBy
 	}
 
+	itemIDs := make([]pulid.ID, 0, len(byShipment))
 	for _, items := range byShipment {
 		for _, item := range items {
 			if item == nil {
 				continue
 			}
 			o.retirePacketDocuments(ctx, change, item, retired)
-			o.rechecks.RequestRecheck(ctx, change.TenantInfo, item.ID)
+			itemIDs = append(itemIDs, item.ID)
 
 			if err = realtimeinvalidation.Publish(
 				ctx,
@@ -110,6 +111,12 @@ func (o *DocumentObserver) DocumentsChanged(
 				)
 			}
 		}
+	}
+
+	if err = o.rechecks.RequestRecheck(ctx, change.TenantInfo, itemIDs...); err != nil {
+		o.l.Warn("could not mark the billing items behind changed shipment documents for their checks",
+			zap.Error(err),
+		)
 	}
 }
 

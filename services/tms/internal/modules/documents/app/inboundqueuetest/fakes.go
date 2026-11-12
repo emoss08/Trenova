@@ -378,27 +378,11 @@ func (f *FakeTargetRepo) Save(_ context.Context, req inboundmessageports.SaveTar
 	return nil
 }
 
-type FakeWakes struct {
-	Scheduled []pulid.ID
-	Cancelled []pulid.ID
+type FakeDues struct {
 	Recompute [][]inboundmessage.Classification
 }
 
-func (f *FakeWakes) Enabled() bool { return true }
-
-func (f *FakeWakes) ScheduleWake(_ context.Context, _ pagination.TenantInfo, id pulid.ID) error {
-	f.Scheduled = append(f.Scheduled, id)
-
-	return nil
-}
-
-func (f *FakeWakes) CancelWake(_ context.Context, id pulid.ID) error {
-	f.Cancelled = append(f.Cancelled, id)
-
-	return nil
-}
-
-func (f *FakeWakes) RecomputeDue(
+func (f *FakeDues) RecomputeDue(
 	_ context.Context,
 	_ pagination.TenantInfo,
 	classifications []inboundmessage.Classification,
@@ -414,7 +398,7 @@ type QueueFakes struct {
 	Activities *FakeActivityRepo
 	Mailboxes  *FakeMailboxState
 	Targets    *FakeTargetRepo
-	Wakes      *FakeWakes
+	Dues       *FakeDues
 }
 
 // plainSecrets stands in for the key manager. The secret this decrypts is
@@ -566,7 +550,7 @@ func NewQueueFakes(states ...*inboundmessageports.QueueState) *QueueFakes {
 		Activities: &FakeActivityRepo{},
 		Mailboxes:  &FakeMailboxState{},
 		Targets:    &FakeTargetRepo{},
-		Wakes:      &FakeWakes{},
+		Dues:       &FakeDues{},
 	}
 }
 

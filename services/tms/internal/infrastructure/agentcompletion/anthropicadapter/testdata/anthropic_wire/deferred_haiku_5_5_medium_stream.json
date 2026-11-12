@@ -63,6 +63,7 @@
     "system": [
       {
         "cache_control": {
+          "ttl": "1h",
           "type": "ephemeral"
         },
         "text": "Rules that never change.",
@@ -113,6 +114,7 @@
       },
       {
         "cache_control": {
+          "ttl": "1h",
           "type": "ephemeral"
         },
         "description": "Load more tools.",

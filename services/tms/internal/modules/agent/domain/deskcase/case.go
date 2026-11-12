@@ -79,6 +79,17 @@ func Subjects() []agent.SubjectType {
 	return subjects
 }
 
+// conversationSubjects are the kinds of record whose conversation the Desk
+// lists with its cases rather than with the day's conversations: every kind a
+// case can be about, and a worker, whose page in the Desk is its case though
+// no checklist case can be about one. The client's THREAD_SUBJECTS
+// (record-case/case-subject.ts) is the same list.
+var conversationSubjects = append(slices.Clone(subjects), agent.SubjectWorker)
+
+func ConversationSubjects() []agent.SubjectType {
+	return conversationSubjects
+}
+
 // IsSubject reports whether a conversation about this kind of record is a
 // case.
 func IsSubject(subject agent.SubjectType) bool {

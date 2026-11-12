@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/loopguard"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantstreamports"
@@ -22,6 +23,9 @@ type Reply struct {
 	// reply.
 	InReasoning bool                        `json:"inReasoning,omitempty"`
 	Usage       *agentruntimeports.RunUsage `json:"usage,omitempty"`
+	// Scope is the scope guard's verdict on the question, on the reply of the
+	// call it ran beside. Nil on every other reply.
+	Scope *agentguard.Decision `json:"scope,omitempty"`
 }
 
 func (r Reply) TotalUsage() *agentruntimeports.RunUsage {

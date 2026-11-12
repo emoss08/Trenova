@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/reflectionjobs/reflectioncontract"
+
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentreflection"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentreflectionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
@@ -49,7 +51,7 @@ func TestThreadReflectionWorkflow_WaitsForTheConversationToGoQuiet(t *testing.T)
 	var preparedAt time.Time
 
 	env.RegisterDelayedCallback(func() {
-		env.SignalWorkflow(TurnFinishedSignalName, TurnFinished{TurnID: pulid.ID("atrn_b")})
+		env.SignalWorkflow(reflectioncontract.TurnFinishedSignalName, reflectioncontract.TurnFinished{TurnID: pulid.ID("atrn_b")})
 	}, 6*time.Minute)
 
 	env.OnActivity(a.PrepareThreadReflectionActivity, mock.Anything, mock.Anything).
@@ -65,7 +67,7 @@ func TestThreadReflectionWorkflow_WaitsForTheConversationToGoQuiet(t *testing.T)
 		Return(&agentreflectionports.ReflectionOutcome{Kept: 1}, nil).Once()
 
 	started := env.Now()
-	env.ExecuteWorkflow(ThreadReflectionWorkflow, &ThreadReflectionInput{
+	env.ExecuteWorkflow(ThreadReflectionWorkflow, &reflectioncontract.ThreadReflectionInput{
 		TenantInfo: tenant(),
 		ThreadID:   pulid.ID("athr_a"),
 	})
@@ -91,7 +93,7 @@ func TestThreadReflectionWorkflow_ABusyConversationIsReadWithinTheLongestWait(t 
 
 	for minute := 5; minute < 120; minute += 5 {
 		env.RegisterDelayedCallback(func() {
-			env.SignalWorkflow(TurnFinishedSignalName, TurnFinished{})
+			env.SignalWorkflow(reflectioncontract.TurnFinishedSignalName, reflectioncontract.TurnFinished{})
 		}, time.Duration(minute)*time.Minute)
 	}
 
@@ -104,7 +106,7 @@ func TestThreadReflectionWorkflow_ABusyConversationIsReadWithinTheLongestWait(t 
 		})
 
 	started := env.Now()
-	env.ExecuteWorkflow(ThreadReflectionWorkflow, &ThreadReflectionInput{
+	env.ExecuteWorkflow(ThreadReflectionWorkflow, &reflectioncontract.ThreadReflectionInput{
 		TenantInfo: tenant(),
 		ThreadID:   pulid.ID("athr_a"),
 	})
@@ -130,7 +132,7 @@ func TestLookBack_AFailedModelCallIsRecordedAndNothingIsKept(t *testing.T) {
 		},
 	)).Return(nil).Once()
 
-	env.ExecuteWorkflow(RunReflectionWorkflow, &RunReflectionInput{
+	env.ExecuteWorkflow(RunReflectionWorkflow, &reflectioncontract.RunReflectionInput{
 		TenantInfo: tenant(),
 		RunID:      pulid.ID("arun_a"),
 	})
@@ -155,7 +157,7 @@ func TestLookBack_APlanWithNothingToAskSkipsTheModel(t *testing.T) {
 		Return(&agentreflectionports.ReflectionPlan{TenantInfo: tenant(), ReflectionID: pulid.ID("arfl_a")}, nil).
 		Once()
 
-	env.ExecuteWorkflow(RunReflectionWorkflow, &RunReflectionInput{
+	env.ExecuteWorkflow(RunReflectionWorkflow, &reflectioncontract.RunReflectionInput{
 		TenantInfo: tenant(),
 		RunID:      pulid.ID("arun_a"),
 	})

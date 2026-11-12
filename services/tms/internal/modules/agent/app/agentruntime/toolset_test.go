@@ -82,6 +82,12 @@ func wideRuntime(t *testing.T, extra ...*agenttest.StubQueryTool) (*Service, []s
 	return service, names
 }
 
+// opensWith is every tool a turn can call from its first model call: what it
+// declares in full, and what it opened for the question.
+func opensWith(set *toolaccess.ToolSet) []string {
+	return append(specNames(set.Specs), set.Opened...)
+}
+
 func specNames(specs []kernelports.ToolSpec) []string {
 	out := make([]string, 0, len(specs))
 	for _, spec := range specs {
@@ -114,8 +120,8 @@ func TestNewToolSet_SendsEverythingForASmallAgent(t *testing.T) {
 
 	assert.False(t, set.Disclosed)
 	assert.Len(t, set.Specs, 5, "the agent's four tools plus ask_user")
-	assert.NotContains(t, specNames(set.Specs), "find_tools")
-	assert.Contains(t, specNames(set.Specs), "ask_user",
+	assert.NotContains(t, opensWith(set), "find_tools")
+	assert.Contains(t, opensWith(set), "ask_user",
 		"asking for a missing value is not a capability an agent has to be granted")
 }
 
@@ -138,13 +144,13 @@ func TestNewToolSet_NarrowsAndOffersFindToolsForALargeAgent(t *testing.T) {
 	require.True(t, set.Disclosed)
 	assert.Len(
 		t,
-		set.Specs,
+		opensWith(set),
 		toolaccess.PreselectedTools+2,
 		"the preselected tools, find_tools and ask_user",
 	)
-	assert.Contains(t, specNames(set.Specs), "find_tools")
-	assert.Contains(t, specNames(set.Specs), "ask_user")
-	assert.Less(t, len(set.Specs), len(names),
+	assert.Contains(t, opensWith(set), "find_tools")
+	assert.Contains(t, opensWith(set), "ask_user")
+	assert.Less(t, len(opensWith(set)), len(names),
 		"the point is to send fewer schemas than the agent holds")
 }
 
@@ -159,7 +165,7 @@ func TestNewToolSet_PreselectsOnTheOperatorsWords(t *testing.T) {
 	service, names := wideRuntime(t)
 	definition := runtimetest.Definition(names...)
 
-	drivers := specNames(
+	drivers := opensWith(
 		service.access.NewToolSet(
 			t.Context(),
 			&toolaccess.ToolSetRequest{
@@ -168,11 +174,11 @@ func TestNewToolSet_PreselectsOnTheOperatorsWords(t *testing.T) {
 				Input:      "which drivers are on the roster",
 				Unattended: false,
 			},
-		).Specs,
+		),
 	)
 	assert.Contains(t, drivers, "worker_list")
 
-	trucks := specNames(
+	trucks := opensWith(
 		service.access.NewToolSet(
 			t.Context(),
 			&toolaccess.ToolSetRequest{
@@ -181,11 +187,11 @@ func TestNewToolSet_PreselectsOnTheOperatorsWords(t *testing.T) {
 				Input:      "which trucks are out of service",
 				Unattended: false,
 			},
-		).Specs,
+		),
 	)
 	assert.Contains(t, trucks, "equipment_list_tractors")
 
-	billing := specNames(
+	billing := opensWith(
 		service.access.NewToolSet(
 			t.Context(),
 			&toolaccess.ToolSetRequest{
@@ -194,7 +200,7 @@ func TestNewToolSet_PreselectsOnTheOperatorsWords(t *testing.T) {
 				Input:      "unpaid invoices for this customer",
 				Unattended: false,
 			},
-		).Specs,
+		),
 	)
 	assert.Contains(t, billing, "invoice_list")
 }
@@ -223,7 +229,7 @@ func TestNewToolSet_AFormulaAssistantAlwaysHoldsItsFormulaTools(t *testing.T) {
 	)
 
 	require.True(t, set.Disclosed)
-	offered := specNames(set.Specs)
+	offered := opensWith(set)
 	for _, name := range standing {
 		assert.Contains(t, offered, name)
 		assert.NotContains(t, set.Preselected, name,
@@ -249,7 +255,7 @@ func TestResolveFind_MakesTheMissingToolCallable(t *testing.T) {
 			Unattended: false,
 		},
 	)
-	require.NotContains(t, specNames(set.Specs), "equipment_list_trailers",
+	require.NotContains(t, opensWith(set), "equipment_list_trailers",
 		"the fixture depends on this one not being preselected")
 
 	answer := findContent(t, service, set, map[string]any{
@@ -285,7 +291,7 @@ func TestResolveFind_CannotReachPastTheAgentsConfiguration(t *testing.T) {
 	findContent(t, service, set, map[string]any{"need": "driver medical card expiry"})
 
 	assert.False(t, set.Offers("worker_list_credentials"))
-	for _, name := range specNames(set.Specs) {
+	for _, name := range opensWith(set) {
 		// The two the agent holds, plus the two the runtime answers itself.
 		// Neither built-in reads anything, so neither widens the agent.
 		assert.Contains(
@@ -431,7 +437,7 @@ func TestResolveFind_SaysAToolExistsButIsNotEnabled(t *testing.T) {
 	assert.Contains(t, answer, "worker_list_credentials")
 	assert.Contains(t, answer, "AI Control")
 	assert.Contains(t, answer, "Do not say the system has no such capability")
-	assert.NotContains(t, specNames(set.Specs), "worker_list_credentials",
+	assert.NotContains(t, opensWith(set), "worker_list_credentials",
 		"naming a tool must not load it")
 }
 
@@ -633,7 +639,7 @@ func TestNewToolSet_WithholdsAskUserFromAnUnattendedRun(t *testing.T) {
 			Unattended: true,
 		},
 	)
-	assert.NotContains(t, specNames(small.Specs), "ask_user")
+	assert.NotContains(t, opensWith(small), "ask_user")
 
 	large := service.access.NewToolSet(
 		t.Context(),
@@ -644,10 +650,10 @@ func TestNewToolSet_WithholdsAskUserFromAnUnattendedRun(t *testing.T) {
 			Unattended: true,
 		},
 	)
-	assert.NotContains(t, specNames(large.Specs), "ask_user")
+	assert.NotContains(t, opensWith(large), "ask_user")
 	assert.Contains(
 		t,
-		specNames(large.Specs),
+		opensWith(large),
 		"find_tools",
 		"finding tools needs no person",
 	)
@@ -714,7 +720,7 @@ func TestNewToolSet_OffersOnlyWhatThePersonMayUse(t *testing.T) {
 		},
 	)
 
-	offered := specNames(set.Specs)
+	offered := opensWith(set)
 	assert.NotContains(t, offered, "shipment_list")
 	assert.NotContains(t, offered, "shipment_get")
 	assert.NotContains(t, set.Allowed, "shipment_list")
@@ -747,7 +753,7 @@ func TestNewToolSet_OffersNothingWithoutAnActor(t *testing.T) {
 	assert.Equal(
 		t,
 		[]string{"ask_user"},
-		specNames(set.Specs),
+		opensWith(set),
 		"only the question tool, which reads nothing",
 	)
 }
@@ -796,7 +802,7 @@ func TestNewToolSet_CarriesTheCoreToolsForAnAgentThatSelectedNone(t *testing.T) 
 		},
 	)
 
-	sent := specNames(set.Specs)
+	sent := opensWith(set)
 	assert.Contains(t, sent, "agent_list_memories")
 	assert.Contains(t, sent, "agent_create_memory")
 	assert.Len(t, set.Specs, 4+2+1, "four selected, two core, ask_user")
@@ -834,10 +840,10 @@ func TestNewToolSet_CoreToolsDoNotCountTowardNarrowing(t *testing.T) {
 		},
 	)
 	require.True(t, large.Disclosed)
-	sent := specNames(large.Specs)
+	sent := opensWith(large)
 	assert.Contains(t, sent, "agent_list_memories")
 	assert.Contains(t, sent, "agent_create_memory")
-	assert.Len(t, large.Specs, toolaccess.PreselectedTools+2+2,
+	assert.Len(t, sent, toolaccess.PreselectedTools+2+2,
 		"the preselected tools, the two core tools, find_tools and ask_user")
 }
 
@@ -957,7 +963,7 @@ func TestResolveFind_ReachesTheToolsOfThePersonsOtherAgentsWhenItsOwnMatchWeakly
 		},
 	)
 	require.True(t, set.Disclosed)
-	require.NotContains(t, specNames(set.Specs), "search_commodities")
+	require.NotContains(t, opensWith(set), "search_commodities")
 
 	answer := findContent(t, service, set, map[string]any{"need": "commodity"})
 
@@ -981,7 +987,7 @@ func TestResolveFind_ReachesBeyondOnATurnThatHoldsFewTools(t *testing.T) {
 		},
 	)
 	require.False(t, set.Disclosed)
-	require.Contains(t, specNames(set.Specs), "find_tools")
+	require.Contains(t, opensWith(set), "find_tools")
 
 	answer := findContent(t, service, set, map[string]any{"need": "commodity"})
 
@@ -1077,7 +1083,7 @@ func TestResolveFind_AStrongNewMatchNeedsNoDelegate(t *testing.T) {
 			}},
 		},
 	)
-	require.NotContains(t, specNames(set.Specs), "search_commodities")
+	require.NotContains(t, opensWith(set), "search_commodities")
 
 	answer := findContent(t, service, set, map[string]any{"need": "commodity"})
 
@@ -1128,7 +1134,7 @@ func TestResolveFind_LoadsTheToolsANeedNamesOutright(t *testing.T) {
 			Unattended: false,
 		},
 	)
-	require.NotContains(t, specNames(set.Specs), "equipment_list_trailers",
+	require.NotContains(t, opensWith(set), "equipment_list_trailers",
 		"the fixture depends on this one not being preselected")
 
 	answer := findContent(t, service, set, map[string]any{

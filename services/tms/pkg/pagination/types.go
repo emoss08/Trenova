@@ -3,12 +3,21 @@ package pagination
 import (
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/shared/pulid"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
 
 type TenantInfo struct {
 	OrgID  pulid.ID `json:"orgId"  form:"-"`
 	BuID   pulid.ID `json:"buId"   form:"-"`
 	UserID pulid.ID `json:"userId" form:"-"`
+}
+
+func (t TenantInfo) Validate() error {
+	return validation.ValidateStruct(
+		&t,
+		validation.Field(&t.OrgID, validation.Required.Error("Organization ID is required")),
+		validation.Field(&t.BuID, validation.Required.Error("Business unit ID is required")),
+	)
 }
 
 func (t TenantInfo) DBTenant() dbscope.Tenant {

@@ -212,6 +212,9 @@ func (r *repository) Create(
 ) (*agent.AgentRun, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agent.AgentRun, error) {
 		if err := agentdb.AgentRuns.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			if keel.IsUnique(err, openSubjectConstraint) {
+				return nil, agentruntimeports.ErrAgentRunAlreadyOpen
+			}
 			r.l.Error("failed to create agent run", zap.Error(err))
 			return nil, runErrors.Map(err, entity.ID.String())
 		}
@@ -289,6 +292,7 @@ func (r *repository) CountOpen(
 			run.AgentDefinitionID.Eq(req.DefinitionID),
 			run.Status.NotIn(closedRunStatuses()...),
 			keel.When(req.SubjectID.IsNotNil(), run.SubjectID.Eq(req.SubjectID)),
+			keel.When(len(req.Triggers) > 0, run.Trigger.In(req.Triggers...)),
 		).Count(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to count open agent runs", zap.Error(err))

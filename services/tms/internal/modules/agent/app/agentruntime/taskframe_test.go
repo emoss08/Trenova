@@ -5,7 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/runtimetest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/toolaccess"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttaskframe"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -24,10 +24,10 @@ func TestOpenTurn_RanksTheOpeningToolsOnTheWrittenNeed(t *testing.T) {
 		"the bare follow-up names nothing a tool covers")
 
 	framed := *vague
-	framed.Context.Frame = agenttaskframe.ChatFrame(
-		"List the trailers whose inspection is due.",
-		"list trailers by inspection date",
-	)
+	framed.Context.Frame = &agentturn.TaskFrame{
+		Goal: "List the trailers whose inspection is due.",
+		Need: "list trailers by inspection date",
+	}
 	turn := service.OpenTurn(t.Context(), &framed)
 
 	assert.True(t, turn.tools.Offers("equipment_list_trailers"), "the need names what the work is")
@@ -37,5 +37,5 @@ func TestOpenTurn_RanksTheOpeningToolsOnTheWrittenNeed(t *testing.T) {
 		toolaccess.TurnQuery(&framed).Text,
 		"the semantic ranking reads the need too, with the message kept beside it",
 	)
-	assert.Contains(t, turn.system, "What the person wants: List the trailers")
+	assert.Contains(t, turn.system, "Goal: List the trailers")
 }

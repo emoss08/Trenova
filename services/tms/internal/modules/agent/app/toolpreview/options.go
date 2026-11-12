@@ -125,6 +125,7 @@ func addPaths(set map[string]struct{}, paths []string) map[string]struct{} {
 
 func topLevel(path string) string {
 	top, _, _ := strings.Cut(path, ".")
+	top, _, _ = strings.Cut(top, "[")
 
 	return top
 }

@@ -76,24 +76,12 @@ func (v *Validator) ValidateConnection(entity *edi.EDIConnection) error {
 			),
 		),
 		validation.Field(
-			&entity.SourcePartnerConfig.Code,
-			validation.Required.Error("Source partner code is required"),
-			validation.Length(1, 100),
+			&entity.SourcePartnerConfig,
+			partnerRule("Source partner code is required", "Source partner name is required"),
 		),
 		validation.Field(
-			&entity.SourcePartnerConfig.Name,
-			validation.Required.Error("Source partner name is required"),
-			validation.Length(1, 200),
-		),
-		validation.Field(
-			&entity.TargetPartnerConfig.Code,
-			validation.Required.Error("Target partner code is required"),
-			validation.Length(1, 100),
-		),
-		validation.Field(
-			&entity.TargetPartnerConfig.Name,
-			validation.Required.Error("Target partner name is required"),
-			validation.Length(1, 200),
+			&entity.TargetPartnerConfig,
+			partnerRule("Target partner code is required", "Target partner name is required"),
 		),
 	))
 	if entity.SourceOrganizationID == entity.TargetOrganizationID {
@@ -105,6 +93,29 @@ func (v *Validator) ValidateConnection(entity *edi.EDIConnection) error {
 	}
 
 	return multiErr.Err()
+}
+
+func partnerRule(codeRequired, nameRequired string) validation.Rule {
+	return validation.By(func(value any) error {
+		config, ok := value.(edi.ConnectionPartnerConfig)
+		if !ok {
+			return fmt.Errorf("partner config rule given %T", value)
+		}
+
+		return validation.ValidateStruct(
+			&config,
+			validation.Field(
+				&config.Code,
+				validation.Required.Error(codeRequired),
+				validation.Length(1, 100),
+			),
+			validation.Field(
+				&config.Name,
+				validation.Required.Error(nameRequired),
+				validation.Length(1, 200),
+			),
+		)
+	})
 }
 
 func (v *Validator) ValidateCommunicationProfile(

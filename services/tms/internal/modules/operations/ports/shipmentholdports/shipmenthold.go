@@ -30,14 +30,7 @@ func (r *GetShipmentHoldByIDRequest) Validate() error {
 		r,
 		validation.Field(&r.HoldID, validation.Required.Error("Hold ID is required")),
 		validation.Field(&r.ShipmentID, validation.Required.Error("Shipment ID is required")),
-		validation.Field(
-			&r.TenantInfo.OrgID,
-			validation.Required.Error("Organization ID is required"),
-		),
-		validation.Field(
-			&r.TenantInfo.BuID,
-			validation.Required.Error("Business unit ID is required"),
-		),
+		validation.Field(&r.TenantInfo),
 	))
 
 	return multiErr.Err()
@@ -63,14 +56,7 @@ func (r *CreateShipmentHoldRequest) Validate() error {
 		r,
 		validation.Field(&r.ShipmentID, validation.Required.Error("Shipment ID is required")),
 		validation.Field(&r.HoldReasonID, validation.Required.Error("Hold reason ID is required")),
-		validation.Field(
-			&r.TenantInfo.OrgID,
-			validation.Required.Error("Organization ID is required"),
-		),
-		validation.Field(
-			&r.TenantInfo.BuID,
-			validation.Required.Error("Business unit ID is required"),
-		),
+		validation.Field(&r.TenantInfo),
 		validation.Field(&r.StartedAt, validation.By(func(value any) error {
 			startedAt, _ := value.(*int64)
 			if startedAt != nil && *startedAt <= 0 {
@@ -104,14 +90,7 @@ func (r *UpdateShipmentHoldRequest) Validate() error {
 		r,
 		validation.Field(&r.HoldID, validation.Required.Error("Hold ID is required")),
 		validation.Field(&r.ShipmentID, validation.Required.Error("Shipment ID is required")),
-		validation.Field(
-			&r.TenantInfo.OrgID,
-			validation.Required.Error("Organization ID is required"),
-		),
-		validation.Field(
-			&r.TenantInfo.BuID,
-			validation.Required.Error("Business unit ID is required"),
-		),
+		validation.Field(&r.TenantInfo),
 		validation.Field(
 			&r.StartedAt,
 			validation.Min(int64(1)).Error("Started At must be greater than zero"),
@@ -143,14 +122,7 @@ func (r *ReleaseShipmentHoldRequest) Validate() error {
 		r,
 		validation.Field(&r.HoldID, validation.Required.Error("Hold ID is required")),
 		validation.Field(&r.ShipmentID, validation.Required.Error("Shipment ID is required")),
-		validation.Field(
-			&r.TenantInfo.OrgID,
-			validation.Required.Error("Organization ID is required"),
-		),
-		validation.Field(
-			&r.TenantInfo.BuID,
-			validation.Required.Error("Business unit ID is required"),
-		),
+		validation.Field(&r.TenantInfo),
 	))
 
 	return multiErr.Err()
@@ -167,14 +139,7 @@ func (r *ActiveShipmentHoldRequest) Validate() error {
 	multiErr.AddOzzoError(validation.ValidateStruct(
 		r,
 		validation.Field(&r.ShipmentID, validation.Required.Error("Shipment ID is required")),
-		validation.Field(
-			&r.TenantInfo.OrgID,
-			validation.Required.Error("Organization ID is required"),
-		),
-		validation.Field(
-			&r.TenantInfo.BuID,
-			validation.Required.Error("Business unit ID is required"),
-		),
+		validation.Field(&r.TenantInfo),
 	))
 
 	return multiErr.Err()

@@ -3,6 +3,8 @@ package reflectionjobs
 import (
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/reflectionjobs/reflectioncontract"
+
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/registry"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/modelcall"
@@ -62,12 +64,12 @@ var failOptions = workflow.ActivityOptions{
 func Workflows() []registry.WorkflowDefinition {
 	return []registry.WorkflowDefinition{
 		{
-			Name:        ThreadReflectionWorkflowName,
+			Name:        reflectioncontract.ThreadReflectionWorkflowName,
 			Fn:          ThreadReflectionWorkflow,
 			Description: "Look back over a conversation once it goes quiet and keep what the agent learned",
 		},
 		{
-			Name:        RunReflectionWorkflowName,
+			Name:        reflectioncontract.RunReflectionWorkflowName,
 			Fn:          RunReflectionWorkflow,
 			Description: "Look back over a settled background run and keep what the agent learned",
 		},
@@ -76,9 +78,9 @@ func Workflows() []registry.WorkflowDefinition {
 
 func ThreadReflectionWorkflow(
 	ctx workflow.Context,
-	input *ThreadReflectionInput,
+	input *reflectioncontract.ThreadReflectionInput,
 ) (*ReflectionResult, error) {
-	signals := workflow.GetSignalChannel(ctx, TurnFinishedSignalName)
+	signals := workflow.GetSignalChannel(ctx, reflectioncontract.TurnFinishedSignalName)
 	result := &ReflectionResult{}
 
 	for {
@@ -88,7 +90,7 @@ func ThreadReflectionWorkflow(
 		var plan agentreflectionports.ReflectionPlan
 		err := workflow.ExecuteActivity(
 			withPriority(ctx, prepareOptions, input.TenantInfo),
-			a.PrepareThreadReflectionActivity, input.request(),
+			a.PrepareThreadReflectionActivity, input.Request(),
 		).Get(ctx, &plan)
 		if err != nil {
 			workflow.GetLogger(ctx).Error("could not prepare a look back over a conversation",
@@ -116,7 +118,7 @@ func ThreadReflectionWorkflow(
 
 func RunReflectionWorkflow(
 	ctx workflow.Context,
-	input *RunReflectionInput,
+	input *reflectioncontract.RunReflectionInput,
 ) (*ReflectionResult, error) {
 	result := &ReflectionResult{Rounds: 1}
 
@@ -204,7 +206,7 @@ func waitForQuiet(ctx workflow.Context, signals workflow.ReceiveChannel) {
 		heard := false
 		selector := workflow.NewSelector(ctx)
 		selector.AddReceive(signals, func(channel workflow.ReceiveChannel, _ bool) {
-			var signal TurnFinished
+			var signal reflectioncontract.TurnFinished
 			channel.Receive(ctx, &signal)
 			heard = true
 		})
@@ -222,7 +224,7 @@ func waitForQuiet(ctx workflow.Context, signals workflow.ReceiveChannel) {
 func drain(signals workflow.ReceiveChannel) bool {
 	heard := false
 	for {
-		var signal TurnFinished
+		var signal reflectioncontract.TurnFinished
 		if !signals.ReceiveAsync(&signal) {
 			return heard
 		}

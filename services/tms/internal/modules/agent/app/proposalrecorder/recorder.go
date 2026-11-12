@@ -607,6 +607,7 @@ func (s *Service) proposalFor(
 		Status:          agent.ProposalStatusPending,
 		SourceMessageID: sourceMessageID,
 		ScriptStepKey:   action.ScriptStepKey,
+		ExpiresAt:       decisionDeadline(group, now),
 	}
 	if req.Evidence != nil {
 		proposal.Evidence = req.Evidence(*action, sourceMessageID)
@@ -621,6 +622,24 @@ func (s *Service) proposalFor(
 	applyExecutor(proposal, action, req.Actor)
 
 	return proposal
+}
+
+// decisionDeadline is when a proposal stops being decidable. A run carried by
+// a workflow gives what it files its agent's decision window, bounded by the
+// proposal TTL; the expiry sweep then closes the run. Anything else, a chat
+// turn or an inline run, keeps the TTL.
+func decisionDeadline(group *runGroup, now int64) int64 {
+	ttl := int64(agent.DefaultProposalTTL.Seconds())
+	if group == nil || group.run == nil || group.run.WorkflowID == "" || group.definition == nil {
+		return now + ttl
+	}
+
+	window := int64(group.definition.DecisionTimeoutSeconds)
+	if window <= 0 {
+		window = agentdefinition.DefaultDecisionTimeoutSeconds
+	}
+
+	return now + min(window, ttl)
 }
 
 type planStep struct {
@@ -691,7 +710,7 @@ func (s *Service) openPlan(
 		Summary:        planSummary(owner.run, rationale),
 		Status:         agentplan.PlanStatusPending,
 		StepCount:      len(steps),
-		ExpiresAt:      now + int64(agent.DefaultProposalTTL.Seconds()),
+		ExpiresAt:      decisionDeadline(owner, now),
 		ScriptStepKey:  scriptStepKey,
 		Script:         opening.script,
 	}

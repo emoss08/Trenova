@@ -44,6 +44,7 @@ type Runner struct {
 	watcher    *benchwatch.TurnWatcher
 	runs       agentruntimeports.AgentRunService
 	runRecords agentruntimeports.AgentRunRepository
+	runCloser  agentruntimeports.RunCloser
 	proposals  agentproposalports.AgentProposalRepository
 	previews   agentruntimeports.ProposalPreviewService
 	decisions  agentdecisionports.AgentDecisionService
@@ -72,6 +73,7 @@ func New(bench *deskbench.Bench) *Runner {
 		watcher:    bench.Watcher(),
 		runs:       bench.Runs,
 		runRecords: bench.RunRecords,
+		runCloser:  bench.RunCloser,
 		proposals:  bench.Proposals,
 		previews:   bench.Previews,
 		decisions:  bench.Decisions,

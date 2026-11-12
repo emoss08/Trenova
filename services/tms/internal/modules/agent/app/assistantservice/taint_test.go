@@ -60,7 +60,7 @@ func TestAdmit_ATurnOpensWithItsConversationsTaint(t *testing.T) {
 	)
 	inherited := inboundTaint()
 
-	decision, req := svc.admit(t.Context(), &TurnRequest{
+	decision, req, _ := svc.admit(t.Context(), &TurnRequest{
 		Definition: assistanttest.Definition(),
 		Actor:      assistanttest.Actor(),
 		Input:      "Who is on load 12345?",

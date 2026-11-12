@@ -80,10 +80,9 @@ func TestAnthropicTraits(t *testing.T) {
 		{
 			"claude-opus-5",
 			anthropicModel{
-				adaptive:              true,
-				thinksUnasked:         true,
-				disableNeedsLowEffort: true,
-				notices:               true,
+				adaptive:      true,
+				thinksUnasked: true,
+				notices:       true,
 			},
 		},
 		{"claude-opus-4-8", anthropicModel{adaptive: true, notices: true}},
@@ -107,10 +106,9 @@ func TestAnthropicTraits(t *testing.T) {
 		{
 			"claude-haiku-5-5",
 			anthropicModel{
-				adaptive:              true,
-				thinksUnasked:         true,
-				disableNeedsLowEffort: true,
-				notices:               true,
+				adaptive:      true,
+				thinksUnasked: true,
+				notices:       true,
 			},
 		},
 		{"claude-haiku-4-5", anthropicModel{}},

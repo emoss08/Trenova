@@ -15,6 +15,7 @@ import {
   PREVIEW_WARNING_CODES,
   previewWarningText,
   previewWarningTone,
+  reasonSentence,
   visibleWarnings,
 } from "../proposal-preview/preview-warnings";
 
@@ -206,11 +207,54 @@ describe("preview warnings", () => {
   it("drops the dependency warning inside a plan, where the step says it", () => {
     const warnings = [
       { code: "depends_on_step", args: ["1"], message: "", reasons: [], remedies: [] },
-      { code: "withheld", args: [], message: "", reasons: [], remedies: [] },
+      { code: "driver_unreachable", args: [], message: "", reasons: [], remedies: [] },
     ];
 
-    expect(visibleWarnings(warnings, { inPlan: true }).map((w) => w.code)).toEqual(["withheld"]);
+    expect(visibleWarnings(warnings, { inPlan: true }).map((w) => w.code)).toEqual([
+      "driver_unreachable",
+    ]);
     expect(visibleWarnings(warnings, { inPlan: false })).toHaveLength(2);
+  });
+
+  it("shows only what a person deciding can weigh or act on", () => {
+    const codes = [
+      "would_fail",
+      "unpinned",
+      "withheld",
+      "preview_failed",
+      "already_told_customer",
+      "a_code_this_client_does_not_know",
+    ];
+    const warnings = codes.map((code) => ({
+      code,
+      args: [],
+      message: "said by the server",
+      reasons: [],
+      remedies: [],
+    }));
+
+    expect(visibleWarnings(warnings, { inPlan: false }).map((w) => w.code)).toEqual([
+      "would_fail",
+      "already_told_customer",
+      "a_code_this_client_does_not_know",
+    ]);
+  });
+
+  it("says a refusal in the reader's words, and never shows a record's id", () => {
+    const t = ((text: string, ...args: unknown[]) =>
+      text.replace(/\{(\d+)\}/gu, (_, index) => String(args[Number(index)]))) as never;
+    const reason = (message: string, label = "") => ({ field: "", label, message, param: "" });
+
+    expect(reasonSentence(reason('missing required parameter "credentialIds"'), t)).toBe(
+      "It was proposed without the credentials it needs.",
+    );
+    expect(reasonSentence(reason('missing required parameter "workerId"'), t)).toBe(
+      "It was proposed without the worker it needs.",
+    );
+    expect(reasonSentence(reason("worker wrk_01M717A1BKQMWBEEED2ZRPQNTF is not active."), t)).toBe(
+      "worker is not active.",
+    );
+    expect(reasonSentence(reason("is already in use", "BOL"), t)).toBe("is already in use");
   });
 });
 

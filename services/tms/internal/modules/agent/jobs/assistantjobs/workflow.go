@@ -22,7 +22,7 @@ import (
 
 const (
 	// prepareTimeout bounds reading what a question needs: the thread, its
-	// history, its files, and the scope guard's verdict.
+	// history and its files.
 	prepareTimeout = 2 * time.Minute
 
 	// finishTimeout bounds saving a turn.
@@ -217,8 +217,26 @@ func (w *Workflows) answer(
 		Kind: agentruntimeports.RunStepOwnerAssistantTurn,
 		ID:   payload.TurnID,
 	}
+	run.ScopeCheck = plan.ScopeCheck
 
 	outcome, err := agentflow.Run(ctx, w.runtime, stream.Events(), run, plan.Turn)
+	plan.Decide(outcome.Scope)
+	if plan.Refused() {
+		refusal := plan.Opening()
+		refusedAt := workflow.Now(ctx).Unix()
+		stream.Publish(ctx, temporaltype.StreamItem{
+			Event: refusal.Event,
+			Data:  refusal.Data,
+			At:    refusedAt,
+		})
+		finish.Events = append(finish.Events, temporaltype.StreamItem{
+			Event: refusal.Event,
+			Data:  refusal.Data,
+			At:    refusedAt,
+		})
+
+		return finish
+	}
 	finish.Run = outcome.Result
 	finish.Artifacts = outcome.Artifacts
 	finish.Events = append(finish.Events, outcome.Events...)

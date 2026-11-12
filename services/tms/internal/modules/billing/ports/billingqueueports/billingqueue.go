@@ -281,8 +281,12 @@ type BillingQueueRepository interface {
 		ctx context.Context,
 		entity *billingqueue.BillingQueueItem,
 	) (*billingqueue.BillingQueueItem, error)
-	ListRecheckCandidates(
+	MarkRecheckDue(ctx context.Context, req *MarkRecheckDueRequest) error
+	ListRecheckDue(ctx context.Context, req *ListRecheckDueRequest) ([]*RecheckDueItem, error)
+	SettleRecheck(ctx context.Context, req *SettleRecheckRequest) error
+	MarkStaleRecheckDue(ctx context.Context, req *MarkStaleRecheckDueRequest) (int64, error)
+	ListRecheckDueTenants(
 		ctx context.Context,
-		req *ListRecheckCandidatesRequest,
-	) ([]*RecheckCandidate, error)
+		req *ListRecheckDueTenantsRequest,
+	) ([]pagination.TenantInfo, error)
 }

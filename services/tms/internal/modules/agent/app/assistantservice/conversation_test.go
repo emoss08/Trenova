@@ -106,7 +106,7 @@ func TestSendMessageStream_RejectsAPageContextItCouldNotTrust(t *testing.T) {
 	require.ErrorAs(t, err, &multiErr)
 	fields := make(map[string]bool, len(multiErr.Errors))
 	for _, fieldErr := range multiErr.Errors {
-		fields[fieldErr.Field] = true
+		fields[fieldErr.Field()] = true
 	}
 	assert.True(t, fields["context.path"])
 	assert.True(t, fields["context.entityType"])

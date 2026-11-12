@@ -135,6 +135,51 @@ export function wouldFailReasons(warning: PreviewWarning): WouldFailReason[] {
     .map((message) => ({ field: "", label: "", message, param: "" }));
 }
 
+const MISSING_PARAMETER = /^missing required parameter\s+["'`]?([A-Za-z0-9_.[\]]+)["'`]?\.?$/iu;
+const RECORD_ID = /\b[a-z]{2,10}_[0-9A-HJKMNP-TV-Z]{26}\b/gu;
+
+/** A parameter's name as a person would say it: `credentialIds` is "credentials". */
+function paramWords(param: string): string {
+  const last = (param.split(".").at(-1) ?? param).replace(/\[\d+\]$/u, "");
+  const many = /(?:Ids|IDs|_ids)$/u.test(last);
+  const named = last.replace(/(?:Ids|IDs|Id|ID|_ids|_id)$/u, "");
+  const words = named
+    .replace(/_/gu, " ")
+    .replace(/([a-z0-9])([A-Z])/gu, "$1 $2")
+    .trim()
+    .toLowerCase();
+  if (words === "") {
+    return "";
+  }
+
+  return many && !words.endsWith("s") ? `${words}s` : words;
+}
+
+/**
+ * What is wrong, as the person deciding reads it; the field it is about is
+ * drawn beside it. A tool's own refusal is written
+ * for the agent that called it ("missing required parameter \"credentialIds\"")
+ * and may quote a record's id; here it says what is missing in plain words,
+ * and no id is ever shown.
+ */
+export function reasonSentence(entry: WouldFailReason, t: TranslateFn): string {
+  const missing = MISSING_PARAMETER.exec(entry.message);
+  if (missing) {
+    const words = entry.label !== "" ? entry.label : paramWords(missing[1] ?? "");
+
+    return words !== ""
+      ? t("It was proposed without the {0} it needs.", words)
+      : t("It was proposed without something it needs.");
+  }
+  const message = entry.message
+    .replace(RECORD_ID, "")
+    .replace(/\s{2,}/gu, " ")
+    .replace(/\s+([.,;:])/gu, "$1")
+    .trim();
+
+  return message;
+}
+
 /** A reason in one line: "BOL: already in use", or the message alone. */
 export function reasonText(entry: WouldFailReason): string {
   return entry.label !== "" ? `${entry.label}: ${entry.message}` : entry.message;
@@ -258,14 +303,33 @@ export function previewWarningText(warning: PreviewWarning, t: TranslateFn): str
 }
 
 /**
- * The warnings a surface shows. A plan draws "uses the record step 2 changes"
- * beside the step itself, so it drops the warning that says the same.
+ * The warnings a surface shows: the ones a person deciding can weigh or act
+ * on, each said once. A plan draws "uses the record step 2 changes" beside
+ * the step itself, so it drops the warning that says the same.
  */
 export function visibleWarnings(
   warnings: readonly PreviewWarning[],
   { inPlan }: { inPlan: boolean },
 ): PreviewWarning[] {
-  return inPlan ? warnings.filter((warning) => warning.code !== "depends_on_step") : [...warnings];
+  return warnings.filter((warning) => {
+    switch (warning.code) {
+      case "depends_on_step":
+        return !inPlan;
+      // Nothing a person deciding can do with either: how the record was
+      // pinned is the server's bookkeeping, and what their access hides is
+      // counted under the change itself.
+      case "unpinned":
+      case "withheld":
+        return false;
+      // A preview that could not be worked out shows the values the change
+      // would run with under a caption that says so; a note saying it again
+      // is one fact twice.
+      case "preview_failed":
+        return false;
+      default:
+        return true;
+    }
+  });
 }
 
 /**

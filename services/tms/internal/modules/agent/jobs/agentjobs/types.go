@@ -27,11 +27,10 @@ const (
 )
 
 type PrepareRunResult struct {
-	Definition             *agentdefinition.Definition `json:"definition"`
-	Subject                *agentturn.RuntimeSubject   `json:"subject,omitempty"`
-	ShadowMode             bool                        `json:"shadowMode"`
-	DecisionTimeoutSeconds int                         `json:"decisionTimeoutSeconds"`
-	RunTimeoutSeconds      int                         `json:"runTimeoutSeconds"`
+	Definition        *agentdefinition.Definition `json:"definition"`
+	Subject           *agentturn.RuntimeSubject   `json:"subject,omitempty"`
+	ShadowMode        bool                        `json:"shadowMode"`
+	RunTimeoutSeconds int                         `json:"runTimeoutSeconds"`
 }
 
 // OpenRunInput is a prepared run, to be opened as a turn.
@@ -62,11 +61,6 @@ type FinishRunInput struct {
 type FinishRunResult struct {
 	ProposalsRaised  int `json:"proposalsRaised"`
 	PendingProposals int `json:"pendingProposals"`
-}
-
-type PendingProposalsInput struct {
-	RunID      pulid.ID              `json:"runId"`
-	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
 }
 
 type CompleteRunInput struct {

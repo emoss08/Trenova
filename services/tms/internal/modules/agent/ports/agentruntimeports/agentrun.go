@@ -30,6 +30,8 @@ type CountOpenAgentRunsRequest struct {
 	TenantInfo   pagination.TenantInfo
 	DefinitionID pulid.ID
 	SubjectID    pulid.ID
+	// Triggers limits the count to runs started these ways; empty counts all.
+	Triggers []agent.RunTrigger
 }
 
 // CountAgentRunsSinceRequest counts an agent's runs started at or after an
@@ -70,7 +72,34 @@ type AgentRunRepository interface {
 	// working long after any run finishes: their workflow is gone, and left
 	// as they are they would say an agent is working for ever.
 	FailAbandoned(ctx context.Context, req FailAbandonedRunsRequest) (int, error)
+	// CloseDecided completes a workflow-carried run that waits on decisions
+	// once none of its proposals is pending. It returns nil when the run was
+	// not closed: it is not waiting, or something is still pending.
+	CloseDecided(ctx context.Context, req *CloseDecidedRunRequest) (*agent.AgentRun, error)
+	// CloseSettled completes, in every organization, the waiting runs whose
+	// proposals all expired.
+	CloseSettled(ctx context.Context, req *CloseSettledRunsRequest) ([]*agent.AgentRun, error)
+	// FailWaiting fails a run that waits on decisions; nil when it was not.
+	FailWaiting(ctx context.Context, req *FailWaitingRunRequest) (*agent.AgentRun, error)
 	CountSince(ctx context.Context, req CountAgentRunsSinceRequest) (int, error)
+}
+
+type CloseDecidedRunRequest struct {
+	TenantInfo pagination.TenantInfo
+	RunID      pulid.ID
+	Now        int64
+}
+
+type FailWaitingRunRequest struct {
+	TenantInfo pagination.TenantInfo
+	RunID      pulid.ID
+	Reason     string
+	Now        int64
+}
+
+type CloseSettledRunsRequest struct {
+	Now   int64
+	Limit int
 }
 
 // FailAbandonedRunsRequest names the runs to end: those still working that

@@ -130,7 +130,7 @@ func TestNewToolSet_CarriesWhatTheLastTurnsUsedAndFound(t *testing.T) {
 	})
 
 	require.True(t, set.Disclosed)
-	sent := specNames(set.Specs)
+	sent := opensWith(set)
 	assert.Contains(t, sent, "worker_list_credentials", "what find_tools found last turn")
 	assert.Contains(t, sent, "report_run", "what the model called last turn")
 }
@@ -152,7 +152,7 @@ func TestNewToolSet_RanksAFollowUpWithTheMessageItAnswers(t *testing.T) {
 		History:    history,
 	})
 
-	assert.Contains(t, specNames(set.Specs), "equipment_list_tractors")
+	assert.Contains(t, opensWith(set), "equipment_list_tractors")
 }
 
 // A run nobody is watching has nobody to ask. The spec is withheld, but a model
@@ -386,11 +386,12 @@ func TestRun_ADisclosedTurnNeverChangesItsToolArray(t *testing.T) {
 	const input = "which drivers have a medical card expiring soon"
 	probe, names := wideRuntime(t)
 	definition := runtimetest.Definition(names...)
-	opening := specNames(probe.access.NewToolSet(t.Context(), &toolaccess.ToolSetRequest{
+	opened := probe.access.NewToolSet(t.Context(), &toolaccess.ToolSetRequest{
 		Definition: definition,
 		Actor:      runtimetest.Actor(),
 		Input:      input,
-	}).Specs)
+	})
+	opening := opensWith(opened)
 	unsent := slices.DeleteFunc(slices.Clone(names), func(name string) bool {
 		return slices.Contains(opening, name)
 	})
@@ -429,4 +430,50 @@ func TestRun_ADisclosedTurnNeverChangesItsToolArray(t *testing.T) {
 	assert.GreaterOrEqual(t, len(loadedIn(completion.Requests[3])),
 		len(loadedIn(completion.Requests[2])),
 		"unheldRefusal loads the nearest held tools for a name that does not exist")
+}
+
+/*
+A provider reuses the start of a prompt only while it is the same bytes, and
+the tools are the very start. The tools ranked for a question used to be
+declared in full there, so every new question changed the tools and nothing a
+turn before had cached was read: tens of thousands of tokens written again on
+the first call of every turn. What a turn declares is now the same whatever is
+asked, and the question's tools ride on the person's message.
+*/
+func TestOpenTurn_DeclaresTheSameToolsWhateverIsAsked(t *testing.T) {
+	t.Parallel()
+
+	service, names := wideRuntime(t)
+	open := func(input string) *Turn {
+		return service.OpenTurn(t.Context(), &agentruntimeports.RunRequest{
+			Definition: runtimetest.Definition(names...),
+			Actor:      runtimetest.Actor(),
+			Input:      input,
+		})
+	}
+
+	trailers := open("which trailers are due for inspection")
+	drivers := open("which drivers have a medical card expiring soon")
+	first, second := trailers.completionRequest(), drivers.completionRequest()
+
+	assert.Equal(t, first.Tools, second.Tools, "the tools sent in full do not follow the question")
+	assert.Equal(t, first.DeferredTools, second.DeferredTools)
+	assert.Equal(t, first.System[:first.SystemStable], second.System[:second.SystemStable])
+
+	require.NotEmpty(t, trailers.tools.Opened, "the question still opens with the tools it needs")
+	assert.NotEqual(t, trailers.tools.Opened, drivers.tools.Opened)
+	assert.True(t, slices.IsSorted(trailers.tools.Opened))
+	assert.Contains(t, trailers.tools.Opened, "equipment_list_trailers")
+	assert.True(t, trailers.tools.Offers("equipment_list_trailers"),
+		"an opened tool is callable from the first call")
+	for _, name := range trailers.tools.Opened {
+		assert.Contains(t, first.DeferredTools, name, "an opened tool stays declared deferred")
+		assert.NotContains(t, requestTools(first), name)
+	}
+
+	asked := first.Messages[len(first.Messages)-1]
+	assert.Equal(t, llmports.RoleUser, asked.Role)
+	assert.Equal(t, trailers.tools.Opened, asked.ToolReferences,
+		"the person's message carries what the question opened")
+	assert.Empty(t, trailers.tools.TakeLoaded(), "nothing is left to name on a tool result")
 }

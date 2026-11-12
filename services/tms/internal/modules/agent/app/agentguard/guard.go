@@ -211,11 +211,7 @@ func (s *Service) evaluate(ctx context.Context, req *EvaluateRequest) Decision {
 
 	category := Category(result.Category)
 	if category.InScope() {
-		decision := allowed(StageClassifier, category)
-		decision.Goal = result.Goal
-		decision.Need = result.Need
-
-		return decision
+		return allowed(StageClassifier, category)
 	}
 
 	s.logger.Info("request refused by scope classifier",

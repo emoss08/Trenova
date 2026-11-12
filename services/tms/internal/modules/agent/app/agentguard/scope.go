@@ -25,6 +25,10 @@ const (
 	StageOutput        = Stage("Output")
 	StageUnavailable   = Stage("Unavailable")
 	StageTrenova       = Stage("Trenova")
+	// StagePending is a question the rules passed whose classifier verdict is
+	// still to come: the turn has begun, and the verdict replaces this stage
+	// before anything the turn wrote is shown or run.
+	StagePending = Stage("Pending")
 )
 
 // Reason names why a request was refused.
@@ -91,13 +95,16 @@ type Decision struct {
 	MatchedRule string `json:"matchedRule,omitempty"`
 	// Altered says the output guard let the reply through with something taken
 	// out of it, which Reason and MatchedRule name.
-	Altered bool   `json:"altered,omitempty"`
-	Goal    string `json:"goal,omitempty"`
-	Need    string `json:"need,omitempty"`
+	Altered bool `json:"altered,omitempty"`
 }
 
 func allowed(stage Stage, category Category) Decision {
 	return Decision{Allowed: true, Stage: stage, Category: category}
+}
+
+// Pending is a question the rules passed, on its way to the classifier.
+func Pending() Decision {
+	return allowed(StagePending, CategoryOther)
 }
 
 func refused(stage Stage, reason Reason, category Category, rule string) Decision {

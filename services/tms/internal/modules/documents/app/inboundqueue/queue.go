@@ -13,7 +13,6 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/sliceutils"
-	"go.uber.org/zap"
 )
 
 type Selection struct {
@@ -103,7 +102,7 @@ func (s *Service) RunTransition(ctx context.Context, t *Transition) (*Transition
 		return nil, err
 	}
 
-	s.afterQueueChange(ctx, t.Tenant, result)
+	s.afterQueueChange(ctx, result)
 
 	return result, nil
 }
@@ -123,11 +122,10 @@ func transitionActivities(t *Transition, result *TransitionResult) []*triage.Act
 	return activities
 }
 
-func (s *Service) afterQueueChange(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	result *TransitionResult,
-) {
+// afterQueueChange tells the inbox what moved. A message parked with a timer
+// needs nothing more: the minute sweep wakes it once its time comes
+// (WakeDueTriage), reading the parked columns themselves.
+func (s *Service) afterQueueChange(ctx context.Context, result *TransitionResult) {
 	if len(result.Changed) == 0 {
 		return
 	}
@@ -137,35 +135,6 @@ func (s *Service) afterQueueChange(
 		messages = append(messages, inboundmessageports.MessageFromState(after))
 	}
 	s.notify.MessagesChanged(ctx, messages...)
-
-	kernelports.AfterCommit(ctx, func(committed context.Context) {
-		for _, after := range result.Changed {
-			s.syncWake(committed, tenantInfo, result.Before[after.ID], after)
-		}
-	})
-}
-
-func (s *Service) syncWake(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	before, after *inboundmessageports.QueueState,
-) {
-
-	switch {
-	case after.HasTimer():
-		if before != nil && before.Parked == after.Parked && before.WakeAt() == after.WakeAt() {
-			return
-		}
-		if err := s.wakes.ScheduleWake(ctx, tenantInfo, after.ID); err != nil {
-			s.l.Error("could not schedule an inbound message's wake-up; the hourly reconcile will",
-				zap.String("messageId", after.ID.String()), zap.Error(err))
-		}
-	case before != nil && before.HasTimer():
-		if err := s.wakes.CancelWake(ctx, after.ID); err != nil {
-			s.l.Warn("could not cancel an inbound message's wake-up; it will find nothing to do",
-				zap.String("messageId", after.ID.String()), zap.Error(err))
-		}
-	}
 }
 
 func (s *Service) resolveSelection(

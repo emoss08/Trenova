@@ -276,5 +276,4 @@ type TaskFrame struct {
 	Steps    []string `json:"steps,omitempty"`
 	Done     string   `json:"done,omitempty"`
 	Playbook string   `json:"playbook,omitempty"`
-	Inferred bool     `json:"inferred,omitempty"`
 }

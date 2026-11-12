@@ -28,6 +28,21 @@ in [module-architecture.md](../module-architecture.md). Agent work has its own r
   (`etacontract.RefreshWorkflowID(id)`), which sleeps for the debounce, drains its signals, does
   the work once and continues-as-new after N iterations (`etajobs/workflows.go`). Pass a tenant
   `FairnessKey` so one tenant's burst does not starve the rest.
+- **Key the debounce by tenant when the entity count is large.** A workflow per entity is
+  still one per row: a tenant moving thousands of items keeps thousands cycling, each a
+  start, a timer and several activities, all written to the Temporal database. Keep the work
+  queue in the row instead: a `<work>_due_at` column set in the requesting transaction, moved
+  strictly forward on every request (`GREATEST(coalesce(due, 0) + 1, now)`), so nothing is lost
+  between commit and signal. One payload-free `SignalWithStart` per tenant wakes a drain that
+  claims a page of due rows, works each, and clears the marker only while it still holds the
+  claimed value (a request that landed meanwhile keeps the row due); a failed row is pushed
+  back (`due_at = now + backoff`). The sweep marks stale rows due and signals the tenants with
+  due rows, never row by row (`billingqueuejobs.BillingQueueTenantWorkflow`).
+- **A workflow ends when its work does.** Waiting on a person is a record's status, not a
+  parked workflow: close the record from the action that settles it and from the sweep that
+  expires it, with one conditional statement both can race on
+  (`agentrunclose.Closer`). A uniqueness a live workflow id used to hold moves to a partial
+  unique index.
 - **Deterministic workflow IDs** with a reuse or conflict policy
   (`WORKFLOW_ID_REUSE_POLICY_REJECT_DUPLICATE`, `CONFLICT_POLICY_USE_EXISTING`) make a duplicate
   start a no-op.

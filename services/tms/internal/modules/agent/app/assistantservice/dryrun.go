@@ -39,6 +39,9 @@ type DryRunPlan struct {
 	// writes are named as a shadow agent's would be.
 	Shadow bool                   `json:"shadow"`
 	Turn   agentruntime.TurnState `json:"turn"`
+	// ScopeCheck is what the scope classifier is still to be asked, beside
+	// the run's first model call.
+	ScopeCheck *agentguard.EvaluateRequest `json:"scopeCheck,omitempty"`
 }
 
 func (p *DryRunPlan) Refused() bool { return !p.Decision.Allowed }
@@ -92,7 +95,7 @@ func (s *Service) PrepareDryRun(
 	draft := *req.Definition
 	draft.SimulationMode = true
 
-	decision, runReq := s.admit(ctx, &TurnRequest{
+	decision, runReq, check := s.admit(ctx, &TurnRequest{
 		Definition: &draft,
 		Actor:      actor,
 		Input:      prompt,
@@ -103,6 +106,7 @@ func (s *Service) PrepareDryRun(
 		Input:      prompt,
 		Decision:   decision,
 		Shadow:     req.Definition.ShadowMode,
+		ScopeCheck: check,
 	}
 	if runReq == nil {
 		return plan, nil

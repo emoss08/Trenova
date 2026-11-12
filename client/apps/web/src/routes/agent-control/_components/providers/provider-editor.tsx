@@ -1595,7 +1595,9 @@ function AdvancedFields({ catalog }: { catalog: AIProviderCatalog }) {
     {
       value: "Off" satisfies ReasoningEffort,
       label: t("Off"),
-      description: t("No reasoning setting is sent; the model decides."),
+      description: t(
+        "No thinking. A Claude model is told not to think; other models are sent no reasoning setting.",
+      ),
       icon: <Power01Icon className="size-4" />,
     },
     {

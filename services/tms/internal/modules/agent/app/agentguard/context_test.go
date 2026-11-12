@@ -160,3 +160,42 @@ func TestEvaluate_SkipsEmptyTurns(t *testing.T) {
 		stub.lastReq.Context.Sections[0].Content,
 	)
 }
+
+// The classifier runs beside the turn's first model call, so the request is
+// carried there cut to what the classifier is shown. Cutting it changes
+// nothing the classifier reads, and so nothing the verdict cache keys on.
+func TestBounded_CarriesOnlyWhatTheClassifierIsShown(t *testing.T) {
+	t.Parallel()
+
+	long := strings.Repeat("late load ", 200)
+	turns := make([]agentguard.Turn, 0, 10)
+	for range 9 {
+		turns = append(turns, agentguard.Turn{Role: "assistant", Content: long})
+	}
+	turns = append(turns, agentguard.Turn{Role: "user", Content: "  "})
+	req := agentguard.EvaluateRequest{
+		TenantInfo: tenant(),
+		Input:      "what about the other one",
+		Recent:     turns,
+		About:      strings.Repeat("shipment S-1 ", 100),
+	}
+
+	bounded := req.Bounded()
+
+	assert.Equal(t, req.Input, bounded.Input)
+	assert.Len(t, bounded.Recent, 5, "the last six turns, less the empty one")
+	for _, turn := range bounded.Recent {
+		assert.Less(t, len(turn.Content), 420)
+	}
+	assert.Less(t, len(bounded.About), 320)
+	assert.Equal(t, bounded, bounded.Bounded(), "cutting it again changes nothing")
+
+	whole := &stubCompletion{category: string(agentguard.CategoryTransportationOperations)}
+	newGuard(t, whole).Evaluate(t.Context(), req)
+	cut := &stubCompletion{category: string(agentguard.CategoryTransportationOperations)}
+	newGuard(t, cut).Evaluate(t.Context(), bounded)
+	require.NotNil(t, whole.lastReq)
+	require.NotNil(t, cut.lastReq)
+	assert.Equal(t, whole.lastReq.Context, cut.lastReq.Context,
+		"the classifier reads the same thing either way")
+}

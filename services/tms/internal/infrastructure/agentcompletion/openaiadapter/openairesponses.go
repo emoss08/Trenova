@@ -174,9 +174,10 @@ func (a openAIResponsesAdapter) baseRequest(call *modeladapter.Call) responsesRe
 		ToolChoice:      toolChoiceWire(call.Request),
 	}
 	if search := responsesSearch(call); search != "" {
-		body.Input = toResponsesInput(call.Request.System, call.Request.Messages,
-			&responsesSearchTool{name: search, tools: call.Request.Tools})
-		body.Tools = toResponsesSearchTools(call.Request.Tools)
+		tools, messages := modeladapter.OpenedTools(call.Request.Tools, call.Request.Messages)
+		body.Input = toResponsesInput(call.Request.System, messages,
+			&responsesSearchTool{name: search, tools: tools})
+		body.Tools = toResponsesSearchTools(tools)
 	} else {
 		body.Input = toResponsesInput(call.Request.System, call.Request.Messages, nil)
 		body.Tools = toResponsesTools(

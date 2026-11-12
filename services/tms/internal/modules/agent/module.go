@@ -90,6 +90,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentquerytoolservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentreflectionservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentrosterservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentrunclose"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruneventservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentrunservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
@@ -178,11 +179,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/conversationschedulejobs/conversationschedulecontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/dispatchjobs/dispatchcoveragecontract"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/paperworkjobs/paperworkcontract"
+	"github.com/emoss08/trenova/internal/modules/agent/jobs/reflectionjobs/reflectioncontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdraftports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentrosterports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentshadowports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aianalyticsports"
@@ -315,6 +318,7 @@ func SharedOptions() fx.Option {
 			conversationschedulerepository.New,
 			assistantchapterrepository.New,
 			chaptercontract.NewScheduler,
+			reflectioncontract.NewScheduler,
 			aiproviderrepository.New,
 			watchtowerrepository.New,
 			exceptionsourcerepository.New,
@@ -379,6 +383,8 @@ func SharedOptions() fx.Option {
 			func(s *aiproviderservice.Service) aiproviderports.AIProviderProbe { return s },
 			aiusageservice.New,
 			agentrunservice.New,
+			agentrunclose.New,
+			func(c *agentrunclose.Closer) agentruntimeports.RunCloser { return c },
 			agentsubjectservice.New,
 			agentactivityservice.New,
 			agentdecisionqueueservice.New,

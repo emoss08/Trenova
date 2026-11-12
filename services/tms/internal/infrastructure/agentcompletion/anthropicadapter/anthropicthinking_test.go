@@ -127,33 +127,36 @@ func TestAnthropicAdapter_SendsNoThinkingSettingForOff(t *testing.T) {
 }
 
 /*
-A model that thinks when a request says nothing about thinking leaves its
-thinking empty unless the summary is asked for, so Off on such a model would
-leave the Desk nothing to show of a step's reasoning. Off asks for the summary
-and nothing else: the model's own effort applies, and the thinking costs what
-it would have cost unshown.
+A model that thinks when a request says nothing about thinking thinks before
+every reply, tool calls included, and on the Desk that was a second or more of
+every step. Off therefore asks for no thinking, as None does: "disabled" where
+the model takes it, and the least effort where it cannot stop. A provider that
+wants thinking names an effort.
 */
-func TestAnthropicAdapter_AsksForTheSummaryOfThinkingAModelDoesUnasked(t *testing.T) {
+func TestAnthropicAdapter_OffTurnsOffTheThinkingAModelDoesUnasked(t *testing.T) {
 	t.Parallel()
 
-	for _, model := range []string{
-		"claude-haiku-5-5", "claude-opus-5-5", "claude-opus-5", "claude-sonnet-5-5",
-		"claude-sonnet-5", "claude-fable-5-1",
-	} {
+	for _, model := range []string{"claude-haiku-5-5", "claude-opus-5", "claude-sonnet-5"} {
+		thinking, output := sentThinking(t, model, aireasoning.ReasoningOff)
+		assert.Equal(t, map[string]any{"type": "disabled"}, thinking, model)
+		assert.Nil(t, output, model)
+	}
+
+	for _, model := range []string{"claude-opus-5-5", "claude-sonnet-5-5", "claude-fable-5-1"} {
 		thinking, output := sentThinking(t, model, aireasoning.ReasoningOff)
 		require.NotNil(t, thinking, model)
 		assert.Equal(t, "adaptive", thinking["type"], model)
 		assert.Equal(t, "summarized", thinking["display"], model)
-		assert.Nil(t, output, model)
+		require.NotNil(t, output, model)
+		assert.Equal(t, "low", output["effort"], model)
 	}
 }
 
 /*
-The scope classifier has three seconds to answer. Haiku 5.5 thinks unless told
-not to, and a provider set to Off says nothing, so the classifier asks for None
-on the request itself: Haiku 5.5 is sent thinking "disabled" (it takes that at
-its default effort), while a call that leaves the override empty still follows
-the provider and only asks to see the thinking Haiku 5.5 does unasked.
+A request may name its own reasoning over the provider's. On Haiku 5.5 a
+request that asks for None, and one that leaves the override empty on a
+provider set to Off, are both sent thinking "disabled", which the model takes
+at its default effort; a request that names an effort is asked to think.
 */
 func TestAnthropicAdapter_ARequestCanTurnThinkingOffOnHaiku55(t *testing.T) {
 	t.Parallel()
@@ -191,9 +194,17 @@ func TestAnthropicAdapter_ARequestCanTurnThinkingOffOnHaiku55(t *testing.T) {
 	followed := sent("")
 	assert.Equal(
 		t,
-		map[string]any{"type": "adaptive", "display": "summarized"},
+		map[string]any{"type": "disabled"},
 		followed["thinking"],
 		"no override follows the provider, which is Off",
 	)
 	assert.NotContains(t, followed, "output_config")
+
+	asked := sent(aireasoning.ReasoningLow)
+	assert.Equal(
+		t,
+		map[string]any{"type": "adaptive", "display": "summarized"},
+		asked["thinking"],
+	)
+	assert.Equal(t, map[string]any{"effort": "low"}, asked["output_config"])
 }

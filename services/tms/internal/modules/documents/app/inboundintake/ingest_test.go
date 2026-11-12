@@ -83,7 +83,6 @@ func TestReceiveWebhook_AReplyJoinsItsThreadAndAnswersTheMessageWaitingOnIt(t *t
 	answered := fakes.Queue.State(awaiting.ID)
 	assert.Equal(t, inboundmessage.StatusActioned, answered.Status)
 	assert.Empty(t, answered.Parked)
-	assert.Equal(t, []pulid.ID{awaiting.ID}, fakes.Wakes.Cancelled)
 	assert.Contains(t, fakes.Activities.Kinds(), triage.ActivityTheyReplied)
 	require.Len(t, workflows.started, 1, "the reply itself lands in the queue to be read")
 	require.Len(t, fakes.Mailboxes.Received, 1)

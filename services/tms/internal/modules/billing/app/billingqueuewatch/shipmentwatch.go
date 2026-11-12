@@ -99,12 +99,18 @@ func (o *ShipmentObserver) OnShipmentEvent(ctx context.Context, event *shipmente
 		return nil
 	}
 
+	itemIDs := make([]pulid.ID, 0, len(byShipment))
 	for _, items := range byShipment {
 		for _, item := range items {
 			if item != nil {
-				o.rechecks.RequestRecheck(ctx, tenantInfo, item.ID)
+				itemIDs = append(itemIDs, item.ID)
 			}
 		}
+	}
+	if err = o.rechecks.RequestRecheck(ctx, tenantInfo, itemIDs...); err != nil {
+		o.l.Warn("could not mark the billing items behind a shipment event for their checks",
+			zap.String("shipmentId", event.ShipmentID.String()),
+			zap.Error(err))
 	}
 
 	return nil

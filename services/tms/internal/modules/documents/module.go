@@ -156,8 +156,8 @@ func SharedOptions() fx.Option {
 			},
 			inboundqueue.NewEventSink,
 			func(e *inboundqueue.EventSink) inboundmessageports.TriageEventSink { return e },
-			triagewakecontract.NewScheduler,
-			func(s *triagewakecontract.Scheduler) inboundmessageports.TriageWakeScheduler { return s },
+			triagewakecontract.NewDueRecomputer,
+			func(s *triagewakecontract.DueRecomputer) inboundmessageports.TriageDueRecomputer { return s },
 			triagenova.New,
 			inboundreplyservice.New,
 			fx.Annotate(

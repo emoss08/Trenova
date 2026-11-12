@@ -66,7 +66,6 @@ func TestBackgroundFrame_IsBuiltFromWhatStartedTheRun(t *testing.T) {
 		agenttrigger.EventBankReceiptException, agenttemplate.TemplateCashApplication)
 	require.NotNil(t, event)
 	assert.Equal(t, "apply-a-bank-receipt", event.Playbook)
-	assert.False(t, event.Inferred, "a frame read off the trigger is not a guess")
 
 	monitor := agenttaskframe.BackgroundFrame(agent.RunTriggerScheduled, "",
 		agenttemplate.TemplateLoadMonitor)
@@ -87,19 +86,6 @@ func TestBackgroundFrame_IsBuiltFromWhatStartedTheRun(t *testing.T) {
 		agenttemplate.TemplateLoadMonitor), "a person who started a run says what it is for")
 	assert.Nil(t, agenttaskframe.BackgroundFrame(agent.RunTriggerEvent,
 		agenttrigger.EventKind("shipment.teleported"), ""))
-}
-
-func TestChatFrame_KeepsTheClassifierToOneLineEach(t *testing.T) {
-	t.Parallel()
-
-	assert.Nil(t, agenttaskframe.ChatFrame("  ", "\n"), "nothing read, nothing framed")
-
-	frame := agenttaskframe.ChatFrame("List the\n trailers  due.", strings.Repeat("trailer ", 80))
-	require.NotNil(t, frame)
-	assert.True(t, frame.Inferred)
-	assert.Equal(t, "List the trailers due.", frame.Goal)
-	assert.LessOrEqual(t, len([]rune(frame.Need)), 300)
-	assert.NotContains(t, frame.Need, "\n")
 }
 
 func TestBuildSystemPrompt_PutsTheTaskInTheTurnsOwnPart(t *testing.T) {
@@ -126,13 +112,6 @@ func TestBuildSystemPrompt_PutsTheTaskInTheTurnsOwnPart(t *testing.T) {
 		frame.Need,
 		"the need ranks tools; the model is not told it",
 	)
-
-	chat := agentprompt.BuildSystemPromptParts(d, &agentturn.RuntimeContext{
-		Frame: agenttaskframe.ChatFrame("Find the late loads.", "list late loads"),
-	})
-	assert.Contains(t, chat.Volatile, "What the person wants: Find the late loads.")
-	assert.Contains(t, chat.Volatile, "the message wins", "a guess never outranks the message")
-	assert.NotContains(t, chat.Volatile, "Done when")
 
 	assert.NotContains(
 		t,

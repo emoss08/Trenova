@@ -2,10 +2,17 @@ import { ItemPanel } from "./panels/item-panel";
 import { AgentWorkBlock } from "./agent-work";
 import { DeskIcon } from "@/components/desk-chat/desk-icons";
 import {
+  askAgentMessage,
+  wouldFailReasons,
+  type WouldFailReason,
+} from "@/components/assistant/proposal-preview/preview-warnings";
+import {
   ReviewBlocker,
   ReviewedChange,
   ReviewedPlan,
 } from "@/components/assistant/proposal-preview/reviewed-change";
+import { useProposalPreview } from "@/components/assistant/proposal-preview/use-proposal-preview";
+import { RefreshCcw01Icon, Lock01Icon } from "@trenova/shared/components/icons";
 import { presentProposal } from "@/components/assistant/proposal-presenters";
 import type { DeskAttentionGroup, DeskAttentionItem } from "@/lib/graphql/desk-attention";
 import { CornerDownLeftIcon } from "@trenova/shared/components/icons";
@@ -26,39 +33,129 @@ import { DeclineDialog } from "./decline-dialog";
 import { LifeBadge, itemLife } from "./life-badge";
 import type { ItemDecision } from "./use-item-decision";
 
-function Block({
-  icon,
-  title,
-  source,
-  children,
-}: {
-  icon?: ReactNode;
-  title: ReactNode;
-  source?: string;
-  children: ReactNode;
-}) {
-  return (
-    <section className="dk-w-blk">
-      <div className="dk-w-blk-h">
-        {icon}
-        {title}
-        {source && <span className="dk-w-blk-src">{source}</span>}
-      </div>
-      {children}
-    </section>
-  );
+const NO_REASONS: WouldFailReason[] = [];
+
+/**
+ * Why the one change in front of the person would be refused if approved, or
+ * nothing when it would run. Read from the same preview the card shows, so it
+ * costs no second request. A plan says this step by step in its own preview.
+ */
+function useRefusal(decision: ItemDecision): WouldFailReason[] {
+  const single = decision.reviewed && decision.planId === null && decision.proposals.length === 1;
+  const preview = useProposalPreview({
+    scope: "approver",
+    id: decision.proposals[0]?.id ?? "",
+    enabled: single,
+  }).data;
+  if (!single || !preview) {
+    return NO_REASONS;
+  }
+
+  return preview.warnings.flatMap(wouldFailReasons);
 }
 
-function Rows({ rows }: { rows: readonly { key: string; label: string; value: ReactNode }[] }) {
-  return (
-    <div className="dk-w-kvrows">
-      {rows.map((row) => (
-        <div key={row.key}>
-          <span className="dk-w-kvrows-k">{row.label}</span>
-          <span>{row.value}</span>
+/**
+ * The change an agent asks to make, as one card: what it would do in a
+ * sentence, why (when that is not what the page already said), the values it
+ * would set, and two quiet facts under them: whether it can be taken back and
+ * who proposed it. Nothing here is a table of things the reader cannot change.
+ */
+function DecisionCard({
+  decision,
+  agentName,
+  raised,
+  said,
+  blocked,
+}: {
+  decision: ItemDecision;
+  agentName: string | null;
+  raised: string;
+  /** What the page has already said above the card, so the card does not repeat it. */
+  said: string;
+  blocked: readonly WouldFailReason[];
+}) {
+  const t = useT();
+  const proposal = decision.proposals[0] ?? null;
+
+  if (decision.loading) {
+    return (
+      <section className="mt-6" aria-busy aria-label={t("Reading the change")}>
+        <div className="flex flex-col gap-2.5 rounded-xl border border-dsk-b bg-dsk-raised px-4 py-4">
+          <i className="h-4 w-2/3 ui-shimmer rounded-[4px]" />
+          <i className="h-3.5 w-1/2 ui-shimmer rounded-[4px]" />
+          <i className="h-3.5 w-1/3 ui-shimmer rounded-[4px]" />
         </div>
-      ))}
-    </div>
+      </section>
+    );
+  }
+  if (decision.failedToRead || proposal === null) {
+    return (
+      <p className="dk-w-quiet mt-6">{t("The change could not be read. Open it on Decisions.")}</p>
+    );
+  }
+
+  const views = decision.proposals.map((step) => presentProposal(step));
+  const lead = views[0]?.summary ?? views[0]?.title ?? "";
+  const why = proposal.rationale.trim();
+  const reversible = views.every((view) => view.reversible);
+  const previewed = decision.phase === "idle" && decision.reviewed;
+
+  return (
+    <section className="mt-6" data-slot="decision-card">
+      <div className="overflow-hidden rounded-xl border border-dsk-b bg-dsk-raised">
+        <div className="flex flex-col gap-1.5 px-4 pt-3.5 pb-3.5">
+          <span className="text-dsk-sm text-dsk-subtle">
+            {agentName ? t("{0} would", agentName) : t("It would")}
+          </span>
+          {views.length > 1 ? (
+            <ol className="flex flex-col gap-1 text-dsk-base text-dsk-fg">
+              {views.map((view, index) => (
+                <li key={decision.proposals[index]?.id ?? index} className="flex gap-2">
+                  <span className="text-dsk-subtle tabular-nums">{index + 1}</span>
+                  <span className="min-w-0">{view.summary ?? view.title}</span>
+                </li>
+              ))}
+            </ol>
+          ) : (
+            <p className="text-dsk-base text-dsk-fg">{lead}</p>
+          )}
+          {why !== "" && why !== said.trim() && <p className="text-dsk-sm text-dsk-fg2">{why}</p>}
+        </div>
+
+        {previewed && (
+          <div className="border-t border-dsk-b px-4 py-3.5">
+            {decision.planId ? (
+              <ReviewedPlan
+                planId={decision.planId}
+                onReport={decision.onReport}
+                scope="approver"
+              />
+            ) : (
+              <ReviewedChange
+                proposal={proposal}
+                onReport={decision.onReport}
+                scope="approver"
+                titled={false}
+              />
+            )}
+          </div>
+        )}
+
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-dsk-b px-4 py-2.5 text-dsk-sm text-dsk-subtle">
+          {blocked.length === 0 && (
+            <span className="inline-flex items-center gap-1.5">
+              {reversible ? (
+                <RefreshCcw01Icon aria-hidden className="size-3.5" />
+              ) : (
+                <Lock01Icon aria-hidden className="size-3.5" />
+              )}
+              {reversible ? t("Can be undone after it runs") : t("Can't be undone once it runs")}
+            </span>
+          )}
+          <span className="ml-auto">{t("Proposed {0}", raised)}</span>
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -113,8 +210,9 @@ export function ItemDetail({
   const panelSaysIt = item.panel?.kind === "Ask" || item.panel?.kind === "Finding";
   const work = item.agentWork;
   const proposal = decision.proposals[0] ?? null;
-  const view = proposal ? presentProposal(proposal) : null;
   const unseenPreviews = decision.tally.loading + decision.tally.failed + decision.tally.stale;
+  const blocked = useRefusal(decision);
+  const agentName = work?.agent?.name ?? null;
   const raised = formatFactTime(t, item.occurredAt, now, timezone);
   return (
     <div className="dk-w-det-w">
@@ -148,6 +246,8 @@ export function ItemDetail({
             how long the item has waited, which its row already says, so it is one
             quiet line here. */}
         {countdown !== null &&
+          // A decision waits on the reader, which its badge already says.
+          !(isDecision && item.dueSource !== "Source") &&
           (item.dueSource === "Source" ? (
             <div className="dk-w-clock">
               <span className="dk-w-clock-l">
@@ -183,78 +283,13 @@ export function ItemDetail({
         )}
 
         {isDecision && (
-          <Block
-            icon={<DeskIcon name="inbox" size={14} />}
-            title={t("Decision")}
-            source={
-              work?.agent
-                ? t("Proposed by {0} · {1}", work.agent.name, raised)
-                : t("Proposed {0}", raised)
-            }
-          >
-            {decision.loading ? (
-              <div className="dk-w-sk" aria-busy aria-label={t("Reading the change")}>
-                <i className="dk-sk" />
-              </div>
-            ) : decision.failedToRead || proposal === null ? (
-              <p className="dk-w-quiet">
-                {t("The change could not be read. Open it on Decisions.")}
-              </p>
-            ) : (
-              <>
-                <Rows
-                  rows={[
-                    {
-                      key: "change",
-                      label: t("Would change"),
-                      value:
-                        decision.proposals.length > 1
-                          ? t(
-                              "{0, plural, one {# change} other {# changes}}, in order: {1}",
-                              decision.proposals.length,
-                              decision.proposals
-                                .map((step) => presentProposal(step).title)
-                                .join(" · "),
-                            )
-                          : (view?.summary ?? view?.title ?? ""),
-                    },
-                    ...(proposal.rationale
-                      ? [{ key: "why", label: t("Why it proposes it"), value: proposal.rationale }]
-                      : []),
-                    {
-                      key: "undo",
-                      label: t("Can it be undone"),
-                      value: decision.proposals.every((step) => presentProposal(step).reversible)
-                        ? t("Yes, it can be reversed after it runs.")
-                        : t("No. Once it runs it stays done."),
-                    },
-                    {
-                      key: "asks",
-                      label: t("Why it asks"),
-                      value: t("AI control needs a person to approve this change before it runs."),
-                    },
-                  ]}
-                />
-                {decision.phase === "idle" && decision.reviewed && (
-                  <div className="dk-w-preview">
-                    {decision.planId ? (
-                      <ReviewedPlan
-                        planId={decision.planId}
-                        onReport={decision.onReport}
-                        scope="approver"
-                      />
-                    ) : (
-                      <ReviewedChange
-                        proposal={proposal}
-                        onReport={decision.onReport}
-                        scope="approver"
-                      />
-                    )}
-                  </div>
-                )}
-              </>
-            )}
-          </Block>
+          <DecisionCard
+            decision={decision}
+            agentName={work?.agent?.name ?? null}
+            raised={raised}
+            said={item.summary}
+            blocked={blocked}
+          />
         )}
 
         {decision.phase === "done" && (
@@ -297,7 +332,9 @@ export function ItemDetail({
       <div className="dk-w-bar">
         <span className="dk-w-bar-note">
           {isDecision
-            ? t("You approve exactly what is shown here.")
+            ? blocked.length > 0
+              ? t("It can't run as it stands. Sending it back tells the agent why.")
+              : t("You approve exactly what is shown here.")
             : isMessage
               ? t("A message is answered, filed or set aside in Triage, which clears it here.")
               : caseWork !== null
@@ -322,9 +359,21 @@ export function ItemDetail({
               >
                 {t("Decline")} <Key k="D" />
               </Button>
-              <Button disabled={unseenPreviews > 0} onClick={() => void decision.approve()}>
-                {t("Approve")} <Key k="A" inv />
-              </Button>
+              {blocked.length > 0 ? (
+                // It would be refused if approved, so the way forward is back
+                // to the agent with the reasons, in one step.
+                <Button
+                  onClick={() =>
+                    void decision.decline(askAgentMessage(proposal.toolName, blocked, t))
+                  }
+                >
+                  {agentName ? t("Send back to {0}", agentName) : t("Send back to the agent")}
+                </Button>
+              ) : (
+                <Button disabled={unseenPreviews > 0} onClick={() => void decision.approve()}>
+                  {t("Approve")} <Key k="A" inv />
+                </Button>
+              )}
             </>
           ) : isDecision && decision.phase === "deciding" ? (
             <Button isLoading>{t("Approve")}</Button>
@@ -377,7 +426,7 @@ export function ItemDetail({
 
       <DeclineDialog
         open={declining}
-        agentName={work?.agent?.name ?? null}
+        agentName={agentName}
         pending={decision.phase === "deciding"}
         onOpenChange={onDecliningChange}
         onDecline={async (reason) => {

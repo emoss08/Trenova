@@ -114,7 +114,7 @@ func TestAnthropicAdapter_DeclaresTheAdvisorLastWithItsBeta(t *testing.T) {
 		"max_uses":      float64(2),
 		"max_tokens":    float64(2048),
 		"caching":       map[string]any{"type": "ephemeral", "ttl": "5m"},
-		"cache_control": map[string]any{"type": "ephemeral"},
+		"cache_control": map[string]any{"type": "ephemeral", "ttl": "1h"},
 	}, tools[2], "the advisor is a server tool after every client tool, never deferred, "+
 		"and carries the tools' cache mark")
 	assert.NotContains(t, tools[1], "cache_control")

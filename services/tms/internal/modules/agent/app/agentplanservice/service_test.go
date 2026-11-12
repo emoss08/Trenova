@@ -97,10 +97,10 @@ func (f *fakeSteps) SkipPendingByPlan(
 }
 
 type fakeDecider struct {
-	failAt   pulid.ID
-	decided  []agentdecisionports.DecideAgentProposalRequest
-	signals  int
-	lastSent *agentdecisionports.DecideAgentProposalRequest
+	failAt      pulid.ID
+	decided     []agentdecisionports.DecideAgentProposalRequest
+	settles     int
+	lastSettled pulid.ID
 }
 
 func (f *fakeDecider) DecideWithOutcome(
@@ -122,14 +122,13 @@ func (f *fakeDecider) DecideWithOutcome(
 	return outcome, nil
 }
 
-func (f *fakeDecider) SignalRun(
+func (f *fakeDecider) SettleRun(
 	_ context.Context,
-	req *agentdecisionports.DecideAgentProposalRequest,
-	_ *agentdecision.AgentDecision,
-	_ pulid.ID,
+	_ pagination.TenantInfo,
+	runID pulid.ID,
 ) error {
-	f.signals++
-	f.lastSent = req
+	f.settles++
+	f.lastSettled = runID
 
 	return nil
 }
@@ -243,7 +242,7 @@ func TestDecide_ApprovesEveryStepInOrderAndSignalsOnce(t *testing.T) {
 		assert.True(t, decided.WithinPlan)
 		assert.Contains(t, decided.ReasonCode, "looks right (plan ")
 	}
-	assert.Equal(t, 1, h.decider.signals, "the run hears once, not once per step")
+	assert.Equal(t, 1, h.decider.settles, "the run is settled once, not once per step")
 
 	require.Len(t, h.plans.statuses, 1)
 	assert.Equal(t, agentplan.PlanStatusApproved, h.plans.statuses[0].Status)
@@ -273,7 +272,7 @@ func TestDecide_StopsAtTheFirstFailedStepAndSkipsTheRest(t *testing.T) {
 
 	assert.Len(t, h.decider.decided, 2, "the third step is never decided")
 	assert.Equal(t, 1, h.steps.skipped, "the steps after the failure are skipped")
-	assert.Equal(t, 0, h.decider.signals)
+	assert.Equal(t, 0, h.decider.settles)
 }
 
 func TestDecide_RejectsEveryPendingStep(t *testing.T) {
@@ -290,7 +289,7 @@ func TestDecide_RejectsEveryPendingStep(t *testing.T) {
 	require.Len(t, h.decider.decided, 1, "a step already decided on its own is left alone")
 	assert.Equal(t, h.steps.steps[1].ID, h.decider.decided[0].ProposalID)
 	assert.Equal(t, agentdecision.DecisionRejected, h.decider.decided[0].Decision)
-	assert.Equal(t, 1, h.decider.signals)
+	assert.Equal(t, 1, h.decider.settles)
 }
 
 func TestDecide_RefusesWhatCannotBeDecided(t *testing.T) {

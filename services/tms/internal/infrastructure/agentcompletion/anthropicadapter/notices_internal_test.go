@@ -120,7 +120,7 @@ func TestAnthropicConversation_PlacesANoticeOnlyWhereTheAPITakesOne(t *testing.T
 		{Role: modeladapter.RoleUser, Content: "How many are late?"},
 		{Role: modeladapter.RoleAssistant, Content: "About half."},
 		{Role: modeladapter.RoleSystem, Content: "Say only what a tool returned."},
-	}, nil, true)
+	}, nil, true, false)
 	require.Len(t, afterReply, 3)
 	assert.Equal(t, "user", string(afterReply[2].Role),
 		"a notice cannot follow an assistant message, so it is sent as text")
@@ -129,7 +129,7 @@ func TestAnthropicConversation_PlacesANoticeOnlyWhereTheAPITakesOne(t *testing.T
 		{Role: modeladapter.RoleUser, Content: "Where is S-1?"},
 		{Role: modeladapter.RoleSystem, Content: modeladaptertest.WorldNotice},
 		{Role: modeladapter.RoleUser, Content: "And S-2?"},
-	}, nil, true)
+	}, nil, true, false)
 	require.Len(t, beforePerson, 3)
 	for _, message := range beforePerson {
 		assert.Equal(t, "user", string(message.Role),
@@ -140,7 +140,7 @@ func TestAnthropicConversation_PlacesANoticeOnlyWhereTheAPITakesOne(t *testing.T
 		{Role: modeladapter.RoleUser, Content: "Where is S-1?"},
 		{Role: modeladapter.RoleSystem, Content: modeladaptertest.WorldNotice},
 		{Role: modeladapter.RoleAssistant, Content: "In transit."},
-	}, nil, true)
+	}, nil, true, false)
 	require.Len(t, answered, 3)
 	assert.Equal(t, "system", string(answered[1].Role))
 }

@@ -493,7 +493,9 @@ func (s *Service) TransferToBillingItems(
 			nil,
 		)
 		if req.DeferReview {
-			s.rechecks.RequestRecheck(ctx, req.TenantInfo, item.ID)
+			if err = s.rechecks.RequestRecheck(ctx, req.TenantInfo, item.ID); err != nil {
+				return nil, err
+			}
 		} else {
 			s.syncReview(ctx, item.ID, req.TenantInfo)
 		}
@@ -1299,5 +1301,11 @@ func (s *Service) syncReview(
 			zap.Error(err),
 		)
 	}
-	s.rechecks.RequestRecheck(ctx, tenantInfo, itemID)
+	if err := s.rechecks.RequestRecheck(ctx, tenantInfo, itemID); err != nil {
+		s.l.Warn(
+			"failed to mark billing queue item for its background checks",
+			zap.String("billingQueueItemId", itemID.String()),
+			zap.Error(err),
+		)
+	}
 }

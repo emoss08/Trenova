@@ -107,12 +107,14 @@ type ToolSetRequest struct {
 	Command     agentextension.Command
 }
 
-// ToolSet is the set of tools a turn may call. It is declared once, when the
-// turn opens: the tools it opens with, sent in full, and every other tool it
-// may load, declared as deferred. Loading one later never changes what is
-// declared; it marks the tool loaded and names it on the next tool result, so
-// the request's tools and everything cached after them stay the same bytes
-// from the first call of the turn to the last.
+// ToolSet is the set of tools a turn may call. What it declares is the same
+// for every turn of an agent for a person: the tools every turn carries, sent
+// in full, and every other tool it may load, declared as deferred. What a
+// question needs is loaded on top of that and never changes the declaration:
+// the tools picked when the turn opens are named on the person's message
+// (Opened), and one loaded later on the next tool result, so the request's
+// tools and everything cached after them are the same bytes from one turn to
+// the next, whatever was asked.
 type ToolSet struct {
 	Specs      []kernelports.ToolSpec
 	Deferred   []string
@@ -134,6 +136,10 @@ type ToolSet struct {
 	held        int
 	Preselected []string
 	Pinned      bool
+	// Opened are the deferred tools the turn loaded for its question as it
+	// opened, by name and sorted, which the person's message carries to the
+	// model.
+	Opened []string
 }
 
 func (s *Access) NewToolSet(ctx context.Context, req *ToolSetRequest) *ToolSet {
@@ -141,7 +147,8 @@ func (s *Access) NewToolSet(ctx context.Context, req *ToolSetRequest) *ToolSet {
 	if req.Command != "" {
 		set.Pinned = s.pinCommand(set, req.Command)
 	}
-	s.freeze(set)
+	set.Opened = set.TakeLoaded()
+	slices.Sort(set.Opened)
 
 	return set
 }
@@ -180,29 +187,39 @@ func (s *Access) openToolSet(ctx context.Context, req *ToolSetRequest) *ToolSet 
 		text = req.Need + "\n" + req.Input
 	}
 
-	s.loadCoreTools(set, req, searchable, text)
+	waiting := s.loadCoreTools(set, req, searchable)
 
 	if !disclosed {
 		for _, name := range selected {
 			s.Load(set, name)
 		}
 		if searchable {
-			s.carryOver(set, req.History)
 			set.add(runtimetools.FindToolsSpec())
 		}
-		set.addConversational(req)
-		s.declareWithdrawal(set, req.Delegated)
-		s.declareNamePlan(set, req.Delegated)
+		s.declare(set, req)
+		s.openCoreTools(set, waiting, text)
+		if searchable {
+			s.carryOver(set, req.History)
+		}
 
 		return set
 	}
 
 	set.Disclosed = true
 	set.held = len(selected)
-	set.Query = s.Vectorize(ctx, &req.Query)
 	for _, name := range agentpreset.StandingTools(req.Definition.Template) {
 		s.Load(set, name)
 	}
+	// Whether a question needs many reads is the model's to judge once it
+	// sees the first result, which is after the turn's tools are fixed, so
+	// the script tool rides on every turn that may run one rather than
+	// waiting on a search the model would not think to make.
+	s.Load(set, "analysis_run")
+	set.add(runtimetools.FindToolsSpec())
+	s.declare(set, req)
+
+	s.openCoreTools(set, waiting, text)
+	set.Query = s.Vectorize(ctx, &req.Query)
 	ranked := s.catalog.RankHybrid(agenttoolcatalog.Query{
 		Allowed:  slices.DeleteFunc(slices.Clone(selected), set.Offers),
 		Text:     text,
@@ -213,26 +230,27 @@ func (s *Access) openToolSet(ctx context.Context, req *ToolSetRequest) *ToolSet 
 		set.Preselected = append(set.Preselected, ranked[idx].Name)
 		s.Load(set, ranked[idx].Name)
 	}
-	// Whether a question needs many reads is the model's to judge once it
-	// sees the first result, which is after the turn's tools are fixed, so
-	// the script tool rides on every turn that may run one rather than
-	// waiting on a search the model would not think to make.
-	s.Load(set, "analysis_run")
 	s.carryOver(set, req.History)
-	set.add(runtimetools.FindToolsSpec())
+
+	return set
+}
+
+// declare closes what the turn declares: the tools that only mean something
+// with a person reading, and then the freeze. Everything loaded before it is
+// sent in full on every turn; everything loaded after it is the question's.
+func (s *Access) declare(set *ToolSet, req *ToolSetRequest) {
 	set.addConversational(req)
 	s.declareWithdrawal(set, req.Delegated)
 	s.declareNamePlan(set, req.Delegated)
-
-	return set
+	s.freeze(set)
 }
 
 // loadCoreTools loads the core tools, which ride on every turn and do not
 // count toward narrowing: a turn that opened with eight slots would otherwise
 // spend half of them on memory and escalation before reaching the work it was
 // asked to do. On a turn that can search, the ones few turns call wait,
-// deferred, unless the request names what they do.
-func (s *Access) loadCoreTools(set *ToolSet, req *ToolSetRequest, searchable bool, text string) {
+// deferred, and are returned: openCoreTools loads those the request names.
+func (s *Access) loadCoreTools(set *ToolSet, req *ToolSetRequest, searchable bool) []string {
 	waiting := make([]string, 0, len(deferredCoreTools))
 	for _, name := range coreOf(set.Allowed) {
 		if name == "agent_read_attachment" && !req.Attachments {
@@ -244,6 +262,12 @@ func (s *Access) loadCoreTools(set *ToolSet, req *ToolSetRequest, searchable boo
 		}
 		s.Load(set, name)
 	}
+
+	return waiting
+}
+
+// openCoreTools loads the waiting core tools the request names what they do.
+func (s *Access) openCoreTools(set *ToolSet, waiting []string, text string) {
 	if len(waiting) == 0 {
 		return
 	}

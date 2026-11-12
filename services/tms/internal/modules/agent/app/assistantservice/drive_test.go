@@ -27,9 +27,12 @@ func (s *Service) runObserved(
 		emit = func(kernelports.StreamEvent) {}
 	}
 
-	decision, runReq := s.admit(ctx, req)
+	decision, runReq, check := s.admit(ctx, req)
+	if check != nil {
+		decision = s.guard.Evaluate(ctx, *check)
+	}
 	emit(openingEvent(req.Input, decision))
-	if runReq == nil {
+	if runReq == nil || !decision.Allowed {
 		return turnResultOf(req.Input, decision, nil, nil), nil
 	}
 

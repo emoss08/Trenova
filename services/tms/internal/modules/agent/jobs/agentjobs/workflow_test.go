@@ -10,7 +10,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/modelstream"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantservice/assistanttest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
@@ -104,12 +103,11 @@ func (s *AgentRunWorkflowTestSuite) definition() *agentdefinition.Definition {
 	return definition
 }
 
-func (s *AgentRunWorkflowTestSuite) prepared(shadow bool, decisionTimeout int) *PrepareRunResult {
+func (s *AgentRunWorkflowTestSuite) prepared(shadow bool) *PrepareRunResult {
 	return &PrepareRunResult{
-		Definition:             s.definition(),
-		ShadowMode:             shadow,
-		DecisionTimeoutSeconds: decisionTimeout,
-		RunTimeoutSeconds:      120,
+		Definition:        s.definition(),
+		ShadowMode:        shadow,
+		RunTimeoutSeconds: 120,
 	}
 }
 
@@ -179,16 +177,8 @@ func (s *AgentRunWorkflowTestSuite) tenant() pagination.TenantInfo {
 	}
 }
 
-func (s *AgentRunWorkflowTestSuite) decide() {
-	s.env.SignalWorkflow(agentcontract.AgentDecisionSignalName, agentcontract.DecisionSignal{
-		ProposalID:      pulid.MustNew("agp_"),
-		Decision:        agentdecision.DecisionAccepted,
-		DecidedByUserID: pulid.MustNew("usr_"),
-	})
-}
-
 func (s *AgentRunWorkflowTestSuite) TestRunsTheLoopAndFilesWhatItDid() {
-	s.stubPrepare(s.prepared(false, 600))
+	s.stubPrepare(s.prepared(false))
 	s.stubOpen()
 	s.stubAnswer("Nothing needed attention.")
 	s.stubFinish(0)
@@ -207,7 +197,7 @@ func (s *AgentRunWorkflowTestSuite) TestRunsTheLoopAndFilesWhatItDid() {
 // Shadow mode means the agent is watched and not acted on. The run is opened
 // in simulation, so an automatic write is previewed rather than made.
 func (s *AgentRunWorkflowTestSuite) TestShadowRunIsOpenedInSimulationAndCompletesAsShadow() {
-	s.stubPrepare(s.prepared(true, 600))
+	s.stubPrepare(s.prepared(true))
 	s.stubOpen()
 	s.stubAnswer("Proposed two changes.")
 	s.stubFinish(2)
@@ -224,68 +214,22 @@ func (s *AgentRunWorkflowTestSuite) TestShadowRunIsOpenedInSimulationAndComplete
 	s.Empty(s.expired)
 }
 
-func (s *AgentRunWorkflowTestSuite) TestPendingProposalsExpireAfterTimeout() {
-	s.stubPrepare(s.prepared(false, 600))
-	s.stubOpen()
-	s.stubAnswer("Proposed a change.")
-	s.stubFinish(1)
-
-	s.run()
-
-	s.NoError(s.env.GetWorkflowError())
-	s.Require().Len(s.expired, 1)
-	s.Equal(s.payload.RunID, s.expired[0].RunID)
-	s.Equal(s.tenant(), s.expired[0].TenantInfo)
-	s.Empty(s.completed, "an expired run is not also marked completed")
-}
-
-// The first decision used to end the run, and every other proposal it raised
-// was left pending on a run that had stopped listening. The run now waits
-// until none is pending.
-func (s *AgentRunWorkflowTestSuite) TestWaitsForEveryDecision() {
-	s.stubPrepare(s.prepared(false, 600))
+// A run's proposals wait on decisions as records, not inside the workflow:
+// it ends once they are filed, leaving the run waiting, so a run that raised
+// proposals holds no workflow open for its decision window. The decision that
+// leaves nothing pending, or the expiry sweep, closes it (agentrunclose).
+func (s *AgentRunWorkflowTestSuite) TestPendingProposalsEndTheWorkflowWithTheRunWaiting() {
+	s.stubPrepare(s.prepared(false))
 	s.stubOpen()
 	s.stubAnswer("Proposed two changes.")
 	s.stubFinish(2)
 
-	var a *Activities
-	counts := []int{1, 0}
-	s.env.OnActivity(a.PendingProposalsActivity, mock.Anything, mock.Anything).
-		Return(func(context.Context, *PendingProposalsInput) (int, error) {
-			next := counts[0]
-			counts = counts[1:]
-			return next, nil
-		}).Twice()
-
-	s.env.RegisterDelayedCallback(s.decide, time.Minute)
-	s.env.RegisterDelayedCallback(s.decide, 2*time.Minute)
-
 	s.run()
 
 	s.NoError(s.env.GetWorkflowError())
-	s.Empty(counts, "each decision recounts what is left")
-	s.Require().Len(s.completed, 1)
-	s.Equal(agent.RunStatusCompleted, s.completed[0].Status)
-	s.Empty(s.expired)
-}
-
-func (s *AgentRunWorkflowTestSuite) TestCancelledWhileWaitingClosesTheRun() {
-	s.stubPrepare(s.prepared(false, 600))
-	s.stubOpen()
-	s.stubAnswer("Proposed a change.")
-	s.stubFinish(1)
-
-	s.env.RegisterDelayedCallback(s.env.CancelWorkflow, time.Minute)
-
-	s.run()
-
-	s.Require().Error(s.env.GetWorkflowError())
-	s.True(temporal.IsCanceledError(s.env.GetWorkflowError()))
-	s.Require().Len(s.expired, 1, "the pending proposals are expired")
-	s.Equal(s.payload.RunID, s.expired[0].RunID)
-	s.Require().Len(s.completed, 1)
-	s.Equal(agent.RunStatusFailed, s.completed[0].Status)
-	s.Equal(errRunStopped.Error(), s.completed[0].Error)
+	s.Require().NotNil(s.finished)
+	s.Empty(s.completed, "the run stays waiting on its decisions")
+	s.Empty(s.expired, "nothing expires when the workflow ends")
 }
 
 func (s *AgentRunWorkflowTestSuite) TestPrepareFailureMarksRunFailed() {
@@ -307,7 +251,7 @@ func (s *AgentRunWorkflowTestSuite) TestPrepareFailureMarksRunFailed() {
 // is still filed: a write it made is on the record, and a proposal it raised
 // is not left waiting on a run that will never hear its decision.
 func (s *AgentRunWorkflowTestSuite) TestModelFailureFilesWhatRanAndFailsTheRun() {
-	s.stubPrepare(s.prepared(false, 600))
+	s.stubPrepare(s.prepared(false))
 	s.stubOpen()
 	var fa *agentflow.Activities
 	s.env.OnActivity(fa.ModelCallActivity, mock.Anything, mock.Anything).

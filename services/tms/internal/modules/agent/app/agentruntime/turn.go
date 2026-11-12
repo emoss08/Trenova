@@ -418,7 +418,9 @@ func (s *Service) OpenTurn(ctx context.Context, req *agentruntimeports.RunReques
 		context: &runtimeContext,
 		now:     now,
 	}
-	messages = append(messages, input.message())
+	asked := input.message()
+	asked.ToolReferences = kit.set.Opened
+	messages = append(messages, asked)
 	taint, opened := turntaint.Open(req, &runtimeContext, now)
 
 	prompt := agentprompt.BuildSystemPromptParts(definition, &runtimeContext)

@@ -533,7 +533,7 @@ func (r *repository) ListOverdueParked(
 ) ([]inboundmessageports.ParkedRef, error) {
 	ctx = dbscope.WithSystem(
 		ctx,
-		"find snoozed and waiting inbound messages in every tenant whose wake-up timer was lost",
+		"find snoozed and waiting inbound messages in every tenant whose time has come",
 	)
 
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]inboundmessageports.ParkedRef, error) {

@@ -9,7 +9,9 @@ import (
 	"go.temporal.io/api/enums/v1"
 )
 
-const reconcileEvery = time.Hour
+// wakeEvery is how late a snoozed or waiting message may come back: the sweep
+// is the only timer, so a message returns within this of its time.
+const wakeEvery = time.Minute
 
 type ScheduleProvider struct{}
 
@@ -17,12 +19,12 @@ func NewScheduleProvider() *ScheduleProvider { return &ScheduleProvider{} }
 
 func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 	return []*schedule.Schedule{{
-		ID:            triagewakecontract.ReconcileScheduleID,
-		Description:   "Wake the snoozed and waiting inbound messages whose own timer was lost",
-		Spec:          schedule.Every(reconcileEvery),
-		Workflow:      ReconcileTriageWakesWorkflow,
+		ID:            triagewakecontract.WakeDueScheduleID,
+		Description:   "Wake the snoozed and waiting inbound messages whose time has come",
+		Spec:          schedule.Every(wakeEvery),
+		Workflow:      WakeDueTriageWorkflow,
 		TaskQueue:     temporaltype.TaskQueueSystem.String(),
 		OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,
-		Memo:          map[string]any{"purpose": triagewakecontract.ReconcileScheduleID},
+		Memo:          map[string]any{"purpose": triagewakecontract.WakeDueScheduleID},
 	}}
 }

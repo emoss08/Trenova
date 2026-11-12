@@ -129,6 +129,20 @@ func (r *Runner) startFreshRun(
 		return fired, err
 	}
 
+	// A run left waiting on decisions has no workflow to cancel; it is
+	// stopped as a record, and the start is tried again at once.
+	stoppedWaiting, stopErr := r.stopLeftoverWaiting(ctx, session, definition.ID, subjectID)
+	if stopErr != nil {
+		return nil, errors.Join(
+			err,
+			fmt.Errorf("stop the run an earlier bench left waiting: %w", stopErr),
+		)
+	}
+	if stoppedWaiting {
+		r.live.Linef(label, "stopped a run an earlier bench left waiting on a decision")
+		return r.startRun(ctx, session, definition, fire, subjectID)
+	}
+
 	workflowID, findErr := r.leftoverWorkflow(ctx, session, definition.ID, subjectID)
 	if findErr != nil {
 		return nil, errors.Join(
@@ -162,6 +176,34 @@ func (r *Runner) startFreshRun(
 			return fired, err
 		}
 	}
+}
+
+func (r *Runner) stopLeftoverWaiting(
+	ctx context.Context,
+	session *deskbench.Session,
+	definitionID, subjectID pulid.ID,
+) (bool, error) {
+	values, err := r.facts(
+		ctx,
+		session,
+		"SELECT id FROM agent_runs WHERE agent_definition_id = "+benchsql.Quote(
+			definitionID,
+		)+
+			" AND subject_id = "+benchsql.Quote(
+			subjectID,
+		)+
+			" AND status = '"+string(agent.RunStatusAwaitingDecision)+"'"+
+			" ORDER BY created_at DESC LIMIT 1",
+	)
+	if err != nil || len(values) == 0 {
+		return false, err
+	}
+	runID, err := pulid.Parse(strings.TrimSpace(values[0]))
+	if err != nil {
+		return false, fmt.Errorf("the leftover run query returned %q, not an id: %w", values[0], err)
+	}
+
+	return r.runCloser.StopWaiting(session.Context(ctx), session.Tenant, runID)
 }
 
 func (r *Runner) leftoverWorkflow(
@@ -536,18 +578,16 @@ func (r *Runner) stopWaitingRun(
 	}
 
 	r.live.Linef(label, "stopping run %s while it waits for a decision", fired.run.ID)
-	if err := r.watcher.CancelWorkflow(ctx, fired.run.WorkflowID, ""); err != nil {
+	stopped, err := r.runCloser.StopWaiting(
+		session.Context(ctx),
+		session.Tenant,
+		fired.run.ID,
+	)
+	if err != nil {
 		record.CaptureError = benchrecord.JoinErrors(record.CaptureError, "stop: "+err.Error())
 		return
 	}
-	outcome.Stopped = true
-
-	waitCtx, cancel := context.WithTimeout(ctx, runSettleWithin)
-	defer cancel()
-	if err := fired.workflow.Get(waitCtx, nil); err != nil && waitCtx.Err() != nil {
-		record.CaptureError = benchrecord.JoinErrors(record.CaptureError,
-			fmt.Sprintf("the stopped run did not close within %s", runSettleWithin))
-	}
+	outcome.Stopped = stopped
 
 	run, err := r.loadRun(ctx, session, fired.run.ID)
 	if err != nil {

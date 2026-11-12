@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentexceptionservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/changepreview"
@@ -14,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentexceptionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/shared/textcase"
 )
 
 var raisedExceptionFields = []string{
@@ -52,8 +54,8 @@ func previewRaisedException(
 	summary := fmt.Sprintf(
 		"Would hand %s to a person as a %s %s exception.",
 		request.SubjectType.NounWithArticle(),
-		request.Severity,
-		request.Category,
+		strings.ToLower(string(request.Severity)),
+		textcase.LowerFirst(textcase.HumanizeCamelCaseSentence(string(request.Category))),
 	)
 	entity, err := agentexceptionservice.PlanException(request)
 	if err != nil {
@@ -62,7 +64,10 @@ func previewRaisedException(
 
 	change, err := toolpreview.Create(toolpreview.Record{
 		Resource: permission.ResourceAgentException,
-		Label:    fmt.Sprintf("%s exception", entity.Category),
+		Label: fmt.Sprintf(
+			"%s exception",
+			textcase.HumanizeCamelCaseSentence(string(entity.Category)),
+		),
 	}, entity, raisedExceptionOptions(entity.SubjectType)...)
 	if err != nil {
 		return nil, err

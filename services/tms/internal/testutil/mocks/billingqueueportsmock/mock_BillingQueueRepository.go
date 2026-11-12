@@ -1159,27 +1159,27 @@ func (_c *MockBillingQueueRepository_ListOpenShipmentIDs_Call) RunAndReturn(run 
 	return _c
 }
 
-// ListRecheckCandidates provides a mock function for the type MockBillingQueueRepository
-func (_mock *MockBillingQueueRepository) ListRecheckCandidates(ctx context.Context, req *billingqueueports.ListRecheckCandidatesRequest) ([]*billingqueueports.RecheckCandidate, error) {
+// ListRecheckDue provides a mock function for the type MockBillingQueueRepository
+func (_mock *MockBillingQueueRepository) ListRecheckDue(ctx context.Context, req *billingqueueports.ListRecheckDueRequest) ([]*billingqueueports.RecheckDueItem, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
-		panic("no return value specified for ListRecheckCandidates")
+		panic("no return value specified for ListRecheckDue")
 	}
 
-	var r0 []*billingqueueports.RecheckCandidate
+	var r0 []*billingqueueports.RecheckDueItem
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *billingqueueports.ListRecheckCandidatesRequest) ([]*billingqueueports.RecheckCandidate, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *billingqueueports.ListRecheckDueRequest) ([]*billingqueueports.RecheckDueItem, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *billingqueueports.ListRecheckCandidatesRequest) []*billingqueueports.RecheckCandidate); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *billingqueueports.ListRecheckDueRequest) []*billingqueueports.RecheckDueItem); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*billingqueueports.RecheckCandidate)
+			r0 = ret.Get(0).([]*billingqueueports.RecheckDueItem)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *billingqueueports.ListRecheckCandidatesRequest) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *billingqueueports.ListRecheckDueRequest) error); ok {
 		r1 = returnFunc(ctx, req)
 	} else {
 		r1 = ret.Error(1)
@@ -1187,27 +1187,27 @@ func (_mock *MockBillingQueueRepository) ListRecheckCandidates(ctx context.Conte
 	return r0, r1
 }
 
-// MockBillingQueueRepository_ListRecheckCandidates_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListRecheckCandidates'
-type MockBillingQueueRepository_ListRecheckCandidates_Call struct {
+// MockBillingQueueRepository_ListRecheckDue_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListRecheckDue'
+type MockBillingQueueRepository_ListRecheckDue_Call struct {
 	*mock.Call
 }
 
-// ListRecheckCandidates is a helper method to define mock.On call
+// ListRecheckDue is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *billingqueueports.ListRecheckCandidatesRequest
-func (_e *MockBillingQueueRepository_Expecter) ListRecheckCandidates(ctx any, req any) *MockBillingQueueRepository_ListRecheckCandidates_Call {
-	return &MockBillingQueueRepository_ListRecheckCandidates_Call{Call: _e.mock.On("ListRecheckCandidates", ctx, req)}
+//   - req *billingqueueports.ListRecheckDueRequest
+func (_e *MockBillingQueueRepository_Expecter) ListRecheckDue(ctx any, req any) *MockBillingQueueRepository_ListRecheckDue_Call {
+	return &MockBillingQueueRepository_ListRecheckDue_Call{Call: _e.mock.On("ListRecheckDue", ctx, req)}
 }
 
-func (_c *MockBillingQueueRepository_ListRecheckCandidates_Call) Run(run func(ctx context.Context, req *billingqueueports.ListRecheckCandidatesRequest)) *MockBillingQueueRepository_ListRecheckCandidates_Call {
+func (_c *MockBillingQueueRepository_ListRecheckDue_Call) Run(run func(ctx context.Context, req *billingqueueports.ListRecheckDueRequest)) *MockBillingQueueRepository_ListRecheckDue_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *billingqueueports.ListRecheckCandidatesRequest
+		var arg1 *billingqueueports.ListRecheckDueRequest
 		if args[1] != nil {
-			arg1 = args[1].(*billingqueueports.ListRecheckCandidatesRequest)
+			arg1 = args[1].(*billingqueueports.ListRecheckDueRequest)
 		}
 		run(
 			arg0,
@@ -1217,12 +1217,80 @@ func (_c *MockBillingQueueRepository_ListRecheckCandidates_Call) Run(run func(ct
 	return _c
 }
 
-func (_c *MockBillingQueueRepository_ListRecheckCandidates_Call) Return(recheckCandidates []*billingqueueports.RecheckCandidate, err error) *MockBillingQueueRepository_ListRecheckCandidates_Call {
-	_c.Call.Return(recheckCandidates, err)
+func (_c *MockBillingQueueRepository_ListRecheckDue_Call) Return(recheckDueItems []*billingqueueports.RecheckDueItem, err error) *MockBillingQueueRepository_ListRecheckDue_Call {
+	_c.Call.Return(recheckDueItems, err)
 	return _c
 }
 
-func (_c *MockBillingQueueRepository_ListRecheckCandidates_Call) RunAndReturn(run func(ctx context.Context, req *billingqueueports.ListRecheckCandidatesRequest) ([]*billingqueueports.RecheckCandidate, error)) *MockBillingQueueRepository_ListRecheckCandidates_Call {
+func (_c *MockBillingQueueRepository_ListRecheckDue_Call) RunAndReturn(run func(ctx context.Context, req *billingqueueports.ListRecheckDueRequest) ([]*billingqueueports.RecheckDueItem, error)) *MockBillingQueueRepository_ListRecheckDue_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListRecheckDueTenants provides a mock function for the type MockBillingQueueRepository
+func (_mock *MockBillingQueueRepository) ListRecheckDueTenants(ctx context.Context, req *billingqueueports.ListRecheckDueTenantsRequest) ([]pagination.TenantInfo, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListRecheckDueTenants")
+	}
+
+	var r0 []pagination.TenantInfo
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *billingqueueports.ListRecheckDueTenantsRequest) ([]pagination.TenantInfo, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *billingqueueports.ListRecheckDueTenantsRequest) []pagination.TenantInfo); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]pagination.TenantInfo)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *billingqueueports.ListRecheckDueTenantsRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockBillingQueueRepository_ListRecheckDueTenants_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListRecheckDueTenants'
+type MockBillingQueueRepository_ListRecheckDueTenants_Call struct {
+	*mock.Call
+}
+
+// ListRecheckDueTenants is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *billingqueueports.ListRecheckDueTenantsRequest
+func (_e *MockBillingQueueRepository_Expecter) ListRecheckDueTenants(ctx any, req any) *MockBillingQueueRepository_ListRecheckDueTenants_Call {
+	return &MockBillingQueueRepository_ListRecheckDueTenants_Call{Call: _e.mock.On("ListRecheckDueTenants", ctx, req)}
+}
+
+func (_c *MockBillingQueueRepository_ListRecheckDueTenants_Call) Run(run func(ctx context.Context, req *billingqueueports.ListRecheckDueTenantsRequest)) *MockBillingQueueRepository_ListRecheckDueTenants_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *billingqueueports.ListRecheckDueTenantsRequest
+		if args[1] != nil {
+			arg1 = args[1].(*billingqueueports.ListRecheckDueTenantsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockBillingQueueRepository_ListRecheckDueTenants_Call) Return(tenantInfos []pagination.TenantInfo, err error) *MockBillingQueueRepository_ListRecheckDueTenants_Call {
+	_c.Call.Return(tenantInfos, err)
+	return _c
+}
+
+func (_c *MockBillingQueueRepository_ListRecheckDueTenants_Call) RunAndReturn(run func(ctx context.Context, req *billingqueueports.ListRecheckDueTenantsRequest) ([]pagination.TenantInfo, error)) *MockBillingQueueRepository_ListRecheckDueTenants_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1425,6 +1493,129 @@ func (_c *MockBillingQueueRepository_MarkPostedForInvoice_Call) Return(n int64, 
 }
 
 func (_c *MockBillingQueueRepository_MarkPostedForInvoice_Call) RunAndReturn(run func(ctx context.Context, req *billingqueueports.MarkPostedForInvoiceRequest) (int64, error)) *MockBillingQueueRepository_MarkPostedForInvoice_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// MarkRecheckDue provides a mock function for the type MockBillingQueueRepository
+func (_mock *MockBillingQueueRepository) MarkRecheckDue(ctx context.Context, req *billingqueueports.MarkRecheckDueRequest) error {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for MarkRecheckDue")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *billingqueueports.MarkRecheckDueRequest) error); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockBillingQueueRepository_MarkRecheckDue_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'MarkRecheckDue'
+type MockBillingQueueRepository_MarkRecheckDue_Call struct {
+	*mock.Call
+}
+
+// MarkRecheckDue is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *billingqueueports.MarkRecheckDueRequest
+func (_e *MockBillingQueueRepository_Expecter) MarkRecheckDue(ctx any, req any) *MockBillingQueueRepository_MarkRecheckDue_Call {
+	return &MockBillingQueueRepository_MarkRecheckDue_Call{Call: _e.mock.On("MarkRecheckDue", ctx, req)}
+}
+
+func (_c *MockBillingQueueRepository_MarkRecheckDue_Call) Run(run func(ctx context.Context, req *billingqueueports.MarkRecheckDueRequest)) *MockBillingQueueRepository_MarkRecheckDue_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *billingqueueports.MarkRecheckDueRequest
+		if args[1] != nil {
+			arg1 = args[1].(*billingqueueports.MarkRecheckDueRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockBillingQueueRepository_MarkRecheckDue_Call) Return(err error) *MockBillingQueueRepository_MarkRecheckDue_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockBillingQueueRepository_MarkRecheckDue_Call) RunAndReturn(run func(ctx context.Context, req *billingqueueports.MarkRecheckDueRequest) error) *MockBillingQueueRepository_MarkRecheckDue_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// MarkStaleRecheckDue provides a mock function for the type MockBillingQueueRepository
+func (_mock *MockBillingQueueRepository) MarkStaleRecheckDue(ctx context.Context, req *billingqueueports.MarkStaleRecheckDueRequest) (int64, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for MarkStaleRecheckDue")
+	}
+
+	var r0 int64
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *billingqueueports.MarkStaleRecheckDueRequest) (int64, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *billingqueueports.MarkStaleRecheckDueRequest) int64); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *billingqueueports.MarkStaleRecheckDueRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockBillingQueueRepository_MarkStaleRecheckDue_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'MarkStaleRecheckDue'
+type MockBillingQueueRepository_MarkStaleRecheckDue_Call struct {
+	*mock.Call
+}
+
+// MarkStaleRecheckDue is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *billingqueueports.MarkStaleRecheckDueRequest
+func (_e *MockBillingQueueRepository_Expecter) MarkStaleRecheckDue(ctx any, req any) *MockBillingQueueRepository_MarkStaleRecheckDue_Call {
+	return &MockBillingQueueRepository_MarkStaleRecheckDue_Call{Call: _e.mock.On("MarkStaleRecheckDue", ctx, req)}
+}
+
+func (_c *MockBillingQueueRepository_MarkStaleRecheckDue_Call) Run(run func(ctx context.Context, req *billingqueueports.MarkStaleRecheckDueRequest)) *MockBillingQueueRepository_MarkStaleRecheckDue_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *billingqueueports.MarkStaleRecheckDueRequest
+		if args[1] != nil {
+			arg1 = args[1].(*billingqueueports.MarkStaleRecheckDueRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockBillingQueueRepository_MarkStaleRecheckDue_Call) Return(n int64, err error) *MockBillingQueueRepository_MarkStaleRecheckDue_Call {
+	_c.Call.Return(n, err)
+	return _c
+}
+
+func (_c *MockBillingQueueRepository_MarkStaleRecheckDue_Call) RunAndReturn(run func(ctx context.Context, req *billingqueueports.MarkStaleRecheckDueRequest) (int64, error)) *MockBillingQueueRepository_MarkStaleRecheckDue_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1753,6 +1944,63 @@ func (_c *MockBillingQueueRepository_SetPacketDocuments_Call) Return(b bool, err
 }
 
 func (_c *MockBillingQueueRepository_SetPacketDocuments_Call) RunAndReturn(run func(ctx context.Context, req *billingqueueports.SetPacketDocumentsRequest) (bool, error)) *MockBillingQueueRepository_SetPacketDocuments_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// SettleRecheck provides a mock function for the type MockBillingQueueRepository
+func (_mock *MockBillingQueueRepository) SettleRecheck(ctx context.Context, req *billingqueueports.SettleRecheckRequest) error {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SettleRecheck")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *billingqueueports.SettleRecheckRequest) error); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockBillingQueueRepository_SettleRecheck_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SettleRecheck'
+type MockBillingQueueRepository_SettleRecheck_Call struct {
+	*mock.Call
+}
+
+// SettleRecheck is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *billingqueueports.SettleRecheckRequest
+func (_e *MockBillingQueueRepository_Expecter) SettleRecheck(ctx any, req any) *MockBillingQueueRepository_SettleRecheck_Call {
+	return &MockBillingQueueRepository_SettleRecheck_Call{Call: _e.mock.On("SettleRecheck", ctx, req)}
+}
+
+func (_c *MockBillingQueueRepository_SettleRecheck_Call) Run(run func(ctx context.Context, req *billingqueueports.SettleRecheckRequest)) *MockBillingQueueRepository_SettleRecheck_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *billingqueueports.SettleRecheckRequest
+		if args[1] != nil {
+			arg1 = args[1].(*billingqueueports.SettleRecheckRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockBillingQueueRepository_SettleRecheck_Call) Return(err error) *MockBillingQueueRepository_SettleRecheck_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockBillingQueueRepository_SettleRecheck_Call) RunAndReturn(run func(ctx context.Context, req *billingqueueports.SettleRecheckRequest) error) *MockBillingQueueRepository_SettleRecheck_Call {
 	_c.Call.Return(run)
 	return _c
 }

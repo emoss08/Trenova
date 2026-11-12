@@ -29,7 +29,7 @@ func TestCachedTools_MarksTheEndOfTheSchemas(t *testing.T) {
 	tools := cachedTools(toAnthropicTools([]modeladapter.ToolSpec{
 		{Name: "list_workers"},
 		{Name: "list_shipments"},
-	}))
+	}), false)
 
 	require.Len(t, tools, 2)
 	assert.NotContains(
@@ -44,7 +44,7 @@ func TestCachedTools_MarksTheEndOfTheSchemas(t *testing.T) {
 func TestCachedSystem_MarksTheSystemPrompt(t *testing.T) {
 	t.Parallel()
 
-	blocks := cachedSystem("You are an agent inside Trenova.", 0)
+	blocks := cachedSystem("You are an agent inside Trenova.", 0, false)
 
 	require.Len(t, blocks, 1)
 	block := wireMap(t, blocks[0])
@@ -58,8 +58,8 @@ func TestCachedSystem_MarksTheSystemPrompt(t *testing.T) {
 func TestCachedPrefix_MarksNothingWhenThereIsNothingToCache(t *testing.T) {
 	t.Parallel()
 
-	assert.Empty(t, cachedTools(nil))
-	assert.Nil(t, cachedSystem("", 0))
+	assert.Empty(t, cachedTools(nil, false))
+	assert.Nil(t, cachedSystem("", 0, false))
 }
 
 // The system field has to serialise as blocks, not a string, or the breakpoint
@@ -70,8 +70,8 @@ func TestAnthropicRequest_SendsSystemAsBlocksCarryingTheBreakpoint(t *testing.T)
 	body := wireMap(t, anthropic.BetaMessageNewParams{
 		Model:     "claude-test",
 		MaxTokens: 1024,
-		System:    cachedSystem("Be brief.", 0),
-		Tools:     cachedTools(toAnthropicTools([]modeladapter.ToolSpec{{Name: "list_workers"}})),
+		System:    cachedSystem("Be brief.", 0, false),
+		Tools:     cachedTools(toAnthropicTools([]modeladapter.ToolSpec{{Name: "list_workers"}}), false),
 	})
 
 	system, ok := body["system"].([]any)
@@ -102,6 +102,7 @@ func TestCachedSystem_MarksTheEndOfTheSharedPart(t *testing.T) {
 	blocks := cachedSystem(
 		"Rules that never change.\n\nToday is Friday.",
 		len("Rules that never change."),
+		false,
 	)
 
 	require.Len(t, blocks, 2)
@@ -115,7 +116,7 @@ func TestCachedSystem_KeepsOneBlockWithoutASharedPart(t *testing.T) {
 	t.Parallel()
 
 	for _, stable := range []int{0, -1, len("Be brief."), 99} {
-		blocks := cachedSystem("Be brief.", stable)
+		blocks := cachedSystem("Be brief.", stable, false)
 		require.Len(t, blocks, 1, "stable=%d", stable)
 		assert.Equal(t, "Be brief.", blocks[0].Text)
 		assert.Contains(t, wireMap(t, blocks[0]), "cache_control", "stable=%d", stable)

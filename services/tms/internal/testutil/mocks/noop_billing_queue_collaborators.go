@@ -16,7 +16,11 @@ var _ billingqueueports.RecheckRequester = (*NoopRecheckRequester)(nil)
 
 type NoopRecheckRequester struct{}
 
-func (*NoopRecheckRequester) RequestRecheck(context.Context, pagination.TenantInfo, ...pulid.ID) {}
+func (*NoopRecheckRequester) RequestRecheck(context.Context, pagination.TenantInfo, ...pulid.ID) error {
+	return nil
+}
+
+func (*NoopRecheckRequester) WakeTenant(context.Context, pagination.TenantInfo) {}
 
 type NoopInvoiceCreation struct {
 	invoiceports.InvoiceCreationService

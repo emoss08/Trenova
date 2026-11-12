@@ -84,6 +84,7 @@ type deps struct {
 	Recommender      agentrecommendationports.AgentRecommender
 	Runs             agentruntimeports.AgentRunService
 	RunRecords       agentruntimeports.AgentRunRepository
+	RunCloser        agentruntimeports.RunCloser
 	PriceReference   aiproviderports.ModelPriceReference
 	ActionTools      agenttoolports.AgentToolRegistry
 	Shipments        shipmentserviceports.ShipmentLifecycleService

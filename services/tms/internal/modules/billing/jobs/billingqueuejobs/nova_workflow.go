@@ -104,7 +104,7 @@ func BillingQueueNovaGenerationWorkflow(
 			progress.Phase = billingqueueports.NovaPhaseBriefing
 			publishNovaProgress(ctx, payload, true)
 			briefCtx := workflow.WithActivityOptions(ctx, briefActivityOptions)
-			if err = workflow.ExecuteActivity(briefCtx, a.RefreshBriefActivity, &billingqueuecontract.BriefPayload{
+			if err = workflow.ExecuteActivity(briefCtx, a.RefreshBriefActivity, &billingqueuecontract.TenantPayload{
 				OrganizationID: payload.OrganizationID,
 				BusinessUnitID: payload.BusinessUnitID,
 			}).Get(briefCtx, nil); err != nil {
@@ -299,8 +299,8 @@ func autoApproveWave(
 func novaItemPayload(
 	payload *billingqueuecontract.NovaGenerationPayload,
 	itemID pulid.ID,
-) *billingqueuecontract.RecheckPayload {
-	return &billingqueuecontract.RecheckPayload{
+) *billingqueuecontract.ItemPayload {
+	return &billingqueuecontract.ItemPayload{
 		OrganizationID: payload.OrganizationID,
 		BusinessUnitID: payload.BusinessUnitID,
 		ItemID:         itemID,

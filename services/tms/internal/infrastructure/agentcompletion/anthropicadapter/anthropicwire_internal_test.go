@@ -492,7 +492,7 @@ func TestAnthropicConversation_PutsLoadedToolsTextAfterEveryResult(t *testing.T)
 			Role: modeladapter.RoleTool, ToolCallID: "call_quiet", ToolName: "find_tools",
 			ToolReferences: []string{"list_workers"},
 		},
-	}, nil, false)
+	}, nil, false, false)
 
 	blocks := out[len(out)-1].Content
 	require.Len(t, blocks, 4)
@@ -520,7 +520,7 @@ func TestAnthropicConversation_KeepsAnErrorResultsTextInside(t *testing.T) {
 			Role: modeladapter.RoleTool, ToolCallID: "call_find", ToolName: "find_tools", IsError: true,
 			Content: "find_tools failed", ToolReferences: []string{"list_trailers"},
 		},
-	}, nil, false)
+	}, nil, false, false)
 
 	blocks := out[len(out)-1].Content
 	require.Len(t, blocks, 1)

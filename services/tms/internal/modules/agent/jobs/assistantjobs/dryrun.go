@@ -124,9 +124,17 @@ func (w *Workflows) dryRun(
 		plan.RunRequest(&payload.Actor),
 		agentflowcontract.PriorityInteractive,
 	)
+	run.ScopeCheck = plan.ScopeCheck
 	outcome, err := agentflow.Run(runCtx, w.runtime, stream.Events(), run, plan.Turn)
 	if err != nil {
 		return dryRunError(ctx, err)
+	}
+	if outcome.Scope != nil && !outcome.Scope.Allowed {
+		return temporaltype.StreamItem{
+			Event: assistantstreamports.AssistantEventDone,
+			Data:  map[string]any{"reply": outcome.Scope.Message},
+			At:    workflow.Now(ctx).Unix(),
+		}
 	}
 
 	reply := ""

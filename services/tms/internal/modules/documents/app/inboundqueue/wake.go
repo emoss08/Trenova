@@ -15,52 +15,24 @@ import (
 
 var _ triagewakecontract.Worker = (*Service)(nil)
 
-const reconcileGraceSeconds = 5 * 60
-
-func (s *Service) WakeSchedule(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	id pulid.ID,
-) (*triagewakecontract.Schedule, error) {
-	states, err := s.queueRepo.QueueStates(ctx, inboundmessageports.QueueStatesRequest{
-		TenantInfo: tenantInfo,
-		IDs:        []pulid.ID{id},
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return scheduleOf(states, id), nil
-}
-
-func scheduleOf(
-	states []*inboundmessageports.QueueState,
-	id pulid.ID,
-) *triagewakecontract.Schedule {
-	for _, state := range states {
-		if state.ID == id && state.HasTimer() {
-			return &triagewakecontract.Schedule{Open: true, WakeAt: state.WakeAt()}
-		}
-	}
-
-	return &triagewakecontract.Schedule{}
-}
-
 func dueToWake(now int64) func(*inboundmessageports.QueueState) bool {
 	return func(state *inboundmessageports.QueueState) bool {
 		return state.HasTimer() && state.WakeAt() <= now
 	}
 }
 
+// WakeIfDue brings back the tenant's parked messages among ids whose time has
+// come, in one transition, and reports how many it woke. A message woken
+// already, or whose time moved on, is left as it is.
 func (s *Service) WakeIfDue(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
-	id pulid.ID,
+	ids []pulid.ID,
 	now int64,
-) (*triagewakecontract.WakeResult, error) {
+) (int, error) {
 	result, err := s.RunTransition(ctx, &Transition{
 		Tenant:   tenantInfo,
-		IDs:      []pulid.ID{id},
+		IDs:      ids,
 		Eligible: dueToWake(now),
 		Patch:    inboundmessageports.QueuePatch{Unpark: true},
 		Activity: func(before, after *inboundmessageports.QueueState) *triage.Activity {
@@ -78,27 +50,23 @@ func (s *Service) WakeIfDue(
 		},
 	})
 	if err != nil {
-		return nil, err
-	}
-	if len(result.Changed) > 0 {
-		return &triagewakecontract.WakeResult{Woken: true}, nil
+		return 0, err
 	}
 
-	schedule, err := s.WakeSchedule(ctx, tenantInfo, id)
-	if err != nil {
-		return nil, err
-	}
-
-	return &triagewakecontract.WakeResult{Schedule: *schedule}, nil
+	return len(result.Changed), nil
 }
 
-func (s *Service) ReconcileOverdueWakes(ctx context.Context, now int64) (int, error) {
+// WakeDue wakes, in every tenant, the snoozed and waiting messages whose time
+// has come. It is the only timer: the minute sweep calls it, reading the
+// parked columns, so a message holds no workflow while it waits. Each page is
+// one transition per tenant.
+func (s *Service) WakeDue(ctx context.Context, now int64) (int, error) {
 	woken := 0
 	for {
 		refs, err := s.queueRepo.ListOverdueParked(
 			ctx,
 			inboundmessageports.ListOverdueParkedRequest{
-				Now:   now - reconcileGraceSeconds,
+				Now:   now,
 				Limit: inboundmessageports.ReconcileBatchSize,
 			},
 		)
@@ -107,22 +75,31 @@ func (s *Service) ReconcileOverdueWakes(ctx context.Context, now int64) (int, er
 		}
 
 		changed := 0
-		for _, ref := range refs {
-			tenantInfo := ref.TenantInfo()
+		for tenantInfo, ids := range parkedByTenant(refs) {
 			tenantCtx := dbscope.WithTenant(ctx, tenantInfo.DBTenant())
-			result, wErr := s.WakeIfDue(tenantCtx, tenantInfo, ref.ID, now)
+			n, wErr := s.WakeIfDue(tenantCtx, tenantInfo, ids, now)
 			if wErr != nil {
-				s.l.Error("could not wake an overdue inbound message",
-					zap.String("messageId", ref.ID.String()), zap.Error(wErr))
+				s.l.Error("could not wake a tenant's due inbound messages",
+					zap.String("organizationId", tenantInfo.OrgID.String()),
+					zap.Int("messages", len(ids)),
+					zap.Error(wErr))
 				continue
 			}
-			if result.Woken {
-				changed++
-			}
+			changed += n
 		}
 		woken += changed
 		if len(refs) < inboundmessageports.ReconcileBatchSize || changed == 0 {
 			return woken, nil
 		}
 	}
+}
+
+func parkedByTenant(refs []inboundmessageports.ParkedRef) map[pagination.TenantInfo][]pulid.ID {
+	byTenant := make(map[pagination.TenantInfo][]pulid.ID)
+	for _, ref := range refs {
+		tenant := ref.TenantInfo()
+		byTenant[tenant] = append(byTenant[tenant], ref.ID)
+	}
+
+	return byTenant
 }

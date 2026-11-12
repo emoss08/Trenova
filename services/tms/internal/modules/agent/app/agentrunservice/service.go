@@ -167,10 +167,30 @@ func (s *Service) StartForDefinition(
 		Origin:       aitrace.Traceparent(ctx),
 	}
 
+	// A subject keeps one open event or wait run per agent, and the run stays
+	// open while its proposals wait on decisions, after its workflow has
+	// ended. The count turns away the usual duplicate before any workflow
+	// starts; the unique index on open subject runs settles two requests
+	// that both pass it, refusing the second record, whose workflow is then
+	// stopped below.
+	if req.Slot == 0 && subjectBound(run) {
+		open, cErr := s.repo.CountOpen(ctx, &agentruntimeports.CountOpenAgentRunsRequest{
+			TenantInfo:   req.TenantInfo,
+			DefinitionID: definition.ID,
+			SubjectID:    subjectID,
+			Triggers:     []agent.RunTrigger{agent.RunTriggerEvent, agent.RunTriggerWait},
+		})
+		if cErr != nil {
+			return nil, cErr
+		}
+		if open > 0 {
+			return nil, agentruntimeports.ErrAgentRunAlreadyOpen
+		}
+	}
+
 	// The workflow starts before the run is recorded, because its id is what
-	// keeps a subject to one open run: a second event about a subject whose
-	// run is still open is refused by Temporal, where two requests cannot
-	// both pass the check. Recording first would leave a record behind for
+	// keeps a scheduled slot to one run ever: a second start for the slot is
+	// refused by Temporal. Recording first would leave a record behind for
 	// every duplicate refused. The run's first activity waits out the moment
 	// between the start and the record.
 	startCtx := aitrace.ContextWithAnchor(ctx, anchor)

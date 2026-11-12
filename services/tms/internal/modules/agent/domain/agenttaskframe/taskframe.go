@@ -1,8 +1,6 @@
 package agenttaskframe
 
 import (
-	"strings"
-
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
@@ -25,21 +23,6 @@ func (p *Playbook) frame() *agentturn.TaskFrame {
 		Done:     p.Done,
 		Playbook: p.ID,
 	}
-}
-
-const (
-	maxFrameGoalRunes = 240
-	maxFrameNeedRunes = 300
-)
-
-func ChatFrame(goal, need string) *agentturn.TaskFrame {
-	goal = boundedLine(goal, maxFrameGoalRunes)
-	need = boundedLine(need, maxFrameNeedRunes)
-	if goal == "" && need == "" {
-		return nil
-	}
-
-	return &agentturn.TaskFrame{Goal: goal, Need: need, Inferred: true}
 }
 
 func BackgroundFrame(
@@ -77,16 +60,6 @@ func ScheduledPlaybook(template agenttemplate.Template) (Playbook, bool) {
 	}
 
 	return Playbook{}, false
-}
-
-func boundedLine(text string, limit int) string {
-	text = strings.Join(strings.Fields(text), " ")
-	runes := []rune(text)
-	if len(runes) <= limit {
-		return text
-	}
-
-	return strings.TrimSpace(string(runes[:limit]))
 }
 
 var scheduledPlaybook = Playbook{

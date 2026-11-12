@@ -22,22 +22,8 @@ func NewActivities(p ActivitiesParams) *Activities {
 	return &Activities{worker: p.Worker}
 }
 
-func (a *Activities) ScheduleTriageWakeActivity(
-	ctx context.Context,
-	payload *Payload,
-) (*Schedule, error) {
-	return a.worker.WakeSchedule(ctx, payload.Tenant(), payload.MessageID)
-}
-
-func (a *Activities) WakeTriageMessageActivity(
-	ctx context.Context,
-	in *WakeInput,
-) (*WakeResult, error) {
-	return a.worker.WakeIfDue(ctx, in.Payload.Tenant(), in.Payload.MessageID, in.Now)
-}
-
-func (a *Activities) ReconcileTriageWakesActivity(ctx context.Context) (int, error) {
-	return a.worker.ReconcileOverdueWakes(ctx, timeutils.NowUnix())
+func (a *Activities) WakeDueTriageActivity(ctx context.Context) (int, error) {
+	return a.worker.WakeDue(ctx, timeutils.NowUnix())
 }
 
 func (a *Activities) RecomputeTriageDueActivity(

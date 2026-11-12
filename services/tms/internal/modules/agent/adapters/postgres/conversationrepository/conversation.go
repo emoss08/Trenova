@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/deskcase"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/conversationports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -258,18 +259,28 @@ func threadShelfCountQuery(
 }
 
 // aboutRecord keeps one half of a person's conversations: the ones asked on
-// a record's case, which the Desk lists as cases, or the ones about no
-// record, which it lists as conversations by day.
+// a record's case, which the Desk lists as cases, or the rest, which it lists
+// as conversations by day. Only the kinds of record deskcase names have a
+// page in the Desk to list a conversation under, so a conversation about any
+// other record (an inbound message, a document) is a conversation like one
+// about nothing: listed with the cases it would be a row no case page stands
+// behind, and missing from the conversations.
 func aboutRecord(wanted *bool) keel.Pred {
-	th := conversationdb.Threads
-	switch {
-	case wanted == nil:
+	if wanted == nil {
 		return nil
-	case *wanted:
-		return th.SubjectID.IsNotNull()
-	default:
-		return th.SubjectID.IsNull()
 	}
+
+	th := conversationdb.Threads
+	onACase := keel.And(th.SubjectID.IsNotNull(), th.SubjectType.In(deskcase.ConversationSubjects()...))
+	if *wanted {
+		return onACase
+	}
+
+	return keel.Or(
+		th.SubjectID.IsNull(),
+		th.SubjectType.IsNull(),
+		th.SubjectType.NotIn(deskcase.ConversationSubjects()...),
+	)
 }
 
 func (r *repository) CountThreadShelves(

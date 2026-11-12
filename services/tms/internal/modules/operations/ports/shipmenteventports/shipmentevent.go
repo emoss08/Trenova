@@ -23,14 +23,7 @@ func (r *ListShipmentEventsRequest) Validate() error {
 
 	multiErr.AddOzzoError(validation.ValidateStruct(
 		r,
-		validation.Field(
-			&r.TenantInfo.OrgID,
-			validation.Required.Error("Organization ID is required"),
-		),
-		validation.Field(
-			&r.TenantInfo.BuID,
-			validation.Required.Error("Business unit ID is required"),
-		),
+		validation.Field(&r.TenantInfo),
 	))
 
 	return multiErr.Err()

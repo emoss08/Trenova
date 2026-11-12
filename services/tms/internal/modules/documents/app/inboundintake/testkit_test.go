@@ -57,7 +57,7 @@ type testService struct {
 	ruleEvaluator inboundmessageports.TriageRuleEvaluator
 	ruleTeacher   inboundmessageports.TriageRuleTeacher
 	hints         inboundmessageports.SenderHintProvider
-	wakes         inboundmessageports.TriageWakeScheduler
+	dues          inboundmessageports.TriageDueRecomputer
 	email         emailports.EmailService
 	notify        *inboundqueue.Notifier
 	now           func() int64
@@ -101,7 +101,7 @@ func withQueue(
 	svc.activityRepo = fakes.Activities
 	svc.mailboxState = fakes.Mailboxes
 	svc.targetRepo = fakes.Targets
-	svc.wakes = fakes.Wakes
+	svc.dues = fakes.Dues
 	svc.notify = inboundqueue.NewNotifier(inboundqueue.NotifierParams{
 		Logger:     svc.l,
 		Realtime:   &inboundqueuetest.RecordingRealtime{},
@@ -151,7 +151,7 @@ func (t *testService) intake() *Service {
 		SettingsRepo:  t.settingsRepo,
 		Shipments:     t.shipments,
 		TargetRepo:    t.targetRepo,
-		Wakes:         t.wakes,
+		Dues:          t.dues,
 		Watchtower:    t.watchtower,
 		Briefing:      inboundqueuetest.NoopBriefing{},
 	})

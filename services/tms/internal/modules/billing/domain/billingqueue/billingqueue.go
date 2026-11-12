@@ -61,6 +61,7 @@ type BillingQueueItem struct {
 	AdjustmentContext         AdjustmentContext     `json:"adjustmentContext"         keel:"adjustment_context,jsonb"`
 	Lane                      Lane                  `json:"lane"                      keel:"lane,readonly"`
 	CheckedAt                 *int64                `json:"checkedAt"                 keel:"checked_at,readonly"`
+	RecheckDueAt              *int64                `json:"-"                         keel:"recheck_due_at,readonly,noselect"`
 	PONumber                  string                `json:"poNumber"                  keel:"po_number,nullzero"`
 	InvoiceMemo               string                `json:"invoiceMemo"               keel:"invoice_memo,nullzero"`
 	PaymentTerm               string                `json:"paymentTerm"               keel:"payment_term,nullzero"`

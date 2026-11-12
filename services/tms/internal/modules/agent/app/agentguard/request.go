@@ -44,6 +44,31 @@ const (
 	maxAboutChars = 300
 )
 
+// Bounded is the request cut to what the classifier is shown, for carrying it
+// to where the classifier runs. Cutting it again changes nothing, so the
+// verdict cache reads the same key either way.
+func (r EvaluateRequest) Bounded() EvaluateRequest {
+	turns := r.Recent
+	if len(turns) > maxContextTurns {
+		turns = turns[len(turns)-maxContextTurns:]
+	}
+	recent := make([]Turn, 0, len(turns))
+	for _, turn := range turns {
+		content := strings.TrimSpace(turn.Content)
+		if content == "" {
+			continue
+		}
+		if len(content) > maxContextChars {
+			content = content[:truncationBoundary(content, maxContextChars)] + "…"
+		}
+		recent = append(recent, Turn{Role: turn.Role, Content: content})
+	}
+	r.Recent = recent
+	r.About = r.aboutContext()
+
+	return r
+}
+
 // aboutContext is what the person was looking at, bounded for the classifier.
 func (r EvaluateRequest) aboutContext() string {
 	about := strings.Join(strings.Fields(r.About), " ")

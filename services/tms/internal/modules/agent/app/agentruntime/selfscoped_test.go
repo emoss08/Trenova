@@ -169,7 +169,7 @@ func TestNewToolSet_MyDashboardReachesTheHomePage(t *testing.T) {
 	})
 
 	require.True(t, set.Disclosed)
-	sent := specNames(set.Specs)
+	sent := opensWith(set)
 	assert.Contains(t, sent, "home_get_layout")
 	assert.Contains(t, sent, "report_list_dashboards")
 }

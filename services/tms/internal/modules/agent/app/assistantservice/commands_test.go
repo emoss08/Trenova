@@ -173,11 +173,11 @@ func TestPrepareTurn_RefusesAnExtensionCommandItCannotHonour(t *testing.T) {
 func fieldOf(err error) string {
 	var single *errortypes.Error
 	if errors.As(err, &single) {
-		return single.Field
+		return single.Field()
 	}
 	var multi *errortypes.MultiError
 	if errors.As(err, &multi) && len(multi.Errors) > 0 {
-		return multi.Errors[0].Field
+		return multi.Errors[0].Field()
 	}
 
 	return ""

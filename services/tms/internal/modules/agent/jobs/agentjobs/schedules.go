@@ -14,6 +14,12 @@ import (
 // left behind, and catches an agent changed by anything other than a save.
 const reconcileEvery = time.Hour
 
+// proposalExpiryEvery is how often expired proposals are marked and the runs
+// they leave settled are closed. A proposal past its expiry is refused at
+// decision time whatever the sweep has done; the sweep only moves the
+// status, so the run's record catches up within this.
+const proposalExpiryEvery = 15 * time.Minute
+
 type ScheduleProvider struct{}
 
 func NewScheduleProvider() *ScheduleProvider {
@@ -35,8 +41,8 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 		},
 		{
 			ID:            ExpireStaleProposalsScheduleID,
-			Description:   "Mark pending agent proposals whose decision window has closed as expired",
-			Spec:          schedule.Every(time.Hour),
+			Description:   "Expire pending agent proposals past their decision window and close the runs they leave settled",
+			Spec:          schedule.Every(proposalExpiryEvery),
 			Workflow:      ExpireStaleProposalsWorkflow,
 			TaskQueue:     temporaltype.TaskQueueAgentBackground.String(),
 			OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,

@@ -257,17 +257,17 @@ describe("ProposalPreview", () => {
     );
 
     expect(
-      screen.getByText(
-        "This action can't say exactly what it would change. It would run with the values below.",
-      ),
+      screen.getByText("Its result can't be previewed. It would run with these values."),
     ).toBeInTheDocument();
-    expect(screen.getByText("Raise agent exception")).toBeInTheDocument();
+    // The values are captioned once; the action's name is not repeated over them.
+    expect(screen.queryByText("Raise agent exception")).toBeNull();
     expect(screen.getByText("High")).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).toBeNull();
   });
 
-  // A preview that failed already says the values are shown instead; the
-  // coverage notice would say the same thing a second time.
-  it("says once that the values are shown instead when the preview failed", () => {
+  // A preview that failed is the same fact as a preview there is none of: it
+  // is said once, as a caption, and never as an alert.
+  it("says once that the result can't be previewed when the preview failed", () => {
     renderIn(
       <ProposalPreview
         preview={preview({
@@ -279,16 +279,10 @@ describe("ProposalPreview", () => {
       />,
     );
 
-    expect(
-      screen.getByText(
-        "What this would change could not be worked out; the values it would run with are shown instead.",
-      ),
-    ).toBeInTheDocument();
-    expect(
-      screen.queryByText(
-        "This action can't say exactly what it would change. It would run with the values below.",
-      ),
-    ).not.toBeInTheDocument();
+    expect(screen.getByText("Its result can't be previewed.")).toBeInTheDocument();
+    expect(screen.queryByText("Nothing would change.")).toBeNull();
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(screen.queryByRole("status")).toBeNull();
   });
 
   it("says a stale proposal can only be rejected, and why", () => {
@@ -378,7 +372,7 @@ describe("ProposalPreview", () => {
       />,
     );
 
-    expect(screen.getByText("This would not go through as it stands")).toBeInTheDocument();
+    expect(screen.getByText("This can't run as it stands")).toBeInTheDocument();
     expect(screen.getByText("BOL is already in use by shipment SEED-DET-009")).toBeInTheDocument();
     expect(screen.getByText("The customer is on credit hold")).toBeInTheDocument();
     expect(screen.getAllByRole("button", { name: /^Change / })).toHaveLength(1);

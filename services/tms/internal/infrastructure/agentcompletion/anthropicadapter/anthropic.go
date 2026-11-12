@@ -50,6 +50,10 @@ func anthropicParams(
 ) anthropic.BetaMessageNewParams {
 	tools := call.Request.Tools
 	messages := attached.messages
+	additions := anthropicAdds(call, messages)
+	if !additions {
+		tools, messages = modeladapter.OpenedTools(tools, messages)
+	}
 	if anthropicDefers(call) {
 		messages = referencing(messages, modeladapter.DeferredTools(tools))
 	} else {
@@ -64,14 +68,24 @@ func anthropicParams(
 	params := anthropic.BetaMessageNewParams{
 		Model:     call.Provider.Model,
 		MaxTokens: int64(call.Request.MaxTokens),
-		System:    cachedSystem(call.Request.System, call.Request.SystemStable),
-		Messages: cachedConversation(
-			anthropicConversation(messages, attached.blocks, anthropicNotices(call)),
+		System: cachedSystem(
+			call.Request.System, call.Request.SystemStable, anthropicKeepsAnHour(call),
 		),
-		Tools: cachedTools(advisedTools(toAnthropicTools(tools), advisor)),
+		Messages: cachedConversation(
+			anthropicConversation(messages, attached.blocks, anthropicNotices(call), additions),
+		),
+		Tools: cachedTools(
+			advisedTools(toAnthropicTools(tools), advisor), anthropicKeepsAnHour(call),
+		),
 	}
 	if beta {
 		params.Betas = append(params.Betas, anthropicAdvisorBeta)
+	}
+	if additions {
+		params.Betas = append(
+			params.Betas,
+			anthropic.AnthropicBetaMidConversationToolChanges2026_07_01,
+		)
 	}
 	if call.Request.ToolChoiceNone && len(params.Tools) > 0 {
 		none := anthropic.NewBetaToolChoiceNoneParam()
@@ -92,6 +106,39 @@ func anthropicNotices(call *modeladapter.Call) bool {
 	return providerTraits(call.Provider).notices
 }
 
+// anthropicAdds reports whether the tools a person's message opened its turn
+// with are surfaced by a tool_addition after that message, which leaves the
+// request's tools as every turn declares them. It takes a model and platform
+// that read a system message mid-conversation, a request that declares tools
+// deferred, and every such message standing where the addition may follow it.
+func anthropicAdds(call *modeladapter.Call, messages []modeladapter.Message) bool {
+	if !anthropicDefers(call) || !anthropicNotices(call) {
+		return false
+	}
+	opened := false
+	for idx := range messages {
+		if messages[idx].Role != modeladapter.RoleUser || len(messages[idx].ToolReferences) == 0 {
+			continue
+		}
+		if !additionFits(messages, idx) {
+			return false
+		}
+		opened = true
+	}
+
+	return opened
+}
+
+// anthropicKeepsAnHour reports whether the tools and the shared system prompt
+// are cached for an hour. They are the same for every turn of an agent for a
+// person, and people answer minutes apart, so the five-minute entry is gone by
+// the next question more often than not.
+func anthropicKeepsAnHour(call *modeladapter.Call) bool {
+	platform := call.Provider.ResolvedPlatform()
+
+	return platform != aiplatform.PlatformFoundry && platform != aiplatform.PlatformBedrock
+}
+
 func anthropicDefers(call *modeladapter.Call) bool {
 	return declaresLoadedTool(call.Request.Tools) &&
 		call.Provider.ResolvedPlatform() != aiplatform.PlatformFoundry
@@ -110,24 +157,13 @@ func applyThinking(params *anthropic.BetaMessageNewParams, call *modeladapter.Ca
 	case effort.Enabled():
 		params.Thinking = adaptiveThinking(anthropic.BetaThinkingConfigAdaptiveDisplaySummarized)
 		params.OutputConfig.Effort = anthropicEffort(effort)
-	case effort.Disabled():
-		// None is the least thinking the model allows. A model that always
-		// thinks, refuses "disabled", or is an effort model the operator named
-		// behind an unreadable id, thinks at low effort; one that takes
-		// "disabled" is told so; the rest do not think unless asked.
-		switch {
-		case model.thinksAlways || model.disableRefused || model.declared:
-			params.Thinking = adaptiveThinking(
-				anthropic.BetaThinkingConfigAdaptiveDisplaySummarized,
-			)
-			params.OutputConfig.Effort = anthropic.BetaOutputConfigEffortLow
-		case model.disableNeedsLowEffort:
-			params.Thinking = anthropic.BetaThinkingConfigParamUnion{
-				OfDisabled: &anthropic.BetaThinkingConfigDisabledParam{},
-			}
-		}
-	case model.thinksUnasked:
+	case model.thinksAlways || model.disableRefused || model.declared:
 		params.Thinking = adaptiveThinking(anthropic.BetaThinkingConfigAdaptiveDisplaySummarized)
+		params.OutputConfig.Effort = anthropic.BetaOutputConfigEffortLow
+	case model.thinksUnasked:
+		params.Thinking = anthropic.BetaThinkingConfigParamUnion{
+			OfDisabled: &anthropic.BetaThinkingConfigDisabledParam{},
+		}
 	}
 	if model.bindsPrefix {
 		bindThinking(params)
@@ -653,7 +689,7 @@ func replayThinking(trace *modeladapter.ReasoningTrace) []anthropic.BetaContentB
 func anthropicConversation(
 	messages []modeladapter.Message,
 	files map[int][]anthropic.BetaContentBlockParamUnion,
-	notices bool,
+	notices, additions bool,
 ) []anthropic.BetaMessageParam {
 	out := make([]anthropic.BetaMessageParam, 0, len(messages))
 	currentTurn := 0
@@ -737,16 +773,51 @@ func anthropicConversation(
 			// which is the order the API asks for.
 			if last, _ := lastToolResults(out); last != nil {
 				last.Content = append(last.Content, blocks...)
-				continue
+			} else {
+				out = append(out, anthropic.BetaMessageParam{
+					Role:    anthropic.BetaMessageParamRoleUser,
+					Content: blocks,
+				})
 			}
-			out = append(out, anthropic.BetaMessageParam{
-				Role:    anthropic.BetaMessageParamRoleUser,
-				Content: blocks,
-			})
+			if additions && msg.Role == modeladapter.RoleUser {
+				out = appendAdditions(out, msg.ToolReferences)
+			}
 		}
 	}
 
 	return out
+}
+
+func appendAdditions(
+	out []anthropic.BetaMessageParam,
+	names []string,
+) []anthropic.BetaMessageParam {
+	if len(names) == 0 {
+		return out
+	}
+	blocks := make([]anthropic.BetaContentBlockParamUnion, 0, len(names))
+	for _, name := range names {
+		blocks = append(blocks, anthropic.NewBetaToolAdditionBlock(
+			anthropic.BetaToolChangeToolReferenceParam{Name: name},
+		))
+	}
+
+	return append(out, anthropic.BetaMessageParam{
+		Role:    anthropic.BetaMessageParamRoleSystem,
+		Content: blocks,
+	})
+}
+
+// additionFits reports whether a system message may follow the message at:
+// the API takes one only as the last message or ahead of an assistant turn.
+func additionFits(messages []modeladapter.Message, at int) bool {
+	for idx := at + 1; idx < len(messages); idx++ {
+		if messages[idx].Role != modeladapter.RoleSystem {
+			return messages[idx].Role == modeladapter.RoleAssistant
+		}
+	}
+
+	return true
 }
 
 func noticeFits(out []anthropic.BetaMessageParam, messages []modeladapter.Message, at int) bool {
@@ -915,17 +986,25 @@ next call read everything before that result back from the cache. A mark from
 an earlier call stays a valid place to read from, so the cache grows with the
 conversation rather than being rewritten by it.
 
+The tools and the shared part of the system prompt are the same on every turn
+of an agent for a person, and people ask minutes apart, so their marks keep an
+hour where the platform takes the longer lifetime. The conversation's mark
+keeps the default five minutes, which a tool loop refreshes with every call.
+
 The marks go at the end of each block rather than the start, because what is
 cached is everything up to the mark. An empty tool list, system prompt or
 conversation gets no mark: a breakpoint on nothing still costs a write.
 */
-func cachedTools(tools []anthropic.BetaToolUnionParam) []anthropic.BetaToolUnionParam {
+func cachedTools(
+	tools []anthropic.BetaToolUnionParam,
+	hour bool,
+) []anthropic.BetaToolUnionParam {
 	for idx := len(tools) - 1; idx >= 0; idx-- {
 		if tool := tools[idx].OfTool; tool != nil && tool.DeferLoading.Value {
 			continue
 		}
 		if mark := tools[idx].GetCacheControl(); mark != nil {
-			*mark = anthropic.NewBetaCacheControlEphemeralParam()
+			*mark = sharedMark(hour)
 		}
 
 		return tools
@@ -934,7 +1013,7 @@ func cachedTools(tools []anthropic.BetaToolUnionParam) []anthropic.BetaToolUnion
 	return tools
 }
 
-func cachedSystem(system string, stable int) []anthropic.BetaTextBlockParam {
+func cachedSystem(system string, stable int, hour bool) []anthropic.BetaTextBlockParam {
 	if system == "" {
 		return nil
 	}
@@ -946,9 +1025,19 @@ func cachedSystem(system string, stable int) []anthropic.BetaTextBlockParam {
 	}
 
 	return []anthropic.BetaTextBlockParam{
-		{Text: system[:stable], CacheControl: anthropic.NewBetaCacheControlEphemeralParam()},
+		{Text: system[:stable], CacheControl: sharedMark(hour)},
 		{Text: system[stable:]},
 	}
+}
+
+// sharedMark is the mark on what every turn of an agent for a person sends.
+func sharedMark(hour bool) anthropic.BetaCacheControlEphemeralParam {
+	mark := anthropic.NewBetaCacheControlEphemeralParam()
+	if hour {
+		mark.TTL = anthropic.BetaCacheControlEphemeralTTLTTL1h
+	}
+
+	return mark
 }
 
 func cachedConversation(messages []anthropic.BetaMessageParam) []anthropic.BetaMessageParam {

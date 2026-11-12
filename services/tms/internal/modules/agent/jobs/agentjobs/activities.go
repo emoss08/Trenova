@@ -102,6 +102,7 @@ type ActivitiesParams struct {
 	// Conditions closes what was handed to a run that proposed nothing.
 	Conditions    watchtowerports.RunSettler
 	Reflections   agentreflectionports.AgentReflectionScheduler
+	RunCloser     agentruntimeports.RunCloser
 	Schedules     *agentcontract.DefinitionSchedules
 	PlatformPlans platformplanports.PlanService
 	// Waits reads the wait whose ending started a run that picks up work.
@@ -138,6 +139,7 @@ type Activities struct {
 	watchtower       watchtowerports.WatchtowerProjector
 	conditions       watchtowerports.RunSettler
 	reflections      agentreflectionports.AgentReflectionScheduler
+	runCloser        agentruntimeports.RunCloser
 	schedules        *agentcontract.DefinitionSchedules
 	platformPlans    platformplanports.PlanService
 	waits            agentwaitports.AgentWaitRepository
@@ -177,6 +179,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 		watchtower:       p.Watchtower,
 		conditions:       p.Conditions,
 		reflections:      p.Reflections,
+		runCloser:        p.RunCloser,
 		schedules:        p.Schedules,
 		platformPlans:    p.PlatformPlans,
 		waits:            p.Waits,
@@ -231,11 +234,10 @@ func (a *Activities) PrepareRunActivity(
 	}
 
 	return &PrepareRunResult{
-		Definition:             definition,
-		Subject:                subject,
-		ShadowMode:             definition.EffectiveShadow(control.ShadowMode),
-		DecisionTimeoutSeconds: definition.DecisionTimeoutSeconds,
-		RunTimeoutSeconds:      definition.RunTimeoutSeconds,
+		Definition:        definition,
+		Subject:           subject,
+		ShadowMode:        definition.EffectiveShadow(control.ShadowMode),
+		RunTimeoutSeconds: definition.RunTimeoutSeconds,
 	}, nil
 }
 
@@ -477,26 +479,6 @@ func (a *Activities) failAbandonedRuns(ctx context.Context, now int64) {
 	if ended > 0 {
 		a.logger.Info("ended agent runs abandoned in a working status", zap.Int("ended", ended))
 	}
-}
-
-// PendingProposalsActivity counts the run's proposals still waiting on a
-// person.
-func (a *Activities) PendingProposalsActivity(
-	ctx context.Context,
-	input *PendingProposalsInput,
-) (int, error) {
-	proposals, err := a.proposalRepo.ListByRun(
-		ctx,
-		agentproposalports.ListAgentProposalsByRunRequest{
-			RunID:      input.RunID,
-			TenantInfo: input.TenantInfo,
-		},
-	)
-	if err != nil {
-		return 0, fmt.Errorf("list the run's proposals: %w", err)
-	}
-
-	return countPending(proposals), nil
 }
 
 func countPending(proposals []*agent.AgentProposal) int {
@@ -1005,6 +987,9 @@ func (a *Activities) ExpireStaleProposalsActivity(
 
 	a.purgeOrphanBaselines(ctx, input.Now)
 	a.failAbandonedRuns(ctx, input.Now)
+	if _, err = a.runCloser.CloseSettled(ctx, input.Now); err != nil {
+		return nil, fmt.Errorf("close runs whose proposals expired: %w", err)
+	}
 
 	// A plan outlives none of its steps: once they have expired, so has it.
 	expiredPlans, planErr := a.plans.ExpirePending(ctx, agentplanports.ExpireAgentPlansRequest{

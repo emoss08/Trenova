@@ -919,7 +919,7 @@
   "No ratings": "無評分",
   "No ratings yet": "尚無評分",
   "No reason was recorded.": "未記錄原因。",
-  "No reasoning setting is sent; the model decides.": "不傳送推理設定，由模型自行決定。",
+  "No thinking. A Claude model is told not to think; other models are sent no reasoning setting.": "不進行推理。Claude 模型會被要求不推理；其他模型則不傳送推理設定。",
   "No retry is left; re-index the source after fixing the cause": "已無重試機會；請在修正原因後重新索引該來源",
   "No routed task ran in this scope.": "此範圍內沒有執行任何已路由的任務。",
   "No runs match": "沒有符合的執行",

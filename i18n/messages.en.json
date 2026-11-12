@@ -15467,15 +15467,6 @@
       "routes/desk"
     ]
   },
-  "AI control needs a person to approve this change before it runs.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
-    ]
-  },
   "AI correction retention": {
     "sites": 1,
     "scope": [
@@ -42819,6 +42810,15 @@
       "routes/inbox"
     ]
   },
+  "Before you decide": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Behavior": {
     "sites": 1,
     "scope": [
@@ -47434,7 +47434,7 @@
     ]
   },
   "Business unit ID is required": {
-    "sites": 50,
+    "sites": 27,
     "scope": [
       "go"
     ],
@@ -48541,6 +48541,15 @@
       "routes/worker"
     ]
   },
+  "Can be undone after it runs": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Can be undone for {0}": {
     "sites": 1,
     "scope": [
@@ -48566,15 +48575,6 @@
     ],
     "areas": [
       "routes/agent-control"
-    ]
-  },
-  "Can it be undone": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
     ]
   },
   "Can read": {
@@ -48679,6 +48679,15 @@
   },
   "Can't be undone": {
     "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Can't be undone once it runs": {
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -77996,7 +78005,7 @@
     ]
   },
   "Decision": {
-    "sites": 13,
+    "sites": 12,
     "scope": [
       "ts"
     ],
@@ -136729,6 +136738,15 @@
       "apps/web/lib"
     ]
   },
+  "It can't run as it stands. Sending it back tells the agent why.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "It cannot be applied yet": {
     "sites": 1,
     "scope": [
@@ -137451,6 +137469,24 @@
       "routes/desk"
     ]
   },
+  "It was proposed without something it needs.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "It was proposed without the {0} it needs.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "It was refused because the record changed: {0}": {
     "sites": 2,
     "scope": [
@@ -137476,6 +137512,15 @@
     ],
     "areas": [
       "routes/insights"
+    ]
+  },
+  "It would": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "It would go through as shown.": {
@@ -137878,6 +137923,24 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Its result can't be previewed.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Its result can't be previewed. It would run with these values.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Its result is not shown here and its file cannot be downloaded.": {
@@ -165011,15 +165074,6 @@
       "go/other"
     ]
   },
-  "New delivery scheduled window start is required": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "New delivery scheduled window start must occur after the split pickup window ends": {
     "sites": 1,
     "scope": [
@@ -173305,7 +173359,7 @@
       "routes/fuel-purchase"
     ]
   },
-  "No reasoning setting is sent; the model decides.": {
+  "No thinking. A Claude model is told not to think; other models are sent no reasoning setting.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -175540,15 +175594,6 @@
     ],
     "areas": [
       "routes/agent-control"
-    ]
-  },
-  "No. Once it runs it stays done.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
     ]
   },
   "Nobody": {
@@ -193707,7 +193752,7 @@
     ]
   },
   "Organization ID is required": {
-    "sites": 53,
+    "sites": 30,
     "scope": [
       "go",
       "ts"
@@ -211925,15 +211970,6 @@
     ],
     "areas": [
       "apps/web/components",
-      "routes/desk"
-    ]
-  },
-  "Proposed by {0} · {1}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
       "routes/desk"
     ]
   },
@@ -248576,6 +248612,24 @@
       "routes/billing-queue"
     ]
   },
+  "Send back to the agent": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Send back to {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Send by": {
     "sites": 1,
     "scope": [
@@ -260564,13 +260618,11 @@
     ]
   },
   "Source partner code is required": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
-      "go",
       "ts"
     ],
     "areas": [
-      "go/other",
       "routes/edi"
     ]
   },
@@ -260584,13 +260636,11 @@
     ]
   },
   "Source partner name is required": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
-      "go",
       "ts"
     ],
     "areas": [
-      "go/other",
       "routes/edi"
     ]
   },
@@ -261257,15 +261307,6 @@
   },
   "Split pickup scheduled window end must be greater than or equal to the scheduled window start": {
     "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Split pickup scheduled window start is required": {
-    "sites": 1,
     "scope": [
       "go"
     ],
@@ -268977,13 +269018,11 @@
     ]
   },
   "Target partner code is required": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
-      "go",
       "ts"
     ],
     "areas": [
-      "go/other",
       "routes/edi"
     ]
   },
@@ -268997,13 +269036,11 @@
     ]
   },
   "Target partner name is required": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
-      "go",
       "ts"
     ],
     "areas": [
-      "go/other",
       "routes/edi"
     ]
   },
@@ -296225,15 +296262,6 @@
       "routes/admin"
     ]
   },
-  "This action can't say exactly what it would change. It would run with the values below.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
   "This action cannot be undone. This will permanently delete this comment and its attachments.": {
     "sites": 1,
     "scope": [
@@ -296717,6 +296745,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "This can't run as it stands": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "This cannot be called": {
@@ -303680,15 +303717,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "This would not go through as it stands": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
     ]
   },
   "This would not go through as it stands.": {
@@ -331867,15 +331895,6 @@
       "routes/fiscal-year"
     ]
   },
-  "Why it asks": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
-    ]
-  },
   "Why it could do this on its own": {
     "sites": 1,
     "scope": [
@@ -331941,15 +331960,6 @@
     ]
   },
   "Why it matters": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
-    ]
-  },
-  "Why it proposes it": {
     "sites": 1,
     "scope": [
       "ts"
@@ -334578,12 +334588,11 @@
     ]
   },
   "Would change": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/desk",
       "routes/formula-template"
     ]
   },
@@ -336085,15 +336094,6 @@
     ],
     "areas": [
       "routes/inbox"
-    ]
-  },
-  "Yes, it can be reversed after it runs.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
     ]
   },
   "Yes, open it": {
@@ -352777,15 +352777,6 @@
     ],
     "areas": [
       "routes/admin"
-    ]
-  },
-  "{0, plural, one {# change} other {# changes}}, in order: {1}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
     ]
   },
   "{0, plural, one {# chapter} other {# chapters}}": {
@@ -373750,6 +373741,15 @@
     "areas": [
       "apps/web/rules",
       "rules/tariff"
+    ]
+  },
+  "{0} would": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0} would bill": {

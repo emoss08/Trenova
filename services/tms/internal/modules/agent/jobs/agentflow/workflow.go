@@ -6,6 +6,7 @@ import (
 	"slices"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/delegation"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/modelstream"
@@ -52,13 +53,37 @@ func Run(
 		steers:  workflow.GetSignalChannel(ctx, agentflowcontract.SteerSignal),
 	}
 	result, err := runtime.Drive(runtime.RestoreTurn(rc.request(), &state), fx)
+	if refusal := scopeRefusal(err); refusal != nil {
+		return &Outcome{Scope: refusal}, nil
+	}
+	if fx.outcome.Scope != nil && !fx.outcome.Scope.Allowed {
+		return &Outcome{Scope: fx.outcome.Scope}, nil
+	}
 
 	return &Outcome{
 		Result:    result,
 		Artifacts: fx.outcome.Artifacts,
 		Events:    fx.outcome.Events,
 		Steered:   fx.outcome.Steered,
+		Scope:     fx.outcome.Scope,
 	}, err
+}
+
+// scopeRefusal is the scope guard's refusal, when that is what ended the
+// turn's first model call. Nothing the call wrote was shown or run, so the
+// turn comes to the refusal and nothing else.
+func scopeRefusal(err error) *agentguard.Decision {
+	var appErr *temporal.ApplicationError
+	if !errors.As(err, &appErr) || appErr.Type() != ErrTypeScopeRefused {
+		return nil
+	}
+	var decision agentguard.Decision
+	if appErr.Details(&decision) != nil {
+		return nil
+	}
+	decision.Allowed = false
+
+	return &decision
 }
 
 // Publish sends one event to the run's reader from workflow code.
@@ -152,13 +177,20 @@ func (fx *workflowEffects) Complete(
 
 	fx.completions++
 
+	check := fx.run.ScopeCheck
+	fx.run.ScopeCheck = nil
+
 	var reply modelstream.Reply
 	err := workflow.ExecuteActivity(ctx, a.ModelCallActivity, &ModelCallInput{
-		Request: req,
-		Stream:  fx.events != nil,
-		Scope:   fx.run.Scope(),
-		Step:    fx.replyStep(),
+		Request:    req,
+		Stream:     fx.events != nil,
+		Scope:      fx.run.Scope(),
+		Step:       fx.replyStep(),
+		ScopeCheck: check,
 	}).Get(ctx, &reply)
+	if reply.Scope != nil {
+		fx.outcome.Scope = reply.Scope
+	}
 
 	return reply, err
 }
@@ -366,15 +398,24 @@ func (fx *workflowEffects) Delegate(
 ) []delegation.Run {
 	runs := make([]delegation.Run, len(calls))
 	outcomes := make([]Outcome, len(calls))
+	// A task the person handed straight to another agent reaches a model
+	// there first, so the scope check the turn still owes rides on that
+	// agent's first call.
+	check := fx.run.ScopeCheck
+	fx.run.ScopeCheck = nil
 	if len(calls) == 1 {
-		runs[0], outcomes[0] = fx.delegate(fx.ctx, &calls[0])
+		runs[0], outcomes[0] = fx.delegate(fx.ctx, &calls[0], check)
 	} else {
 		wg := workflow.NewWaitGroup(fx.ctx)
 		for idx := range calls {
 			wg.Add(1)
+			owed := check
+			if idx > 0 {
+				owed = nil
+			}
 			workflow.Go(fx.ctx, func(ctx workflow.Context) {
 				defer wg.Done()
-				runs[idx], outcomes[idx] = fx.delegate(ctx, &calls[idx])
+				runs[idx], outcomes[idx] = fx.delegate(ctx, &calls[idx], owed)
 			})
 		}
 		wg.Wait(fx.ctx)
@@ -382,6 +423,9 @@ func (fx *workflowEffects) Delegate(
 	for idx := range outcomes {
 		fx.outcome.Artifacts = append(fx.outcome.Artifacts, outcomes[idx].Artifacts...)
 		fx.outcome.Events = append(fx.outcome.Events, outcomes[idx].Events...)
+		if outcomes[idx].Scope != nil {
+			fx.outcome.Scope = outcomes[idx].Scope
+		}
 	}
 
 	return runs
@@ -390,6 +434,7 @@ func (fx *workflowEffects) Delegate(
 func (fx *workflowEffects) delegate(
 	ctx workflow.Context,
 	call *delegation.Call,
+	check *agentguard.EvaluateRequest,
 ) (delegation.Run, Outcome) {
 	var a *Activities
 	openCtx := workflow.WithActivityOptions(ctx, fx.openDelegateOptions(call.Delegate.Name))
@@ -400,9 +445,14 @@ func (fx *workflowEffects) delegate(
 		Call: *call,
 	}).Get(openCtx, &opened)
 	if err != nil {
+		if check != nil {
+			fx.run.ScopeCheck = check
+		}
+
 		return declinedDelegate(call, err), Outcome{}
 	}
 
+	opened.Run.ScopeCheck = check
 	sub := &workflowEffects{
 		ctx:     ctx,
 		runtime: fx.runtime,
@@ -413,6 +463,9 @@ func (fx *workflowEffects) delegate(
 	turn.ReserveCallIDs(call.CallIDs)
 	turn.CarryExternalContent(call.AfterExternalContent)
 	result, err := fx.runtime.Drive(turn, sub)
+	if refusal := scopeRefusal(err); refusal != nil {
+		sub.outcome.Scope = refusal
+	}
 
 	run := delegation.Run{
 		Definition:      opened.Run.Definition,

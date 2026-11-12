@@ -27,7 +27,7 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 	return []*schedule.Schedule{
 		{
 			ID:            RecheckSweepScheduleID,
-			Description:   "Re-run the billing checks on queue items whose checks are missing or stale",
+			Description:   "Mark queue items whose checks are missing or stale as due and wake the tenants with due items",
 			Spec:          schedule.Every(recheckSweepInterval),
 			Workflow:      BillingQueueRecheckSweepWorkflow,
 			TaskQueue:     temporaltype.TaskQueueBilling.String(),

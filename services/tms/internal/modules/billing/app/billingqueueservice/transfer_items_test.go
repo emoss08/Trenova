@@ -544,9 +544,13 @@ func (r *recordedRechecks) RequestRecheck(
 	_ context.Context,
 	_ pagination.TenantInfo,
 	itemIDs ...pulid.ID,
-) {
+) error {
 	r.itemIDs = append(r.itemIDs, itemIDs...)
+
+	return nil
 }
+
+func (*recordedRechecks) WakeTenant(context.Context, pagination.TenantInfo) {}
 
 func TestTransferToBillingItemsInABulkRunReusesPayersAndDefersTheReview(t *testing.T) {
 	t.Parallel()

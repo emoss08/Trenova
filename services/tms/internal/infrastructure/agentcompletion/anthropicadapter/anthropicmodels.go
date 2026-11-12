@@ -17,14 +17,13 @@ type anthropicModel struct {
 	// thinksAlways models refuse thinking.type "disabled" at every effort.
 	thinksAlways bool
 	// thinksUnasked models think adaptively when a request says nothing
-	// about thinking, and leave the summary out unless it is asked for.
+	// about thinking, so a request that wants none says "disabled". Each takes
+	// it at effort high or below, which is every effort this system sends,
+	// unless thinksAlways or disableRefused says otherwise.
 	thinksUnasked bool
 	// disableRefused models refuse "disabled"; their own off switch takes no
 	// other field, so the least thinking is adaptive at low effort.
 	disableRefused bool
-	// disableNeedsLowEffort models accept "disabled" only at effort high or
-	// below, which is every effort this system sends.
-	disableNeedsLowEffort bool
 	// bindsPrefix models check that a replayed thinking block's system
 	// prompt, tools and earlier messages are unchanged since it was written.
 	bindsPrefix bool
@@ -75,7 +74,6 @@ func anthropicTraits(model string) anthropicModel {
 		traits.thinksAlways = version >= 55
 		traits.thinksUnasked = version >= 50
 		traits.bindsPrefix = version >= 55
-		traits.disableNeedsLowEffort = version == 50
 		traits.notices = version >= 48
 	case aimodel.ClaudeFamilySonnet:
 		traits.disableRefused = version >= 55
@@ -93,7 +91,6 @@ func anthropicTraits(model string) anthropicModel {
 		traits.notices = true
 	case aimodel.ClaudeFamilyHaiku:
 		traits.thinksUnasked = version >= 55
-		traits.disableNeedsLowEffort = version >= 55
 		traits.notices = version >= 55
 	}
 

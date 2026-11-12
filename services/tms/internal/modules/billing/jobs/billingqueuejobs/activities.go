@@ -26,7 +26,6 @@ type ActivitiesParams struct {
 	Review     billingqueueports.BillingQueueReviewService
 	Rechecks   billingqueueports.RecheckRequester
 	Assist     billingqueueports.BillingQueueAssistService
-	Briefs     billingqueueports.BriefRequester
 	Generator  billingqueueports.NovaGenerator
 	Realtime   realtimeports.RealtimeService
 	Logger     *zap.Logger
@@ -38,7 +37,6 @@ type Activities struct {
 	review    billingqueueports.BillingQueueReviewService
 	rechecks  billingqueueports.RecheckRequester
 	assist    billingqueueports.BillingQueueAssistService
-	briefs    billingqueueports.BriefRequester
 	generator billingqueueports.NovaGenerator
 	realtime  realtimeports.RealtimeService
 	l         *zap.Logger
@@ -51,7 +49,6 @@ func NewActivities(p ActivitiesParams) *Activities {
 		review:    p.Review,
 		rechecks:  p.Rechecks,
 		assist:    p.Assist,
-		briefs:    p.Briefs,
 		generator: p.Generator,
 		realtime:  p.Realtime,
 		l:         p.Logger.Named("billing-queue-activities"),

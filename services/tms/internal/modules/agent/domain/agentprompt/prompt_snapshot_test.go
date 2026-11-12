@@ -117,10 +117,6 @@ func promptContexts() []promptContext {
 				rc.Facts = []string{"Invoice date is Oct 3", "Acme pays net 45"}
 				rc.UserProfile = "This person dispatches the Dallas terminal's regional loads " +
 					"and works mostly with Northwind Foods and Contoso Retail."
-				rc.Frame = agenttaskframe.ChatFrame(
-					"See which of today's loads and moves need the dispatcher's attention.",
-					"list late and at-risk loads; list moves with no driver",
-				)
 
 				return &agentruntimeports.RunRequest{
 					Definition: definition,

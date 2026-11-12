@@ -172,7 +172,7 @@ func TestSendMessageStream_RefusesAnAttachmentThatIsNotTheirs(t *testing.T) {
 		}, actor, nil)
 		var multiErr *errortypes.MultiError
 		require.ErrorAs(t, err, &multiErr, name)
-		assert.Equal(t, "attachmentDocumentIds[0]", multiErr.Errors[0].Field, name)
+		assert.Equal(t, "attachmentDocumentIds[0]", multiErr.Errors[0].Field(), name)
 	}
 	assert.Nil(t, completion.LastReq, "nothing reached the model")
 	assert.Zero(t, conversations.AppendCalls, "nothing was saved")
@@ -200,7 +200,7 @@ func TestSendMessageStream_BoundsAttachmentsAndMentions(t *testing.T) {
 	}, actor, nil)
 	var multiErr *errortypes.MultiError
 	require.ErrorAs(t, err, &multiErr)
-	assert.Equal(t, "attachmentDocumentIds", multiErr.Errors[0].Field)
+	assert.Equal(t, "attachmentDocumentIds", multiErr.Errors[0].Field())
 
 	_, err = svc.sendMessage(t.Context(), &assistantports.SendMessageRequest{
 		ThreadID:   conversations.Thread.ID,
@@ -211,7 +211,7 @@ func TestSendMessageStream_BoundsAttachmentsAndMentions(t *testing.T) {
 	require.ErrorAs(t, err, &multiErr)
 	fields := make(map[string]bool, len(multiErr.Errors))
 	for _, fieldErr := range multiErr.Errors {
-		fields[fieldErr.Field] = true
+		fields[fieldErr.Field()] = true
 	}
 	assert.True(t, fields["mentions[0].type"])
 	assert.True(t, fields["mentions[0].id"])

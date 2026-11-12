@@ -76,6 +76,19 @@ type TurnPlan struct {
 	Readings []pulid.ID `json:"readings,omitempty"`
 	// Turn is the runtime turn, empty when the guard refused the question.
 	Turn agentruntime.TurnState `json:"turn"`
+	// ScopeCheck is what the scope classifier is still to be asked, beside
+	// the turn's first model call. Nil when the question needs no verdict or
+	// already has one.
+	ScopeCheck *agentguard.EvaluateRequest `json:"scopeCheck,omitempty"`
+}
+
+// Decide records the scope verdict on a plan that began without one.
+func (p *TurnPlan) Decide(decision *agentguard.Decision) {
+	if decision == nil {
+		return
+	}
+	p.Decision = *decision
+	p.ScopeCheck = nil
 }
 
 // Refused reports a question the guard declined. There is nothing to run.
@@ -272,8 +285,9 @@ func (s *Service) prepareTurn(
 		CodeMode:            req.CodeMode,
 	}
 
-	decision, runReq := s.admit(ctx, turnReq)
+	decision, runReq, check := s.admit(ctx, turnReq)
 	plan := &TurnPlan{
+		ScopeCheck:          check,
 		ThreadID:            thread.ID,
 		Definition:          definition,
 		Input:               content,

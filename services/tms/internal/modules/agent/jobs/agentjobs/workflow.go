@@ -1,7 +1,6 @@
 package agentjobs
 
 import (
-	"errors"
 	"fmt"
 	"time"
 
@@ -38,8 +37,6 @@ const (
 	reminderBatchLimit = 500
 	reminderTimeout    = 5 * time.Minute
 )
-
-var errRunStopped = errors.New("the run was stopped while its proposals waited for a decision")
 
 var reminderOptions = workflow.ActivityOptions{
 	StartToCloseTimeout: reminderTimeout,
@@ -90,7 +87,7 @@ func (w *Workflows) background() []registry.WorkflowDefinition {
 		{
 			Name:        agentcontract.AgentRunWorkflowName,
 			Fn:          w.AgentRunWorkflow,
-			Description: "Run one agent definition against its subject and wait for decisions on what it proposes",
+			Description: "Run one agent definition against its subject and file what it proposes",
 		},
 		{
 			Name:        agentcontract.AgentScheduledRunWorkflowName,
@@ -225,9 +222,10 @@ func NewWorkflows(runtime *agentruntime.Service) *Workflows {
 	return &Workflows{runtime: runtime}
 }
 
-// AgentRunWorkflow runs one agent definition against its subject and waits for
-// decisions on what it proposed. The loop runs here, one activity per model
-// call and per tool call.
+// AgentRunWorkflow runs one agent definition against its subject and files
+// what it proposed. The loop runs here, one activity per model call and per
+// tool call. It ends once the proposals are filed; the run then waits on
+// decisions as a record.
 func (w *Workflows) AgentRunWorkflow(
 	ctx workflow.Context,
 	payload *agentcontract.AgentRunPayload,
@@ -310,63 +308,10 @@ func (w *Workflows) AgentRunWorkflow(
 		return completeRun(keep, a, payload.RunID, agent.RunStatusCompleted, tenant)
 	}
 
-	timedOut := awaitEveryDecision(ctx, a, payload, prepared.DecisionTimeoutSeconds)
-	if stopped := ctx.Err(); stopped != nil {
-		_ = expireProposals(keep, a, payload.RunID, tenant)
-		_ = failRun(keep, payload.RunID, tenant, errRunStopped)
-		return stopped
-	}
-	if timedOut {
-		return expireProposals(keep, a, payload.RunID, tenant)
-	}
-
-	return completeRun(keep, a, payload.RunID, agent.RunStatusCompleted, tenant)
-}
-
-// awaitEveryDecision waits until none of the run's proposals is still pending,
-// or the decision window closes. It reports whether it closed.
-//
-// A decision signal says something was decided, and the ledger says what is
-// left: a plan decides several steps under one signal, and a proposal decided
-// twice over in a race sends two. Counting what is still pending after each
-// signal is right in both cases, where counting signals is right in neither.
-func awaitEveryDecision(
-	ctx workflow.Context,
-	a *Activities,
-	payload *agentcontract.AgentRunPayload,
-	timeoutSeconds int,
-) bool {
-	if timeoutSeconds <= 0 {
-		timeoutSeconds = agentdefinition.DefaultDecisionTimeoutSeconds
-	}
-
-	decisions := workflow.GetSignalChannel(ctx, agentcontract.AgentDecisionSignalName)
-	deadline := workflow.Now(ctx).Add(time.Duration(timeoutSeconds) * time.Second)
-	countCtx := workflow.WithActivityOptions(ctx, withPriority(persistActivityOptions, payload))
-
-	for {
-		remaining := deadline.Sub(workflow.Now(ctx))
-		if remaining <= 0 {
-			return true
-		}
-
-		var decision agentcontract.DecisionSignal
-		if received, _ := decisions.ReceiveWithTimeout(ctx, remaining, &decision); !received {
-			return true
-		}
-
-		var pending int
-		if err := workflow.ExecuteActivity(countCtx, a.PendingProposalsActivity,
-			&PendingProposalsInput{RunID: payload.RunID, TenantInfo: payload.TenantInfo()},
-		).Get(countCtx, &pending); err != nil {
-			workflow.GetLogger(ctx).Warn("could not count the run's pending proposals",
-				"runId", payload.RunID.String(), "error", err.Error())
-			continue
-		}
-		if pending == 0 {
-			return false
-		}
-	}
+	// The run waits on decisions as a record, not as a workflow: the decision
+	// that leaves nothing pending completes it, and the expiry sweep completes
+	// it once the rest expired (agentrunclose).
+	return nil
 }
 
 func withPriority(

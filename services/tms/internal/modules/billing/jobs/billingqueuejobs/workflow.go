@@ -55,22 +55,16 @@ func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 			Description: "Apply one action to several billing queue items after an undo window",
 		},
 		{
-			Name:        billingqueuecontract.RecheckWorkflowName,
-			Fn:          BillingQueueRecheckWorkflow,
+			Name:        billingqueuecontract.TenantWorkflowName,
+			Fn:          BillingQueueTenantWorkflow,
 			TaskQueue:   temporaltype.TaskQueueBilling.String(),
-			Description: "Run the billing checks on a queue item after it changes",
+			Description: "Run a tenant's due billing checks, Nova reviews and auto-approvals, then write its brief",
 		},
 		{
 			Name:        billingqueuecontract.RecheckSweepWorkflowName,
 			Fn:          BillingQueueRecheckSweepWorkflow,
 			TaskQueue:   temporaltype.TaskQueueBilling.String(),
-			Description: "Re-run the billing checks on queue items whose checks are missing or stale",
-		},
-		{
-			Name:        billingqueuecontract.BriefWorkflowName,
-			Fn:          BillingQueueBriefWorkflow,
-			TaskQueue:   temporaltype.TaskQueueBilling.String(),
-			Description: "Write the billing queue's brief after it changes",
+			Description: "Mark queue items whose checks are missing or stale as due and wake the tenants with due items",
 		},
 		{
 			Name:        billingqueuecontract.NovaGenerationWorkflowName,

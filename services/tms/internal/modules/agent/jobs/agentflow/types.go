@@ -22,6 +22,7 @@ package agentflow
 import (
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/delegation"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/replystep"
@@ -91,6 +92,9 @@ const (
 	// ErrTypeDelegateDeclined is another agent that may not be handed the
 	// task: its message says why, for the agent that asked.
 	ErrTypeDelegateDeclined = "DelegateDeclined"
+	// ErrTypeScopeRefused is a model call the scope guard ended: its details
+	// are the refusal.
+	ErrTypeScopeRefused = "ScopeRefused"
 )
 
 // StreamItem is one event on a run's stream, as the reader receives it.
@@ -126,6 +130,10 @@ type RunContext struct {
 	Records []agentpagecontext.EntityRef `json:"records,omitempty"`
 	// CodeMode forces the code-mode gate for the run.
 	CodeMode codemode.Override `json:"codeMode,omitempty"`
+	// ScopeCheck is what the scope classifier is to be asked beside the
+	// run's first model call. The loop takes it off the run as it sends that
+	// call, so no later activity carries it.
+	ScopeCheck *agentguard.EvaluateRequest `json:"scopeCheck,omitempty"`
 }
 
 // Scope is how the run's events are tagged for its reader: empty for the
@@ -194,6 +202,10 @@ type ModelCallInput struct {
 	// task the run's own agent handed it.
 	Scope assistantstreamports.DelegateScope `json:"scope,omitzero"`
 	Step  *replystep.Call                    `json:"step,omitempty"`
+	// ScopeCheck has the call ask the scope classifier about the question
+	// while the model answers it. What the model streams is held until the
+	// verdict, and a refusal ends the call with ErrTypeScopeRefused.
+	ScopeCheck *agentguard.EvaluateRequest `json:"scopeCheck,omitempty"`
 }
 
 // OpenDelegateInput asks for another agent's turn on a task the run's agent
@@ -254,6 +266,10 @@ type Outcome struct {
 	Events []StreamItem `json:"events,omitempty"`
 	// Steered are the queued messages the turn read while it worked.
 	Steered []pulid.ID `json:"steered,omitempty"`
+	// Scope is the scope guard's verdict, when the turn's first model call
+	// asked for one: the verdict that let the turn go on, or the refusal that
+	// ended it.
+	Scope *agentguard.Decision `json:"scope,omitempty"`
 }
 
 const (

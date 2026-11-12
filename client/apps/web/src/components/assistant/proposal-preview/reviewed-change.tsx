@@ -49,11 +49,14 @@ export function ReviewedChange({
   proposal,
   onReport,
   scope = "mine",
+  titled = true,
 }: {
   proposal: AssistantProposal;
   onReport: Report;
   /** "mine" for a proposal from the person's own conversation, "approver" for any other. */
   scope?: PreviewScope;
+  /** Whether the change is headed by its name; a surface that already names it leaves it out. */
+  titled?: boolean;
 }) {
   const t = useT();
   const query = useProposalPreview({ scope, id: proposal.id });
@@ -62,7 +65,7 @@ export function ReviewedChange({
 
   return (
     <section className="flex min-w-0 flex-col gap-2" aria-label={t("Preview of {0}", title)}>
-      <b className="text-sm font-medium">{title}</b>
+      {titled && <b className="text-sm font-medium">{title}</b>}
       <PreviewLoadState query={query} changed={false} density="compact" reviewRequired>
         {(preview) => <ProposalPreview preview={preview} density="compact" />}
       </PreviewLoadState>

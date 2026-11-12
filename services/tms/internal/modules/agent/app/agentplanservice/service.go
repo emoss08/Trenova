@@ -51,19 +51,14 @@ import (
 )
 
 // stepDecider is the slice of the decision service a plan uses: decide one
-// step and learn whether it ran, and signal the run once at the end.
+// step and learn whether it ran, and settle the run once at the end.
 type stepDecider interface {
 	DecideWithOutcome(
 		ctx context.Context,
 		req *agentdecisionports.DecideAgentProposalRequest,
 		actor *permissionports.RequestActor,
 	) (*agentdecisionports.DecisionOutcome, error)
-	SignalRun(
-		ctx context.Context,
-		req *agentdecisionports.DecideAgentProposalRequest,
-		decision *agentdecision.AgentDecision,
-		runID pulid.ID,
-	) error
+	SettleRun(ctx context.Context, tenantInfo pagination.TenantInfo, runID pulid.ID) error
 }
 
 type shadowReader interface {
@@ -989,8 +984,8 @@ func (s *Service) signal(
 	if last == nil || lastReq == nil {
 		return
 	}
-	if err := s.decisions.SignalRun(ctx, lastReq, last, plan.RunID); err != nil {
-		s.l.Error("failed to signal agent workflow for plan", zap.Error(err))
+	if err := s.decisions.SettleRun(ctx, lastReq.TenantInfo, plan.RunID); err != nil {
+		s.l.Error("failed to close the agent run its plan settled", zap.Error(err))
 	}
 }
 
@@ -1072,8 +1067,8 @@ func (s *Service) rejectSteps(
 	}
 
 	if last != nil && stepReq != nil {
-		if err := s.decisions.SignalRun(ctx, stepReq, last, steps[0].RunID); err != nil {
-			s.l.Error("failed to signal agent workflow for rejected plan", zap.Error(err))
+		if err := s.decisions.SettleRun(ctx, stepReq.TenantInfo, steps[0].RunID); err != nil {
+			s.l.Error("failed to close the agent run its rejected plan settled", zap.Error(err))
 		}
 	}
 }

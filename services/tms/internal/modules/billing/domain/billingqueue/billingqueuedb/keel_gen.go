@@ -65,6 +65,7 @@ var billingQueueItemsTable = schema.Table{
 		{Name: "adjustment_context", Quoted: `"adjustment_context"`, Field: "AdjustmentContext", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Adjustment Context`, JSON: `adjustmentContext`},
 		{Name: "lane", Quoted: `"lane"`, Field: "Lane", Kind: schema.KindString, Flags: schema.FlagReadOnly, Label: `Lane`, JSON: `lane`, Enum: enumLane[:]},
 		{Name: "checked_at", Quoted: `"checked_at"`, Field: "CheckedAt", Kind: schema.KindInt64, Flags: schema.FlagReadOnly | schema.FlagNullable, Label: `Checked At`, JSON: `checkedAt`},
+		{Name: "recheck_due_at", Quoted: `"recheck_due_at"`, Field: "RecheckDueAt", Kind: schema.KindInt64, Flags: schema.FlagReadOnly | schema.FlagNoSelect | schema.FlagNullable, Label: `Recheck Due At`},
 		{Name: "po_number", Quoted: `"po_number"`, Field: "PONumber", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `PO Number`, JSON: `poNumber`},
 		{Name: "invoice_memo", Quoted: `"invoice_memo"`, Field: "InvoiceMemo", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Invoice Memo`, JSON: `invoiceMemo`},
 		{Name: "payment_term", Quoted: `"payment_term"`, Field: "PaymentTerm", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Payment Term`, JSON: `paymentTerm`},
@@ -93,14 +94,14 @@ var billingQueueItemsTable = schema.Table{
 	},
 	PK:           []int32{0, 1, 2},
 	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 50},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 51},
 	Returning:    []int32{34, 35},
-	Version:      48,
+	Version:      49,
 	AutoID:       0,
-	AutoCreate:   49,
-	AutoUpdate:   50,
+	AutoCreate:   50,
+	AutoUpdate:   51,
 	IDPrefix:     "bqi_",
 	New:          newBillingQueueItem,
 	NewN:         newNBillingQueueItem,
@@ -152,6 +153,7 @@ type BillingQueueItemsTable struct {
 	AdjustmentContext         keel.JSONBCol
 	Lane                      LaneCol
 	CheckedAt                 keel.Int64Col
+	RecheckDueAt              keel.Int64Col
 	PONumber                  keel.StringCol
 	InvoiceMemo               keel.StringCol
 	PaymentTerm               keel.StringCol
@@ -212,25 +214,26 @@ var BillingQueueItems = &BillingQueueItemsTable{
 	AdjustmentContext:         keel.JSONBCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 33}},
 	Lane:                      LaneCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 34}}},
 	CheckedAt:                 keel.Int64Col{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 35}},
-	PONumber:                  keel.StringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 36}},
-	InvoiceMemo:               keel.StringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 37}},
-	PaymentTerm:               keel.StringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 38}},
-	InvoiceDate:               keel.Int64Col{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 39}},
-	PacketDocumentIDs:         keel.JSONBCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 40}},
-	PacketPicked:              keel.BoolCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 41}},
-	PacketPageRotations:       keel.JSONBCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 42}},
-	AgentVerdict:              AgentVerdictCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 43}}},
-	AgentSummary:              keel.StringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 44}},
-	AgentReviewedAt:           keel.Int64Col{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 45}},
-	AgentReads:                keel.JSONBCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 46}},
-	AgentReviewHash:           keel.StringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 47}},
-	Version:                   keel.Int64Col{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 48}},
-	CreatedAt:                 keel.Int64Col{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 49}},
-	UpdatedAt:                 keel.Int64Col{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 50}},
-	SearchVector:              keel.TSVectorCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 51}},
-	ShipmentCustomerID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 52}}},
-	ShipmentDeliveredAt:       keel.Int64Col{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 53}},
-	ShipmentShippedAt:         keel.Int64Col{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 54}},
+	RecheckDueAt:              keel.Int64Col{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 36}},
+	PONumber:                  keel.StringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 37}},
+	InvoiceMemo:               keel.StringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 38}},
+	PaymentTerm:               keel.StringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 39}},
+	InvoiceDate:               keel.Int64Col{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 40}},
+	PacketDocumentIDs:         keel.JSONBCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 41}},
+	PacketPicked:              keel.BoolCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 42}},
+	PacketPageRotations:       keel.JSONBCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 43}},
+	AgentVerdict:              AgentVerdictCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 44}}},
+	AgentSummary:              keel.StringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 45}},
+	AgentReviewedAt:           keel.Int64Col{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 46}},
+	AgentReads:                keel.JSONBCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 47}},
+	AgentReviewHash:           keel.StringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 48}},
+	Version:                   keel.Int64Col{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 49}},
+	CreatedAt:                 keel.Int64Col{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 50}},
+	UpdatedAt:                 keel.Int64Col{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 51}},
+	SearchVector:              keel.TSVectorCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 52}},
+	ShipmentCustomerID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 53}}},
+	ShipmentDeliveredAt:       keel.Int64Col{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 54}},
+	ShipmentShippedAt:         keel.Int64Col{Col: keel.Col{Ref: &billingQueueItemsRef, Index: 55}},
 }
 
 // BuildBillingQueueItems builds the table of billing_queue_items for ref. Generated relation and alias methods call it.
@@ -273,25 +276,26 @@ func BuildBillingQueueItems(r *keel.Ref) *BillingQueueItemsTable {
 		AdjustmentContext:         keel.JSONBCol{Col: keel.Col{Ref: r, Index: 33}},
 		Lane:                      LaneCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 34}}},
 		CheckedAt:                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 35}},
-		PONumber:                  keel.StringCol{Col: keel.Col{Ref: r, Index: 36}},
-		InvoiceMemo:               keel.StringCol{Col: keel.Col{Ref: r, Index: 37}},
-		PaymentTerm:               keel.StringCol{Col: keel.Col{Ref: r, Index: 38}},
-		InvoiceDate:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 39}},
-		PacketDocumentIDs:         keel.JSONBCol{Col: keel.Col{Ref: r, Index: 40}},
-		PacketPicked:              keel.BoolCol{Col: keel.Col{Ref: r, Index: 41}},
-		PacketPageRotations:       keel.JSONBCol{Col: keel.Col{Ref: r, Index: 42}},
-		AgentVerdict:              AgentVerdictCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 43}}},
-		AgentSummary:              keel.StringCol{Col: keel.Col{Ref: r, Index: 44}},
-		AgentReviewedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 45}},
-		AgentReads:                keel.JSONBCol{Col: keel.Col{Ref: r, Index: 46}},
-		AgentReviewHash:           keel.StringCol{Col: keel.Col{Ref: r, Index: 47}},
-		Version:                   keel.Int64Col{Col: keel.Col{Ref: r, Index: 48}},
-		CreatedAt:                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 49}},
-		UpdatedAt:                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 50}},
-		SearchVector:              keel.TSVectorCol{Col: keel.Col{Ref: r, Index: 51}},
-		ShipmentCustomerID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 52}}},
-		ShipmentDeliveredAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 53}},
-		ShipmentShippedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 54}},
+		RecheckDueAt:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 36}},
+		PONumber:                  keel.StringCol{Col: keel.Col{Ref: r, Index: 37}},
+		InvoiceMemo:               keel.StringCol{Col: keel.Col{Ref: r, Index: 38}},
+		PaymentTerm:               keel.StringCol{Col: keel.Col{Ref: r, Index: 39}},
+		InvoiceDate:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 40}},
+		PacketDocumentIDs:         keel.JSONBCol{Col: keel.Col{Ref: r, Index: 41}},
+		PacketPicked:              keel.BoolCol{Col: keel.Col{Ref: r, Index: 42}},
+		PacketPageRotations:       keel.JSONBCol{Col: keel.Col{Ref: r, Index: 43}},
+		AgentVerdict:              AgentVerdictCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 44}}},
+		AgentSummary:              keel.StringCol{Col: keel.Col{Ref: r, Index: 45}},
+		AgentReviewedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 46}},
+		AgentReads:                keel.JSONBCol{Col: keel.Col{Ref: r, Index: 47}},
+		AgentReviewHash:           keel.StringCol{Col: keel.Col{Ref: r, Index: 48}},
+		Version:                   keel.Int64Col{Col: keel.Col{Ref: r, Index: 49}},
+		CreatedAt:                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 50}},
+		UpdatedAt:                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 51}},
+		SearchVector:              keel.TSVectorCol{Col: keel.Col{Ref: r, Index: 52}},
+		ShipmentCustomerID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 53}}},
+		ShipmentDeliveredAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 54}},
+		ShipmentShippedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 55}},
 	}
 }
 
@@ -775,42 +779,44 @@ func ptrBillingQueueItem(p unsafe.Pointer, c int32) any {
 	case 35:
 		return &r.CheckedAt
 	case 36:
-		return &r.PONumber
+		return &r.RecheckDueAt
 	case 37:
-		return &r.InvoiceMemo
+		return &r.PONumber
 	case 38:
-		return &r.PaymentTerm
+		return &r.InvoiceMemo
 	case 39:
-		return &r.InvoiceDate
+		return &r.PaymentTerm
 	case 40:
-		return &r.PacketDocumentIDs
+		return &r.InvoiceDate
 	case 41:
-		return &r.PacketPicked
+		return &r.PacketDocumentIDs
 	case 42:
-		return &r.PacketPageRotations
+		return &r.PacketPicked
 	case 43:
-		return (**string)(unsafe.Pointer(&r.AgentVerdict))
+		return &r.PacketPageRotations
 	case 44:
-		return &r.AgentSummary
+		return (**string)(unsafe.Pointer(&r.AgentVerdict))
 	case 45:
-		return &r.AgentReviewedAt
+		return &r.AgentSummary
 	case 46:
-		return &r.AgentReads
+		return &r.AgentReviewedAt
 	case 47:
-		return &r.AgentReviewHash
+		return &r.AgentReads
 	case 48:
-		return &r.Version
+		return &r.AgentReviewHash
 	case 49:
-		return &r.CreatedAt
+		return &r.Version
 	case 50:
-		return &r.UpdatedAt
+		return &r.CreatedAt
 	case 51:
-		return &r.SearchVector
+		return &r.UpdatedAt
 	case 52:
-		return (*string)(unsafe.Pointer(&r.ShipmentCustomerID))
+		return &r.SearchVector
 	case 53:
-		return &r.ShipmentDeliveredAt
+		return (*string)(unsafe.Pointer(&r.ShipmentCustomerID))
 	case 54:
+		return &r.ShipmentDeliveredAt
+	case 55:
 		return &r.ShipmentShippedAt
 	}
 	return nil
@@ -961,81 +967,86 @@ func valueBillingQueueItem(p unsafe.Pointer, c int32) any {
 		}
 		return *r.CheckedAt
 	case 36:
+		if r.RecheckDueAt == nil {
+			return nil
+		}
+		return *r.RecheckDueAt
+	case 37:
 		if r.PONumber == "" {
 			return nil
 		}
 		return r.PONumber
-	case 37:
+	case 38:
 		if r.InvoiceMemo == "" {
 			return nil
 		}
 		return r.InvoiceMemo
-	case 38:
+	case 39:
 		if r.PaymentTerm == "" {
 			return nil
 		}
 		return r.PaymentTerm
-	case 39:
+	case 40:
 		if r.InvoiceDate == nil {
 			return nil
 		}
 		return *r.InvoiceDate
-	case 40:
+	case 41:
 		if r.PacketDocumentIDs == nil {
 			return keel.EmptyJSONArray
 		}
 		return r.PacketDocumentIDs
-	case 41:
-		return r.PacketPicked
 	case 42:
+		return r.PacketPicked
+	case 43:
 		if r.PacketPageRotations == nil {
 			return keel.EmptyJSONArray
 		}
 		return r.PacketPageRotations
-	case 43:
+	case 44:
 		if r.AgentVerdict == nil {
 			return nil
 		}
 		return string(*r.AgentVerdict)
-	case 44:
+	case 45:
 		if r.AgentSummary == "" {
 			return nil
 		}
 		return r.AgentSummary
-	case 45:
+	case 46:
 		if r.AgentReviewedAt == nil {
 			return nil
 		}
 		return *r.AgentReviewedAt
-	case 46:
+	case 47:
 		if r.AgentReads == nil {
 			return keel.EmptyJSONArray
 		}
 		return r.AgentReads
-	case 47:
+	case 48:
 		if r.AgentReviewHash == "" {
 			return nil
 		}
 		return r.AgentReviewHash
-	case 48:
-		return r.Version
 	case 49:
-		return r.CreatedAt
+		return r.Version
 	case 50:
-		return r.UpdatedAt
+		return r.CreatedAt
 	case 51:
-		return r.SearchVector
+		return r.UpdatedAt
 	case 52:
+		return r.SearchVector
+	case 53:
 		if r.ShipmentCustomerID == "" {
 			return nil
 		}
 		return string(r.ShipmentCustomerID)
-	case 53:
+	case 54:
 		if r.ShipmentDeliveredAt == nil {
 			return nil
 		}
 		return *r.ShipmentDeliveredAt
-	case 54:
+	case 55:
 		if r.ShipmentShippedAt == nil {
 			return nil
 		}

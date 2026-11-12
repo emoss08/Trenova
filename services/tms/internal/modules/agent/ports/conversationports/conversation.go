@@ -54,7 +54,8 @@ type ListThreadsRequest struct {
 	TouchedFrom     int64
 	TouchedBefore   int64
 	// AboutRecord splits a person's conversations in two: true lists only
-	// those asked on a record's case, false only the ones about no record.
+	// those asked on a record's case (deskcase.ConversationSubjects),
+	// false every other one, about another kind of record or about none.
 	// Nil lists both.
 	AboutRecord *bool
 }

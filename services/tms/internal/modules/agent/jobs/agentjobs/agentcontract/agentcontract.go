@@ -9,7 +9,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/schedule"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentflow/agentflowcontract"
@@ -28,8 +27,6 @@ import (
 const AgentRunWorkflowName = "AgentRunWorkflow"
 
 const AgentEvaluationWorkflowName = "AgentEvaluationWorkflow"
-
-const AgentDecisionSignalName = "agent-decision"
 
 type AgentRunPayload struct {
 	temporaltype.BasePayload
@@ -57,13 +54,6 @@ func (p *AgentRunPayload) TenantInfo() pagination.TenantInfo {
 		OrgID: p.OrganizationID,
 		BuID:  p.BusinessUnitID,
 	}
-}
-
-type DecisionSignal struct {
-	ProposalID      pulid.ID                   `json:"proposalId"`
-	Decision        agentdecision.DecisionType `json:"decision"`
-	DecidedByUserID pulid.ID                   `json:"decidedByUserId"`
-	ReasonCode      string                     `json:"reasonCode"`
 }
 
 // AgentEvaluationPayload names the evaluation to carry out: a recorded run

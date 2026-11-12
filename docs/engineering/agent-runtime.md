@@ -406,14 +406,18 @@ than any it names takes the newest known constraints.
   model it is, so under a declared Effort None asks for adaptive thinking at low effort, the
   least every such model accepts. Only an Anthropic provider may hold anything but Auto:
   validation refuses it, and so does `ck_ai_providers_thinking_style_kind`.
-- **None and Off.** None is the least thinking the model allows. Opus 5.5, Fable and Mythos
-  cannot stop thinking and Sonnet 5.5 refuses `disabled`, so they get adaptive at low
-  effort, with the summary shown; Opus 5 gets `disabled`; Opus and Sonnet 4.6 to 4.8 get
-  nothing, which is no thinking there. Off leaves the effort to the model. A model that
-  thinks when a request says nothing about thinking (Opus 5 and later, Sonnet 5 and later,
-  Haiku 5.5, Fable, Mythos: `thinksUnasked`) is sent `{type: "adaptive", display:
-  "summarized"}` and no effort, which is the thinking it would do anyway, made readable;
-  every other model is sent nothing.
+- **None and Off both mean no thinking.** Each asks for the least thinking the model
+  allows. Opus 5.5, Fable and Mythos cannot stop thinking and Sonnet 5.5 refuses `disabled`,
+  so they get adaptive at low effort, with the summary shown, and so does an effort model
+  declared behind an alias. A model that thinks when a request says nothing about thinking
+  and takes `disabled` (Opus 5, Sonnet 5, Haiku 5.5: `thinksUnasked`) is sent `disabled`,
+  which each accepts at effort high or below, every effort this system sends. Opus and
+  Sonnet 4.6 to 4.8 get nothing, which is no thinking there. Off used to leave such a model
+  to itself, and that was the Desk thinking before every step: on Haiku 5.5, 30 of 36
+  tool-calling replies thought first, about two thirds of the tokens of a reply whose
+  visible part was one tool call. A provider that wants thinking names an effort (Minimal
+  to High). On the OpenAI-shaped protocols Off still sends nothing, because a model that
+  does not reason refuses the parameter; None is how a reasoning model there is told not to.
 - **Why the summary is always asked for.** Each step on the Desk shows the reasoning of the
   reply that asked for it (`Message.Reasoning`, drawn with `ReasoningDisclosure`), and
   unattended runs keep it in their trajectory. Display changes only what comes back:
@@ -1236,31 +1240,19 @@ together.
   and a written need. It is written in words, never tool names, so renaming a
   tool cannot strand it (the test refuses anything shaped like one). The
   frame is set in `agentjobs.runRequest`, after the context is built.
-- **Chat turns** are framed by the scope classifier, which already runs on
-  every turn person-written input reaches (`agentguard/classifier.go`). It is served by the
-  providers assigned to ScopeClassification and then by the ones serving AssistantChat
-  (`Task.BorrowsFrom`), so an organization that never assigned the task, or whose assigned
-  providers are down, still has its guard: a classifier that cannot run lets the request
-  through on the deterministic rules alone. Its
-  schema also asks for a `goal` (one sentence) and a `need` (what the work must
-  read and change, as plain phrases); both are empty for a refused request,
-  and a request the classifier timed out on, failed on or found only in the
-  shared verdict store has neither. The shared store keeps the category alone,
-  so nothing derived from the person's words leaves the replica that asked
-  (`TestEvaluate_TheSharedStoreKeepsNoParaphraseOfTheRequest`).
-  `assistantservice.admit` turns the decision into `ChatFrame(goal, need)`; a
-  note Trenova wrote is not classified and has no frame. The frame stays
-  advisory: the prompt calls it how the request read before the turn started
-  and says the message wins.
-- **Preselection ranks on the need.** With a need, both the lexical and the
-  semantic ranking read the need followed by the message (`frameNeed`,
-  `turnQuery`), in place of the message and the person's previous one: the
-  classifier already resolved what a follow-up refers to, and a written need
-  shares its words with the tool descriptions where "yes, those ones" shares
-  none. The bench reports preselection recall@8 against the tools the turn used.
+- **Chat turns have no frame.** The scope classifier used to write one (a `goal` and a
+  `need` beside its verdict), which meant no turn could ask a model anything until the
+  classifier had answered: about two seconds of nothing in front of every reply. The
+  classifier now returns a verdict and nothing else, and runs beside the turn's first model
+  call ("Chat turns" below), so a chat turn is read from the person's message alone.
+- **Preselection ranks on the need** of a playbook. With a need, both the lexical and the
+  semantic ranking read the need followed by the input (`FrameNeed`, `TurnQuery`). A chat
+  turn ranks on the message and the person's previous one (`rankingText`): "yes, those
+  ones" names nothing; the message it answers does. The bench reports preselection recall@8
+  against the tools the turn used.
 - **In the prompt**, the frame opens the turn's own part as `## This task`: a
-  playbook's goal, steps, done-when and that proposals wait on a person, or a
-  chat turn's goal with its caveat. The need is not shown; it ranks tools. The
+  playbook's goal, steps, done-when and that proposals wait on a person. The
+  need is not shown; it ranks tools. The
   turn's own part is after the cache breakpoint, so the frame costs no cached
   prefix.
 - **The domain primer** (`agentdefinition.domainPrimer`, about 600 tokens) sits
@@ -1291,17 +1283,32 @@ starts a turn on it.
    so the turn's first workflow task prepares
    it and schedules the model call without a task-queue dispatch or a second
    workflow task in between. It reads the thread, history, files and mentions,
-   checks budget and room, and runs the scope guard. After the thread, every check and read runs
-   side by side (`checkTurn`); none writes, and a question failing several is
-   told about the first in the old order (files, agent, page, budget, room,
-   history), never about a cancellation. The guard's classifier runs beside the
-   context build (memories, retrieval embedding), which writes nothing, so a
-   refusal discards it; the classifier fails open after 3s, and on any other failure, unless
-   `RefuseWhenUnavailable` is set, when either refuses the turn. A refusal the
-   person can act on is non-retryable and its message reaches the reader as
-   written.
-2. **The loop** runs in workflow code, as above.
-3. **Finish** saves the turn, its proposals and artifacts, closes the turn's
+   checks budget and room, and runs the scope guard's deterministic rules. After the thread,
+   every check and read runs side by side (`checkTurn`); none writes, and a question failing
+   several is told about the first in the old order (files, agent, page, budget, room,
+   history), never about a cancellation. A question a rule refuses ends here, and a refusal
+   the person can act on is non-retryable and its message reaches the reader as written.
+   **The classifier does not run here.** `admit` hands back what it is to be asked
+   (`TurnPlan.ScopeCheck`, cut to what the classifier is shown by `EvaluateRequest.Bounded`)
+   with a decision at stage `Pending`, and the turn starts.
+2. **The scope classifier runs beside the first model call.** The loop takes
+   `RunContext.ScopeCheck` off the run as it sends that call (`ModelCallInput.ScopeCheck`),
+   and `ModelCallActivity` asks the classifier while the model answers (`agentflow/scopecheck.go`).
+   What the model streams is held until the verdict (`streamGate`), and the call's reply
+   reaches the loop only after it, so nothing the model wrote is shown and no tool it asked
+   for runs on a question the guard refuses. An allowed verdict rides back on the reply
+   (`modelstream.Reply.Scope`) and replaces the pending decision on the plan
+   (`TurnPlan.Decide`). A refusal cancels the model call and ends the activity with the
+   non-retryable `ScopeRefused`, whose details are the decision; `agentflow.Run` returns it as
+   `Outcome.Scope`, the workflow publishes `refused` (the reader drops the turn's segments)
+   and the turn is saved as any refused question is. The classifier still fails open after
+   3s, and on any other failure, unless `RefuseWhenUnavailable` is set. A task the person
+   handed straight to another agent reaches a model there first, so the check rides on that
+   agent's first call (`workflowEffects.Delegate`). The verdict costs the turn only what it
+   takes past the model's own first reply, which is usually nothing; before, it was a second
+   or two of "Checking the question…" in front of every answer. A dry run does the same.
+3. **The loop** runs in workflow code, as above.
+4. **Finish** saves the turn, its proposals and artifacts, closes the turn's
    record and writes the trajectory. It claims one ledger key per attempt, after
    checking no earlier attempt saved, so a retried save never appends twice.
 
@@ -2551,28 +2558,38 @@ telling the model so.
 
 ### What a provider can cache
 
-A provider reuses the start of a prompt only while it is the same bytes, and
-every model call of a turn resends everything before the newest tool result. So
-a turn is declared once, when it opens, and everything a call sends before the
-conversation is the same from the first call of the turn to the last.
+A provider reuses the start of a prompt only while it is the same bytes. Every
+model call of a turn resends everything before the newest tool result, and every
+turn of an agent for a person resends the tools and the shared part of the system
+prompt. So what a request sends before the conversation is the same from the first
+call of a turn to the last, **and from one turn to the next, whatever was asked**.
+Measured before that held (Haiku 5.5, Claude API): 21 of 22 Desk turns and 52 of 56
+agent runs read nothing from the cache on their first call and wrote 36k to 63k
+tokens, because the tools ranked for the question were declared in full at the very
+front of the prompt.
 
 - **Bytes.** Every request body, the tools and the replayed tool-call arguments
   included, is encoded with sorted keys (`modeladapter.RequestJSON`, and the
   SDK's encoder for Anthropic); a map in Go's random order made every request
   different. `TestRequests_AreTheSameBytesEveryTime` holds every protocol to it.
-- **One tool array per turn.** `newToolSet` opens the set (the core tools, the
-  template's standing tools (`Template.StandingTools`), the eight preselected
-  with their companions, what recent turns used, the runtime
-  tools, a command's tools) and `freeze` declares it: what is loaded is sent in
-  full, sorted by name, and every other tool the turn holds or reaches is
-  declared **deferred** (`toolSet.deferred`, `ChatCompletionRequest.DeferredTools`).
-  Loading a tool later (`find_tools`, a call to a held tool that was not loaded,
-  a read joining a batch, the nearest tools after an unheld call) never changes
-  the declaration: it marks the tool loaded and the next tool result names it
-  (`toolSet.takeLoaded` → `Message.ToolReferences`).
-  `TestRun_ADisclosedTurnNeverChangesItsToolArray` holds the turn to it. Only
-  a turn that can search (it is disclosed, or reaches other agents' tools)
-  declares anything deferred.
+- **One tool array per agent and person.** `openToolSet` declares what every turn carries
+  (the core tools, the template's standing tools (`Template.StandingTools`), `analysis_run`,
+  the runtime tools) and `freeze` closes it (`Access.declare`): those are sent in full,
+  sorted by name, and every other tool the turn holds or reaches is declared **deferred**
+  (`toolSet.deferred`, `ChatCompletionRequest.DeferredTools`). Nothing chosen for the
+  question is in that declaration.
+- **The question's tools are opened, not declared.** After the freeze the turn loads the
+  eight preselected with their companions, the waiting core tools the request names, what
+  recent turns used and a command's tools. Each is a deferred tool marked loaded, and
+  together they are `ToolSet.Opened`, which `OpenTurn` puts on the person's message
+  (`Message.ToolReferences`). Loading a tool later (`find_tools`, a call to a held tool that
+  was not loaded, a read joining a batch, the nearest tools after an unheld call) works the
+  same way and names the tool on the next tool result (`toolSet.takeLoaded`).
+  `TestOpenTurn_DeclaresTheSameToolsWhateverIsAsked` and
+  `TestRun_ADisclosedTurnNeverChangesItsToolArray` hold the turn to it. Only a turn that can
+  search (it is disclosed, or reaches other agents' tools) declares anything deferred. What
+  still moves the declaration is a change of state, not of question: a decision coming to
+  wait on the person (`request_decision`) and the first attachment (`agent_read_attachment`).
 - **Deferred tools travel by name.** The turn, its workflow state and each
   model activity's input carry a deferred tool's name, not its schema; the
   model call fills each in from the registry (`Service.declareTools`, in
@@ -2613,9 +2630,20 @@ conversation is the same from the first call of the turn to the last.
   answers a load with `tool_reference` blocks in the tool result that loaded
   it, after its text (`anthropicToolResult`); a reference to anything the
   request does not declare deferred is dropped (`referencing`), because the API
-  refuses one. The API leaves deferred tools out of the cached prefix, so the
+  refuses one. The tools a person's message opened are surfaced by a `role: "system"`
+  message of `tool_addition` blocks right after it (`appendAdditions`, beta
+  `mid-conversation-tool-changes-2026-07-01`), on the models and platforms that read a
+  system message mid-conversation (`anthropicAdds`: the same set as notices, so not Sonnet 5
+  or older, Bedrock or Foundry) and only where the message stands last or ahead of an
+  assistant turn (`additionFits`). Anywhere else those tools are declared in full
+  (`modeladapter.OpenedTools`), which is the tools prefix following the question, as it did
+  everywhere before. The API leaves deferred tools out of the cached prefix, so the
   marks are the last tool sent in full (a deferred tool cannot carry one), the
-  end of the shared system part, and the last block of the conversation. Since
+  end of the shared system part, and the last block of the conversation. The first two
+  **keep an hour** (`sharedMark`, `anthropicKeepsAnHour`; not on Bedrock or Foundry): they
+  are the same for every turn, and people ask minutes apart, so the five-minute entry was
+  gone by the next question more often than not. The conversation's mark keeps the default
+  five minutes, which a tool loop refreshes with every call. Since
   nothing edits the tools mid-turn, a turn's thinking blocks stay valid on the
   models that check the history (Haiku 5.5, Sonnet 5.5, Opus 5.5, Fable 5.1).
   Microsoft Foundry is not known to take deferred tools, so it is sent what is
@@ -2636,7 +2664,9 @@ conversation is the same from the first call of the turn to the last.
   and version, only there too.
 - **Everything else** (Responses elsewhere, OpenAI-compatible chat servers) is
   sent what is loaded: every tool declared in full and each deferred one a
-  result has loaded since (`loadedTools`), in declared order. The list grows
+  message has loaded since, the person's or a tool result's (`LoadedTools`), in declared
+  order. OpenAI's `tool_search` path declares what the person's message opened in full
+  (`OpenedTools`), since a search output is the only thing that loads a tool there. The list grows
   when a tool is loaded, and such a provider caches what it can.
 - **The final answer** keeps the tools and sends `tool_choice: none`, so it
   reads the same cached prefix.
@@ -2653,18 +2683,29 @@ conversation is the same from the first call of the turn to the last.
 3. **The loop** runs in workflow code under the definition's run timeout.
 4. **Finish** files the proposals, the summary and the trajectory. It runs
    however the loop ended, so a write made before a failure is on the record.
-5. The run then waits until **every** proposal is decided, or the decision
-   window closes and the rest expire. A decision signal says something was
-   decided; the run recounts what is still pending after each one, which is
-   right for a plan that decides several steps under one signal and for a
-   proposal decided twice in a race.
+5. The workflow then **ends**. A run with pending proposals is left
+   `AwaitingDecision` as a record; it holds no workflow open for its decision
+   window. Each proposal a workflow-carried run files expires at the agent's
+   decision window (bounded by the 7-day proposal TTL), and a proposal past
+   its expiry is refused at decision time.
 
-Whatever ends the run, its record is written on a disconnected context, as a
-stopped assistant turn's is. A run cancelled while it waits for decisions
-expires what is still pending and is recorded as failed ("the run was stopped
-while its proposals waited for a decision"). Before this, every activity after
-the cancellation ran on the cancelled context and none could start, so the
-run stayed `AwaitingDecision` with its proposals pending for good.
+The run is closed by `agentrunclose.Closer`, one conditional statement that
+completes a waiting run once none of its proposals is pending, so the two
+paths that race for it close it once:
+
+- the decision that leaves nothing pending (`agentdecisionservice.SettleRun`,
+  called once per plan by the plan service), which also has the run
+  reflected on;
+- the expiry sweep (`ExpireStaleProposalsWorkflow`, every 15 minutes), which
+  closes runs whose last proposals expired, without reflection.
+
+A run started inline has no workflow and is never closed this way. Stopping a
+waiting run (`RunCloser.StopWaiting`, used by the bench) expires what it left
+pending and fails it ("The run was stopped while its proposals waited for a
+decision."). A subject keeps one open event or wait run per agent: the run
+service counts open runs before starting a workflow, and the partial unique
+index `uq_agent_runs_open_subject` refuses a second record that races past
+the count, whose workflow is then cancelled.
 
 An approved proposal is executed by the decision service, not by the run: that
 path carries the modification checks, the trust ledger, memory and follow-ups,

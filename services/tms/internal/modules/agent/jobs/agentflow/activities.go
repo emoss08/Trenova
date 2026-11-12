@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aimetrics"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/delegation"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime/modelstream"
@@ -77,6 +78,7 @@ type ActivitiesParams struct {
 	Metrics   *metrics.Registry
 	Changes   realtimeports.RecordChangeFeed
 	Scopes    permissionports.ReadScopes
+	Guard     *agentguard.Service
 }
 
 // Activities are a turn's effects, one activity each.
@@ -90,6 +92,7 @@ type Activities struct {
 	metrics   *aimetrics.Assistant
 	changes   realtimeports.RecordChangeFeed
 	scopes    permissionports.ReadScopes
+	guard     *agentguard.Service
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
@@ -103,6 +106,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 		metrics:   metrics.AssistantFrom(p.Metrics),
 		changes:   p.Changes,
 		scopes:    p.Scopes,
+		guard:     p.Guard,
 	}
 }
 
@@ -172,6 +176,14 @@ func (a *Activities) ModelCallActivity(
 		emit = func(event kernelports.StreamEvent) { publish(event, first.flush(event)) }
 	}
 
+	stopBeating := modelcall.Heartbeat(ctx)
+	defer stopBeating()
+
+	callCtx, emit, check := a.checkScope(ctx, in.ScopeCheck, emit)
+	if check != nil {
+		defer check.cancel()
+	}
+
 	lookup := &replystep.Lookup{
 		Call:    in.Step,
 		Request: in.Request,
@@ -182,17 +194,17 @@ func (a *Activities) ModelCallActivity(
 			emit(modelstream.DeltaEvent(kept.Completion.Text))
 		}
 
-		return &kept, nil
+		return admitted(ctx, &kept, check)
 	}
 
-	stopBeating := modelcall.Heartbeat(ctx)
-	defer stopBeating()
-
-	ctx = aitrace.WithCallOrigin(ctx, aitrace.CallOrigin{
+	callCtx = aitrace.WithCallOrigin(callCtx, aitrace.CallOrigin{
 		ActivityAttempt: int(activity.GetInfo(ctx).Attempt),
 		Stream:          in.Stream,
 	})
-	reply, err := a.runtime.StreamCompletion(ctx, in.Request, emit)
+	reply, err := a.runtime.StreamCompletion(callCtx, in.Request, emit)
+	if _, refusal := admitted(ctx, &reply, check); refusal != nil {
+		return nil, refusal
+	}
 	if err != nil {
 		return nil, modelcall.Classify(err)
 	}
@@ -203,6 +215,26 @@ func (a *Activities) ModelCallActivity(
 	})
 
 	return &reply, nil
+}
+
+// admitted waits for the scope verdict of a call that asked for one and puts
+// it on the reply, or returns the refusal that ends the call. A call that
+// asked for none, or was stopped before the verdict, is returned as it is.
+func admitted(
+	ctx context.Context,
+	reply *modelstream.Reply,
+	check *scopeCheck,
+) (*modelstream.Reply, error) {
+	if check == nil || ctx.Err() != nil {
+		return reply, nil
+	}
+	decision := check.wait()
+	if !decision.Allowed {
+		return nil, scopeRefused(&decision)
+	}
+	reply.Scope = &decision
+
+	return reply, nil
 }
 
 // firstWords hurries the first piece of a model call's reply to the reader.

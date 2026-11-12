@@ -45,14 +45,7 @@ func (r *GetShipmentCommentCountRequest) Validate() error {
 	multiErr.AddOzzoError(validation.ValidateStruct(
 		r,
 		validation.Field(&r.ShipmentID, validation.Required.Error("Shipment ID is required")),
-		validation.Field(
-			&r.TenantInfo.OrgID,
-			validation.Required.Error("Organization ID is required"),
-		),
-		validation.Field(
-			&r.TenantInfo.BuID,
-			validation.Required.Error("Business unit ID is required"),
-		),
+		validation.Field(&r.TenantInfo),
 	))
 
 	return multiErr.Err()
@@ -71,14 +64,7 @@ func (r *GetShipmentCommentByIDRequest) Validate() error {
 		r,
 		validation.Field(&r.CommentID, validation.Required.Error("Comment ID is required")),
 		validation.Field(&r.ShipmentID, validation.Required.Error("Shipment ID is required")),
-		validation.Field(
-			&r.TenantInfo.OrgID,
-			validation.Required.Error("Organization ID is required"),
-		),
-		validation.Field(
-			&r.TenantInfo.BuID,
-			validation.Required.Error("Business unit ID is required"),
-		),
+		validation.Field(&r.TenantInfo),
 	))
 
 	return multiErr.Err()
@@ -97,14 +83,7 @@ func (r *DeleteShipmentCommentQuery) Validate() error {
 		r,
 		validation.Field(&r.CommentID, validation.Required.Error("Comment ID is required")),
 		validation.Field(&r.ShipmentID, validation.Required.Error("Shipment ID is required")),
-		validation.Field(
-			&r.TenantInfo.OrgID,
-			validation.Required.Error("Organization ID is required"),
-		),
-		validation.Field(
-			&r.TenantInfo.BuID,
-			validation.Required.Error("Business unit ID is required"),
-		),
+		validation.Field(&r.TenantInfo),
 	))
 
 	return multiErr.Err()
@@ -126,14 +105,7 @@ func (r *SetShipmentCommentPinnedRequest) Validate() error {
 		validation.Field(&r.CommentID, validation.Required.Error("Comment ID is required")),
 		validation.Field(&r.ShipmentID, validation.Required.Error("Shipment ID is required")),
 		validation.Field(&r.ActorID, validation.Required.Error("Actor ID is required")),
-		validation.Field(
-			&r.TenantInfo.OrgID,
-			validation.Required.Error("Organization ID is required"),
-		),
-		validation.Field(
-			&r.TenantInfo.BuID,
-			validation.Required.Error("Business unit ID is required"),
-		),
+		validation.Field(&r.TenantInfo),
 	))
 
 	return multiErr.Err()
@@ -155,14 +127,7 @@ func (r *SetShipmentCommentResolvedRequest) Validate() error {
 		validation.Field(&r.CommentID, validation.Required.Error("Comment ID is required")),
 		validation.Field(&r.ShipmentID, validation.Required.Error("Shipment ID is required")),
 		validation.Field(&r.ActorID, validation.Required.Error("Actor ID is required")),
-		validation.Field(
-			&r.TenantInfo.OrgID,
-			validation.Required.Error("Organization ID is required"),
-		),
-		validation.Field(
-			&r.TenantInfo.BuID,
-			validation.Required.Error("Business unit ID is required"),
-		),
+		validation.Field(&r.TenantInfo),
 	))
 
 	return multiErr.Err()
@@ -183,14 +148,7 @@ func (r *AcknowledgeShipmentCommentRequest) Validate() error {
 		validation.Field(&r.CommentID, validation.Required.Error("Comment ID is required")),
 		validation.Field(&r.ShipmentID, validation.Required.Error("Shipment ID is required")),
 		validation.Field(&r.UserID, validation.Required.Error("User ID is required")),
-		validation.Field(
-			&r.TenantInfo.OrgID,
-			validation.Required.Error("Organization ID is required"),
-		),
-		validation.Field(
-			&r.TenantInfo.BuID,
-			validation.Required.Error("Business unit ID is required"),
-		),
+		validation.Field(&r.TenantInfo),
 	))
 
 	return multiErr.Err()
@@ -211,14 +169,7 @@ func (r *SoftDeleteShipmentCommentRequest) Validate() error {
 		validation.Field(&r.CommentID, validation.Required.Error("Comment ID is required")),
 		validation.Field(&r.ShipmentID, validation.Required.Error("Shipment ID is required")),
 		validation.Field(&r.ActorID, validation.Required.Error("Actor ID is required")),
-		validation.Field(
-			&r.TenantInfo.OrgID,
-			validation.Required.Error("Organization ID is required"),
-		),
-		validation.Field(
-			&r.TenantInfo.BuID,
-			validation.Required.Error("Business unit ID is required"),
-		),
+		validation.Field(&r.TenantInfo),
 	))
 
 	return multiErr.Err()

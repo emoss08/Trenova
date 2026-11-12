@@ -16,7 +16,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
-	"github.com/emoss08/trenova/internal/modules/agent/jobs/agentjobs/agentcontract"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentactivityports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
@@ -57,6 +56,7 @@ type Params struct {
 	Shadow        *agentshadow.Resolver
 	Permissions   permissionports.PermissionEngine
 	Workflows     kernelports.WorkflowStarter
+	Runs          agentruntimeports.RunCloser
 	Executor      *proposalexecutor.Service
 	AuditService  auditports.AuditService
 	Trust         agenttrustports.AgentTrustService
@@ -87,6 +87,7 @@ type Service struct {
 	owners       caseownerports.Service
 	permissions  permissionports.PermissionEngine
 	workflows    kernelports.WorkflowStarter
+	runs         agentruntimeports.RunCloser
 	executor     *proposalexecutor.Service
 	audit        auditports.AuditService
 	trust        agenttrustports.AgentTrustService
@@ -111,6 +112,7 @@ func New(p Params) agentdecisionports.AgentDecisionService {
 		owners:       p.Owners,
 		permissions:  p.Permissions,
 		workflows:    p.Workflows,
+		runs:         p.Runs,
 		executor:     p.Executor,
 		audit:        p.AuditService,
 		trust:        p.Trust,
@@ -463,12 +465,11 @@ func (s *Service) carryOut(
 
 	s.clearFromWatchtower(ctx, proposal, req.TenantInfo)
 
-	// A plan signals its run's workflow once, for all its steps; a step
-	// signalling on its own would reach a workflow the first step already
-	// released.
+	// A plan settles its run once, after all its steps are decided; a step
+	// settling on its own would find the plan's other steps still pending.
 	if !req.WithinPlan {
-		if err := s.signalWorkflow(ctx, proposal.RunID, req, created); err != nil {
-			s.l.Error("failed to signal agent workflow", zap.Error(err))
+		if err := s.SettleRun(ctx, req.TenantInfo, proposal.RunID); err != nil {
+			s.l.Error("failed to close the agent run its decision settled", zap.Error(err))
 		}
 	}
 
@@ -562,15 +563,15 @@ func (s *Service) settleModifications(
 	return &settled, nil
 }
 
-// SignalRun tells a run's workflow that its proposals were decided. The
-// plan service calls it once after deciding every step.
-func (s *Service) SignalRun(
+// SettleRun completes the run once the decisions leave none of its
+// proposals pending. The plan service calls it once after deciding every
+// step.
+func (s *Service) SettleRun(
 	ctx context.Context,
-	req *agentdecisionports.DecideAgentProposalRequest,
-	decision *agentdecision.AgentDecision,
+	tenantInfo pagination.TenantInfo,
 	runID pulid.ID,
 ) error {
-	return s.signalWorkflow(ctx, runID, req, decision)
+	return s.runs.CloseIfDecided(ctx, tenantInfo, runID)
 }
 
 // shadowRefusal names the switch that is on and where it lives.
@@ -733,38 +734,6 @@ func (s *Service) recordCorrection(
 			zap.Error(err),
 		)
 	}
-}
-
-func (s *Service) signalWorkflow(
-	ctx context.Context,
-	runID pulid.ID,
-	req *agentdecisionports.DecideAgentProposalRequest,
-	decision *agentdecision.AgentDecision,
-) error {
-	run, err := s.runRepo.GetByID(ctx, agentruntimeports.GetAgentRunByIDRequest{
-		ID:         runID,
-		TenantInfo: &req.TenantInfo,
-	})
-	if err != nil {
-		return err
-	}
-
-	if run.WorkflowID == "" {
-		return nil
-	}
-
-	return s.workflows.SignalWorkflow(
-		ctx,
-		run.WorkflowID,
-		"",
-		agentcontract.AgentDecisionSignalName,
-		agentcontract.DecisionSignal{
-			ProposalID:      *decision.ProposalID,
-			Decision:        decision.Decision,
-			DecidedByUserID: decision.DecidedByUserID,
-			ReasonCode:      decision.ReasonCode,
-		},
-	)
 }
 
 // reasonCodeFor fills in a code when the decision came without one. The

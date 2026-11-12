@@ -96,8 +96,10 @@ func TestAnthropicAdapter_NoneOnADeclaredEffortModelAsksForTheLeast(t *testing.T
 		aireasoning.ThinkingStyleEffort,
 		aireasoning.ReasoningOff,
 	)
-	assert.Nil(t, thinking)
-	assert.Nil(t, output)
+	require.NotNil(t, thinking)
+	assert.Equal(t, "adaptive", thinking["type"])
+	require.NotNil(t, output)
+	assert.Equal(t, "low", output["effort"])
 }
 
 // An operator who knows the model behind an id takes a budget gets one, even

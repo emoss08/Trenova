@@ -77,7 +77,7 @@ func (s *Service) Review(
 			About("", updated.ReviewNote),
 		req.ReviewerID,
 	))
-	s.afterQueueChange(ctx, req.TenantInfo, &TransitionResult{
+	s.afterQueueChange(ctx, &TransitionResult{
 		Before:  map[pulid.ID]*inboundmessageports.QueueState{updated.ID: before},
 		Changed: []*inboundmessageports.QueueState{queueStateOf(updated)},
 	})

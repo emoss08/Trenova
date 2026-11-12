@@ -2,6 +2,7 @@ package shipmentmoveports
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/movesplit"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -38,14 +39,7 @@ func (r *UpdateMoveStatusRequest) Validate() error {
 	multiErr.AddOzzoError(validation.ValidateStruct(
 		r,
 		validation.Field(&r.MoveID, validation.Required.Error("Move ID is required")),
-		validation.Field(
-			&r.TenantInfo.OrgID,
-			validation.Required.Error("Organization ID is required"),
-		),
-		validation.Field(
-			&r.TenantInfo.BuID,
-			validation.Required.Error("Business unit ID is required"),
-		),
+		validation.Field(&r.TenantInfo),
 		validation.Field(
 			&r.Status,
 			validation.Required.Error("Status is required"),
@@ -178,14 +172,7 @@ func (r *BulkUpdateMoveStatusRequest) Validate() error {
 			validation.Required.Error("Move IDs are required"),
 			validation.Length(1, 500),
 		),
-		validation.Field(
-			&r.TenantInfo.OrgID,
-			validation.Required.Error("Organization ID is required"),
-		),
-		validation.Field(
-			&r.TenantInfo.BuID,
-			validation.Required.Error("Business unit ID is required"),
-		),
+		validation.Field(&r.TenantInfo),
 		validation.Field(
 			&r.Status,
 			validation.Required.Error("Status is required"),
@@ -205,6 +192,20 @@ func (r *BulkUpdateMoveStatusRequest) Validate() error {
 type SplitStopTimes struct {
 	ScheduledWindowStart int64  `json:"scheduledWindowStart"`
 	ScheduledWindowEnd   *int64 `json:"scheduledWindowEnd"`
+}
+
+func startsRule(message string) validation.Rule {
+	return validation.By(func(value any) error {
+		times, ok := value.(SplitStopTimes)
+		if !ok {
+			return fmt.Errorf("stop times rule given %T", value)
+		}
+
+		return validation.ValidateStruct(
+			&times,
+			validation.Field(&times.ScheduledWindowStart, validation.Required.Error(message)),
+		)
+	})
 }
 
 type SplitMoveRequest struct {
@@ -239,21 +240,14 @@ func (r *SplitMoveRequest) Validate() error {
 			&r.NewDeliveryLocationID,
 			validation.Required.Error("New delivery location ID is required"),
 		),
+		validation.Field(&r.TenantInfo),
 		validation.Field(
-			&r.TenantInfo.OrgID,
-			validation.Required.Error("Organization ID is required"),
+			&r.SplitPickupTimes,
+			startsRule("Split pickup scheduled window start is required"),
 		),
 		validation.Field(
-			&r.TenantInfo.BuID,
-			validation.Required.Error("Business unit ID is required"),
-		),
-		validation.Field(
-			&r.SplitPickupTimes.ScheduledWindowStart,
-			validation.Required.Error("Split pickup scheduled window start is required"),
-		),
-		validation.Field(
-			&r.NewDeliveryTimes.ScheduledWindowStart,
-			validation.Required.Error("New delivery scheduled window start is required"),
+			&r.NewDeliveryTimes,
+			startsRule("New delivery scheduled window start is required"),
 		),
 	))
 

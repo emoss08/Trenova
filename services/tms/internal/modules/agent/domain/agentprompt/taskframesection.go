@@ -10,8 +10,6 @@ import (
 const (
 	frameApproval = "What your tools record as a proposal waits on a person: file it and say " +
 		"so in the report rather than waiting for the decision."
-	frameInferredCaveat = "This is how the request read before you started. When the message " +
-		"says otherwise, the message wins."
 )
 
 func buildTaskFrameSection(frame *agentturn.TaskFrame) string {
@@ -21,15 +19,6 @@ func buildTaskFrameSection(frame *agentturn.TaskFrame) string {
 
 	var builder strings.Builder
 	builder.WriteString("## This task\n")
-	if frame.Inferred {
-		builder.WriteString("What the person wants: ")
-		builder.WriteString(frame.Goal)
-		builder.WriteString("\n")
-		builder.WriteString(frameInferredCaveat)
-
-		return builder.String()
-	}
-
 	builder.WriteString("Goal: ")
 	builder.WriteString(frame.Goal)
 	if len(frame.Steps) > 0 {

@@ -174,7 +174,7 @@ func (s *Service) scheduleRecomputeDue(
 	tenantInfo pagination.TenantInfo,
 	changed []inboundmessage.Classification,
 ) {
-	err := s.wakes.RecomputeDue(ctx, tenantInfo, changed)
+	err := s.dues.RecomputeDue(ctx, tenantInfo, changed)
 	if err == nil {
 		return
 	}

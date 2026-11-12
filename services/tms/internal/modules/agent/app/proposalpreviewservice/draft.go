@@ -89,7 +89,7 @@ func (s *Service) draft(ctx context.Context, in *draftInput) (*draft, error) {
 		return nil, err
 	}
 
-	s.assemble(d, tool, found)
+	s.assemble(ctx, d, tool, found)
 	d.preview.Staleness = found.staleness(proposal)
 	d.preview.TargetVersion = found.version
 	if proposal.TargetID.IsNil() {
@@ -358,7 +358,12 @@ func tenantOfParams(params *agenttoolports.ToolExecuteParams) pagination.TenantI
 
 // assemble turns the tool's preview into the proposal's: its coverage, its
 // changes named by their labels, or the fallback when it had nothing to say.
-func (s *Service) assemble(d *draft, tool agenttoolports.AgentTool, found *snapshotResult) {
+func (s *Service) assemble(
+	ctx context.Context,
+	d *draft,
+	tool agenttoolports.AgentTool,
+	found *snapshotResult,
+) {
 	preview := d.preview
 	switch {
 	// A preview that came back with one of the write's own refusals (a rule it
@@ -371,7 +376,7 @@ func (s *Service) assemble(d *draft, tool agenttoolports.AgentTool, found *snaps
 			zap.String("proposal", d.proposal.ID.String()),
 			zap.Error(found.previewErr),
 		)
-		s.fallback(d, tool)
+		s.fallback(ctx, d, tool)
 		if errortypes.IsRefusal(found.previewErr) {
 			refusal := toolpreview.WouldFail(found.previewErr)
 			preview.AddWarning(&refusal)
@@ -388,7 +393,7 @@ func (s *Service) assemble(d *draft, tool agenttoolports.AgentTool, found *snaps
 
 		return
 	case found.preview == nil:
-		s.fallback(d, tool)
+		s.fallback(ctx, d, tool)
 
 		return
 	}
@@ -407,9 +412,12 @@ func (s *Service) assemble(d *draft, tool agenttoolports.AgentTool, found *snaps
 }
 
 // fallback is a tool that cannot say what it would change: the parameters it
-// would run with, without the ones its policy holds Confidential.
-func (s *Service) fallback(d *draft, tool agenttoolports.AgentTool) {
+// would run with, without the ones its policy holds Confidential. A parameter
+// that names a record is that record by its label, read here as a preview's
+// own references are.
+func (s *Service) fallback(ctx context.Context, d *draft, tool agenttoolports.AgentTool) {
 	params := toolpreview.Parameters(d.proposal.ToolName, tool.Policy().Resource, d.params)
+	applyLabels(params.Changes, s.labels(ctx, tenantOf(d.proposal), params.Changes))
 	d.preview.Summary = params.Summary
 	d.preview.Changes = params.Changes
 	d.preview.Coverage = agentpreview.PreviewCoverageUnavailable

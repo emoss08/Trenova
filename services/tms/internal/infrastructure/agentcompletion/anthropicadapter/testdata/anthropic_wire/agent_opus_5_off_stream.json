@@ -8,7 +8,7 @@
     "X-Api-Key": "sk-test"
   },
   "body": {
-    "max_tokens": 10240,
+    "max_tokens": 512,
     "messages": [
       {
         "content": [
@@ -136,6 +136,7 @@
     "system": [
       {
         "cache_control": {
+          "ttl": "1h",
           "type": "ephemeral"
         },
         "text": "Rules that never change.",
@@ -147,8 +148,7 @@
       }
     ],
     "thinking": {
-      "display": "summarized",
-      "type": "adaptive"
+      "type": "disabled"
     },
     "tools": [
       {
@@ -177,6 +177,7 @@
       },
       {
         "cache_control": {
+          "ttl": "1h",
           "type": "ephemeral"
         },
         "description": "List workers",

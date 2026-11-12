@@ -35,7 +35,7 @@ type Params struct {
 	// an unmatched message is still one a person can read and link by hand.
 	Shipments  ShipmentFinder
 	TargetRepo inboundmessageports.TriageTargetRepository
-	Wakes      inboundmessageports.TriageWakeScheduler
+	Dues       inboundmessageports.TriageDueRecomputer
 	// Watchtower and Events are how a message that needs a person, or a desk,
 	// gets one.
 	Watchtower watchtowerports.WatchtowerProjector
@@ -57,7 +57,7 @@ type Service struct {
 	settingsRepo  inboundmessageports.TriageSettingsRepository
 	shipments     ShipmentFinder
 	targetRepo    inboundmessageports.TriageTargetRepository
-	wakes         inboundmessageports.TriageWakeScheduler
+	dues          inboundmessageports.TriageDueRecomputer
 }
 
 //nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
@@ -84,6 +84,6 @@ func New(p Params) *Service {
 		settingsRepo:  p.SettingsRepo,
 		shipments:     p.Shipments,
 		targetRepo:    p.TargetRepo,
-		wakes:         p.Wakes,
+		dues:          p.Dues,
 	}
 }

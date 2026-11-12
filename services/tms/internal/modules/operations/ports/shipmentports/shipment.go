@@ -123,14 +123,7 @@ func (r *CancelShipmentRequest) Validate() error {
 	multiErr.AddOzzoError(validation.ValidateStruct(
 		r,
 		validation.Field(&r.ShipmentID, validation.Required.Error("Shipment ID is required")),
-		validation.Field(
-			&r.TenantInfo.OrgID,
-			validation.Required.Error("Organization ID is required"),
-		),
-		validation.Field(
-			&r.TenantInfo.BuID,
-			validation.Required.Error("Business unit ID is required"),
-		),
+		validation.Field(&r.TenantInfo),
 	))
 
 	return multiErr.Err()
@@ -161,14 +154,7 @@ func (r *UncancelShipmentRequest) Validate() error {
 	multiErr.AddOzzoError(validation.ValidateStruct(
 		r,
 		validation.Field(&r.ShipmentID, validation.Required.Error("Shipment ID is required")),
-		validation.Field(
-			&r.TenantInfo.OrgID,
-			validation.Required.Error("Organization ID is required"),
-		),
-		validation.Field(
-			&r.TenantInfo.BuID,
-			validation.Required.Error("Business unit ID is required"),
-		),
+		validation.Field(&r.TenantInfo),
 	))
 
 	return multiErr.Err()
@@ -187,14 +173,7 @@ func (r *TransferOwnershipRequest) Validate() error {
 		r,
 		validation.Field(&r.ShipmentID, validation.Required.Error("Shipment ID is required")),
 		validation.Field(&r.OwnerID, validation.Required.Error("Owner ID is required")),
-		validation.Field(
-			&r.TenantInfo.OrgID,
-			validation.Required.Error("Organization ID is required"),
-		),
-		validation.Field(
-			&r.TenantInfo.BuID,
-			validation.Required.Error("Business unit ID is required"),
-		),
+		validation.Field(&r.TenantInfo),
 	))
 
 	return multiErr.Err()
@@ -212,14 +191,7 @@ func (r *DuplicateBOLCheckRequest) Validate() error {
 	multiErr.AddOzzoError(validation.ValidateStruct(
 		r,
 		validation.Field(&r.BOL, validation.Required.Error("BOL is required")),
-		validation.Field(
-			&r.TenantInfo.OrgID,
-			validation.Required.Error("Organization ID is required"),
-		),
-		validation.Field(
-			&r.TenantInfo.BuID,
-			validation.Required.Error("Business unit ID is required"),
-		),
+		validation.Field(&r.TenantInfo),
 	))
 
 	return multiErr.Err()
@@ -306,14 +278,7 @@ func (r *GetDelayedShipmentsRequest) Validate() error {
 
 	multiErr.AddOzzoError(validation.ValidateStruct(
 		r,
-		validation.Field(
-			&r.TenantInfo.OrgID,
-			validation.Required.Error("Organization ID is required"),
-		),
-		validation.Field(
-			&r.TenantInfo.BuID,
-			validation.Required.Error("Business unit ID is required"),
-		),
+		validation.Field(&r.TenantInfo),
 	))
 
 	return multiErr.Err()
@@ -329,14 +294,7 @@ func (r *DelayShipmentsRequest) Validate() error {
 
 	multiErr.AddOzzoError(validation.ValidateStruct(
 		r,
-		validation.Field(
-			&r.TenantInfo.OrgID,
-			validation.Required.Error("Organization ID is required"),
-		),
-		validation.Field(
-			&r.TenantInfo.BuID,
-			validation.Required.Error("Business unit ID is required"),
-		),
+		validation.Field(&r.TenantInfo),
 	))
 
 	return multiErr.Err()
@@ -352,14 +310,7 @@ func (r *GetAutoCancelableShipmentsRequest) Validate() error {
 
 	multiErr.AddOzzoError(validation.ValidateStruct(
 		r,
-		validation.Field(
-			&r.TenantInfo.OrgID,
-			validation.Required.Error("Organization ID is required"),
-		),
-		validation.Field(
-			&r.TenantInfo.BuID,
-			validation.Required.Error("Business unit ID is required"),
-		),
+		validation.Field(&r.TenantInfo),
 	))
 
 	return multiErr.Err()
@@ -375,14 +326,7 @@ func (r *AutoCancelShipmentsRequest) Validate() error {
 
 	multiErr.AddOzzoError(validation.ValidateStruct(
 		r,
-		validation.Field(
-			&r.TenantInfo.OrgID,
-			validation.Required.Error("Organization ID is required"),
-		),
-		validation.Field(
-			&r.TenantInfo.BuID,
-			validation.Required.Error("Business unit ID is required"),
-		),
+		validation.Field(&r.TenantInfo),
 	))
 
 	return multiErr.Err()

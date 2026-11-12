@@ -1,4 +1,5 @@
 "use no memo";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import logo from "@/assets/logo.webp";
 import { useLiveThreadIds } from "@/components/assistant/use-active-turns";
 import { DeskIcon, type DeskIconName } from "@/components/desk-chat/desk-icons";
@@ -37,13 +38,7 @@ import { RenameConversationDialog } from "./rename-conversation-dialog";
 import { RailList } from "./rail-list";
 import { RAIL_TRANSITION_CLASS } from "../desk-motion";
 import { RailCaseRowItem, RailThreadRow } from "./rail-row";
-import {
-  RAIL_LIST_CLASS,
-  RAIL_TOP_CLASS,
-  railClass,
-  railInnerClass,
-  type RailMode,
-} from "./rail-classes";
+import { RAIL_TOP_CLASS, railClass, railInnerClass, type RailMode } from "./rail-classes";
 
 const NO_WAITING_CASES: readonly DeskAttentionGroup[] = [];
 
@@ -473,32 +468,42 @@ export function DeskRail({
         </div>
 
         {view === "triage" ? (
-          <div className={cn(RAIL_LIST_CLASS, RAIL_TRANSITION_CLASS.triage)}>
-            <HoverGlideGroup className="bg-transparent" glideClassName="rounded-[8px] bg-dsk-hover">
-              <div className="flex flex-col gap-1">
-                {/* Back is where the person came from, the page itself and not only
+          // Triage's folders, views, sources and rules run past a short window:
+          // the Desk's scroll area, fading at an edge with more beyond it.
+          <ScrollArea
+            className={cn("min-h-0 flex-1", RAIL_TRANSITION_CLASS.triage)}
+            maskClassName="before:from-dsk-rail after:from-dsk-rail"
+          >
+            <div className="px-2 pt-0.5 pb-4">
+              <HoverGlideGroup
+                className="bg-transparent"
+                glideClassName="rounded-[8px] bg-dsk-hover"
+              >
+                <div className="flex flex-col gap-1">
+                  {/* Back is where the person came from, the page itself and not only
                     the view, so Triage opened from a case leads back to that case. */}
-                <RailPlace
-                  to={triageBack.to}
-                  current={false}
-                  icon="chevL"
-                  label={triageBack.view === "cases" ? t("Back to cases") : t("Back to chats")}
-                />
-                {canWatch && triageBack.view === "chats" && (
                   <RailPlace
-                    to="/desk/needs"
+                    to={triageBack.to}
                     current={false}
-                    icon="stack"
-                    label={t("Needs you")}
-                    count={lensCounts.everything}
+                    icon="chevL"
+                    label={triageBack.view === "cases" ? t("Back to cases") : t("Back to chats")}
                   />
-                )}
-              </div>
-            </HoverGlideGroup>
-            {/* A room's places come through a portal, whose pointer events never
+                  {canWatch && triageBack.view === "chats" && (
+                    <RailPlace
+                      to="/desk/needs"
+                      current={false}
+                      icon="stack"
+                      label={t("Needs you")}
+                      count={lensCounts.everything}
+                    />
+                  )}
+                </div>
+              </HoverGlideGroup>
+              {/* A room's places come through a portal, whose pointer events never
                 reach this rail's glide, so the room brings a glide of its own. */}
-            <div ref={setSlot} className="flex flex-col" />
-          </div>
+              <div ref={setSlot} className="flex flex-col" />
+            </div>
+          </ScrollArea>
         ) : (
           <RailList
             className={RAIL_TRANSITION_CLASS[view]}

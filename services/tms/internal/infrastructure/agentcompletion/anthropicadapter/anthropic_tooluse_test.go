@@ -10,7 +10,7 @@ import (
 )
 
 func toAnthropicMessages(messages []modeladapter.Message) []anthropic.BetaMessageParam {
-	return anthropicConversation(messages, nil, false)
+	return anthropicConversation(messages, nil, false, false)
 }
 
 func TestToAnthropicMessages_ReplaysAnArgumentFreeCallWithItsInput(t *testing.T) {

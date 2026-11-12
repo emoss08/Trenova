@@ -73,7 +73,7 @@ func TestCarryOver_ReloadsTheToolsASearchRecorded(t *testing.T) {
 	})
 
 	require.True(t, set.Disclosed)
-	sent := specNames(set.Specs)
+	sent := opensWith(set)
 	assert.Contains(t, sent, "worker_list", "the recorded result is reloaded as it was")
 	assert.NotContains(t, sent, "equipment_list_trailers",
 		"the search is not run again when its result named what it found")
@@ -98,7 +98,7 @@ func TestCarryOver_SearchesAgainForAResultRecordedBeforeNamesWereKept(t *testing
 	})
 
 	require.True(t, set.Disclosed)
-	sent := specNames(set.Specs)
+	sent := opensWith(set)
 	assert.Contains(
 		t,
 		sent,
@@ -182,7 +182,7 @@ func TestNewToolSet_KeywordRankingIsUnchangedWithoutAVector(t *testing.T) {
 	want := keyword.access.NewToolSet(t.Context(), &request)
 	got := unavailable.access.NewToolSet(t.Context(), &request)
 
-	assert.Equal(t, specNames(want.Specs), specNames(got.Specs))
+	assert.Equal(t, opensWith(want), opensWith(got))
 	assert.Len(t, vectorizer.Calls, 1)
 	assert.Empty(t, similarities.Requests, "an unavailable vector is never compared")
 	assert.Nil(t, got.State().Query)
@@ -248,7 +248,7 @@ func TestFindFor_SearchesByMeaningWithTheTurnsVector(t *testing.T) {
 		},
 	})
 	require.True(t, set.Disclosed)
-	preselected := specNames(set.Specs)
+	preselected := opensWith(set)
 	for _, name := range names[:toolaccess.PreselectedTools] {
 		require.Contains(t, preselected, name, "preselection spends the vector first")
 	}

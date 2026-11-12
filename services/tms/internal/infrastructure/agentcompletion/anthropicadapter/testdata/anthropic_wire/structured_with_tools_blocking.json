@@ -36,6 +36,7 @@
     "tools": [
       {
         "cache_control": {
+          "ttl": "1h",
           "type": "ephemeral"
         },
         "description": "Look up a shipment by its number",

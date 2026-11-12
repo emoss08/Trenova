@@ -11,7 +11,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttaskframe"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
@@ -75,24 +74,24 @@ type TurnResult struct {
 	Provider  pulid.ID
 }
 
-// admit asks the scope guard about a question and, when it may be answered,
-// builds the run request that answers it. A refused question gets no run
-// request: the point of guarding first is that the model is never called.
+// admit runs the scope rules over a question and, when they pass, builds the
+// run request that answers it. A question a rule refuses gets no run request
+// and never reaches a model.
 //
-// The classifier and the context build run side by side. Neither needs the
-// other, both are network calls, and run one after the other the person
-// waited for their sum before the first token. Building the context writes
-// nothing, so a refusal simply discards it. A request the deterministic rules
-// refuse is refused before either starts.
+// The classifier does not run here. It is a model call, and run in front of
+// the turn it was a second or two of nothing on the screen before every
+// answer. It runs beside the turn's first model call instead: admit hands
+// back what it is to be asked (check), the turn starts at once, and the call
+// holds what it streams and returns nothing the loop can act on until the
+// verdict is in. A question Trenova wrote itself is not checked at all.
 func (s *Service) admit(
 	ctx context.Context,
 	req *TurnRequest,
-) (agentguard.Decision, *agentruntimeports.RunRequest) {
+) (agentguard.Decision, *agentruntimeports.RunRequest, *agentguard.EvaluateRequest) {
 	var decision agentguard.Decision
-	var runtimeContext agentturn.RuntimeContext
+	var check *agentguard.EvaluateRequest
 	if req.TrenovaWritten {
 		decision = trenovaWrittenDecision()
-		runtimeContext = s.buildContext(ctx, req)
 	} else {
 		evaluate := agentguard.EvaluateRequest{
 			TenantInfo: req.Actor.TenantInfo(),
@@ -101,22 +100,14 @@ func (s *Service) admit(
 			About:      aboutOf(req),
 		}
 		if !agentguard.EvaluateDeterministic(req.Input).Allowed {
-			return s.guard.Evaluate(ctx, evaluate), nil
+			return s.guard.Evaluate(ctx, evaluate), nil, nil
 		}
-
-		verdict := make(chan agentguard.Decision, 1)
-		go func() {
-			verdict <- s.guard.Evaluate(ctx, evaluate)
-		}()
-
-		runtimeContext = s.buildContext(ctx, req)
-		decision = <-verdict
-		if !decision.Allowed {
-			return decision, nil
-		}
+		decision = agentguard.Pending()
+		bounded := evaluate.Bounded()
+		check = &bounded
 	}
 
-	runtimeContext.Frame = agenttaskframe.ChatFrame(decision.Goal, decision.Need)
+	runtimeContext := s.buildContext(ctx, req)
 	runtimeContext.PendingProposals = proposaloutcomes.Pending(req.Proposals)
 	runtimeContext.OpenWaits = req.OpenWaits
 	runtimeContext.Anchors = req.Anchors
@@ -142,7 +133,7 @@ func (s *Service) admit(
 		// every write it asks for, as reading the web in the turn would.
 		AfterExternalContent: req.OutsideText,
 		CodeMode:             req.CodeMode,
-	}
+	}, check
 }
 
 func trenovaWrittenDecision() agentguard.Decision {

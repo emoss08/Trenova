@@ -1,4 +1,4 @@
-package reflectionjobs
+package reflectioncontract
 
 import (
 	"context"

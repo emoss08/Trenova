@@ -94,6 +94,9 @@ func offeredTools(req *llmports.ChatCompletionRequest) []string {
 			names = append(names, spec.Name)
 		}
 	}
+	for idx := range req.Messages {
+		names = append(names, req.Messages[idx].ToolReferences...)
+	}
 
 	return names
 }

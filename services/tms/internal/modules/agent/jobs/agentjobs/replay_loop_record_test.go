@@ -92,12 +92,12 @@ func TestRecordAgentLoopHistories(t *testing.T) {
 			},
 		},
 		{
-			name:    "loop-waiting-on-a-decision",
+			name:    "loop-filed-a-pending-proposal",
 			replies: []*modelstream.ModelReply{read, write, answer},
 			pending: 1,
-			drive: func(t *testing.T, c client.Client, run client.WorkflowRun) bool {
-				waitForTimer(t, c, run)
-				return true
+			drive: func(t *testing.T, _ client.Client, run client.WorkflowRun) bool {
+				require.NoError(t, run.Get(t.Context(), nil))
+				return false
 			},
 		},
 	}
@@ -162,9 +162,8 @@ func registerLoopStandIns(
 	w.RegisterActivityWithOptions(
 		func(_ context.Context, p *agentcontract.AgentRunPayload) (*PrepareRunResult, error) {
 			return &PrepareRunResult{
-				Definition:             loopReplayDefinition(p.DefinitionID),
-				DecisionTimeoutSeconds: 86400,
-				RunTimeoutSeconds:      600,
+				Definition:        loopReplayDefinition(p.DefinitionID),
+				RunTimeoutSeconds: 600,
 			}, nil
 		},
 		activity.RegisterOptions{Name: "PrepareRunActivity"},
@@ -245,31 +244,6 @@ func registerLoopStandIns(
 	w.RegisterActivityWithOptions(func(context.Context, *ExpireProposalsInput) error {
 		return nil
 	}, activity.RegisterOptions{Name: "ExpireProposalsActivity"})
-
-	w.RegisterActivityWithOptions(func(context.Context, *PendingProposalsInput) (int, error) {
-		return rec.pending, nil
-	}, activity.RegisterOptions{Name: "PendingProposalsActivity"})
-}
-
-// waitForTimer returns once the workflow has started its decision timer, which
-// is the point at which it is parked waiting on a person.
-func waitForTimer(t *testing.T, c client.Client, run client.WorkflowRun) {
-	t.Helper()
-
-	require.Eventually(t, func() bool {
-		iter := c.GetWorkflowHistory(t.Context(), run.GetID(), run.GetRunID(), false,
-			enumspb.HISTORY_EVENT_FILTER_TYPE_ALL_EVENT)
-		for iter.HasNext() {
-			event, err := iter.Next()
-			if err != nil {
-				return false
-			}
-			if event.GetEventType() == enumspb.EVENT_TYPE_TIMER_STARTED {
-				return true
-			}
-		}
-		return false
-	}, 30*time.Second, 100*time.Millisecond)
 }
 
 func writeHistory(t *testing.T, c client.Client, run client.WorkflowRun, path string) {

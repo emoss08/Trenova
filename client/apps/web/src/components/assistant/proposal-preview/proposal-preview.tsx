@@ -4,45 +4,36 @@ import type {
   PreviewWarning,
   ProposalPreview as ProposalPreviewData,
 } from "@/lib/graphql/agent-preview";
-import {
-  Alert,
-  AlertAction,
-  AlertDescription,
-  AlertTitle,
-} from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
 import { DescriptionItem, DescriptionList } from "@trenova/shared/components/ui/description-list";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import {
-  AlertCircleIcon,
-  AlertTriangleIcon,
   ArchiveIcon,
   Edit02Icon,
   type IconComponent,
-  InfoCircleIcon,
   Lock01Icon,
   PlayIcon,
   PlusIcon,
-  RefreshCw02Icon,
   Send01Icon,
   Trash01Icon,
 } from "@trenova/shared/components/icons";
 import { useState, type ReactNode } from "react";
 import { Link } from "react-router";
 import { humanizeToolName } from "../proposal-state";
-import { humanizeKey } from "../readable-values";
+import { humanizeKey, isRecordId } from "../readable-values";
 import { MessagePreview } from "./message-preview";
 import { MoneyPreview } from "./money-preview";
 import { operationLabel, previewRecordPath } from "./preview-format";
+import { PreviewNote, PreviewNotes } from "./preview-notes";
 import {
   previewNeedsAttention,
   previewWarningText,
   previewWarningTone,
+  reasonSentence,
   visibleWarnings,
   wouldFailReasons,
-  type PreviewWarningTone,
   type WouldFailReason,
 } from "./preview-warnings";
 import { ValueChange } from "./value-change";
@@ -62,18 +53,6 @@ const OPERATION_ICONS: Record<AgentPreviewOperation, IconComponent> = {
   Run: PlayIcon,
 };
 
-const WARNING_VARIANT: Record<PreviewWarningTone, "destructive" | "warning" | "info"> = {
-  danger: "destructive",
-  warning: "warning",
-  info: "info",
-};
-
-const WARNING_ICON: Record<PreviewWarningTone, IconComponent> = {
-  danger: AlertCircleIcon,
-  warning: AlertTriangleIcon,
-  info: InfoCircleIcon,
-};
-
 /**
  * What a surface can do about a write that would be refused. Each is
  * offered only where the surface can honour it: a chat card can change a
@@ -89,7 +68,7 @@ export type WouldFailActions = {
   onAskAgent?: (reasons: WouldFailReason[]) => void;
 };
 
-function WarningAlert({
+function WarningNote({
   warning,
   wouldFail,
 }: {
@@ -97,28 +76,22 @@ function WarningAlert({
   wouldFail?: WouldFailActions;
 }) {
   const t = useT();
-  const tone = previewWarningTone(warning);
-  const Icon = WARNING_ICON[tone];
   const reasons = wouldFailReasons(warning);
   if (reasons.length > 0) {
-    return <WouldFailAlert reasons={reasons} actions={wouldFail} />;
+    return <WouldFailNote reasons={reasons} actions={wouldFail} />;
   }
 
   return (
-    <Alert size="sm" variant={WARNING_VARIANT[tone]}>
-      <Icon />
-      <AlertDescription>{previewWarningText(warning, t)}</AlertDescription>
-    </Alert>
+    <PreviewNote tone={previewWarningTone(warning)}>{previewWarningText(warning, t)}</PreviewNote>
   );
 }
 
 /**
- * A write its own rules would refuse, reason by reason. The old notice said
- * only that it would not go through; the person needs what is wrong and a
- * way forward: change the value the rule names, where they may, or have the
- * agent fix it.
+ * A write its own rules would refuse, reason by reason, each in words a
+ * person would use for the field, with a way forward: change the value the
+ * rule names, where they may, or have the agent fix it.
  */
-function WouldFailAlert({
+function WouldFailNote({
   reasons,
   actions,
 }: {
@@ -132,38 +105,39 @@ function WouldFailAlert({
     (actions.canChange?.(reason.param) ?? false);
 
   return (
-    <Alert size="sm" variant="destructive">
-      <AlertCircleIcon />
-      <AlertTitle>{t("This would not go through as it stands")}</AlertTitle>
-      <AlertDescription>
-        <ul className="flex w-full flex-col gap-1">
-          {reasons.map((reason, index) => (
-            <li
-              key={`${reason.param}-${index}`}
-              className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5"
-            >
-              <span className="min-w-0 break-words">
-                {reason.label !== "" && <span className="font-medium">{reason.label}: </span>}
-                {reason.message}
-              </span>
-              {changeable(reason) && (
-                <Button size="xxs" variant="outline" onClick={() => actions?.onChange?.(reason)}>
-                  <Edit02Icon className="size-3" />
-                  {t("Change {0}", reason.label !== "" ? reason.label : paramLabel(reason.param))}
-                </Button>
-              )}
-            </li>
-          ))}
-        </ul>
-      </AlertDescription>
-      {actions?.onAskAgent && (
-        <AlertAction>
-          <Button size="xs" variant="outline" onClick={() => actions.onAskAgent?.(reasons)}>
+    <PreviewNote
+      tone="danger"
+      title={t("This can't run as it stands")}
+      action={
+        actions?.onAskAgent && (
+          <Button size="xs" variant="secondary" onClick={() => actions.onAskAgent?.(reasons)}>
             {t("Ask the agent to fix it")}
           </Button>
-        </AlertAction>
-      )}
-    </Alert>
+        )
+      }
+    >
+      <ul className="flex w-full flex-col gap-1">
+        {reasons.map((reason, index) => (
+          <li
+            key={`${reason.param}-${index}`}
+            className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5"
+          >
+            <span className="min-w-0 break-words">
+              {reason.label !== "" && (
+                <span className="text-foreground font-medium">{reason.label}: </span>
+              )}
+              {reasonSentence(reason, t)}
+            </span>
+            {changeable(reason) && (
+              <Button size="xxs" variant="secondary" onClick={() => actions?.onChange?.(reason)}>
+                <Edit02Icon className="size-3" />
+                {t("Change {0}", reason.label !== "" ? reason.label : paramLabel(reason.param))}
+              </Button>
+            )}
+          </li>
+        ))}
+      </ul>
+    </PreviewNote>
   );
 }
 
@@ -183,17 +157,13 @@ export function StaleNotice({ missing }: { missing: boolean }) {
   const t = useT();
 
   return (
-    <Alert size="sm" variant="warning">
-      <AlertTriangleIcon />
-      <AlertTitle>{t("Changed since it was proposed")}</AlertTitle>
-      <AlertDescription>
-        {missing
-          ? t("The record it would change is gone. It can only be rejected now.")
-          : t(
-              "The record it would change has been edited since. It can only be rejected now; ask the agent again for a fresh proposal.",
-            )}
-      </AlertDescription>
-    </Alert>
+    <PreviewNote tone="warning" title={t("Changed since it was proposed")}>
+      {missing
+        ? t("The record it would change is gone. It can only be rejected now.")
+        : t(
+            "The record it would change has been edited since. It can only be rejected now; ask the agent again for a fresh proposal.",
+          )}
+    </PreviewNote>
   );
 }
 
@@ -202,10 +172,9 @@ export function ChangedNotice() {
   const t = useT();
 
   return (
-    <Alert size="sm" variant="warning">
-      <RefreshCw02Icon />
-      <AlertDescription>{t("This change looks different now — review it again.")}</AlertDescription>
-    </Alert>
+    <PreviewNote tone="warning">
+      {t("This change looks different now — review it again.")}
+    </PreviewNote>
   );
 }
 
@@ -227,23 +196,22 @@ export function PreviewFailedNotice({
   const t = useT();
 
   return (
-    <Alert size="sm" variant="warning">
-      <AlertTriangleIcon />
-      <AlertDescription>
-        {reviewRequired
-          ? t(
-              "What this would change could not be loaded. It has to be reviewed before it can be approved, so try again.",
-            )
-          : t(
-              "What this would change could not be loaded. Approving now is recorded as approved without a preview.",
-            )}
-      </AlertDescription>
-      <AlertAction>
-        <Button size="xs" variant="outline" onClick={onRetry} isLoading={retrying}>
+    <PreviewNote
+      tone="warning"
+      action={
+        <Button size="xs" variant="secondary" onClick={onRetry} isLoading={retrying}>
           {t("Try again")}
         </Button>
-      </AlertAction>
-    </Alert>
+      }
+    >
+      {reviewRequired
+        ? t(
+            "What this would change could not be loaded. It has to be reviewed before it can be approved, so try again.",
+          )
+        : t(
+            "What this would change could not be loaded. Approving now is recorded as approved without a preview.",
+          )}
+    </PreviewNote>
   );
 }
 
@@ -331,18 +299,23 @@ export function PreviewAttention({
   inPlan?: boolean;
   wouldFail?: WouldFailActions;
 }) {
+  const t = useT();
   if (!previewNeedsAttention(preview, { inPlan })) {
     return null;
   }
   const warnings = visibleWarnings(preview.warnings, { inPlan });
 
+  if (!preview.stale && warnings.length === 0) {
+    return null;
+  }
+
   return (
-    <>
+    <PreviewNotes label={t("Before you decide")}>
       {preview.stale && <StaleNotice missing={preview.staleness?.missing === true} />}
       {warnings.map((warning, index) => (
-        <WarningAlert key={`${warning.code}-${index}`} warning={warning} wouldFail={wouldFail} />
+        <WarningNote key={`${warning.code}-${index}`} warning={warning} wouldFail={wouldFail} />
       ))}
-    </>
+    </PreviewNotes>
   );
 }
 
@@ -380,28 +353,54 @@ function RecordHeader({ change, tool }: { change: PreviewRecordChange; tool: str
   );
 }
 
+/** A value that is a record's id (or a list of them) with no record sent to name it. */
+function isBareId(field: PreviewRecordChange["fields"][number]): boolean {
+  if (field.withheld || field.beforeRef || field.afterRef) {
+    return false;
+  }
+  const values = [field.before, field.after].filter(
+    (value) => value !== null && value !== undefined && value !== "",
+  );
+
+  return (
+    values.length > 0 &&
+    values.every((value) =>
+      Array.isArray(value) ? value.length > 0 && value.every(isRecordId) : isRecordId(value),
+    )
+  );
+}
+
 function RecordChangeView({
   change,
   tool,
   fieldLimit,
   density,
+  bare,
 }: {
   change: PreviewRecordChange;
   tool: string;
   fieldLimit: number | null;
   density: PreviewDensity;
+  /** The preview is only the values the action would run with. */
+  bare: boolean;
 }) {
   const t = useT();
-  const fields = fieldLimit === null ? change.fields : change.fields.slice(0, fieldLimit);
-  const hiddenHere = change.fields.length - fields.length;
+  // A value that is only a record's id names nothing a person can read. The
+  // server sends the record itself beside it; one that arrives bare is left out.
+  const readable = change.fields.filter((field) => !isBareId(field));
+  const fields = fieldLimit === null ? readable : readable.slice(0, fieldLimit);
+  const hiddenHere = readable.length - fields.length;
+  // The values a run would use are captioned once by the preview; a header
+  // repeating the action's name over them says nothing more.
+  const headed = !(change.operation === "Run" && bare);
 
   return (
     <section className="flex min-w-0 flex-col gap-2">
-      <RecordHeader change={change} tool={tool} />
+      {headed && <RecordHeader change={change} tool={tool} />}
       {!change.withheld && (
         <>
           {fields.length > 0 && (
-            <DescriptionList layout="inline" className="pl-5">
+            <DescriptionList layout="inline" className={headed ? "pl-5" : undefined}>
               {fields.map((field) => (
                 <DescriptionItem key={field.path} label={field.label}>
                   <ValueChange change={field} operation={change.operation} />
@@ -482,22 +481,20 @@ export function ProposalPreview({
   return (
     <div className="flex min-w-0 flex-col gap-3" data-slot="proposal-preview">
       {attention && <PreviewAttention preview={preview} inPlan={inPlan} wouldFail={wouldFail} />}
-      {/* One notice for one fact: a preview that failed already says the
-          values are shown instead, so the coverage note would repeat it. */}
-      {preview.coverage === "Unavailable" &&
-        !preview.warnings.some((warning) => warning.code === "preview_failed") && (
-          <Alert size="sm" variant="warning">
-            <AlertTriangleIcon />
-            <AlertDescription>
-              {t(
-                "This action can't say exactly what it would change. It would run with the values below.",
-              )}
-            </AlertDescription>
-          </Alert>
-        )}
+      {/* A change that cannot be previewed is not an alarm: it is the values
+          it would run with, said once as their caption. */}
+      {preview.coverage === "Unavailable" && (
+        <p className="text-foreground-subtle text-xs">
+          {preview.changes.length > 0
+            ? t("Its result can't be previewed. It would run with these values.")
+            : t("Its result can't be previewed.")}
+        </p>
+      )}
 
       {preview.changes.length === 0 ? (
-        <p className="text-foreground-muted text-xs">{t("Nothing would change.")}</p>
+        preview.coverage !== "Unavailable" && (
+          <p className="text-foreground-muted text-xs">{t("Nothing would change.")}</p>
+        )
       ) : (
         <div className={cn("flex flex-col", density === "compact" ? "gap-3" : "gap-4")}>
           {records.map((change, index) => (
@@ -507,6 +504,7 @@ export function ProposalPreview({
               tool={preview.tool}
               fieldLimit={limited ? COMPACT_FIELDS : null}
               density={density}
+              bare={preview.coverage === "Unavailable"}
             />
           ))}
         </div>
