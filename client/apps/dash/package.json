@@ -11,7 +11,7 @@
     "lint": "oxlint"
   },
   "dependencies": {
-    "@tailwindcss/vite": "^4.3.3",
+    "@tailwindcss/vite": "^4.3.5",
     "@tanstack/react-query": "catalog:",
     "@trenova/graphql": "workspace:*",
     "@trenova/shared": "workspace:*",
@@ -19,7 +19,7 @@
     "react": "catalog:",
     "react-dom": "catalog:",
     "react-router": "catalog:",
-    "tailwindcss": "^4.3.3"
+    "tailwindcss": "^4.3.5"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^7.0.1",
@@ -30,9 +30,9 @@
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.2",
     "happy-dom": "^21.0.4",
-    "oxlint": "^1.89.0",
+    "oxlint": "^1.92.0",
     "typescript": "~7.0.2",
-    "vite": "^8.3.5",
+    "vite": "^8.3.6",
     "vitest": "^5.0.5"
   }
 }
