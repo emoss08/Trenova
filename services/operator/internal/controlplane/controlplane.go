@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/google/uuid"
 	"net/http"
 	"strconv"
 	"strings"
@@ -142,6 +143,36 @@ func (c *Client) Secrets(ctx context.Context) (instanceapi.InstanceSecrets, erro
 	}
 	return instanceapi.InstanceSecrets{}, failure(
 		res.HTTPResponse,
+		res.ApplicationproblemJSON401,
+		res.ApplicationproblemJSON429,
+	)
+}
+
+// Commands lists what the control plane asks the instance to do.
+func (c *Client) Commands(ctx context.Context) ([]instanceapi.Command, error) {
+	res, err := c.api.ListCommandsWithResponse(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("list commands: %w", err)
+	}
+	if res.StatusCode() == http.StatusOK && res.JSON200 != nil {
+		return res.JSON200.Commands, nil
+	}
+	return nil, failure(res.HTTPResponse, res.ApplicationproblemJSON401, res.ApplicationproblemJSON429)
+}
+
+// CompleteCommand says how a command ended. A command the control plane no
+// longer has (it expired) is answered: there is nothing left to say.
+func (c *Client) CompleteCommand(ctx context.Context, id uuid.UUID, result instanceapi.CommandResult) error {
+	res, err := c.api.CompleteCommandWithResponse(ctx, id, result)
+	if err != nil {
+		return fmt.Errorf("answer a command: %w", err)
+	}
+	if res.StatusCode() == http.StatusNoContent || res.StatusCode() == http.StatusNotFound {
+		return nil
+	}
+	return failure(
+		res.HTTPResponse,
+		res.ApplicationproblemJSON400,
 		res.ApplicationproblemJSON401,
 		res.ApplicationproblemJSON429,
 	)

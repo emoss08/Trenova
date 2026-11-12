@@ -18,6 +18,7 @@ import (
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/yaml"
 
+	"github.com/emoss08/trenova/operator/internal/commands"
 	"github.com/emoss08/trenova/operator/internal/controlplane"
 	"github.com/emoss08/trenova/operator/internal/credential"
 	"github.com/emoss08/trenova/operator/internal/escrow"
@@ -150,12 +151,19 @@ func run(logger *slog.Logger) error {
 		}),
 		Usage:          usage.New(usage.Params{ControlPlane: cp, TMS: tmsClient}),
 		Administrators: tmsClient,
-		Base:           base,
-		Namespace:      cfg.namespace,
-		Logger:         logger,
-		Poll:           cfg.poll,
-		Report:         cfg.report,
-		UsageEvery:     cfg.usage,
+		Commands: commands.New(&commands.Params{
+			Kube:      kube,
+			Namespace: cfg.targetNamespace,
+			Release:   cfg.release,
+			Chart:     chartName,
+			Logger:    logger,
+		}),
+		Base:       base,
+		Namespace:  cfg.namespace,
+		Logger:     logger,
+		Poll:       cfg.poll,
+		Report:     cfg.report,
+		UsageEvery: cfg.usage,
 	})
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)

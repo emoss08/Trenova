@@ -180,10 +180,72 @@ paths:
         "429":
           $ref: "#/components/responses/RateLimited"
 
+  /v1/commands:
+    get:
+      operationId: listCommands
+      summary: The commands waiting for the instance
+      description: |
+        What the control plane asks the instance to do besides converging to its spec: restart
+        Trenova or one part of it, or collect a part's recent log lines for staff. The instance
+        takes no inbound connections, so it asks: with each status report, or sooner. A command is
+        listed until the instance answers it with `completeCommand` or it expires (15 minutes
+        after it was issued); at most 20, oldest first. Carry each out once, by ID: a command
+        listed again was not answered yet, not issued again.
+      responses:
+        "200":
+          description: The commands, oldest first; empty when there are none.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommandList"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
+  /v1/commands/{commandId}:
+    put:
+      operationId: completeCommand
+      summary: Answer a command
+      description: |
+        Says how a command ended. Answering again with the same outcome changes nothing; a command
+        that expired or belongs to another instance is not found. For `collect_logs`, `output` is
+        the lines, newest last, with every secret the instance holds removed before they leave it.
+      parameters:
+        - name: commandId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CommandResult"
+      responses:
+        "204":
+          description: Recorded.
+        "400":
+          $ref: "#/components/responses/Invalid"
+        "401":
+          $ref: "#/components/responses/Unauthenticated"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
 components:
   responses:
     Invalid:
       description: The request is invalid.
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    NotFound:
+      description: Nothing by that ID is this instance's.
       content:
         application/problem+json:
           schema:
@@ -207,6 +269,60 @@ components:
             $ref: "#/components/schemas/Problem"
 
   schemas:
+    CommandList:
+      type: object
+      required: [commands]
+      properties:
+        commands:
+          type: array
+          maxItems: 20
+          items:
+            $ref: "#/components/schemas/Command"
+
+    Command:
+      type: object
+      required: [id, kind, issuedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        kind:
+          type: string
+          enum: [restart, collect_logs]
+          description: |
+            `restart` restarts the named component's workload, or every Trenova workload when no
+            component is named. The database is never restarted this way: a restart of everything
+            leaves it running, and naming it fails. `collect_logs` returns the named component's
+            most recent log lines.
+        component:
+          type: string
+          maxLength: 64
+          description: A component as the status report names it, such as `api`. Required for `collect_logs`.
+        lines:
+          type: integer
+          minimum: 1
+          maximum: 500
+          description: For `collect_logs`, how many of the most recent lines to return.
+        issuedAt:
+          type: string
+          format: date-time
+
+    CommandResult:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [succeeded, failed]
+        message:
+          type: string
+          maxLength: 500
+          description: A short explanation, required when failed. One line, no control characters.
+        output:
+          type: string
+          maxLength: 262144
+          description: For `collect_logs`, the lines, newest last, with secrets removed.
+
     Problem:
       type: object
       required: [type, title, status]

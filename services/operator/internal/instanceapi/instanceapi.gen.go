@@ -18,6 +18,42 @@ import (
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
+// Defines values for CommandKind.
+const (
+	CollectLogs CommandKind = "collect_logs"
+	Restart     CommandKind = "restart"
+)
+
+// Valid indicates whether the value is a known member of the CommandKind enum.
+func (e CommandKind) Valid() bool {
+	switch e {
+	case CollectLogs:
+		return true
+	case Restart:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CommandResultStatus.
+const (
+	Failed    CommandResultStatus = "failed"
+	Succeeded CommandResultStatus = "succeeded"
+)
+
+// Valid indicates whether the value is a known member of the CommandResultStatus enum.
+func (e CommandResultStatus) Valid() bool {
+	switch e {
+	case Failed:
+		return true
+	case Succeeded:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for InstanceSpecAiProvider.
 const (
 	Customer InstanceSpecAiProvider = "customer"
@@ -225,6 +261,45 @@ type AdministratorStatus struct {
 	// SetUp Whether the first administrator has chosen a password or signed in.
 	SetUp bool `json:"setUp"`
 }
+
+// Command defines model for Command.
+type Command struct {
+	// Component A component as the status report names it, such as `api`. Required for `collect_logs`.
+	Component *string            `json:"component,omitempty"`
+	Id        openapi_types.UUID `json:"id"`
+	IssuedAt  time.Time          `json:"issuedAt"`
+
+	// Kind `restart` restarts the named component's workload, or every Trenova workload when no
+	// component is named; the database is restarted only when it is named. `collect_logs`
+	// returns the named component's most recent log lines.
+	Kind CommandKind `json:"kind"`
+
+	// Lines For `collect_logs`, how many of the most recent lines to return.
+	Lines *int `json:"lines,omitempty"`
+}
+
+// CommandKind `restart` restarts the named component's workload, or every Trenova workload when no
+// component is named; the database is restarted only when it is named. `collect_logs`
+// returns the named component's most recent log lines.
+type CommandKind string
+
+// CommandList defines model for CommandList.
+type CommandList struct {
+	Commands []Command `json:"commands"`
+}
+
+// CommandResult defines model for CommandResult.
+type CommandResult struct {
+	// Message A short explanation, required when failed. One line, no control characters.
+	Message *string `json:"message,omitempty"`
+
+	// Output For `collect_logs`, the lines, newest last, with secrets removed.
+	Output *string             `json:"output,omitempty"`
+	Status CommandResultStatus `json:"status"`
+}
+
+// CommandResultStatus defines model for CommandResult.Status.
+type CommandResultStatus string
 
 // ComponentStatus defines model for ComponentStatus.
 type ComponentStatus struct {
@@ -530,6 +605,9 @@ type UsageWindow struct {
 // Invalid defines model for Invalid.
 type Invalid = Problem
 
+// NotFound defines model for NotFound.
+type NotFound = Problem
+
 // RateLimited defines model for RateLimited.
 type RateLimited = Problem
 
@@ -544,6 +622,9 @@ type GetSpecParams struct {
 
 // RenewCertificateJSONRequestBody defines body for RenewCertificate for application/json ContentType.
 type RenewCertificateJSONRequestBody = RenewCertificateRequest
+
+// CompleteCommandJSONRequestBody defines body for CompleteCommand for application/json ContentType.
+type CompleteCommandJSONRequestBody = CommandResult
 
 // ReportStatusJSONRequestBody defines body for ReportStatus for application/json ContentType.
 type ReportStatusJSONRequestBody = StatusReport
@@ -648,6 +729,40 @@ type ClientInterface interface {
 	//
 	// Corresponds with POST /v1/certificate (the `RenewCertificate` operationId).
 	RenewCertificate(ctx context.Context, body RenewCertificateJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListCommands The commands waiting for the instance
+	//
+	// What the control plane asks the instance to do besides converging to its spec: restart
+	// Trenova or one part of it, or collect a part's recent log lines for staff. The instance
+	// takes no inbound connections, so it asks: with each status report, or sooner. A command is
+	// listed until the instance answers it with `completeCommand` or it expires (15 minutes
+	// after it was issued); at most 20, oldest first. Carry each out once, by ID: a command
+	// listed again was not answered yet, not issued again.
+	//
+	// Corresponds with GET /v1/commands (the `ListCommands` operationId).
+	ListCommands(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CompleteCommandWithBody Answer a command
+	//
+	// Says how a command ended. Answering again with the same outcome changes nothing; a command
+	// that expired or belongs to another instance is not found. For `collect_logs`, `output` is
+	// the lines, newest last, with every secret the instance holds removed before they leave it.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with PUT /v1/commands/{commandId} (the `CompleteCommand` operationId).
+	CompleteCommandWithBody(ctx context.Context, commandId openapi_types.UUID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CompleteCommand Answer a command
+	//
+	// Says how a command ended. Answering again with the same outcome changes nothing; a command
+	// that expired or belongs to another instance is not found. For `collect_logs`, `output` is
+	// the lines, newest last, with every secret the instance holds removed before they leave it.
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with PUT /v1/commands/{commandId} (the `CompleteCommand` operationId).
+	CompleteCommand(ctx context.Context, commandId openapi_types.UUID, body CompleteCommandJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetSecrets The instance's escrowed secrets
 	//
@@ -755,6 +870,70 @@ func (c *Client) RenewCertificateWithBody(ctx context.Context, contentType strin
 // Corresponds with POST /v1/certificate (the `RenewCertificate` operationId).
 func (c *Client) RenewCertificate(ctx context.Context, body RenewCertificateJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewRenewCertificateRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ListCommands The commands waiting for the instance
+//
+// What the control plane asks the instance to do besides converging to its spec: restart
+// Trenova or one part of it, or collect a part's recent log lines for staff. The instance
+// takes no inbound connections, so it asks: with each status report, or sooner. A command is
+// listed until the instance answers it with `completeCommand` or it expires (15 minutes
+// after it was issued); at most 20, oldest first. Carry each out once, by ID: a command
+// listed again was not answered yet, not issued again.
+//
+// Corresponds with GET /v1/commands (the `ListCommands` operationId).
+func (c *Client) ListCommands(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListCommandsRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// CompleteCommandWithBody Answer a command
+//
+// Says how a command ended. Answering again with the same outcome changes nothing; a command
+// that expired or belongs to another instance is not found. For `collect_logs`, `output` is
+// the lines, newest last, with every secret the instance holds removed before they leave it.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with PUT /v1/commands/{commandId} (the `CompleteCommand` operationId).
+func (c *Client) CompleteCommandWithBody(ctx context.Context, commandId openapi_types.UUID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCompleteCommandRequestWithBody(c.Server, commandId, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// CompleteCommand Answer a command
+//
+// Says how a command ended. Answering again with the same outcome changes nothing; a command
+// that expired or belongs to another instance is not found. For `collect_logs`, `output` is
+// the lines, newest last, with every secret the instance holds removed before they leave it.
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with PUT /v1/commands/{commandId} (the `CompleteCommand` operationId).
+func (c *Client) CompleteCommand(ctx context.Context, commandId openapi_types.UUID, body CompleteCommandJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCompleteCommandRequest(c.Server, commandId, body)
 	if err != nil {
 		return nil, err
 	}
@@ -927,6 +1106,80 @@ func NewRenewCertificateRequestWithBody(server string, contentType string, body 
 	}
 
 	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewListCommandsRequest constructs an http.Request for the ListCommands method
+func NewListCommandsRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/commands")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewCompleteCommandRequest calls the generic CompleteCommand builder with application/json body
+func NewCompleteCommandRequest(server string, commandId openapi_types.UUID, body CompleteCommandJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCompleteCommandRequestWithBody(server, commandId, "application/json", bodyReader)
+}
+
+// NewCompleteCommandRequestWithBody constructs an http.Request for the CompleteCommand method, with any body, and a specified content type
+func NewCompleteCommandRequestWithBody(server string, commandId openapi_types.UUID, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "commandId", commandId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: "uuid"})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/commands/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPut, queryURL.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -1153,6 +1406,42 @@ type ClientWithResponsesInterface interface {
 	// Corresponds with POST /v1/certificate (the `RenewCertificate` operationId).
 	RenewCertificateWithResponse(ctx context.Context, body RenewCertificateJSONRequestBody, reqEditors ...RequestEditorFn) (*RenewCertificateResponse, error)
 
+	// ListCommandsWithResponse The commands waiting for the instance
+	//
+	// What the control plane asks the instance to do besides converging to its spec: restart
+	// Trenova or one part of it, or collect a part's recent log lines for staff. The instance
+	// takes no inbound connections, so it asks: with each status report, or sooner. A command is
+	// listed until the instance answers it with `completeCommand` or it expires (15 minutes
+	// after it was issued); at most 20, oldest first. Carry each out once, by ID: a command
+	// listed again was not answered yet, not issued again.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /v1/commands (the `ListCommands` operationId).
+	ListCommandsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListCommandsResponse, error)
+
+	// CompleteCommandWithBodyWithResponse Answer a command
+	//
+	// Says how a command ended. Answering again with the same outcome changes nothing; a command
+	// that expired or belongs to another instance is not found. For `collect_logs`, `output` is
+	// the lines, newest last, with every secret the instance holds removed before they leave it.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with PUT /v1/commands/{commandId} (the `CompleteCommand` operationId).
+	CompleteCommandWithBodyWithResponse(ctx context.Context, commandId openapi_types.UUID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CompleteCommandResponse, error)
+
+	// CompleteCommandWithResponse Answer a command
+	//
+	// Says how a command ended. Answering again with the same outcome changes nothing; a command
+	// that expired or belongs to another instance is not found. For `collect_logs`, `output` is
+	// the lines, newest last, with every secret the instance holds removed before they leave it.
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with PUT /v1/commands/{commandId} (the `CompleteCommand` operationId).
+	CompleteCommandWithResponse(ctx context.Context, commandId openapi_types.UUID, body CompleteCommandJSONRequestBody, reqEditors ...RequestEditorFn) (*CompleteCommandResponse, error)
+
 	// GetSecretsWithResponse The instance's escrowed secrets
 	//
 	// The secrets that make the instance's data readable, which the control plane keeps in escrow:
@@ -1292,6 +1581,137 @@ func (r RenewCertificateResponse) StatusCode() int {
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
 func (r RenewCertificateResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// ListCommandsResponse429Headers the declared response headers of an HTTP 429 response for ListCommands
+type ListCommandsResponse429Headers struct {
+	RetryAfter *int
+}
+
+type ListCommandsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *CommandList
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *Unauthenticated
+	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationproblemJSON429 *RateLimited
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *ListCommandsResponse429Headers
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ListCommandsResponse) GetJSON200() *CommandList {
+	return r.JSON200
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r ListCommandsResponse) GetApplicationproblemJSON401() *Unauthenticated {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r ListCommandsResponse) GetApplicationproblemJSON429() *RateLimited {
+	return r.ApplicationproblemJSON429
+}
+
+// GetBody returns the raw response body bytes
+func (r ListCommandsResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ListCommandsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListCommandsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListCommandsResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// CompleteCommandResponse429Headers the declared response headers of an HTTP 429 response for CompleteCommand
+type CompleteCommandResponse429Headers struct {
+	RetryAfter *int
+}
+
+type CompleteCommandResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// ApplicationproblemJSON400 the response for an HTTP 400 `application/problem+json` response
+	ApplicationproblemJSON400 *Invalid
+	// ApplicationproblemJSON401 the response for an HTTP 401 `application/problem+json` response
+	ApplicationproblemJSON401 *Unauthenticated
+	// ApplicationproblemJSON404 the response for an HTTP 404 `application/problem+json` response
+	ApplicationproblemJSON404 *NotFound
+	// ApplicationproblemJSON429 the response for an HTTP 429 `application/problem+json` response
+	ApplicationproblemJSON429 *RateLimited
+	// Headers429 the parsed response headers for an HTTP 429 response
+	Headers429 *CompleteCommandResponse429Headers
+}
+
+// GetApplicationproblemJSON400 returns the response for an HTTP 400 `application/problem+json` response
+func (r CompleteCommandResponse) GetApplicationproblemJSON400() *Invalid {
+	return r.ApplicationproblemJSON400
+}
+
+// GetApplicationproblemJSON401 returns the response for an HTTP 401 `application/problem+json` response
+func (r CompleteCommandResponse) GetApplicationproblemJSON401() *Unauthenticated {
+	return r.ApplicationproblemJSON401
+}
+
+// GetApplicationproblemJSON404 returns the response for an HTTP 404 `application/problem+json` response
+func (r CompleteCommandResponse) GetApplicationproblemJSON404() *NotFound {
+	return r.ApplicationproblemJSON404
+}
+
+// GetApplicationproblemJSON429 returns the response for an HTTP 429 `application/problem+json` response
+func (r CompleteCommandResponse) GetApplicationproblemJSON429() *RateLimited {
+	return r.ApplicationproblemJSON429
+}
+
+// GetBody returns the raw response body bytes
+func (r CompleteCommandResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r CompleteCommandResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CompleteCommandResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r CompleteCommandResponse) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
@@ -1617,6 +2037,60 @@ func (c *ClientWithResponses) RenewCertificateWithResponse(ctx context.Context, 
 	return ParseRenewCertificateResponse(rsp)
 }
 
+// ListCommandsWithResponse The commands waiting for the instance
+//
+// What the control plane asks the instance to do besides converging to its spec: restart
+// Trenova or one part of it, or collect a part's recent log lines for staff. The instance
+// takes no inbound connections, so it asks: with each status report, or sooner. A command is
+// listed until the instance answers it with `completeCommand` or it expires (15 minutes
+// after it was issued); at most 20, oldest first. Carry each out once, by ID: a command
+// listed again was not answered yet, not issued again.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /v1/commands (the `ListCommands` operationId).
+func (c *ClientWithResponses) ListCommandsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListCommandsResponse, error) {
+	rsp, err := c.ListCommands(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListCommandsResponse(rsp)
+}
+
+// CompleteCommandWithBodyWithResponse Answer a command
+//
+// Says how a command ended. Answering again with the same outcome changes nothing; a command
+// that expired or belongs to another instance is not found. For `collect_logs`, `output` is
+// the lines, newest last, with every secret the instance holds removed before they leave it.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with PUT /v1/commands/{commandId} (the `CompleteCommand` operationId).
+func (c *ClientWithResponses) CompleteCommandWithBodyWithResponse(ctx context.Context, commandId openapi_types.UUID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CompleteCommandResponse, error) {
+	rsp, err := c.CompleteCommandWithBody(ctx, commandId, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCompleteCommandResponse(rsp)
+}
+
+// CompleteCommandWithResponse Answer a command
+//
+// Says how a command ended. Answering again with the same outcome changes nothing; a command
+// that expired or belongs to another instance is not found. For `collect_logs`, `output` is
+// the lines, newest last, with every secret the instance holds removed before they leave it.
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with PUT /v1/commands/{commandId} (the `CompleteCommand` operationId).
+func (c *ClientWithResponses) CompleteCommandWithResponse(ctx context.Context, commandId openapi_types.UUID, body CompleteCommandJSONRequestBody, reqEditors ...RequestEditorFn) (*CompleteCommandResponse, error) {
+	rsp, err := c.CompleteCommand(ctx, commandId, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCompleteCommandResponse(rsp)
+}
+
 // GetSecretsWithResponse The instance's escrowed secrets
 //
 // The secrets that make the instance's data readable, which the control plane keeps in escrow:
@@ -1775,6 +2249,122 @@ func ParseRenewCertificateResponse(rsp *http.Response) (*RenewCertificateRespons
 	switch {
 	case rsp.StatusCode == 429:
 		var headers RenewCertificateResponse429Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers429 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseListCommandsResponse parses an HTTP response from a ListCommandsWithResponse call
+func ParseListCommandsResponse(rsp *http.Response) (*ListCommandsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListCommandsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest CommandList
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON429 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 429:
+		var headers ListCommandsResponse429Headers
+		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.RetryAfter = &value
+		}
+		response.Headers429 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseCompleteCommandResponse parses an HTTP response from a CompleteCommandWithResponse call
+func ParseCompleteCommandResponse(rsp *http.Response) (*CompleteCommandResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CompleteCommandResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case rsp.StatusCode == 204:
+		break // No content-type
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest Invalid
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Unauthenticated
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 429:
+		var dest RateLimited
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationproblemJSON429 = &dest
+
+	}
+
+	switch {
+	case rsp.StatusCode == 429:
+		var headers CompleteCommandResponse429Headers
 		if values := rsp.Header.Values("Retry-After"); len(values) > 0 {
 			var value int
 			if err := runtime.BindStyledParameterWithOptions("simple", "Retry-After", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {

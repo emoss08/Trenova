@@ -11,6 +11,7 @@ import (
 	"github.com/google/uuid"
 	"helm.sh/helm/v3/pkg/chart"
 
+	"github.com/emoss08/trenova/operator/internal/commands"
 	"github.com/emoss08/trenova/operator/internal/controlplane"
 	"github.com/emoss08/trenova/operator/internal/credential"
 	"github.com/emoss08/trenova/operator/internal/health"
@@ -64,6 +65,12 @@ type Usage interface {
 	Run(ctx context.Context, allowances []instanceapi.SpecAllowance) (usage.Result, error)
 }
 
+// Commands carries out what the control plane asks besides the spec:
+// restarts and log collection.
+type Commands interface {
+	Run(ctx context.Context, cp commands.ControlPlane) error
+}
+
 type Administrators interface {
 	InstallInvite(ctx context.Context, invite tms.Invite) (tms.Administrator, error)
 }
@@ -83,6 +90,7 @@ type Loop struct {
 	escrow   Escrow
 	usage    Usage
 	admins   Administrators
+	commands Commands
 	base     map[string]any
 	ownNS    string
 	logger   *slog.Logger
@@ -113,13 +121,15 @@ type Params struct {
 	Escrow         Escrow
 	Usage          Usage
 	Administrators Administrators
-	Base           map[string]any
-	Namespace      string
-	Logger         *slog.Logger
-	Now            func() time.Time
-	Poll           time.Duration
-	Report         time.Duration
-	UsageEvery     time.Duration
+	// Commands is optional: without it the operator carries out none.
+	Commands   Commands
+	Base       map[string]any
+	Namespace  string
+	Logger     *slog.Logger
+	Now        func() time.Time
+	Poll       time.Duration
+	Report     time.Duration
+	UsageEvery time.Duration
 }
 
 func New(p *Params) *Loop {
@@ -140,6 +150,7 @@ func New(p *Params) *Loop {
 		escrow:   p.Escrow,
 		usage:    p.Usage,
 		admins:   p.Administrators,
+		commands: p.Commands,
 		base:     p.Base,
 		ownNS:    p.Namespace,
 		logger:   p.Logger,
@@ -235,6 +246,20 @@ func (l *Loop) Tick(ctx context.Context) {
 		l.last, l.lastSent, l.reported = report, l.now(), true
 	}
 	l.relayUsage(ctx, report.Ready)
+	l.runCommands(ctx)
+}
+
+// runCommands carries out what the control plane asked for since the last
+// tick. A failure here never stops the loop: the commands are asked for
+// again on the next one.
+func (l *Loop) runCommands(ctx context.Context) {
+	cp, ok := l.cp.(commands.ControlPlane)
+	if l.commands == nil || !ok {
+		return
+	}
+	if err := l.commands.Run(ctx, cp); err != nil && !l.handle(ctx, err) {
+		l.logger.Warn("cannot carry out the control plane's commands", "error", err)
+	}
 }
 
 func (l *Loop) administrator(ctx context.Context, ready bool) *instanceapi.AdministratorStatus {
