@@ -9,7 +9,7 @@ related:
 ## What it's for
 Decisions is the queue of changes AI agents have proposed and that wait on a person before they run, such as updating shipments, posting invoices, sending a message, or a plan of several steps. Open it from **Decisions** in the [Desk](/desk) sidebar, which shows how many are waiting. Dispatchers, billing staff and managers work it so agents only change the operation with a person's say-so.
 
-The **Queue** on the left lists every waiting proposal, newest first, grouped by the kind of change, with how many of today's are decided. The middle shows one proposal at a time: which agent wants it and when, a one-line title with how many records it touches, the agent's reason, and what it would change. That is worked out by the same code that would make the change, read from your records as they are now. A **Dry run** line says whether it would go through as shown. Changes are marked **Reversible** or **Can't be undone**. The bar underneath approves or declines it.
+The **Queue** on the left lists every waiting proposal, newest first, grouped by the kind of change, with how many of today's are decided. The middle shows every waiting change of the kind you selected on one sheet. The one you selected is open: which agent wants it and when, the agent's reason, and what it would change. That is worked out by the same code that would make the change, read from your records as they are now. A **Dry run** line says whether it would go through as shown. Changes are marked **Reversible** or **Can't be undone**. When several changes of a kind wait, what they have in common is shown once under **The same for every one**, and each row shows only what is its own. The bar underneath approves or declines the open change, or the ones you have ticked.
 
 ## Tasks
 
@@ -40,23 +40,25 @@ Keywords: reject agent change, deny proposal, turn down, decline reason
 ### Change the values before approving
 Keywords: edit proposal, adjust agent change, modify and approve, approve with changes
 1. Open [Decisions](/desk/decisions) and select the proposal.
-2. Select **Change values** (or press m). It is offered only for a single change that has values you can edit, not for a plan or a group decided together.
+2. Select **Change values** (or press m). It is offered for the open change when it has values you can edit and nothing is ticked, never for a plan.
 3. Adjust the values. A value marked "Stays as proposed" cannot be changed: you can change what is done to that record, never which record it is.
 4. Under the values, the dialog shows what your values would do. Values that would not go through say why, and the change cannot be approved with them.
 5. Optionally add a **Reason**, then select **Approve with changes**. It stays off while **Nothing changed yet** is shown. The change runs with the values you saw previewed.
 
 ### Fix a change that would not go through
 Keywords: would be refused, refused values, ask agent to fix, change refused value
-1. Open [Decisions](/desk/decisions) and select the proposal. A change its own rules would refuse shows **This would not go through as it stands**, reason by reason. In the one-line-per-record view, records that would be refused are listed first and marked **Refused**.
+1. Open [Decisions](/desk/decisions) and select the proposal. A change its own rules would refuse shows **This can't run as it stands**, reason by reason. In the one-line-per-record view, records that would be refused are listed first and marked **Refused**.
 2. Where you can edit the value a reason names, select the button next to the reason to open the values on it. Then approve with your changes.
 3. Or select **Ask the agent to fix it**. This opens the decline dialog with the reasons already written as the **Reason**. Decline it, and the agent learns what to fix and can propose it again.
 
-### Decide every change like this one together
-Keywords: bulk approve, batch decline, approve all like this, decide together
-1. Open [Decisions](/desk/decisions) and select a proposal that has others of the same kind waiting. A line under it says how many more are waiting.
-2. Select the link on that line to decide all of them together (or press x). The line then says how many you are deciding together and how many you have not opened yet. Select **Just this one** (or press x again) to go back.
-3. Select **Approve** or **Decline**. Both buttons show the count. Declining asks for one **Reason** for all of them.
-4. If some could not be approved, a message says how many went through and why the rest did not. Those stay in the queue.
+### Decide several changes of one kind together
+Keywords: bulk approve, batch decline, approve all like this, decide together, select all
+1. Open [Decisions](/desk/decisions) and select a proposal that has others of the same kind waiting. They are all on the sheet, up to 50 at a time.
+2. Read **The same for every one**. A message the changes share is shown once, with numbered places, and each row shows what fills each place. A message worded differently is shown in full on its row.
+3. Tick the changes you want to decide together (or press x on the open one), or tick **Select all**. Press Esc or select **Clear** to untick them.
+4. Scroll past each ticked change. **Approve** stays off until every ticked change has been on screen.
+5. Select **Approve** or **Decline**. Both buttons show the count. Declining asks for one **Reason** for all of them. A change whose record moved since it was proposed can only be declined, so it is left out of an approval. Changes you did not tick stay in the queue.
+6. If some could not be approved, a message says how many went through and why the rest did not. Those stay in the queue.
 
 ### Approve or decline a plan
 Keywords: multi-step plan, agent plan, plan steps
@@ -68,7 +70,7 @@ Keywords: multi-step plan, agent plan, plan steps
 Keywords: next proposal, previous proposal, keyboard shortcuts, decisions shortcuts
 1. Open [Decisions](/desk/decisions).
 2. Use **Previous** and **Next** in the bar, or press k and j (or the up and down arrows). The bar shows where you are in the queue.
-3. Shortcuts: a approves, d or r declines, m opens **Change values**, x decides every change like this one together. They do nothing while you are typing or a dialog is open.
+3. Shortcuts: a approves, d or r declines, m opens **Change values**, x ticks the open change, Esc unticks every change. With changes ticked, a and d act on them; otherwise on the open change. They do nothing while you are typing or a dialog is open.
 4. When more are waiting than the queue shows, select **Load more**. The queue also refreshes on its own every minute.
 
 ### See what was decided today
@@ -90,7 +92,7 @@ Keywords: approval card, approve in chat, not now, redraft
 ## Notes
 You need read access to the assistant and to agent proposals to open this page. Approving, declining and changing values need update permission on agent proposals. Without it, the page says you can read these but not decide them.
 
-An approval records exactly what you were shown. When you decide several together, a proposal you never opened is recorded as approved without its preview having been reviewed. If what a change would do cannot be loaded, a notice says so and offers **Try again**. You can still approve it, and the decision is recorded as made without a preview.
+An approval records exactly what you were shown, including when you decide several together. If what the changes would do cannot be loaded, a notice says so and offers **Try again**. You can still approve a change that stays inside your organization, and the decision is recorded as made without a preview. A change that moves money, reaches a customer or driver, or goes outside the organization waits until it can be read.
 
 A value, record or amount you are not allowed to see reads **Hidden by your data access**, and the number of hidden parts is shown under the change. You can still approve it.
 

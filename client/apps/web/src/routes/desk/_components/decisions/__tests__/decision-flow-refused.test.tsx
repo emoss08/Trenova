@@ -13,7 +13,7 @@ import { toast } from "@trenova/shared/components/ui/toast";
 import { DecisionFlow } from "../decision-flow";
 import type { PendingDecisionNode } from "../use-pending-decisions";
 import { planNode, proposalNode } from "./pending-fixtures";
-import { stubListReadToEnd } from "./read-to-end";
+import { batchFrom, stubRowsInView } from "./sheet-test-kit";
 
 const fetchProposalPreview =
   vi.fn<(request: ProposalPreviewRequest, options?: unknown) => Promise<ProposalPreview>>();
@@ -66,6 +66,8 @@ let error: MockInstance;
 let warning: MockInstance;
 
 beforeEach(() => {
+  stubRowsInView();
+  fetchProposalPreviews.mockImplementation(batchFrom(fetchProposalPreview));
   info = vi.spyOn(toast, "info");
   error = vi.spyOn(toast, "error");
   warning = vi.spyOn(toast, "warning");
@@ -259,17 +261,6 @@ describe("DecisionFlow when the server refuses an approval", () => {
         digest: `sha256:${request.id}`,
       }),
     );
-    fetchProposalPreviews.mockImplementation(async (ids) =>
-      ids.map((id) => ({
-        proposalId: id,
-        preview: preview({
-          proposalId: id,
-          tool: "receivable_post_customer_payment",
-          digest: `sha256:${id}`,
-        }),
-        error: null,
-      })),
-    );
     decideAgentProposals.mockResolvedValue([
       {
         proposalId: "aprop_1",
@@ -286,10 +277,11 @@ describe("DecisionFlow when the server refuses an approval", () => {
         decision: decisionOf("aprop_2"),
       },
     ]);
-    stubListReadToEnd();
     renderFlow();
 
     await waitFor(() => expect(approveButton()).toBeEnabled());
+    press("x");
+    press("j");
     press("x");
     await waitFor(() => expect(screen.getByRole("button", { name: /^Approve 2/ })).toBeEnabled());
     press("a");

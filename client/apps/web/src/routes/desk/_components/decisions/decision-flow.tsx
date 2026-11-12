@@ -36,7 +36,7 @@ import { DeskAgentTile } from "@/components/desk-chat/desk-agent-tile";
 import { AlertCircleIcon, CheckIcon, XCloseIcon } from "@trenova/shared/components/icons";
 import { humanizeToolName } from "@/components/assistant/proposal-state";
 import { QueueClear, QueueHeader, QueueLayout, QueueReading } from "../queue/queue";
-import { QueueBar, QueueBarSpacer, QueueButton, QueueKey, QueueNav } from "../queue/queue-bar";
+import { QueueBar, QueueBarSpacer, QueueButton, QueueNav } from "../queue/queue-bar";
 import {
   QueueGroupHeader,
   QueueList,
@@ -45,9 +45,9 @@ import {
   type QueueSection,
 } from "../queue/queue-list";
 import { useQueueCursor, useQueueLeave } from "../queue/use-queue-cursor";
-import { BatchCard, type BatchGate } from "./batch-card";
 import { MAX_BATCH } from "./batch-review-model";
-import { DecisionCard, type CardGate } from "./decision-card";
+import { PlanCard, type CardGate } from "./decision-card";
+import { DecisionSheet, type SheetGate } from "./decision-sheet";
 import { asAssistantProposal } from "./decision-presenters";
 import {
   isPendingPlan,
@@ -59,6 +59,7 @@ import {
 } from "./use-pending-decisions";
 
 const SEEN_KEY = "desk.decisions.seen";
+const EMPTY: ReadonlySet<string> = new Set();
 const LINK_CLASS =
   "text-sm font-medium whitespace-nowrap text-dsk-fg underline decoration-dsk-fg/30 underline-offset-2 hover:decoration-current";
 
@@ -115,14 +116,16 @@ function errorText(error: unknown): string {
 }
 
 /**
- * What waits on a person, one decision at a time. The queue on the left is
- * grouped by the kind of write, with how much of today's work is decided;
- * the card in the middle is the one decision in front of them, and the bar
- * under it approves or declines it, or every one like it at once.
+ * What waits on a person. The queue on the left is grouped by the kind of
+ * write, with how much of today's work is decided. In the middle is the
+ * sheet of the open change's kind: one change reads whole, several read as
+ * one with what they share shown once, and the open one drawn whole. The bar
+ * under it approves or declines the open change, or the ticked ones together.
+ * A plan is decided as one and keeps a card of its own.
  *
- * Approving sends the digest of the preview on screen, so a record that moved
- * since is caught rather than overwritten. Declining asks why, because the
- * reason goes back to the agent and to whoever owns it.
+ * Approving sends the digest of each preview the person was shown, so a
+ * record that moved since is caught rather than overwritten. Declining asks
+ * why, because the reason goes back to the agent and to whoever owns it.
  */
 export function DecisionFlow() {
   const t = useT();
@@ -189,38 +192,57 @@ export function DecisionFlow() {
   }
   useEffect(() => writeSeen(seen), [seen]);
 
-  // Deciding every write like this one together: the ids, or null for one at a time.
-  const like = useMemo(
-    () =>
-      current && current.held === null && isPendingProposal(current.node)
-        ? items.filter(
-            (item) =>
-              item.tool === current.tool && item.held === null && isPendingProposal(item.node),
-          )
-        : [],
-    [current, items],
-  );
-  // A batch is at most the server's bound; a longer run is decided in turns.
-  const [batch, setBatch] = useState<string[] | null>(null);
-  if (batch && current && !batch.includes(current.id)) {
-    setBatch(null);
-  }
-  const batchNodes = useMemo(
-    () =>
-      batch
-        ? items
-            .filter((item) => batch.includes(item.id))
-            .flatMap((item) => (isPendingProposal(item.node) ? [item.node] : []))
-        : [],
-    [batch, items],
+  // The sheet in front of the person: every change of the open one's kind,
+  // fifty at a time around it. A plan is decided as one and keeps a card.
+  const sheet = useMemo(() => {
+    if (!current || !isPendingProposal(current.node)) return null;
+    const kind = items.filter((item) => item.tool === current.tool && isPendingProposal(item.node));
+    const position = Math.max(
+      0,
+      kind.findIndex((item) => item.id === current.id),
+    );
+    const start = Math.floor(position / MAX_BATCH) * MAX_BATCH;
+    const nodes = kind
+      .slice(start, start + MAX_BATCH)
+      .flatMap((item) => (isPendingProposal(item.node) ? [item.node] : []));
+    return { key: `${current.tool}:${start}`, nodes, total: kind.length };
+  }, [current, items]);
+
+  // Ticked changes belong to one sheet; opening another kind lets them go.
+  const [tickedState, setTickedState] = useState<{ key: string; ids: ReadonlySet<string> }>({
+    key: "",
+    ids: EMPTY,
+  });
+  const ticked = sheet !== null && tickedState.key === sheet.key ? tickedState.ids : EMPTY;
+  const sheetKey = sheet?.key ?? "";
+  const tick = useCallback(
+    (ids: readonly string[], value: boolean) => {
+      if (sheetKey === "") return;
+      setTickedState((previous) => {
+        const next = new Set(previous.key === sheetKey ? previous.ids : EMPTY);
+        for (const id of ids) {
+          if (value) {
+            next.add(id);
+          } else {
+            next.delete(id);
+          }
+        }
+        return { key: sheetKey, ids: next };
+      });
+    },
+    [sheetKey],
   );
 
   const [gate, setGate] = useState<CardGate | null>(null);
-  // What the batch sheet says a decision carries: the proposals it read and
-  // the digest of each preview it showed, once the person has read them all.
-  const [batchGate, setBatchGate] = useState<BatchGate | null>(null);
+  const [sheetGate, setSheetGate] = useState<SheetGate | null>(null);
+  const onPlan = current !== null && isPendingPlan(current.node);
+  // The open change is decided alone while nothing is ticked; the ticked
+  // changes are decided together once there are any.
+  const currentGate = onPlan ? gate : (sheetGate?.current ?? null);
+  const tickedGate = ticked.size > 0 ? (sheetGate?.ticked ?? null) : null;
 
   const { leaving, leave } = useQueueLeave();
+  const [leavingIds, setLeavingIds] = useState<ReadonlySet<string>>(EMPTY);
   const [busy, setBusy] = useState(false);
   const [dialog, setDialog] = useState<ReasonDialogRequest | null>(null);
   const [editor, setEditor] = useState<ProposalEditorRequest | null>(null);
@@ -246,18 +268,22 @@ export function DecisionFlow() {
   }, [decidedRows, t]);
 
   /**
-   * Takes decided cards off the queue, the way the design does, then reads it
-   * again. The approvals in `watch` are still to run, so a failure is said
+   * Takes decided changes off the queue, the way the design does, then reads
+   * it again. The approvals in `watch` are still to run, so a failure is said
    * when the decisions are read again.
    */
   const finish = useCallback(
     (ids: readonly string[], ok: boolean, watch: readonly string[] = ok ? ids : []) => {
       watch.forEach((id) => approved.current.add(id));
       const next = cursor.after(ids);
+      setLeavingIds(new Set(ids));
       leave(ok ? "ok" : "no", () => {
         setGone((previous) => new Set([...previous, ...ids]));
-        setBatch(null);
-        setBatchGate(null);
+        setLeavingIds(EMPTY);
+        setTickedState((previous) => ({
+          key: previous.key,
+          ids: new Set([...previous.ids].filter((id) => !ids.includes(id))),
+        }));
         setGate(null);
         setCurrentId(next);
         void invalidateProposalViews(queryClient);
@@ -267,8 +293,8 @@ export function DecisionFlow() {
   );
 
   /**
-   * Takes an approved card off the queue. One recorded but not carried out,
-   * refused because its record moved on or failed as it ran, says so now
+   * Takes an approved change off the queue. One recorded but not carried
+   * out, refused because its record moved on or failed as it ran, says so now
    * rather than when the decisions are read again.
    */
   const settle = useCallback(
@@ -290,16 +316,17 @@ export function DecisionFlow() {
   );
 
   const approve = useCallback(async () => {
-    if (!current || busy || !canDecide || current.held) return;
-    if (batch === null && !gate?.approvable) return;
-    if (batch !== null && !batchGate?.approvable) return;
+    if (!current || busy || !canDecide) return;
+    if (tickedGate !== null ? !tickedGate.approvable : current.held || !currentGate?.approvable) {
+      return;
+    }
     setBusy(true);
     try {
-      if (batch !== null && batchGate !== null) {
-        const results = await decideAgentProposals(batchGate.approveIds, {
+      if (tickedGate !== null) {
+        const results = await decideAgentProposals(tickedGate.approveIds, {
           decision: "Accepted",
           reasonCode: "approved_from_desk_batch",
-          previewDigests: batchGate.digests,
+          previewDigests: tickedGate.digests,
         });
         const failed = results.filter((result) => result.error);
         if (failed.length > 0) {
@@ -322,7 +349,7 @@ export function DecisionFlow() {
       const input = {
         decision: "Accepted" as const,
         reasonCode: "approved_from_desk",
-        previewDigest: gate?.digest,
+        previewDigest: currentGate?.digest,
       };
       if (isPendingPlan(current.node)) {
         const { plan, refused } = await decideAgentPlan(current.id, input);
@@ -333,7 +360,7 @@ export function DecisionFlow() {
         settle(current, failure === null ? null : { refused: result.refused, why: failure });
       }
     } catch (error) {
-      if (gate?.handleError(error)) {
+      if (currentGate?.handleError(error)) {
         toast.info(t("This changed since you opened it"), {
           description: t("Look at it again before you approve."),
         });
@@ -343,12 +370,17 @@ export function DecisionFlow() {
     } finally {
       setBusy(false);
     }
-  }, [batch, batchGate, busy, canDecide, current, finish, gate, settle, t]);
+  }, [busy, canDecide, current, currentGate, finish, settle, t, tickedGate]);
 
+  /**
+   * Turns down the ticked changes, or the open one while none is ticked or
+   * when `alone` says the reason is about the open one only.
+   */
   const decline = useCallback(
-    (initialReason?: string) => {
-      if (!current || busy || !canDecide || current.held) return;
-      const ids = batch === null ? [current.id] : (batchGate?.declineIds ?? []);
+    (initialReason?: string, alone = false) => {
+      if (!current || busy || !canDecide) return;
+      const together = tickedGate !== null && !alone;
+      const ids = together ? tickedGate.declineIds : current.held ? [] : [current.id];
       if (ids.length === 0) return;
       const node = current.node;
       setDialog({
@@ -360,7 +392,7 @@ export function DecisionFlow() {
         destructive: true,
         initialReason,
         onConfirm: async (reason) => {
-          if (batch !== null) {
+          if (together) {
             const results = await decideAgentProposals(ids, {
               decision: "Rejected",
               reasonCode: reason,
@@ -381,7 +413,7 @@ export function DecisionFlow() {
         },
       });
     },
-    [batch, batchGate, busy, canDecide, current, finish, t],
+    [busy, canDecide, current, finish, t, tickedGate],
   );
 
   const editable =
@@ -389,7 +421,7 @@ export function DecisionFlow() {
     current.held === null &&
     isPendingProposal(current.node) &&
     current.node.parameterFields.length > 0 &&
-    batch === null;
+    ticked.size === 0;
   const modify = useCallback(
     (focus?: EditorFocus) => {
       if (!current || !isPendingProposal(current.node) || !editable) return;
@@ -417,18 +449,12 @@ export function DecisionFlow() {
     [current, editable, settle, t],
   );
 
-  const startBatch = useCallback(() => {
-    setBatchGate(null);
-    setBatch(like.slice(0, MAX_BATCH).map((item) => item.id));
-  }, [like]);
-  const toggleBatch = useCallback(() => {
-    if (batch !== null) {
-      setBatch(null);
-      setBatchGate(null);
-    } else if (like.length > 1) {
-      startBatch();
-    }
-  }, [batch, like.length, startBatch]);
+  /** Ticks or unticks the open change, when it is one that can be decided with others. */
+  const tickCurrent = useCallback(() => {
+    if (!current || current.held || !isPendingProposal(current.node) || sheet === null) return;
+    if (sheet.nodes.length < 2) return;
+    tick([current.id], !ticked.has(current.id));
+  }, [current, sheet, tick, ticked]);
 
   // The listener stays attached while the queue is open and reads the latest
   // handlers, so a key pressed in the same frame the Approve button enables
@@ -456,7 +482,10 @@ export function DecisionFlow() {
       modify();
     } else if (key === "x") {
       event.preventDefault();
-      toggleBatch();
+      tickCurrent();
+    } else if (event.key === "Escape" && ticked.size > 0) {
+      event.preventDefault();
+      tick([...ticked], false);
     }
   });
 
@@ -468,55 +497,11 @@ export function DecisionFlow() {
 
   const decided = recent.data ?? [];
   const total = decided.length + items.length + (queue.hasNextPage ? 1 : 0);
-  const approveLabel = batch
-    ? t("Approve {0}", batchGate?.approveIds.length ?? 0)
-    : gate && gate.refused > 0 && gate.refused < gate.count
-      ? t("Approve {0}, skip {1}", gate.count - gate.refused, gate.refused)
+  const approveLabel = tickedGate
+    ? t("Approve {0}", tickedGate.approveIds.length)
+    : currentGate && currentGate.refused > 0 && currentGate.refused < currentGate.count
+      ? t("Approve {0}, skip {1}", currentGate.count - currentGate.refused, currentGate.refused)
       : t("Approve");
-
-  const holding = batchGate?.holding ?? "reading";
-  const likeFooter =
-    current && like.length > 1 && canDecide ? (
-      <div className="dk-dc2-like">
-        {batch ? (
-          <>
-            <b>{t("Deciding {0} together", batch.length)}</b>
-            <span>
-              {like.length > batch.length
-                ? t("The first {0} of {1}", batch.length, like.length)
-                : t("All {0}", current.tool)}
-              {holding === "reading" && ` · ${t("Reading every change…")}`}
-              {holding === "unread" && ` · ${t("Read to the end of the list to approve")}`}
-              {holding === "failed" && ` · ${t("The changes could not be read")}`}
-              {holding === "empty" && ` · ${t("None of these can be approved together")}`}
-            </span>
-            <Button
-              variant="bare"
-              size="bare"
-              className={cn(LINK_CLASS, "ml-auto")}
-              onClick={toggleBatch}
-            >
-              {t("Just this one")}
-            </Button>
-          </>
-        ) : (
-          <>
-            <span>{t("{0} more {1} waiting", like.length - 1, current.tool)}</span>
-            <Button
-              variant="bare"
-              size="bare"
-              className={cn(LINK_CLASS, "ml-auto")}
-              onClick={startBatch}
-            >
-              {like.length > MAX_BATCH
-                ? t("Decide {0} of {1} together", MAX_BATCH, like.length)
-                : t("Decide all {0} together", like.length)}
-            </Button>
-            <QueueKey>X</QueueKey>
-          </>
-        )}
-      </div>
-    ) : undefined;
 
   const sections: QueueSection[] = groups.map((group) => ({
     key: group.tool,
@@ -531,7 +516,7 @@ export function DecisionFlow() {
       render: () => (
         <QueueRow
           selected={current?.id === item.id}
-          marked={batch?.includes(item.id) ?? false}
+          marked={ticked.has(item.id)}
           onSelect={() => setCurrentId(item.id)}
           leading={<DeskAgentTile agent={item.node.run?.definition ?? null} size="xs" />}
           title={item.title}
@@ -619,22 +604,28 @@ export function DecisionFlow() {
       >
         {queue.isLoading ? (
           <QueueReading label={t("Reading the queue…")} />
-        ) : current && batch !== null && batchNodes.length > 0 ? (
-          <BatchCard
-            nodes={batchNodes}
-            leaving={leaving}
-            onGate={setBatchGate}
-            footer={likeFooter}
-          />
-        ) : current ? (
-          <DecisionCard
+        ) : current && isPendingPlan(current.node) ? (
+          <PlanCard
             key={current.id}
             node={current.node}
             leaving={leaving}
             onGate={setGate}
-            onDeclineWith={(reason) => decline(reason)}
+            onDeclineWith={(reason) => decline(reason, true)}
+          />
+        ) : current && sheet !== null ? (
+          <DecisionSheet
+            key={sheet.key}
+            nodes={sheet.nodes}
+            total={sheet.total}
+            currentId={current.id}
+            ticked={ticked}
+            onTick={tick}
+            onSelect={setCurrentId}
+            leaving={leaving}
+            leavingIds={leavingIds}
+            onGate={setSheetGate}
+            onDeclineWith={(reason) => decline(reason, true)}
             onModify={editable ? modify : undefined}
-            footer={likeFooter}
           />
         ) : (
           <QueueClear
@@ -657,7 +648,7 @@ export function DecisionFlow() {
               {queue.hasNextPage ? "+" : ""}
             </span>
             <QueueBarSpacer />
-            {current.held ? (
+            {current.held && tickedGate === null ? (
               <HeldBar
                 held={current.held}
                 canTurnOff={current.held.scope === "organization" ? canResume : canEditAgent}
@@ -676,15 +667,18 @@ export function DecisionFlow() {
                 )}
                 <QueueButton
                   shortcut="D"
-                  disabled={busy || (batch !== null && (batchGate?.declineIds.length ?? 0) === 0)}
+                  disabled={busy || (tickedGate !== null && tickedGate.declineIds.length === 0)}
                   onClick={() => decline()}
                 >
-                  {batch ? t("Decline {0}", batchGate?.declineIds.length ?? 0) : t("Decline")}
+                  {tickedGate ? t("Decline {0}", tickedGate.declineIds.length) : t("Decline")}
                 </QueueButton>
                 <QueueButton
                   ink
                   shortcut="A"
-                  disabled={busy || (batch === null ? !gate?.approvable : !batchGate?.approvable)}
+                  disabled={
+                    busy ||
+                    (tickedGate !== null ? !tickedGate.approvable : !currentGate?.approvable)
+                  }
                   onClick={() => void approve()}
                 >
                   {approveLabel}

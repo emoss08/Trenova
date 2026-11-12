@@ -3,7 +3,7 @@ import type { PendingProposalFieldsFragment } from "@trenova/graphql/generated/g
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   field,
   preview,
@@ -12,19 +12,8 @@ import {
   warning,
 } from "@/components/assistant/__tests__/preview-fixtures";
 import type { ProposalPreview } from "@/lib/graphql/agent-preview";
-import { DecisionCard, type CardGate } from "../decision-card";
+import { ProposalDetail } from "../decision-card";
 import type { PendingProposalNode } from "../use-pending-decisions";
-
-const fetchProposalPreview = vi.fn<(...args: unknown[]) => Promise<ProposalPreview>>();
-
-vi.mock("@/lib/graphql/agent-preview", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/lib/graphql/agent-preview")>()),
-  fetchProposalPreview: (...args: unknown[]) => fetchProposalPreview(...args),
-}));
-
-afterEach(() => {
-  fetchProposalPreview.mockReset();
-});
 
 type ParameterField = PendingProposalFieldsFragment["parameterFields"][number];
 
@@ -73,9 +62,8 @@ function node(overrides: Partial<PendingProposalNode> = {}): PendingProposalNode
   };
 }
 
-function renderCard(proposal = node()) {
+function renderCard(proposal: PendingProposalNode, data: ProposalPreview) {
   const props = {
-    onGate: vi.fn<(gate: CardGate) => void>(),
     onDeclineWith: vi.fn(),
     onModify: vi.fn(),
   };
@@ -83,7 +71,7 @@ function renderCard(proposal = node()) {
   render(
     <QueryClientProvider client={client}>
       <MemoryRouter>
-        <DecisionCard node={proposal} leaving={null} {...props} />
+        <ProposalDetail node={proposal} preview={data} canChange {...props} />
       </MemoryRouter>
     </QueryClientProvider>,
   );
@@ -93,9 +81,10 @@ function renderCard(proposal = node()) {
 const refused = () =>
   preview({ tool: "shipment_create", warnings: [warning({ reasons: [reason()] })] });
 
-describe("DecisionCard", () => {
+describe("ProposalDetail", () => {
   it("lists each record with the value it sets and says the dry run is clear", async () => {
-    fetchProposalPreview.mockResolvedValue(
+    renderCard(
+      node({ toolName: "assign_driver" }),
       preview({
         changes: [
           record({
@@ -110,19 +99,16 @@ describe("DecisionCard", () => {
         ],
       }),
     );
-    const props = renderCard(node({ toolName: "assign_driver" }));
 
     expect(await screen.findByText("S-1001")).toBeInTheDocument();
     expect(screen.getByText("Driver")).toBeInTheDocument();
     expect(screen.getByText("Marcus Hill")).toBeInTheDocument();
     expect(screen.getByText("All 2 shipments would go through as shown.")).toBeInTheDocument();
-    expect(props.onGate).toHaveBeenLastCalledWith(
-      expect.objectContaining({ approvable: true, digest: "sha256:aaaa", count: 2, refused: 0 }),
-    );
   });
 
   it("marks the records the write would refuse and says how many go through", async () => {
-    fetchProposalPreview.mockResolvedValue(
+    renderCard(
+      node({ toolName: "invoice_post" }),
       preview({
         changes: [
           record({
@@ -144,7 +130,6 @@ describe("DecisionCard", () => {
         ],
       }),
     );
-    renderCard(node({ toolName: "invoice_post" }));
 
     expect(await screen.findByText("Refused")).toBeInTheDocument();
     expect(
@@ -153,8 +138,7 @@ describe("DecisionCard", () => {
   });
 
   it("draws a refused write whole, naming each reason", async () => {
-    fetchProposalPreview.mockResolvedValue(refused());
-    renderCard();
+    renderCard(node(), refused());
 
     expect(
       await screen.findByText("BOL is already in use by shipment SEED-DET-009"),
@@ -163,8 +147,7 @@ describe("DecisionCard", () => {
 
   it("opens the editor on the value a reason names", async () => {
     const user = userEvent.setup();
-    fetchProposalPreview.mockResolvedValue(refused());
-    const props = renderCard();
+    const props = renderCard(node(), refused());
 
     await user.click(await screen.findByRole("button", { name: "Change BOL" }));
 
@@ -173,8 +156,7 @@ describe("DecisionCard", () => {
 
   it("declines with the reasons written when the agent is asked to fix it", async () => {
     const user = userEvent.setup();
-    fetchProposalPreview.mockResolvedValue(refused());
-    const props = renderCard();
+    const props = renderCard(node(), refused());
 
     await user.click(await screen.findByRole("button", { name: "Ask the agent to fix it" }));
 

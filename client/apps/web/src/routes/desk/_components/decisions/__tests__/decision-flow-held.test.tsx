@@ -7,6 +7,7 @@ import type { ProposalPreview, ProposalPreviewRequest } from "@/lib/graphql/agen
 import { DecisionFlow } from "../decision-flow";
 import type { PendingDecisionNode } from "../use-pending-decisions";
 import { planNode, proposalNode } from "./pending-fixtures";
+import { batchFrom } from "./sheet-test-kit";
 
 const fetchProposalPreview =
   vi.fn<(request: ProposalPreviewRequest, options?: unknown) => Promise<ProposalPreview>>();
@@ -19,6 +20,7 @@ vi.mock("@/lib/graphql/agent-preview", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/graphql/agent-preview")>()),
   fetchProposalPreview: (request: ProposalPreviewRequest, options?: unknown) =>
     fetchProposalPreview(request, options),
+  fetchProposalPreviews: (ids: readonly string[]) => batchFrom(fetchProposalPreview)(ids),
 }));
 
 vi.mock("@/lib/graphql/agent-decisions", () => ({

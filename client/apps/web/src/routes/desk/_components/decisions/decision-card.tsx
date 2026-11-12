@@ -19,7 +19,6 @@ import {
 import {
   useApprovalGate,
   usePlanPreview,
-  useProposalPreview,
 } from "@/components/assistant/proposal-preview/use-proposal-preview";
 import { presentProposal } from "@/components/assistant/proposal-presenters";
 import { conversationPath } from "@/lib/conversation-path";
@@ -29,7 +28,7 @@ import { formatTimeAgo } from "@/lib/time-utils";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router";
 import {
   approvalFacts,
@@ -44,7 +43,6 @@ import { DeskAgentTile } from "@/components/desk-chat/desk-agent-tile";
 import { DeskIcon } from "@/components/desk-chat/desk-icons";
 import { asAssistantProposal } from "./decision-presenters";
 import {
-  isPendingPlan,
   usePlanSteps,
   type PendingDecisionNode,
   type PendingPlanNode,
@@ -72,29 +70,12 @@ export type CardGate = {
 };
 
 export type CardProps = {
-  node: PendingDecisionNode;
+  node: PendingPlanNode;
   leaving: QueueLeave | null;
-  /** The card underneath: the like-batch line and anything else the queue adds. */
-  footer?: ReactNode;
   onGate: (gate: CardGate) => void;
-  /** Turns the change down with a reason already written. */
+  /** Turns the plan down with a reason already written. */
   onDeclineWith: (reason: string) => void;
-  /** Opens the editor, on one value when a refusal named it; absent when values can't be changed. */
-  onModify?: (focus?: EditorFocus) => void;
 };
-
-/**
- * One decision, read whole: who wants it and when, what it changes record by
- * record, what the dry run says would happen, and the exact arguments behind
- * it for anyone who wants them.
- */
-export function DecisionCard(props: CardProps) {
-  return isPendingPlan(props.node) ? (
-    <PlanCard {...props} node={props.node} />
-  ) : (
-    <ProposalCard {...props} node={props.node as PendingProposalNode} />
-  );
-}
 
 function Who({ node }: { node: PendingDecisionNode }) {
   const t = useT();
@@ -225,36 +206,34 @@ function dryRun(preview: ProposalPreviewData, t: TranslateFn): { text: string; w
   return { text: t("It would go through as shown."), warn: false };
 }
 
-function ProposalCard({
+/**
+ * What one change does, read whole, as its row in the decision sheet opens
+ * it: who wants it and when, why, what it changes record by record, what the
+ * dry run says would happen, the ways forward when it would be refused, and
+ * the exact arguments behind it. The sheet reads the preview; until it is in,
+ * or when it cannot be read, the change's own highlights stand in.
+ */
+export function ProposalDetail({
   node,
-  leaving,
-  footer,
-  onGate,
+  preview,
   onDeclineWith,
   onModify,
-}: CardProps & { node: PendingProposalNode }) {
+  canChange,
+}: {
+  node: PendingProposalNode;
+  preview: ProposalPreviewData | null;
+  /** Turns the change down with a reason already written. */
+  onDeclineWith: (reason: string) => void;
+  /** Opens the editor, on one value when a refusal named it; absent when values can't be changed. */
+  onModify?: (focus?: EditorFocus) => void;
+  /** Whether the change can be approved as it stands, so a value it names can be edited. */
+  canChange: boolean;
+}) {
   const t = useT();
   const proposal = useMemo(() => asAssistantProposal(node), [node]);
   const view = useMemo(() => presentProposal(proposal), [proposal]);
-  const previewQuery = useProposalPreview({ scope: "approver", id: node.id });
-  const approval = useApprovalGate(previewQuery);
-  const preview = previewQuery.data;
-  const facts = useMemo(() => approvalFacts(preview, t), [preview, t]);
+  const facts = useMemo(() => approvalFacts(preview ?? undefined, t), [preview, t]);
   const rows = useMemo(() => (preview ? diffRows(preview, t) : null), [preview, t]);
-
-  const reviewRequired = reviewRequiredFor(preview, node.reviewRequired, false);
-  const approvable = canApprove(approval.gate, reviewRequired);
-  const digest = gateDigest(approval.gate);
-  const { handleDecisionError } = approval;
-  useEffect(() => {
-    onGate({
-      approvable,
-      digest,
-      refused: facts.refused.length,
-      count: facts.count,
-      handleError: handleDecisionError,
-    });
-  }, [approvable, digest, facts.count, facts.refused.length, handleDecisionError, onGate]);
 
   // A write that would be refused: change the value a reason names, or turn
   // it down with the reasons so the agent learns what to fix.
@@ -262,7 +241,7 @@ function ProposalCard({
   const wouldFail: WouldFailActions = {
     canChange: editable ? (param) => editableParam(param, proposal.fields) : undefined,
     onChange:
-      editable && approvable
+      editable && canChange
         ? (reason) => onModify?.({ param: reason.param, label: reason.label })
         : undefined,
     onAskAgent: (reasons) => onDeclineWith(askAgentMessage(proposal.toolName, reasons, t)),
@@ -270,62 +249,48 @@ function ProposalCard({
   const run = preview ? dryRun(preview, t) : null;
 
   return (
-    <QueueCard leaving={leaving}>
+    <>
       <Who node={node} />
-      <h1>
-        {view.title}
-        {facts.count > 0 && <span> · {recordCount(facts.resource, facts.count, t)}</span>}
-      </h1>
       <p className="dk-dc2-why">{node.rationale || view.summary}</p>
 
-      <PreviewLoadState
-        query={previewQuery}
-        changed={approval.changed}
-        fallback={<Highlights rows={view.highlights} />}
-        reviewRequired={reviewRequired}
-      >
-        {(data) =>
-          rows && rows.length > 0 ? (
-            <div className="dk-dc2-diff">
-              <div className="dk-dc2-dh">
-                <span>
-                  {data.changes
-                    .find((change) => !change.withheld)
-                    ?.fields.find((field) => !field.withheld && field.path !== OUTCOME_FIELD)
-                    ?.label ?? ""}
-                </span>
-                <Badge variant={view.reversible ? "success" : "warning"} dot>
-                  {view.reversible ? t("Reversible") : t("Can't be undone")}
-                </Badge>
-              </div>
-              {rows.slice(0, SHOWN_ROWS).map((row, index) => (
-                <div
-                  key={`${row.key}-${index}`}
-                  className={cn("dk-dc2-dr", row.refused && "dk-bad")}
-                >
-                  <span className="dk-dc2-dk">{row.key}</span>
-                  <s>{row.before}</s>
-                  <i aria-hidden>→</i>
-                  <span className="sr-only">{t("to")}</span>
-                  <b title={row.refused ?? undefined}>
-                    {row.refused ? t("Refused") : row.after}
-                    {row.refused && <span className="sr-only">: {row.refused}</span>}
-                  </b>
-                </div>
-              ))}
-              {facts.count > Math.min(rows.length, SHOWN_ROWS) && (
-                <div className="dk-dc2-more">
-                  {t("+ {0} more like these", facts.count - Math.min(rows.length, SHOWN_ROWS))}
-                </div>
-              )}
+      {preview === null ? (
+        <Highlights rows={view.highlights} />
+      ) : rows && rows.length > 0 ? (
+        <div className="dk-dc2-diff">
+          <div className="dk-dc2-dh">
+            <span>
+              {preview.changes
+                .find((change) => !change.withheld)
+                ?.fields.find((field) => !field.withheld && field.path !== OUTCOME_FIELD)?.label ??
+                ""}
+            </span>
+            <Badge variant={view.reversible ? "success" : "warning"} dot>
+              {view.reversible ? t("Reversible") : t("Can't be undone")}
+            </Badge>
+          </div>
+          {rows.slice(0, SHOWN_ROWS).map((row, index) => (
+            <div key={`${row.key}-${index}`} className={cn("dk-dc2-dr", row.refused && "dk-bad")}>
+              <span className="dk-dc2-dk">{row.key}</span>
+              <s>{row.before}</s>
+              <i aria-hidden>→</i>
+              <span className="sr-only">{t("to")}</span>
+              <b title={row.refused ?? undefined}>
+                {row.refused ? t("Refused") : row.after}
+                {row.refused && <span className="sr-only">: {row.refused}</span>}
+              </b>
             </div>
-          ) : (
-            <div className="dk-dc2-full">
-              <ProposalPreview preview={data} wouldFail={wouldFail} />
+          ))}
+          {facts.count > Math.min(rows.length, SHOWN_ROWS) && (
+            <div className="dk-dc2-more">
+              {t("+ {0} more like these", facts.count - Math.min(rows.length, SHOWN_ROWS))}
             </div>
-          )
-        }
-      </PreviewLoadState>
+          )}
+        </div>
+      ) : (
+        <div className="dk-dc2-full">
+          <ProposalPreview preview={preview} wouldFail={wouldFail} />
+        </div>
+      )}
 
       {run && (
         <div className={cn("dk-dc2-sim", run.warn && "dk-warn")}>
@@ -338,8 +303,7 @@ function ProposalCard({
       )}
 
       <RawArguments value={{ tool: node.toolName, ...proposal.arguments }} />
-      {footer}
-    </QueueCard>
+    </>
   );
 }
 
@@ -359,13 +323,11 @@ function Highlights({ rows }: { rows: { label: string; value: string }[] }) {
   );
 }
 
-function PlanCard({
-  node,
-  leaving,
-  footer,
-  onGate,
-  onDeclineWith,
-}: CardProps & { node: PendingPlanNode }) {
+/**
+ * A plan, decided as one: every step runs in order, or none does. It is
+ * never decided together with other changes, so it keeps a card of its own.
+ */
+export function PlanCard({ node, leaving, onGate, onDeclineWith }: CardProps) {
   const t = useT();
   const stepsQuery = usePlanSteps(node.id);
   const previewQuery = usePlanPreview({ scope: "approver", id: node.id });
@@ -430,7 +392,6 @@ function PlanCard({
         </span>
         {t("Decided as one: every step runs in order, or none does.")}
       </div>
-      {footer}
     </QueueCard>
   );
 }

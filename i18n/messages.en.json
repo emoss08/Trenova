@@ -2670,15 +2670,6 @@
       "go/other"
     ]
   },
-  "<b>{0, plural, one {# agent} other {# agents}}</b> want to:": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
-    ]
-  },
   "<b>{0, plural, one {# change was} other {# changes were}}</b> written {1, plural, one {today} other {in the last # days}}.": {
     "sites": 1,
     "scope": [
@@ -3076,7 +3067,7 @@
     ]
   },
   "<b>{0}</b> wants to:": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -26131,12 +26122,11 @@
     ]
   },
   "All {0}": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/desk",
       "routes/factoring-company",
       "routes/settings"
     ]
@@ -28066,7 +28056,7 @@
     ]
   },
   "An agent": {
-    "sites": 10,
+    "sites": 9,
     "scope": [
       "ts"
     ],
@@ -54251,15 +54241,6 @@
       "routes/agent-control"
     ]
   },
-  "Changes in this decision": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
-    ]
-  },
   "Changes may run without asking": {
     "sites": 1,
     "scope": [
@@ -54412,6 +54393,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Changes waiting": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Changes your agents proposed that need a decision.": {
@@ -59584,7 +59574,7 @@
     ]
   },
   "Clear": {
-    "sites": 27,
+    "sites": 28,
     "scope": [
       "go",
       "ts"
@@ -77791,15 +77781,6 @@
       "routes/desk"
     ]
   },
-  "Decide all {0} together": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
-    ]
-  },
   "Decide here:": {
     "sites": 1,
     "scope": [
@@ -77816,15 +77797,6 @@
     ],
     "areas": [
       "template/agent.proposal_reminder.email"
-    ]
-  },
-  "Decide it on its own card.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
     ]
   },
   "Decide later": {
@@ -77879,15 +77851,6 @@
     ],
     "areas": [
       "api/handlers"
-    ]
-  },
-  "Decide {0} of {1} together": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
     ]
   },
   "Decided": {
@@ -78051,15 +78014,6 @@
     ],
     "areas": [
       "routes/dispatch-console"
-    ]
-  },
-  "Deciding {0} together": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
     ]
   },
   "Decimal": {
@@ -103887,15 +103841,6 @@
       "edi/lading"
     ]
   },
-  "Everything each one would do is below. Untick any you want to leave in the queue.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
-    ]
-  },
   "Everything else waits in the bell until your focus ends.": {
     "sites": 1,
     "scope": [
@@ -124224,7 +124169,7 @@
     ]
   },
   "Held": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
       "ts"
     ],
@@ -124234,6 +124179,7 @@
       "apps/web/hooks",
       "packages/shared/components",
       "routes/agent-control",
+      "routes/desk",
       "routes/driver-pay-event",
       "routes/edi",
       "routes/fuel-feed-run",
@@ -125012,15 +124958,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "Hide the whole change": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
     ]
   },
   "Hide the workspace": {
@@ -131514,15 +131451,6 @@
     ],
     "areas": [
       "routes/formula-template"
-    ]
-  },
-  "Include {0}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
     ]
   },
   "Include {0} on this invoice": {
@@ -138047,7 +137975,7 @@
       "routes/desk"
     ]
   },
-  "Its record changed since it was proposed. Decide it on its own card.": {
+  "Its record changed since it was proposed. It can only be declined.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -139326,15 +139254,6 @@
     "areas": [
       "apps/web/hooks",
       "routes/accounting-inbound"
-    ]
-  },
-  "Just this one": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
     ]
   },
   "Just you": {
@@ -218439,15 +218358,6 @@
       "routes/agent-control"
     ]
   },
-  "Read to the end of the list to approve": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
-    ]
-  },
   "Read together from {0, plural, one {# call} other {# calls}}": {
     "sites": 1,
     "scope": [
@@ -243468,6 +243378,15 @@
       "routes/shipment"
     ]
   },
+  "Scroll past each selected change to approve them": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Scroll right": {
     "sites": 1,
     "scope": [
@@ -246489,13 +246408,14 @@
     ]
   },
   "Select all {0}": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/agent-control",
-      "routes/billing-queue"
+      "routes/billing-queue",
+      "routes/desk"
     ]
   },
   "Select all {0} matching": {
@@ -248224,7 +248144,7 @@
     ]
   },
   "Select {0}": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "ts"
     ],
@@ -248232,6 +248152,7 @@
       "apps/web/components",
       "routes/billing-queue",
       "routes/carrier-monitoring",
+      "routes/desk",
       "routes/invoice",
       "routes/late-charges"
     ]
@@ -256955,15 +256876,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "Show the whole change": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
     ]
   },
   "Show the workspace": {
@@ -280956,15 +280868,6 @@
       "rules/tariff"
     ]
   },
-  "The first {0} of {1}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
-    ]
-  },
   "The fiscal period closed while this reversal was posting. Post it again.": {
     "sites": 1,
     "scope": [
@@ -304323,6 +304226,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Tick changes to decide them together": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Tick the box to confirm you have read it": {
@@ -350459,6 +350371,15 @@
       "routes/factoring-remittance"
     ]
   },
+  "the first {0} of {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "the full number is never stored": {
     "sites": 1,
     "scope": [
@@ -356503,7 +356424,7 @@
     ]
   },
   "{0, plural, one {# selected} other {# selected}}": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -368902,15 +368823,6 @@
     ],
     "areas": [
       "routes/scheduling"
-    ]
-  },
-  "{0} more {1} waiting": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
     ]
   },
   "{0} more · {1}": {
