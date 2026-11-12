@@ -133,6 +133,16 @@ query AgentProposalPreview($id: ID!, $modifications: JSON) {
   }
 }
 
+query AgentProposalPreviews($ids: [ID!]!) {
+  agentProposalPreviews(ids: $ids) {
+    proposalId
+    preview {
+      ...AgentProposalPreviewFields
+    }
+    error
+  }
+}
+
 query MyProposalPreview($id: ID!, $modifications: JSON) {
   myProposalPreview(id: $id, modifications: $modifications) {
     ...AgentProposalPreviewFields

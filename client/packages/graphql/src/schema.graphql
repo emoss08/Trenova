@@ -5738,6 +5738,18 @@ input AgentProposalPreviewDigestInput {
   proposalId: ID!
 }
 
+"""
+One proposal's preview among several read together, or why it could not be
+read. A proposal whose preview failed is decided on its own card.
+"""
+type AgentProposalPreviewResult {
+  """Why the preview could not be read, in words for the reader."""
+  error: String
+  """Absent when the preview could not be read."""
+  preview: AgentProposalPreview
+  proposalId: ID!
+}
+
 enum AgentProposalStatus {
   Accepted
   """
@@ -27531,6 +27543,12 @@ type Query {
   recorded when it was decided.
   """
   agentProposalPreview(id: ID!, modifications: JSON): AgentProposalPreview!
+  """
+  The previews of up to 50 proposals, in the order asked, for deciding them
+  together: each digest sent back with the batch approval names what the
+  approver was shown of that proposal.
+  """
+  agentProposalPreviews(ids: [ID!]!): [AgentProposalPreviewResult!]!
   agentProposals(input: DataTableConnectionInput!): AgentProposalConnection!
   """One agent's quality over the last window days."""
   agentQuality(agentDefinitionId: ID!, window: Int = 30): AgentQuality!

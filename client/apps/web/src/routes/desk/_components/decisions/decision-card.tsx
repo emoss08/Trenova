@@ -77,7 +77,6 @@ export type CardProps = {
   /** The card underneath: the like-batch line and anything else the queue adds. */
   footer?: ReactNode;
   onGate: (gate: CardGate) => void;
-  onPreviewShown: (proposalId: string, digest: string) => void;
   /** Turns the change down with a reason already written. */
   onDeclineWith: (reason: string) => void;
   /** Opens the editor, on one value when a refusal named it; absent when values can't be changed. */
@@ -231,7 +230,6 @@ function ProposalCard({
   leaving,
   footer,
   onGate,
-  onPreviewShown,
   onDeclineWith,
   onModify,
 }: CardProps & { node: PendingProposalNode }) {
@@ -257,14 +255,6 @@ function ProposalCard({
       handleError: handleDecisionError,
     });
   }, [approvable, digest, facts.count, facts.refused.length, handleDecisionError, onGate]);
-  // A preview of a record that moved since is shown but never counts as
-  // reviewed: the server refuses an approval of it, so it is recorded as unseen.
-  const shownDigest = preview === undefined ? undefined : preview.stale ? "" : preview.digest;
-  useEffect(() => {
-    if (shownDigest !== undefined) {
-      onPreviewShown(node.id, shownDigest);
-    }
-  }, [node.id, onPreviewShown, shownDigest]);
 
   // A write that would be refused: change the value a reason names, or turn
   // it down with the reasons so the agent learns what to fix.

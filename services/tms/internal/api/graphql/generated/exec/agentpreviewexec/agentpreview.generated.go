@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -33,6 +34,7 @@ var Shard = &gqlexec.Shard{
 		{Name: "AgentPreviewStaleness", Implementors: []string{"AgentPreviewStaleness"}},
 		{Name: "AgentPreviewWarning", Implementors: []string{"AgentPreviewWarning"}},
 		{Name: "AgentProposalPreview", Implementors: []string{"AgentProposalPreview"}},
+		{Name: "AgentProposalPreviewResult", Implementors: []string{"AgentProposalPreviewResult"}},
 	},
 	Fields: []gqlexec.Fields{
 		{Object: "AgentDecision", Fields: []*gqlexec.Field{
@@ -1084,6 +1086,39 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
 		}},
+		{Object: "AgentProposalPreviewResult", Fields: []*gqlexec.Field{
+			{
+				Name:     "proposalId",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agentruntimeports.ProposalPreviewOutcome)
+					return obj.ProposalID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:      "preview",
+				HasChild:  true,
+				ChildType: "AgentProposalPreview",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agentruntimeports.ProposalPreviewOutcome)
+					return obj.Preview, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOAgentProposalPreview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentpreviewᚐProposalPreview),
+			},
+			{
+				Name:       "error",
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agentruntimeports.ProposalPreviewOutcome)
+					return gqlexec.Resolver[AgentProposalPreviewResultResolver](ec, "AgentProposalPreviewResult@agentpreview").Error(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
+			},
+		}},
 		{Object: "Query", Fields: []*gqlexec.Field{
 			{
 				Name:       "agentProposalPreview",
@@ -1098,6 +1133,20 @@ var Shard = &gqlexec.Shard{
 					return gqlexec.Resolver[QueryResolver](ec, "Query@agentpreview").AgentProposalPreview(ctx, fc.Args["id"].(string), fc.Args["modifications"].(map[string]any))
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentProposalPreview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentpreviewᚐProposalPreview),
+			},
+			{
+				Name:       "agentProposalPreviews",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "AgentProposalPreviewResult",
+				Args:       field_Query_agentProposalPreviews_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@agentpreview").AgentProposalPreviews(ctx, fc.Args["ids"].([]string))
+				},
+				Marshal: gqlexec.Marshal(marshalNAgentProposalPreviewResult2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋagentruntimeportsᚐProposalPreviewOutcomeᚄ),
 			},
 			{
 				Name:       "agentPlanPreview",
@@ -1155,6 +1204,7 @@ var Shard = &gqlexec.Shard{
 		{Root: "AgentPreviewRecordChange@agentpreview", Check: func(r any) bool { _, ok := r.(AgentPreviewRecordChangeResolver); return ok }},
 		{Root: "AgentPreviewRef@agentpreview", Check: func(r any) bool { _, ok := r.(AgentPreviewRefResolver); return ok }},
 		{Root: "AgentPreviewWarning@agentpreview", Check: func(r any) bool { _, ok := r.(AgentPreviewWarningResolver); return ok }},
+		{Root: "AgentProposalPreviewResult@agentpreview", Check: func(r any) bool { _, ok := r.(AgentProposalPreviewResultResolver); return ok }},
 		{Root: "Query@agentpreview", Check: func(r any) bool { _, ok := r.(QueryResolver); return ok }},
 	},
 }
@@ -1195,8 +1245,13 @@ type AgentPreviewWarningResolver interface {
 	Code(ctx context.Context, obj *agentpreview.PreviewWarning) (string, error)
 }
 
+type AgentProposalPreviewResultResolver interface {
+	Error(ctx context.Context, obj *agentruntimeports.ProposalPreviewOutcome) (*string, error)
+}
+
 type QueryResolver interface {
 	AgentProposalPreview(ctx context.Context, id string, modifications map[string]any) (*agentpreview.ProposalPreview, error)
+	AgentProposalPreviews(ctx context.Context, ids []string) ([]*agentruntimeports.ProposalPreviewOutcome, error)
 	AgentPlanPreview(ctx context.Context, id string) (*agentpreview.PlanPreview, error)
 	MyProposalPreview(ctx context.Context, id string, modifications map[string]any) (*agentpreview.ProposalPreview, error)
 	MyPlanPreview(ctx context.Context, id string) (*agentpreview.PlanPreview, error)
@@ -1233,6 +1288,19 @@ func field_Query_agentProposalPreview_args(ctx context.Context, ec *gqlexec.Exec
 		return nil, err
 	}
 	args["modifications"] = arg1
+	return args, nil
+}
+
+func field_Query_agentProposalPreviews_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "ids",
+		func(ctx context.Context, v any) ([]string, error) {
+			return unmarshalNID2ᚕstringᚄ(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["ids"] = arg0
 	return args, nil
 }
 
@@ -1323,6 +1391,10 @@ func unmarshalInputAgentProposalPreviewDigestInput(ctx context.Context, ec *gqle
 func unmarshalNID2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
 	res, err := graphql.UnmarshalID(v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNID2ᚕstringᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]string, error) {
+	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNID2string)
 }
 
 func unmarshalNString2string(ctx context.Context, ec *gqlexec.Exec, v any) (string, error) {
@@ -1462,6 +1534,22 @@ func marshalNAgentProposalPreview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal
 	return ec.MarshalType(ctx, sel, "AgentProposalPreview", v)
 }
 
+func marshalNAgentProposalPreviewResult2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋagentruntimeportsᚐProposalPreviewOutcomeᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*agentruntimeports.ProposalPreviewOutcome) graphql.Marshaler {
+	return gqlexec.List[*agentruntimeports.ProposalPreviewOutcome]{
+		Elem:        marshalNAgentProposalPreviewResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋagentruntimeportsᚐProposalPreviewOutcome,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNAgentProposalPreviewResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋagentruntimeportsᚐProposalPreviewOutcome(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentruntimeports.ProposalPreviewOutcome) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "AgentProposalPreviewResult", v)
+}
+
 func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v bool) graphql.Marshaler {
 	res := graphql.MarshalBoolean(v)
 	if res == graphql.Null {
@@ -1595,6 +1683,14 @@ func marshalOInt2ᚖint64(ctx context.Context, ec *gqlexec.Exec, sel ast.Selecti
 
 func marshalOString2string(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v string) graphql.Marshaler {
 	res := graphql.MarshalString(v)
+	return res
+}
+
+func marshalOString2ᚖstring(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *string) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalString(*v)
 	return res
 }
 

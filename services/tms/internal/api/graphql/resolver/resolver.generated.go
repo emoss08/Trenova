@@ -1127,6 +1127,7 @@ func FromServices(s *Services) *Resolver {
 	agentAgentProposal := &agentresolver.AgentProposalResolver{Deps: agentDeps}
 	decisionsAgentProposal := &decisionsresolver.AgentProposalResolver{Deps: decisionsDeps}
 	agentAgentProposalField := &agentresolver.AgentProposalFieldResolver{Deps: agentDeps}
+	agentpreviewAgentProposalPreviewResult := &agentpreviewresolver.AgentProposalPreviewResultResolver{Deps: agentpreviewDeps}
 	agentqualityAgentQualityAgent := &agentqualityresolver.AgentQualityAgentResolver{Deps: agentqualityDeps}
 	agentqualityAgentQualityControl := &agentqualityresolver.AgentQualityControlResolver{Deps: agentqualityDeps}
 	agentAgentReflection := &agentresolver.AgentReflectionResolver{Deps: agentDeps}
@@ -1683,6 +1684,7 @@ func FromServices(s *Services) *Resolver {
 			"AgentProposal@agent":                                  agentAgentProposal,
 			"AgentProposal@decisions":                              decisionsAgentProposal,
 			"AgentProposalField@agent":                             agentAgentProposalField,
+			"AgentProposalPreviewResult@agentpreview":              agentpreviewAgentProposalPreviewResult,
 			"AgentQualityAgent@agentquality":                       agentqualityAgentQualityAgent,
 			"AgentQualityControl@agentquality":                     agentqualityAgentQualityControl,
 			"AgentReflection@agent":                                agentAgentReflection,
@@ -2244,6 +2246,7 @@ var (
 	_ agentexec.AgentProposalResolver                                  = (*agentresolver.AgentProposalResolver)(nil)
 	_ decisionsexec.AgentProposalResolver                              = (*decisionsresolver.AgentProposalResolver)(nil)
 	_ agentexec.AgentProposalFieldResolver                             = (*agentresolver.AgentProposalFieldResolver)(nil)
+	_ agentpreviewexec.AgentProposalPreviewResultResolver              = (*agentpreviewresolver.AgentProposalPreviewResultResolver)(nil)
 	_ agentqualityexec.AgentQualityAgentResolver                       = (*agentqualityresolver.AgentQualityAgentResolver)(nil)
 	_ agentqualityexec.AgentQualityControlResolver                     = (*agentqualityresolver.AgentQualityControlResolver)(nil)
 	_ agentexec.AgentReflectionResolver                                = (*agentresolver.AgentReflectionResolver)(nil)

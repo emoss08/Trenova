@@ -129,6 +129,7 @@ type previewingTool struct {
 
 	state   *shipmentState
 	block   bool
+	mu      sync.Mutex
 	asked   []agenttoolports.ToolExecuteParams
 	money   bool
 	failErr error
@@ -139,7 +140,9 @@ func (t *previewingTool) Preview(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
 ) (*agentpreview.ToolPreview, error) {
+	t.mu.Lock()
 	t.asked = append(t.asked, *params)
+	t.mu.Unlock()
 	if t.block {
 		<-ctx.Done()
 
@@ -226,6 +229,7 @@ func (f *fakeVersions) Version(
 
 type fakeLabeler struct {
 	labels agentruntimeports.RecordLabels
+	mu     sync.Mutex
 	asked  []map[permission.Resource][]pulid.ID
 }
 
@@ -234,6 +238,8 @@ func (f *fakeLabeler) Labels(
 	_ pagination.TenantInfo,
 	refs map[permission.Resource][]pulid.ID,
 ) (agentruntimeports.RecordLabels, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
 	f.asked = append(f.asked, refs)
 
 	return f.labels, nil
@@ -244,6 +250,7 @@ type fakeBaselines struct {
 	kept    []*agentpreview.ProposalBaseline
 	stored  []*agentpreview.ProposalBaseline
 	listErr error
+	listed  int
 }
 
 func (f *fakeBaselines) Create(_ context.Context, baseline *agentpreview.ProposalBaseline) error {
@@ -258,6 +265,9 @@ func (f *fakeBaselines) ListByProposals(
 	_ context.Context,
 	req agentproposalports.ListProposalBaselinesRequest,
 ) ([]*agentpreview.ProposalBaseline, error) {
+	f.mu.Lock()
+	f.listed++
+	f.mu.Unlock()
 	if f.listErr != nil {
 		return nil, f.listErr
 	}

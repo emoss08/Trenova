@@ -49,3 +49,10 @@ func (s *Service) GetByID(
 ) (*agent.AgentProposal, error) {
 	return s.repo.GetByID(ctx, req)
 }
+
+func (s *Service) ListByIDs(
+	ctx context.Context,
+	req agentproposalports.ListAgentProposalsByIDsRequest,
+) ([]*agent.AgentProposal, error) {
+	return s.repo.ListByIDs(ctx, req)
+}

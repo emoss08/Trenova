@@ -2670,6 +2670,15 @@
       "go/other"
     ]
   },
+  "<b>{0, plural, one {# agent} other {# agents}}</b> want to:": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "<b>{0, plural, one {# change was} other {# changes were}}</b> written {1, plural, one {today} other {in the last # days}}.": {
     "sites": 1,
     "scope": [
@@ -3067,7 +3076,7 @@
     ]
   },
   "<b>{0}</b> wants to:": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -28057,7 +28066,7 @@
     ]
   },
   "An agent": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "ts"
     ],
@@ -35672,6 +35681,15 @@
       "apps/web/components"
     ]
   },
+  "Ask for the proofs of delivery a tenant's delivered shipments are missing, a page at a time": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Ask for what you want": {
     "sites": 2,
     "scope": [
@@ -35978,6 +35996,15 @@
       "go/other"
     ]
   },
+  "Ask whoever invited you to send a new link.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/auth"
+    ]
+  },
   "Ask you to choose": {
     "sites": 1,
     "scope": [
@@ -36114,6 +36141,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Asked for the signed proof of delivery": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Asked for {0}": {
@@ -38756,14 +38792,15 @@
     ]
   },
   "Attachments": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "go/other"
+      "go/other",
+      "routes/desk"
     ]
   },
   "Attachments & content": {
@@ -42745,12 +42782,13 @@
     ]
   },
   "Bcc": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/desk"
     ]
   },
   "Before": {
@@ -46538,15 +46576,6 @@
       "go/other"
     ]
   },
-  "Bring a snoozed or waiting inbound message back to the queue when its time comes": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Bring in templates from a JSON file exported from Trenova.": {
     "sites": 1,
     "scope": [
@@ -46563,6 +46592,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Bring snoozed and waiting inbound messages back to the queue when their time comes": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Bring the roles a SCIM directory's groups grant up to date": {
@@ -52923,12 +52961,13 @@
     ]
   },
   "Cc": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/desk"
     ]
   },
   "Ceiling": {
@@ -54025,6 +54064,15 @@
       "routes/accounting-inbound"
     ]
   },
+  "Changed since": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Changed since it was proposed": {
     "sites": 1,
     "scope": [
@@ -54201,6 +54249,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Changes in this decision": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Changes may run without asking": {
@@ -54504,7 +54561,7 @@
     ]
   },
   "Channel": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -55633,8 +55690,17 @@
       "routes/inbox"
     ]
   },
-  "Check the web watch for new findings and hand them on": {
+  "Check the web watches that are due and hand on what they found": {
     "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Check the web watches whose check is due and hand on what they found": {
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -57107,11 +57173,12 @@
     ]
   },
   "Choose at least one proposal": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
+      "api/graphql",
       "go/other"
     ]
   },
@@ -77751,6 +77818,15 @@
       "template/agent.proposal_reminder.email"
     ]
   },
+  "Decide it on its own card.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Decide later": {
     "sites": 5,
     "scope": [
@@ -77803,6 +77879,15 @@
     ],
     "areas": [
       "api/handlers"
+    ]
+  },
+  "Decide {0} of {1} together": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Decided": {
@@ -93578,6 +93663,15 @@
       "routes/admin"
     ]
   },
+  "Each numbered place is filled in from the change's own row below.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Each one below keeps its own switch for when you resume.": {
     "sites": 1,
     "scope": [
@@ -103793,6 +103887,15 @@
       "edi/lading"
     ]
   },
+  "Everything each one would do is below. Untick any you want to leave in the queue.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Everything else waits in the bell until your focus ends.": {
     "sites": 1,
     "scope": [
@@ -106828,6 +106931,15 @@
     ]
   },
   "Expiration warning days must be zero or greater": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Expire pending agent proposals past their decision window and close the runs they leave settled": {
     "sites": 1,
     "scope": [
       "go"
@@ -115974,15 +116086,6 @@
       "routes/shipment-tracking-public"
     ]
   },
-  "Follow a web watch to its end and hand on what it finds": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Follow an approved portal task to its end and hand its answer back": {
     "sites": 1,
     "scope": [
@@ -118035,7 +118138,7 @@
     ]
   },
   "From": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
       "ts"
     ],
@@ -118043,6 +118146,7 @@
       "apps/web/components",
       "routes/accounting-sync",
       "routes/agent-control",
+      "routes/desk",
       "routes/detention-policy",
       "routes/fuel-management",
       "routes/invoice",
@@ -124910,6 +125014,15 @@
       "apps/web/components"
     ]
   },
+  "Hide the whole change": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Hide the workspace": {
     "sites": 1,
     "scope": [
@@ -131401,6 +131514,15 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "Include {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Include {0} on this invoice": {
@@ -137917,6 +138039,15 @@
     ]
   },
   "Its record": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Its record changed since it was proposed. Decide it on its own card.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -154400,6 +154531,15 @@
     ]
   },
   "Mark pending agent proposals whose decision window has closed as expired": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Mark queue items whose checks are missing or stale as due and wake the tenants with due items": {
     "sites": 2,
     "scope": [
       "go"
@@ -173359,15 +173499,6 @@
       "routes/fuel-purchase"
     ]
   },
-  "No thinking. A Claude model is told not to think; other models are sent no reasoning setting.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "No receipt attached — consider asking the driver for one before approving.": {
     "sites": 1,
     "scope": [
@@ -175025,6 +175156,15 @@
       "routes/formula-template"
     ]
   },
+  "No thinking. A Claude model is told not to think; other models are sent no reasoning setting.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "No tiers yet. A ladder must start at minute 0 of billable detention and run contiguously; the final rung may be open-ended.": {
     "sites": 1,
     "scope": [
@@ -176390,6 +176530,15 @@
   },
   "None of their codes are matched to our records yet.": {
     "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "None of these can be approved together": {
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -208825,6 +208974,15 @@
       "routes/late-charges"
     ]
   },
+  "Preview at most {0} proposals at once": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
+    ]
+  },
   "Preview changes": {
     "sites": 1,
     "scope": [
@@ -211055,6 +211213,15 @@
       "routes/edi"
     ]
   },
+  "Project the arrival at each open stop of the tenant's changed shipments": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Projected": {
     "sites": 1,
     "scope": [
@@ -211408,20 +211575,22 @@
     ]
   },
   "Proposal listed twice": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Proposal not found": {
     "sites": 2,
     "scope": [
       "go"
     ],
     "areas": [
+      "api/graphql",
+      "go/other"
+    ]
+  },
+  "Proposal not found": {
+    "sites": 3,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql",
       "go/other"
     ]
   },
@@ -217482,15 +217651,6 @@
       "routes/detention-policy"
     ]
   },
-  "Re-run the billing checks on queue items whose checks are missing or stale": {
-    "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Re: your email": {
     "sites": 1,
     "scope": [
@@ -218279,6 +218439,15 @@
       "routes/agent-control"
     ]
   },
+  "Read to the end of the list to approve": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Read together from {0, plural, one {# call} other {# calls}}": {
     "sites": 1,
     "scope": [
@@ -218565,6 +218734,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Reading every change…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Reading more lanes…": {
@@ -227727,12 +227905,13 @@
     ]
   },
   "Repeats": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/desk",
       "routes/review-template"
     ]
   },
@@ -237194,6 +237373,15 @@
       "apps/web/components"
     ]
   },
+  "Run a tenant's due billing checks, Nova reviews and auto-approvals, then write its brief": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Run accrual now": {
     "sites": 1,
     "scope": [
@@ -237442,7 +237630,7 @@
       "routes/agent-control"
     ]
   },
-  "Run one agent definition against its subject and wait for decisions on what it proposes": {
+  "Run one agent definition against its subject and file what it proposes": {
     "sites": 1,
     "scope": [
       "go"
@@ -237539,15 +237727,6 @@
     ],
     "areas": [
       "routes/detention-policy"
-    ]
-  },
-  "Run the billing checks on a queue item after it changes": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Run the full report": {
@@ -245458,12 +245637,13 @@
     ]
   },
   "Seen by": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/desk"
     ]
   },
   "Seen by whoever reviews the request.": {
@@ -249185,6 +249365,15 @@
     ],
     "areas": [
       "routes/detention-desk"
+    ]
+  },
+  "Send the customer status emails the tenant's rules ask for": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Send the customer the detention notice for this occurrence.": {
@@ -256768,6 +256957,15 @@
       "apps/web/components"
     ]
   },
+  "Show the whole change": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Show the workspace": {
     "sites": 1,
     "scope": [
@@ -262095,6 +262293,15 @@
     ]
   },
   "Start agent runs": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Start an agent's queued event runs, as many as it may run at once": {
     "sites": 1,
     "scope": [
       "go"
@@ -275910,6 +276117,15 @@
       "template/notification.dash.profile_change_reviewed"
     ]
   },
+  "The changes could not be read": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "The charge amount.": {
     "sites": 1,
     "scope": [
@@ -280738,6 +280954,15 @@
     "areas": [
       "apps/web/rules",
       "rules/tariff"
+    ]
+  },
+  "The first {0} of {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "The fiscal period closed while this reversal was posting. Post it again.": {
@@ -289730,6 +289955,15 @@
       "routes/worker"
     ]
   },
+  "The same for every one": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "The same instant in another zone": {
     "sites": 2,
     "scope": [
@@ -296911,6 +297145,15 @@
       "go/other"
     ]
   },
+  "This change": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "This change could not be loaded": {
     "sites": 1,
     "scope": [
@@ -296918,6 +297161,24 @@
     ],
     "areas": [
       "routes/carrier-monitoring"
+    ]
+  },
+  "This change could not be previewed.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "This change could not be previewed. Open it on its own.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "api/graphql"
     ]
   },
   "This change could not be saved": {
@@ -301225,6 +301486,15 @@
     "areas": [
       "apps/web/rules",
       "rules/tariff"
+    ]
+  },
+  "This proposal could not be decided. Try it on its own.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "This proposal expired on {0} without a decision. Ask the agent again for a current one": {
@@ -322304,8 +322574,8 @@
       "routes/inbox"
     ]
   },
-  "Wake an EDI flow instance when its timer is due": {
-    "sites": 1,
+  "Wake every open EDI flow instance whose timer is due": {
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -322341,15 +322611,6 @@
       "go/other"
     ]
   },
-  "Wake the parked inbound messages whose own timer was lost": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Wake the sender for every accounting connection with documents due": {
     "sites": 2,
     "scope": [
@@ -322359,7 +322620,7 @@
       "go/other"
     ]
   },
-  "Wake the snoozed and waiting inbound messages whose own timer was lost": {
+  "Wake the snoozed and waiting inbound messages whose time has come": {
     "sites": 1,
     "scope": [
       "go"
@@ -335134,15 +335395,6 @@
     ]
   },
   "Write the announcement": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Write the billing queue's brief after it changes": {
     "sites": 1,
     "scope": [
       "go"
@@ -350804,11 +351056,12 @@
     ]
   },
   "to {0}": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/desk",
       "routes/dispatch-console",
       "routes/shipment",
       "routes/worker"
@@ -352686,15 +352939,6 @@
       "apps/web/components"
     ]
   },
-  "{0, plural, one {# change must be opened before these can be approved} other {# changes must be opened before these can be approved}}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
-    ]
-  },
   "{0, plural, one {# change waits on you} other {# changes wait on you}}": {
     "sites": 1,
     "scope": [
@@ -352705,7 +352949,7 @@
     ]
   },
   "{0, plural, one {# change} other {# changes}}": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "ts"
     ],
@@ -369209,15 +369453,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "{0} not opened yet": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
     ]
   },
   "{0} not tendered": {

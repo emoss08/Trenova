@@ -35,6 +35,27 @@ type PreviewProposals struct {
 	agentproposalports.AgentProposalService
 
 	Proposal *agent.AgentProposal
+	// Batch is what ListByIDs finds, in any order; the IDs asked for that it
+	// holds no proposal for are missing.
+	Batch []*agent.AgentProposal
+}
+
+func (p *PreviewProposals) ListByIDs(
+	_ context.Context,
+	req agentproposalports.ListAgentProposalsByIDsRequest,
+) ([]*agent.AgentProposal, error) {
+	asked := make(map[pulid.ID]struct{}, len(req.IDs))
+	for _, id := range req.IDs {
+		asked[id] = struct{}{}
+	}
+	out := make([]*agent.AgentProposal, 0, len(req.IDs))
+	for _, proposal := range p.Batch {
+		if _, ok := asked[proposal.ID]; ok {
+			out = append(out, proposal)
+		}
+	}
+
+	return out, nil
 }
 
 func (p *PreviewProposals) GetByID(
@@ -101,6 +122,30 @@ type PreviewService struct {
 	Viewer    *agentruntimeports.PreviewViewer
 	Mods      map[string]any
 	Warnings  []agentpreview.PreviewWarning
+	// Batched is the proposals a batch preview was asked for, in order;
+	// Failures fail the named ones.
+	Batched  []pulid.ID
+	Failures map[pulid.ID]error
+}
+
+func (s *PreviewService) ForProposals(
+	_ context.Context,
+	req *agentruntimeports.ProposalPreviewsRequest,
+) []agentruntimeports.ProposalPreviewOutcome {
+	s.Viewer = req.Viewer
+	out := make([]agentruntimeports.ProposalPreviewOutcome, 0, len(req.Proposals))
+	for _, proposal := range req.Proposals {
+		s.Batched = append(s.Batched, proposal.ID)
+		outcome := agentruntimeports.ProposalPreviewOutcome{ProposalID: proposal.ID}
+		if err := s.Failures[proposal.ID]; err != nil {
+			outcome.Err = err
+		} else {
+			outcome.Preview = &agentpreview.ProposalPreview{ProposalID: proposal.ID, Digest: "d-" + proposal.ID.String()}
+		}
+		out = append(out, outcome)
+	}
+
+	return out
 }
 
 func (s *PreviewService) ForProposal(

@@ -20,6 +20,7 @@ type previewHarness struct {
 	previews  *resolvertest.PreviewService
 	decisions *resolvertest.PreviewDecisions
 	plans     *resolvertest.PreviewPlans
+	proposals *resolvertest.PreviewProposals
 	ctx       context.Context
 	proposal  pulid.ID
 }
@@ -43,17 +44,18 @@ func newPreviewHarness(t *testing.T, granted ...string) *previewHarness {
 		previews:  &resolvertest.PreviewService{},
 		decisions: &resolvertest.PreviewDecisions{},
 		plans:     &resolvertest.PreviewPlans{},
-		ctx:       gqlctx.WithAuthContext(t.Context(), auth),
-		proposal:  proposalID,
+		proposals: &resolvertest.PreviewProposals{
+			Proposal: &agent.AgentProposal{ID: proposalID},
+		},
+		ctx:      gqlctx.WithAuthContext(t.Context(), auth),
+		proposal: proposalID,
 	}
 	h.resolver = &QueryResolver{&Deps{
 		Core: &resolvercore.Core{
 			L:                zap.NewNop(),
 			PermissionEngine: &resolvertest.PreviewPermissions{Granted: grants},
 		},
-		AgentProposalService: &resolvertest.PreviewProposals{
-			Proposal: &agent.AgentProposal{ID: proposalID},
-		},
+		AgentProposalService:   h.proposals,
 		AgentDecisionService:   h.decisions,
 		AgentPlanService:       h.plans,
 		ProposalPreviewService: h.previews,

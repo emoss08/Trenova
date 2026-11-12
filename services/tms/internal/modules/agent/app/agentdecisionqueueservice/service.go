@@ -28,10 +28,7 @@ const (
 	defaultPageSize        = 25
 	maxPageSize            = 100
 	decisionCursorResource = "agent_decision_queue"
-	// MaxBatch bounds one batch decision. Each proposal is decided and, when
-	// approved, executed in turn, so the bound is what keeps one request
-	// from running for minutes.
-	MaxBatch = 50
+	MaxBatch               = agentdecision.MaxBatch
 )
 
 type Params struct {
@@ -361,7 +358,7 @@ func (s *Service) DecideMany(
 		)
 		switch {
 		case decideErr != nil:
-			result.Error = decisionErrorMessage(decideErr)
+			result.Error = decisionErrorMessage(ctx, decideErr)
 			s.l.Warn("batch decision failed for a proposal",
 				zap.String("proposal", id.String()),
 				zap.Error(decideErr),
@@ -474,15 +471,12 @@ func validateBatch(req *agentdecisionqueueports.DecideAgentProposalsRequest) err
 // decisionErrorMessage keeps what a person may read of a failure. A
 // business or validation error was written for them; anything else is an
 // internal fault whose wording belongs in the log.
-func decisionErrorMessage(err error) string {
-	if errortypes.IsBusinessError(err) || errortypes.IsMultiError(err) ||
-		errortypes.IsNotFoundError(err) || errortypes.IsError(err) ||
-		errortypes.IsAuthorizationError(err) || errortypes.IsVersionMismatchError(err) ||
-		errortypes.IsConflictError(err) {
-		return err.Error()
-	}
-
-	return "This proposal could not be decided. Try it on its own."
+func decisionErrorMessage(ctx context.Context, err error) string {
+	return errortypes.MessageForPerson(
+		ctx,
+		err,
+		"This proposal could not be decided. Try it on its own.",
+	)
 }
 
 func decisionCursorBinding(tenant pagination.TenantInfo) pagination.CursorBinding {
@@ -574,7 +568,7 @@ func (s *Service) approveDeferred(
 	for _, approval := range deferred {
 		result := agentdecisionports.AgentProposalDecisionResult{ProposalID: approval.ProposalID}
 		if approval.Err != nil {
-			result.Error = decisionErrorMessage(approval.Err)
+			result.Error = decisionErrorMessage(ctx, approval.Err)
 			s.l.Warn("batch approval refused for a proposal",
 				zap.String("proposal", approval.ProposalID.String()),
 				zap.Error(approval.Err),

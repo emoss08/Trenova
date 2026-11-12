@@ -249,7 +249,13 @@ proposal or a plan) is the only `ConflictError` the decide path returns; a previ
 changes fail validation is a validation error. A batch (`decideAgentProposals`) takes one
 digest per proposal: a mismatch fails that proposal alone, a gated proposal without one is
 refused alone, and an internal one without one is approved unreviewed. Withheld parts do not block an approval; the count is recorded in the
-decision's preview.
+decision's preview. `agentProposalPreviews(ids)` is the read a batch is decided from: up to
+`agentdecision.MaxBatch` proposals, each listed once, previewed for the reader in the order
+asked (`ProposalPreviewService.ForProposals`: drafts a few at a time, one baseline read for
+the batch) and each digested exactly as its card would be. A proposal that is missing or
+fails to preview carries its error (`AgentProposalPreviewResult.error`, the error's own words
+when written for the reader and a plain fallback otherwise, `errortypes.MessageForPerson`)
+and never fails the others.
 
 A plan's steps may be filed by several agents of one turn (the conversation's agent and
 an agent it handed a task to); each step keeps the run of the agent that filed it, and
@@ -293,9 +299,21 @@ approval would be recorded unreviewed. In the Desk:
   the approval carries every digest (`batchPreviewDigests`). What still holds it is said by
   cause (`ReviewBlocker`): a preview still loading, one that failed to load, and a record that
   moved since, which is shown but never counts and can only be set aside;
-- the Decisions queue records each preview as its card is read, and "Decide all together"
-  keeps Approve off, naming how many must still be opened, until every gated change in the
-  batch has been read (`unreviewedRequired`).
+- the Decisions queue decides a run of one tool's changes together on one sheet
+  (`decisions/batch-card.tsx`), fifty at a time (`agentdecision.MaxBatch`, `MAX_BATCH` on the
+  client). The sheet reads every preview in one request (`agentProposalPreviews`) and lays
+  the batch out by `batchReview`: what every change has alike is shown once (how a message
+  goes out, the values every change sets alike, and a message's subject and body as a
+  template with numbered places, `sharedTemplate` in `lib/shared-template.ts`), and each row
+  shows what is its own, with its warnings and a way to open its whole preview. The template
+  is worked out from the texts and checked by rebuilding every row's text from it; a row that
+  does not come out exactly, or a message worded differently from the rest, is shown whole,
+  so the sheet can be awkward but never shows anything other than the preview. Changes that
+  differ in shape are each shown whole. A row whose record moved or whose preview failed is
+  decided on its own card; any other row can be unticked to stay in the queue. Approve
+  holds until the last row has been on screen, then carries the digest of every row it
+  showed. When the read fails, a batch of internal changes is approved unreviewed, as one
+  card would be, and a batch with a gated change waits for it.
 
 An approver's changes can never point the write at another record: `refuseRetarget`
 compares `Target(proposed)` with `Target(merged)` in `CheckModifications` and again where it

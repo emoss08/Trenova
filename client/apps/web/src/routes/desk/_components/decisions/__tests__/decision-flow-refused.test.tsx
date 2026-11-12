@@ -4,6 +4,7 @@ import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } from "vitest";
 import { planPreview, preview } from "@/components/assistant/__tests__/preview-fixtures";
 import type {
+  BatchProposalPreview,
   PlanPreview,
   ProposalPreview,
   ProposalPreviewRequest,
@@ -12,11 +13,14 @@ import { toast } from "@trenova/shared/components/ui/toast";
 import { DecisionFlow } from "../decision-flow";
 import type { PendingDecisionNode } from "../use-pending-decisions";
 import { planNode, proposalNode } from "./pending-fixtures";
+import { stubListReadToEnd } from "./read-to-end";
 
 const fetchProposalPreview =
   vi.fn<(request: ProposalPreviewRequest, options?: unknown) => Promise<ProposalPreview>>();
 const fetchPlanPreview =
   vi.fn<(request: { scope: string; id: string }, options?: unknown) => Promise<PlanPreview>>();
+const fetchProposalPreviews =
+  vi.fn<(ids: readonly string[], options?: unknown) => Promise<BatchProposalPreview[]>>();
 const decideAgentProposal = vi.fn<(...args: unknown[]) => Promise<unknown>>();
 const decideAgentPlan = vi.fn<(...args: unknown[]) => Promise<unknown>>();
 const decideAgentProposals = vi.fn<(...args: unknown[]) => Promise<unknown>>();
@@ -29,11 +33,14 @@ vi.mock("@/lib/graphql/agent-preview", async (importOriginal) => ({
     fetchProposalPreview(request, options),
   fetchPlanPreview: (request: { scope: string; id: string }, options?: unknown) =>
     fetchPlanPreview(request, options),
+  fetchProposalPreviews: (ids: readonly string[], options?: unknown) =>
+    fetchProposalPreviews(ids, options),
 }));
 
 vi.mock("@/lib/graphql/agent-decisions", () => ({
   decideAgentPlan: (...args: unknown[]) => decideAgentPlan(...args),
   decideAgentProposal: (...args: unknown[]) => decideAgentProposal(...args),
+  decideAgentProposals: (...args: unknown[]) => decideAgentProposals(...args),
 }));
 
 vi.mock("@/hooks/use-permission", () => ({
@@ -52,7 +59,6 @@ vi.mock("../use-pending-decisions", async (importOriginal) => ({
   // A new array each render, the way a refetch hands one back.
   useRecentDecisions: () => ({ data: [...recent] }),
   usePlanSteps: () => ({ data: [] }),
-  decideAgentProposals: (...args: unknown[]) => decideAgentProposals(...args),
 }));
 
 let info: MockInstance;
@@ -70,6 +76,8 @@ afterEach(() => {
   error.mockRestore();
   warning.mockRestore();
   fetchProposalPreview.mockReset();
+  fetchProposalPreviews.mockReset();
+  vi.unstubAllGlobals();
   fetchPlanPreview.mockReset();
   decideAgentProposal.mockReset();
   decideAgentPlan.mockReset();
@@ -251,6 +259,17 @@ describe("DecisionFlow when the server refuses an approval", () => {
         digest: `sha256:${request.id}`,
       }),
     );
+    fetchProposalPreviews.mockImplementation(async (ids) =>
+      ids.map((id) => ({
+        proposalId: id,
+        preview: preview({
+          proposalId: id,
+          tool: "receivable_post_customer_payment",
+          digest: `sha256:${id}`,
+        }),
+        error: null,
+      })),
+    );
     decideAgentProposals.mockResolvedValue([
       {
         proposalId: "aprop_1",
@@ -267,6 +286,7 @@ describe("DecisionFlow when the server refuses an approval", () => {
         decision: decisionOf("aprop_2"),
       },
     ]);
+    stubListReadToEnd();
     renderFlow();
 
     await waitFor(() => expect(approveButton()).toBeEnabled());

@@ -11742,6 +11742,13 @@ export type AgentProposalPreviewQueryVariables = Exact<{
 
 export type AgentProposalPreviewQuery = { agentProposalPreview: { ' $fragmentRefs'?: { 'AgentProposalPreviewFieldsFragment': AgentProposalPreviewFieldsFragment } } };
 
+export type AgentProposalPreviewsQueryVariables = Exact<{
+  ids: Array<string | number> | string | number;
+}>;
+
+
+export type AgentProposalPreviewsQuery = { agentProposalPreviews: Array<{ proposalId: string, error: string | null, preview: { ' $fragmentRefs'?: { 'AgentProposalPreviewFieldsFragment': AgentProposalPreviewFieldsFragment } } | null }> };
+
 export type MyProposalPreviewQueryVariables = Exact<{
   id: string | number;
   modifications?: unknown;
@@ -21323,7 +21330,7 @@ export { AgentEvaluationTableRowFieldsFragmentDoc, AgentEvaluationTableDocument,
 export { AgentExceptionTableRowFieldsFragmentDoc, AgentExceptionDetailFieldsFragmentDoc, AgentExceptionTableDocument, AgentExceptionDetailDocument, ResolveAgentExceptionDocument } from "./documents/agent/exceptions";
 export { AgentMemoryTableRowFieldsFragmentDoc, AgentReflectionRowFieldsFragmentDoc, AgentMemoryTableDocument, AgentMemoryCountDocument, AgentMemoryUsageDocument, CreateAgentMemoryDocument, UpdateAgentMemoryDocument, SetAgentMemoryStatusDocument, ReviewAgentMemoryDocument, ApproveAgentMemorySuggestionDocument, DismissAgentMemorySuggestionDocument, AgentReflectionsDocument } from "./documents/agent/memories";
 export { AgentPlanTableRowFieldsFragmentDoc, AgentPlanTableDocument, AgentPlanDetailDocument, DecideAgentPlanDocument } from "./documents/agent/plans";
-export { AgentProposalPreviewFieldsFragmentDoc, AgentPlanPreviewFieldsFragmentDoc, AgentProposalPreviewDocument, MyProposalPreviewDocument, AgentPlanPreviewDocument, MyPlanPreviewDocument } from "./documents/agent/previews";
+export { AgentProposalPreviewFieldsFragmentDoc, AgentPlanPreviewFieldsFragmentDoc, AgentProposalPreviewDocument, AgentProposalPreviewsDocument, MyProposalPreviewDocument, AgentPlanPreviewDocument, MyPlanPreviewDocument } from "./documents/agent/previews";
 export { AgentProfileVersionFieldsFragmentDoc, AgentProfileGuidanceFieldsFragmentDoc, AgentProfileFieldsFragmentDoc, AgentOrganizationProfileDocument, AgentOrganizationProfileHistoryDocument, MyAgentProfileDocument, AddAgentOrganizationProfileGuidanceDocument, RetireAgentOrganizationProfileGuidanceDocument, RegenerateAgentOrganizationProfileDocument, ApproveAgentOrganizationProfileGuidanceDocument, DismissAgentOrganizationProfileGuidanceDocument, AddMyAgentProfileGuidanceDocument, RetireMyAgentProfileGuidanceDocument, RegenerateMyAgentProfileDocument } from "./documents/agent/profile";
 export { AgentEvidenceRefFieldsFragmentDoc, AgentProposalTableRowFieldsFragmentDoc, AgentProposalDetailFieldsFragmentDoc, AgentProposalTableDocument, AgentProposalDetailDocument, DecideAgentProposalDocument } from "./documents/agent/proposals";
 export { AgentSuiteRunFieldsFragmentDoc, AgentQualityPointFieldsFragmentDoc, AgentWorstRatedAnswerFieldsFragmentDoc, AgentQualityControlFieldsFragmentDoc, AgentSuiteRunCaseFieldsFragmentDoc, AgentQualityOverviewDocument, AgentQualityAgentTableDocument, AgentWorstRatedAnswerTableDocument, AgentQualityDocument, AgentSuiteRunTableDocument, AgentSuiteRunDocument, AgentSuiteRunCaseTableDocument, AgentQualityControlDocument, UpdateAgentQualityControlDocument, RunAgentSuiteDocument } from "./documents/agent/quality";

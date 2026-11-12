@@ -9,10 +9,6 @@ import {
   type EditorFocus,
   type ProposalEditorRequest,
 } from "@/components/assistant/proposal-editor";
-import {
-  batchPreviewDigests,
-  unreviewedRequired,
-} from "@/components/assistant/proposal-preview/preview-gate";
 import { presentProposal } from "@/components/assistant/proposal-presenters";
 import { usePermission } from "@/hooks/use-permission";
 import {
@@ -49,6 +45,8 @@ import {
   type QueueSection,
 } from "../queue/queue-list";
 import { useQueueCursor, useQueueLeave } from "../queue/use-queue-cursor";
+import { BatchCard, type BatchGate } from "./batch-card";
+import { MAX_BATCH } from "./batch-review-model";
 import { DecisionCard, type CardGate } from "./decision-card";
 import { asAssistantProposal } from "./decision-presenters";
 import {
@@ -202,36 +200,25 @@ export function DecisionFlow() {
         : [],
     [current, items],
   );
+  // A batch is at most the server's bound; a longer run is decided in turns.
   const [batch, setBatch] = useState<string[] | null>(null);
   if (batch && current && !batch.includes(current.id)) {
     setBatch(null);
   }
-
-  const [gate, setGate] = useState<CardGate | null>(null);
-  const [shownDigests, setShownDigests] = useState<ReadonlyMap<string, string>>(new Map());
-  const onPreviewShown = useCallback((id: string, digest: string) => {
-    setShownDigests((previous) =>
-      previous.get(id) === digest ? previous : new Map(previous).set(id, digest),
-    );
-  }, []);
-  // A batch approves every change in it together; one the server takes only
-  // with the digest of a preview the person was shown must have been opened
-  // first, and these are the ones still to read.
-  const batchUnreviewed = useMemo(
+  const batchNodes = useMemo(
     () =>
       batch
-        ? unreviewedRequired(
-            items
-              .filter((item) => batch.includes(item.id))
-              .map((item) => ({
-                id: item.id,
-                reviewRequired: isPendingProposal(item.node) ? item.node.reviewRequired : true,
-              })),
-            shownDigests,
-          )
+        ? items
+            .filter((item) => batch.includes(item.id))
+            .flatMap((item) => (isPendingProposal(item.node) ? [item.node] : []))
         : [],
-    [batch, items, shownDigests],
+    [batch, items],
   );
+
+  const [gate, setGate] = useState<CardGate | null>(null);
+  // What the batch sheet says a decision carries: the proposals it read and
+  // the digest of each preview it showed, once the person has read them all.
+  const [batchGate, setBatchGate] = useState<BatchGate | null>(null);
 
   const { leaving, leave } = useQueueLeave();
   const [busy, setBusy] = useState(false);
@@ -270,6 +257,7 @@ export function DecisionFlow() {
       leave(ok ? "ok" : "no", () => {
         setGone((previous) => new Set([...previous, ...ids]));
         setBatch(null);
+        setBatchGate(null);
         setGate(null);
         setCurrentId(next);
         void invalidateProposalViews(queryClient);
@@ -303,16 +291,15 @@ export function DecisionFlow() {
 
   const approve = useCallback(async () => {
     if (!current || busy || !canDecide || current.held) return;
-    const ids = batch ?? [current.id];
-    if (ids.length === 1 && !gate?.approvable) return;
-    if (ids.length > 1 && batchUnreviewed.length > 0) return;
+    if (batch === null && !gate?.approvable) return;
+    if (batch !== null && !batchGate?.approvable) return;
     setBusy(true);
     try {
-      if (ids.length > 1) {
-        const results = await decideAgentProposals(ids, {
+      if (batch !== null && batchGate !== null) {
+        const results = await decideAgentProposals(batchGate.approveIds, {
           decision: "Accepted",
           reasonCode: "approved_from_desk_batch",
-          previewDigests: batchPreviewDigests(ids, shownDigests),
+          previewDigests: batchGate.digests,
         });
         const failed = results.filter((result) => result.error);
         if (failed.length > 0) {
@@ -356,23 +343,13 @@ export function DecisionFlow() {
     } finally {
       setBusy(false);
     }
-  }, [
-    batch,
-    batchUnreviewed.length,
-    busy,
-    canDecide,
-    current,
-    finish,
-    gate,
-    settle,
-    shownDigests,
-    t,
-  ]);
+  }, [batch, batchGate, busy, canDecide, current, finish, gate, settle, t]);
 
   const decline = useCallback(
     (initialReason?: string) => {
       if (!current || busy || !canDecide || current.held) return;
-      const ids = batch ?? [current.id];
+      const ids = batch === null ? [current.id] : (batchGate?.declineIds ?? []);
+      if (ids.length === 0) return;
       const node = current.node;
       setDialog({
         title: ids.length > 1 ? t("Decline {0} changes?", ids.length) : t("Decline this change?"),
@@ -383,7 +360,7 @@ export function DecisionFlow() {
         destructive: true,
         initialReason,
         onConfirm: async (reason) => {
-          if (ids.length > 1) {
+          if (batch !== null) {
             const results = await decideAgentProposals(ids, {
               decision: "Rejected",
               reasonCode: reason,
@@ -404,7 +381,7 @@ export function DecisionFlow() {
         },
       });
     },
-    [batch, busy, canDecide, current, finish, t],
+    [batch, batchGate, busy, canDecide, current, finish, t],
   );
 
   const editable =
@@ -440,9 +417,18 @@ export function DecisionFlow() {
     [current, editable, settle, t],
   );
 
-  const toggleBatch = useCallback(() => {
-    setBatch((value) => (value ? null : like.length > 1 ? like.map((item) => item.id) : null));
+  const startBatch = useCallback(() => {
+    setBatchGate(null);
+    setBatch(like.slice(0, MAX_BATCH).map((item) => item.id));
   }, [like]);
+  const toggleBatch = useCallback(() => {
+    if (batch !== null) {
+      setBatch(null);
+      setBatchGate(null);
+    } else if (like.length > 1) {
+      startBatch();
+    }
+  }, [batch, like.length, startBatch]);
 
   // The listener stays attached while the queue is open and reads the latest
   // handlers, so a key pressed in the same frame the Approve button enables
@@ -482,13 +468,55 @@ export function DecisionFlow() {
 
   const decided = recent.data ?? [];
   const total = decided.length + items.length + (queue.hasNextPage ? 1 : 0);
-  const unopened = batch ? batch.filter((id) => !seen.has(id)).length : 0;
-
   const approveLabel = batch
-    ? t("Approve {0}", batch.length)
+    ? t("Approve {0}", batchGate?.approveIds.length ?? 0)
     : gate && gate.refused > 0 && gate.refused < gate.count
       ? t("Approve {0}, skip {1}", gate.count - gate.refused, gate.refused)
       : t("Approve");
+
+  const holding = batchGate?.holding ?? "reading";
+  const likeFooter =
+    current && like.length > 1 && canDecide ? (
+      <div className="dk-dc2-like">
+        {batch ? (
+          <>
+            <b>{t("Deciding {0} together", batch.length)}</b>
+            <span>
+              {like.length > batch.length
+                ? t("The first {0} of {1}", batch.length, like.length)
+                : t("All {0}", current.tool)}
+              {holding === "reading" && ` · ${t("Reading every change…")}`}
+              {holding === "unread" && ` · ${t("Read to the end of the list to approve")}`}
+              {holding === "failed" && ` · ${t("The changes could not be read")}`}
+              {holding === "empty" && ` · ${t("None of these can be approved together")}`}
+            </span>
+            <Button
+              variant="bare"
+              size="bare"
+              className={cn(LINK_CLASS, "ml-auto")}
+              onClick={toggleBatch}
+            >
+              {t("Just this one")}
+            </Button>
+          </>
+        ) : (
+          <>
+            <span>{t("{0} more {1} waiting", like.length - 1, current.tool)}</span>
+            <Button
+              variant="bare"
+              size="bare"
+              className={cn(LINK_CLASS, "ml-auto")}
+              onClick={startBatch}
+            >
+              {like.length > MAX_BATCH
+                ? t("Decide {0} of {1} together", MAX_BATCH, like.length)
+                : t("Decide all {0} together", like.length)}
+            </Button>
+            <QueueKey>X</QueueKey>
+          </>
+        )}
+      </div>
+    ) : undefined;
 
   const sections: QueueSection[] = groups.map((group) => ({
     key: group.tool,
@@ -591,56 +619,22 @@ export function DecisionFlow() {
       >
         {queue.isLoading ? (
           <QueueReading label={t("Reading the queue…")} />
+        ) : current && batch !== null && batchNodes.length > 0 ? (
+          <BatchCard
+            nodes={batchNodes}
+            leaving={leaving}
+            onGate={setBatchGate}
+            footer={likeFooter}
+          />
         ) : current ? (
           <DecisionCard
             key={current.id}
             node={current.node}
             leaving={leaving}
             onGate={setGate}
-            onPreviewShown={onPreviewShown}
             onDeclineWith={(reason) => decline(reason)}
             onModify={editable ? modify : undefined}
-            footer={
-              like.length > 1 && canDecide ? (
-                <div className="dk-dc2-like">
-                  {batch ? (
-                    <>
-                      <b>{t("Deciding {0} together", batch.length)}</b>
-                      <span>
-                        {t("All {0}", current.tool)}
-                        {batchUnreviewed.length > 0
-                          ? ` · ${t(
-                              "{0, plural, one {# change must be opened before these can be approved} other {# changes must be opened before these can be approved}}",
-                              batchUnreviewed.length,
-                            )}`
-                          : unopened > 0 && ` · ${t("{0} not opened yet", unopened)}`}
-                      </span>
-                      <Button
-                        variant="bare"
-                        size="bare"
-                        className={cn(LINK_CLASS, "ml-auto")}
-                        onClick={() => setBatch(null)}
-                      >
-                        {t("Just this one")}
-                      </Button>
-                    </>
-                  ) : (
-                    <>
-                      <span>{t("{0} more {1} waiting", like.length - 1, current.tool)}</span>
-                      <Button
-                        variant="bare"
-                        size="bare"
-                        className={cn(LINK_CLASS, "ml-auto")}
-                        onClick={() => setBatch(like.map((item) => item.id))}
-                      >
-                        {t("Decide all {0} together", like.length)}
-                      </Button>
-                      <QueueKey>X</QueueKey>
-                    </>
-                  )}
-                </div>
-              ) : undefined
-            }
+            footer={likeFooter}
           />
         ) : (
           <QueueClear
@@ -680,15 +674,17 @@ export function DecisionFlow() {
                     {t("Change values")}
                   </Button>
                 )}
-                <QueueButton shortcut="D" disabled={busy} onClick={() => decline()}>
-                  {batch ? t("Decline {0}", batch.length) : t("Decline")}
+                <QueueButton
+                  shortcut="D"
+                  disabled={busy || (batch !== null && (batchGate?.declineIds.length ?? 0) === 0)}
+                  onClick={() => decline()}
+                >
+                  {batch ? t("Decline {0}", batchGate?.declineIds.length ?? 0) : t("Decline")}
                 </QueueButton>
                 <QueueButton
                   ink
                   shortcut="A"
-                  disabled={
-                    busy || (batch === null ? !gate?.approvable : batchUnreviewed.length > 0)
-                  }
+                  disabled={busy || (batch === null ? !gate?.approvable : !batchGate?.approvable)}
                   onClick={() => void approve()}
                 >
                   {approveLabel}

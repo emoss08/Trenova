@@ -46,6 +46,22 @@ type ProposalPreviewRequest struct {
 	Deciding bool
 }
 
+// ProposalPreviewsRequest asks what several proposals would each do, for
+// one reader deciding them together. Proposals holds at most
+// agentdecision.MaxBatch.
+type ProposalPreviewsRequest struct {
+	Proposals []*agent.AgentProposal
+	Viewer    *PreviewViewer
+}
+
+// ProposalPreviewOutcome is one proposal's preview in a batch, or why it
+// could not be read.
+type ProposalPreviewOutcome struct {
+	ProposalID pulid.ID
+	Preview    *agentpreview.ProposalPreview
+	Err        error
+}
+
 // PlanPreviewRequest asks what every pending step of a plan would do, in
 // order.
 type PlanPreviewRequest struct {
@@ -177,6 +193,10 @@ type ProposalPreviewService interface {
 		ctx context.Context,
 		req *ProposalPreviewRequest,
 	) (*agentpreview.ProposalPreview, error)
+	// ForProposals previews several proposals for one reader, in the order
+	// given. One that cannot be previewed carries its error; it never keeps
+	// the others from theirs.
+	ForProposals(ctx context.Context, req *ProposalPreviewsRequest) []ProposalPreviewOutcome
 	// ForPlan previews a plan's pending steps, each projected from the ones
 	// before it.
 	ForPlan(ctx context.Context, req *PlanPreviewRequest) (*agentpreview.PlanPreview, error)

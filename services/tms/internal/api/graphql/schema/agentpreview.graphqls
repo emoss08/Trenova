@@ -258,6 +258,18 @@ input AgentProposalPreviewDigestInput {
   digest: String!
 }
 
+"""
+One proposal's preview among several read together, or why it could not be
+read. A proposal whose preview failed is decided on its own card.
+"""
+type AgentProposalPreviewResult {
+  proposalId: ID!
+  "Absent when the preview could not be read."
+  preview: AgentProposalPreview
+  "Why the preview could not be read, in words for the reader."
+  error: String
+}
+
 extend type AgentDecision {
   "What the decider was shown of the write, filtered again for the reader. Absent for a rejection and for a decision recorded before previews were kept."
   preview: AgentProposalPreview
@@ -274,6 +286,12 @@ extend type Query {
   recorded when it was decided.
   """
   agentProposalPreview(id: ID!, modifications: JSON): AgentProposalPreview!
+  """
+  The previews of up to 50 proposals, in the order asked, for deciding them
+  together: each digest sent back with the batch approval names what the
+  approver was shown of that proposal.
+  """
+  agentProposalPreviews(ids: [ID!]!): [AgentProposalPreviewResult!]!
   "What every pending step of a plan would do, in order."
   agentPlanPreview(id: ID!): AgentPlanPreview!
   "agentProposalPreview for a proposal raised in one of the caller's own conversations."

@@ -154,7 +154,6 @@ func (s *Service) settleParams(
 		warnings := []agentpreview.PreviewWarning{toolpreview.WouldFail(err)}
 		toolpreview.LocateReasons(warnings, tool.ParamSchema())
 
-		//nolint:nilerr // a call that would fail is shown with a warning, not refused
 		return params, warnings, nil
 	}
 

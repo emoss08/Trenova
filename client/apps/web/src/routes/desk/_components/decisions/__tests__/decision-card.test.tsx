@@ -76,7 +76,6 @@ function node(overrides: Partial<PendingProposalNode> = {}): PendingProposalNode
 function renderCard(proposal = node()) {
   const props = {
     onGate: vi.fn<(gate: CardGate) => void>(),
-    onPreviewShown: vi.fn(),
     onDeclineWith: vi.fn(),
     onModify: vi.fn(),
   };
@@ -117,7 +116,6 @@ describe("DecisionCard", () => {
     expect(screen.getByText("Driver")).toBeInTheDocument();
     expect(screen.getByText("Marcus Hill")).toBeInTheDocument();
     expect(screen.getByText("All 2 shipments would go through as shown.")).toBeInTheDocument();
-    expect(props.onPreviewShown).toHaveBeenCalledWith("aprop_1", "sha256:aaaa");
     expect(props.onGate).toHaveBeenLastCalledWith(
       expect.objectContaining({ approvable: true, digest: "sha256:aaaa", count: 2, refused: 0 }),
     );

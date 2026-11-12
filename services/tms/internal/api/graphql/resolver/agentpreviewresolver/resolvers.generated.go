@@ -34,4 +34,6 @@ type AgentPreviewRefResolver struct{ *Deps }
 
 type AgentPreviewWarningResolver struct{ *Deps }
 
+type AgentProposalPreviewResultResolver struct{ *Deps }
+
 type QueryResolver struct{ *Deps }

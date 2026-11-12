@@ -1,10 +1,12 @@
 package errortypes
 
 import (
+	"context"
 	"strconv"
 	"strings"
 
 	"github.com/emoss08/trenova/pkg/fieldpath"
+	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/emoss08/trenova/shared/inflect"
 	"github.com/emoss08/trenova/shared/textcase"
 )
@@ -17,6 +19,24 @@ func IsRefusal(err error) bool {
 		return true
 	}
 	return IsBusinessError(err) || IsError(err) || IsNotFoundError(err) || IsConflictError(err)
+}
+
+// IsForPerson says an error's own words were written for the person who
+// asked: a refusal, a missing record, a denied permission or a record that
+// moved on. Anything else is an internal fault whose wording belongs in the
+// log.
+func IsForPerson(err error) bool {
+	return IsRefusal(err) || IsAuthorizationError(err) || IsVersionMismatchError(err)
+}
+
+// MessageForPerson is an error's own words in the reader's language when
+// they were written for them, and fallback in their language otherwise.
+func MessageForPerson(ctx context.Context, err error, fallback string) string {
+	if IsForPerson(err) {
+		return LocalizedText(ctx, err)
+	}
+
+	return i18n.T(ctx, fallback)
 }
 
 func Summary(err error) string {

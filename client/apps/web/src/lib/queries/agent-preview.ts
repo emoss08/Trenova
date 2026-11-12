@@ -1,6 +1,7 @@
 import {
   fetchPlanPreview,
   fetchProposalPreview,
+  fetchProposalPreviews,
   type PreviewScope,
 } from "@/lib/graphql/agent-preview";
 import { stableStringify } from "@/lib/stable-stringify";
@@ -42,6 +43,11 @@ export const agentPreview = createQueryKeys("agentPreview", {
         ),
     };
   },
+  /** A batch an approver decides together, keyed by its proposals in order. */
+  batch: (ids: readonly string[]) => ({
+    queryKey: [ids.join(",")],
+    queryFn: ({ signal }: { signal?: AbortSignal }) => fetchProposalPreviews(ids, { signal }),
+  }),
   plan: (scope: PreviewScope, id: string) => ({
     queryKey: [scope, id],
     queryFn: ({ signal }: { signal?: AbortSignal }) => fetchPlanPreview({ scope, id }, { signal }),

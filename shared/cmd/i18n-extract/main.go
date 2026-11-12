@@ -22,6 +22,7 @@ var messageArgs = map[string]int{
 	"NewAdvisory":             2,
 	"NewValidationError":      2,
 	"NewVersionMismatchError": 0,
+	"MessageForPerson":        2,
 	"NewBusinessError":        0,
 	"NewDatabaseError":        0,
 	"NewAuthenticationError":  0,

@@ -14,7 +14,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -149,4 +151,31 @@ func (r *QueryResolver) MyPlanPreview(ctx context.Context, id string) (*agentpre
 	}
 
 	return r.PlanPreview(ctx, authCtx, planID)
+}
+
+func (r *AgentProposalPreviewResultResolver) Error(ctx context.Context, obj *agentruntimeports.ProposalPreviewOutcome) (*string, error) {
+	if obj.Err == nil {
+		return nil, nil
+	}
+	message := errortypes.MessageForPerson(
+		ctx,
+		obj.Err,
+		"This change could not be previewed. Open it on its own.",
+	)
+
+	return &message, nil
+}
+
+func (r *QueryResolver) AgentProposalPreviews(ctx context.Context, ids []string) ([]*agentruntimeports.ProposalPreviewOutcome, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentProposal, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	proposalIDs, err := gqlid.ParseIDListField("ids", ids)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.ProposalPreviews(ctx, authCtx, proposalIDs)
 }

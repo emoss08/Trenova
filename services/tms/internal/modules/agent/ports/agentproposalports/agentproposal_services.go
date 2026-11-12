@@ -22,6 +22,10 @@ type AgentProposalService interface {
 		ctx context.Context,
 		req GetAgentProposalByIDRequest,
 	) (*agent.AgentProposal, error)
+	ListByIDs(
+		ctx context.Context,
+		req ListAgentProposalsByIDsRequest,
+	) ([]*agent.AgentProposal, error)
 }
 
 // PendingProposalsNotice is what the recorder hands the notifier once a run's

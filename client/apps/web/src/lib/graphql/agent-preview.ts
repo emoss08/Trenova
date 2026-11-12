@@ -4,6 +4,7 @@ import {
   AgentPlanPreviewFieldsFragmentDoc,
   AgentProposalPreviewDocument,
   AgentProposalPreviewFieldsFragmentDoc,
+  AgentProposalPreviewsDocument,
   MyPlanPreviewDocument,
   MyProposalPreviewDocument,
   type AgentPlanPreviewFieldsFragment,
@@ -79,6 +80,38 @@ export async function fetchProposalPreview(
   });
 
   return getFragmentData(AgentProposalPreviewFieldsFragmentDoc, data.agentProposalPreview);
+}
+
+/** One proposal's preview among several read together, or why it could not be read. */
+export type BatchProposalPreview = {
+  proposalId: string;
+  preview: ProposalPreview | null;
+  error: string | null;
+};
+
+/**
+ * The previews of a batch the approver is deciding together, in the order
+ * asked: what the decisions queue shows on one sheet, and whose digests the
+ * batch approval sends back.
+ */
+export async function fetchProposalPreviews(
+  ids: readonly string[],
+  { signal }: RequestOptions = {},
+): Promise<BatchProposalPreview[]> {
+  const data = await requestGraphQL({
+    document: AgentProposalPreviewsDocument,
+    operationName: "AgentProposalPreviews",
+    variables: { ids: [...ids] },
+    signal,
+  });
+
+  return data.agentProposalPreviews.map((result) => ({
+    proposalId: result.proposalId,
+    preview: result.preview
+      ? getFragmentData(AgentProposalPreviewFieldsFragmentDoc, result.preview)
+      : null,
+    error: result.error ?? null,
+  }));
 }
 
 export async function fetchPlanPreview(
