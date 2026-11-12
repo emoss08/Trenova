@@ -61,6 +61,20 @@ export const organizationSettingsSchema = z.object({
 
 export type OrganizationSettings = z.infer<typeof organizationSettingsSchema>;
 
+// What the server may hold, as opposed to what the settings form accepts. An
+// organization made for a managed instance starts with only its name: the address is
+// blank until an administrator fills it in. Reading it with the form's rules would
+// refuse the response, and the settings page that fixes it could never load.
+export const storedOrganizationSettingsSchema = organizationSettingsSchema.extend({
+  scacCode: z.string(),
+  dotNumber: z.string(),
+  addressLine1: z.string(),
+  city: z.string(),
+  stateId: z.string(),
+  postalCode: z.string(),
+  timezone: z.string(),
+});
+
 export type OrganizationSelectOption = {
   id: string;
   name: string;

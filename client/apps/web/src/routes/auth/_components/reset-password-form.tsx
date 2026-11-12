@@ -117,9 +117,17 @@ export function ResetPasswordForm({
         {rootError && (
           <>
             <AuthErrorText>{rootError}</AuthErrorText>
-            <div>
-              <AuthQuietButton onClick={onRequestNewLink}>{t("Request a new link")}</AuthQuietButton>
-            </div>
+            {/* An account that was never set up has no password to reset, so the
+                sign-in page's reset cannot replace an invite: only its sender can. */}
+            {isInvite ? (
+              <AuthErrorText>{t("Ask whoever invited you to send a new link.")}</AuthErrorText>
+            ) : (
+              <div>
+                <AuthQuietButton onClick={onRequestNewLink}>
+                  {t("Request a new link")}
+                </AuthQuietButton>
+              </div>
+            )}
           </>
         )}
         <AuthSubmit type="submit" busy={isPending} busyLabel={t("Setting password")}>

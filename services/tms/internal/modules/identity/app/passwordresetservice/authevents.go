@@ -13,6 +13,7 @@ const (
 	resetErrorUnknownAccount     = "unknown_account"
 	resetErrorAccountUnavailable = "account_unavailable"
 	resetErrorRateLimited        = "rate_limited"
+	resetErrorAwaitingSetup      = "awaiting_setup"
 	resetErrorInvalidToken       = "invalid_token"
 	resetErrorInternal           = "internal_error"
 	resetErrorWeakPassword       = "weak_password"

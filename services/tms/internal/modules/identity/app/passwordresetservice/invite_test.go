@@ -159,7 +159,7 @@ func TestSendInviteRefusesAnInactiveAccount(t *testing.T) {
 func TestRequestResetForUserResendsAnInviteToSomebodyWhoNeverSetUpTheirAccount(t *testing.T) {
 	t.Parallel()
 
-	user := activeUser()
+	user := invitedUser()
 	h := newInviteHarness(t, user)
 
 	require.NoError(t, h.svc.RequestResetForUser(t.Context(), adminRequest(user.ID)))

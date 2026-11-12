@@ -139,6 +139,7 @@ func (r *stubSessionRepo) DeleteAllForUser(_ context.Context, userID pulid.ID) e
 }
 
 func activeUser() *tenant.User {
+	passwordChangedAt := timeutils.NowUnix() - 86400
 	return &tenant.User{
 		ID:                    pulid.MustNew("usr_"),
 		BusinessUnitID:        pulid.MustNew("bu_"),
@@ -146,7 +147,17 @@ func activeUser() *tenant.User {
 		Status:                domaintypes.StatusActive,
 		Name:                  "Dana Whitfield",
 		EmailAddress:          "dana@example.com",
+		PasswordChangedAt:     &passwordChangedAt,
 	}
+}
+
+// invitedUser is an account that exists but that nobody has signed in to or chosen a
+// password for: it is reached only through its invite.
+func invitedUser() *tenant.User {
+	user := activeUser()
+	user.PasswordChangedAt = nil
+	user.LastLoginAt = nil
+	return user
 }
 
 type discardedAuthEvents struct{}
@@ -227,6 +238,7 @@ func TestRequestReset_IsSilentForEveryRejection(t *testing.T) {
 		{"no user returned", &stubUserRepo{user: nil}, &stubTokenRepo{}},
 		{"locked account", &stubUserRepo{user: locked}, &stubTokenRepo{}},
 		{"inactive account", &stubUserRepo{user: inactive}, &stubTokenRepo{}},
+		{"awaiting setup", &stubUserRepo{user: invitedUser()}, &stubTokenRepo{}},
 		{"rate limited", &stubUserRepo{user: activeUser()}, &stubTokenRepo{countSince: 5}},
 	}
 
@@ -252,6 +264,21 @@ func TestRequestReset_RetiresOlderLinksSoOnlyTheNewestWorks(t *testing.T) {
 	require.NoError(t, svc.RequestReset(t.Context(), "dana@example.com"))
 
 	assert.Contains(t, tokens.invalidated, user.ID)
+}
+
+// A reset link retires every outstanding link, the invite included. For an account
+// that is not set up, that would let anyone who knows the address cancel the invite.
+func TestRequestReset_LeavesAPendingInviteLive(t *testing.T) {
+	t.Parallel()
+
+	user := invitedUser()
+	tokens := &stubTokenRepo{}
+	svc := newService(t, &stubUserRepo{user: user}, tokens, &stubSessionRepo{})
+
+	require.NoError(t, svc.RequestReset(t.Context(), "dana@example.com"))
+
+	assert.NotContains(t, tokens.invalidated, user.ID, "the invite must stay redeemable")
+	assert.Empty(t, tokens.created)
 }
 
 func TestRequestReset_StoresOnlyTheDigest(t *testing.T) {

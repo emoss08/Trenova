@@ -90,10 +90,11 @@ func New(p Params) *Service {
 
 // RequestReset mints a reset link and emails it.
 //
-// It returns nil for an address that belongs to nobody, to a deactivated account, or
-// to an account that has already been sent its hourly allowance of links. The caller
-// answers the same way in every case: an endpoint that distinguishes them is an
-// account-existence oracle for anyone with a word list.
+// It returns nil for an address that belongs to nobody, to a deactivated account, to
+// an account still waiting on its invite, or to an account that has already been sent
+// its hourly allowance of links. The caller answers the same way in every case: an
+// endpoint that distinguishes them is an account-existence oracle for anyone with a
+// word list.
 //
 // Nothing about the account changes here. The password on file keeps working until
 // somebody who can read that mailbox redeems the token, which is what stops a stranger
@@ -123,6 +124,17 @@ func (s *Service) RequestReset(ctx context.Context, emailAddress string) (err er
 		log.Info("password reset requested for an inactive or locked account",
 			zap.String("userId", user.ID.String()))
 		event.deny(iam.AuthEventOutcomeDenied, resetErrorAccountUnavailable)
+		return nil
+	}
+
+	// An account nobody has set up has no password to reset: its way in is its
+	// invite. Minting a reset link here would retire that invite, so a stranger who
+	// knows the address could cancel it, and on a managed instance the control
+	// plane would go on believing the link it emailed still works.
+	if user.AwaitingAccountSetup() {
+		log.Info("password reset requested for an account that is not set up yet",
+			zap.String("userId", user.ID.String()))
+		event.deny(iam.AuthEventOutcomeDenied, resetErrorAwaitingSetup)
 		return nil
 	}
 
