@@ -70,7 +70,8 @@ func ShipmentEtaDrainWorkflow(
 		Iterations:       payload.Iterations,
 		Page: func(ctx workflow.Context) (*temporaljobs.DrainPage, error) {
 			var page temporaljobs.DrainPage
-			err := workflow.ExecuteActivity(actx, a.DrainShipmentEtasActivity, payload).Get(actx, &page)
+			err := workflow.ExecuteActivity(actx, a.DrainShipmentEtasActivity, payload).
+				Get(actx, &page)
 
 			return &page, err
 		},
@@ -92,7 +93,8 @@ func ShipmentEtaSweepWorkflow(ctx workflow.Context) (*SweepResult, error) {
 	tenantCtx := workflow.WithActivityOptions(ctx, sweepTenantOptions)
 
 	// Wake the drains whose wake was lost before refreshing every tenant.
-	if err := workflow.ExecuteActivity(listCtx, a.WakeDueEtaDrainsActivity).Get(listCtx, nil); err != nil {
+	if err := workflow.ExecuteActivity(listCtx, a.WakeDueEtaDrainsActivity).
+		Get(listCtx, nil); err != nil {
 		workflow.GetLogger(ctx).Warn("could not wake the shipment eta drains", "error", err)
 	}
 

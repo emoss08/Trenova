@@ -71,7 +71,8 @@ func CustomerStatusDrainWorkflow(
 		Iterations:       payload.Iterations,
 		Page: func(ctx workflow.Context) (*temporaljobs.DrainPage, error) {
 			var page temporaljobs.DrainPage
-			err := workflow.ExecuteActivity(actx, a.DrainCustomerStatusActivity, payload).Get(actx, &page)
+			err := workflow.ExecuteActivity(actx, a.DrainCustomerStatusActivity, payload).
+				Get(actx, &page)
 
 			return &page, err
 		},
@@ -93,7 +94,8 @@ func CustomerStatusSweepWorkflow(ctx workflow.Context) (*SweepResult, error) {
 	tenantCtx := workflow.WithActivityOptions(ctx, sweepTenantOptions)
 
 	// Wake the drains whose wake was lost before sweeping every tenant.
-	if err := workflow.ExecuteActivity(listCtx, a.WakeDueCustomerStatusDrainsActivity).Get(listCtx, nil); err != nil {
+	if err := workflow.ExecuteActivity(listCtx, a.WakeDueCustomerStatusDrainsActivity).
+		Get(listCtx, nil); err != nil {
 		workflow.GetLogger(ctx).Warn("could not wake the customer status drains", "error", err)
 	}
 

@@ -449,7 +449,12 @@ func (s *Service) StopWebWatch(
 		return nil, err
 	}
 	// One last check tells the work waiting on the watch that it was stopped.
-	if checkErr := s.watches.ScheduleCheck(ctx, req.TenantInfo, updated.ID, s.now()); checkErr != nil {
+	if checkErr := s.watches.ScheduleCheck(
+		ctx,
+		req.TenantInfo,
+		updated.ID,
+		s.now(),
+	); checkErr != nil {
 		s.l.Warn("could not queue a stopped web watch's last check",
 			zap.String("webWatch", updated.ID.String()), zap.Error(checkErr))
 	}

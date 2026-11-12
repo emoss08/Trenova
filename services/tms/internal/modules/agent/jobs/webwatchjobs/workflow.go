@@ -38,7 +38,8 @@ func CheckDueWebWatchesWorkflow(ctx workflow.Context) (*SweepResult, error) {
 	ctx = workflow.WithActivityOptions(ctx, sweepOptions)
 
 	var result SweepResult
-	if err := workflow.ExecuteActivity(ctx, a.CheckDueWebWatchesActivity).Get(ctx, &result); err != nil {
+	if err := workflow.ExecuteActivity(ctx, a.CheckDueWebWatchesActivity).
+		Get(ctx, &result); err != nil {
 		return nil, err
 	}
 

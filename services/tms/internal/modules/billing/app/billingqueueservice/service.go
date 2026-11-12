@@ -476,7 +476,13 @@ func (s *Service) TransferToBillingItems(
 	}
 	auditActor := actor.AuditActor()
 	for _, item := range created {
-		s.autoAssignDefaultBiller(ctx, item, req.Payers[item.BillToCustomerID], req.TenantInfo, actor)
+		s.autoAssignDefaultBiller(
+			ctx,
+			item,
+			req.Payers[item.BillToCustomerID],
+			req.TenantInfo,
+			actor,
+		)
 
 		if s.shouldAutoApprove(req, item.BillToCustomerID) {
 			item = s.autoApprove(ctx, item, req.TenantInfo, actor)

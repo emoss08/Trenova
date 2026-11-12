@@ -69,35 +69,39 @@ func (r *webWatchRepository) ClaimDueChecks(
 	req *agentextensionports.ClaimWebWatchChecksRequest,
 ) ([]agentextensionports.WebWatchRef, error) {
 	ctx = dbscope.WithSystem(ctx, claimWebWatchChecksReason)
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]agentextensionports.WebWatchRef, error) {
-		w := extensionwebwatchdb.WebWatches
-		due := w.Pick(w.ID).
-			Where(w.NextCheckAt.Lte(req.Now)).
-			Order(w.NextCheckAt.Asc(), w.ID.Asc()).
-			Limit(req.Limit).
-			AllTenants()
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]agentextensionports.WebWatchRef, error) {
+			w := extensionwebwatchdb.WebWatches
+			due := w.Pick(w.ID).
+				Where(w.NextCheckAt.Lte(req.Now)).
+				Order(w.NextCheckAt.Asc(), w.ID.Asc()).
+				Limit(req.Limit).
+				AllTenants()
 
-		rows, err := w.Pick(w.ID, w.OrganizationID, w.BusinessUnitID).
-			Where(w.ID.InQuery(due), w.NextCheckAt.Lte(req.Now)).
-			AllTenants().
-			UpdateReturning(
-				ctx,
-				r.db.Keel(ctx),
-				w.NextCheckAt.To(req.Next),
-				w.Version.ToExpr(w.Version),
-				w.UpdatedAt.ToExpr(w.UpdatedAt),
-			)
-		if err != nil {
-			return nil, err
-		}
+			rows, err := w.Pick(w.ID, w.OrganizationID, w.BusinessUnitID).
+				Where(w.ID.InQuery(due), w.NextCheckAt.Lte(req.Now)).
+				AllTenants().
+				UpdateReturning(
+					ctx,
+					r.db.Keel(ctx),
+					w.NextCheckAt.To(req.Next),
+					w.Version.ToExpr(w.Version),
+					w.UpdatedAt.ToExpr(w.UpdatedAt),
+				)
+			if err != nil {
+				return nil, err
+			}
 
-		refs := make([]agentextensionports.WebWatchRef, 0, len(rows))
-		for _, row := range rows {
-			refs = append(refs, refOf(row))
-		}
+			refs := make([]agentextensionports.WebWatchRef, 0, len(rows))
+			for _, row := range rows {
+				refs = append(refs, refOf(row))
+			}
 
-		return refs, nil
-	})
+			return refs, nil
+		},
+	)
 }
 
 func refOf(watch *extensionwebwatch.WebWatch) agentextensionports.WebWatchRef {

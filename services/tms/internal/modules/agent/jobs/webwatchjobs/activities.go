@@ -118,8 +118,11 @@ func (a *Activities) checkOne(ctx context.Context, ref agentextensionports.WebWa
 		return outcomeFailed
 	case done:
 		if cErr := a.watches.ClearCheck(ctx, ref.Tenant, ref.ID); cErr != nil {
-			a.l.Warn("could not take an ended web watch off the sweep; its next check ends it again",
-				zap.String("watchId", ref.ID.String()), zap.Error(cErr))
+			a.l.Warn(
+				"could not take an ended web watch off the sweep; its next check ends it again",
+				zap.String("watchId", ref.ID.String()),
+				zap.Error(cErr),
+			)
 		}
 
 		return outcomeEnded

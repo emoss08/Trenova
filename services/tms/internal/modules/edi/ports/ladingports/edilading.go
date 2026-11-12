@@ -196,7 +196,10 @@ type FlowRepository interface {
 		ctx context.Context,
 		req GetFlowSendMessageRequest,
 	) (*edimessage.EDIMessage, error)
-	ListDueInstances(ctx context.Context, req *ListDueFlowInstancesRequest) ([]DueFlowInstance, error)
+	ListDueInstances(
+		ctx context.Context,
+		req *ListDueFlowInstancesRequest,
+	) ([]DueFlowInstance, error)
 }
 
 type GetLadingReplayRequest struct {

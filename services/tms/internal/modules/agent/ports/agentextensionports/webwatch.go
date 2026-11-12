@@ -43,7 +43,12 @@ type WebWatchRepository interface {
 	CountActive(ctx context.Context, tenantInfo pagination.TenantInfo) (int, error)
 	// ScheduleCheck makes the watch due for a check by at, never later than
 	// it already was.
-	ScheduleCheck(ctx context.Context, tenantInfo pagination.TenantInfo, id pulid.ID, at int64) error
+	ScheduleCheck(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		id pulid.ID,
+		at int64,
+	) error
 	// ClearCheck takes a watch a check found ended off the sweep.
 	ClearCheck(ctx context.Context, tenantInfo pagination.TenantInfo, id pulid.ID) error
 	// ClaimDueChecks takes the watches whose check is due, across tenants,

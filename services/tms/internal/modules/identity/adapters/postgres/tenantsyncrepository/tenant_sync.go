@@ -102,7 +102,10 @@ func (r *repository) ListTenantsPage(
 
 		tenants := make([]pagination.TenantInfo, 0, len(orgs))
 		for _, org := range orgs {
-			tenants = append(tenants, pagination.TenantInfo{OrgID: org.ID, BuID: org.BusinessUnitID})
+			tenants = append(
+				tenants,
+				pagination.TenantInfo{OrgID: org.ID, BuID: org.BusinessUnitID},
+			)
 		}
 
 		return tenants, nil
