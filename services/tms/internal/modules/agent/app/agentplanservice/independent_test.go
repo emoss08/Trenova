@@ -36,7 +36,7 @@ func TestDecide_IndependentStepsAllRunAndEachOutcomeIsReported(t *testing.T) {
 	assert.Contains(t, plan.FailureError, "1 of 5 steps did not run")
 	assert.Contains(t, plan.FailureError, "step 2")
 	assert.Contains(t, plan.FailureError, "changed since")
-	assert.Equal(t, 1, h.decider.signals, "the run hears once about what did run")
+	assert.Equal(t, 1, h.decider.settles, "the run is settled once about what did run")
 }
 
 func TestDecide_IndependentStepsThatAllRunCompleteThePlan(t *testing.T) {

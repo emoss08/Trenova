@@ -54,7 +54,7 @@ func TestDecide_RefusesAnOverlongNoteBeforeClaimingThePlan(t *testing.T) {
 	require.Error(t, err)
 	var validation *errortypes.Error
 	require.ErrorAs(t, err, &validation)
-	assert.Equal(t, "note", validation.Field)
+	assert.Equal(t, "note", validation.Field())
 	assert.Empty(t, h.plans.statuses, "the plan is not claimed")
 	assert.Empty(t, h.decider.decided, "no step is decided")
 }

@@ -58,7 +58,7 @@ func TestPacketRotationsRefuseWhatIsNotAQuarterTurnOfARealPage(t *testing.T) {
 
 			var invalid *errortypes.Error
 			require.True(t, errors.As(err, &invalid), "got %v", err)
-			assert.Equal(t, "packetPageRotations", invalid.Field)
+			assert.Equal(t, "packetPageRotations", invalid.Field())
 		})
 	}
 }

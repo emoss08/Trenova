@@ -39,7 +39,7 @@ func TestADocumentTheShipmentDoesNotHoldCannotBeAddedToThePacket(t *testing.T) {
 
 	var invalid *errortypes.Error
 	require.True(t, errors.As(err, &invalid), "got %v", err)
-	assert.Equal(t, "packetDocumentIds", invalid.Field)
+	assert.Equal(t, "packetDocumentIds", invalid.Field())
 }
 
 func TestARejectedOrSupersededDocumentIsNotCurrent(t *testing.T) {

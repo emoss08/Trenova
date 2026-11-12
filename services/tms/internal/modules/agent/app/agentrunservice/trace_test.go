@@ -29,7 +29,7 @@ func TestStartForDefinition_StartsTheWorkflowUnderTheRunsAnchor(t *testing.T) {
 		budgets:     &agenttest.StubMoneyBudgets{},
 		activity:    agenttest.QuietActivity{},
 		l:           zap.NewNop(),
-		validator:   NewValidator(ValidatorParams{}),
+		validator:   NewValidator(),
 		definitions: definitionRepoFor(def),
 		repo: &fakeAgentRunRepo{
 			create: func(_ context.Context, entity *agent.AgentRun) (*agent.AgentRun, error) {
@@ -77,7 +77,7 @@ func TestStartInline_RecordsTheTraceItRanIn(t *testing.T) {
 		budgets:   &agenttest.StubMoneyBudgets{},
 		activity:  agenttest.QuietActivity{},
 		l:         zap.NewNop(),
-		validator: NewValidator(ValidatorParams{}),
+		validator: NewValidator(),
 		repo: &fakeAgentRunRepo{
 			create: func(_ context.Context, entity *agent.AgentRun) (*agent.AgentRun, error) {
 				created = entity

@@ -613,7 +613,7 @@ func TestUpdateCharges_RefusesAnEditThatLeavesAnAmountSplitStale(t *testing.T) {
 	var multiErr *errortypes.MultiError
 	require.True(t, errors.As(err, &multiErr), "got %v", err)
 	require.Len(t, multiErr.Errors, 1)
-	assert.Equal(t, convertAmountSplitsField, multiErr.Errors[0].Field)
+	assert.Equal(t, convertAmountSplitsField, multiErr.Errors[0].Field())
 	assert.Contains(t, multiErr.Error(), "Detention Fee split no longer adds up")
 	assert.Contains(t, multiErr.Error(), "total 1154.38 but the charge is now 1200.00")
 }
@@ -676,8 +676,10 @@ func TestUpdateCharges_ConvertsAStaleAmountSplitWhenAsked(t *testing.T) {
 	)
 	require.NoError(t, err)
 	refused := staleAmountSplitError(rebalance.Stale, accessorialNames(stale.AdditionalCharges))
-	require.Len(t, refused.Errors, 1)
-	assert.Equal(t, convertAmountSplitsField, refused.Errors[0].Field)
+	var multiErr *errortypes.MultiError
+	require.ErrorAs(t, refused, &multiErr)
+	require.Len(t, multiErr.Errors, 1)
+	assert.Equal(t, convertAmountSplitsField, multiErr.Errors[0].Field())
 	assert.Contains(t, refused.Error(), "total 2850.00 but the charge is now 3000.00")
 
 	assert.Equal(t, 1, rebalance.ConvertToPercent())

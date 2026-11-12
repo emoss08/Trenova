@@ -96,7 +96,7 @@ func TestDecide_AStalePlanIsRefusedAsApprovedAndNothingRuns(t *testing.T) {
 	assert.Equal(t, agentplan.PlanStatusApproved, h.plans.statuses[0].Status)
 	assert.Equal(t, agentplan.PlanStatusPending, h.plans.statuses[0].FromStatus,
 		"the claim is conditional, so a second decision cannot refuse it again")
-	assert.Equal(t, 1, h.decider.signals, "the run hears the plan is no longer waiting")
+	assert.Equal(t, 1, h.decider.settles, "the run is settled now the plan no longer waits")
 	require.Len(t, followUps.requests, 1, "the conversation is told why nothing ran")
 	assert.Equal(t, plan.ID, followUps.requests[0].PlanID)
 }

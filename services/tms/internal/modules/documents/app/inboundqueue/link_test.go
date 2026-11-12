@@ -109,7 +109,7 @@ func TestLink_RefusesARecordTheTenantDoesNotHave(t *testing.T) {
 
 			var multiErr *errortypes.MultiError
 			require.ErrorAs(t, err, &multiErr)
-			assert.Equal(t, tc.field, multiErr.Errors[0].Field)
+			assert.Equal(t, tc.field, multiErr.Errors[0].Field())
 			assert.Nil(t, repo.updated, "nothing may be written for a record that is not there")
 		})
 	}

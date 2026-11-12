@@ -111,5 +111,5 @@ func TestInspectInboundFile_RefusesAFileWhoseRawContentWasPurged(t *testing.T) {
 	require.Nil(t, result)
 	var validation *errortypes.Error
 	require.ErrorAs(t, err, &validation)
-	assert.Equal(t, "rawContent", validation.Field)
+	assert.Equal(t, "rawContent", validation.Field())
 }

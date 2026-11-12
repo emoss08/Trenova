@@ -202,7 +202,7 @@ func TestCheckStatusFields_NamesWhatEachStatusRequires(t *testing.T) {
 
 			fields := make([]string, 0, len(multiErr.Errors))
 			for _, entry := range multiErr.Errors {
-				fields = append(fields, entry.Field)
+				fields = append(fields, entry.Field())
 			}
 			assert.ElementsMatch(t, tc.fields, fields)
 		})

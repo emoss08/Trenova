@@ -6,6 +6,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingvocab"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -13,24 +15,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// reviewItem picks one of the tenant's items under review with no due marker.
+// reviewItem creates an item under review with no due marker.
 func reviewItem(t *testing.T, f *syncFixture) pulid.ID {
 	t.Helper()
 
-	var id pulid.ID
-	require.NoError(t, keel.Pool(f.db).QueryRow(f.ctx,
-		`UPDATE billing_queue_items SET recheck_due_at = NULL
-		WHERE id = (
-			SELECT id FROM billing_queue_items
-			WHERE organization_id = $1 AND business_unit_id = $2
-				AND status IN ('ReadyForReview', 'InReview')
-			ORDER BY id LIMIT 1
-		)
-		RETURNING id`,
-		f.tenant.OrgID, f.tenant.BuID,
-	).Scan(&id), "the seed has an item under review")
-
-	return id
+	return f.createItem(t, "BQ-RECHECK-0001", billingqueue.StatusInReview, billingvocab.BillTypeInvoice).ID
 }
 
 func dueAt(t *testing.T, f *syncFixture, id pulid.ID) *int64 {
@@ -120,19 +109,15 @@ func TestMarkStaleRecheckDueMarksOnlyItemsUnderReview(t *testing.T) {
 	t.Parallel()
 
 	f := setupSyncFixture(t)
-	var postedID pulid.ID
-	require.NoError(t, keel.Pool(f.db).QueryRow(f.ctx,
-		`UPDATE billing_queue_items SET lane = 'Checking', checked_at = NULL, recheck_due_at = NULL
-		WHERE id = (
-			SELECT id FROM billing_queue_items
-			WHERE organization_id = $1 AND business_unit_id = $2 AND status = 'Posted'
-			ORDER BY id LIMIT 1
-		)
-		RETURNING id`,
-		f.tenant.OrgID, f.tenant.BuID,
-	).Scan(&postedID), "the seed has a posted item to drift")
-	reviewID := reviewItem(t, f)
+	postedID := f.createItem(
+		t, "BQ-RECHECK-0002", billingqueue.StatusPosted, billingvocab.BillTypeInvoice,
+	).ID
 	_, err := keel.Pool(f.db).Exec(f.ctx,
+		`UPDATE billing_queue_items SET lane = 'Checking', checked_at = NULL, recheck_due_at = NULL
+		WHERE id = $1`, postedID)
+	require.NoError(t, err)
+	reviewID := reviewItem(t, f)
+	_, err = keel.Pool(f.db).Exec(f.ctx,
 		`UPDATE billing_queue_items SET checked_at = NULL WHERE id = $1`, reviewID)
 	require.NoError(t, err)
 

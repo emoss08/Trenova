@@ -29,6 +29,13 @@ type fakeAgentRunRepo struct {
 	update func(ctx context.Context, entity *agent.AgentRun) (*agent.AgentRun, error)
 }
 
+func (f *fakeAgentRunRepo) CountOpen(
+	context.Context,
+	*agentruntimeports.CountOpenAgentRunsRequest,
+) (int, error) {
+	return 0, nil
+}
+
 func (f *fakeAgentRunRepo) Create(
 	ctx context.Context,
 	entity *agent.AgentRun,
@@ -208,7 +215,7 @@ func TestStartForDefinitionLaunchesWorkflow(t *testing.T) {
 		l:           zap.NewNop(),
 		budgets:     &agenttest.StubMoneyBudgets{},
 		activity:    agenttest.QuietActivity{},
-		validator:   NewValidator(ValidatorParams{}),
+		validator:   NewValidator(),
 		definitions: definitionRepoFor(def),
 		repo: &fakeAgentRunRepo{
 			create: func(_ context.Context, entity *agent.AgentRun) (*agent.AgentRun, error) {
@@ -315,7 +322,7 @@ func TestStartForDefinitionUsesSlotWorkflowID(t *testing.T) {
 		l:           zap.NewNop(),
 		budgets:     &agenttest.StubMoneyBudgets{},
 		activity:    agenttest.QuietActivity{},
-		validator:   NewValidator(ValidatorParams{}),
+		validator:   NewValidator(),
 		definitions: definitionRepoFor(def),
 		repo: &fakeAgentRunRepo{
 			create: func(_ context.Context, entity *agent.AgentRun) (*agent.AgentRun, error) {
@@ -379,7 +386,7 @@ func TestStartForDefinitionRecordsNothingWhenWorkflowStartFails(t *testing.T) {
 		l:           zap.NewNop(),
 		budgets:     &agenttest.StubMoneyBudgets{},
 		activity:    agenttest.QuietActivity{},
-		validator:   NewValidator(ValidatorParams{}),
+		validator:   NewValidator(),
 		definitions: definitionRepoFor(def),
 		repo: &fakeAgentRunRepo{
 			create: func(_ context.Context, entity *agent.AgentRun) (*agent.AgentRun, error) {
@@ -421,7 +428,7 @@ func TestStartForDefinitionRefusesASecondRunForAnOpenSubject(t *testing.T) {
 		l:           zap.NewNop(),
 		budgets:     &agenttest.StubMoneyBudgets{},
 		activity:    agenttest.QuietActivity{},
-		validator:   NewValidator(ValidatorParams{}),
+		validator:   NewValidator(),
 		definitions: definitionRepoFor(def),
 		repo: &fakeAgentRunRepo{
 			create: func(_ context.Context, entity *agent.AgentRun) (*agent.AgentRun, error) {
