@@ -91,6 +91,7 @@ func (r *repository) Update(
 			c.SubjectType,
 			c.SubjectID,
 			c.HeldTools,
+			c.ReachedTools,
 			c.ToolFixtures,
 			c.Expected,
 			c.Rubric,
@@ -461,6 +462,7 @@ func (r *repository) AdoptCandidates(
 						c.Status.Eq(agentquality.CaseStatusCandidate),
 						c.Source.Eq(agentquality.CaseSourceDecidedProposal),
 						c.CreatedByUserID.IsNull(),
+						c.ReachedTools.Len().Eq(0),
 						c.CreatedAt.Gte(req.CreatedAfter),
 						keel.NotExists(control.AllTenants().Where(
 							control.OrganizationID.EqCol(c.OrganizationID),

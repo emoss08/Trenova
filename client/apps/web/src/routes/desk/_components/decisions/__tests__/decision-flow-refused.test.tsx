@@ -92,7 +92,7 @@ function renderFlow() {
   render(
     <QueryClientProvider client={client}>
       <MemoryRouter>
-        <DecisionFlow head={() => null} />
+        <DecisionFlow onFilter={vi.fn()} since={0} />
       </MemoryRouter>
     </QueryClientProvider>,
   );

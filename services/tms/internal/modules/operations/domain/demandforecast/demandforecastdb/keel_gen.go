@@ -1587,6 +1587,11 @@ var qualitiesTable = schema.Table{
 		{Name: "mae", Quoted: `"mae"`, Field: "MAE", Kind: schema.KindFloat64, Flags: 0, Label: `MAE`, JSON: `mae`},
 		{Name: "naive_mae", Quoted: `"naive_mae"`, Field: "NaiveMAE", Kind: schema.KindFloat64, Flags: 0, Label: `Naive MAE`, JSON: `naiveMae`},
 		{Name: "skill", Quoted: `"skill"`, Field: "Skill", Kind: schema.KindFloat64, Flags: 0, Label: `Skill`, JSON: `skill`},
+		{Name: "dispersion", Quoted: `"dispersion"`, Field: "Dispersion", Kind: schema.KindFloat64, Flags: 0, Label: `Dispersion`, JSON: `dispersion`},
+		{Name: "level", Quoted: `"level"`, Field: "Level", Kind: schema.KindFloat64, Flags: 0, Label: `Level`, JSON: `level`},
+		{Name: "holiday_factor", Quoted: `"holiday_factor"`, Field: "HolidayFactor", Kind: schema.KindFloat64, Flags: 0, Label: `Holiday Factor`, JSON: `holidayFactor`},
+		{Name: "holidays", Quoted: `"holidays"`, Field: "Holidays", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Holidays`, JSON: `holidays`},
+		{Name: "timezone", Quoted: `"timezone"`, Field: "Timezone", Kind: schema.KindString, Flags: 0, Label: `Timezone`, JSON: `timezone`},
 		{Name: "fitted_at", Quoted: `"fitted_at"`, Field: "FittedAt", Kind: schema.KindInt64, Flags: 0, Label: `Fitted At`, JSON: `fittedAt`},
 		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, JSON: `version`},
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
@@ -1594,14 +1599,14 @@ var qualitiesTable = schema.Table{
 	},
 	PK:         []int32{0, 1},
 	Tenant:     []int32{0, 1},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14},
-	Update:     []int32{2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 14},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19},
+	Update:     []int32{2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 19},
 	Returning:  nil,
-	Version:    12,
+	Version:    17,
 	AutoID:     -1,
-	AutoCreate: 13,
-	AutoUpdate: 14,
+	AutoCreate: 18,
+	AutoUpdate: 19,
 	IDPrefix:   "",
 	New:        newQuality,
 	NewN:       newNQuality,
@@ -1626,6 +1631,11 @@ type QualitiesTable struct {
 	MAE              keel.Float64Col
 	NaiveMAE         keel.Float64Col
 	Skill            keel.Float64Col
+	Dispersion       keel.Float64Col
+	Level            keel.Float64Col
+	HolidayFactor    keel.Float64Col
+	Holidays         keel.JSONBCol
+	Timezone         keel.StringCol
 	FittedAt         keel.Int64Col
 	Version          keel.Int64Col
 	CreatedAt        keel.Int64Col
@@ -1646,10 +1656,15 @@ var Qualities = &QualitiesTable{
 	MAE:              keel.Float64Col{Col: keel.Col{Ref: &qualitiesRef, Index: 8}},
 	NaiveMAE:         keel.Float64Col{Col: keel.Col{Ref: &qualitiesRef, Index: 9}},
 	Skill:            keel.Float64Col{Col: keel.Col{Ref: &qualitiesRef, Index: 10}},
-	FittedAt:         keel.Int64Col{Col: keel.Col{Ref: &qualitiesRef, Index: 11}},
-	Version:          keel.Int64Col{Col: keel.Col{Ref: &qualitiesRef, Index: 12}},
-	CreatedAt:        keel.Int64Col{Col: keel.Col{Ref: &qualitiesRef, Index: 13}},
-	UpdatedAt:        keel.Int64Col{Col: keel.Col{Ref: &qualitiesRef, Index: 14}},
+	Dispersion:       keel.Float64Col{Col: keel.Col{Ref: &qualitiesRef, Index: 11}},
+	Level:            keel.Float64Col{Col: keel.Col{Ref: &qualitiesRef, Index: 12}},
+	HolidayFactor:    keel.Float64Col{Col: keel.Col{Ref: &qualitiesRef, Index: 13}},
+	Holidays:         keel.JSONBCol{Col: keel.Col{Ref: &qualitiesRef, Index: 14}},
+	Timezone:         keel.StringCol{Col: keel.Col{Ref: &qualitiesRef, Index: 15}},
+	FittedAt:         keel.Int64Col{Col: keel.Col{Ref: &qualitiesRef, Index: 16}},
+	Version:          keel.Int64Col{Col: keel.Col{Ref: &qualitiesRef, Index: 17}},
+	CreatedAt:        keel.Int64Col{Col: keel.Col{Ref: &qualitiesRef, Index: 18}},
+	UpdatedAt:        keel.Int64Col{Col: keel.Col{Ref: &qualitiesRef, Index: 19}},
 }
 
 // BuildQualities builds the table of demand_forecast_quality for ref. Generated relation and alias methods call it.
@@ -1667,10 +1682,15 @@ func BuildQualities(r *keel.Ref) *QualitiesTable {
 		MAE:              keel.Float64Col{Col: keel.Col{Ref: r, Index: 8}},
 		NaiveMAE:         keel.Float64Col{Col: keel.Col{Ref: r, Index: 9}},
 		Skill:            keel.Float64Col{Col: keel.Col{Ref: r, Index: 10}},
-		FittedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
-		Version:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
-		CreatedAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
-		UpdatedAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
+		Dispersion:       keel.Float64Col{Col: keel.Col{Ref: r, Index: 11}},
+		Level:            keel.Float64Col{Col: keel.Col{Ref: r, Index: 12}},
+		HolidayFactor:    keel.Float64Col{Col: keel.Col{Ref: r, Index: 13}},
+		Holidays:         keel.JSONBCol{Col: keel.Col{Ref: r, Index: 14}},
+		Timezone:         keel.StringCol{Col: keel.Col{Ref: r, Index: 15}},
+		FittedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
+		Version:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
+		CreatedAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
+		UpdatedAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 19}},
 	}
 }
 
@@ -2079,12 +2099,22 @@ func ptrQuality(p unsafe.Pointer, c int32) any {
 	case 10:
 		return &r.Skill
 	case 11:
-		return &r.FittedAt
+		return &r.Dispersion
 	case 12:
-		return &r.Version
+		return &r.Level
 	case 13:
-		return &r.CreatedAt
+		return &r.HolidayFactor
 	case 14:
+		return &r.Holidays
+	case 15:
+		return &r.Timezone
+	case 16:
+		return &r.FittedAt
+	case 17:
+		return &r.Version
+	case 18:
+		return &r.CreatedAt
+	case 19:
 		return &r.UpdatedAt
 	}
 	return nil
@@ -2116,12 +2146,25 @@ func valueQuality(p unsafe.Pointer, c int32) any {
 	case 10:
 		return r.Skill
 	case 11:
-		return r.FittedAt
+		return r.Dispersion
 	case 12:
-		return r.Version
+		return r.Level
 	case 13:
-		return r.CreatedAt
+		return r.HolidayFactor
 	case 14:
+		if r.Holidays == nil {
+			return keel.EmptyJSONArray
+		}
+		return r.Holidays
+	case 15:
+		return r.Timezone
+	case 16:
+		return r.FittedAt
+	case 17:
+		return r.Version
+	case 18:
+		return r.CreatedAt
+	case 19:
 		return r.UpdatedAt
 	}
 	return nil

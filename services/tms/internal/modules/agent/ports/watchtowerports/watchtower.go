@@ -63,6 +63,19 @@ type ListWatchtowerItemsQuery struct {
 	// AgentWorking keeps only the items an agent's run is working on now: a
 	// run that finished, failed or waits on a person is not working.
 	AgentWorking bool
+	// Search keeps only the items whose title, summary or record label holds
+	// it, whatever its case. Empty keeps every item.
+	Search string
+	// Unseen keeps only the items its reader has not been shown. Nil keeps
+	// every item.
+	Unseen *UnseenBy
+}
+
+// UnseenBy names a reader and where their cursor sits: an item is unseen by
+// them when it occurred after the cursor and they have not opened it.
+type UnseenBy struct {
+	ReaderID pulid.ID
+	SeenAt   int64
 }
 
 // CountWatchtowerItemsRequest asks how much is open, and how much of it is

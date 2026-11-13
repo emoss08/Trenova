@@ -3,6 +3,7 @@ package dispatchmarket_test
 import (
 	"math"
 	"testing"
+	"time"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchmarket"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -58,7 +59,12 @@ func TestCellOf_GroupsNearbyPointsAndRefusesUnknownOnes(t *testing.T) {
 }
 
 func sample(cents float64, drivers int32, observedAt int64) *dispatchmarket.Sample {
-	return &dispatchmarket.Sample{SumCents: cents, Drivers: drivers, ObservedAt: observedAt}
+	return &dispatchmarket.Sample{
+		SumCents:   cents,
+		Drivers:    drivers,
+		ObservedAt: observedAt,
+		Week:       dispatchmarket.WeekOf(observedAt),
+	}
 }
 
 func TestFold_AveragesAWeekThenFoldsWeeksAsAMovingAverage(t *testing.T) {
@@ -112,16 +118,20 @@ func TestEstimate_SettlesOnAFloorWeight(t *testing.T) {
 func TestAggregate_SumsDriversByCellAndSlot(t *testing.T) {
 	t.Parallel()
 
-	samples := dispatchmarket.Aggregate(mondayMidnight, []dispatchmarket.DriverValue{
-		{Start: chicago, AvailableAt: mondayMidnight, ValueCents: 12_000},
-		{Start: joliet, AvailableAt: mondayMidnight + hour, ValueCents: 0},
-		{Start: dallas, AvailableAt: mondayMidnight, ValueCents: 5_000},
-		{Start: chicago, AvailableAt: mondayMidnight + 5*hour, ValueCents: 7_000},
-		{Start: dispatchmarket.Point{}, AvailableAt: mondayMidnight, ValueCents: 9_000},
-	})
+	samples := dispatchmarket.Aggregate(
+		dispatchmarket.Grid{},
+		mondayMidnight,
+		[]dispatchmarket.DriverValue{
+			{Start: chicago, AvailableAt: mondayMidnight, ValueCents: 12_000},
+			{Start: joliet, AvailableAt: mondayMidnight + hour, ValueCents: 0},
+			{Start: dallas, AvailableAt: mondayMidnight, ValueCents: 5_000},
+			{Start: chicago, AvailableAt: mondayMidnight + 5*hour, ValueCents: 7_000},
+			{Start: dispatchmarket.Point{}, AvailableAt: mondayMidnight, ValueCents: 9_000},
+		},
+	)
 
 	require.Len(t, samples, 3)
-	chicagoKey, _ := dispatchmarket.KeyOf(chicago, mondayMidnight)
+	chicagoKey, _ := dispatchmarket.Grid{}.Key(chicago, mondayMidnight)
 	var found bool
 	for _, s := range samples {
 		assert.Equal(t, mondayMidnight, s.ObservedAt)
@@ -141,8 +151,8 @@ func TestAggregate_SumsDriversByCellAndSlot(t *testing.T) {
 func TestFoldAll_CreatesNewCellsForTheTenantAndFoldsExistingOnes(t *testing.T) {
 	t.Parallel()
 
-	chicagoKey, _ := dispatchmarket.KeyOf(chicago, mondayMidnight)
-	dallasKey, _ := dispatchmarket.KeyOf(dallas, mondayMidnight)
+	chicagoKey, _ := dispatchmarket.Grid{}.Key(chicago, mondayMidnight)
+	dallasKey, _ := dispatchmarket.Grid{}.Key(dallas, mondayMidnight)
 	existing := &dispatchmarket.MarketValue{
 		ID:           pulid.ID("dmv_1"),
 		Cell:         chicagoKey.Cell,
@@ -159,8 +169,14 @@ func TestFoldAll_CreatesNewCellsForTheTenantAndFoldsExistingOnes(t *testing.T) {
 		BusinessUnitID: pulid.ID("bu_1"),
 		Existing:       []*dispatchmarket.MarketValue{existing},
 		Samples: []*dispatchmarket.Sample{
-			{Key: chicagoKey, SumCents: 6_000, Drivers: 1, ObservedAt: mondayMidnight},
-			{Key: dallasKey, SumCents: 3_000, Drivers: 1, ObservedAt: mondayMidnight},
+			{
+				Key: chicagoKey, SumCents: 6_000, Drivers: 1, ObservedAt: mondayMidnight,
+				Week: dispatchmarket.WeekOf(mondayMidnight),
+			},
+			{
+				Key: dallasKey, SumCents: 3_000, Drivers: 1, ObservedAt: mondayMidnight,
+				Week: dispatchmarket.WeekOf(mondayMidnight),
+			},
 		},
 	})
 
@@ -176,8 +192,8 @@ func TestFoldAll_CreatesNewCellsForTheTenantAndFoldsExistingOnes(t *testing.T) {
 func TestValuer_DiscountsAndShrinksWhatItHasSeenLittleOf(t *testing.T) {
 	t.Parallel()
 
-	chicagoKey, _ := dispatchmarket.KeyOf(chicago, mondayMidnight)
-	valuer := dispatchmarket.NewValuer([]*dispatchmarket.MarketValue{{
+	chicagoKey, _ := dispatchmarket.Grid{}.Key(chicago, mondayMidnight)
+	valuer := dispatchmarket.NewValuer(dispatchmarket.Grid{}, []*dispatchmarket.MarketValue{{
 		Cell:         chicagoKey.Cell,
 		Slot:         chicagoKey.Slot,
 		WeekSumCents: 10_000,
@@ -223,4 +239,33 @@ func TestBoundsOf_HoldsTheCellsCenterAndCoversItsCorners(t *testing.T) {
 	assert.Greater(t, dispatchmarket.CoverMeters(cell), 50_000.0,
 		"the circle reaches the corners of a tile over a degree wide")
 	assert.Less(t, dispatchmarket.CoverMeters(cell), 150_000.0)
+}
+
+func TestValuer_FindsAnEveningsValueOnTheOrganizationsClockAllYear(t *testing.T) {
+	t.Parallel()
+
+	chicagoZone, err := time.LoadLocation("America/Chicago")
+	require.NoError(t, err)
+	grid := dispatchmarket.GridIn(chicagoZone)
+	summer := time.Date(2026, time.July, 14, 18, 0, 0, 0, chicagoZone).Unix()
+	winter := time.Date(2026, time.December, 15, 18, 0, 0, 0, chicagoZone).Unix()
+
+	samples := dispatchmarket.Aggregate(grid, summer, []dispatchmarket.DriverValue{
+		{Start: chicago, AvailableAt: summer, ValueCents: 20_000},
+	})
+	require.Len(t, samples, 1)
+	assert.Equal(t, grid.Slot(summer), samples[0].Key.Slot)
+	assert.Equal(t, grid.Week(summer), samples[0].Week,
+		"a week turns over at the organization's Monday, not UTC's")
+
+	learned := dispatchmarket.FoldAll(&dispatchmarket.FoldParams{Samples: samples})
+	require.Len(t, learned, 1)
+	local := dispatchmarket.NewValuer(grid, learned)
+	utc := dispatchmarket.NewValuer(dispatchmarket.Grid{}, learned)
+
+	evening := local.EndMarketCents(chicago.Latitude, chicago.Longitude, winter)
+	assert.Positive(t, evening, "six in the evening is the same slot after the clocks change")
+	assert.Equal(t, local.EndMarketCents(chicago.Latitude, chicago.Longitude, summer), evening)
+	assert.Less(t, utc.EndMarketCents(chicago.Latitude, chicago.Longitude, winter), evening,
+		"read on UTC blocks the winter evening falls in another slot and gets the area's fallback")
 }

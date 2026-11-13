@@ -28,3 +28,15 @@ func TestWithChannel_KeepsTheRunItWasGiven(t *testing.T) {
 	ctx := WithChannel(WithAIRun(t.Context(), "arun_1", false), ChannelSCIM)
 	assert.Equal(t, Source{Channel: ChannelSCIM, AIRunID: "arun_1"}, From(ctx))
 }
+
+func TestWithAgent_NamesTheAgentBesideTheRunAndLeavesTheRestAlone(t *testing.T) {
+	ctx := WithAgent(WithAIRun(t.Context(), "ar_1", false), "agdef_1")
+
+	source := From(ctx)
+	if source.AgentID != "agdef_1" || source.AIRunID != "ar_1" || source.Channel != ChannelAgentRun {
+		t.Fatalf("source = %+v", source)
+	}
+	if got := From(WithAgent(t.Context(), "")); got != (Source{}) {
+		t.Fatalf("an empty agent changed the source: %+v", got)
+	}
+}

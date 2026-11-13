@@ -28,6 +28,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
+	"github.com/emoss08/trenova/pkg/auditctx"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolcoerce"
@@ -491,8 +492,25 @@ type approvedRun struct {
 	params   *agenttoolports.ToolExecuteParams
 }
 
+// approvedAuditSource marks what an approved proposal writes as the agent's
+// work, as a call the agent ran itself is marked. Without it the audit entry
+// read as the approver's own edit, and nothing could tell a person later
+// changing what an agent wrote from a person changing their own work.
+func approvedAuditSource(ctx context.Context, r *approvedRun) context.Context {
+	if r.proposal.RunID.IsNil() {
+		return ctx
+	}
+	ctx = auditctx.WithAIRun(ctx, r.proposal.RunID.String(), r.params.ThreadID.IsNotNil())
+	if r.params.DefinitionID.IsNotNil() {
+		ctx = auditctx.WithAgent(ctx, r.params.DefinitionID.String())
+	}
+
+	return ctx
+}
+
 func (s *Service) run(ctx context.Context, r *approvedRun) (*int64, error) {
 	proposal := r.proposal
+	ctx = approvedAuditSource(ctx, r)
 	toolCtx, toolSpan := startTool(ctx, proposal, r.policy)
 	defer toolSpan.End()
 	writeCtx, write := startWrite(toolCtx, proposal, false)

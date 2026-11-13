@@ -2348,6 +2348,12 @@ models:
   AgentMemoryUsage:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports.AgentMemoryUsage
+  AgentLearningStats:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agentreflectionports.LearningStats
+  AgentLearningRow:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/ports/agentreflectionports.LearningRow
   AgentMemoryUpkeep:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/ports/agentmemoryports.MemoryUpkeep
@@ -3262,6 +3268,9 @@ models:
   DeskLensCounts:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/ports/deskattentionports.LensCounts
+  DeskAttentionKind:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/ports/deskattentionports.KindCount
   DeskAttention:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/ports/deskattentionports.Attention

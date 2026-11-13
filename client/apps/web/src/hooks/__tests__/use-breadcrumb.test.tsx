@@ -14,7 +14,7 @@ function Trail() {
   return (
     <ol data-testid="trail">
       {crumbs.map((crumb) => (
-        <li key={crumb.id}>{crumb.crumb}</li>
+        <li key={crumb.path}>{crumb.label}</li>
       ))}
     </ol>
   );

@@ -65,6 +65,7 @@ type AreaDetail struct {
 	Area                *Area
 	Bounds              dispatchmarket.Bounds
 	SlotStart           int64
+	SlotEnd             int64
 	Reach               []freightmove.ReachRow
 	Steps               []freightmove.Step
 	Pace                []freightmove.Pace

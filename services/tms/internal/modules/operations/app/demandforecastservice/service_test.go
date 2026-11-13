@@ -6,13 +6,18 @@ import (
 	"errors"
 	"slices"
 	"testing"
+	"time"
 	_ "time/tzdata"
 
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/demandfit"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/demandforecast"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchmarket"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/demandforecastports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/orgholidayports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -49,6 +54,7 @@ type fakeRepository struct {
 
 	quality    *demandforecast.Quality
 	qualityErr error
+	modelReads int
 
 	histories []*demandforecastports.HistoryRequest
 	replaced  []*demandforecastports.ReplaceRequest
@@ -95,18 +101,27 @@ func (f *fakeFits) StartFitting(_ context.Context, tenantInfo pagination.TenantI
 	return f.err
 }
 
-func (f *fakeRepository) ModelForCells(
-	context.Context,
-	*demandforecastports.CellsRequest,
-) (*demandforecastports.Model, error) {
-	return nil, errUnexpected
-}
-
 func (f *fakeRepository) Model(
 	context.Context,
 	pagination.TenantInfo,
 ) (*demandforecastports.Model, error) {
+	f.modelReads++
+
 	return f.model, nil
+}
+
+type fakeHolidays struct {
+	orgholidayports.OrgHolidayRepository
+
+	rows []*pto.OrgHoliday
+	err  error
+}
+
+func (f *fakeHolidays) List(
+	context.Context,
+	*orgholidayports.ListOrgHolidaysRequest,
+) ([]*pto.OrgHoliday, error) {
+	return f.rows, f.err
 }
 
 func (f *fakeRepository) ListBooked(
@@ -167,6 +182,19 @@ func (f *fakeRepository) ListTenants(
 	return nil, errUnexpected
 }
 
+type fakeOrganizations struct {
+	tenantports.OrganizationRepository
+
+	timezone string
+}
+
+func (f fakeOrganizations) GetByID(
+	context.Context,
+	tenantports.GetOrganizationByIDRequest,
+) (*tenant.Organization, error) {
+	return &tenant.Organization{Timezone: f.timezone}, nil
+}
+
 func newService(
 	repo demandforecastports.Repository,
 	controls dispatchcontrolports.DispatchControlRepository,
@@ -185,6 +213,7 @@ func newServiceWithFits(
 		Logger:        zap.NewNop(),
 		Repo:          repo,
 		Fits:          fits,
+		Holidays:      &fakeHolidays{},
 		Controls:      controls,
 		Organizations: organizations,
 	})
@@ -240,21 +269,21 @@ func TestHistoryOf_GroupsLocationsIntoAreasNamedForTheirBusiestPlace(t *testing.
 			{CustomerID: acme, LocationID: "loc_houston", Week: week, Slot: 9, Loads: 1},
 			{CustomerID: acme, LocationID: "loc_nowhere", Week: week, Slot: 7, Loads: 4},
 		},
-		Leads: []demandforecast.LeadCount{{CustomerID: acme, Bucket: 5, Loads: 6}},
+		Leads: []demandfit.LeadCount{{CustomerID: acme, Bucket: 5, Loads: 6}},
 	}
 
 	history := HistoryOf(testNow, rows)
 
-	areas := []demandforecast.AreaSummary{
+	areas := []demandfit.AreaSummary{
 		{Cell: dallas, Label: "Dallas, TX", MedianRevenueCents: 35_000, Loads: 60},
 		{Cell: houston, Label: "Houston, TX", MedianRevenueCents: 0, Loads: 5},
 	}
-	slices.SortFunc(areas, func(a, b demandforecast.AreaSummary) int {
+	slices.SortFunc(areas, func(a, b demandfit.AreaSummary) int {
 		return cmp.Compare(a.Cell, b.Cell)
 	})
-	assert.Equal(t, &demandforecast.History{
+	assert.Equal(t, &demandfit.History{
 		Now: testNow,
-		Counts: []demandforecast.LoadCount{
+		Counts: []demandfit.LoadCount{
 			{CustomerID: acme, Cell: dallas, Week: week, Slot: 7, Loads: 3},
 			{CustomerID: globex, Cell: dallas, Week: week, Slot: 7, Loads: 2},
 			{CustomerID: acme, Cell: houston, Week: week, Slot: 9, Loads: 1},
@@ -269,7 +298,7 @@ func fitRows(currentWeek int64) *demandforecastports.HistoryRows {
 		Locations: []demandforecastports.LocationSummary{
 			location("loc_dallas", dallasPoint, "Dallas", 240, 40_000),
 		},
-		Leads: []demandforecast.LeadCount{{CustomerID: acme, Bucket: 5, Loads: 200}},
+		Leads: []demandfit.LeadCount{{CustomerID: acme, Bucket: 5, Loads: 200}},
 	}
 	for back := int64(1); back <= 12; back++ {
 		loads := int32(18)
@@ -293,17 +322,37 @@ func TestFit_ReadsTheBacktestSpanAndSavesTheModelForTheTenant(t *testing.T) {
 
 	rows := fitRows(dispatchmarket.WeekOf(testNow))
 	repo := &fakeRepository{rows: rows}
-	svc := newService(repo, nil, nil)
+	svc := newService(repo, nil, fakeOrganizations{timezone: "America/Chicago"})
+	closed := time.Date(2026, time.October, 28, 0, 0, 0, 0, time.UTC).Unix()
+	ahead := time.Date(2026, time.November, 3, 0, 0, 0, 0, time.UTC).Unix()
+	svc.holidays = &fakeHolidays{rows: []*pto.OrgHoliday{
+		{Name: "Founders day", HolidayDate: closed, Kind: pto.HolidayKindHoliday},
+		{Name: "Election day", HolidayDate: ahead, Kind: pto.HolidayKindHoliday},
+		{Name: "Peak freeze", HolidayDate: ahead + 86_400, Kind: pto.HolidayKindBlackout},
+	}}
 
 	quality, err := svc.Fit(t.Context(), tenantInfo)
 	require.NoError(t, err)
+
+	chicago, err := time.LoadLocation("America/Chicago")
+	require.NoError(t, err)
+	history := HistoryOf(testNow, rows)
+	history.Grid = dispatchmarket.GridIn(chicago)
+	history.Holidays = demandforecast.Holidays{closed / 86_400: {}, ahead / 86_400: {}}
+	want := demandfit.Train(history)
+	wantQuality, wantDays := want.Quality, want.Days
 
 	assert.Equal(t, []*demandforecastports.HistoryRequest{{
 		TenantInfo: tenantInfo,
 		Since:      testNow - (26+8+1)*dispatchmarket.WeekSeconds,
 		Until:      testNow,
+		Timezone:   "America/Chicago",
 	}}, repo.histories)
-	assert.Equal(t, demandforecast.Backtest(HistoryOf(testNow, rows)), quality)
+	assert.Equal(t, wantQuality, quality)
+	assert.Equal(t, "America/Chicago", quality.Timezone,
+		"the fit records the clock its slots were counted on")
+	assert.Equal(t, []int64{ahead / 86_400}, quality.Holidays,
+		"a holiday in the days ahead is kept for the forecast; a blackout is not one")
 
 	require.Len(t, repo.replaced, 1)
 	replaced := repo.replaced[0]
@@ -312,8 +361,9 @@ func TestFit_ReadsTheBacktestSpanAndSavesTheModelForTheTenant(t *testing.T) {
 	require.NotEmpty(t, replaced.Fitted.Rates)
 	require.NotEmpty(t, replaced.Fitted.Areas)
 	require.Len(t, replaced.Fitted.Curves, 2)
-	assert.Equal(t, demandforecast.TrackRecord(HistoryOf(testNow, rows)), replaced.Days,
-		"every fit stores the out-of-sample track record beside the model")
+	require.NotEmpty(t, wantDays)
+	assert.Equal(t, wantDays, replaced.Days,
+		"every fit stores the out-of-sample track record, in the organization's own days")
 	for _, rate := range replaced.Fitted.Rates {
 		assert.True(t, rate.OrganizationID.IsNil(), "keel fills tenant columns on insert")
 	}
@@ -349,7 +399,10 @@ func TestFit_ReturnsTheRepositoryError(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			quality, err := newService(tt.repo, nil, nil).Fit(t.Context(), tenantInfo)
+			quality, err := newService(tt.repo, nil, fakeOrganizations{}).Fit(
+				t.Context(),
+				tenantInfo,
+			)
 
 			require.ErrorIs(t, err, tt.want)
 			assert.Nil(t, quality)
@@ -446,4 +499,67 @@ func TestStanding_ReturnsTheRepositoryErrorWithoutRefitting(t *testing.T) {
 	require.ErrorIs(t, err, down)
 	assert.Nil(t, standing)
 	assert.Empty(t, fits.started)
+}
+
+func TestFit_FailsWhenTheHolidayCalendarCannotBeRead(t *testing.T) {
+	t.Parallel()
+
+	down := errors.New("holidays down")
+	repo := &fakeRepository{rows: fitRows(dispatchmarket.WeekOf(testNow))}
+	svc := newService(repo, nil, fakeOrganizations{})
+	svc.holidays = &fakeHolidays{err: down}
+
+	quality, err := svc.Fit(t.Context(), tenantInfo)
+
+	require.ErrorIs(t, err, down)
+	assert.Nil(t, quality)
+	assert.Empty(
+		t,
+		repo.replaced,
+		"a fit that cannot tell holidays from working days saves nothing",
+	)
+}
+
+func TestForecaster_ReadsTheModelOncePerFit(t *testing.T) {
+	t.Parallel()
+
+	cell := cellOf(t, dallasPoint)
+	fitted := func(at int64) *demandforecast.Quality {
+		return &demandforecast.Quality{Status: demandforecast.StatusReady, FittedAt: at}
+	}
+	repo := &fakeRepository{quality: fitted(100)}
+	repo.model = &demandforecastports.Model{
+		Quality: repo.quality,
+		Rates:   []*demandforecast.Rate{{Cell: cell, Slot: 3, Alpha: 4, Beta: 2}},
+		Areas: []*demandforecast.Area{
+			{Cell: cell, Label: "Dallas, TX", MedianRevenueCents: 45_000},
+		},
+	}
+	svc := newService(repo, nil, nil)
+	req := &demandforecastports.ForecasterRequest{TenantInfo: tenantInfo, Now: testNow}
+
+	first, err := svc.Forecaster(t.Context(), req)
+	require.NoError(t, err)
+	second, err := svc.Forecaster(t.Context(), req)
+	require.NoError(t, err)
+
+	assert.True(t, first.Ready())
+	assert.Equal(t, 1, repo.modelReads, "the second read reuses the fitted model")
+	assert.Same(t, first.Index, second.Index)
+
+	repo.quality = fitted(200)
+	repo.model.Quality = repo.quality
+	third, err := svc.Forecaster(t.Context(), req)
+	require.NoError(t, err)
+
+	assert.Equal(t, 2, repo.modelReads, "a new fit is read once")
+	assert.NotSame(t, first.Index, third.Index)
+
+	other, err := svc.Forecaster(t.Context(), &demandforecastports.ForecasterRequest{
+		TenantInfo: pagination.TenantInfo{OrgID: "org_b", BuID: bu},
+		Now:        testNow,
+	})
+	require.NoError(t, err)
+	assert.Equal(t, 3, repo.modelReads, "another organization never shares a model")
+	assert.NotSame(t, third.Index, other.Index)
 }

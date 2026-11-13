@@ -5,6 +5,7 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentmemorydesk"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentmemoryrank"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentmemorysubjects"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -194,6 +195,7 @@ func wired(svc *Service) *Service {
 	if svc.permissions == nil {
 		svc.permissions = &fakePermissions{}
 	}
+	svc.Desk = agentmemorydesk.New(svc, svc.repo, svc.l)
 
 	return svc
 }

@@ -103,7 +103,7 @@ func TestCheckModifications_RefusesWideningARecordSubset(t *testing.T) {
 	var multiErr *errortypes.MultiError
 	require.ErrorAs(t, err, &multiErr)
 	require.Len(t, multiErr.Errors, 1)
-	assert.Equal(t, "shipmentIds", multiErr.Errors[0].Field)
+	assert.Equal(t, "shipmentIds", multiErr.Errors[0].Field())
 	assert.Equal(t, errortypes.ErrForbidden, multiErr.Errors[0].Code)
 }
 
@@ -121,7 +121,7 @@ func TestCheckModifications_RefusesEmptyingARecordSubset(t *testing.T) {
 
 	var multiErr *errortypes.MultiError
 	require.ErrorAs(t, err, &multiErr)
-	assert.Equal(t, "shipmentIds", multiErr.Errors[0].Field)
+	assert.Equal(t, "shipmentIds", multiErr.Errors[0].Field())
 }
 
 // The rule holds where the write runs too, whatever the decision carried.

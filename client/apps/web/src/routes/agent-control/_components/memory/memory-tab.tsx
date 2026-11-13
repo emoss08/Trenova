@@ -38,6 +38,7 @@ import { AgentReflections } from "./agent-reflections";
 import { getMemoryColumns } from "./memory-columns";
 import type { MemoryFormValues } from "./memory-form-schema";
 import { MemoryKindMark } from "./memory-kind";
+import { MemoryLearning } from "./memory-learning";
 import { MemoryPanel } from "./memory-panel";
 import { MemorySuggestions } from "./memory-suggestions";
 import { MemoryTaintNotice } from "./memory-taint-notice";
@@ -160,6 +161,7 @@ export default function MemoryTab() {
       <MemoryTaintNotice canDecide={canManage} />
       <MemorySuggestions canDecide={canManage} />
       <MemoryUpkeepNotice canDecide={canManage} />
+      <MemoryLearning />
       <AgentReflections />
       <section className="sec">
         {empty ? (

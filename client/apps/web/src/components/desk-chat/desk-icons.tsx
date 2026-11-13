@@ -61,6 +61,7 @@ const PATHS = {
     </>
   ),
   check: <path d="M5 12.5l4.5 4.5L19 7" />,
+  filter: <path d="M4 7h16M7 12h10M10 17h4" />,
   up: <path d="M12 19V5M6 11l6-6 6 6" />,
   down: <path d="M12 5v14M6 13l6 6 6-6" />,
   stop: <rect x="7" y="7" width="10" height="10" rx="2" />,

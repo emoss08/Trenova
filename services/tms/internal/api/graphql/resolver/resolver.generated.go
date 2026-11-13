@@ -97,6 +97,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/orgholidayexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/orgstructureexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/pageaccessexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/pagetourexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/performancereviewexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/ptopolicyexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/rateexec"
@@ -235,6 +236,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/orgholidayresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/orgstructureresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/pageaccessresolver"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/pagetourresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/performancereviewresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/ptopolicyresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/rateresolver"
@@ -805,6 +807,10 @@ func FromServices(s *Services) *Resolver {
 		Core:              s.Core,
 		PageAccessService: s.PageAccessService,
 	}
+	pagetourDeps := &pagetourresolver.Deps{
+		Core:            s.Core,
+		PageTourService: s.PageTourService,
+	}
 	performancereviewDeps := &performancereviewresolver.Deps{
 		Core:                       s.Core,
 		PerformanceReviewService:   s.PerformanceReviewService,
@@ -1370,6 +1376,7 @@ func FromServices(s *Services) *Resolver {
 	orderMutation := &orderresolver.MutationResolver{Deps: orderDeps}
 	orgholidayMutation := &orgholidayresolver.MutationResolver{Deps: orgholidayDeps}
 	orgstructureMutation := &orgstructureresolver.MutationResolver{Deps: orgstructureDeps}
+	pagetourMutation := &pagetourresolver.MutationResolver{Deps: pagetourDeps}
 	performancereviewMutation := &performancereviewresolver.MutationResolver{Deps: performancereviewDeps}
 	ptopolicyMutation := &ptopolicyresolver.MutationResolver{Deps: ptopolicyDeps}
 	recordshareMutation := &recordshareresolver.MutationResolver{Deps: recordshareDeps}
@@ -1514,6 +1521,7 @@ func FromServices(s *Services) *Resolver {
 	orgholidayQuery := &orgholidayresolver.QueryResolver{Deps: orgholidayDeps}
 	orgstructureQuery := &orgstructureresolver.QueryResolver{Deps: orgstructureDeps}
 	pageaccessQuery := &pageaccessresolver.QueryResolver{Deps: pageaccessDeps}
+	pagetourQuery := &pagetourresolver.QueryResolver{Deps: pagetourDeps}
 	performancereviewQuery := &performancereviewresolver.QueryResolver{Deps: performancereviewDeps}
 	ptopolicyQuery := &ptopolicyresolver.QueryResolver{Deps: ptopolicyDeps}
 	rateQuery := &rateresolver.QueryResolver{Deps: rateDeps}
@@ -1927,6 +1935,7 @@ func FromServices(s *Services) *Resolver {
 			"Mutation@order":                                       orderMutation,
 			"Mutation@orgholiday":                                  orgholidayMutation,
 			"Mutation@orgstructure":                                orgstructureMutation,
+			"Mutation@pagetour":                                    pagetourMutation,
 			"Mutation@performancereview":                           performancereviewMutation,
 			"Mutation@ptopolicy":                                   ptopolicyMutation,
 			"Mutation@recordshare":                                 recordshareMutation,
@@ -2071,6 +2080,7 @@ func FromServices(s *Services) *Resolver {
 			"Query@orgholiday":                                     orgholidayQuery,
 			"Query@orgstructure":                                   orgstructureQuery,
 			"Query@pageaccess":                                     pageaccessQuery,
+			"Query@pagetour":                                       pagetourQuery,
 			"Query@performancereview":                              performancereviewQuery,
 			"Query@ptopolicy":                                      ptopolicyQuery,
 			"Query@rate":                                           rateQuery,
@@ -2489,6 +2499,7 @@ var (
 	_ orderexec.MutationResolver                                       = (*orderresolver.MutationResolver)(nil)
 	_ orgholidayexec.MutationResolver                                  = (*orgholidayresolver.MutationResolver)(nil)
 	_ orgstructureexec.MutationResolver                                = (*orgstructureresolver.MutationResolver)(nil)
+	_ pagetourexec.MutationResolver                                    = (*pagetourresolver.MutationResolver)(nil)
 	_ performancereviewexec.MutationResolver                           = (*performancereviewresolver.MutationResolver)(nil)
 	_ ptopolicyexec.MutationResolver                                   = (*ptopolicyresolver.MutationResolver)(nil)
 	_ recordshareexec.MutationResolver                                 = (*recordshareresolver.MutationResolver)(nil)
@@ -2633,6 +2644,7 @@ var (
 	_ orgholidayexec.QueryResolver                                     = (*orgholidayresolver.QueryResolver)(nil)
 	_ orgstructureexec.QueryResolver                                   = (*orgstructureresolver.QueryResolver)(nil)
 	_ pageaccessexec.QueryResolver                                     = (*pageaccessresolver.QueryResolver)(nil)
+	_ pagetourexec.QueryResolver                                       = (*pagetourresolver.QueryResolver)(nil)
 	_ performancereviewexec.QueryResolver                              = (*performancereviewresolver.QueryResolver)(nil)
 	_ ptopolicyexec.QueryResolver                                      = (*ptopolicyresolver.QueryResolver)(nil)
 	_ rateexec.QueryResolver                                           = (*rateresolver.QueryResolver)(nil)

@@ -1,6 +1,6 @@
 ---
 path: /admin/audit-logs
-aliases: [audit entries, audit log, audit trail, activity log, change history, who changed what, change log, legal hold, audit export, security alerts, alert review, needs a review]
+aliases: [audit entries, audit log, audit trail, activity log, change history, who changed what, change log, legal hold, audit export, security alerts, alert review, needs a review, who changed a record, who edited a customer, who changed a setting, field change history]
 related:
   - /admin/users
   - /admin/roles
@@ -28,7 +28,7 @@ read-only apart from marking reviews.
 ## Tasks
 
 ### Find who changed a record
-Keywords: record history, who edited, trace change, investigate change
+Keywords: record history, who edited, trace change, investigate change, who changed a customer, who changed a credit limit, who changed a rate
 1. Open [Audit log](/admin/audit-logs).
 2. Select **Filter** and filter **Record** with the record's number or name, **Record ID** with
    its ID, or **Kind of record** to the kind of record.

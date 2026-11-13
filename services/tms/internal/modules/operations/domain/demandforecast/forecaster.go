@@ -33,14 +33,10 @@ type Driver struct {
 
 type ForecasterParams struct {
 	Now           int64
-	Quality       *Quality
-	Rates         []*Rate
-	Areas         []*Area
-	Curves        []*BookingCurve
+	Index         *Index
 	Booked        []Booked
 	Solving       []Booked
 	Supply        []Driver
-	CustomerNames map[pulid.ID]string
 	MarginPercent int64
 	CapCents      int64
 }
@@ -61,60 +57,36 @@ type customerKey struct {
 }
 
 type Forecaster struct {
-	now       int64
-	ready     bool
-	areas     map[int64]*Area
-	rates     map[rateKey]*Rate
-	customers map[rateKey][]*Rate
-	curves    map[pulid.ID][]float64
-	tenant    []float64
-	booked    map[absoluteKey]Booked
-	tendered  map[customerKey]int
-	solving   map[absoluteKey]int
-	supply    map[int64][]Driver
-	names     map[pulid.ID]string
-	margin    int64
-	cap       int64
+	*Index
+
+	now      int64
+	booked   map[absoluteKey]Booked
+	tendered map[customerKey]int
+	solving  map[absoluteKey]int
+	supply   map[int64][]Driver
+	margin   int64
+	cap      int64
 }
 
 func NewForecaster(p *ForecasterParams) *Forecaster {
-	f := &Forecaster{
-		now:       p.Now,
-		ready:     p.Quality.Ready(),
-		areas:     make(map[int64]*Area, len(p.Areas)),
-		rates:     make(map[rateKey]*Rate, len(p.Rates)),
-		customers: map[rateKey][]*Rate{},
-		curves:    make(map[pulid.ID][]float64, len(p.Curves)),
-		booked:    make(map[absoluteKey]Booked, len(p.Booked)),
-		tendered:  map[customerKey]int{},
-		solving:   make(map[absoluteKey]int, len(p.Solving)),
-		names:     p.CustomerNames,
-		margin:    p.MarginPercent,
-		cap:       p.CapCents,
+	index := p.Index
+	if index == nil {
+		index = NewIndex(&IndexParams{})
 	}
-	for _, area := range p.Areas {
-		f.areas[area.Cell] = area
+	f := &Forecaster{
+		Index:    index,
+		now:      p.Now,
+		booked:   make(map[absoluteKey]Booked, len(p.Booked)),
+		tendered: map[customerKey]int{},
+		solving:  make(map[absoluteKey]int, len(p.Solving)),
+		margin:   p.MarginPercent,
+		cap:      p.CapCents,
 	}
 	if f.cap <= 0 {
-		f.cap = AutomaticCapCents(p.Areas, p.MarginPercent)
-	}
-	for _, rate := range p.Rates {
-		key := rateKey{cell: rate.Cell, slot: rate.Slot}
-		if rate.CustomerID.IsNil() {
-			f.rates[key] = rate
-			continue
-		}
-		f.customers[key] = append(f.customers[key], rate)
-	}
-	for _, curve := range p.Curves {
-		if curve.CustomerID.IsNil() {
-			f.tenant = curve.Shares
-			continue
-		}
-		f.curves[curve.CustomerID] = curve.Shares
+		f.cap = index.automaticCap(p.MarginPercent)
 	}
 	for _, booked := range p.Booked {
-		key := absoluteKey{cell: booked.Cell, start: dispatchmarket.SlotStart(booked.SlotStart)}
+		key := absoluteKey{cell: booked.Cell, start: f.grid.SlotStart(booked.SlotStart)}
 		current := f.booked[key]
 		current.Total += booked.Total
 		current.Open += booked.Open
@@ -124,7 +96,8 @@ func NewForecaster(p *ForecasterParams) *Forecaster {
 		}
 	}
 	for _, solving := range p.Solving {
-		f.solving[absoluteKey{cell: solving.Cell, start: dispatchmarket.SlotStart(solving.SlotStart)}] += solving.Open
+		key := absoluteKey{cell: solving.Cell, start: f.grid.SlotStart(solving.SlotStart)}
+		f.solving[key] += solving.Open
 	}
 	f.supply = supplyByCell(p.Supply)
 
@@ -132,7 +105,11 @@ func NewForecaster(p *ForecasterParams) *Forecaster {
 }
 
 func (f *Forecaster) Ready() bool {
-	return f != nil && f.ready
+	return f != nil && f.Index.Ready()
+}
+
+func (f *Forecaster) OutlookStarts() []int64 {
+	return OutlookStarts(f.grid, f.now)
 }
 
 func (f *Forecaster) Covers(cell int64) bool {
@@ -185,6 +162,7 @@ type Valuation struct {
 
 type windowForecast struct {
 	key      WindowKey
+	end      int64
 	typical  Count
 	unbooked Count
 	booked   int
@@ -197,7 +175,7 @@ func (f *Forecaster) Window(cell, freeAt int64) (WindowKey, bool) {
 		return WindowKey{}, false
 	}
 
-	return WindowKey{Cell: cell, Start: dispatchmarket.SlotStart(max(freeAt, f.now))}, true
+	return WindowKey{Cell: cell, Start: f.grid.SlotStart(max(freeAt, f.now))}, true
 }
 
 func (f *Forecaster) Value(q Query) (Valuation, bool) {
@@ -231,7 +209,7 @@ func supplyByCell(supply []Driver) map[int64][]Driver {
 
 func (f *Forecaster) ValueAt(key WindowKey, workerID pulid.ID) Valuation {
 	forecast := f.forecast(key)
-	drivers := f.driversIn(key, workerID)
+	drivers := f.driversIn(key.Cell, forecast.end, workerID)
 	demand := forecast.unbooked.Shift(max(forecast.open, 0))
 	probability := demand.Exceeds(drivers)
 	area := f.areas[key.Cell]
@@ -244,7 +222,7 @@ func (f *Forecaster) ValueAt(key WindowKey, workerID pulid.ID) Valuation {
 		Reason: &Reason{
 			AreaLabel:        area.Label,
 			WindowStart:      key.Start,
-			WindowEnd:        key.Start + WindowSlots*dispatchmarket.SlotSeconds,
+			WindowEnd:        forecast.end,
 			TypicalLow:       forecast.typical.Quantile(IntervalLow),
 			TypicalHigh:      forecast.typical.Quantile(IntervalHigh),
 			LikelyLow:        forecast.unbooked.Shift(forecast.booked).Quantile(IntervalLow),
@@ -260,10 +238,11 @@ func (f *Forecaster) ValueAt(key WindowKey, workerID pulid.ID) Valuation {
 }
 
 func (f *Forecaster) forecast(key WindowKey) windowForecast {
-	out := windowForecast{key: key, shares: map[pulid.ID]float64{}}
-	for i := range int64(WindowSlots) {
-		start := key.Start + i*dispatchmarket.SlotSeconds
-		slot := dispatchmarket.SlotOf(start)
+	starts := f.grid.Starts(key.Start, WindowSlots+1)
+	out := windowForecast{key: key, end: starts[WindowSlots], shares: map[pulid.ID]float64{}}
+	for _, start := range starts[:WindowSlots] {
+		slot := f.grid.Slot(start)
+		scale := f.scale(start)
 		booked := f.booked[absoluteKey{cell: key.Cell, start: start}]
 		out.booked += booked.Total
 		out.open += booked.Open - f.solving[absoluteKey{cell: key.Cell, start: start}]
@@ -275,10 +254,11 @@ func (f *Forecaster) forecast(key WindowKey) windowForecast {
 		lead := float64(start+slotMidSeconds-f.now) / 3600
 		unbooked := 1 - f.bookedShare(customers, lead)
 
-		out.typical = out.typical.Plus(GammaPoisson(rate.Alpha, rate.Beta))
-		out.unbooked = out.unbooked.Plus(Nowcast(rate.Alpha, rate.Beta, booked.Total, unbooked))
+		beta := rate.Beta / scale
+		out.typical = out.typical.Plus(GammaPoisson(rate.Alpha, beta))
+		out.unbooked = out.unbooked.Plus(Nowcast(rate.Alpha, beta, booked.Total, unbooked))
 		for _, customer := range customers {
-			out.shares[customer.CustomerID] += customer.Alpha / customer.Beta
+			out.shares[customer.CustomerID] += scale * customer.Alpha / customer.Beta
 		}
 	}
 
@@ -306,10 +286,9 @@ func (f *Forecaster) bookedShare(customers []*Rate, leadHours float64) float64 {
 	return weighted / weight
 }
 
-func (f *Forecaster) driversIn(key WindowKey, except pulid.ID) int {
-	end := key.Start + WindowSlots*dispatchmarket.SlotSeconds
+func (f *Forecaster) driversIn(cell, end int64, except pulid.ID) int {
 	count := 0
-	for _, driver := range f.supply[key.Cell] {
+	for _, driver := range f.supply[cell] {
 		if driver.WorkerID == except {
 			continue
 		}
@@ -351,14 +330,13 @@ func (r *Reason) Shortfall() float64 {
 	return math.Max(0, float64(r.OpenBooked)+r.ExpectedUnbooked-float64(r.DriversExpected))
 }
 
-func (f *Forecaster) Cells() []int64 {
-	cells := make([]int64, 0, len(f.areas))
-	for cell := range f.areas {
-		cells = append(cells, cell)
+func (i *Index) automaticCap(marginPercent int64) int64 {
+	areas := make([]*Area, 0, len(i.areas))
+	for _, cell := range i.cells {
+		areas = append(areas, i.areas[cell])
 	}
-	slices.Sort(cells)
 
-	return cells
+	return AutomaticCapCents(areas, marginPercent)
 }
 
 func AutomaticCapCents(areas []*Area, marginPercent int64) int64 {

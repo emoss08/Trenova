@@ -65,9 +65,17 @@ func TestApplyUpsertReopensWithACleanSlateAndKeepsAnEscalatedSeverity(t *testing
 	t.Parallel()
 
 	asked := resolvedItem()
-	asked.LastRequest = &watchtower.Request{At: 50, ByName: "Dana Reyes", Summary: "Asked for the POD"}
+	asked.LastRequest = &watchtower.Request{
+		At:      50,
+		ByName:  "Dana Reyes",
+		Summary: "Asked for the POD",
+	}
 	reopened := applyUpsert(asked, &watchtower.Item{}, upsertPlan{reopen: true})
-	assert.Nil(t, reopened.LastRequest, "the question asked about the last occurrence is not out about this one")
+	assert.Nil(
+		t,
+		reopened.LastRequest,
+		"the question asked about the last occurrence is not out about this one",
+	)
 	assert.Nil(t, reopened.ResolvedAt)
 	assert.Equal(t, watchtower.StatusOpen, reopened.Status)
 	assert.Empty(t, reopened.ResolutionCode)
@@ -95,9 +103,13 @@ func TestApplyUpsertKeepsTheRequestThroughARefresh(t *testing.T) {
 	t.Parallel()
 
 	existing := &watchtower.Item{
-		Status:      watchtower.StatusInProgress,
-		Title:       "POD missing",
-		LastRequest: &watchtower.Request{At: 50, ByName: "Dana Reyes", Summary: "Asked for the POD"},
+		Status: watchtower.StatusInProgress,
+		Title:  "POD missing",
+		LastRequest: &watchtower.Request{
+			At:      50,
+			ByName:  "Dana Reyes",
+			Summary: "Asked for the POD",
+		},
 	}
 	merged := applyUpsert(existing, &watchtower.Item{Title: "POD missing for 3 days"}, upsertPlan{})
 
@@ -167,6 +179,40 @@ func TestListNewestFirstContinuesBeforeTheCursor(t *testing.T) {
 	assert.Contains(t, sql, `ORDER BY wi."occurred_at" DESC, wi."id" DESC LIMIT 50`, sql)
 }
 
+func TestListSearchesWhatAnItemSaysAndTheRecordItNames(t *testing.T) {
+	t.Parallel()
+
+	sql, args := keeltest.Render(t, listQuery(&watchtowerports.ListWatchtowerItemsQuery{
+		Search: `50%_off`,
+	}))
+
+	assert.Contains(t, sql, `(wi."title" ILIKE $`, sql)
+	assert.Contains(t, sql, ` OR wi."summary" ILIKE $`, sql)
+	assert.Contains(t, sql, ` OR wi."record_label" ILIKE $`, sql)
+	assert.Contains(t, args, `%50\%\_off%`, "a wildcard a person types matches itself")
+}
+
+func TestListWithoutASearchOrAReaderFiltersOnNeither(t *testing.T) {
+	t.Parallel()
+
+	sql, _ := keeltest.Render(t, listQuery(&watchtowerports.ListWatchtowerItemsQuery{}))
+
+	assert.NotContains(t, sql, "ILIKE", sql)
+	assert.NotContains(t, sql, `wi."occurred_at" > $`, sql)
+}
+
+func TestListKeepsOnlyWhatItsReaderHasNotSeen(t *testing.T) {
+	t.Parallel()
+
+	sql, args := keeltest.Render(t, listQuery(&watchtowerports.ListWatchtowerItemsQuery{
+		Unseen: &watchtowerports.UnseenBy{ReaderID: pulid.ID("usr_1"), SeenAt: 10},
+	}))
+
+	assert.Contains(t, sql, `wi."occurred_at" > $`, sql)
+	assert.Contains(t, sql, `NOT EXISTS (SELECT`, sql)
+	assert.Contains(t, args, int64(10))
+}
+
 func TestOverdueSkipsItemsEscalatedTooRecently(t *testing.T) {
 	t.Parallel()
 
@@ -223,7 +269,12 @@ func TestRetentionDeletesOnlyItemsTheSourceIsDoneWith(t *testing.T) {
 	)
 
 	assert.Contains(t, sql, `."id" IN (SELECT stale."id" FROM "watchtower_items" stale`, sql)
-	assert.Contains(t, sql, `(stale."resolved_by_id" IS NULL OR stale."source_cleared_at" IS NOT NULL)`, sql)
+	assert.Contains(
+		t,
+		sql,
+		`(stale."resolved_by_id" IS NULL OR stale."source_cleared_at" IS NOT NULL)`,
+		sql,
+	)
 	assert.Contains(t, sql, "LIMIT 500)", sql)
 	assert.Equal(t, []any{int64(1_000)}, args)
 }

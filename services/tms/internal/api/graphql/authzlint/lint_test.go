@@ -34,6 +34,8 @@ var authOnlyAllowlist = map[string]string{
 	"QueryResolver.MyTableLayout":               "returns only the calling user's own table layout",
 	"MutationResolver.SaveMyTableLayout":        "saves only the calling user's own table layout",
 	"MutationResolver.ResetMyTableLayout":       "removes only the calling user's own table layout",
+	"QueryResolver.MyPageTourViews":             "returns only the page tours the calling user was shown",
+	"MutationResolver.RecordMyPageTour":         "records only the calling user's own view of a page tour",
 	"QueryResolver.MyBulkEdit":                  "returns only a bulk edit the calling user started",
 	"QueryResolver.MyBulkEdits":                 "returns only bulk edits the calling user started",
 

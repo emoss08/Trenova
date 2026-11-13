@@ -152,3 +152,35 @@ func (s *Service) TeamRole(
 		name, strings.Join(names, ", "),
 	)
 }
+
+func (s *Service) Outcomes(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	since int64,
+) ([]agentmemoryports.MemoryOutcome, error) {
+	return s.repo.ListOutcomes(ctx, &agentmemoryports.ListAgentMemoryOutcomesRequest{
+		TenantInfo: tenant,
+		Since:      since,
+	})
+}
+
+func (s *Service) LapseOffers(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	now int64,
+) (int64, error) {
+	return s.repo.LapseOffers(ctx, &agentmemoryports.LapseAgentMemoryOffersRequest{
+		TenantInfo: tenant,
+		Before:     agentmemory.OffersLapseBefore(now),
+		At:         now,
+	})
+}
+
+func (s *Service) ResolveSubject(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	subjectType agentmemory.MemorySubjectType,
+	name string,
+) (pulid.ID, error) {
+	return s.subjectNames.Resolve(ctx, tenant, subjectType, name)
+}

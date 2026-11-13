@@ -191,6 +191,14 @@ func enrichFromContext(ctx context.Context, entry *audit.Entry) {
 	if entry.AIRunID == "" && source.AIRunID != "" {
 		entry.AIRunID = source.AIRunID
 	}
+	if source.AgentID != "" {
+		if entry.Metadata == nil {
+			entry.Metadata = make(map[string]any, 1)
+		}
+		if _, set := entry.Metadata[audit.MetadataAgentID]; !set {
+			entry.Metadata[audit.MetadataAgentID] = source.AgentID
+		}
+	}
 	if entry.Channel == "" {
 		entry.Channel = channelOf(ctx, entry, source)
 	}

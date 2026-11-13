@@ -11,6 +11,9 @@ export const DESK_LENSES: readonly DeskLens[] = ["Everything", "Watchtower", "Tr
  */
 export type NeedsLens = Exclude<DeskLens, "Triage">;
 
+/** A lens that lists by record: Everything and Watchtower. Decisions lists by kind of change. */
+export type RecordLens = Exclude<NeedsLens, "Decisions">;
+
 /** The lenses in the order the page shows them; the keys 1–3 pick them in this order. */
 export const NEEDS_LENSES: readonly NeedsLens[] = ["Everything", "Watchtower", "Decisions"];
 

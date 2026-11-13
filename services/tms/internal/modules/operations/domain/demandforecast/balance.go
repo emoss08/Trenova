@@ -3,7 +3,6 @@ package demandforecast
 import (
 	"math"
 
-	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchmarket"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -19,6 +18,7 @@ type CustomerSlot struct {
 
 type SlotForecast struct {
 	Start     int64
+	End       int64
 	Demand    Count
 	Open      Count
 	Booked    int
@@ -28,6 +28,7 @@ type SlotForecast struct {
 
 type SlotBalance struct {
 	Start     int64
+	End       int64
 	Demand    Count
 	Open      Count
 	Low       int
@@ -49,6 +50,7 @@ type AreaBalance struct {
 
 type NetworkSlot struct {
 	Start     int64
+	End       int64
 	Low       int
 	High      int
 	NeedLow   int
@@ -60,32 +62,29 @@ type NetworkSlot struct {
 	Idle      float64
 }
 
-func OutlookStarts(now int64) []int64 {
-	first := dispatchmarket.SlotStart(now)
-	starts := make([]int64, OutlookSlots)
-	for i := range starts {
-		starts[i] = first + int64(i)*dispatchmarket.SlotSeconds
-	}
-
-	return starts
-}
-
 func (f *Forecaster) Slot(cell, start int64) SlotForecast {
 	key := absoluteKey{cell: cell, start: start}
-	slot := dispatchmarket.SlotOf(start)
+	slot := f.grid.Slot(start)
+	scale := f.scale(start)
 	booked := f.booked[key]
 	open := float64(max(booked.Open-f.solving[key], 0))
 	customers := f.customers[rateKey{cell: cell, slot: slot}]
 	lead := float64(start+slotMidSeconds-f.now) / 3600
 	out := SlotForecast{
 		Start:  start,
+		End:    f.grid.SlotEnd(start),
 		Demand: Count{}.Shift(booked.Total),
 		Open:   Count{}.Shift(int(open)),
 		Booked: booked.Total,
 		Need:   open,
 	}
 	if rate := f.rates[rateKey{cell: cell, slot: slot}]; rate != nil {
-		unbooked := Nowcast(rate.Alpha, rate.Beta, booked.Total, 1-f.bookedShare(customers, lead))
+		unbooked := Nowcast(
+			rate.Alpha,
+			rate.Beta/scale,
+			booked.Total,
+			1-f.bookedShare(customers, lead),
+		)
 		out.Demand = unbooked.Shift(booked.Total)
 		out.Open = unbooked.Shift(int(open))
 		out.Need += unbooked.Mean
@@ -93,7 +92,7 @@ func (f *Forecaster) Slot(cell, start int64) SlotForecast {
 
 	out.Customers = make([]CustomerSlot, 0, len(customers))
 	for _, customer := range customers {
-		usual := customer.Alpha / customer.Beta
+		usual := scale * customer.Alpha / customer.Beta
 		byNow := usual
 		if lead > 0 {
 			shares, ok := f.curves[customer.CustomerID]
@@ -123,7 +122,8 @@ func (f *Forecaster) Balance(cell int64, starts []int64) AreaBalance {
 
 	pool := 0.0
 	for i, start := range starts {
-		end := start + dispatchmarket.SlotSeconds
+		forecast := f.Slot(cell, start)
+		end := forecast.End
 		freed, total := 0, 0
 		for _, driver := range f.supply[cell] {
 			if driver.FreeAt >= end {
@@ -135,11 +135,11 @@ func (f *Forecaster) Balance(cell int64, starts []int64) AreaBalance {
 			}
 		}
 		pool += float64(freed)
-		forecast := f.Slot(cell, start)
 		short := math.Max(0, forecast.Need-pool)
 		pool = math.Max(0, pool-forecast.Need)
 		out.Slots[i] = SlotBalance{
 			Start:     start,
+			End:       end,
 			Demand:    forecast.Demand,
 			Open:      forecast.Open,
 			Low:       forecast.Demand.Quantile(IntervalLow),
@@ -160,7 +160,7 @@ func (f *Forecaster) Network(areas []AreaBalance, starts []int64) []NetworkSlot 
 	out := make([]NetworkSlot, len(starts))
 	pool := 0.0
 	for i, start := range starts {
-		end := start + dispatchmarket.SlotSeconds
+		end := f.grid.SlotEnd(start)
 		freed := 0
 		for _, drivers := range f.supply {
 			for _, driver := range drivers {
@@ -172,7 +172,7 @@ func (f *Forecaster) Network(areas []AreaBalance, starts []int64) []NetworkSlot 
 		pool += float64(freed)
 
 		demand, open := Count{}, Count{}
-		slot := NetworkSlot{Start: start, Drivers: pool}
+		slot := NetworkSlot{Start: start, End: end, Drivers: pool}
 		for _, area := range areas {
 			balance := area.Slots[i]
 			demand = demand.Plus(balance.Demand)
@@ -181,6 +181,7 @@ func (f *Forecaster) Network(areas []AreaBalance, starts []int64) []NetworkSlot 
 			slot.Uncovered += balance.Short
 			slot.Idle += balance.Spare
 		}
+		demand, open = demand.Widen(f.dispersion), open.Widen(f.dispersion)
 		slot.Low, slot.High = demand.Quantile(IntervalLow), demand.Quantile(IntervalHigh)
 		slot.NeedLow, slot.NeedHigh = open.Quantile(IntervalLow), open.Quantile(IntervalHigh)
 		slot.Short = math.Max(0, slot.Need-pool)
@@ -222,16 +223,4 @@ func (f *Forecaster) OneMoreDriver(b *AreaBalance) int64 {
 
 func (f *Forecaster) MarginPercent() int64 {
 	return f.margin
-}
-
-func (f *Forecaster) Area(cell int64) (*Area, bool) {
-	area, ok := f.areas[cell]
-
-	return area, ok
-}
-
-func (f *Forecaster) Rate(cell int64, slot int16) (*Rate, bool) {
-	rate, ok := f.rates[rateKey{cell: cell, slot: slot}]
-
-	return rate, ok
 }

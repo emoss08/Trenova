@@ -209,7 +209,7 @@ describe("FreightForecastCard", () => {
     expect(await screen.findByText("Ready")).toBeInTheDocument();
     expect(
       screen.getByText(
-        "Tested on your last 8 weeks: 82% of actual counts fell inside the forecast range; 32% more accurate than repeating last week.",
+        "Tested on your last 8 weeks: 82% of days landed inside the forecast range; 32% more accurate than repeating last week.",
       ),
     ).toBeInTheDocument();
     const figures = screen.getByLabelText("Forecast figures");

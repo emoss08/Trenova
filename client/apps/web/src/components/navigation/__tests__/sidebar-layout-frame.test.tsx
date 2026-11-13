@@ -91,7 +91,8 @@ function renderAt(path: string) {
             element: page("Studio"),
           },
           { path: "/shipments", element: page("Shipments") },
-          { path: "/shipments/hazardous-materials", element: page("Hazardous materials") },
+          { path: "/dispatch/outlook", element: page("Freight outlook") },
+          { path: "/accounting/journal-entries/:id", element: page("Journal entry") },
         ],
       },
     ],
@@ -111,7 +112,7 @@ function renderAt(path: string) {
 describe("the shell's frame", () => {
   it("takes the frame the deepest route that names one asks for", () => {
     expect(frameOfMatches([])).toBe("page");
-    expect(frameOfMatches([{ handle: undefined }, { handle: { crumb: "Triage" } }])).toBe("page");
+    expect(frameOfMatches([{ handle: undefined }, { handle: { roomRail: "folds" } }])).toBe("page");
     expect(frameOfMatches([{ handle: { frame: "page" } }, { handle: { frame: "room" } }])).toBe(
       "room",
     );
@@ -137,14 +138,27 @@ describe("the shell's frame", () => {
   });
 
   it("leads the title with the trail above it, never with Home or the title itself", async () => {
-    renderAt("/shipments/hazardous-materials");
+    renderAt("/dispatch/outlook");
 
-    await screen.findByText("Hazardous materials body");
+    await screen.findByText("Freight outlook body");
     const trail = screen.getByRole("navigation", { name: "Breadcrumb" });
-    expect(trail).toHaveTextContent("Shipments");
+    expect(trail).toHaveTextContent("Dispatch management");
     expect(trail).not.toHaveTextContent("Home");
-    expect(trail).not.toHaveTextContent("Hazardous materials");
-    expect(screen.getByRole("link", { name: "Shipments" })).toHaveAttribute("href", "/shipments");
+    expect(trail).not.toHaveTextContent("Freight outlook");
+    expect(screen.getByRole("link", { name: "Dispatch management" })).toHaveAttribute(
+      "href",
+      "/dispatch",
+    );
+  });
+
+  it("leaves out a folder of the URL that no page or section fills", async () => {
+    renderAt("/accounting/journal-entries/je_01HZX2K3M4N5P6Q7R8S9T0V1");
+
+    await screen.findByText("Journal entry body");
+    const trail = screen.getByRole("navigation", { name: "Breadcrumb" });
+    expect(Array.from(trail.querySelectorAll("a")).map((link) => link.textContent)).toEqual([
+      "Accounting management",
+    ]);
   });
 
   it("draws no trail on a module's own landing page", async () => {

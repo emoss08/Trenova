@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/notificationpreferencerepository"
 	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/notificationrepository"
 	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/pagefavoriterepository"
+	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/pagetourrepository"
 	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/pushsubscriptionrepository"
 	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/reportrepository"
 	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/sidebarpreferencerepository"
@@ -46,6 +47,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationpreferenceservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/pagefavoriteservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/pagetourservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reportdashboardservice"
 	reportingservice "github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reportscheduleservice"
@@ -68,6 +70,7 @@ func SharedOptions() fx.Option {
 			tableexportservice.New,
 			tableconfigurationrepository.New,
 			pagefavoriterepository.New,
+			pagetourrepository.New,
 			reportrepository.NewDefinitionRepository,
 			reportrepository.NewCatalogVersionRepository,
 			reportrepository.NewDashboardRepository,
@@ -101,6 +104,7 @@ func SharedOptions() fx.Option {
 			dataentrycontrolservice.NewValidator,
 			tableconfigurationservice.New,
 			pagefavoriteservice.New,
+			pagetourservice.New,
 			sidebarpreferenceservice.New,
 			tablelayoutservice.New,
 			bulkeditservice.New,

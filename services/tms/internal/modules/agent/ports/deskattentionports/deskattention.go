@@ -24,6 +24,11 @@ type AttentionRequest struct {
 	// Mine narrows a reader who may see everyone's cases to their own and
 	// the ones nobody owns.
 	Mine bool
+	// Search keeps the rows with an item whose title, summary or record
+	// label holds these words.
+	Search string
+	// Unseen keeps the rows with an item the reader has not opened yet.
+	Unseen bool
 }
 
 type Record struct {
@@ -55,9 +60,21 @@ type LensCounts struct {
 	Decisions  int
 }
 
+// KindCount is how many open items of one kind the reader may see, which a
+// filter offers the kind by.
+type KindCount struct {
+	Kind  watchtower.SourceKind
+	Label string
+	Lens  desklens.Lens
+	Count int
+}
+
 type Attention struct {
-	Groups  []*Group
-	Counts  LensCounts
+	Groups []*Group
+	Counts LensCounts
+	// Kinds counts the open items of each kind in the list's own scope,
+	// most first, so a filter offers only what is there to find.
+	Kinds   []KindCount
 	HasMore bool
 	SeenAt  int64
 	// SeesEveryone says the reader may see everyone's cases, so the list

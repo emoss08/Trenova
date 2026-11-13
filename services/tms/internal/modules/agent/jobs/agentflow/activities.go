@@ -79,6 +79,7 @@ type ActivitiesParams struct {
 	Changes   realtimeports.RecordChangeFeed
 	Scopes    permissionports.ReadScopes
 	Guard     *agentguard.Service
+	Recorded  agentruntimeports.RecordedReadsReader
 }
 
 // Activities are a turn's effects, one activity each.
@@ -93,6 +94,7 @@ type Activities struct {
 	changes   realtimeports.RecordChangeFeed
 	scopes    permissionports.ReadScopes
 	guard     *agentguard.Service
+	recorded  agentruntimeports.RecordedReadsReader
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
@@ -107,6 +109,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 		changes:   p.Changes,
 		scopes:    p.Scopes,
 		guard:     p.Guard,
+		recorded:  p.Recorded,
 	}
 }
 
@@ -359,6 +362,11 @@ func (a *Activities) runTool(
 	req := in.Run.request()
 	req.Steps = a.steps
 	req.Attempt = int(activity.GetInfo(ctx).Attempt)
+	recorded, err := a.recordedReads(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	req.Recorded = recorded
 
 	outcome := a.runtime.DispatchStep(ctx, req, &in.Call)
 	observe, kept, done := a.observing(ctx, &in.Run)
@@ -366,6 +374,19 @@ func (a *Activities) runTool(
 	outcome = a.runtime.ObserveDispatch(observe, &in.Call, &outcome)
 
 	return &ToolResult{Outcome: outcome, Artifacts: *kept}, nil
+}
+
+// recordedReads is what the case a replay runs against was given, loaded for
+// this one call. A run that replays nothing has none.
+func (a *Activities) recordedReads(
+	ctx context.Context,
+	req *agentruntimeports.RunRequest,
+) (agentruntimeports.RecordedReads, error) {
+	if req.Replay == nil || req.Replay.CaseID.IsNil() || req.Actor == nil {
+		return nil, nil //nolint:nilnil // most runs replay nothing, which is not an error
+	}
+
+	return a.recorded.RecordedReads(ctx, req.Actor.TenantInfo(), req.Replay.CaseID)
 }
 
 // PublishArtifactActivity keeps a document the model published, and says what

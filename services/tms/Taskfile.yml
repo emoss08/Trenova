@@ -66,8 +66,6 @@ vars:
   GO_REMOTE_CACHE_JOBS: '{{.GO_REMOTE_CACHE_JOBS | default "32"}}'
   GO_REMOTE_CACHE_JOBS_FLAG: '{{if and (eq .GO_REMOTE_CACHE "on") (not .GO_JOBS)}} -p={{.GO_REMOTE_CACHE_JOBS}}{{end}}'
   GOCACHEPROG_SCRIPT: "{{.TASKFILE_DIR}}/scripts/gocacheprog/gocacheprog.sh"
-  GOBUILDCACHE_VERSION:
-    sh: cat "{{.TASKFILE_DIR}}/scripts/gocacheprog/version"
   # gocut builds the local binaries (the watch tasks and build-cli, so run,
   # run-worker and every task that runs the CLI) through -toolexec. gocut
   # reuses a package's previous compile when nothing the package uses from a
@@ -204,6 +202,12 @@ tasks:
   go-remote-cache-install:
     desc: Install the pinned gobuildcache that GO_REMOTE_CACHE=on runs
     dir: "{{.TASKFILE_DIR}}/scripts/gocacheprog"
+    vars:
+      # Read here, in the task's own directory, and not as a global: Task
+      # evaluates this file's globals for the root Taskfile's tasks too, where
+      # TASKFILE_DIR is the repository root and the file is not found.
+      GOBUILDCACHE_VERSION:
+        sh: cat version
     cmds:
       # Its go.mod needs a newer Go than GOTOOLCHAIN pins; the binary does not
       # depend on the toolchain the builds use.

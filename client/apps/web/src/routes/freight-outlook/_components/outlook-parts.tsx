@@ -1,6 +1,7 @@
 import { formatUnixDayTimeRange, formatUnixInUserTimezone } from "@trenova/shared/lib/date";
 import type { CSSProperties, ReactNode } from "react";
-import { SLOT_SECONDS, type BalanceLevel } from "./outlook-model";
+import { tourTarget } from "@/components/tour/tour-model";
+import type { BalanceLevel, Window } from "./outlook-model";
 
 /** The heat ramp, as detention intelligence draws one: a hue mixed into the page by level. */
 const SHADE: Record<1 | 2 | 3, number> = { 1: 22, 2: 48, 3: 82 };
@@ -47,9 +48,13 @@ export function dayKey(at: number): string {
   return formatUnixInUserTimezone(at, { dateStyle: "short" });
 }
 
-/** "Thu 4:00 PM – 8:00 PM": a whole window. */
-export function slotRange(start: number): string {
-  return formatUnixDayTimeRange(start, start + SLOT_SECONDS);
+/**
+ * "Thu 4:00 PM – 8:00 PM": a whole window, from its own start and end. A window is four hours
+ * on the organization's clock, which is three or five real hours on the two nights the clocks
+ * change, so the end is read, never added.
+ */
+export function slotRange(window: Window | undefined): string {
+  return window ? formatUnixDayTimeRange(window.start, window.end) : "";
 }
 
 /**
@@ -72,6 +77,7 @@ export function PanelSection({
       id={id}
       aria-label={title}
       className="flex min-w-0 scroll-mt-2 flex-col gap-2.5 border-t border-border-subtle pt-3 first:border-t-0 first:pt-0"
+      {...tourTarget(id)}
     >
       <header className="flex items-baseline justify-between gap-2">
         <span className="text-xs font-medium text-muted-foreground">{title}</span>

@@ -4398,9 +4398,9 @@ and scored.
 type AgentEvalCase {
   agentDefinitionId: ID!
   """
-  When the person asked it. A replay answered from the recorded tool results
-  runs with its clock at this moment; null for a case written by hand or
-  captured from a background run, which replays as of now.
+  When the person asked it, or when the run that made the proposal started. A
+  replay answered from the recorded tool results runs with its clock at this
+  moment; null for a case written by hand, which replays as of now.
   """
   askedAt: Timestamp
   """
@@ -4431,6 +4431,12 @@ type AgentEvalCase {
   mentions: [JSON!]!
   organizationId: ID!
   pageContext: JSON
+  """
+  The tools the original used that its agent did not hold itself, found through
+  another agent on the Desk. A replay cannot reach them, so a case that names
+  any is never activated on its own.
+  """
+  reachedTools: [String!]!
   """Which fields were replaced when the case was captured."""
   redaction: JSON
   rubric: String!
@@ -4770,6 +4776,47 @@ type AgentInstructionsTightened {
   """False when the model returned the instructions as they were."""
   changed: Boolean!
   instructions: String!
+}
+
+"""
+One way agents came to hold memories over a stretch of days, and what became of them. A look
+back has one row per trigger, counted under its strongest signal; the other sources have one row
+each and no look back figures.
+"""
+type AgentLearningRow {
+  """Offers a person turned down."""
+  dismissed: Int!
+  inputTokens: Int!
+  """Memories recorded in the stretch that agents read now."""
+  kept: Int!
+  """Offers nobody decided within 30 days, set aside by the nightly sweep."""
+  lapsed: Int!
+  """Look backs that called a model."""
+  lookBacks: Int!
+  outputTokens: Int!
+  """Memories recorded in the stretch and retired since."""
+  retired: Int!
+  source: AgentMemorySource!
+  """Look backs that called a model and kept or offered nothing."""
+  taughtNothing: Int!
+  """
+  Lessons a look back wanted to keep that were already kept: the agent was told again what it had on record.
+  """
+  toldAgain: Int!
+  """
+  What made the look backs look; absent for a source that is not a look back.
+  """
+  trigger: AgentReflectionSignalKind
+  """Memories recorded in the stretch that a turn has used at least once."""
+  used: Int!
+  """Offers still waiting for a person."""
+  waiting: Int!
+}
+
+type AgentLearningStats {
+  days: Int!
+  rows: [AgentLearningRow!]!
+  since: Timestamp!
 }
 
 """How well the chat agents a person may use fit a question."""
@@ -6069,6 +6116,10 @@ type AgentReflectionSignal {
 }
 
 enum AgentReflectionSignalKind {
+  """
+  People changed, by hand and on several records, a field the agent had set.
+  """
+  ChangedAfterwards
   NegativeFeedback
   PersonCorrected
   """The person stated something while asking for something else."""
@@ -6100,6 +6151,10 @@ enum AgentReflectionStatus {
 }
 
 enum AgentReflectionSubject {
+  """
+  A field an agent set that people changed by hand on several records, read for the rule behind the changes.
+  """
+  Correction
   """One background run, read once every proposal it raised was decided."""
   Run
   """A stretch of a conversation, read once it went quiet."""
@@ -11422,11 +11477,20 @@ input CreateCarrierInvoiceMatchInput {
 
 input CreateDeskMemoryInput {
   content: String!
+  """
+  Instruction when left out; Fact or Procedure for one that is not a rule.
+  """
+  kind: AgentMemoryKind
   roleId: ID
   """
   User, Role or Organization. A Role memory needs a role the person holds. Role and Organization memories are kept at once when the person manages agent memory and offered to an administrator otherwise.
   """
   scope: AgentMemoryScope!
+  subjectId: ID
+  """
+  With subjectId, the customer, location, driver or carrier the memory is about.
+  """
+  subjectType: AgentMemorySubjectType
 }
 
 input CreateDocumentTemplateVersionInput {
@@ -12968,6 +13032,10 @@ type DeskAttention {
   groups: [DeskAttentionGroup!]!
   """True when more records wait than the first page holds."""
   hasMore: Boolean!
+  """
+  Open items of each kind in the list's own scope, most first. A kind with none is left out unless the list is narrowed to it.
+  """
+  kinds: [DeskAttentionKind!]!
   """Where the reader's unseen line sits."""
   seenAt: Timestamp!
   """
@@ -13019,12 +13087,30 @@ input DeskAttentionInput {
   mine: Boolean = false
   """One record's row, for its case: every open item about it."""
   recordId: ID
+  """
+  Rows with an item whose title, summary or record name holds these words, whatever their case; at most 100 characters are read. Empty is every row.
+  """
+  search: String
   """Rows with an item of one of these severities. Empty is every severity."""
   severities: [WatchtowerSeverity!]
+  """Only rows with an item the reader has not opened yet."""
+  unseen: Boolean = false
   """
   Only rows with an item an agent's run is working on right now. A run that finished, failed or waits on a person is not working.
   """
   working: Boolean = false
+}
+
+"""
+How many open items of one kind the reader may see, which the list's filter offers the kind by.
+"""
+type DeskAttentionKind {
+  count: Int!
+  kind: WatchtowerSourceKind!
+  """The kind in the reader's words."""
+  label: String!
+  """The lens items of this kind are filed under."""
+  lens: DeskLens!
 }
 
 """
@@ -13624,6 +13710,11 @@ input DeskMemoriesInput {
   roleId: ID
   """Only this scope; every scope when left out."""
   scope: AgentMemoryScope
+  subjectId: ID
+  """
+  With subjectId, only the memories about that record, as its own page lists them: what agents keep about it for their own work is listed too.
+  """
+  subjectType: AgentMemorySubjectType
 }
 
 """
@@ -13669,6 +13760,10 @@ type DeskMemory {
   Active or Paused on the page; Retired once forgotten, until it is brought back; Suggested while an agent's offer waits.
   """
   status: AgentMemoryStatus!
+  """The record's name; empty for a memory about no one record."""
+  subjectLabel: String!
+  """The kind of record the memory is about, when it is about one."""
+  subjectType: AgentMemorySubjectType
   """How many prompts and recalls have used it."""
   useCount: Int!
   version: Int!
@@ -15144,10 +15239,14 @@ type DispatchForecastQuality {
   historyLoads: Int!
   """Weeks of history the forecast learns from."""
   historyWeeks: Int!
-  """Share of actual counts that fell inside the forecast's 80% range."""
+  """
+  Share of the tested days whose load total fell inside the forecast's 80% range.
+  """
   intervalCoverage: Float!
   loadsTested: Int!
-  """Average miss per area and four-hour slot, in loads."""
+  """
+  Average miss per active area and four-hour slot, in loads: the forecast's ranked probability score.
+  """
   meanAbsoluteError: Float!
   """The same average miss for repeating the same slot of the week before."""
   naiveMeanAbsoluteError: Float!
@@ -15229,6 +15328,7 @@ type DispatchFreightAreaDetail {
   The usual range for this area and window of the week (10th to 90th percentile).
   """
   recentLow: Int!
+  slotEnd: Timestamp!
   """The window the sheet reads: the one asked for, or the area's worst."""
   slotStart: Timestamp!
 }
@@ -15266,6 +15366,7 @@ type DispatchFreightMove {
   savedCents: Int!
   """Loads with no truck nearby in that window."""
   short: Float!
+  slotEnd: Timestamp!
   """The window the move is for."""
   slotStart: Timestamp!
   """What the driver is worth where they are."""
@@ -15305,6 +15406,10 @@ type DispatchFreightNetworkSlot {
   Drivers free by the end of the window and not yet used by earlier windows.
   """
   drivers: Float!
+  """
+  When the window ends: four hours on, three or five on the two nights the clocks change.
+  """
+  end: Timestamp!
   """Drivers with nothing nearby, summed over areas."""
   idle: Float!
   likelyHigh: Int!
@@ -15393,6 +15498,10 @@ type DispatchFreightSlot {
   booked: Int!
   """Drivers free in the area by the end of the window."""
   drivers: Int!
+  """
+  When the window ends: four hours on, three or five on the two nights the clocks change.
+  """
+  end: Timestamp!
   likelyHigh: Int!
   """
   Loads likely to start in the window, booked included (10th to 90th percentile).
@@ -24906,6 +25015,10 @@ type Mutation {
   """
   recordMyAgentSuggestion(input: RecordMyAgentSuggestionInput!): AgentSuggestion!
   """
+  Remembers that the caller has been shown a page tour, replacing an earlier view of it.
+  """
+  recordMyPageTour(input: RecordPageTourInput!): PageTourView!
+  """
   Records the signed-in driver's arrival at or departure from a stop on their
   own load. Timestamps are server-side; stop, move, and shipment statuses
   cascade, and pay accrues when the move completes.
@@ -26393,6 +26506,26 @@ type PageInfo {
   hasNextPage: Boolean!
 }
 
+"""How a person left a page tour."""
+enum PageTourOutcome {
+  """They walked through every step."""
+  Finished
+  """They closed it before the last step."""
+  Skipped
+}
+
+"""
+A page tour the caller has already been shown, so it does not open by itself again.
+"""
+type PageTourView {
+  outcome: PageTourOutcome!
+  seenAt: Timestamp!
+  """The tour's key, such as freight-outlook."""
+  tour: String!
+  """The version of the tour they saw. A tour with newer steps opens again."""
+  tourVersion: Int!
+}
+
 input PauseAccountingSyncInput {
   integrationType: AccountingSystem!
   reason: String
@@ -26814,6 +26947,10 @@ input PendingDecisionsInput {
   """Only this agent's work."""
   agentDefinitionId: ID
   first: Int = 25
+  """
+  Only decisions whose words hold this: what the agent wants, why, and the name of the record it is for, as Needs you's search reads them.
+  """
+  search: String
   """Only proposals of this tool; a plan matches when any step uses it."""
   toolName: String
 }
@@ -27623,6 +27760,10 @@ type Query {
   What a draft's instructions ask for that none of its tools can do. Saves nothing.
   """
   agentInstructionLint(input: AgentInstructionLintInput!): [AgentInstructionFinding!]!
+  """
+  How each way of learning did over the last days (1 to 365): what it cost, what it offered and what people did with the offers.
+  """
+  agentLearningStats(days: Int! = 30): AgentLearningStats!
   agentMemories(input: DataTableConnectionInput!): AgentMemoryConnection!
   agentMemory(id: ID!): AgentMemory
   """
@@ -28415,6 +28556,8 @@ type Query {
   returned.
   """
   myNotifications(filter: NotificationFilterInput, input: DataTableConnectionInput!): NotificationConnection!
+  """The page tours the caller has been shown."""
+  myPageTourViews: [PageTourView!]!
   myPeriodSummary: PortalPeriodSummary!
   """
   agentPlanPreview for a plan raised in one of the caller's own conversations, by an agent they may still use.
@@ -29664,6 +29807,12 @@ input RecordMyStopActionInput {
   """
   occurredAt: Timestamp
   stopId: ID!
+}
+
+input RecordPageTourInput {
+  outcome: PageTourOutcome!
+  tour: String!
+  tourVersion: Int!
 }
 
 input RecordSafetyViolationInput {

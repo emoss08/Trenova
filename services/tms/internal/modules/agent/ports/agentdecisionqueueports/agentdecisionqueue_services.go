@@ -32,6 +32,9 @@ type ListPendingDecisionsRequest struct {
 	// one kind of write (a plan matches when any step uses it).
 	AgentDefinitionID pulid.ID
 	ToolName          string
+	// Search narrows the queue to the decisions whose words, or whose
+	// record's name, hold it: what Needs you's search reads.
+	Search            string
 	IncludeTotalCount bool
 	// Usable keeps only what agents the reader may use raised. Nil keeps
 	// everything, for a caller reading the queue for the organization.

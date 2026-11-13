@@ -3399,13 +3399,6 @@
   color: var(--dsk-subtle);
   background: var(--dsk-sunken);
 }
-.dk-dc2-main {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  min-width: 0;
-}
 .dk-dc2-card {
   flex: 1;
   min-height: 0;

@@ -139,3 +139,69 @@
     transform: translateY(8px);
   }
 }
+
+/* ---------- From one lens of Needs you to another ----------
+   A lens names its list and what it reads beside it after itself
+   (desk-motion.ts), and the head above them is not named. So a change of lens
+   keeps the head where it is, with its marker gliding to the lens picked, and
+   moves only the two regions under it: the list that was fades as the next
+   arrives, and its rows rise as they do when a lens is first drawn. What keeps
+   the lens (a search, a row opened) finds the same names on both sides and
+   changes at once. */
+
+::view-transition-group(dk-needs-list-everything),
+::view-transition-group(dk-needs-list-watchtower),
+::view-transition-group(dk-needs-list-decisions),
+::view-transition-group(dk-needs-detail-everything),
+::view-transition-group(dk-needs-detail-watchtower),
+::view-transition-group(dk-needs-detail-decisions) {
+  animation-duration: 0s;
+}
+::view-transition-old(dk-needs-list-everything),
+::view-transition-old(dk-needs-list-watchtower),
+::view-transition-old(dk-needs-list-decisions),
+::view-transition-old(dk-needs-detail-everything),
+::view-transition-old(dk-needs-detail-watchtower),
+::view-transition-old(dk-needs-detail-decisions) {
+  display: none;
+}
+::view-transition-new(dk-needs-list-everything),
+::view-transition-new(dk-needs-list-watchtower),
+::view-transition-new(dk-needs-list-decisions),
+::view-transition-new(dk-needs-detail-everything),
+::view-transition-new(dk-needs-detail-watchtower),
+::view-transition-new(dk-needs-detail-decisions) {
+  animation: none;
+}
+
+::view-transition-old(dk-needs-list-everything):only-child,
+::view-transition-old(dk-needs-list-watchtower):only-child,
+::view-transition-old(dk-needs-list-decisions):only-child,
+::view-transition-old(dk-needs-detail-everything):only-child,
+::view-transition-old(dk-needs-detail-watchtower):only-child,
+::view-transition-old(dk-needs-detail-decisions):only-child {
+  display: block;
+  animation: dk-page-out 120ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+::view-transition-new(dk-needs-list-everything):only-child,
+::view-transition-new(dk-needs-list-watchtower):only-child,
+::view-transition-new(dk-needs-list-decisions):only-child {
+  animation: dk-lens-in 220ms cubic-bezier(0.2, 0.8, 0.2, 1) 40ms both;
+}
+::view-transition-new(dk-needs-detail-everything):only-child,
+::view-transition-new(dk-needs-detail-watchtower):only-child,
+::view-transition-new(dk-needs-detail-decisions):only-child {
+  animation: dk-page-in 260ms cubic-bezier(0.2, 0.8, 0.2, 1) 60ms both;
+}
+
+@keyframes dk-lens-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* The page under a transition stays the page: a lens picked while the last
+   one is still arriving is picked, not swallowed by the layer above it. */
+::view-transition {
+  pointer-events: none;
+}

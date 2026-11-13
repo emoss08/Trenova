@@ -5,6 +5,7 @@ import (
 	"math/rand/v2"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/operations/domain/demandfit"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/demandforecast"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchmarket"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -42,13 +43,13 @@ func poisson(r *rand.Rand, mean float64) int32 {
 	}
 }
 
-func steadyHistory(t *testing.T, mean float64, weeks int64, slot int16) *demandforecast.History {
+func steadyHistory(t *testing.T, mean float64, weeks int64, slot int16) *demandfit.History {
 	t.Helper()
 	r := rand.New(rand.NewPCG(7, 11))
 	current := dispatchmarket.WeekOf(mondayMidnight) + weeks
-	h := &demandforecast.History{Now: nowAtWeek(current)}
+	h := &demandfit.History{Now: nowAtWeek(current)}
 	for week := current - weeks; week < current; week++ {
-		h.Counts = append(h.Counts, demandforecast.LoadCount{
+		h.Counts = append(h.Counts, demandfit.LoadCount{
 			CustomerID: acme, Cell: dallasCell(t), Week: week, Slot: slot, Loads: poisson(r, mean),
 		})
 	}
@@ -71,7 +72,7 @@ func areaRate(t *testing.T, fitted *demandforecast.Fitted, slot int16) *demandfo
 func TestFit_RecoversAKnownWeeklyRate(t *testing.T) {
 	t.Parallel()
 
-	fitted := demandforecast.Fit(steadyHistory(t, 4, 26, 7))
+	fitted := demandfit.Fit(steadyHistory(t, 4, 26, 7))
 
 	rate := areaRate(t, fitted, 7)
 	assert.InDelta(t, 4.0, rate.Alpha/rate.Beta, 0.6)
@@ -81,10 +82,10 @@ func TestFit_ShrinksASparseSlotTowardTheAreaRhythm(t *testing.T) {
 	t.Parallel()
 
 	h := steadyHistory(t, 6, 26, 7)
-	h.Counts = append(h.Counts, demandforecast.LoadCount{
+	h.Counts = append(h.Counts, demandfit.LoadCount{
 		CustomerID: acme, Cell: dallasCell(t), Week: dispatchmarket.WeekOf(h.Now) - 3, Slot: 8, Loads: 1,
 	})
-	fitted := demandforecast.Fit(h)
+	fitted := demandfit.Fit(h)
 
 	sparse := areaRate(t, fitted, 8)
 	busy := areaRate(t, fitted, 7)
@@ -96,25 +97,30 @@ func TestFit_WeighsRecentWeeksMore(t *testing.T) {
 	t.Parallel()
 
 	current := dispatchmarket.WeekOf(mondayMidnight) + 26
-	h := &demandforecast.History{Now: nowAtWeek(current)}
+	h := &demandfit.History{Now: nowAtWeek(current)}
 	for week := current - 26; week < current; week++ {
 		loads := int32(2)
 		if week >= current-8 {
 			loads = 6
 		}
-		h.Counts = append(h.Counts, demandforecast.LoadCount{
+		h.Counts = append(h.Counts, demandfit.LoadCount{
 			CustomerID: acme, Cell: dallasCell(t), Week: week, Slot: 7, Loads: loads,
 		})
 	}
 
-	rate := areaRate(t, demandforecast.Fit(h), 7)
-	assert.Greater(t, rate.Alpha/rate.Beta, 4.0, "the last 8 weeks at 6 outweigh 18 earlier weeks at 2")
+	rate := areaRate(t, demandfit.Fit(h), 7)
+	assert.Greater(
+		t,
+		rate.Alpha/rate.Beta,
+		4.0,
+		"the last 8 weeks at 6 outweigh 18 earlier weeks at 2",
+	)
 }
 
 func TestFit_StartsTheWindowAtTheFirstWeekOfHistory(t *testing.T) {
 	t.Parallel()
 
-	rate := areaRate(t, demandforecast.Fit(steadyHistory(t, 4, 6, 7)), 7)
+	rate := areaRate(t, demandfit.Fit(steadyHistory(t, 4, 6, 7)), 7)
 
 	assert.InDelta(t, 4.0, rate.Alpha/rate.Beta, 1.0,
 		"six weeks of history are not diluted by twenty empty weeks before it")
@@ -124,9 +130,9 @@ func TestBookingCurve_ShrinksASmallCustomerToTheTenant(t *testing.T) {
 	t.Parallel()
 
 	big, small := pulid.ID("cus_big"), pulid.ID("cus_small")
-	fitted := demandforecast.Fit(&demandforecast.History{
+	fitted := demandfit.Fit(&demandfit.History{
 		Now: mondayMidnight,
-		Leads: []demandforecast.LeadCount{
+		Leads: []demandfit.LeadCount{
 			{CustomerID: big, Bucket: 7, Loads: 200},
 			{CustomerID: small, Bucket: 0, Loads: 2},
 		},
@@ -211,9 +217,13 @@ func dallasWorld(t *testing.T) forecastWorld {
 	}
 
 	return forecastWorld{
-		rates:  rates,
-		areas:  []*demandforecast.Area{{Cell: cell, Label: "Dallas, TX", MedianRevenueCents: 45_000, Loads: 400}},
-		curves: []*demandforecast.BookingCurve{{Shares: []float64{1, 0.9, 0.85, 0.8, 0.7, 0.4, 0.3, 0.2, 0.1, 0.05, 0.02, 0.01, 0}}},
+		rates: rates,
+		areas: []*demandforecast.Area{
+			{Cell: cell, Label: "Dallas, TX", MedianRevenueCents: 45_000, Loads: 400},
+		},
+		curves: []*demandforecast.BookingCurve{
+			{Shares: []float64{1, 0.9, 0.85, 0.8, 0.7, 0.4, 0.3, 0.2, 0.1, 0.05, 0.02, 0.01, 0}},
+		},
 		now:    now,
 		window: window,
 	}
@@ -221,13 +231,15 @@ func dallasWorld(t *testing.T) forecastWorld {
 
 func (w forecastWorld) forecaster(supply ...demandforecast.Driver) *demandforecast.Forecaster {
 	return demandforecast.NewForecaster(&demandforecast.ForecasterParams{
-		Now:           w.now,
-		Quality:       &demandforecast.Quality{Status: demandforecast.StatusReady},
-		Rates:         w.rates,
-		Areas:         w.areas,
-		Curves:        w.curves,
+		Now: w.now,
+		Index: demandforecast.NewIndex(&demandforecast.IndexParams{
+			Quality:       &demandforecast.Quality{Status: demandforecast.StatusReady},
+			Rates:         w.rates,
+			Areas:         w.areas,
+			Curves:        w.curves,
+			CustomerNames: map[pulid.ID]string{acme: "Acme Foods"},
+		}),
 		Supply:        supply,
-		CustomerNames: map[pulid.ID]string{acme: "Acme Foods"},
 		MarginPercent: 80,
 	})
 }
@@ -262,7 +274,12 @@ func TestCredit_FallsAsSupplyRises(t *testing.T) {
 	}
 	none, _ := w.forecaster().Value(query)
 	crowded, _ := w.forecaster(idleDrivers(t, 8, w.now)...).Value(query)
-	assert.Greater(t, none.Cents, int64(10_000), "the first driver into a likely market is worth over $100")
+	assert.Greater(
+		t,
+		none.Cents,
+		int64(10_000),
+		"the first driver into a likely market is worth over $100",
+	)
 	assert.Less(t, crowded.Cents, none.Cents/4, "the ninth is worth a fraction of that")
 }
 
@@ -273,7 +290,8 @@ func TestCredit_DoesNotCountTheDriverItValues(t *testing.T) {
 	me := pulid.ID("wrk_me")
 	self := []demandforecast.Driver{{WorkerID: me, Cell: dallasCell(t), FreeAt: w.now}}
 
-	value, ok := w.forecaster(self...).Value(demandforecast.Query{Point: dallas, FreeAt: w.window, WorkerID: me})
+	value, ok := w.forecaster(self...).
+		Value(demandforecast.Query{Point: dallas, FreeAt: w.window, WorkerID: me})
 
 	require.True(t, ok)
 	assert.Zero(t, value.Reason.DriversExpected)
@@ -285,8 +303,15 @@ func TestCredit_IsCappedByTheSetting(t *testing.T) {
 	w := dallasWorld(t)
 	w.areas[0].MedianRevenueCents = 10_000_000
 	f := demandforecast.NewForecaster(&demandforecast.ForecasterParams{
-		Now: w.now, Quality: &demandforecast.Quality{Status: demandforecast.StatusReady},
-		Rates: w.rates, Areas: w.areas, Curves: w.curves, MarginPercent: 80, CapCents: 40_000,
+		Now: w.now,
+		Index: demandforecast.NewIndex(
+			&demandforecast.IndexParams{
+				Quality: &demandforecast.Quality{Status: demandforecast.StatusReady},
+				Rates:   w.rates,
+				Areas:   w.areas,
+				Curves:  w.curves,
+			},
+		), MarginPercent: 80, CapCents: 40_000,
 	})
 
 	value, ok := f.Value(demandforecast.Query{Point: dallas, FreeAt: w.window})
@@ -330,10 +355,19 @@ func TestCredit_BookedButUnplannedLoadsAreDemandTooUnlessBeingPlanned(t *testing
 
 	w := dallasWorld(t)
 	busy := demandforecast.NewForecaster(&demandforecast.ForecasterParams{
-		Now: w.now, Quality: &demandforecast.Quality{Status: demandforecast.StatusReady},
-		Rates: w.rates, Areas: w.areas, Curves: w.curves, MarginPercent: 80,
-		Supply:  idleDrivers(t, 3, w.now),
-		Booked:  []demandforecast.Booked{{Cell: dallasCell(t), SlotStart: w.window, Total: 4, Open: 4}},
+		Now: w.now,
+		Index: demandforecast.NewIndex(
+			&demandforecast.IndexParams{
+				Quality: &demandforecast.Quality{Status: demandforecast.StatusReady},
+				Rates:   w.rates,
+				Areas:   w.areas,
+				Curves:  w.curves,
+			},
+		), MarginPercent: 80,
+		Supply: idleDrivers(t, 3, w.now),
+		Booked: []demandforecast.Booked{
+			{Cell: dallasCell(t), SlotStart: w.window, Total: 4, Open: 4},
+		},
 		Solving: []demandforecast.Booked{{Cell: dallasCell(t), SlotStart: w.window, Open: 1}},
 	})
 	plain := w.forecaster(idleDrivers(t, 3, w.now)...)
@@ -352,8 +386,15 @@ func TestForecaster_StaysSilentUntilTheForecastIsReady(t *testing.T) {
 
 	w := dallasWorld(t)
 	f := demandforecast.NewForecaster(&demandforecast.ForecasterParams{
-		Now: w.now, Quality: &demandforecast.Quality{Status: demandforecast.StatusNoSkill},
-		Rates: w.rates, Areas: w.areas, Curves: w.curves, MarginPercent: 80,
+		Now: w.now,
+		Index: demandforecast.NewIndex(
+			&demandforecast.IndexParams{
+				Quality: &demandforecast.Quality{Status: demandforecast.StatusNoSkill},
+				Rates:   w.rates,
+				Areas:   w.areas,
+				Curves:  w.curves,
+			},
+		), MarginPercent: 80,
 	})
 
 	_, ok := f.Value(demandforecast.Query{Point: dallas, FreeAt: w.window})
@@ -378,15 +419,15 @@ func TestForecaster_WithSupplyRecountsWithoutChangingTheOriginal(t *testing.T) {
 	assert.Less(t, after.Cents, before.Cents)
 }
 
-func patternedHistory(t *testing.T, weeks int64) *demandforecast.History {
+func patternedHistory(t *testing.T, weeks int64) *demandfit.History {
 	t.Helper()
 	r := rand.New(rand.NewPCG(3, 5))
 	current := dispatchmarket.WeekOf(mondayMidnight) + weeks
-	h := &demandforecast.History{Now: nowAtWeek(current)}
+	h := &demandfit.History{Now: nowAtWeek(current)}
 	means := map[int16]float64{1: 4, 7: 3, 13: 5, 25: 2, 31: 1}
 	for week := current - weeks; week < current; week++ {
 		for slot, mean := range means {
-			h.Counts = append(h.Counts, demandforecast.LoadCount{
+			h.Counts = append(h.Counts, demandfit.LoadCount{
 				CustomerID: acme, Cell: dallasCell(t), Week: week, Slot: slot, Loads: poisson(r, mean),
 			})
 		}
@@ -395,22 +436,24 @@ func patternedHistory(t *testing.T, weeks int64) *demandforecast.History {
 	return h
 }
 
-func TestBacktest_BeatsSameSlotLastWeekOnARegularRhythm(t *testing.T) {
+func TestEvaluate_BeatsSameSlotLastWeekOnARegularRhythm(t *testing.T) {
 	t.Parallel()
 
-	quality := demandforecast.Backtest(patternedHistory(t, 26))
+	quality, _ := demandfit.Evaluate(patternedHistory(t, 26))
 
 	assert.Equal(t, demandforecast.StatusReady, quality.Status)
-	assert.EqualValues(t, demandforecast.BacktestWeeks, quality.WeeksTested)
+	assert.EqualValues(t, demandfit.BacktestWeeks, quality.WeeksTested)
 	assert.Greater(t, quality.Skill, 0.2, "beats repeating last week by more than 20%%")
 	assert.Greater(t, quality.IntervalCoverage, 0.7)
 	assert.LessOrEqual(t, quality.IntervalCoverage, 1.0)
+	assert.GreaterOrEqual(t, quality.Dispersion, 1.0)
+	assert.Less(t, quality.Dispersion, 2.0, "a Poisson rhythm needs little widening")
 }
 
-func TestBacktest_SaysWhenHistoryIsTooShort(t *testing.T) {
+func TestEvaluate_SaysWhenHistoryIsTooShort(t *testing.T) {
 	t.Parallel()
 
-	quality := demandforecast.Backtest(patternedHistory(t, 5))
+	quality, _ := demandfit.Evaluate(patternedHistory(t, 5))
 
 	assert.Equal(t, demandforecast.StatusInsufficientHistory, quality.Status)
 	assert.EqualValues(t, 5, quality.HistoryWeeks)
@@ -427,6 +470,11 @@ func TestCount_ShiftAddsAKnownCountNotASpread(t *testing.T) {
 	assert.Equal(t, 4, booked.Quantile(0.9))
 
 	withMore := demandforecast.Count{Mean: 2, Variance: 2}.Shift(4)
-	assert.InDelta(t, demandforecast.Count{Mean: 2, Variance: 2}.Exceeds(1), withMore.Exceeds(5), 1e-12)
+	assert.InDelta(
+		t,
+		demandforecast.Count{Mean: 2, Variance: 2}.Exceeds(1),
+		withMore.Exceeds(5),
+		1e-12,
+	)
 	assert.GreaterOrEqual(t, withMore.Quantile(0.1), 4)
 }

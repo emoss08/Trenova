@@ -40,6 +40,8 @@ input PendingDecisionsInput {
   agentDefinitionId: ID
   "Only proposals of this tool; a plan matches when any step uses it."
   toolName: String
+  "Only decisions whose words hold this: what the agent wants, why, and the name of the record it is for, as Needs you's search reads them."
+  search: String
 }
 
 type PendingDecisionAgentCount {

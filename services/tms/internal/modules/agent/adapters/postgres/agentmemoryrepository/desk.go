@@ -65,9 +65,15 @@ func deskSelect() keel.Query[*agentmemory.Memory] {
 // suggestion waits in its conversation.
 func deskVisible(filter *agentmemoryports.DeskMemoryFilter) keel.Pred {
 	m := agentmemorydb.Memories
+	readers := keel.Or(m.Scope.Eq(agentmemory.MemoryScopeOrganization), forPerson(filter.Reader))
+	var about keel.Pred
+	if subject := filter.Subject; subject != nil {
+		about = keel.And(m.SubjectType.Eq(subject.Type), m.SubjectID.Eq(subject.ID))
+		readers = keel.Or(readers, m.Scope.Eq(agentmemory.MemoryScopeAgent))
+	}
 	kept := keel.And(
 		m.Status.In(agentmemory.MemoryStatusActive, agentmemory.MemoryStatusPaused),
-		keel.Or(m.Scope.Eq(agentmemory.MemoryScopeOrganization), forPerson(filter.Reader)),
+		readers,
 	)
 	var offered keel.Pred
 	if filter.Reader.UserID.IsNotNil() {
@@ -78,7 +84,7 @@ func deskVisible(filter *agentmemoryports.DeskMemoryFilter) keel.Pred {
 			m.Scope.In(agentmemory.MemoryScopeRole, agentmemory.MemoryScopeOrganization),
 		)
 	}
-	visible := keel.Or(kept, offered)
+	visible := keel.And(keel.Or(kept, offered), about)
 
 	text := newTextQuery(filter.Query, nil)
 	switch {

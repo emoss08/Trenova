@@ -2,6 +2,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTab } from "@trenova/shared/components/ui/tabs";
 import {
+  BrainIcon,
   Building08Icon,
   RadarIcon,
   ReceiptIcon,
@@ -9,6 +10,10 @@ import {
   Truck01Icon,
   Users01Icon,
 } from "@trenova/shared/components/icons";
+import {
+  RecordMemories,
+  useRecordMemoriesAvailable,
+} from "@/components/record-memories/record-memories";
 import { parseAsString, useQueryState } from "nuqs";
 import { CarrierComplianceForm } from "./carrier-compliance-form";
 import { CarrierContactsForm } from "./carrier-contacts-form";
@@ -25,6 +30,7 @@ export function CarrierTabbedForm({ carrierId }: CarrierTabbedFormProps) {
   const t = useT();
 
   const [activeTab, setActiveTab] = useQueryState("tab", parseAsString.withDefault("identity"));
+  const remembers = useRecordMemoriesAvailable() && Boolean(carrierId);
 
   return (
     <Tabs
@@ -60,6 +66,12 @@ export function CarrierTabbedForm({ carrierId }: CarrierTabbedFormProps) {
               {t("Intelligence")}
             </TabsTab>
           ) : null}
+          {remembers ? (
+            <TabsTab value="memory">
+              <BrainIcon className="size-4" />
+              {t("Agent memory")}
+            </TabsTab>
+          ) : null}
         </TabsList>
       </div>
       <ScrollArea className="flex-1">
@@ -81,6 +93,11 @@ export function CarrierTabbedForm({ carrierId }: CarrierTabbedFormProps) {
         {carrierId ? (
           <TabsContent value="intelligence" className="p-4">
             <CarrierIntelligenceTab carrierId={carrierId} />
+          </TabsContent>
+        ) : null}
+        {remembers && carrierId ? (
+          <TabsContent value="memory" className="p-4">
+            <RecordMemories subject={{ type: "Carrier", id: carrierId }} />
           </TabsContent>
         ) : null}
       </ScrollArea>

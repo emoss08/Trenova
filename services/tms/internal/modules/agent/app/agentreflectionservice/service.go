@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentrecord"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentreflection"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
@@ -41,6 +42,7 @@ type Params struct {
 
 	Logger        *zap.Logger
 	Repo          agentreflectionports.AgentReflectionRepository
+	Corrections   agentreflectionports.CorrectedWorkRepository
 	Conversations conversationports.ConversationRepository
 	Definitions   agentdefinitionports.AgentDefinitionRepository
 	Controls      tenantports.AgentControlRepository
@@ -56,6 +58,7 @@ type Params struct {
 type Service struct {
 	l             *zap.Logger
 	repo          agentreflectionports.AgentReflectionRepository
+	corrections   agentreflectionports.CorrectedWorkRepository
 	conversations conversationports.ConversationRepository
 	definitions   agentdefinitionports.AgentDefinitionRepository
 	controls      tenantports.AgentControlRepository
@@ -74,6 +77,7 @@ func New(p Params) agentreflectionports.AgentReflectionService {
 	return &Service{
 		l:             p.Logger.Named("service.agentreflection"),
 		repo:          p.Repo,
+		corrections:   p.Corrections,
 		conversations: p.Conversations,
 		definitions:   p.Definitions,
 		controls:      p.Controls,
@@ -159,31 +163,86 @@ func (s *Service) PrepareThread(
 		Taint:             cleanOr(thread.Taint),
 	}
 
-	definition, control, skip, err := s.usableAgent(ctx, tenant, thread.AgentDefinitionID)
-	if err != nil {
-		return nil, err
-	}
-	if skip != "" {
-		return s.skip(ctx, reflection, plan, skip)
-	}
+	return s.claimed(ctx, reflection, func() (*agentreflectionports.ReflectionPlan, error) {
+		if failErr := s.repo.FailInterrupted(ctx, &agentreflectionports.FailInterruptedRequest{
+			TenantInfo: tenant,
+			ThreadID:   thread.ID,
+			ExceptID:   reflection.ID,
+			Message:    interruptedMessage,
+			At:         s.now(),
+		}); failErr != nil {
+			return nil, failErr
+		}
 
-	window := &Window{
-		Messages:        messages,
-		Proposals:       s.threadProposals(ctx, tenant, thread.ID, messages),
-		NegativeRatings: s.negativeRatings(ctx, tenant, person, messages),
-		HasPerson:       true,
-		Continues:       found,
-		InPassing:       !control.PassingLearningOff,
-	}
+		definition, control, skip, agentErr := s.usableAgent(ctx, tenant, thread.AgentDefinitionID)
+		if agentErr != nil {
+			return nil, agentErr
+		}
+		if skip != "" {
+			return s.skip(ctx, reflection, plan, skip)
+		}
 
-	return s.ready(ctx, &readyParams{
-		reflection: reflection,
-		plan:       plan,
-		definition: definition,
-		window:     window,
-		trigger:    "a conversation on the " + string(thread.Origin),
-		provider:   firstProvider(thread.PreferredProviderID, definition.PreferredProviderID),
+		window := &Window{
+			Messages:        messages,
+			Proposals:       s.threadProposals(ctx, tenant, thread.ID, messages),
+			NegativeRatings: s.negativeRatings(ctx, tenant, person, messages),
+			HasPerson:       true,
+			Continues:       found,
+			InPassing:       !control.PassingLearningOff,
+		}
+
+		return s.ready(ctx, &readyParams{
+			reflection: reflection,
+			plan:       plan,
+			definition: definition,
+			window:     window,
+			trigger:    "a conversation on the " + string(thread.Origin),
+			provider: firstProvider(
+				thread.PreferredProviderID,
+				definition.PreferredProviderID,
+			),
+		})
 	})
+}
+
+const interruptedMessage = "The look back was interrupted before it finished"
+
+// claimed runs what follows a claim and records the look back as failed when
+// it cannot be prepared. A claimed row left Running reads as a stretch already
+// looked over, so the conversation's next look back would start after it and
+// what was said in it would never be read.
+func (s *Service) claimed(
+	ctx context.Context,
+	reflection *agentreflection.Reflection,
+	prepare func() (*agentreflectionports.ReflectionPlan, error),
+) (*agentreflectionports.ReflectionPlan, error) {
+	plan, err := prepare()
+	if err == nil {
+		return plan, nil
+	}
+
+	current, readErr := s.repo.GetByID(
+		context.WithoutCancel(ctx),
+		agentreflectionports.GetAgentReflectionRequest{
+			ID: reflection.ID,
+			TenantInfo: pagination.TenantInfo{
+				OrgID: reflection.OrganizationID,
+				BuID:  reflection.BusinessUnitID,
+			},
+		},
+	)
+	if readErr == nil && !current.Status.Settled() {
+		current.Fail(err.Error(), s.now())
+		_, readErr = s.repo.Update(context.WithoutCancel(ctx), current)
+	}
+	if readErr != nil {
+		s.l.Warn("agent reflection: a look back that could not be prepared was not marked failed",
+			zap.String("reflection", reflection.ID.String()),
+			zap.Error(readErr),
+		)
+	}
+
+	return nil, err
 }
 
 func (s *Service) PrepareRun(
@@ -226,32 +285,34 @@ func (s *Service) PrepareRun(
 		Taint:             runTaint(run),
 	}
 
-	definition, _, skip, err := s.usableAgent(ctx, tenant, run.AgentDefinitionID)
-	if err != nil {
-		return nil, err
-	}
-	if skip != "" {
-		return s.skip(ctx, reflection, plan, skip)
-	}
+	return s.claimed(ctx, reflection, func() (*agentreflectionports.ReflectionPlan, error) {
+		definition, _, skip, agentErr := s.usableAgent(ctx, tenant, run.AgentDefinitionID)
+		if agentErr != nil {
+			return nil, agentErr
+		}
+		if skip != "" {
+			return s.skip(ctx, reflection, plan, skip)
+		}
 
-	messages, err := s.runMessages(ctx, tenant, run.ID)
-	if err != nil {
-		return nil, err
-	}
-	if len(messages) == 0 {
-		return s.skip(ctx, reflection, plan, agentreflection.ReflectionSkipNothingToRead)
-	}
+		messages, readErr := s.runMessages(ctx, tenant, run.ID)
+		if readErr != nil {
+			return nil, readErr
+		}
+		if len(messages) == 0 {
+			return s.skip(ctx, reflection, plan, agentreflection.ReflectionSkipNothingToRead)
+		}
 
-	return s.ready(ctx, &readyParams{
-		reflection: reflection,
-		plan:       plan,
-		definition: definition,
-		window: &Window{
-			Messages:  messages,
-			Proposals: s.runProposals(ctx, tenant, run.ID),
-		},
-		trigger:  "a " + string(run.Trigger) + " run about a " + string(run.SubjectType),
-		provider: definition.PreferredProviderID,
+		return s.ready(ctx, &readyParams{
+			reflection: reflection,
+			plan:       plan,
+			definition: definition,
+			window: &Window{
+				Messages:  messages,
+				Proposals: s.runProposals(ctx, tenant, run.ID),
+			},
+			trigger:  "a " + string(run.Trigger) + " run about a " + string(run.SubjectType),
+			provider: definition.PreferredProviderID,
+		})
 	})
 }
 
@@ -262,6 +323,9 @@ type readyParams struct {
 	window     *Window
 	trigger    string
 	provider   pulid.ID
+	// records are the records the work touched when there is no transcript to
+	// read them from.
+	records []agentpagecontext.EntityRef
 }
 
 func (s *Service) ready(
@@ -280,12 +344,16 @@ func (s *Service) ready(
 	}
 
 	toolNames := windowToolNames(p.window.Messages)
+	records := p.records
+	if records == nil {
+		records = windowRecords(p.window.Messages)
+	}
 	known, err := s.memories.ForContext(ctx, &agentmemoryports.MemoryContextRequest{
 		TenantInfo:        plan.TenantInfo,
 		AgentDefinitionID: plan.AgentDefinitionID,
 		ReaderUserID:      plan.PersonUserID,
 		ToolNames:         toolNames,
-		Records:           windowRecords(p.window.Messages),
+		Records:           records,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("read the memories already kept: %w", err)
@@ -322,6 +390,8 @@ func (s *Service) ready(
 		ToolNames:   toolNames,
 		Proposals:   p.window.Proposals,
 		Messages:    p.window.Messages,
+		Corrections: p.window.Corrections,
+		Corrected:   p.window.CorrectedWhat,
 	}
 	version := p.definition.Version
 	plan.Request = &llmports.StructuredCompletionRequest{

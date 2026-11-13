@@ -1,5 +1,6 @@
 import { getFragmentData } from "@trenova/graphql/fragment-data";
 import {
+  AgentLearningStatsDocument,
   AgentMemoryCountDocument,
   AgentMemoryTableDocument,
   AgentMemoryTableRowFieldsFragmentDoc,
@@ -12,6 +13,7 @@ import {
   ReviewAgentMemoryDocument,
   SetAgentMemoryStatusDocument,
   UpdateAgentMemoryDocument,
+  type AgentLearningStatsQuery,
   type AgentMemoryInput,
   type AgentMemoryKind,
   type AgentMemoryStatus,
@@ -89,6 +91,32 @@ export async function confirmAgentMemory(id: string, version: number) {
   });
 
   return getFragmentData(AgentMemoryTableRowFieldsFragmentDoc, data.confirmAgentMemory);
+}
+
+export type AgentLearningStats = AgentLearningStatsQuery["agentLearningStats"];
+export type AgentLearningRow = AgentLearningStats["rows"][number];
+
+export function agentLearningStatsQueryKey(days: number) {
+  return [AGENT_MEMORY_LIST_KEY, "learning", days] as const;
+}
+
+/**
+ * How each way of learning did over the last days: what look backs cost, what
+ * they offered, and what people did with the offers. It sits under the list's
+ * key, so keeping or dismissing a memory refreshes it.
+ */
+export async function fetchAgentLearningStats(
+  days: number,
+  options?: { signal?: AbortSignal },
+): Promise<AgentLearningStats> {
+  const data = await requestGraphQL({
+    document: AgentLearningStatsDocument,
+    operationName: "AgentLearningStats",
+    variables: { days },
+    signal: options?.signal,
+  });
+
+  return data.agentLearningStats;
 }
 
 export const agentMemoryUpkeepQueryKey = [AGENT_MEMORY_LIST_KEY, "upkeep"] as const;

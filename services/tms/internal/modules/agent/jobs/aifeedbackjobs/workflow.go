@@ -34,7 +34,7 @@ func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 			Name:        AIFeedbackMaintenanceWorkflowName,
 			Fn:          AIFeedbackMaintenanceWorkflow,
 			TaskQueue:   temporaltype.TaskQueueSystem.String(),
-			Description: "Purge expired AI feedback and suggest agent memories from it, per organization",
+			Description: "Purge expired AI feedback, suggest agent memories from it, lapse memory offers nobody decided and cue look backs over what people keep changing of agents' work, per organization",
 		},
 	}
 }

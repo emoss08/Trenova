@@ -2,6 +2,7 @@ package driverpositioningservice
 
 import (
 	"context"
+	"slices"
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/notificationtemplate"
@@ -117,7 +118,6 @@ func (s *Service) Create(
 	forecaster, err := s.forecasts.Forecaster(ctx, &demandforecastports.ForecasterRequest{
 		TenantInfo:    req.TenantInfo,
 		Now:           now,
-		Cells:         []int64{fromCell, req.ToCell},
 		MarginPercent: margin,
 		CapCents:      capCents,
 	})
@@ -129,6 +129,12 @@ func (s *Service) Create(
 		return nil, errortypes.NewBusinessError(
 			"That area is not in the freight forecast, so a driver cannot be sent there from the outlook.",
 		)
+	}
+	if !slices.Contains(forecaster.OutlookStarts(), req.SlotStart) {
+		multiErr := errortypes.NewMultiError()
+		multiErr.Add("slotStart", errortypes.ErrInvalid,
+			"Choose a window in the next 48 hours of the outlook")
+		return nil, multiErr.Err()
 	}
 
 	target := dispatchmarket.CenterOf(req.ToCell)
@@ -226,9 +232,7 @@ func validateTarget(req *driverpositioningports.CreateRequest, now int64) error 
 	if req.ToCell <= 0 {
 		multiErr.Add("toCell", errortypes.ErrRequired, "Choose an area to send the driver to")
 	}
-	first := dispatchmarket.SlotStart(now)
-	if req.SlotStart != dispatchmarket.SlotStart(req.SlotStart) ||
-		req.SlotStart < first || req.SlotStart >= first+outlookHorizon {
+	if req.SlotStart <= 0 || req.SlotStart >= now+outlookHorizon {
 		multiErr.Add("slotStart", errortypes.ErrInvalid,
 			"Choose a window in the next 48 hours of the outlook")
 	}
@@ -245,6 +249,7 @@ func (s *Service) driverStart(
 		TenantInfo: tenantInfo,
 		Now:        now,
 		WorkerIDs:  []pulid.ID{workerID},
+		Location:   s.forecasts.Location(ctx, tenantInfo),
 	})
 	if err != nil {
 		return demandforecastports.DriverStart{}, err

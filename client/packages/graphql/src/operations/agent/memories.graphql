@@ -88,6 +88,28 @@ query AgentMemoryUsage {
   }
 }
 
+query AgentLearningStats($days: Int!) {
+  agentLearningStats(days: $days) {
+    days
+    since
+    rows {
+      source
+      trigger
+      lookBacks
+      taughtNothing
+      toldAgain
+      inputTokens
+      outputTokens
+      kept
+      waiting
+      dismissed
+      lapsed
+      retired
+      used
+    }
+  }
+}
+
 query AgentMemoryUpkeep {
   agentMemoryUpkeep {
     reason

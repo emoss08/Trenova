@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -341,6 +342,9 @@ type ListDeskMemoriesRequest struct {
 	Query  string
 	After  string
 	Limit  int
+	// SubjectType and SubjectID list only the memories about one record.
+	SubjectType agentmemory.MemorySubjectType
+	SubjectID   pulid.ID
 }
 
 type DeskMemoryPage struct {
@@ -368,6 +372,12 @@ type CreateDeskMemoryRequest struct {
 	Content string
 	Scope   agentmemory.MemoryScope
 	RoleID  pulid.ID
+	// Kind is Instruction when left out: what a person writes down for their
+	// agents is a rule to follow. A record's page also keeps Facts about it.
+	Kind agentmemory.MemoryKind
+	// SubjectType and SubjectID file the memory under one record.
+	SubjectType agentmemory.MemorySubjectType
+	SubjectID   pulid.ID
 }
 
 // ReviseDeskMemoryRequest changes what a memory says, who reads it, or both.
@@ -506,6 +516,15 @@ type AgentMemoryService interface {
 		req ReviewAgentMemoryRequest,
 		actor *permissionports.RequestActor,
 	) (*agentmemory.Memory, error)
+	// Outcomes counts what became of the memories recorded since a time.
+	Outcomes(
+		ctx context.Context,
+		tenant pagination.TenantInfo,
+		since int64,
+	) ([]MemoryOutcome, error)
+	// LapseOffers sets aside the offers nobody decided within
+	// agentmemory.OfferLifetimeDays and says how many.
+	LapseOffers(ctx context.Context, tenant pagination.TenantInfo, now int64) (int64, error)
 	// Upkeep lists the shared memories worth another look, oldest first.
 	Upkeep(ctx context.Context, tenant pagination.TenantInfo) ([]*MemoryUpkeep, error)
 	// SavingMode is how the person wants what agents pick up kept.
@@ -530,4 +549,14 @@ type AgentMemoryService interface {
 	SetDeskStatus(ctx context.Context, req *SetDeskMemoryStatusRequest) (*DeskMemory, error)
 	ConfirmDesk(ctx context.Context, req *ConfirmDeskMemoryRequest) (*DeskMemory, error)
 	DismissDesk(ctx context.Context, req DeskMemoryRef) (*DeskMemory, error)
+}
+
+// ErrSharedMemoryManaged is the refusal for keeping or changing a memory other
+// people's conversations read without the permission to.
+func ErrSharedMemoryManaged() error {
+	return errortypes.NewAuthorizationError(
+		"Only an administrator keeps, changes, pauses or forgets a memory shared with a " +
+			"team, the organization or every agent: it needs permission to manage agent " +
+			"memory",
+	)
 }

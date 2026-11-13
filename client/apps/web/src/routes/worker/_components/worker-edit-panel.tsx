@@ -26,6 +26,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   ActivityHeartIcon,
   Beaker02Icon,
+  BrainIcon,
   Briefcase01Icon,
   CalendarClockIcon,
   CalendarRangeIcon,
@@ -48,6 +49,10 @@ import {
 import { parseAsString, useQueryState } from "nuqs";
 import { Suspense, lazy, useCallback, useEffect, useRef, useState } from "react";
 import { FormProvider, type UseFormReturn } from "react-hook-form";
+import {
+  RecordMemories,
+  useRecordMemoriesAvailable,
+} from "@/components/record-memories/record-memories";
 import { ComplianceTab, EmploymentTab, GeneralTab } from "./worker-form-tabs";
 import { resolveWorkerPanelTab, type EmploymentView } from "./worker-panel-tabs";
 
@@ -137,6 +142,7 @@ interface WorkerEditPanelProps {
 
 export function WorkerEditPanel({ open, onOpenChange, row, form }: WorkerEditPanelProps) {
   const t = useT();
+  const remembers = useRecordMemoriesAvailable();
   const personalDetailsVisible = useProtectedFieldAccess("Personal");
 
   const queryClient = useQueryClient();
@@ -346,6 +352,9 @@ export function WorkerEditPanel({ open, onOpenChange, row, form }: WorkerEditPan
                         { value: "leave", label: t("Leave"), icon: ActivityHeartIcon },
                         { value: "documents", label: t("Documents"), icon: File06Icon },
                         { value: "portal", label: t("Portal"), icon: Phone01Icon },
+                        ...(remembers
+                          ? [{ value: "memory", label: t("Agent memory"), icon: BrainIcon }]
+                          : []),
                       ]}
                       activeValue={resolvedTab}
                       onSelect={(value) => void setActiveTab(value)}
@@ -572,6 +581,11 @@ export function WorkerEditPanel({ open, onOpenChange, row, form }: WorkerEditPan
                         <WorkerPortalTab workerId={row?.id as string} />
                       </Suspense>
                     </TabsContent>
+                    {remembers ? (
+                      <TabsContent value="memory" className="p-4">
+                        <RecordMemories subject={{ type: "Worker", id: row.id as string }} />
+                      </TabsContent>
+                    ) : null}
                   </ScrollArea>
                 </Tabs>
               </Form>

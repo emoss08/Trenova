@@ -507,7 +507,13 @@ func (r *Runner) runStep(
 		return result, ""
 	}
 
-	if step.Decide != "" {
+	if step.LookBack {
+		result.Kind = "lookBack"
+		evidence.LookBack = true
+		if err := conv.LookBack(ctx); err != nil {
+			result.Error = err.Error()
+		}
+	} else if step.Decide != "" {
 		decideStep(ctx, conv, step, result, evidence)
 	} else if unmet = r.sayStep(ctx, session, conv, step, result, evidence); unmet != "" {
 		return result, unmet

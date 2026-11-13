@@ -23,6 +23,7 @@ fragment AgentEvalCaseTableRowFields on AgentEvalCase {
 fragment AgentEvalCaseDetailFields on AgentEvalCase {
   ...AgentEvalCaseTableRowFields
   askedAt
+  reachedTools
   sourceRunId
   sourceTurnId
   sourceMessageId

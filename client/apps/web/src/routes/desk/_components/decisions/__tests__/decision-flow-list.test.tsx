@@ -15,7 +15,8 @@ import type {
   ProposalPreview,
   ProposalPreviewRequest,
 } from "@/lib/graphql/agent-preview";
-import { DecisionFlow, type DecisionFlowProgress } from "../decision-flow";
+import { NO_DECISION_FILTERS, type DecisionFilters } from "../decision-filters";
+import { DecisionFlow } from "../decision-flow";
 import type { PendingDecisionNode } from "../use-pending-decisions";
 import { planNode, proposalNode } from "./pending-fixtures";
 
@@ -74,12 +75,15 @@ afterEach(() => {
   nodes = [];
 });
 
-function renderFlow(head: (progress: DecisionFlowProgress) => null = () => null) {
+function renderFlow(
+  filter: DecisionFilters = NO_DECISION_FILTERS,
+  onFilter: (filter: DecisionFilters) => void = vi.fn(),
+) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
     <QueryClientProvider client={client}>
       <MemoryRouter>
-        <DecisionFlow head={head} />
+        <DecisionFlow filter={filter} onFilter={onFilter} since={0} />
       </MemoryRouter>
     </QueryClientProvider>,
   );
@@ -179,20 +183,22 @@ describe("DecisionFlow: the list picks and ticks, the page reads one change", ()
     expect(screen.queryByText("No signed proof of delivery is on file for load 1.")).toBeNull();
   });
 
-  it("tells the page's head how much is decided and how much waits", async () => {
-    queueOf(3);
-    previewsOf();
-    const head = vi.fn<(progress: DecisionFlowProgress) => null>(() => null);
-    renderFlow(head);
+  it("says nothing matches a search that finds no change, and clears it from there", () => {
+    const onFilter = vi.fn<(filter: DecisionFilters) => void>();
+    renderFlow({ search: "acme", agentId: "", tool: "" }, onFilter);
 
-    await screen.findByRole("checkbox", { name: "Select Laura Wright" });
-    expect(head).toHaveBeenLastCalledWith({
-      progressLabel: "0 of 3 decided",
-      done: 0,
-      total: 3,
-      waiting: 3,
-      keysEnabled: true,
-    });
+    expect(screen.getByText("Nothing matches “acme”")).toBeInTheDocument();
+    expect(screen.queryByText("Queue clear")).toBeNull();
+    fireEvent.click(button("Clear the search"));
+
+    expect(onFilter.mock.calls).toEqual([[NO_DECISION_FILTERS]]);
+  });
+
+  it("says the queue is clear when nothing waits and nothing narrows it", () => {
+    renderFlow();
+
+    expect(screen.getAllByText("Queue clear").length).toBeGreaterThan(0);
+    expect(screen.queryByRole("button", { name: /^Clear/u })).toBeNull();
   });
 
   it("approves the open change alone with its digest and opens the next", async () => {

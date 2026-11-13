@@ -12,33 +12,36 @@ import { formatUnixInUserTimezone } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import { area as areaPath, curveMonotoneX, line as linePath } from "d3-shape";
 import { useId } from "react";
-import { SLOT_SECONDS } from "./outlook-model";
+import {
+  BARS_BASE,
+  DRIVERS_LANE,
+  LOADS_LANE,
+  NOW_LABEL_Y,
+  TIDE_HEIGHT,
+  barHeights,
+  columnStep,
+  laneScale,
+  laneTop,
+  nowLabelAnchor,
+  type BoardColumns,
+  type Lane,
+} from "./board-tide-model";
+import { positionAmong } from "./outlook-model";
 import { slotRange } from "./outlook-parts";
 
-export const TIDE_HEIGHT = 148;
-const TOP = 16;
-const LINES_BOTTOM = 92;
-const BASE = 116;
-const BAR_MAX = 26;
+/** The space between the plot's left edge and the text beside it. */
+const GUTTER_GAP = 10;
+/** The least a column is wide before its bars carry their numbers. */
+const NUMBERED_STEP = 24;
 const BAR_WIDTH = 22;
-
-export type BoardColumns = { width: number; label: number; value: number; count: number };
-
-export function columnStep({ width, label, value, count }: BoardColumns): number {
-  return Math.max(0, width - label - value) / Math.max(count, 1);
-}
+/** How far the shading of a window and of the hours past the range reach around the lanes. */
+const LANE_MARGIN = 6;
+/** The count at which the whole network is short of drivers in a window. */
+const NETWORK_SHORT = 0.5;
 
 type TideSlot = { index: number; slot: FreightNetworkSlot };
-
-function niceTicks(min: number, max: number, count: number): number[] {
-  const span = Math.max(max - min, 1);
-  const raw = span / count;
-  const magnitude = 10 ** Math.floor(Math.log10(raw));
-  const step = [1, 2, 5, 10].map((m) => m * magnitude).find((s) => s >= raw) ?? raw;
-  const ticks: number[] = [];
-  for (let value = Math.ceil(min / step) * step; value <= max; value += step) ticks.push(value);
-  return ticks;
-}
+/** A point on a line: a window's value, held from the plot's edge to the window's middle. */
+type TidePoint = { px: number; slot: FreightNetworkSlot };
 
 function TideColumn({
   item,
@@ -63,7 +66,7 @@ function TideColumn({
       role="button"
       tabIndex={0}
       aria-pressed={pinned}
-      aria-label={slotRange(item.slot.start)}
+      aria-label={slotRange(item.slot)}
       className={cn(
         "cursor-pointer ui-focus-ring outline-none",
         pinned ? "fill-brand/8" : "fill-transparent hover:fill-foreground/4",
@@ -85,7 +88,7 @@ function TideDetail({ item, pinned }: { item: TideSlot; pinned: boolean }) {
   const { slot } = item;
   return (
     <>
-      <HoverCardHeading>{slotRange(slot.start)}</HoverCardHeading>
+      <HoverCardHeading>{slotRange(slot)}</HoverCardHeading>
       <HoverCardRow
         label={t("Still need a driver")}
         value={t("{0}–{1}", formatNumber(slot.needLow), formatNumber(slot.needHigh))}
@@ -100,6 +103,13 @@ function TideDetail({ item, pinned }: { item: TideSlot; pinned: boolean }) {
         value={formatNumber(Math.round(slot.drivers))}
         swatchClass="bg-foreground"
       />
+      {slot.short >= NETWORK_SHORT ? (
+        <HoverCardRow
+          label={t("More loads than drivers")}
+          value={formatNumber(Math.round(slot.short))}
+          swatchClass="bg-danger"
+        />
+      ) : null}
       <HoverCardRow
         label={t("No truck nearby")}
         value={formatNumber(Math.round(slot.uncovered))}
@@ -120,9 +130,16 @@ function TideDetail({ item, pinned }: { item: TideSlot; pinned: boolean }) {
 }
 
 /**
- * The network across the next two days, drawn on the board's own columns: loads likely (with
- * their usual range) against drivers expected, and underneath, loads with no truck nearby and
- * idle drivers once each area is counted alone. A column pins its window.
+ * The network across the next two days, drawn on the board's own columns: loads still needing
+ * a driver (with their usual range) and drivers free, each in a lane with its own scale, and
+ * underneath, loads with no truck nearby and idle drivers once each area is counted alone. A
+ * window where the loads outrun the drivers is shaded across both lanes, which is what the
+ * two lines crossing would have said on one scale. A column pins its window.
+ *
+ * Everything that names a mark sits in the column to the left of the plot, beside the mark it
+ * names; what each lane's top line stands for is written at its right end, with its unit;
+ * and the "now" label has a strip of its own above the lanes. No text is drawn over the data
+ * or under the shading of the hours past the chosen range.
  */
 export function BoardTide({
   outlook,
@@ -143,44 +160,62 @@ export function BoardTide({
   const slots = outlook.network;
   const count = slots.length;
   const { width, label, value } = columns;
-  if (count === 0 || width === 0) {
+  const first = slots[0];
+  const last = slots[count - 1];
+  if (!first || !last || width === 0) {
     return <div style={{ height: TIDE_HEIGHT }} />;
   }
 
   const step = columnStep(columns);
   const x = (index: number) => label + step * (index + 0.5);
   const right = width - value;
-  const lowest = Math.min(...slots.map((s) => Math.min(s.needLow, s.need, s.drivers)));
-  const highest = Math.max(...slots.map((s) => Math.max(s.needHigh, s.need, s.drivers)));
-  const ticks = niceTicks(Math.floor(lowest), Math.ceil(highest), 3);
-  const yMin = Math.min(ticks[0] ?? lowest, lowest);
-  const yMax = Math.max(ticks[ticks.length - 1] ?? highest, highest);
-  const y = (v: number) => TOP + (1 - (v - yMin) / Math.max(yMax - yMin, 1)) * (LINES_BOTTOM - TOP);
-  const barTop = Math.max(1, ...slots.map((s) => Math.max(s.uncovered, s.idle)));
-  const bar = (v: number) => (v / barTop) * BAR_MAX;
+  const loadsTop = laneTop(Math.max(...slots.map((s) => Math.max(s.needHigh, s.need))));
+  const driversTop = laneTop(Math.max(...slots.map((s) => s.drivers)));
+  const loadsAt = laneScale(LOADS_LANE, loadsTop);
+  const driversAt = laneScale(DRIVERS_LANE, driversTop);
+  // Each lane's top line says what it stands for, with its unit, and its bottom line is
+  // zero. Bare numbers down the column read as a list, not as two scales.
+  const lanes: { lane: Lane; scale: string }[] = [
+    {
+      lane: LOADS_LANE,
+      scale: t("{0, plural, one {# load} other {# loads}}", loadsTop),
+    },
+    {
+      lane: DRIVERS_LANE,
+      scale: t("{0, plural, one {# driver} other {# drivers}}", driversTop),
+    },
+  ];
+  const shade = { y: LOADS_LANE.top - LANE_MARGIN, bottom: DRIVERS_LANE.bottom + LANE_MARGIN };
+  const shortBar = barHeights(slots.map((s) => s.uncovered));
+  const idleBar = barHeights(slots.map((s) => s.idle));
   const barWidth = Math.min(BAR_WIDTH, step * 0.4);
+  const numbered = step >= NUMBERED_STEP;
 
   const items: TideSlot[] = slots.map((slot, index) => ({ index, slot }));
-  const band = areaPath<TideSlot>()
-    .x((d) => x(d.index))
-    .y0((d) => y(d.slot.needLow))
-    .y1((d) => y(d.slot.needHigh))
-    .curve(curveMonotoneX)(items);
-  const loads = linePath<TideSlot>()
-    .x((d) => x(d.index))
-    .y((d) => y(d.slot.need))
-    .curve(curveMonotoneX)(items);
-  const drivers = linePath<TideSlot>()
-    .x((d) => x(d.index))
-    .y((d) => y(d.slot.drivers))
-    .curve(curveMonotoneX)(items);
+  // Each value stands for a whole window, so the lines hold it out to the plot's edges
+  // instead of stopping half a column short of them.
+  const points: TidePoint[] = [
+    { px: label, slot: first },
+    ...items.map(({ index, slot }) => ({ px: x(index), slot })),
+    { px: right, slot: last },
+  ];
+  const band = areaPath<TidePoint>()
+    .x((d) => d.px)
+    .y0((d) => loadsAt(d.slot.needLow))
+    .y1((d) => loadsAt(d.slot.needHigh))
+    .curve(curveMonotoneX)(points);
+  const loads = linePath<TidePoint>()
+    .x((d) => d.px)
+    .y((d) => loadsAt(d.slot.need))
+    .curve(curveMonotoneX)(points);
+  const drivers = linePath<TidePoint>()
+    .x((d) => d.px)
+    .y((d) => driversAt(d.slot.drivers))
+    .curve(curveMonotoneX)(points);
 
-  const first = outlook.slotStarts[0] ?? now;
-  const nowX = label + step * Math.min(Math.max((now - first) / SLOT_SECONDS, 0), count);
-  const last = items[count - 1];
-  const loadsY = y(last.slot.need);
-  const driversY = y(last.slot.drivers);
-  const apart = Math.abs(loadsY - driversY) < 14 ? (loadsY < driversY ? -7 : 7) : 0;
+  const gutter = label - GUTTER_GAP;
+  const nowX = label + step * Math.min(positionAmong(slots, now), count);
+  const nowAnchor = nowLabelAnchor(nowX, right);
 
   return (
     <PointerHoverCard<TideSlot>
@@ -208,96 +243,144 @@ export function BoardTide({
             <line x1={0} y1={0} x2={0} y2={6} className="stroke-border" strokeWidth={1.5} />
           </pattern>
         </defs>
-        {ticks.map((tick) => (
-          <g key={tick}>
+        <text x={14} y={NOW_LABEL_Y} className="fill-muted-foreground text-2xs">
+          {t("Network")}
+        </text>
+        {lanes.map(({ lane, scale }) => (
+          <g key={lane.top}>
             <line
               x1={label}
               x2={right}
-              y1={y(tick)}
-              y2={y(tick)}
+              y1={lane.top}
+              y2={lane.top}
+              className="stroke-border-subtle"
+            />
+            <line
+              x1={label}
+              x2={right}
+              y1={lane.bottom}
+              y2={lane.bottom}
               className="stroke-border-subtle"
             />
             <text
-              x={label - 8}
-              y={y(tick) + 3.5}
-              textAnchor="end"
-              className="fill-foreground-subtle text-2xs"
+              x={right + GUTTER_GAP}
+              y={lane.top + 3.5}
+              className="fill-foreground-subtle text-2xs tabular-nums"
             >
-              {formatNumber(tick)}
+              {scale}
             </text>
           </g>
         ))}
-        <text x={14} y={TOP + 4} className="fill-muted-foreground text-2xs">
-          {t("Network")}
+        {items.map(({ index, slot }) =>
+          slot.short >= NETWORK_SHORT ? (
+            <rect
+              key={`short-${slot.start}`}
+              x={label + step * index}
+              y={shade.y}
+              width={step}
+              height={shade.bottom - shade.y}
+              className="fill-danger/10"
+            />
+          ) : null,
+        )}
+        <text
+          x={gutter}
+          y={driversAt(first.drivers) + 3.5}
+          textAnchor="end"
+          className="fill-foreground text-2xs font-medium"
+        >
+          {t("Drivers free")}
         </text>
-        <text x={14} y={BASE - 8} className="fill-warning-foreground text-2xs">
+        <text
+          x={gutter}
+          y={loadsAt(first.need) + 3.5}
+          textAnchor="end"
+          className="fill-warning-foreground text-2xs font-medium"
+        >
+          {t("Loads needing a driver")}
+        </text>
+        <text
+          x={gutter}
+          y={BARS_BASE - 6}
+          textAnchor="end"
+          className="fill-warning-foreground text-2xs"
+        >
           {t("No truck nearby")}
         </text>
-        <text x={14} y={BASE + 14} className="fill-accent-sky-on-subtle text-2xs">
+        <text
+          x={gutter}
+          y={BARS_BASE + 13}
+          textAnchor="end"
+          className="fill-accent-sky-on-subtle text-2xs"
+        >
           {t("Idle drivers")}
         </text>
-        <line x1={label} x2={right} y1={BASE} y2={BASE} className="stroke-border" />
+        <line x1={label} x2={right} y1={BARS_BASE} y2={BARS_BASE} className="stroke-border" />
         {band ? <path d={band} className="fill-warning/20" /> : null}
         {loads ? (
-          <path
-            d={loads}
-            className="fill-none stroke-warning-foreground"
-            strokeWidth={2}
-            strokeLinecap="round"
-          />
+          <path d={loads} className="fill-none stroke-warning-foreground" strokeWidth={2} />
         ) : null}
         {drivers ? (
-          <path
-            d={drivers}
-            className="fill-none stroke-foreground"
-            strokeWidth={2}
-            strokeLinecap="round"
-          />
+          <path d={drivers} className="fill-none stroke-foreground" strokeWidth={2} />
         ) : null}
-        <text
-          x={x(count - 1) + 14}
-          y={loadsY + 4 + apart}
-          className="fill-warning-foreground text-xs font-medium"
-        >
-          {t("Loads")}
-        </text>
-        <text
-          x={x(count - 1) + 14}
-          y={driversY + 4 - apart}
-          className="fill-foreground text-xs font-medium"
-        >
-          {t("Drivers")}
-        </text>
-        {items.map(({ index, slot }) => (
-          <g key={slot.start}>
-            {slot.uncovered > 0.2 ? (
-              <rect
-                x={x(index) - barWidth / 2}
-                y={BASE - 1 - bar(slot.uncovered)}
-                width={barWidth}
-                height={bar(slot.uncovered)}
-                rx={2}
-                className="fill-warning"
-              />
-            ) : null}
-            {slot.idle > 0.2 ? (
-              <rect
-                x={x(index) - barWidth / 2}
-                y={BASE + 1}
-                width={barWidth}
-                height={bar(slot.idle)}
-                rx={2}
-                className="fill-accent-sky"
-              />
-            ) : null}
-          </g>
-        ))}
+        {items.map(({ index, slot }) => {
+          const short = shortBar(slot.uncovered);
+          const idle = idleBar(slot.idle);
+          return (
+            <g key={slot.start}>
+              {short > 0 ? (
+                <>
+                  <rect
+                    x={x(index) - barWidth / 2}
+                    y={BARS_BASE - 1 - short}
+                    width={barWidth}
+                    height={short}
+                    rx={2}
+                    className="fill-warning"
+                  />
+                  {numbered ? (
+                    <text
+                      x={x(index)}
+                      y={BARS_BASE - 4 - short}
+                      textAnchor="middle"
+                      className="fill-warning-foreground text-2xs font-medium tabular-nums"
+                    >
+                      {formatNumber(Math.round(slot.uncovered))}
+                    </text>
+                  ) : null}
+                </>
+              ) : null}
+              {idle > 0 ? (
+                <>
+                  <rect
+                    x={x(index) - barWidth / 2}
+                    y={BARS_BASE + 1}
+                    width={barWidth}
+                    height={idle}
+                    rx={2}
+                    className="fill-accent-sky"
+                  />
+                  {numbered ? (
+                    <text
+                      x={x(index)}
+                      y={BARS_BASE + 11 + idle}
+                      textAnchor="middle"
+                      className="fill-accent-sky-on-subtle text-2xs tabular-nums"
+                    >
+                      {formatNumber(Math.round(slot.idle))}
+                    </text>
+                  ) : null}
+                </>
+              ) : null}
+            </g>
+          );
+        })}
         {horizonSlots < count ? (
           <rect
             x={label + step * horizonSlots}
-            y={0}
+            y={shade.y}
             width={step * (count - horizonSlots)}
-            height={TIDE_HEIGHT}
+            height={TIDE_HEIGHT - shade.y}
             fill={`url(#${hatch})`}
             className="pointer-events-none"
           />
@@ -305,12 +388,17 @@ export function BoardTide({
         <line
           x1={nowX}
           x2={nowX}
-          y1={TOP - 6}
+          y1={NOW_LABEL_Y + 4}
           y2={TIDE_HEIGHT}
           className="stroke-brand"
           strokeWidth={1.5}
         />
-        <text x={nowX + 5} y={TOP + 2} className="fill-brand text-2xs font-medium">
+        <text
+          x={nowX}
+          y={NOW_LABEL_Y}
+          textAnchor={nowAnchor}
+          className="fill-brand text-2xs font-medium"
+        >
           {t("Now {0}", formatUnixInUserTimezone(now, { hour: "numeric", minute: "2-digit" }))}
         </text>
         {items.map((item) => (

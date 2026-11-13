@@ -2,7 +2,7 @@ import type { SidebarLink } from "@/components/sidebar-nav";
 import { appAdminLinks } from "@/config/app-navigation";
 import { usePlanRestrictions } from "@/hooks/use-plan-restrictions";
 import { isPlanRestricted } from "@/lib/plan-capability";
-import { normalizePath } from "@/lib/route-utils";
+import { normalizePath } from "@/lib/navigation-paths";
 import { useOrgCapabilities } from "@trenova/shared/hooks/use-org-capabilities";
 import { usePublicConfig } from "@trenova/shared/hooks/use-public-config";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";

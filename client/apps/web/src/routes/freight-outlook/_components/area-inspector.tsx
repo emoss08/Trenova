@@ -1,3 +1,4 @@
+import { FloatingPanelHeader } from "@/components/floating-panel";
 import { RECORD_LINKS } from "@/config/record-links";
 import { usePermission } from "@/hooks/use-permission";
 import { filteredListPath } from "@/lib/filtered-list-path";
@@ -11,7 +12,7 @@ import type {
 import { freightOutlook } from "@/lib/queries/freight-outlook";
 import { useQuery } from "@tanstack/react-query";
 import { LazyComponent } from "@trenova/shared/components/error-boundary";
-import { ChevronLeftIcon, XCloseIcon } from "@trenova/shared/components/icons";
+import { ChevronLeftIcon } from "@trenova/shared/components/icons";
 import { ErrorState } from "@trenova/shared/components/errors/error-state";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -26,8 +27,7 @@ import { Operation, Resource } from "@trenova/shared/types/permission";
 import { lazy, type ReactNode } from "react";
 import { Link } from "react-router";
 import { AreaInspectorSkeleton } from "./area-inspector-skeleton";
-import { CollapseBriefButton } from "./brief-rail";
-import { paceReadings, startsDay } from "./outlook-model";
+import { paceReadings, startsDay, windowOfSlot } from "./outlook-model";
 import { Strong, dayKey, dayLabel, hourLabel, slotLabel, slotRange } from "./outlook-parts";
 import { ReachMapSkeleton } from "./reach-map-skeleton";
 import { useOutlookActions } from "./use-outlook-actions";
@@ -372,7 +372,7 @@ function AreaBody({ detail }: { detail: FreightAreaDetail }) {
                 "<b>{0, plural, one {# truck} other {# trucks}} short {1}</b>. {2}–{3} loads likely, {4} booked, {5, plural, one {# driver} other {# drivers}} expected. One more driver ending here is worth <b>{6}</b>.",
                 { b: strong },
                 Math.round(slot.short),
-                slotRange(slot.start),
+                slotRange(slot),
                 slot.likelyLow,
                 slot.likelyHigh,
                 slot.booked,
@@ -384,7 +384,7 @@ function AreaBody({ detail }: { detail: FreightAreaDetail }) {
                   "<b>{0, plural, one {# truck} other {# trucks}} to spare {1}</b>. {2}–{3} loads likely against {4, plural, one {# driver} other {# drivers}}. A good place to send drivers from.",
                   { b: strong },
                   Math.round(slot.spare),
-                  slotRange(slot.start),
+                  slotRange(slot),
                   slot.likelyLow,
                   slot.likelyHigh,
                   slot.drivers,
@@ -477,7 +477,7 @@ function AreaBody({ detail }: { detail: FreightAreaDetail }) {
           <p className="text-xs text-foreground-subtle">
             {t(
               "No loads started here in {0} in any of the last {1} weeks, so there is no record to show yet.",
-              slotRange(detail.slotStart),
+              slotRange(windowOfSlot(detail)),
               detail.recent.length,
             )}
           </p>
@@ -488,7 +488,7 @@ function AreaBody({ detail }: { detail: FreightAreaDetail }) {
           <p className="text-xs text-foreground-subtle">
             {t(
               "{0}, the last {1} weeks, against its usual {2} to {3}.",
-              slotRange(detail.slotStart),
+              slotRange(windowOfSlot(detail)),
               detail.recent.length,
               detail.recentLow,
               detail.recentHigh,
@@ -546,35 +546,23 @@ function AreaBody({ detail }: { detail: FreightAreaDetail }) {
 export function AreaInspector({
   open,
   onBack,
-  onCollapse,
+  onClose,
 }: {
   open: OpenArea;
   onBack: () => void;
-  onCollapse: () => void;
+  onClose: () => void;
 }) {
   const t = useT();
   const query = useQuery(freightOutlook.area(open.cell, open.slotStart));
 
   return (
     <div className="flex min-h-0 flex-1 animate-in flex-col duration-200 ease-settle fade-in-0 slide-in-from-right-3 motion-reduce:animate-none">
-      <div className="flex h-11 shrink-0 items-center gap-2 border-b border-border-subtle px-3.5">
+      <FloatingPanelHeader onClose={onClose}>
         <Button type="button" size="sm" variant="quiet" className="-ml-1.5 pl-1" onClick={onBack}>
           <ChevronLeftIcon className="size-3.5" />
           {t("Brief")}
         </Button>
-        <span className="ml-auto">
-          <CollapseBriefButton onCollapse={onCollapse} />
-        </span>
-        <Button
-          type="button"
-          size="icon-xs"
-          variant="ghost"
-          aria-label={t("Close")}
-          onClick={onBack}
-        >
-          <XCloseIcon className="size-3" />
-        </Button>
-      </div>
+      </FloatingPanelHeader>
       <ScrollArea
         maskVariant="card"
         maskHeight={18}

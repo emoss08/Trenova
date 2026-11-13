@@ -1,25 +1,35 @@
 import { ForecastNotReady } from "@/components/dispatch/forecast-not-ready";
+import { FloatingPanel } from "@/components/floating-panel";
+import { PageTour } from "@/components/tour/page-tour";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { isTypingTarget, isWithinDialog } from "@/lib/dom";
 import { createRefitPoll, forecastStanding } from "@/lib/dispatch-forecast";
 import { FREIGHT_OUTLOOK_REFETCH_MS, freightOutlook } from "@/lib/queries/freight-outlook";
 import { useQuery } from "@tanstack/react-query";
 import { ErrorState } from "@trenova/shared/components/errors/error-state";
+import { LayoutRightIcon } from "@trenova/shared/components/icons";
+import { Badge } from "@trenova/shared/components/ui/badge";
+import { Button } from "@trenova/shared/components/ui/button";
 import { EmptySheet } from "@trenova/shared/components/ui/empty-sheet";
+import { formatNumber } from "@trenova/shared/i18n/format";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { useEffect, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { AreaInspector, type OpenArea } from "./area-inspector";
 import { BoardSketch } from "./board-sketch";
-import { BriefRail } from "./brief-rail";
 import { FreightOutlookSkeleton } from "./freight-outlook-skeleton";
 import { OutlookBoard } from "./outlook-board";
 import { OutlookBriefPanel } from "./outlook-brief-panel";
 import { horizonSlots, moveKey, movesIn, viewIndexes, type Horizon } from "./outlook-model";
 import { OutlookBrief, OutlookFigures } from "./outlook-overview";
+import { OUTLOOK_TOUR } from "./outlook-tour";
+import { usePageTourStore } from "@/stores/page-tour-store";
 
-/** Whether the inspector is unfolded: a per-browser layout choice, never a record. */
+/** Whether the brief's panel is open: a per-browser layout choice, never a record. */
 const BRIEF_OPEN_KEY = "trenova-freight-outlook-brief-open";
+/** The panel's width: what the track record, a move's row and an area's map are drawn for. */
+const PANEL_WIDTH = 400;
 /** An outlook with no board to draw sits in the middle of the workspace, not under its header. */
 function BoardStandIn({ children }: { children: ReactNode }) {
   return (
@@ -32,10 +42,21 @@ function BoardStandIn({ children }: { children: ReactNode }) {
 /**
  * The freight outlook as a full-screen workspace, the way the dispatch console is laid out:
  * figures across the top, the board (the network's tide over every area's windows, on one time
- * axis) and an inspector holding the brief, or an area once one is picked. A window pinned on
+ * axis) and a panel floating over its right side holding the brief, or an area once one is
+ * picked. A window pinned on
  * the board re-reads everything at that hour; a move pointed at in the brief is drawn on it.
  */
-export function FreightOutlook({ horizon }: { horizon: Horizon }) {
+export function FreightOutlook({
+  horizon,
+  briefSlot,
+}: {
+  horizon: Horizon;
+  /**
+   * The place in the page header for the button that opens the brief. The outlook draws the
+   * button there once it has an outlook to open, with the count of moves waiting in it.
+   */
+  briefSlot: HTMLElement | null;
+}) {
   const t = useT();
   const [refitPoll] = useState(() => createRefitPoll(FREIGHT_OUTLOOK_REFETCH_MS));
   const query = useQuery({
@@ -43,10 +64,15 @@ export function FreightOutlook({ horizon }: { horizon: Horizon }) {
     refetchInterval: (current) => refitPoll(current.state.data?.quality.refitting),
   });
   const [pinned, setPinned] = useState<number | null>(null);
-  const [openArea, setOpenArea] = useState<OpenArea | null>(null);
+  const [chosenArea, setOpenArea] = useState<OpenArea | null>(null);
   const [hotKey, setHotKey] = useState<string | null>(null);
   const [dismissed, setDismissed] = useState<ReadonlySet<string>>(() => new Set());
-  const [briefOpen, setBriefOpen] = useLocalStorage(BRIEF_OPEN_KEY, true);
+  const [briefLeftOpen, setBriefOpen] = useLocalStorage(BRIEF_OPEN_KEY, true);
+  // The tour points into the brief, so while it runs the brief is drawn, whether its panel
+  // was left closed or showing an area; both come back as they were when the tour closes.
+  const touring = usePageTourStore((state) => state.showing === OUTLOOK_TOUR.key);
+  const briefOpen = briefLeftOpen || touring;
+  const openArea = touring ? null : chosenArea;
   const outlook = query.data;
 
   useEffect(() => {
@@ -120,6 +146,14 @@ export function FreightOutlook({ horizon }: { horizon: Horizon }) {
       : (movesIn(outlook.moves, outlook.slotStarts, indexes).find(
           (move) => moveKey(move) === hotKey,
         ) ?? null);
+  const waiting = movesIn(outlook.moves, outlook.slotStarts, indexes).filter(
+    (move) => !dismissed.has(moveKey(move)),
+  ).length;
+  const closePanel = () => {
+    setHotKey(null);
+    setOpenArea(null);
+    setBriefOpen(false);
+  };
 
   return (
     <div
@@ -128,8 +162,33 @@ export function FreightOutlook({ horizon }: { horizon: Horizon }) {
         query.isFetching && !query.isPending && "opacity-90",
       )}
     >
+      <PageTour tour={OUTLOOK_TOUR} />
+      {briefSlot
+        ? createPortal(
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              aria-pressed={briefOpen}
+              className="aria-pressed:border-brand/30 aria-pressed:bg-brand-subtle aria-pressed:text-brand-subtle-foreground"
+              onClick={() => (briefOpen ? closePanel() : setBriefOpen(true))}
+            >
+              <LayoutRightIcon className="size-3.5" />
+              {t("Brief")}
+              {waiting > 0 ? (
+                <Badge variant="success" className="h-4 px-1.5 text-2xs tabular-nums">
+                  {formatNumber(waiting)}
+                </Badge>
+              ) : null}
+            </Button>,
+            briefSlot,
+          )
+        : null}
       <OutlookFigures outlook={outlook} indexes={indexes} pinned={effectivePinned} onJump={jump} />
-      <div className="flex min-h-0 flex-1 max-xl:flex-col">
+      {/* The panel floats over the board instead of sitting beside it, so opening and closing
+          it never resizes the board: the chart and every area row keep their width and are
+          not laid out or drawn again while the panel arrives. */}
+      <div className="@container relative flex min-h-0 flex-1">
         <section
           aria-label={t("Board")}
           className="flex min-w-0 flex-1 flex-col gap-3 px-4 pt-3.5 pb-4 xl:min-h-0 xl:overflow-hidden"
@@ -152,30 +211,13 @@ export function FreightOutlook({ horizon }: { horizon: Horizon }) {
             onOpenArea={open}
           />
         </section>
-        {/* Folds by width, as the console's inspector does, so the board takes back the room
-            rather than being covered; the content keeps its width and fades so nothing reflows
-            mid-fold. */}
-        <aside
-          aria-label={openArea ? t("Area") : t("Brief")}
-          className={cn(
-            "relative flex shrink-0 flex-col overflow-hidden border-border-subtle bg-card max-xl:border-t xl:min-h-0 xl:border-l",
-            "transition-[width] duration-320 ease-settle motion-reduce:transition-none",
-            briefOpen ? "xl:w-100" : "max-xl:h-11 xl:w-11",
-          )}
-        >
-          <div
-            inert={!briefOpen}
-            aria-hidden={!briefOpen}
-            className={cn(
-              "flex min-h-0 flex-1 flex-col transition-opacity duration-200 motion-reduce:transition-none xl:w-100",
-              briefOpen ? "opacity-100" : "pointer-events-none opacity-0",
-            )}
-          >
+        {briefOpen ? (
+          <FloatingPanel label={openArea ? t("Area") : t("Brief")} width={PANEL_WIDTH}>
             {openArea ? (
               <AreaInspector
                 open={openArea}
                 onBack={() => setOpenArea(null)}
-                onCollapse={() => setBriefOpen(false)}
+                onClose={closePanel}
               />
             ) : (
               <OutlookBriefPanel
@@ -185,26 +227,13 @@ export function FreightOutlook({ horizon }: { horizon: Horizon }) {
                 hotKey={hotKey}
                 onHot={setHotKey}
                 onOpenArea={open}
-                onCollapse={() => {
-                  setHotKey(null);
-                  setBriefOpen(false);
-                }}
+                onClose={closePanel}
                 dismissed={dismissed}
                 onDismissedChange={setDismissed}
               />
             )}
-          </div>
-          {briefOpen ? null : (
-            <BriefRail
-              moves={
-                movesIn(outlook.moves, outlook.slotStarts, indexes).filter(
-                  (move) => !dismissed.has(moveKey(move)),
-                ).length
-              }
-              onExpand={() => setBriefOpen(true)}
-            />
-          )}
-        </aside>
+          </FloatingPanel>
+        ) : null}
       </div>
     </div>
   );

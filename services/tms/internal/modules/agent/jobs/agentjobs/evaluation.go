@@ -62,6 +62,7 @@ type replaySource struct {
 	input     *replayInput
 	originals []agentreplay.OriginalProposal
 	recorded  *agentquality.Recording
+	replay    *agentruntimeports.ReplayOf
 }
 
 // openReplay reads what an evaluation replays and marks it running. It returns
@@ -155,6 +156,7 @@ func (a *Activities) openReplay(
 	}
 	if source.recorded != nil {
 		request.Recorded = source.recorded
+		request.Replay = source.replay
 	}
 
 	return &replay{evaluation: evaluation, originals: source.originals, request: request}, nil
@@ -233,7 +235,15 @@ func (a *Activities) caseSource(
 			return nil, inputErr
 		}
 
-		return &replaySource{actor: actor, input: input, originals: originals}, nil
+		recorded, replay := recordedAsOf(evalCase, &input.context)
+
+		return &replaySource{
+			actor:     actor,
+			input:     input,
+			originals: originals,
+			recorded:  recorded,
+			replay:    replay,
+		}, nil
 	}
 
 	actor, err := a.caseActor(ctx, tenant, evalCase)
@@ -252,13 +262,7 @@ func (a *Activities) caseSource(
 		return nil, fmt.Errorf("build runtime context: %w", err)
 	}
 
-	// A replay answered from what the original was given runs as of the
-	// moment the person asked: the recorded results word their dates against
-	// that day, and so must the prompt and the dates the agent passes back.
-	recorded := evalCase.Recording()
-	if asked := evalCase.Asked(); recorded != nil && asked > 0 {
-		runtimeContext.Now = asked
-	}
+	recorded, replay := recordedAsOf(evalCase, &runtimeContext)
 
 	return &replaySource{
 		actor: actor,
@@ -269,7 +273,29 @@ func (a *Activities) caseSource(
 		},
 		originals: originals,
 		recorded:  recorded,
+		replay:    replay,
 	}, nil
+}
+
+// recordedAsOf is what a case's original was given, with the replay's clock
+// set back to when it was asked. The recorded results word their dates
+// against that day, and so must the prompt and the dates the agent passes
+// back. A case with nothing recorded reads the records as they are, as of now.
+func recordedAsOf(
+	evalCase *agentquality.EvalCase,
+	runtimeContext *agentturn.RuntimeContext,
+) (*agentquality.Recording, *agentruntimeports.ReplayOf) {
+	recorded := evalCase.Recording()
+	if recorded == nil {
+		return nil, nil
+	}
+
+	asked := evalCase.Asked()
+	if asked > 0 {
+		runtimeContext.Now = asked
+	}
+
+	return recorded, &agentruntimeports.ReplayOf{CaseID: evalCase.ID, AsOf: asked}
 }
 
 func (a *Activities) caseBackgroundInput(

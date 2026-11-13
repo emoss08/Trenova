@@ -43,6 +43,12 @@ query DeskAttention($input: DeskAttentionInput!) {
       triage
       decisions
     }
+    kinds {
+      kind
+      label
+      lens
+      count
+    }
     hasMore
     seenAt
     seesEveryone

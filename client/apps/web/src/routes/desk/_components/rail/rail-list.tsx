@@ -1,10 +1,8 @@
 "use no memo";
-import { RAIL_LIST_CLASS } from "./rail-classes";
 import { HoverGlideGroup } from "@/components/hover-glide";
 import { deskRailRowKey, type DeskRailRow } from "@/components/desk-chat/rail/desk-rail-rows";
 import { DESK_SHELF_KEYS, type DeskShelfKey } from "@/components/desk-chat/rail/desk-threads";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { cn } from "@trenova/shared/lib/utils";
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 
 /** Rows from the place a shelf's next page arrives at which it is asked for. */
@@ -31,15 +29,16 @@ type RailListProps = {
   empty: ReactNode;
   /** Told which conversations are drawn, overscan included, and told none when the list goes. */
   onThreadsInView?: (threadIds: readonly string[]) => void;
-  /** Names the list as the region that moves when the rail changes view. */
-  className?: string;
+  /** The rail's scroll area, which the rows are windowed against; null until it is drawn. */
+  scrollElement: HTMLElement | null;
 };
 
 /**
- * The rail's scrolling body: the places, then the conversations, of which
- * only the rows near the viewport are mounted however many have been read.
- * Each shelf's next page is asked for before the reader reaches the place it
- * arrives.
+ * What the rail's body holds under the chats and the cases: the places, then
+ * the conversations, of which only the rows near the viewport are mounted
+ * however many have been read. It scrolls in the rail's one scroll area, as
+ * Triage's places do. Each shelf's next page is asked for before the reader
+ * reaches the place it arrives.
  */
 export function RailList({
   nav,
@@ -48,9 +47,8 @@ export function RailList({
   onLoadMore,
   empty,
   onThreadsInView,
-  className,
+  scrollElement,
 }: RailListProps) {
-  const scrollRef = useRef<HTMLDivElement>(null);
   const navRef = useRef<HTMLDivElement>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
   const [scrollMargin, setScrollMargin] = useState(0);
@@ -74,7 +72,7 @@ export function RailList({
   // oxlint-disable-next-line react/incompatible-library -- TanStack Virtual is incompatible with the React Compiler; file is already "use no memo", which oxlint 1.89 ignores
   const virtualizer = useVirtualizer({
     count: rows.length,
-    getScrollElement: () => scrollRef.current,
+    getScrollElement: () => scrollElement,
     estimateSize: (index) => ROW_ESTIMATE[rows[index].kind],
     getItemKey: (index) => deskRailRowKey(rows[index]),
     overscan: OVERSCAN,
@@ -124,7 +122,7 @@ export function RailList({
   useEffect(() => () => onThreadsInView?.([]), [onThreadsInView]);
 
   return (
-    <div className={cn(RAIL_LIST_CLASS, className)} ref={scrollRef}>
+    <>
       <HoverGlideGroup className="bg-transparent" glideClassName="rounded-[8px] bg-dsk-hover">
         <div ref={navRef} className="flex flex-col gap-1">
           {nav}
@@ -144,6 +142,6 @@ export function RailList({
         </div>
       </HoverGlideGroup>
       {rows.length === 0 && empty}
-    </div>
+    </>
   );
 }

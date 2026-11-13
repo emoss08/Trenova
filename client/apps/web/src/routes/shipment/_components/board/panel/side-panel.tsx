@@ -3,8 +3,8 @@ import { AI_SETUP_PATH } from "@/lib/ai-setup";
 import { shipmentBoard } from "@/lib/queries/shipment-board";
 import { useShipmentCapabilities } from "@/lib/shipment-board/capabilities";
 import { useQuery } from "@tanstack/react-query";
-import { PlugIcon, XCloseIcon } from "@trenova/shared/components/icons";
-import { Button } from "@trenova/shared/components/ui/button";
+import { FloatingPanel, FloatingPanelHeader } from "@/components/floating-panel";
+import { PlugIcon } from "@trenova/shared/components/icons";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Tabs, TabsList, TabsPanel, TabsTab } from "@trenova/shared/components/ui/tabs";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -13,7 +13,6 @@ import { useNavigate } from "react-router";
 import { type PanelTab, useShipmentBoardUrl } from "../url-state";
 import { ActionQueue } from "./action-queue";
 import { ActivityTimeline } from "./activity/activity-timeline";
-import { SIDE_PANEL_FRAME_CLASS } from "./side-panel-skeleton";
 import { Watchlist } from "./watchlist";
 
 export function ShipmentSidePanel({ onClose }: { onClose: () => void }) {
@@ -30,28 +29,25 @@ export function ShipmentSidePanel({ onClose }: { onClose: () => void }) {
   const [activityViewport, setActivityViewport] = useState<HTMLDivElement | null>(null);
 
   return (
-    <aside aria-label={t("Brief and activity")} className={SIDE_PANEL_FRAME_CLASS}>
+    <FloatingPanel label={t("Brief and activity")}>
       <Tabs
         value={tab}
         onValueChange={(value) => void setUrl({ tab: value as PanelTab })}
         className="flex min-h-0 flex-1 flex-col gap-0"
       >
-        <div className="border-border flex items-center gap-2 border-b px-3 py-2">
+        <FloatingPanelHeader onClose={onClose}>
           <TabsList className="flex-1">
             <TabsTab value="brief">
               {ai ? t("Brief") : t("Overview")}
               {openCount > 0 ? (
-                <span className="bg-danger text-foreground-on-solid ml-1 rounded-badge px-1.5 font-mono text-2xs tabular-nums">
+                <span className="ml-1 rounded-badge bg-danger px-1.5 font-mono text-2xs text-foreground-on-solid tabular-nums">
                   {openCount}
                 </span>
               ) : null}
             </TabsTab>
             <TabsTab value="activity">{t("Activity")}</TabsTab>
           </TabsList>
-          <Button variant="ghost" size="icon-sm" aria-label={t("Close panel")} onClick={onClose}>
-            <XCloseIcon className="size-4" />
-          </Button>
-        </div>
+        </FloatingPanelHeader>
         <TabsPanel value="brief" className="flex min-h-0 flex-1 flex-col">
           <ScrollArea className="min-h-0 flex-1" maskVariant="raised">
             <div className="flex flex-col gap-5 p-4">
@@ -59,7 +55,7 @@ export function ShipmentSidePanel({ onClose }: { onClose: () => void }) {
                 <button
                   type="button"
                   onClick={() => void navigate(AI_SETUP_PATH)}
-                  className="ui-focus-ring border-border text-muted-foreground hover:text-foreground flex items-center gap-2 rounded-md border border-dashed p-2.5 text-left text-xs"
+                  className="flex items-center gap-2 rounded-md border border-dashed ui-focus-ring border-border p-2.5 text-left text-xs text-muted-foreground hover:text-foreground"
                 >
                   <PlugIcon className="size-3.5 shrink-0" />
                   {t(
@@ -82,6 +78,6 @@ export function ShipmentSidePanel({ onClose }: { onClose: () => void }) {
           </ScrollArea>
         </TabsPanel>
       </Tabs>
-    </aside>
+    </FloatingPanel>
   );
 }

@@ -1,8 +1,15 @@
 package dispatchmarketservice_test
 
 import (
+	"errors"
+	"time"
+	_ "time/tzdata"
+
 	"context"
 	"testing"
+
+	tenantdomain "github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchmarketservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchmarket"
@@ -53,11 +60,37 @@ func (f *fakeRepo) Upsert(_ context.Context, values []*dispatchmarket.MarketValu
 	return nil
 }
 
+type fakeOrganizations struct {
+	tenantports.OrganizationRepository
+
+	timezone string
+	err      error
+}
+
+func (f fakeOrganizations) GetByID(
+	context.Context,
+	tenantports.GetOrganizationByIDRequest,
+) (*tenantdomain.Organization, error) {
+	if f.err != nil {
+		return nil, f.err
+	}
+
+	return &tenantdomain.Organization{Timezone: f.timezone}, nil
+}
+
 func newService(repo *fakeRepo) *dispatchmarketservice.Service {
+	return newServiceIn(repo, fakeOrganizations{})
+}
+
+func newServiceIn(
+	repo *fakeRepo,
+	organizations tenantports.OrganizationRepository,
+) *dispatchmarketservice.Service {
 	return dispatchmarketservice.New(dispatchmarketservice.Params{
-		Logger: zap.NewNop(),
-		DB:     dbtest.NopConnection{},
-		Repo:   repo,
+		Logger:        zap.NewNop(),
+		DB:            dbtest.NopConnection{},
+		Repo:          repo,
+		Organizations: organizations,
 	})
 }
 
@@ -112,7 +145,7 @@ func TestRecord_WritesNothingForDriversWithNoKnownPosition(t *testing.T) {
 func TestValuer_ReadsOnlyTheDestinationCells(t *testing.T) {
 	t.Parallel()
 
-	chicagoKey, _ := dispatchmarket.KeyOf(chicago, mondayMidnight)
+	chicagoKey, _ := dispatchmarket.Grid{}.Key(chicago, mondayMidnight)
 	repo := &fakeRepo{stored: []*dispatchmarket.MarketValue{{
 		Cell:         chicagoKey.Cell,
 		Slot:         chicagoKey.Slot,
@@ -147,4 +180,62 @@ func TestValuer_ReadsNothingWithoutADestination(t *testing.T) {
 	require.NoError(t, err)
 	assert.Empty(t, repo.asked)
 	assert.Zero(t, valuer.Len())
+}
+
+func TestRecordAndValuer_KeepTheOrganizationsOwnClock(t *testing.T) {
+	t.Parallel()
+
+	zone, err := time.LoadLocation("America/Chicago")
+	require.NoError(t, err)
+	grid := dispatchmarket.GridIn(zone)
+	evening := time.Date(2026, time.July, 14, 18, 0, 0, 0, zone).Unix()
+	repo := &fakeRepo{}
+	svc := newServiceIn(repo, fakeOrganizations{timezone: "America/Chicago"})
+
+	err = svc.Record(t.Context(), &dispatchmarketports.RecordRequest{
+		TenantInfo: tenant,
+		ObservedAt: evening,
+		Values: []dispatchmarket.DriverValue{
+			{Start: chicago, AvailableAt: evening, ValueCents: 8_000},
+		},
+	})
+	require.NoError(t, err)
+
+	require.Len(t, repo.upserted, 1)
+	assert.Equal(t, grid.Slot(evening), repo.upserted[0].Slot)
+	assert.NotEqual(t, dispatchmarket.SlotOf(evening), repo.upserted[0].Slot)
+	assert.Equal(t, grid.Week(evening), repo.upserted[0].WeekIndex)
+
+	repo.stored = repo.upserted
+	valuer, err := svc.Valuer(t.Context(), &dispatchmarketports.ValuerRequest{
+		TenantInfo: tenant,
+		Points:     []dispatchmarket.Point{chicago},
+	})
+	require.NoError(t, err)
+	winter := time.Date(2026, time.December, 15, 18, 0, 0, 0, zone).Unix()
+	assert.Positive(t, valuer.EndMarketCents(chicago.Latitude, chicago.Longitude, winter))
+}
+
+func TestRecordAndValuer_FailWhenTheOrganizationCannotBeRead(t *testing.T) {
+	t.Parallel()
+
+	down := errors.New("organizations down")
+	repo := &fakeRepo{}
+	svc := newServiceIn(repo, fakeOrganizations{err: down})
+
+	err := svc.Record(t.Context(), &dispatchmarketports.RecordRequest{
+		TenantInfo: tenant,
+		ObservedAt: mondayMidnight,
+		Values: []dispatchmarket.DriverValue{
+			{Start: chicago, AvailableAt: mondayMidnight, ValueCents: 1},
+		},
+	})
+	require.ErrorIs(t, err, down)
+	assert.Zero(t, repo.upserts, "a value is never filed under a clock nobody could read")
+
+	_, err = svc.Valuer(t.Context(), &dispatchmarketports.ValuerRequest{
+		TenantInfo: tenant,
+		Points:     []dispatchmarket.Point{chicago},
+	})
+	require.ErrorIs(t, err, down)
 }

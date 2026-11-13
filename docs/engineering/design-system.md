@@ -459,6 +459,15 @@ Things that open on a selection open from where they belong:
   `ease-settle`, so the list beside it gives up and takes back the room rather than being
   covered. Its content sits in a fixed-width inner box and enters with `animate-panel-in`,
   keyed by what is selected, so each selection arrives rather than repainting.
+- **A floating panel** (`FloatingPanel`, `components/floating-panel.tsx`: the shipment
+  board's brief and activity, the freight outlook's brief and its areas) sits over the right
+  side of a workspace instead of beside it and enters with `animate-panel-in`. Use it, not a
+  width fold, when what it would push aside is costly to lay out or draw (a board of
+  pixel-measured charts): a pane that opens by width resizes its neighbour on every frame,
+  and the freight outlook redrew its whole board twenty times per fold. Its host is
+  `relative @container`; `FloatingPanelHeader` is its top row, with the one button that
+  closes it. The workspace keeps a control that opens it again and says what is waiting in
+  it.
 - **Something opened in place** (a pre-flight under the driver it is for, a reason box
   under the decision it explains) takes `animate-expand-in`.
 - **A row a write takes away** collapses over 200ms (`grid-rows-[1fr]` to `grid-rows-[0fr]`
@@ -545,6 +554,24 @@ right, and the star behind a hairline after them. Pass `title`, `description`,
 and never set its `leading` or `trailing` slots, which belong to the shell. The two
 pages that draw their own bar (Home's briefing, AI control's head) put
 `PageBarControls` from `rail-page-bar.tsx` where the fold and history would be.
+
+**Every crumb in the trail opens something.** The trail takes its names from the
+navigation config (`generateBreadcrumbSegments` in `lib/route-utils.ts`) and shows a
+parent only when it is a page, a section, or a record a page named with
+`useBreadcrumbLabel`; a folder of the URL that nothing fills
+(`/accounting/journal-entries`) is left out rather than drawn as a link to the not-found
+page. A section is a module's root (`/dispatch`) or the folder a navigation group's pages
+share (`/billing/configuration-files`), listed in `lib/navigation-sections.ts`. The router
+mounts the section index (`routes/section-index/page.tsx`) at every section no page fills
+(`withSectionIndexes` in `lib/section-routes.ts`); it lists the pages there the person may
+open, grouped the way the sidebar groups them. A new module or group needs nothing
+more; never add a placeholder route or a redirect for a section.
+
+**Every control in the bar is 28px tall.** A button with a label is `size="sm"`, an icon
+alone is `size="icon-sm"`, both with a `size-3.5` icon, and the shell's own fold, history
+and star are the same (`PAGE_BAR_BUTTON_SIZE` in `components/header.tsx`). A default
+button is 32px and an `xs` one 24px; either beside the others reads as a mistake. The
+info icon after the title is text, not a control in the row, and keeps its own size.
 
 **A list page bleeds.** When the page body's only child is a data table, the body
 drops its padding and the table runs edge to edge: no outer box, no page gutter,
@@ -813,6 +840,57 @@ each child of a `DataTableLazyComponent` to its module (through `lazy`,
 `lazyComponent` and imports) and fails when that module does not render a
 `DataTable`, and it fails a `<Suspense>` with no `fallback`. A genuine exception takes
 `loading-skeleton-ignore: <reason>` in a comment on or above the line.
+
+### Page tours
+
+A page whose parts need explaining the first time (the freight outlook: a forecast, a
+board and a brief nobody has seen elsewhere) carries a tour: a short walk through the
+page, one part lit at a time while the rest is dimmed. A tour is for a page that is hard
+to read cold. A page that is a table and a form does not get one; its About note and empty
+state already say what it is.
+
+- **One component.** `PageTour` (`components/tour/page-tour.tsx`) draws every tour: the
+  shared `Popover` for the card, anchored to the part it describes, over `TourSpotlight`.
+  No tour library, and no second card design.
+- **A tour is a definition.** A `TourDefinition` (`components/tour/tour-model.ts`) is a
+  `key` (lowercase words joined by hyphens), a `version` and `steps(t)`: a title, a body
+  and the `target` each step points at. The page marks each target with
+  `{...tourTarget(name)}`, renders `<PageTour tour={…} />` where its content is drawn, and
+  passes `tour: KEY` in `pageHeaderProps`. `routes/freight-outlook/_components/outlook-tour.ts`
+  is the model to copy.
+- **It opens once.** The first time a person reaches the page, after the read that draws
+  the targets has worked (mount it in that branch, or pass `ready`). Finishing and skipping
+  both count as seen. Which tours a person has seen is kept on the server
+  (`page_tour_views`, `myPageTourViews` and `recordMyPageTour`), never in browser storage,
+  so it follows them across devices. Raise `version` only when the steps change enough that
+  someone who saw the tour should see it again.
+- **It can be taken again.** The header's About note offers **Take the tour** while the
+  page's tour is on screen.
+- **A step whose target is not drawn is passed over** (no moves today, a section the person
+  may not see, anything inside an `inert` panel), so a step never points at nothing. A step
+  with no `target` sits in the middle of the window: use it once, to say what the page is
+  for.
+- **The page draws itself whole for its tour.** A page that folds a panel a step points
+  into reads `usePageTourStore((state) => state.showing === KEY)` and draws the panel open
+  while that is true, without changing what the person left: the freight outlook unfolds
+  its brief and sets aside an open area, and both come back when the tour closes.
+- **Only what shows is lit, and the card never leaves the window.** A list longer than the
+  box it scrolls in is lit where it shows through that box (`visibleBox`,
+  `components/tour/tour-frame.ts`), not along its whole length. `placeCard`
+  (`tour-geometry.ts`) hangs the card off the side the step asked for when the measured card
+  fits there, then the opposite side, then the roomier of the other two; a part that leaves
+  no side with room gets the card against the window's top or bottom edge, whichever covers
+  less of it. A step's `side` is a preference, never a position to work around.
+- **Writing one.** Eight to ten steps at most, in the order the page is read. Each says
+  what the part shows and what selecting it does, in two or three sentences, and names
+  controls by the words on them. The last step says where the tour can be found again.
+- **Keyboard.** The card holds focus; Left and Right move between steps and Escape skips.
+  Pressing the dimmed page does nothing, so a stray click does not end a tour.
+- **Working on one.** A development build puts `tour` on the browser console
+  (`stores/page-tour-console.ts`): `tour.show()` opens the tour of the page on screen, seen
+  or not; `tour.always()` opens every tour on every visit, as a first-time visitor gets it,
+  until `tour.always(false)`; `tour.list()` names the tours the page can run. A release has
+  none of it.
 
 ## No record ids on screen
 

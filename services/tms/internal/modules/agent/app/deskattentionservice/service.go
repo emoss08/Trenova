@@ -77,13 +77,14 @@ func (s *Service) Attention(
 	out := &deskattentionports.Attention{
 		Groups:       []*deskattentionports.Group{},
 		Counts:       lensCounts(counts),
+		Kinds:        kindCounts(counts, req.Kinds),
 		SeenAt:       counts.SeenAt,
 		SeesEveryone: sight.All,
 	}
 
 	var items []*watchtower.Item
 	if len(req.RecordIDs) > 0 {
-		page, lErr := s.list(ctx, req, actor, nil, req.RecordIDs, nil, false)
+		page, lErr := s.list(ctx, req, actor, narrowing{about: req.RecordIDs})
 		if lErr != nil {
 			return nil, lErr
 		}
@@ -93,7 +94,13 @@ func (s *Service) Attention(
 		if len(req.Kinds) > 0 && len(kinds) == 0 {
 			return out, nil
 		}
-		page, lErr := s.list(ctx, req, actor, kinds, nil, req.Severities, req.Working)
+		page, lErr := s.list(ctx, req, actor, narrowing{
+			kinds:      kinds,
+			severities: req.Severities,
+			working:    req.Working,
+			search:     req.Search,
+			unseen:     req.Unseen,
+		})
 		if lErr != nil {
 			return nil, lErr
 		}
@@ -104,7 +111,7 @@ func (s *Service) Attention(
 
 		about := aboutIDs(items)
 		if len(about) > 0 {
-			filled, fErr := s.list(ctx, req, actor, nil, about, nil, false)
+			filled, fErr := s.list(ctx, req, actor, narrowing{about: about})
 			if fErr != nil {
 				return nil, fErr
 			}
@@ -161,27 +168,69 @@ func (s *Service) own(
 	return nil
 }
 
+type narrowing struct {
+	kinds      []watchtower.SourceKind
+	about      []pulid.ID
+	severities []watchtower.Severity
+	working    bool
+	search     string
+	unseen     bool
+}
+
 func (s *Service) list(
 	ctx context.Context,
 	req *deskattentionports.AttentionRequest,
 	actor *permissionports.RequestActor,
-	kinds []watchtower.SourceKind,
-	about []pulid.ID,
-	severities []watchtower.Severity,
-	working bool,
+	by narrowing,
 ) (*watchtowerports.WatchtowerPage, error) {
 	return s.watchtower.List(ctx, watchtowerports.ListWatchtowerItemsRequest{
-		AgentWorking:   working,
+		AgentWorking:   by.working,
 		TenantInfo:     req.TenantInfo,
-		Kinds:          kinds,
-		Severities:     severities,
+		Kinds:          by.kinds,
+		Severities:     by.severities,
 		UnresolvedOnly: true,
 		Statuses:       queueStatuses,
-		AboutIDs:       about,
+		AboutIDs:       by.about,
 		OrderByDue:     true,
 		First:          window,
 		Mine:           req.Mine,
+		Search:         by.search,
+		UnseenOnly:     by.unseen,
 	}, actor)
+}
+
+func kindCounts(
+	counts *watchtowerports.WatchtowerCounts,
+	asked []watchtower.SourceKind,
+) []deskattentionports.KindCount {
+	open := make(map[watchtower.SourceKind]int, len(counts.ByKind)+len(asked))
+	for _, kind := range asked {
+		if kind.IsValid() {
+			open[kind] = 0
+		}
+	}
+	for kind, n := range counts.ByKind {
+		if n > 0 {
+			open[kind] = n
+		}
+	}
+	out := make([]deskattentionports.KindCount, 0, len(open))
+	for kind, n := range open {
+		out = append(out, deskattentionports.KindCount{
+			Kind:  kind,
+			Label: kind.Label(),
+			Lens:  desklens.Of(kind),
+			Count: n,
+		})
+	}
+	slices.SortFunc(out, func(a, b deskattentionports.KindCount) int {
+		if c := cmp.Compare(b.Count, a.Count); c != 0 {
+			return c
+		}
+		return cmp.Compare(a.Label, b.Label)
+	})
+
+	return out
 }
 
 func lensCounts(counts *watchtowerports.WatchtowerCounts) deskattentionports.LensCounts {

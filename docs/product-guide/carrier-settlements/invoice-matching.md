@@ -1,6 +1,6 @@
 ---
 path: /carrier-settlements/invoice-matching
-aliases: [carrier invoice reconciliation, freight bill audit, match carrier bills, EDI 210, carrier invoice variance, three-way match, freight audit]
+aliases: [carrier invoice reconciliation, freight bill audit, match carrier bills, EDI 210, carrier invoice variance, three-way match, freight audit, carrier overbilled, carrier billed more than agreed, carrier billed the wrong rate, carrier invoice does not match the rate]
 related:
   - /carrier-settlements/workspace
   - /carrier-settlements/cost-events

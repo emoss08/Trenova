@@ -66,6 +66,84 @@ cases:
     expect: [/desk]
   - request: have an agent run a question every weekday morning
     expect: [/desk]
+  - request: who should we call first about overdue invoices
+    expect: [/accounting/ar/collections]
+  - request: charge customers interest on invoices they pay late
+    expect: [/accounting/ar/late-charges]
+  - request: what do we own and what do we owe as of the end of the period
+    expect: [/accounting/reports/balance-sheet]
+  - request: where do I pull a trial balance
+    expect: [/accounting/reports/trial-balance]
+  - request: an invoice total was edited in QuickBooks and no longer matches
+    expect: [/accounting/sync/drift]
+  - request: undo a journal entry that was posted by mistake
+    expect: [/accounting/journal-reversals]
+  - request: set up next year's accounting calendar
+    expect: [/accounting/configuration-files/fiscal-years]
+  - request: create a token so another system can call Trenova
+    expect: [/admin/api-keys]
+  - request: who changed this customer's credit limit
+    expect: [/admin/audit-logs]
+  - request: add our own field to the trailer record
+    expect: [/admin/custom-fields]
+  - request: edit the list of reasons a load can be put on hold
+    expect: [/admin/hold-reasons]
+  - request: connect our telematics provider
+    expect: [/admin/integrations]
+  - request: the mileage between two locations is wrong, fix it
+    expect: [/admin/distance-overrides]
+  - request: where do I add a lumper or tarp fee we can bill
+    expect: [/billing/configuration-files/accessorial-charges]
+  - request: where are our customer contracts and the lanes they price
+    expect: [/billing/rate-agreements]
+  - request: send invoices to our factoring company
+    expect: [/billing/factoring]
+  - request: a carrier billed us more than the rate we agreed
+    expect: [/carrier-settlements/invoice-matching]
+  - request: set free time and the hourly rate for waiting at a dock
+    expect: [/detention/configuration-files/detention-policies]
+  - request: tell me when a carrier's insurance lapses
+    expect: [/dispatch/carrier-monitoring]
+  - request: add a new warehouse address
+    expect: [/dispatch/locations]
+  - request: where will we be short of trucks tomorrow
+    expect: [/dispatch/outlook]
+  - request: add a trading partner for EDI
+    expect: [/edi/partners]
+  - request: an EDI file got quarantined, where do I see it
+    expect: [/edi/inbound-files]
+  - request: where do I add a trailer
+    expect: [/equipment/trailers]
+  - request: record a diesel purchase for a truck
+    expect: [/fuel/purchases]
+  - request: add deadhead miles by state for the IFTA return
+    expect: [/fuel/jurisdiction-mileage]
+  - request: set up the fuel surcharge table
+    expect: [/fuel/configuration-files/surcharge]
+  - request: draw drivers for a random drug test
+    expect: [/hr/random-testing]
+  - request: log a workplace injury for OSHA
+    expect: [/hr/osha-log]
+  - request: approve hourly staff timesheets
+    expect: [/hr/time-attendance]
+  - request: add a company holiday
+    expect: [/hr/holidays]
+  - request: take a truck lease payment out of every settlement
+    expect: [/payroll/deductions]
+  - request: where is the owner-operator maintenance escrow balance
+    expect: [/payroll/escrow-accounts]
+  - request: a driver says his settlement is wrong
+    expect: [/payroll/disputes]
+  - request: how long do we keep old records before they are deleted
+    expect: [/organization/data-retention]
+  - request: download a report I ran yesterday
+    expect: [/reports/runs]
+  - request: create the same load every Monday automatically
+    expect: [/shipment-management/recurring-shipments]
+  - request: add a commodity we haul
+    expect: [/shipment-management/configuration-files/commodities]
+  - request: which training does a new driver have to complete
+    expect: [/hr/training-courses]
 nothing:
   - xyzzy plugh
   - quantum chromodynamics lattice

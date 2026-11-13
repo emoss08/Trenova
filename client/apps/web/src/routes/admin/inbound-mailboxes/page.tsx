@@ -92,12 +92,13 @@ export function InboundMailboxesPage() {
         ),
         actions: canCreate ? (
           <Button
+            size="sm"
             onClick={() => {
               setEditing(null);
               setFormOpen(true);
             }}
           >
-            <PlusIcon className="size-4" />
+            <PlusIcon className="size-3.5" />
             {t("New mailbox")}
           </Button>
         ) : undefined,

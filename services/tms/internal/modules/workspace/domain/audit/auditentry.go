@@ -32,6 +32,10 @@ var (
 	_ pagination.CursorEntity        = (*Entry)(nil)
 )
 
+// MetadataAgentID is the metadata key naming the agent whose tool call made
+// a change.
+const MetadataAgentID = "agentDefinitionId"
+
 type Entry struct {
 	keel.Table `keel:"audit_entries"`
 

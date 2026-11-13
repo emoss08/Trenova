@@ -22,6 +22,7 @@ import (
 	"strings"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentmemorydesk"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentmemoryrank"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentmemorysubjects"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -101,7 +102,7 @@ type Service struct {
 	labeler      agentmemorysubjects.SubjectLabeler
 	audit        actionLogger
 	subjects     agentmemorysubjects.SubjectResolver
-	subjectNames agentmemoryports.AgentMemorySubjectRepository
+	subjectNames agentmemorysubjects.NameResolver
 	ranker       agentmemoryports.MemoryRanker
 	indexer      retrievalports.RetrievalIndexer
 	vectors      retrievalports.MemoryVectorSearcher
@@ -109,18 +110,22 @@ type Service struct {
 	security     permissionports.SecurityAuditor
 	permissions  permissionports.PermissionEngine
 	judge        agentmemoryports.MemoryJudge
+
+	// Desk is the Desk's memory page and conversation cards. It is part of
+	// the same service to its callers and a package of its own to keep.
+	*agentmemorydesk.Desk
 }
 
 //nolint:gocritic // fx requires an fx.In parameter struct to be passed by value.
 func New(p Params) agentmemoryports.AgentMemoryService {
-	return &Service{
+	s := &Service{
 		l:            p.Logger.Named("service.agentmemory"),
 		repo:         p.Repo,
 		runs:         p.Runs,
 		labeler:      p.Labeler,
 		audit:        p.AuditService,
 		subjects:     agentmemorysubjects.NewSubjectResolver(p.Subjects),
-		subjectNames: p.Subjects,
+		subjectNames: agentmemorysubjects.NewNameResolver(p.Subjects),
 		ranker:       p.Ranker,
 		indexer:      p.Indexer,
 		vectors:      p.Vectors,
@@ -129,6 +134,9 @@ func New(p Params) agentmemoryports.AgentMemoryService {
 		permissions:  p.Permissions,
 		judge:        p.Judge,
 	}
+	s.Desk = agentmemorydesk.New(s, s.repo, s.l)
+
+	return s
 }
 
 func (s *Service) MayManageShared(
@@ -173,16 +181,6 @@ func (s *Service) manages(
 	}
 
 	return s.MayManageShared(ctx, tenant, actor.UserID)
-}
-
-// errSharedMemoryManaged is the refusal for keeping or changing a memory other
-// people's conversations read without the permission to.
-func errSharedMemoryManaged() error {
-	return errortypes.NewAuthorizationError(
-		"Only an administrator keeps, changes, pauses or forgets a memory shared with a " +
-			"team, the organization or every agent: it needs permission to manage agent " +
-			"memory",
-	)
 }
 
 func (s *Service) Remember(
@@ -488,7 +486,7 @@ func (s *Service) Update(
 		return nil, err
 	}
 	if entity.Scope.Shared() && !s.manages(ctx, req.TenantInfo, actor) {
-		return nil, errSharedMemoryManaged()
+		return nil, agentmemoryports.ErrSharedMemoryManaged()
 	}
 	if err = rewritable(entity, actor); err != nil {
 		return nil, err
@@ -556,7 +554,7 @@ func mayChangeStatus(
 			return nil
 		}
 
-		return errSharedMemoryManaged()
+		return agentmemoryports.ErrSharedMemoryManaged()
 	}
 	if actor.IsUser() && current.OwnerUserID != nil && *current.OwnerUserID == actor.UserID {
 		return nil
@@ -644,7 +642,7 @@ func (s *Service) notReplaced(
 	}
 
 	replacement := agentmemory.NewestReplacements(replacements)[memory.ID]
-	if replacement == nil || !Replaceable(replacement.Status) {
+	if replacement == nil || !replacement.Status.Replaceable() {
 		return nil
 	}
 

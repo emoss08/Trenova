@@ -58,7 +58,7 @@ func folded(
 		OrganizationID: s.tenant.OrgID,
 		BusinessUnitID: s.tenant.BuID,
 		Existing:       existing,
-		Samples:        dispatchmarket.Aggregate(observedAt, values),
+		Samples:        dispatchmarket.Aggregate(dispatchmarket.Grid{}, observedAt, values),
 	})
 }
 

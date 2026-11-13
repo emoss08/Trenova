@@ -80,8 +80,15 @@ func (r *repository) claimed(
 		idIs(rf.ThreadID, entity.ThreadID),
 		rf.ThroughSequence.Eq(int64(entity.ThroughSequence)),
 	)
-	if entity.SubjectType == agentreflection.ReflectionSubjectRun {
+	switch entity.SubjectType {
+	case agentreflection.ReflectionSubjectRun:
 		subject = idIs(rf.RunID, entity.RunID)
+	case agentreflection.ReflectionSubjectCorrection:
+		subject = keel.And(
+			rf.PatternKey.Eq(entity.PatternKey),
+			rf.ThroughSequence.Eq(int64(entity.ThroughSequence)),
+		)
+	case agentreflection.ReflectionSubjectThread:
 	}
 
 	held, err := rf.Where(rf.SubjectType.Eq(entity.SubjectType), subject).First(ctx, r.db.Keel(ctx))
@@ -151,7 +158,10 @@ func (r *repository) ThreadReflectedThrough(
 			Where(
 				rf.SubjectType.Eq(agentreflection.ReflectionSubjectThread),
 				rf.ThreadID.Eq(req.ThreadID),
-				rf.Status.Ne(agentreflection.ReflectionStatusFailed),
+				rf.Status.In(
+					agentreflection.ReflectionStatusSkipped,
+					agentreflection.ReflectionStatusCompleted,
+				),
 			).
 			Order(rf.ThroughSequence.Desc()).
 			First(ctx, r.db.Keel(ctx))
@@ -191,4 +201,101 @@ func (r *repository) ListConnection(
 			return result, nil
 		},
 	)
+}
+
+// ListLearningTriggers reads only the look backs that called a model: the
+// skipped ones cost nothing and are most of the table.
+func (r *repository) ListLearningTriggers(
+	ctx context.Context,
+	req *agentreflectionports.ListLearningTriggersRequest,
+) ([]agentreflectionports.LearningTrigger, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]agentreflectionports.LearningTrigger, error) {
+			rf := agentreflectiondb.Reflections
+			trigger := keel.StringOf(rf.Signals.Text("0", "kind")).Coalesce("")
+			toldAgain := keel.Int64Of(keel.Raw(
+				"(SELECT count(*) FROM jsonb_array_elements(?) AS lesson "+
+					"WHERE lesson->>'action' = 'Refreshed')",
+				rf.Changes,
+			))
+
+			rows, err := keel.Into[agentreflectionports.LearningTrigger](ctx, r.db.Keel(ctx), rf.
+				Where(
+					rf.Status.Eq(agentreflection.ReflectionStatusCompleted),
+					rf.CreatedAt.Gte(req.Since),
+				).
+				Group(trigger).
+				Pick(
+					trigger,
+					keel.Count(),
+					keel.Count().Filter(keel.Raw("jsonb_array_length(?) = 0", rf.Changes)),
+					keel.CastInt64(keel.NumericOf(toldAgain.Sum()).Coalesce(0)),
+					keel.CastInt64(keel.NumericOf(rf.InputTokens.Sum()).Coalesce(0)),
+					keel.CastInt64(keel.NumericOf(rf.OutputTokens.Sum()).Coalesce(0)),
+				))
+			if err != nil {
+				return nil, fmt.Errorf("count what look backs found: %w", err)
+			}
+
+			return rows, nil
+		},
+	)
+}
+
+func (r *repository) FailInterrupted(
+	ctx context.Context,
+	req *agentreflectionports.FailInterruptedRequest,
+) error {
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		rf := agentreflectiondb.Reflections
+		_, err := rf.Where(
+			rf.SubjectType.Eq(agentreflection.ReflectionSubjectThread),
+			rf.ThreadID.Eq(req.ThreadID),
+			rf.Status.Eq(agentreflection.ReflectionStatusRunning),
+			rf.ID.Ne(req.ExceptID),
+		).Update(
+			ctx,
+			r.db.Keel(ctx),
+			rf.Status.To(agentreflection.ReflectionStatusFailed),
+			rf.ErrorMessage.To(req.Message),
+			rf.FinishedAt.To(req.At),
+			rf.UpdatedAt.To(req.At),
+		)
+		if err != nil {
+			return fmt.Errorf("fail a conversation's interrupted look backs: %w", err)
+		}
+
+		return nil
+	})
+}
+
+// ListCorrectionLookBacks names the patterns a look back has read since a
+// time. A failed one does not count: it read nothing.
+func (r *repository) ListCorrectionLookBacks(
+	ctx context.Context,
+	req *agentreflectionports.ListCorrectionLookBacksRequest,
+) ([]string, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]string, error) {
+		if len(req.PatternKeys) == 0 {
+			return []string{}, nil
+		}
+
+		rf := agentreflectiondb.Reflections
+		keys, err := keel.Into[string](ctx, r.db.Keel(ctx), rf.
+			Where(
+				rf.SubjectType.Eq(agentreflection.ReflectionSubjectCorrection),
+				rf.PatternKey.In(req.PatternKeys...),
+				rf.Status.Ne(agentreflection.ReflectionStatusFailed),
+				rf.CreatedAt.Gte(req.Since),
+			).
+			Group(rf.PatternKey).
+			Pick(rf.PatternKey))
+		if err != nil {
+			return nil, fmt.Errorf("list the corrections already looked back over: %w", err)
+		}
+
+		return keys, nil
+	})
 }

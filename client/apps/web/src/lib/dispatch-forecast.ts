@@ -97,7 +97,7 @@ export function forecastStandingCopy(
       return {
         title: t("Ready"),
         description: t(
-          "Tested on your last {0, plural, one {week} other {# weeks}}: {1} of actual counts fell inside the forecast range; {2} more accurate than repeating last week.",
+          "Tested on your last {0, plural, one {week} other {# weeks}}: {1} of days landed inside the forecast range; {2} more accurate than repeating last week.",
           quality.weeksTested,
           formatShare(quality.intervalCoverage),
           formatShare(quality.skill),

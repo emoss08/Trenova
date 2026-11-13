@@ -4,7 +4,12 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { useLocation } from "react-router";
 import "@/components/desk-chat/desk-frame.css";
-import { RAIL_LIST_CLASS, RAIL_TOP_CLASS, railClass } from "./_components/rail/rail-classes";
+import {
+  RAIL_BODY_CLASS,
+  RAIL_GUTTER_CLASS,
+  RAIL_TOP_CLASS,
+  railClass,
+} from "./_components/rail/rail-classes";
 import "./_components/today/today.css";
 import "./_components/top/top.css";
 
@@ -64,7 +69,7 @@ export function DeskLoadingScreen() {
           <i className="dk-sk dk-sk-ic" />
           <i className="dk-sk dk-sk-ic" />
         </div>
-        <div className={cn(RAIL_LIST_CLASS, "dk-skr-list")}>
+        <div className={cn(RAIL_BODY_CLASS, RAIL_GUTTER_CLASS, "dk-skr-list overflow-hidden")}>
           {PLACE_WIDTHS.map((width) => (
             <div key={width} className="dk-skr">
               <i className="dk-sk dk-sk-glyph" />

@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/operations/domain/demandfit"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/demandforecast"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -37,11 +38,12 @@ type HistoryRequest struct {
 	TenantInfo pagination.TenantInfo
 	Since      int64
 	Until      int64
+	Timezone   string
 }
 
 type HistoryRows struct {
 	Counts    []LocationCount
-	Leads     []demandforecast.LeadCount
+	Leads     []demandfit.LeadCount
 	Locations []LocationSummary
 }
 
@@ -50,11 +52,6 @@ type ReplaceRequest struct {
 	Fitted     *demandforecast.Fitted
 	Quality    *demandforecast.Quality
 	Days       []*demandforecast.Day
-}
-
-type CellsRequest struct {
-	TenantInfo pagination.TenantInfo
-	Cells      []int64
 }
 
 type Model struct {
@@ -83,7 +80,6 @@ type Repository interface {
 	History(ctx context.Context, req *HistoryRequest) (*HistoryRows, error)
 	Replace(ctx context.Context, req *ReplaceRequest) error
 	Quality(ctx context.Context, tenantInfo pagination.TenantInfo) (*demandforecast.Quality, error)
-	ModelForCells(ctx context.Context, req *CellsRequest) (*Model, error)
 	Model(ctx context.Context, tenantInfo pagination.TenantInfo) (*Model, error)
 	Days(ctx context.Context, tenantInfo pagination.TenantInfo) ([]*demandforecast.Day, error)
 	ListBooked(ctx context.Context, req *BookedRequest) ([]BookedSlot, error)
@@ -114,6 +110,7 @@ type DriverStartsRequest struct {
 	TenantInfo pagination.TenantInfo
 	Now        int64
 	WorkerIDs  []pulid.ID
+	Location   *time.Location
 }
 
 type DriverStart struct {
@@ -157,9 +154,7 @@ type Departure struct {
 type ForecasterRequest struct {
 	TenantInfo    pagination.TenantInfo
 	Now           int64
-	AllCells      bool
 	Horizon       int64
-	Cells         []int64
 	Supply        []demandforecast.Driver
 	Solving       []demandforecast.Booked
 	MarginPercent int64

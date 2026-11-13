@@ -277,6 +277,16 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNString2ᚕstringᚄ),
 			},
 			{
+				Name:     "reachedTools",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agentquality.EvalCase)
+					return obj.ReachedTools, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2ᚕstringᚄ),
+			},
+			{
 				Name:       "toolFixtures",
 				NonNull:    true,
 				IsResolver: true,

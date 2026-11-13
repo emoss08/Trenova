@@ -1,4 +1,4 @@
-import type { BreadcrumbMatch, RoomRail, ShellFrame } from "@/types/router";
+import type { HandleMatch, RoomRail, ShellFrame } from "@/types/router";
 import { createContext, useContext, type ReactNode } from "react";
 import { useMatches } from "react-router";
 
@@ -13,7 +13,7 @@ export function useShellFrame(): ShellFrame {
 }
 
 /** The frame the deepest route that names one asks for; a page when none does. */
-export function frameOfMatches(matches: readonly Pick<BreadcrumbMatch, "handle">[]): ShellFrame {
+export function frameOfMatches(matches: readonly Pick<HandleMatch, "handle">[]): ShellFrame {
   for (let index = matches.length - 1; index >= 0; index -= 1) {
     const frame = matches[index].handle?.frame;
     if (frame !== undefined) {
@@ -26,13 +26,13 @@ export function frameOfMatches(matches: readonly Pick<BreadcrumbMatch, "handle">
 
 /** The frame the matched routes ask the shell for. */
 export function useRouteFrame(): ShellFrame {
-  const matches = useMatches() as unknown as BreadcrumbMatch[];
+  const matches = useMatches() as unknown as HandleMatch[];
 
   return frameOfMatches(matches);
 }
 
 /** How the deepest route that names one asks its room's rail to sit; it folds when none does. */
-export function roomRailOfMatches(matches: readonly Pick<BreadcrumbMatch, "handle">[]): RoomRail {
+export function roomRailOfMatches(matches: readonly Pick<HandleMatch, "handle">[]): RoomRail {
   for (let index = matches.length - 1; index >= 0; index -= 1) {
     const roomRail = matches[index].handle?.roomRail;
     if (roomRail !== undefined) {
@@ -45,7 +45,7 @@ export function roomRailOfMatches(matches: readonly Pick<BreadcrumbMatch, "handl
 
 /** How the matched routes ask the shell to sit a room's own rail. */
 export function useRouteRoomRail(): RoomRail {
-  const matches = useMatches() as unknown as BreadcrumbMatch[];
+  const matches = useMatches() as unknown as HandleMatch[];
 
   return roomRailOfMatches(matches);
 }

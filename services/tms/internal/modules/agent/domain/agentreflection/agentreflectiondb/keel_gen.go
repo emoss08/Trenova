@@ -30,6 +30,7 @@ var reflectionsTable = schema.Table{
 		{Name: "subject_type", Quoted: `"subject_type"`, Field: "SubjectType", Kind: schema.KindString, Flags: 0, Label: `Subject Type`, JSON: `subjectType`, Enum: enumReflectionSubject[:]},
 		{Name: "thread_id", Quoted: `"thread_id"`, Field: "ThreadID", Kind: schema.KindString, Flags: schema.FlagNullable, Label: `Thread ID`, JSON: `threadId`},
 		{Name: "run_id", Quoted: `"run_id"`, Field: "RunID", Kind: schema.KindString, Flags: schema.FlagNullable, Label: `Run ID`, JSON: `runId`},
+		{Name: "pattern_key", Quoted: `"pattern_key"`, Field: "PatternKey", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Pattern Key`, JSON: `patternKey`},
 		{Name: "user_id", Quoted: `"user_id"`, Field: "UserID", Kind: schema.KindString, Flags: schema.FlagNullable, Label: `User ID`, JSON: `userId`},
 		{Name: "from_sequence", Quoted: `"from_sequence"`, Field: "FromSequence", Kind: schema.KindInt64, Flags: 0, Label: `From Sequence`, JSON: `fromSequence`},
 		{Name: "through_sequence", Quoted: `"through_sequence"`, Field: "ThroughSequence", Kind: schema.KindInt64, Flags: 0, Label: `Through Sequence`, JSON: `throughSequence`},
@@ -51,14 +52,14 @@ var reflectionsTable = schema.Table{
 	},
 	PK:           []int32{0, 1, 2},
 	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 24},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 25},
 	Returning:    nil,
-	Version:      22,
+	Version:      23,
 	AutoID:       0,
-	AutoCreate:   23,
-	AutoUpdate:   24,
+	AutoCreate:   24,
+	AutoUpdate:   25,
 	IDPrefix:     "arfl_",
 	New:          newReflection,
 	NewN:         newNReflection,
@@ -80,6 +81,7 @@ type ReflectionsTable struct {
 	SubjectType       ReflectionSubjectCol
 	ThreadID          keelkinds.PulidIDCol
 	RunID             keelkinds.PulidIDCol
+	PatternKey        keel.StringCol
 	UserID            keelkinds.PulidIDCol
 	FromSequence      keel.Int64Col
 	ThroughSequence   keel.Int64Col
@@ -110,24 +112,25 @@ var Reflections = &ReflectionsTable{
 	SubjectType:       ReflectionSubjectCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reflectionsRef, Index: 4}}},
 	ThreadID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reflectionsRef, Index: 5}}},
 	RunID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reflectionsRef, Index: 6}}},
-	UserID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reflectionsRef, Index: 7}}},
-	FromSequence:      keel.Int64Col{Col: keel.Col{Ref: &reflectionsRef, Index: 8}},
-	ThroughSequence:   keel.Int64Col{Col: keel.Col{Ref: &reflectionsRef, Index: 9}},
-	Status:            ReflectionStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reflectionsRef, Index: 10}}},
-	SkipReason:        ReflectionSkipCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reflectionsRef, Index: 11}}},
-	Signals:           keel.JSONBCol{Col: keel.Col{Ref: &reflectionsRef, Index: 12}},
-	Changes:           keel.JSONBCol{Col: keel.Col{Ref: &reflectionsRef, Index: 13}},
-	Notes:             keel.StringCol{Col: keel.Col{Ref: &reflectionsRef, Index: 14}},
-	Tainted:           keel.BoolCol{Col: keel.Col{Ref: &reflectionsRef, Index: 15}},
-	Model:             keel.StringCol{Col: keel.Col{Ref: &reflectionsRef, Index: 16}},
-	ProviderID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reflectionsRef, Index: 17}}},
-	InputTokens:       keel.Int64Col{Col: keel.Col{Ref: &reflectionsRef, Index: 18}},
-	OutputTokens:      keel.Int64Col{Col: keel.Col{Ref: &reflectionsRef, Index: 19}},
-	ErrorMessage:      keel.StringCol{Col: keel.Col{Ref: &reflectionsRef, Index: 20}},
-	FinishedAt:        keel.Int64Col{Col: keel.Col{Ref: &reflectionsRef, Index: 21}},
-	Version:           keel.Int64Col{Col: keel.Col{Ref: &reflectionsRef, Index: 22}},
-	CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: &reflectionsRef, Index: 23}},
-	UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: &reflectionsRef, Index: 24}},
+	PatternKey:        keel.StringCol{Col: keel.Col{Ref: &reflectionsRef, Index: 7}},
+	UserID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reflectionsRef, Index: 8}}},
+	FromSequence:      keel.Int64Col{Col: keel.Col{Ref: &reflectionsRef, Index: 9}},
+	ThroughSequence:   keel.Int64Col{Col: keel.Col{Ref: &reflectionsRef, Index: 10}},
+	Status:            ReflectionStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reflectionsRef, Index: 11}}},
+	SkipReason:        ReflectionSkipCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reflectionsRef, Index: 12}}},
+	Signals:           keel.JSONBCol{Col: keel.Col{Ref: &reflectionsRef, Index: 13}},
+	Changes:           keel.JSONBCol{Col: keel.Col{Ref: &reflectionsRef, Index: 14}},
+	Notes:             keel.StringCol{Col: keel.Col{Ref: &reflectionsRef, Index: 15}},
+	Tainted:           keel.BoolCol{Col: keel.Col{Ref: &reflectionsRef, Index: 16}},
+	Model:             keel.StringCol{Col: keel.Col{Ref: &reflectionsRef, Index: 17}},
+	ProviderID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &reflectionsRef, Index: 18}}},
+	InputTokens:       keel.Int64Col{Col: keel.Col{Ref: &reflectionsRef, Index: 19}},
+	OutputTokens:      keel.Int64Col{Col: keel.Col{Ref: &reflectionsRef, Index: 20}},
+	ErrorMessage:      keel.StringCol{Col: keel.Col{Ref: &reflectionsRef, Index: 21}},
+	FinishedAt:        keel.Int64Col{Col: keel.Col{Ref: &reflectionsRef, Index: 22}},
+	Version:           keel.Int64Col{Col: keel.Col{Ref: &reflectionsRef, Index: 23}},
+	CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: &reflectionsRef, Index: 24}},
+	UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: &reflectionsRef, Index: 25}},
 }
 
 // BuildReflections builds the table of agent_reflections for ref. Generated relation and alias methods call it.
@@ -141,24 +144,25 @@ func BuildReflections(r *keel.Ref) *ReflectionsTable {
 		SubjectType:       ReflectionSubjectCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 4}}},
 		ThreadID:          keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		RunID:             keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		UserID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
-		FromSequence:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
-		ThroughSequence:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
-		Status:            ReflectionStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
-		SkipReason:        ReflectionSkipCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 11}}},
-		Signals:           keel.JSONBCol{Col: keel.Col{Ref: r, Index: 12}},
-		Changes:           keel.JSONBCol{Col: keel.Col{Ref: r, Index: 13}},
-		Notes:             keel.StringCol{Col: keel.Col{Ref: r, Index: 14}},
-		Tainted:           keel.BoolCol{Col: keel.Col{Ref: r, Index: 15}},
-		Model:             keel.StringCol{Col: keel.Col{Ref: r, Index: 16}},
-		ProviderID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 17}}},
-		InputTokens:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
-		OutputTokens:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 19}},
-		ErrorMessage:      keel.StringCol{Col: keel.Col{Ref: r, Index: 20}},
-		FinishedAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 21}},
-		Version:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 22}},
-		CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 23}},
-		UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 24}},
+		PatternKey:        keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
+		UserID:            keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		FromSequence:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
+		ThroughSequence:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
+		Status:            ReflectionStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 11}}},
+		SkipReason:        ReflectionSkipCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 12}}},
+		Signals:           keel.JSONBCol{Col: keel.Col{Ref: r, Index: 13}},
+		Changes:           keel.JSONBCol{Col: keel.Col{Ref: r, Index: 14}},
+		Notes:             keel.StringCol{Col: keel.Col{Ref: r, Index: 15}},
+		Tainted:           keel.BoolCol{Col: keel.Col{Ref: r, Index: 16}},
+		Model:             keel.StringCol{Col: keel.Col{Ref: r, Index: 17}},
+		ProviderID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 18}}},
+		InputTokens:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 19}},
+		OutputTokens:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 20}},
+		ErrorMessage:      keel.StringCol{Col: keel.Col{Ref: r, Index: 21}},
+		FinishedAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 22}},
+		Version:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 23}},
+		CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 24}},
+		UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 25}},
 	}
 }
 
@@ -564,40 +568,42 @@ func ptrReflection(p unsafe.Pointer, c int32) any {
 	case 6:
 		return (**string)(unsafe.Pointer(&r.RunID))
 	case 7:
-		return (**string)(unsafe.Pointer(&r.UserID))
+		return &r.PatternKey
 	case 8:
-		return (*int64)(unsafe.Pointer(&r.FromSequence))
+		return (**string)(unsafe.Pointer(&r.UserID))
 	case 9:
-		return (*int64)(unsafe.Pointer(&r.ThroughSequence))
+		return (*int64)(unsafe.Pointer(&r.FromSequence))
 	case 10:
-		return (*string)(unsafe.Pointer(&r.Status))
+		return (*int64)(unsafe.Pointer(&r.ThroughSequence))
 	case 11:
-		return (*string)(unsafe.Pointer(&r.SkipReason))
+		return (*string)(unsafe.Pointer(&r.Status))
 	case 12:
-		return &r.Signals
+		return (*string)(unsafe.Pointer(&r.SkipReason))
 	case 13:
-		return &r.Changes
+		return &r.Signals
 	case 14:
-		return &r.Notes
+		return &r.Changes
 	case 15:
-		return &r.Tainted
+		return &r.Notes
 	case 16:
-		return &r.Model
+		return &r.Tainted
 	case 17:
-		return (*string)(unsafe.Pointer(&r.ProviderID))
+		return &r.Model
 	case 18:
-		return (*int64)(unsafe.Pointer(&r.InputTokens))
+		return (*string)(unsafe.Pointer(&r.ProviderID))
 	case 19:
-		return (*int64)(unsafe.Pointer(&r.OutputTokens))
+		return (*int64)(unsafe.Pointer(&r.InputTokens))
 	case 20:
-		return &r.ErrorMessage
+		return (*int64)(unsafe.Pointer(&r.OutputTokens))
 	case 21:
-		return &r.FinishedAt
+		return &r.ErrorMessage
 	case 22:
-		return &r.Version
+		return &r.FinishedAt
 	case 23:
-		return &r.CreatedAt
+		return &r.Version
 	case 24:
+		return &r.CreatedAt
+	case 25:
 		return &r.UpdatedAt
 	}
 	return nil
@@ -627,67 +633,72 @@ func valueReflection(p unsafe.Pointer, c int32) any {
 		}
 		return string(*r.RunID)
 	case 7:
+		if r.PatternKey == "" {
+			return nil
+		}
+		return r.PatternKey
+	case 8:
 		if r.UserID == nil {
 			return nil
 		}
 		return string(*r.UserID)
-	case 8:
-		return int64(r.FromSequence)
 	case 9:
-		return int64(r.ThroughSequence)
+		return int64(r.FromSequence)
 	case 10:
-		return string(r.Status)
+		return int64(r.ThroughSequence)
 	case 11:
+		return string(r.Status)
+	case 12:
 		if r.SkipReason == "" {
 			return nil
 		}
 		return string(r.SkipReason)
-	case 12:
+	case 13:
 		if r.Signals == nil {
 			return keel.EmptyJSONArray
 		}
 		return r.Signals
-	case 13:
+	case 14:
 		if r.Changes == nil {
 			return keel.EmptyJSONArray
 		}
 		return r.Changes
-	case 14:
+	case 15:
 		if r.Notes == "" {
 			return nil
 		}
 		return r.Notes
-	case 15:
-		return r.Tainted
 	case 16:
+		return r.Tainted
+	case 17:
 		if r.Model == "" {
 			return nil
 		}
 		return r.Model
-	case 17:
+	case 18:
 		if r.ProviderID == "" {
 			return nil
 		}
 		return string(r.ProviderID)
-	case 18:
-		return int64(r.InputTokens)
 	case 19:
-		return int64(r.OutputTokens)
+		return int64(r.InputTokens)
 	case 20:
+		return int64(r.OutputTokens)
+	case 21:
 		if r.ErrorMessage == "" {
 			return nil
 		}
 		return r.ErrorMessage
-	case 21:
+	case 22:
 		if r.FinishedAt == nil {
 			return nil
 		}
 		return *r.FinishedAt
-	case 22:
-		return r.Version
 	case 23:
-		return r.CreatedAt
+		return r.Version
 	case 24:
+		return r.CreatedAt
+	case 25:
 		return r.UpdatedAt
 	}
 	return nil
@@ -718,6 +729,7 @@ var enumReflectionStatus = [...]schema.EnumValue{
 var enumReflectionSubject = [...]schema.EnumValue{
 	{Value: `Thread`, Label: `Thread`},
 	{Value: `Run`, Label: `Run`},
+	{Value: `Correction`, Label: `Correction`, Doc: `ReflectionSubjectCorrection is what people kept changing, by hand, of one field an agent set: read once the same field was changed often enough to be a habit rather than a one-off.`},
 }
 
 // ReflectionSkipCol is a column of agentreflection.ReflectionSkip values.

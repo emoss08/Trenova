@@ -686,6 +686,12 @@ func listQuery(req *watchtowerports.ListWatchtowerItemsQuery) keel.Query[*watcht
 		caseownerquery.InSight(watchtowerdb.Items.AboutID, req.Sight),
 		keel.When(req.AgentRunID.IsNotNil(), it.AgentRunID.Eq(req.AgentRunID)),
 		keel.When(req.AgentWorking, agentWorking()),
+		keel.When(req.Search != "", keel.Or(
+			it.Title.ContainsFold(req.Search),
+			it.Summary.ContainsFold(req.Search),
+			it.RecordLabel.ContainsFold(req.Search),
+		)),
+		unseenPred(req.Unseen),
 		before,
 	)
 	if req.OrderByDue {
@@ -705,6 +711,24 @@ func agentWorking() keel.Pred {
 		run.ID.EqCol(it.AgentRunID),
 		run.Status.In(agent.WorkingRunStatuses()...),
 	))
+}
+
+func unseenBy(readerID pulid.ID, seenAt int64) keel.Pred {
+	it := watchtowerdb.Items
+	rd := watchtowerdb.Reads
+
+	return keel.And(
+		it.OccurredAt.Gt(seenAt),
+		keel.NotExists(rd.Where(rd.ItemID.EqCol(it.ID), rd.UserID.Eq(readerID))),
+	)
+}
+
+func unseenPred(unseen *watchtowerports.UnseenBy) keel.Pred {
+	if unseen == nil {
+		return nil
+	}
+
+	return unseenBy(unseen.ReaderID, unseen.SeenAt)
 }
 
 func dueSortExpr() keel.Int64Expr {
@@ -738,7 +762,6 @@ func countTotalsQuery(
 	req *watchtowerports.CountWatchtowerItemsRequest,
 ) keel.Query[*watchtower.Item] {
 	it := watchtowerdb.Items
-	rd := watchtowerdb.Reads
 	critical := it.Severity.Eq(watchtower.SeverityCritical)
 	active := it.Status.Ne(watchtower.StatusSnoozed)
 	overdue := it.DueAt.Lt(req.Now)
@@ -746,10 +769,7 @@ func countTotalsQuery(
 	if req.AssigneeID.IsNotNil() {
 		mine = it.AssigneeID.Eq(req.AssigneeID)
 	}
-	unseen := keel.And(
-		it.OccurredAt.Gt(req.SeenAt),
-		keel.NotExists(rd.Where(rd.ItemID.EqCol(it.ID), rd.UserID.Eq(req.ReaderID))),
-	)
+	unseen := unseenBy(req.ReaderID, req.SeenAt)
 
 	return openItems(req).Pick(
 		keel.Count(),

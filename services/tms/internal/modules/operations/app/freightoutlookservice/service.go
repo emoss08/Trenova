@@ -76,10 +76,13 @@ func (s *Service) Outlook(
 		return nil, err
 	}
 	out := &freightoutlookports.Outlook{
-		Quality:      snap.quality,
-		Refitting:    snap.refitting,
-		GeneratedAt:  snap.now,
-		Starts:       demandforecast.OutlookStarts(snap.now),
+		Quality:     snap.quality,
+		Refitting:   snap.refitting,
+		GeneratedAt: snap.now,
+		Starts: demandforecast.OutlookStarts(
+			dispatchmarket.GridNamed(snap.quality.Timezone),
+			snap.now,
+		),
 		Network:      []demandforecast.NetworkSlot{},
 		Areas:        []*freightoutlookports.Area{},
 		Steps:        []freightmove.Step{},
@@ -130,14 +133,13 @@ func (s *Service) Area(
 	}
 
 	balance := snap.balances[index]
-	slotStart := req.SlotStart
-	if slotStart == 0 ||
-		slices.IndexFunc(balance.Slots, func(slot demandforecast.SlotBalance) bool {
-			return slot.Start == slotStart
-		}) < 0 {
-		worst, _ := balance.Worst()
-		slotStart = balance.Slots[worst].Start
+	at := slices.IndexFunc(balance.Slots, func(slot demandforecast.SlotBalance) bool {
+		return slot.Start == req.SlotStart
+	})
+	if req.SlotStart == 0 || at < 0 {
+		at, _ = balance.Worst()
 	}
+	slotStart := balance.Slots[at].Start
 
 	detail := &freightoutlookports.AreaDetail{
 		Quality:     snap.quality,
@@ -146,6 +148,7 @@ func (s *Service) Area(
 		Area:        s.area(snap, balance),
 		Bounds:      dispatchmarket.BoundsOf(req.Cell),
 		SlotStart:   slotStart,
+		SlotEnd:     balance.Slots[at].End,
 		Reach:       freightmove.Reach(snap.inputs, req.Cell, slotStart),
 		Steps:       []freightmove.Step{},
 		Pace:        []freightmove.Pace{},
@@ -157,7 +160,7 @@ func (s *Service) Area(
 		}
 	}
 	detail.Pace = freightmove.Paces([]demandforecast.AreaBalance{balance})
-	if rate, ok := snap.forecaster.Rate(req.Cell, dispatchmarket.SlotOf(slotStart)); ok {
+	if rate, ok := snap.forecaster.RateAt(req.Cell, slotStart); ok {
 		detail.Recent = rate.Recent
 		typical := demandforecast.GammaPoisson(rate.Alpha, rate.Beta)
 		detail.RecentLow = typical.Quantile(demandforecast.IntervalLow)
@@ -208,6 +211,7 @@ func (s *Service) snapshot(
 	starts, err := s.repo.ListDriverStarts(ctx, &demandforecastports.DriverStartsRequest{
 		TenantInfo: tenantInfo,
 		Now:        now,
+		Location:   dispatchmarket.GridNamed(quality.Timezone).Location(),
 	})
 	if err != nil {
 		return nil, err
@@ -220,7 +224,6 @@ func (s *Service) snapshot(
 	forecaster, err := s.forecasts.Forecaster(ctx, &demandforecastports.ForecasterRequest{
 		TenantInfo:    tenantInfo,
 		Now:           now,
-		AllCells:      true,
 		Horizon:       horizonSeconds,
 		Supply:        supply,
 		MarginPercent: economics.CoverageMarginPercent,
@@ -248,12 +251,13 @@ func (s *Service) snapshot(
 	}
 
 	snap.forecaster = forecaster
-	snap.starts = demandforecast.OutlookStarts(now)
+	snap.starts = forecaster.OutlookStarts()
 	for _, cell := range forecaster.Cells() {
 		snap.balances = append(snap.balances, forecaster.Balance(cell, snap.starts))
 	}
 	snap.inputs = &freightmove.Inputs{
 		Now:            now,
+		Grid:           forecaster.Grid(),
 		Areas:          snap.balances,
 		Drivers:        drivers,
 		Lanes:          lanesOf(lanes),

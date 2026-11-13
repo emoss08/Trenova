@@ -1,4 +1,4 @@
-import { normalizePath } from "@/lib/route-utils";
+import { normalizePath } from "@/lib/navigation-paths";
 import { useBreadcrumbStore } from "@/stores/breadcrumb-store";
 import { useEffect } from "react";
 import { useLocation } from "react-router";

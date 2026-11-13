@@ -34,7 +34,7 @@ func (s *Service) PlanEdit(
 	if current.Status.IsSuggestion() || !s.editorReads(ctx, req, current) {
 		return nil, errMemoryNotVisible()
 	}
-	if !Replaceable(current.Status) {
+	if !current.Status.Replaceable() {
 		return nil, errortypes.NewValidationError(
 			"memoryId",
 			errortypes.ErrInvalid,

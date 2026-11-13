@@ -831,4 +831,8 @@ then still read as assigned days later, their drivers count as free, and the dis
 roll-forward`, package `internal/seeds/volume/rollforward`) slides every open shipment, its stops
 and its assignments forward by the time since the newest shipment was entered, the data set's own
 "now". Creation times move with them, so running it again measures from the new present and never
-shifts twice; finished freight and history stay where they are.
+shifts twice; finished freight and history stay where they are. The telematics feed stopped at
+that moment too, and readers trust hours-of-service clocks for 12 hours and a GPS position for 4,
+so the same run slides the clocks, vehicle positions, duty logs and violations forward by the
+time since the newest clock was recorded. Without it the outlook's supply and the candidate
+checks read every driver as having no clocks.

@@ -59,7 +59,7 @@ func TestCheckModifications_RefusesPointingTheChangeAtAnotherRecord(t *testing.T
 	var multiErr *errortypes.MultiError
 	require.True(t, errors.As(err, &multiErr))
 	require.Len(t, multiErr.Errors, 1)
-	assert.Equal(t, "workerId", multiErr.Errors[0].Field)
+	assert.Equal(t, "workerId", multiErr.Errors[0].Field())
 	assert.Equal(t, errortypes.ErrForbidden, multiErr.Errors[0].Code)
 }
 

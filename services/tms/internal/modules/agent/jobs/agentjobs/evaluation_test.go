@@ -527,6 +527,11 @@ func TestOpenReplay_ACaseAnsweredFromItsRecordingRunsAsOfWhenThePersonAsked(t *t
 
 	assert.Equal(t, asked, opened.request.Context.Now,
 		"\"in 2 days\" in the recorded result is two days after the day the agent is told it is")
+	require.NotNil(t, opened.request.Replay,
+		"the agent's tool calls run in activities of their own, which load the recording by "+
+			"the case and set their clock from this")
+	assert.Equal(t, evalCase.ID, opened.request.Replay.CaseID)
+	assert.Equal(t, asked, opened.request.Replay.AsOf)
 }
 
 func TestOpenReplay_ACaseThatReadsTheRecordsRunsAsOfNow(t *testing.T) {
@@ -578,6 +583,7 @@ func TestOpenReplay_ACaseWithNoRecordedReadsReadsTheRecords(t *testing.T) {
 
 	assert.Nil(t, opened.request.Recorded,
 		"an empty recording would be an interface that is not nil and answers nothing")
+	assert.Nil(t, opened.request.Replay)
 }
 
 func TestOpenReplay_ADeletedCaseIsSkipped(t *testing.T) {
@@ -681,6 +687,69 @@ func TestObserveReplay_TracesWhichCallsWouldHaveRunUnasked(t *testing.T) {
 	assert.Equal(t, map[string]any{"to": "a"}, observed.trace[1].Arguments)
 	assert.False(t, observed.trace[2].AutoRun, "a proposal waits for a person")
 	assert.Len(t, observed.calls, 3)
+}
+
+func backgroundCase(w *replayWorld) *agentquality.EvalCase {
+	evalCase := chatCase(w)
+	evalCase.Trigger = agent.RunTriggerEvent
+	evalCase.SourceThreadID = nil
+	evalCase.History = nil
+
+	return evalCase
+}
+
+func TestOpenReplay_ABackgroundCaseIsAnsweredFromWhatItsRunWasGiven(t *testing.T) {
+	t.Parallel()
+
+	started := int64(1_772_530_200)
+	w := newReplayWorld(t)
+	evalCase := backgroundCase(w)
+	evalCase.AskedAt = &started
+	evalCase.ToolFixtures = []agentquality.ToolFixture{{
+		Tool:   "shipment_get",
+		Args:   map[string]any{"id": "shp_1"},
+		Result: map[string]any{"status": "Delivered", "eta": "2026-03-05 09:30 UTC (in 2 days)"},
+	}}
+	caseEvaluation(w, evalCase)
+	w.users.On("GetSystemUser", mock.Anything, []string{"id"}).
+		Return(&tenant.User{ID: pulid.MustNew("usr_")}, nil).
+		Once()
+
+	opened, err := w.activities.openReplay(t.Context(), w.payload)
+	require.NoError(t, err)
+	require.NotNil(t, opened)
+
+	require.NotNil(t, opened.request.Recorded,
+		"a run an agent started on its own is judged on what that run read, not on the "+
+			"records as they are now")
+	result, _, ok := opened.request.Recorded.Recorded("shipment_get", map[string]any{"id": "shp_1"})
+	require.True(t, ok)
+	assert.Equal(t, "Delivered", result.(map[string]any)["status"])
+	assert.Equal(t, started, opened.request.Context.Now,
+		"the replay runs as of when the run started")
+	require.NotNil(t, opened.request.Replay)
+	assert.Equal(t, evalCase.ID, opened.request.Replay.CaseID)
+	assert.Equal(t, started, opened.request.Replay.AsOf)
+}
+
+func TestOpenReplay_ABackgroundCaseWithNothingRecordedReadsTheRecordsAsOfNow(t *testing.T) {
+	t.Parallel()
+
+	started := int64(1_772_530_200)
+	w := newReplayWorld(t)
+	evalCase := backgroundCase(w)
+	evalCase.AskedAt = &started
+	caseEvaluation(w, evalCase)
+	w.users.On("GetSystemUser", mock.Anything, []string{"id"}).
+		Return(&tenant.User{ID: pulid.MustNew("usr_")}, nil).
+		Once()
+
+	opened, err := w.activities.openReplay(t.Context(), w.payload)
+	require.NoError(t, err)
+	require.NotNil(t, opened)
+
+	assert.Nil(t, opened.request.Recorded)
+	assert.Zero(t, opened.request.Context.Now)
 }
 
 func TestOpenReplay_ABackgroundCaseReplaysAsTheAgentAttributedToTheSystemUser(t *testing.T) {

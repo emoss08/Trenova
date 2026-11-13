@@ -51,7 +51,9 @@ strata:
       - duplicate-a-load-for-next-week
       - ids-never-shown
       - in-transit-count
+      - kept-fact-changes-the-answer
       - load-by-description
+      - mention-is-offered-on-look-back
       - messy-hos-with-no-eld-data
       - messy-self-correction-in-one-message
       - off-topic-code-request

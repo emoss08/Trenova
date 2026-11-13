@@ -248,50 +248,9 @@
 }
 
 /* ---------- Needs you: the list and the item beside it ----------
-   The list's pane, scroll area, headings and rows are the Desk's shared list
-   (list/desk-list.tsx); only the page's two-column frame is here. */
-.dk-w-nq {
-  display: grid;
-  grid-template-columns: minmax(300px, 400px) minmax(0, 1fr);
-  height: 100%;
-  min-height: 0;
-  border-top: 1px solid var(--dsk-b-sub);
-}
-.dk-w-nq-h {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 16px 16px 10px;
-}
-.dk-w-nq-h b {
-  font-size: 13px;
-  font-weight: 600;
-}
-.dk-w-nq-c {
-  margin-left: auto;
-  font: 11px var(--font-sans);
-  color: var(--dsk-subtle);
-}
-.dk-w-nq-bar {
-  height: 2px;
-  margin: 0 16px;
-  overflow: hidden;
-  border-radius: 2px;
-  background: var(--dsk-b-sub);
-}
-.dk-w-nq-bar i {
-  display: block;
-  height: 100%;
-  background: var(--dsk-fg2);
-  transform-origin: left;
-  transition: transform 400ms var(--dk-settle);
-}
-.dk-w-lens {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  padding: 10px 12px 8px;
-}
+   The page's frame, its head and each lens's two cells are drawn with
+   Tailwind (list/desk-views.tsx), and the list's scroll area, headings and
+   rows are the Desk's shared list (list/desk-list.tsx). */
 .dk-w-chip {
   display: inline-flex;
   align-items: center;
@@ -315,23 +274,11 @@
   background: var(--surface-active);
   color: var(--dsk-fg);
 }
-.dk-w-chip-n {
-  font: 11px var(--font-sans);
-  color: var(--dsk-subtle);
-}
-.dk-w-lens-deep {
-  padding: 0 16px 6px;
-  font-size: 11.5px;
-}
 .dk-w-nq-settled .dk-w-ar {
   animation: none;
 }
 .dk-w-nq-more {
   padding-top: 12px;
-}
-.dk-w-nq-d {
-  min-height: 0;
-  overflow: auto;
 }
 .dk-w-det-w {
   display: flex;
@@ -511,18 +458,7 @@
   gap: 6px;
   margin-top: 8px;
 }
-.dk-w-bar {
-  position: sticky;
-  bottom: 0;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 32px;
-  border-top: 1px solid var(--dsk-b-sub);
-  background: color-mix(in oklch, var(--dsk-canvas) 92%, transparent);
-  backdrop-filter: blur(6px);
-}
+/* The bar under an item is drawn with Tailwind in item-detail.tsx; these are what it holds. */
 .dk-w-bar-note {
   flex: 1 1 200px;
   min-width: 0;
@@ -572,12 +508,6 @@
 .dk-w-sk-short {
   width: 40%;
 }
-.dk-w-sk-chip {
-  display: block;
-  width: 84px;
-  height: 26px;
-  border-radius: 6px;
-}
 .dk-w-sk-row {
   display: block;
   height: 48px;
@@ -585,17 +515,7 @@
   border-radius: 8px;
 }
 @media (max-width: 900px) {
-  .dk-w-nq {
-    grid-template-columns: 1fr;
-  }
-  .dk-w-nq.dk-has-sel .dk-w-nq-l {
-    display: none;
-  }
-  .dk-w-nq:not(.dk-has-sel) .dk-w-nq-d {
-    display: none;
-  }
-  .dk-w-det,
-  .dk-w-bar {
+  .dk-w-det {
     padding-right: 16px;
     padding-left: 16px;
   }

@@ -104,7 +104,7 @@ func TestCheckModifications_RefusesAChangeTheSchemaRejects(t *testing.T) {
 	require.ErrorAs(t, err, &multiErr)
 	fields := make([]string, 0, len(multiErr.Errors))
 	for _, entry := range multiErr.Errors {
-		fields = append(fields, entry.Field)
+		fields = append(fields, entry.Field())
 	}
 	assert.ElementsMatch(t, []string{"message", "priority"}, fields)
 }

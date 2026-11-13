@@ -26,9 +26,13 @@ export const readyQuality: DispatchForecastQuality = {
 
 export const slotStarts = Array.from({ length: 12 }, (_, index) => OUTLOOK_START + index * SLOT);
 
+/** The outlook's windows as the server sends them: each with its own end. */
+export const windows = slotStarts.map((start) => ({ start, end: start + SLOT }));
+
 export function slots(overrides: Record<number, Partial<FreightSlot>> = {}): FreightSlot[] {
   return slotStarts.map((start, index) => ({
     start,
+    end: start + SLOT,
     likelyLow: 1,
     likelyHigh: 3,
     booked: 1,
@@ -82,6 +86,7 @@ export function move(overrides: Partial<FreightMove>): FreightMove {
     toCell: cleveland.cell,
     toLabel: "Cleveland, OH",
     slotStart: slotStarts[1],
+    slotEnd: slotStarts[1] + SLOT,
     short: 2.8,
     freeAt: OUTLOOK_START + 1_800,
     arriveAt: OUTLOOK_START + 4 * 3_600,
@@ -117,6 +122,7 @@ export function outlook(overrides: Partial<FreightOutlook> = {}): FreightOutlook
     slotStarts,
     network: slotStarts.map((start) => ({
       start,
+      end: start + SLOT,
       likelyLow: 20,
       likelyHigh: 30,
       needLow: 18,

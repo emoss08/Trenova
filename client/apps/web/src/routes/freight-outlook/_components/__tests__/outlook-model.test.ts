@@ -5,6 +5,7 @@ import {
   move,
   outlook,
   slotStarts,
+  windows,
 } from "@/lib/graphql/__tests__/freight-outlook-fixtures";
 import type { FreightPace } from "@/lib/graphql/freight-outlook";
 import { describe, expect, it } from "vitest";
@@ -22,7 +23,8 @@ import {
   paceStanding,
   peakOf,
   reachBounds,
-  slotIndexOf,
+  positionAmong,
+  windowIndexAt,
   totalsOf,
   viewIndexes,
 } from "../outlook-model";
@@ -117,16 +119,38 @@ describe("outlook model", () => {
     expect(paceStanding(0.8, 2, 0)).toBe("OnPace");
   });
 
-  it("finds a window by its start, and nothing outside the outlook", () => {
-    expect(slotIndexOf(slotStarts, slotStarts[5])).toBe(5);
-    expect(slotIndexOf(slotStarts, slotStarts[11] + 4 * 3_600)).toBeNull();
-    expect(slotIndexOf([], slotStarts[0])).toBeNull();
+  it("finds the window that holds a moment, and nothing outside the outlook", () => {
+    expect(windowIndexAt(windows, slotStarts[5])).toBe(5);
+    expect(windowIndexAt(windows, slotStarts[5] + 3 * 3_600)).toBe(5);
+    expect(windowIndexAt(windows, slotStarts[6] - 1)).toBe(5);
+    expect(windowIndexAt(windows, slotStarts[0] - 1)).toBeNull();
+    expect(windowIndexAt(windows, slotStarts[11] + 4 * 3_600)).toBeNull();
+    expect(windowIndexAt([], slotStarts[0])).toBeNull();
+  });
+
+  it("reads a window that is not four hours long by its own end", () => {
+    const hour = 3_600;
+    // The night the clocks go back: the first window runs five hours, the rest four.
+    const longNight = [
+      { start: 0, end: 5 * hour },
+      { start: 5 * hour, end: 9 * hour },
+      { start: 9 * hour, end: 13 * hour },
+    ];
+
+    expect(windowIndexAt(longNight, 4.5 * hour)).toBe(0);
+    expect(windowIndexAt(longNight, 5 * hour)).toBe(1);
+    expect(windowIndexAt(longNight, 8.5 * hour)).toBe(1);
+    expect(positionAmong(longNight, 2.5 * hour)).toBeCloseTo(0.5);
+    expect(positionAmong(longNight, 7 * hour)).toBeCloseTo(1.5);
+    expect(positionAmong(longNight, -hour)).toBe(0);
+    expect(positionAmong(longNight, 20 * hour)).toBe(3);
+    expect(positionAmong([], hour)).toBe(0);
   });
 });
 
 describe("moves on the board", () => {
   it("draws a send from the area and window its driver frees up in", () => {
-    const trail = moveTrail(move({}), slotStarts);
+    const trail = moveTrail(move({}), windows);
 
     expect(trail).toEqual({
       toCell: cleveland.cell,
@@ -144,7 +168,7 @@ describe("moves on the board", () => {
       partnerFreeAt: slotStarts[0] - 3_600,
     });
 
-    expect(moveTrail(keep, slotStarts)).toEqual({
+    expect(moveTrail(keep, windows)).toEqual({
       toCell: cleveland.cell,
       toIndex: 1,
       fromCell: kansasCity.cell,
@@ -156,8 +180,8 @@ describe("moves on the board", () => {
     const call = move({ kind: "Call", fromCell: 0, customerId: "cus_northstar" });
     const local = move({ fromCell: cleveland.cell });
 
-    expect(moveTrail(call, slotStarts).fromCell).toBeNull();
-    expect(moveTrail(local, slotStarts).fromCell).toBeNull();
+    expect(moveTrail(call, windows).fromCell).toBeNull();
+    expect(moveTrail(local, windows).fromCell).toBeNull();
   });
 
   it("names a move by its kind, driver or customer, target and window", () => {

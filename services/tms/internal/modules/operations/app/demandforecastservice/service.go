@@ -8,23 +8,34 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/demandfit"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/demandforecast"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchmarket"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/demandforecastports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/pto"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/orgholidayports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/maypok86/otter/v2"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
 const (
-	historySpanWeeks   = demandforecast.HistoryWeeks + demandforecast.BacktestWeeks + 1
-	bookedLookbackSecs = dispatchmarket.SlotSeconds
+	historySpanWeeks   = demandfit.HistoryWeeks + demandfit.BacktestWeeks + 1
+	bookedLookbackSecs = 2 * dispatchmarket.SlotSeconds
 	bookedHorizonSecs  = int64(5 * 24 * 3600)
-	windowSeconds      = demandforecast.WindowSlots * dispatchmarket.SlotSeconds
+	windowSeconds      = (demandforecast.WindowSlots + 1) * dispatchmarket.SlotSeconds
+	maxCachedWeight    = 2_000_000
+	cachedIdle         = 6 * time.Hour
 )
+
+type modelKey struct {
+	orgID pulid.ID
+	buID  pulid.ID
+}
 
 type Params struct {
 	fx.In
@@ -32,6 +43,7 @@ type Params struct {
 	Logger        *zap.Logger
 	Repo          demandforecastports.Repository
 	Fits          demandforecastports.FitStarter
+	Holidays      orgholidayports.OrgHolidayRepository
 	Controls      dispatchcontrolports.DispatchControlRepository
 	Organizations tenantports.OrganizationRepository
 }
@@ -40,6 +52,8 @@ type Service struct {
 	l             *zap.Logger
 	repo          demandforecastports.Repository
 	fits          demandforecastports.FitStarter
+	holidays      orgholidayports.OrgHolidayRepository
+	models        *otter.Cache[modelKey, *demandforecast.Index]
 	controls      dispatchcontrolports.DispatchControlRepository
 	organizations tenantports.OrganizationRepository
 	clock         func() int64
@@ -49,9 +63,17 @@ var _ demandforecastports.Service = (*Service)(nil)
 
 func New(p Params) *Service {
 	return &Service{
-		l:             p.Logger.Named("service.demand-forecast"),
-		repo:          p.Repo,
-		fits:          p.Fits,
+		l:        p.Logger.Named("service.demand-forecast"),
+		repo:     p.Repo,
+		fits:     p.Fits,
+		holidays: p.Holidays,
+		models: otter.Must(&otter.Options[modelKey, *demandforecast.Index]{
+			MaximumWeight: maxCachedWeight,
+			Weigher: func(_ modelKey, index *demandforecast.Index) uint32 {
+				return uint32(min(index.Weight(), maxCachedWeight)) //nolint:gosec // clamped above
+			},
+			ExpiryCalculator: otter.ExpiryAccessing[modelKey, *demandforecast.Index](cachedIdle),
+		}),
 		controls:      p.Controls,
 		organizations: p.Organizations,
 		clock:         timeutils.NowUnix,
@@ -63,32 +85,69 @@ func (s *Service) Fit(
 	tenantInfo pagination.TenantInfo,
 ) (*demandforecast.Quality, error) {
 	now := s.clock()
+	since := now - historySpanWeeks*dispatchmarket.WeekSeconds
+	grid := dispatchmarket.GridIn(s.Location(ctx, tenantInfo))
 	rows, err := s.repo.History(ctx, &demandforecastports.HistoryRequest{
 		TenantInfo: tenantInfo,
-		Since:      now - historySpanWeeks*dispatchmarket.WeekSeconds,
+		Since:      since,
 		Until:      now,
+		Timezone:   grid.Timezone(),
 	})
 	if err != nil {
 		return nil, err
 	}
 
 	history := HistoryOf(now, rows)
-	fitted := demandforecast.Fit(history)
-	quality := demandforecast.Backtest(history)
+	history.Grid = grid
+	if history.Holidays, err = s.holidaysBetween(ctx, tenantInfo, grid, since, now); err != nil {
+		return nil, err
+	}
+	trained := demandfit.Train(history)
 
 	if err = s.repo.Replace(ctx, &demandforecastports.ReplaceRequest{
 		TenantInfo: tenantInfo,
-		Fitted:     fitted,
-		Quality:    quality,
-		Days:       demandforecast.TrackRecord(history),
+		Fitted:     trained.Fitted,
+		Quality:    trained.Quality,
+		Days:       trained.Days,
 	}); err != nil {
 		return nil, err
 	}
 
-	return quality, nil
+	return trained.Quality, nil
 }
 
-func HistoryOf(now int64, rows *demandforecastports.HistoryRows) *demandforecast.History {
+func (s *Service) holidaysBetween(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	grid dispatchmarket.Grid,
+	since, now int64,
+) (demandforecast.Holidays, error) {
+	rows, err := s.holidays.List(ctx, &orgholidayports.ListOrgHolidaysRequest{
+		TenantInfo: tenantInfo,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("read the organization's holidays: %w", err)
+	}
+	observed := make([]*pto.OrgHoliday, 0, len(rows))
+	for _, row := range rows {
+		if row != nil && row.Kind == pto.HolidayKindHoliday {
+			observed = append(observed, row)
+		}
+	}
+	calendar := pto.NewHolidayCalendar(observed)
+
+	holidays := demandforecast.Holidays{}
+	last := grid.Day(now) + demandfit.HolidayHorizonDays
+	for day := grid.Day(since); day <= last; day++ {
+		if calendar.HolidayOn(time.Unix(day*dispatchmarket.DaySeconds, 0).UTC()) {
+			holidays[day] = struct{}{}
+		}
+	}
+
+	return holidays, nil
+}
+
+func HistoryOf(now int64, rows *demandforecastports.HistoryRows) *demandfit.History {
 	cells := make(map[pulid.ID]int64, len(rows.Locations))
 	type areaStats struct {
 		label    string
@@ -125,18 +184,18 @@ func HistoryOf(now int64, rows *demandforecastports.HistoryRows) *demandforecast
 		}
 	}
 
-	history := &demandforecast.History{
+	history := &demandfit.History{
 		Now:    now,
-		Counts: make([]demandforecast.LoadCount, 0, len(rows.Counts)),
+		Counts: make([]demandfit.LoadCount, 0, len(rows.Counts)),
 		Leads:  rows.Leads,
-		Areas:  make([]demandforecast.AreaSummary, 0, len(areas)),
+		Areas:  make([]demandfit.AreaSummary, 0, len(areas)),
 	}
 	for _, count := range rows.Counts {
 		cell, ok := cells[count.LocationID]
 		if !ok {
 			continue
 		}
-		history.Counts = append(history.Counts, demandforecast.LoadCount{
+		history.Counts = append(history.Counts, demandfit.LoadCount{
 			CustomerID: count.CustomerID,
 			Cell:       cell,
 			Week:       count.Week,
@@ -149,14 +208,14 @@ func HistoryOf(now int64, rows *demandforecastports.HistoryRows) *demandforecast
 		if stats.priced > 0 {
 			median = int64(stats.revenue / float64(stats.priced))
 		}
-		history.Areas = append(history.Areas, demandforecast.AreaSummary{
+		history.Areas = append(history.Areas, demandfit.AreaSummary{
 			Cell:               cell,
 			Label:              stats.label,
 			MedianRevenueCents: median,
 			Loads:              stats.loads,
 		})
 	}
-	slices.SortFunc(history.Areas, func(a, b demandforecast.AreaSummary) int {
+	slices.SortFunc(history.Areas, func(a, b demandfit.AreaSummary) int {
 		return cmp.Compare(a.Cell, b.Cell)
 	})
 
@@ -199,82 +258,72 @@ func (s *Service) Forecaster(
 	ctx context.Context,
 	req *demandforecastports.ForecasterRequest,
 ) (*demandforecast.Forecaster, error) {
-	var model *demandforecastports.Model
-	var err error
-	if req.AllCells {
-		model, err = s.repo.Model(ctx, req.TenantInfo)
-	} else {
-		model, err = s.repo.ModelForCells(ctx, &demandforecastports.CellsRequest{
-			TenantInfo: req.TenantInfo,
-			Cells:      req.Cells,
-		})
-	}
+	index, err := s.index(ctx, req.TenantInfo)
 	if err != nil {
 		return nil, err
 	}
-
-	return s.forecaster(ctx, &forecasterInputs{
-		tenantInfo: req.TenantInfo,
-		now:        req.Now,
-		model:      model,
-		supply:     req.Supply,
-		solving:    req.Solving,
-		margin:     req.MarginPercent,
-		capCents:   req.CapCents,
-		horizon:    req.Horizon,
-	})
-}
-
-type forecasterInputs struct {
-	tenantInfo pagination.TenantInfo
-	now        int64
-	model      *demandforecastports.Model
-	supply     []demandforecast.Driver
-	solving    []demandforecast.Booked
-	margin     int64
-	capCents   int64
-	horizon    int64
-}
-
-func (s *Service) forecaster(
-	ctx context.Context,
-	in *forecasterInputs,
-) (*demandforecast.Forecaster, error) {
 	params := &demandforecast.ForecasterParams{
-		Now:           in.now,
-		Quality:       in.model.Quality,
-		Rates:         in.model.Rates,
-		Areas:         in.model.Areas,
-		Curves:        in.model.Curves,
-		Supply:        in.supply,
-		Solving:       in.solving,
-		MarginPercent: in.margin,
-		CapCents:      in.capCents,
+		Now:           req.Now,
+		Index:         index,
+		Supply:        req.Supply,
+		Solving:       req.Solving,
+		MarginPercent: req.MarginPercent,
+		CapCents:      req.CapCents,
 	}
-	if !in.model.Quality.Ready() || len(in.model.Areas) == 0 {
+	if !index.Ready() || len(index.Cells()) == 0 {
 		return demandforecast.NewForecaster(params), nil
 	}
 
 	booked, err := s.repo.ListBooked(ctx, &demandforecastports.BookedRequest{
-		TenantInfo: in.tenantInfo,
-		From:       dispatchmarket.SlotStart(in.now) - bookedLookbackSecs,
-		Until:      in.now + max(in.horizon, bookedHorizonSecs) + windowSeconds,
+		TenantInfo: req.TenantInfo,
+		From:       req.Now - bookedLookbackSecs,
+		Until:      req.Now + max(req.Horizon, bookedHorizonSecs) + windowSeconds,
 	})
 	if err != nil {
 		return nil, err
 	}
 	params.Booked = BookedOf(booked)
 
+	return demandforecast.NewForecaster(params), nil
+}
+
+func (s *Service) index(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) (*demandforecast.Index, error) {
+	quality, err := s.repo.Quality(ctx, tenantInfo)
+	if err != nil {
+		return nil, err
+	}
+	key := modelKey{orgID: tenantInfo.OrgID, buID: tenantInfo.BuID}
+	if cached, ok := s.models.GetIfPresent(key); ok {
+		if fitted := cached.Quality(); fitted.FittedAt == quality.FittedAt &&
+			fitted.Version == quality.Version {
+			return cached, nil
+		}
+	}
+
+	model, err := s.repo.Model(ctx, tenantInfo)
+	if err != nil {
+		return nil, err
+	}
 	names, err := s.repo.CustomerNames(ctx, &demandforecastports.CustomerNamesRequest{
-		TenantInfo:  in.tenantInfo,
-		CustomerIDs: customersOf(in.model.Rates),
+		TenantInfo:  tenantInfo,
+		CustomerIDs: customersOf(model.Rates),
 	})
 	if err != nil {
 		return nil, err
 	}
-	params.CustomerNames = names
+	index := demandforecast.NewIndex(&demandforecast.IndexParams{
+		Quality:       model.Quality,
+		Rates:         model.Rates,
+		Areas:         model.Areas,
+		Curves:        model.Curves,
+		CustomerNames: names,
+	})
+	s.models.Set(key, index)
 
-	return demandforecast.NewForecaster(params), nil
+	return index, nil
 }
 
 func BookedOf(slots []demandforecastports.BookedSlot) []demandforecast.Booked {

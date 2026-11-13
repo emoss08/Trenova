@@ -100,6 +100,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/orgholidayexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/orgstructureexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/pageaccessexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/pagetourexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/performancereviewexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/preludeexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/ptopolicyexec"
@@ -257,6 +258,7 @@ var registry = sync.OnceValues(func() (*gqlexec.Registry, error) {
 		orgholidayexec.Shard,
 		orgstructureexec.Shard,
 		pageaccessexec.Shard,
+		pagetourexec.Shard,
 		performancereviewexec.Shard,
 		preludeexec.Shard,
 		ptopolicyexec.Shard,

@@ -1026,7 +1026,7 @@ func (s *Dispatcher) executeAction(ctx context.Context, a *actionParams) toolcal
 		outcome.Memories = []pulid.ID{refreshed.ID}
 	case saved != nil:
 		outcome.Content = savedMemoryContent(call.Name, saved) + replacedNote(saved, replaced) +
-			differsNote(differs)
+			differsNote(saved, differs)
 	}
 	if note := a.argumentNote; note != "" {
 		outcome.Content += " " + note
@@ -1084,7 +1084,7 @@ func replacedNote(saved *agentmemoryports.SavedMemory, replaced pulid.ID) string
 // otherwise. The new one is kept beside it, so the person hears that what
 // they just said and what their team or organization keeps disagree, and the
 // shared one gets corrected when it is the one out of date.
-func differsNote(differs *agentmemory.Memory) string {
+func differsNote(saved *agentmemoryports.SavedMemory, differs *agentmemory.Memory) string {
 	if differs == nil {
 		return ""
 	}
@@ -1094,12 +1094,20 @@ func differsNote(differs *agentmemory.Memory) string {
 		audience = "the person's team"
 	}
 
+	stands := "Both stand: this one is read with the other in this person's conversations, " +
+		"and only the other everywhere else."
+	if saved.Pending {
+		stands = "Accepting this one replaces nothing: both would stand, this one read with " +
+			"the other in this person's conversations and only the other everywhere else."
+	}
+
 	return fmt.Sprintf(
-		" It differs from memory %s, kept for %s: %q. Both stand: this one is read with the "+
-			"other in this person's conversations, and only the other everywhere else. Tell "+
-			"the person the two differ, and ask whether the shared one is out of date and "+
-			"should be changed.",
-		differs.ID, audience, stringutils.Ellipsize(differs.Content, differingMemoryChars),
+		" It differs from memory %s, kept for %s: %q. %s Tell the person the two differ, and "+
+			"ask whether the shared one is out of date and should be changed.",
+		differs.ID,
+		audience,
+		stringutils.Ellipsize(differs.Content, differingMemoryChars),
+		stands,
 	)
 }
 

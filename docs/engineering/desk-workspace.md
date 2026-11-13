@@ -87,8 +87,24 @@ pane, `routes/desk/_components/list/desk-list.tsx`. Needs you (and so its Watcht
 lenses) and Triage's queue are both it; a new page with a list in that place starts there rather
 than with a scroll container of its own.
 
-- `DeskListPane` is the frame (the Desk's canvas, the hairline on the right); the page puts its own
-  head in it: title, filters, search.
+- `DeskListPane` is the frame (the Desk's canvas, the hairline on the right); the page stacks its
+  head in it from the parts in `list/desk-list-head.tsx`, one row each: `DeskListTitle` (the name,
+  with a scope beside it and progress at its end), `DeskListProgress`, `DeskListTabs` (the views on
+  the list, each with what it holds, and the filter at the row's end), `DeskListSearch`
+  (`list/desk-list-search.tsx`) and `DeskListTokens`.
+- **A view and a filter never look alike.** A view (a lens, an order, whose cases) is a quiet word
+  that holds the active surface while chosen (`DeskListTabs`, `DeskListToggle`). A filter is a
+  bordered token with an x, drawn only while it is on (`DeskListTokens`), and every list's filters
+  sit behind one **Filter** button (`deskListFilterClass`, `DeskListFilterLabel`) whose menu the
+  page brings, since what can be filtered is the page's to say. The menu narrows as a choice is
+  made and stays open; nothing is applied with a button.
+- **Search runs on the server.** A list shows a first page, so a search over the rows in the
+  browser would miss most of the list. `DeskListSearch` hands the page a settled value a quarter
+  second after typing stops; Escape empties it and Enter keeps it, and both give the keys back to
+  the list. The page keeps the words and the filters in the address.
+- **The page's keys stand down while the filter is open.** The menu takes typing, and E, S or A
+  pressed in it must not clear or approve the row behind it: the page holds whether the menu is
+  open and turns its keys off (`keysEnabled`, `keysPaused`).
 - `DeskList` is the rows: `VirtualRows` in the app's `ScrollArea` with the Desk's fade, the list's
   gutter, and one hover that glides from row to row (`HoverGlideGroup`).
 - `DeskListHeading` is a group's heading (a lane, "Over target"); `DeskListStill` holds what stands
@@ -96,8 +112,65 @@ than with a scroll container of its own.
 - A row spreads `deskListRow(chosen)`: it marks the row as a glide target and gives the chosen row
   the Desk's active surface. A row never sets a hover background of its own.
 
-What a row says, how it is filtered and searched, and its keys stay the page's own. A long page
-that is not a list (Triage's Briefing) scrolls in `ScrollArea` with the same fade.
+What a row says, what it is filtered and searched by, and its keys stay the page's own. A long
+page that is not a list (Triage's Briefing) scrolls in `ScrollArea` with the same fade.
+
+### A pane whose list has views
+
+When the views on a list hold different things (Needs you's lenses), the page is still one
+component, and a view is a variant of it, never a second page drawn in the same place. Two
+pages that each draw the pane take the whole pane down and build it again on a change of view:
+the head blinks, the tab that was clicked is gone with its focus, and nothing can move from
+one view to the next because nothing survives the change. `list/desk-views.tsx` is the frame
+that prevents it.
+
+- **The frame is drawn once and a view fills two cells of it.** `DeskViews` is a grid: the head
+  (`DeskListHead` with `DESK_VIEWS_HEAD_CLASS`) at the top of the list's column, and under it and
+  beside it the cells a view brings, `DeskViewList` and `DeskViewDetail`. The page owns the head
+  and everything it shows (the view in front, the search, the filters, how far along the work
+  is); a view owns its rows, its selection, its keys and what the chosen row reads. It is a grid
+  and not a pane beside a page because a view's list and detail are one component with one
+  selection, and one component cannot draw into two parents.
+- **A view left is kept, not unmounted.** Each view sits in `Kept` (`components/kept.tsx`), so
+  its scroll, its selection and what it has read are there when the person comes back, its
+  effects (keys, address writes) rest while it is hidden, and a view never opened is never
+  mounted or read. The view takes `shown`, and marks its detail `reading` only while it is in
+  front and a row is open, which is what gives a narrow window to the detail.
+- **A view is read when it is opened, or a moment before.** `DeskListTabs` tells the page when
+  the pointer or the focus reaches a tab (`onIntent`), and the page reads that view ahead:
+  its code (`lazyComponent(...).preload`) and its first page (`prefetchQuery` with the same
+  options the view reads with, such as `pendingDecisionsOptions`). So the view is there when it
+  is picked, and one nobody heads for costs nothing.
+- **What the head says is read where the head is.** The page reads what a view's head needs
+  (counts, progress, what the filter offers) with the same query options the view uses, so the
+  two share one request, and keeps the last answer while another view is being read. Tab
+  counts therefore hold still from view to view. A view never hands its head up through an
+  effect, and never draws a head of its own.
+- **While a view is read its rows are a skeleton, and the head stays.** `DeskListSkeleton`
+  stands in the list cell only; the frame is never replaced by a skeleton of the whole page.
+
+### Moving between views
+
+- **One marker under the tabs.** `DeskListTabs` draws the active surface once and glides it to
+  the tab that is picked (`translate` and `width`, 200 ms, `ease-settle`), measured from the
+  chosen tab and again when a tab's width changes. A tab never lights itself.
+- **The two cells cross-fade; the rest of the page does not move.** A change of view is a
+  navigation that asks for a view transition (`navigate(..., { viewTransition: true })`, as the
+  rail's links do). Each view names its list and its detail after itself
+  (`NEEDS_LIST_TRANSITION_CLASS`, `NEEDS_DETAIL_TRANSITION_CLASS` in `desk-motion.ts`), so a
+  change of view has one pair leaving and another arriving (`:only-child` in `desk-motion.css`),
+  and anything that keeps the view finds the same names on both sides and changes at once. The
+  head is not named: it is the same element before and after.
+- **Rows rise on every arrival.** `useListEntrance(view, hasRows, shown)` says when a list's rows
+  (`dk-w-ar`) have settled; a view shown again starts over, so arriving at a lens reads the same
+  whichever lens it is and whether it was open before. A row on its way out gives the entrance
+  up, so its leaving is not held in place.
+- **Nothing moves under reduced motion** (the system's, or the Desk's `dk-calm`): the regions
+  are left unnamed and the marker does not travel.
+- **The address is read from the router for the view and written through it.** The search and
+  the filters are written to the address without a navigation (nuqs), so the router's own copy
+  of the query goes stale; a change of view builds the next address from `window.location` and
+  not from `useSearchParams`, or it would drop them.
 
 ## An item's panel
 
@@ -168,6 +241,33 @@ resource, is its own row with no record.
   reads every open item about those rows' records in any lens (`AboutIDs`), so a row in the
   Decisions lens still shows its Watchtower condition and its email.
 - **Lens counts** sum `WatchtowerCounts.ByKind` by lens.
+- **Search and filters narrow the first read, never the second.** `deskAttention` takes `search`
+  (an item whose title, summary or record label holds the words, any case, at most
+  `watchtowerports.MaxSearchLength` characters; `%` and `_` match themselves), `severities`,
+  `kinds`, `unseen` (occurred after the reader's cursor and never opened, the predicate the counts
+  use: `unseenBy`) and `working`. They pick which records make the page; the second read still
+  brings every open item about those records, so a row found by its late warning shows its email
+  and its plan too. The read walks the tenant's open queue in due order
+  (`idx_watchtower_items_queue`) and filters as it goes, so its cost is bounded by what is open,
+  as the counts' is. There is no trigram index: the queue is the open items of one tenant, and a
+  GIN index on a table every reconcile rewrites would cost more than the scan it saves.
+- **The filter offers what is there.** `DeskAttention.kinds` counts the open items of each kind in
+  the list's scope (`mine` included), most first, from the counts the read already makes; a kind
+  the address names is listed with nothing open, so its token keeps its name. The menu offers the
+  kinds of the lens in front (`offeredKinds`). The filters live in the address (`needs-filters.ts`:
+  `q`, `severities`, `kinds`, `unseen`, `working`), so the briefing's links and a link sent to
+  someone open the same list. The Decisions lens is narrowed to one agent and one kind of change
+  (`decision-filters.ts`: `agent`, `change`), which `pendingDecisions` already takes, and offers
+  them from `pendingDecisionSummary`.
+- **The search is the page's, and every lens answers it.** The words are one address key (`q`)
+  that stays as the person goes from lens to lens. Under Decisions, `pendingDecisions(search:)`
+  keeps the proposals and plans whose Watchtower item holds the words in its title, its summary
+  or its record's name (`said` in `agentdecisionqueuerepository`, an `EXISTS` on
+  `uq_watchtower_items_source`). It reads the item rather than the proposal on purpose: those
+  are the words Needs you searches under Everything, so a search finds the same decisions under
+  every lens, and a record's name is on the item and not on the proposal. What was decided
+  today is not narrowed by the search or the filters, so the queue lists it only while it is
+  whole.
 - **Labels** come from the record summarizer, one batch per kind, and only for kinds the reader may
   read (`deskrecords.Labeler`); a record they may not read is counted, never named. A readable
   record with no label is treated as no record: it names nothing and opens no case.
@@ -175,13 +275,22 @@ resource, is its own row with no record.
   the agent on it or the one that could take it, the message and the decision, and a sticky bar.
   `useWatchtowerActions` owns J/K/E/S/H, done, snooze and hand-off; the page adds Enter for the
   case and A/D for a decision, and refuses E and S on a decision.
-- **One page, one head.** `DeskNeeds` (`attention/desk-needs.tsx`) reads the lens and draws
-  `NeedsAttention` (the rows by record) for Everything and Watchtower, and `DecisionFlow`
-  (`decisions/decision-flow.tsx`) for Decisions. Both sit in the same two-pane frame under
-  `NeedsHead`, which owns the name, the progress bar, the lens chips and the keys 1–3, so a lens
-  changes what the list holds and never the page. A person sees the lenses they may read
-  (Watchtower for the first two, agent proposals for Decisions); the route lets in whoever may
-  read either (`anyOfLoaders`, and the `or` requirement in `routeaccess`).
+- **What a row reads is centred in the detail, under every lens.** The item (`ItemDetail`) keeps
+  to one measure in the middle of the detail cell, as a decision's card does, and the bar under
+  it holds its note and buttons to the same measure while its rule and blur run the cell's
+  width (`ITEM_MEASURE_CLASS`). A detail is never left hugging the list.
+- **One page, one head, and a lens is a variant of it.** `DeskNeeds`
+  (`attention/desk-needs.tsx`) is the frame ("A pane whose list has views", above): it reads
+  the lens from the address and draws `NeedsHead` once, which owns the name, the progress bar,
+  the lens tabs and the keys 1–3, / for the search and F for the filter. Under it,
+  `NeedsAttention` (the rows by record) fills the cells for Everything and Watchtower and
+  `DecisionFlow` (`decisions/decision-flow.tsx`) fills them for Decisions; each is kept while the
+  other is in front, and `DecisionFlow`'s code is read when the lens is first opened or headed
+  for. What each lens says in the head comes from `useAttentionHead` and `useDecisionsHead`,
+  which also hold what the lens is narrowed to and hand it down. A person sees the lenses they
+  may read (Watchtower for the first two, agent proposals for Decisions); the route lets in
+  whoever may read either (`anyOfLoaders`, and the `or` requirement in `routeaccess`), and does
+  not run its guards again when only the lens changes.
 - **The Decisions lens is the only place changes are decided together.** It lists the pending
   queue (`pendingDecisions`) by the kind of write; changes are ticked in the list and decided
   from the dock at its foot, and the page beside it reads one change
@@ -205,8 +314,8 @@ resource, is its own row with no record.
   Watchtower's Manage) reads their own and the unowned ones by default and everyone's when
   they ask. `deskAttention(mine: true)` narrows the list and its lens counts
   (`ListWatchtowerItemsRequest.Mine`, `WatchtowerService.CountsFor`), and the answer's
-  `seesEveryone` says whether to draw the switch at all. The choice is the `cases` Desk
-  setting, kept in the person's browser. The rail's badge still counts everything they may
+  `seesEveryone` says whether to draw the switch at all, beside the page's name. The choice is
+  the `cases` Desk setting, kept in the person's browser. The rail's badge still counts everything they may
   see.
 
 
@@ -610,6 +719,11 @@ The rail lists cases and conversations apart, and nothing moves between the two.
   Triage, Scheduled, Memory, and the chats by day. There is no
   switch to keep in step with the page: the rail follows where the person is. Either way the list
   is shelved by day by the same queries, counts and paging.
+- **Every view scrolls in the one scroll area.** The rail's body is a single `ScrollArea`, fading
+  into the rail at an edge with more beyond it, and it stays while the view changes: the chats
+  and the cases (`RailList`, windowed against the area's viewport) and Triage's places are what
+  it holds, not scroll containers of their own. A new view of the rail goes inside it; another
+  view is read from its top.
 - **A room fills the rail, it does not add a second one.** The rail offers an element
   (`useDeskRailSlotStore`) while Triage is in front and `TriageRoom` portals `TriageFolders` into
   it, so the folders keep the room's state and actions and sit in the one rail a person reads.

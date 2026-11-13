@@ -54,7 +54,7 @@ type world struct {
 func newWorld(t *testing.T) *world {
 	t.Helper()
 	now := mondayMidnight + 9*3600
-	starts := demandforecast.OutlookStarts(now)
+	starts := demandforecast.OutlookStarts(dispatchmarket.Grid{}, now)
 	w := &world{t: t, now: now, starts: starts}
 	w.in = &freightmove.Inputs{
 		Now:            now,
@@ -82,6 +82,7 @@ func (w *world) area(
 	slots := make([]demandforecast.SlotBalance, len(w.starts))
 	for i := range slots {
 		slots[i].Start = w.starts[i]
+		slots[i].End = w.starts[i] + dispatchmarket.SlotSeconds
 	}
 	if set != nil {
 		set(slots)
@@ -138,6 +139,7 @@ func TestPlan_SendsAnIdleDriverToAShortAreaForWhatItNets(t *testing.T) {
 	assert.Equal(t, "Oklahoma City, OK", step.FromLabel)
 	assert.Equal(t, "Dallas, TX", step.ToLabel)
 	assert.Equal(t, w.starts[4], step.SlotStart)
+	assert.Equal(t, w.starts[4]+dispatchmarket.SlotSeconds, step.SlotEnd)
 	assert.InDelta(t, miles, step.Miles, 1e-6)
 	assert.Equal(t, int64(math.Round(miles*100)), step.EmptyCostCents)
 	assert.Equal(t, int64(90_000), step.DropCents)
@@ -279,6 +281,7 @@ func TestPlan_AsksACustomerBehindItsUsualPaceAndRanksItByWhatItCouldRecover(t *t
 	assert.Equal(t, acme, step.CustomerID)
 	assert.Equal(t, "Dallas, TX", step.ToLabel)
 	assert.Equal(t, w.starts[2], step.SlotStart, "named for the customer's busiest window")
+	assert.Equal(t, w.starts[2]+dispatchmarket.SlotSeconds, step.SlotEnd)
 	assert.InDelta(t, 5, step.Usual, 1e-9)
 	assert.InDelta(t, 3, step.ByNow, 1e-9)
 	assert.Equal(t, 1, step.Tendered)
@@ -371,4 +374,89 @@ func TestPlan_ConsidersOnlyTheBiggestShortfallsWhenThereAreMoreThanItCanPrice(t 
 		steps,
 		"Dallas's small shortfalls fall past the cut once bigger ones fill it, and those are out of reach",
 	)
+}
+
+func TestPlan_SendsNoMoreDriversOutOfAnAreaThanItCanSpare(t *testing.T) {
+	t.Parallel()
+
+	w := newWorld(t)
+	w.area(dallas, "Dallas, TX", 45_000, shortAt(4, 3.4))
+	w.area(okc, "Oklahoma City, OK", 30_000, spareAll(1.3))
+	w.driver("wrk_ana", "Ana Ruiz", okc, w.now)
+	w.driver("wrk_ben", "Ben Ortiz", okc, w.now)
+	w.driver("wrk_cy", "Cy Park", okc, w.now)
+
+	steps := freightmove.Plan(w.in)
+
+	require.Len(t, steps, 1,
+		"three drivers wait in an area that can spare one: the other two are its own cover")
+	assert.Equal(t, freightmove.KindSend, steps[0].Kind)
+	assert.Equal(t, "Oklahoma City, OK", steps[0].FromLabel)
+
+	w.area(okc, "Oklahoma City, OK", 30_000, spareAll(2.6))
+	assert.Len(t, freightmove.Plan(w.in), 3, "an area with three to spare can send all three")
+}
+
+func TestPlan_GivesAScarceWindowToTheDriverWhoCanGoNowhereElse(t *testing.T) {
+	t.Parallel()
+
+	w := newWorld(t)
+	w.in.Valuer = fakeValuer{cents: map[int64]int64{
+		cellOf(t, dallas):  90_000,
+		cellOf(t, okc):     9_000,
+		cellOf(t, houston): 100_000,
+	}}
+	w.area(dallas, "Dallas, TX", 45_000, shortAt(6, 1.1))
+	w.area(houston, "Houston, TX", 40_000, shortAt(3, 1.1))
+	w.area(okc, "Oklahoma City, OK", 30_000, spareAll(2))
+	w.driver("wrk_ana", "Ana Ruiz", okc, w.now)
+	w.driver("wrk_ben", "Ben Ortiz", okc, w.starts[5])
+
+	steps := freightmove.Plan(w.in)
+
+	require.Len(t, steps, 2,
+		"Ana nets most in Dallas, but Ben can only make Dallas: sending Ana to Houston fills both")
+	byWorker := map[pulid.ID]freightmove.Step{}
+	for _, step := range steps {
+		byWorker[step.WorkerID] = step
+	}
+	assert.Equal(t, "Houston, TX", byWorker["wrk_ana"].ToLabel)
+	assert.Equal(t, "Dallas, TX", byWorker["wrk_ben"].ToLabel)
+	assert.Greater(t, steps[0].NetCents+steps[1].NetCents,
+		90_000-9_000-int64(roadMiles(okc, dispatchmarket.CenterOf(cellOf(t, dallas)))*100),
+		"together they net more than the one move a best-first pick would have made")
+}
+
+func TestPlan_NeverUsesADriverTwiceAcrossSendsAndKeeps(t *testing.T) {
+	t.Parallel()
+
+	w := newWorld(t)
+	w.area(dallas, "Dallas, TX", 45_000, shortAt(4, 2.2))
+	w.area(okc, "Oklahoma City, OK", 30_000, spareAll(2))
+	w.area(houston, "Houston, TX", 40_000, spareAll(2))
+	w.driver("wrk_ana", "Ana Ruiz", okc, w.now)
+	w.driver("wrk_ben", "Ben Ortiz", houston, w.now)
+	w.in.Departures = []freightmove.Departure{{
+		MoveID:      "sm_out",
+		ProNumber:   "PRO-9",
+		WorkerID:    "wrk_ana",
+		Origin:      dallas,
+		PickupStart: w.starts[3],
+		PickupEnd:   w.starts[4],
+	}}
+
+	steps := freightmove.Plan(w.in)
+
+	require.NotEmpty(t, steps)
+	seen := map[pulid.ID]int{}
+	for _, step := range steps {
+		seen[step.WorkerID]++
+		if !step.PartnerID.IsNil() {
+			seen[step.PartnerID]++
+		}
+	}
+	for worker, times := range seen {
+		assert.Equal(t, 1, times, "%s is asked to do one thing", worker)
+	}
+	assert.LessOrEqual(t, len(steps), 2, "the window is short two drivers")
 }

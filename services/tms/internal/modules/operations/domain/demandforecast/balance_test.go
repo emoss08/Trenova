@@ -3,6 +3,7 @@ package demandforecast_test
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/operations/domain/demandfit"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/demandforecast"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchmarket"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -37,7 +38,7 @@ func newBalanceWorld(t *testing.T) *balanceWorld {
 
 	return &balanceWorld{
 		now:    now,
-		starts: demandforecast.OutlookStarts(now),
+		starts: demandforecast.OutlookStarts(dispatchmarket.Grid{}, now),
 		areas: []*demandforecast.Area{
 			{Cell: dallasCell(t), Label: "Dallas, TX", MedianRevenueCents: 45_000, Loads: 400},
 			{Cell: houstonCell(t), Label: "Houston, TX", MedianRevenueCents: 40_000, Loads: 300},
@@ -47,15 +48,17 @@ func newBalanceWorld(t *testing.T) *balanceWorld {
 
 func (w *balanceWorld) forecaster() *demandforecast.Forecaster {
 	return demandforecast.NewForecaster(&demandforecast.ForecasterParams{
-		Now:           w.now,
-		Quality:       &demandforecast.Quality{Status: demandforecast.StatusReady},
-		Rates:         w.rates,
-		Areas:         w.areas,
-		Curves:        w.curves,
+		Now: w.now,
+		Index: demandforecast.NewIndex(&demandforecast.IndexParams{
+			Quality:       &demandforecast.Quality{Status: demandforecast.StatusReady},
+			Rates:         w.rates,
+			Areas:         w.areas,
+			Curves:        w.curves,
+			CustomerNames: map[pulid.ID]string{acme: "Acme Foods"},
+		}),
 		Booked:        w.booked,
 		Solving:       w.solving,
 		Supply:        w.supply,
-		CustomerNames: map[pulid.ID]string{acme: "Acme Foods"},
 		MarginPercent: 80,
 	})
 }
@@ -68,7 +71,7 @@ func TestOutlookStarts_AreTwelveFourHourWindowsFromTheOneUnderWay(t *testing.T) 
 	t.Parallel()
 
 	now := mondayMidnight + 9*3600 + 15*60
-	starts := demandforecast.OutlookStarts(now)
+	starts := demandforecast.OutlookStarts(dispatchmarket.Grid{}, now)
 
 	require.Len(t, starts, demandforecast.OutlookSlots)
 	assert.Equal(t, mondayMidnight+8*3600, starts[0], "the window under way comes first")
@@ -172,6 +175,10 @@ func TestNetwork_SeparatesHowManyDriversFromWhereTheyAre(t *testing.T) {
 	network := f.Network(areas, w.starts)
 
 	require.Len(t, network, demandforecast.OutlookSlots)
+	for i, slot := range network {
+		assert.Equal(t, w.starts[i], slot.Start)
+		assert.Equal(t, w.starts[i]+dispatchmarket.SlotSeconds, slot.End, "slot %d", i)
+	}
 	first := network[0]
 	assert.InDelta(t, 2, first.Drivers, 1e-9)
 	assert.InDelta(t, 2, first.Need, 1e-9)
@@ -251,7 +258,7 @@ func TestFit_KeepsTheLastEightWeeksOfEachAreaSlot(t *testing.T) {
 	t.Parallel()
 
 	h := steadyHistory(t, 4, 12, 7)
-	fitted := demandforecast.Fit(h)
+	fitted := demandfit.Fit(h)
 	rate := areaRate(t, fitted, 7)
 
 	want := make([]int32, 0, demandforecast.RecordWeeks)
@@ -267,14 +274,14 @@ func TestTrackRecord_ForecastsEachDayOnlyFromTheWeeksBeforeIt(t *testing.T) {
 	t.Parallel()
 
 	h := patternedHistory(t, 26)
-	days := demandforecast.TrackRecord(h)
+	_, days := demandfit.Evaluate(h)
 
 	require.Len(t, days, demandforecast.RecordDays)
 	for i, day := range days {
 		assert.LessOrEqual(t, day.Low, day.High)
 		assert.Equal(t, h.Now, day.FittedAt)
 		if i > 0 {
-			assert.Equal(t, demandforecast.DaySeconds, day.DayStart-days[i-1].DayStart)
+			assert.Equal(t, dispatchmarket.DaySeconds, day.DayStart-days[i-1].DayStart)
 		}
 		actual := int32(0)
 		week := dispatchmarket.WeekOf(day.DayStart)
@@ -288,16 +295,16 @@ func TestTrackRecord_ForecastsEachDayOnlyFromTheWeeksBeforeIt(t *testing.T) {
 	}
 
 	lastWeek := dispatchmarket.WeekOf(h.Now) - 1
-	busier := &demandforecast.History{
+	busier := &demandfit.History{
 		Now:    h.Now,
-		Counts: append([]demandforecast.LoadCount{}, h.Counts...),
+		Counts: append([]demandfit.LoadCount{}, h.Counts...),
 	}
 	for i := range busier.Counts {
 		if busier.Counts[i].Week == lastWeek {
 			busier.Counts[i].Loads += 50
 		}
 	}
-	again := demandforecast.TrackRecord(busier)
+	_, again := demandfit.Evaluate(busier)
 	var before, after int32
 	for i := range days {
 		if dispatchmarket.WeekOf(days[i].DayStart) != lastWeek {
@@ -318,8 +325,13 @@ func TestValueAt_CountsBookedLoadsInAWindowWithNoLearnedRate(t *testing.T) {
 	cell := dallasCell(t)
 	w.booked = []demandforecast.Booked{{Cell: cell, SlotStart: w.starts[4], Total: 3, Open: 3}}
 
-	value := w.forecaster().ValueAt(demandforecast.WindowKey{Cell: cell, Start: w.starts[4]}, pulid.Nil)
+	value := w.forecaster().
+		ValueAt(demandforecast.WindowKey{Cell: cell, Start: w.starts[4]}, pulid.Nil)
 
-	assert.Positive(t, value.Cents, "a booked load with no driver is worth a driver, learned or not")
+	assert.Positive(
+		t,
+		value.Cents,
+		"a booked load with no driver is worth a driver, learned or not",
+	)
 	assert.Equal(t, 3, value.Reason.Booked)
 }

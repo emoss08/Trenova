@@ -18,7 +18,13 @@ export const HORIZON_OPTIONS: readonly { value: Horizon; slots: number }[] = [
 ];
 
 export const DEFAULT_HORIZON: Horizon = "24";
-export const SLOT_SECONDS = 4 * 3600;
+/** A window of the outlook: when it starts and when it ends. */
+export type Window = { start: number; end: number };
+
+/** The window that names a move or an area sheet: its own slot start and end. */
+export function windowOfSlot(named: { slotStart: number; slotEnd: number }): Window {
+  return { start: named.slotStart, end: named.slotEnd };
+}
 /** Below half a load (or half a driver) an area is called balanced, the server's threshold too. */
 export const MIN_GAP = 0.5;
 /** Short by a load and a half or more puts an area in the "Short of trucks" lane. */
@@ -165,12 +171,11 @@ export function movesIn(
   indexes: readonly number[],
 ): FreightMove[] {
   if (slotStarts.length === 0 || indexes.length === 0) return [];
-  const first = slotStarts[0];
   const reach = indexes.length === 1 ? 1 : 0;
   const low = Math.min(...indexes) - reach;
   const high = Math.max(...indexes) + reach;
   return moves.filter((move) => {
-    const index = Math.floor((move.slotStart - first) / SLOT_SECONDS);
+    const index = slotStarts.indexOf(move.slotStart);
     return index >= low && index <= high;
   });
 }
@@ -232,11 +237,20 @@ export function paceReadings(
   );
 }
 
-/** The index of a window's start among the outlook's windows, or null when it is not one. */
-export function slotIndexOf(slotStarts: readonly number[], start: number): number | null {
-  if (slotStarts.length === 0) return null;
-  const index = Math.floor((start - slotStarts[0]) / SLOT_SECONDS);
-  return index >= 0 && index < slotStarts.length ? index : null;
+/** The index of the window that holds a moment, or null when none of them does. */
+export function windowIndexAt(windows: readonly Window[], at: number): number | null {
+  const index = windows.findIndex((window) => at >= window.start && at < window.end);
+  return index >= 0 ? index : null;
+}
+
+/** How far across the windows a moment sits, in windows: 2.5 is halfway through the third. */
+export function positionAmong(windows: readonly Window[], at: number): number {
+  const first = windows[0];
+  if (!first || at <= first.start) return 0;
+  const index = windows.findIndex((window) => at < window.end);
+  const held = windows[index];
+  if (!held) return windows.length;
+  return index + Math.max(at - held.start, 0) / Math.max(held.end - held.start, 1);
 }
 
 /** Whether a window begins a new day in the reader's time zone, for the axis and the strips. */
@@ -261,9 +275,9 @@ export type MoveTrail = {
  * travels there, the area and window that driver frees up in. A keep starts from its partner;
  * a call stays where it is.
  */
-export function moveTrail(move: FreightMove, slotStarts: readonly number[]): MoveTrail {
-  const toIndex = slotIndexOf(slotStarts, move.slotStart);
-  const first = slotStarts[0] ?? 0;
+export function moveTrail(move: FreightMove, windows: readonly Window[]): MoveTrail {
+  const toIndex = windowIndexAt(windows, move.slotStart);
+  const first = windows[0]?.start ?? 0;
   const origin =
     move.kind === "Send" || move.kind === "Book"
       ? { cell: move.fromCell, freeAt: move.freeAt }
@@ -277,7 +291,7 @@ export function moveTrail(move: FreightMove, slotStarts: readonly number[]): Mov
     toCell: move.toCell,
     toIndex,
     fromCell: origin.cell,
-    fromIndex: slotIndexOf(slotStarts, Math.max(origin.freeAt ?? first, first)),
+    fromIndex: windowIndexAt(windows, Math.max(origin.freeAt ?? first, first)),
   };
 }
 

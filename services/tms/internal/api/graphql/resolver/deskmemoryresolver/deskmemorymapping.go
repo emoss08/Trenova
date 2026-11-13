@@ -56,23 +56,28 @@ func idString(id *pulid.ID) *string {
 func deskMemoryToModel(memory *agentmemoryports.DeskMemory) *gqlmodel.DeskMemory {
 	entity := memory.Memory
 	out := &gqlmodel.DeskMemory{
-		ID:          entity.ID.String(),
-		Content:     entity.Content,
-		Kind:        entity.Kind,
-		Scope:       entity.Scope,
-		RoleID:      idString(entity.RoleID),
-		RoleName:    memory.RoleName,
-		Status:      entity.Status,
-		Source:      entity.Source,
-		SourceTitle: memory.SourceTitle,
-		UseCount:    entity.UseCount,
-		CreatedAt:   int(entity.CreatedAt),
-		Version:     int(entity.Version),
-		Editable:    memory.Editable,
+		ID:           entity.ID.String(),
+		Content:      entity.Content,
+		Kind:         entity.Kind,
+		Scope:        entity.Scope,
+		RoleID:       idString(entity.RoleID),
+		RoleName:     memory.RoleName,
+		SubjectLabel: entity.SubjectLabel,
+		Status:       entity.Status,
+		Source:       entity.Source,
+		SourceTitle:  memory.SourceTitle,
+		UseCount:     entity.UseCount,
+		CreatedAt:    int(entity.CreatedAt),
+		Version:      int(entity.Version),
+		Editable:     memory.Editable,
 	}
 	if entity.LastUsedAt != nil {
 		at := int(*entity.LastUsedAt)
 		out.LastUsedAt = &at
+	}
+	if entity.SubjectType.IsValid() {
+		subjectType := entity.SubjectType
+		out.SubjectType = &subjectType
 	}
 	out.Reason, out.Quotes = deskEvidence(entity.Evidence)
 	out.Replaces = deskLinkToModel(memory.Replaces)

@@ -3,7 +3,6 @@ package dispatchcandidateservice
 import (
 	"context"
 	"errors"
-	"slices"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/demandforecast"
@@ -96,7 +95,9 @@ func TestAnticipate_LeavesTheForecastOutUnlessTurnedOnWithSomewhereToGo(t *testi
 	}
 }
 
-func TestAnticipate_ForecastsTheDestinationsAndWhereDriversAreWithTheirSupplyAndEconomics(t *testing.T) {
+func TestAnticipate_ForecastsTheDestinationsAndWhereDriversAreWithTheirSupplyAndEconomics(
+	t *testing.T,
+) {
 	t.Parallel()
 
 	forecasts := &fakeForecasts{forecaster: demandforecast.NewForecaster(
@@ -107,7 +108,7 @@ func TestAnticipate_ForecastsTheDestinationsAndWhereDriversAreWithTheirSupplyAnd
 	driver := addPlacedDriver(snapshot, "Ana", denverLat, denverLon)
 	addDriver(snapshot, "Ben")
 	snapshot.Prepare()
-	chicago, dallas := pointCell(t, chicagoLat, chicagoLon), pointCell(t, dallasLat, dallasLon)
+	chicago := pointCell(t, chicagoLat, chicagoLon)
 	solving := []demandforecast.Booked{{Cell: chicago, SlotStart: testNow, Total: 1, Open: 1}}
 
 	err := svc.anticipate(t.Context(), &SnapshotRequest{
@@ -123,14 +124,10 @@ func TestAnticipate_ForecastsTheDestinationsAndWhereDriversAreWithTheirSupplyAnd
 	}, snapshot)
 	require.NoError(t, err)
 
-	denver := pointCell(t, denverLat, denverLon)
-	cells := []int64{chicago, dallas, denver}
-	slices.Sort(cells)
 	assert.Same(t, forecasts.forecaster, snapshot.Forecast)
 	assert.Equal(t, []*demandforecastports.ForecasterRequest{{
 		TenantInfo: anticipateTenant,
 		Now:        testNow,
-		Cells:      cells,
 		Supply: []demandforecast.Driver{{
 			WorkerID: driver.WorkerID,
 			Cell:     pointCell(t, denverLat, denverLon),

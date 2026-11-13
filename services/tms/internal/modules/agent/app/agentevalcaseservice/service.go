@@ -109,6 +109,10 @@ type runReader interface {
 		ctx context.Context,
 		req agentruntimeports.GetAgentRunByIDRequest,
 	) (*agent.AgentRun, error)
+	ListTranscriptsByIDs(
+		ctx context.Context,
+		req *agentruntimeports.ListAgentRunsByIDsRequest,
+	) ([]*agent.AgentRun, error)
 }
 
 type definitionReader interface {
@@ -203,6 +207,35 @@ func New(p Params) agentqualityports.AgentEvalCaseService {
 		audit:         p.AuditService,
 		now:           timeutils.NowUnix,
 	}
+}
+
+func AsRecordedReads(
+	s agentqualityports.AgentEvalCaseService,
+) agentruntimeports.RecordedReadsReader {
+	return s
+}
+
+func (s *Service) RecordedReads(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	caseID pulid.ID,
+) (agentruntimeports.RecordedReads, error) {
+	evalCase, err := s.cases.GetByID(ctx, agentqualityports.GetAgentEvalCaseByIDRequest{
+		ID:         caseID,
+		TenantInfo: tenant,
+	})
+	if isNotFound(err) {
+		return nil, nil //nolint:nilnil // a case deleted mid-run has nothing recorded, which is not an error
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	if recording := evalCase.Recording(); recording != nil {
+		return recording, nil
+	}
+
+	return nil, nil //nolint:nilnil // a case with no usable reads is replayed against the records
 }
 
 func (s *Service) GetByID(

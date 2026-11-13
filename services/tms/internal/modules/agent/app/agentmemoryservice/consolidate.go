@@ -109,8 +109,7 @@ func (s *Service) widerNeighbors(
 	same *agentmemoryports.FindActiveAgentMemoryRequest,
 ) []*agentmemory.Memory {
 	entity := c.plan.Memory
-	if entity.Status != agentmemory.MemoryStatusActive ||
-		(entity.Scope != agentmemory.MemoryScopeUser && entity.Scope != agentmemory.MemoryScopeRole) {
+	if entity.Scope != agentmemory.MemoryScopeUser && entity.Scope != agentmemory.MemoryScopeRole {
 		return nil
 	}
 
@@ -173,7 +172,7 @@ func (s *Service) applyJudgement(
 		if judgement.Verdict(neighbor.ID) != agentmemoryports.MemoryVerdictSame {
 			continue
 		}
-		if entity.Kind.Rank() < neighbor.Kind.Rank() && Replaceable(neighbor.Status) {
+		if entity.Kind.Rank() < neighbor.Kind.Rank() && neighbor.Status.Replaceable() {
 			replaceContradicted(c, neighbor)
 
 			return
@@ -185,7 +184,7 @@ func (s *Service) applyJudgement(
 
 	for _, neighbor := range judged {
 		if judgement.Verdict(neighbor.ID) == agentmemoryports.MemoryVerdictContradicts &&
-			Replaceable(neighbor.Status) {
+			neighbor.Status.Replaceable() {
 			replaceContradicted(c, neighbor)
 
 			return

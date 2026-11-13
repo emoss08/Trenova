@@ -67,9 +67,55 @@ type FailReflectionRequest struct {
 	Message string          `json:"message"`
 }
 
+// LearningRow is one way agents came to hold memories over a stretch of days,
+// and what became of them: what a person typed, what an agent saved when
+// asked, or what a look back kept after one kind of trigger. The look back
+// figures are nought for a source that is not a look back.
+type LearningRow struct {
+	Source        agentmemory.MemorySource
+	Trigger       *agentreflection.ReflectionSignalKind
+	LookBacks     int
+	TaughtNothing int
+	ToldAgain     int
+	InputTokens   int
+	OutputTokens  int
+	Kept          int
+	Waiting       int
+	Dismissed     int
+	Lapsed        int
+	Retired       int
+	Used          int
+}
+
+type LearningStats struct {
+	Days  int
+	Since int64
+	Rows  []*LearningRow
+}
+
+type LearningStatsRequest struct {
+	TenantInfo pagination.TenantInfo
+	Days       int
+}
+
 type AgentReflectionService interface {
+	// LearningStats says, for the last days, how each way of learning did:
+	// what it cost, what it offered and what people did with the offers.
+	LearningStats(ctx context.Context, req *LearningStatsRequest) (*LearningStats, error)
 	PrepareThread(ctx context.Context, req *ReflectOnThreadRequest) (*ReflectionPlan, error)
 	PrepareRun(ctx context.Context, req *ReflectOnRunRequest) (*ReflectionPlan, error)
+	// PlanCorrections finds the habits of correction worth a look back now:
+	// a field an agent set that people changed by hand on several records,
+	// that no look back has read lately.
+	PlanCorrections(
+		ctx context.Context,
+		tenant pagination.TenantInfo,
+		now int64,
+	) ([]*ReflectOnCorrectionsRequest, error)
+	PrepareCorrections(
+		ctx context.Context,
+		req *ReflectOnCorrectionsRequest,
+	) (*ReflectionPlan, error)
 	Finish(
 		ctx context.Context,
 		plan *ReflectionPlan,
@@ -85,4 +131,5 @@ type AgentReflectionService interface {
 type AgentReflectionScheduler interface {
 	AfterTurn(ctx context.Context, req *ReflectOnThreadRequest)
 	AfterRun(ctx context.Context, req *ReflectOnRunRequest)
+	AfterCorrections(ctx context.Context, req *ReflectOnCorrectionsRequest)
 }

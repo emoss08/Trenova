@@ -26,10 +26,13 @@ export function QueueList({
   empty,
   footer,
   onEndReached,
+  className,
 }: {
   label: string;
   sections: readonly QueueSection[];
   selectedKey: string | null;
+  /** Classes on the list itself: whether its rows have settled, a dimming while it is read again. */
+  className?: string;
   empty?: ReactNode;
   footer?: ReactNode;
   onEndReached?: () => void;
@@ -60,6 +63,7 @@ export function QueueList({
       estimateSize={ROW_ESTIMATE}
       overscan={OVERSCAN}
       aria-label={label}
+      className={className}
       empty={<DeskListStill>{empty}</DeskListStill>}
       footer={footer}
       onEndReached={onEndReached}

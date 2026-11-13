@@ -22,3 +22,18 @@ export function severityLabel(t: TranslateFn, severity: WatchtowerSeverity): str
       return t("Info");
   }
 }
+
+/** Every severity, loudest first: the order a filter offers them in. */
+export const SEVERITIES: readonly WatchtowerSeverity[] = ["Critical", "Warning", "Info"];
+
+// i18n-ignore: class names, never shown to a person
+const MARK_CLASS: Record<WatchtowerSeverity, string> = {
+  Critical: "bg-danger",
+  Warning: "bg-dsk-warn",
+  Info: "bg-dsk-blue",
+};
+
+/** The fill of the small square that says a severity: on a row, a filter, a token. */
+export function severityMarkClass(severity: WatchtowerSeverity): string {
+  return MARK_CLASS[severity];
+}

@@ -13,6 +13,7 @@ const MaxPace = 20
 
 type PaceSlot struct {
 	Start    int64
+	End      int64
 	Usual    float64
 	ByNow    float64
 	Tendered int
@@ -78,6 +79,7 @@ func Paces(areas []demandforecast.AreaBalance) []Pace {
 					}
 					for j := range pace.Slots {
 						pace.Slots[j].Start = area.Slots[j].Start
+						pace.Slots[j].End = area.Slots[j].End
 					}
 					byKey[key] = pace
 				}
@@ -120,12 +122,14 @@ func (p *planner) calls() []Step {
 		}
 		area := p.areas[pace.Cell]
 		loads := math.Max(0, usual-float64(tendered))
+		busiest := busiestSlot(pace, CallHorizonSlots)
 		worth := loads * float64(area.MedianRevenueCents) * float64(p.in.MarginPercent) / 100
 		out = append(out, Step{
 			Kind:         KindCall,
 			ToCell:       pace.Cell,
 			ToLabel:      pace.Label,
-			SlotStart:    busiestSlot(pace, CallHorizonSlots),
+			SlotStart:    busiest.Start,
+			SlotEnd:      busiest.End,
 			CustomerID:   pace.CustomerID,
 			CustomerName: pace.CustomerName,
 			Usual:        usual,
@@ -139,13 +143,13 @@ func (p *planner) calls() []Step {
 	return out
 }
 
-func busiestSlot(pace Pace, slots int) int64 {
-	best, start := -1.0, int64(0)
+func busiestSlot(pace Pace, slots int) PaceSlot {
+	busiest := PaceSlot{Usual: -1}
 	for _, slot := range pace.Slots[:min(slots, len(pace.Slots))] {
-		if slot.Usual > best {
-			best, start = slot.Usual, slot.Start
+		if slot.Usual > busiest.Usual {
+			busiest = slot
 		}
 	}
 
-	return start
+	return busiest
 }

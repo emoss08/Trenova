@@ -29,14 +29,26 @@ import { useLatestCallback } from "@trenova/shared/hooks/use-latest-callback";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { AlertCircleIcon, CheckIcon, XCloseIcon } from "@trenova/shared/components/icons";
 import { askAgentMessage } from "@/components/assistant/proposal-preview/preview-warnings";
 import { humanizeToolName } from "@/components/assistant/proposal-state";
 import { DeskIcon } from "@/components/desk-chat/desk-icons";
-import { DeskListPane } from "../list/desk-list";
+import { NEEDS_DETAIL_TRANSITION_CLASS, NEEDS_LIST_TRANSITION_CLASS } from "../desk-motion";
+import { DeskListSkeleton } from "../list/desk-list-skeleton";
+import { DeskViewDetail, DeskViewList } from "../list/desk-views";
+import { LIST_SETTLED_CLASS, useListEntrance } from "../list/use-list-entrance";
+import {
+  NO_DECISION_FILTERS,
+  PLAN_GROUP,
+  changeLabel,
+  decisionFilterCount,
+  isDecisionNarrowed,
+  pendingFilter,
+  type DecisionFilters,
+} from "./decision-filters";
 import { QueueClear, QueueReading } from "../queue/queue";
 import { QueueBar, QueueBarSpacer, QueueButton, QueueNav } from "../queue/queue-bar";
 import { QueueGroupHeader, QueueList, type QueueSection } from "../queue/queue-list";
@@ -53,7 +65,6 @@ import { useDecisionPreviews } from "./use-decision-previews";
 import {
   isPendingPlan,
   isPendingProposal,
-  startOfToday,
   usePendingDecisions,
   useRecentDecisions,
   type PendingDecisionNode,
@@ -75,9 +86,6 @@ type Item = {
   /** The switch keeping it from being decided; null when it can be decided now. */
   held: HoldSwitch | null;
 };
-
-/** The group a plan is filed under, beside the groups named after one kind of write. */
-const PLAN_GROUP = "plan";
 
 function itemOf(node: PendingDecisionNode): Item {
   const held = holdSwitchOf(node.hold, {
@@ -127,36 +135,41 @@ function errorText(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
-/** What the list's head is told: how much of today's deciding is done, and what still waits. */
-export type DecisionFlowProgress = {
-  progressLabel: string;
-  done: number;
-  total: number;
-  /** How many changes wait, as far as the queue has been read. */
-  waiting: number;
-  /** Off while a dialog is open over the queue. */
-  keysEnabled: boolean;
-};
-
 /**
- * The Decisions lens of Needs you: what agents ask to change. The list on the
- * left, under the head the page gives it, is grouped by the kind of write,
- * with how much of today's work is decided. Each row leads with what is its
- * own, and is where changes are ticked to decide several: a kind's heading
- * ticks the kind, and the dock at the foot of the list declines the ticked
- * changes or opens the one review an approval of several takes. The page
- * beside the list only ever holds one change, read whole, with the bar under
- * it deciding that one. A plan is decided as one and takes no tick.
+ * The Decisions lens of Needs you: what agents ask to change. Its list,
+ * under the page's head, is grouped by the kind of write. Each row leads with
+ * what is its own, and is where changes are ticked to decide several: a
+ * kind's heading ticks the kind, and the dock at the foot of the list
+ * declines the ticked changes or opens the one review an approval of several
+ * takes. The page beside the list only ever holds one change, read whole,
+ * with the bar under it deciding that one. A plan is decided as one and takes
+ * no tick.
+ *
+ * It fills the two cells a lens owns in the page's frame (list/desk-views):
+ * the list under the page's head, and the change beside it. The head, the
+ * search and the filter are the page's, which hands down what the queue is
+ * narrowed to.
  *
  * Approving sends the digest of each preview the person was shown, so a
  * record that moved since is caught rather than overwritten. Declining asks
  * why, because the reason goes back to the agent and to whoever owns it.
  */
 export function DecisionFlow({
-  head,
+  shown = true,
+  filter = NO_DECISION_FILTERS,
+  onFilter,
+  since,
+  keysPaused = false,
 }: {
-  /** The page's head over the list: its name, progress and lenses. */
-  head: (progress: DecisionFlowProgress) => ReactNode;
+  /** Whether this lens is the one in front; it is kept, hidden, while another is. */
+  shown?: boolean;
+  /** The words, the agent and the kind of change the queue is narrowed to. */
+  filter?: DecisionFilters;
+  onFilter: (filter: DecisionFilters) => void;
+  /** The start of the reader's day, which "Decided today" lists from. */
+  since: number;
+  /** Set while the head's filter menu is open: the queue's keys stand down. */
+  keysPaused?: boolean;
 }) {
   const t = useT();
   const queryClient = useQueryClient();
@@ -164,9 +177,11 @@ export function DecisionFlow({
   const { allowed: canDecide } = usePermission(Resource.AgentProposal, Operation.Update);
   const { allowed: canResume } = usePermission(Resource.AgentControl, Operation.Update);
   const { allowed: canEditAgent } = usePermission(Resource.AgentDefinition, Operation.Update);
-  const queue = usePendingDecisions({});
-  const [since] = useState(startOfToday);
+  // The page's head reads the same queue for how far along today is; this is
+  // that read, not a second one.
+  const queue = usePendingDecisions(pendingFilter(filter));
   const recent = useRecentDecisions(since);
+  const narrowed = isDecisionNarrowed(filter);
 
   const [gone, setGone] = useState<ReadonlySet<string>>(new Set());
   const groups = useMemo(() => {
@@ -555,13 +570,14 @@ export function DecisionFlow({
   });
 
   useEffect(() => {
-    if (dialog || editor || review) return;
+    if (dialog || editor || review || keysPaused) return;
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [dialog, editor, onKey, review]);
+  }, [dialog, editor, keysPaused, onKey, review]);
 
-  const decided = recent.data ?? [];
-  const total = decided.length + items.length + (queue.hasNextPage ? 1 : 0);
+  // What was decided today is not narrowed by the search or the filters, so
+  // it is listed only under the whole queue.
+  const decided = narrowed ? [] : (recent.data ?? []);
   const approveLabel =
     currentGate && currentGate.refused > 0 && currentGate.refused < currentGate.count
       ? t("Approve {0}, skip {1}", currentGate.count - currentGate.refused, currentGate.refused)
@@ -579,7 +595,7 @@ export function DecisionFlow({
       key: group.tool,
       header: (
         <DecisionGroupHeading
-          label={group.tool === PLAN_GROUP ? t("Plans") : humanizeToolName(group.tool)}
+          label={changeLabel(t, group.tool)}
           count={group.items.length}
           selecting={selecting}
           clear={clear.length < canTick.length ? clear.length : 0}
@@ -664,22 +680,55 @@ export function DecisionFlow({
     });
   }
 
+  // Rows rise in when the lens is drawn; a row scrolled into view later mounts still.
+  const settled = useListEntrance("Decisions", items.length > 0, shown);
+
   return (
     <>
-      <div className={cn("dk-w-nq", !showList && current && "dk-has-sel")}>
-        <DeskListPane className="dk-w-nq-l relative">
-          {head({
-            progressLabel: t("{0} of {1} decided", decided.length, total),
-            done: decided.length,
-            total,
-            waiting: queue.data?.totalCount ?? items.length,
-            keysEnabled: dialog === null && editor === null && review === null,
-          })}
+      <DeskViewList className={NEEDS_LIST_TRANSITION_CLASS.Decisions}>
+        {queue.isLoading ? (
+          <DeskListSkeleton label={t("Reading the queue…")} />
+        ) : (
           <QueueList
             label={t("Waiting decisions")}
             sections={sections}
             selectedKey={current?.id ?? null}
-            empty={!queue.isLoading && <div className="dk-dc2-qe">{t("Queue clear")}</div>}
+            className={cn(
+              settled && LIST_SETTLED_CLASS,
+              "transition-opacity",
+              queue.isPlaceholderData && "opacity-60",
+            )}
+            empty={
+              narrowed ? (
+                <div className="dk-w-empty">
+                  <div>
+                    <b>
+                      {filter.search !== ""
+                        ? t("Nothing matches “{0}”", filter.search)
+                        : t("Nothing waiting matches these filters")}
+                    </b>
+                    {filter.search !== ""
+                      ? t("Search reads what each change says and the record it is for.")
+                      : t("Take a filter off to see more of what waits.")}
+                    <div className="mt-3 flex justify-center">
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => onFilter(NO_DECISION_FILTERS)}
+                      >
+                        {decisionFilterCount(filter) > 0 && filter.search !== ""
+                          ? t("Clear the search and filters")
+                          : filter.search !== ""
+                            ? t("Clear the search")
+                            : t("Clear filters")}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="dk-dc2-qe">{t("Queue clear")}</div>
+              )
+            }
             footer={
               (queue.hasNextPage || selecting) && (
                 // While changes are ticked the list keeps room under its last
@@ -700,123 +749,131 @@ export function DecisionFlow({
               )
             }
           />
-          <DecisionDock
-            summary={{
-              count: bulk.count,
-              what:
-                tickedKinds.size === 1
-                  ? humanizeToolName([...tickedKinds][0] ?? "")
-                  : t(
-                      "{0, plural, one {# kind of change} other {# kinds of change}}",
-                      tickedKinds.size,
-                    ),
-              approvable: bulk.approveIds.length,
-              flagged: bulk.flagged,
-              blocked: bulk.blocked,
-              reading: bulk.reading,
-            }}
-            canDecide={canDecide}
-            busy={busy}
-            onClear={() => tick([...ticked], false)}
-            onDecline={declineTicked}
-            onReview={reviewTicked}
+        )}
+        <DecisionDock
+          summary={{
+            count: bulk.count,
+            what:
+              tickedKinds.size === 1
+                ? humanizeToolName([...tickedKinds][0] ?? "")
+                : t(
+                    "{0, plural, one {# kind of change} other {# kinds of change}}",
+                    tickedKinds.size,
+                  ),
+            approvable: bulk.approveIds.length,
+            flagged: bulk.flagged,
+            blocked: bulk.blocked,
+            reading: bulk.reading,
+          }}
+          canDecide={canDecide}
+          busy={busy}
+          onClear={() => tick([...ticked], false)}
+          onDecline={declineTicked}
+          onReview={reviewTicked}
+        />
+      </DeskViewList>
+      {/* The Desk's layout is the page's one main landmark; this is a part of it. */}
+      <DeskViewDetail
+        reading={shown && !showList && current !== null}
+        // A column, so the change scrolls in its card and the bar keeps to the foot. In a
+        // narrow window the frame hides a detail nothing is open in; flex only while it shows.
+        className={cn(
+          "relative flex-col max-[900px]:data-reading:flex min-[901px]:flex",
+          NEEDS_DETAIL_TRANSITION_CLASS.Decisions,
+        )}
+      >
+        <button
+          type="button"
+          className="dk-w-det-back mx-4 mt-3 mb-0 self-start ui-focus-ring"
+          onClick={() => setShowList(true)}
+        >
+          <DeskIcon name="chevL" size={12} />
+          {t("All that needs you")}
+        </button>
+        {queue.isLoading ? (
+          <QueueReading label={t("Reading the queue…")} />
+        ) : current && isPendingPlan(current.node) ? (
+          <PlanCard
+            key={current.id}
+            node={current.node}
+            leaving={leaving}
+            onGate={setGate}
+            onDeclineWith={decline}
           />
-        </DeskListPane>
-        {/* The Desk's layout is the page's one main landmark; this is a part of it. */}
-        <div className="dk-w-nq-d dk-dc2-main">
-          <button
-            type="button"
-            className="dk-w-det-back mx-4 mt-3 mb-0 self-start ui-focus-ring"
-            onClick={() => setShowList(true)}
-          >
-            <DeskIcon name="chevL" size={12} />
-            {t("All that needs you")}
-          </button>
-          {queue.isLoading ? (
-            <QueueReading label={t("Reading the queue…")} />
-          ) : current && isPendingPlan(current.node) ? (
-            <PlanCard
-              key={current.id}
-              node={current.node}
-              leaving={leaving}
-              onGate={setGate}
-              onDeclineWith={decline}
-            />
-          ) : currentProposal ? (
-            <DecisionChange
-              key={currentProposal.id}
-              node={currentProposal}
-              entry={previews.entry(currentProposal.id)}
-              reading={previews.reading(currentProposal.id)}
-              failed={previews.failed(currentProposal.id)}
-              onRetry={() => previews.refetch(currentProposal.id)}
-              leaving={leavingIds.has(currentProposal.id) ? leaving : null}
-              onModify={editable ? modify : undefined}
-              canChange={currentGate?.approvable ?? false}
-            />
-          ) : (
-            <QueueClear
-              title={t("Queue clear")}
-              body={
-                decided.length > 0
-                  ? t(
-                      "{0, plural, one {# thing was decided today.} other {# things were decided today.}} Agents will ask here before they change anything else.",
-                      decided.length,
-                    )
-                  : t("Agents will ask here before they change anything.")
-              }
-            />
-          )}
-          {current && (
-            <QueueBar>
-              <QueueNav onPrevious={() => go(-1)} onNext={() => go(1)} />
-              <span className="dk-dc2-pos">
-                {index + 1} / {items.length}
-                {queue.hasNextPage ? "+" : ""}
-              </span>
-              <QueueBarSpacer />
-              {current.held ? (
-                <HeldBar
-                  held={current.held}
-                  canTurnOff={current.held.scope === "organization" ? canResume : canEditAgent}
-                />
-              ) : canDecide ? (
-                <>
-                  {editable && (
-                    <QueueButton
-                      quiet
-                      shortcut="M"
-                      className="@max-[900px]/mainc:hidden"
-                      onClick={() => modify()}
-                    >
-                      {t("Change values")}
-                    </QueueButton>
-                  )}
-                  <QueueButton shortcut="D" disabled={busy} onClick={() => decline()}>
-                    {t("Decline")}
+        ) : currentProposal ? (
+          <DecisionChange
+            key={currentProposal.id}
+            node={currentProposal}
+            entry={previews.entry(currentProposal.id)}
+            reading={previews.reading(currentProposal.id)}
+            failed={previews.failed(currentProposal.id)}
+            onRetry={() => previews.refetch(currentProposal.id)}
+            leaving={leavingIds.has(currentProposal.id) ? leaving : null}
+            onModify={editable ? modify : undefined}
+            canChange={currentGate?.approvable ?? false}
+          />
+        ) : narrowed ? null : (
+          <QueueClear
+            title={t("Queue clear")}
+            body={
+              decided.length > 0
+                ? t(
+                    "{0, plural, one {# thing was decided today.} other {# things were decided today.}} Agents will ask here before they change anything else.",
+                    decided.length,
+                  )
+                : t("Agents will ask here before they change anything.")
+            }
+          />
+        )}
+        {current && (
+          <QueueBar>
+            <QueueNav onPrevious={() => go(-1)} onNext={() => go(1)} />
+            <span className="dk-dc2-pos">
+              {index + 1} / {items.length}
+              {queue.hasNextPage ? "+" : ""}
+            </span>
+            <QueueBarSpacer />
+            {current.held ? (
+              <HeldBar
+                held={current.held}
+                canTurnOff={current.held.scope === "organization" ? canResume : canEditAgent}
+              />
+            ) : canDecide ? (
+              <>
+                {editable && (
+                  <QueueButton
+                    quiet
+                    shortcut="M"
+                    className="@max-[900px]/mainc:hidden"
+                    onClick={() => modify()}
+                  >
+                    {t("Change values")}
                   </QueueButton>
-                  {refusals.length > 0 ? (
-                    <QueueButton ink disabled={busy} onClick={sendBack}>
-                      {t("Send back to the agent")}
-                    </QueueButton>
-                  ) : (
-                    <QueueButton
-                      ink
-                      shortcut="A"
-                      disabled={busy || !currentGate?.approvable}
-                      onClick={() => void approve()}
-                    >
-                      {approveLabel}
-                    </QueueButton>
-                  )}
-                </>
-              ) : (
-                <span className="dk-dc2-qe">{t("You can read these, but not decide them.")}</span>
-              )}
-            </QueueBar>
-          )}
-        </div>
-      </div>
+                )}
+                <QueueButton shortcut="D" disabled={busy} onClick={() => decline()}>
+                  {t("Decline")}
+                </QueueButton>
+                {refusals.length > 0 ? (
+                  <QueueButton ink disabled={busy} onClick={sendBack}>
+                    {t("Send back to the agent")}
+                  </QueueButton>
+                ) : (
+                  <QueueButton
+                    ink
+                    shortcut="A"
+                    disabled={busy || !currentGate?.approvable}
+                    onClick={() => void approve()}
+                  >
+                    {approveLabel}
+                  </QueueButton>
+                )}
+              </>
+            ) : (
+              <span className="dk-dc2-qe">{t("You can read these, but not decide them.")}</span>
+            )}
+          </QueueBar>
+        )}
+      </DeskViewDetail>
 
       <ReasonDialog request={dialog} onClose={() => setDialog(null)} />
       <ProposalEditor request={editor} onClose={() => setEditor(null)} />

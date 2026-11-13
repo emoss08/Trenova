@@ -14,17 +14,11 @@ export type ShellFrame = "page" | "room";
 export type RoomRail = "folds" | "stands";
 
 export interface RouteHandle {
-  crumb?: string | ((data: any) => React.ReactNode);
-  title?: string | ((data: any) => string);
-  showBreadcrumbs?: boolean;
   frame?: ShellFrame;
   roomRail?: RoomRail;
 }
 
-export interface BreadcrumbMatch {
-  id: string;
-  pathname: string;
-  params: Record<string, string>;
-  data: unknown;
+/** A matched route as the shell reads it: only its handle. */
+export interface HandleMatch {
   handle?: RouteHandle;
 }

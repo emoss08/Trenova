@@ -25,19 +25,21 @@ type Sample struct {
 	SumCents   float64
 	Drivers    int32
 	ObservedAt int64
+	Week       int64
 }
 
-func Aggregate(observedAt int64, values []DriverValue) []*Sample {
+func Aggregate(grid Grid, observedAt int64, values []DriverValue) []*Sample {
 	byKey := make(map[Key]*Sample, len(values))
 	keys := make([]Key, 0, len(values))
+	week := grid.Week(observedAt)
 	for _, value := range values {
-		key, ok := KeyOf(value.Start, value.AvailableAt)
+		key, ok := grid.Key(value.Start, value.AvailableAt)
 		if !ok || value.ValueCents < 0 {
 			continue
 		}
 		sample, seen := byKey[key]
 		if !seen {
-			sample = &Sample{Key: key, ObservedAt: observedAt}
+			sample = &Sample{Key: key, ObservedAt: observedAt, Week: week}
 			byKey[key] = sample
 			keys = append(keys, key)
 		}
@@ -76,12 +78,14 @@ func (e estimate) confident() float64 {
 }
 
 type Valuer struct {
+	grid  Grid
 	slots map[Key]estimate
 	cells map[int64]estimate
 }
 
-func NewValuer(values []*MarketValue) *Valuer {
+func NewValuer(grid Grid, values []*MarketValue) *Valuer {
 	v := &Valuer{
+		grid:  grid,
 		slots: make(map[Key]estimate, len(values)),
 		cells: make(map[int64]estimate),
 	}
@@ -120,7 +124,7 @@ func (v *Valuer) EndMarketCents(latitude, longitude float64, at int64) int64 {
 	if v == nil || len(v.slots) == 0 {
 		return 0
 	}
-	key, ok := KeyOf(Point{Latitude: latitude, Longitude: longitude}, at)
+	key, ok := v.grid.Key(Point{Latitude: latitude, Longitude: longitude}, at)
 	if !ok {
 		return 0
 	}

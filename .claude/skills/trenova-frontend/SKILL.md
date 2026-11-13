@@ -62,6 +62,12 @@ Copyable patterns for the common tasks are in [patterns.md](patterns.md).
 - Every page is `PageLayout` (`components/navigation/sidebar-layout.tsx`) with
   `pageHeaderProps`. Never mount `PageHeader`, never draw a top bar, never `p-0` and re-add
   gutters. A full-height workspace takes `fill`.
+- A button in `pageHeaderProps.actions` is `size="sm"` (an icon alone `size="icon-sm"`), so
+  every control in the page bar is 28px tall (design-system.md → "Page anatomy").
+- A page that is hard to read cold (the freight outlook) carries a tour: a `TourDefinition`,
+  `tourTarget(name)` on each part, `<PageTour tour={…} />` and `tour` in `pageHeaderProps`.
+  Never hand-roll a walkthrough or keep "seen" in browser storage (design-system.md → "Page
+  tours").
 - A list page is `PageLayout` > `DataTableLazyComponent` > the table, with no wrapper `div`.
   Create buttons read "New {thing}".
 - Lazy-load everything below the page: `DataTableLazyComponent` only around a component that

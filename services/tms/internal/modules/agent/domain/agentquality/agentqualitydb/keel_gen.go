@@ -47,6 +47,7 @@ var evalCasesTable = schema.Table{
 		{Name: "subject_type", Quoted: `"subject_type"`, Field: "SubjectType", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Subject Type`, JSON: `subjectType`, Enum: enumAgentSubjectType[:]},
 		{Name: "subject_id", Quoted: `"subject_id"`, Field: "SubjectID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Subject ID`, JSON: `subjectId`},
 		{Name: "held_tools", Quoted: `"held_tools"`, Field: "HeldTools", Kind: schema.KindStringArray, Flags: schema.FlagNullable, Label: `Held Tools`, JSON: `heldTools`},
+		{Name: "reached_tools", Quoted: `"reached_tools"`, Field: "ReachedTools", Kind: schema.KindStringArray, Flags: schema.FlagNullable, Label: `Reached Tools`, JSON: `reachedTools`},
 		{Name: "tool_fixtures", Quoted: `"tool_fixtures"`, Field: "ToolFixtures", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Tool Fixtures`, JSON: `toolFixtures`},
 		{Name: "expected", Quoted: `"expected"`, Field: "Expected", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Expected`, JSON: `expected`},
 		{Name: "rubric", Quoted: `"rubric"`, Field: "Rubric", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Rubric`, JSON: `rubric`},
@@ -61,14 +62,14 @@ var evalCasesTable = schema.Table{
 	},
 	PK:           []int32{0, 1, 2},
 	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 33},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 34},
 	Returning:    nil,
-	Version:      31,
+	Version:      32,
 	AutoID:       0,
-	AutoCreate:   32,
-	AutoUpdate:   33,
+	AutoCreate:   33,
+	AutoUpdate:   34,
 	IDPrefix:     "aec_",
 	New:          newEvalCase,
 	NewN:         newNEvalCase,
@@ -106,6 +107,7 @@ type EvalCasesTable struct {
 	SubjectType         agentdb.SubjectTypeCol
 	SubjectID           keelkinds.PulidIDCol
 	HeldTools           keel.StringArrayCol
+	ReachedTools        keel.StringArrayCol
 	ToolFixtures        keel.JSONBCol
 	Expected            keel.JSONBCol
 	Rubric              keel.StringCol
@@ -145,17 +147,18 @@ var EvalCases = &EvalCasesTable{
 	SubjectType:         agentdb.SubjectTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &evalCasesRef, Index: 20}}},
 	SubjectID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &evalCasesRef, Index: 21}}},
 	HeldTools:           keel.StringArrayCol{Col: keel.Col{Ref: &evalCasesRef, Index: 22}},
-	ToolFixtures:        keel.JSONBCol{Col: keel.Col{Ref: &evalCasesRef, Index: 23}},
-	Expected:            keel.JSONBCol{Col: keel.Col{Ref: &evalCasesRef, Index: 24}},
-	Rubric:              keel.StringCol{Col: keel.Col{Ref: &evalCasesRef, Index: 25}},
-	Redaction:           keel.JSONBCol{Col: keel.Col{Ref: &evalCasesRef, Index: 26}},
-	ContentHash:         keel.StringCol{Col: keel.Col{Ref: &evalCasesRef, Index: 27}},
-	CapturedFingerprint: keel.JSONBCol{Col: keel.Col{Ref: &evalCasesRef, Index: 28}},
-	ExpiresAt:           keel.Int64Col{Col: keel.Col{Ref: &evalCasesRef, Index: 29}},
-	CreatedByUserID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &evalCasesRef, Index: 30}}},
-	Version:             keel.Int64Col{Col: keel.Col{Ref: &evalCasesRef, Index: 31}},
-	CreatedAt:           keel.Int64Col{Col: keel.Col{Ref: &evalCasesRef, Index: 32}},
-	UpdatedAt:           keel.Int64Col{Col: keel.Col{Ref: &evalCasesRef, Index: 33}},
+	ReachedTools:        keel.StringArrayCol{Col: keel.Col{Ref: &evalCasesRef, Index: 23}},
+	ToolFixtures:        keel.JSONBCol{Col: keel.Col{Ref: &evalCasesRef, Index: 24}},
+	Expected:            keel.JSONBCol{Col: keel.Col{Ref: &evalCasesRef, Index: 25}},
+	Rubric:              keel.StringCol{Col: keel.Col{Ref: &evalCasesRef, Index: 26}},
+	Redaction:           keel.JSONBCol{Col: keel.Col{Ref: &evalCasesRef, Index: 27}},
+	ContentHash:         keel.StringCol{Col: keel.Col{Ref: &evalCasesRef, Index: 28}},
+	CapturedFingerprint: keel.JSONBCol{Col: keel.Col{Ref: &evalCasesRef, Index: 29}},
+	ExpiresAt:           keel.Int64Col{Col: keel.Col{Ref: &evalCasesRef, Index: 30}},
+	CreatedByUserID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &evalCasesRef, Index: 31}}},
+	Version:             keel.Int64Col{Col: keel.Col{Ref: &evalCasesRef, Index: 32}},
+	CreatedAt:           keel.Int64Col{Col: keel.Col{Ref: &evalCasesRef, Index: 33}},
+	UpdatedAt:           keel.Int64Col{Col: keel.Col{Ref: &evalCasesRef, Index: 34}},
 }
 
 // BuildEvalCases builds the table of agent_eval_cases for ref. Generated relation and alias methods call it.
@@ -185,17 +188,18 @@ func BuildEvalCases(r *keel.Ref) *EvalCasesTable {
 		SubjectType:         agentdb.SubjectTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 20}}},
 		SubjectID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 21}}},
 		HeldTools:           keel.StringArrayCol{Col: keel.Col{Ref: r, Index: 22}},
-		ToolFixtures:        keel.JSONBCol{Col: keel.Col{Ref: r, Index: 23}},
-		Expected:            keel.JSONBCol{Col: keel.Col{Ref: r, Index: 24}},
-		Rubric:              keel.StringCol{Col: keel.Col{Ref: r, Index: 25}},
-		Redaction:           keel.JSONBCol{Col: keel.Col{Ref: r, Index: 26}},
-		ContentHash:         keel.StringCol{Col: keel.Col{Ref: r, Index: 27}},
-		CapturedFingerprint: keel.JSONBCol{Col: keel.Col{Ref: r, Index: 28}},
-		ExpiresAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 29}},
-		CreatedByUserID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 30}}},
-		Version:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 31}},
-		CreatedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 32}},
-		UpdatedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 33}},
+		ReachedTools:        keel.StringArrayCol{Col: keel.Col{Ref: r, Index: 23}},
+		ToolFixtures:        keel.JSONBCol{Col: keel.Col{Ref: r, Index: 24}},
+		Expected:            keel.JSONBCol{Col: keel.Col{Ref: r, Index: 25}},
+		Rubric:              keel.StringCol{Col: keel.Col{Ref: r, Index: 26}},
+		Redaction:           keel.JSONBCol{Col: keel.Col{Ref: r, Index: 27}},
+		ContentHash:         keel.StringCol{Col: keel.Col{Ref: r, Index: 28}},
+		CapturedFingerprint: keel.JSONBCol{Col: keel.Col{Ref: r, Index: 29}},
+		ExpiresAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 30}},
+		CreatedByUserID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 31}}},
+		Version:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 32}},
+		CreatedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 33}},
+		UpdatedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 34}},
 	}
 }
 
@@ -633,26 +637,28 @@ func ptrEvalCase(p unsafe.Pointer, c int32) any {
 	case 22:
 		return &r.HeldTools
 	case 23:
-		return &r.ToolFixtures
+		return &r.ReachedTools
 	case 24:
-		return &r.Expected
+		return &r.ToolFixtures
 	case 25:
-		return &r.Rubric
+		return &r.Expected
 	case 26:
-		return &r.Redaction
+		return &r.Rubric
 	case 27:
-		return &r.ContentHash
+		return &r.Redaction
 	case 28:
-		return &r.CapturedFingerprint
+		return &r.ContentHash
 	case 29:
-		return &r.ExpiresAt
+		return &r.CapturedFingerprint
 	case 30:
-		return (**string)(unsafe.Pointer(&r.CreatedByUserID))
+		return &r.ExpiresAt
 	case 31:
-		return &r.Version
+		return (**string)(unsafe.Pointer(&r.CreatedByUserID))
 	case 32:
-		return &r.CreatedAt
+		return &r.Version
 	case 33:
+		return &r.CreatedAt
+	case 34:
 		return &r.UpdatedAt
 	}
 	return nil
@@ -750,44 +756,49 @@ func valueEvalCase(p unsafe.Pointer, c int32) any {
 		}
 		return r.HeldTools
 	case 23:
+		if r.ReachedTools == nil {
+			return []string{}
+		}
+		return r.ReachedTools
+	case 24:
 		if r.ToolFixtures == nil {
 			return keel.EmptyJSONArray
 		}
 		return r.ToolFixtures
-	case 24:
-		return r.Expected
 	case 25:
+		return r.Expected
+	case 26:
 		if r.Rubric == "" {
 			return nil
 		}
 		return r.Rubric
-	case 26:
+	case 27:
 		if r.Redaction == nil {
 			return nil
 		}
 		return *r.Redaction
-	case 27:
-		return r.ContentHash
 	case 28:
+		return r.ContentHash
+	case 29:
 		if r.CapturedFingerprint == nil {
 			return nil
 		}
 		return *r.CapturedFingerprint
-	case 29:
+	case 30:
 		if r.ExpiresAt == nil {
 			return nil
 		}
 		return *r.ExpiresAt
-	case 30:
+	case 31:
 		if r.CreatedByUserID == nil {
 			return nil
 		}
 		return string(*r.CreatedByUserID)
-	case 31:
-		return r.Version
 	case 32:
-		return r.CreatedAt
+		return r.Version
 	case 33:
+		return r.CreatedAt
+	case 34:
 		return r.UpdatedAt
 	}
 	return nil

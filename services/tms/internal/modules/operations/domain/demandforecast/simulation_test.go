@@ -7,6 +7,7 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/operations/domain/demandfit"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/demandforecast"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatcheconomics"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchmarket"
@@ -171,8 +172,8 @@ func newSimWorld(t *testing.T, seed uint64) *simWorld {
 	w.end = w.start + simEvalWeeks*dispatchmarket.WeekSeconds
 	history := w.history(w.generate(r, first, first+simHistoryWeeks))
 	w.eval = w.generate(r, first+simHistoryWeeks, first+simHistoryWeeks+simEvalWeeks)
-	w.fitted = demandforecast.Fit(history)
-	w.quality = demandforecast.Backtest(history)
+	w.fitted = demandfit.Fit(history)
+	w.quality, _ = demandfit.Evaluate(history)
 
 	return w
 }
@@ -232,13 +233,13 @@ func (w *simWorld) load(r *rand.Rand, city int, slotStart int64) simLoad {
 	}
 }
 
-func (w *simWorld) history(loads []simLoad) *demandforecast.History {
+func (w *simWorld) history(loads []simLoad) *demandfit.History {
 	type countKey struct {
 		city int
 		week int64
 		slot int16
 	}
-	h := &demandforecast.History{Now: w.start}
+	h := &demandfit.History{Now: w.start}
 	index := map[countKey]int{}
 	var leads [len(simCities)][len(demandforecast.LeadHours)]int32
 	var revenues [len(simCities)][]int64
@@ -253,7 +254,7 @@ func (w *simWorld) history(loads []simLoad) *demandforecast.History {
 		if !ok {
 			i = len(h.Counts)
 			index[key] = i
-			h.Counts = append(h.Counts, demandforecast.LoadCount{
+			h.Counts = append(h.Counts, demandfit.LoadCount{
 				CustomerID: simCities[l.city].customer,
 				Cell:       w.cells[l.city],
 				Week:       key.week,
@@ -268,13 +269,13 @@ func (w *simWorld) history(loads []simLoad) *demandforecast.History {
 	for city := range simCities {
 		for bucket, n := range leads[city] {
 			if n > 0 {
-				h.Leads = append(h.Leads, demandforecast.LeadCount{
+				h.Leads = append(h.Leads, demandfit.LeadCount{
 					CustomerID: simCities[city].customer, Bucket: bucket, Loads: n,
 				})
 			}
 		}
 		slices.Sort(revenues[city])
-		h.Areas = append(h.Areas, demandforecast.AreaSummary{
+		h.Areas = append(h.Areas, demandfit.AreaSummary{
 			Cell:               w.cells[city],
 			Label:              simCities[city].label,
 			MedianRevenueCents: revenues[city][len(revenues[city])/2],
@@ -390,11 +391,13 @@ func (w *simWorld) forecaster(s *simState, now int64, rows []int) *demandforecas
 	}
 
 	return demandforecast.NewForecaster(&demandforecast.ForecasterParams{
-		Now:           now,
-		Quality:       w.quality,
-		Rates:         w.fitted.Rates,
-		Areas:         w.fitted.Areas,
-		Curves:        w.fitted.Curves,
+		Now: now,
+		Index: demandforecast.NewIndex(&demandforecast.IndexParams{
+			Quality: w.quality,
+			Rates:   w.fitted.Rates,
+			Areas:   w.fitted.Areas,
+			Curves:  w.fitted.Curves,
+		}),
 		Booked:        booked,
 		Solving:       solving,
 		MarginPercent: w.econ.CoverageMarginPercent,
@@ -481,7 +484,11 @@ func TestSimulation_AnticipationEarnsMoreWithoutLosingCoverage(t *testing.T) {
 		rate := w.econ.EmptyMileCents
 		o, d, r := w.run(simOff), w.run(simDropOnly), w.run(simRelative)
 		require.Equal(t, o.loads, r.loads)
-		require.Positive(t, o.emptyMiles, "the world needs repositioning for anticipation to matter")
+		require.Positive(
+			t,
+			o.emptyMiles,
+			"the world needs repositioning for anticipation to matter",
+		)
 		t.Logf("seed %4d: off %.1f%% $%.0f, drop %.1f%% $%.0f, relative %.1f%% $%.0f", seed,
 			100*o.coverage(), o.contribution(rate)/100, 100*d.coverage(), d.contribution(rate)/100,
 			100*r.coverage(), r.contribution(rate)/100)

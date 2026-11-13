@@ -124,9 +124,11 @@ func (f *fakeForecasts) Forecaster(
 	req *demandforecastports.ForecasterRequest,
 ) (*demandforecast.Forecaster, error) {
 	return demandforecast.NewForecaster(&demandforecast.ForecasterParams{
-		Now:           req.Now,
-		Quality:       f.quality,
-		Areas:         f.areas,
+		Now: req.Now,
+		Index: demandforecast.NewIndex(&demandforecast.IndexParams{
+			Quality: f.quality,
+			Areas:   f.areas,
+		}),
 		MarginPercent: req.MarginPercent,
 		CapCents:      req.CapCents,
 	}), nil
@@ -355,7 +357,7 @@ func TestCreate_RefusesWhatCannotBeSent(t *testing.T) {
 				require.ErrorAs(t, err, &multi)
 				fields := []string{}
 				for _, fieldErr := range multi.Errors {
-					fields = append(fields, fieldErr.Field)
+					fields = append(fields, fieldErr.Field())
 				}
 				assert.Contains(t, fields, tt.field, "the message lands on its field")
 			} else {

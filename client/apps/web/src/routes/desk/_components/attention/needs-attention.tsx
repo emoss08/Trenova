@@ -1,23 +1,19 @@
-import { useDeskSetting, useDeskSettingsStore } from "@/stores/desk-settings-store";
+import { useDeskSetting } from "@/stores/desk-settings-store";
 import { DeskIcon } from "@/components/desk-chat/desk-icons";
 import type { VirtualRow, VirtualRowsHandle } from "@/components/virtual-rows";
 import { usePermission } from "@/hooks/use-permission";
 import type { DeskAttentionGroup } from "@/lib/graphql/desk-attention";
 import { isTypingTarget } from "@/lib/dom";
-import { deskAttention } from "@/lib/queries/desk-attention";
-import { watchtower } from "@/lib/queries/watchtower";
 import { useDeskMarginStore } from "@/stores/desk-margin-store";
-import { useQuery } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useNow } from "@trenova/shared/hooks/use-now";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { getStartOfDay, resolveUserTimezone } from "@trenova/shared/lib/date";
+import { resolveUserTimezone } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import type { WatchtowerSeverity, WatchtowerSourceKind } from "@trenova/graphql/generated/graphql";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { parseAsArrayOf, parseAsString, useQueryStates } from "nuqs";
+import { useQueryStates } from "nuqs";
 import { useNavigate } from "react-router";
 import { LANES, laneLabel, laneOf, minutesLeft, type Lane } from "../watchtower/lanes";
 import { useWatchtowerActions } from "../watchtower/use-watchtower-actions";
@@ -25,10 +21,20 @@ import { casePath, START_CASE } from "./attention-record";
 import { itemsWorkedElsewhere } from "./case-work";
 import { AttentionRow } from "./attention-row";
 import { ItemDetail } from "./item-detail";
-import { DeskList, DeskListHeading, DeskListPane, DeskListStill } from "../list/desk-list";
-import { attentionItems, type NeedsLens } from "./lens";
-import { NeedsHead } from "./needs-head";
-import { NeedsSkeleton } from "./needs-skeleton";
+import { NEEDS_DETAIL_TRANSITION_CLASS, NEEDS_LIST_TRANSITION_CLASS } from "../desk-motion";
+import { DeskList, DeskListHeading, DeskListStill } from "../list/desk-list";
+import { DeskListSkeleton } from "../list/desk-list-skeleton";
+import { DeskViewDetail, DeskViewList } from "../list/desk-views";
+import { LIST_SETTLED_CLASS, useListEntrance } from "../list/use-list-entrance";
+import { attentionItems, type RecordLens } from "./lens";
+import {
+  NEEDS_ITEM_ADDRESS,
+  NO_FILTERS,
+  filterCount,
+  isNarrowed,
+  type NeedsFilters,
+} from "./needs-filters";
+import { useAttentionList } from "./use-attention-list";
 import { useItemDecision } from "./use-item-decision";
 
 function byLane(groups: readonly DeskAttentionGroup[], now: number) {
@@ -47,61 +53,61 @@ function byLane(groups: readonly DeskAttentionGroup[], now: number) {
 const ROW_HEIGHT = 56;
 /** The list's height before it is measured: a tall window, so the first paint is full. */
 const INITIAL_LIST_HEIGHT = 900;
-/** Longer than a row's entrance (`dk-w-rise`), after which rows scrolled into view mount still. */
-const ENTRANCE_MS = 480;
 
 function rowId(key: string) {
   return `dk-w-row-${key}`;
 }
 
-/** What Needs you keeps in the address, in the shape it has always had there. */
-const NEEDS_ADDRESS = {
-  kinds: parseAsArrayOf(parseAsString, ",").withDefault([]),
-  severities: parseAsArrayOf(parseAsString, ",").withDefault([]),
-  item: parseAsString,
-};
-
 /**
- * Needs you by record: everything that waits on people, one row per record,
- * soonest deadline first, in lanes by how long is left. A shipment's late
- * warning, the customer's email about it and the plan to recover it are one
- * row. The item chosen is read in full beside the list and acted on from the
- * bar under it, with the same keys everywhere. A message is the exception: it
- * shows here as a signal and is worked in Triage, the one place mail is read
- * and filed.
+ * Needs you by record, the list of the Everything and Watchtower lenses:
+ * everything that waits on people, one row per record, soonest deadline
+ * first, in lanes by how long is left. A shipment's late warning, the
+ * customer's email about it and the plan to recover it are one row. The item
+ * chosen is read in full beside the list and acted on from the bar under it,
+ * with the same keys everywhere. A message is the exception: it shows here as
+ * a signal and is worked in Triage, the one place mail is read and filed.
+ *
+ * It fills the two cells a lens owns in the page's frame (list/desk-views):
+ * the list under the page's head, and the detail beside it. The head, the
+ * search and the filters are the page's, which hands down what the list is
+ * narrowed to.
  */
 export function NeedsAttention({
   lens,
-  lenses,
-  onLens,
+  shown,
+  filters,
+  onFilters,
+  since,
+  keysPaused,
 }: {
-  lens: Exclude<NeedsLens, "Decisions">;
-  /** The lenses the person may open, in page order. */
-  lenses: readonly NeedsLens[];
-  onLens: (lens: NeedsLens) => void;
+  lens: RecordLens;
+  /** Whether this lens is the one in front; it is kept, hidden, while Decisions is. */
+  shown: boolean;
+  /** What the page's head narrows the list to. */
+  filters: NeedsFilters;
+  onFilters: (filters: NeedsFilters) => void;
+  /** The start of the reader's day, which "cleared today" counts from. */
+  since: number;
+  /** Set while the head's filter menu is open: the list's keys stand down. */
+  keysPaused: boolean;
 }) {
   const t = useT();
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const timezone = resolveUserTimezone(user?.timezone);
   const now = useNow("minute");
-  const [since] = useState(() => getStartOfDay(new Date(), timezone));
   const { allowed: canAct } = usePermission(Resource.Watchtower, Operation.Update);
   const { allowed: canDecide } = usePermission(Resource.AgentProposal, Operation.Update);
-  // What is being looked at lives in the address: the lens, the filters and
-  // the item open beside the list. So a link sent to someone opens on the
-  // same item, and a reload comes back to it.
-  const [address, setAddress] = useQueryStates(NEEDS_ADDRESS, { history: "replace" });
-  const kinds = address.kinds as WatchtowerSourceKind[];
-  const severities = address.severities as WatchtowerSeverity[];
+  // The item open beside the list lives in the address, as the lens, the
+  // search and the filters do. So a link sent to someone opens on the same
+  // item in the same list, and a reload comes back to it.
+  const [address, setAddress] = useQueryStates(NEEDS_ITEM_ADDRESS, { history: "replace" });
+  const narrowed = isNarrowed(filters);
   const askedItem = address.item;
 
-  // A person who may see everyone's cases reads their own by default, and
-  // everyone's when they ask; the choice is theirs and stays with them.
-  const whose = useDeskSetting("cases");
-  const setDeskSetting = useDeskSettingsStore((state) => state.set);
-  const query = useQuery(deskAttention.list({ lens, kinds, severities, mine: whose === "mine" }));
-  const clearedQuery = useQuery(watchtower.cleared(since));
+  // The page's head reads the same list for what waits in each lens; this is
+  // that read, not a second one.
+  const query = useAttentionList(lens, useDeskSetting("cases") === "mine", filters);
   const groups = useMemo(() => query.data?.groups ?? [], [query.data]);
   const items = useMemo(() => attentionItems(groups), [groups]);
   const lanes = useMemo(() => byLane(groups, now), [groups, now]);
@@ -114,7 +120,8 @@ export function NeedsAttention({
     now,
     timezone,
     since,
-    keysEnabled: canAct && !declineOpen,
+    keysEnabled: canAct && !declineOpen && !keysPaused,
+    deferSeen: filters.unseen,
   });
   const { current, select } = actions;
   const currentGroup = current
@@ -167,6 +174,7 @@ export function NeedsAttention({
         event.ctrlKey ||
         event.altKey ||
         declineOpen ||
+        keysPaused ||
         isTypingTarget(event.target)
       ) {
         return;
@@ -248,59 +256,46 @@ export function NeedsAttention({
     }
   }, [currentKey]);
 
-  // Rows rise in when a lens first draws; a row scrolled into view later mounts still.
-  const [settledLens, setSettledLens] = useState<NeedsLens | null>(null);
-  const settled = settledLens === lens;
-  const hasRows = groups.length > 0;
-  useEffect(() => {
-    if (!hasRows) {
-      return;
-    }
-    const timer = window.setTimeout(() => setSettledLens(lens), ENTRANCE_MS);
-    return () => window.clearTimeout(timer);
-  }, [lens, hasRows]);
-
-  if (query.isPending) {
-    return <NeedsSkeleton />;
-  }
-
-  const counts = query.data?.counts;
-  const cleared = clearedQuery.data ?? 0;
-  const open = counts?.everything ?? items.length;
-  const total = cleared + open;
-  const filtered = kinds.length > 0 || severities.length > 0;
+  // Rows rise in when a lens is drawn; a row scrolled into view later mounts still.
+  const settled = useListEntrance(lens, groups.length > 0, shown);
+  const reading = shown && !showList && currentItem !== null;
 
   return (
-    <div className={cn("dk-w-nq", !showList && currentItem && "dk-has-sel")}>
-      <DeskListPane className="dk-w-nq-l">
-        <NeedsHead
-          lens={lens}
-          lenses={lenses}
-          onLens={onLens}
-          counts={{
-            Everything: counts?.everything ?? 0,
-            Watchtower: counts?.watchtower ?? 0,
-            Decisions: counts?.decisions ?? 0,
-          }}
-          progressLabel={t("{0} of {1} cleared today", cleared, total)}
-          done={cleared}
-          total={total}
-          keysEnabled={!declineOpen}
-          whose={query.data?.seesEveryone ? whose : null}
-          onWhose={(next) => setDeskSetting("cases", next)}
-          onClearFilters={
-            filtered ? () => void setAddress({ kinds: null, severities: null }) : undefined
-          }
-        />
-        {query.isError || groups.length === 0 ? (
+    <>
+      <DeskViewList className={NEEDS_LIST_TRANSITION_CLASS[lens]}>
+        {query.isPending ? (
+          <DeskListSkeleton label={t("Reading what needs you")} />
+        ) : query.isError || groups.length === 0 ? (
           <DeskListStill>
             {query.isError ? (
               <div className="dk-w-empty">
                 <div>
                   <b>{t("What needs you could not be read")}</b>
-                  <Button size="sm" variant="outline" onClick={() => void query.refetch()}>
+                  <Button size="sm" variant="secondary" onClick={() => void query.refetch()}>
                     {t("Try again")}
                   </Button>
+                </div>
+              </div>
+            ) : narrowed ? (
+              <div className="dk-w-empty">
+                <div>
+                  <b>
+                    {filters.search !== ""
+                      ? t("Nothing matches “{0}”", filters.search)
+                      : t("Nothing matches these filters")}
+                  </b>
+                  {filters.search !== ""
+                    ? t("Search reads what each item says and the record it is about.")
+                    : t("Take a filter off to see more of what waits.")}
+                  <div className="mt-3 flex justify-center">
+                    <Button size="sm" variant="secondary" onClick={() => onFilters(NO_FILTERS)}>
+                      {filterCount(filters) > 0 && filters.search !== ""
+                        ? t("Clear the search and filters")
+                        : filters.search !== ""
+                          ? t("Clear the search")
+                          : t("Clear filters")}
+                    </Button>
+                  </div>
                 </div>
               </div>
             ) : (
@@ -321,23 +316,31 @@ export function NeedsAttention({
             handleRef={listRef}
             estimateSize={ROW_HEIGHT}
             initialHeight={INITIAL_LIST_HEIGHT}
-            className={cn(settled && "dk-w-nq-settled")}
+            className={cn(
+              settled && LIST_SETTLED_CLASS,
+              "transition-opacity",
+              query.isPlaceholderData && "opacity-60",
+            )}
             role="listbox"
             aria-label={t("Things that need you")}
             aria-activedescendant={currentGroup ? rowId(currentGroup.key) : undefined}
             footer={
               query.data?.hasMore && (
                 <p className="dk-w-quiet dk-w-nq-more">
-                  {t(
-                    "These are the soonest records. More wait after them; clear these to see the rest.",
-                  )}
+                  {narrowed
+                    ? t(
+                        "These are the soonest records that match. More match after them; search or filter further to reach them.",
+                      )
+                    : t(
+                        "These are the soonest records. More wait after them; clear these to see the rest.",
+                      )}
                 </p>
               )
             }
           />
         )}
-      </DeskListPane>
-      <div className="dk-w-nq-d">
+      </DeskViewList>
+      <DeskViewDetail reading={reading} className={NEEDS_DETAIL_TRANSITION_CLASS[lens]}>
         {currentItem && currentGroup ? (
           <ItemDetail
             key={currentItem.id}
@@ -354,11 +357,13 @@ export function NeedsAttention({
             onBack={() => setShowList(true)}
           />
         ) : (
-          <div className="dk-w-empty">
-            <div>{t("Pick something on the left, or press J.")}</div>
-          </div>
+          !query.isPending && (
+            <div className="dk-w-empty">
+              <div>{t("Pick something on the left, or press J.")}</div>
+            </div>
+          )
         )}
-      </div>
-    </div>
+      </DeskViewDetail>
+    </>
   );
 }

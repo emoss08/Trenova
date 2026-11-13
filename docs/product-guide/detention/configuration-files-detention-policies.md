@@ -1,6 +1,6 @@
 ---
 path: /detention/configuration-files/detention-policies
-aliases: [detention terms, detention rules, free time, dwell charges, waiting time charges, demurrage, layover rules, detention contract]
+aliases: [detention terms, detention rules, free time, dwell charges, waiting time charges, demurrage, layover rules, detention contract, hourly detention rate, set free time, rate for waiting at the dock, dock wait rate]
 related:
   - /detention/desk
   - /detention/intelligence

@@ -823,7 +823,12 @@ func withAuditSource(ctx context.Context, req *agentruntimeports.RunRequest) con
 		return ctx
 	}
 	inConversation := req.ThreadID.IsNotNil() && !req.Unattended
-	return auditctx.WithAIRun(ctx, runID.String(), inConversation)
+	ctx = auditctx.WithAIRun(ctx, runID.String(), inConversation)
+	if req.Definition != nil {
+		ctx = auditctx.WithAgent(ctx, req.Definition.ID.String())
+	}
+
+	return ctx
 }
 
 // FindFor answers find_tools for a turn held as data, and names the tools it

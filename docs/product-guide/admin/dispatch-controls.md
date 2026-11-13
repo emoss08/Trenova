@@ -72,7 +72,7 @@ Keywords: forecast quality, is the forecast ready, forecast accuracy, not enough
 1. Open [Dispatch controls](/admin/dispatch-controls) and find **Freight forecast**.
 2. The forecast is learned from your shipment history and tested every night on the weeks it has
    not seen. Its status is one of:
-   - **Ready**: how many actual counts fell inside the forecast range, and how much more accurate
+   - **Ready**: how many of the tested days landed inside the forecast range, and how much more accurate
      it was than repeating last week. Plans use it when **Anticipate freight** is on.
    - **Not better than last week yet**: it was tested but did not beat repeating last week, so
      plans ignore it until it does better.

@@ -268,6 +268,102 @@ scenarios:
             that shared rule is out of date or should stay. Does not claim the organization's
             rule was changed.
 
+  - name: mention-is-offered-on-look-back
+    description: >
+      A person states a lasting fact about a customer while asking for something else and never
+      says "remember". Whether or not the agent saves it in the turn, the conversation's look
+      back picks it up: afterwards a memory about the call before delivery is kept or offered,
+      filed under Acme Manufacturing. Before the look back read what people mention, this taught
+      the agents nothing.
+    agent: Dispatch desk
+    tags: [memory]
+    exclusive: acme-memory
+    setup:
+      - >
+        DELETE FROM agent_memories
+        WHERE content ILIKE '%call%' AND content ILIKE '%hour%' AND content ILIKE '%deliver%'
+    steps:
+      - say: "acme manufacturing's receiving office wants a call an hour before every delivery. what is their newest shipment?"
+        expect:
+          noProposals: true
+          rubric: >
+            Answers with Acme Manufacturing's newest shipment. It may also say it noted the
+            call-ahead requirement.
+      - lookBack: true
+        expect:
+          db:
+            - sql: >
+                SELECT CASE WHEN count(*) >= 1 THEN 'learned' ELSE 'missed' END
+                FROM agent_memories
+                WHERE content ILIKE '%call%' AND content ILIKE '%hour%'
+                  AND status IN ('Active', 'Suggested')
+                  AND subject_label ILIKE 'Acme Manufacturing%'
+              equals: "learned"
+              note: the call before delivery is kept or offered, filed under Acme Manufacturing
+
+  - name: mention-in-spanish-is-offered-on-look-back
+    description: >
+      The same, written in Spanish: people write in the language they think in, and the look
+      back reads a Spanish statement as it reads an English one. The lesson is written in the
+      person's language.
+    agent: Dispatch desk
+    tags: [memory]
+    exclusive: acme-memory
+    setup:
+      - >
+        DELETE FROM agent_memories
+        WHERE content ILIKE '%viernes%'
+           OR (content ILIKE '%acme%' AND (content ILIKE '%dock%' OR content ILIKE '%muelle%'))
+    steps:
+      - say: "el muelle de recepción de acme manufacturing cierra a las 2 de la tarde los viernes. ¿cuál es su envío más reciente?"
+        expect:
+          noProposals: true
+          rubric: >
+            Answers, in Spanish, with Acme Manufacturing's newest shipment.
+      - lookBack: true
+        expect:
+          db:
+            - sql: >
+                SELECT CASE WHEN count(*) >= 1 THEN 'learned' ELSE 'missed' END
+                FROM agent_memories
+                WHERE content ILIKE '%viernes%'
+                  AND status IN ('Active', 'Suggested')
+              equals: "learned"
+              note: the Friday closing time is kept or offered, in Spanish as the person wrote it
+
+  - name: short-name-reaches-the-record
+    description: >
+      People call a customer by the first word of its name. "acme" reaches the fact filed under
+      Acme Manufacturing when no other record with memories begins with that word, so the answer
+      turns on it as it does when the full name is typed.
+    agent: Dispatch desk
+    tags: [memory]
+    exclusive: acme-memory
+    setup:
+      - >
+        DELETE FROM agent_memories
+        WHERE id = 'amem_01M6BENCHACMEDCK0000000000' OR (content ILIKE '%acme%' AND content ILIKE '%dock%')
+      - >
+        INSERT INTO agent_memories
+          (id, business_unit_id, organization_id, kind, source, status, scope, subject_type,
+           subject_id, subject_label, content)
+        SELECT 'amem_01M6BENCHACMEDCK0000000000', c.business_unit_id, c.organization_id,
+               'Fact', 'User', 'Active', 'Organization', 'Customer', c.id, c.name,
+               'Acme Manufacturing''s receiving dock closes at 2pm on Fridays, and nothing is received after that until Monday.'
+        FROM customers AS c
+        WHERE c.name ILIKE 'Acme Manufacturing%'
+        ORDER BY c.created_at
+        LIMIT 1
+    steps:
+      - say: "can we deliver to acme this friday at 4:30pm?"
+        expect:
+          noProposals: true
+          replyIncludes: ["2"]
+          rubric: >
+            Says a 4:30pm Friday delivery will not work because Acme Manufacturing's receiving
+            dock closes at 2pm on Fridays, or asks which Acme is meant while citing that rule.
+            Does not say the delivery is fine.
+
   - name: wait-for-delivery
     description: Parking work until something happens on the road.
     agent: Dispatch desk

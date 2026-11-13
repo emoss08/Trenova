@@ -132,6 +132,35 @@ type ListAgentMemoryNeighborsRequest struct {
 	RoleIDs []pulid.ID
 }
 
+// ListAgentMemoryOutcomesRequest asks what became of the memories recorded
+// since a time, counted by where each came from and what triggered it.
+type ListAgentMemoryOutcomesRequest struct {
+	TenantInfo pagination.TenantInfo
+	Since      int64
+}
+
+// MemoryOutcome counts the memories of one source, trigger and status
+// recorded in a stretch, and how many of them a turn has used since. Trigger
+// is the first signal of the look back that kept it, empty for any other.
+type MemoryOutcome struct {
+	Source  agentmemory.MemorySource
+	Trigger string
+	Status  agentmemory.MemoryStatus
+	Count   int64
+	Used    int64
+	// Lapsed counts the offers among them nobody decided, set aside by the
+	// nightly sweep and not by a person.
+	Lapsed int64
+}
+
+// LapseAgentMemoryOffersRequest sets aside the offers made before a time
+// that nobody decided.
+type LapseAgentMemoryOffersRequest struct {
+	TenantInfo pagination.TenantInfo
+	Before     int64
+	At         int64
+}
+
 type ConfirmAgentMemoryQuery struct {
 	ID         pulid.ID
 	TenantInfo pagination.TenantInfo
@@ -225,6 +254,10 @@ type DeskMemoryFilter struct {
 	Scope      agentmemory.MemoryScope
 	RoleID     pulid.ID
 	Query      string
+	// Subject narrows the list to the memories about one record, as its own
+	// page shows them. What an agent keeps about the record for its own work
+	// is listed with them there, since it shapes what agents do with it.
+	Subject *MemorySubjectRef
 }
 
 type ListDeskMemoriesQuery struct {
@@ -292,6 +325,8 @@ type AgentMemoryRepository interface {
 	// read it; a memory that does not taint, or that changed, is refused.
 	Review(ctx context.Context, req *ReviewAgentMemoryQuery) (*agentmemory.Memory, error)
 	Confirm(ctx context.Context, req *ConfirmAgentMemoryQuery) (*agentmemory.Memory, error)
+	ListOutcomes(ctx context.Context, req *ListAgentMemoryOutcomesRequest) ([]MemoryOutcome, error)
+	LapseOffers(ctx context.Context, req *LapseAgentMemoryOffersRequest) (int64, error)
 	ListUpkeep(
 		ctx context.Context,
 		req *ListAgentMemoryUpkeepRequest,

@@ -104,7 +104,15 @@ type ListWatchtowerItemsRequest struct {
 	// Mine narrows a reader who may see everyone's cases to their own and
 	// the ones nobody owns.
 	Mine bool
+	// Search keeps only the items whose title, summary or record label holds
+	// these words. It is trimmed and cut to MaxSearchLength.
+	Search string
+	// UnseenOnly keeps only the items the reader has not been shown.
+	UnseenOnly bool
 }
+
+// MaxSearchLength bounds a search over the feed, in characters.
+const MaxSearchLength = 100
 
 type WatchtowerPage struct {
 	Items       []*watchtower.Item

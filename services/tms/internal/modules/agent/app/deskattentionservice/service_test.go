@@ -3,6 +3,7 @@ package deskattentionservice
 import (
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/desklens"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -81,6 +82,51 @@ func TestLensCounts_SumsEachKindIntoItsLens(t *testing.T) {
 	assert.Equal(t, 4, counts.Watchtower)
 	assert.Equal(t, 2, counts.Triage)
 	assert.Equal(t, 2, counts.Decisions)
+}
+
+func TestKindCounts_ListsWhatIsOpenMostFirstAndNamesAnAskedKindWithNothingOpen(t *testing.T) {
+	kinds := kindCounts(
+		&watchtowerports.WatchtowerCounts{ByKind: map[watchtower.SourceKind]int{
+			watchtower.SourceEtaAtRisk:      4,
+			watchtower.SourcePodMissing:     9,
+			watchtower.SourceAgentPlan:      4,
+			watchtower.SourceInboundMessage: 0,
+		}},
+		[]watchtower.SourceKind{
+			watchtower.SourceMissedPickup,
+			watchtower.SourcePodMissing,
+			watchtower.SourceKind("Made up"),
+		},
+	)
+
+	got := make([]watchtower.SourceKind, 0, len(kinds))
+	for _, entry := range kinds {
+		got = append(got, entry.Kind)
+		assert.Equal(t, entry.Kind.Label(), entry.Label)
+		assert.Equal(t, desklens.Of(entry.Kind), entry.Lens)
+	}
+	require.Len(t, kinds, 4)
+	assert.Equal(t, watchtower.SourcePodMissing, kinds[0].Kind)
+	assert.Equal(t, 9, kinds[0].Count)
+	assert.ElementsMatch(
+		t,
+		[]watchtower.SourceKind{watchtower.SourceEtaAtRisk, watchtower.SourceAgentPlan},
+		got[1:3],
+		"kinds with as much open are in label order",
+	)
+	assert.Equal(t, watchtower.SourceMissedPickup, kinds[3].Kind)
+	assert.Equal(t, 0, kinds[3].Count, "a kind the list is narrowed to is named with nothing open")
+}
+
+func TestKindCounts_LeavesOutAKindWithNothingOpenThatNobodyAskedFor(t *testing.T) {
+	kinds := kindCounts(
+		&watchtowerports.WatchtowerCounts{ByKind: map[watchtower.SourceKind]int{
+			watchtower.SourceInboundMessage: 0,
+		}},
+		nil,
+	)
+
+	assert.Empty(t, kinds)
 }
 
 func TestMerge_AddsWhatTheSecondReadFoundOnce(t *testing.T) {

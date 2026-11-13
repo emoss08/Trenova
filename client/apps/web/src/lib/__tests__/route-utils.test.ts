@@ -1,20 +1,25 @@
 import { describe, expect, it } from "vitest";
-import { generateBreadcrumbSegments, generateFallbackTitle, getPageTitle } from "../route-utils";
+import {
+  generateBreadcrumbSegments,
+  generateFallbackTitle,
+  getPageTitle,
+  trailCrumbs,
+} from "../route-utils";
 
 describe("generateBreadcrumbSegments", () => {
   it("produces cumulative paths and Title Case labels", () => {
     const segments = generateBreadcrumbSegments("/admin/api-keys");
     expect(segments).toEqual([
-      { path: "/admin", label: "Settings" },
-      { path: "/admin/api-keys", label: "API keys" },
+      { path: "/admin", label: "Settings", source: "navigation" },
+      { path: "/admin/api-keys", label: "API keys", source: "navigation" },
     ]);
   });
 
   it("uses the navigation label for every segment that has one", () => {
     const segments = generateBreadcrumbSegments("/hr/my-team");
     expect(segments).toEqual([
-      { path: "/hr", label: "Human resource management" },
-      { path: "/hr/my-team", label: "My team" },
+      { path: "/hr", label: "Human resource management", source: "navigation" },
+      { path: "/hr/my-team", label: "My team", source: "navigation" },
     ]);
   });
 
@@ -32,12 +37,21 @@ describe("generateBreadcrumbSegments", () => {
       "/billing/configuration-files/formula-templates/ft_01HZX2K3M4N5P6Q7R8S9T0V1/edit",
     );
     expect(segments).toEqual([
-      { path: "/billing", label: "Billing management" },
-      { path: "/billing/configuration-files", label: "Configuration files" },
-      { path: "/billing/configuration-files/formula-templates", label: "Formula templates" },
+      { path: "/billing", label: "Billing management", source: "navigation" },
+      {
+        path: "/billing/configuration-files",
+        label: "Configuration files",
+        source: "navigation",
+      },
+      {
+        path: "/billing/configuration-files/formula-templates",
+        label: "Formula templates",
+        source: "navigation",
+      },
       {
         path: "/billing/configuration-files/formula-templates/ft_01HZX2K3M4N5P6Q7R8S9T0V1/edit",
         label: "Details",
+        source: "derived",
       },
     ]);
   });
@@ -74,7 +88,7 @@ describe("generateBreadcrumbSegments", () => {
 
   it("strips trailing slash", () => {
     const segments = generateBreadcrumbSegments("/settings/");
-    expect(segments).toEqual([{ path: "/settings", label: "Settings" }]);
+    expect(segments).toEqual([{ path: "/settings", label: "Settings", source: "derived" }]);
   });
 
   it("converts kebab-case to Title Case", () => {
@@ -142,5 +156,51 @@ describe("generateBreadcrumbSegments group labels", () => {
       "Human resource management",
       "Credential types",
     ]);
+  });
+});
+
+describe("trailCrumbs", () => {
+  const french = (label: string) => `fr:${label}`;
+
+  it("leaves out folders of the URL that no page or section fills", () => {
+    const path = "/accounting/journal-entries/source/invoice/inv_01HZX2K3M4N5P6Q7R8S9T0V1";
+    expect(
+      trailCrumbs(generateBreadcrumbSegments(path), "Journal entry", (label) => label),
+    ).toEqual([{ path: "/accounting", label: "Accounting management" }]);
+  });
+
+  it("keeps every section above a page as a link, in the reader's language", () => {
+    const segments = generateBreadcrumbSegments("/billing/configuration-files/formula-libraries");
+    expect(trailCrumbs(segments, "fr:Formula libraries", french)).toEqual([
+      { path: "/billing", label: "fr:Billing management" },
+      { path: "/billing/configuration-files", label: "fr:Configuration files" },
+    ]);
+  });
+
+  it("shows a record name a page published as it was written, untranslated", () => {
+    const parent = "/billing/configuration-files/factoring-companies/fac_01HZX2K3M4N5P6Q7R8S9T0V1";
+    const segments = generateBreadcrumbSegments(`${parent}/agreements`, {
+      [parent]: "Apex Capital",
+    });
+    expect(trailCrumbs(segments, "Agreements", french).at(-1)).toEqual({
+      path: parent,
+      label: "Apex Capital",
+    });
+  });
+
+  it("drops a parent that only repeats the title", () => {
+    const segments = generateBreadcrumbSegments("/shipment-management/shipments");
+    expect(trailCrumbs(segments, "Shipments", (label) => label)).toEqual([]);
+  });
+
+  it("leads the freight outlook with the dispatch section it sits in", () => {
+    const segments = generateBreadcrumbSegments("/dispatch/outlook");
+    expect(trailCrumbs(segments, "Freight outlook", (label) => label)).toEqual([
+      { path: "/dispatch", label: "Dispatch management" },
+    ]);
+  });
+
+  it("is empty for a page with no parents", () => {
+    expect(trailCrumbs(generateBreadcrumbSegments("/settings"), "Settings", french)).toEqual([]);
   });
 });

@@ -94,6 +94,7 @@ func (s *Service) ListPending(
 		Limit:             limit,
 		AgentDefinitionID: req.AgentDefinitionID,
 		ToolName:          strings.TrimSpace(req.ToolName),
+		Search:            strings.TrimSpace(req.Search),
 		Audience:          audienceOf(req.Usable),
 		Now:               timeutils.NowUnix(),
 	}

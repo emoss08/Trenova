@@ -203,7 +203,8 @@ func TestMapDispatchFreightOutlook_MapsEverySection(t *testing.T) {
 		GeneratedAt: 1_800_000_000,
 		Starts:      []int64{1_800_000_000, 1_800_014_400},
 		Network: []demandforecast.NetworkSlot{{
-			Start: 1_800_000_000, Low: 20, High: 30, NeedLow: 9, NeedHigh: 14, Need: 25, Drivers: 24,
+			Start: 1_800_000_000, End: 1_800_018_000,
+			Low: 20, High: 30, NeedLow: 9, NeedHigh: 14, Need: 25, Drivers: 24,
 			Short: 1, Uncovered: 6, Idle: 4,
 		}},
 		Areas: []*freightoutlookports.Area{{
@@ -211,7 +212,8 @@ func TestMapDispatchFreightOutlook_MapsEverySection(t *testing.T) {
 				Cell:  12971,
 				Label: "Chicago, IL",
 				Slots: []demandforecast.SlotBalance{{
-					Start: 1_800_000_000, Low: 2, High: 5, Booked: 2, Need: 3.5,
+					Start: 1_800_000_000, End: 1_800_018_000,
+					Low: 2, High: 5, Booked: 2, Need: 3.5,
 					Drivers: 1, Short: 2.5,
 				}},
 			},
@@ -225,7 +227,8 @@ func TestMapDispatchFreightOutlook_MapsEverySection(t *testing.T) {
 		Steps: []freightmove.Step{
 			{
 				Kind: freightmove.KindKeep, WorkerID: worker, WorkerName: "Dana Ortiz",
-				ToCell: 12971, ToLabel: "Chicago, IL", SlotStart: 1_800_014_400,
+				ToCell: 12971, ToLabel: "Chicago, IL",
+				SlotStart: 1_800_014_400, SlotEnd: 1_800_025_200,
 				NetCents: 54_000, MoveID: move, ProNumber: "PRO-1",
 				PartnerID: partner, PartnerName: "Joe Kowalski", PartnerCell: 12802,
 				PartnerFreeAt: 1_800_003_600,
@@ -251,7 +254,8 @@ func TestMapDispatchFreightOutlook_MapsEverySection(t *testing.T) {
 	assert.Equal(t, []int{1_800_000_000, 1_800_014_400}, mapped.SlotStarts)
 	assert.Equal(t, 9, mapped.AreaCount)
 	assert.Equal(t, []*gqlmodel.DispatchFreightNetworkSlot{{
-		Start: 1_800_000_000, LikelyLow: 20, LikelyHigh: 30, NeedLow: 9, NeedHigh: 14,
+		Start: 1_800_000_000, End: 1_800_018_000,
+		LikelyLow: 20, LikelyHigh: 30, NeedLow: 9, NeedHigh: 14,
 		Need: 25, Drivers: 24,
 		Short: 1, Uncovered: 6, Idle: 4,
 	}}, mapped.Network)
@@ -261,13 +265,17 @@ func TestMapDispatchFreightOutlook_MapsEverySection(t *testing.T) {
 	assert.Equal(t, 61_000, area.ValueCents)
 	assert.InDelta(t, 41.9, area.Latitude, 1e-9)
 	assert.Equal(t, []*gqlmodel.DispatchFreightSlot{{
-		Start: 1_800_000_000, LikelyLow: 2, LikelyHigh: 5, Booked: 2, Need: 3.5,
+		Start: 1_800_000_000, End: 1_800_018_000,
+		LikelyLow: 2, LikelyHigh: 5, Booked: 2, Need: 3.5,
 		Drivers: 1, Short: 2.5,
 	}}, area.Slots)
 	assert.Equal(t, "Patriot Brewing", area.Customers[0].Name)
 
 	require.Len(t, mapped.Moves, 2)
 	keep := mapped.Moves[0]
+	assert.Equal(t, 1_800_014_400, keep.SlotStart)
+	assert.Equal(t, 1_800_025_200, keep.SlotEnd,
+		"a window's end is sent as it is, three hours on here, never assumed")
 	assert.Equal(t, gqlmodel.DispatchFreightMoveKindKeep, keep.Kind)
 	assert.Equal(t, worker.String(), *keep.WorkerID)
 	assert.Equal(t, move.String(), *keep.MoveID)
@@ -318,6 +326,7 @@ func TestMapDispatchFreightAreaDetail_MapsReachAndTheRecentWeeks(t *testing.T) {
 			South: 39.63, West: -87.19, North: 40.98, East: -85.78,
 		},
 		SlotStart: 1_800_014_400,
+		SlotEnd:   1_800_032_400,
 		Reach: []freightmove.ReachRow{{
 			WorkerID: worker, WorkerName: "Joe Kowalski", Label: "Indianapolis, IN",
 			Point:  dispatchmarket.Point{Latitude: 39.8, Longitude: -86.2},
@@ -330,6 +339,7 @@ func TestMapDispatchFreightAreaDetail_MapsReachAndTheRecentWeeks(t *testing.T) {
 	})
 
 	assert.Equal(t, 1_800_014_400, mapped.SlotStart)
+	assert.Equal(t, 1_800_032_400, mapped.SlotEnd)
 	assert.Equal(t, &gqlmodel.DispatchFreightAreaBounds{
 		South: 39.63, West: -87.19, North: 40.98, East: -85.78,
 	}, mapped.Bounds)

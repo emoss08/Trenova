@@ -55,6 +55,7 @@ function detail(expected: unknown): AgentEvalCaseDetail {
     status: "Candidate",
     automatic: false,
     askedAt: null,
+    reachedTools: [],
     trigger: "Chat",
     input: "Rate S-100",
     sourceThreadId: null,

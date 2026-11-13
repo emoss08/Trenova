@@ -12,7 +12,12 @@ import {
 import { getFragmentData } from "@trenova/graphql/fragment-data";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import type { ProposalHold } from "@/types/assistant";
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import {
+  infiniteQueryOptions,
+  keepPreviousData,
+  useInfiniteQuery,
+  useQuery,
+} from "@tanstack/react-query";
 
 export const PENDING_DECISIONS_KEY = "pending-decisions";
 export const PENDING_DECISION_SUMMARY_KEY = "pending-decision-summary";
@@ -36,6 +41,8 @@ export type PlanStepNode = PendingProposalFieldsFragment;
 export type PendingDecisionFilter = {
   agentDefinitionId?: string;
   toolName?: string;
+  /** Changes whose words or whose record's name hold these words. */
+  search?: string;
 };
 
 export function isPendingProposal(node: PendingDecisionNode): node is PendingProposalNode {
@@ -46,10 +53,19 @@ export function isPendingPlan(node: PendingDecisionNode): node is PendingPlanNod
   return node.__typename === "AgentPlan";
 }
 
-/** The queue, a page at a time, newest first. */
-export function usePendingDecisions(filter: PendingDecisionFilter, enabled = true) {
-  return useInfiniteQuery({
-    queryKey: [PENDING_DECISIONS_KEY, filter.agentDefinitionId ?? "", filter.toolName ?? ""],
+/**
+ * How the queue is read, a page at a time, newest first. The lens reads it
+ * with these, and the page reads it ahead with the same ones when the lens is
+ * about to be opened, so the two share one read.
+ */
+export function pendingDecisionsOptions(filter: PendingDecisionFilter) {
+  return infiniteQueryOptions({
+    queryKey: [
+      PENDING_DECISIONS_KEY,
+      filter.agentDefinitionId ?? "",
+      filter.toolName ?? "",
+      filter.search?.trim() ?? "",
+    ],
     initialPageParam: null as string | null,
     queryFn: ({ pageParam, signal }) => {
       const input: PendingDecisionsInput = {
@@ -57,6 +73,7 @@ export function usePendingDecisions(filter: PendingDecisionFilter, enabled = tru
         after: pageParam,
         agentDefinitionId: filter.agentDefinitionId || null,
         toolName: filter.toolName || null,
+        search: filter.search?.trim() || null,
       };
       return requestGraphQL({
         document: PendingDecisionsDocument,
@@ -69,8 +86,20 @@ export function usePendingDecisions(filter: PendingDecisionFilter, enabled = tru
       const { hasNextPage, endCursor } = lastPage.pendingDecisions.pageInfo;
       return hasNextPage && endCursor ? endCursor : undefined;
     },
+  });
+}
+
+/**
+ * The queue, a page at a time, newest first. A queue being narrowed keeps
+ * the changes it had until the narrower ones arrive, so typing a search
+ * never empties the list between answers.
+ */
+export function usePendingDecisions(filter: PendingDecisionFilter, enabled = true) {
+  return useInfiniteQuery({
+    ...pendingDecisionsOptions(filter),
     refetchInterval: REFETCH_INTERVAL,
     enabled,
+    placeholderData: keepPreviousData,
     select: (data) => ({
       nodes: data.pages.flatMap((page) =>
         page.pendingDecisions.edges.flatMap((edge): PendingDecisionNode[] => {

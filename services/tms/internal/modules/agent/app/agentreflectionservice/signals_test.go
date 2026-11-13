@@ -238,3 +238,72 @@ func TestReadSignals_ACorrectionOrStandingRequestIsNotCountedAgainAsAMention(t *
 		agentreflection.ReflectionSignalStandingRequest,
 	}, signalKinds(signals))
 }
+
+// People write in the language they think in. A Spanish or Chinese speaker
+// corrects, asks and mentions in their own words, and the gate reads those as
+// it reads English: before it did, they taught an agent only by saying
+// "remember".
+func TestTells_ReadsSpanishAndChineseAsItReadsEnglish(t *testing.T) {
+	t.Parallel()
+
+	for text, want := range map[string]bool{
+		"El muelle de Acme cierra a las 2 los viernes":                                 true,
+		"Reserva la carga para el jueves. Acme no recibe después de las 2 los viernes": true,
+		"¿A qué hora cierra el muelle de Acme los viernes?":                            false,
+		"muéstrame todos los envíos abiertos de acme":                                  false,
+		"necesito la factura de acme enviada hoy mismo":                                false,
+		"gracias, eso se ve muy bien para mí":                                          false,
+		"Acme的收货码头周五下午两点关门":                                                            true,
+		"這個客戶只接受預約送貨，到達前一小時要先打電話":                                                      true,
+		"Acme的码头周五几点关门？":                                                               false,
+		"请帮我查一下Acme所有未完成的货运":                                                           false,
+		"好的，谢谢，这样看起来没问题":                                                               false,
+		"周五两点关门":                                                                       false,
+	} {
+		assert.Equal(t, want, Tells(text), text)
+	}
+}
+
+func TestReadSignals_CorrectionsAndStandingRequestsInSpanishAndChinese(t *testing.T) {
+	t.Parallel()
+
+	for name, tc := range map[string]struct {
+		said string
+		want []agentreflection.ReflectionSignalKind
+	}{
+		"a Spanish correction": {
+			said: "No, eso no es lo que pedí, la cotización va en dólares canadienses",
+			want: []agentreflection.ReflectionSignalKind{
+				agentreflection.ReflectionSignalPersonCorrected,
+			},
+		},
+		"a Spanish standing request": {
+			said: "A partir de ahora copia siempre a cuentas por pagar en las cotizaciones",
+			want: []agentreflection.ReflectionSignalKind{
+				agentreflection.ReflectionSignalStandingRequest,
+			},
+		},
+		"a Chinese correction": {
+			said: "不对，Acme的报价应该用加元",
+			want: []agentreflection.ReflectionSignalKind{
+				agentreflection.ReflectionSignalPersonCorrected,
+			},
+		},
+		"a Chinese standing request": {
+			said: "以後給Acme的報價一律抄送應付帳款部門",
+			want: []agentreflection.ReflectionSignalKind{
+				agentreflection.ReflectionSignalStandingRequest,
+			},
+		},
+	} {
+		signals := ReadSignals(&Window{
+			Messages: []conversation.Message{
+				reply("Quoted Acme in US dollars."),
+				person(tc.said),
+			},
+			HasPerson: true,
+			InPassing: true,
+		})
+		assert.Equal(t, tc.want, signalKinds(signals), name)
+	}
+}

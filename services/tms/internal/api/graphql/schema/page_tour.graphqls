@@ -1,0 +1,33 @@
+"How a person left a page tour."
+enum PageTourOutcome {
+  "They walked through every step."
+  Finished
+  "They closed it before the last step."
+  Skipped
+}
+
+"A page tour the caller has already been shown, so it does not open by itself again."
+type PageTourView {
+  "The tour's key, such as freight-outlook."
+  tour: String!
+  "The version of the tour they saw. A tour with newer steps opens again."
+  tourVersion: Int!
+  outcome: PageTourOutcome!
+  seenAt: Timestamp!
+}
+
+input RecordPageTourInput {
+  tour: String!
+  tourVersion: Int!
+  outcome: PageTourOutcome!
+}
+
+extend type Query {
+  "The page tours the caller has been shown."
+  myPageTourViews: [PageTourView!]!
+}
+
+extend type Mutation {
+  "Remembers that the caller has been shown a page tour, replacing an earlier view of it."
+  recordMyPageTour(input: RecordPageTourInput!): PageTourView!
+}

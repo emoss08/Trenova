@@ -44,6 +44,7 @@ vi.mock("@/lib/graphql/agent-memories", async (importOriginal) => ({
   fetchAgentMemoryUsage: api.fetchAgentMemoryUsage,
   fetchAgentMemorySuggestions: api.fetchAgentMemorySuggestions,
   fetchAgentMemoryUpkeep: vi.fn().mockResolvedValue([]),
+  fetchAgentLearningStats: vi.fn().mockResolvedValue({ days: 30, since: 0, rows: [] }),
 }));
 vi.mock("@/lib/graphql/agent-profile", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/graphql/agent-profile")>()),

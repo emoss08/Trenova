@@ -27,7 +27,7 @@ You only see the kinds of items whose records you are allowed to open, and a rec
 Keywords: next item, keyboard, check alerts, what went wrong, exceptions today, open alerts
 1. Open [Needs you](/desk/needs) from the rail, or press G then N.
 2. Select a row, or press J (or the down arrow) for the next one and K (or the up arrow) for the previous one. Opening an item marks it seen, so its blue dot goes away.
-3. Pick a lens above the list, or press 1 to 3, to see only one queue's rows.
+3. Pick a lens above the list, or press 1 to 3, to see only one queue's rows. Press / to search the list and F to filter it.
 
 ### Mark an item done or snooze it
 Keywords: clear alert, resolve, close alert, finished, remove from list, later, put aside, remind me tomorrow
@@ -51,9 +51,24 @@ Keywords: approve agent change, decline agent change, review agent work, agent n
 
 ### See only your own cases, or everyone's
 Keywords: mine, everyone, my cases, all cases, other people's cases, case lead, team view
-1. Open [Needs you](/desk/needs). When your role lets you see cases other people own, **Mine** and **Everyone** show beside the lenses.
+1. Open [Needs you](/desk/needs). When your role lets you see cases other people own, **Mine** and **Everyone** show beside the page's name, above the list.
 2. **Mine** lists the cases you own and the ones nobody owns yet; it is what the page opens on. **Everyone** adds the cases other people own.
 3. Your choice is kept on this browser. The count in the Desk rail still counts everything you may see.
+
+### Search what needs you
+Keywords: search, find a shipment, find a load, look up, PRO number, find a row, search the list
+1. Open [Needs you](/desk/needs) and pick a lens.
+2. Select **Search what needs you** above the list, or press /, and type a record's number or name, or words from what the row says. The list narrows to the records with something that matches, soonest deadline first, searching everything open and not only the rows already on screen. The search is there under every lens and stays as you go from one to the next: under **Decisions** it narrows the queue to the changes that say those words or are for that record.
+3. Press Enter to keep the words and go back to the list's keys, or Esc to empty the search. A row found by one of its signals still shows every signal about its record.
+4. When nothing matches, the list says so and offers **Clear the search**.
+
+### Filter what needs you
+Keywords: filter, critical only, severity, kind, only new, unread, not opened, agent working, narrow the list, clear filters
+1. Open [Needs you](/desk/needs) and select **Filter** at the end of the lenses, or press F.
+2. Under **Severity**, tick **Critical**, **Warning** or **Info**. Under **Show only**, tick **Not opened yet** for rows with something new to you, or **An agent is working** for rows an agent is on right now. Under **Kind**, tick the kinds of thing to see, such as detention or a missing proof of delivery; each shows how many are open. The list narrows as you tick and the menu stays open.
+3. Each filter that is on shows as a chip under the search. Select the x on a chip to take that filter off, or **Clear** to take them all off. The number on **Filter** is how many are on.
+4. Under the **Decisions** lens, **Filter** narrows the queue to one **Agent** or one **Kind of change**.
+5. The search and the filters are part of the page's address, so a link you copy opens the same list for whoever may see it.
 
 ### Open the case behind a row
 Keywords: open case, open record, go to the shipment, view the source

@@ -160,13 +160,13 @@ export function ReportsPage() {
         description: t("Build, run, and share reports over your organization's data"),
         actions: (
           <div className="flex items-center gap-2">
-            <Button variant="outline" render={<Link to="/reports/runs" />}>
-              <ClockRewindIcon className="size-4" />
+            <Button size="sm" variant="outline" render={<Link to="/reports/runs" />}>
+              <ClockRewindIcon className="size-3.5" />
               {t("Run history")}
             </Button>
             {canCreate && (
-              <Button onClick={() => void navigate("/reports/builder")}>
-                <PlusIcon className="size-4" />
+              <Button size="sm" onClick={() => void navigate("/reports/builder")}>
+                <PlusIcon className="size-3.5" />
                 {t("New report")}
               </Button>
             )}

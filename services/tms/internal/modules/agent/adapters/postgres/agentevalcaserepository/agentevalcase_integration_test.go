@@ -534,6 +534,31 @@ func TestAdoptCandidates_ActivatesUntouchedCandidatesOfOrganizationsThatKeepThei
 	assert.Empty(t, again)
 }
 
+func TestAdoptCandidates_LeavesACaseWhoseOriginalUsedToolsAReplayCannotReach(t *testing.T) {
+	f := setup(t)
+
+	reached := f.automaticCase(t, "Rate S-261", "update_rate")
+	reached.Status = agentquality.CaseStatusCandidate
+	reached.Automatic = false
+	reached.ReachedTools = []string{"customer_list"}
+	reached, err := f.repo.Create(f.ctx, reached)
+	require.NoError(t, err)
+	plain := f.candidate(t, "Rate S-262")
+
+	adopted, err := f.repo.AdoptCandidates(f.base, agentqualityports.AdoptEvalCaseCandidatesRequest{
+		CreatedAfter: reached.CreatedAt,
+		At:           timeutils.NowUnix(),
+	})
+	require.NoError(t, err)
+
+	require.Len(t, adopted, 1)
+	assert.Equal(t, plain.ID, adopted[0].ID)
+	held := f.statusOf(t, reached.ID)
+	assert.Equal(t, agentquality.CaseStatusCandidate, held.Status,
+		"a case that could never pass is left for a person to judge")
+	assert.Equal(t, []string{"customer_list"}, held.ReachedTools)
+}
+
 func TestAdoptCandidates_LeavesAnOrganizationThatTurnedTheAutomaticSetOff(t *testing.T) {
 	f := setup(t)
 

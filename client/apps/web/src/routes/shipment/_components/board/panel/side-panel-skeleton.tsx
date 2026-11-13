@@ -1,3 +1,4 @@
+import { FloatingPanel } from "@/components/floating-panel";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
@@ -8,10 +9,6 @@ import { useShipmentBoardUrl } from "../url-state";
  * answers, and the panel skeleton puts the same parts in the same frame, so the panel looks one
  * way however it is waiting.
  */
-
-/** The panel's frame: it floats over the board with a stronger border and no shadow. */
-export const SIDE_PANEL_FRAME_CLASS =
-  "animate-panel-in bg-raised border-border-strong absolute top-2 right-3 bottom-3 z-30 flex w-[min(372px,calc(100%-28px))] flex-col overflow-hidden rounded-lg border @max-[820px]/board:inset-x-2 @max-[820px]/board:w-auto";
 
 const UP_NEXT_WIDTHS = ["w-3/5", "w-2/3", "w-1/2"] as const;
 const DELIVERY_BARS = [20, 35, 55, 80, 65, 90, 70, 45, 60, 30, 25, 15] as const;
@@ -75,7 +72,7 @@ export function ActionQueueSkeleton() {
 
 function WatchSectionSkeleton({ children }: { children: React.ReactNode }) {
   return (
-    <div className="border-border flex flex-col gap-2.5 border-t pt-3 first:border-t-0 first:pt-0">
+    <div className="flex flex-col gap-2.5 border-t border-border pt-3 first:border-t-0 first:pt-0">
       <div className="flex items-baseline justify-between gap-2">
         <div className="text-xs">
           <Skeleton className="inline-block h-2.5 w-24 align-middle" />
@@ -107,7 +104,7 @@ export function WatchlistSkeleton() {
                 />
               ))}
             </div>
-            <div className="text-2xs flex justify-between">
+            <div className="flex justify-between text-2xs">
               <Skeleton className="inline-block h-2 w-6 align-middle" />
               <Skeleton className="inline-block h-2 w-6 align-middle" />
               <Skeleton className="inline-block h-2 w-6 align-middle" />
@@ -158,7 +155,7 @@ export function ActivityTimelineSkeleton() {
   return (
     <div className="relative flex flex-col px-4 py-3" aria-busy aria-label={t("Loading activity")}>
       <div className="contents" aria-hidden>
-        <span className="bg-border absolute top-5 bottom-5 left-[19px] w-px" />
+        <span className="absolute top-5 bottom-5 left-[19px] w-px bg-border" />
         <ActivityRowsSkeleton />
       </div>
     </div>
@@ -184,13 +181,9 @@ export function ShipmentSidePanelSkeleton() {
   const [{ tab }] = useShipmentBoardUrl();
 
   return (
-    <div
-      className={SIDE_PANEL_FRAME_CLASS}
-      aria-busy
-      aria-label={t("Loading the brief and activity")}
-    >
+    <FloatingPanel aria-busy label={t("Loading the brief and activity")}>
       <div className="contents" aria-hidden>
-        <div className="border-border flex items-center gap-2 border-b px-3 py-2">
+        <div className="flex items-center gap-2 border-b border-border px-3 py-2">
           <Skeleton className="h-9 flex-1 rounded-lg" />
           <Skeleton className="size-7" />
         </div>
@@ -205,6 +198,6 @@ export function ShipmentSidePanelSkeleton() {
           )}
         </div>
       </div>
-    </div>
+    </FloatingPanel>
   );
 }

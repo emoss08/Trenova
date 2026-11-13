@@ -42,6 +42,10 @@ type Evidence struct {
 	Decisions []*benchrecord.DecisionRecord
 	Formula   string
 	Run       *RunOutcome
+	// LookBack marks a step that ran the conversation's look back. No turn
+	// runs in it and nothing is said, so only what the database holds
+	// afterwards is checked.
+	LookBack bool
 }
 
 func (e *Evidence) calls() []*benchrecord.ToolCallRecord {
@@ -92,6 +96,10 @@ func (c *Checker) Evaluate(
 	expect *benchscenario.Expect,
 	evidence *Evidence,
 ) []benchresult.CheckResult {
+	if evidence.LookBack {
+		return c.databaseChecks(ctx, session, expect, evidence, "")
+	}
+
 	checks := make([]benchresult.CheckResult, 0, 8)
 	checks = append(checks, turnsCompleted(evidence))
 	if evidence.Run == nil {

@@ -2562,6 +2562,43 @@ type AgentMemoryUsage {
   warnAt: Int!
 }
 
+"""
+One way agents came to hold memories over a stretch of days, and what became of them. A look
+back has one row per trigger, counted under its strongest signal; the other sources have one row
+each and no look back figures.
+"""
+type AgentLearningRow {
+  source: AgentMemorySource!
+  "What made the look backs look; absent for a source that is not a look back."
+  trigger: AgentReflectionSignalKind
+  "Look backs that called a model."
+  lookBacks: Int!
+  "Look backs that called a model and kept or offered nothing."
+  taughtNothing: Int!
+  "Lessons a look back wanted to keep that were already kept: the agent was told again what it had on record."
+  toldAgain: Int!
+  inputTokens: Int!
+  outputTokens: Int!
+  "Memories recorded in the stretch that agents read now."
+  kept: Int!
+  "Offers still waiting for a person."
+  waiting: Int!
+  "Offers a person turned down."
+  dismissed: Int!
+  "Offers nobody decided within 30 days, set aside by the nightly sweep."
+  lapsed: Int!
+  "Memories recorded in the stretch and retired since."
+  retired: Int!
+  "Memories recorded in the stretch that a turn has used at least once."
+  used: Int!
+}
+
+type AgentLearningStats {
+  days: Int!
+  since: Timestamp!
+  rows: [AgentLearningRow!]!
+}
+
 "Why a memory is worth another look."
 enum AgentMemoryUpkeepReason {
   "No turn has used it since it was recorded or last confirmed, 30 days ago or more."
@@ -2581,6 +2618,8 @@ enum AgentReflectionSubject {
   Thread
   "One background run, read once every proposal it raised was decided."
   Run
+  "A field an agent set that people changed by hand on several records, read for the rule behind the changes."
+  Correction
 }
 
 enum AgentReflectionStatus {
@@ -2608,6 +2647,8 @@ enum AgentReflectionSignalKind {
   NegativeFeedback
   "The person stated something while asking for something else."
   PersonTold
+  "People changed, by hand and on several records, a field the agent had set."
+  ChangedAfterwards
 }
 
 enum AgentReflectionAction {
@@ -2885,6 +2926,8 @@ extend type Query {
   agentMemoryUsage: AgentMemoryUsage!
   "The shared memories worth another look, oldest first, at most 25: facts nobody has confirmed in a long time and memories no turn has used."
   agentMemoryUpkeep: [AgentMemoryUpkeep!]!
+  "How each way of learning did over the last days (1 to 365): what it cost, what it offered and what people did with the offers."
+  agentLearningStats(days: Int! = 30): AgentLearningStats!
   agentExceptions(input: DataTableConnectionInput!): AgentExceptionConnection!
   agentException(id: ID!): AgentException
   agentControl: AgentControl!
@@ -4196,9 +4239,9 @@ type AgentEvalCase {
   "The question the agent is asked."
   input: String!
   """
-  When the person asked it. A replay answered from the recorded tool results
-  runs with its clock at this moment; null for a case written by hand or
-  captured from a background run, which replays as of now.
+  When the person asked it, or when the run that made the proposal started. A
+  replay answered from the recorded tool results runs with its clock at this
+  moment; null for a case written by hand, which replays as of now.
   """
   askedAt: Timestamp
   "The conversation before the question, redacted when captured."
@@ -4209,6 +4252,12 @@ type AgentEvalCase {
   subjectId: ID
   "The tools the agent held when the case was captured; calling any other fails the case."
   heldTools: [String!]!
+  """
+  The tools the original used that its agent did not hold itself, found through
+  another agent on the Desk. A replay cannot reach them, so a case that names
+  any is never activated on its own.
+  """
+  reachedTools: [String!]!
   "Each tool call the original made, with restricted fields redacted."
   toolFixtures: [JSON!]!
   "Expected tools with tolerance rules, forbidden tools, proposals, refusal and mention rules."
@@ -12307,6 +12356,8 @@ input PendingDecisionsInput {
   agentDefinitionId: ID
   "Only proposals of this tool; a plan matches when any step uses it."
   toolName: String
+  "Only decisions whose words hold this: what the agent wants, why, and the name of the record it is for, as Needs you's search reads them."
+  search: String
 }
 
 type PendingDecisionAgentCount {
@@ -12468,9 +12519,21 @@ type DeskLensCounts {
   decisions: Int!
 }
 
+"How many open items of one kind the reader may see, which the list's filter offers the kind by."
+type DeskAttentionKind {
+  kind: WatchtowerSourceKind!
+  "The kind in the reader's words."
+  label: String!
+  "The lens items of this kind are filed under."
+  lens: DeskLens!
+  count: Int!
+}
+
 type DeskAttention {
   groups: [DeskAttentionGroup!]!
   counts: DeskLensCounts!
+  "Open items of each kind in the list's own scope, most first. A kind with none is left out unless the list is narrowed to it."
+  kinds: [DeskAttentionKind!]!
   "True when more records wait than the first page holds."
   hasMore: Boolean!
   "Where the reader's unseen line sits."
@@ -12494,6 +12557,10 @@ input DeskAttentionInput {
   working: Boolean = false
   "Only the reader's own cases and the ones nobody owns, for a reader who may see everyone's."
   mine: Boolean = false
+  "Rows with an item whose title, summary or record name holds these words, whatever their case; at most 100 characters are read. Empty is every row."
+  search: String
+  "Only rows with an item the reader has not opened yet."
+  unseen: Boolean = false
 }
 
 "How a write an agent made ended."
@@ -13194,6 +13261,10 @@ type DeskMemory {
   "The role a Role memory is kept for."
   roleId: ID
   roleName: String!
+  "The kind of record the memory is about, when it is about one."
+  subjectType: AgentMemorySubjectType
+  "The record's name; empty for a memory about no one record."
+  subjectLabel: String!
   "Active or Paused on the page; Retired once forgotten, until it is brought back; Suggested while an agent's offer waits."
   status: AgentMemoryStatus!
   source: AgentMemorySource!
@@ -13269,6 +13340,9 @@ input DeskMemoriesInput {
   roleId: ID
   "Words the memory says."
   query: String
+  "With subjectId, only the memories about that record, as its own page lists them: what agents keep about it for their own work is listed too."
+  subjectType: AgentMemorySubjectType
+  subjectId: ID
 }
 
 input CreateDeskMemoryInput {
@@ -13276,6 +13350,11 @@ input CreateDeskMemoryInput {
   "User, Role or Organization. A Role memory needs a role the person holds. Role and Organization memories are kept at once when the person manages agent memory and offered to an administrator otherwise."
   scope: AgentMemoryScope!
   roleId: ID
+  "Instruction when left out; Fact or Procedure for one that is not a rule."
+  kind: AgentMemoryKind
+  "With subjectId, the customer, location, driver or carrier the memory is about."
+  subjectType: AgentMemorySubjectType
+  subjectId: ID
 }
 
 "Changes what a memory says, who it is kept for, or both; what is left out stays."
@@ -14869,9 +14948,9 @@ type DispatchForecastQuality {
   historyLoads: Int!
   weeksTested: Int!
   loadsTested: Int!
-  "Share of actual counts that fell inside the forecast's 80% range."
+  "Share of the tested days whose load total fell inside the forecast's 80% range."
   intervalCoverage: Float!
-  "Average miss per area and four-hour slot, in loads."
+  "Average miss per active area and four-hour slot, in loads: the forecast's ranked probability score."
   meanAbsoluteError: Float!
   "The same average miss for repeating the same slot of the week before."
   naiveMeanAbsoluteError: Float!
@@ -14892,6 +14971,8 @@ drivers expected, served in order, so a driver used in one window is not counted
 """
 type DispatchFreightSlot {
   start: Timestamp!
+  "When the window ends: four hours on, three or five on the two nights the clocks change."
+  end: Timestamp!
   "Loads likely to start in the window, booked included (10th to 90th percentile)."
   likelyLow: Int!
   likelyHigh: Int!
@@ -14931,6 +15012,8 @@ anywhere. The gap between short here and uncovered (summed over areas) is placem
 """
 type DispatchFreightNetworkSlot {
   start: Timestamp!
+  "When the window ends: four hours on, three or five on the two nights the clocks change."
+  end: Timestamp!
   "Every load likely in the window, booked or not, the 10th to 90th percentile."
   likelyLow: Int!
   likelyHigh: Int!
@@ -14970,6 +15053,7 @@ type DispatchFreightMove {
   toLabel: String!
   "The window the move is for."
   slotStart: Timestamp!
+  slotEnd: Timestamp!
   "Loads with no truck nearby in that window."
   short: Float!
   freeAt: Timestamp
@@ -15106,6 +15190,7 @@ type DispatchFreightAreaDetail {
   bounds: DispatchFreightAreaBounds!
   "The window the sheet reads: the one asked for, or the area's worst."
   slotStart: Timestamp!
+  slotEnd: Timestamp!
   reach: [DispatchFreightReach!]!
   moves: [DispatchFreightMove!]!
   pace: [DispatchFreightPace!]!
@@ -26405,6 +26490,40 @@ extend type Query {
   pageAccessScreens: [PageAccessScreen!]!
   "The role editor's sentences for each resource, with the screens it affects."
   roleResourceGuides(input: RoleResourceGuideInput!): [RoleResourceGuide!]!
+}
+`, BuiltIn: false},
+	{Name: "../schema/page_tour.graphqls", Input: `"How a person left a page tour."
+enum PageTourOutcome {
+  "They walked through every step."
+  Finished
+  "They closed it before the last step."
+  Skipped
+}
+
+"A page tour the caller has already been shown, so it does not open by itself again."
+type PageTourView {
+  "The tour's key, such as freight-outlook."
+  tour: String!
+  "The version of the tour they saw. A tour with newer steps opens again."
+  tourVersion: Int!
+  outcome: PageTourOutcome!
+  seenAt: Timestamp!
+}
+
+input RecordPageTourInput {
+  tour: String!
+  tourVersion: Int!
+  outcome: PageTourOutcome!
+}
+
+extend type Query {
+  "The page tours the caller has been shown."
+  myPageTourViews: [PageTourView!]!
+}
+
+extend type Mutation {
+  "Remembers that the caller has been shown a page tour, replacing an earlier view of it."
+  recordMyPageTour(input: RecordPageTourInput!): PageTourView!
 }
 `, BuiltIn: false},
 	{Name: "../schema/performance_review.graphqls", Input: `enum PerformanceReviewStatus {

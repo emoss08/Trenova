@@ -1,18 +1,18 @@
 import type { VirtualRow, VirtualRowsHandle } from "@/components/virtual-rows";
 import { DeskList, DeskListHeading, DeskListStill } from "@/routes/desk/_components/list/desk-list";
+import { DeskListToggle } from "@/routes/desk/_components/list/desk-list-head";
+import { DeskListSearch } from "@/routes/desk/_components/list/desk-list-search";
 import type { InboundMessageRow, TriageSort } from "@/lib/graphql/inbox";
 import { useTriageStore, type TriageRowMode } from "@/stores/triage-store";
 import { openContextMenu } from "@trenova/shared/components/context-menu/context-menu-host";
 import { CheckIcon, Rows01Icon } from "@trenova/shared/components/icons";
 import { Button } from "@trenova/shared/components/ui/button";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { cn } from "@trenova/shared/lib/utils";
 import { useMemo, type ReactNode, type Ref, type RefObject } from "react";
 import type { FolderSort } from "../folders";
 import type { ListItem } from "./list-items";
 import { ListSkeleton } from "./list-states";
 import { RowHandlersContext, TriageRow, type RowHandlers } from "./triage-row";
-import { SearchBox } from "./search-box";
 import { BulkBar } from "./bulk-bar";
 
 /** A row's height before it is measured: three lines and their padding. */
@@ -47,29 +47,18 @@ export type TriageListProps = {
 
 function SortToggle({ sort, onSort }: { sort: TriageSort; onSort: (sort: FolderSort) => void }) {
   const t = useT();
-  const options: Array<[FolderSort, TriageSort, string]> = [
-    ["due", "Due", t("Due first")],
-    ["newest", "Newest", t("Newest")],
-  ];
 
   return (
-    <div role="group" aria-label={t("Order")} className="flex gap-0.5 px-0.5">
-      {options.map(([value, server, label]) => (
-        <button
-          key={value}
-          type="button"
-          aria-pressed={sort === server}
-          onClick={() => onSort(value)}
-          className={cn(
-            "ui-focus-ring h-5.5 rounded-badge px-2 text-xs transition-colors",
-            sort === server
-              ? "bg-surface-hover text-foreground"
-              : "text-foreground-subtle hover:text-foreground",
-          )}
-        >
-          {label}
-        </button>
-      ))}
+    <div className="px-0.5">
+      <DeskListToggle<FolderSort>
+        label={t("Order")}
+        value={sort === "Due" ? "due" : "newest"}
+        onChange={onSort}
+        options={[
+          { value: "due", label: t("Due first") },
+          { value: "newest", label: t("Newest") },
+        ]}
+      />
     </div>
   );
 }
@@ -171,7 +160,7 @@ export function TriageList({
   return (
     <section aria-label={searchPlaceholder} className="relative flex min-h-0 flex-1 flex-col">
       <header className="flex flex-col gap-2 px-3 pt-2.5 pb-2">
-        <SearchBox
+        <DeskListSearch
           inputRef={searchRef}
           placeholder={searchPlaceholder}
           value={search}

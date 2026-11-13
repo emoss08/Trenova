@@ -53,9 +53,21 @@ type DeskLensCounts {
   decisions: Int!
 }
 
+"How many open items of one kind the reader may see, which the list's filter offers the kind by."
+type DeskAttentionKind {
+  kind: WatchtowerSourceKind!
+  "The kind in the reader's words."
+  label: String!
+  "The lens items of this kind are filed under."
+  lens: DeskLens!
+  count: Int!
+}
+
 type DeskAttention {
   groups: [DeskAttentionGroup!]!
   counts: DeskLensCounts!
+  "Open items of each kind in the list's own scope, most first. A kind with none is left out unless the list is narrowed to it."
+  kinds: [DeskAttentionKind!]!
   "True when more records wait than the first page holds."
   hasMore: Boolean!
   "Where the reader's unseen line sits."
@@ -79,6 +91,10 @@ input DeskAttentionInput {
   working: Boolean = false
   "Only the reader's own cases and the ones nobody owns, for a reader who may see everyone's."
   mine: Boolean = false
+  "Rows with an item whose title, summary or record name holds these words, whatever their case; at most 100 characters are read. Empty is every row."
+  search: String
+  "Only rows with an item the reader has not opened yet."
+  unseen: Boolean = false
 }
 
 "How a write an agent made ended."

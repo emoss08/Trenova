@@ -42,6 +42,42 @@ var conversationalWords = map[string]struct{}{
 	"same": {}, "other": {}, "another": {}, "back": {}, "over": {}, "had": {},
 }
 
+// askingWords ask for whatever is known without saying what about: "tell me
+// about Acme", "anything I should know for Acme?". A turn made only of them
+// and a record's name asks for everything kept about that record.
+var askingWords = map[string]struct{}{
+	"tell": {}, "about": {}, "what": {}, "whats": {}, "show": {}, "give": {}, "info": {},
+	"information": {}, "everything": {}, "have": {}, "has": {}, "remember": {},
+	"note": {}, "notes": {}, "memory": {}, "memories": {}, "rule": {}, "rules": {},
+	"detail": {}, "details": {}, "summary": {}, "summarize": {}, "overview": {},
+	"all": {}, "any": {}, "for": {}, "the": {}, "with": {}, "our": {}, "does": {}, "did": {},
+	"are": {}, "was": {}, "can": {}, "could": {}, "would": {}, "please": {}, "there": {},
+	"customer": {}, "location": {}, "driver": {}, "carrier": {}, "account": {}, "known": {},
+	"special": {}, "aware": {},
+}
+
+// asksAbout reports whether the turn names the record a memory is filed
+// under and asks nothing more particular, so every memory about it bears.
+func asksAbout(words []queryWord, memory *agentmemory.Memory) bool {
+	if memory.SubjectLabel == "" {
+		return false
+	}
+	label := agentsearch.TokenSet(memory.SubjectLabel)
+	named := false
+	for _, word := range words {
+		if word.in(label) {
+			named = true
+
+			continue
+		}
+		if _, asking := askingWords[word.raw]; !asking {
+			return false
+		}
+	}
+
+	return named
+}
+
 // queryWord is one word the turn used, with the forms a memory may spell it
 // in: the word, its singular and the product's words for it.
 type queryWord struct {
@@ -92,7 +128,7 @@ func Relevance(
 		if _, ok := ids[memory.ID]; ok {
 			continue
 		}
-		if sharesEnough(words, rare, tokens[idx], need) {
+		if sharesEnough(words, rare, tokens[idx], need) || asksAbout(words, memory) {
 			ids[memory.ID] = struct{}{}
 		}
 	}

@@ -22,17 +22,24 @@ func likelyDallas(t *testing.T) (*demandforecast.Forecaster, demandforecast.Wind
 	require.True(t, ok)
 	shares := make([]float64, len(demandforecast.LeadHours))
 	shares[0] = 1
-	params := &demandforecast.ForecasterParams{
-		Now:           anticipateNow,
-		Quality:       &demandforecast.Quality{Status: demandforecast.StatusReady},
-		Areas:         []*demandforecast.Area{{Cell: cell, Label: "Dallas, TX", MedianRevenueCents: 100_000}},
-		Curves:        []*demandforecast.BookingCurve{{Shares: shares}},
-		MarginPercent: 50,
+	params := &demandforecast.IndexParams{
+		Quality: &demandforecast.Quality{Status: demandforecast.StatusReady},
+		Areas: []*demandforecast.Area{
+			{Cell: cell, Label: "Dallas, TX", MedianRevenueCents: 100_000},
+		},
+		Curves: []*demandforecast.BookingCurve{{Shares: shares}},
 	}
 	for slot := range dispatchmarket.SlotsPerWeek {
-		params.Rates = append(params.Rates, &demandforecast.Rate{Cell: cell, Slot: slot, Alpha: 4, Beta: 10})
+		params.Rates = append(
+			params.Rates,
+			&demandforecast.Rate{Cell: cell, Slot: slot, Alpha: 4, Beta: 10},
+		)
 	}
-	forecaster := demandforecast.NewForecaster(params)
+	forecaster := demandforecast.NewForecaster(&demandforecast.ForecasterParams{
+		Now:           anticipateNow,
+		Index:         demandforecast.NewIndex(params),
+		MarginPercent: 50,
+	})
 	key, ok := forecaster.Window(cell, anticipateNow+6*3600)
 	require.True(t, ok)
 

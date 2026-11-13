@@ -5,23 +5,34 @@ import {
   outlook,
   readyQuality,
   slotStarts,
+  windows,
 } from "@/lib/graphql/__tests__/freight-outlook-fixtures";
 import type { FreightOutlook, FreightPositioning } from "@/lib/graphql/freight-outlook";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
+import { usePageTourStore } from "@/stores/page-tour-store";
+import { act, cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { formatUnixDateTimeMedium } from "@trenova/shared/lib/date";
+import { useState } from "react";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { FreightOutlook as FreightOutlookView } from "../freight-outlook";
 import { slotRange } from "../outlook-parts";
+import { OUTLOOK_TOUR } from "../outlook-tour";
 
 const mocks = vi.hoisted(() => ({
   outlook: vi.fn<() => Promise<FreightOutlook>>(),
   area: vi.fn(),
   positionDriver: vi.fn(),
   callOff: vi.fn(),
+  tourViews: vi.fn(),
+  recordTour: vi.fn(),
   allowed: true,
+}));
+
+vi.mock("@/lib/graphql/page-tour", () => ({
+  fetchMyPageTourViews: mocks.tourViews,
+  recordMyPageTour: mocks.recordTour,
 }));
 
 vi.mock("@/lib/queries/freight-outlook", async (importOriginal) => {
@@ -68,12 +79,30 @@ const onTheWay: FreightPositioning = {
   createdAt: slotStarts[0],
 };
 
+const tourSeen = {
+  tour: OUTLOOK_TOUR.key,
+  tourVersion: OUTLOOK_TOUR.version,
+  outcome: "Finished",
+  seenAt: slotStarts[0],
+};
+
+/** The outlook under a stand-in for the page header, which offers the Brief button its place. */
+function Page() {
+  const [briefSlot, setBriefSlot] = useState<HTMLElement | null>(null);
+  return (
+    <>
+      <header ref={setBriefSlot} aria-label="Page header" />
+      <FreightOutlookView horizon="24" briefSlot={briefSlot} />
+    </>
+  );
+}
+
 function renderPage() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter>
-        <FreightOutlookView horizon="24" />
+        <Page />
       </MemoryRouter>
     </QueryClientProvider>,
   );
@@ -84,6 +113,14 @@ describe("FreightOutlook", () => {
     window.localStorage.clear();
     mocks.allowed = true;
     mocks.area.mockImplementation(() => new Promise(() => {}));
+    mocks.tourViews.mockResolvedValue([tourSeen]);
+    usePageTourStore.setState({
+      available: [],
+      requested: null,
+      showing: null,
+      always: false,
+    });
+    mocks.recordTour.mockResolvedValue(tourSeen);
   });
 
   afterEach(() => {
@@ -231,13 +268,13 @@ describe("FreightOutlook", () => {
 
     const first = screen
       .getAllByRole("button", { pressed: false })
-      .find((button) => button.getAttribute("title") === slotRange(slotStarts[0]));
+      .find((button) => button.getAttribute("title") === slotRange(windows[0]));
     expect(first).toBeDefined();
     await user.click(first as HTMLElement);
 
     expect(screen.getByRole("button", { name: "Show all" })).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "Summary" }).textContent).toContain(
-      `Your drivers cover the freight on ${slotRange(slotStarts[0])}.`,
+      `Your drivers cover the freight on ${slotRange(windows[0])}.`,
     );
   });
 
@@ -258,26 +295,37 @@ describe("FreightOutlook", () => {
     expect(screen.getByRole("complementary", { name: "Brief" })).toBeInTheDocument();
   });
 
-  it("folds the brief to a rail that still counts the moves, and unfolds it again", async () => {
+  it("closes the brief's panel, and the board's Brief button still counts the moves and opens it again", async () => {
     const user = userEvent.setup();
     mocks.outlook.mockResolvedValue(outlook());
 
     renderPage();
 
-    await user.click(await screen.findByRole("button", { name: "Hide the brief" }));
+    const brief = await screen.findByRole("complementary", { name: "Brief" });
+    await user.click(within(brief).getByRole("button", { name: "Close panel" }));
 
+    expect(screen.queryByRole("complementary", { name: "Brief" })).toBeNull();
     expect(screen.queryByRole("listitem", { name: "Send Ana Ruiz to Cleveland, OH" })).toBeNull();
-    const rail = screen.getByRole("button", { name: "Show the brief" }).parentElement;
-    expect(rail).toHaveTextContent("Brief1");
+    const header = screen.getByRole("banner", { name: "Page header" });
+    const toggle = within(header).getByRole("button", { name: /^Brief/, pressed: false });
+    expect(toggle).toHaveTextContent("Brief1");
+    expect(
+      within(screen.getByRole("region", { name: "Loads against drivers" })).queryByRole("button", {
+        name: /^Brief/,
+      }),
+    ).toBeNull();
     expect(window.localStorage.getItem("trenova-freight-outlook-brief-open")).toBe("false");
 
-    await user.click(screen.getByRole("button", { name: "Show the brief" }));
+    await user.click(toggle);
+
+    expect(screen.getByRole("complementary", { name: "Brief" })).toBeInTheDocument();
     expect(
       screen.getByRole("listitem", { name: "Send Ana Ruiz to Cleveland, OH" }),
     ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^Brief/, pressed: true })).toBeInTheDocument();
   });
 
-  it("unfolds a folded brief when an area is opened", async () => {
+  it("opens the panel on an area when its row is picked with the panel closed", async () => {
     const user = userEvent.setup();
     window.localStorage.setItem("trenova-freight-outlook-brief-open", "false");
     mocks.outlook.mockResolvedValue(outlook());
@@ -285,11 +333,38 @@ describe("FreightOutlook", () => {
     renderPage();
 
     const board = await screen.findByRole("region", { name: "Loads against drivers" });
-    expect(screen.getByRole("button", { name: "Show the brief" })).toBeInTheDocument();
+    expect(screen.queryByRole("complementary")).toBeNull();
     await user.click(within(board).getByRole("button", { name: /^Cleveland, OH/ }));
 
-    expect(screen.queryByRole("button", { name: "Show the brief" })).toBeNull();
+    expect(screen.getByRole("complementary", { name: "Area" })).toBeInTheDocument();
     expect(await screen.findByLabelText("Loading the area")).toBeInTheDocument();
+  });
+
+  it("goes back from an area to the brief, and closing the panel lets the area go", async () => {
+    const user = userEvent.setup();
+    mocks.outlook.mockResolvedValue(outlook());
+    renderPage();
+    const board = await screen.findByRole("region", { name: "Loads against drivers" });
+    await user.click(within(board).getByRole("button", { name: /^Cleveland, OH/ }));
+    const area = screen.getByRole("complementary", { name: "Area" });
+
+    await user.click(within(area).getByRole("button", { name: "Brief" }));
+    expect(screen.getByRole("complementary", { name: "Brief" })).toBeInTheDocument();
+
+    await user.click(within(board).getByRole("button", { name: /^Cleveland, OH/ }));
+    await user.click(
+      within(screen.getByRole("complementary", { name: "Area" })).getByRole("button", {
+        name: "Close panel",
+      }),
+    );
+    expect(screen.queryByRole("complementary")).toBeNull();
+    expect(within(board).getByRole("button", { name: /^Cleveland, OH/ })).toHaveAttribute(
+      "aria-pressed",
+      "false",
+    );
+
+    await user.click(screen.getByRole("button", { name: /^Brief/, pressed: false }));
+    expect(screen.getByRole("complementary", { name: "Brief" })).toBeInTheDocument();
   });
 
   it("says why one more driver is worth nothing instead of leaving it blank", async () => {
@@ -311,6 +386,127 @@ describe("FreightOutlook", () => {
     expect(within(board).getByRole("button", { name: /^Cleveland, OH/ })).toHaveTextContent(
       "No price",
     );
+  });
+
+  it("walks a first-time visitor through each part of the page, top to bottom then the brief", async () => {
+    const user = userEvent.setup();
+    mocks.tourViews.mockResolvedValue([]);
+    mocks.outlook.mockResolvedValue(outlook());
+
+    renderPage();
+
+    const tour = await screen.findByRole("dialog", { name: "Welcome to the freight outlook" });
+    const titles: string[] = [];
+    while (within(tour).queryByRole("button", { name: "Next" })) {
+      await user.click(within(tour).getByRole("button", { name: "Next" }));
+      titles.push(within(tour).getByRole("heading").textContent ?? "");
+    }
+
+    expect(titles).toEqual([
+      "Start with the five figures",
+      "The outlook in a sentence",
+      "Loads against drivers",
+      "Pin a window",
+      "One row for each area",
+      "How far to trust it",
+      "The moves that fix it",
+      "Customers against their usual pace",
+    ]);
+
+    await user.click(within(tour).getByRole("button", { name: "Done" }));
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(mocks.recordTour).toHaveBeenCalledExactlyOnceWith({
+      tour: "freight-outlook",
+      tourVersion: 1,
+      outcome: "Finished",
+    });
+  });
+
+  it("opens a closed brief for the tour and closes it again afterwards", async () => {
+    const user = userEvent.setup();
+    window.localStorage.setItem("trenova-freight-outlook-brief-open", "false");
+    mocks.tourViews.mockResolvedValue([]);
+    mocks.outlook.mockResolvedValue(outlook());
+
+    renderPage();
+
+    const tour = await screen.findByRole("dialog", { name: "Welcome to the freight outlook" });
+    // The open tour hides the page behind it from assistive technology, the panel included.
+    expect(
+      await screen.findByRole("complementary", { name: "Brief", hidden: true }),
+    ).toBeInTheDocument();
+    const titles: string[] = [];
+    while (within(tour).queryByRole("button", { name: "Next" })) {
+      await user.click(within(tour).getByRole("button", { name: "Next" }));
+      titles.push(within(tour).getByRole("heading").textContent ?? "");
+    }
+    expect(titles.slice(-3)).toEqual([
+      "How far to trust it",
+      "The moves that fix it",
+      "Customers against their usual pace",
+    ]);
+
+    await user.click(within(tour).getByRole("button", { name: "Done" }));
+
+    await waitFor(() => expect(screen.queryByRole("complementary")).toBeNull());
+    expect(screen.getByRole("button", { name: /^Brief/, pressed: false })).toBeInTheDocument();
+    expect(window.localStorage.getItem("trenova-freight-outlook-brief-open")).toBe("false");
+  });
+
+  it("shows the brief instead of an open area while the tour is taken again", async () => {
+    const user = userEvent.setup();
+    mocks.outlook.mockResolvedValue(outlook());
+    renderPage();
+    const board = await screen.findByRole("region", { name: "Loads against drivers" });
+    await user.click(within(board).getByRole("button", { name: /^Cleveland, OH/ }));
+    expect(screen.getByRole("complementary", { name: "Area" })).toBeInTheDocument();
+
+    act(() => usePageTourStore.getState().request(OUTLOOK_TOUR.key));
+
+    await screen.findByRole("dialog", { name: "Welcome to the freight outlook" });
+    await waitFor(() =>
+      expect(document.querySelector('[data-tour="outlook-moves"]')).not.toBeNull(),
+    );
+    expect(document.querySelector('[aria-label="Area"]')).toBeNull();
+
+    await user.keyboard("{Escape}");
+
+    expect(await screen.findByRole("complementary", { name: "Area" })).toBeInTheDocument();
+  });
+
+  it("leaves someone who has seen the tour to the page", async () => {
+    mocks.outlook.mockResolvedValue(outlook());
+
+    renderPage();
+
+    await screen.findByRole("region", { name: "Summary" });
+    await waitFor(() => expect(mocks.tourViews).toHaveBeenCalledTimes(1));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("keeps the tour for when there is an outlook to show", async () => {
+    mocks.tourViews.mockResolvedValue([]);
+    mocks.outlook.mockResolvedValue(
+      outlook({ quality: { ...readyQuality, status: "NoSkill" }, areas: [], moves: [] }),
+    );
+
+    renderPage();
+
+    await screen.findByRole("heading", { name: "Not better than last week yet" });
+    expect(mocks.tourViews).not.toHaveBeenCalled();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("offers no Brief button while there is no outlook to open one on", async () => {
+    mocks.outlook.mockResolvedValue(
+      outlook({ quality: { ...readyQuality, status: "NoSkill" }, areas: [], moves: [] }),
+    );
+
+    renderPage();
+
+    await screen.findByRole("heading", { name: "Not better than last week yet" });
+    expect(screen.getByRole("banner", { name: "Page header" })).toBeEmptyDOMElement();
   });
 
   it("says why there is no outlook while the forecast is not ready", async () => {

@@ -4,7 +4,6 @@ import { deskDecisionPath } from "@/lib/desk-paths";
 import {
   fetchWatchtowerItem,
   handOffWatchtowerItem,
-  markWatchtowerItemSeen,
   resolveWatchtowerItem,
   snoozeWatchtowerItem,
   type WatchtowerItem,
@@ -15,7 +14,6 @@ import { assistant } from "@/lib/queries/assistant";
 import { watchtower } from "@/lib/queries/watchtower";
 import { tomorrowMorning } from "@/lib/snooze-presets";
 import {
-  patchQueueItem,
   placeInQueue,
   removeFromQueue,
   shiftCleared,
@@ -23,7 +21,7 @@ import {
 } from "@/lib/watchtower-cache";
 import { assistantService } from "@/services/assistant";
 import { useAssistantStore } from "@/stores/assistant-store";
-import { patchAttentionItem, removeAttentionItem } from "@/lib/desk-attention-cache";
+import { removeAttentionItem } from "@/lib/desk-attention-cache";
 import { deskAttention } from "@/lib/queries/desk-attention";
 import { useDeskAttachedPageStore } from "@/stores/desk-attached-page-store";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -35,6 +33,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { useQueueCursor, useQueueLeave } from "../queue/use-queue-cursor";
 import { watchtowerPageContext } from "./page-context";
+import { useMarkSeen } from "./use-mark-seen";
 
 /** What a key or a button asks the queue to do. */
 export type WatchtowerCommand = "next" | "previous" | "handOff" | "done" | "snooze";
@@ -93,6 +92,13 @@ export type WatchtowerActionsOptions = {
    * Hand off leave them alone, by key as by button; moving through them works.
    */
   held?: ReadonlySet<string>;
+  /**
+   * Set while the list holds only what the reader has not opened. An item is
+   * then marked seen when the reader moves off it rather than when it opens:
+   * marked at once, the next read would take it out from under them and put
+   * the following one in front, which would be marked in turn.
+   */
+  deferSeen?: boolean;
 };
 
 /**
@@ -113,6 +119,7 @@ export function useWatchtowerActions({
   since,
   keysEnabled,
   held,
+  deferSeen = false,
 }: WatchtowerActionsOptions) {
   const t = useT();
   const queryClient = useQueryClient();
@@ -144,21 +151,7 @@ export function useWatchtowerActions({
     void queryClient.invalidateQueries({ queryKey: deskAttention._def, refetchType: "active" });
   };
 
-  // Opening an item marks it seen for this reader. The dot goes at once; a
-  // mark that does not reach the server puts it back.
-  const currentId = current?.id ?? null;
-  const currentSeen = current?.seen ?? true;
-  useEffect(() => {
-    if (currentId === null || currentSeen) {
-      return;
-    }
-    patchQueueItem(queryClient, currentId, (item) => ({ ...item, seen: true }));
-    patchAttentionItem(queryClient, currentId, (item) => ({ ...item, seen: true }));
-    markWatchtowerItemSeen(currentId).catch(() => {
-      patchQueueItem(queryClient, currentId, (item) => ({ ...item, seen: false }));
-      patchAttentionItem(queryClient, currentId, (item) => ({ ...item, seen: false }));
-    });
-  }, [currentId, currentSeen, queryClient]);
+  useMarkSeen(current, deferSeen);
 
   // A refused write puts the row back as the server now has it, so the card
   // the person sees again is the item as it stands and a second press is made

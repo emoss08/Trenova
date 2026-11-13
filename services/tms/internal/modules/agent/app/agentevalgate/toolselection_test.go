@@ -21,6 +21,7 @@ const (
 	paraphraseSuite = "evals/toolselection.paraphrase.yaml"
 	selectionFloors = "evals/toolselection.floors.json"
 	guideSuite      = "evals/guideselection.yaml"
+	guideHeldSuite  = "evals/guideselection.heldout.yaml"
 	guideFloors     = "evals/guideselection.floors.json"
 	selectionSplits = "evals/toolselection.splits.yaml"
 	minSelection    = 40
@@ -42,6 +43,7 @@ type evalSuites struct {
 	tools      *agentevalgate.SelectionSuite
 	paraphrase *agentevalgate.SelectionSuite
 	guide      *agentevalgate.SelectionSuite
+	guideHeld  *agentevalgate.SelectionSuite
 }
 
 func loadSuites(t *testing.T, kit *agentevalgate.Kit) evalSuites {
@@ -53,6 +55,8 @@ func loadSuites(t *testing.T, kit *agentevalgate.Kit) evalSuites {
 	require.NoError(t, err)
 	guide, err := agentevalgate.LoadSelectionSuite(guideSuite)
 	require.NoError(t, err)
+	guideHeld, err := agentevalgate.LoadSelectionSuite(guideHeldSuite)
+	require.NoError(t, err)
 
 	require.GreaterOrEqual(t, len(tools.Cases), minSelection,
 		"the selection suite keeps at least %d requests", minSelection)
@@ -63,7 +67,7 @@ func loadSuites(t *testing.T, kit *agentevalgate.Kit) evalSuites {
 	require.Empty(t, kit.UnknownTools(agentevalgate.Combined(tools, paraphrase)),
 		"every expected tool must be registered; a renamed tool renames its cases")
 
-	return evalSuites{tools: tools, paraphrase: paraphrase, guide: guide}
+	return evalSuites{tools: tools, paraphrase: paraphrase, guide: guide, guideHeld: guideHeld}
 }
 
 func (s evalSuites) inputs(kit *agentevalgate.Kit) agentevalgate.EmbeddingInputs {
@@ -72,7 +76,8 @@ func (s evalSuites) inputs(kit *agentevalgate.Kit) agentevalgate.EmbeddingInputs
 
 	return agentevalgate.EmbeddingInputs{
 		Documents: documents,
-		Queries:   agentevalgate.Combined(s.tools, s.paraphrase, s.guide).Requests(),
+		Queries: agentevalgate.Combined(s.tools, s.paraphrase, s.guide, s.guideHeld).
+			Requests(),
 	}
 }
 
@@ -196,6 +201,13 @@ func enforce(t *testing.T, g gate) {
 	require.GreaterOrEqualf(t, g.report.Top1, g.floors.Top1,
 		"%s top-1 fell below its floor: the ranking now puts something else first\n%s",
 		g.label, g.report.MissesExcept(g.held))
+}
+
+func reportHeldOut(t *testing.T, label string, report agentevalgate.SelectionReport) {
+	t.Helper()
+
+	t.Logf("%s, held-out (not gated): recall@5 %.2f, top-1 %.2f over %d requests",
+		label, report.RecallAt5, report.Top1, len(report.Outcomes))
 }
 
 func heldOutFloors(floors agentevalgate.SelectionFloorSet) agentevalgate.SelectionFloorSet {
@@ -355,7 +367,7 @@ func TestGuideSelectionAgainstFloors(t *testing.T) {
 
 	kit := newKit(t)
 	suites := loadSuites(t, kit)
-	for _, selection := range suites.guide.Cases {
+	for _, selection := range agentevalgate.Combined(suites.guide, suites.guideHeld).Cases {
 		for _, path := range selection.Expect {
 			_, ok := productguide.Default.Page(path)
 			require.Truef(t, ok, "%q expects %s, which the guide does not list",
@@ -365,6 +377,8 @@ func TestGuideSelectionAgainstFloors(t *testing.T) {
 	guide := productguideservice.NewOffline(productguide.Default)
 
 	keyword := evaluate(t, suites.guide, agentevalgate.GuideKeywordFinder(guide))
+	reportHeldOut(t, "agent_find_page by keyword",
+		evaluate(t, suites.guideHeld, agentevalgate.GuideKeywordFinder(guide)))
 
 	if *update {
 		updateFloors(t, guideFloors, floorReports{
@@ -391,6 +405,9 @@ func TestGuideSelectionAgainstFloorsHybrid(t *testing.T) {
 	suites := loadSuites(t, kit)
 	fixture := hybridFixture(t, suites, kit)
 	guide := productguideservice.NewOffline(productguide.Default)
+
+	reportHeldOut(t, "agent_find_page by keyword and meaning",
+		evaluate(t, suites.guideHeld, agentevalgate.GuideHybridFinder(guide, fixture)))
 
 	report := evaluate(t, suites.guide, agentevalgate.GuideHybridFinder(guide, fixture))
 	enforce(t, gate{

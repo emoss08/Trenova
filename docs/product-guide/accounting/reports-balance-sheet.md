@@ -1,6 +1,6 @@
 ---
 path: /accounting/reports/balance-sheet
-aliases: [statement of financial position, assets and liabilities, equity, net worth]
+aliases: [statement of financial position, assets and liabilities, equity, net worth, what we own and what we owe, what the company owns, what the company owes, financial position at period end]
 related:
   - /accounting/reports/income-statement
   - /accounting/reports/trial-balance

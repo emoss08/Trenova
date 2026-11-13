@@ -18,6 +18,9 @@ const (
 type Source struct {
 	Channel string
 	AIRunID string
+	// AgentID is the agent whose tool call made the change, so what people
+	// later change of an agent's work can be traced to the agent that did it.
+	AgentID string
 }
 
 type sourceKey struct{}
@@ -40,5 +43,14 @@ func WithAIRun(ctx context.Context, runID string, conversation bool) context.Con
 	if conversation {
 		source.Channel = ChannelAgentConversation
 	}
+	return context.WithValue(ctx, sourceKey{}, source)
+}
+
+func WithAgent(ctx context.Context, agentID string) context.Context {
+	if agentID == "" {
+		return ctx
+	}
+	source := From(ctx)
+	source.AgentID = agentID
 	return context.WithValue(ctx, sourceKey{}, source)
 }

@@ -1,3 +1,5 @@
+import { tourTarget } from "@/components/tour/tour-model";
+import { OUTLOOK_TOUR_TARGET } from "./outlook-tour";
 import {
   HoverCardHeading,
   HoverCardRow,
@@ -20,7 +22,8 @@ import { useRichT } from "@trenova/shared/i18n/rich";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { cn, formatCentsWhole } from "@trenova/shared/lib/utils";
 import { useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
-import { BoardTide, TIDE_HEIGHT, type BoardColumns } from "./board-tide";
+import { BoardTide } from "./board-tide";
+import { TIDE_HEIGHT, type BoardColumns } from "./board-tide-model";
 import {
   balanceFigure,
   balanceOf,
@@ -44,8 +47,13 @@ import {
 } from "./outlook-parts";
 
 /** The area column and the one-more-driver column; the windows share what is left. */
-const LABEL_WIDTH = 280;
-const VALUE_WIDTH = 108;
+/**
+ * The name column and the value column, either side of the windows. They are as narrow as
+ * what they hold allows (an area's name, the chart's line names, a price), because every
+ * pixel they give up goes to the twelve windows between them.
+ */
+const LABEL_WIDTH = 192;
+const VALUE_WIDTH = 100;
 /** The network is short when it is three or more loads past every driver it has. */
 const NETWORK_SHORT = 3;
 
@@ -120,7 +128,7 @@ function CellDetail({ cell }: { cell: Cell }) {
   const balance = balanceOf(slot);
   return (
     <>
-      <HoverCardHeading>{t("{0} · {1}", cell.area.label, slotRange(slot.start))}</HoverCardHeading>
+      <HoverCardHeading>{t("{0} · {1}", cell.area.label, slotRange(slot))}</HoverCardHeading>
       <HoverCardRow
         label={t("Loads likely")}
         value={
@@ -196,14 +204,6 @@ function BoardKey() {
     ));
   return (
     <span className="flex flex-wrap items-center gap-3 text-2xs text-foreground-subtle">
-      <span className="inline-flex items-center gap-1.25">
-        <span aria-hidden className="h-0.5 w-4 rounded-full bg-warning-foreground" />
-        {t("Loads needing a driver")}
-      </span>
-      <span className="inline-flex items-center gap-1.25">
-        <span aria-hidden className="h-0.5 w-4 rounded-full bg-foreground" />
-        {t("Drivers")}
-      </span>
       <span className="inline-flex items-center gap-1.25">
         <span className="inline-flex gap-0.5">{ramp("short")}</span>
         {t("Short")}
@@ -293,7 +293,9 @@ function AreaRow({
     >
       <span className="flex min-w-0 items-baseline gap-2 py-0.75 pr-2.5 pl-3.5">
         <span className="shrink-0 text-sm font-medium">{area.label}</span>
-        <span className={cn("min-w-0 truncate text-2xs", NOTE_TONE[note.tone])}>{note.text}</span>
+        <span title={note.text} className={cn("min-w-0 truncate text-2xs", NOTE_TONE[note.tone])}>
+          {note.text}
+        </span>
       </span>
       {area.slots.map((slot, index) => (
         <CellMark
@@ -384,7 +386,7 @@ export function OutlookBoard({
   const columns: BoardColumns = { width, label: LABEL_WIDTH, value: VALUE_WIDTH, count };
   const groups = laneGroups(outlook.areas, indexes);
   const first = outlook.slotStarts[0] ?? 0;
-  const trail = hotMove ? moveTrail(hotMove, outlook.slotStarts) : null;
+  const trail = hotMove ? moveTrail(hotMove, outlook.network) : null;
   const wireLabel =
     hotMove && hotMove.kind !== "Call" ? t("+{0}", formatCentsWhole(hotMove.netCents)) : "";
 
@@ -446,7 +448,11 @@ export function OutlookBoard({
               </p>
               <BoardKey />
             </header>
-            <div ref={tideRef} style={{ height: TIDE_HEIGHT }}>
+            <div
+              ref={tideRef}
+              style={{ height: TIDE_HEIGHT }}
+              {...tourTarget(OUTLOOK_TOUR_TARGET.network)}
+            >
               <BoardTide
                 outlook={outlook}
                 columns={columns}
@@ -458,6 +464,7 @@ export function OutlookBoard({
             <div
               className="grid h-7.5 items-center border-t border-border-subtle bg-sunken text-2xs text-foreground-subtle"
               style={gridStyle(count)}
+              {...tourTarget(OUTLOOK_TOUR_TARGET.windows)}
             >
               <span className="flex min-w-0 items-center gap-2 pl-3.5">
                 {pinned === null ? (
@@ -465,7 +472,7 @@ export function OutlookBoard({
                 ) : (
                   <>
                     <span className="truncate text-foreground">
-                      {slotRange(outlook.slotStarts[pinned] ?? 0)}
+                      {slotRange(outlook.network[pinned])}
                     </span>
                     <button
                       type="button"
@@ -483,7 +490,7 @@ export function OutlookBoard({
                   <button
                     key={start}
                     type="button"
-                    title={slotRange(start)}
+                    title={slotRange(outlook.network[index])}
                     aria-pressed={pinned === index}
                     onClick={() => onPin(pinned === index ? null : index)}
                     className={cn(
@@ -520,7 +527,7 @@ export function OutlookBoard({
               itemId={(cell) => `${cell.area.cell}:${cell.index}`}
               render={(cell) => <CellDetail cell={cell} />}
             >
-              <div ref={contentRef} className="relative">
+              <div ref={contentRef} className="relative" {...tourTarget(OUTLOOK_TOUR_TARGET.areas)}>
                 {groups.map(({ lane, rows }) => {
                   const open = !folded[lane];
                   return (

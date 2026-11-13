@@ -61,6 +61,10 @@ export function railInnerClass(mode: RailMode): string {
 // i18n-ignore: class names, never shown to a person
 export const RAIL_TOP_CLASS = "flex h-13 flex-none items-center gap-2 px-2";
 
+/** The rail's body, between its top and its foot: the room its scroll area fills. */
 // i18n-ignore: class names, never shown to a person
-export const RAIL_LIST_CLASS =
-  "relative min-h-0 flex-1 overflow-auto px-2 pt-0.5 pb-4 [scrollbar-width:none]";
+export const RAIL_BODY_CLASS = "min-h-0 flex-1";
+
+/** The gutter of what scrolls in the body, the same under every view of the rail. */
+// i18n-ignore: class names, never shown to a person
+export const RAIL_GUTTER_CLASS = "relative px-2 pt-0.5 pb-4";

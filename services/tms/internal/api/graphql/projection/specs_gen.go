@@ -450,6 +450,8 @@ var PTOPolicySpec TypeSpec
 
 var PTOPolicyRuleSpec TypeSpec
 
+var PageTourViewSpec TypeSpec
+
 var PayAdvanceSpec TypeSpec
 
 var PayCodeSpec TypeSpec
@@ -3278,6 +3280,10 @@ func init() {
 			{
 				Name:   "heldTools",
 				Column: "held_tools",
+			},
+			{
+				Name:   "reachedTools",
+				Column: "reached_tools",
 			},
 			{
 				Name:   "toolFixtures",
@@ -20910,6 +20916,32 @@ func init() {
 			{
 				Name:   "sortOrder",
 				Column: "sort_order",
+			},
+		},
+	}
+
+	PageTourViewSpec = TypeSpec{
+		TypeName: "PageTourView",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "tour",
+				Column: "tour",
+			},
+			{
+				Name:   "tourVersion",
+				Column: "tour_version",
+			},
+			{
+				Name:   "outcome",
+				Column: "outcome",
+			},
+			{
+				Name:   "seenAt",
+				Column: "seen_at",
 			},
 		},
 	}

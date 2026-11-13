@@ -1467,6 +1467,8 @@ export type AgentReflectionAction =
   | 'Suggested';
 
 export type AgentReflectionSignalKind =
+  /** People changed, by hand and on several records, a field the agent had set. */
+  | 'ChangedAfterwards'
   | 'NegativeFeedback'
   | 'PersonCorrected'
   /** The person stated something while asking for something else. */
@@ -1491,6 +1493,8 @@ export type AgentReflectionStatus =
   | 'Skipped';
 
 export type AgentReflectionSubject =
+  /** A field an agent set that people changed by hand on several records, read for the rule behind the changes. */
+  | 'Correction'
   /** One background run, read once every proposal it raised was decided. */
   | 'Run'
   /** A stretch of a conversation, read once it went quiet. */
@@ -3051,9 +3055,14 @@ export type CreateCarrierInvoiceMatchInput = {
 
 export type CreateDeskMemoryInput = {
   content: string;
+  /** Instruction when left out; Fact or Procedure for one that is not a rule. */
+  kind?: AgentMemoryKind | null | undefined;
   roleId?: string | number | null | undefined;
   /** User, Role or Organization. A Role memory needs a role the person holds. Role and Organization memories are kept at once when the person manages agent memory and offered to an administrator otherwise. */
   scope: AgentMemoryScope;
+  subjectId?: string | number | null | undefined;
+  /** With subjectId, the customer, location, driver or carrier the memory is about. */
+  subjectType?: AgentMemorySubjectType | null | undefined;
 };
 
 export type CreateFactoringRemittanceInput = {
@@ -3728,8 +3737,12 @@ export type DeskAttentionInput = {
   mine?: boolean | null | undefined;
   /** One record's row, for its case: every open item about it. */
   recordId?: string | number | null | undefined;
+  /** Rows with an item whose title, summary or record name holds these words, whatever their case; at most 100 characters are read. Empty is every row. */
+  search?: string | null | undefined;
   /** Rows with an item of one of these severities. Empty is every severity. */
   severities?: Array<WatchtowerSeverity> | null | undefined;
+  /** Only rows with an item the reader has not opened yet. */
+  unseen?: boolean | null | undefined;
   /** Only rows with an item an agent's run is working on right now. A run that finished, failed or waits on a person is not working. */
   working?: boolean | null | undefined;
 };
@@ -3823,6 +3836,9 @@ export type DeskMemoriesInput = {
   roleId?: string | number | null | undefined;
   /** Only this scope; every scope when left out. */
   scope?: AgentMemoryScope | null | undefined;
+  subjectId?: string | number | null | undefined;
+  /** With subjectId, only the memories about that record, as its own page lists them: what agents keep about it for their own work is listed too. */
+  subjectType?: AgentMemorySubjectType | null | undefined;
 };
 
 export type DetachPayEventInput = {
@@ -6754,6 +6770,13 @@ export type PageAccessUse =
   /** The screen's route, or a REST endpoint it calls, checks the kind. */
   | 'REQUIRED';
 
+/** How a person left a page tour. */
+export type PageTourOutcome =
+  /** They walked through every step. */
+  | 'Finished'
+  /** They closed it before the last step. */
+  | 'Skipped';
+
 export type PauseAccountingSyncInput = {
   integrationType: AccountingSystem;
   reason?: string | null | undefined;
@@ -6868,6 +6891,8 @@ export type PendingDecisionsInput = {
   /** Only this agent's work. */
   agentDefinitionId?: string | number | null | undefined;
   first?: number | null | undefined;
+  /** Only decisions whose words hold this: what the agent wants, why, and the name of the record it is for, as Needs you's search reads them. */
+  search?: string | null | undefined;
   /** Only proposals of this tool; a plan matches when any step uses it. */
   toolName?: string | null | undefined;
 };
@@ -7215,6 +7240,12 @@ export type RecordMyStopActionInput = {
   /** When it happened on the device. Omitted means when the server receives it. */
   occurredAt?: number | null | undefined;
   stopId: string | number;
+};
+
+export type RecordPageTourInput = {
+  outcome: PageTourOutcome;
+  tour: string;
+  tourVersion: number;
 };
 
 export type RecordSafetyViolationInput = {
@@ -11392,7 +11423,7 @@ export type DeskAttentionQueryVariables = Exact<{
 }>;
 
 
-export type DeskAttentionQuery = { deskAttention: { hasMore: boolean, seenAt: number, seesEveryone: boolean, groups: Array<{ ' $fragmentRefs'?: { 'DeskAttentionGroupFieldsFragment': DeskAttentionGroupFieldsFragment } }>, counts: { everything: number, watchtower: number, triage: number, decisions: number } } };
+export type DeskAttentionQuery = { deskAttention: { hasMore: boolean, seenAt: number, seesEveryone: boolean, groups: Array<{ ' $fragmentRefs'?: { 'DeskAttentionGroupFieldsFragment': DeskAttentionGroupFieldsFragment } }>, counts: { everything: number, watchtower: number, triage: number, decisions: number }, kinds: Array<{ kind: WatchtowerSourceKind, label: string, lens: DeskLens, count: number }> } };
 
 export type DeskActivityEntryFieldsFragment = { id: string, outcome: DeskActivityOutcome, at: number, runId: string, planId: string | null, title: string, detail: string, count: number, recordsMore: number, proposalIds: Array<string>, agent: { ' $fragmentRefs'?: { 'WatchtowerAgentFieldsFragment': WatchtowerAgentFieldsFragment } } | null, records: Array<{ ' $fragmentRefs'?: { 'DeskRecordFieldsFragment': DeskRecordFieldsFragment } }>, decidedBy: { id: string, name: string } | null } & { ' $fragmentName'?: 'DeskActivityEntryFieldsFragment' };
 
@@ -11500,7 +11531,7 @@ export type CommitAgentDecisionNowMutationVariables = Exact<{
 
 export type CommitAgentDecisionNowMutation = { commitAgentDecisionNow: boolean };
 
-export type DeskMemoryFieldsFragment = { id: string, content: string, kind: AgentMemoryKind, scope: AgentMemoryScope, roleId: string | null, roleName: string, status: AgentMemoryStatus, source: AgentMemorySource, sourceTitle: string, useCount: number, lastUsedAt: number | null, createdAt: number, version: number, editable: boolean, reason: string, quotes: Array<string>, replaces: { id: string, content: string, status: AgentMemoryStatus } | null, replacedBy: { id: string, content: string, status: AgentMemoryStatus } | null } & { ' $fragmentName'?: 'DeskMemoryFieldsFragment' };
+export type DeskMemoryFieldsFragment = { id: string, content: string, kind: AgentMemoryKind, scope: AgentMemoryScope, roleId: string | null, roleName: string, subjectType: AgentMemorySubjectType | null, subjectLabel: string, status: AgentMemoryStatus, source: AgentMemorySource, sourceTitle: string, useCount: number, lastUsedAt: number | null, createdAt: number, version: number, editable: boolean, reason: string, quotes: Array<string>, replaces: { id: string, content: string, status: AgentMemoryStatus } | null, replacedBy: { id: string, content: string, status: AgentMemoryStatus } | null } & { ' $fragmentName'?: 'DeskMemoryFieldsFragment' };
 
 export type DeskMemorySettingsFieldsFragment = { savingMode: AgentMemorySavingMode, canShareWithOrganization: boolean, managesShared: boolean, roles: Array<{ id: string, name: string, writable: boolean }> } & { ' $fragmentName'?: 'DeskMemorySettingsFieldsFragment' };
 
@@ -11571,7 +11602,7 @@ export type SetMemorySavingModeMutation = { setMemorySavingMode: { ' $fragmentRe
 export type AgentEvalCaseTableRowFieldsFragment = { id: string, organizationId: string, businessUnitId: string, agentDefinitionId: string, title: string, source: AgentEvalCaseSource, status: AgentEvalCaseStatus, automatic: boolean, trigger: AgentRunTrigger, input: string, sourceThreadId: string | null, sourceProposalId: string | null, heldTools: Array<string>, expected: unknown, weight: number, expiresAt: number | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'AgentEvalCaseTableRowFieldsFragment' };
 
 export type AgentEvalCaseDetailFieldsFragment = (
-  { askedAt: number | null, sourceRunId: string | null, sourceTurnId: string | null, sourceMessageId: string | null, sourceFeedbackId: string | null, history: Array<unknown>, pageContext: unknown, mentions: Array<unknown>, subjectType: string, subjectId: string | null, toolFixtures: Array<unknown>, rubric: string, redaction: unknown, contentHash: string, capturedFingerprint: unknown, createdByUserId: string | null }
+  { askedAt: number | null, reachedTools: Array<string>, sourceRunId: string | null, sourceTurnId: string | null, sourceMessageId: string | null, sourceFeedbackId: string | null, history: Array<unknown>, pageContext: unknown, mentions: Array<unknown>, subjectType: string, subjectId: string | null, toolFixtures: Array<unknown>, rubric: string, redaction: unknown, contentHash: string, capturedFingerprint: unknown, createdByUserId: string | null }
   & { ' $fragmentRefs'?: { 'AgentEvalCaseTableRowFieldsFragment': AgentEvalCaseTableRowFieldsFragment } }
 ) & { ' $fragmentName'?: 'AgentEvalCaseDetailFieldsFragment' };
 
@@ -11695,6 +11726,13 @@ export type AgentMemoryUsageQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type AgentMemoryUsageQuery = { agentMemoryUsage: { activeCount: number, activeSoftCap: number, warnAt: number } };
+
+export type AgentLearningStatsQueryVariables = Exact<{
+  days: number;
+}>;
+
+
+export type AgentLearningStatsQuery = { agentLearningStats: { days: number, since: number, rows: Array<{ source: AgentMemorySource, trigger: AgentReflectionSignalKind | null, lookBacks: number, taughtNothing: number, toldAgain: number, inputTokens: number, outputTokens: number, kept: number, waiting: number, dismissed: number, lapsed: number, retired: number, used: number }> } };
 
 export type AgentMemoryUpkeepQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -13908,9 +13946,9 @@ export type DeleteDetentionPolicyMutation = { deleteDetentionPolicy: boolean };
 
 export type DispatchForecastQualityFieldsFragment = { status: DispatchForecastStatus, historyWeeks: number, historyLoads: number, weeksTested: number, loadsTested: number, intervalCoverage: number, meanAbsoluteError: number, naiveMeanAbsoluteError: number, skill: number, fittedAt: number | null, refitting: boolean } & { ' $fragmentName'?: 'DispatchForecastQualityFieldsFragment' };
 
-export type DispatchFreightAreaFieldsFragment = { cell: number, label: string, latitude: number, longitude: number, valueCents: number, slots: Array<{ start: number, likelyLow: number, likelyHigh: number, booked: number, need: number, drivers: number, short: number, spare: number }>, customers: Array<{ customerId: string, name: string, share: number }> } & { ' $fragmentName'?: 'DispatchFreightAreaFieldsFragment' };
+export type DispatchFreightAreaFieldsFragment = { cell: number, label: string, latitude: number, longitude: number, valueCents: number, slots: Array<{ start: number, end: number, likelyLow: number, likelyHigh: number, booked: number, need: number, drivers: number, short: number, spare: number }>, customers: Array<{ customerId: string, name: string, share: number }> } & { ' $fragmentName'?: 'DispatchFreightAreaFieldsFragment' };
 
-export type DispatchFreightMoveFieldsFragment = { kind: DispatchFreightMoveKind, workerId: string | null, workerName: string, fromCell: number, fromLabel: string, toCell: number, toLabel: string, slotStart: number, short: number, freeAt: number | null, arriveAt: number | null, miles: number, emptyCostCents: number, dropCents: number, stayCents: number, netCents: number, savedCents: number, moveId: string | null, proNumber: string, laneMoveIds: Array<string>, partnerId: string | null, partnerName: string, partnerCell: number, partnerLabel: string, partnerFreeAt: number | null, partnerMiles: number, customerId: string | null, customerName: string, usual: number, byNow: number, tendered: number, loads: number } & { ' $fragmentName'?: 'DispatchFreightMoveFieldsFragment' };
+export type DispatchFreightMoveFieldsFragment = { kind: DispatchFreightMoveKind, workerId: string | null, workerName: string, fromCell: number, fromLabel: string, toCell: number, toLabel: string, slotStart: number, slotEnd: number, short: number, freeAt: number | null, arriveAt: number | null, miles: number, emptyCostCents: number, dropCents: number, stayCents: number, netCents: number, savedCents: number, moveId: string | null, proNumber: string, laneMoveIds: Array<string>, partnerId: string | null, partnerName: string, partnerCell: number, partnerLabel: string, partnerFreeAt: number | null, partnerMiles: number, customerId: string | null, customerName: string, usual: number, byNow: number, tendered: number, loads: number } & { ' $fragmentName'?: 'DispatchFreightMoveFieldsFragment' };
 
 export type DispatchFreightPaceFieldsFragment = { customerId: string, customerName: string, cell: number, label: string, slots: Array<{ start: number, usual: number, byNow: number, tendered: number }> } & { ' $fragmentName'?: 'DispatchFreightPaceFieldsFragment' };
 
@@ -13919,7 +13957,7 @@ export type DispatchPositioningFieldsFragment = { id: string, workerId: string, 
 export type DispatchFreightOutlookQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type DispatchFreightOutlookQuery = { dispatchFreightOutlook: { generatedAt: number, slotStarts: Array<number>, areaCount: number, quality: { ' $fragmentRefs'?: { 'DispatchForecastQualityFieldsFragment': DispatchForecastQualityFieldsFragment } }, network: Array<{ start: number, likelyLow: number, likelyHigh: number, needLow: number, needHigh: number, need: number, drivers: number, short: number, uncovered: number, idle: number }>, areas: Array<{ ' $fragmentRefs'?: { 'DispatchFreightAreaFieldsFragment': DispatchFreightAreaFieldsFragment } }>, moves: Array<{ ' $fragmentRefs'?: { 'DispatchFreightMoveFieldsFragment': DispatchFreightMoveFieldsFragment } }>, pace: Array<{ ' $fragmentRefs'?: { 'DispatchFreightPaceFieldsFragment': DispatchFreightPaceFieldsFragment } }>, record: Array<{ dayStart: number, low: number, high: number, mean: number, actual: number }>, positionings: Array<{ ' $fragmentRefs'?: { 'DispatchPositioningFieldsFragment': DispatchPositioningFieldsFragment } }> } };
+export type DispatchFreightOutlookQuery = { dispatchFreightOutlook: { generatedAt: number, slotStarts: Array<number>, areaCount: number, quality: { ' $fragmentRefs'?: { 'DispatchForecastQualityFieldsFragment': DispatchForecastQualityFieldsFragment } }, network: Array<{ start: number, end: number, likelyLow: number, likelyHigh: number, needLow: number, needHigh: number, need: number, drivers: number, short: number, uncovered: number, idle: number }>, areas: Array<{ ' $fragmentRefs'?: { 'DispatchFreightAreaFieldsFragment': DispatchFreightAreaFieldsFragment } }>, moves: Array<{ ' $fragmentRefs'?: { 'DispatchFreightMoveFieldsFragment': DispatchFreightMoveFieldsFragment } }>, pace: Array<{ ' $fragmentRefs'?: { 'DispatchFreightPaceFieldsFragment': DispatchFreightPaceFieldsFragment } }>, record: Array<{ dayStart: number, low: number, high: number, mean: number, actual: number }>, positionings: Array<{ ' $fragmentRefs'?: { 'DispatchPositioningFieldsFragment': DispatchPositioningFieldsFragment } }> } };
 
 export type DispatchFreightAreaQueryVariables = Exact<{
   cell: number;
@@ -13927,7 +13965,7 @@ export type DispatchFreightAreaQueryVariables = Exact<{
 }>;
 
 
-export type DispatchFreightAreaQuery = { dispatchFreightArea: { generatedAt: number, slotStart: number, recent: Array<number>, recentLow: number, recentHigh: number, deliveryLocationIds: Array<string>, quality: { ' $fragmentRefs'?: { 'DispatchForecastQualityFieldsFragment': DispatchForecastQualityFieldsFragment } }, area: { ' $fragmentRefs'?: { 'DispatchFreightAreaFieldsFragment': DispatchFreightAreaFieldsFragment } }, bounds: { south: number, west: number, north: number, east: number }, reach: Array<{ workerId: string, workerName: string, label: string, latitude: number, longitude: number, freeAt: number, arriveAt: number, miles: number, netCents: number, reach: DispatchFreightReachKind }>, moves: Array<{ ' $fragmentRefs'?: { 'DispatchFreightMoveFieldsFragment': DispatchFreightMoveFieldsFragment } }>, pace: Array<{ ' $fragmentRefs'?: { 'DispatchFreightPaceFieldsFragment': DispatchFreightPaceFieldsFragment } }>, positionings: Array<{ ' $fragmentRefs'?: { 'DispatchPositioningFieldsFragment': DispatchPositioningFieldsFragment } }> } };
+export type DispatchFreightAreaQuery = { dispatchFreightArea: { generatedAt: number, slotStart: number, slotEnd: number, recent: Array<number>, recentLow: number, recentHigh: number, deliveryLocationIds: Array<string>, quality: { ' $fragmentRefs'?: { 'DispatchForecastQualityFieldsFragment': DispatchForecastQualityFieldsFragment } }, area: { ' $fragmentRefs'?: { 'DispatchFreightAreaFieldsFragment': DispatchFreightAreaFieldsFragment } }, bounds: { south: number, west: number, north: number, east: number }, reach: Array<{ workerId: string, workerName: string, label: string, latitude: number, longitude: number, freeAt: number, arriveAt: number, miles: number, netCents: number, reach: DispatchFreightReachKind }>, moves: Array<{ ' $fragmentRefs'?: { 'DispatchFreightMoveFieldsFragment': DispatchFreightMoveFieldsFragment } }>, pace: Array<{ ' $fragmentRefs'?: { 'DispatchFreightPaceFieldsFragment': DispatchFreightPaceFieldsFragment } }>, positionings: Array<{ ' $fragmentRefs'?: { 'DispatchPositioningFieldsFragment': DispatchPositioningFieldsFragment } }> } };
 
 export type DispatchForecastQualityQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -18085,6 +18123,20 @@ export type RoleResourceGuidesQueryVariables = Exact<{
 
 export type RoleResourceGuidesQuery = { roleResourceGuides: Array<{ resource: string, name: string, granted: string, withheld: string, ceiling: string | null, screens: Array<{ path: string, name: string, use: PageAccessUse }> }> };
 
+export type PageTourViewFieldsFragment = { tour: string, tourVersion: number, outcome: PageTourOutcome, seenAt: number } & { ' $fragmentName'?: 'PageTourViewFieldsFragment' };
+
+export type MyPageTourViewsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type MyPageTourViewsQuery = { myPageTourViews: Array<{ ' $fragmentRefs'?: { 'PageTourViewFieldsFragment': PageTourViewFieldsFragment } }> };
+
+export type RecordMyPageTourMutationVariables = Exact<{
+  input: RecordPageTourInput;
+}>;
+
+
+export type RecordMyPageTourMutation = { recordMyPageTour: { ' $fragmentRefs'?: { 'PageTourViewFieldsFragment': PageTourViewFieldsFragment } } };
+
 export type DeskWorkerPerformanceReviewsQueryVariables = Exact<{
   workerId: string | number;
 }>;
@@ -21413,7 +21465,7 @@ export { DeskMemoryFieldsFragmentDoc, DeskMemorySettingsFieldsFragmentDoc, DeskM
 export { AgentEvalCaseTableRowFieldsFragmentDoc, AgentEvalCaseDetailFieldsFragmentDoc, AgentEvalCaseTableDocument, AgentEvalCaseDetailDocument, CreateAgentEvalCaseDocument, UpdateAgentEvalCaseDocument, SetAgentEvalCaseStatusDocument, ReplayAgentEvalCaseDocument } from "./documents/agent/eval-cases";
 export { AgentEvaluationTableRowFieldsFragmentDoc, AgentEvaluationTableDocument, AgentEvaluationDetailDocument, ReplayAgentRunDocument } from "./documents/agent/evaluations";
 export { AgentExceptionTableRowFieldsFragmentDoc, AgentExceptionDetailFieldsFragmentDoc, AgentExceptionTableDocument, AgentExceptionDetailDocument, ResolveAgentExceptionDocument } from "./documents/agent/exceptions";
-export { AgentMemoryTableRowFieldsFragmentDoc, AgentReflectionRowFieldsFragmentDoc, AgentMemoryTableDocument, AgentMemoryCountDocument, AgentMemoryUsageDocument, AgentMemoryUpkeepDocument, ConfirmAgentMemoryDocument, CreateAgentMemoryDocument, UpdateAgentMemoryDocument, SetAgentMemoryStatusDocument, ReviewAgentMemoryDocument, ApproveAgentMemorySuggestionDocument, DismissAgentMemorySuggestionDocument, AgentReflectionsDocument } from "./documents/agent/memories";
+export { AgentMemoryTableRowFieldsFragmentDoc, AgentReflectionRowFieldsFragmentDoc, AgentMemoryTableDocument, AgentMemoryCountDocument, AgentMemoryUsageDocument, AgentLearningStatsDocument, AgentMemoryUpkeepDocument, ConfirmAgentMemoryDocument, CreateAgentMemoryDocument, UpdateAgentMemoryDocument, SetAgentMemoryStatusDocument, ReviewAgentMemoryDocument, ApproveAgentMemorySuggestionDocument, DismissAgentMemorySuggestionDocument, AgentReflectionsDocument } from "./documents/agent/memories";
 export { AgentPlanTableRowFieldsFragmentDoc, AgentPlanTableDocument, AgentPlanDetailDocument, DecideAgentPlanDocument } from "./documents/agent/plans";
 export { AgentProposalPreviewFieldsFragmentDoc, AgentPlanPreviewFieldsFragmentDoc, AgentProposalPreviewDocument, AgentProposalPreviewsDocument, MyProposalPreviewDocument, AgentPlanPreviewDocument, MyPlanPreviewDocument } from "./documents/agent/previews";
 export { AgentProfileVersionFieldsFragmentDoc, AgentProfileGuidanceFieldsFragmentDoc, AgentProfileFieldsFragmentDoc, AgentOrganizationProfileDocument, AgentOrganizationProfileHistoryDocument, MyAgentProfileDocument, AddAgentOrganizationProfileGuidanceDocument, RetireAgentOrganizationProfileGuidanceDocument, RegenerateAgentOrganizationProfileDocument, ApproveAgentOrganizationProfileGuidanceDocument, DismissAgentOrganizationProfileGuidanceDocument, AddMyAgentProfileGuidanceDocument, RetireMyAgentProfileGuidanceDocument, RegenerateMyAgentProfileDocument } from "./documents/agent/profile";
@@ -21566,6 +21618,7 @@ export { OrgHolidayFieldsFragmentDoc, OrgHolidaysDocument, CreateOrgHolidayDocum
 export { JobPositionsDocument, HeadcountDocument, JobPositionHoldersDocument, MyTeamDocument, ApprovalDelegationsDocument, AssignWorkerPositionDocument, AssignUserPositionDocument, CreateJobPositionDocument, UpdateJobPositionDocument, DelegateApprovalDocument, RevokeApprovalDelegationDocument } from "./documents/org-structure/operations";
 export { OrganizationSettingsStateFieldsFragmentDoc, OrganizationSettingsFieldsFragmentDoc, OrganizationSettingsDocument, UpdateOrganizationSettingsDocument } from "./documents/organization/page";
 export { PageAccessRequirementFieldsFragmentDoc, PageAccessFieldsFragmentDoc, PageAccessDocument, PageAccessPreviewDocument, PageAccessScreensDocument, RoleResourceGuidesDocument } from "./documents/page-access/page-access";
+export { PageTourViewFieldsFragmentDoc, MyPageTourViewsDocument, RecordMyPageTourDocument } from "./documents/page-tour/page-tour";
 export { DeskWorkerPerformanceReviewsDocument, DeskPerformanceReviewTemplatesDocument } from "./documents/performance-review/desk";
 export { PerformanceReviewTemplateFieldsFragmentDoc, PerformanceReviewFieldsFragmentDoc, PerformanceReviewTemplateTableDocument, ActivePerformanceReviewTemplatesDocument, WorkerPerformanceReviewsDocument, CreatePerformanceReviewTemplateDocument, UpdatePerformanceReviewTemplateDocument, ArchivePerformanceReviewTemplateDocument, RestorePerformanceReviewTemplateDocument, CreatePerformanceReviewDocument, UpdatePerformanceReviewDocument, SubmitPerformanceReviewDocument, ReopenPerformanceReviewDocument, ClosePerformanceReviewDocument, DeletePerformanceReviewDocument } from "./documents/performance-review/operations";
 export { PtoPolicyRuleFieldsFragmentDoc, PtoPolicyFieldsFragmentDoc, PtoPolicyAssignmentFieldsFragmentDoc, PlannedPtoAccrualFieldsFragmentDoc, WorkerPtoBalanceFieldsFragmentDoc, WorkerPtoLedgerEntryFieldsFragmentDoc, PtoPolicyTableDocument, PtoPolicyDocument, WorkerPtoPolicyAssignmentsDocument, WorkerPtoBalancesDocument, WorkerPtoLedgerDocument, WorkerPtoAvailabilityDocument, PreviewWorkerPtoAccrualDocument, PtoBalanceSummaryDocument, PtoLiabilityReportDocument, CreatePtoPolicyDocument, UpdatePtoPolicyDocument, ArchivePtoPolicyDocument, RestorePtoPolicyDocument, AssignWorkerPtoPolicyDocument, EndWorkerPtoPolicyAssignmentDocument, AdjustWorkerPtoBalanceDocument, RunPtoAccrualDocument } from "./documents/pto-policy/operations";

@@ -73,6 +73,11 @@ func Workflows() []registry.WorkflowDefinition {
 			Fn:          RunReflectionWorkflow,
 			Description: "Look back over a settled background run and keep what the agent learned",
 		},
+		{
+			Name:        reflectioncontract.CorrectionReflectionWorkflowName,
+			Fn:          CorrectionReflectionWorkflow,
+			Description: "Look back over what people kept changing of an agent's work and offer the rule behind it",
+		},
 	}
 }
 
@@ -139,6 +144,26 @@ func RunReflectionWorkflow(
 	return result, nil
 }
 
+func CorrectionReflectionWorkflow(
+	ctx workflow.Context,
+	input *agentreflectionports.ReflectOnCorrectionsRequest,
+) (*ReflectionResult, error) {
+	result := &ReflectionResult{Rounds: 1}
+
+	var a *Activities
+	var plan agentreflectionports.ReflectionPlan
+	err := workflow.ExecuteActivity(
+		withPriority(ctx, prepareOptions, input.TenantInfo),
+		a.PrepareCorrectionReflectionActivity, input,
+	).Get(ctx, &plan)
+	if err != nil {
+		return result, err
+	}
+	lookBack(ctx, &plan, result)
+
+	return result, nil
+}
+
 func lookBack(
 	ctx workflow.Context,
 	plan *agentreflectionports.ReflectionPlan,
@@ -158,19 +183,7 @@ func lookBack(
 	).Get(ctx, &completion)
 	if err != nil {
 		result.Failed++
-		failure := workflow.ExecuteActivity(
-			withPriority(ctx, failOptions, plan.TenantInfo),
-			a.FailReflectionActivity, &agentreflectionports.FailReflectionRequest{
-				Plan:    plan,
-				Message: err.Error(),
-			},
-		).Get(ctx, nil)
-		if failure != nil {
-			workflow.GetLogger(ctx).Error("could not record a look back that failed",
-				"reflectionId", plan.ReflectionID.String(),
-				"error", failure.Error(),
-			)
-		}
+		recordFailure(ctx, plan, err)
 
 		return
 	}
@@ -186,10 +199,35 @@ func lookBack(
 			"reflectionId", plan.ReflectionID.String(),
 			"error", err.Error(),
 		)
+		recordFailure(ctx, plan, err)
 
 		return
 	}
 	result.absorb(&outcome)
+}
+
+// recordFailure marks the look back failed, so its stretch of the
+// conversation is read again by the next one and is not shown as still
+// running.
+func recordFailure(
+	ctx workflow.Context,
+	plan *agentreflectionports.ReflectionPlan,
+	cause error,
+) {
+	var a *Activities
+	failure := workflow.ExecuteActivity(
+		withPriority(ctx, failOptions, plan.TenantInfo),
+		a.FailReflectionActivity, &agentreflectionports.FailReflectionRequest{
+			Plan:    plan,
+			Message: cause.Error(),
+		},
+	).Get(ctx, nil)
+	if failure != nil {
+		workflow.GetLogger(ctx).Error("could not record a look back that failed",
+			"reflectionId", plan.ReflectionID.String(),
+			"error", failure.Error(),
+		)
+	}
 }
 
 func waitForQuiet(ctx workflow.Context, signals workflow.ReceiveChannel) {

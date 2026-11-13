@@ -767,7 +767,9 @@ expects it not to. Each agent keeps at most the **Cases kept per agent**. Past t
 automatic cases are retired, a tool at a time, so one busy tool does not crowd out the rest. An
 automatic case is also retired after 30 days, because an old case stops being fair as the records
 it is about move on. Turning the automatic golden set on also activates the candidates captured
-in the last 30 days that nobody has touched. A case someone keeps, edits, quarantines
+in the last 30 days that nobody has touched. A decided proposal stays a candidate when its
+conversation used a tool the agent does not hold itself, one it found through another of your
+agents on the Desk: a replay cannot reach that tool, so the case could never pass. A case someone keeps, edits, quarantines
 or restores is theirs from then on and is never retired on its own. What the cases cost to
 replay counts toward the evaluation budget.
 
@@ -780,13 +782,13 @@ agent's provider.
 
 Every night, at the hour chosen in **Sweep settings** (in the organization's timezone unless another
 is chosen there), each agent with active cases is replayed against a sample of its golden set
-with every write simulated. A case captured from a conversation answers the agent's reads with
-what the original was given, so the agent is judged on the situation the person decided in, not
-on records that have changed since. Such a replay runs as of the moment the question was asked:
-the date the agent is told, the dates in what it reads and what "today" means in what it asks
-for all agree. A read the original never made, a result that had a
-restricted field taken out when the case was captured, and every read of a case captured from a
-run an agent started on its own are made against the records as they are now. The sample always includes the cases the agent failed most recently
+with every write simulated. A case answers the agent's reads with
+what its original was given, whether it was captured from a conversation or from a run an agent
+started on its own, so the agent is judged on the situation the person decided in, not on records
+that have changed since. Such a replay runs as of the moment the question was asked or the run
+started: the date the agent is told, the dates in what it reads and what "today" means in what
+it asks for all agree. A read the original never made, and a result that had a restricted field
+taken out when the case was captured, are made against the records as they are now. The sample always includes the cases the agent failed most recently
 and is otherwise spread across where the cases came from; it is the same sample for the same run.
 An agent is skipped when nothing about it (its instructions, tools, model or provider) or its
 cases changed since its last run, unless that run is older than the rerun limit. A run stops

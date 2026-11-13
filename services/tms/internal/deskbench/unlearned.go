@@ -20,6 +20,12 @@ func (unlearned) AfterTurn(context.Context, *agentreflectionports.ReflectOnThrea
 
 func (unlearned) AfterRun(context.Context, *agentreflectionports.ReflectOnRunRequest) {}
 
+func (unlearned) AfterCorrections(
+	context.Context,
+	*agentreflectionports.ReflectOnCorrectionsRequest,
+) {
+}
+
 // unchaptered keeps chapter titling out of the bench: it is a model call per
 // question that the bench neither scores nor should pay for, and its calls
 // would land in the recorder beside the turns being measured.

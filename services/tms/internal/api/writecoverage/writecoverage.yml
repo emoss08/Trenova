@@ -2303,6 +2303,11 @@ writes:
     exempt: user-preference
     reason: "A person's own interface state; it changes nothing anyone else sees."
 
+  # pagetour
+  "mutation recordMyPageTour":
+    exempt: user-preference
+    reason: "A person's own interface state; it changes nothing anyone else sees."
+
   # performancereview
   "mutation acknowledgeMyReview":
     exempt: counterparty

@@ -55,8 +55,7 @@ function useRecordRecentPages() {
   const breadcrumbs = useBreadcrumbs();
   const recordVisit = useRecentPagesStore((state) => state.recordVisit);
   const organizationId = useAuthStore((state) => state.user?.currentOrganizationId);
-  const lastCrumb = breadcrumbs.at(-1)?.crumb;
-  const title = typeof lastCrumb === "string" ? lastCrumb : getPageTitle(pathname);
+  const title = breadcrumbs.at(-1)?.label ?? getPageTitle(pathname);
 
   useEffect(() => {
     recordVisit(organizationId, { path: pathname, title });

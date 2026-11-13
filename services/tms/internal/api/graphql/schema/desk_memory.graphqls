@@ -22,6 +22,10 @@ type DeskMemory {
   "The role a Role memory is kept for."
   roleId: ID
   roleName: String!
+  "The kind of record the memory is about, when it is about one."
+  subjectType: AgentMemorySubjectType
+  "The record's name; empty for a memory about no one record."
+  subjectLabel: String!
   "Active or Paused on the page; Retired once forgotten, until it is brought back; Suggested while an agent's offer waits."
   status: AgentMemoryStatus!
   source: AgentMemorySource!
@@ -97,6 +101,9 @@ input DeskMemoriesInput {
   roleId: ID
   "Words the memory says."
   query: String
+  "With subjectId, only the memories about that record, as its own page lists them: what agents keep about it for their own work is listed too."
+  subjectType: AgentMemorySubjectType
+  subjectId: ID
 }
 
 input CreateDeskMemoryInput {
@@ -104,6 +111,11 @@ input CreateDeskMemoryInput {
   "User, Role or Organization. A Role memory needs a role the person holds. Role and Organization memories are kept at once when the person manages agent memory and offered to an administrator otherwise."
   scope: AgentMemoryScope!
   roleId: ID
+  "Instruction when left out; Fact or Procedure for one that is not a rule."
+  kind: AgentMemoryKind
+  "With subjectId, the customer, location, driver or carrier the memory is about."
+  subjectType: AgentMemorySubjectType
+  subjectId: ID
 }
 
 "Changes what a memory says, who it is kept for, or both; what is left out stays."

@@ -1,3 +1,5 @@
+import { tourTarget } from "@/components/tour/tour-model";
+import { OUTLOOK_TOUR_TARGET } from "./outlook-tour";
 import { KPI_STRIP_CELL_CLASS, KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
 import type { FreightOutlook } from "@/lib/graphql/freight-outlook";
 import { TrendUp01Icon } from "@trenova/shared/components/icons";
@@ -7,15 +9,7 @@ import { useRichT } from "@trenova/shared/i18n/rich";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { cn, formatCentsWhole } from "@trenova/shared/lib/utils";
 import type { ReactNode } from "react";
-import {
-  SLOT_SECONDS,
-  daysInRange,
-  movesIn,
-  paceReadings,
-  peakOf,
-  totalsOf,
-  type Totals,
-} from "./outlook-model";
+import { daysInRange, movesIn, paceReadings, peakOf, totalsOf, type Totals } from "./outlook-model";
 import { slotLabel, slotRange } from "./outlook-parts";
 
 const BRIEF_AREAS = 2;
@@ -37,10 +31,10 @@ export function readingSpan(
   t: TranslateFn,
 ): string {
   if (pinned !== null) {
-    return t("on {0}", slotRange(outlook.slotStarts[pinned] ?? 0));
+    return t("on {0}", slotRange(outlook.network[pinned]));
   }
   const last = indexes[indexes.length - 1] ?? 0;
-  return t("through {0}", slotLabel((outlook.slotStarts[last] ?? 0) + SLOT_SECONDS));
+  return t("through {0}", slotLabel(outlook.network[last]?.end ?? 0));
 }
 
 function Ref({
@@ -118,7 +112,11 @@ export function OutlookBrief({
   );
 
   return (
-    <section aria-label={t("Summary")} className="flex items-start gap-3">
+    <section
+      aria-label={t("Summary")}
+      className="flex items-start gap-3"
+      {...tourTarget(OUTLOOK_TOUR_TARGET.summary)}
+    >
       <span
         aria-hidden
         className="mt-0.5 grid size-5.5 shrink-0 place-items-center rounded-md border border-brand-border bg-brand-subtle text-brand"
@@ -252,29 +250,31 @@ export function OutlookFigures({
   const span = readingSpan(outlook, indexes, pinned, t);
 
   return (
-    <KpiStrip aria-label={t("Outlook figures")} className={STRIP_CLASS}>
-      <KpiStripItem
-        tone="warning"
-        label={t("Loads with no truck nearby")}
-        value={formatNumber(totals.uncovered)}
-        sub={t("in {0, plural, one {# area} other {# areas}} {1}", totals.shortAreas, span)}
-      />
-      <KpiStripItem
-        tone="info"
-        label={t("Drivers with nothing nearby")}
-        value={formatNumber(totals.idle)}
-        sub={t(
-          "in {0, plural, one {# area} other {# areas}}, at the worst hour",
-          totals.spareAreas,
-        )}
-      />
-      <KpiStripItem label={t("Across the network")} value={network.value} sub={network.sub} />
-      <KpiStripItem
-        label={t("Worth acting on")}
-        value={formatCentsWhole(totals.worthCents)}
-        sub={t("{0, plural, one {# move} other {# moves}} in the brief", totals.moves)}
-      />
-      <RangeHeld outlook={outlook} onJump={() => onJump("outlook-record")} />
-    </KpiStrip>
+    <div {...tourTarget(OUTLOOK_TOUR_TARGET.figures)}>
+      <KpiStrip aria-label={t("Outlook figures")} className={STRIP_CLASS}>
+        <KpiStripItem
+          tone="warning"
+          label={t("Loads with no truck nearby")}
+          value={formatNumber(totals.uncovered)}
+          sub={t("in {0, plural, one {# area} other {# areas}} {1}", totals.shortAreas, span)}
+        />
+        <KpiStripItem
+          tone="info"
+          label={t("Drivers with nothing nearby")}
+          value={formatNumber(totals.idle)}
+          sub={t(
+            "in {0, plural, one {# area} other {# areas}}, at the worst hour",
+            totals.spareAreas,
+          )}
+        />
+        <KpiStripItem label={t("Across the network")} value={network.value} sub={network.sub} />
+        <KpiStripItem
+          label={t("Worth acting on")}
+          value={formatCentsWhole(totals.worthCents)}
+          sub={t("{0, plural, one {# move} other {# moves}} in the brief", totals.moves)}
+        />
+        <RangeHeld outlook={outlook} onJump={() => onJump("outlook-record")} />
+      </KpiStrip>
+    </div>
   );
 }

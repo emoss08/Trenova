@@ -301,3 +301,45 @@ func TestShiftSwapRequest_Validate(t *testing.T) {
 		assert.Contains(t, multiErr.Error(), "needs the date it was made")
 	})
 }
+
+func TestWorksOnDate_AgreesWithTheRotaForEveryDayOfARotation(t *testing.T) {
+	t.Parallel()
+
+	chicago, err := time.LoadLocation("America/Chicago")
+	require.NoError(t, err)
+	template := &workerschedule.ShiftTemplate{
+		DaysOfWeek:  "0111110",
+		StartMinute: 360,
+		CycleWeeks:  2,
+	}
+	weekStart := workerschedule.StartOfWeekUTC(
+		time.Date(2026, time.November, 12, 9, 0, 0, 0, chicago).Unix(), chicago,
+	)
+
+	working := 0
+	for _, offset := range []int16{0, 1} {
+		rota := workerschedule.BuildRota(workerschedule.RotaInput{
+			WeekStart: weekStart,
+			Weeks:     4,
+			Location:  chicago,
+			Workers: []workerschedule.RotaWorkerInput{{
+				WorkerID: "wrk_a", Template: template, CycleOffsetWeeks: offset,
+			}},
+		})
+		require.Len(t, rota.Rows, 1)
+		for _, day := range rota.Rows[0].Days {
+			date := time.Unix(day.Date, 0).In(chicago)
+			assert.Equal(t, day.Scheduled, template.WorksOnDate(date, offset),
+				"%s with offset %d", date.Format("Mon Jan 2"), offset)
+			assert.Equal(t, day.Scheduled, template.WorksOnDate(date.Add(17*time.Hour), offset),
+				"any hour of the day answers for the day")
+			if day.Scheduled {
+				working++
+			}
+		}
+	}
+	assert.Equal(t, 20, working, "each half works five days in two of the four weeks")
+
+	var none *workerschedule.ShiftTemplate
+	assert.False(t, none.WorksOnDate(time.Unix(weekStart, 0), 0))
+}

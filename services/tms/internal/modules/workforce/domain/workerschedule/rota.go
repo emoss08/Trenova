@@ -208,12 +208,30 @@ func BuildRota(in RotaInput) *Rota {
 // counted from the epoch do not begin on a Sunday, so computing it per day
 // would flip the rotation midweek and put both halves of an A/B pair on at once.
 func cycleWeekFor(weekStart int64, worker RotaWorkerInput) int {
-	if worker.Template == nil || worker.Template.CycleWeeks <= 1 {
+	return worker.Template.cycleWeek(weekStart, worker.CycleOffsetWeeks)
+}
+
+func (t *ShiftTemplate) cycleWeek(weekStart int64, cycleOffsetWeeks int16) int {
+	if t == nil || t.CycleWeeks <= 1 {
 		return 0
 	}
 	weekIndex := weekStart / (int64(daysInWeek) * 86400)
-	cycle := int64(worker.Template.CycleWeeks)
-	return int(((weekIndex+int64(worker.CycleOffsetWeeks))%cycle + cycle) % cycle)
+	cycle := int64(t.CycleWeeks)
+	return int(((weekIndex+int64(cycleOffsetWeeks))%cycle + cycle) % cycle)
+}
+
+// WorksOnDate reports whether the pattern covers a calendar day for a worker
+// whose assignment starts the cycle cycleOffsetWeeks in. The day is read in its
+// own location, and the rotation is resolved for its whole week exactly as the
+// rota resolves it, so anything that asks "is this a working day" agrees with
+// the board.
+func (t *ShiftTemplate) WorksOnDate(day time.Time, cycleOffsetWeeks int16) bool {
+	if t == nil {
+		return false
+	}
+	weekStart := StartOfWeekUTC(day.Unix(), day.Location())
+
+	return t.WorksOn(int(day.Weekday()), t.cycleWeek(weekStart, cycleOffsetWeeks))
 }
 
 func buildRotaDay(worker RotaWorkerInput, day time.Time, cycleWeek int) RotaDay {

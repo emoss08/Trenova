@@ -10,6 +10,8 @@ export interface SidebarPageItem {
   path: string;
   disabled?: boolean;
   includeBetaTag?: boolean;
+  /** The navigation group the page sits in, or null when it sits in none. */
+  groupId: string | null;
 }
 
 export interface SidebarPageSection {
@@ -109,13 +111,14 @@ export function findModuleForPath(
   return best;
 }
 
-function pageItemFromNavItem(item: NavItem): SidebarPageItem {
+function pageItemFromNavItem(item: NavItem, groupId: string | null): SidebarPageItem {
   return {
     id: item.id,
     label: item.label,
     path: item.path,
     disabled: item.disabled,
     includeBetaTag: item.includeBetaTag,
+    groupId,
   };
 }
 
@@ -126,6 +129,7 @@ function pageItemFromAdminLink(link: SidebarLink, group: string): SidebarPageIte
     path: link.href,
     disabled: link.disabled,
     includeBetaTag: link.includeBetaTag,
+    groupId: null,
   };
 }
 
@@ -155,13 +159,13 @@ function moduleSections(module: NavModule): {
   for (const entry of module.navigation) {
     if (!isNavGroup(entry)) {
       pending ??= { id: `${module.id}:${entry.id}`, label: null, items: [] };
-      pending.items.push(pageItemFromNavItem(entry));
+      pending.items.push(pageItemFromNavItem(entry, null));
       continue;
     }
 
     if (entry.kind === "configuration") {
       for (const item of entry.items) {
-        configuration.push(pageItemFromNavItem(item));
+        configuration.push(pageItemFromNavItem(item, entry.id));
       }
       continue;
     }
@@ -173,7 +177,7 @@ function moduleSections(module: NavModule): {
     sections.push({
       id: entry.id,
       label: entry.label,
-      items: entry.items.map(pageItemFromNavItem),
+      items: entry.items.map((item) => pageItemFromNavItem(item, entry.id)),
     });
   }
 

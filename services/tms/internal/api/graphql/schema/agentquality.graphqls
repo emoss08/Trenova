@@ -40,9 +40,9 @@ type AgentEvalCase {
   "The question the agent is asked."
   input: String!
   """
-  When the person asked it. A replay answered from the recorded tool results
-  runs with its clock at this moment; null for a case written by hand or
-  captured from a background run, which replays as of now.
+  When the person asked it, or when the run that made the proposal started. A
+  replay answered from the recorded tool results runs with its clock at this
+  moment; null for a case written by hand, which replays as of now.
   """
   askedAt: Timestamp
   "The conversation before the question, redacted when captured."
@@ -53,6 +53,12 @@ type AgentEvalCase {
   subjectId: ID
   "The tools the agent held when the case was captured; calling any other fails the case."
   heldTools: [String!]!
+  """
+  The tools the original used that its agent did not hold itself, found through
+  another agent on the Desk. A replay cannot reach them, so a case that names
+  any is never activated on its own.
+  """
+  reachedTools: [String!]!
   "Each tool call the original made, with restricted fields redacted."
   toolFixtures: [JSON!]!
   "Expected tools with tolerance rules, forbidden tools, proposals, refusal and mention rules."

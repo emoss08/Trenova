@@ -24,15 +24,21 @@ type OrganizationAIFeedbackInput struct {
 }
 
 type OrganizationAIFeedbackResult struct {
-	Purged     int64 `json:"purged"`
-	Suggested  int   `json:"suggested"`
-	Covered    int   `json:"covered"`
-	BelowFloor int   `json:"belowFloor"`
+	Purged int64 `json:"purged"`
+	Lapsed int64 `json:"lapsed"`
+	// Corrections is how many habits of people changing an agent's work a
+	// look back was cued for.
+	Corrections int `json:"corrections"`
+	Suggested   int `json:"suggested"`
+	Covered     int `json:"covered"`
+	BelowFloor  int `json:"belowFloor"`
 }
 
 type AIFeedbackMaintenanceResult struct {
 	OrganizationsProcessed int      `json:"organizationsProcessed"`
 	Purged                 int64    `json:"purged"`
+	Lapsed                 int64    `json:"lapsed"`
+	Corrections            int      `json:"corrections"`
 	Suggested              int      `json:"suggested"`
 	Covered                int      `json:"covered"`
 	FailedOrganizations    []string `json:"failedOrganizations"`
@@ -45,6 +51,8 @@ func newAIFeedbackMaintenanceResult() *AIFeedbackMaintenanceResult {
 func (r *AIFeedbackMaintenanceResult) absorb(organization *OrganizationAIFeedbackResult) {
 	r.OrganizationsProcessed++
 	r.Purged += organization.Purged
+	r.Lapsed += organization.Lapsed
+	r.Corrections += organization.Corrections
 	r.Suggested += organization.Suggested
 	r.Covered += organization.Covered
 }

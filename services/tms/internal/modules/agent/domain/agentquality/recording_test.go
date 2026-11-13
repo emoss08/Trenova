@@ -28,7 +28,6 @@ func TestRecording_AnswersTheSameToolAndArgumentsWithWhatTheOriginalWasGiven(t *
 	require.True(t, ok, "the order the arguments were written in does not matter")
 	assert.False(t, failed)
 	assert.Equal(t, map[string]any{"proNumber": "S-100", "status": "InTransit"}, result)
-	assert.Equal(t, 1, recording.Served())
 }
 
 func TestRecording_HoldsNothingForAnotherToolOrOtherArguments(t *testing.T) {
@@ -46,7 +45,6 @@ func TestRecording_HoldsNothingForAnotherToolOrOtherArguments(t *testing.T) {
 	assert.False(t, ok)
 	_, _, ok = recording.Recorded("shipment_get", nil)
 	assert.False(t, ok)
-	assert.Zero(t, recording.Served())
 }
 
 func TestRecording_ReadsWithNoArgumentsMatchEachOther(t *testing.T) {
@@ -62,7 +60,7 @@ func TestRecording_ReadsWithNoArgumentsMatchEachOther(t *testing.T) {
 	assert.Equal(t, map[string]any{"waiting": float64(4)}, result)
 }
 
-func TestRecording_RepeatedReadsComeBackInTheOrderTheyWereGiven(t *testing.T) {
+func TestRecording_ARepeatedReadIsAnsweredTheSameEveryTime(t *testing.T) {
 	t.Parallel()
 
 	args := map[string]any{"id": "shp_1"}
@@ -72,14 +70,14 @@ func TestRecording_RepeatedReadsComeBackInTheOrderTheyWereGiven(t *testing.T) {
 	).Recording()
 
 	first, _, _ := recording.Recorded("shipment_get", args)
-	second, _, _ := recording.Recorded("shipment_get", args)
-	third, _, ok := recording.Recorded("shipment_get", args)
+	again, _, ok := recording.Recorded("shipment_get", args)
 
-	assert.Equal(t, map[string]any{"status": "New"}, first)
-	assert.Equal(t, map[string]any{"status": "Assigned"}, second)
 	require.True(t, ok)
-	assert.Equal(t, map[string]any{"status": "Assigned"}, third,
-		"a read asked more often than the original keeps getting the last answer")
+	assert.Equal(t, map[string]any{"status": "New"}, first,
+		"the first answer the original was given is the one it decided what to read next on")
+	assert.Equal(t, first, again,
+		"each call of a replay is dispatched on its own, so an answer cannot depend on "+
+			"how many came before it")
 }
 
 func TestRecording_AFailedReadFailsAgain(t *testing.T) {
@@ -141,7 +139,6 @@ func TestRecording_IsNothingForACaseWithNoUsableReads(t *testing.T) {
 	var none *Recording
 	_, _, ok := none.Recorded("shipment_get", nil)
 	assert.False(t, ok)
-	assert.Zero(t, none.Served())
 }
 
 func TestRecording_AnAnswerCannotBeChangedByWhoeverReadIt(t *testing.T) {

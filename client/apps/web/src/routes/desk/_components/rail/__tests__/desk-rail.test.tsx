@@ -472,6 +472,23 @@ describe("DeskRail", () => {
     expect(screen.getByRole("link", { name: /Triage/ })).toHaveTextContent("4");
   });
 
+  it("scrolls the chats, the cases and Triage's places in the same scroll area", () => {
+    const scrolled = (name: string | RegExp) =>
+      screen.getByRole("link", { name }).closest('[data-slot="scroll-area"]');
+    const { update } = renderRail({ threads: [thread({ id: "thr_1", title: "Late loads" })] });
+
+    const area = scrolled("Today");
+    expect(area).not.toBeNull();
+    expect(scrolled(/Late loads/u)).toBe(area);
+
+    update({ view: "cases", place: "needs" });
+    expect(scrolled("Back to chats")).toBe(area);
+
+    update({ view: "triage", place: "triage" });
+    expect(scrolled("Back to chats")).toBe(area);
+    expect(document.querySelectorAll('[data-slot="scroll-area"]')).toHaveLength(1);
+  });
+
   it("gives the rail to Triage's folders while Triage is in front", () => {
     renderRail({
       view: "triage",

@@ -1,0 +1,18 @@
+fragment PageTourViewFields on PageTourView {
+  tour
+  tourVersion
+  outcome
+  seenAt
+}
+
+query MyPageTourViews {
+  myPageTourViews {
+    ...PageTourViewFields
+  }
+}
+
+mutation RecordMyPageTour($input: RecordPageTourInput!) {
+  recordMyPageTour(input: $input) {
+    ...PageTourViewFields
+  }
+}

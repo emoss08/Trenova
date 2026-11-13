@@ -33,10 +33,15 @@ type ReflectionSubject string
 const (
 	ReflectionSubjectThread = ReflectionSubject("Thread")
 	ReflectionSubjectRun    = ReflectionSubject("Run")
+	// ReflectionSubjectCorrection is what people kept changing, by hand, of
+	// one field an agent set: read once the same field was changed often
+	// enough to be a habit rather than a one-off.
+	ReflectionSubjectCorrection = ReflectionSubject("Correction")
 )
 
 func (s ReflectionSubject) IsValid() bool {
-	return s == ReflectionSubjectThread || s == ReflectionSubjectRun
+	return s == ReflectionSubjectThread || s == ReflectionSubjectRun ||
+		s == ReflectionSubjectCorrection
 }
 
 type ReflectionStatus string
@@ -105,6 +110,9 @@ const (
 	ReflectionSignalProposalRejected = ReflectionSignalKind("ProposalRejected")
 	ReflectionSignalNegativeFeedback = ReflectionSignalKind("NegativeFeedback")
 	ReflectionSignalPersonTold       = ReflectionSignalKind("PersonTold")
+	// ReflectionSignalChangedAfterwards is people changing, by hand, a field
+	// the agent had set.
+	ReflectionSignalChangedAfterwards = ReflectionSignalKind("ChangedAfterwards")
 )
 
 func (k ReflectionSignalKind) IsValid() bool {
@@ -114,7 +122,8 @@ func (k ReflectionSignalKind) IsValid() bool {
 		ReflectionSignalProposalModified,
 		ReflectionSignalProposalRejected,
 		ReflectionSignalNegativeFeedback,
-		ReflectionSignalPersonTold:
+		ReflectionSignalPersonTold,
+		ReflectionSignalChangedAfterwards:
 		return true
 	default:
 		return false
@@ -122,7 +131,11 @@ func (k ReflectionSignalKind) IsValid() bool {
 }
 
 func AllReflectionSubjects() []ReflectionSubject {
-	return []ReflectionSubject{ReflectionSubjectThread, ReflectionSubjectRun}
+	return []ReflectionSubject{
+		ReflectionSubjectThread,
+		ReflectionSubjectRun,
+		ReflectionSubjectCorrection,
+	}
 }
 
 func AllReflectionSkips() []ReflectionSkip {
@@ -147,6 +160,8 @@ func (k ReflectionSignalKind) Describe() string {
 		return "a person refused a write the agent proposed"
 	case ReflectionSignalNegativeFeedback:
 		return "a person rated a reply as unhelpful"
+	case ReflectionSignalChangedAfterwards:
+		return "people changed, by hand and more than once, a field the agent had set"
 	case ReflectionSignalPersonTold:
 		return "the person told the agent something in passing, while asking for something " +
 			"else, that may be a lasting fact about the organization or one of its " +
@@ -180,7 +195,8 @@ func (s ReflectionSignals) FromPeople() bool {
 		s.Has(ReflectionSignalProposalModified) ||
 		s.Has(ReflectionSignalProposalRejected) ||
 		s.Has(ReflectionSignalNegativeFeedback) ||
-		s.Has(ReflectionSignalPersonTold)
+		s.Has(ReflectionSignalPersonTold) ||
+		s.Has(ReflectionSignalChangedAfterwards)
 }
 
 func (s ReflectionSignals) OnlyInPassing() bool {
@@ -244,6 +260,7 @@ type Reflection struct {
 	SubjectType       ReflectionSubject `json:"subjectType"       keel:"subject_type"`
 	ThreadID          *pulid.ID         `json:"threadId"          keel:"thread_id"`
 	RunID             *pulid.ID         `json:"runId"             keel:"run_id"`
+	PatternKey        string            `json:"patternKey"        keel:"pattern_key,nullzero"`
 	UserID            *pulid.ID         `json:"userId"            keel:"user_id"`
 	FromSequence      int               `json:"fromSequence"      keel:"from_sequence"`
 	ThroughSequence   int               `json:"throughSequence"   keel:"through_sequence"`
@@ -316,6 +333,14 @@ func (r *Reflection) Validate(multiErr *errortypes.MultiError) {
 	case ReflectionSubjectRun:
 		if r.RunID == nil || r.RunID.IsNil() {
 			multiErr.Add("runId", errortypes.ErrRequired, "A look back at a run needs it")
+		}
+	case ReflectionSubjectCorrection:
+		if strings.TrimSpace(r.PatternKey) == "" {
+			multiErr.Add(
+				"patternKey",
+				errortypes.ErrRequired,
+				"A look back at what people changed needs what they kept changing",
+			)
 		}
 	}
 	if (r.Status == ReflectionStatusSkipped) != (r.SkipReason != "") {

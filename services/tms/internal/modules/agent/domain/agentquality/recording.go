@@ -2,7 +2,6 @@ package agentquality
 
 import (
 	"strings"
-	"sync"
 
 	"github.com/bytedance/sonic"
 )
@@ -13,14 +12,11 @@ type recordedRead struct {
 }
 
 type Recording struct {
-	mu     sync.Mutex
-	reads  map[string][]recordedRead
-	next   map[string]int
-	served int
+	reads map[string]recordedRead
 }
 
 func (c *EvalCase) Recording() *Recording {
-	reads := make(map[string][]recordedRead, len(c.ToolFixtures))
+	reads := make(map[string]recordedRead, len(c.ToolFixtures))
 	for _, fixture := range c.ToolFixtures {
 		if fixture.Result == nil || IsRuntimeTool(fixture.Tool) ||
 			holdsPlaceholder(fixture.Result) || holdsPlaceholder(fixture.Args) {
@@ -30,16 +26,16 @@ func (c *EvalCase) Recording() *Recording {
 		if !ok {
 			continue
 		}
-		reads[key] = append(reads[key], recordedRead{
-			result: fixture.Result,
-			failed: fixture.Failed,
-		})
+		if _, answered := reads[key]; answered {
+			continue
+		}
+		reads[key] = recordedRead{result: fixture.Result, failed: fixture.Failed}
 	}
 	if len(reads) == 0 {
 		return nil
 	}
 
-	return &Recording{reads: reads, next: make(map[string]int, len(reads))}
+	return &Recording{reads: reads}
 }
 
 func (r *Recording) Recorded(
@@ -54,29 +50,12 @@ func (r *Recording) Recorded(
 		return nil, false, false
 	}
 
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
-	reads := r.reads[key]
-	if len(reads) == 0 {
+	read, ok := r.reads[key]
+	if !ok {
 		return nil, false, false
 	}
-	at := min(r.next[key], len(reads)-1)
-	r.next[key]++
-	r.served++
 
-	return copied(reads[at].result), reads[at].failed, true
-}
-
-func (r *Recording) Served() int {
-	if r == nil {
-		return 0
-	}
-
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
-	return r.served
+	return copied(read.result), read.failed, true
 }
 
 func recordingKey(tool string, arguments map[string]any) (string, bool) {

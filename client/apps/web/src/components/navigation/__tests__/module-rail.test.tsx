@@ -22,7 +22,7 @@ const views = new Map<string, SidebarModuleView>([
         {
           id: "pages",
           label: null,
-          items: [{ id: "board", label: "Shipments", path: "/shipments" }],
+          items: [{ id: "board", label: "Shipments", path: "/shipments", groupId: null }],
         },
       ],
       configuration: [],
@@ -38,8 +38,8 @@ const views = new Map<string, SidebarModuleView>([
           id: "pages",
           label: null,
           items: [
-            { id: "queue", label: "Billing queue", path: "/billing/queue" },
-            { id: "invoices", label: "Invoices", path: "/billing/invoices" },
+            { id: "queue", label: "Billing queue", path: "/billing/queue", groupId: null },
+            { id: "invoices", label: "Invoices", path: "/billing/invoices", groupId: null },
           ],
         },
       ],

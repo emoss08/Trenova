@@ -2,7 +2,6 @@ package dispatchcandidateservice
 
 import (
 	"context"
-	"slices"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/demandforecast"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/driverpositioning"
@@ -225,24 +224,6 @@ func (s *Service) BuildSnapshot(
 	return snapshot, nil
 }
 
-func forecastCells(destinations []dispatchmarket.Point, supply []demandforecast.Driver) []int64 {
-	cells := dispatchmarket.CellsOf(destinations)
-	seen := make(map[int64]struct{}, len(cells)+len(supply))
-	for _, cell := range cells {
-		seen[cell] = struct{}{}
-	}
-	for _, driver := range supply {
-		if _, dup := seen[driver.Cell]; dup {
-			continue
-		}
-		seen[driver.Cell] = struct{}{}
-		cells = append(cells, driver.Cell)
-	}
-	slices.Sort(cells)
-
-	return cells
-}
-
 func (s *Service) anticipate(
 	ctx context.Context,
 	req *SnapshotRequest,
@@ -256,7 +237,6 @@ func (s *Service) anticipate(
 	forecaster, err := s.forecasts.Forecaster(ctx, &demandforecastports.ForecasterRequest{
 		TenantInfo:    req.TenantInfo,
 		Now:           snapshot.Now,
-		Cells:         forecastCells(req.Destinations, supply),
 		Supply:        supply,
 		Solving:       req.Solving,
 		MarginPercent: economics.CoverageMarginPercent,

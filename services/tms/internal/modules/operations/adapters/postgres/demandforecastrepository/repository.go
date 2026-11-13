@@ -18,10 +18,9 @@ import (
 )
 
 const (
-	maxSeriesPerCell = 60
-	maxModelRates    = 200_000
-	maxModelAreas    = 5_000
-	maxModelCurves   = 20_000
+	maxModelRates  = 200_000
+	maxModelAreas  = 5_000
+	maxModelCurves = 20_000
 )
 
 type Params struct {
@@ -92,7 +91,8 @@ func (r *repository) Replace(ctx context.Context, req *demandforecastports.Repla
 		if _, err := q.Upsert(ctx, db, []*demandforecast.Quality{req.Quality},
 			keel.OnConflict(q.OrganizationID, q.BusinessUnitID).Update(
 				q.Status, q.HistoryWeeks, q.HistoryLoads, q.WeeksTested, q.LoadsTested,
-				q.IntervalCoverage, q.MAE, q.NaiveMAE, q.Skill, q.FittedAt,
+				q.IntervalCoverage, q.MAE, q.NaiveMAE, q.Skill, q.Dispersion, q.Level,
+				q.HolidayFactor, q.Holidays, q.Timezone, q.FittedAt,
 			)); err != nil {
 			return fmt.Errorf("write forecast quality: %w", err)
 		}
@@ -148,57 +148,45 @@ func (r *repository) Days(
 	})
 }
 
-func (r *repository) ModelForCells(
-	ctx context.Context,
-	req *demandforecastports.CellsRequest,
-) (*demandforecastports.Model, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*demandforecastports.Model, error) {
-		return r.model(ctx, req.TenantInfo, req.Cells, true)
-	})
-}
-
 func (r *repository) Model(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (*demandforecastports.Model, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*demandforecastports.Model, error) {
-		return r.model(ctx, tenantInfo, nil, false)
-	})
-}
+		quality, err := r.quality(ctx, tenantInfo)
+		if err != nil {
+			return nil, err
+		}
+		model := &demandforecastports.Model{Quality: quality}
+		if !quality.Ready() {
+			return model, nil
+		}
 
-func (r *repository) model(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	cells []int64,
-	byCell bool,
-) (*demandforecastports.Model, error) {
-	quality, err := r.quality(ctx, tenantInfo)
-	if err != nil {
-		return nil, err
-	}
-	model := &demandforecastports.Model{Quality: quality}
-	if !quality.Ready() || (byCell && len(cells) == 0) {
+		db := r.db.Keel(ctx)
+		rates := demandforecastdb.Rates
+		areas := demandforecastdb.Areas
+		curves := demandforecastdb.BookingCurves
+		if model.Rates, err = rates.
+			Where(rates.CustomerID.IsNull()).
+			Limit(maxModelAreas*int(dispatchmarket.SlotsPerWeek)).
+			List(ctx, db); err != nil {
+			return nil, fmt.Errorf("read forecast rates: %w", err)
+		}
+		customerRates, err := rates.
+			Where(rates.CustomerID.IsNotNull()).
+			Limit(maxModelRates).
+			List(ctx, db)
+		if err != nil {
+			return nil, fmt.Errorf("read customer forecast rates: %w", err)
+		}
+		model.Rates = append(model.Rates, customerRates...)
+		if model.Areas, err = areas.Query().Limit(maxModelAreas).List(ctx, db); err != nil {
+			return nil, fmt.Errorf("read forecast areas: %w", err)
+		}
+		if model.Curves, err = curves.Query().Limit(maxModelCurves).List(ctx, db); err != nil {
+			return nil, fmt.Errorf("read booking curves: %w", err)
+		}
+
 		return model, nil
-	}
-
-	db := r.db.Keel(ctx)
-	rates := demandforecastdb.Rates
-	areas := demandforecastdb.Areas
-	curves := demandforecastdb.BookingCurves
-	rateLimit, areaLimit := maxModelRates, maxModelAreas
-	if byCell {
-		rateLimit = min(len(cells)*int(dispatchmarket.SlotsPerWeek)*maxSeriesPerCell, maxModelRates)
-		areaLimit = min(len(cells), maxModelAreas)
-	}
-	if model.Rates, err = rates.Where(keel.When(byCell, rates.Cell.In(cells...))).Limit(rateLimit).List(ctx, db); err != nil {
-		return nil, fmt.Errorf("read forecast rates: %w", err)
-	}
-	if model.Areas, err = areas.Where(keel.When(byCell, areas.Cell.In(cells...))).Limit(areaLimit).List(ctx, db); err != nil {
-		return nil, fmt.Errorf("read forecast areas: %w", err)
-	}
-	if model.Curves, err = curves.Query().Limit(maxModelCurves).List(ctx, db); err != nil {
-		return nil, fmt.Errorf("read booking curves: %w", err)
-	}
-
-	return model, nil
+	})
 }

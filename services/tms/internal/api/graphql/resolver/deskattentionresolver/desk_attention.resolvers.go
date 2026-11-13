@@ -82,6 +82,8 @@ func (r *QueryResolver) DeskAttention(ctx context.Context, input gqlmodel.DeskAt
 		RecordIDs:  recordIDs,
 		Working:    typeutils.ValueOrZero(input.Working),
 		Mine:       typeutils.ValueOrZero(input.Mine),
+		Search:     typeutils.ValueOrZero(input.Search),
+		Unseen:     typeutils.ValueOrZero(input.Unseen),
 	}, actorutil.FromAuthContext(authCtx))
 }
 

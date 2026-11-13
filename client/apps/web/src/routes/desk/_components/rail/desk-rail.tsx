@@ -24,7 +24,15 @@ import { resolveUserTimezone } from "@trenova/shared/lib/date";
 import { formatModShiftShortcut, formatShortcut } from "@trenova/shared/lib/shortcuts";
 import { cn, getNameInitials } from "@trenova/shared/lib/utils";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
-import { useMemo, useState, type PointerEvent, type ReactNode } from "react";
+import {
+  useCallback,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type PointerEvent,
+  type ReactNode,
+} from "react";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router";
 import { DeleteConversationCard } from "@/components/assistant/delete-conversation-card";
 import { useDeleteConversation } from "@/components/assistant/use-delete-conversation";
@@ -38,7 +46,14 @@ import { RenameConversationDialog } from "./rename-conversation-dialog";
 import { RailList } from "./rail-list";
 import { RAIL_TRANSITION_CLASS } from "../desk-motion";
 import { RailCaseRowItem, RailThreadRow } from "./rail-row";
-import { RAIL_TOP_CLASS, railClass, railInnerClass, type RailMode } from "./rail-classes";
+import {
+  RAIL_BODY_CLASS,
+  RAIL_GUTTER_CLASS,
+  RAIL_TOP_CLASS,
+  railClass,
+  railInnerClass,
+  type RailMode,
+} from "./rail-classes";
 
 const NO_WAITING_CASES: readonly DeskAttentionGroup[] = [];
 
@@ -297,6 +312,21 @@ export function DeskRail({
   );
   const name = user?.name ?? user?.username ?? "";
   const setSlot = useDeskRailSlotStore((state) => state.setSlot);
+  // The rail's body is one scroll area under every view, so the chats, the
+  // cases and Triage's places scroll and fade alike. The list is windowed
+  // against it, so the rail draws again once it is there; another view is
+  // another list, and it is read from its top.
+  const scrollerRef = useRef<HTMLDivElement | null>(null);
+  const [scroller, setScroller] = useState<HTMLDivElement | null>(null);
+  const holdScroller = useCallback((node: HTMLDivElement | null) => {
+    scrollerRef.current = node;
+    setScroller(node);
+  }, []);
+  useLayoutEffect(() => {
+    if (scrollerRef.current !== null) {
+      scrollerRef.current.scrollTop = 0;
+    }
+  }, [view]);
 
   // Every row of work has a menu on right-click or a long press: what can be
   // done to it without opening it first.
@@ -465,149 +495,157 @@ export function DeskRail({
           </RailIconButton>
         </div>
 
-        {view === "triage" ? (
-          // Triage's folders, views, sources and rules run past a short window:
-          // the Desk's scroll area, fading at an edge with more beyond it.
-          <ScrollArea
-            className={cn("min-h-0 flex-1", RAIL_TRANSITION_CLASS.triage)}
-            maskClassName="before:from-dsk-rail after:from-dsk-rail"
-          >
-            <div className="px-2 pt-0.5 pb-4">
-              <HoverGlideGroup
-                className="bg-transparent"
-                glideClassName="rounded-[8px] bg-dsk-hover"
-              >
-                <div className="flex flex-col gap-1">
-                  {/* Back is where the person came from, the page itself and not only
-                    the view, so Triage opened from a case leads back to that case. */}
-                  <RailPlace
-                    to={triageBack.to}
-                    current={false}
-                    icon="chevL"
-                    label={triageBack.view === "cases" ? t("Back to cases") : t("Back to chats")}
-                  />
-                  {canWatch && triageBack.view === "chats" && (
-                    <RailPlace
-                      to="/desk/needs"
-                      current={false}
-                      icon="stack"
-                      label={t("Needs you")}
-                      count={lensCounts.everything}
-                    />
-                  )}
-                </div>
-              </HoverGlideGroup>
-              {/* A room's places come through a portal, whose pointer events never
-                reach this rail's glide, so the room brings a glide of its own. */}
-              <div ref={setSlot} className="flex flex-col" />
-            </div>
-          </ScrollArea>
-        ) : (
-          <RailList
-            className={RAIL_TRANSITION_CLASS[view]}
-            rows={rows}
-            renderRow={renderRow}
-            onLoadMore={onLoadMore}
-            onThreadsInView={onThreadsInView}
-            nav={
+        {/* The chats, the cases and Triage's places run past a short window:
+          the Desk's scroll area, fading at an edge with more beyond it. */}
+        <ScrollArea
+          className={cn(RAIL_BODY_CLASS, RAIL_TRANSITION_CLASS[view])}
+          maskClassName="before:from-dsk-rail after:from-dsk-rail"
+          viewportRef={holdScroller}
+        >
+          <div className={RAIL_GUTTER_CLASS}>
+            {view === "triage" ? (
               <>
-                {view === "cases" ? (
-                  <>
-                    <RailPlace to="/desk" current={false} icon="chevL" label={t("Back to chats")} />
-                    {canWatch && (
+                <HoverGlideGroup
+                  className="bg-transparent"
+                  glideClassName="rounded-[8px] bg-dsk-hover"
+                >
+                  <div className="flex flex-col gap-1">
+                    {/* Back is where the person came from, the page itself and not only
+                      the view, so Triage opened from a case leads back to that case. */}
+                    <RailPlace
+                      to={triageBack.to}
+                      current={false}
+                      icon="chevL"
+                      label={triageBack.view === "cases" ? t("Back to cases") : t("Back to chats")}
+                    />
+                    {canWatch && triageBack.view === "chats" && (
                       <RailPlace
                         to="/desk/needs"
-                        current={place === "needs" && lens === ""}
+                        current={false}
                         icon="stack"
                         label={t("Needs you")}
                         count={lensCounts.everything}
                       />
                     )}
-                    {canWatch && (
-                      <RailPlace
-                        to="/desk/needs?lens=watchtower"
-                        current={lens === "watchtower"}
-                        label={t("Watchtower")}
-                        count={lensCounts.watchtower}
-                      />
-                    )}
-                    {canDecide && (
-                      <RailPlace
-                        to="/desk/needs?lens=decisions"
-                        current={lens === "decisions"}
-                        label={t("Decisions")}
-                        count={lensCounts.decisions}
-                      />
-                    )}
-                    {canTriage && (
-                      <RailPlace
-                        to="/desk/triage"
-                        current={false}
-                        icon="mail"
-                        label={t("Triage")}
-                        count={triageWaiting}
-                      />
-                    )}
-                  </>
-                ) : (
-                  <>
-                    <RailPlace
-                      to="/desk"
-                      current={place === "today"}
-                      icon="home"
-                      label={t("Today")}
-                    />
-                    {canWatch && (
-                      <RailPlace
-                        to="/desk/needs"
-                        current={false}
-                        icon="stack"
-                        label={t("Cases")}
-                        count={lensCounts.everything}
-                      />
-                    )}
-                    {canTriage && (
-                      <RailPlace
-                        to="/desk/triage"
-                        current={false}
-                        icon="mail"
-                        label={t("Triage")}
-                        count={triageWaiting}
-                      />
-                    )}
-                    <RailPlace
-                      to="/desk/scheduled"
-                      current={place === "scheduled"}
-                      icon="clock"
-                      label={t("Scheduled")}
-                    />
-                    <RailPlace
-                      to="/desk/memory"
-                      current={place === "memory"}
-                      icon="book"
-                      label={t("Memory")}
-                    />
-                  </>
-                )}
+                  </div>
+                </HoverGlideGroup>
+                {/* A room's places come through a portal, whose pointer events never
+                  reach this rail's glide, so the room brings a glide of its own. */}
+                <div ref={setSlot} className="flex flex-col" />
               </>
-            }
-            empty={
-              !noConversations || rows.length > 0 ? null : view === "cases" ? (
-                <p className="m-0 px-2.5 text-sm/normal text-dsk-subtle">
-                  {t(
-                    "No cases yet. A record you ask an agent about, or one that needs you, shows here.",
-                  )}
-                </p>
-              ) : (
-                <p className="m-0 px-2.5 text-sm/normal text-dsk-subtle">
-                  {rt("Your chats will show up here. Press <kbd/> to start one.", {
-                    kbd: () => <span className="dk-kbd">{formatModShiftShortcut("O")}</span>,
-                  })}
-                </p>
-              )
-            }
-          />
-        )}
+            ) : (
+              <RailList
+                scrollElement={scroller}
+                rows={rows}
+                renderRow={renderRow}
+                onLoadMore={onLoadMore}
+                onThreadsInView={onThreadsInView}
+                nav={
+                  <>
+                    {view === "cases" ? (
+                      <>
+                        <RailPlace
+                          to="/desk"
+                          current={false}
+                          icon="chevL"
+                          label={t("Back to chats")}
+                        />
+                        {canWatch && (
+                          <RailPlace
+                            to="/desk/needs"
+                            current={place === "needs" && lens === ""}
+                            icon="stack"
+                            label={t("Needs you")}
+                            count={lensCounts.everything}
+                          />
+                        )}
+                        {canWatch && (
+                          <RailPlace
+                            to="/desk/needs?lens=watchtower"
+                            current={lens === "watchtower"}
+                            label={t("Watchtower")}
+                            count={lensCounts.watchtower}
+                          />
+                        )}
+                        {canDecide && (
+                          <RailPlace
+                            to="/desk/needs?lens=decisions"
+                            current={lens === "decisions"}
+                            label={t("Decisions")}
+                            count={lensCounts.decisions}
+                          />
+                        )}
+                        {canTriage && (
+                          <RailPlace
+                            to="/desk/triage"
+                            current={false}
+                            icon="mail"
+                            label={t("Triage")}
+                            count={triageWaiting}
+                          />
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        <RailPlace
+                          to="/desk"
+                          current={place === "today"}
+                          icon="home"
+                          label={t("Today")}
+                        />
+                        {canWatch && (
+                          <RailPlace
+                            to="/desk/needs"
+                            current={false}
+                            icon="stack"
+                            label={t("Cases")}
+                            count={lensCounts.everything}
+                          />
+                        )}
+                        {canTriage && (
+                          <RailPlace
+                            to="/desk/triage"
+                            current={false}
+                            icon="mail"
+                            label={t("Triage")}
+                            count={triageWaiting}
+                          />
+                        )}
+                        <RailPlace
+                          to="/desk/scheduled"
+                          current={place === "scheduled"}
+                          icon="clock"
+                          label={t("Scheduled")}
+                        />
+                        <RailPlace
+                          to="/desk/memory"
+                          current={place === "memory"}
+                          icon="book"
+                          label={t("Memory")}
+                        />
+                      </>
+                    )}
+                  </>
+                }
+                empty={
+                  !noConversations || rows.length > 0 ? null : view === "cases" ? (
+                    <p className="m-0 px-2.5 text-sm/normal text-dsk-subtle">
+                      {t(
+                        "No cases yet. A record you ask an agent about, or one that needs you, shows here.",
+                      )}
+                    </p>
+                  ) : (
+                    <p className="m-0 px-2.5 text-sm/normal text-dsk-subtle">
+                      {rt("Your chats will show up here. Press <kbd/> to start one.", {
+                        kbd: () => <span className="dk-kbd">{formatModShiftShortcut("O")}</span>,
+                      })}
+                    </p>
+                  )
+                }
+              />
+            )}
+          </div>
+        </ScrollArea>
 
         <div className="flex h-13 flex-none items-center gap-2 border-t border-dsk-b-sub pr-2 pl-3">
           <span className="grid size-6.5 flex-none place-items-center rounded-full border border-dsk-b-sub bg-dsk-sunken text-2xs font-medium text-dsk-muted">

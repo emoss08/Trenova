@@ -131,6 +131,11 @@ type RunContext struct {
 	Records []agentpagecontext.EntityRef `json:"records,omitempty"`
 	// CodeMode forces the code-mode gate for the run.
 	CodeMode codemode.Override `json:"codeMode,omitempty"`
+	// Replay is set on an evaluation's run that is answered from what its
+	// case's original was given: the case, and the moment the run's clock is
+	// set back to. The recorded reads themselves are loaded by the activity
+	// that dispatches a call.
+	Replay *agentruntimeports.ReplayOf `json:"replay,omitempty"`
 	// ScopeCheck is what the scope classifier is to be asked beside the
 	// run's first model call. The loop takes it off the run as it sends that
 	// call, so no later activity carries it.
@@ -169,6 +174,7 @@ func NewRunContext(req *agentruntimeports.RunRequest, priorityKey int) RunContex
 		Delegation:          req.Delegation,
 		Records:             req.Records,
 		CodeMode:            req.CodeMode,
+		Replay:              req.Replay,
 	}
 }
 
@@ -176,10 +182,15 @@ func NewRunContext(req *agentruntimeports.RunRequest, priorityKey int) RunContex
 // deliberately absent: they are services, and whichever activity needs one
 // supplies its own.
 func (rc *RunContext) request() *agentruntimeports.RunRequest {
+	runtimeContext := agentturn.RuntimeContext{Timezone: rc.Timezone}
+	if rc.Replay != nil {
+		runtimeContext.Now = rc.Replay.AsOf
+	}
+
 	return &agentruntimeports.RunRequest{
 		Definition:          rc.Definition,
 		Actor:               rc.Actor,
-		Context:             agentturn.RuntimeContext{Timezone: rc.Timezone},
+		Context:             runtimeContext,
 		Input:               rc.Input,
 		RunID:               rc.RunID,
 		ThreadID:            rc.ThreadID,
@@ -192,6 +203,7 @@ func (rc *RunContext) request() *agentruntimeports.RunRequest {
 		Delegation:          rc.Delegation,
 		Records:             rc.Records,
 		CodeMode:            rc.CodeMode,
+		Replay:              rc.Replay,
 	}
 }
 

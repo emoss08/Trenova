@@ -89,6 +89,8 @@ type deps struct {
 	ActionTools      agenttoolports.AgentToolRegistry
 	Shipments        shipmentserviceports.ShipmentLifecycleService
 	Palette          paletteports.PaletteService
+	Reflections      agentreflectionports.AgentReflectionService
+	Completion       llmports.CompletionService
 }
 
 type Bench struct {

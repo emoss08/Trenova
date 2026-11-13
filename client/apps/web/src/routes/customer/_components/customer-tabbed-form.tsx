@@ -2,12 +2,17 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTab } from "@trenova/shared/components/ui/tabs";
 import {
+  BrainIcon,
   CreditCard01Icon,
   Mail01Icon,
   RadarIcon,
   Share07Icon,
   User01Icon,
 } from "@trenova/shared/components/icons";
+import {
+  RecordMemories,
+  useRecordMemoriesAvailable,
+} from "@/components/record-memories/record-memories";
 import { parseAsString, useQueryState } from "nuqs";
 import { CustomerBillingProfileForm } from "./customer-billing-profile-form";
 import { CustomerBrokerIntelligence } from "./customer-broker-intelligence";
@@ -23,6 +28,7 @@ export function CustomerTabbedForm({ customerId }: CustomerTabbedFormProps) {
   const t = useT();
 
   const [activeTab, setActiveTab] = useQueryState("tab", parseAsString.withDefault("general"));
+  const remembers = useRecordMemoriesAvailable() && Boolean(customerId);
 
   return (
     <Tabs
@@ -54,6 +60,12 @@ export function CustomerTabbedForm({ customerId }: CustomerTabbedFormProps) {
               {t("Broker vetting")}
             </TabsTab>
           ) : null}
+          {remembers ? (
+            <TabsTab value="memory">
+              <BrainIcon className="size-4" />
+              {t("Agent memory")}
+            </TabsTab>
+          ) : null}
         </TabsList>
       </div>
       <ScrollArea className="flex-1">
@@ -74,6 +86,11 @@ export function CustomerTabbedForm({ customerId }: CustomerTabbedFormProps) {
         {customerId ? (
           <TabsContent value="broker-vetting" className="p-4">
             <CustomerBrokerIntelligence customerId={customerId} />
+          </TabsContent>
+        ) : null}
+        {remembers && customerId ? (
+          <TabsContent value="memory" className="p-4">
+            <RecordMemories subject={{ type: "Customer", id: customerId }} />
           </TabsContent>
         ) : null}
       </ScrollArea>

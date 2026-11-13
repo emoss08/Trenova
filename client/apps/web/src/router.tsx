@@ -14,6 +14,7 @@ import {
 import { edition } from "@/lib/edition";
 import { withRouteCatalogs } from "@/lib/route-catalogs";
 import { createPrefetchLoader, lazyPrefetch } from "@/lib/route-prefetch";
+import { withSectionIndexes } from "@/lib/section-routes";
 import { legacySettingsRedirect } from "@/lib/settings-path";
 import { AppErrorLayout, AppLayout, OnboardingLayout } from "@/routes/app-layout";
 import { DeskLoadingScreen } from "@/routes/desk/desk-loading-screen";
@@ -2416,6 +2417,9 @@ export const routes: RouteObject[] = withPathScopedRevalidation([
                   createPermissionLoader(Resource.Watchtower, Operation.Read),
                   createPermissionLoader(Resource.AgentProposal, Operation.Read),
                 ),
+                // Picking a lens only changes the query; the guards ran when the page opened.
+                shouldRevalidate: ({ currentUrl, nextUrl, defaultShouldRevalidate }) =>
+                  currentUrl.pathname === nextUrl.pathname ? false : defaultShouldRevalidate,
                 async lazy() {
                   const { DeskNeedsPage } = await import("@/routes/desk/needs-page");
                   return { Component: DeskNeedsPage };
@@ -2534,4 +2538,4 @@ export const routes: RouteObject[] = withPathScopedRevalidation([
   },
 ]);
 
-export const router = createBrowserRouter(withRouteCatalogs(routes));
+export const router = createBrowserRouter(withRouteCatalogs(withSectionIndexes(routes)));

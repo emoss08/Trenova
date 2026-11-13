@@ -116,7 +116,12 @@ Optional: permissions a task needs, what happens after, common mistakes.
   title a task with it (notes and steps are left out of that count, since they
   share "Needs read access to …"), so a word on many pages counts for little
   and a long guide cannot win questions that belong to another page. Guard it
-  with `evals/guideselection.yaml` and its floors.
+  with `evals/guideselection.yaml` and its floors. When a question there lands
+  on the wrong page, give the right page the words people use for it; do not
+  lower the floor. `evals/guideselection.heldout.yaml` holds questions nobody
+  tunes against: the gate reports how they fare on every run without enforcing
+  a floor, which is how you tell a fix that generalizes from one that fits its
+  own question. Never edit a guide against a held-out case.
 - `related`: other pages with guides.
 - `covers`: other routes this guide documents (a `/new` page, a `:id` detail
   route) that don't get their own guide.

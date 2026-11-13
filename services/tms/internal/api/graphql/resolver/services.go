@@ -237,6 +237,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/app/emailservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/homelayoutservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/pagetourservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reportdashboardservice"
 	reportingservice "github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reportscheduleservice"
@@ -517,6 +518,7 @@ type Params struct {
 	TableConfigurationService         *tableconfigurationservice.Service
 	SidebarPreferenceService          *sidebarpreferenceservice.Service
 	TableLayoutService                *tablelayoutservice.Service
+	PageTourService                   *pagetourservice.Service
 	TableInsightService               *tableinsightservice.Service
 	BulkEditService                   *bulkeditservice.Service
 	TableExportService                *tableexportservice.Service
@@ -821,6 +823,7 @@ type Services struct {
 	TableConfigurationService         *tableconfigurationservice.Service
 	SidebarPreferenceService          *sidebarpreferenceservice.Service
 	TableLayoutService                *tablelayoutservice.Service
+	PageTourService                   *pagetourservice.Service
 	TableInsightService               *tableinsightservice.Service
 	BulkEditService                   *bulkeditservice.Service
 	TableExportService                *tableexportservice.Service
@@ -1131,6 +1134,7 @@ func newServices(p *Params) *Services {
 		TableConfigurationService:         p.TableConfigurationService,
 		SidebarPreferenceService:          p.SidebarPreferenceService,
 		TableLayoutService:                p.TableLayoutService,
+		PageTourService:                   p.PageTourService,
 		TableInsightService:               p.TableInsightService,
 		BulkEditService:                   p.BulkEditService,
 		TableExportService:                p.TableExportService,

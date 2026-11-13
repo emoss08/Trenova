@@ -31,6 +31,10 @@ import { XCloseIcon } from "@trenova/shared/components/icons";
 import { useEffect } from "react";
 import { FormProvider, useForm, type UseFormReturn } from "react-hook-form";
 import type { z } from "zod";
+import {
+  RecordMemories,
+  useRecordMemoriesAvailable,
+} from "@/components/record-memories/record-memories";
 import { LocationForm } from "./location-form";
 import { LocationGeofenceMap } from "./location-geofence-editor";
 
@@ -210,6 +214,7 @@ type EditDialogProps = {
 
 function EditDialog({ open, onOpenChange, row }: EditDialogProps) {
   const t = useT();
+  const remembers = useRecordMemoriesAvailable();
 
   const form = useForm<LocationFormInput, unknown, Location>({
     resolver: zodResolver(locationSchema),
@@ -299,6 +304,14 @@ function EditDialog({ open, onOpenChange, row }: EditDialogProps) {
 
   return (
     <DialogShell
+      after={
+        remembers && row?.id ? (
+          <div className="border-border flex flex-col gap-2 border-t p-4">
+            <h3 className="text-sm font-semibold">{t("What agents remember")}</h3>
+            <RecordMemories subject={{ type: "Location", id: row.id }} />
+          </div>
+        ) : null
+      }
       open={open}
       onOpenChange={(next) => {
         if (!next) reset();
@@ -357,6 +370,8 @@ type DialogShellProps = {
   footer: React.ReactNode;
   form: LocationFormReturn;
   onValidSubmit: (values: Location) => void | Promise<void>;
+  /** What follows the form's own fields: what agents remember about a saved location. */
+  after?: React.ReactNode;
 };
 
 function DialogShell({
@@ -367,6 +382,7 @@ function DialogShell({
   footer,
   form,
   onValidSubmit,
+  after,
 }: DialogShellProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -400,6 +416,7 @@ function DialogShell({
             </div>
             <ScrollArea className="min-h-0 flex-1">
               <LocationForm />
+              {after}
             </ScrollArea>
             <div className="border-border bg-muted/30 flex shrink-0 items-center justify-end gap-2 border-t px-5 py-3">
               {footer}

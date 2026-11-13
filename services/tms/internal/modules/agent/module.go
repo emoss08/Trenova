@@ -51,6 +51,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/caseownerrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/conversationrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/conversationschedulerepository"
+	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/correctedworkrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/exceptionsourcerepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/insightrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/palettequestionrepository"
@@ -271,6 +272,7 @@ func SharedOptions() fx.Option {
 			agentplanrepository.New,
 			agentmemoryrepository.New,
 			agentreflectionrepository.New,
+			correctedworkrepository.New,
 			aicorrectionrepository.New,
 			aifeedbackrepository.New,
 			aifeedbackrepository.NewSource,
@@ -501,6 +503,7 @@ func SharedOptions() fx.Option {
 			agentbudgetservice.New,
 			agentevaluationservice.New,
 			agentevalcaseservice.New,
+			agentevalcaseservice.AsRecordedReads,
 			agentactivitysummaryservice.New,
 			agentqualitysettings.New,
 			agentqualityengine.New,

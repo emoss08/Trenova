@@ -1,0 +1,49 @@
+# Held-out questions for agent_find_page: written from what a page is for and
+# never looked at while a guide, an alias or the ranking is being changed. The
+# gate measures them on every run and reports the figures without enforcing a
+# floor, so they say how a question nobody has tuned for fares. Never edit a
+# guide page against a case listed here; add new questions instead, and move
+# one to guideselection.yaml only when it is to become a gated case.
+cases:
+  - request: show me everything a customer has been billed and paid
+    expect: [/accounting/ar/customer-ledger]
+  - request: which invoices are still unpaid
+    expect: [/accounting/ar/open-items]
+  - request: post the journals that are waiting
+    expect: [/accounting/journals-to-post]
+  - request: change our company address and logo
+    expect: [/admin/organization-settings]
+  - request: approve an invoice adjustment that needs finance sign-off
+    expect: [/billing/pending-approvals]
+  - request: add a new kind of document like a lumper receipt
+    expect: [/billing/configuration-files/document-types]
+  - request: what have we accrued for carriers that have not been settled
+    expect: [/carrier-settlements/cost-events]
+  - request: set up fleet codes
+    expect: [/dispatch/configuration-files/fleet-codes]
+  - request: did the 214 status update go out to the partner
+    expect: [/edi/messages]
+  - request: add a new equipment type like a reefer
+    expect: [/equipment/configuration-files/equipment-types]
+  - request: assign a fuel card to a driver
+    expect: [/fuel/configuration-files/fuel-cards]
+  - request: a fuel card we never registered shows purchases
+    expect: [/fuel/unassigned-cards]
+  - request: enroll an employee in health insurance
+    expect: [/hr/benefits]
+  - request: make a medical card required for every driver
+    expect: [/hr/credential-types]
+  - request: set the rules for family and medical leave
+    expect: [/hr/leave-settings]
+  - request: build a performance review form
+    expect: [/hr/review-templates]
+  - request: add a new earning code for stop pay
+    expect: [/payroll/pay-codes]
+  - request: reimburse a driver for a receipt he paid out of pocket
+    expect: [/payroll/expenses]
+  - request: which email address do invoices get sent from
+    expect: [/organization/email-profiles]
+  - request: how are our CSA scores trending
+    expect: [/hr/fleet-safety]
+  - request: choose how scanned documents are read into shipments
+    expect: [/admin/document-intelligence]

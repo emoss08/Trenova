@@ -29,6 +29,7 @@ var Shard = &gqlexec.Shard{
 		{Name: "DeskActivityEntry", Implementors: []string{"DeskActivityEntry"}},
 		{Name: "DeskAttention", Implementors: []string{"DeskAttention"}},
 		{Name: "DeskAttentionGroup", Implementors: []string{"DeskAttentionGroup"}},
+		{Name: "DeskAttentionKind", Implementors: []string{"DeskAttentionKind"}},
 		{Name: "DeskLensCounts", Implementors: []string{"DeskLensCounts"}},
 		{Name: "DeskRecord", Implementors: []string{"DeskRecord"}},
 	},
@@ -354,6 +355,17 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNDeskLensCounts2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋdeskattentionportsᚐLensCounts),
 			},
 			{
+				Name:      "kinds",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "DeskAttentionKind",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*deskattentionports.Attention)
+					return obj.Kinds, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDeskAttentionKind2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋdeskattentionportsᚐKindCountᚄ),
+			},
+			{
 				Name:     "hasMore",
 				NonNull:  true,
 				ChildErr: errNoChild0,
@@ -465,6 +477,48 @@ var Shard = &gqlexec.Shard{
 					return obj.Ownership, nil
 				},
 				Marshal: gqlexec.Marshal(marshalODeskCaseOwnership2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋrecordcaseᚐOwnership),
+			},
+		}},
+		{Object: "DeskAttentionKind", Fields: []*gqlexec.Field{
+			{
+				Name:     "kind",
+				NonNull:  true,
+				ChildErr: errNoChild7,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*deskattentionports.KindCount)
+					return obj.Kind, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNWatchtowerSourceKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐSourceKind),
+			},
+			{
+				Name:     "label",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*deskattentionports.KindCount)
+					return obj.Label, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "lens",
+				NonNull:  true,
+				ChildErr: errNoChild8,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*deskattentionports.KindCount)
+					return obj.Lens, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDeskLens2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋdesklensᚐLens),
+			},
+			{
+				Name:     "count",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*deskattentionports.KindCount)
+					return obj.Count, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
 			},
 		}},
 		{Object: "DeskLensCounts", Fields: []*gqlexec.Field{
@@ -635,7 +689,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild7,
+				ChildErr:   errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*watchtower.Item)
 					return gqlexec.Resolver[WatchtowerItemResolver](ec, "WatchtowerItem@deskattention").DeskLens(ctx, obj)
@@ -660,7 +714,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild7,
+				ChildErr:   errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.WatchtowerKindSummary)
 					return gqlexec.Resolver[WatchtowerKindSummaryResolver](ec, "WatchtowerKindSummary@deskattention").DeskLens(ctx, obj)
@@ -720,7 +774,8 @@ var (
 	errNoChild4 = errors.New("field of type DeskActivityOutcome does not have child fields")
 	errNoChild5 = errors.New("field of type Int does not have child fields")
 	errNoChild6 = errors.New("field of type WatchtowerSeverity does not have child fields")
-	errNoChild7 = errors.New("field of type DeskLens does not have child fields")
+	errNoChild7 = errors.New("field of type WatchtowerSourceKind does not have child fields")
+	errNoChild8 = errors.New("field of type DeskLens does not have child fields")
 )
 
 func field_Query_deskAttention_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
@@ -792,8 +847,11 @@ func unmarshalInputDeskAttentionInput(ctx context.Context, ec *gqlexec.Exec, obj
 	if _, present := asMap["mine"]; !present {
 		asMap["mine"] = false
 	}
+	if _, present := asMap["unseen"]; !present {
+		asMap["unseen"] = false
+	}
 
-	fieldsInOrder := [...]string{"lens", "kinds", "severities", "first", "recordId", "working", "mine"}
+	fieldsInOrder := [...]string{"lens", "kinds", "severities", "first", "recordId", "working", "mine", "search", "unseen"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -849,6 +907,20 @@ func unmarshalInputDeskAttentionInput(ctx context.Context, ec *gqlexec.Exec, obj
 				return it, err
 			}
 			it.Mine = data
+		case "search":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Search = data
+		case "unseen":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("unseen"))
+			data, err := unmarshalOBoolean2ᚖbool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Unseen = data
 		}
 	}
 	return it, nil
@@ -911,6 +983,14 @@ func unmarshalOInt2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*int, e
 		return nil, nil
 	}
 	res, err := graphql.UnmarshalInt(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOString2ᚖstring(ctx context.Context, ec *gqlexec.Exec, v any) (*string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalString(v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -1016,6 +1096,18 @@ func marshalNDeskAttentionGroup2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return ec.MarshalType(ctx, sel, "DeskAttentionGroup", v)
 }
 
+func marshalNDeskAttentionKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋdeskattentionportsᚐKindCount(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v deskattentionports.KindCount) graphql.Marshaler {
+	return ec.MarshalType(ctx, sel, "DeskAttentionKind", &v)
+}
+
+func marshalNDeskAttentionKind2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋdeskattentionportsᚐKindCountᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []deskattentionports.KindCount) graphql.Marshaler {
+	return gqlexec.List[deskattentionports.KindCount]{
+		Elem:        marshalNDeskAttentionKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋdeskattentionportsᚐKindCount,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
 func marshalNDeskLens2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋdesklensᚐLens(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v desklens.Lens) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
@@ -1102,6 +1194,14 @@ func marshalNWatchtowerItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmod
 }
 
 func marshalNWatchtowerSeverity2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐSeverity(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v watchtower.Severity) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
+func marshalNWatchtowerSourceKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐSourceKind(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v watchtower.SourceKind) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)

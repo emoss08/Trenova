@@ -105,7 +105,7 @@ func ownerFieldRefused(t *testing.T, err error) {
 	var multiErr *errortypes.MultiError
 	require.ErrorAs(t, err, &multiErr)
 	require.Len(t, multiErr.Errors, 1)
-	assert.Equal(t, agenttoolports.SelfScopeOwnerParam, multiErr.Errors[0].Field)
+	assert.Equal(t, agenttoolports.SelfScopeOwnerParam, multiErr.Errors[0].Field())
 	assert.Equal(t, errortypes.ErrForbidden, multiErr.Errors[0].Code)
 }
 

@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -141,4 +142,9 @@ type AgentEvalCaseService interface {
 		req CaptureEvalCaseCandidatesRequest,
 	) (*CaptureEvalCaseCandidatesResult, error)
 	Purge(ctx context.Context, req PurgeEvalCasesRequest) (*PurgeEvalCasesResult, error)
+	RecordedReads(
+		ctx context.Context,
+		tenant pagination.TenantInfo,
+		caseID pulid.ID,
+	) (agentruntimeports.RecordedReads, error)
 }

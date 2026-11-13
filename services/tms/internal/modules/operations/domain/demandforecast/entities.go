@@ -64,6 +64,14 @@ type BookingCurve struct {
 	CreatedAt      int64     `json:"createdAt"      keel:"created_at,autocreate"`
 }
 
+const (
+	RefitAfterSeconds = int64(3600)
+	IntervalLow       = 0.1
+	IntervalHigh      = 0.9
+	RecordDays        = 14
+	RecordWeeks       = 8
+)
+
 type Status string
 
 const (
@@ -86,6 +94,11 @@ type Quality struct {
 	MAE              float64  `json:"mae"              keel:"mae"`
 	NaiveMAE         float64  `json:"naiveMae"         keel:"naive_mae"`
 	Skill            float64  `json:"skill"            keel:"skill"`
+	Dispersion       float64  `json:"dispersion"       keel:"dispersion"`
+	Level            float64  `json:"level"            keel:"level"`
+	HolidayFactor    float64  `json:"holidayFactor"    keel:"holiday_factor"`
+	Holidays         []int64  `json:"holidays"         keel:"holidays,jsonb"`
+	Timezone         string   `json:"timezone"         keel:"timezone"`
 	FittedAt         int64    `json:"fittedAt"         keel:"fitted_at"`
 	Version          int64    `json:"version"          keel:"version,version"`
 	CreatedAt        int64    `json:"createdAt"        keel:"created_at,autocreate"`

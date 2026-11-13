@@ -1,7 +1,7 @@
+import { FloatingPanelHeader } from "@/components/floating-panel";
 import type { FreightOutlook } from "@/lib/graphql/freight-outlook";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { useT } from "@trenova/shared/i18n/use-t";
-import { CollapseBriefButton } from "./brief-rail";
 import { movesIn, moveKey } from "./outlook-model";
 import { OutlookMoves } from "./outlook-moves";
 import { readingSpan } from "./outlook-overview";
@@ -21,7 +21,7 @@ export function OutlookBriefPanel({
   hotKey,
   onHot,
   onOpenArea,
-  onCollapse,
+  onClose,
   dismissed,
   onDismissedChange,
 }: {
@@ -31,7 +31,7 @@ export function OutlookBriefPanel({
   hotKey: string | null;
   onHot: (key: string | null) => void;
   onOpenArea: (cell: number, slotStart: number) => void;
-  onCollapse: () => void;
+  onClose: () => void;
   dismissed: ReadonlySet<string>;
   onDismissedChange: (next: ReadonlySet<string>) => void;
 }) {
@@ -55,15 +55,14 @@ export function OutlookBriefPanel({
 
   return (
     <div className="flex min-h-0 flex-1 animate-in flex-col duration-200 ease-settle fade-in-0 slide-in-from-right-3 motion-reduce:animate-none">
-      <div className="flex h-11 shrink-0 items-center gap-2 border-b border-border-subtle px-3.5">
-        <h2 className="text-sm font-semibold">{t("Brief")}</h2>
-        <span className="truncate text-xs text-foreground-subtle">
-          {readingSpan(outlook, indexes, pinned, t)}
-        </span>
-        <span className="ml-auto">
-          <CollapseBriefButton onCollapse={onCollapse} />
-        </span>
-      </div>
+      <FloatingPanelHeader onClose={onClose}>
+        <div className="flex min-w-0 items-baseline gap-2">
+          <h2 className="shrink-0 text-sm font-semibold">{t("Brief")}</h2>
+          <span className="truncate text-xs text-foreground-subtle">
+            {readingSpan(outlook, indexes, pinned, t)}
+          </span>
+        </div>
+      </FloatingPanelHeader>
       <ScrollArea
         maskVariant="card"
         maskHeight={18}

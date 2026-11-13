@@ -2,6 +2,7 @@ package agentevalcaseservice
 
 import (
 	"context"
+	"slices"
 	"testing"
 
 	"github.com/bytedance/sonic"
@@ -13,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitycontrol"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitysuite"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aifeedback"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports"
@@ -215,6 +217,7 @@ func (f *fakeCases) AdoptCandidates(
 		if stored.Status != agentquality.CaseStatusCandidate ||
 			stored.Source != agentquality.CaseSourceDecidedProposal ||
 			stored.CreatedByUserID != nil ||
+			len(stored.ReachedTools) > 0 ||
 			stored.CreatedAt < req.CreatedAfter {
 			continue
 		}
@@ -276,7 +279,30 @@ func (f fakeDecisions) ListByProposals(
 	return f.decisions, nil
 }
 
+type fakeSubjects struct{}
+
+func (fakeSubjects) Describe(
+	_ context.Context,
+	_ pagination.TenantInfo,
+	subjectType agent.SubjectType,
+	subjectID pulid.ID,
+) (*agentturn.RuntimeSubject, error) {
+	return &agentturn.RuntimeSubject{Type: subjectType, ID: subjectID.String(), Label: "S-100"}, nil
+}
+
 type fakeRuns struct{ run *agent.AgentRun }
+
+func (f fakeRuns) ListTranscriptsByIDs(
+	_ context.Context,
+	req *agentruntimeports.ListAgentRunsByIDsRequest,
+) ([]*agent.AgentRun, error) {
+	if f.run == nil || !slices.Contains(req.IDs, f.run.ID) ||
+		f.run.OrganizationID != req.TenantInfo.OrgID {
+		return []*agent.AgentRun{}, nil
+	}
+
+	return []*agent.AgentRun{f.run}, nil
+}
 
 func (f fakeRuns) GetByID(
 	context.Context,
@@ -509,6 +535,7 @@ func newWorld(t *testing.T, decision *agentdecision.AgentDecision) *world {
 		feedback:      feedback,
 		retention:     fakeRetention{},
 		settings:      settings,
+		subjects:      fakeSubjects{},
 		redactor:      testRedactor(t),
 		audit:         &mocks.NoopAuditService{},
 		now:           func() int64 { return 1_700_000_000 },
@@ -656,6 +683,96 @@ func TestCreateFromProposal_FreezesTheTurnWithTheCorrectedParameters(t *testing.
 	require.NotNil(t, evalCase.CapturedFingerprint)
 	assert.Equal(t, int64(4), evalCase.CapturedFingerprint.DefinitionVersion)
 	assert.NotEmpty(t, evalCase.ContentHash)
+}
+
+func (w *world) background(transcript *agent.RunTranscript) {
+	w.run.Trigger = agent.RunTriggerEvent
+	w.run.SubjectType = agent.SubjectShipment
+	w.run.SubjectID = pulid.MustNew("shp_")
+	w.run.StartedAt = 240
+	w.run.Transcript = transcript
+}
+
+func backgroundTranscript(t *testing.T) *agent.RunTranscript {
+	t.Helper()
+
+	customer, err := sonic.MarshalString(map[string]any{"name": "Acme Foods", "status": "Active"})
+	require.NoError(t, err)
+
+	return &agent.RunTranscript{Messages: []agent.TranscriptMessage{
+		{Role: string(conversation.RoleUser), Content: "A shipment was delivered.", CreatedAt: 240},
+		{
+			Role: string(conversation.RoleAssistant),
+			ToolCalls: []agent.TranscriptToolCall{
+				{ID: "call_1", Name: "customer_get", Arguments: map[string]any{"name": "Acme Foods"}},
+				{ID: "call_2", Name: "update_rate", Arguments: map[string]any{"rate": float64(1200)}},
+			},
+			CreatedAt: 241,
+		},
+		{
+			Role:       string(conversation.RoleTool),
+			ToolCallID: "call_1",
+			ToolName:   "customer_get",
+			Content:    toolresult.Fence("customer_get", customer),
+			CreatedAt:  242,
+		},
+		{
+			Role:       string(conversation.RoleTool),
+			ToolCallID: "call_lost",
+			ToolName:   "customer_get",
+			Content:    toolresult.Fence("customer_get", customer),
+			CreatedAt:  243,
+		},
+		{
+			Role:       string(conversation.RoleTool),
+			ToolCallID: "call_2",
+			ToolName:   "update_rate",
+			Content:    "Proposal filed.",
+			Omitted:    true,
+			CreatedAt:  244,
+		},
+	}}
+}
+
+func TestCreateFromProposal_ABackgroundRunFreezesWhatItsToolsReturned(t *testing.T) {
+	t.Parallel()
+
+	w := newWorld(t, &agentdecision.AgentDecision{Decision: agentdecision.DecisionAccepted})
+	w.background(backgroundTranscript(t))
+
+	evalCase := w.fromProposal(t).Case
+
+	assert.Equal(t, agent.RunTriggerEvent, evalCase.Trigger)
+	assert.Equal(t, agent.SubjectShipment, evalCase.SubjectType)
+	require.Len(t, evalCase.ToolFixtures, 1,
+		"a result whose call is not in the transcript, and one too large to have been kept, "+
+			"would answer the wrong call or with nothing")
+	fixture := evalCase.ToolFixtures[0]
+	assert.Equal(t, "customer_get", fixture.Tool)
+	assert.Equal(t, map[string]any{"name": "Acme Foods"}, fixture.Args)
+	assert.Equal(t, map[string]any{"name": "Acme Foods", "status": "Active"}, fixture.Result)
+	assert.Equal(t, int64(240), evalCase.Asked(),
+		"the replay runs as of when the run started")
+	require.NotNil(t, evalCase.Redaction)
+	assert.Nil(t, evalCase.SourceThreadID)
+
+	recording := evalCase.Recording()
+	require.NotNil(t, recording)
+	_, _, ok := recording.Recorded("customer_get", map[string]any{"name": "Acme Foods"})
+	assert.True(t, ok)
+}
+
+func TestCreateFromProposal_ABackgroundRunWithNoTranscriptReadsTheRecords(t *testing.T) {
+	t.Parallel()
+
+	w := newWorld(t, &agentdecision.AgentDecision{Decision: agentdecision.DecisionAccepted})
+	w.background(nil)
+
+	evalCase := w.fromProposal(t).Case
+
+	assert.Empty(t, evalCase.ToolFixtures)
+	assert.Nil(t, evalCase.AskedAt)
+	assert.Nil(t, evalCase.Recording())
 }
 
 func TestCreateFromProposal_RejectionIsExpectedToStayDropped(t *testing.T) {
@@ -943,6 +1060,47 @@ func TestCaptureCandidates_ActivatesADecidedProposalWhenTheSetIsKeptAutomaticall
 	assert.Equal(t, agentquality.CaseStatusActive, stored.Status)
 	assert.True(t, stored.Automatic)
 	assert.Equal(t, 1, w.settings.reads, "an organization's controls are read once a round")
+}
+
+func TestCaptureCandidates_ATurnThatUsedAToolTheAgentDoesNotHoldStaysACandidate(t *testing.T) {
+	t.Parallel()
+
+	w := newWorld(t, &agentdecision.AgentDecision{Decision: agentdecision.DecisionAccepted})
+	w.settings.control.AutoActivate = true
+	w.definition.ToolNames = []string{"update_rate"}
+	w.cases.candidates = []agentqualityports.EvalCaseCaptureCandidate{w.candidate()}
+
+	result, err := w.service.CaptureCandidates(
+		t.Context(),
+		agentqualityports.CaptureEvalCaseCandidatesRequest{},
+	)
+	require.NoError(t, err)
+
+	assert.Equal(t, 1, result.Captured)
+	assert.Zero(t, result.Activated,
+		"on the Desk an agent can find and call another agent's tool, which a replay cannot "+
+			"reach: the case could never pass, so it is not scored against on its own")
+	stored := w.onlyCase(t)
+	assert.Equal(t, agentquality.CaseStatusCandidate, stored.Status,
+		"and the next round does not adopt it either")
+	assert.False(t, stored.Automatic)
+	assert.Equal(t, []string{"customer_get"}, stored.ReachedTools)
+	require.Len(t, stored.ToolFixtures, 1, "what it read is still kept for whoever activates it")
+}
+
+func TestBeyondHeld_NamesEachToolTheAgentDoesNotHoldOnce(t *testing.T) {
+	t.Parallel()
+
+	definition := &agentdefinition.Definition{ToolNames: []string{"worker_get"}}
+
+	assert.Equal(t,
+		[]string{"shipment_add_comment", "customer_list"},
+		beyondHeld(definition, "shipment_add_comment", []string{
+			"worker_get", "customer_list", "find_tools", "customer_list",
+		}),
+		"the agent's own tools and the runtime's are not beyond it",
+	)
+	assert.Empty(t, beyondHeld(definition, "worker_get", []string{"worker_get", "ask_user"}))
 }
 
 func TestCaptureCandidates_RetiresTheOldestAutomaticCasesPastTheAgentsLimit(t *testing.T) {

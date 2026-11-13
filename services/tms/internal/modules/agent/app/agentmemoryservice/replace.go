@@ -47,7 +47,7 @@ func (s *Service) planReplacement(
 
 	inheritReaders(entity, replaced)
 
-	if !Replaceable(replaced.Status) {
+	if !replaced.Status.Replaceable() {
 		already, err := s.alreadyReplaced(ctx, req.TenantInfo, entity, replaced)
 		if err != nil {
 			return nil, false, err
@@ -98,10 +98,6 @@ func (s *Service) alreadyReplaced(
 
 	return existing != nil && existing.SupersedesID != nil &&
 		*existing.SupersedesID == replaced.ID, nil
-}
-
-func Replaceable(status agentmemory.MemoryStatus) bool {
-	return status == agentmemory.MemoryStatusActive || status == agentmemory.MemoryStatusPaused
 }
 
 func ReplacedFreely(replaced *agentmemory.Memory, personID pulid.ID, agentID *pulid.ID) bool {
@@ -162,7 +158,7 @@ func (s *Service) retireReplaced(
 	replacement *agentmemory.Memory,
 	actor *permissionports.RequestActor,
 ) {
-	if !Replaceable(replaced.Status) || replaced.ID == replacement.ID {
+	if !replaced.Status.Replaceable() || replaced.ID == replacement.ID {
 		return
 	}
 

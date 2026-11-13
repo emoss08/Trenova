@@ -5,6 +5,8 @@ fragment DeskMemoryFields on DeskMemory {
   scope
   roleId
   roleName
+  subjectType
+  subjectLabel
   status
   source
   sourceTitle

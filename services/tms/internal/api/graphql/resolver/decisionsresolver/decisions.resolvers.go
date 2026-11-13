@@ -142,6 +142,9 @@ func (r *QueryResolver) PendingDecisions(ctx context.Context, input gqlmodel.Pen
 	if input.ToolName != nil {
 		req.ToolName = *input.ToolName
 	}
+	if input.Search != nil {
+		req.Search = *input.Search
+	}
 	if input.AgentDefinitionID != nil && *input.AgentDefinitionID != "" {
 		definitionID, parseErr := pulid.MustParse(*input.AgentDefinitionID)
 		if parseErr != nil {

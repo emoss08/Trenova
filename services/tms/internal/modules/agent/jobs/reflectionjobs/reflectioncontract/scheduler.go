@@ -113,3 +113,35 @@ func priorityFor(tenant pagination.TenantInfo) temporal.Priority {
 		FairnessKey: tenant.OrgID.String(),
 	}
 }
+
+func (s *Scheduler) AfterCorrections(
+	ctx context.Context,
+	req *agentreflectionports.ReflectOnCorrectionsRequest,
+) {
+	if req == nil || req.PatternKey == "" || len(req.Work) == 0 {
+		return
+	}
+
+	tenant := tenantOnly(req.TenantInfo)
+	input := *req
+	input.TenantInfo = tenant
+	_, err := s.workflows.StartWorkflow(ctx, client.StartWorkflowOptions{
+		ID:                    CorrectionWorkflowID(req),
+		TaskQueue:             temporaltype.TaskQueueAgentBackground.String(),
+		WorkflowIDReusePolicy: enums.WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE_FAILED_ONLY,
+		StaticSummary:         "Look back over what people kept changing of an agent's work",
+		Priority:              priorityFor(tenant),
+	}, CorrectionReflectionWorkflowName, &input)
+	if err == nil {
+		return
+	}
+
+	var started *serviceerror.WorkflowExecutionAlreadyStarted
+	if errors.As(err, &started) {
+		return
+	}
+	s.l.Warn("could not cue a look back over what people changed",
+		zap.String("pattern", req.PatternKey),
+		zap.Error(err),
+	)
+}

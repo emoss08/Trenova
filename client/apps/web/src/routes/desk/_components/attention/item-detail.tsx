@@ -37,6 +37,14 @@ import type { ItemDecision } from "./use-item-decision";
 const NO_REASONS: WouldFailReason[] = [];
 
 /**
+ * The item's reading measure, centred in the detail beside the list, as a
+ * decision's card is. The item and the bar under it share it, so they stay
+ * one column however wide the window is.
+ */
+// i18n-ignore: class names, never shown to a person
+const ITEM_MEASURE_CLASS = "mx-auto w-full max-w-[720px]";
+
+/**
  * Why the one change in front of the person would be refused if approved, or
  * nothing when it would run. Read from the same preview the card shows, so it
  * costs no second request. A plan says this step by step in its own preview.
@@ -232,7 +240,7 @@ export function ItemDetail({
   const raised = formatFactTime(t, item.occurredAt, now, timezone);
   return (
     <div className="dk-w-det-w">
-      <div className="dk-w-det">
+      <div className={cn("dk-w-det", ITEM_MEASURE_CLASS)}>
         <button type="button" className="dk-w-det-back ui-focus-ring" onClick={onBack}>
           <DeskIcon name="chevL" size={12} />
           {t("All that needs you")}
@@ -360,106 +368,115 @@ export function ItemDetail({
         )}
       </div>
 
-      <div className="dk-w-bar">
-        <span className="dk-w-bar-note">
-          {isDecision
-            ? blocked.length > 0
-              ? t("It can't run as it stands. Sending it back tells the agent why.")
-              : t("You approve exactly what is shown here.")
-            : isMessage
-              ? t("A message is answered, filed or set aside in Triage, which clears it here.")
-              : ownedElsewhere && caseWork === null
-                ? t(
-                    "{0} owns this case, so only they can act on it. You can read it; a case lead can give it to you.",
-                    group.ownership?.owner?.name ?? t("Someone else"),
-                  )
-                : caseWork !== null
-                  ? caseWork.owner !== null && !caseWork.mine
-                    ? t(
-                        "{0} is working this in its case. It is closed there, by approving the plan or accepting the risk.",
-                        caseWork.owner.name,
-                      )
-                    : t(
-                        "This is being worked in its case. Close it there, by approving the plan or accepting the risk.",
-                      )
-                  : t("Done clears it for everyone; it comes back if the problem returns.")}
-        </span>
-        <div className="dk-w-bar-acts">
-          {isDecision && decision.phase === "idle" && canDecide && proposal !== null ? (
-            <>
-              <ReviewBlocker tally={decision.tally} plan={decision.planId !== null} />
-              <Button
-                variant="ghost"
-                className="text-danger-foreground"
-                onClick={() => onDecliningChange(true)}
-              >
-                {t("Decline")} <Key k="D" />
-              </Button>
-              {blocked.length > 0 ? (
-                // It would be refused if approved, so the way forward is back
-                // to the agent with the reasons, in one step.
+      {/* The bar's rule and its blur run the width of the detail; what it holds keeps to
+          the item's measure, so its note and its buttons end where the item's text does. */}
+      <div className="sticky bottom-0 border-t border-dsk-b-sub bg-dsk-canvas/92 backdrop-blur-[6px]">
+        <div
+          className={cn(
+            ITEM_MEASURE_CLASS,
+            "flex flex-wrap items-center gap-2 px-8 py-3 max-[900px]:px-4",
+          )}
+        >
+          <span className="dk-w-bar-note">
+            {isDecision
+              ? blocked.length > 0
+                ? t("It can't run as it stands. Sending it back tells the agent why.")
+                : t("You approve exactly what is shown here.")
+              : isMessage
+                ? t("A message is answered, filed or set aside in Triage, which clears it here.")
+                : ownedElsewhere && caseWork === null
+                  ? t(
+                      "{0} owns this case, so only they can act on it. You can read it; a case lead can give it to you.",
+                      group.ownership?.owner?.name ?? t("Someone else"),
+                    )
+                  : caseWork !== null
+                    ? caseWork.owner !== null && !caseWork.mine
+                      ? t(
+                          "{0} is working this in its case. It is closed there, by approving the plan or accepting the risk.",
+                          caseWork.owner.name,
+                        )
+                      : t(
+                          "This is being worked in its case. Close it there, by approving the plan or accepting the risk.",
+                        )
+                    : t("Done clears it for everyone; it comes back if the problem returns.")}
+          </span>
+          <div className="dk-w-bar-acts">
+            {isDecision && decision.phase === "idle" && canDecide && proposal !== null ? (
+              <>
+                <ReviewBlocker tally={decision.tally} plan={decision.planId !== null} />
                 <Button
-                  onClick={() =>
-                    void decision.decline(askAgentMessage(proposal.toolName, blocked, t))
-                  }
+                  variant="ghost"
+                  className="text-danger-foreground"
+                  onClick={() => onDecliningChange(true)}
                 >
-                  {agentName ? t("Send back to {0}", agentName) : t("Send back to the agent")}
+                  {t("Decline")} <Key k="D" />
                 </Button>
-              ) : (
-                <Button disabled={unseenPreviews > 0} onClick={() => void decision.approve()}>
-                  {t("Approve")} <Key k="A" inv />
-                </Button>
-              )}
-            </>
-          ) : isDecision && decision.phase === "deciding" ? (
-            <Button isLoading>{t("Approve")}</Button>
-          ) : null}
-          {!isDecision && !isMessage && canAct && caseWork === null && !ownedElsewhere && (
-            <>
-              <Button variant="ghost" onClick={actions.snooze}>
-                <DeskIcon name="clock" size={13} />
-                {t("Snooze")} <Key k="S" />
-              </Button>
-              {/* An agent raised it to ask for a person: no agent is offered for it. */}
-              {item.agentWork === null &&
-                item.subjectId !== null &&
-                item.sourceKind !== "AgentException" && (
-                  <WatchtowerHandOff
-                    suggested={item.suggestedAgent}
-                    open={actions.menuOpen}
-                    onOpenChange={actions.setMenuOpen}
-                    onHandOff={actions.handOff}
-                    disabled={actions.handingOff}
-                  />
+                {blocked.length > 0 ? (
+                  // It would be refused if approved, so the way forward is back
+                  // to the agent with the reasons, in one step.
+                  <Button
+                    onClick={() =>
+                      void decision.decline(askAgentMessage(proposal.toolName, blocked, t))
+                    }
+                  >
+                    {agentName ? t("Send back to {0}", agentName) : t("Send back to the agent")}
+                  </Button>
+                ) : (
+                  <Button disabled={unseenPreviews > 0} onClick={() => void decision.approve()}>
+                    {t("Approve")} <Key k="A" inv />
+                  </Button>
                 )}
-              <Button variant={readable ? "outline" : "default"} onClick={actions.done}>
-                <DeskIcon name="check" size={13} />
-                {t("Done")} <Key k="E" inv={!readable} />
+              </>
+            ) : isDecision && decision.phase === "deciding" ? (
+              <Button isLoading>{t("Approve")}</Button>
+            ) : null}
+            {!isDecision && !isMessage && canAct && caseWork === null && !ownedElsewhere && (
+              <>
+                <Button variant="ghost" onClick={actions.snooze}>
+                  <DeskIcon name="clock" size={13} />
+                  {t("Snooze")} <Key k="S" />
+                </Button>
+                {/* An agent raised it to ask for a person: no agent is offered for it. */}
+                {item.agentWork === null &&
+                  item.subjectId !== null &&
+                  item.sourceKind !== "AgentException" && (
+                    <WatchtowerHandOff
+                      suggested={item.suggestedAgent}
+                      open={actions.menuOpen}
+                      onOpenChange={actions.setMenuOpen}
+                      onHandOff={actions.handOff}
+                      disabled={actions.handingOff}
+                    />
+                  )}
+                <Button variant={readable ? "secondary" : "default"} onClick={actions.done}>
+                  <DeskIcon name="check" size={13} />
+                  {t("Done")} <Key k="E" inv={!readable} />
+                </Button>
+              </>
+            )}
+            {isMessage && item.path !== "" && (
+              <Button
+                variant={readable ? "secondary" : "default"}
+                onClick={() => void navigate(item.path)}
+              >
+                <DeskIcon name="mail" size={13} />
+                {t("Open in Triage")}
+                {!readable && <Key k={<CornerDownLeftIcon aria-hidden />} inv />}
               </Button>
-            </>
-          )}
-          {isMessage && item.path !== "" && (
-            <Button
-              variant={readable ? "secondary" : "default"}
-              onClick={() => void navigate(item.path)}
-            >
-              <DeskIcon name="mail" size={13} />
-              {t("Open in Triage")}
-              {!readable && <Key k={<CornerDownLeftIcon aria-hidden />} inv />}
-            </Button>
-          )}
-          {record && readable && (
-            <Button
-              onClick={() =>
-                void navigate(casePath(record.kind, record.id), {
-                  state: START_CASE,
-                  viewTransition: true,
-                })
-              }
-            >
-              {t("Open the case")} <Key k={<CornerDownLeftIcon aria-hidden />} inv />
-            </Button>
-          )}
+            )}
+            {record && readable && (
+              <Button
+                onClick={() =>
+                  void navigate(casePath(record.kind, record.id), {
+                    state: START_CASE,
+                    viewTransition: true,
+                  })
+                }
+              >
+                {t("Open the case")} <Key k={<CornerDownLeftIcon aria-hidden />} inv />
+              </Button>
+            )}
+          </div>
         </div>
       </div>
 

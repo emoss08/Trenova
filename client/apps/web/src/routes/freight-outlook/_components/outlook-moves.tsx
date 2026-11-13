@@ -22,7 +22,7 @@ import { cn, formatCentsWhole } from "@trenova/shared/lib/utils";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import type { ReactNode } from "react";
 import { Link } from "react-router";
-import { moveKey } from "./outlook-model";
+import { moveKey, windowOfSlot } from "./outlook-model";
 import { PanelSection, slotLabel, slotRange } from "./outlook-parts";
 import { useOutlookActions } from "./use-outlook-actions";
 
@@ -310,7 +310,7 @@ function MoveCard({ move, text }: { move: FreightMove; text: MoveText }) {
       <div>
         <p className="text-sm leading-snug font-medium">{text.plain}</p>
         <p className="mt-0.5 text-xs text-foreground-subtle">
-          {t("For {0}", slotRange(move.slotStart))}
+          {t("For {0}", slotRange(windowOfSlot(move)))}
         </p>
       </div>
       <p className="text-xs leading-normal text-muted-foreground">{text.detail}</p>

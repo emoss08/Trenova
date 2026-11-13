@@ -90,6 +90,9 @@ export function DecisionRow({
       className={cn(
         "group/row flex h-11.5 w-full items-center gap-2.5 pr-2.5 pl-2 transition-[opacity,translate] duration-300 ease-out",
         row.className,
+        // dk-w-ar is the row's entrance (desk-room.css), which the list turns off once
+        // settled. A row on its way out gives it up, so nothing holds it in place.
+        leaving === null && "dk-w-ar",
         leaving === "ok" && "translate-x-3 opacity-0",
         leaving === "no" && "-translate-x-3 opacity-0",
       )}

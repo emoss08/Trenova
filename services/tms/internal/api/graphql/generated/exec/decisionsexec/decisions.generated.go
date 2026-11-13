@@ -718,7 +718,7 @@ func unmarshalInputPendingDecisionsInput(ctx context.Context, ec *gqlexec.Exec, 
 		asMap["first"] = 25
 	}
 
-	fieldsInOrder := [...]string{"first", "after", "agentDefinitionId", "toolName"}
+	fieldsInOrder := [...]string{"first", "after", "agentDefinitionId", "toolName", "search"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -753,6 +753,13 @@ func unmarshalInputPendingDecisionsInput(ctx context.Context, ec *gqlexec.Exec, 
 				return it, err
 			}
 			it.ToolName = data
+		case "search":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("search"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Search = data
 		}
 	}
 	return it, nil

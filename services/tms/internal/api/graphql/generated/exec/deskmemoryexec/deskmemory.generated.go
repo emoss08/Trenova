@@ -85,9 +85,28 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 			{
+				Name:     "subjectType",
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DeskMemory)
+					return obj.SubjectType, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOAgentMemorySubjectType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentmemoryᚐMemorySubjectType),
+			},
+			{
+				Name:     "subjectLabel",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DeskMemory)
+					return obj.SubjectLabel, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
 				Name:     "status",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DeskMemory)
 					return obj.Status, nil
@@ -97,7 +116,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "source",
 				NonNull:  true,
-				ChildErr: errNoChild5,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DeskMemory)
 					return obj.Source, nil
@@ -117,7 +136,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "useCount",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DeskMemory)
 					return obj.UseCount, nil
@@ -126,7 +145,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "lastUsedAt",
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DeskMemory)
 					return obj.LastUsedAt, nil
@@ -136,7 +155,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "createdAt",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DeskMemory)
 					return obj.CreatedAt, nil
@@ -146,7 +165,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "version",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DeskMemory)
 					return obj.Version, nil
@@ -156,7 +175,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "editable",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DeskMemory)
 					return obj.Editable, nil
@@ -227,7 +246,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "count",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DeskMemoryCount)
 					return obj.Count, nil
@@ -259,7 +278,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "status",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DeskMemoryLink)
 					return obj.Status, nil
@@ -291,7 +310,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "all",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DeskMemoryPage)
 					return obj.All, nil
@@ -334,7 +353,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "writable",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DeskMemoryRole)
 					return obj.Writable, nil
@@ -346,7 +365,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "savingMode",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DeskMemorySettings)
 					return obj.SavingMode, nil
@@ -367,7 +386,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "canShareWithOrganization",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DeskMemorySettings)
 					return obj.CanShareWithOrganization, nil
@@ -377,7 +396,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "managesShared",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.DeskMemorySettings)
 					return obj.ManagesShared, nil
@@ -536,16 +555,17 @@ type QueryResolver interface {
 }
 
 var (
-	errNoChild0 = errors.New("field of type ID does not have child fields")
-	errNoChild1 = errors.New("field of type String does not have child fields")
-	errNoChild2 = errors.New("field of type AgentMemoryKind does not have child fields")
-	errNoChild3 = errors.New("field of type AgentMemoryScope does not have child fields")
-	errNoChild4 = errors.New("field of type AgentMemoryStatus does not have child fields")
-	errNoChild5 = errors.New("field of type AgentMemorySource does not have child fields")
-	errNoChild6 = errors.New("field of type Int does not have child fields")
-	errNoChild7 = errors.New("field of type Timestamp does not have child fields")
-	errNoChild8 = errors.New("field of type Boolean does not have child fields")
-	errNoChild9 = errors.New("field of type AgentMemorySavingMode does not have child fields")
+	errNoChild0  = errors.New("field of type ID does not have child fields")
+	errNoChild1  = errors.New("field of type String does not have child fields")
+	errNoChild2  = errors.New("field of type AgentMemoryKind does not have child fields")
+	errNoChild3  = errors.New("field of type AgentMemoryScope does not have child fields")
+	errNoChild4  = errors.New("field of type AgentMemorySubjectType does not have child fields")
+	errNoChild5  = errors.New("field of type AgentMemoryStatus does not have child fields")
+	errNoChild6  = errors.New("field of type AgentMemorySource does not have child fields")
+	errNoChild7  = errors.New("field of type Int does not have child fields")
+	errNoChild8  = errors.New("field of type Timestamp does not have child fields")
+	errNoChild9  = errors.New("field of type Boolean does not have child fields")
+	errNoChild10 = errors.New("field of type AgentMemorySavingMode does not have child fields")
 )
 
 func field_Mutation_createDeskMemory_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
@@ -738,7 +758,7 @@ func unmarshalInputCreateDeskMemoryInput(ctx context.Context, ec *gqlexec.Exec, 
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"content", "scope", "roleId"}
+	fieldsInOrder := [...]string{"content", "scope", "roleId", "kind", "subjectType", "subjectId"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -766,6 +786,27 @@ func unmarshalInputCreateDeskMemoryInput(ctx context.Context, ec *gqlexec.Exec, 
 				return it, err
 			}
 			it.RoleID = data
+		case "kind":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("kind"))
+			data, err := unmarshalOAgentMemoryKind2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentmemoryᚐMemoryKind(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Kind = data
+		case "subjectType":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("subjectType"))
+			data, err := unmarshalOAgentMemorySubjectType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentmemoryᚐMemorySubjectType(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.SubjectType = data
+		case "subjectId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("subjectId"))
+			data, err := unmarshalOID2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.SubjectID = data
 		}
 	}
 	return it, nil
@@ -782,7 +823,7 @@ func unmarshalInputDeskMemoriesInput(ctx context.Context, ec *gqlexec.Exec, obj 
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"first", "after", "scope", "roleId", "query"}
+	fieldsInOrder := [...]string{"first", "after", "scope", "roleId", "query", "subjectType", "subjectId"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -824,6 +865,20 @@ func unmarshalInputDeskMemoriesInput(ctx context.Context, ec *gqlexec.Exec, obj 
 				return it, err
 			}
 			it.Query = data
+		case "subjectType":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("subjectType"))
+			data, err := unmarshalOAgentMemorySubjectType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentmemoryᚐMemorySubjectType(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.SubjectType = data
+		case "subjectId":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("subjectId"))
+			data, err := unmarshalOID2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.SubjectID = data
 		}
 	}
 	return it, nil
@@ -937,12 +992,30 @@ func unmarshalNString2string(ctx context.Context, ec *gqlexec.Exec, v any) (stri
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func unmarshalOAgentMemoryKind2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentmemoryᚐMemoryKind(ctx context.Context, ec *gqlexec.Exec, v any) (*agentmemory.MemoryKind, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := agentmemory.MemoryKind(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func unmarshalOAgentMemoryScope2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentmemoryᚐMemoryScope(ctx context.Context, ec *gqlexec.Exec, v any) (*agentmemory.MemoryScope, error) {
 	if v == nil {
 		return nil, nil
 	}
 	tmp, err := graphql.UnmarshalString(v)
 	res := agentmemory.MemoryScope(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalOAgentMemorySubjectType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentmemoryᚐMemorySubjectType(ctx context.Context, ec *gqlexec.Exec, v any) (*agentmemory.MemorySubjectType, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := agentmemory.MemorySubjectType(tmp)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -1120,6 +1193,14 @@ func marshalNTimestamp2int(ctx context.Context, ec *gqlexec.Exec, sel ast.Select
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
 	}
+	return res
+}
+
+func marshalOAgentMemorySubjectType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentmemoryᚐMemorySubjectType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentmemory.MemorySubjectType) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalString(string(*v))
 	return res
 }
 

@@ -28,6 +28,8 @@ const (
 	MaxLaneChoices     = 5
 	MaxReach           = 8
 	MaxTargets         = 120
+	MaxTargetOptions   = 24
+	MaxRepairs         = 8
 	MinShort           = 0.5
 	MinSpare           = 0.5
 	KeepMinShort       = 1.0
@@ -73,6 +75,7 @@ type Valuer interface {
 
 type Inputs struct {
 	Now            int64
+	Grid           dispatchmarket.Grid
 	Areas          []demandforecast.AreaBalance
 	Drivers        []Driver
 	Lanes          []Lane
@@ -91,6 +94,7 @@ type Step struct {
 	ToCell         int64
 	ToLabel        string
 	SlotStart      int64
+	SlotEnd        int64
 	Short          float64
 	FreeAt         int64
 	ArriveAt       int64
@@ -178,7 +182,7 @@ func (p *planner) drop(t *target) int64 {
 func (p *planner) stay(d *Driver) int64 {
 	key := demandforecast.WindowKey{
 		Cell:  d.Cell,
-		Start: dispatchmarket.SlotStart(max(d.FreeAt, p.in.Now)),
+		Start: p.in.Grid.SlotStart(max(d.FreeAt, p.in.Now)),
 	}
 	if cents, ok := p.stays[key]; ok {
 		return cents
@@ -193,30 +197,35 @@ func (p *planner) stay(d *Driver) int64 {
 }
 
 func (p *planner) slotIndex(area *demandforecast.AreaBalance, at int64) (int, bool) {
-	if len(area.Slots) == 0 {
-		return 0, false
-	}
-	offset := (dispatchmarket.SlotStart(max(at, p.in.Now)) - area.Slots[0].Start) /
-		dispatchmarket.SlotSeconds
-	if offset < 0 || offset >= int64(len(area.Slots)) {
-		return 0, false
+	at = max(at, p.in.Now)
+	for index, slot := range area.Slots {
+		if at >= slot.Start && at < slot.End {
+			return index, true
+		}
 	}
 
-	return int(offset), true
+	return 0, false
 }
 
 func (p *planner) idle(d *Driver) bool {
+	return p.spare(d) > 0
+}
+
+func (p *planner) spare(d *Driver) int {
 	area, ok := p.areas[d.Cell]
 	if !ok {
-		return true
+		return math.MaxInt
 	}
 	index, ok := p.slotIndex(area, d.FreeAt)
 	if !ok {
-		return false
+		return 0
 	}
 	slot := area.Slots[index]
+	if slot.Short >= MinShort || slot.Spare < MinSpare {
+		return 0
+	}
 
-	return slot.Short < MinShort && slot.Spare >= MinSpare
+	return max(1, int(math.Round(slot.Spare)))
 }
 
 func (p *planner) targets() []*target {
@@ -231,7 +240,7 @@ func (p *planner) targets() []*target {
 				area:  area,
 				index: index,
 				start: slot.Start,
-				end:   slot.Start + dispatchmarket.SlotSeconds,
+				end:   slot.End,
 				short: slot.Short,
 				room:  max(1, int(math.Round(slot.Short))),
 				point: dispatchmarket.CenterOf(area.Cell),
@@ -260,10 +269,16 @@ func (p *planner) emptyCost(miles float64) int64 {
 }
 
 type option struct {
-	step    Step
-	worker  pulid.ID
-	partner pulid.ID
-	target  *target
+	step      Step
+	worker    pulid.ID
+	partner   pulid.ID
+	target    *target
+	leaver    *Driver
+	departure pulid.ID
+}
+
+func (o *option) mover() pulid.ID {
+	return o.leaver.WorkerID
 }
 
 func Plan(in *Inputs) []Step {
@@ -272,26 +287,11 @@ func Plan(in *Inputs) []Step {
 	}
 	p := newPlanner(in)
 	targets := p.targets()
-	options := append(p.sends(targets), p.keeps(targets)...)
-	slices.SortStableFunc(options, func(a, b option) int {
-		if c := cmp.Compare(b.step.NetCents, a.step.NetCents); c != 0 {
-			return c
-		}
-		return cmp.Compare(a.worker, b.worker)
-	})
+	chosen := p.assign(append(p.sends(targets), p.keeps(targets)...))
 
-	used := map[pulid.ID]bool{}
 	usedLanes := map[pulid.ID]bool{}
-	steps := []Step{}
-	for _, opt := range options {
-		if used[opt.worker] || (!opt.partner.IsNil() && used[opt.partner]) || opt.target.room <= 0 {
-			continue
-		}
-		used[opt.worker] = true
-		if !opt.partner.IsNil() {
-			used[opt.partner] = true
-		}
-		opt.target.room--
+	steps := make([]Step, 0, len(chosen)+MaxPace)
+	for _, opt := range chosen {
 		step := opt.step
 		if step.Kind == KindSend {
 			step = p.book(step, opt.target, usedLanes)
@@ -345,6 +345,7 @@ func (p *planner) sends(targets []*target) []option {
 			out = append(out, option{
 				worker: d.WorkerID,
 				target: t,
+				leaver: d,
 				step: Step{
 					Kind:           KindSend,
 					WorkerID:       d.WorkerID,
@@ -354,6 +355,7 @@ func (p *planner) sends(targets []*target) []option {
 					ToCell:         t.area.Cell,
 					ToLabel:        t.area.Label,
 					SlotStart:      t.start,
+					SlotEnd:        t.end,
 					Short:          t.short,
 					FreeAt:         free,
 					ArriveAt:       arrive,
@@ -423,6 +425,7 @@ func (p *planner) book(step Step, t *target, usedLanes map[pulid.ID]bool) Step {
 
 func (p *planner) keeps(targets []*target) []option {
 	out := []option{}
+	kept := map[pulid.ID]bool{}
 	for i := range p.in.Departures {
 		m := &p.in.Departures[i]
 		cell, ok := dispatchmarket.CellOf(m.Origin)
@@ -430,15 +433,15 @@ func (p *planner) keeps(targets []*target) []option {
 			continue
 		}
 		w := p.drivers[m.WorkerID]
-		if w == nil || w.Cell == cell {
+		if w == nil || w.Cell == cell || kept[w.WorkerID] {
 			continue
 		}
 		t := firstShortAfter(targets, cell, m.PickupStart)
 		if t == nil {
 			continue
 		}
+		kept[w.WorkerID] = true
 		value := p.drop(t)
-		best, bestNet, bestMiles := (*Driver)(nil), int64(0), 0.0
 		for j := range p.in.Drivers {
 			q := &p.in.Drivers[j]
 			if q.WorkerID == w.WorkerID || q.Cell == cell || !p.idle(q) {
@@ -449,43 +452,44 @@ func (p *planner) keeps(targets []*target) []option {
 				max(q.FreeAt, p.in.Now)+geoutils.PlanningDriveSeconds(miles) > m.PickupEnd {
 				continue
 			}
-			net := value - p.stay(q) - p.emptyCost(miles)
-			if net > bestNet || (net == bestNet && best != nil && q.WorkerID < best.WorkerID) {
-				best, bestNet, bestMiles = q, net, miles
+			stay, cost := p.stay(q), p.emptyCost(miles)
+			net := value - stay - cost
+			if net <= 0 {
+				continue
 			}
+			out = append(out, option{
+				worker:    w.WorkerID,
+				partner:   q.WorkerID,
+				target:    t,
+				leaver:    q,
+				departure: m.MoveID,
+				step: Step{
+					Kind:           KindKeep,
+					WorkerID:       w.WorkerID,
+					WorkerName:     w.Name,
+					FromCell:       cell,
+					FromLabel:      p.label(cell),
+					ToCell:         cell,
+					ToLabel:        t.area.Label,
+					SlotStart:      t.start,
+					SlotEnd:        t.end,
+					Short:          t.short,
+					FreeAt:         m.PickupStart,
+					DropCents:      value,
+					StayCents:      stay,
+					EmptyCostCents: cost,
+					NetCents:       net,
+					MoveID:         m.MoveID,
+					ProNumber:      m.ProNumber,
+					PartnerID:      q.WorkerID,
+					PartnerName:    q.Name,
+					PartnerCell:    q.Cell,
+					PartnerLabel:   p.label(q.Cell),
+					PartnerFreeAt:  max(q.FreeAt, p.in.Now),
+					PartnerMiles:   miles,
+				},
+			})
 		}
-		if best == nil || bestNet <= 0 {
-			continue
-		}
-		out = append(out, option{
-			worker:  w.WorkerID,
-			partner: best.WorkerID,
-			target:  t,
-			step: Step{
-				Kind:           KindKeep,
-				WorkerID:       w.WorkerID,
-				WorkerName:     w.Name,
-				FromCell:       cell,
-				FromLabel:      p.label(cell),
-				ToCell:         cell,
-				ToLabel:        t.area.Label,
-				SlotStart:      t.start,
-				Short:          t.short,
-				FreeAt:         m.PickupStart,
-				DropCents:      value,
-				StayCents:      p.stay(best),
-				EmptyCostCents: p.emptyCost(bestMiles),
-				NetCents:       bestNet,
-				MoveID:         m.MoveID,
-				ProNumber:      m.ProNumber,
-				PartnerID:      best.WorkerID,
-				PartnerName:    best.Name,
-				PartnerCell:    best.Cell,
-				PartnerLabel:   p.label(best.Cell),
-				PartnerFreeAt:  max(best.FreeAt, p.in.Now),
-				PartnerMiles:   bestMiles,
-			},
-		})
 	}
 
 	return out

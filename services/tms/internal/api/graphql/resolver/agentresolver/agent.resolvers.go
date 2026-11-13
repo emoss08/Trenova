@@ -1104,3 +1104,15 @@ func (r *QueryResolver) AgentMemoryUpkeep(ctx context.Context) ([]*agentmemorypo
 
 	return r.AgentMemoryService.Upkeep(ctx, resolvercore.TenantInfo(authCtx))
 }
+
+func (r *QueryResolver) AgentLearningStats(ctx context.Context, days int) (*agentreflectionports.LearningStats, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentMemory, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.AgentReflectionService.LearningStats(ctx, &agentreflectionports.LearningStatsRequest{
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+		Days:       days,
+	})
+}

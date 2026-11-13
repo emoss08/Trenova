@@ -877,7 +877,9 @@ a memory is filed under is not one of its words (`memoryTokens` drops the subjec
 tokens, from the content too): naming a customer puts its memories in the prompt, and one
 bears only when the turn also asks about what it says. Counting the name made every memory
 about a customer "used" each time the customer came up, so `use_count` said nothing about
-which memories earn their place.
+which memories earn their place. A turn that names the record and asks nothing more
+particular ("tell me about Acme", `asksAbout`) asks for everything kept about it, and every
+memory about it bears.
 The words are read from the turn's own message (`QueryVectorRequest.Focus`,
 carried as `MemoryContextRequest.Focus`); the message before it, which the
 embedded text also carries, is read too only when the turn's message has fewer
@@ -1007,7 +1009,7 @@ spends no model call.
 **A wider audience.** A memory for one person or one role is also judged, in the same call,
 against active memories for a wider audience its readers are part of: the organization's,
 and for a person's memory their roles' (`ListNeighbors` with `Wider`; about the same record
-and tool, or about any record when the new memory is filed under none). One of the same kind
+and tool, or about any record when the new memory is filed under none). A memory offered because the person asked to be asked first is judged the same way. One of the same kind
 that already says it is refreshed in place of a personal copy. One that says otherwise is
 never replaced: the new memory is kept beside it, the save returns it as
 `Memory.DiffersFrom`, and the tool result tells the agent the two differ and to ask whether
@@ -1029,6 +1031,32 @@ behind for `AgingAfterDays` (180), and any memory no turn has used for `UnusedAf
 (`confirmAgentMemory`, `agent_memory:manage`, audited) stamps `confirmed_at` and
 `confirmed_by_user_id`, which takes it off the list until it ages again; Retire stops
 agents reading it. One person's own memories are theirs and are not listed.
+
+**Short names.** `ListNamedSubjects` also matches a message word of four letters or more
+that is the first word of a customer's, location's or carrier's name ("acme" for Acme
+Manufacturing), in the same round trip as the whole-name match, and `SubjectsLedBy` keeps it
+only when one record of that kind with memories begins with the word: "granite" for four
+Granite customers names none of them. Drivers are left out, since a first name names too
+many people. The check is among records that have memories, so a short name shared with a
+customer nobody has written about still reaches the one that has.
+
+**On the record's page.** The customer, carrier and driver panels have an Agent memory tab,
+and the location dialog a section, drawn by `RecordMemories`
+(`components/record-memories`): what agents remember about that record, with add, edit and
+forget for whoever may change each one. It reads `deskMemories` with `subjectType` and
+`subjectId` (`DeskMemoryFilter.Subject`), which also lists what an agent keeps about the
+record for its own work, and writes through `createDeskMemory` with a kind (a Fact or a
+rule) and the record. The people who know a record see and correct what agents were told
+about it without opening the Desk or AI Control; a fact kept only where agents read it was
+invisible to them.
+
+**The Desk's page is its own package.** `agentmemorydesk.Desk` holds the Desk's memory page
+and conversation cards: who may see, keep, change and forget what. `agentmemoryservice.Service`
+embeds it, so callers still see one `AgentMemoryService`, and it keeps and changes memories
+through `agentmemorydesk.Core`, the entry points the core service exports for it
+(`Keep`, `SetStatusAs`, `LogChange`, …), so the page goes through the same dedupe,
+consolidation, taint and audit as every other writer. Record-name resolution lives in
+`agentmemorysubjects.NameResolver`.
 
 **Naming the record.** `agent_create_memory` takes `subjectName` with `subjectType` when the
 agent does not hold the record's id. `AgentMemoryService.ResolveSubject` reads up to ten
@@ -1139,7 +1167,13 @@ modified or rejected; a reply rated unhelpful; and, unless the organization turn
 something in passing (`PersonTold`). `Tells` is structural, not a phrase list of facts: a
 sentence of five words or more that is not a question, does not open as a request ("show",
 "can you", "I need") or a reaction ("ok", "thanks", "that looks"), in a message that is
-neither a correction nor a standing request. Before it, a look back started only on a
+neither a correction nor a standing request. Corrections, standing requests, requests and
+reactions are read through a `lexicon` chosen by the script of the message, not by a locale:
+English and Spanish share one, read by a sentence's first word; Chinese has no spaces, so its
+openings are prefixes and a statement is eight characters or more. A person who writes
+Spanish or Chinese used to teach an agent only by saying "remember". Signals are listed
+strongest first and `PersonTold` last, so a look back's first signal is what it is counted
+under. Before it, a look back started only on a
 correction or a phrase such as "from now on", so "Acme's dock closes at 2 on Fridays, book
 it for Thursday" taught nothing and almost no memory was about the organization. The gate
 decides only whether to spend the call; the model decides whether anything stated is a
@@ -1151,6 +1185,55 @@ it was one, 35 of the first 40 memories look backs kept described how to call a 
 learned again by every organization and kept after the tool was fixed. A run with
 nobody in it reads no person signals, and a long run alone is no signal: one that
 only worked showed it nothing a person corrected or decided.
+
+**What people keep changing.** An agent also learns from what people do to its work
+without saying anything. Every write an agent makes, in a turn or through an approved
+proposal (`proposalexecutor.approvedAuditSource`; before it an approved write read as the
+approver's own edit), carries its run and its agent in the audit entry
+(`auditctx.WithAIRun`, `WithAgent`, `audit.MetadataAgentID`). The nightly maintenance job
+calls `PlanCorrections`: `CorrectedWorkRepository.ListCorrectedWork` reads the agents' newest
+2,000 writes of the last 37 days (`idx_audit_entries_agent_writes`), then the hand edits of
+those records in the last 30 (`idx_audit_entries_tenant_record`, 500 records a read), and
+`Corrected` pairs each edit with the agent's latest write before it, within a week, keeping
+the fields of the agent's that the person changed. Agents' own records (memories, runs,
+proposals) and sensitive entries are left out. `CorrectionPatterns` groups them by agent, kind
+of record and field; a habit is the same field changed on `MinCorrectedRecords` (3) different
+records, the newest within two days, that no look back has read in 30 days
+(`ListCorrectionLookBacks`). At most five habits a night are cued
+(`AgentReflectionScheduler.AfterCorrections`, `AgentCorrectionReflectionWorkflow`, one per
+habit per day). `PrepareCorrections` claims a `Correction` look back keyed by
+`pattern_key`, lists each record with what stood and what a person made it, and asks for the
+rule behind the changes; lessons only ever wait as offers, since nobody is in the work, and
+changes that disagree with each other teach nothing. Counting is all it takes: no model
+reads the audit log, and one call is spent per habit.
+
+**Failed and interrupted look backs.** A look back that cannot be prepared after its row was
+claimed is marked Failed (`Service.claimed`), and so is one whose lessons could not be kept
+(`recordFailure` in the workflow). `ThreadReflectedThrough` counts only Skipped and
+Completed rows, and preparing a conversation's next look back fails any other row of the
+conversation still Running (`FailInterrupted`). Before this a claimed row left Running read
+as a stretch already looked over, so what was said in it was never read and AI Control
+showed it running for good.
+
+**How learning is going.** `agentLearningStats(days)` (`AgentReflectionService.LearningStats`)
+joins, for a stretch of 1 to 365 days, what the look backs that called a model cost by their
+first signal (`ListLearningTriggers`: look backs, how many kept nothing, lessons already kept
+and so told again, tokens; `idx_agent_reflections_completed`) with what became of the
+memories each source recorded (`ListOutcomes`: kept, waiting, turned down, lapsed, retired,
+used since). AI Control's Memory tab draws it as a table with the share of decided offers
+that were accepted. A trigger that mostly finds nothing, or whose offers are mostly turned
+down, costs more than it teaches; lessons told again are not being applied.
+
+**Offers lapse.** The nightly maintenance job sets aside offers nobody decided within
+`OfferLifetimeDays` (30): Dismissed with no person behind it (`LapseOffers`), which the
+figures count as lapsed, not turned down. A lapsed offer can still be accepted where it was
+made.
+
+**In the bench.** The bench cues no look back of its own (`deskbench.unlearned`), so one
+case's lessons never reach the next. A scenario step `lookBack: true` runs the
+conversation's look back in the bench's process (`Conversation.LookBack`: prepare, the model
+call, finish), and its `db` checks say what should have been kept or offered;
+`mention-is-offered-on-look-back` and its Spanish twin in `conversation.yaml` are the cases.
 
 **What it asks.** A ready plan carries one structured completion
 (`FeatureAgentReflection`, at most 2,500 output tokens, strict JSON schema of at

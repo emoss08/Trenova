@@ -2,60 +2,15 @@ package agentreflectionservice
 
 import (
 	"strings"
+	"unicode/utf8"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentreflection"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentreflectionports"
 	"github.com/emoss08/trenova/shared/sliceutils"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
-
-var correctionOpenings = []string{
-	"no,", "no ", "no.", "nope", "not ", "not that", "wrong", "that's wrong", "that is wrong",
-	"that's not", "that is not", "thats not", "actually", "instead", "i said", "i meant",
-	"i asked", "don't", "dont", "do not", "stop", "why did you", "you should have",
-	"you shouldn't", "you should not", "please don't", "incorrect", "that's incorrect",
-	"undo", "redo", "try again",
-}
-
-var correctionPhrases = []string{
-	"not what i", "i told you", "should have been", "you forgot", "you missed",
-	"wrong one", "the wrong", "that isn't right", "that is not right", "that's not right",
-	"isn't what", "is not what", "i didn't ask", "i did not ask",
-}
-
-var standingPhrases = []string{
-	"from now on", "going forward", "in the future", "next time", "every time", "each time",
-	"always ", "never ", "by default", "remember that", "remember to", "keep in mind",
-	"whenever ", "make sure you", "for future", "from here on", "in future",
-}
-
-var askingOpenings = stringSet(
-	"show", "list", "find", "get", "give", "create", "make", "add", "update", "change", "set",
-	"send", "draft", "write", "open", "check", "look", "pull", "run", "book", "assign",
-	"cancel", "delete", "remove", "tell", "help", "can", "could", "would", "will", "please",
-	"what", "what's", "whats", "when", "where", "who", "who's", "whos", "why", "how", "which",
-	"is", "are", "do", "does", "did", "should", "need", "want", "let's", "lets", "schedule",
-	"dispatch", "move", "mark", "close", "search", "summarize", "explain", "compare",
-	"calculate", "build", "generate", "remind", "put", "email", "call", "try", "use",
-)
-
-var reactingOpenings = stringSet(
-	"ok", "okay", "thanks", "thank", "great", "perfect", "yes", "yep", "yeah", "no", "nope",
-	"sure", "cool", "good", "nice", "got", "sounds", "looks", "that", "that's", "thats",
-	"this", "it", "it's", "its", "hi", "hello", "hey", "sorry", "nevermind", "never",
-)
-
-var askingPhrases = []string{
-	"i need",
-	"i want",
-	"i'd like",
-	"i would like",
-	"i am looking",
-	"i'm looking",
-}
-
-const minToldWords = 5
 
 type DecidedProposal struct {
 	ToolName string
@@ -70,6 +25,10 @@ type Window struct {
 	HasPerson       bool
 	Continues       bool
 	InPassing       bool
+	// Corrections are records an agent wrote whose same field people then
+	// changed by hand, and CorrectedWhat names that field in plain words.
+	Corrections   []agentreflectionports.CorrectedWork
+	CorrectedWhat string
 }
 
 func ReadSignals(window *Window) agentreflection.ReflectionSignals {
@@ -83,13 +42,12 @@ func ReadSignals(window *Window) agentreflection.ReflectionSignals {
 		}
 	}
 
+	told := 0
 	if window.HasPerson {
 		read := readPerson(window.Messages, window.Continues)
 		add(agentreflection.ReflectionSignalPersonCorrected, read.corrected, "")
 		add(agentreflection.ReflectionSignalStandingRequest, read.standing, "")
-		if window.InPassing {
-			add(agentreflection.ReflectionSignalPersonTold, read.told, "")
-		}
+		told = read.told
 	}
 
 	modified, rejected := make(
@@ -120,6 +78,14 @@ func ReadSignals(window *Window) agentreflection.ReflectionSignals {
 		strings.Join(rejected, ", "),
 	)
 	add(agentreflection.ReflectionSignalNegativeFeedback, window.NegativeRatings, "")
+	add(
+		agentreflection.ReflectionSignalChangedAfterwards,
+		len(window.Corrections),
+		window.CorrectedWhat,
+	)
+	if window.InPassing {
+		add(agentreflection.ReflectionSignalPersonTold, told, "")
+	}
 
 	return signals
 }
@@ -149,8 +115,9 @@ func readPerson(messages []conversation.Message, continues bool) personRead {
 			if text == "" {
 				continue
 			}
-			corrected := answered && corrects(text)
-			standing := stringutils.ContainsAny(text, standingPhrases...)
+			words := lexiconOf(text)
+			corrected := answered && words.corrects(text)
+			standing := stringutils.ContainsAny(text, words.standing...)
 			if corrected {
 				read.corrected++
 			}
@@ -166,9 +133,16 @@ func readPerson(messages []conversation.Message, continues bool) personRead {
 	return read
 }
 
+// Tells reports whether a message states something rather than asking for
+// it: some sentence long enough to carry a fact that is not a question and
+// does not open as a request or a reaction to the last reply. It is a gate on
+// spending a look back, not a judgment of what was said; the model reads the
+// conversation and decides whether anything in it lasts.
 func Tells(text string) bool {
-	for _, sentence := range sentences(strings.ToLower(text)) {
-		if states(sentence) {
+	text = strings.ToLower(text)
+	words := lexiconOf(text)
+	for _, sentence := range sentences(text) {
+		if words.states(sentence) {
 			return true
 		}
 	}
@@ -180,66 +154,26 @@ func sentences(text string) []string {
 	out := make([]string, 0, 4)
 	start := 0
 	for idx, r := range text {
-		ends := r == '?' || r == '!' || r == '\n' ||
-			(r == '.' && (idx+1 == len(text) || text[idx+1] == ' ' || text[idx+1] == '\n'))
+		size := utf8.RuneLen(r)
+		next := idx + size
+		question := r == '?' || r == '？'
+		ends := question || r == '!' || r == '！' || r == '。' || r == '；' || r == '\n' ||
+			(r == '.' && (next == len(text) || text[next] == ' ' || text[next] == '\n'))
 		if !ends {
 			continue
 		}
 		end := idx
-		if r == '?' {
-			end = idx + 1
+		if question {
+			end = next
 		}
 		if sentence := strings.TrimSpace(text[start:end]); sentence != "" {
 			out = append(out, sentence)
 		}
-		start = idx + 1
+		start = next
 	}
 	if sentence := strings.TrimSpace(text[start:]); sentence != "" {
 		out = append(out, sentence)
 	}
 
 	return out
-}
-
-func states(sentence string) bool {
-	if strings.HasSuffix(sentence, "?") {
-		return false
-	}
-	words := strings.Fields(sentence)
-	if len(words) < minToldWords {
-		return false
-	}
-	first := strings.Trim(words[0], ",:;\"'()-")
-	if _, asking := askingOpenings[first]; asking {
-		return false
-	}
-	if _, reacting := reactingOpenings[first]; reacting {
-		return false
-	}
-	for _, phrase := range askingPhrases {
-		if strings.HasPrefix(sentence, phrase) {
-			return false
-		}
-	}
-
-	return true
-}
-
-func stringSet(words ...string) map[string]struct{} {
-	set := make(map[string]struct{}, len(words))
-	for _, word := range words {
-		set[word] = struct{}{}
-	}
-
-	return set
-}
-
-func corrects(text string) bool {
-	for _, opening := range correctionOpenings {
-		if strings.HasPrefix(text, opening) {
-			return true
-		}
-	}
-
-	return stringutils.ContainsAny(text, correctionPhrases...)
 }

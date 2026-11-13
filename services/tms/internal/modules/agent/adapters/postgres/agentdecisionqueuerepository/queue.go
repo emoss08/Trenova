@@ -14,6 +14,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition/agentdefinitiondb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan/agentplandb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower/watchtowerdb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionqueueports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -88,6 +90,7 @@ func pendingQueue(req *agentdecisionqueueports.ListPendingDecisionsQuery) *keel.
 			audience(pDef, req.Audience),
 			p.PlanID.IsNull(),
 			keel.When(req.ToolName != "", p.ToolName.Eq(req.ToolName)),
+			said(watchtower.SourceAgentProposal, p.ID, "psaid", req.Search),
 		)
 
 	pl := agentplandb.AgentPlans
@@ -115,9 +118,33 @@ func pendingQueue(req *agentdecisionqueueports.ListPendingDecisionsQuery) *keel.
 				step.PlanID.EqCol(pl.ID),
 				step.ToolName.Eq(req.ToolName),
 			))),
+			said(watchtower.SourceAgentPlan, pl.ID, "plsaid", req.Search),
 		)
 
 	return keel.CTE("q", pendingColumns, keel.UnionAll(proposals, plans))
+}
+
+// said keeps the decisions whose words hold the search. A waiting decision is
+// on the Watchtower as an item that says what the agent wants, why, and which
+// record it is for; Needs you searches those items, so the queue reads the
+// same ones and a search finds the same decisions under every lens. An empty
+// search keeps everything.
+func said(kind watchtower.SourceKind, id keel.Expr, alias, search string) keel.Pred {
+	if search == "" {
+		return nil
+	}
+
+	it := watchtowerdb.Items.As(alias)
+
+	return keel.Exists(it.Where(
+		it.SourceKind.Eq(kind),
+		it.SourceID.EqCol(id),
+		keel.Or(
+			it.Title.ContainsFold(search),
+			it.Summary.ContainsFold(search),
+			it.RecordLabel.ContainsFold(search),
+		),
+	))
 }
 
 // audience keeps what agents the reader may use raised: an agent open to

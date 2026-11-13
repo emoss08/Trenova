@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
+	"github.com/emoss08/trenova/shared/textcase"
 )
 
 const (
@@ -47,6 +48,8 @@ type promptInput struct {
 	ToolNames   []string
 	Proposals   []DecidedProposal
 	Messages    []conversation.Message
+	Corrections []agentreflectionports.CorrectedWork
+	Corrected   string
 }
 
 func systemPrompt(in *promptInput) string {
@@ -54,9 +57,20 @@ func systemPrompt(in *promptInput) string {
 	b.WriteString("You are looking back over work that ")
 	b.WriteString(in.AgentName)
 	b.WriteString(", an agent in a transportation management system, has just finished")
-	if in.HasPerson {
+	switch {
+	case len(in.Corrections) > 0:
+		b.WriteString(". On several records, people went in afterwards and changed by hand ")
+		b.WriteString("the same thing the agent had set. Nobody said why. The changes are ")
+		b.WriteString("listed with what stood after the agent's work and what a person made ")
+		b.WriteString("it. Look for the rule the people were following: what they consistently ")
+		b.WriteString("changed it to, and for which customer, location, driver, carrier or kind ")
+		b.WriteString("of record. Keep a lesson only when the changes agree with each other ")
+		b.WriteString("well enough that the next record should be set their way; changes that ")
+		b.WriteString("point in different directions teach nothing. Say in the lesson what to ")
+		b.WriteString("set and when, in the organization's words, never as a field's code name")
+	case in.HasPerson:
 		b.WriteString(" in a conversation with a person")
-	} else {
+	default:
 		b.WriteString(" on its own, with no person in the work")
 	}
 	b.WriteString(". Decide what, if anything, is worth keeping as memory so the agent does this ")
@@ -135,6 +149,13 @@ func systemPrompt(in *promptInput) string {
 	b.WriteString("as they wrote it in subjectName; the lesson is filed under the one record with ")
 	b.WriteString("that name. Otherwise leave all three empty. replaces is a kept memory's id or ")
 	b.WriteString("empty.\n")
+	if in.HasPerson {
+		b.WriteString("Write each lesson in the language the person wrote their messages in, ")
+		b.WriteString("whatever language the agent answered in and whatever language this is ")
+		b.WriteString("written in: a person who wrote in Spanish is offered a lesson in Spanish, ")
+		b.WriteString("because they are the one who reads the offer and decides on it. Keep ")
+		b.WriteString("names of records as they are.\n")
+	}
 	b.WriteString("Write each lesson in plain sentences a reader with no other context ")
 	fmt.Fprintf(
 		&b,
@@ -142,6 +163,7 @@ func systemPrompt(in *promptInput) string {
 		agentreflection.MaxReflectionLessonChars,
 	)
 	b.WriteString("pointer to, what taught it; why is one sentence on how it helps next time.\n")
+	b.WriteString("Never write a record's id in a lesson; name the record.\n")
 	fmt.Fprintf(
 		&b,
 		"Return at most %d lessons, best first, and notes: one sentence on what you ",
@@ -223,12 +245,44 @@ func contextSections(in *promptInput) llmports.DelimitedContext {
 		})
 	}
 
-	sections = append(sections, llmports.ContextSection{
-		Title:   "The work",
-		Content: transcript(in.Messages, in.HasPerson),
-	})
+	if len(in.Corrections) > 0 {
+		sections = append(sections, llmports.ContextSection{
+			Title:   "What people changed afterwards: " + in.Corrected,
+			Content: correctionLines(in.Corrections),
+		})
+	}
+	if len(in.Messages) > 0 {
+		sections = append(sections, llmports.ContextSection{
+			Title:   "The work",
+			Content: transcript(in.Messages, in.HasPerson),
+		})
+	}
 
 	return llmports.DelimitedContext{Sections: sections}
+}
+
+// correctionLines lists each record with what stood after the agent's work
+// and what a person made it. The values are what records held, read as data.
+func correctionLines(work []agentreflectionports.CorrectedWork) string {
+	lines := make([]string, 0, len(work))
+	for idx := range work {
+		item := &work[idx]
+		name := strings.TrimSpace(item.Label)
+		if name == "" {
+			name = "a " + textcase.HumanizeCamelCaseSentence(item.Resource)
+		}
+		for _, field := range item.Fields {
+			lines = append(lines, fmt.Sprintf(
+				"- %s: %s was %q after the agent's work; a person changed it to %q",
+				name,
+				strings.ToLower(textcase.HumanizeCamelCaseSentence(field.Field)),
+				field.Was,
+				field.Now,
+			))
+		}
+	}
+
+	return strings.Join(lines, "\n")
 }
 
 func memoryLines(memories []*agentmemory.Memory) string {
@@ -405,8 +459,10 @@ func outputSchema(hasPerson bool) map[string]any {
 				"items": map[string]any{
 					"type": "object",
 					"properties": map[string]any{
-						"kind":        map[string]any{"type": "string", "enum": kinds},
-						"content":     text("The lesson in plain sentences"),
+						"kind": map[string]any{"type": "string", "enum": kinds},
+						"content": text(
+							"The lesson in plain sentences, in the language the person wrote in",
+						),
 						"audience":    map[string]any{"type": "string", "enum": audiences},
 						"subjectType": map[string]any{"type": "string", "enum": subjectTypes},
 						"subjectId":   text("A listed record's id, or empty"),

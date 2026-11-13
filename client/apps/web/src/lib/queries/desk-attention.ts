@@ -12,6 +12,8 @@ function normalized(filter?: DeskAttentionFilter): Required<DeskAttentionFilter>
     recordId: filter?.recordId ?? "",
     working: filter?.working ?? false,
     mine: filter?.mine ?? false,
+    search: filter?.search?.trim() ?? "",
+    unseen: filter?.unseen ?? false,
   };
 }
 
@@ -34,6 +36,8 @@ export const deskAttention = createQueryKeys("deskAttention", {
             recordId: key.recordId || null,
             working: key.working,
             mine: key.mine,
+            search: key.search,
+            unseen: key.unseen,
           },
           { signal },
         ),

@@ -14,6 +14,7 @@ const (
 	CellZoom     = maptile.Zoom(8)
 	SlotSeconds  = int64(4 * 3600)
 	SlotsPerWeek = int16(42)
+	SlotsPerDay  = int64(6)
 	WeekSeconds  = int64(7 * 24 * 3600)
 	MondayOffset = int64(4 * 24 * 3600)
 	minAlpha     = 0.2
@@ -115,13 +116,13 @@ func WeekOf(at int64) int64 {
 	return max(at-MondayOffset, 0) / WeekSeconds
 }
 
-func KeyOf(p Point, at int64) (Key, bool) {
+func (g Grid) Key(p Point, at int64) (Key, bool) {
 	cell, ok := CellOf(p)
 	if !ok {
 		return Key{}, false
 	}
 
-	return Key{Cell: cell, Slot: SlotOf(at)}, true
+	return Key{Cell: cell, Slot: g.Slot(at)}, true
 }
 
 func (v *MarketValue) Key() Key {
@@ -149,7 +150,7 @@ func (v *MarketValue) Fold(sample *Sample) bool {
 		return false
 	}
 
-	week := WeekOf(sample.ObservedAt)
+	week := sample.Week
 	switch {
 	case v.WeekSamples > 0 && week > v.WeekIndex:
 		v.ValueCents = v.Estimate()

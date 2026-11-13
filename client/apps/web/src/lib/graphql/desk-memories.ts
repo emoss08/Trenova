@@ -11,9 +11,11 @@ import {
   ReviseDeskMemoryDocument,
   SetDeskMemoryStatusDocument,
   SetMemorySavingModeDocument,
+  type AgentMemoryKind,
   type AgentMemorySavingMode,
   type AgentMemoryScope,
   type AgentMemoryStatus,
+  type AgentMemorySubjectType,
   type DeskMemoryFieldsFragment,
   type DeskMemorySettingsFieldsFragment,
 } from "@trenova/graphql/generated/graphql";
@@ -43,10 +45,15 @@ export type DeskMemoryPage = {
   counts: DeskMemoryCount[];
 };
 
+/** The customer, location, driver or carrier a memory is about. */
+export type DeskMemorySubject = { type: AgentMemorySubjectType; id: string };
+
 export type DeskMemoryQuery = {
   scope: DeskMemoryScope | null;
   roleId: string | null;
   query: string;
+  /** Only the memories about this record, as its own page lists them. */
+  subject?: DeskMemorySubject | null;
 };
 
 export async function fetchDeskMemories(
@@ -65,6 +72,8 @@ export async function fetchDeskMemories(
         scope: filter.scope,
         roleId: filter.scope === "Role" ? filter.roleId : null,
         query: filter.query.trim() || null,
+        subjectType: filter.subject?.type ?? null,
+        subjectId: filter.subject?.id ?? null,
       },
     },
     signal,
@@ -104,14 +113,28 @@ export async function fetchDeskMemorySettings(signal?: AbortSignal): Promise<Des
   return getFragmentData(DeskMemorySettingsFieldsFragmentDoc, data.deskMemorySettings);
 }
 
+/**
+ * Keeps a memory a person wrote. On a record's page it is filed under that
+ * record and may be a fact about it; everywhere else it is a rule to follow.
+ */
 export async function createDeskMemory(
   content: string,
   audience: DeskMemoryAudience,
+  about?: { kind: Extract<AgentMemoryKind, "Instruction" | "Fact">; subject: DeskMemorySubject },
 ): Promise<DeskMemory> {
   const data = await requestGraphQL({
     document: CreateDeskMemoryDocument,
     operationName: "CreateDeskMemory",
-    variables: { input: { content, scope: audience.scope, roleId: audience.roleId } },
+    variables: {
+      input: {
+        content,
+        scope: audience.scope,
+        roleId: audience.roleId,
+        kind: about?.kind ?? null,
+        subjectType: about?.subject.type ?? null,
+        subjectId: about?.subject.id ?? null,
+      },
+    },
   });
 
   return getFragmentData(DeskMemoryFieldsFragmentDoc, data.createDeskMemory);

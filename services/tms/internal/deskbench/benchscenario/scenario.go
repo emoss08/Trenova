@@ -158,8 +158,13 @@ type Step struct {
 	Modifications map[string]any           `yaml:"modifications" json:"modifications,omitempty"`
 	Attach        []string                 `yaml:"attach"        json:"attach,omitempty"`
 	Fire          *Fire                    `yaml:"fire"          json:"fire,omitempty"`
-	Setup         []string                 `yaml:"setup"         json:"setup,omitempty"`
-	Expect        Expect                   `yaml:"expect"        json:"expect"`
+	// LookBack runs the conversation's look back now, as it would run once
+	// the conversation went quiet, so a scenario can check what the agent
+	// learned from it. The bench cues no look back of its own, so one case's
+	// lessons never reach the next.
+	LookBack bool     `yaml:"lookBack"      json:"lookBack,omitempty"`
+	Setup    []string `yaml:"setup"         json:"setup,omitempty"`
+	Expect   Expect   `yaml:"expect"        json:"expect"`
 }
 
 func (s *Step) Utterance() (Utterance, error) {
@@ -224,6 +229,9 @@ func (s *Step) validateAttach(where string, decides bool) error {
 func (s *Step) Label() string {
 	if s.Fire != nil {
 		return s.Fire.Label()
+	}
+	if s.LookBack {
+		return "look back over the conversation"
 	}
 	if s.Decide != "" {
 		label := string(s.Decide)
@@ -625,6 +633,19 @@ func (s *Scenario) Validate() error {
 		}
 		hasSay := strings.TrimSpace(step.Say) != ""
 		hasDecide := step.Decide != ""
+		if step.LookBack {
+			switch {
+			case hasSay || hasDecide:
+				return fmt.Errorf("%s: a look back says nothing and decides nothing", where)
+			case idx == 0:
+				return fmt.Errorf("%s: a look back follows something said", where)
+			}
+			if err := validateChecks(where, &step.Expect); err != nil {
+				return err
+			}
+
+			continue
+		}
 		switch {
 		case hasSay == hasDecide:
 			return fmt.Errorf(

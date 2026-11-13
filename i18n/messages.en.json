@@ -8452,6 +8452,15 @@
       "go/other"
     ]
   },
+  "A look back at what people changed needs what they kept changing": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "A loop needs an identifier": {
     "sites": 2,
     "scope": [
@@ -8920,6 +8929,15 @@
     "areas": [
       "apps/web/rules",
       "rules/tariff"
+    ]
+  },
+  "A minus number is trucks short in that window and a plus number is drivers to spare. The last column is what one more driver ending there is worth. Select a row to see who books there and who can reach it in time.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "A mirror entry posts on this date and takes back everything {0} booked": {
@@ -10882,6 +10900,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "A reason given on a decision": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "A reason is required for this event": {
@@ -16842,7 +16869,7 @@
     ]
   },
   "Accepted": {
-    "sites": 22,
+    "sites": 23,
     "scope": [
       "go",
       "ts"
@@ -21980,7 +22007,7 @@
     ]
   },
   "Add to favorites": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -23899,7 +23926,7 @@
     ]
   },
   "Agent": {
-    "sites": 33,
+    "sites": 34,
     "scope": [
       "go",
       "ts"
@@ -24179,6 +24206,17 @@
     ],
     "areas": [
       "api/graphql"
+    ]
+  },
+  "Agent memory": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/carrier",
+      "routes/customer",
+      "routes/worker"
     ]
   },
   "Agent memory not found": {
@@ -24715,6 +24753,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Agents read these whenever this record comes up. Write down what they should know or always do, and correct anything that is no longer true.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Agents read this to choose the right portal.": {
@@ -28234,6 +28281,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "An agent is working": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "An agent is working this case. What it proposes shows here for you to approve.": {
@@ -41249,7 +41305,7 @@
     ]
   },
   "Back": {
-    "sites": 28,
+    "sites": 29,
     "scope": [
       "ts"
     ],
@@ -47601,7 +47657,7 @@
     ]
   },
   "Business unit is required": {
-    "sites": 133,
+    "sites": 134,
     "scope": [
       "go"
     ],
@@ -48891,7 +48947,7 @@
     ]
   },
   "Cancel": {
-    "sites": 332,
+    "sites": 333,
     "scope": [
       "go",
       "ts"
@@ -54382,6 +54438,15 @@
       "routes/agent-control"
     ]
   },
+  "Changes people made to its work": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Changes requested": {
     "sites": 2,
     "scope": [
@@ -57081,7 +57146,7 @@
     ]
   },
   "Choose a window in the next 48 hours of the outlook": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -57351,6 +57416,15 @@
       "go/other"
     ]
   },
+  "Choose between 1 and {0} days": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Choose between 1 and {0} libraries to duplicate": {
     "sites": 1,
     "scope": [
@@ -57412,6 +57486,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Choose how far ahead": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "Choose how fuel costs are recovered from this customer.": {
@@ -59715,7 +59798,7 @@
     ]
   },
   "Clear": {
-    "sites": 29,
+    "sites": 30,
     "scope": [
       "go",
       "ts"
@@ -59789,7 +59872,7 @@
     ]
   },
   "Clear filters": {
-    "sites": 13,
+    "sites": 17,
     "scope": [
       "ts"
     ],
@@ -59798,6 +59881,7 @@
       "packages/shared/components",
       "routes/carrier-monitoring",
       "routes/carrier-sourcing",
+      "routes/desk",
       "routes/detention-desk",
       "routes/home",
       "routes/insights",
@@ -59969,7 +60053,7 @@
     ]
   },
   "Clear the search": {
-    "sites": 9,
+    "sites": 11,
     "scope": [
       "ts"
     ],
@@ -59978,8 +60062,16 @@
       "routes/admin",
       "routes/agent-control",
       "routes/desk",
-      "routes/inbox",
       "routes/intake"
+    ]
+  },
+  "Clear the search and filters": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Clear the selection, then close the panel, then close the message": {
@@ -60519,7 +60611,7 @@
     ]
   },
   "Close": {
-    "sites": 71,
+    "sites": 70,
     "scope": [
       "go",
       "ts"
@@ -60543,7 +60635,6 @@
       "routes/factoring",
       "routes/formula-library",
       "routes/formula-template",
-      "routes/freight-outlook",
       "routes/fuel-feed-run",
       "routes/fuel-purchase",
       "routes/home",
@@ -60791,7 +60882,6 @@
     ],
     "areas": [
       "apps/web/components",
-      "routes/shipment",
       "routes/worker"
     ]
   },
@@ -64465,7 +64555,7 @@
     ]
   },
   "Configuration": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "go",
       "ts"
@@ -64475,7 +64565,8 @@
       "apps/web/components",
       "apps/web/hooks",
       "go/other",
-      "routes/admin"
+      "routes/admin",
+      "routes/section-index"
     ]
   },
   "Configuration files": {
@@ -68639,11 +68730,12 @@
     ]
   },
   "Correction": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/agent-control"
     ]
   },
@@ -75440,6 +75532,15 @@
       "routes/customer",
       "routes/desk",
       "routes/factoring-company"
+    ]
+  },
+  "Customers against their usual pace": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "Customers and locations": {
@@ -88317,7 +88418,7 @@
     ]
   },
   "Done": {
-    "sites": 43,
+    "sites": 44,
     "scope": [
       "ts"
     ],
@@ -90627,7 +90728,7 @@
     ]
   },
   "Drivers": {
-    "sites": 15,
+    "sites": 13,
     "scope": [
       "ts"
     ],
@@ -90636,7 +90737,6 @@
       "routes/desk",
       "routes/dispatch-console",
       "routes/fleet-safety",
-      "routes/freight-outlook",
       "routes/org-structure",
       "routes/pay-profile",
       "routes/shipment"
@@ -90784,6 +90884,15 @@
     ],
     "areas": [
       "routes/dispatch-console"
+    ]
+  },
+  "Drivers free": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "Drivers free here have been worth this to past plans.": {
@@ -93405,6 +93514,15 @@
       "apps/web/components"
     ]
   },
+  "Each column is a four-hour window. Select one to read the whole page at that hour, and select Show all to go back.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
   "Each column is split by who caused the wait. Click a facility for its scorecard.": {
     "sites": 1,
     "scope": [
@@ -93810,6 +93928,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Each of the last 14 days: the range the forecast gave and the loads that came. Days outside the range are marked, so you can judge it for yourself.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "Each one below keeps its own switch for when you resume.": {
@@ -94590,7 +94717,7 @@
     ]
   },
   "Edit": {
-    "sites": 37,
+    "sites": 38,
     "scope": [
       "ts"
     ],
@@ -103041,6 +103168,15 @@
       "routes/intake"
     ]
   },
+  "Every page in {0} you can open.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/section-index"
+    ]
+  },
   "Every page is set aside. Make a document from one, or drag pages into a new one, to file it.": {
     "sites": 1,
     "scope": [
@@ -103790,7 +103926,7 @@
     ]
   },
   "Everyone": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "go",
       "ts"
@@ -109255,11 +109391,12 @@
     ]
   },
   "Fact": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/agent-control"
     ]
   },
@@ -113437,13 +113574,14 @@
     ]
   },
   "Filter": {
-    "sites": 5,
+    "sites": 8,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/billing-queue",
+      "routes/desk",
       "routes/shipment",
       "routes/worker"
     ]
@@ -113710,13 +113848,12 @@
     ]
   },
   "Filtered": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/agent-control",
-      "routes/desk"
+      "routes/agent-control"
     ]
   },
   "Filtering loads by margin needs access to margins": {
@@ -113729,12 +113866,13 @@
     ]
   },
   "Filters": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/billing-queue",
+      "routes/desk",
       "routes/intake",
       "routes/reports"
     ]
@@ -116745,7 +116883,7 @@
     ]
   },
   "Forget": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
@@ -117447,12 +117585,13 @@
     ]
   },
   "Found nothing": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/agent-control"
     ]
   },
   "Found the right tools": {
@@ -125052,7 +125191,7 @@
     ]
   },
   "Hide sidebar": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -125067,15 +125206,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "Hide the brief": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/freight-outlook"
     ]
   },
   "Hide the button when closed": {
@@ -126895,6 +127025,15 @@
       "routes/agent-control"
     ]
   },
+  "How far to trust it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
   "How far, and whether the tractor was under load.": {
     "sites": 1,
     "scope": [
@@ -127087,6 +127226,15 @@
     ]
   },
   "How its {0} changes run": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "How learning is going": {
     "sites": 1,
     "scope": [
       "ts"
@@ -139464,6 +139612,15 @@
       "go/other"
     ]
   },
+  "Just me": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Just now": {
     "sites": 1,
     "scope": [
@@ -140634,7 +140791,7 @@
     ]
   },
   "Kept": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "ts"
     ],
@@ -141122,7 +141279,7 @@
     ]
   },
   "Kind": {
-    "sites": 26,
+    "sites": 27,
     "scope": [
       "go",
       "ts"
@@ -141132,6 +141289,7 @@
       "go/other",
       "routes/accounting-mapping",
       "routes/agent-control",
+      "routes/desk",
       "routes/holiday",
       "routes/invoice",
       "routes/reports",
@@ -141200,6 +141358,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Kind of change": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Kind of contact": {
@@ -141817,6 +141984,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Lapsed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Lapsed {0}d ago": {
@@ -143780,6 +143956,15 @@
     ],
     "areas": [
       "routes/dispatch-control"
+    ]
+  },
+  "Learned from": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Learned from this conversation": {
@@ -148877,6 +149062,15 @@
       "routes/carrier-invoice-matching"
     ]
   },
+  "Loading memories": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Loading memory": {
     "sites": 1,
     "scope": [
@@ -150512,7 +150706,7 @@
     ]
   },
   "Loads": {
-    "sites": 11,
+    "sites": 10,
     "scope": [
       "ts"
     ],
@@ -150522,12 +150716,11 @@
       "apps/web/components",
       "routes/carrier-settlement",
       "routes/driver-settlement",
-      "routes/freight-outlook",
       "routes/inbox"
     ]
   },
   "Loads against drivers": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -150653,6 +150846,15 @@
     ]
   },
   "Loads with no truck nearby": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
+  "Loads with no truck nearby and drivers with nothing nearby are the two problems. Across the network says whether you have enough drivers overall. Worth acting on is what the suggested moves would earn. Range held is how often the forecast has been right lately.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -151758,6 +151960,24 @@
       "go/other"
     ]
   },
+  "Look back over what people kept changing of an agent's work and offer the rule behind it": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Look backs": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Look for a tool": {
     "sites": 1,
     "scope": [
@@ -151985,6 +152205,15 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "Looking back, other": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Looking for your computers…": {
@@ -160814,6 +161043,15 @@
       "apps/web/components"
     ]
   },
+  "More loads than drivers": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
   "More memories than agents can use well": {
     "sites": 1,
     "scope": [
@@ -166477,7 +166715,7 @@
     ]
   },
   "Next": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "ts"
     ],
@@ -172845,6 +173083,15 @@
       "apps/web/components"
     ]
   },
+  "No pages you can open here": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/section-index"
+    ]
+  },
   "No pairings to propose": {
     "sites": 1,
     "scope": [
@@ -176787,6 +177034,15 @@
       "routes/desk"
     ]
   },
+  "None of the pages here are open to you. An administrator can grant access or turn this part of Trenova on.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/section-index"
+    ]
+  },
   "None of the selected carriers have a DOT number to monitor": {
     "sites": 2,
     "scope": [
@@ -178170,7 +178426,7 @@
     ]
   },
   "Not opened yet": {
-    "sites": 3,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -180615,6 +180871,15 @@
       "routes/desk"
     ]
   },
+  "Nothing is remembered about it yet.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Nothing is required before it bills.": {
     "sites": 1,
     "scope": [
@@ -180777,13 +181042,23 @@
       "routes/worker"
     ]
   },
+  "Nothing matches these filters": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Nothing matches “{0}”": {
-    "sites": 4,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/desk",
       "routes/inbox",
       "routes/settings"
     ]
@@ -181884,6 +182159,15 @@
       "routes/factoring-company"
     ]
   },
+  "Nothing waiting matches these filters": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Nothing waiting on you": {
     "sites": 1,
     "scope": [
@@ -181927,6 +182211,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Nothing waits to filter.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Nothing was changed.": {
@@ -181982,6 +182275,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Nothing was learned in this stretch.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Nothing was read from these columns: {0}.": {
@@ -186292,6 +186594,15 @@
       "routes/escrow-account"
     ]
   },
+  "One agent": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "One at a time, in the order listed": {
     "sites": 1,
     "scope": [
@@ -186431,6 +186742,15 @@
     ],
     "areas": [
       "routes/order"
+    ]
+  },
+  "One line is the freight that still needs a driver and the other is the drivers free to take it, across your whole network. The bars underneath are the loads with no truck nearby and the drivers idle in each four-hour window.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "One line per jurisdiction and fuel type. Gallons and miles are whole as the form prints them; money is in {0}, and a negative figure is a credit.": {
@@ -186788,6 +187108,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "One row for each area": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "One row per event": {
@@ -194466,7 +194795,7 @@
     ]
   },
   "Organization is required": {
-    "sites": 132,
+    "sites": 133,
     "scope": [
       "go"
     ],
@@ -195769,7 +196098,7 @@
     ]
   },
   "Outcome is required": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "go"
     ],
@@ -198212,7 +198541,7 @@
     ]
   },
   "Pages": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "ts"
     ],
@@ -198220,7 +198549,8 @@
       "apps/web/components",
       "routes/billing-queue",
       "routes/desk",
-      "routes/inbox"
+      "routes/inbox",
+      "routes/section-index"
     ]
   },
   "Pages appear here as they arrive": {
@@ -202482,6 +202812,15 @@
       "routes/org-structure"
     ]
   },
+  "People kept changing what it set": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "People liked <b>{0}</b> of the answers they rated.": {
     "sites": 1,
     "scope": [
@@ -205744,6 +206083,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Pin a window": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "Pin an artifact to keep it at the top of this conversation.": {
@@ -209334,7 +209682,7 @@
     ]
   },
   "Press {0}": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -213742,7 +214090,7 @@
       "go/other"
     ]
   },
-  "Purge expired AI feedback and suggest agent memories from it, per organization": {
+  "Purge expired AI feedback and suggest agent memories from recent ratings": {
     "sites": 1,
     "scope": [
       "go"
@@ -213751,7 +214099,7 @@
       "go/other"
     ]
   },
-  "Purge expired AI feedback and suggest agent memories from recent ratings": {
+  "Purge expired AI feedback, suggest agent memories from it, lapse memory offers nobody decided and cue look backs over what people keep changing of agents' work, per organization": {
     "sites": 1,
     "scope": [
       "go"
@@ -216078,6 +216426,15 @@
       "packages/shared/lib"
     ]
   },
+  "Ranked by what each is worth: send an empty driver, book a load that ends where trucks are short, keep a driver in an area about to get busy, or call a customer who is behind.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
   "Ranked by what is left after paying them, which is not the same order as cheapest.": {
     "sites": 1,
     "scope": [
@@ -217801,6 +218158,15 @@
       "apps/web/components"
     ]
   },
+  "Ratings on replies": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Rationale": {
     "sites": 1,
     "scope": [
@@ -218959,6 +219325,15 @@
       "go/other"
     ]
   },
+  "Read the next 12, 24 or 48 hours. Everything on the page follows this choice.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
   "Read the question": {
     "sites": 2,
     "scope": [
@@ -219491,7 +219866,7 @@
     ]
   },
   "Reading the queue…": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -219572,7 +219947,7 @@
     ]
   },
   "Reading what needs you": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -226335,6 +226710,15 @@
       "go/other"
     ]
   },
+  "Remember": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Remember this for <who/>?": {
     "sites": 1,
     "scope": [
@@ -227174,7 +227558,7 @@
     ]
   },
   "Remove from favorites": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -227500,6 +227884,15 @@
     "areas": [
       "apps/web/rules",
       "rules/tariff"
+    ]
+  },
+  "Remove the filter {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Remove the parentheses": {
@@ -237667,11 +238060,12 @@
     ]
   },
   "Rule": {
-    "sites": 6,
+    "sites": 8,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/admin",
       "routes/agent-control",
       "routes/billing-queue",
@@ -240419,7 +240813,7 @@
     ]
   },
   "Save": {
-    "sites": 51,
+    "sites": 52,
     "scope": [
       "ts"
     ],
@@ -240437,7 +240831,6 @@
       "routes/formula-template",
       "routes/hold-reason",
       "routes/home",
-      "routes/inbox",
       "routes/invoice",
       "routes/jurisdiction-rule",
       "routes/jurisdiction-rule-override",
@@ -241309,6 +241702,15 @@
       "routes/inbox"
     ]
   },
+  "Saved in a conversation when asked": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Saved on the rescinded row so an auditor can see why the action was withdrawn.": {
     "sites": 1,
     "scope": [
@@ -241848,6 +242250,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Say what kind of record to list memories about": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Say what needs to change before sending it back": {
@@ -245035,6 +245446,24 @@
       "routes/admin"
     ]
   },
+  "Search reads what each change says and the record it is for.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Search reads what each item says and the record it is about.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Search records and pages, run a command, or ask Nova…": {
     "sites": 1,
     "scope": [
@@ -245332,6 +245761,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Search what needs you": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Search widgets": {
@@ -254042,13 +254480,14 @@
     ]
   },
   "Severity": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/agent-control",
       "routes/carrier-monitoring",
+      "routes/desk",
       "routes/edi",
       "routes/worker"
     ]
@@ -257391,6 +257830,15 @@
       "routes/shipment"
     ]
   },
+  "Show only": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Show only this kind of time off.": {
     "sites": 1,
     "scope": [
@@ -257501,7 +257949,7 @@
     ]
   },
   "Show sidebar": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -257525,15 +257973,6 @@
     ],
     "areas": [
       "routes/settings"
-    ]
-  },
-  "Show the brief": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/freight-outlook"
     ]
   },
   "Show the changes": {
@@ -259540,6 +259979,15 @@
       "apps/web/lib"
     ]
   },
+  "Skip tour": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Skip weekends": {
     "sites": 1,
     "scope": [
@@ -260679,6 +261127,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Something agents should remember about this record": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Something else": {
@@ -263543,6 +264000,15 @@
       "routes/agent-control"
     ]
   },
+  "Start with the five figures": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
   "Start with when it should run, like “every Monday at 8am”, then what to ask": {
     "sites": 1,
     "scope": [
@@ -265148,11 +265614,12 @@
     ]
   },
   "Step {0} of {1}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/desk"
     ]
   },
@@ -265193,11 +265660,12 @@
     ]
   },
   "Steps": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/admin",
       "routes/agent-control",
       "routes/desk",
@@ -266415,6 +266883,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Stretch of days": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Stripe customer ID must be at most 255 characters": {
@@ -269352,6 +269829,15 @@
       "go/other"
     ]
   },
+  "Take a filter off to see more of what waits.": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Take an email attachment off the shipment it was filed on, when it went on the wrong load or as the wrong type. A whole file returns to the message and any document it replaced is restored; the documents a split made are deleted. inbox_get_inbound_message shows where each attachment is filed.": {
     "sites": 1,
     "scope": [
@@ -269503,6 +269989,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Take the tour": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Take this case": {
@@ -272242,7 +272737,7 @@
       "apps/web/lib"
     ]
   },
-  "Tested on your last {0, plural, one {week} other {# weeks}}: {1} of actual counts fell inside the forecast range; {2} more accurate than repeating last week.": {
+  "Tested on your last {0, plural, one {week} other {# weeks}}: {1} of days landed inside the forecast range; {2} more accurate than repeating last week.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -284881,6 +285376,15 @@
       "go/other"
     ]
   },
+  "The memories could not be read. Try again in a moment.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "The message a customer receives with their invoice attached.": {
     "sites": 1,
     "scope": [
@@ -285577,6 +286081,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "The moves that fix it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "The name": {
@@ -286635,6 +287148,15 @@
       "routes/shipment"
     ]
   },
+  "The original found these through another agent on the Desk. A replay cannot reach them, so this case is not activated on its own.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "The other half of the safety record. Visible recognition reaches the driver in Dash; internal notes stay with the office.": {
     "sites": 1,
     "scope": [
@@ -286669,6 +287191,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "The outlook in a sentence": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "The outstanding balance will no longer be recovered from future settlements.": {
@@ -289358,6 +289889,15 @@
       "routes/agent-control"
     ]
   },
+  "The receiving dock closes at 2pm on Fridays.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "The record": {
     "sites": 1,
     "scope": [
@@ -290857,6 +291397,15 @@
     ],
     "areas": [
       "routes/random-testing"
+    ]
+  },
+  "The same story in words: which areas run short, how many drivers will wait, and what fixing it is worth. Select an area's name to open it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
     ]
   },
   "The same terms as the version before it.": {
@@ -296649,6 +297198,15 @@
       "routes/agent-control"
     ]
   },
+  "These are the soonest records that match. More match after them; search or filter further to reach them.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "These are the soonest records. More wait after them; clear these to see the rest.": {
     "sites": 1,
     "scope": [
@@ -302039,6 +302597,15 @@
       "routes/billing-queue"
     ]
   },
+  "This page looks two days ahead and shows where trucks will be short and where drivers will sit idle, before the freight is booked. It learns from your own shipment history. The tour takes about a minute.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
   "This page was opened without everything {0} sends back. Start the connection again from Integrations.": {
     "sites": 1,
     "scope": [
@@ -307039,7 +307606,7 @@
     ]
   },
   "Tokens": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -307091,6 +307658,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Told again": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Tolerance percentage used when comparing rerated replacement invoice economics to the superseded invoice.": {
@@ -307801,6 +308377,15 @@
   },
   "Tools and autonomy": {
     "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Tools beyond its own": {
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -308749,6 +309334,60 @@
     ]
   },
   "Touched from cannot be negative": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Tour is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Tour is too long": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Tour must be lowercase words joined by hyphens": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Tour version is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Tour version is too high": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Tour version must be at least 1": {
     "sites": 1,
     "scope": [
       "go"
@@ -312451,6 +313090,15 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "Turned down": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Turned into layover": {
@@ -318322,6 +318970,15 @@
       "routes/admin"
     ]
   },
+  "Used since": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Used to encrypt outbound documents. Leave blank to reuse the signing certificate.": {
     "sites": 1,
     "scope": [
@@ -318505,7 +319162,7 @@
     ]
   },
   "User is required": {
-    "sites": 26,
+    "sites": 27,
     "scope": [
       "go",
       "ts"
@@ -322504,7 +323161,7 @@
     ]
   },
   "Waiting": {
-    "sites": 18,
+    "sites": 19,
     "scope": [
       "ts"
     ],
@@ -322570,6 +323227,15 @@
     ],
     "areas": [
       "routes/billing-queue"
+    ]
+  },
+  "Waiting for an administrator": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Waiting for an administrator; agents read none of it until then": {
@@ -325520,6 +326186,15 @@
       "template/driverportal.invitation.email"
     ]
   },
+  "Welcome to the freight outlook": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
   "Welcome{0} 👋": {
     "sites": 1,
     "scope": [
@@ -325938,6 +326613,25 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "What agents remember": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components",
+      "routes/location"
+    ]
+  },
+  "What agents should remember": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "What an agent did": {
@@ -326840,12 +327534,13 @@
     ]
   },
   "What it is": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/edi",
       "edi/lading",
       "routes/policies"
@@ -332429,6 +333124,15 @@
       "routes/policies"
     ]
   },
+  "Who has tendered less than they usually have by now. Behind means freight you normally get has not been booked yet. You can take this tour again from the information button beside the page title.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/freight-outlook"
+    ]
+  },
   "Who holds it": {
     "sites": 4,
     "scope": [
@@ -332532,11 +333236,12 @@
     ]
   },
   "Who it is for": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/desk"
     ]
   },
@@ -336201,6 +336906,15 @@
       "edi/lading"
     ]
   },
+  "Write an instruction, a fact or a procedure": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Write back from the source's address": {
     "sites": 2,
     "scope": [
@@ -336899,6 +337613,15 @@
     ],
     "areas": [
       "routes/ifta-jurisdiction-mileage"
+    ]
+  },
+  "Written down by a person": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Written off": {
@@ -338414,6 +339137,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "You have already been shown every tour there is room to remember.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "You have an active HOS violation": {
@@ -354808,13 +355540,14 @@
     ]
   },
   "{0, plural, one {# driver} other {# drivers}}": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "routes/fleet-safety"
+      "routes/fleet-safety",
+      "routes/freight-outlook"
     ]
   },
   "{0, plural, one {# earlier message summarized} other {# earlier messages summarized}}": {
@@ -355778,7 +356511,7 @@
     ]
   },
   "{0, plural, one {# load} other {# loads}}": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "ts"
     ],
@@ -359361,6 +360094,15 @@
   },
   "{0, plural, one {Filter the # row read} other {Filter the # rows read}}": {
     "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "{0, plural, one {Filter, # on} other {Filter, # on}}": {
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -364082,7 +364824,7 @@
     ]
   },
   "{0} days": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],

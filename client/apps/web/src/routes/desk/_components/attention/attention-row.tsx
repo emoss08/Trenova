@@ -5,7 +5,7 @@ import { formatList } from "@trenova/shared/i18n/format";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { formatCountdown, minutesLeft } from "../watchtower/lanes";
-import { severityLabel } from "../watchtower/severity";
+import { severityLabel, severityMarkClass } from "../watchtower/severity";
 import { caseWorkLabel, caseWorkOf, caseWorkShort } from "./case-work";
 import { LifeBadge, groupLife } from "./life-badge";
 import { deskListRow } from "../list/desk-list";
@@ -16,13 +16,6 @@ const LENS_ICON: Record<DeskLens, DeskIconName> = {
   Watchtower: "radar",
   Triage: "mail",
   Decisions: "inbox",
-};
-
-// i18n-ignore: class names, never shown to a person
-const SEVERITY_CLASS: Record<string, string> = {
-  Critical: "bg-danger",
-  Warning: "bg-dsk-warn",
-  Info: "bg-dsk-blue",
 };
 
 // i18n-ignore: class names, never shown to a person
@@ -171,7 +164,7 @@ export function AttentionRow({
       <span
         className={cn(
           "row-start-1 size-2 justify-self-center rounded-[2px]",
-          SEVERITY_CLASS[group.severity] ?? "bg-dsk-faint",
+          severityMarkClass(group.severity),
         )}
         role="img"
         aria-label={severityLabel(t, group.severity)}

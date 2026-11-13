@@ -95,7 +95,7 @@ func Render(
 		"domain":        spec.Hostname,
 		"storageDomain": StorageHost(spec.Hostname),
 		"stopped":       stopped,
-		keyTMS:          map[string]any{"instanceId": spec.InstanceId.String()},
+		keyTMS:          tmsValues(spec.InstanceId.String()),
 		"docling":       map[string]any{"enabled": docling},
 		keyPostgres:     map[string]any{"hibernate": hibernate},
 		"managed":       managed(operatorNamespace),
@@ -154,6 +154,16 @@ func managed(operatorNamespace string) map[string]any {
 				},
 			},
 		},
+	}
+}
+
+func tmsValues(instanceID string) map[string]any {
+	return map[string]any{
+		"instanceId": instanceID,
+		"config": map[string]any{"ai": map[string]any{
+			"privateNetworkProviders": false,
+			"serverCloudCredentials":  false,
+		}},
 	}
 }
 

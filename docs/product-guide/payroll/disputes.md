@@ -1,6 +1,6 @@
 ---
 path: /payroll/disputes
-aliases: [settlement disputes, pay disputes, driver pay questions, pay complaints, challenge settlement]
+aliases: [settlement disputes, pay disputes, driver pay questions, pay complaints, challenge settlement, driver says pay is wrong, settlement is wrong, wrong settlement, driver disagrees with settlement]
 related:
   - /payroll/settlements
   - /payroll/workspace

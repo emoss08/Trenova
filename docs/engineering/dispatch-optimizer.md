@@ -139,8 +139,11 @@ row) for every surface, so the inspector, pre-flight and plan agree.
 
 With `planForEndMarket` on, each plan folds its drivers' exact duals (`ColumnValue`, an idle
 driver at zero) into `dispatch_market_values` by where and when each driver becomes free:
-web mercator tiles at zoom 8 (`orb/maptile`) by four-hour slot of the week (UTC, Monday
-00:00). A slot keeps the mean of the current week and an exponential moving average of past
+web mercator tiles at zoom 8 (`orb/maptile`) by four-hour slot of the week on the
+organization's own clock (`dispatchmarket.Grid`, Monday 00:00 first), the same slots the
+freight forecast uses; the week a value belongs to turns over at the organization's Monday
+too. `dispatchmarketservice` reads the time zone through `orgzone.Location` and fails the
+read or the record rather than file a value under a clock it could not read. A slot keeps the mean of the current week and an exponential moving average of past
 weekly means (weight `max(1/(weeks+1), 0.2)`), so how often the plan runs does not change
 the estimate, and a replayed plan (same `observed_at`) folds nothing. `BuildSnapshot` reads
 the rows of the moves' destination cells once (`SnapshotRequest.Destinations`) and the
@@ -154,9 +157,11 @@ End-market values look backward: what drivers free in a place were worth to past
 `anticipateFreight` on, the plan also looks forward. A per-organization freight forecast says
 where loads are likely to appear before they are booked, and the "where the driver ends up"
 component (`endMarket`) prices a move by the chance a load will need a driver nobody else
-covers where the move leaves them, against the same chance where they are now. The model is
-`operations/domain/demandforecast`; the service, repository and nightly job are
-`demandforecastservice`, `demandforecastrepository` and `demandforecastjobs`.
+covers where the move leaves them, against the same chance where they are now. The model and
+its read side are `operations/domain/demandforecast` (rates, the count distribution, the
+prepared `Index`, the `Forecaster`); training is `operations/domain/demandfit` (`Train`: the
+fit, the backtest and the track record in one pass); the service, repository and nightly job
+are `demandforecastservice`, `demandforecastrepository` and `demandforecastjobs`.
 
 Network-level demand forecasting and backward-looking driver values exist elsewhere; TMS
 dispatch screens rank drivers for booked loads only. What is new is the combination, inside
@@ -180,20 +185,54 @@ the one cost model:
   stop's location, its time that stop's scheduled window start, its booking time the
   shipment's `created_at`. Carrier-covered moves count: they are freight that appeared. An
   area is a zoom-8 map tile (`dispatchmarket.CellOf`, about 120 km across in the US) and a
-  slot one of the 42 four-hour blocks of the week (`SlotOf`, UTC, Monday 00:00 first), the
-  same keys as `dispatch_market_values`.
+  slot one of the 42 four-hour blocks of the week, Monday 00:00 first, **on the
+  organization's own clock** (`dispatchmarket.Grid`). A dock that ships at six in the evening
+  ships at six all year; on UTC blocks that hour changes slot twice a year and the rhythm
+  smears for weeks after each clock change. The grid converts an instant to wall-clock
+  seconds and reuses the plain slot arithmetic on them, so a slot is four wall hours: three
+  or five real ones on the two nights the clocks change (`Grid.Starts`, `Grid.SlotEnd`; never
+  `start + SlotSeconds`). The API says where each window ends (`end` on a slot, `slotEnd` on a
+  move and on the area sheet) and the client labels and places windows from those, never by
+  adding four hours. History is bucketed in SQL with the same conversion
+  (`to_timestamp(t) AT TIME ZONE tz`). The fit stores its time zone on the quality row and
+  the forecaster reads its grid from there, so a forecast is always read on the clock it was
+  fitted on, even if the organization's time zone changes before the next fit.
+  `dispatch_market_values` keys on the same grid.
 - **Rate per area and slot** (`Fit`): empirical Bayes Poisson–Gamma over the last 26 weeks
   (`HistoryWeeks`), each week weighted `0.5^(age / 8)` (`HalfLifeWeeks`). The prior mean is
   the area's weekly total × the tenant's share of volume in that slot (its weekly rhythm), at
   a strength of 2 pseudo-weeks (`PriorWeeks`): `α = 2·m0 + Σ r_w·y_w`, `β = 2 + Σ r_w`. A
   sparse slot shrinks toward the area's rhythm instead of reading as zero.
+- **Holidays** are the organization's own (`org_holidays`, kind Holiday; a PTO blackout is
+  not one). A holiday's slots are left out of the fit, loads and exposure both (`β` sums the
+  weights of the weeks that slot was a working day), so closed Mondays do not drag every
+  Monday down. What a holiday is worth is learned as one factor per organization: loads that
+  came on its past holidays over what the working-day model expected, shrunk toward a half
+  with 20 pseudo-loads (`HolidayPriorFactor`, `HolidayPriorLoads`). A fleet whose freight does
+  not dip learns a factor near 1. The forecaster scales a holiday slot's rate by it
+  (`β / factor`); the quality row carries the factor and the holidays of the next 14 days, so
+  a holiday added to the calendar takes effect at the next fit.
+- **Level.** Eight-week memory lags a book that is growing or has just jumped. The last two
+  weeks' network total against what the fitted rhythm expected for them updates one level
+  multiplier, as a Gamma posterior with a prior spread of 10% (`LevelPriorSpread`) and the
+  evidence divided by the week-to-week dispersion measured before those two weeks: a noisy
+  book moves it less, and the step itself is never counted as noise. It is clamped to
+  0.5–2 and folded into the stored rates (`β / level`). On a year of one tenant's history it
+  halved the forecast's running bias with no change in slot-level score; a detector that
+  waited for a significant shift almost never fired.
 - **Customer series** `(customer, area, slot)` are fitted the same way, with the customer's
   area total × the area's slot share as the prior. They do not change the area rate; they
-  name who drives a forecast ("Acme Foods about 3") and weight the booking curve.
+  name who drives a forecast ("Acme Foods about 3") and weight the booking curve. An area
+  keeps its 50 busiest customers (`MaxAreaCustomers`), so the stored model is bounded by
+  areas, not by how many customers ship from a metro; the model read takes area rates and
+  customer rates in separate bounded reads, so a limit can never drop an area's own rate.
 - **Booking curves** (`fitCurves`): `F_c(L)`, the share of a customer's loads booked at least
   `L` hours before pickup, on the buckets `LeadHours` (0, 2, 4, 8, 12, 24, 36, 48, 72, 96,
   120, 168, 336), shrunk to the tenant's curve with 20 pseudo-loads (`CurvePriorLoads`). A
-  slot's curve is its customers' curves weighted by their rates.
+  slot's curve is its customers' curves weighted by their rates. Only loads entered before
+  their pickup count: a load keyed in afterwards, or imported from another system, says
+  nothing about how far ahead freight is booked, and counted as "booked at the last minute"
+  it would tell the nowcast that nothing is ever booked ahead.
 - **Nowcast** (`Nowcast`): for a slot starting `L` hours ahead, the share still unbooked is
   `u = 1 − F(L)`. With `b` loads already booked for it, `λ | b ~ Gamma(α + b, β + 1 − u)` and
   the unbooked remainder is negative binomial with mean `(α + b)·u / (β + 1 − u)`. A fully
@@ -247,13 +286,27 @@ the one cost model:
 
 ### Readiness
 
-Every night, per organization, a rolling-origin backtest (`Backtest`) refits on the weeks
+Every night, per organization, a rolling-origin backtest (inside `demandfit.Train`) refits on the weeks
 before each of the last 8 weeks (`BacktestWeeks`), predicts every area-slot count of that
 week and compares:
 
-- **Interval coverage**: the share of actual counts inside the forecast's 80% range (10th to
-  90th percentile), ideally near 0.8.
-- **Skill**: `1 − MAE / naive MAE`, where naive repeats the same slot of the week before.
+- **Skill**: `1 − miss / naive miss`, summed over every area and slot of the tested weeks.
+  The forecast's miss is its ranked probability score (`Count.Score`), the absolute error of
+  a whole predicted range; for a single guess it is exactly the absolute error, so it compares
+  fairly with naive, which repeats the same slot of the week before. It is a proper score:
+  absolute error against the forecast's mean would punish every quiet slot where the forecast
+  rightly expects a fraction of a load, and a score taken only where something happened
+  selects on the outcome. Loads from an area the tested week's model had never seen count as
+  misses for both. `mae` and `naive_mae` are the two sums per active case (a slot where a
+  load came this week or last, or the forecast expected at least a quarter of one).
+- **Dispersion**: day totals vary more than independent counts allow, because whole days and
+  weeks run busy or slow together. `dispersion` is the variance of the tested days' network
+  totals over the variance the forecast expected (at least 1, at most `MaxDispersion`).
+  Network-wide ranges (the outlook's network chart, the track record) are widened by it
+  (`Count.Widen`); area windows, which price moves, are not: they hold their range as fitted.
+- **Interval coverage**: the share of tested days whose network total fell inside the 80%
+  range (10th to 90th percentile). Each tested week is ranged with the dispersion learned
+  from the tested weeks before it, never its own, so the figure is out of sample.
 - **Status**: `InsufficientHistory` (fewer than 8 weeks or 200 loads, or nothing testable),
   `NoSkill` (skill at most 0.05) or `Ready`. Plans use the forecast only when Ready; Dispatch
   controls shows the status, the coverage, the skill and when it was last fitted.
@@ -266,7 +319,7 @@ week and compares:
 | `demand_forecast_areas` | per area: label (busiest origin city), median revenue, loads |
 | `demand_booking_curves` | booking shares per lead bucket; no `customer_id` is the tenant curve |
 | `demand_forecast_quality` | one row per organization: status and the backtest numbers |
-| `demand_forecast_days` | the track record: 14 days of out-of-sample network ranges against actual loads |
+| `demand_forecast_days` | the track record: 14 days of out-of-sample network ranges against actual loads. A day is the six slots from midnight on the organization's clock (`Grid.DayStart`) |
 | `driver_positionings` | drivers sent toward an area from the outlook (see below) |
 
 Area rates also carry `recent`: the last 8 weeks of loads in that area and slot, oldest
@@ -288,14 +341,32 @@ was fitted more than an hour ago (`Quality.Stale`, `RefitAfterSeconds`) or never
 most two minutes (`createRefitPoll`), so the page turns over when the fit lands and a fit that
 keeps failing is not polled for. Only tenants someone is looking at pay for it, at most one
 fit an hour each; a Ready forecast is left to the nightly run. Nothing is fitted on a request
-path: the read only starts a workflow. `anticipateFreight` lives on
+path: the read only starts a workflow.
+
+**The model is read once per fit.** `demandforecastservice` keeps each tenant's prepared
+`demandforecast.Index` (rates, areas, curves, customer names, grid, holidays) in an otter
+cache weighted by row count. Every forecaster build reads the one-row quality and reuses the
+index while `fitted_at` and `version` match, so the outlook's poll and each plan cost one
+primary-key read plus the live booked loads, not the whole model. Customer names are as of
+the fit. `anticipateFreight` lives on
 dispatch controls and is off by default. The freight outlook (`dispatchFreightOutlook`,
 `dispatchFreightArea`) and Nova's `dispatch_forecast_demand` read
 `freightoutlookports.Service`; the quality card reads `dispatchForecastQuality`.
 
 Where a driver starts, read in SQL, is one join in `adapters/postgres/driverstart`: the drop
 of their last open (assigned or in-transit) move, else a GPS position under 4 hours old, else
-the tractor's last drop, and before all of them a live positioning (below). The Outlook's supply (`demandforecastrepository.ListDriverStarts`)
+the tractor's last drop, and before all of them a live positioning (below). The outlook's
+supply then asks when the driver can take a load, not only when their work ends
+(`domain/driverready.At`): hours-of-service clocks under 12 hours old push the time out by a
+ten-hour rest when too little of the shift or drive time will be left, or a 34-hour restart
+when the cycle is spent and nothing comes back tomorrow; approved time off or an approved
+leave covering that moment holds the driver out until it ends, and a leave with no end takes
+them off the board; and a driver on a shift pattern who comes free on a day the pattern does
+not cover waits for the start of the next day it does (`ShiftTemplate.WorksOnDate`, the rule
+the rota itself uses, so the outlook and the rota never disagree about a working day, A/B
+rotations included). A driver on no pattern is free when their work ends. Clocks, time off,
+leave and the pattern are joined in the same read.
+The Outlook's supply (`demandforecastrepository.ListDriverStarts`)
 and the console's nearest-driver order use the join; the console's filters and summary take
 its open move statuses and freshness from it. A new reader joins it instead of writing its
 own precedence.
@@ -315,8 +386,15 @@ own precedence.
 - **The network** (`Forecaster.Network`): the same pool over every driver against all demand,
   as if drivers could be anywhere. The gap between its `short` and the areas' summed `short`
   (`uncovered`) is placement, which is usually most of it.
-- **Moves** (`domain/freightmove.Plan`), on one dollar scale, greedy by net with each driver
-  used once and each short slot taking `round(short)` drivers:
+- **Moves** (`domain/freightmove.Plan`), on one dollar scale, solved together as one
+  assignment (`shared/assignmentsolver`), not picked best-first: a seat per driver a short
+  slot can take (`round(short)`), a column per driver who could move, the net as the arc.
+  Best-first gives a contested window to whoever nets most there and can strand the driver
+  who could go nowhere else. An area gives up no more drivers than `round(spare)`: the rest
+  are pinned by rows worth more than any move, so the solver chooses who stays. A Keep's
+  seat is tied to its departure, so a departure is kept once, and a driver both kept and
+  sent is repaired by banning the weaker of the two and solving again. Each slot offers its
+  `room + 24` best options (`MaxTargetOptions`), so the problem stays small:
   - **Send**: an idle driver (in an area with spare at their free time, or in no forecast
     area) to a short slot they reach before it ends: drop value − stay value − empty miles
     at `EmptyMileCents`.
@@ -332,8 +410,10 @@ own precedence.
     missing loads are worth (`CallRecoveryShare`): most late freight still comes.
 - **Reach** (`freightmove.Reach`): every driver within 900 miles of an area, whether they
   arrive before its window ends and what it would net, including the ones who don't.
-- **Track record**: `TrackRecord` runs at every fit: each of the last 14 days, forecast for
-  the whole network from the weeks before that day's week only, against the loads that came.
+- **Track record**: `Train` returns it at every fit: each of the last 14 whole days, forecast
+  for the whole network from the weeks before that day's week only and ranged with the
+  dispersion known before that week, against the loads that came. Days are the
+  organization's own, midnight to midnight on its clock.
 
 The outlook is bounded: 40 areas (those a move names, then the biggest gap, then volume), 12
 slots, 12 moves, 20 customer paces, 14 days; the planner prices only the 120 biggest short windows

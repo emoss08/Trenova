@@ -63,10 +63,12 @@ func (f *fakeForecasts) Forecaster(
 ) (*demandforecast.Forecaster, error) {
 	f.request = req
 	return demandforecast.NewForecaster(&demandforecast.ForecasterParams{
-		Now:           req.Now,
-		Quality:       f.quality,
-		Rates:         f.rates,
-		Areas:         f.areas,
+		Now: req.Now,
+		Index: demandforecast.NewIndex(&demandforecast.IndexParams{
+			Quality: f.quality,
+			Rates:   f.rates,
+			Areas:   f.areas,
+		}),
 		Booked:        f.booked,
 		Supply:        req.Supply,
 		MarginPercent: req.MarginPercent,
@@ -149,7 +151,7 @@ func newTestService(
 
 func readyWorld(t *testing.T) (*fakeForecasts, *fakeRepo) {
 	t.Helper()
-	starts := demandforecast.OutlookStarts(testNow)
+	starts := demandforecast.OutlookStarts(dispatchmarket.Grid{}, testNow)
 	dallasCell := cellOf(t, dallas)
 
 	return &fakeForecasts{
@@ -231,11 +233,7 @@ func TestOutlook_ReadsEveryAreaTheMovesThatFixThemAndTheTrackRecord(t *testing.T
 	require.NoError(t, err)
 
 	require.NotNil(t, forecasts.request)
-	assert.True(
-		t,
-		forecasts.request.AllCells,
-		"the outlook reads every area, not the ones a plan touches",
-	)
+	assert.Positive(t, forecasts.request.Horizon, "the outlook reads its whole horizon")
 	assert.Equal(t, horizonSeconds, forecasts.request.Horizon)
 	assert.Len(t, forecasts.request.Supply, 2)
 	require.NotNil(t, repo.window)
@@ -267,7 +265,7 @@ func TestArea_ReadsTheWorstWindowWhenNoneIsAskedAndItsRecentWeeks(t *testing.T) 
 	forecasts, repo := readyWorld(t)
 	repo.locations = []pulid.ID{"loc_dock_a", "loc_dock_b"}
 	svc := newTestService(t, forecasts, repo, positioningtest.Fixed{})
-	starts := demandforecast.OutlookStarts(testNow)
+	starts := demandforecast.OutlookStarts(dispatchmarket.Grid{}, testNow)
 
 	detail, err := svc.Area(t.Context(), &freightoutlookports.AreaRequest{
 		TenantInfo: tenant,
@@ -280,6 +278,7 @@ func TestArea_ReadsTheWorstWindowWhenNoneIsAskedAndItsRecentWeeks(t *testing.T) 
 		"the area names its locations, so its loads can be read")
 
 	assert.Equal(t, starts[4], detail.SlotStart)
+	assert.Equal(t, starts[4]+dispatchmarket.SlotSeconds, detail.SlotEnd)
 	assert.Equal(t, "Dallas, TX", detail.Area.Balance.Label)
 	assert.True(
 		t,

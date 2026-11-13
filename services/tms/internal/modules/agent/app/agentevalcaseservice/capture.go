@@ -1,6 +1,7 @@
 package agentevalcaseservice
 
 import (
+	"cmp"
 	"context"
 	"slices"
 	"strings"
@@ -16,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aifeedback"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversationtranscript"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
@@ -138,10 +140,18 @@ func (s *Service) captureProposal(
 			return nil, freezeErr
 		}
 		applyFrozen(evalCase, frozen, redacted, s.now())
+		evalCase.ReachedTools = beyondHeld(definition, proposal.ToolName, frozen.called)
+		if len(evalCase.ReachedTools) > 0 {
+			evalCase.Status = agentquality.CaseStatusCandidate
+			evalCase.Automatic = false
+		}
 	} else {
 		evalCase.Input = s.backgroundInput(ctx, tenantInfo, run)
 		evalCase.SubjectType = run.SubjectType
 		evalCase.SubjectID = run.SubjectID
+		if freezeErr := s.freezeRun(ctx, tenantInfo, run, evalCase); freezeErr != nil {
+			return nil, freezeErr
+		}
 	}
 
 	return s.save(ctx, evalCase, actor)
@@ -350,6 +360,7 @@ func (s *Service) captureMessage(
 		evalCase.SourceRunID = req.feedback.RunID
 	}
 	applyFrozen(evalCase, frozen, redacted, s.now())
+	evalCase.ReachedTools = beyondHeld(definition, "", frozen.called)
 	if evalCase.Title == "" {
 		evalCase.Title = titleFromInput(evalCase.Input)
 	}
@@ -657,6 +668,66 @@ func (s *Service) freezeChat(
 	return frozen, out, nil
 }
 
+func beyondHeld(
+	definition *agentdefinition.Definition,
+	proposed string,
+	called []string,
+) []string {
+	held := definition.EffectiveToolNames()
+	reached := make([]string, 0)
+	for _, name := range append([]string{proposed}, called...) {
+		if name == "" || agentquality.IsRuntimeTool(name) || slices.Contains(held, name) ||
+			slices.Contains(reached, name) {
+			continue
+		}
+		reached = append(reached, name)
+	}
+
+	return reached
+}
+
+func (s *Service) freezeRun(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	run *agent.AgentRun,
+	evalCase *agentquality.EvalCase,
+) error {
+	rows, err := s.runs.ListTranscriptsByIDs(ctx, &agentruntimeports.ListAgentRunsByIDsRequest{
+		IDs:        []pulid.ID{run.ID},
+		TenantInfo: tenantInfo,
+	})
+	if err != nil {
+		return err
+	}
+	if len(rows) == 0 || rows[0].Transcript == nil {
+		return nil
+	}
+
+	entries := rows[0].Transcript.Messages
+	messages := make([]conversation.Message, 0, len(entries))
+	for i := range entries {
+		if entries[i].Omitted {
+			continue
+		}
+		messages = append(messages, conversationtranscript.MessageOfTranscript(&entries[i]))
+	}
+
+	out := &redaction{}
+	evalCase.ToolFixtures, _ = s.fixtures(messages, out)
+	evalCase.Redaction = &agentquality.Redaction{
+		Fields:     out.fields,
+		RedactedAt: s.now(),
+	}
+	if evalCase.Redaction.Fields == nil {
+		evalCase.Redaction.Fields = []agentquality.RedactedField{}
+	}
+	if started := cmp.Or(run.StartedAt, run.CreatedAt); started > 0 {
+		evalCase.AskedAt = &started
+	}
+
+	return nil
+}
+
 func (s *Service) fixtures(
 	turn []conversation.Message,
 	out *redaction,
@@ -676,6 +747,10 @@ func (s *Service) fixtures(
 			}
 		case conversation.RoleTool:
 			if agentquality.IsRuntimeTool(message.ToolName) {
+				continue
+			}
+			if _, known := args[message.ToolCallID]; !known ||
+				len(fixtures) >= agentquality.MaxToolFixtures {
 				continue
 			}
 			fixtures = append(fixtures, agentquality.ToolFixture{

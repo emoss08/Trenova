@@ -1,6 +1,8 @@
 import { appAdminLinks, appNavigationModules } from "@/config/app-navigation";
 import { recordPath } from "@/config/record-links";
-import type { NavGroup, NavItem } from "@/config/navigation.types";
+import { isNavGroup } from "@/config/navigation.types";
+import { normalizePath } from "@/lib/navigation-paths";
+import { navigationSections } from "@/lib/navigation-sections";
 
 interface RouteTitleEntry {
   path: string;
@@ -64,99 +66,21 @@ export function findActiveNavPath(
   return bestMatch;
 }
 
-export function normalizePath(path: string): string | null {
-  if (!path || path === "#") {
-    return null;
-  }
-
-  const trimmed = path.trim();
-  if (!trimmed || trimmed === "#") {
-    return null;
-  }
-
-  const withLeadingSlash = trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
-  const normalized = withLeadingSlash.replace(/\/+$/, "");
-
-  return normalized === "" ? "/" : normalized;
-}
-
-/**
- * The directory every path in the list shares, or null when they share
- * nothing beyond the root.
- */
-function sharedDirectory(paths: readonly string[]): string | null {
-  if (paths.length === 0) {
-    return null;
-  }
-  let common = paths[0].split("/").slice(0, -1);
-  for (const path of paths.slice(1)) {
-    const parts = path.split("/").slice(0, -1);
-    let length = 0;
-    while (length < common.length && length < parts.length && common[length] === parts[length]) {
-      length += 1;
-    }
-    common = common.slice(0, length);
-  }
-  const directory = common.join("/");
-  return directory.length > 1 ? directory : null;
-}
-
-/**
- * Pages label their own paths. A group labels the directory its pages share,
- * so "/accounting/ar" reads as the group is named rather than as "Ar", but
- * only when that directory belongs to the group alone: a group whose pages
- * sit directly under the module has nothing of its own to name.
- */
-function collectNavItemEntries(
-  entries: RouteTitleEntry[],
-  items: (NavItem | NavGroup)[],
-  moduleRoots: ReadonlySet<string>,
-): void {
-  for (const item of items) {
-    if ("items" in item) {
-      const before = entries.length;
-      collectNavItemEntries(entries, item.items, moduleRoots);
-      const groupPaths = entries.slice(before).map((entry) => entry.path);
-      const directory = sharedDirectory(groupPaths);
-      if (directory && !moduleRoots.has(directory) && !groupPaths.includes(directory)) {
-        entries.push({ path: directory, label: item.label });
-      }
-      continue;
-    }
-
-    const normalizedPath = normalizePath(item.path);
-    if (normalizedPath) {
-      entries.push({ path: normalizedPath, label: item.label });
-    }
-  }
-}
-
 function createRouteTitleIndex(): RouteTitleEntry[] {
-  const collectedEntries: RouteTitleEntry[] = [];
+  const collectedEntries: RouteTitleEntry[] = navigationSections.map(({ path, label }) => ({
+    path,
+    label,
+  }));
 
   for (const module of appNavigationModules) {
-    // A module owns its base path and every prefix it declares; those are
-    // its roots, and no group underneath may claim them. The base path
-    // carries the full name; a declared prefix carries the short one, since
-    // the base path is often a page inside it whose crumb follows.
-    const moduleRoots = new Set<string>();
-    const moduleBasePath = normalizePath(module.basePath);
-    if (moduleBasePath) {
-      moduleRoots.add(moduleBasePath);
-      collectedEntries.push({ path: moduleBasePath, label: module.label });
-    }
-    for (const prefix of module.routePrefixes ?? []) {
-      const normalizedPrefix = normalizePath(prefix);
-      if (normalizedPrefix && !moduleRoots.has(normalizedPrefix)) {
-        moduleRoots.add(normalizedPrefix);
-        collectedEntries.push({
-          path: normalizedPrefix,
-          label: module.shortLabel ?? module.label,
-        });
+    for (const item of module.navigation.flatMap((entry) =>
+      isNavGroup(entry) ? entry.items : [entry],
+    )) {
+      const normalizedPath = normalizePath(item.path);
+      if (normalizedPath) {
+        collectedEntries.push({ path: normalizedPath, label: item.label });
       }
     }
-
-    collectNavItemEntries(collectedEntries, module.navigation, moduleRoots);
   }
 
   for (const link of appAdminLinks) {
@@ -187,9 +111,17 @@ function isPathMatch(pathname: string, candidatePath: string): boolean {
 const routeTitleIndex = createRouteTitleIndex();
 const routeTitleByPath = new Map(routeTitleIndex.map((entry) => [entry.path, entry.label]));
 
+/**
+ * Where a crumb's label came from: a page that named the record it shows, the
+ * navigation (a page or a section, either of which a person can open), or the
+ * URL segment itself, which names a folder nothing fills.
+ */
+export type BreadcrumbSource = "published" | "navigation" | "derived";
+
 export interface BreadcrumbSegment {
   path: string;
   label: string;
+  source: BreadcrumbSource;
 }
 
 /**
@@ -204,6 +136,7 @@ const RECORD_ACTION_SEGMENTS: ReadonlySet<string> = new Set(["edit", "view"]);
  * Splits a pathname into cumulative crumbs. Each crumb takes its label from,
  * in order: a label a page published for that exact path, the navigation
  * config's label for that exact path, or a Title Case rendering of the segment.
+ * The source says which, so a trail can leave out folders that lead nowhere.
  */
 export function generateBreadcrumbSegments(
   pathname: string,
@@ -225,12 +158,45 @@ export function generateBreadcrumbSegments(
     }
 
     const path = "/" + parts.slice(0, end).join("/");
-    const label = labelOverrides[path] ?? routeTitleByPath.get(path) ?? formatSegmentLabel(segment);
-    crumbs.push({ path, label });
+    const published = labelOverrides[path];
+    const navigation = routeTitleByPath.get(path);
+    if (published !== undefined) {
+      crumbs.push({ path, label: published, source: "published" });
+    } else if (navigation !== undefined) {
+      crumbs.push({ path, label: navigation, source: "navigation" });
+    } else {
+      crumbs.push({ path, label: formatSegmentLabel(segment), source: "derived" });
+    }
     index = end;
   }
 
   return crumbs;
+}
+
+/**
+ * The pages above this one that a person can open, in the words they read
+ * them in. Every crumb is a link that lands somewhere: a page, a section
+ * index, or a record a page has named. A folder of the URL that nothing fills
+ * ("/accounting/journal-entries") is left out rather than drawn as a link to
+ * a missing page, and a crumb that only repeats the title is dropped, so the
+ * Shipments board reads "Shipments" once rather than three times.
+ */
+export function trailCrumbs(
+  breadcrumbs: readonly BreadcrumbSegment[],
+  title: string,
+  translate: (label: string) => string,
+): { path: string; label: string }[] {
+  const last = breadcrumbs.at(-1);
+  const lastLabel = last && (last.source === "navigation" ? translate(last.label) : last.label);
+
+  return breadcrumbs
+    .slice(0, -1)
+    .filter((crumb) => crumb.source !== "derived")
+    .map((crumb) => ({
+      path: crumb.path,
+      label: crumb.source === "navigation" ? translate(crumb.label) : crumb.label,
+    }))
+    .filter((crumb) => crumb.label !== title && crumb.label !== lastLabel);
 }
 
 function findMatchingRoute(pathname: string): RouteTitleEntry | null {

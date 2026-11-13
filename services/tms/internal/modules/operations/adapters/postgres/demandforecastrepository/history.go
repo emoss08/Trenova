@@ -3,10 +3,12 @@ package demandforecastrepository
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate/usstatedb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/demandfit"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/demandforecast"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchmarket"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -25,6 +27,16 @@ type loadQuery struct {
 	sp    *shipmentdb.ShipmentsTable
 	st    *shipmentdb.StopsTable
 	start keel.Int64Expr
+}
+
+const wallClockSQL = "CAST(extract(epoch FROM (to_timestamp(?) AT TIME ZONE ?)) AS bigint)"
+
+func (l loadQuery) wall(timezone string) keel.Int64Expr {
+	if timezone == "" || timezone == time.UTC.String() {
+		return l.start
+	}
+
+	return keel.Int64Of(keel.Raw(wallClockSQL, l.st.ScheduledWindowStart, timezone))
 }
 
 func loadsBetween(since, until int64) loadQuery {
@@ -57,8 +69,8 @@ func loadsBetween(since, until int64) loadQuery {
 	}
 }
 
-func (l loadQuery) sinceMonday() keel.Int64Expr {
-	return l.start.Sub(keel.Int64(dispatchmarket.MondayOffset))
+func (l loadQuery) sinceMonday(timezone string) keel.Int64Expr {
+	return l.wall(timezone).Sub(keel.Int64(dispatchmarket.MondayOffset))
 }
 
 type countRow struct {
@@ -114,8 +126,8 @@ func (r *repository) History(
 
 func countsQuery(req *demandforecastports.HistoryRequest) keel.Query[*shipment.ShipmentMove] {
 	l := loadsBetween(req.Since, req.Until)
-	week := l.sinceMonday().Div(keel.Int64(dispatchmarket.WeekSeconds))
-	slot := l.sinceMonday().
+	week := l.sinceMonday(req.Timezone).Div(keel.Int64(dispatchmarket.WeekSeconds))
+	slot := l.sinceMonday(req.Timezone).
 		Mod(keel.Int64(dispatchmarket.WeekSeconds)).
 		Div(keel.Int64(dispatchmarket.SlotSeconds))
 
@@ -134,6 +146,7 @@ func leadsQuery(req *demandforecastports.HistoryRequest) keel.Query[*shipment.Sh
 	bucketExpr := bucket.Else(keel.Int64(0))
 
 	return l.q.
+		Where(l.start.GteExpr(l.sp.CreatedAt)).
 		Pick(text(l.sp.CustomerID), bucketExpr, keel.Count()).
 		Group(l.sp.CustomerID, bucketExpr)
 }
@@ -169,7 +182,7 @@ func historyRows(
 ) *demandforecastports.HistoryRows {
 	rows := &demandforecastports.HistoryRows{
 		Counts:    make([]demandforecastports.LocationCount, 0, len(counts)),
-		Leads:     make([]demandforecast.LeadCount, 0, len(leads)),
+		Leads:     make([]demandfit.LeadCount, 0, len(leads)),
 		Locations: make([]demandforecastports.LocationSummary, 0, len(locations)),
 	}
 	for _, c := range counts {
@@ -183,7 +196,7 @@ func historyRows(
 		})
 	}
 	for _, l := range leads {
-		rows.Leads = append(rows.Leads, demandforecast.LeadCount{
+		rows.Leads = append(rows.Leads, demandfit.LeadCount{
 			CustomerID: l.CustomerID,
 			Bucket:     int(l.Bucket),
 			Loads: int32(

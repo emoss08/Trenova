@@ -23,15 +23,17 @@ type forecastArea struct {
 
 func forecasterFor(t *testing.T, areas ...forecastArea) *demandforecast.Forecaster {
 	t.Helper()
-	params := &demandforecast.ForecasterParams{
-		Now:           testNow,
-		Quality:       &demandforecast.Quality{Status: demandforecast.StatusReady},
-		Curves:        []*demandforecast.BookingCurve{{Shares: make([]float64, len(demandforecast.LeadHours))}},
-		MarginPercent: 30,
+	params := &demandforecast.IndexParams{
+		Quality: &demandforecast.Quality{Status: demandforecast.StatusReady},
+		Curves: []*demandforecast.BookingCurve{
+			{Shares: make([]float64, len(demandforecast.LeadHours))},
+		},
 	}
 	params.Curves[0].Shares[0] = 1
 	for _, area := range areas {
-		cell, ok := dispatchmarket.CellOf(dispatchmarket.Point{Latitude: area.lat, Longitude: area.lon})
+		cell, ok := dispatchmarket.CellOf(
+			dispatchmarket.Point{Latitude: area.lat, Longitude: area.lon},
+		)
 		require.True(t, ok)
 		params.Areas = append(params.Areas, &demandforecast.Area{
 			Cell: cell, Label: "area", MedianRevenueCents: 100_000,
@@ -43,7 +45,11 @@ func forecasterFor(t *testing.T, areas ...forecastArea) *demandforecast.Forecast
 		}
 	}
 
-	return demandforecast.NewForecaster(params)
+	return demandforecast.NewForecaster(&demandforecast.ForecasterParams{
+		Now:           testNow,
+		Index:         demandforecast.NewIndex(params),
+		MarginPercent: 30,
+	})
 }
 
 func TestEndMarket_UsesTheForecastWhereItCoversTheDropAndHistoryElsewhere(t *testing.T) {
@@ -65,11 +71,20 @@ func TestEndMarket_UsesTheForecastWhereItCoversTheDropAndHistoryElsewhere(t *tes
 	require.NotNil(t, forecast.endMarket)
 	assert.Equal(t, dispatchplanports.EndMarketForecast, forecast.endMarket.Source)
 	assert.Positive(t, forecast.endMarket.DropCents)
-	assert.Zero(t, forecast.endMarket.StayCents, "Denver is not forecast, so staying there is worth nothing")
+	assert.Zero(
+		t,
+		forecast.endMarket.StayCents,
+		"Denver is not forecast, so staying there is worth nothing",
+	)
 	assert.Equal(t, forecast.endMarket.Cents, forecast.features.EndMarketCents)
 	require.NotNil(t, history.endMarket)
 	assert.Equal(t, dispatchplanports.EndMarketHistory, history.endMarket.Source)
-	assert.Equal(t, int64(5_000), history.endMarket.Cents, "never both: history fills in only where the forecast does not reach")
+	assert.Equal(
+		t,
+		int64(5_000),
+		history.endMarket.Cents,
+		"never both: history fills in only where the forecast does not reach",
+	)
 }
 
 func TestEndMarket_ChargesForTheValueLeftBehind(t *testing.T) {

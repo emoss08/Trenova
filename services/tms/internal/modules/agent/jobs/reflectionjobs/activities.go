@@ -53,6 +53,18 @@ func (a *Activities) PrepareRunReflectionActivity(
 	return plan, nil
 }
 
+func (a *Activities) PrepareCorrectionReflectionActivity(
+	ctx context.Context,
+	req *agentreflectionports.ReflectOnCorrectionsRequest,
+) (*agentreflectionports.ReflectionPlan, error) {
+	plan, err := a.reflections.PrepareCorrections(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("prepare a look back over what people changed: %w", err)
+	}
+
+	return plan, nil
+}
+
 func (a *Activities) ReflectionModelActivity(
 	ctx context.Context,
 	plan *agentreflectionports.ReflectionPlan,

@@ -235,6 +235,13 @@ func (s MemoryStatus) IsValid() bool {
 	}
 }
 
+// Replaceable reports whether a memory in this status can be replaced by
+// another: one agents read, or one a person set aside. A retired memory and
+// an offer have nothing to take the place of.
+func (s MemoryStatus) Replaceable() bool {
+	return s == MemoryStatusActive || s == MemoryStatusPaused
+}
+
 func (s MemoryStatus) IsSuggestion() bool {
 	return s == MemoryStatusSuggested || s == MemoryStatusDismissed
 }

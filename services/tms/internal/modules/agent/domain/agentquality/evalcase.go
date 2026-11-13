@@ -201,6 +201,7 @@ type EvalCase struct {
 	SubjectType  agent.SubjectType             `json:"subjectType"  keel:"subject_type,nullzero"`
 	SubjectID    pulid.ID                      `json:"subjectId"    keel:"subject_id,nullzero"`
 	HeldTools    []string                      `json:"heldTools"    keel:"held_tools"`
+	ReachedTools []string                      `json:"reachedTools" keel:"reached_tools"`
 	ToolFixtures []ToolFixture                 `json:"toolFixtures" keel:"tool_fixtures,jsonb"`
 
 	Expected            Expected                      `json:"expected"            keel:"expected,jsonb"`
@@ -231,6 +232,9 @@ func (c *EvalCase) BeforeCreate(_ context.Context) error {
 	}
 	if c.HeldTools == nil {
 		c.HeldTools = []string{}
+	}
+	if c.ReachedTools == nil {
+		c.ReachedTools = []string{}
 	}
 	if c.ToolFixtures == nil {
 		c.ToolFixtures = []ToolFixture{}

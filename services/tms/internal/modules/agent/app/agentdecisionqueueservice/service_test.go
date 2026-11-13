@@ -458,6 +458,7 @@ func TestListPending_LoadsRecordsInQueueOrderAndDropsTheGone(t *testing.T) {
 	page, err := svc.ListPending(t.Context(), &agentdecisionqueueports.ListPendingDecisionsRequest{
 		First:             2,
 		ToolName:          " dispatch_assign_move ",
+		Search:            "  SHP-1042 ",
 		IncludeTotalCount: true,
 	})
 	require.NoError(t, err)
@@ -469,6 +470,7 @@ func TestListPending_LoadsRecordsInQueueOrderAndDropsTheGone(t *testing.T) {
 	assert.Equal(t, 7, *page.TotalCount)
 	assert.True(t, page.TotalCountExact)
 	assert.Equal(t, "dispatch_assign_move", queue.last.ToolName)
+	assert.Equal(t, "SHP-1042", queue.last.Search, "the search reaches the queue trimmed")
 
 	decoded, err := decodeCursor(pagination.TenantInfo{}, page.Items[1].Cursor)
 	require.NoError(t, err)

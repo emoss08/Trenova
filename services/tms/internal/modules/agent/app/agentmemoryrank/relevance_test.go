@@ -221,3 +221,30 @@ func TestRelevance_AWordMostOfAFewMemoriesShareIsNotRare(t *testing.T) {
 	assert.True(t, relevance.Bears(second.ID), "Dallas does")
 	assert.False(t, relevance.Bears(third.ID))
 }
+
+func TestRelevance_AskingWhatIsKnownAboutARecordUsesEveryMemoryAboutIt(t *testing.T) {
+	t.Parallel()
+
+	pays := &agentmemory.Memory{
+		ID: pulid.MustNew("amem_"), Content: "Acme Foods pays on the 15th.",
+		SubjectLabel: "Acme Foods",
+	}
+	dock := &agentmemory.Memory{
+		ID: pulid.MustNew("amem_"), Content: "The dock at Acme Foods closes at 2pm on Fridays.",
+		SubjectLabel: "Acme Foods",
+	}
+	other := &agentmemory.Memory{
+		ID: pulid.MustNew("amem_"), Content: "Granite Brands wants a call before delivery.",
+		SubjectLabel: "Granite Brands",
+	}
+	ranked := agentmemoryports.RankedMemories{Memories: []*agentmemory.Memory{pays, dock, other}}
+
+	about := Relevance("", "tell me about acme foods", ranked)
+	assert.True(t, about.Bears(pays.ID))
+	assert.True(t, about.Bears(dock.ID))
+	assert.False(t, about.Bears(other.ID))
+
+	particular := Relevance("", "how many open shipments does acme foods have", ranked)
+	assert.False(t, particular.Bears(pays.ID), "a question about something else uses neither")
+	assert.False(t, particular.Bears(dock.ID))
+}

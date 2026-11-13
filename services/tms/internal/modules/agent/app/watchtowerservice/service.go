@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentshadow"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/caseownerports"
@@ -25,6 +26,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 )
 
@@ -63,7 +65,7 @@ type Params struct {
 	Runs        agentruntimeports.AgentRunService
 	RunRepo     agentruntimeports.AgentRunRepository
 	Events      agenteventports.AgentEventPublisher
-	Sources     []watchtowerports.WatchtowerSource `                group:"watchtower_sources"`
+	Sources     []watchtowerports.WatchtowerSource `group:"watchtower_sources"`
 	Dismisser   *Dismisser
 	Exceptions  *Exceptions
 	Owners      caseownerports.Service
@@ -233,6 +235,13 @@ func (s *Service) List(
 		AboutIDs:       req.AboutIDs,
 		OrderByDue:     req.OrderByDue,
 		AgentWorking:   req.AgentWorking,
+		Search: stringutils.TruncateRunes(
+			strings.TrimSpace(req.Search),
+			watchtowerports.MaxSearchLength,
+		),
+	}
+	if req.UnseenOnly {
+		listReq.Unseen = &watchtowerports.UnseenBy{ReaderID: actor.UserID, SeenAt: cursor.SeenAt}
 	}
 	if req.OverdueOnly {
 		listReq.OverdueAt = s.now()

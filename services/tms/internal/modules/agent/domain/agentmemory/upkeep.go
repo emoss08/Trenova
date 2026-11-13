@@ -8,7 +8,17 @@ const (
 	// AgingAfterDays is how long a fact with no end date stands before a
 	// person is asked whether it is still true.
 	AgingAfterDays = 180
+	// OfferLifetimeDays is how long an offered memory waits for a person. One
+	// nobody decided by then lapses: it is set aside as not kept, can still be
+	// accepted where it was offered, and stops crowding the offers that are
+	// new.
+	OfferLifetimeDays = 30
 )
+
+// OffersLapseBefore is the time an offer must have been made by to lapse now.
+func OffersLapseBefore(now int64) int64 {
+	return now - OfferLifetimeDays*secondsPerDay
+}
 
 type MemoryUpkeepReason string
 

@@ -40,9 +40,19 @@ export type DeskLensCounts = {
   decisions: number;
 };
 
+/** Open items of one kind the reader may see, which the list's filter offers the kind by. */
+export type DeskAttentionKind = {
+  kind: WatchtowerSourceKind;
+  label: string;
+  lens: DeskLens;
+  count: number;
+};
+
 export type DeskAttention = {
   groups: DeskAttentionGroup[];
   counts: DeskLensCounts;
+  /** Kinds with something open in the list's own scope, most first. */
+  kinds: DeskAttentionKind[];
   hasMore: boolean;
   seenAt: number;
   /** The reader may see everyone's cases, so the list can offer only their own. */
@@ -81,6 +91,10 @@ export type DeskAttentionFilter = {
   working?: boolean;
   /** Only the reader's own cases and the ones nobody owns. */
   mine?: boolean;
+  /** Rows with an item whose title, summary or record name holds these words. */
+  search?: string;
+  /** Only rows with an item the reader has not opened yet. */
+  unseen?: boolean;
 };
 
 export async function fetchDeskAttention(
@@ -100,6 +114,8 @@ export async function fetchDeskAttention(
         recordId: filter.recordId ?? null,
         working: filter.working ?? false,
         mine: filter.mine ?? false,
+        search: filter.search?.trim() || null,
+        unseen: filter.unseen ?? false,
       },
     },
     signal: options?.signal,
@@ -120,6 +136,7 @@ export async function fetchDeskAttention(
       };
     }),
     counts: result.counts,
+    kinds: result.kinds,
     hasMore: result.hasMore,
     seenAt: result.seenAt,
     seesEveryone: result.seesEveryone,

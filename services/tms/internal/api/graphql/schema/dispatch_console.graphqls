@@ -689,9 +689,9 @@ type DispatchForecastQuality {
   historyLoads: Int!
   weeksTested: Int!
   loadsTested: Int!
-  "Share of actual counts that fell inside the forecast's 80% range."
+  "Share of the tested days whose load total fell inside the forecast's 80% range."
   intervalCoverage: Float!
-  "Average miss per area and four-hour slot, in loads."
+  "Average miss per active area and four-hour slot, in loads: the forecast's ranked probability score."
   meanAbsoluteError: Float!
   "The same average miss for repeating the same slot of the week before."
   naiveMeanAbsoluteError: Float!
@@ -712,6 +712,8 @@ drivers expected, served in order, so a driver used in one window is not counted
 """
 type DispatchFreightSlot {
   start: Timestamp!
+  "When the window ends: four hours on, three or five on the two nights the clocks change."
+  end: Timestamp!
   "Loads likely to start in the window, booked included (10th to 90th percentile)."
   likelyLow: Int!
   likelyHigh: Int!
@@ -751,6 +753,8 @@ anywhere. The gap between short here and uncovered (summed over areas) is placem
 """
 type DispatchFreightNetworkSlot {
   start: Timestamp!
+  "When the window ends: four hours on, three or five on the two nights the clocks change."
+  end: Timestamp!
   "Every load likely in the window, booked or not, the 10th to 90th percentile."
   likelyLow: Int!
   likelyHigh: Int!
@@ -790,6 +794,7 @@ type DispatchFreightMove {
   toLabel: String!
   "The window the move is for."
   slotStart: Timestamp!
+  slotEnd: Timestamp!
   "Loads with no truck nearby in that window."
   short: Float!
   freeAt: Timestamp
@@ -926,6 +931,7 @@ type DispatchFreightAreaDetail {
   bounds: DispatchFreightAreaBounds!
   "The window the sheet reads: the one asked for, or the area's worst."
   slotStart: Timestamp!
+  slotEnd: Timestamp!
   reach: [DispatchFreightReach!]!
   moves: [DispatchFreightMove!]!
   pace: [DispatchFreightPace!]!

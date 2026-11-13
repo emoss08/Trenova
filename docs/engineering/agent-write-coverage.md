@@ -87,35 +87,35 @@ matches anything fails too, so the file cannot drift behind the tools.
 | --- | --- | --- |
 | `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 99 |
 | `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 247 |
-| `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 40 |
+| `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 41 |
 | `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 49 |
 | `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 109 |
 | `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 35 |
-| `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 48 |
+| `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 49 |
 | `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 55 |
 | `duplicate` | Another surface for a write listed elsewhere that the analysis could not merge on its own. The reason names the write it duplicates. | 10 |
 
 ## Totals
 
-1142 writes: 683 GraphQL mutations and 459 REST writes, after merging 27 REST routes into the mutation they duplicate.
+1145 writes: 686 GraphQL mutations and 459 REST writes, after merging 27 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
-| Covered by a tool | 446 |
-| Exempt | 692 |
+| Covered by a tool | 447 |
+| Exempt | 694 |
 | — Security | 99 |
 | — Configuration | 247 |
-| — User preference | 40 |
+| — User preference | 41 |
 | — Infrastructure | 49 |
 | — Agent administration | 109 |
 | — Counterparty | 35 |
-| — Read-only | 48 |
+| — Read-only | 49 |
 | — Attestation | 55 |
 | — Duplicate | 10 |
 | **Pending** | **4** |
-| Total | 1142 |
+| Total | 1145 |
 
-Of the 450 writes an agent should be able to make, 446 have a tool (99%).
+Of the 451 writes an agent should be able to make, 447 have a tool (99%).
 
 ## Pending
 
@@ -250,6 +250,7 @@ The writes no tool performs yet, and what the tool would do.
 | orgholiday | 3 | 0 | 3 | 0 |
 | orgstructure | 6 | 0 | 6 | 0 |
 | pagefavorite | 1 | 0 | 1 | 0 |
+| pagetour | 1 | 0 | 1 | 0 |
 | palette | 3 | 0 | 3 | 0 |
 | performancereview | 11 | 3 | 8 | 0 |
 | permission | 1 | 0 | 1 | 0 |
@@ -297,7 +298,7 @@ The writes no tool performs yet, and what the tool would do.
 | trailer | 5 | 5 | 0 | 0 |
 | triage | 8 | 2 | 6 | 0 |
 | user | 20 | 0 | 20 | 0 |
-| watchtower | 13 | 8 | 5 | 0 |
+| watchtower | 15 | 9 | 6 | 0 |
 | worker | 8 | 5 | 3 | 0 |
 | workerchecklist | 10 | 6 | 4 | 0 |
 | workercredential | 9 | 4 | 5 | 0 |
@@ -327,13 +328,11 @@ Tools that change something no person-facing write does, such as sending a messa
 | `rate_amend_agreement_rules` | rate_agreement | update |
 | `shipment_place_hold` | shipment_hold | create |
 | `shipment_release_hold` | shipment_hold | update |
-| `shipment_request_documents` | customer_communication | create |
 | `shipment_update_hold` | shipment_hold | update |
 | `web_use_portal` | portal_automation | update |
 | `web_watch` | web_research | read |
 | `worker_place_dispatch_hold` | worker_dispatch_hold | create |
 | `worker_request_credential_renewal` | worker_credential | update |
-| `worker_send_message` | driver_message | create |
 
 ## Every write
 
@@ -1717,6 +1716,12 @@ Tools that change something no person-facing write does, such as sending a messa
 | --- | --- |
 | `POST /api/v1/page-favorites/toggle`<br>pagefavoritehandler.toggle | Exempt, user-preference: A person's own interface state; it changes nothing anyone else sees. |
 
+### pagetour
+
+| Write | Decision |
+| --- | --- |
+| `mutation recordMyPageTour` | Exempt, user-preference: A person's own interface state; it changes nothing anyone else sees. |
+
 ### palette
 
 | Write | Decision |
@@ -2217,6 +2222,8 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation markWatchtowerSeen` | Exempt, user-preference: A person's own interface state; it changes nothing anyone else sees. |
 | `mutation reopenWatchtowerItem` | Tool: `exception_reopen` |
 | `mutation resolveWatchtowerItem` | Tool: `exception_resolve` |
+| `mutation rewordWatchtowerPlay` | Exempt, read-only: Has Nova rewrite the wording of a message a person is about to send and returns the text; nothing is stored or sent. |
+| `mutation sendWatchtowerPlay` | Tool: `worker_send_message`, `shipment_request_documents`, `dispatch_create_tender_from_routing_guide` |
 | `mutation setWatchtowerItemDue` | Tool: `exception_set_due` |
 | `mutation snoozeWatchtowerItem` | Tool: `exception_snooze` |
 | `mutation startWatchtowerItem` | Exempt, attestation: A person saying they are working an exception now, and taking it if nobody owns it; an agent cannot start work for them. |

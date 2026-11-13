@@ -18,7 +18,15 @@ import (
 type fakeLinks struct {
 	links map[agentmemory.MemoryRecordKind][]agentmemoryports.MemoryRecordLink
 	asked []agentmemoryports.ListMemoryRecordLinksRequest
+	named []agentmemoryports.MemorySubjectCandidate
 	fail  agentmemory.MemoryRecordKind
+}
+
+func (f *fakeLinks) FindSubjectsByName(
+	context.Context,
+	*agentmemoryports.FindMemorySubjectsRequest,
+) ([]agentmemoryports.MemorySubjectCandidate, error) {
+	return f.named, nil
 }
 
 func (f *fakeLinks) ListRecordLinks(

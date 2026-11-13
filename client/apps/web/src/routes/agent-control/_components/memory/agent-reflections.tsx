@@ -5,7 +5,7 @@ import {
 } from "@/lib/graphql/agent-reflections";
 import type { AgentReflectionAction } from "@trenova/graphql/generated/graphql";
 import { defineLabels } from "@trenova/shared/i18n/labels";
-import { useT } from "@trenova/shared/i18n/use-t";
+import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateTimeMedium } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
@@ -65,9 +65,21 @@ export function AgentReflections() {
   );
 }
 
+/** What a look back read, in a person's words. */
+function reflectionSubjectLabel(subject: AgentReflection["subjectType"], t: TranslateFn): string {
+  switch (subject) {
+    case "Thread":
+      return t("A conversation");
+    case "Correction":
+      return t("Changes people made to its work");
+    default:
+      return t("A background run");
+  }
+}
+
 function ReflectionRow({ reflection }: { reflection: AgentReflection }) {
   const t = useT();
-  const where = reflection.subjectType === "Thread" ? t("A conversation") : t("A background run");
+  const where = reflectionSubjectLabel(reflection.subjectType, t);
 
   return (
     <div className="sgm">

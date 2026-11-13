@@ -10,9 +10,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/querytools/querytool"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/demandfit"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/demandforecast"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatcheconomics"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchmarket"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/freightmove"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/freightoutlookports"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -240,7 +240,7 @@ func forecastAreaViewOf(
 	view := forecastAreaView{
 		Area:               cmp.Or(area.Balance.Label, unnamedArea),
 		WindowStart:        timeutils.FormatStamp(slot.Start, location),
-		WindowEnd:          timeutils.FormatStamp(slot.Start+dispatchmarket.SlotSeconds, location),
+		WindowEnd:          timeutils.FormatStamp(slot.End, location),
 		LikelyLow:          slot.Low,
 		LikelyHigh:         slot.High,
 		Booked:             slot.Booked,
@@ -323,8 +323,9 @@ func fittedQualityViewOf(
 	case demandforecast.StatusReady:
 		view.Status = forecastStatusReady
 		view.Meaning = fmt.Sprintf(
-			"Tested on the last %d weeks of this organization's own history: %d%% of actual "+
-				"counts fell inside the forecast range, and its misses were %d%% smaller than "+
+			"Tested on the last %d weeks of this organization's own history: %d%% of the "+
+				"tested days' load totals fell inside the forecast range, and its misses were "+
+				"%d%% smaller than "+
 				"repeating the same slot last week. Plans use it when Anticipate freight is on.",
 			view.WeeksTested, view.IntervalCoveragePercent, view.SkillPercent,
 		)
@@ -381,6 +382,6 @@ func insufficientMeaning(view *forecastQualityView) string {
 		"Not enough history to test yet: %d weeks and %d loads, where it needs at least "+
 			"%d weeks and %d loads. Plans ignore it until then; say so.",
 		view.HistoryWeeks, view.HistoryLoads,
-		demandforecast.MinHistoryWeeks, demandforecast.MinHistoryLoads,
+		demandfit.MinHistoryWeeks, demandfit.MinHistoryLoads,
 	)
 }

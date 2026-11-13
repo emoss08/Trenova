@@ -129,6 +129,7 @@ first, and what the spec decides is merged over them:
 | `components` contains `docling` | `docling.enabled` |
 | (always) | `managed.enabled: true`, `managed.from`: the operator's own namespace |
 | (always) | `secrets.escrowSecret: trenova-escrow` |
+| (always) | `tms.config.ai.privateNetworkProviders: false`, `serverCloudCredentials: false`: a customer's administrator adds the instance's AI providers, so none may sit on a private address or sign in as the instance's own cloud identity, whatever the base values say |
 | `firstAdministrator` | `bootstrap.orgName`, `adminName`, `adminEmail`, and `bootstrap.adminSetup: link` |
 | `lifecycle: active` | `stopped: false`, `postgres.hibernate: false` |
 | `lifecycle: suspended` | `stopped: true`, `postgres.hibernate: true`: nothing runs, every volume is kept |

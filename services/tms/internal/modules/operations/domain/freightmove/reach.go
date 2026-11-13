@@ -50,7 +50,7 @@ func Reach(in *Inputs, cell int64, slotStart int64) []ReachRow {
 		area:  area,
 		index: index,
 		start: slot.Start,
-		end:   slot.Start + dispatchmarket.SlotSeconds,
+		end:   slot.End,
 		short: slot.Short,
 		point: dispatchmarket.CenterOf(cell),
 	}

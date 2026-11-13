@@ -262,6 +262,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration/integrationdb"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification/notificationdb"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/pagefavorite/pagefavoritedb"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/pagetour/pagetourdb"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report/reportdb"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/sidebarpreference/sidebarpreferencedb"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/tablechangealert/tablechangealertdb"
@@ -628,6 +629,7 @@ func All() []*schema.Table {
 		tenantdb.OrganizationsSchema(),
 		workerinjurydb.OSHAAnnualSummariesSchema(),
 		pagefavoritedb.PageFavoritesSchema(),
+		pagetourdb.ViewsSchema(),
 		passwordresetdb.PasswordResetTokensSchema(),
 		payadvancedb.PayAdvancesSchema(),
 		paycodedb.PayCodesSchema(),

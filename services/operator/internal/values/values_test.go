@@ -220,6 +220,47 @@ func TestManagedModeAdmitsOnlyTheOperatorsNamespace(t *testing.T) {
 	require.Error(t, err)
 }
 
+func TestAnAIProviderStaysOutsideThePlatform(t *testing.T) {
+	t.Parallel()
+	b := base()
+	b["tms"] = map[string]any{"config": map[string]any{"ai": map[string]any{
+		"enabled":                 true,
+		"privateNetworkProviders": true,
+		"serverCloudCredentials":  true,
+		"maxConcurrentActivities": 4,
+	}}}
+	s := spec(plans[0], instanceapi.Active)
+	r, err := values.Render(&s, b, operatorNS)
+	require.NoError(t, err)
+
+	ai := lookup(t, r.Values, []string{"tms", "config", "ai"})
+	require.Equal(t, false, ai["privateNetworkProviders"])
+	require.Equal(t, false, ai["serverCloudCredentials"])
+	require.Equal(t, true, ai["enabled"], "AI stays on, for the providers a customer adds")
+	require.Equal(t, 4, ai["maxConcurrentActivities"], "the base's other AI settings are kept")
+
+	ch, err := loader.Load(chartDir)
+	require.NoError(t, err)
+	require.NoError(t, chartutil.ValidateAgainstSchema(ch, r.Values))
+	vals, err := chartutil.ToRenderValues(ch, r.Values, chartutil.ReleaseOptions{
+		Name: "trenova", Namespace: "trenova", Revision: 1, IsInstall: true,
+	}, chartutil.DefaultCapabilities)
+	require.NoError(t, err)
+	out, err := engine.Render(ch, vals)
+	require.NoError(t, err)
+	config := out["trenova/templates/configmap.yaml"]
+	require.Contains(t, config, "privateNetworkProviders: false")
+	require.Contains(t, config, "serverCloudCredentials: false")
+	require.NotContains(t, config, "privateNetworkProviders: true")
+	require.NotContains(t, config, "serverCloudCredentials: true")
+
+	unset, err := values.Render(&s, base(), operatorNS)
+	require.NoError(t, err)
+	ai = lookup(t, unset.Values, []string{"tms", "config", "ai"})
+	require.Equal(t, false, ai["privateNetworkProviders"])
+	require.Equal(t, false, ai["serverCloudCredentials"])
+}
+
 func TestTheEscrowedKeysComeFromTheOperatorsSecret(t *testing.T) {
 	t.Parallel()
 	b := base()

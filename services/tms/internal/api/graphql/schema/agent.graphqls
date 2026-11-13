@@ -661,6 +661,43 @@ type AgentMemoryUsage {
   warnAt: Int!
 }
 
+"""
+One way agents came to hold memories over a stretch of days, and what became of them. A look
+back has one row per trigger, counted under its strongest signal; the other sources have one row
+each and no look back figures.
+"""
+type AgentLearningRow {
+  source: AgentMemorySource!
+  "What made the look backs look; absent for a source that is not a look back."
+  trigger: AgentReflectionSignalKind
+  "Look backs that called a model."
+  lookBacks: Int!
+  "Look backs that called a model and kept or offered nothing."
+  taughtNothing: Int!
+  "Lessons a look back wanted to keep that were already kept: the agent was told again what it had on record."
+  toldAgain: Int!
+  inputTokens: Int!
+  outputTokens: Int!
+  "Memories recorded in the stretch that agents read now."
+  kept: Int!
+  "Offers still waiting for a person."
+  waiting: Int!
+  "Offers a person turned down."
+  dismissed: Int!
+  "Offers nobody decided within 30 days, set aside by the nightly sweep."
+  lapsed: Int!
+  "Memories recorded in the stretch and retired since."
+  retired: Int!
+  "Memories recorded in the stretch that a turn has used at least once."
+  used: Int!
+}
+
+type AgentLearningStats {
+  days: Int!
+  since: Timestamp!
+  rows: [AgentLearningRow!]!
+}
+
 "Why a memory is worth another look."
 enum AgentMemoryUpkeepReason {
   "No turn has used it since it was recorded or last confirmed, 30 days ago or more."
@@ -680,6 +717,8 @@ enum AgentReflectionSubject {
   Thread
   "One background run, read once every proposal it raised was decided."
   Run
+  "A field an agent set that people changed by hand on several records, read for the rule behind the changes."
+  Correction
 }
 
 enum AgentReflectionStatus {
@@ -707,6 +746,8 @@ enum AgentReflectionSignalKind {
   NegativeFeedback
   "The person stated something while asking for something else."
   PersonTold
+  "People changed, by hand and on several records, a field the agent had set."
+  ChangedAfterwards
 }
 
 enum AgentReflectionAction {
@@ -984,6 +1025,8 @@ extend type Query {
   agentMemoryUsage: AgentMemoryUsage!
   "The shared memories worth another look, oldest first, at most 25: facts nobody has confirmed in a long time and memories no turn has used."
   agentMemoryUpkeep: [AgentMemoryUpkeep!]!
+  "How each way of learning did over the last days (1 to 365): what it cost, what it offered and what people did with the offers."
+  agentLearningStats(days: Int! = 30): AgentLearningStats!
   agentExceptions(input: DataTableConnectionInput!): AgentExceptionConnection!
   agentException(id: ID!): AgentException
   agentControl: AgentControl!

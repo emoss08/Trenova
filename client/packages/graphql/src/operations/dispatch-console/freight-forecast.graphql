@@ -20,6 +20,7 @@ fragment DispatchFreightAreaFields on DispatchFreightArea {
   valueCents
   slots {
     start
+    end
     likelyLow
     likelyHigh
     booked
@@ -44,6 +45,7 @@ fragment DispatchFreightMoveFields on DispatchFreightMove {
   toCell
   toLabel
   slotStart
+  slotEnd
   short
   freeAt
   arriveAt
@@ -108,6 +110,7 @@ query DispatchFreightOutlook {
     slotStarts
     network {
       start
+      end
       likelyLow
       likelyHigh
       needLow
@@ -157,6 +160,7 @@ query DispatchFreightArea($cell: Int!, $slotStart: Timestamp) {
       east
     }
     slotStart
+    slotEnd
     reach {
       workerId
       workerName

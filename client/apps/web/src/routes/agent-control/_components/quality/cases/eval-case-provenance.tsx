@@ -67,6 +67,20 @@ export function EvalCaseProvenance({ evalCase }: { evalCase: AgentEvalCaseDetail
           <DescriptionItem label={t("Tools held")} numeric>
             {fingerprint ? fingerprint.tools.length : evalCase.heldTools.length}
           </DescriptionItem>
+          <DescriptionItem label={t("Tools beyond its own")}>
+            {evalCase.reachedTools.length > 0 ? (
+              <span
+                className="font-mono text-xs"
+                title={t(
+                  "The original found these through another agent on the Desk. A replay cannot reach them, so this case is not activated on its own.",
+                )}
+              >
+                {evalCase.reachedTools.join(", ")}
+              </span>
+            ) : (
+              <DescriptionEmpty />
+            )}
+          </DescriptionItem>
           <DescriptionItem label={t("Redacted fields")} numeric>
             {redaction.length}
           </DescriptionItem>

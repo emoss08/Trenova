@@ -25,12 +25,25 @@ func (r *MutationResolver) CreateDeskMemory(ctx context.Context, input gqlmodel.
 		return nil, err
 	}
 
-	created, err := r.AgentMemoryService.CreateDesk(ctx, &agentmemoryports.CreateDeskMemoryRequest{
-		Actor:   actor,
-		Content: input.Content,
-		Scope:   input.Scope,
-		RoleID:  roleID,
-	})
+	subjectID, err := optionalID(input.SubjectID)
+	if err != nil {
+		return nil, err
+	}
+	req := &agentmemoryports.CreateDeskMemoryRequest{
+		Actor:     actor,
+		Content:   input.Content,
+		Scope:     input.Scope,
+		RoleID:    roleID,
+		SubjectID: subjectID,
+	}
+	if input.Kind != nil {
+		req.Kind = *input.Kind
+	}
+	if input.SubjectType != nil {
+		req.SubjectType = *input.SubjectType
+	}
+
+	created, err := r.AgentMemoryService.CreateDesk(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -169,7 +182,19 @@ func (r *QueryResolver) DeskMemories(ctx context.Context, input gqlmodel.DeskMem
 		return nil, err
 	}
 
-	req := &agentmemoryports.ListDeskMemoriesRequest{Actor: actor, RoleID: roleID}
+	subjectID, err := optionalID(input.SubjectID)
+	if err != nil {
+		return nil, err
+	}
+
+	req := &agentmemoryports.ListDeskMemoriesRequest{
+		Actor:     actor,
+		RoleID:    roleID,
+		SubjectID: subjectID,
+	}
+	if input.SubjectType != nil {
+		req.SubjectType = *input.SubjectType
+	}
 	if input.Scope != nil {
 		req.Scope = *input.Scope
 	}

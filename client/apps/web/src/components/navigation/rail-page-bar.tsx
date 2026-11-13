@@ -1,6 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { FavoriteToggle, HistoryNavigation, SidebarToggle } from "@/components/header";
 import { useBreadcrumbs } from "@/hooks/use-breadcrumb";
+import { trailCrumbs } from "@/lib/route-utils";
 import { cn } from "@trenova/shared/lib/utils";
 import { Link, useNavigation } from "react-router";
 
@@ -20,19 +21,15 @@ export function PageBarControls({ className }: { className?: string }) {
 
 /**
  * The trail to the page, drawn into the page's own title bar. Home is not a
- * crumb (the rail holds it), and a crumb that only repeats the title is
- * dropped, so the Shipments board reads "Shipments" once rather than three
- * times. On a phone the trail goes, and the title keeps the width.
+ * crumb (the rail holds it). On a phone the trail goes, and the title keeps
+ * the width.
  */
 export function PageBarTrail({ title }: { title: string }) {
   const t = useT();
   const navigation = useNavigation();
   const breadcrumbs = useBreadcrumbs();
   const isLoading = navigation.state === "loading";
-  const last = breadcrumbs.at(-1);
-  const parents = breadcrumbs
-    .slice(0, -1)
-    .filter((crumb) => crumb.crumb !== title && crumb.crumb !== last?.crumb);
+  const parents = trailCrumbs(breadcrumbs, title, (label) => t(label));
 
   if (parents.length === 0) {
     return null;
@@ -44,15 +41,15 @@ export function PageBarTrail({ title }: { title: string }) {
       className="flex min-w-0 shrink items-center gap-1.5 max-md:hidden"
     >
       {parents.map((crumb) => (
-        <span key={crumb.id} className="flex min-w-0 items-center gap-1.5">
+        <span key={crumb.path} className="flex min-w-0 items-center gap-1.5">
           <Link
-            to={crumb.pathname}
+            to={crumb.path}
             className={cn(
               "text-foreground-muted hover:text-foreground truncate text-sm transition-colors",
               isLoading && "opacity-50",
             )}
           >
-            {crumb.crumb}
+            {crumb.label}
           </Link>
           <span aria-hidden className="text-foreground-subtle text-sm">
             /

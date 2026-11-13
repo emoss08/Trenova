@@ -109,6 +109,27 @@ type RecordedReads interface {
 	Recorded(tool string, arguments map[string]any) (result any, failed, ok bool)
 }
 
+// ReplayOf says a run replays an evaluation case against what its original
+// was given. It is data, so it rides with a run that is driven across
+// workflow activities: each activity that dispatches a tool call loads the
+// case's recorded reads for itself. AsOf is the moment the case was asked,
+// which the run's clock is set back to; zero leaves the clock as it is.
+type ReplayOf struct {
+	CaseID pulid.ID `json:"caseId"`
+	AsOf   int64    `json:"asOf,omitempty"`
+}
+
+// RecordedReadsReader loads what an evaluation case's original was given. It
+// returns nil when the case holds nothing a replay can be answered from, or
+// no longer exists.
+type RecordedReadsReader interface {
+	RecordedReads(
+		ctx context.Context,
+		tenant pagination.TenantInfo,
+		caseID pulid.ID,
+	) (RecordedReads, error)
+}
+
 type RunRequest struct {
 	Definition *agentdefinition.Definition
 	Actor      *permissionports.RequestActor
@@ -142,6 +163,9 @@ type RunRequest struct {
 	// situation the person decided in rather than on records that have since
 	// moved on. A read is still authorized first; only its data is recorded.
 	Recorded RecordedReads
+	// Replay names the case Recorded came from, for a run whose tool calls
+	// are dispatched in activities of their own, where Recorded cannot ride.
+	Replay *ReplayOf
 	// History is the conversation so far, oldest first, excluding Input.
 	History []conversation.Message
 	Input   string

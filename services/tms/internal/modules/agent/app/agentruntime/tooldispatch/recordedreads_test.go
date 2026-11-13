@@ -70,7 +70,6 @@ func TestRunQueryTool_ARecordedReadIsAnsweredWithWhatTheOriginalWasGiven(t *test
 	assert.NotContains(t, outcome.Content, "Delivered",
 		"the shipment has since been delivered, which the person who decided never saw")
 	assert.Zero(t, tool.Calls, "the records are not read for a read that was recorded")
-	assert.Equal(t, 1, recording.Served())
 }
 
 func TestRunQueryTool_AReadTheOriginalNeverMadeIsMadeAgainstTheRecords(t *testing.T) {
@@ -96,7 +95,6 @@ func TestRunQueryTool_AReadTheOriginalNeverMadeIsMadeAgainstTheRecords(t *testin
 	assert.False(t, outcome.Failed)
 	assert.Contains(t, outcome.Content, "Delivered")
 	assert.Equal(t, 1, tool.Calls)
-	assert.Zero(t, recording.Served())
 }
 
 func TestRunQueryTool_ARecordedReadMatchesTheArgumentsTheModelSent(t *testing.T) {

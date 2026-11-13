@@ -5,6 +5,7 @@ import "math"
 const (
 	maxCountTerms    = 2_000
 	poissonTolerance = 1e-9
+	scoreTolerance   = 1e-6
 )
 
 type Count struct {
@@ -46,6 +47,51 @@ func (c Count) Shift(by int) Count {
 	c.Offset += by
 
 	return c
+}
+
+func (c Count) Scale(by float64) Count {
+	if by == 1 || c.Mean <= 0 {
+		return c
+	}
+	excess := math.Max(c.Variance-c.Mean, 0)
+	c.Mean *= by
+	c.Variance = c.Mean + by*by*excess
+
+	return c
+}
+
+func (c Count) Widen(dispersion float64) Count {
+	if dispersion > 1 {
+		c.Variance *= dispersion
+	}
+
+	return c
+}
+
+func (c Count) Score(actual int) float64 {
+	k := actual - c.Offset
+	if c.Mean <= 0 {
+		return math.Abs(float64(k))
+	}
+	score := float64(max(-k, 0))
+	cumulative, last := 0.0, -1
+	c.walk(func(n int, p float64) bool {
+		cumulative += p
+		last = n
+		if n < k {
+			score += cumulative * cumulative
+			return true
+		}
+		tail := math.Max(0, 1-cumulative)
+		score += tail * tail
+
+		return tail > scoreTolerance
+	})
+	if last < k {
+		score += float64(k - last - 1)
+	}
+
+	return score
 }
 
 func (c Count) Exceeds(k int) float64 {

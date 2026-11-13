@@ -3,7 +3,9 @@ package agentmemoryrepository
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
@@ -446,6 +448,72 @@ type namedSubjectRow struct {
 	SubjectID   pulid.ID
 }
 
+const (
+	minLeadWordRunes = 4
+	maxLeadWords     = 24
+	maxLedSubjects   = 48
+)
+
+type ledSubjectRow struct {
+	SubjectType agentmemory.MemorySubjectType
+	SubjectID   pulid.ID
+	Lead        string
+}
+
+// leadWords are the words of a message long enough to be the first word of a
+// company's name: "acme" for Acme Manufacturing.
+func leadWords(text string) []string {
+	words := make([]string, 0, maxLeadWords)
+	for _, word := range stringutils.SearchWords(text) {
+		if utf8.RuneCountInString(word) < minLeadWordRunes || slices.Contains(words, word) {
+			continue
+		}
+		words = append(words, word)
+		if len(words) == maxLeadWords {
+			break
+		}
+	}
+
+	return words
+}
+
+// organizationSubjects are the records people call by the first word of
+// their name. A driver is not one: "john" names too many people.
+func organizationSubjects() []agentmemory.MemorySubjectType {
+	return []agentmemory.MemorySubjectType{
+		agentmemory.MemorySubjectCustomer,
+		agentmemory.MemorySubjectLocation,
+		agentmemory.MemorySubjectCarrier,
+	}
+}
+
+// SubjectsLedBy keeps the records a short name points at without doubt: a
+// first word that only one record of its kind with memories begins with.
+// "granite" for four Granite customers names none of them.
+func SubjectsLedBy(rows []ledSubjectRow) []agentmemoryports.MemorySubjectRef {
+	type lead struct {
+		kind agentmemory.MemorySubjectType
+		word string
+	}
+	count := make(map[lead]int, len(rows))
+	for _, row := range rows {
+		count[lead{kind: row.SubjectType, word: row.Lead}]++
+	}
+
+	refs := make([]agentmemoryports.MemorySubjectRef, 0, len(rows))
+	for _, row := range rows {
+		if count[lead{kind: row.SubjectType, word: row.Lead}] != 1 {
+			continue
+		}
+		refs = append(refs, agentmemoryports.MemorySubjectRef{
+			Type: row.SubjectType,
+			ID:   row.SubjectID,
+		})
+	}
+
+	return refs
+}
+
 func (r *repository) ListNamedSubjects(
 	ctx context.Context,
 	req *agentmemoryports.ListNamedMemorySubjectsRequest,
@@ -479,16 +547,45 @@ func (r *repository) ListNamedSubjects(
 				).
 				Group(m.SubjectType, m.SubjectID).
 				Limit(limit)
-			if err := keel.Batch(ctx, r.db.Keel(ctx), keel.IntoSlice(q, &rows)); err != nil {
+			reads := []keel.BatchItem{keel.IntoSlice(q, &rows)}
+
+			var led []ledSubjectRow
+			if leads := leadWords(req.Text); len(leads) > 0 {
+				lead := keel.StringOf(
+					keel.Raw("split_part(?, ' ', 1)", foldedContent(m.SubjectLabel)),
+				)
+				reads = append(reads, keel.IntoSlice(
+					m.Pick(m.SubjectType, m.SubjectID, lead).
+						Where(
+							activeOnly(req.Now),
+							forAgent(req.AgentDefinitionID, req.Reader),
+							m.SubjectID.IsNotNull(),
+							m.SubjectType.In(organizationSubjects()...),
+							lead.InArray(keel.TextArray(leads)),
+						).
+						Group(m.SubjectType, m.SubjectID, lead).
+						Limit(maxLedSubjects),
+					&led,
+				))
+			}
+			if err := keel.Batch(ctx, r.db.Keel(ctx), reads...); err != nil {
 				return nil, fmt.Errorf("list the memory subjects a message names: %w", err)
 			}
 
-			refs := make([]agentmemoryports.MemorySubjectRef, 0, len(rows))
+			refs := make([]agentmemoryports.MemorySubjectRef, 0, len(rows)+len(led))
 			for _, row := range rows {
 				refs = append(refs, agentmemoryports.MemorySubjectRef{
 					Type: row.SubjectType,
 					ID:   row.SubjectID,
 				})
+			}
+			for _, ref := range SubjectsLedBy(led) {
+				if len(refs) >= limit {
+					break
+				}
+				if !slices.Contains(refs, ref) {
+					refs = append(refs, ref)
+				}
 			}
 
 			return refs, nil

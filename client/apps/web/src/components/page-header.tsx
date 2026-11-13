@@ -1,6 +1,7 @@
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { cn } from "@trenova/shared/lib/utils";
 import { InfoPopover } from "./info-popover";
+import { TourReplayButton } from "./tour/tour-replay-button";
 import { Metadata } from "./metadata";
 
 export type PageHeaderProps = {
@@ -16,6 +17,11 @@ export type PageHeaderProps = {
   /** What the shell puts after the actions, set apart by a hairline. */
   trailing?: React.ReactNode;
   includeMetadata?: boolean;
+  /**
+   * The key of the page's tour. The About note then offers "Take the tour" while the page's
+   * `PageTour` is on screen, so a tour seen once can be seen again.
+   */
+  tour?: string;
   className?: string;
   /**
    * Keeps the title and description for assistive technology and the
@@ -36,6 +42,7 @@ export function PageHeader({
   leading,
   trailing,
   includeMetadata = true,
+  tour,
   className,
   visuallyHidden = false,
 }: PageHeaderProps) {
@@ -53,7 +60,7 @@ export function PageHeader({
     <div
       data-slot="page-header"
       className={cn(
-        "border-border bg-background flex shrink-0 flex-wrap items-center justify-between gap-x-3 gap-y-1.5 border-b px-4 py-1.5",
+        "flex shrink-0 flex-wrap items-center justify-between gap-x-3 gap-y-1.5 border-b border-border bg-background px-4 py-1.5",
         PAGE_HEADER_HEIGHT_CLASS,
         className,
       )}
@@ -61,7 +68,18 @@ export function PageHeader({
       <div className="flex min-w-0 items-center gap-1.5">
         {leading}
         <h1 className="truncate text-lg font-semibold">{title}</h1>
-        {description ? <InfoPopover title={title}>{description}</InfoPopover> : null}
+        {description ? (
+          <InfoPopover title={title}>
+            {tour ? (
+              <>
+                <p>{description}</p>
+                <TourReplayButton tour={tour} />
+              </>
+            ) : (
+              description
+            )}
+          </InfoPopover>
+        ) : null}
         {context ? <div className="ml-1 flex min-w-0 items-center gap-2">{context}</div> : null}
       </div>
       {actions || trailing ? (
@@ -71,7 +89,7 @@ export function PageHeader({
             <div
               className={cn(
                 "flex items-center gap-1",
-                actions && "border-border ml-1 border-l pl-3",
+                actions && "ml-1 border-l border-border pl-3",
               )}
             >
               {trailing}
@@ -88,7 +106,7 @@ export function PageHeaderSkeleton() {
   return (
     <div
       className={cn(
-        "border-border flex shrink-0 items-center border-b px-4 py-1.5",
+        "flex shrink-0 items-center border-b border-border px-4 py-1.5",
         PAGE_HEADER_HEIGHT_CLASS,
       )}
     >

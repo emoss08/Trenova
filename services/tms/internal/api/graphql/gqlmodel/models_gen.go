@@ -3077,6 +3077,11 @@ type CreateDeskMemoryInput struct {
 	// User, Role or Organization. A Role memory needs a role the person holds. Role and Organization memories are kept at once when the person manages agent memory and offered to an administrator otherwise.
 	Scope  agentmemory.MemoryScope `json:"scope"`
 	RoleID *string                 `json:"roleId,omitempty"`
+	// Instruction when left out; Fact or Procedure for one that is not a rule.
+	Kind *agentmemory.MemoryKind `json:"kind,omitempty"`
+	// With subjectId, the customer, location, driver or carrier the memory is about.
+	SubjectType *agentmemory.MemorySubjectType `json:"subjectType,omitempty"`
+	SubjectID   *string                        `json:"subjectId,omitempty"`
 }
 
 type CreateDocumentTemplateVersionInput struct {
@@ -3652,6 +3657,10 @@ type DeskAttentionInput struct {
 	Working *bool `json:"working,omitempty"`
 	// Only the reader's own cases and the ones nobody owns, for a reader who may see everyone's.
 	Mine *bool `json:"mine,omitempty"`
+	// Rows with an item whose title, summary or record name holds these words, whatever their case; at most 100 characters are read. Empty is every row.
+	Search *string `json:"search,omitempty"`
+	// Only rows with an item the reader has not opened yet.
+	Unseen *bool `json:"unseen,omitempty"`
 }
 
 // A button an actions block offers. It sends its request as the person's own message
@@ -3857,6 +3866,9 @@ type DeskMemoriesInput struct {
 	RoleID *string `json:"roleId,omitempty"`
 	// Words the memory says.
 	Query *string `json:"query,omitempty"`
+	// With subjectId, only the memories about that record, as its own page lists them: what agents keep about it for their own work is listed too.
+	SubjectType *agentmemory.MemorySubjectType `json:"subjectType,omitempty"`
+	SubjectID   *string                        `json:"subjectId,omitempty"`
 }
 
 // A memory as a person keeps it on the Desk: one of their own, their role's, or
@@ -3873,6 +3885,10 @@ type DeskMemory struct {
 	// The role a Role memory is kept for.
 	RoleID   *string `json:"roleId,omitempty"`
 	RoleName string  `json:"roleName"`
+	// The kind of record the memory is about, when it is about one.
+	SubjectType *agentmemory.MemorySubjectType `json:"subjectType,omitempty"`
+	// The record's name; empty for a memory about no one record.
+	SubjectLabel string `json:"subjectLabel"`
 	// Active or Paused on the page; Retired once forgotten, until it is brought back; Suggested while an agent's offer waits.
 	Status agentmemory.MemoryStatus `json:"status"`
 	Source agentmemory.MemorySource `json:"source"`
@@ -4994,9 +5010,9 @@ type DispatchForecastQuality struct {
 	HistoryLoads int `json:"historyLoads"`
 	WeeksTested  int `json:"weeksTested"`
 	LoadsTested  int `json:"loadsTested"`
-	// Share of actual counts that fell inside the forecast's 80% range.
+	// Share of the tested days whose load total fell inside the forecast's 80% range.
 	IntervalCoverage float64 `json:"intervalCoverage"`
-	// Average miss per area and four-hour slot, in loads.
+	// Average miss per active area and four-hour slot, in loads: the forecast's ranked probability score.
 	MeanAbsoluteError float64 `json:"meanAbsoluteError"`
 	// The same average miss for repeating the same slot of the week before.
 	NaiveMeanAbsoluteError float64 `json:"naiveMeanAbsoluteError"`
@@ -5043,6 +5059,7 @@ type DispatchFreightAreaDetail struct {
 	Bounds      *DispatchFreightAreaBounds `json:"bounds"`
 	// The window the sheet reads: the one asked for, or the area's worst.
 	SlotStart int                     `json:"slotStart"`
+	SlotEnd   int                     `json:"slotEnd"`
 	Reach     []*DispatchFreightReach `json:"reach"`
 	Moves     []*DispatchFreightMove  `json:"moves"`
 	Pace      []*DispatchFreightPace  `json:"pace"`
@@ -5067,6 +5084,7 @@ type DispatchFreightMove struct {
 	ToLabel    string                  `json:"toLabel"`
 	// The window the move is for.
 	SlotStart int `json:"slotStart"`
+	SlotEnd   int `json:"slotEnd"`
 	// Loads with no truck nearby in that window.
 	Short          float64 `json:"short"`
 	FreeAt         *int    `json:"freeAt,omitempty"`
@@ -5106,6 +5124,8 @@ type DispatchFreightMove struct {
 // anywhere. The gap between short here and uncovered (summed over areas) is placement.
 type DispatchFreightNetworkSlot struct {
 	Start int `json:"start"`
+	// When the window ends: four hours on, three or five on the two nights the clocks change.
+	End int `json:"end"`
 	// Every load likely in the window, booked or not, the 10th to 90th percentile.
 	LikelyLow  int `json:"likelyLow"`
 	LikelyHigh int `json:"likelyHigh"`
@@ -5173,6 +5193,8 @@ type DispatchFreightReach struct {
 // drivers expected, served in order, so a driver used in one window is not counted again.
 type DispatchFreightSlot struct {
 	Start int `json:"start"`
+	// When the window ends: four hours on, three or five on the two nights the clocks change.
+	End int `json:"end"`
 	// Loads likely to start in the window, booked included (10th to 90th percentile).
 	LikelyLow  int `json:"likelyLow"`
 	LikelyHigh int `json:"likelyHigh"`
@@ -8460,6 +8482,16 @@ type PageInfo struct {
 	EndCursor   *string `json:"endCursor,omitempty"`
 }
 
+// A page tour the caller has already been shown, so it does not open by itself again.
+type PageTourView struct {
+	// The tour's key, such as freight-outlook.
+	Tour string `json:"tour"`
+	// The version of the tour they saw. A tour with newer steps opens again.
+	TourVersion int             `json:"tourVersion"`
+	Outcome     PageTourOutcome `json:"outcome"`
+	SeenAt      int             `json:"seenAt"`
+}
+
 type PauseAccountingSyncInput struct {
 	IntegrationType integration.Type `json:"integrationType"`
 	Reason          *string          `json:"reason,omitempty"`
@@ -8597,6 +8629,8 @@ type PendingDecisionsInput struct {
 	AgentDefinitionID *string `json:"agentDefinitionId,omitempty"`
 	// Only proposals of this tool; a plan matches when any step uses it.
 	ToolName *string `json:"toolName,omitempty"`
+	// Only decisions whose words hold this: what the agent wants, why, and the name of the record it is for, as Needs you's search reads them.
+	Search *string `json:"search,omitempty"`
 }
 
 type PerformanceReviewStatusInput struct {
@@ -9161,6 +9195,12 @@ type RecordMyStopActionInput struct {
 	OccurredAt *int `json:"occurredAt,omitempty"`
 	// An id the device makes once per tap, so a resend after a dropped connection is recorded once.
 	ClientEventID *string `json:"clientEventId,omitempty"`
+}
+
+type RecordPageTourInput struct {
+	Tour        string          `json:"tour"`
+	TourVersion int             `json:"tourVersion"`
+	Outcome     PageTourOutcome `json:"outcome"`
 }
 
 type RecordSafetyViolationInput struct {
@@ -16355,6 +16395,64 @@ func (e *PageAccessUse) UnmarshalJSON(b []byte) error {
 }
 
 func (e PageAccessUse) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+// How a person left a page tour.
+type PageTourOutcome string
+
+const (
+	// They walked through every step.
+	PageTourOutcomeFinished PageTourOutcome = "Finished"
+	// They closed it before the last step.
+	PageTourOutcomeSkipped PageTourOutcome = "Skipped"
+)
+
+var AllPageTourOutcome = []PageTourOutcome{
+	PageTourOutcomeFinished,
+	PageTourOutcomeSkipped,
+}
+
+func (e PageTourOutcome) IsValid() bool {
+	switch e {
+	case PageTourOutcomeFinished, PageTourOutcomeSkipped:
+		return true
+	}
+	return false
+}
+
+func (e PageTourOutcome) String() string {
+	return string(e)
+}
+
+func (e *PageTourOutcome) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = PageTourOutcome(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid PageTourOutcome", str)
+	}
+	return nil
+}
+
+func (e PageTourOutcome) MarshalGQL(w io.Writer) {
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *PageTourOutcome) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e PageTourOutcome) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil

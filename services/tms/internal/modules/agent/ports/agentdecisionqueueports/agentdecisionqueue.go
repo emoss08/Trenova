@@ -43,6 +43,9 @@ type ListPendingDecisionsQuery struct {
 	// one kind of write.
 	AgentDefinitionID pulid.ID
 	ToolName          string
+	// Search keeps only the decisions whose Watchtower item holds these words
+	// in its title, its summary or its record's name; empty keeps everything.
+	Search string
 	// Audience keeps only what agents the person may use raised; nil keeps
 	// everything.
 	Audience *kernelports.AgentAudience

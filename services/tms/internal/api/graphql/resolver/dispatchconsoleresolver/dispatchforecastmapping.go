@@ -127,6 +127,7 @@ func mapDispatchFreightOutlook(
 	for _, slot := range outlook.Network {
 		mapped.Network = append(mapped.Network, &gqlmodel.DispatchFreightNetworkSlot{
 			Start:      int(slot.Start),
+			End:        int(slot.End),
 			LikelyLow:  slot.Low,
 			LikelyHigh: slot.High,
 			NeedLow:    slot.NeedLow,
@@ -168,6 +169,7 @@ func mapDispatchFreightAreaDetail(
 			East:  detail.Bounds.East,
 		},
 		SlotStart:           int(detail.SlotStart),
+		SlotEnd:             int(detail.SlotEnd),
 		Reach:               make([]*gqlmodel.DispatchFreightReach, 0, len(detail.Reach)),
 		Moves:               mapDispatchFreightMoves(detail.Steps),
 		Pace:                mapDispatchFreightPaces(detail.Pace),
@@ -214,6 +216,7 @@ func mapDispatchFreightArea(area *freightoutlookports.Area) *gqlmodel.DispatchFr
 	for _, slot := range area.Balance.Slots {
 		mapped.Slots = append(mapped.Slots, &gqlmodel.DispatchFreightSlot{
 			Start:      int(slot.Start),
+			End:        int(slot.End),
 			LikelyLow:  slot.Low,
 			LikelyHigh: slot.High,
 			Booked:     slot.Booked,
@@ -251,6 +254,7 @@ func mapDispatchFreightMoves(steps []freightmove.Step) []*gqlmodel.DispatchFreig
 			ToCell:         int(step.ToCell),
 			ToLabel:        step.ToLabel,
 			SlotStart:      int(step.SlotStart),
+			SlotEnd:        int(step.SlotEnd),
 			Short:          step.Short,
 			FreeAt:         gqlscalar.NonZeroIntPtr(step.FreeAt),
 			ArriveAt:       gqlscalar.NonZeroIntPtr(step.ArriveAt),
