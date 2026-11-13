@@ -2,7 +2,7 @@
   "screens": [
     {
       "path": "/",
-      "name": "",
+      "name": "Home",
       "requires": [],
       "operations": [
         "AccountingBriefing",
@@ -1320,8 +1320,6 @@
         }
       ],
       "operations": [
-        "AIAgentRoster",
-        "AIControlSummary",
         "AICorrectionDetail",
         "AICorrectionTable",
         "AIProviderCards",
@@ -1333,18 +1331,14 @@
         "AIRetrievalReindexEstimate",
         "AIRetrievalStatus",
         "AIRoutePreview",
-        "AITuneUps",
-        "AIUsageDaily",
         "AIUsageFeatures",
         "AIUsageSummary",
         "AddAgentOrganizationProfileGuidance",
         "AddMyAgentProfileGuidance",
-        "AgentActivitySummary",
         "AgentAnalytics",
         "AgentAnalyticsToolFailures",
         "AgentControlSettings",
         "AgentDefinitionCard",
-        "AgentDefinitionCount",
         "AgentDefinitionVersionDraft",
         "AgentDefinitionVersions",
         "AgentDraftingAvailable",
@@ -1354,23 +1348,18 @@
         "AgentEvaluationTable",
         "AgentExceptionTable",
         "AgentInstructionLint",
-        "AgentMemoryCount",
-        "AgentMemoryTable",
-        "AgentMemoryUsage",
         "AgentOrganizationProfile",
         "AgentOrganizationProfileHistory",
         "AgentPlanPreview",
         "AgentPlanTable",
-        "AgentPromotionPreview",
-        "AgentProposalCount",
         "AgentProposalPreview",
+        "AgentProposalPreviews",
         "AgentProposalTable",
         "AgentQuality",
         "AgentQualityAgentTable",
         "AgentQualityControl",
         "AgentQualityOverview",
         "AgentReflections",
-        "AgentRunCount",
         "AgentRunDetail",
         "AgentRunTable",
         "AgentSafety",
@@ -1385,14 +1374,11 @@
         "AgentToolRuleTable",
         "AgentToolSafetyTable",
         "AgentWorstRatedAnswerTable",
-        "ApplyAITuneUp",
-        "ApproveAgentMemorySuggestion",
         "ApproveAgentOrganizationProfileGuidance",
         "BulkEditFields",
         "ClearMyAIFeedback",
         "ConfirmDeskMemory",
         "CreateAgentEvalCase",
-        "CreateAgentMemory",
         "DataTableAggregates",
         "DataTableFacets",
         "DataTableInsightFields",
@@ -1400,9 +1386,6 @@
         "DecideAgentProposal",
         "DeskMemoriesByIds",
         "DeskMemorySettings",
-        "DismissAIProviderFailure",
-        "DismissAITuneUp",
-        "DismissAgentMemorySuggestion",
         "DismissAgentOrganizationProfileGuidance",
         "DismissDeskMemory",
         "DraftAgentFromDescription",
@@ -1425,11 +1408,8 @@
         "ReplayAgentRun",
         "ResetMyTableLayout",
         "ResolveAgentException",
-        "RestoreAIProviderFailure",
-        "RestoreAITuneUp",
         "RetireAgentOrganizationProfileGuidance",
         "RetireMyAgentProfileGuidance",
-        "ReviewAgentMemory",
         "ReviseDeskMemory",
         "RouteAITask",
         "RunAgentSuite",
@@ -1437,7 +1417,6 @@
         "SaveMyTableLayout",
         "ScheduleTableView",
         "SetAgentEvalCaseStatus",
-        "SetAgentMemoryStatus",
         "SetDeskMemoryStatus",
         "SetMyAIFeedback",
         "StartBulkEdit",
@@ -1447,7 +1426,6 @@
         "UpdateAIRetrievalSettings",
         "UpdateAgentControl",
         "UpdateAgentEvalCase",
-        "UpdateAgentMemory",
         "UpdateAgentQualityControl"
       ],
       "rest": [
@@ -3905,6 +3883,7 @@
         "CarrierIntelMonitoringStatus",
         "CarrierIntelSettings",
         "CarrierIntelUsage",
+        "CreateDeskMemory",
         "CreateMemo",
         "CustomerBrokerIntelligence",
         "CustomerTable",
@@ -3913,6 +3892,7 @@
         "DataTableInsightFields",
         "DataTableSeries",
         "DeskInvoiceCard",
+        "DeskMemories",
         "DraftFactoringNoa",
         "ExportTableView",
         "FactoringAgreementActivity",
@@ -3951,9 +3931,11 @@
         "PreviewBulkEdit",
         "ReleaseFactoringNoa",
         "ResetMyTableLayout",
+        "ReviseDeskMemory",
         "SaveMyTableLayout",
         "ScheduleTableView",
         "SendFactoringNoa",
+        "SetDeskMemoryStatus",
         "ShipmentInvoices",
         "StartBulkEdit",
         "UndoMyBulkEdit",
@@ -4396,6 +4378,7 @@
       "operations": [
         "AgentPlanPreview",
         "AgentProposalPreview",
+        "AgentProposalPreviews",
         "AvailableCaptureProfiles",
         "CancelCaptureRequest",
         "CaptureAgentRelease",
@@ -4802,6 +4785,7 @@
       "operations": [
         "AgentPlanPreview",
         "AgentProposalPreview",
+        "AgentProposalPreviews",
         "AvailableCaptureProfiles",
         "CancelCaptureRequest",
         "CaptureAgentRelease",
@@ -5244,6 +5228,7 @@
       "operations": [
         "AgentPlanPreview",
         "AgentProposalPreview",
+        "AgentProposalPreviews",
         "AvailableCaptureProfiles",
         "CancelCaptureRequest",
         "CaptureAgentRelease",
@@ -5649,6 +5634,7 @@
       "operations": [
         "AgentPlanPreview",
         "AgentProposalPreview",
+        "AgentProposalPreviews",
         "AvailableCaptureProfiles",
         "CancelCaptureRequest",
         "CaptureAgentRelease",
@@ -6581,14 +6567,18 @@
         "LateChargePreview",
         "MyActiveBillingTransferRun",
         "OpenInvoiceDispute",
+        "RecordShareCandidates",
+        "RecordShares",
         "RequestMissingFactoringDocuments",
         "ResolveInvoiceDispute",
         "SendInvoiceEdi",
         "SetInvoiceFactoringOverride",
+        "ShareRecord",
         "ShipmentCheckCalls",
         "ShipmentInvoices",
         "ShipmentProfitability",
         "UnapplyCreditMemoApplication",
+        "UnshareRecord",
         "VoidInvoice",
         "WithdrawInvoiceDispute"
       ],
@@ -6772,18 +6762,6 @@
         {
           "method": "POST",
           "path": "/billing/invoices/:param/send/"
-        },
-        {
-          "method": "GET",
-          "path": "/billing/invoices/:param/shares/"
-        },
-        {
-          "method": "POST",
-          "path": "/billing/invoices/:param/shares/"
-        },
-        {
-          "method": "GET",
-          "path": "/billing/invoices/:param/shares/candidates/"
         },
         {
           "method": "DELETE",
@@ -7842,6 +7820,7 @@
         "AddDriverSettlementAdjustment",
         "AgentPlanPreview",
         "AgentProposalPreview",
+        "AgentProposalPreviews",
         "ApproveCarrierSettlement",
         "ApproveDriverSettlement",
         "ApproveJournalEntries",
@@ -7928,6 +7907,7 @@
         "EdiSummary",
         "EdiVolumeSeries",
         "ExportCarrierSettlementBatchCsv",
+        "InviteWorkerToPortal",
         "InvoiceArContext",
         "JournalEntriesBySource",
         "JournalEntryDetail",
@@ -7948,6 +7928,8 @@
         "RecalculateCarrierSettlement",
         "RecalculateDriverSettlement",
         "RecordMyAgentSuggestion",
+        "RecordShareCandidates",
+        "RecordShares",
         "RejectCarrierSettlement",
         "RejectDriverSettlement",
         "RemoveCarrierSettlementAdjustment",
@@ -7957,6 +7939,7 @@
         "SendInvoiceEdi",
         "SetDeskMemoryStatus",
         "SettleMyAgentSuggestion",
+        "ShareRecord",
         "ShipmentCheckCalls",
         "ShipmentCustomerBillingRules",
         "ShipmentInvoices",
@@ -7965,6 +7948,7 @@
         "SubmitDriverSettlement",
         "TodaysBriefing",
         "UndoMyDecision",
+        "UnshareRecord",
         "UpcomingWorkerPto",
         "VoidCarrierSettlement",
         "VoidDriverSettlement",
@@ -8669,33 +8653,6 @@
       "rest": []
     },
     {
-      "path": "/desk/decisions",
-      "name": "",
-      "requires": [
-        {
-          "resource": "assistant",
-          "operation": "read"
-        },
-        {
-          "resource": "agent_proposal",
-          "operation": "read"
-        }
-      ],
-      "operations": [
-        "AgentPlanPreview",
-        "AgentProposalPreview",
-        "DecideAgentPlan",
-        "DecideAgentProposal",
-        "DecideAgentProposals",
-        "MyPlanPreview",
-        "MyProposalPreview",
-        "PendingDecisions",
-        "PlanSteps",
-        "RecentDecisions"
-      ],
-      "rest": []
-    },
-    {
       "path": "/desk/handled/:id",
       "name": "",
       "requires": [
@@ -8749,25 +8706,52 @@
         {
           "resource": "assistant",
           "operation": "read"
-        },
-        {
-          "resource": "watchtower",
-          "operation": "read"
         }
       ],
       "operations": [
         "AgentPlanPreview",
         "AgentProposalPreview",
+        "AgentProposalPreviews",
+        "CarrierTrackingLink",
+        "CustomerStatusNotifications",
+        "CustomerTrackingLinks",
         "DecideAgentPlan",
         "DecideAgentProposal",
+        "DecideAgentProposals",
+        "InviteWorkerToPortal",
         "MyPlanPreview",
         "MyProposalPreview",
-        "PlanSteps"
+        "PendingDecisionSummary",
+        "PendingDecisions",
+        "PlanSteps",
+        "RecentDecisions",
+        "ShipmentCheckCalls",
+        "ShipmentProfitability"
       ],
       "rest": [
         {
           "method": "POST",
           "path": "/assistant/threads/"
+        },
+        {
+          "method": "GET",
+          "path": "/shipments/:param/customer-tracking/preview/"
+        },
+        {
+          "method": "GET",
+          "path": "/shipments/:param/eta/"
+        },
+        {
+          "method": "GET",
+          "path": "/shipments/:param/permit-assessment/"
+        },
+        {
+          "method": "GET",
+          "path": "/shipments/:param/permit-requirements/"
+        },
+        {
+          "method": "GET",
+          "path": "/shipments/:param/permits/"
         }
       ]
     },
@@ -8800,6 +8784,7 @@
         "AddDriverSettlementAdjustment",
         "AgentPlanPreview",
         "AgentProposalPreview",
+        "AgentProposalPreviews",
         "ApproveCarrierSettlement",
         "ApproveDriverSettlement",
         "ApproveJournalEntries",
@@ -8888,6 +8873,7 @@
         "EdiSummary",
         "EdiVolumeSeries",
         "ExportCarrierSettlementBatchCsv",
+        "InviteWorkerToPortal",
         "InvoiceArContext",
         "JournalEntriesBySource",
         "JournalEntryDetail",
@@ -8908,6 +8894,8 @@
         "RecalculateCarrierSettlement",
         "RecalculateDriverSettlement",
         "RecordMyAgentSuggestion",
+        "RecordShareCandidates",
+        "RecordShares",
         "RejectCarrierSettlement",
         "RejectDriverSettlement",
         "RemoveCarrierSettlementAdjustment",
@@ -8917,6 +8905,7 @@
         "SendInvoiceEdi",
         "SetDeskMemoryStatus",
         "SettleMyAgentSuggestion",
+        "ShareRecord",
         "ShipmentCheckCalls",
         "ShipmentCustomerBillingRules",
         "ShipmentInvoices",
@@ -8925,6 +8914,7 @@
         "SubmitDriverSettlement",
         "TodaysBriefing",
         "UndoMyDecision",
+        "UnshareRecord",
         "UpcomingWorkerPto",
         "VoidCarrierSettlement",
         "VoidDriverSettlement",
@@ -9049,6 +9039,14 @@
         {
           "method": "POST",
           "path": "/agent-web-watches/:param/stop/"
+        },
+        {
+          "method": "GET",
+          "path": "/api-keys/"
+        },
+        {
+          "method": "GET",
+          "path": "/api-keys/:param/"
         },
         {
           "method": "GET",
@@ -9540,6 +9538,26 @@
         },
         {
           "method": "GET",
+          "path": "/integrations/:param/config/"
+        },
+        {
+          "method": "GET",
+          "path": "/integrations/:param/runtime-config/"
+        },
+        {
+          "method": "GET",
+          "path": "/integrations/catalog/"
+        },
+        {
+          "method": "GET",
+          "path": "/integrations/samsara/workers/sync/drift/"
+        },
+        {
+          "method": "GET",
+          "path": "/integrations/samsara/workers/sync/readiness/"
+        },
+        {
+          "method": "GET",
           "path": "/locations/"
         },
         {
@@ -9666,6 +9684,7 @@
         "AddDriverSettlementAdjustment",
         "AgentPlanPreview",
         "AgentProposalPreview",
+        "AgentProposalPreviews",
         "ApproveCarrierSettlement",
         "ApproveDriverSettlement",
         "ApproveJournalEntries",
@@ -9752,6 +9771,7 @@
         "EdiSummary",
         "EdiVolumeSeries",
         "ExportCarrierSettlementBatchCsv",
+        "InviteWorkerToPortal",
         "InvoiceArContext",
         "JournalEntriesBySource",
         "JournalEntryDetail",
@@ -9771,6 +9791,8 @@
         "RecalculateCarrierSettlement",
         "RecalculateDriverSettlement",
         "RecordMyAgentSuggestion",
+        "RecordShareCandidates",
+        "RecordShares",
         "RejectCarrierSettlement",
         "RejectDriverSettlement",
         "RemoveCarrierSettlementAdjustment",
@@ -9780,6 +9802,7 @@
         "SendInvoiceEdi",
         "SetDeskMemoryStatus",
         "SettleMyAgentSuggestion",
+        "ShareRecord",
         "ShipmentCheckCalls",
         "ShipmentCustomerBillingRules",
         "ShipmentInvoices",
@@ -9788,6 +9811,7 @@
         "SubmitDriverSettlement",
         "TodaysBriefing",
         "UndoMyDecision",
+        "UnshareRecord",
         "UpcomingWorkerPto",
         "VoidCarrierSettlement",
         "VoidDriverSettlement",
@@ -10483,6 +10507,7 @@
       "operations": [
         "AgentPlanPreview",
         "AgentProposalPreview",
+        "AgentProposalPreviews",
         "AvailableCaptureProfiles",
         "CancelCaptureRequest",
         "CaptureAgentRelease",
@@ -10997,6 +11022,7 @@
         "AddDriverSettlementAdjustment",
         "AgentPlanPreview",
         "AgentProposalPreview",
+        "AgentProposalPreviews",
         "ApproveCarrierSettlement",
         "ApproveDriverSettlement",
         "ApproveJournalEntries",
@@ -11083,6 +11109,7 @@
         "EdiSummary",
         "EdiVolumeSeries",
         "ExportCarrierSettlementBatchCsv",
+        "InviteWorkerToPortal",
         "InvoiceArContext",
         "JournalEntriesBySource",
         "JournalEntryDetail",
@@ -11102,6 +11129,8 @@
         "RecalculateCarrierSettlement",
         "RecalculateDriverSettlement",
         "RecordMyAgentSuggestion",
+        "RecordShareCandidates",
+        "RecordShares",
         "RejectCarrierSettlement",
         "RejectDriverSettlement",
         "RemoveCarrierSettlementAdjustment",
@@ -11111,6 +11140,7 @@
         "SendInvoiceEdi",
         "SetDeskMemoryStatus",
         "SettleMyAgentSuggestion",
+        "ShareRecord",
         "ShipmentCheckCalls",
         "ShipmentCustomerBillingRules",
         "ShipmentInvoices",
@@ -11119,6 +11149,7 @@
         "SubmitDriverSettlement",
         "TodaysBriefing",
         "UndoMyDecision",
+        "UnshareRecord",
         "UpcomingWorkerPto",
         "VoidCarrierSettlement",
         "VoidDriverSettlement",
@@ -11972,9 +12003,11 @@
         "CarrierIntelUsage",
         "CarrierIntelligence",
         "CarrierTable",
+        "CreateDeskMemory",
         "DataTableAggregates",
         "DataTableFacets",
         "DataTableInsightFields",
+        "DeskMemories",
         "ExportTableView",
         "GrantCarrierIntelOverride",
         "MarkCarrierIntelReviewed",
@@ -11983,10 +12016,12 @@
         "PreviewBulkEdit",
         "ResetMyTableLayout",
         "ResolveCarrierIntelEvent",
+        "ReviseDeskMemory",
         "RevokeCarrierIntelOverride",
         "SaveMyTableLayout",
         "ScheduleTableView",
         "SetCarrierMonitoring",
+        "SetDeskMemoryStatus",
         "StartBulkEdit",
         "UndoMyBulkEdit",
         "VetCarrier"
@@ -12100,6 +12135,7 @@
       "operations": [
         "AgentPlanPreview",
         "AgentProposalPreview",
+        "AgentProposalPreviews",
         "CarrierEquipmentVerifications",
         "CarrierIntelligence",
         "DecideAgentProposal",
@@ -12293,17 +12329,21 @@
       ],
       "operations": [
         "BulkEditFields",
+        "CreateDeskMemory",
         "DataTableAggregates",
         "DataTableFacets",
         "DataTableInsightFields",
+        "DeskMemories",
         "ExportTableView",
         "LocationTable",
         "MyBulkEdit",
         "MyTableLayout",
         "PreviewBulkEdit",
         "ResetMyTableLayout",
+        "ReviseDeskMemory",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SetDeskMemoryStatus",
         "StartBulkEdit",
         "UndoMyBulkEdit"
       ],
@@ -12375,7 +12415,9 @@
         "DispatchCallOffPositioning",
         "DispatchFreightArea",
         "DispatchFreightOutlook",
-        "DispatchPositionDriver"
+        "DispatchPositionDriver",
+        "MyPageTourViews",
+        "RecordMyPageTour"
       ],
       "rest": [
         {
@@ -16606,6 +16648,7 @@
         "CompleteWorkerTraining",
         "CreateCaptureCoverSheets",
         "CreateCaptureRequest",
+        "CreateDeskMemory",
         "CreatePerformanceReview",
         "CreateWorkerCredential",
         "CreateWorkerPto",
@@ -16632,6 +16675,7 @@
         "DeskCustomerRateAgreements",
         "DeskDetentionCard",
         "DeskInvoiceCard",
+        "DeskMemories",
         "DeskWorkerCard",
         "DeskWorkerCredentials",
         "DeskWorkerHos",
@@ -16684,11 +16728,13 @@
         "RescindDisciplinaryAction",
         "ResetMyTableLayout",
         "ReviewWorkerSafetyEvent",
+        "ReviseDeskMemory",
         "RevokeCarrierTrackingLink",
         "RevokeWorkerPortalAccess",
         "RunPtoAccrual",
         "SaveMyTableLayout",
         "ScheduleTableView",
+        "SetDeskMemoryStatus",
         "SetWorkerAvailabilityPreference",
         "ShiftSwapRequests",
         "ShipmentCheckCalls",
@@ -18830,6 +18876,7 @@
       "operations": [
         "AgentPlanPreview",
         "AgentProposalPreview",
+        "AgentProposalPreviews",
         "AvailableCaptureProfiles",
         "CancelCaptureRequest",
         "CaptureAgentRelease",

@@ -738,6 +738,7 @@ export const REFERENCE_VIEWS = {
   rate_matrix: ["businessUnitId", "createdAt", "id", "organizationId", "updatedAt", "version"],
   rate_quote: ["businessUnitId", "createdAt", "id", "organizationId", "updatedAt", "version"],
   rate_zone: ["businessUnitId", "createdAt", "id", "organizationId", "updatedAt", "version"],
+  record_share: ["businessUnitId", "createdAt", "id", "organizationId", "updatedAt", "version"],
   recurring_deduction: [
     "businessUnitId",
     "createdAt",
@@ -1196,6 +1197,7 @@ export const KIND_OF_TYPE: Readonly<Record<string, ReferenceKind>> = {
   RateMatrix: "rate_matrix",
   RateQuote: "rate_quote",
   RateZone: "rate_zone",
+  RecordShare: "record_share",
   RecurringDeduction: "recurring_deduction",
   RecurringEarning: "recurring_earning",
   RecurringShipment: "recurring_shipment",
