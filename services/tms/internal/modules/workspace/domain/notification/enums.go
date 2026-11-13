@@ -55,26 +55,38 @@ func ChannelFromString(v string) (Channel, error) {
 	}
 }
 
-type State string
+type Lens string
 
 const (
-	StateInbox    = State("inbox")
-	StateArchived = State("archived")
+	LensForYou = Lens("forYou")
+	LensTeam   = Lens("team")
+	LensLater  = Lens("later")
+	LensDone   = Lens("done")
+	LensOpen   = Lens("open")
 )
 
-func (s State) String() string {
-	return string(s)
+func (l Lens) String() string {
+	return string(l)
 }
 
-func StateFromString(v string) (State, error) {
-	switch v {
-	case "inbox":
-		return StateInbox, nil
-	case "archived":
-		return StateArchived, nil
-	default:
-		return "", errors.New("invalid state")
+func LensFromString(v string) (Lens, error) {
+	lens := Lens(v)
+	if !lens.IsValid() {
+		return "", errors.New("invalid lens")
 	}
+
+	return lens, nil
+}
+
+type Reason string
+
+const (
+	ReasonDirect = Reason("direct")
+	ReasonTeam   = Reason("team")
+)
+
+func (r Reason) String() string {
+	return string(r)
 }
 
 type DeliveryStatus string
@@ -128,10 +140,23 @@ func (v Channel) IsValid() bool {
 	}
 }
 
-func (v State) IsValid() bool {
+func (v Lens) IsValid() bool {
 	switch v {
-	case StateInbox,
-		StateArchived:
+	case LensForYou,
+		LensTeam,
+		LensLater,
+		LensDone,
+		LensOpen:
+		return true
+	default:
+		return false
+	}
+}
+
+func (v Reason) IsValid() bool {
+	switch v {
+	case ReasonDirect,
+		ReasonTeam:
 		return true
 	default:
 		return false

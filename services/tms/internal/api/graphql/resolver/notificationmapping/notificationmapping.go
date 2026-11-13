@@ -16,10 +16,8 @@ func ApplyNotificationFilter(
 		return
 	}
 
-	if filter.State != nil {
-		if state, err := notification.StateFromString(string(*filter.State)); err == nil {
-			req.State = state
-		}
+	if filter.Lens != nil && filter.Lens.IsValid() {
+		req.Lens = *filter.Lens
 	}
 
 	if filter.UnreadOnly != nil {

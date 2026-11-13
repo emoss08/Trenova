@@ -1,5 +1,5 @@
 {
-  "version": "sha256:43bd8ad40df10f054d59351d7e14db97c42f5674d0c0e222937389eb18486398",
+  "version": "sha256:54fb3a526af97748cc4a59a6718cd3010448278d45542ce588c2a7d1a4e834a6",
   "modules": [
     {
       "id": "home",
@@ -6570,8 +6570,8 @@
         "Data & Integrations",
         "Table change alerts"
       ],
-      "description": "Monitor and review system activity across your organization",
-      "summary": "Table change alerts notify people when records change. A subscription watches one table (optionally one record) for inserts, updates or deletes, can narrow the match with conditions, and sends a notification with a chosen priority and an optional custom title and message.\n\nThe page has two tabs. **Subscriptions** lists subscriptions with their **Name**, **Table**, **Events**, **Status**, **Priority** and **Conditions**. **Notifications** shows your recent notifications, newest first, with unread ones highlighted. Administrators and operations leads use it to keep an eye on changes that matter to them, such as a shipment's status changing.",
+      "description": "Get told when the records you watch are created, changed or deleted",
+      "summary": "Table change alerts notify people when records change. A subscription watches one table (optionally one record) for inserts, updates or deletes, can narrow the match with conditions, and sends a notification with a chosen priority and an optional custom title and message.\n\nThe page lists subscriptions with their **Name**, **Table**, **Events**, **Status**, **Priority** and **Conditions**. The alerts themselves arrive in the notification panel, with everything else that is for you. Administrators and operations leads use it to keep an eye on changes that matter to them, such as a shipment's status changing.",
       "requires": [
         {
           "resource": "table_change_alert",
@@ -6598,7 +6598,7 @@
           ],
           "steps": [
             "Open [Table change alerts](/admin/table-change-alerts).",
-            "On the **Subscriptions** tab, select **New subscription**.",
+            "Select **New subscription**.",
             "Enter a **Name** and choose the **Table** to monitor.",
             "Optionally enter a **Record ID** to watch a single record, and set the **Priority**.",
             "Under the event types, tick Insert, Update and/or Delete. At least one is required.",
@@ -6614,7 +6614,7 @@
             "filter alerts"
           ],
           "steps": [
-            "Open the subscription from the **Subscriptions** tab, or start a new one.",
+            "Open the subscription from the list, or start a new one.",
             "Under **Conditions**, select **Add condition**, then enter the field, choose an operator (such as **Equals** or **Changed to**) and enter the value.",
             "Set **Condition matching** to **Match ALL conditions** or **Match ANY condition**.",
             "Optionally list **Watched columns** (comma-separated) so updates only trigger when those columns change.",
@@ -6629,22 +6629,24 @@
             "template"
           ],
           "steps": [
-            "Open the subscription from the **Subscriptions** tab.",
+            "Open the subscription from the list.",
             "Under **Notification**, enter a **Topic**, a **Custom title** and a **Custom message**. The title can use placeholders such as {{table}}, {{operation}}, {{new.field}} and {{old.field}}.",
             "Leave **Custom message** empty to use the auto-generated summary.",
             "Select **Save**."
           ]
         },
         {
-          "title": "Review and clear notifications",
+          "title": "Review and clear alerts",
           "keywords": [
             "unread alerts",
-            "mark read"
+            "mark read",
+            "mark done",
+            "snooze alert"
           ],
           "steps": [
-            "Open [Table change alerts](/admin/table-change-alerts).",
-            "Select the **Notifications** tab.",
-            "Hover over an unread notification and select the check mark to mark it read, or select **Mark all read**."
+            "Select the bell to open the notification panel. An alert from a subscription of yours is under **For you**.",
+            "Select the alert to open the record it is about.",
+            "Hover over it and select **Done** to finish it, or **Later** to have it come back at a time you pick. **Mark all done** finishes everything under the tab."
           ]
         }
       ],

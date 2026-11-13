@@ -13,11 +13,14 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+const maxSnooze = 30 * 24 * time.Hour
 
 type Params struct {
 	fx.In
@@ -168,6 +171,11 @@ func (s *Service) ListConnection(
 	ctx context.Context,
 	req *notificationports.ListNotificationConnectionRequest,
 ) (*pagination.CursorListResult[*notification.Notification], error) {
+	if !req.Lens.IsValid() {
+		req.Lens = notification.LensOpen
+	}
+	req.Now = s.now().Unix()
+
 	return s.repo.ListConnection(ctx, req)
 }
 
@@ -206,6 +214,91 @@ func (s *Service) Restore(
 	req notificationports.NotificationActionRequest,
 ) error {
 	return s.repo.Restore(ctx, req)
+}
+
+func (s *Service) DismissAll(
+	ctx context.Context,
+	req notificationports.DismissAllNotificationsRequest,
+) error {
+	if !req.Lens.IsValid() || req.Lens == notification.LensDone {
+		return errortypes.NewValidationError(
+			"lens",
+			errortypes.ErrInvalid,
+			"Choose which notifications to mark done",
+		)
+	}
+	req.Now = s.now().Unix()
+
+	return s.repo.DismissAll(ctx, req)
+}
+
+func (s *Service) Snooze(
+	ctx context.Context,
+	req notificationports.SnoozeNotificationsRequest,
+) error {
+	now := s.now().Unix()
+	if req.Until <= now || req.Until > now+int64(maxSnooze.Seconds()) {
+		return errortypes.NewValidationError(
+			"until",
+			errortypes.ErrInvalid,
+			"Choose a time within the next 30 days",
+		)
+	}
+
+	return s.repo.Snooze(ctx, req)
+}
+
+func (s *Service) Wake(
+	ctx context.Context,
+	req notificationports.NotificationActionRequest,
+) error {
+	return s.repo.Wake(ctx, req)
+}
+
+func (s *Service) Counts(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	personalOnly bool,
+) (*notificationports.NotificationCounts, error) {
+	return s.repo.Counts(ctx, notificationports.NotificationCountsRequest{
+		TenantInfo:   tenantInfo,
+		PersonalOnly: personalOnly,
+		Now:          s.now().Unix(),
+	})
+}
+
+func (s *Service) ResolveSubject(
+	ctx context.Context,
+	req notificationports.ResolveNotificationSubjectRequest,
+) (int64, error) {
+	if req.SubjectKey == "" {
+		return 0, nil
+	}
+	if req.Now == 0 {
+		req.Now = s.now().Unix()
+	}
+
+	resolved, err := s.repo.ResolveSubject(ctx, req)
+	if err != nil {
+		return 0, err
+	}
+	if resolved == 0 {
+		return 0, nil
+	}
+
+	if pubErr := s.realtime.PublishResourceInvalidation(
+		ctx,
+		&realtimeports.PublishResourceInvalidationRequest{
+			OrganizationID: req.OrganizationID,
+			BusinessUnitID: req.BusinessUnitID,
+			Resource:       "notifications",
+			Action:         "resolved",
+		},
+	); pubErr != nil {
+		s.l.Warn("failed to publish resolved notifications", zap.Error(pubErr))
+	}
+
+	return resolved, nil
 }
 
 func (s *Service) MarkAllAsRead(

@@ -187,13 +187,13 @@ export function buildAppCommands(context: AppCommandContext, t: TranslateFn): Pa
 
   if (context.unreadNotifications > 0) {
     commands.push({
-      id: "app:notifications-read-all",
-      label: t("Mark all notifications as read"),
-      description: t("Clear the unread count without opening each one"),
+      id: "app:notifications-done-all",
+      label: t("Mark all my notifications done"),
+      description: t("Finish everything waiting for you without opening each one"),
       group: "notifications",
       icon: CheckDoubleIcon,
-      keywords: ["notifications", "read", "clear", "dismiss", "all"],
-      intent: { type: "mark-all-notifications-read" },
+      keywords: ["notifications", "read", "done", "clear", "dismiss", "all"],
+      intent: { type: "mark-all-notifications-done" },
     });
   }
 

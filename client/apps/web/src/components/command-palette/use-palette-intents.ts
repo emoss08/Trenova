@@ -11,7 +11,7 @@ import { useNavigationStore } from "@/stores/navigation-store";
 import type { AssistantEntityRef } from "@/types/assistant";
 import { useTheme } from "@trenova/shared/components/theme-provider";
 import {
-  useMarkAllNotificationsRead,
+  useDismissAllNotifications,
   useNotificationAction,
 } from "@trenova/shared/hooks/use-notifications";
 import { useT } from "@trenova/shared/i18n/use-t";
@@ -52,7 +52,7 @@ export function usePaletteIntentRunner({ close, askAbout, confirm }: IntentRunne
   const { copy } = useCopyToClipboard();
   const openDialog = useAppDialogsStore((state) => state.openDialog);
   const toggleSidebar = useNavigationStore((state) => state.toggleSidebar);
-  const markAllRead = useMarkAllNotificationsRead();
+  const markAllDone = useDismissAllNotifications();
   const markRead = useNotificationAction("read");
 
   const say = useCallback(
@@ -178,8 +178,8 @@ export function usePaletteIntentRunner({ close, askAbout, confirm }: IntentRunne
           markRead.mutate([intent.notificationId]);
           say(t("Marked as read"));
           return;
-        case "mark-all-notifications-read":
-          markAllRead.mutate();
+        case "mark-all-notifications-done":
+          markAllDone.mutate("forYou");
           close();
           return;
         case "open-document":
@@ -192,7 +192,7 @@ export function usePaletteIntentRunner({ close, askAbout, confirm }: IntentRunne
       askAbout,
       close,
       copyText,
-      markAllRead,
+      markAllDone,
       markRead,
       navigate,
       openDialog,

@@ -2,7 +2,6 @@ package notificationservice
 
 import (
 	"context"
-	"errors"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -11,8 +10,6 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/zap"
 )
-
-var errNoRoleDirectory = errors.New("notifications cannot find who holds a permission")
 
 // NotifyPermittedRequest tells the people who may act on a resource about one
 // thing. Notification is the template; the tenant, the recipient and the
@@ -80,6 +77,9 @@ func (s *Service) NotifyPermitted(ctx context.Context, req NotifyPermittedReques
 		entity.BusinessUnitID = &buID
 		entity.TargetUserID = &userID
 		entity.Channel = notification.ChannelUser
+		if entity.Reason == "" {
+			entity.Reason = notification.ReasonTeam
+		}
 
 		if _, err = s.Create(ctx, &entity); err != nil {
 			s.l.Warn("notification to a permitted user lost",

@@ -212,10 +212,10 @@ func (s *Service) NotifyPending(
 		s.notify(ctx, group, decider, deciderNotice{
 			eventType: EventProposalsPending,
 			priority:  notification.PriorityMedium,
-			title: fmt.Sprintf("%s has %s waiting for a decision",
-				notice.Definition.Name, countChanges(len(pending))),
+			title:     waitingTitle(notice.Definition.Name),
 			message: fmt.Sprintf("It proposed %s. Nothing runs until someone decides.",
 				describeTools(pending)),
+			tally: len(pending),
 		})
 	}
 
@@ -323,12 +323,14 @@ func (s *Service) remindGroup(ctx context.Context, group proposalGroup, now int6
 		s.notify(ctx, group, decider, deciderNotice{
 			eventType: EventProposalsReminder,
 			priority:  notification.PriorityHigh,
-			title: fmt.Sprintf("%s still has %s waiting after %d hours",
-				agentName, countChanges(len(group.proposals)), waitingHours),
+			title:     waitingTitle(agentName),
 			message: fmt.Sprintf(
-				"It proposed %s. Nobody has decided, and nothing runs until someone does.",
+				"It proposed %s. Nobody has decided after %d hours, and nothing runs until someone does.",
 				describeTools(group.proposals),
+				waitingHours,
 			),
+			tally:        notification.NoNewOccurrence,
+			waitingHours: waitingHours,
 		})
 		s.mail(ctx, group, decider, waitingHours)
 	}
@@ -375,10 +377,24 @@ func (s *Service) deciders(
 }
 
 type deciderNotice struct {
-	eventType string
-	priority  notification.Priority
-	title     string
-	message   string
+	eventType    string
+	priority     notification.Priority
+	title        string
+	message      string
+	tally        int
+	waitingHours int
+}
+
+func waitingTitle(agentName string) string {
+	return agentName + " has changes waiting for a decision"
+}
+
+func proposalsSubjectKey(definition *agentdefinition.Definition, runID string) string {
+	if id := agentIDOf(definition); id != "" {
+		return notification.SubjectKey("agent", "proposals", id)
+	}
+
+	return notification.SubjectKey("agent", "proposals", "run", runID)
 }
 
 func (s *Service) notify(
@@ -395,23 +411,28 @@ func (s *Service) notify(
 	}
 
 	if _, err := s.notifications.Create(ctx, &notification.Notification{
-		OrganizationID: group.tenant.OrgID,
-		BusinessUnitID: &buID,
-		TargetUserID:   &userID,
-		Channel:        notification.ChannelUser,
-		EventType:      n.eventType,
-		Priority:       n.priority,
-		Title:          n.title,
-		Message:        n.message,
-		Source:         notificationSource,
-		CorrelationID:  &correlation,
+		OrganizationID:  group.tenant.OrgID,
+		BusinessUnitID:  &buID,
+		TargetUserID:    &userID,
+		Channel:         notification.ChannelUser,
+		Reason:          notification.ReasonTeam,
+		SubjectKey:      proposalsSubjectKey(group.definition, correlation),
+		OccurrenceCount: n.tally,
+		EventType:       n.eventType,
+		Priority:        n.priority,
+		Title:           n.title,
+		Message:         n.message,
+		Source:          notificationSource,
+		CorrelationID:   &correlation,
 		Data: map[string]any{
-			"link":        reviewPath(correlation),
-			"runId":       correlation,
-			"agentId":     agentIDOf(group.definition),
-			"agentName":   agentNameOf(group.definition),
-			"count":       len(group.proposals),
-			"proposalIds": idStrings(group.proposals),
+			"link":         decisionsPath(),
+			"runLink":      reviewPath(correlation),
+			"runId":        correlation,
+			"agentId":      agentIDOf(group.definition),
+			"agentName":    agentNameOf(group.definition),
+			"count":        len(group.proposals),
+			"waitingHours": n.waitingHours,
+			"proposalIds":  idStrings(group.proposals),
 		},
 		RelatedEntities: map[string]any{
 			"agentRunId": correlation,
@@ -511,6 +532,13 @@ func reviewPath(runID string) string {
 	query := url.Values{}
 	query.Set("lens", proposalsLens)
 	query.Set("run", runID)
+
+	return proposalsPath + "?" + query.Encode()
+}
+
+func decisionsPath() string {
+	query := url.Values{}
+	query.Set("lens", proposalsLens)
 
 	return proposalsPath + "?" + query.Encode()
 }
@@ -618,14 +646,6 @@ func describeTools(proposals []*agent.AgentProposal) string {
 	default:
 		return strings.Join(names, "")
 	}
-}
-
-func countChanges(n int) string {
-	if n == 1 {
-		return "a change"
-	}
-
-	return strconv.Itoa(n) + " changes"
 }
 
 func agentNameOf(definition *agentdefinition.Definition) string {

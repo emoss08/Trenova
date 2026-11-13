@@ -1,26 +1,37 @@
-import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
-import { Textarea } from "@trenova/shared/components/ui/textarea";
-import { useNotificationAction, useReplyToMention } from "@trenova/shared/hooks/use-notifications";
+import { Input } from "@trenova/shared/components/ui/input";
+import { useReplyToMention } from "@trenova/shared/hooks/use-notifications";
+import { useT } from "@trenova/shared/i18n/use-t";
 import type { Notification } from "@trenova/shared/types/notification";
-import { CheckIcon, CornerUpLeftIcon } from "@trenova/shared/components/icons";
-import { useState, type KeyboardEvent, type MouseEvent } from "react";
-import {
-  getNotificationLink,
-  notificationDataString,
-  notificationRelatedId,
-} from "./notification-registry";
+import { useState, type FormEvent, type MouseEvent } from "react";
+import { notificationDataString, notificationRelatedId } from "./notification-registry";
 
 function stopPropagation(event: MouseEvent) {
   event.stopPropagation();
 }
 
+/** What someone said when they mentioned the person, quoted under the row's title. */
+export function MentionQuote({ notification }: { notification: Notification }) {
+  if (!notification.message) return null;
+
+  return (
+    <p className="mt-1.5 rounded-md bg-surface-hover px-2 py-1.5 text-xs text-foreground">
+      {notification.message}
+    </p>
+  );
+}
+
+/**
+ * The reply to a mention, written where it is read. It goes to the shipment's thread and
+ * mentions the author back, and the row is done once it is sent: answering is what the
+ * notification asked for.
+ */
 export function MentionReply({
   notification,
-  onNavigate,
+  onReplied,
 }: {
   notification: Notification;
-  onNavigate?: (link: string) => void;
+  onReplied: () => void;
 }) {
   const t = useT();
 
@@ -28,144 +39,52 @@ export function MentionReply({
   const authorId = notificationDataString(notification, "authorId");
   const authorName = notificationDataString(notification, "authorName");
   const mentionToken = authorName ? `@${authorName}` : "";
-  const link = getNotificationLink(notification);
+  const placeholder = authorName ? t("Reply to {0}…", authorName) : t("Reply to the author…");
 
-  const [composing, setComposing] = useState(false);
   const [value, setValue] = useState("");
-  const [sent, setSent] = useState(false);
-
   const reply = useReplyToMention();
-  const markRead = useNotificationAction("read");
 
-  const openThread = (event: MouseEvent) => {
-    event.stopPropagation();
-    if (link) onNavigate?.(link);
-  };
-
-  const openComposer = (event: MouseEvent) => {
-    event.stopPropagation();
-    setComposing(true);
-  };
-
-  const closeComposer = (event: MouseEvent) => {
-    event.stopPropagation();
-    setValue("");
-    setComposing(false);
-  };
-
-  const submit = () => {
+  const submit = (event: FormEvent) => {
+    event.preventDefault();
     const text = value.trim();
     if (!text || !shipmentId || reply.isPending) return;
 
-    // Attach the mention automatically: prepend the @token so it renders and
-    // highlights in the thread, while the compose box stays clean.
+    // The mention is attached for the person: the token renders and highlights in the
+    // thread, and the box holds only what they typed.
     const comment = mentionToken && !text.includes(mentionToken) ? `${mentionToken} ${text}` : text;
 
     reply.mutate(
       { shipmentId, comment, mentionUserId: authorId },
       {
         onSuccess: () => {
-          setSent(true);
-          setComposing(false);
           setValue("");
-          markRead.mutate([notification.id]);
+          onReplied();
         },
       },
     );
   };
 
-  const onKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (event.key === "Enter" && !event.shiftKey) {
-      event.preventDefault();
-      submit();
-    } else if (event.key === "Escape") {
-      event.preventDefault();
-      setValue("");
-      setComposing(false);
-    }
-  };
+  if (!shipmentId) return null;
 
   return (
-    <div className="mt-1.5 flex flex-col gap-1.5">
-      {notification.message && (
-        <div className="border-border bg-muted/50 text-2xs text-muted-foreground rounded-md border-l-2 px-2.5 py-1.5 leading-relaxed">
-          {notification.message}
-        </div>
-      )}
-
-      {sent ? (
-        <div className="text-2xs text-muted-foreground flex items-center gap-1.5">
-          <CheckIcon className="text-success size-3" />
-          <span>{t("Reply sent")}</span>
-          {link && (
-            <>
-              <span aria-hidden>·</span>
-              <button
-                type="button"
-                className="text-brand font-medium hover:underline"
-                onClick={openThread}
-              >
-                {t("View conversation")}
-              </button>
-            </>
-          )}
-        </div>
-      ) : composing ? (
-        <div className="flex flex-col gap-1.5">
-          <Textarea
-            autoFocus
-            value={value}
-            minRows={2}
-            maxRows={6}
-            placeholder={authorName ? t("Reply to {0}…", authorName) : t("Reply to the author…")}
-            className="text-2xs"
-            onClick={stopPropagation}
-            onChange={(event) => setValue(event.target.value)}
-            onKeyDown={onKeyDown}
-          />
-          <div className="flex items-center justify-between">
-            <span className="text-muted-foreground/60 text-2xs">
-              {authorName ? t("{0} will be notified", authorName) : t("Enter to send")}
-            </span>
-            <div className="flex items-center gap-1">
-              <Button variant="ghost" size="xs" className="text-2xs" onClick={closeComposer}>
-                {t("Cancel")}
-              </Button>
-              <Button
-                size="xs"
-                className="text-2xs"
-                isLoading={reply.isPending}
-                disabled={!value.trim()}
-                onClick={(event) => {
-                  event.stopPropagation();
-                  submit();
-                }}
-              >
-                {t("Send")}
-              </Button>
-            </div>
-          </div>
-        </div>
-      ) : (
-        <div className="flex items-center gap-1">
-          {shipmentId && (
-            <Button variant="outline" size="xs" className="text-2xs" onClick={openComposer}>
-              <CornerUpLeftIcon className="size-3" />
-              {t("Reply")}
-            </Button>
-          )}
-          {link && (
-            <Button
-              variant="ghost"
-              size="xs"
-              className="text-2xs text-muted-foreground"
-              onClick={openThread}
-            >
-              {t("View conversation")}
-            </Button>
-          )}
-        </div>
-      )}
-    </div>
+    <form className="mt-2 flex gap-1.5" onSubmit={submit} onClick={stopPropagation}>
+      <Input
+        value={value}
+        placeholder={placeholder}
+        aria-label={placeholder}
+        className="h-6.5 flex-1 text-xs md:text-xs"
+        disabled={reply.isPending}
+        onChange={(event) => setValue(event.target.value)}
+      />
+      <Button
+        type="submit"
+        size="xs"
+        className="h-6.5 text-xs"
+        isLoading={reply.isPending}
+        disabled={!value.trim()}
+      >
+        {t("Reply")}
+      </Button>
+    </form>
   );
 }

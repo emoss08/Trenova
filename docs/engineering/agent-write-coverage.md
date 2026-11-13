@@ -87,7 +87,7 @@ matches anything fails too, so the file cannot drift behind the tools.
 | --- | --- | --- |
 | `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 99 |
 | `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 247 |
-| `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 41 |
+| `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 43 |
 | `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 49 |
 | `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 109 |
 | `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 35 |
@@ -97,15 +97,15 @@ matches anything fails too, so the file cannot drift behind the tools.
 
 ## Totals
 
-1145 writes: 686 GraphQL mutations and 459 REST writes, after merging 27 REST routes into the mutation they duplicate.
+1147 writes: 688 GraphQL mutations and 459 REST writes, after merging 27 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
 | Covered by a tool | 447 |
-| Exempt | 694 |
+| Exempt | 696 |
 | — Security | 99 |
 | — Configuration | 247 |
-| — User preference | 41 |
+| — User preference | 43 |
 | — Infrastructure | 49 |
 | — Agent administration | 109 |
 | — Counterparty | 35 |
@@ -113,7 +113,7 @@ matches anything fails too, so the file cannot drift behind the tools.
 | — Attestation | 55 |
 | — Duplicate | 10 |
 | **Pending** | **4** |
-| Total | 1145 |
+| Total | 1147 |
 
 Of the 451 writes an agent should be able to make, 447 have a tool (99%).
 
@@ -243,7 +243,7 @@ The writes no tool performs yet, and what the tool would do.
 | location | 3 | 3 | 0 | 0 |
 | locationcategory | 2 | 0 | 2 | 0 |
 | manualjournal | 7 | 5 | 2 | 0 |
-| notification | 5 | 0 | 5 | 0 |
+| notification | 7 | 0 | 7 | 0 |
 | notificationpreference | 1 | 0 | 1 | 0 |
 | order | 10 | 10 | 0 | 0 |
 | organization | 4 | 0 | 4 | 0 |
@@ -1655,11 +1655,13 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
+| `mutation dismissAllNotifications` | Exempt, user-preference: A person's own interface state; it changes nothing anyone else sees. |
 | `mutation dismissNotifications` | Exempt, user-preference: A person's own interface state; it changes nothing anyone else sees. |
-| `mutation markAllNotificationsRead` | Exempt, user-preference: A person's own interface state; it changes nothing anyone else sees. |
 | `mutation markNotificationsRead` | Exempt, user-preference: A person's own interface state; it changes nothing anyone else sees. |
 | `mutation markNotificationsUnread` | Exempt, user-preference: A person's own interface state; it changes nothing anyone else sees. |
 | `mutation restoreNotifications` | Exempt, user-preference: A person's own interface state; it changes nothing anyone else sees. |
+| `mutation snoozeNotifications` | Exempt, user-preference: A person's own interface state; it changes nothing anyone else sees. |
+| `mutation wakeNotifications` | Exempt, user-preference: A person's own interface state; it changes nothing anyone else sees. |
 
 ### notificationpreference
 

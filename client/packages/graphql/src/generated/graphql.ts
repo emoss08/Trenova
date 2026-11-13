@@ -6488,9 +6488,21 @@ export type NotificationChannel =
   | 'user';
 
 export type NotificationFilterInput = {
-  state?: NotificationState | null | undefined;
+  lens?: NotificationLens | null | undefined;
   unreadOnly?: boolean | null | undefined;
 };
+
+/**
+ * A part of the panel. forYou and team split what is open by why the person got it,
+ * later is what they set aside, done is what they finished or what cleared itself, and
+ * open is everything open whatever the reason.
+ */
+export type NotificationLens =
+  | 'done'
+  | 'forYou'
+  | 'later'
+  | 'open'
+  | 'team';
 
 export type NotificationPriority =
   | 'critical'
@@ -6498,9 +6510,10 @@ export type NotificationPriority =
   | 'low'
   | 'medium';
 
-export type NotificationState =
-  | 'archived'
-  | 'inbox';
+/** Why a person got a notification. */
+export type NotificationReason =
+  | 'direct'
+  | 'team';
 
 export type NotifyShipmentDelayInput = {
   message: string;
@@ -17755,7 +17768,7 @@ export type ManualJournalTableQueryVariables = Exact<{
 
 export type ManualJournalTableQuery = { manualJournals: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'ManualJournalTableRowFieldsFragment': ManualJournalTableRowFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
-export type NotificationFieldsFragment = { id: string, organizationId: string, businessUnitId: string | null, targetUserId: string | null, eventType: string, priority: NotificationPriority, channel: NotificationChannel, title: string, message: string, data: unknown, relatedEntities: unknown, source: string, readAt: number | null, dismissedAt: number | null, createdAt: number } & { ' $fragmentName'?: 'NotificationFieldsFragment' };
+export type NotificationFieldsFragment = { id: string, organizationId: string, businessUnitId: string | null, targetUserId: string | null, eventType: string, priority: NotificationPriority, channel: NotificationChannel, title: string, message: string, data: unknown, relatedEntities: unknown, source: string, readAt: number | null, dismissedAt: number | null, createdAt: number, reason: NotificationReason, occurrenceCount: number, surfacesAt: number, resolvedAt: number | null, resolution: string } & { ' $fragmentName'?: 'NotificationFieldsFragment' };
 
 export type NotificationListQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -17766,10 +17779,10 @@ export type NotificationListQueryVariables = Exact<{
 
 export type NotificationListQuery = { notifications: { totalCount?: number | null, totalCountExact?: boolean, edges: Array<{ node: { ' $fragmentRefs'?: { 'NotificationFieldsFragment': NotificationFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
-export type NotificationUnreadCountQueryVariables = Exact<{ [key: string]: never; }>;
+export type NotificationCountsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type NotificationUnreadCountQuery = { notificationUnreadCount: number };
+export type NotificationCountsQuery = { notificationCounts: { forYou: number, forYouUnread: number, team: number, teamUnread: number, later: number } };
 
 export type MyNotificationListQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -17832,10 +17845,27 @@ export type MarkNotificationsUnreadMutationVariables = Exact<{
 
 export type MarkNotificationsUnreadMutation = { markNotificationsUnread: boolean };
 
-export type MarkAllNotificationsReadMutationVariables = Exact<{ [key: string]: never; }>;
+export type DismissAllNotificationsMutationVariables = Exact<{
+  lens: NotificationLens;
+}>;
 
 
-export type MarkAllNotificationsReadMutation = { markAllNotificationsRead: boolean };
+export type DismissAllNotificationsMutation = { dismissAllNotifications: boolean };
+
+export type SnoozeNotificationsMutationVariables = Exact<{
+  ids: Array<string | number> | string | number;
+  until: number;
+}>;
+
+
+export type SnoozeNotificationsMutation = { snoozeNotifications: boolean };
+
+export type WakeNotificationsMutationVariables = Exact<{
+  ids: Array<string | number> | string | number;
+}>;
+
+
+export type WakeNotificationsMutation = { wakeNotifications: boolean };
 
 export type DismissNotificationsMutationVariables = Exact<{
   ids: Array<string | number> | string | number;
@@ -20309,6 +20339,13 @@ export type WatchtowerItemDetailQueryVariables = Exact<{
 
 export type WatchtowerItemDetailQuery = { watchtowerItem: { ' $fragmentRefs'?: { 'WatchtowerItemFieldsFragment': WatchtowerItemFieldsFragment } } };
 
+export type AcknowledgeWatchtowerItemMutationVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type AcknowledgeWatchtowerItemMutation = { acknowledgeWatchtowerItem: { id: string, status: WatchtowerItemStatus, version: number } };
+
 export type SnoozeWatchtowerItemMutationVariables = Exact<{
   id: string | number;
   input: SnoozeWatchtowerItemInput;
@@ -21609,7 +21646,7 @@ export { DeskLocationCardDocument, DeskLocationDwellDocument, DeskLocationPolici
 export { LocationTableRowFieldsFragmentDoc, LocationTableDocument } from "./documents/location/table";
 export { DeskManualJournalCardDocument, DeskManualJournalsDocument } from "./documents/manual-journal/desk";
 export { ManualJournalTableRowFieldsFragmentDoc, ManualJournalTableDocument } from "./documents/manual-journal/table";
-export { NotificationFieldsFragmentDoc, NotificationListDocument, NotificationUnreadCountDocument, MyNotificationListDocument, MyNotificationUnreadCountDocument, MarkAllMyNotificationsReadDocument, MarkMyNotificationsReadDocument, MarkMyNotificationsUnreadDocument, DismissMyNotificationsDocument, RestoreMyNotificationsDocument, MarkNotificationsReadDocument, MarkNotificationsUnreadDocument, MarkAllNotificationsReadDocument, DismissNotificationsDocument, RestoreNotificationsDocument } from "./documents/notification/operations";
+export { NotificationFieldsFragmentDoc, NotificationListDocument, NotificationCountsDocument, MyNotificationListDocument, MyNotificationUnreadCountDocument, MarkAllMyNotificationsReadDocument, MarkMyNotificationsReadDocument, MarkMyNotificationsUnreadDocument, DismissMyNotificationsDocument, RestoreMyNotificationsDocument, MarkNotificationsReadDocument, MarkNotificationsUnreadDocument, DismissAllNotificationsDocument, SnoozeNotificationsDocument, WakeNotificationsDocument, DismissNotificationsDocument, RestoreNotificationsDocument } from "./documents/notification/operations";
 export { DeskOrderCardDocument, DeskOrderDocument } from "./documents/order-desk/desk";
 export { OrderDetailDocument } from "./documents/order/detail";
 export { OrderMutationResultFragmentDoc, AttachOrderShipmentsDocument, DetachOrderShipmentDocument, CreateOrderDocument, UpdateOrderDocument, AddOrderChargeDocument, SetOrderChargeAllocationsDocument, UpdateOrderChargeDocument, RemoveOrderChargeDocument, CloseOrderDocument, CancelOrderDocument } from "./documents/order/mutations";
@@ -21673,7 +21710,7 @@ export { DeskTractorCardDocument, DeskTractorPositionDocument, DeskVehiclePositi
 export { DeskTrailerCardDocument } from "./documents/trailer/desk";
 export { UserDetailDocument, CreateUserDocument, PatchUserDocument } from "./documents/user/detail";
 export { UserTableRowFieldsFragmentDoc, UserTableDocument } from "./documents/user/table";
-export { WatchtowerItemFieldsFragmentDoc, WatchtowerAgentFieldsFragmentDoc, WatchtowerCountsFieldsFragmentDoc, WatchtowerFeedDocument, WatchtowerCountsDocument, HandOffWatchtowerItemDocument, WatchtowerItemDetailDocument, SnoozeWatchtowerItemDocument, ResolveWatchtowerItemDocument, WatchtowerClearedDocument, WatchtowerHandOffAgentsDocument, MarkWatchtowerItemSeenDocument, WatchtowerPlayDocument, RewordWatchtowerPlayDocument, SendWatchtowerPlayDocument } from "./documents/watchtower/watchtower";
+export { WatchtowerItemFieldsFragmentDoc, WatchtowerAgentFieldsFragmentDoc, WatchtowerCountsFieldsFragmentDoc, WatchtowerFeedDocument, WatchtowerCountsDocument, HandOffWatchtowerItemDocument, WatchtowerItemDetailDocument, AcknowledgeWatchtowerItemDocument, SnoozeWatchtowerItemDocument, ResolveWatchtowerItemDocument, WatchtowerClearedDocument, WatchtowerHandOffAgentsDocument, MarkWatchtowerItemSeenDocument, WatchtowerPlayDocument, RewordWatchtowerPlayDocument, SendWatchtowerPlayDocument } from "./documents/watchtower/watchtower";
 export { DeskWorkerChecklistsDocument, DeskWorkerChecklistTemplatesDocument } from "./documents/worker-checklist/desk";
 export { WorkerChecklistTemplateItemFieldsFragmentDoc, WorkerChecklistTemplateFieldsFragmentDoc, WorkerChecklistItemFieldsFragmentDoc, WorkerChecklistFieldsFragmentDoc, WorkerChecklistTemplateTableDocument, ActiveWorkerChecklistTemplatesDocument, WorkerChecklistsDocument, CreateWorkerChecklistTemplateDocument, UpdateWorkerChecklistTemplateDocument, ArchiveWorkerChecklistTemplateDocument, RestoreWorkerChecklistTemplateDocument, StartWorkerChecklistDocument, CompleteWorkerChecklistItemDocument, SkipWorkerChecklistItemDocument, MarkWorkerChecklistItemNotApplicableDocument, ReopenWorkerChecklistItemDocument, CancelWorkerChecklistDocument } from "./documents/worker-checklist/operations";
 export { DeskWorkerCredentialDocument, DeskWorkerCredentialListDocument, DeskWorkerCredentialTypesDocument } from "./documents/worker-credential/desk";

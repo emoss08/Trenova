@@ -107,7 +107,7 @@ func (s *Exceptions) wake(ctx context.Context, item *watchtower.Item) bool {
 			item:      saved,
 			userID:    saved.AssigneeID,
 			eventType: EventAssigned,
-			title:     "Snoozed exception is back: " + saved.Title,
+			notice:    noticeWoke,
 			priority:  noticePriority(saved.Severity),
 		})
 	}
@@ -153,7 +153,6 @@ func (s *Exceptions) notifyEscalation(
 	item *watchtower.Item,
 	contact pulid.ID,
 ) {
-	title := "Overdue exception escalated: " + item.Title
 	recipients := make([]pulid.ID, 0, 2)
 	if item.AssigneeID.IsNotNil() {
 		recipients = append(recipients, item.AssigneeID)
@@ -177,7 +176,6 @@ func (s *Exceptions) notifyEscalation(
 			item:      item,
 			userID:    recipient,
 			eventType: EventEscalated,
-			title:     title,
 			priority:  notification.PriorityHigh,
 		})
 	}

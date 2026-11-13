@@ -128,6 +128,74 @@ func (_c *MockNotificationRepository_CountUnread_Call) RunAndReturn(run func(ctx
 	return _c
 }
 
+// Counts provides a mock function for the type MockNotificationRepository
+func (_mock *MockNotificationRepository) Counts(ctx context.Context, req notificationports.NotificationCountsRequest) (*notificationports.NotificationCounts, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Counts")
+	}
+
+	var r0 *notificationports.NotificationCounts
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, notificationports.NotificationCountsRequest) (*notificationports.NotificationCounts, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, notificationports.NotificationCountsRequest) *notificationports.NotificationCounts); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*notificationports.NotificationCounts)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, notificationports.NotificationCountsRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockNotificationRepository_Counts_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Counts'
+type MockNotificationRepository_Counts_Call struct {
+	*mock.Call
+}
+
+// Counts is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req notificationports.NotificationCountsRequest
+func (_e *MockNotificationRepository_Expecter) Counts(ctx any, req any) *MockNotificationRepository_Counts_Call {
+	return &MockNotificationRepository_Counts_Call{Call: _e.mock.On("Counts", ctx, req)}
+}
+
+func (_c *MockNotificationRepository_Counts_Call) Run(run func(ctx context.Context, req notificationports.NotificationCountsRequest)) *MockNotificationRepository_Counts_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 notificationports.NotificationCountsRequest
+		if args[1] != nil {
+			arg1 = args[1].(notificationports.NotificationCountsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockNotificationRepository_Counts_Call) Return(notificationCounts *notificationports.NotificationCounts, err error) *MockNotificationRepository_Counts_Call {
+	_c.Call.Return(notificationCounts, err)
+	return _c
+}
+
+func (_c *MockNotificationRepository_Counts_Call) RunAndReturn(run func(ctx context.Context, req notificationports.NotificationCountsRequest) (*notificationports.NotificationCounts, error)) *MockNotificationRepository_Counts_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Create provides a mock function for the type MockNotificationRepository
 func (_mock *MockNotificationRepository) Create(ctx context.Context, entity *notification.Notification) (*notification.Notification, error) {
 	ret := _mock.Called(ctx, entity)
@@ -249,6 +317,63 @@ func (_c *MockNotificationRepository_Dismiss_Call) Return(err error) *MockNotifi
 }
 
 func (_c *MockNotificationRepository_Dismiss_Call) RunAndReturn(run func(ctx context.Context, req notificationports.NotificationActionRequest) error) *MockNotificationRepository_Dismiss_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// DismissAll provides a mock function for the type MockNotificationRepository
+func (_mock *MockNotificationRepository) DismissAll(ctx context.Context, req notificationports.DismissAllNotificationsRequest) error {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DismissAll")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, notificationports.DismissAllNotificationsRequest) error); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockNotificationRepository_DismissAll_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DismissAll'
+type MockNotificationRepository_DismissAll_Call struct {
+	*mock.Call
+}
+
+// DismissAll is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req notificationports.DismissAllNotificationsRequest
+func (_e *MockNotificationRepository_Expecter) DismissAll(ctx any, req any) *MockNotificationRepository_DismissAll_Call {
+	return &MockNotificationRepository_DismissAll_Call{Call: _e.mock.On("DismissAll", ctx, req)}
+}
+
+func (_c *MockNotificationRepository_DismissAll_Call) Run(run func(ctx context.Context, req notificationports.DismissAllNotificationsRequest)) *MockNotificationRepository_DismissAll_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 notificationports.DismissAllNotificationsRequest
+		if args[1] != nil {
+			arg1 = args[1].(notificationports.DismissAllNotificationsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockNotificationRepository_DismissAll_Call) Return(err error) *MockNotificationRepository_DismissAll_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockNotificationRepository_DismissAll_Call) RunAndReturn(run func(ctx context.Context, req notificationports.DismissAllNotificationsRequest) error) *MockNotificationRepository_DismissAll_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -706,6 +831,72 @@ func (_c *MockNotificationRepository_NotifiedUsers_Call) RunAndReturn(run func(c
 	return _c
 }
 
+// ResolveSubject provides a mock function for the type MockNotificationRepository
+func (_mock *MockNotificationRepository) ResolveSubject(ctx context.Context, req notificationports.ResolveNotificationSubjectRequest) (int64, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ResolveSubject")
+	}
+
+	var r0 int64
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, notificationports.ResolveNotificationSubjectRequest) (int64, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, notificationports.ResolveNotificationSubjectRequest) int64); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, notificationports.ResolveNotificationSubjectRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockNotificationRepository_ResolveSubject_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ResolveSubject'
+type MockNotificationRepository_ResolveSubject_Call struct {
+	*mock.Call
+}
+
+// ResolveSubject is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req notificationports.ResolveNotificationSubjectRequest
+func (_e *MockNotificationRepository_Expecter) ResolveSubject(ctx any, req any) *MockNotificationRepository_ResolveSubject_Call {
+	return &MockNotificationRepository_ResolveSubject_Call{Call: _e.mock.On("ResolveSubject", ctx, req)}
+}
+
+func (_c *MockNotificationRepository_ResolveSubject_Call) Run(run func(ctx context.Context, req notificationports.ResolveNotificationSubjectRequest)) *MockNotificationRepository_ResolveSubject_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 notificationports.ResolveNotificationSubjectRequest
+		if args[1] != nil {
+			arg1 = args[1].(notificationports.ResolveNotificationSubjectRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockNotificationRepository_ResolveSubject_Call) Return(n int64, err error) *MockNotificationRepository_ResolveSubject_Call {
+	_c.Call.Return(n, err)
+	return _c
+}
+
+func (_c *MockNotificationRepository_ResolveSubject_Call) RunAndReturn(run func(ctx context.Context, req notificationports.ResolveNotificationSubjectRequest) (int64, error)) *MockNotificationRepository_ResolveSubject_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Restore provides a mock function for the type MockNotificationRepository
 func (_mock *MockNotificationRepository) Restore(ctx context.Context, req notificationports.NotificationActionRequest) error {
 	ret := _mock.Called(ctx, req)
@@ -759,6 +950,120 @@ func (_c *MockNotificationRepository_Restore_Call) Return(err error) *MockNotifi
 }
 
 func (_c *MockNotificationRepository_Restore_Call) RunAndReturn(run func(ctx context.Context, req notificationports.NotificationActionRequest) error) *MockNotificationRepository_Restore_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// Snooze provides a mock function for the type MockNotificationRepository
+func (_mock *MockNotificationRepository) Snooze(ctx context.Context, req notificationports.SnoozeNotificationsRequest) error {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Snooze")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, notificationports.SnoozeNotificationsRequest) error); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockNotificationRepository_Snooze_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Snooze'
+type MockNotificationRepository_Snooze_Call struct {
+	*mock.Call
+}
+
+// Snooze is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req notificationports.SnoozeNotificationsRequest
+func (_e *MockNotificationRepository_Expecter) Snooze(ctx any, req any) *MockNotificationRepository_Snooze_Call {
+	return &MockNotificationRepository_Snooze_Call{Call: _e.mock.On("Snooze", ctx, req)}
+}
+
+func (_c *MockNotificationRepository_Snooze_Call) Run(run func(ctx context.Context, req notificationports.SnoozeNotificationsRequest)) *MockNotificationRepository_Snooze_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 notificationports.SnoozeNotificationsRequest
+		if args[1] != nil {
+			arg1 = args[1].(notificationports.SnoozeNotificationsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockNotificationRepository_Snooze_Call) Return(err error) *MockNotificationRepository_Snooze_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockNotificationRepository_Snooze_Call) RunAndReturn(run func(ctx context.Context, req notificationports.SnoozeNotificationsRequest) error) *MockNotificationRepository_Snooze_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// Wake provides a mock function for the type MockNotificationRepository
+func (_mock *MockNotificationRepository) Wake(ctx context.Context, req notificationports.NotificationActionRequest) error {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Wake")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, notificationports.NotificationActionRequest) error); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockNotificationRepository_Wake_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Wake'
+type MockNotificationRepository_Wake_Call struct {
+	*mock.Call
+}
+
+// Wake is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req notificationports.NotificationActionRequest
+func (_e *MockNotificationRepository_Expecter) Wake(ctx any, req any) *MockNotificationRepository_Wake_Call {
+	return &MockNotificationRepository_Wake_Call{Call: _e.mock.On("Wake", ctx, req)}
+}
+
+func (_c *MockNotificationRepository_Wake_Call) Run(run func(ctx context.Context, req notificationports.NotificationActionRequest)) *MockNotificationRepository_Wake_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 notificationports.NotificationActionRequest
+		if args[1] != nil {
+			arg1 = args[1].(notificationports.NotificationActionRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockNotificationRepository_Wake_Call) Return(err error) *MockNotificationRepository_Wake_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockNotificationRepository_Wake_Call) RunAndReturn(run func(ctx context.Context, req notificationports.NotificationActionRequest) error) *MockNotificationRepository_Wake_Call {
 	_c.Call.Return(run)
 	return _c
 }

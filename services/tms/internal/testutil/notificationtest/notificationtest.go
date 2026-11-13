@@ -36,6 +36,13 @@ func (discardedNotifications) Create(
 	return entity, nil
 }
 
+func (discardedNotifications) ResolveSubject(
+	context.Context,
+	notificationports.ResolveNotificationSubjectRequest,
+) (int64, error) {
+	return 0, nil
+}
+
 type nobodyPermitted struct {
 	permissionports.RoleRepository
 }

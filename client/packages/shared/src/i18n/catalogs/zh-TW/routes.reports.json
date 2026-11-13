@@ -106,7 +106,6 @@
   "Include \"Other\" bucket": "納入「其他」分組",
   "It is built on {0}, which your role cannot read. Ask an administrator for access, or start a new report.": "此報表以{0}為基礎，而您的角色無法讀取。請向管理員申請權限，或建立新報表。",
   "Large numbers": "大數字",
-  "Latest {0}": "最新{0}",
   "Link this report's parameters to the dashboard's. Matching names link themselves.": "將此報表的參數連結至儀表板的參數。名稱相符者會自動連結。",
   "Load more reports": "載入更多報表",
   "Loading fields…": "正在載入欄位…",

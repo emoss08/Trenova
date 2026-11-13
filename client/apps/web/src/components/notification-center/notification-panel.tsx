@@ -1,105 +1,148 @@
-import { useT } from "@trenova/shared/i18n/use-t";
-import { Badge } from "@trenova/shared/components/ui/badge";
+import { VirtualRows, type VirtualRow, type VirtualRowsHandle } from "@/components/virtual-rows";
+import { getNotificationDayGroup, type NotificationDayGroup } from "@/lib/notification-helpers";
+import { settingsPath } from "@/lib/settings-path";
+import { AlertCircleIcon, CheckDoubleIcon, Settings01Icon } from "@trenova/shared/components/icons";
 import { Button } from "@trenova/shared/components/ui/button";
-import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
+import { createDropdownMenuHandle } from "@trenova/shared/components/ui/dropdown-menu";
+import { Kbd } from "@trenova/shared/components/ui/kbd";
 import { SheetTitle } from "@trenova/shared/components/ui/sheet";
+import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { Tabs, TabsList, TabsTab } from "@trenova/shared/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import {
-  useMarkAllNotificationsRead,
-  useNotificationAction,
+  useDismissAllNotifications,
+  useNotificationCounts,
   useNotificationFeed,
 } from "@trenova/shared/hooks/use-notifications";
+import { useNow } from "@trenova/shared/hooks/use-now";
+import { defineLabels } from "@trenova/shared/i18n/labels";
+import { useRichT } from "@trenova/shared/i18n/rich";
+import { useT } from "@trenova/shared/i18n/use-t";
+import type { Notification, NotificationCounts } from "@trenova/shared/types/notification";
 import {
-  getNotificationDayGroup,
-  NOTIFICATION_DAY_GROUPS,
-  type NotificationDayGroup,
-} from "@/lib/notification-helpers";
-import { cn } from "@trenova/shared/lib/utils";
-import type { Notification, NotificationState } from "@trenova/shared/types/notification";
-import { AnimatePresence, motion } from "motion/react";
-import {
-  AlertCircleIcon,
-  ArchiveIcon,
-  CheckDoubleIcon,
-  Inbox01Icon,
-  MailCheckIcon,
-  Settings01Icon,
-} from "@trenova/shared/components/icons";
-import { settingsPath } from "@/lib/settings-path";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+  useImperativeHandle,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type ReactNode,
+  type Ref,
+} from "react";
 import { useNavigate } from "react-router";
-import { NotificationItem, type NotificationItemActions } from "./notification-item";
+import { NotificationEmpty } from "./notification-empty";
+import { NotificationItem } from "./notification-item";
+import {
+  lensCount,
+  NOTIFICATION_LENS_LABELS,
+  NOTIFICATION_PANEL_LENSES,
+  type NotificationPanelLens,
+} from "./notification-lenses";
+import {
+  laterTriggerId,
+  NotificationLaterMenu,
+  NotificationMoreMenu,
+} from "./notification-row-menus";
 import { NotificationFeedSkeleton } from "./notification-skeletons";
-
-function FeedEmptyState({ state, unreadOnly }: { state: NotificationState; unreadOnly: boolean }) {
-  const Icon = state === "archived" ? ArchiveIcon : unreadOnly ? MailCheckIcon : Inbox01Icon;
-  const title =
-    state === "archived"
-      ? "Nothing archived"
-      : unreadOnly
-        ? "No unread notifications"
-        : "You're all caught up";
-  const description =
-    state === "archived"
-      ? "Notifications you archive are kept here."
-      : unreadOnly
-        ? "Everything in your inbox has been read."
-        : "New activity that needs your attention will appear here.";
-
-  return (
-    <div className="flex flex-col items-center justify-center gap-3 py-16">
-      <div className="border-border bg-muted/60 flex size-11 items-center justify-center rounded-full border">
-        <Icon className="text-muted-foreground/70 size-5" />
-      </div>
-      <div className="text-center">
-        <p className="text-foreground text-xs font-medium">{title}</p>
-        <p className="text-2xs text-muted-foreground/70 mt-0.5 max-w-56">{description}</p>
-      </div>
-    </div>
-  );
-}
+import { useNotificationRowHandlers } from "./use-notification-row-handlers";
 
 const EMPTY_FEED: Notification[] = [];
 
-function groupNotifications(notifications: Notification[]) {
-  const groups = new Map<NotificationDayGroup, Notification[]>();
-  for (const item of notifications) {
-    const group = getNotificationDayGroup(item.createdAt);
-    const bucket = groups.get(group);
-    if (bucket) {
-      bucket.push(item);
-    } else {
-      groups.set(group, [item]);
-    }
-  }
-  return NOTIFICATION_DAY_GROUPS.filter((group) => groups.has(group)).map((group) => ({
-    label: group,
-    items: groups.get(group)!,
-  }));
+/** A row before it is measured: a title, two lines of message, the why line and an action. */
+const ROW_ESTIMATE = 96;
+const FADE_HEIGHT = 28;
+
+const GROUP_LABELS: Record<NotificationDayGroup | "later", string> = defineLabels({
+  Today: "Today",
+  Yesterday: "Yesterday",
+  "This week": "This week",
+  Older: "Older",
+  later: "Coming back",
+});
+
+/** The heading a row sits under: the day it surfaced or was finished, or "Coming back". */
+function groupOf(notification: Notification, lens: NotificationPanelLens) {
+  if (lens === "later") return "later";
+
+  return getNotificationDayGroup(
+    lens === "done"
+      ? (notification.dismissedAt ?? notification.surfacesAt)
+      : notification.surfacesAt,
+  );
 }
 
+const SHORTCUT_BLOCKERS = "input, textarea, select, [contenteditable='true'], [role='menu']";
+
+/**
+ * The panel's keyboard shortcuts, called for every key pressed anywhere in the sheet. The
+ * sheet owns the element the keys arrive on (its close button and the sheet itself can hold
+ * the focus), so it holds a ref to this and the panel fills it in.
+ */
+export type NotificationPanelKeyHandler = (event: KeyboardEvent<HTMLElement>) => void;
+
+function Summary({ counts }: { counts: NotificationCounts | undefined }) {
+  const t = useT();
+  const rt = useRichT();
+
+  if (counts === undefined) return <Skeleton className="h-3 w-40 rounded-md" />;
+  if (counts.forYou === 0 && counts.team === 0) {
+    return t("Nothing is waiting on you or your team.");
+  }
+
+  const bold = {
+    b: (content: ReactNode) => <b className="font-medium text-foreground">{content}</b>,
+  };
+  const forYou = lensCount(counts, "forYou");
+
+  return (
+    <>
+      {counts.forYou === 0
+        ? t("Nothing is waiting on you.")
+        : counts.forYouUnread === 0
+          ? rt("<b>{0} for you</b>, nothing new.", bold, forYou)
+          : rt("<b>{0} for you</b>, {1} new.", bold, forYou, counts.forYouUnread)}
+      {counts.team > 0 && <> {t("{0} for your team.", lensCount(counts, "team"))}</>}
+    </>
+  );
+}
+
+function Shortcut({ keys, children }: { keys: string[]; children: ReactNode }) {
+  return (
+    <span className="flex items-center gap-1">
+      {keys.map((key) => (
+        <Kbd key={key} className="h-4 min-w-4 border-0 bg-surface-hover px-1 font-mono">
+          {key}
+        </Kbd>
+      ))}
+      {children}
+    </span>
+  );
+}
+
+/**
+ * The notification panel: what is the person's own, what went to their team, what they set
+ * aside and what is finished. Each part loads when it is opened and mounts only the rows
+ * near the viewport; the rows carry their own actions, and the keyboard works the list.
+ */
 export default function NotificationPanel({
   open,
-  unreadCount,
   onClose,
+  keys,
 }: {
   open: boolean;
-  unreadCount: number;
   onClose: () => void;
+  keys: Ref<NotificationPanelKeyHandler>;
 }) {
   const t = useT();
-
   const navigate = useNavigate();
-  const [tab, setTab] = useState<NotificationState>("inbox");
-  const [unreadOnly, setUnreadOnly] = useState(false);
+  const now = useNow();
 
-  const filters = useMemo(
-    () => ({ state: tab, unreadOnly: tab === "inbox" && unreadOnly }),
-    [tab, unreadOnly],
-  );
+  const [lens, setLens] = useState<NotificationPanelLens>("forYou");
+  const [laterMenu] = useState(() => createDropdownMenuHandle<Notification>());
+  const [moreMenu] = useState(() => createDropdownMenuHandle<Notification>());
+  const rootRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<VirtualRowsHandle>(null);
 
+  const { data: counts } = useNotificationCounts(open);
   const {
     data: feed,
     isLoading,
@@ -108,191 +151,229 @@ export default function NotificationPanel({
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useNotificationFeed(filters, open);
-
-  const markRead = useNotificationAction("read");
-  const markUnread = useNotificationAction("unread");
-  const archive = useNotificationAction("dismiss");
-  const restore = useNotificationAction("restore");
-  const markAllRead = useMarkAllNotificationsRead();
-
-  const actions = useMemo<NotificationItemActions>(
-    () => ({
-      markRead: markRead.mutate,
-      markUnread: markUnread.mutate,
-      archive: archive.mutate,
-      restore: restore.mutate,
-    }),
-    [markRead.mutate, markUnread.mutate, archive.mutate, restore.mutate],
-  );
-
-  const handleNavigate = useCallback(
-    (link: string) => {
-      onClose();
-      void navigate(link);
-    },
-    [navigate, onClose],
-  );
+  } = useNotificationFeed({ lens }, open);
+  const dismissAll = useDismissAllNotifications();
+  const { handlers, leaving } = useNotificationRowHandlers(onClose);
 
   const notifications = feed?.notifications ?? EMPTY_FEED;
-  const groups = useMemo(() => groupNotifications(notifications), [notifications]);
 
-  const sentinelRef = useRef<HTMLDivElement | null>(null);
-  useEffect(() => {
-    const sentinel = sentinelRef.current;
-    if (!sentinel || !hasNextPage) return;
+  const rows: VirtualRow[] = [];
+  let heading: string | null = null;
+  for (const notification of notifications) {
+    const group = groupOf(notification, lens);
+    if (group !== heading) {
+      heading = group;
+      rows.push({
+        key: `group:${group}`,
+        render: () => (
+          <p className="px-2.5 pt-3 pb-1 text-xs font-medium text-foreground-subtle">
+            {t(GROUP_LABELS[group])}
+          </p>
+        ),
+      });
+    }
+    rows.push({
+      key: notification.id,
+      render: () => (
+        <NotificationItem
+          notification={notification}
+          lens={lens}
+          now={now}
+          leaving={leaving.has(notification.id)}
+          handlers={handlers}
+          laterMenu={laterMenu}
+          moreMenu={moreMenu}
+        />
+      ),
+    });
+  }
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries.some((entry) => entry.isIntersecting) && !isFetchingNextPage) {
-          void fetchNextPage();
-        }
-      },
-      { rootMargin: "120px" },
-    );
-    observer.observe(sentinel);
-    return () => observer.disconnect();
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage, groups.length]);
+  const rowElement = (id: string) =>
+    rootRef.current?.querySelector<HTMLElement>(`[data-notification-id="${CSS.escape(id)}"]`) ??
+    null;
+
+  const focusRow = (id: string) => {
+    listRef.current?.scrollToKey(id);
+    requestAnimationFrame(() => rowElement(id)?.focus());
+  };
+
+  /** The row to carry on from when the one at `index` leaves: the next, or the one before. */
+  const neighbourOf = (index: number) => notifications[index + 1] ?? notifications[index - 1];
+
+  const nextRow = (id: string) => {
+    const neighbour = neighbourOf(notifications.findIndex((item) => item.id === id));
+    return neighbour ? rowElement(neighbour.id) : null;
+  };
+
+  const onKeyDown = (event: KeyboardEvent<HTMLElement>) => {
+    if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.altKey) return;
+    if (!(event.target instanceof HTMLElement) || event.target.closest(SHORTCUT_BLOCKERS)) return;
+
+    const key = event.key.toLowerCase();
+    const id = event.target.closest<HTMLElement>("[data-notification-id]")?.dataset.notificationId;
+    const index = id === undefined ? -1 : notifications.findIndex((item) => item.id === id);
+
+    if (key === "j" || key === "k") {
+      const next = notifications[index === -1 ? 0 : index + (key === "j" ? 1 : -1)];
+      if (next) {
+        event.preventDefault();
+        focusRow(next.id);
+      }
+      return;
+    }
+    if (index === -1 || id === undefined || lens === "done" || lens === "later") return;
+
+    if (key === "e") {
+      event.preventDefault();
+      const neighbour = neighbourOf(index);
+      handlers.done(id);
+      if (neighbour) focusRow(neighbour.id);
+    } else if (key === "h") {
+      event.preventDefault();
+      laterMenu.open(laterTriggerId(id));
+    }
+  };
+
+  useImperativeHandle(keys, () => onKeyDown);
+
+  const openSettings = () => {
+    onClose();
+    void navigate(settingsPath("notifications"));
+  };
+
+  const canMarkAllDone = (lens === "forYou" || lens === "team") && (counts?.[lens] ?? 0) > 0;
 
   return (
-    <>
-      <div className="flex items-center justify-between gap-2 py-3 pr-11 pl-4">
-        <div className="flex items-center gap-2">
-          <SheetTitle>{t("Notifications")}</SheetTitle>
-          {unreadCount > 0 && (
-            <Badge variant="info" className="text-2xs h-4.5 tabular-nums">
-              {t("{0} new", unreadCount)}
-            </Badge>
-          )}
-        </div>
-        <div className="flex items-center gap-1">
-          {unreadCount > 0 && tab === "inbox" && (
-            <Button
-              type="button"
-              variant="ghost"
-              size="xxs"
-              className="text-2xs text-muted-foreground"
-              onClick={() => markAllRead.mutate()}
-            >
-              <CheckDoubleIcon className="size-3" />
-              {t("Mark all read")}
-            </Button>
-          )}
+    <div ref={rootRef} className="flex min-h-0 flex-1 flex-col">
+      <div className="flex flex-col gap-2.5 pt-3 pr-3 pl-4">
+        <div className="flex min-h-7 items-center gap-2 pr-9">
+          <SheetTitle className="min-w-0 flex-1 text-lg font-semibold">
+            {t("Notifications")}
+          </SheetTitle>
           <Tooltip>
             <TooltipTrigger
               render={
                 <Button
                   type="button"
-                  variant="ghost"
-                  size="icon-xs"
+                  variant="quiet"
+                  size="icon-sm"
                   aria-label={t("Notification settings")}
-                  className="text-muted-foreground"
-                  onClick={() => handleNavigate(settingsPath("notifications"))}
+                  onClick={openSettings}
                 />
               }
             >
-              <Settings01Icon className="size-3" />
+              <Settings01Icon className="size-3.5" />
             </TooltipTrigger>
             <TooltipContent side="bottom">{t("Notification settings")}</TooltipContent>
           </Tooltip>
         </div>
-      </div>
 
-      <div className="border-border flex items-center justify-between border-b pr-3 pl-2">
-        <Tabs
-          value={tab}
-          onValueChange={(value) => setTab(value as NotificationState)}
-          className="gap-0"
-        >
-          <TabsList variant="underline" className="py-0">
-            <TabsTab value="inbox" className="h-8 px-2.5 text-xs sm:h-8 sm:text-xs">
-              {t("Inbox")}
-            </TabsTab>
-            <TabsTab value="archived" className="h-8 px-2.5 text-xs sm:h-8 sm:text-xs">
-              {t("Archive")}
-            </TabsTab>
-          </TabsList>
-        </Tabs>
-        {tab === "inbox" && (
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="xxs"
-                  aria-pressed={unreadOnly}
-                  className={cn(
-                    "text-2xs text-muted-foreground",
-                    unreadOnly && "bg-accent text-foreground",
-                  )}
-                  onClick={() => setUnreadOnly((value) => !value)}
-                />
-              }
-            >
-              {t("Unread")}
-            </TooltipTrigger>
-            <TooltipContent side="bottom">
-              {unreadOnly ? t("Show all notifications") : t("Show unread only")}
-            </TooltipContent>
-          </Tooltip>
-        )}
-      </div>
+        <p className="-mt-1 flex min-h-4.5 items-center text-sm text-muted-foreground">
+          <span>
+            <Summary counts={counts} />
+          </span>
+        </p>
 
-      <ScrollArea className="min-h-0 flex-1" maskHeight={24}>
-        {isLoading && <NotificationFeedSkeleton />}
+        <div className="-mr-3 -ml-4 flex items-end gap-0.5 border-b border-border pr-3 pl-2">
+          <Tabs
+            value={lens}
+            onValueChange={(value) => setLens(value as NotificationPanelLens)}
+            className="gap-0"
+          >
+            <TabsList variant="underline" className="py-0">
+              {NOTIFICATION_PANEL_LENSES.map((value) => {
+                const count = lensCount(counts, value);
 
-        {isError && !isLoading && (
-          <div className="flex flex-col items-center justify-center gap-3 py-16">
-            <AlertCircleIcon className="text-destructive/60 size-5" />
-            <p className="text-2xs text-muted-foreground">
-              {t("Notifications couldn't be loaded.")}
-            </p>
-            <Button type="button" variant="outline" size="xs" onClick={() => void refetch()}>
-              {t("Try again")}
-            </Button>
-          </div>
-        )}
-
-        {!isLoading && !isError && notifications.length === 0 && (
-          <FeedEmptyState state={tab} unreadOnly={filters.unreadOnly} />
-        )}
-
-        {!isLoading &&
-          groups.map((group) => (
-            <div key={group.label}>
-              <p className="text-xs text-muted-foreground/70 px-4 pt-3 pb-1 font-medium">
-                {t(group.label)}
-              </p>
-              <AnimatePresence initial={false}>
-                {group.items.map((notification) => (
-                  <motion.div
-                    key={notification.id}
-                    layout="position"
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.18, ease: "easeOut" }}
-                    className="overflow-hidden"
+                return (
+                  <TabsTab
+                    key={value}
+                    value={value}
+                    className="group/tab h-8 gap-1.5 px-2 text-sm sm:h-8 sm:text-sm"
                   >
-                    <NotificationItem
-                      notification={notification}
-                      actions={actions}
-                      onNavigate={handleNavigate}
-                    />
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-            </div>
-          ))}
+                    {t(NOTIFICATION_LENS_LABELS[value])}
+                    {count !== null && (
+                      <span className="font-mono text-xs font-normal text-foreground-subtle tabular-nums group-data-active/tab:text-muted-foreground">
+                        {count}
+                      </span>
+                    )}
+                  </TabsTab>
+                );
+              })}
+            </TabsList>
+          </Tabs>
+          <span className="flex-1" />
+          {canMarkAllDone && (
+            <Button
+              type="button"
+              variant="quiet"
+              size="xs"
+              className="mb-1 px-2 text-xs"
+              isLoading={dismissAll.isPending}
+              onClick={() => dismissAll.mutate(lens)}
+            >
+              <CheckDoubleIcon className="size-3" />
+              <span className="max-sm:sr-only">{t("Mark all done")}</span>
+            </Button>
+          )}
+        </div>
+      </div>
 
-        {hasNextPage && <div ref={sentinelRef} className="h-px w-full" />}
-        {isFetchingNextPage && (
-          <div className="flex items-center justify-center py-3">
-            <Spinner className="text-muted-foreground size-3.5" />
-          </div>
-        )}
-      </ScrollArea>
-    </>
+      {isLoading ? (
+        <div className="min-h-0 flex-1 overflow-hidden">
+          <NotificationFeedSkeleton />
+        </div>
+      ) : isError ? (
+        <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 py-16">
+          <AlertCircleIcon className="size-5 text-danger-foreground" />
+          <p className="text-sm text-muted-foreground">{t("Notifications couldn't be loaded.")}</p>
+          <Button type="button" size="xs" onClick={() => void refetch()}>
+            {t("Try again")}
+          </Button>
+        </div>
+      ) : (
+        <VirtualRows
+          rows={rows}
+          handleRef={listRef}
+          estimateSize={ROW_ESTIMATE}
+          className="min-h-0 flex-1"
+          contentClassName="px-1.5 pb-2.5"
+          aria-label={t(NOTIFICATION_LENS_LABELS[lens])}
+          hoverGlide
+          glideClassName="bg-surface-hover"
+          mask="overlay"
+          maskHeight={FADE_HEIGHT}
+          onEndReached={() => {
+            if (hasNextPage && !isFetchingNextPage) void fetchNextPage();
+          }}
+          footer={
+            isFetchingNextPage ? (
+              <div className="flex items-center justify-center py-3">
+                <Spinner className="size-3.5 text-muted-foreground" />
+              </div>
+            ) : null
+          }
+          empty={
+            <div className="min-h-0 flex-1 overflow-y-auto">
+              <NotificationEmpty lens={lens} />
+            </div>
+          }
+        />
+      )}
+
+      <div className="flex items-center gap-3.5 border-t border-border px-4 py-1.5 text-xs text-foreground-subtle">
+        <Shortcut keys={["↵"]}>{t("Open")}</Shortcut>
+        <Shortcut keys={["E"]}>{t("Done")}</Shortcut>
+        <span className="max-sm:hidden">
+          <Shortcut keys={["H"]}>{t("Later")}</Shortcut>
+        </span>
+        <span className="flex-1" />
+        <span className="max-sm:hidden">
+          <Shortcut keys={["J", "K"]}>{t("Move")}</Shortcut>
+        </span>
+      </div>
+
+      <NotificationLaterMenu handle={laterMenu} onLater={handlers.later} nextRow={nextRow} />
+      <NotificationMoreMenu handle={moreMenu} handlers={handlers} />
+    </div>
   );
 }

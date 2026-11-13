@@ -24766,6 +24766,8 @@ type Mutation {
   Turn an offered line down; it never shapes the profile. Needs agent memory manage.
   """
   dismissAgentOrganizationProfileGuidance(id: ID!): AgentProfileGuidance!
+  """Marks every open notification in one part of the panel done."""
+  dismissAllNotifications(lens: NotificationLens!): Boolean!
   """Turns down a memory an agent offered; nothing is kept."""
   dismissDeskMemory(id: ID!): DeskMemory!
   dismissMyNotifications(ids: [ID!]!): Boolean!
@@ -24891,7 +24893,6 @@ type Mutation {
   Marks all of the signed-in driver's personally targeted notifications as read.
   """
   markAllMyNotificationsRead: Boolean!
-  markAllNotificationsRead: Boolean!
   markAuditReviewReviewed(id: ID!): AuditReview!
   markBriefingRead(id: ID!): Briefing!
   markCarrierIntelReviewed(carrierId: ID!, note: String!): Boolean!
@@ -25368,6 +25369,8 @@ type Mutation {
   skipWorkerChecklistItem(input: WorkerChecklistItemActionInput!): WorkerChecklist!
   """Takes messages out of the queue until a time or an event."""
   snoozeInboundMessages(input: SnoozeInboundMessagesInput!, selection: TriageSelectionInput!): TriageBulkResult! @authorizes(resource: "inbound_message")
+  """Sets notifications aside until a time, when they come back unread."""
+  snoozeNotifications(ids: [ID!]!, until: Timestamp!): Boolean!
   """Puts an exception aside until a time; it wakes on its own."""
   snoozeWatchtowerItem(id: ID!, input: SnoozeWatchtowerItemInput!): WatchtowerItem!
   """
@@ -25605,6 +25608,8 @@ type Mutation {
   waiveWorkerTraining(input: WaiveWorkerTrainingInput!): WorkerTrainingRecord!
   """Brings a snoozed message back now."""
   wakeInboundMessage(id: ID!): InboundMessage!
+  """Brings set-aside notifications back now."""
+  wakeNotifications(ids: [ID!]!): Boolean!
   """Brings a snoozed exception back before its time."""
   wakeWatchtowerItem(expectedVersion: Int, id: ID!): WatchtowerItem!
   withdrawInvoiceDispute(input: WithdrawInvoiceDisputeInput!): InvoiceDispute!
@@ -25776,11 +25781,23 @@ type Notification {
   id: ID!
   jobId: String
   message: String!
+  """How many times the subject came up while this notification was open."""
+  occurrenceCount: Int!
   organizationId: ID!
   priority: NotificationPriority!
   readAt: Timestamp
+  """
+  Why the person got it: it was theirs, or it went to everyone who could act.
+  """
+  reason: NotificationReason!
   relatedEntities: JSON
+  """How it cleared itself, in words."""
+  resolution: String!
+  """Set when the work it pointed at was finished and it cleared itself."""
+  resolvedAt: Timestamp
   source: String!
+  """When it shows: now, or later when the person set it aside."""
+  surfacesAt: Timestamp!
   tags: [String!]
   targetUserId: ID
   title: String!
@@ -25804,6 +25821,15 @@ type NotificationConnection {
   totalCountExact: Boolean!
 }
 
+"""How many notifications wait in each part of the panel."""
+type NotificationCounts {
+  forYou: Int!
+  forYouUnread: Int!
+  later: Int!
+  team: Int!
+  teamUnread: Int!
+}
+
 enum NotificationDeliveryStatus {
   delivered
   expired
@@ -25817,8 +25843,21 @@ type NotificationEdge {
 }
 
 input NotificationFilterInput {
-  state: NotificationState
+  lens: NotificationLens
   unreadOnly: Boolean
+}
+
+"""
+A part of the panel. forYou and team split what is open by why the person got it,
+later is what they set aside, done is what they finished or what cleared itself, and
+open is everything open whatever the reason.
+"""
+enum NotificationLens {
+  done
+  forYou
+  later
+  open
+  team
 }
 
 enum NotificationPriority {
@@ -25828,9 +25867,10 @@ enum NotificationPriority {
   medium
 }
 
-enum NotificationState {
-  archived
-  inbox
+"""Why a person got a notification."""
+enum NotificationReason {
+  direct
+  team
 }
 
 input NotifyShipmentDelayInput {
@@ -28614,7 +28654,7 @@ type Query {
   myTriageViews: [TriageView!]!
   """The signed-in driver's year-to-date pay summary."""
   myYtdPay(year: Int!): WorkerYTDPaySummary!
-  notificationUnreadCount: Int!
+  notificationCounts: NotificationCounts!
   notifications(filter: NotificationFilterInput, input: DataTableConnectionInput!): NotificationConnection!
   """
   Open collections across the organisation: what the office is waiting on.

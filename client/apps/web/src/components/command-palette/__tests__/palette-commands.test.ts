@@ -102,9 +102,9 @@ describe("buildAppCommands", () => {
 
   it("offers to mark notifications read only when some are unread", () => {
     expect(idsOf(appContext({ unreadNotifications: 0 }))).not.toContain(
-      "app:notifications-read-all",
+      "app:notifications-done-all",
     );
-    expect(idsOf(appContext({ unreadNotifications: 3 }))).toContain("app:notifications-read-all");
+    expect(idsOf(appContext({ unreadNotifications: 3 }))).toContain("app:notifications-done-all");
   });
 
   it("leaves the assistant out for someone who cannot use it", () => {

@@ -273,6 +273,14 @@ query WatchtowerItemDetail($id: ID!) @requiresRead(kind: "agent_definition") {
   }
 }
 
+mutation AcknowledgeWatchtowerItem($id: ID!) {
+  acknowledgeWatchtowerItem(id: $id) {
+    id
+    status
+    version
+  }
+}
+
 mutation SnoozeWatchtowerItem($id: ID!, $input: SnoozeWatchtowerItemInput!) @requiresRead(kind: "agent_definition") {
   snoozeWatchtowerItem(id: $id, input: $input) {
     ...WatchtowerItemFields

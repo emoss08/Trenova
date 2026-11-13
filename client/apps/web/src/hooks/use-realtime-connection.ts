@@ -299,6 +299,19 @@ export function useRealtimeConnection() {
         });
       }
 
+      // A notification that cleared itself (the work it pointed at was finished) leaves
+      // every panel it was open in. One event covers everyone it reached, so it is batched
+      // with whatever else arrives in the same moment.
+      if (
+        notifEvt?.resource === "notifications" &&
+        notifEvt.action === "resolved" &&
+        notifEvt.organizationId === user.currentOrganizationId &&
+        notifEvt.businessUnitId === user.businessUnitId
+      ) {
+        enqueueInvalidation([notification._def], true);
+        return;
+      }
+
       const evt = parseInvalidationEvent(data);
       if (!evt) return;
       if (

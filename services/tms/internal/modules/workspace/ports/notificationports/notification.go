@@ -16,9 +16,45 @@ type ListNotificationConnectionRequest struct {
 	Filter              *pagination.QueryOptions `json:"filter"`
 	Cursor              pagination.CursorInfo    `json:"-"`
 	NotificationColumns []string                 `json:"-"`
-	State               notification.State       `json:"state"`
+	Lens                notification.Lens        `json:"lens"`
 	UnreadOnly          bool                     `json:"unreadOnly"`
 	PersonalOnly        bool                     `json:"-"`
+	Now                 int64                    `json:"-"`
+}
+
+type SnoozeNotificationsRequest struct {
+	NotificationActionRequest
+
+	Until int64
+}
+
+type DismissAllNotificationsRequest struct {
+	TenantInfo   pagination.TenantInfo
+	Lens         notification.Lens
+	PersonalOnly bool
+	Now          int64
+}
+
+type ResolveNotificationSubjectRequest struct {
+	OrganizationID pulid.ID `json:"organizationId"`
+	BusinessUnitID pulid.ID `json:"businessUnitId"`
+	SubjectKey     string   `json:"subjectKey"`
+	Resolution     string   `json:"resolution"`
+	Now            int64    `json:"now"`
+}
+
+type NotificationCountsRequest struct {
+	TenantInfo   pagination.TenantInfo
+	PersonalOnly bool
+	Now          int64
+}
+
+type NotificationCounts struct {
+	ForYou       int64 `json:"forYou"`
+	ForYouUnread int64 `json:"forYouUnread"`
+	Team         int64 `json:"team"`
+	TeamUnread   int64 `json:"teamUnread"`
+	Later        int64 `json:"later"`
 }
 
 type NotificationActionRequest struct {
@@ -59,7 +95,12 @@ type NotificationRepository interface {
 		personalOnly bool,
 	) error
 	Dismiss(ctx context.Context, req NotificationActionRequest) error
+	DismissAll(ctx context.Context, req DismissAllNotificationsRequest) error
 	Restore(ctx context.Context, req NotificationActionRequest) error
+	Snooze(ctx context.Context, req SnoozeNotificationsRequest) error
+	Wake(ctx context.Context, req NotificationActionRequest) error
+	ResolveSubject(ctx context.Context, req ResolveNotificationSubjectRequest) (int64, error)
+	Counts(ctx context.Context, req NotificationCountsRequest) (*NotificationCounts, error)
 	CountUnread(
 		ctx context.Context,
 		userID pulid.ID,

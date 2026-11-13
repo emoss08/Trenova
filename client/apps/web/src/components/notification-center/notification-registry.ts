@@ -94,6 +94,97 @@ function entityPanelLink(
   return `${basePath}?${params.toString()}`;
 }
 
+/**
+ * Something a row offers beyond opening it. `open` goes somewhere; the others change the
+ * record the notification is about, and the row moves to Done once they succeed. An `open`
+ * that `settles` is the whole of what the notification asked for (reading a reply), so the
+ * row goes to Done with it; any other `open` only marks the row read, because the work it
+ * leads to is what finishes it.
+ */
+export type NotificationRowAction =
+  | { kind: "open"; label: string; href: string; primary?: boolean; settles?: boolean }
+  | { kind: "acknowledge-exception"; label: string; itemId: string }
+  | { kind: "approve-time-off"; label: string; timeOffId: string };
+
+const WHY = defineLabels({
+  assigned: "Assigned to you",
+  woke: "Back from being set aside",
+  commented: "New comment on your exception",
+  escalated: "Yours, and now overdue",
+  mentioned: "You were mentioned",
+  approval: "Waits on your approval",
+  deciders: "Anyone who can approve",
+  asked: "You asked for it",
+  shared: "Shared with you",
+  ran: "You ran it",
+});
+
+const ACTION = defineLabels({
+  acknowledge: "Acknowledge",
+  openException: "Open exception",
+  openQueue: "Open the queue",
+  review: "Review changes",
+  approve: "Approve",
+  openRequest: "Open request",
+  readReply: "Read the reply",
+});
+
+const EXCEPTIONS_PATH = "/desk/needs";
+
+const exceptionLink = (notification: Notification) =>
+  notificationDataString(notification, "link") ?? EXCEPTIONS_PATH;
+
+/** A row about one exception that is the person's own: acknowledge it, or open it. */
+function exceptionActions(notification: Notification): NotificationRowAction[] {
+  const itemId = notificationDataString(notification, "itemId");
+  const open: NotificationRowAction = {
+    kind: "open",
+    label: ACTION.openException,
+    href: exceptionLink(notification),
+  };
+
+  return itemId
+    ? [{ kind: "acknowledge-exception", label: ACTION.acknowledge, itemId }, open]
+    : [{ ...open, primary: true }];
+}
+
+/**
+ * An exception on the Desk. It is drawn as a warning so the catalog does not call the kind
+ * urgent, and takes the danger tone only for a notice whose own severity is critical.
+ */
+const EXCEPTION_DESCRIPTOR: NotificationDescriptor = {
+  category: "Exceptions",
+  icon: ClockAlertIcon,
+  iconClass: "text-warning",
+  tileClass: "bg-warning-subtle",
+  getLink: exceptionLink,
+  refine: (n) =>
+    notificationDataString(n, "severity") === "Critical"
+      ? { iconClass: "text-destructive", tileClass: "bg-danger-subtle" }
+      : null,
+};
+
+/** A state drawn as a badge on the row. `label` is English source; translate it with `args`. */
+export interface NotificationStatus {
+  tone: "danger" | "warning" | "neutral" | "success";
+  label: string;
+  args?: unknown[];
+}
+
+const STATUS = defineLabels({
+  waitingDays: "Waiting {0, plural, one {# day} other {# days}}",
+});
+
+const HOURS_PER_DAY = 24;
+
+/** Proposals nobody has decided for a day or more say how long they have waited. */
+function proposalsStatus(notification: Notification): NotificationStatus | null {
+  const hours = notificationDataNumber(notification, "waitingHours");
+  if (hours === null || hours < HOURS_PER_DAY) return null;
+
+  return { tone: "warning", label: STATUS.waitingDays, args: [Math.floor(hours / HOURS_PER_DAY)] };
+}
+
 export interface NotificationAvatar {
   userId?: string;
   name?: string;
@@ -107,9 +198,18 @@ export interface NotificationDescriptor {
   iconClass: string;
   tileClass: string;
   hideMessage?: boolean;
-  disableRowNavigation?: boolean;
   avatar?: (notification: Notification) => NotificationAvatar | null;
   getLink?: (notification: Notification) => string | null;
+  /**
+   * Why the person got it, in the language on screen: "Assigned to you", "You were
+   * mentioned". A kind with none shows its category for a broadcast and nothing for a
+   * notification that is plainly the person's own.
+   */
+  why?: (notification: Notification) => string | null;
+  /** What can be done about it from the row itself, the one that settles it first. */
+  actions?: (notification: Notification) => NotificationRowAction[];
+  /** A state the row should carry as a badge, beyond its priority: how long it has waited. */
+  status?: (notification: Notification) => NotificationStatus | null;
   /** The look for one notification, when its kind alone does not settle it. */
   refine?: (
     notification: Notification,
@@ -150,6 +250,7 @@ const carrierIntelUsageLink = (notification: Notification) =>
   notificationDataString(notification, "link") ?? `${CARRIER_MONITORING_PATH}?tab=usage`;
 
 const REPORT_READY: NotificationDescriptor = {
+  why: () => WHY.ran,
   category: "Reports",
   icon: FileDownload02Icon,
   iconClass: "text-success",
@@ -177,6 +278,13 @@ const ASSISTANT_REPLY_DESCRIPTOR: NotificationDescriptor = {
   iconClass: "text-muted-foreground",
   tileClass: "bg-muted",
   getLink: (n) => parseReplyReady(n)?.link ?? null,
+  why: () => WHY.asked,
+  actions: (n) => {
+    const href = parseReplyReady(n)?.link;
+    return href
+      ? [{ kind: "open", label: ACTION.readReply, href, primary: true, settles: true }]
+      : [];
+  },
   refine: (n) =>
     parseReplyReady(n)?.status === "Failed"
       ? { iconClass: "text-destructive", tileClass: "bg-danger-subtle" }
@@ -192,6 +300,9 @@ const EXACT_REGISTRY: Record<string, NotificationDescriptor> = {
     iconClass: "text-brand",
     tileClass: "bg-brand-subtle",
     getLink: aiControlLink,
+    why: () => WHY.deciders,
+    status: proposalsStatus,
+    actions: (n) => [{ kind: "open", label: ACTION.review, href: aiControlLink(n), primary: true }],
   },
   "agent.proposals_reminder": {
     label: "A reminder about waiting proposals",
@@ -200,6 +311,34 @@ const EXACT_REGISTRY: Record<string, NotificationDescriptor> = {
     iconClass: "text-warning",
     tileClass: "bg-warning-subtle",
     getLink: aiControlLink,
+    why: () => WHY.deciders,
+    status: proposalsStatus,
+    actions: (n) => [{ kind: "open", label: ACTION.review, href: aiControlLink(n), primary: true }],
+  },
+  "watchtower.critical": {
+    ...EXCEPTION_DESCRIPTOR,
+    label: "A critical exception reaches your team",
+    actions: (n) => [
+      { kind: "open", label: ACTION.openQueue, href: exceptionLink(n), primary: true },
+    ],
+  },
+  "watchtower.assigned": {
+    ...EXCEPTION_DESCRIPTOR,
+    label: "An exception is assigned to you",
+    why: (n) => (notificationDataString(n, "notice") === "woke" ? WHY.woke : WHY.assigned),
+    actions: exceptionActions,
+  },
+  "watchtower.commented": {
+    ...EXCEPTION_DESCRIPTOR,
+    label: "Someone comments on your exception",
+    why: () => WHY.commented,
+    actions: exceptionActions,
+  },
+  "watchtower.escalated": {
+    ...EXCEPTION_DESCRIPTOR,
+    label: "Your exception goes overdue",
+    why: () => WHY.escalated,
+    actions: exceptionActions,
   },
   "agent.tool_promoted": {
     label: "A tool earns more trust",
@@ -260,6 +399,19 @@ const EXACT_REGISTRY: Record<string, NotificationDescriptor> = {
     iconClass: "text-brand",
     tileClass: "bg-brand/10",
     getLink: () => "/hr/workers?pageTab=pto",
+    why: () => WHY.approval,
+    actions: (n) => {
+      const timeOffId = notificationDataString(n, "ptoId");
+      const open: NotificationRowAction = {
+        kind: "open",
+        label: ACTION.openRequest,
+        href: "/hr/workers?pageTab=pto",
+      };
+
+      return timeOffId
+        ? [{ kind: "approve-time-off", label: ACTION.approve, timeOffId }, open]
+        : [{ ...open, primary: true }];
+    },
   },
   "dash.credential_expiring": {
     label: "A worker’s credential is about to expire",
@@ -349,6 +501,7 @@ const EXACT_REGISTRY: Record<string, NotificationDescriptor> = {
     getLink: invoiceLink,
   },
   record_shared: {
+    why: () => WHY.shared,
     label: "Someone shares a record with you",
     category: "Shared with you",
     icon: Share07Icon,
@@ -383,13 +536,13 @@ const EXACT_REGISTRY: Record<string, NotificationDescriptor> = {
       ),
   },
   shipment_comment_mention: {
+    why: () => WHY.mentioned,
     label: "Someone @mentions you on a shipment",
     category: "Mentions",
     icon: AtSignIcon,
     iconClass: "text-brand",
     tileClass: "bg-brand/10",
     hideMessage: true,
-    disableRowNavigation: true,
     avatar: (n) => {
       const userId = notificationDataString(n, "authorId");
       const name = notificationDataString(n, "authorName");
@@ -633,6 +786,14 @@ const CATEGORY_LOOKS: readonly CategoryLook[] = [
     tileClass: "bg-brand-subtle",
   },
   {
+    name: "Exceptions",
+    label: "Exceptions",
+    description: "Late, missing and at-risk work on the Desk",
+    icon: ClockAlertIcon,
+    iconClass: "text-warning",
+    tileClass: "bg-warning-subtle",
+  },
+  {
     name: "Billing",
     label: "Billing",
     description: "Invoices and billing exceptions",
@@ -778,4 +939,67 @@ export function buildNotificationCatalog(): NotificationCatalogCategory[] {
   return [...byCategory.values()]
     .sort((a, b) => a.order - b.order || a.name.localeCompare(b.name))
     .map(({ order: _order, ...category }) => category);
+}
+
+/** Why the person got this notification, or null when the row needs no line for it. */
+export function notificationWhy(notification: Notification): string | null {
+  return resolveNotificationDescriptor(notification).why?.(notification) ?? null;
+}
+
+/** What the row offers beyond opening it; empty for a kind that is only news. */
+export function notificationActions(notification: Notification): NotificationRowAction[] {
+  return resolveNotificationDescriptor(notification).actions?.(notification) ?? [];
+}
+
+/** A state the row carries as a badge, or null when its kind has none to show. */
+export function notificationStatus(notification: Notification): NotificationStatus | null {
+  return resolveNotificationDescriptor(notification).status?.(notification) ?? null;
+}
+
+/**
+ * The key a preference stores to turn this kind of notification off, or null when the
+ * organization requires it and it cannot be turned off.
+ */
+export function notificationPreferenceKey(
+  notification: Pick<Notification, "eventType">,
+): string | null {
+  const { eventType } = notification;
+  const key = Object.hasOwn(EXACT_REGISTRY, eventType)
+    ? eventType
+    : eventType.startsWith("tca.")
+      ? TCA_PREFERENCE_KEY
+      : SYSTEM_PREFERENCE_KEY;
+
+  return requiredReason(key) === null ? key : null;
+}
+
+/** One earlier time a counted notification's subject came up, newest first. */
+export interface NotificationOccurrence {
+  label: string;
+  /** The record's own number, where the producer gave one. */
+  ref: string | null;
+  link: string | null;
+  at: number;
+}
+
+/** The last few times the subject of a counted notification came up. */
+export function notificationRecent(
+  notification: Pick<Notification, "data">,
+): NotificationOccurrence[] {
+  const recent = notification.data?.recent;
+  if (!Array.isArray(recent)) return [];
+
+  return recent.flatMap((entry) => {
+    if (typeof entry !== "object" || entry === null) return [];
+    const { label, ref, link, at } = entry as Record<string, unknown>;
+    if (typeof label !== "string" || label === "" || typeof at !== "number") return [];
+    return [
+      {
+        label,
+        ref: typeof ref === "string" && ref !== "" ? ref : null,
+        link: typeof link === "string" && link !== "" ? link : null,
+        at,
+      },
+    ];
+  });
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
 
@@ -43,6 +44,12 @@ type Notification struct {
 	JobID           *string        `json:"jobId"           keel:"job_id"`
 	CorrelationID   *string        `json:"correlationId"   keel:"correlation_id"`
 	Tags            []string       `json:"tags"            keel:"tags"`
+	SubjectKey      string         `json:"subjectKey"      keel:"subject_key"`
+	Reason          Reason         `json:"reason"          keel:"reason"`
+	OccurrenceCount int            `json:"occurrenceCount" keel:"occurrence_count"`
+	SurfacesAt      int64          `json:"surfacesAt"      keel:"surfaces_at"`
+	ResolvedAt      *int64         `json:"resolvedAt"      keel:"resolved_at"`
+	Resolution      string         `json:"resolution"      keel:"resolution"`
 	Version         int64          `json:"version"         keel:"version,version"`
 }
 
@@ -58,6 +65,18 @@ func (n *Notification) BeforeCreate(_ context.Context) error {
 	}
 	if n.MaxRetries == 0 {
 		n.MaxRetries = 3
+	}
+	if n.Reason == "" {
+		n.Reason = ReasonDirect
+		if n.TargetUserID == nil {
+			n.Reason = ReasonTeam
+		}
+	}
+	if n.OccurrenceCount <= 0 {
+		n.OccurrenceCount = 1
+	}
+	if n.SurfacesAt == 0 {
+		n.SurfacesAt = timeutils.NowUnix()
 	}
 
 	return nil
@@ -121,6 +140,10 @@ func (n *Notification) Validate(multiErr *errortypes.MultiError) {
 			validation.Required.Error("Delivery status is required"),
 			domainvalidation.ValidEnum[DeliveryStatus]("Delivery status is invalid"),
 		),
+		validation.Field(&n.SubjectKey,
+			validation.Length(0, maxSubjectKeyLength).
+				Error("Subject cannot be longer than 255 characters"),
+		),
 		validation.Field(&n.Source,
 			validation.Required.Error("Source is required"),
 			validation.Length(1, maxNotificationSourceLength).
@@ -142,6 +165,7 @@ func (n *Notification) Validate(multiErr *errortypes.MultiError) {
 const (
 	maxEventTypeLength          = 100
 	maxNotificationTitleLength  = 255
+	maxSubjectKeyLength         = 255
 	maxNotificationSourceLength = 100
 	maxNotificationRetries      = 10
 )

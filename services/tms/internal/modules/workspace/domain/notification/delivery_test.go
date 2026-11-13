@@ -238,7 +238,7 @@ func TestPreferenceValidate(t *testing.T) {
 	require.True(t, multiErr.HasErrors())
 	fields := make([]string, 0, len(multiErr.Errors))
 	for _, err := range multiErr.Errors {
-		fields = append(fields, err.Field)
+		fields = append(fields, err.Field())
 	}
 	assert.ElementsMatch(t, []string{
 		"desktopMode",

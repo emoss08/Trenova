@@ -62,6 +62,11 @@ export function useDashRealtime() {
         return;
       }
 
+      if (event.resource === "notifications" && event.action === "resolved") {
+        void queryClient.invalidateQueries({ queryKey: notification._def });
+        return;
+      }
+
       const keys = DASH_RESOURCE_QUERY_KEYS[event.resource];
       if (!keys) {
         return;

@@ -9,6 +9,11 @@ import {
   TCA_PREFERENCE_KEY,
   getNotificationDescriptor,
   getNotificationLink,
+  notificationActions,
+  notificationPreferenceKey,
+  notificationRecent,
+  notificationStatus,
+  notificationWhy,
   resolveNotificationDescriptor,
 } from "./notification-registry";
 
@@ -38,6 +43,11 @@ function notification(overrides: Partial<Notification> = {}): Notification {
     readAt: null,
     dismissedAt: null,
     createdAt: 1_700_000_000,
+    reason: "direct",
+    occurrenceCount: 1,
+    surfacesAt: 1_700_000_000,
+    resolvedAt: null,
+    resolution: "",
     ...overrides,
   };
 }
@@ -438,5 +448,184 @@ describe("notification registry — a record shared with you", () => {
 
   it("opens nothing when the share carries no link", () => {
     expect(getNotificationLink(notification({ eventType: "record_shared" }))).toBeNull();
+  });
+});
+
+describe("notification registry — exceptions on the Desk", () => {
+  const assigned = (overrides: Partial<Notification> = {}) =>
+    notification({
+      eventType: "watchtower.assigned",
+      title: "Missed pickup",
+      data: { itemId: "wti_1", link: "/desk/needs?item=wti_1" },
+      ...overrides,
+    });
+
+  it("offers to acknowledge the person's own exception first, then to open it", () => {
+    expect(notificationActions(assigned())).toEqual([
+      { kind: "acknowledge-exception", label: "Acknowledge", itemId: "wti_1" },
+      { kind: "open", label: "Open exception", href: "/desk/needs?item=wti_1" },
+    ]);
+  });
+
+  it("only opens an exception whose notice does not name the item", () => {
+    expect(notificationActions(assigned({ data: null }))).toEqual([
+      { kind: "open", label: "Open exception", href: "/desk/needs", primary: true },
+    ]);
+  });
+
+  it("says why each kind of notice about an exception reached the person", () => {
+    expect(notificationWhy(assigned())).toBe("Assigned to you");
+    expect(notificationWhy(assigned({ data: { itemId: "wti_1", notice: "woke" } }))).toBe(
+      "Back from being set aside",
+    );
+    expect(notificationWhy(assigned({ eventType: "watchtower.commented" }))).toBe(
+      "New comment on your exception",
+    );
+    expect(notificationWhy(assigned({ eventType: "watchtower.escalated" }))).toBe(
+      "Yours, and now overdue",
+    );
+  });
+
+  it("opens the queue from a team's counted row and gives no reason beyond its category", () => {
+    const rollup = notification({
+      eventType: "watchtower.critical",
+      reason: "team",
+      data: { link: "/desk/needs" },
+    });
+
+    expect(notificationActions(rollup)).toEqual([
+      { kind: "open", label: "Open the queue", href: "/desk/needs", primary: true },
+    ]);
+    expect(notificationWhy(rollup)).toBeNull();
+    expect(resolveNotificationDescriptor(rollup).category).toBe("Exceptions");
+  });
+
+  it("is drawn as a warning, and in the danger tone only when its own severity is critical", () => {
+    expect(resolveNotificationDescriptor(assigned()).iconClass).toBe("text-warning");
+    expect(
+      resolveNotificationDescriptor(assigned({ data: { itemId: "wti_1", severity: "Critical" } })),
+    ).toMatchObject({ iconClass: "text-destructive", tileClass: "bg-danger-subtle" });
+  });
+});
+
+describe("notification registry — what a row offers", () => {
+  it("approves time off from the row when the notice names the request", () => {
+    const request = notification({ eventType: "dash.pto_requested", data: { ptoId: "pto_1" } });
+
+    expect(notificationWhy(request)).toBe("Waits on your approval");
+    expect(notificationActions(request)).toEqual([
+      { kind: "approve-time-off", label: "Approve", timeOffId: "pto_1" },
+      { kind: "open", label: "Open request", href: "/hr/workers?pageTab=pto" },
+    ]);
+  });
+
+  it("only opens the requests when the notice does not name one", () => {
+    expect(notificationActions(notification({ eventType: "dash.pto_requested" }))).toEqual([
+      { kind: "open", label: "Open request", href: "/hr/workers?pageTab=pto", primary: true },
+    ]);
+  });
+
+  it("settles a finished reply by opening it, since reading it is all it asked for", () => {
+    const reply = notification({
+      eventType: "assistant_reply_ready",
+      data: { threadId: "athr_1", status: "Completed", link: "/desk/c/athr_1" },
+    });
+
+    expect(notificationActions(reply)).toEqual([
+      {
+        kind: "open",
+        label: "Read the reply",
+        href: "/desk/c/athr_1",
+        primary: true,
+        settles: true,
+      },
+    ]);
+    expect(notificationWhy(reply)).toBe("You asked for it");
+  });
+
+  it("opens waiting proposals for review without settling them", () => {
+    const pending = notification({
+      eventType: "agent.proposals_pending",
+      reason: "team",
+      data: { link: "/desk/needs?lens=decisions" },
+    });
+
+    expect(notificationActions(pending)).toEqual([
+      { kind: "open", label: "Review changes", href: "/desk/needs?lens=decisions", primary: true },
+    ]);
+    expect(notificationWhy(pending)).toBe("Anyone who can approve");
+  });
+
+  it("offers nothing for a kind that is only news", () => {
+    expect(notificationActions(notification({ eventType: "tender_accepted" }))).toEqual([]);
+    expect(notificationWhy(notification({ eventType: "tender_accepted" }))).toBeNull();
+  });
+});
+
+describe("notification registry — how long proposals have waited", () => {
+  const waiting = (waitingHours: unknown) =>
+    notification({ eventType: "agent.proposals_reminder", data: { waitingHours } });
+
+  it("says nothing until a whole day has passed", () => {
+    expect(notificationStatus(waiting(23))).toBeNull();
+    expect(notificationStatus(notification({ eventType: "agent.proposals_reminder" }))).toBeNull();
+  });
+
+  it("counts whole days once they have, as a warning", () => {
+    expect(notificationStatus(waiting(24))).toEqual({
+      tone: "warning",
+      label: "Waiting {0, plural, one {# day} other {# days}}",
+      args: [1],
+    });
+    expect(notificationStatus(waiting(74))?.args).toEqual([3]);
+  });
+
+  it("gives other kinds no state of their own", () => {
+    expect(notificationStatus(notification({ data: { waitingHours: 80 } }))).toBeNull();
+  });
+});
+
+describe("notification registry — turning a kind off", () => {
+  it("stores a registered kind under its own event type", () => {
+    expect(notificationPreferenceKey({ eventType: "tender_accepted" })).toBe("tender_accepted");
+  });
+
+  it("stores every table change alert under one key", () => {
+    expect(notificationPreferenceKey({ eventType: "tca.shipments.update" })).toBe(
+      TCA_PREFERENCE_KEY,
+    );
+  });
+
+  it("offers no key for a kind the organization requires", () => {
+    expect(notificationPreferenceKey({ eventType: "some.unregistered.event" })).toBeNull();
+    expect(notificationPreferenceKey({ eventType: "ai_audit_chain_mismatch" })).toBeNull();
+  });
+});
+
+describe("notification registry — the latest times a subject came up", () => {
+  it("lists them newest first as the server stored them, with the record's number and link", () => {
+    expect(
+      notificationRecent({
+        data: {
+          recent: [
+            { label: "Savannah, GA", ref: "S261", link: "/desk/needs?item=a", at: 300 },
+            { label: "Memphis, TN", at: 200 },
+          ],
+        },
+      }),
+    ).toEqual([
+      { label: "Savannah, GA", ref: "S261", link: "/desk/needs?item=a", at: 300 },
+      { label: "Memphis, TN", ref: null, link: null, at: 200 },
+    ]);
+  });
+
+  it("drops entries that carry no label or no time, and reads anything else as none", () => {
+    expect(
+      notificationRecent({
+        data: { recent: [{ label: "", at: 1 }, { label: "No time" }, "text", null, { at: 4 }] },
+      }),
+    ).toEqual([]);
+    expect(notificationRecent({ data: { recent: "three" } })).toEqual([]);
+    expect(notificationRecent({ data: null })).toEqual([]);
   });
 });

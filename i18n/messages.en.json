@@ -2760,6 +2760,24 @@
       "go/other"
     ]
   },
+  "<b>{0} for you</b>, nothing new.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "<b>{0} for you</b>, {1} new.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "<b>{0} of the last {1, plural, other {# schedules}}</b> funded late.": {
     "sites": 1,
     "scope": [
@@ -5937,6 +5955,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "A critical exception reaches your team": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "A cron expression is required": {
@@ -18627,7 +18654,7 @@
     ]
   },
   "Acknowledge": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -29365,6 +29392,15 @@
       "go/other"
     ]
   },
+  "An exception is assigned to you": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "An exchange rate must be more than zero, not {0}": {
     "sites": 2,
     "scope": [
@@ -31394,6 +31430,15 @@
       "apps/web/components"
     ]
   },
+  "Anyone who can approve": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Anyone who can view this sees the note in the list below.": {
     "sites": 1,
     "scope": [
@@ -32944,7 +32989,7 @@
     ]
   },
   "Approve": {
-    "sites": 62,
+    "sites": 63,
     "scope": [
       "go",
       "ts"
@@ -34305,7 +34350,7 @@
     ]
   },
   "Archive": {
-    "sites": 37,
+    "sites": 35,
     "scope": [
       "go",
       "ts"
@@ -37382,11 +37427,12 @@
     ]
   },
   "Assigned to you": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/inbox"
     ]
   },
@@ -41329,6 +41375,15 @@
       "routes/worker"
     ]
   },
+  "Back from being set aside": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Back from snooze": {
     "sites": 1,
     "scope": [
@@ -41661,6 +41716,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Back {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Back: a document was attached": {
@@ -46750,6 +46814,15 @@
       "go/other"
     ]
   },
+  "Bring back now": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Bring in templates from a JSON file exported from Trenova.": {
     "sites": 1,
     "scope": [
@@ -46760,11 +46833,12 @@
     ]
   },
   "Bring it back": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/desk"
     ]
   },
@@ -46811,6 +46885,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Broadcasts to everyone who can act on something show up here, one row per subject.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Broken": {
@@ -48964,7 +49047,7 @@
     ]
   },
   "Cancel": {
-    "sites": 333,
+    "sites": 332,
     "scope": [
       "go",
       "ts"
@@ -57119,6 +57202,15 @@
       "packages/shared/types"
     ]
   },
+  "Choose a time within the next 30 days": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Choose a type": {
     "sites": 1,
     "scope": [
@@ -58642,6 +58734,15 @@
       "apps/web/components"
     ]
   },
+  "Choose which notifications to mark done": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Choose which organizations this user can access in the current business unit.": {
     "sites": 1,
     "scope": [
@@ -60101,15 +60202,6 @@
     ],
     "areas": [
       "apps/web/config"
-    ]
-  },
-  "Clear the unread count without opening each one": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
     ]
   },
   "Clear the {0} {1} tools shown": {
@@ -62475,6 +62567,15 @@
     "areas": [
       "apps/web/components",
       "routes/scheduling"
+    ]
+  },
+  "Coming back": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Coming back later": {
@@ -68081,7 +68182,7 @@
     ]
   },
   "Copy link": {
-    "sites": 17,
+    "sites": 18,
     "scope": [
       "ts"
     ],
@@ -70107,15 +70208,6 @@
       "apps/web/components"
     ]
   },
-  "Couldn't archive notification": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "packages/shared/hooks"
-    ]
-  },
   "Couldn't ask another agent": {
     "sites": 1,
     "scope": [
@@ -70150,6 +70242,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Couldn't bring the notification back": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/hooks"
     ]
   },
   "Couldn't check the product guide": {
@@ -70314,6 +70415,33 @@
       "packages/shared/hooks"
     ]
   },
+  "Couldn't mark the notification done": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/hooks"
+    ]
+  },
+  "Couldn't mark them done": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/hooks"
+    ]
+  },
+  "Couldn't move the notification back": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/hooks"
+    ]
+  },
   "Couldn't open that page": {
     "sites": 1,
     "scope": [
@@ -70386,15 +70514,6 @@
       "apps/web/components"
     ]
   },
-  "Couldn't restore notification": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "packages/shared/hooks"
-    ]
-  },
   "Couldn't review some items · tries again after {0}": {
     "sites": 1,
     "scope": [
@@ -70414,6 +70533,15 @@
     ]
   },
   "Couldn't send reply": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "packages/shared/hooks"
+    ]
+  },
+  "Couldn't set the notification aside": {
     "sites": 1,
     "scope": [
       "ts"
@@ -73593,7 +73721,7 @@
     ]
   },
   "Critical": {
-    "sites": 12,
+    "sites": 13,
     "scope": [
       "go",
       "ts"
@@ -88447,7 +88575,7 @@
     ]
   },
   "Done": {
-    "sites": 44,
+    "sites": 48,
     "scope": [
       "ts"
     ],
@@ -99772,15 +99900,6 @@
       "routes/shipment-control"
     ]
   },
-  "Enter to send": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
   "Enter valid email addresses": {
     "sites": 1,
     "scope": [
@@ -104871,12 +104990,13 @@
     ]
   },
   "Exceptions": {
-    "sites": 18,
+    "sites": 19,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "go/other",
       "routes/agent-control",
       "routes/bank-receipt",
@@ -110921,24 +111041,6 @@
       "routes/customer-statement"
     ]
   },
-  "Failed to mark all as read": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/table-change-alert"
-    ]
-  },
-  "Failed to mark notification as read": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/table-change-alert"
-    ]
-  },
   "Failed to mark settlement paid": {
     "sites": 2,
     "scope": [
@@ -114650,6 +114752,15 @@
       "go/other"
     ]
   },
+  "Finish everything waiting for you without opening each one": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Finish it by hand": {
     "sites": 1,
     "scope": [
@@ -116734,6 +116845,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "For you": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "For your information": {
@@ -121454,6 +121574,16 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Get told when the records you watch are created, changed or deleted": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/section-index",
+      "routes/table-change-alert"
     ]
   },
   "Gets rate confirmations": {
@@ -130358,6 +130488,15 @@
       "routes/desk"
     ]
   },
+  "In 1 hour": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "In 3 hours": {
     "sites": 1,
     "scope": [
@@ -131605,13 +131744,12 @@
     ]
   },
   "Inbox": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components",
       "go/other",
       "routes/carrier-monitoring"
     ]
@@ -137247,6 +137385,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "It cleared itself": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "It could not be duplicated": {
@@ -143543,6 +143690,15 @@
       "routes/service-failure"
     ]
   },
+  "Late, missing and at-risk work on the Desk": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Latency": {
     "sites": 1,
     "scope": [
@@ -143580,11 +143736,12 @@
     ]
   },
   "Later": {
-    "sites": 5,
+    "sites": 9,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/config",
       "routes/dispatch-console",
       "routes/inbox",
@@ -143610,11 +143767,12 @@
     ]
   },
   "Later today": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/inbox",
       "routes/shipment"
     ]
@@ -143731,11 +143889,12 @@
     ]
   },
   "Latest {0}": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/reports"
     ]
   },
@@ -149197,7 +149356,7 @@
       "ts"
     ],
     "areas": [
-      "routes/table-change-alert"
+      "apps/web/components"
     ]
   },
   "Loading older activity": {
@@ -154901,6 +155060,15 @@
       "go/other"
     ]
   },
+  "Mark all done": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Mark all handled": {
     "sites": 1,
     "scope": [
@@ -154910,7 +155078,7 @@
       "routes/inbox"
     ]
   },
-  "Mark all notifications as read": {
+  "Mark all my notifications done": {
     "sites": 1,
     "scope": [
       "ts"
@@ -154920,14 +155088,12 @@
     ]
   },
   "Mark all read": {
-    "sites": 3,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/dash/routes",
-      "apps/web/components",
-      "routes/table-change-alert"
+      "apps/dash/routes"
     ]
   },
   "Mark all seen": {
@@ -154958,14 +155124,13 @@
     ]
   },
   "Mark as read": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/dash/_components",
-      "apps/web/components",
-      "routes/table-change-alert"
+      "apps/web/components"
     ]
   },
   "Mark as unread": {
@@ -160348,11 +160513,12 @@
     ]
   },
   "Monday": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/lib",
       "routes/inbox"
     ]
@@ -160707,16 +160873,6 @@
       "routes/carrier-monitoring"
     ]
   },
-  "Monitor and review system activity across your organization": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/section-index",
-      "routes/table-change-alert"
-    ]
-  },
   "Monitor brokered loads for check calls": {
     "sites": 1,
     "scope": [
@@ -161068,11 +161224,12 @@
     ]
   },
   "More": {
-    "sites": 9,
+    "sites": 11,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "packages/shared/components",
       "routes/agent-control",
       "routes/desk",
@@ -161430,11 +161587,12 @@
     ]
   },
   "Move": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/carrier-monitoring",
       "routes/dispatch-console",
       "routes/inbox",
@@ -161547,6 +161705,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Move back": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Move back to candidates": {
@@ -165726,6 +165893,15 @@
     ],
     "areas": [
       "routes/billing-queue"
+    ]
+  },
+  "New comment on your exception": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "New commodity": {
@@ -172847,15 +173023,6 @@
     ],
     "areas": [
       "routes/settings"
-    ]
-  },
-  "No notifications yet": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/table-change-alert"
     ]
   },
   "No odometer": {
@@ -180126,6 +180293,15 @@
       "routes/agent-control"
     ]
   },
+  "Nothing done yet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Nothing drawn this year": {
     "sites": 1,
     "scope": [
@@ -181061,6 +181237,33 @@
       "routes/inbox"
     ]
   },
+  "Nothing is waiting on you": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Nothing is waiting on you or your team.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Nothing is waiting on you.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Nothing is waiting to be filed": {
     "sites": 1,
     "scope": [
@@ -181878,6 +182081,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Nothing set aside": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Nothing shared yet. Status emails add their own link when they go out.": {
@@ -182991,7 +183203,7 @@
     ]
   },
   "Notifications": {
-    "sites": 12,
+    "sites": 11,
     "scope": [
       "go",
       "ts"
@@ -183004,8 +183216,7 @@
       "go/other",
       "packages/shared/components",
       "routes/home",
-      "routes/settings",
-      "routes/table-change-alert"
+      "routes/settings"
     ]
   },
   "Notifications ({0} unread)": {
@@ -183037,6 +183248,15 @@
     ]
   },
   "Notifications couldn't be loaded.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Notifications like this one will no longer reach you.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -185465,7 +185685,7 @@
     ]
   },
   "Older": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -190345,7 +190565,7 @@
     ]
   },
   "Open": {
-    "sites": 73,
+    "sites": 74,
     "scope": [
       "go",
       "ts"
@@ -191225,6 +191445,15 @@
       "routes/desk"
     ]
   },
+  "Open exception": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Open exceptions": {
     "sites": 2,
     "scope": [
@@ -191856,6 +192085,15 @@
       "routes/admin"
     ]
   },
+  "Open request": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Open reviews": {
     "sites": 1,
     "scope": [
@@ -192411,7 +192649,7 @@
     ]
   },
   "Open the queue": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -219442,6 +219680,15 @@
       "go/other"
     ]
   },
+  "Read the reply": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Read the work to look back over": {
     "sites": 1,
     "scope": [
@@ -229643,15 +229890,6 @@
       "routes/shipment"
     ]
   },
-  "Reply sent": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
   "Reply stopped": {
     "sites": 1,
     "scope": [
@@ -232790,7 +233028,7 @@
     ]
   },
   "Resolved": {
-    "sites": 27,
+    "sites": 28,
     "scope": [
       "go",
       "ts"
@@ -233360,7 +233598,7 @@
     ]
   },
   "Restore": {
-    "sites": 34,
+    "sites": 33,
     "scope": [
       "go",
       "ts"
@@ -235384,6 +235622,15 @@
     ],
     "areas": [
       "routes/dispatch-console"
+    ]
+  },
+  "Review changes": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Review company": {
@@ -249676,7 +249923,7 @@
     ]
   },
   "Send": {
-    "sites": 23,
+    "sites": 22,
     "scope": [
       "go",
       "ts"
@@ -249837,6 +250084,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Send a notification to Later and it comes back when you said.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Send a payment reminder": {
@@ -255094,7 +255350,7 @@
     ]
   },
   "Shared with you": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
@@ -257610,15 +257866,6 @@
       "apps/web/components"
     ]
   },
-  "Show all notifications": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
   "Show all {0, plural, one {# segment} other {# segments}}": {
     "sites": 1,
     "scope": [
@@ -258265,15 +258512,6 @@
     ]
   },
   "Show totals": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
-  "Show unread only": {
     "sites": 1,
     "scope": [
       "ts"
@@ -261073,6 +261311,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Someone comments on your exception": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Someone created, rotated, changed or revoked an API key": {
@@ -267122,7 +267369,7 @@
     ]
   },
   "Subject cannot be longer than 255 characters": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go"
     ],
@@ -267677,15 +267924,6 @@
   },
   "Subscription": {
     "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/table-change-alert"
-    ]
-  },
-  "Subscriptions": {
-    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -269759,15 +269997,6 @@
       "routes/table-change-alert"
     ]
   },
-  "Table Change": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/lib"
-    ]
-  },
   "Table Change Alert": {
     "sites": 1,
     "scope": [
@@ -271144,7 +271373,7 @@
     ]
   },
   "Team": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "go",
       "ts"
@@ -277512,6 +277741,15 @@
       "template/notification.dash.profile_change_reviewed"
     ]
   },
+  "The changes were decided": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "The charge amount.": {
     "sites": 1,
     "scope": [
@@ -278211,6 +278449,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "The condition it reported no longer holds": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "The confirmation reference returned when the 300A was filed, so it can be found again.": {
@@ -281099,6 +281346,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "The exception was resolved": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "The executive's job title, as it appears on the 300A.": {
@@ -305370,11 +305626,12 @@
     ]
   },
   "This week": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "apps/web/types",
       "routes/inbox",
       "routes/time-attendance"
@@ -307438,7 +307695,7 @@
     ]
   },
   "Today": {
-    "sites": 39,
+    "sites": 40,
     "scope": [
       "go",
       "ts"
@@ -307857,11 +308114,12 @@
     ]
   },
   "Tomorrow morning": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/desk",
       "routes/inbox"
     ]
@@ -312992,6 +313250,15 @@
       "routes/worker"
     ]
   },
+  "Turn off notifications like this": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Turn off shadow": {
     "sites": 1,
     "scope": [
@@ -313221,11 +313488,12 @@
     ]
   },
   "Turned off": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/desk"
     ]
   },
@@ -314769,7 +315037,7 @@
     ]
   },
   "Undo": {
-    "sites": 30,
+    "sites": 31,
     "scope": [
       "ts"
     ],
@@ -316202,15 +316470,6 @@
     ],
     "areas": [
       "routes/billing-control"
-    ]
-  },
-  "Unread": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
     ]
   },
   "Unread notifications, most urgent first": {
@@ -321293,15 +321552,6 @@
       "go/other"
     ]
   },
-  "View conversation": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
   "View credential types": {
     "sites": 1,
     "scope": [
@@ -324009,11 +324259,12 @@
     ]
   },
   "Waiting {0, plural, one {# day} other {# days}}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
       "routes/time-attendance"
     ]
   },
@@ -324060,6 +324311,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Waits on your approval": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Waive": {
@@ -327317,6 +327577,15 @@
       "routes/worker"
     ]
   },
+  "What is assigned to you, mentions you or needs your decision shows up here.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "What is being asked for, as a list, so it can be rendered as bullets instead of buried in a paragraph.": {
     "sites": 1,
     "scope": [
@@ -329386,6 +329655,15 @@
       "routes/inbox"
     ]
   },
+  "What you finish and what clears itself is kept here.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "What you hear about": {
     "sites": 2,
     "scope": [
@@ -330840,15 +331118,6 @@
     ],
     "areas": [
       "routes/agent-control"
-    ]
-  },
-  "When your subscriptions match database changes, notifications will appear here.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/table-change-alert"
     ]
   },
   "Where": {
@@ -338296,7 +338565,7 @@
     ]
   },
   "Yesterday": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "ts"
     ],
@@ -338510,6 +338779,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "You asked for it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "You authored part of this revision, so another reviewer must approve it": {
@@ -339425,6 +339703,15 @@
       "routes/inbox"
     ]
   },
+  "You marked it done": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "You may not assign cases": {
     "sites": 1,
     "scope": [
@@ -339522,6 +339809,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "You ran it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "You ran it · {0}": {
@@ -339670,6 +339966,15 @@
     ]
   },
   "You were just in": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "You were mentioned": {
     "sites": 1,
     "scope": [
       "ts"
@@ -340343,6 +340648,15 @@
     ]
   },
   "Your edits match the saved version.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Your exception goes overdue": {
     "sites": 1,
     "scope": [
       "ts"
@@ -341394,6 +341708,15 @@
       "routes/my-team"
     ]
   },
+  "Your team is clear": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Your templates": {
     "sites": 1,
     "scope": [
@@ -341563,6 +341886,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Yours, and now overdue": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "You’re all caught up.": {
@@ -359263,13 +359595,12 @@
     ]
   },
   "{0, plural, one {# unread notification} other {# unread notifications}}": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components",
-      "routes/table-change-alert"
+      "apps/web/components"
     ]
   },
   "{0, plural, one {# unresolved service failure} other {# unresolved service failures}}": {
@@ -359895,6 +360226,15 @@
     ],
     "areas": [
       "routes/accounting-dashboard"
+    ]
+  },
+  "{0, plural, one {Came up # time} other {Came up # times}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "{0, plural, one {Canceled # item} other {Canceled # items}}": {
@@ -365950,6 +366290,15 @@
       "go/other"
     ]
   },
+  "{0} for your team.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "{0} for {1}": {
     "sites": 1,
     "scope": [
@@ -371484,12 +371833,11 @@
     ]
   },
   "{0} new": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components",
       "packages/shared/lib"
     ]
   },
@@ -375882,15 +376230,6 @@
     ],
     "areas": [
       "routes/admin"
-    ]
-  },
-  "{0} will be notified": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
     ]
   },
   "{0} will be tendered to <b>{1}</b> for approval by the receiving organization.": {

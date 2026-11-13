@@ -5403,6 +5403,15 @@ models:
   NotificationChannel:
     model:
       - github.com/emoss08/trenova/internal/modules/workspace/domain/notification.Channel
+  NotificationReason:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workspace/domain/notification.Reason
+  NotificationLens:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workspace/domain/notification.Lens
+  NotificationCounts:
+    model:
+      - github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports.NotificationCounts
   NotificationDeliveryStatus:
     model:
       - github.com/emoss08/trenova/internal/modules/workspace/domain/notification.DeliveryStatus

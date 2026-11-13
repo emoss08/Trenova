@@ -20343,6 +20343,26 @@ func init() {
 				Column: "tags",
 			},
 			{
+				Name:   "reason",
+				Column: "reason",
+			},
+			{
+				Name:   "occurrenceCount",
+				Column: "occurrence_count",
+			},
+			{
+				Name:   "surfacesAt",
+				Column: "surfaces_at",
+			},
+			{
+				Name:   "resolvedAt",
+				Column: "resolved_at",
+			},
+			{
+				Name:   "resolution",
+				Column: "resolution",
+			},
+			{
 				Name:   "version",
 				Column: "version",
 			},

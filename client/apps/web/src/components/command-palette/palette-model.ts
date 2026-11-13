@@ -27,7 +27,7 @@ export type PaletteIntent =
   | { type: "assistant"; mode: "open" | "new-chat" }
   | { type: "toggle-sidebar" }
   | { type: "mark-notification-read"; notificationId: string }
-  | { type: "mark-all-notifications-read" }
+  | { type: "mark-all-notifications-done" }
   | { type: "open-document"; documentId: string; disposition: "view" | "download" };
 
 /** What a copy put on the clipboard, so the confirmation can say so. */

@@ -10,7 +10,7 @@ import { Operation, Resource } from "@trenova/shared/types/permission";
 import type { Notification } from "@trenova/shared/types/notification";
 import { formatRelativeTime } from "@trenova/shared/i18n/format";
 import { Download01Icon } from "@trenova/shared/components/icons";
-import { MentionReply } from "./notification-mention-reply";
+import { MentionQuote, MentionReply } from "./notification-mention-reply";
 import {
   notificationDataBoolean,
   notificationDataNumber,
@@ -49,23 +49,23 @@ function ReportRunAttachment({ notification }: { notification: Notification }) {
   }
 
   return (
-    <div className="border-border bg-card mt-2 flex items-center gap-2.5 rounded-md border px-2.5 py-2">
+    <div className="mt-2 flex items-center gap-2.5 rounded-md border border-border bg-card px-2.5 py-2">
       <DocumentFileTypeIcon fileName={format ? `${name}.${format}` : name} size="sm" />
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <span className="text-foreground truncate text-xs font-medium">{name}</span>
+        <span className="truncate text-xs font-medium text-foreground">{name}</span>
         {meta.length > 0 && (
-          <span className="text-2xs text-muted-foreground truncate">{meta.join(" · ")}</span>
+          <span className="truncate text-2xs text-muted-foreground">{meta.join(" · ")}</span>
         )}
       </div>
       {truncated && (
-        <Badge variant="warning" className="text-2xs h-4.5 shrink-0">
+        <Badge variant="warning" className="h-4.5 shrink-0 text-2xs">
           {t("Truncated")}
         </Badge>
       )}
       {canExport && !expired && (
         <Button
-          variant="outline"
+          variant="secondary"
           size="icon-xs"
           className="shrink-0"
           aria-label={t("Download {0}", name)}
@@ -98,17 +98,17 @@ function TableChangeDetails({ notification }: { notification: Notification }) {
   return (
     <div className="mt-1.5 flex flex-wrap items-center gap-1">
       {operation && (
-        <Badge variant="info" className="text-2xs h-4.5 uppercase">
+        <Badge variant="info" className="h-4.5 text-2xs uppercase">
           {operation}
         </Badge>
       )}
       {tableName && (
-        <Badge variant="neutral" appearance="outline" className="text-2xs h-4.5 font-mono">
+        <Badge variant="neutral" appearance="outline" className="h-4.5 font-mono text-2xs">
           {tableName}
         </Badge>
       )}
       {visibleFields.map((field) => (
-        <Badge key={field} variant="neutral" className="text-2xs h-4.5 font-mono">
+        <Badge key={field} variant="neutral" className="h-4.5 font-mono text-2xs">
           {field}
         </Badge>
       ))}
@@ -134,8 +134,8 @@ function AmountRow({
       <span
         className={
           emphasis
-            ? "text-2xs text-warning font-medium tabular-nums"
-            : "text-2xs text-foreground font-medium tabular-nums"
+            ? "text-2xs font-medium text-warning tabular-nums"
+            : "text-2xs font-medium text-foreground tabular-nums"
         }
       >
         {value}
@@ -154,7 +154,7 @@ function ReconciliationDetails({ notification }: { notification: Notification })
   if (expected === null && posted === null && discrepancy === null) return null;
 
   return (
-    <div className="border-border bg-card mt-2 flex flex-col gap-1 rounded-md border px-2.5 py-2">
+    <div className="mt-2 flex flex-col gap-1 rounded-md border border-border bg-card px-2.5 py-2">
       {expected !== null && <AmountRow label={t("Expected")} value={formatCurrency(expected)} />}
       {posted !== null && <AmountRow label={t("Posted")} value={formatCurrency(posted)} />}
       {discrepancy !== null && (
@@ -175,12 +175,12 @@ function BillingExceptionDetails({ notification }: { notification: Notification 
   return (
     <div className="mt-1.5 flex flex-wrap items-center gap-1">
       {missing !== null && missing > 0 && (
-        <Badge variant="warning" className="text-2xs h-4.5">
+        <Badge variant="warning" className="h-4.5 text-2xs">
           {t("{0, plural, one {# missing requirement} other {# missing requirements}}", missing)}
         </Badge>
       )}
       {failures !== null && failures > 0 && (
-        <Badge variant="warning" className="text-2xs h-4.5">
+        <Badge variant="warning" className="h-4.5 text-2xs">
           {t(
             "{0, plural, one {# rate validation failure} other {# rate validation failures}}",
             failures,
@@ -202,12 +202,12 @@ function BankReceiptDetails({ notification }: { notification: Notification }) {
   return (
     <div className="mt-1.5 flex flex-wrap items-center gap-1">
       {reference && (
-        <Badge variant="neutral" appearance="outline" className="text-2xs h-4.5 font-mono">
+        <Badge variant="neutral" appearance="outline" className="h-4.5 font-mono text-2xs">
           {t("Ref {0}", reference)}
         </Badge>
       )}
       {amountMinor !== null && (
-        <Badge variant="neutral" className="text-2xs h-4.5 tabular-nums">
+        <Badge variant="neutral" className="h-4.5 text-2xs tabular-nums">
           {formatCurrency(amountMinor / 100)}
         </Badge>
       )}
@@ -215,13 +215,10 @@ function BankReceiptDetails({ notification }: { notification: Notification }) {
   );
 }
 
-export function NotificationContent({
-  notification,
-  onNavigate,
-}: {
-  notification: Notification;
-  onNavigate?: (link: string) => void;
-}) {
+const MENTION_EVENT_TYPE = "shipment_comment_mention";
+
+/** What a kind of notification shows under its message: an attachment, figures, a quote. */
+export function NotificationContent({ notification }: { notification: Notification }) {
   if (REPORT_ATTACHMENT_EVENT_TYPES.has(notification.eventType)) {
     return <ReportRunAttachment notification={notification} />;
   }
@@ -229,8 +226,8 @@ export function NotificationContent({
     return <TableChangeDetails notification={notification} />;
   }
   switch (notification.eventType) {
-    case "shipment_comment_mention":
-      return <MentionReply notification={notification} onNavigate={onNavigate} />;
+    case MENTION_EVENT_TYPE:
+      return <MentionQuote notification={notification} />;
     case "invoice_reconciliation_warning":
       return <ReconciliationDetails notification={notification} />;
     case "billing_exception_recorded":
@@ -240,4 +237,18 @@ export function NotificationContent({
     default:
       return null;
   }
+}
+
+/** What a kind of notification lets the person write back from the row, under its actions. */
+export function NotificationReply({
+  notification,
+  onReplied,
+}: {
+  notification: Notification;
+  /** Called when the person answered from the row. */
+  onReplied: () => void;
+}) {
+  return notification.eventType === MENTION_EVENT_TYPE ? (
+    <MentionReply notification={notification} onReplied={onReplied} />
+  ) : null;
 }

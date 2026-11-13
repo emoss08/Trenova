@@ -2,7 +2,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import {
-  useMarkAllNotificationsRead,
+  useMarkAllMyNotificationsRead,
   useNotificationAction,
   useNotificationFeed,
 } from "@trenova/shared/hooks/use-notifications";
@@ -33,9 +33,9 @@ export function DashNotificationsPage() {
   const t = useT();
 
   const navigate = useNavigate();
-  const feed = useNotificationFeed({ state: "inbox", unreadOnly: false }, true, "mine");
+  const feed = useNotificationFeed({ lens: "open" }, true, "mine");
   const markRead = useNotificationAction("read", "mine");
-  const markAllRead = useMarkAllNotificationsRead("mine");
+  const markAllRead = useMarkAllMyNotificationsRead();
 
   const notifications = feed.data?.notifications ?? [];
   const hasUnread = notifications.some((notification) => notification.readAt === null);

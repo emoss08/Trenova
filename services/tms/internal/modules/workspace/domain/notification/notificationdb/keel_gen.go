@@ -48,15 +48,21 @@ var notificationsTable = schema.Table{
 		{Name: "job_id", Quoted: `"job_id"`, Field: "JobID", Kind: schema.KindString, Flags: schema.FlagNullable, Label: `Job ID`, JSON: `jobId`},
 		{Name: "correlation_id", Quoted: `"correlation_id"`, Field: "CorrelationID", Kind: schema.KindString, Flags: schema.FlagNullable, Label: `Correlation ID`, JSON: `correlationId`},
 		{Name: "tags", Quoted: `"tags"`, Field: "Tags", Kind: schema.KindStringArray, Flags: schema.FlagNullable, Label: `Tags`, JSON: `tags`},
+		{Name: "subject_key", Quoted: `"subject_key"`, Field: "SubjectKey", Kind: schema.KindString, Flags: 0, Label: `Subject Key`, JSON: `subjectKey`},
+		{Name: "reason", Quoted: `"reason"`, Field: "Reason", Kind: schema.KindString, Flags: 0, Label: `Reason`, JSON: `reason`, Enum: enumReason[:]},
+		{Name: "occurrence_count", Quoted: `"occurrence_count"`, Field: "OccurrenceCount", Kind: schema.KindInt64, Flags: 0, Label: `Occurrence Count`, JSON: `occurrenceCount`},
+		{Name: "surfaces_at", Quoted: `"surfaces_at"`, Field: "SurfacesAt", Kind: schema.KindInt64, Flags: 0, Label: `Surfaces At`, JSON: `surfacesAt`},
+		{Name: "resolved_at", Quoted: `"resolved_at"`, Field: "ResolvedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Resolved At`, JSON: `resolvedAt`},
+		{Name: "resolution", Quoted: `"resolution"`, Field: "Resolution", Kind: schema.KindString, Flags: 0, Label: `Resolution`, JSON: `resolution`},
 		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, JSON: `version`},
 	},
 	PK:           []int32{0},
 	Tenant:       []int32{1},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25},
-	Update:       []int32{2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19, 20, 21, 22, 23, 24},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31},
+	Update:       []int32{2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30},
 	Returning:    nil,
-	Version:      25,
+	Version:      31,
 	AutoID:       0,
 	AutoCreate:   16,
 	AutoUpdate:   17,
@@ -99,6 +105,12 @@ type NotificationsTable struct {
 	JobID           keel.StringCol
 	CorrelationID   keel.StringCol
 	Tags            keel.StringArrayCol
+	SubjectKey      keel.StringCol
+	Reason          ReasonCol
+	OccurrenceCount keel.Int64Col
+	SurfacesAt      keel.Int64Col
+	ResolvedAt      keel.Int64Col
+	Resolution      keel.StringCol
 	Version         keel.Int64Col
 }
 
@@ -130,7 +142,13 @@ var Notifications = &NotificationsTable{
 	JobID:           keel.StringCol{Col: keel.Col{Ref: &notificationsRef, Index: 22}},
 	CorrelationID:   keel.StringCol{Col: keel.Col{Ref: &notificationsRef, Index: 23}},
 	Tags:            keel.StringArrayCol{Col: keel.Col{Ref: &notificationsRef, Index: 24}},
-	Version:         keel.Int64Col{Col: keel.Col{Ref: &notificationsRef, Index: 25}},
+	SubjectKey:      keel.StringCol{Col: keel.Col{Ref: &notificationsRef, Index: 25}},
+	Reason:          ReasonCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &notificationsRef, Index: 26}}},
+	OccurrenceCount: keel.Int64Col{Col: keel.Col{Ref: &notificationsRef, Index: 27}},
+	SurfacesAt:      keel.Int64Col{Col: keel.Col{Ref: &notificationsRef, Index: 28}},
+	ResolvedAt:      keel.Int64Col{Col: keel.Col{Ref: &notificationsRef, Index: 29}},
+	Resolution:      keel.StringCol{Col: keel.Col{Ref: &notificationsRef, Index: 30}},
+	Version:         keel.Int64Col{Col: keel.Col{Ref: &notificationsRef, Index: 31}},
 }
 
 // BuildNotifications builds the table of notifications for ref. Generated relation and alias methods call it.
@@ -162,7 +180,13 @@ func BuildNotifications(r *keel.Ref) *NotificationsTable {
 		JobID:           keel.StringCol{Col: keel.Col{Ref: r, Index: 22}},
 		CorrelationID:   keel.StringCol{Col: keel.Col{Ref: r, Index: 23}},
 		Tags:            keel.StringArrayCol{Col: keel.Col{Ref: r, Index: 24}},
-		Version:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 25}},
+		SubjectKey:      keel.StringCol{Col: keel.Col{Ref: r, Index: 25}},
+		Reason:          ReasonCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 26}}},
+		OccurrenceCount: keel.Int64Col{Col: keel.Col{Ref: r, Index: 27}},
+		SurfacesAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 28}},
+		ResolvedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 29}},
+		Resolution:      keel.StringCol{Col: keel.Col{Ref: r, Index: 30}},
+		Version:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 31}},
 	}
 }
 
@@ -604,6 +628,18 @@ func ptrNotification(p unsafe.Pointer, c int32) any {
 	case 24:
 		return &r.Tags
 	case 25:
+		return &r.SubjectKey
+	case 26:
+		return (*string)(unsafe.Pointer(&r.Reason))
+	case 27:
+		return (*int64)(unsafe.Pointer(&r.OccurrenceCount))
+	case 28:
+		return &r.SurfacesAt
+	case 29:
+		return &r.ResolvedAt
+	case 30:
+		return &r.Resolution
+	case 31:
 		return &r.Version
 	}
 	return nil
@@ -699,6 +735,21 @@ func valueNotification(p unsafe.Pointer, c int32) any {
 		}
 		return r.Tags
 	case 25:
+		return r.SubjectKey
+	case 26:
+		return string(r.Reason)
+	case 27:
+		return int64(r.OccurrenceCount)
+	case 28:
+		return r.SurfacesAt
+	case 29:
+		if r.ResolvedAt == nil {
+			return nil
+		}
+		return *r.ResolvedAt
+	case 30:
+		return r.Resolution
+	case 31:
 		return r.Version
 	}
 	return nil
@@ -1874,6 +1925,11 @@ var enumPriority = [...]schema.EnumValue{
 	{Value: `low`, Label: `Low`},
 }
 
+var enumReason = [...]schema.EnumValue{
+	{Value: `direct`, Label: `Direct`},
+	{Value: `team`, Label: `Team`},
+}
+
 // ChannelCol is a column of notification.Channel values.
 type ChannelCol struct{ keel.TypedStringCol }
 
@@ -1971,5 +2027,28 @@ func (c PriorityCol) In(vs ...notification.Priority) keel.Pred {
 	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
 }
 func (c PriorityCol) NotIn(vs ...notification.Priority) keel.Pred {
+	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
+}
+
+// ReasonCol is a column of notification.Reason values.
+type ReasonCol struct{ keel.TypedStringCol }
+
+func (c ReasonCol) Eq(v notification.Reason) keel.Pred  { return c.Text().Eq(string(v)) }
+func (c ReasonCol) Ne(v notification.Reason) keel.Pred  { return c.Text().Ne(string(v)) }
+func (c ReasonCol) Gt(v notification.Reason) keel.Pred  { return c.Text().Gt(string(v)) }
+func (c ReasonCol) Gte(v notification.Reason) keel.Pred { return c.Text().Gte(string(v)) }
+func (c ReasonCol) Lt(v notification.Reason) keel.Pred  { return c.Text().Lt(string(v)) }
+func (c ReasonCol) Lte(v notification.Reason) keel.Pred { return c.Text().Lte(string(v)) }
+func (c ReasonCol) IsDistinctFrom(v notification.Reason) keel.Pred {
+	return c.Text().IsDistinctFrom(string(v))
+}
+func (c ReasonCol) Between(lo, hi notification.Reason) keel.Pred {
+	return c.Text().Between(string(lo), string(hi))
+}
+func (c ReasonCol) To(v notification.Reason) keel.Assignment { return c.Text().To(string(v)) }
+func (c ReasonCol) In(vs ...notification.Reason) keel.Pred {
+	return c.Text().In(*(*[]string)(unsafe.Pointer(&vs))...)
+}
+func (c ReasonCol) NotIn(vs ...notification.Reason) keel.Pred {
 	return c.Text().NotIn(*(*[]string)(unsafe.Pointer(&vs))...)
 }

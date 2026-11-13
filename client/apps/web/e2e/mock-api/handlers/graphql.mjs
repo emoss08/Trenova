@@ -19,6 +19,7 @@ import { FORMULA_HANDLERS, formulaSelectRows } from "./formula.mjs";
 import { FORMULA_LIBRARY_HANDLERS } from "./formula-library.mjs";
 import { ACCOUNTING_HANDLERS } from "./accounting.mjs";
 import { AUDIT_HANDLERS } from "./audit.mjs";
+import { NOTIFICATION_HANDLERS } from "./notifications.mjs";
 import { hash, stageOf, stageRankOf, STAGE_RANKS } from "../state.mjs";
 
 const HOUR = 3600;
@@ -1154,6 +1155,7 @@ const SHELL_HANDLERS = {
     },
   }),
   DataTableInsightFields: () => ({ dataTableInsightFields: [] }),
+  BulkEditFields: () => ({ bulkEditFields: [] }),
   AttentionSummary: () => ({
     attentionSummary: {
       billingQueue: 0,
@@ -1168,7 +1170,6 @@ const SHELL_HANDLERS = {
   RecentActivity: () => ({
     auditEntries: { edges: [], pageInfo: { endCursor: null, hasNextPage: false } },
   }),
-  NotificationUnreadCount: () => ({ notificationUnreadCount: 0 }),
   DefaultTableConfiguration: () => ({ defaultTableConfiguration: null }),
   TableConfigurationTable: () => ({ tableConfigurations: EMPTY_CONNECTION }),
 };
@@ -1190,6 +1191,7 @@ const HANDLERS = {
   ...FORMULA_LIBRARY_HANDLERS,
   ...ACCOUNTING_HANDLERS,
   ...AUDIT_HANDLERS,
+  ...NOTIFICATION_HANDLERS,
   SelectOptions: (state, v) => {
     const cards = DESK_CARD_HANDLERS.SelectOptions(state, v);
     if (v.input?.resource !== "USER" && cards.selectOptions.totalCount > 0) return cards;

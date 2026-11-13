@@ -1,12 +1,9 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { DataTableLazyComponent, LazyComponent } from "@trenova/shared/components/error-boundary";
+import { DataTableLazyComponent } from "@trenova/shared/components/error-boundary";
 import { PageLayout } from "@/components/navigation/sidebar-layout";
-import { Tabs, TabsList, TabsPanel, TabsTab } from "@trenova/shared/components/ui/tabs";
 import { lazy } from "react";
-import { NotificationListSkeleton } from "./_components/notification-list-skeleton";
 
 const SubscriptionTable = lazy(() => import("./_components/subscription-table"));
-const NotificationList = lazy(() => import("./_components/notification-list"));
 
 export function TableChangeAlertPage() {
   const t = useT();
@@ -15,25 +12,12 @@ export function TableChangeAlertPage() {
     <PageLayout
       pageHeaderProps={{
         title: t("Table change alert"),
-        description: t("Monitor and review system activity across your organization"),
+        description: t("Get told when the records you watch are created, changed or deleted"),
       }}
     >
-      <Tabs defaultValue="subscriptions">
-        <TabsList variant="underline">
-          <TabsTab value="subscriptions">{t("Subscriptions")}</TabsTab>
-          <TabsTab value="notifications">{t("Notifications")}</TabsTab>
-        </TabsList>
-        <TabsPanel value="subscriptions">
-          <DataTableLazyComponent>
-            <SubscriptionTable />
-          </DataTableLazyComponent>
-        </TabsPanel>
-        <TabsPanel value="notifications">
-          <LazyComponent fallback={<NotificationListSkeleton />}>
-            <NotificationList />
-          </LazyComponent>
-        </TabsPanel>
-      </Tabs>
+      <DataTableLazyComponent>
+        <SubscriptionTable />
+      </DataTableLazyComponent>
     </PageLayout>
   );
 }

@@ -196,6 +196,9 @@ func (s *Exceptions) applyException(
 	}
 
 	s.projector.publish(ctx, saved, "updated")
+	if before.Status.IsOpen() && !saved.Status.IsOpen() {
+		resolveItemNotifications(ctx, s.notifications, s.l, saved, notification.ResolutionResolved)
+	}
 	s.auditException(ctx, before, saved, change.actor, events)
 	if change.after != nil {
 		change.after(ctx, before, saved)
@@ -619,25 +622,27 @@ func (s *Exceptions) notifyAssignee(
 	}
 
 	eventType := EventAssigned
-	title := "Exception assigned to you: " + item.Title
 	if notice == commentedNotice {
 		eventType = EventCommented
-		title = "New comment on your exception: " + item.Title
 	}
 	sendExceptionNotice(ctx, s.notifications, s.l, &exceptionNotice{
 		item:      item,
 		userID:    item.AssigneeID,
 		eventType: eventType,
-		title:     title,
 		priority:  notification.PriorityMedium,
 	})
 }
+
+const (
+	noticeDataKey = "notice"
+	noticeWoke    = "woke"
+)
 
 type exceptionNotice struct {
 	item      *watchtower.Item
 	userID    pulid.ID
 	eventType string
-	title     string
+	notice    string
 	priority  notification.Priority
 }
 
@@ -652,6 +657,10 @@ func sendExceptionNotice(
 	target := notice.userID
 	correlation := item.ID.String()
 	link := FeedPath + "?item=" + item.ID.String()
+	data := noticeData(item, link)
+	if notice.notice != "" {
+		data[noticeDataKey] = notice.notice
+	}
 	if _, err := notifications.Create(ctx, &notification.Notification{
 		OrganizationID:  item.OrganizationID,
 		BusinessUnitID:  &buID,
@@ -659,11 +668,13 @@ func sendExceptionNotice(
 		EventType:       notice.eventType,
 		Priority:        notice.priority,
 		Channel:         notification.ChannelUser,
-		Title:           notice.title,
+		Reason:          notification.ReasonDirect,
+		SubjectKey:      itemSubjectKey(item.ID),
+		Title:           item.Title,
 		Message:         item.Summary,
 		Source:          notificationSource,
 		CorrelationID:   &correlation,
-		Data:            noticeData(item, link),
+		Data:            data,
 		RelatedEntities: map[string]any{"watchtowerItemId": item.ID.String()},
 	}); err != nil {
 		l.Warn("could not notify about an exception",

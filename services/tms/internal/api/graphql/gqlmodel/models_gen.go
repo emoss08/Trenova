@@ -8203,7 +8203,7 @@ type NotificationEdge struct {
 }
 
 type NotificationFilterInput struct {
-	State      *NotificationState `json:"state,omitempty"`
+	Lens       *notification.Lens `json:"lens,omitempty"`
 	UnreadOnly *bool              `json:"unreadOnly,omitempty"`
 }
 
@@ -16216,61 +16216,6 @@ func (e *MyShiftSwapResponse) UnmarshalJSON(b []byte) error {
 }
 
 func (e MyShiftSwapResponse) MarshalJSON() ([]byte, error) {
-	var buf bytes.Buffer
-	e.MarshalGQL(&buf)
-	return buf.Bytes(), nil
-}
-
-type NotificationState string
-
-const (
-	NotificationStateInbox    NotificationState = "inbox"
-	NotificationStateArchived NotificationState = "archived"
-)
-
-var AllNotificationState = []NotificationState{
-	NotificationStateInbox,
-	NotificationStateArchived,
-}
-
-func (e NotificationState) IsValid() bool {
-	switch e {
-	case NotificationStateInbox, NotificationStateArchived:
-		return true
-	}
-	return false
-}
-
-func (e NotificationState) String() string {
-	return string(e)
-}
-
-func (e *NotificationState) UnmarshalGQL(v any) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = NotificationState(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid NotificationState", str)
-	}
-	return nil
-}
-
-func (e NotificationState) MarshalGQL(w io.Writer) {
-	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
-}
-
-func (e *NotificationState) UnmarshalJSON(b []byte) error {
-	s, err := strconv.Unquote(string(b))
-	if err != nil {
-		return err
-	}
-	return e.UnmarshalGQL(s)
-}
-
-func (e NotificationState) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil

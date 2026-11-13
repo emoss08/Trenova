@@ -20,13 +20,15 @@ var authOnlyAllowlist = map[string]string{
 		"screen's needs from the build's static page access manifest and the caller's own " +
 		"grants, never record data or another person's access",
 
-	"QueryResolver.Notifications":               "returns only the calling user's own notifications",
-	"QueryResolver.NotificationUnreadCount":     "returns only the calling user's own notifications",
-	"MutationResolver.MarkNotificationsRead":    "acts only on the calling user's own notifications",
-	"MutationResolver.MarkNotificationsUnread":  "acts only on the calling user's own notifications",
-	"MutationResolver.MarkAllNotificationsRead": "acts only on the calling user's own notifications",
-	"MutationResolver.DismissNotifications":     "acts only on the calling user's own notifications",
-	"MutationResolver.RestoreNotifications":     "acts only on the calling user's own notifications",
+	"QueryResolver.Notifications":              "returns only the calling user's own notifications",
+	"QueryResolver.NotificationCounts":         "counts only the calling user's own notifications",
+	"MutationResolver.MarkNotificationsRead":   "acts only on the calling user's own notifications",
+	"MutationResolver.MarkNotificationsUnread": "acts only on the calling user's own notifications",
+	"MutationResolver.DismissNotifications":    "acts only on the calling user's own notifications",
+	"MutationResolver.DismissAllNotifications": "acts only on the calling user's own notifications",
+	"MutationResolver.RestoreNotifications":    "acts only on the calling user's own notifications",
+	"MutationResolver.SnoozeNotifications":     "acts only on the calling user's own notifications",
+	"MutationResolver.WakeNotifications":       "acts only on the calling user's own notifications",
 
 	"QueryResolver.SidebarPreferences":          "returns only the calling user's own preferences",
 	"QueryResolver.SidebarCustomizationOptions": "returns only the calling user's own preferences",

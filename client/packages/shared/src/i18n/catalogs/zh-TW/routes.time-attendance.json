@@ -86,7 +86,6 @@
   "Unpaid break (minutes)": "無薪休息（分鐘）",
   "Void run": "作廢執行",
   "Void this payroll run": "作廢此次薪資作業",
-  "Waiting {0, plural, one {# day} other {# days}}": "已等待 {0, plural, other {# 天}}",
   "Week of {0}, overtime past {1}": "{0} 該週，超過 {1} 起算加班",
   "Weeks a manager has approved that payroll has not yet locked into an export.": "主管已核准但薪資作業尚未鎖入匯出檔的週次。",
   "Weeks still being worked, and any sent back for another look, land here.": "仍在進行中的週次，以及任何被退回重新檢視的週次，都會落在此處。",

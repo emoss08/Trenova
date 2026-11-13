@@ -106,7 +106,6 @@
   "Include \"Other\" bucket": "Incluir el grupo «Otros»",
   "It is built on {0}, which your role cannot read. Ask an administrator for access, or start a new report.": "Se basa en {0}, que su rol no puede leer. Solicite acceso a un administrador o cree un informe nuevo.",
   "Large numbers": "Números grandes",
-  "Latest {0}": "{0} más reciente",
   "Link this report's parameters to the dashboard's. Matching names link themselves.": "Vincule los parámetros de este informe con los del panel. Los nombres coincidentes se vinculan solos.",
   "Load more reports": "Cargar más informes",
   "Loading fields…": "Cargando los campos…",

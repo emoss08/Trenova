@@ -80,7 +80,8 @@ export const PAGE_DESCRIPTIONS = defineLabels({
     "Configure pay periods, accrual triggers, exception policies, and escrow interest",
   "/admin/shipment-controls": "Configure and manage your shipment control settings",
   "/admin/stored-mileages": "Review reusable mileage records captured from PC*Miler calculations",
-  "/admin/table-change-alerts": "Monitor and review system activity across your organization",
+  "/admin/table-change-alerts":
+    "Get told when the records you watch are created, changed or deleted",
   "/admin/users": "Manage users and their role assignments",
   "/billing/adjustment-batches":
     "Track bulk adjustment submission progress, failures, and created artifacts.",

@@ -1,37 +1,40 @@
 import { getFragmentData } from "@trenova/graphql/fragment-data";
 import {
   DataTablePageInfoFieldsFragmentDoc,
+  DismissAllNotificationsDocument,
   DismissMyNotificationsDocument,
   DismissNotificationsDocument,
   MarkAllMyNotificationsReadDocument,
-  MarkAllNotificationsReadDocument,
   MarkMyNotificationsReadDocument,
   MarkMyNotificationsUnreadDocument,
   MarkNotificationsReadDocument,
   MarkNotificationsUnreadDocument,
   MyNotificationListDocument,
   MyNotificationUnreadCountDocument,
+  NotificationCountsDocument,
   NotificationListDocument,
-  NotificationUnreadCountDocument,
   RestoreMyNotificationsDocument,
   RestoreNotificationsDocument,
+  SnoozeNotificationsDocument,
+  WakeNotificationsDocument,
   type MyNotificationListQuery,
   type MyNotificationUnreadCountQuery,
+  type NotificationCountsQuery,
   type NotificationListQuery,
-  type NotificationUnreadCountQuery,
 } from "@trenova/graphql/generated/graphql";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { safeParse } from "@trenova/shared/lib/parse";
 import type { GraphQLExecutableDocument } from "@trenova/shared/types/graphql";
 import {
+  notificationCountsSchema,
   notificationFeedSchema,
   type Notification,
-  type NotificationState,
+  type NotificationLens,
 } from "@trenova/shared/types/notification";
 
 /**
  * Notification visibility scope.
- * - "all": organization feed (back-office web app).
+ * - "all": the back-office web app's panel, which also takes what went to a team.
  * - "mine": strictly the signed-in driver's own notifications (Dash portal);
  *   organization-wide notifications are never returned.
  */
@@ -40,7 +43,7 @@ export type NotificationScope = "all" | "mine";
 export interface NotificationFeedParams {
   first?: number;
   after?: string | null;
-  state?: NotificationState;
+  lens?: NotificationLens;
   unreadOnly?: boolean;
   scope?: NotificationScope;
 }
@@ -81,7 +84,7 @@ export class NotificationService {
     const variables = {
       input: { first: params?.first ?? 30, after: params?.after ?? null },
       filter: {
-        state: params?.state ?? "inbox",
+        lens: params?.lens ?? "open",
         unreadOnly: params?.unreadOnly ?? false,
       },
     };
@@ -120,29 +123,28 @@ export class NotificationService {
     );
   }
 
-  public async getUnreadCount(
-    scope: NotificationScope = "all",
-    options?: { signal?: AbortSignal },
-  ) {
-    if (scope === "mine") {
-      const response = (await requestGraphQL({
-        document: MyNotificationUnreadCountDocument,
-        operationName: "MyNotificationUnreadCount",
-        variables: {},
-        signal: options?.signal,
-      })) as MyNotificationUnreadCountQuery;
-
-      return response.myNotificationUnreadCount;
-    }
-
+  /** How many notifications wait in each part of the web app's panel. */
+  public async getCounts(options?: { signal?: AbortSignal }) {
     const response = (await requestGraphQL({
-      document: NotificationUnreadCountDocument,
-      operationName: "NotificationUnreadCount",
+      document: NotificationCountsDocument,
+      operationName: "NotificationCounts",
       variables: {},
       signal: options?.signal,
-    })) as NotificationUnreadCountQuery;
+    })) as NotificationCountsQuery;
 
-    return response.notificationUnreadCount;
+    return safeParse(notificationCountsSchema, response.notificationCounts, "Notification Counts");
+  }
+
+  /** The driver portal's one number: the driver's own unread notifications. */
+  public async getMyUnreadCount(options?: { signal?: AbortSignal }) {
+    const response = (await requestGraphQL({
+      document: MyNotificationUnreadCountDocument,
+      operationName: "MyNotificationUnreadCount",
+      variables: {},
+      signal: options?.signal,
+    })) as MyNotificationUnreadCountQuery;
+
+    return response.myNotificationUnreadCount;
   }
 
   private async runAction(
@@ -162,19 +164,11 @@ export class NotificationService {
     await this.runAction("unread", ids, scope);
   }
 
-  public async markAllRead(scope: NotificationScope = "all") {
-    if (scope === "mine") {
-      await requestGraphQL({
-        document: MarkAllMyNotificationsReadDocument,
-        operationName: "MarkAllMyNotificationsRead",
-        variables: {},
-      });
-      return;
-    }
-
+  /** The driver portal's "mark all read"; the web app marks a whole lens done instead. */
+  public async markAllMineRead() {
     await requestGraphQL({
-      document: MarkAllNotificationsReadDocument,
-      operationName: "MarkAllNotificationsRead",
+      document: MarkAllMyNotificationsReadDocument,
+      operationName: "MarkAllMyNotificationsRead",
       variables: {},
     });
   }
@@ -183,8 +177,35 @@ export class NotificationService {
     await this.runAction("dismiss", ids, scope);
   }
 
+  /** Marks every open notification in one part of the panel done. */
+  public async dismissAll(lens: NotificationLens) {
+    await requestGraphQL({
+      document: DismissAllNotificationsDocument,
+      operationName: "DismissAllNotifications",
+      variables: { lens },
+    });
+  }
+
   public async restore(ids: Notification["id"][], scope: NotificationScope = "all") {
     await this.runAction("restore", ids, scope);
+  }
+
+  /** Sets notifications aside until `until` (Unix seconds), when they come back unread. */
+  public async snooze(ids: Notification["id"][], until: number) {
+    await requestGraphQL({
+      document: SnoozeNotificationsDocument,
+      operationName: "SnoozeNotifications",
+      variables: { ids, until },
+    });
+  }
+
+  /** Brings set-aside notifications back now. */
+  public async wake(ids: Notification["id"][]) {
+    await requestGraphQL({
+      document: WakeNotificationsDocument,
+      operationName: "WakeNotifications",
+      variables: { ids },
+    });
   }
 }
 

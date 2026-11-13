@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -220,6 +221,7 @@ func (p *Projector) Resolve(
 	}
 	if item != nil {
 		p.publish(ctx, item, "resolved")
+		resolveItemNotifications(ctx, p.notifications, p.l, item, notification.ResolutionCleared)
 	}
 }
 
@@ -260,29 +262,67 @@ func (p *Projector) publishBulk(ctx context.Context, tenant pagination.TenantInf
 // bounded, so a critical weather warning reaches dispatch and not the whole
 // company.
 func (p *Projector) notifyCritical(ctx context.Context, item *watchtower.Item) {
+	now := p.now()
 	correlation := item.ID.String()
 	link := item.Path
 	if link == "" {
 		link = FeedPath + "?item=" + item.ID.String()
 	}
+	expires := now + int64(notification.TeamBroadcastTTL.Seconds())
+	template := notification.Notification{
+		EventType:     EventCritical,
+		Priority:      notification.PriorityHigh,
+		Title:         item.SourceKind.Label(),
+		Message:       item.Summary,
+		Source:        notificationSource,
+		CorrelationID: &correlation,
+		SubjectKey:    criticalSubjectKey(item.SourceKind, now),
+		ExpiresAt:     &expires,
+		Data:          noticeData(item, FeedPath),
+	}
+	template.WithOccurrence(notification.Occurrence{Label: item.Title, Link: link, At: now})
+
 	if _, err := p.notifications.NotifyPermitted(ctx, notificationservice.NotifyPermittedRequest{
-		Tenant:    pagination.TenantInfo{OrgID: item.OrganizationID, BuID: item.BusinessUnitID},
-		Resource:  item.SourceKind.ReadResource(),
-		Operation: permission.OpRead,
-		Limit:     maxCriticalRecipients,
-		Now:       p.now(),
-		Notification: notification.Notification{
-			EventType:       EventCritical,
-			Priority:        notification.PriorityHigh,
-			Title:           item.Title,
-			Message:         item.Summary,
-			Source:          notificationSource,
-			CorrelationID:   &correlation,
-			Data:            noticeData(item, link),
-			RelatedEntities: map[string]any{"watchtowerItemId": item.ID.String()},
-		},
+		Tenant:       pagination.TenantInfo{OrgID: item.OrganizationID, BuID: item.BusinessUnitID},
+		Resource:     item.SourceKind.ReadResource(),
+		Operation:    permission.OpRead,
+		Limit:        maxCriticalRecipients,
+		Now:          now,
+		Notification: template,
 	}); err != nil {
 		p.l.Warn("could not tell anyone about a critical item",
+			zap.String("item", item.ID.String()), zap.Error(err))
+	}
+}
+
+func criticalSubjectKey(kind watchtower.SourceKind, now int64) string {
+	return notification.DaySubjectKey(now, notificationSource, "critical", string(kind))
+}
+
+func itemSubjectKey(id pulid.ID) string {
+	return notification.SubjectKey(notificationSource, "item", id.String())
+}
+
+func resolveItemNotifications(
+	ctx context.Context,
+	notifications *notificationservice.Service,
+	l *zap.Logger,
+	item *watchtower.Item,
+	resolution string,
+) {
+	if item == nil {
+		return
+	}
+	if _, err := notifications.ResolveSubject(
+		ctx,
+		notificationports.ResolveNotificationSubjectRequest{
+			OrganizationID: item.OrganizationID,
+			BusinessUnitID: item.BusinessUnitID,
+			SubjectKey:     itemSubjectKey(item.ID),
+			Resolution:     resolution,
+		},
+	); err != nil {
+		l.Warn("could not clear the notifications of a resolved item",
 			zap.String("item", item.ID.String()), zap.Error(err))
 	}
 }

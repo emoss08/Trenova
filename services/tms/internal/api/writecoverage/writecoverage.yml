@@ -2215,10 +2215,10 @@ writes:
     tools: [ledger_update_manual_journal]
 
   # notification
-  "mutation dismissNotifications":
+  "mutation dismissAllNotifications":
     exempt: user-preference
     reason: "A person's own interface state; it changes nothing anyone else sees."
-  "mutation markAllNotificationsRead":
+  "mutation dismissNotifications":
     exempt: user-preference
     reason: "A person's own interface state; it changes nothing anyone else sees."
   "mutation markNotificationsRead":
@@ -2228,6 +2228,12 @@ writes:
     exempt: user-preference
     reason: "A person's own interface state; it changes nothing anyone else sees."
   "mutation restoreNotifications":
+    exempt: user-preference
+    reason: "A person's own interface state; it changes nothing anyone else sees."
+  "mutation snoozeNotifications":
+    exempt: user-preference
+    reason: "A person's own interface state; it changes nothing anyone else sees."
+  "mutation wakeNotifications":
     exempt: user-preference
     reason: "A person's own interface state; it changes nothing anyone else sees."
 

@@ -6,12 +6,12 @@ import { useUnreadNotificationCount } from "@trenova/shared/hooks/use-notificati
 import { cn } from "@trenova/shared/lib/utils";
 import { Bell01Icon } from "@trenova/shared/components/icons";
 import { useAppDialogOpen, useAppDialogsStore } from "@/stores/app-dialogs-store";
-import { lazy, Suspense, useCallback, useState } from "react";
+import { lazy, Suspense, useCallback, useRef, useState } from "react";
+import type { NotificationPanelKeyHandler } from "./notification-panel";
 import { NotificationPanelSkeleton } from "./notification-skeletons";
 
-// The feed body pulls the notification registry, the item renderer and the
-// mention reply composer. Only the bell and its unread count belong in the
-// chunk that renders the app header on every page.
+// The panel pulls the notification registry, the row, its menus and the virtual list. Only
+// the bell and its unread count belong in the chunk that renders the app header on every page.
 const NotificationPanel = lazy(() => import("./notification-panel"));
 
 function BellTrigger({
@@ -29,7 +29,7 @@ function BellTrigger({
         className={cn("size-3 transition-colors", open && "text-foreground", iconClassName)}
       />
       {unreadCount > 0 && (
-        <span className="bg-brand text-brand-foreground text-3xs absolute -top-2 -right-2 flex h-3.5 min-w-3.5 items-center justify-center rounded-badge px-0.5 leading-none font-semibold tabular-nums">
+        <span className="absolute -top-2 -right-2 flex h-3.5 min-w-3.5 items-center justify-center rounded-badge bg-brand px-0.5 text-3xs leading-none font-semibold text-brand-foreground tabular-nums">
           {unreadCount > 9 ? "9+" : unreadCount}
         </span>
       )}
@@ -54,6 +54,7 @@ export function NotificationSheet({
   const open = useAppDialogOpen("notifications");
   const setDialogOpen = useAppDialogsStore((state) => state.setDialogOpen);
   const [mounted, setMounted] = useState(false);
+  const panelKeys = useRef<NotificationPanelKeyHandler>(null);
   const { data: unreadCount = 0 } = useUnreadNotificationCount();
 
   if (open && !mounted) {
@@ -101,10 +102,11 @@ export function NotificationSheet({
       <SheetContent
         side="right"
         className="w-[min(26rem,calc(100vw-2rem))] gap-0 overflow-hidden sm:max-w-none"
+        onKeyDown={(event) => panelKeys.current?.(event)}
       >
         {mounted ? (
           <Suspense fallback={<NotificationPanelSkeleton />}>
-            <NotificationPanel open={open} unreadCount={unreadCount} onClose={handleClose} />
+            <NotificationPanel open={open} onClose={handleClose} keys={panelKeys} />
           </Suspense>
         ) : (
           <NotificationPanelSkeleton />

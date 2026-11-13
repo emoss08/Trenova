@@ -78,7 +78,6 @@ func (p *Projector) route(
 			item:      updated,
 			userID:    updated.AssigneeID,
 			eventType: EventAssigned,
-			title:     "Exception assigned to you: " + updated.Title,
 			priority:  noticePriority(updated.Severity),
 		})
 	}

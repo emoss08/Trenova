@@ -1,8 +1,5 @@
 import { notificationService } from "@trenova/shared/services/notification";
-import type {
-  NotificationFeedParams,
-  NotificationScope,
-} from "@trenova/shared/services/notification";
+import type { NotificationFeedParams } from "@trenova/shared/services/notification";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
 
 export const notification = createQueryKeys("notification", {
@@ -10,8 +7,12 @@ export const notification = createQueryKeys("notification", {
     queryKey: [params],
     queryFn: async ({ signal }) => notificationService.listNotifications(params, { signal }),
   }),
-  unreadCount: (scope: NotificationScope = "all") => ({
-    queryKey: ["unread-count", scope],
-    queryFn: async ({ signal }) => notificationService.getUnreadCount(scope, { signal }),
+  counts: () => ({
+    queryKey: ["counts"],
+    queryFn: async ({ signal }) => notificationService.getCounts({ signal }),
+  }),
+  myUnreadCount: () => ({
+    queryKey: ["my-unread-count"],
+    queryFn: async ({ signal }) => notificationService.getMyUnreadCount({ signal }),
   }),
 });

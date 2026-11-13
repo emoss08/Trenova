@@ -2,6 +2,7 @@ package notificationrepository
 
 import (
 	"context"
+	"errors"
 
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
@@ -37,6 +38,13 @@ func New(p Params) notificationports.NotificationRepository {
 	}
 }
 
+const (
+	openSubjectConstraint = "uq_notifications_open_subject"
+	countCap              = 1000
+	ascending             = "asc"
+	descending            = "desc"
+)
+
 func notifications(ctx context.Context, orgID pulid.ID) keel.Query[*notification.Notification] {
 	n := notificationdb.Notifications
 	if dbscope.IsSystem(ctx) {
@@ -59,14 +67,55 @@ func audience(tenantInfo pagination.TenantInfo, personalOnly bool) keel.Pred {
 	return keel.Or(personal, n.Channel.Eq(notification.ChannelGlobal))
 }
 
-func stateFilter(req *notificationports.ListNotificationConnectionRequest) []keel.Pred {
+func open(now int64) keel.Pred {
 	n := notificationdb.Notifications
-	dismissed := n.DismissedAt.IsNull()
-	if req.State == notification.StateArchived {
-		dismissed = n.DismissedAt.IsNotNull()
-	}
 
-	return []keel.Pred{dismissed, keel.When(req.UnreadOnly, n.ReadAt.IsNull())}
+	return keel.And(
+		n.DismissedAt.IsNull(),
+		keel.Or(n.ExpiresAt.IsNull(), n.ExpiresAt.Gt(now)),
+	)
+}
+
+func lensFilter(lens notification.Lens, now int64) keel.Pred {
+	n := notificationdb.Notifications
+	switch lens {
+	case notification.LensDone:
+		return n.DismissedAt.IsNotNull()
+	case notification.LensLater:
+		return keel.And(open(now), n.SurfacesAt.Gt(now))
+	case notification.LensForYou:
+		return keel.And(open(now), n.SurfacesAt.Lte(now), n.Reason.Eq(notification.ReasonDirect))
+	case notification.LensTeam:
+		return keel.And(open(now), n.SurfacesAt.Lte(now), n.Reason.Eq(notification.ReasonTeam))
+	case notification.LensOpen:
+		return keel.And(open(now), n.SurfacesAt.Lte(now))
+	default:
+		return keel.And(open(now), n.SurfacesAt.Lte(now))
+	}
+}
+
+func lensKeyset(lens notification.Lens) *listquery.Keyset {
+	n := notificationdb.Notifications
+	switch lens {
+	case notification.LensLater:
+		return keysetBy("surfacesAt", ascending, n.SurfacesAt.Asc(), n.ID.Asc())
+	case notification.LensDone:
+		return keysetBy("dismissedAt", descending, n.DismissedAt.Desc(), n.ID.Desc())
+	case notification.LensForYou, notification.LensTeam, notification.LensOpen:
+		return keysetBy("surfacesAt", descending, n.SurfacesAt.Desc(), n.ID.Desc())
+	default:
+		return keysetBy("surfacesAt", descending, n.SurfacesAt.Desc(), n.ID.Desc())
+	}
+}
+
+func keysetBy(field, direction string, at, id keel.Order) *listquery.Keyset {
+	return &listquery.Keyset{
+		Orders: []keel.Order{at, id},
+		Shape: []pagination.CursorSortField{
+			{Field: field, Direction: direction},
+			{Field: "id", Direction: direction},
+		},
+	}
 }
 
 func (r *repository) ExistsRecent(
@@ -106,14 +155,84 @@ func (r *repository) Create(
 	ctx context.Context,
 	entity *notification.Notification,
 ) (*notification.Notification, error) {
+	created, err := r.createOrAbsorb(ctx, entity)
+	if keel.IsUnique(err, openSubjectConstraint) {
+		return r.createOrAbsorb(ctx, entity)
+	}
+
+	return created, err
+}
+
+func (r *repository) createOrAbsorb(
+	ctx context.Context,
+	entity *notification.Notification,
+) (*notification.Notification, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*notification.Notification, error) {
-		if err := notificationdb.Notifications.Create(ctx, r.db.Keel(ctx), entity); err != nil {
-			r.l.Error("failed to create notification", zap.Error(err))
+		if !entity.Collapses() {
+			entity.FoldOccurrence(nil)
+
+			return r.insert(ctx, entity)
+		}
+
+		existing, err := r.openSubject(ctx, entity)
+		if errors.Is(err, keel.ErrNotFound) {
+			incoming := *entity
+			incoming.FoldOccurrence(nil)
+			created, createErr := r.insert(ctx, &incoming)
+			if createErr != nil {
+				return nil, createErr
+			}
+
+			return created, nil
+		}
+		if err != nil {
 			return nil, err
 		}
 
-		return entity, nil
+		existing.Absorb(entity, timeutils.NowUnix())
+		if err = notificationdb.Notifications.Save(ctx, r.db.Keel(ctx), existing); err != nil {
+			r.l.Error("failed to update the open notification of a subject", zap.Error(err))
+			return nil, err
+		}
+
+		return existing, nil
 	})
+}
+
+func (r *repository) insert(
+	ctx context.Context,
+	entity *notification.Notification,
+) (*notification.Notification, error) {
+	if err := notificationdb.Notifications.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+		if !keel.IsUnique(err, openSubjectConstraint) {
+			r.l.Error("failed to create notification", zap.Error(err))
+		}
+
+		return nil, err
+	}
+
+	return entity, nil
+}
+
+func (r *repository) openSubject(
+	ctx context.Context,
+	entity *notification.Notification,
+) (*notification.Notification, error) {
+	n := notificationdb.Notifications
+	existing, err := notifications(ctx, entity.OrganizationID).Where(
+		n.TargetUserID.Eq(*entity.TargetUserID),
+		n.SubjectKey.Eq(entity.SubjectKey),
+		n.DismissedAt.IsNull(),
+	).Lock(keel.ForUpdate).One(ctx, r.db.Keel(ctx))
+	if err != nil {
+		if !errors.Is(err, keel.ErrNotFound) {
+			r.l.Error("failed to read the open notification of a subject", zap.Error(err))
+		}
+
+		return nil, err
+	}
+
+	return existing, nil
 }
 
 func (r *repository) List(
@@ -157,12 +276,16 @@ func (r *repository) ListConnection(
 				ctx,
 				r.db.Keel(ctx),
 				notifications(ctx, req.Filter.TenantInfo.OrgID).
-					Where(stateFilter(req)...).
-					Where(audience(req.Filter.TenantInfo, req.PersonalOnly)),
+					Where(
+						lensFilter(req.Lens, req.Now),
+						keel.When(req.UnreadOnly, notificationdb.Notifications.ReadAt.IsNull()),
+						audience(req.Filter.TenantInfo, req.PersonalOnly),
+					),
 				&listquery.Request[notification.Notification]{
 					Filter:  req.Filter,
 					Cursor:  req.Cursor,
 					Columns: req.NotificationColumns,
+					Keyset:  lensKeyset(req.Lens),
 				},
 			)
 			if err != nil {
@@ -249,19 +372,144 @@ func (r *repository) Dismiss(
 	})
 }
 
+func (r *repository) DismissAll(
+	ctx context.Context,
+	req notificationports.DismissAllNotificationsRequest,
+) error {
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		n := notificationdb.Notifications
+		return r.update(
+			ctx,
+			"dismiss every notification of a lens",
+			notifications(ctx, req.TenantInfo.OrgID).Where(
+				lensFilter(req.Lens, req.Now),
+				n.DismissedAt.IsNull(),
+				audience(req.TenantInfo, req.PersonalOnly),
+			),
+			n.DismissedAt.To(req.Now),
+			n.ReadAt.ToExpr(n.ReadAt.Coalesce(req.Now)),
+		)
+	})
+}
+
 func (r *repository) Restore(
 	ctx context.Context,
 	req notificationports.NotificationActionRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		n := notificationdb.Notifications
+		now := timeutils.NowUnix()
 		return r.update(
 			ctx,
 			"restore notifications",
 			r.action(ctx, req, n.DismissedAt.IsNotNull()),
 			n.DismissedAt.ToNull(),
+			n.ResolvedAt.ToNull(),
+			n.Resolution.To(""),
+			n.SurfacesAt.To(now),
 		)
 	})
+}
+
+func (r *repository) Snooze(
+	ctx context.Context,
+	req notificationports.SnoozeNotificationsRequest,
+) error {
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		n := notificationdb.Notifications
+		return r.update(
+			ctx,
+			"set notifications aside",
+			r.action(ctx, req.NotificationActionRequest, n.DismissedAt.IsNull()),
+			n.SurfacesAt.To(req.Until),
+			n.ReadAt.ToNull(),
+		)
+	})
+}
+
+func (r *repository) Wake(
+	ctx context.Context,
+	req notificationports.NotificationActionRequest,
+) error {
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		n := notificationdb.Notifications
+		now := timeutils.NowUnix()
+		return r.update(
+			ctx,
+			"bring notifications back",
+			r.action(ctx, req, n.DismissedAt.IsNull(), n.SurfacesAt.Gt(now)),
+			n.SurfacesAt.To(now),
+		)
+	})
+}
+
+func (r *repository) ResolveSubject(
+	ctx context.Context,
+	req notificationports.ResolveNotificationSubjectRequest,
+) (int64, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
+		n := notificationdb.Notifications
+		resolved, err := notifications(ctx, req.OrganizationID).Where(
+			n.BusinessUnitID.Eq(req.BusinessUnitID),
+			n.SubjectKey.Eq(req.SubjectKey),
+			n.DismissedAt.IsNull(),
+		).Update(
+			ctx,
+			r.db.Keel(ctx),
+			n.DismissedAt.To(req.Now),
+			n.ResolvedAt.To(req.Now),
+			n.Resolution.To(req.Resolution),
+			n.ReadAt.ToExpr(n.ReadAt.Coalesce(req.Now)),
+			n.UpdatedAt.To(req.Now),
+		)
+		if err != nil {
+			r.l.Error("failed to resolve the notifications of a subject", zap.Error(err))
+			return 0, err
+		}
+
+		return resolved, nil
+	})
+}
+
+func (r *repository) Counts(
+	ctx context.Context,
+	req notificationports.NotificationCountsRequest,
+) (*notificationports.NotificationCounts, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*notificationports.NotificationCounts, error) {
+			n := notificationdb.Notifications
+			lens := func(lens notification.Lens, preds ...keel.Pred) keel.Query[*notification.Notification] {
+				return notifications(ctx, req.TenantInfo.OrgID).Where(
+					lensFilter(lens, req.Now),
+					audience(req.TenantInfo, req.PersonalOnly),
+				).Where(preds...)
+			}
+
+			counts := new(notificationports.NotificationCounts)
+			if err := keel.Batch(ctx, r.db.Keel(ctx),
+				keel.CountUpToInto(lens(notification.LensForYou), countCap, &counts.ForYou),
+				keel.CountUpToInto(
+					lens(notification.LensForYou, n.ReadAt.IsNull()),
+					countCap,
+					&counts.ForYouUnread,
+				),
+				keel.CountUpToInto(lens(notification.LensTeam), countCap, &counts.Team),
+				keel.CountUpToInto(
+					lens(notification.LensTeam, n.ReadAt.IsNull()),
+					countCap,
+					&counts.TeamUnread,
+				),
+				keel.CountUpToInto(lens(notification.LensLater), countCap, &counts.Later),
+			); err != nil {
+				r.l.Error("failed to count notifications", zap.Error(err))
+				return nil, err
+			}
+
+			return counts, nil
+		},
+	)
 }
 
 func (r *repository) MarkAllAsRead(
@@ -303,9 +551,9 @@ func (r *repository) CountUnread(
 		count, err := notifications(ctx, tenantInfo.OrgID).Where(
 			n.BusinessUnitID.Eq(tenantInfo.BuID),
 			n.ReadAt.IsNull(),
-			n.DismissedAt.IsNull(),
+			lensFilter(notification.LensOpen, timeutils.NowUnix()),
 			audience(ti, personalOnly),
-		).Count(ctx, r.db.Keel(ctx))
+		).CountUpTo(ctx, r.db.Keel(ctx), countCap)
 		if err != nil {
 			r.l.Error("failed to count unread notifications", zap.Error(err))
 			return 0, err

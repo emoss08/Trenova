@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -19,6 +20,7 @@ var Shard = &gqlexec.Shard{
 	Objects: []*gqlexec.Object{
 		{Name: "Notification", Implementors: []string{"Notification"}},
 		{Name: "NotificationConnection", Implementors: []string{"NotificationConnection"}},
+		{Name: "NotificationCounts", Implementors: []string{"NotificationCounts"}},
 		{Name: "NotificationEdge", Implementors: []string{"NotificationEdge"}},
 	},
 	Fields: []gqlexec.Fields{
@@ -48,16 +50,6 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
 			{
-				Name:       "markAllNotificationsRead",
-				NonNull:    true,
-				IsResolver: true,
-				ChildErr:   errNoChild0,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[MutationResolver](ec, "Mutation@notification").MarkAllNotificationsRead(ctx)
-				},
-				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
-			},
-			{
 				Name:       "dismissNotifications",
 				NonNull:    true,
 				IsResolver: true,
@@ -70,6 +62,18 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
 			{
+				Name:       "dismissAllNotifications",
+				NonNull:    true,
+				IsResolver: true,
+				ChildErr:   errNoChild0,
+				Args:       field_Mutation_dismissAllNotifications_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@notification").DismissAllNotifications(ctx, fc.Args["lens"].(notification.Lens))
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
 				Name:       "restoreNotifications",
 				NonNull:    true,
 				IsResolver: true,
@@ -78,6 +82,30 @@ var Shard = &gqlexec.Shard{
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[MutationResolver](ec, "Mutation@notification").RestoreNotifications(ctx, fc.Args["ids"].([]string))
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:       "snoozeNotifications",
+				NonNull:    true,
+				IsResolver: true,
+				ChildErr:   errNoChild0,
+				Args:       field_Mutation_snoozeNotifications_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@notification").SnoozeNotifications(ctx, fc.Args["ids"].([]string), fc.Args["until"].(int))
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:       "wakeNotifications",
+				NonNull:    true,
+				IsResolver: true,
+				ChildErr:   errNoChild0,
+				Args:       field_Mutation_wakeNotifications_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@notification").WakeNotifications(ctx, fc.Args["ids"].([]string))
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
@@ -302,9 +330,58 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalOString2ᚕstringᚄ),
 			},
 			{
-				Name:     "version",
+				Name:     "reason",
 				NonNull:  true,
 				ChildErr: errNoChild8,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*notification.Notification)
+					return obj.Reason, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNNotificationReason2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋnotificationᚐReason),
+			},
+			{
+				Name:     "occurrenceCount",
+				NonNull:  true,
+				ChildErr: errNoChild9,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*notification.Notification)
+					return obj.OccurrenceCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "surfacesAt",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*notification.Notification)
+					return obj.SurfacesAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+			{
+				Name:     "resolvedAt",
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*notification.Notification)
+					return obj.ResolvedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
+			},
+			{
+				Name:     "resolution",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*notification.Notification)
+					return obj.Resolution, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "version",
+				NonNull:  true,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*notification.Notification)
 					return obj.Version, nil
@@ -337,7 +414,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "totalCount",
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.NotificationConnection)
 					return obj.TotalCount, nil
@@ -353,6 +430,58 @@ var Shard = &gqlexec.Shard{
 					return obj.TotalCountExact, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+		}},
+		{Object: "NotificationCounts", Fields: []*gqlexec.Field{
+			{
+				Name:     "forYou",
+				NonNull:  true,
+				ChildErr: errNoChild9,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*notificationports.NotificationCounts)
+					return obj.ForYou, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+			{
+				Name:     "forYouUnread",
+				NonNull:  true,
+				ChildErr: errNoChild9,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*notificationports.NotificationCounts)
+					return obj.ForYouUnread, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+			{
+				Name:     "team",
+				NonNull:  true,
+				ChildErr: errNoChild9,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*notificationports.NotificationCounts)
+					return obj.Team, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+			{
+				Name:     "teamUnread",
+				NonNull:  true,
+				ChildErr: errNoChild9,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*notificationports.NotificationCounts)
+					return obj.TeamUnread, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
+			},
+			{
+				Name:     "later",
+				NonNull:  true,
+				ChildErr: errNoChild9,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*notificationports.NotificationCounts)
+					return obj.Later, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int64),
 			},
 		}},
 		{Object: "NotificationEdge", Fields: []*gqlexec.Field{
@@ -394,15 +523,16 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNNotificationConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐNotificationConnection),
 			},
 			{
-				Name:       "notificationUnreadCount",
+				Name:       "notificationCounts",
 				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild8,
+				HasChild:   true,
+				ChildType:  "NotificationCounts",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					return gqlexec.Resolver[QueryResolver](ec, "Query@notification").NotificationUnreadCount(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@notification").NotificationCounts(ctx)
 				},
-				Marshal: gqlexec.Marshal(marshalNInt2int),
+				Marshal: gqlexec.Marshal(marshalNNotificationCounts2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋportsᚋnotificationportsᚐNotificationCounts),
 			},
 		}},
 	},
@@ -418,14 +548,16 @@ var Shard = &gqlexec.Shard{
 type MutationResolver interface {
 	MarkNotificationsRead(ctx context.Context, ids []string) (bool, error)
 	MarkNotificationsUnread(ctx context.Context, ids []string) (bool, error)
-	MarkAllNotificationsRead(ctx context.Context) (bool, error)
 	DismissNotifications(ctx context.Context, ids []string) (bool, error)
+	DismissAllNotifications(ctx context.Context, lens notification.Lens) (bool, error)
 	RestoreNotifications(ctx context.Context, ids []string) (bool, error)
+	SnoozeNotifications(ctx context.Context, ids []string, until int) (bool, error)
+	WakeNotifications(ctx context.Context, ids []string) (bool, error)
 }
 
 type QueryResolver interface {
 	Notifications(ctx context.Context, input gqlmodel.DataTableConnectionInput, filter *gqlmodel.NotificationFilterInput) (*gqlmodel.NotificationConnection, error)
-	NotificationUnreadCount(ctx context.Context) (int, error)
+	NotificationCounts(ctx context.Context) (*notificationports.NotificationCounts, error)
 }
 
 var (
@@ -437,7 +569,8 @@ var (
 	errNoChild5 = errors.New("field of type JSON does not have child fields")
 	errNoChild6 = errors.New("field of type Timestamp does not have child fields")
 	errNoChild7 = errors.New("field of type NotificationDeliveryStatus does not have child fields")
-	errNoChild8 = errors.New("field of type Int does not have child fields")
+	errNoChild8 = errors.New("field of type NotificationReason does not have child fields")
+	errNoChild9 = errors.New("field of type Int does not have child fields")
 )
 
 func field_Mutation_markNotificationsRead_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
@@ -479,7 +612,54 @@ func field_Mutation_dismissNotifications_args(ctx context.Context, ec *gqlexec.E
 	return args, nil
 }
 
+func field_Mutation_dismissAllNotifications_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "lens",
+		func(ctx context.Context, v any) (notification.Lens, error) {
+			return unmarshalNNotificationLens2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋnotificationᚐLens(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["lens"] = arg0
+	return args, nil
+}
+
 func field_Mutation_restoreNotifications_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "ids",
+		func(ctx context.Context, v any) ([]string, error) {
+			return unmarshalNID2ᚕstringᚄ(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["ids"] = arg0
+	return args, nil
+}
+
+func field_Mutation_snoozeNotifications_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "ids",
+		func(ctx context.Context, v any) ([]string, error) {
+			return unmarshalNID2ᚕstringᚄ(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["ids"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "until",
+		func(ctx context.Context, v any) (int, error) {
+			return unmarshalNTimestamp2int(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["until"] = arg1
+	return args, nil
+}
+
+func field_Mutation_wakeNotifications_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
 	args := make(map[string]any, 1)
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "ids",
 		func(ctx context.Context, v any) ([]string, error) {
@@ -524,20 +704,20 @@ func unmarshalInputNotificationFilterInput(ctx context.Context, ec *gqlexec.Exec
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"state", "unreadOnly"}
+	fieldsInOrder := [...]string{"lens", "unreadOnly"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "state":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("state"))
-			data, err := unmarshalONotificationState2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐNotificationState(ctx, ec, v)
+		case "lens":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lens"))
+			data, err := unmarshalONotificationLens2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋnotificationᚐLens(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
-			it.State = data
+			it.Lens = data
 		case "unreadOnly":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("unreadOnly"))
 			data, err := unmarshalOBoolean2ᚖbool(ctx, ec, v)
@@ -568,6 +748,17 @@ func unmarshalNID2ᚕstringᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]
 	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNID2string)
 }
 
+func unmarshalNNotificationLens2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋnotificationᚐLens(ctx context.Context, ec *gqlexec.Exec, v any) (notification.Lens, error) {
+	tmp, err := graphql.UnmarshalString(v)
+	res := notification.Lens(tmp)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNTimestamp2int(ctx context.Context, ec *gqlexec.Exec, v any) (int, error) {
+	res, err := graphql.UnmarshalInt(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func unmarshalOBoolean2ᚖbool(ctx context.Context, ec *gqlexec.Exec, v any) (*bool, error) {
 	if v == nil {
 		return nil, nil
@@ -584,13 +775,13 @@ func unmarshalONotificationFilterInput2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋint
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalONotificationState2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐNotificationState(ctx context.Context, ec *gqlexec.Exec, v any) (*gqlmodel.NotificationState, error) {
+func unmarshalONotificationLens2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋnotificationᚐLens(ctx context.Context, ec *gqlexec.Exec, v any) (*notification.Lens, error) {
 	if v == nil {
 		return nil, nil
 	}
-	var res = new(gqlmodel.NotificationState)
-	err := res.UnmarshalGQL(v)
-	return res, graphql.ErrorOnPath(ctx, err)
+	tmp, err := graphql.UnmarshalString(v)
+	res := notification.Lens(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v bool) graphql.Marshaler {
@@ -649,6 +840,14 @@ func marshalNNotificationConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋintern
 	return ec.MarshalType(ctx, sel, "NotificationConnection", v)
 }
 
+func marshalNNotificationCounts2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋportsᚋnotificationportsᚐNotificationCounts(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *notificationports.NotificationCounts) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "NotificationCounts", v)
+}
+
 func marshalNNotificationDeliveryStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋnotificationᚐDeliveryStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v notification.DeliveryStatus) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
@@ -674,6 +873,14 @@ func marshalNNotificationEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋa
 }
 
 func marshalNNotificationPriority2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋnotificationᚐPriority(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v notification.Priority) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
+func marshalNNotificationReason2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋnotificationᚐReason(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v notification.Reason) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)

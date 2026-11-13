@@ -7,7 +7,9 @@ redesign of `/inbox`), the Desk (`/desk`), the Formula Studio
 (`/billing/configuration-files/formula-templates/new`, `…/<id>/edit`), the formula libraries, the
 Lading studio (`/edi/lading/<partnerId>`), the integrations page with its accounting setup
 (`/admin/integrations?type=QuickBooksOnline`), the audit log (`/admin/audit-logs`, with its
-exports, legal holds and alerts; `node e2e/mock-api/audit-screenshots.mjs` shoots every state) and
+exports, legal holds and alerts; `node e2e/mock-api/audit-screenshots.mjs` shoots every state), the
+notification panel (the bell on any page; `node e2e/mock-api/notifications-screenshots.mjs` shoots
+every part of it) and
 Data retention (`/organization/data-retention`) can be run, clicked through and screenshotted without Postgres, Redis,
 Temporal or an AI provider. It answers the REST session endpoints the app shell needs, every
 GraphQL operation those pages send, and the realtime stream, from a deterministic fixture.

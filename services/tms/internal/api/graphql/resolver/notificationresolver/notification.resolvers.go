@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/notificationmapping"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
 )
 
@@ -23,30 +24,46 @@ func (r *MutationResolver) MarkNotificationsUnread(ctx context.Context, ids []st
 	return r.notificationAction(ctx, ids, r.NotificationService.MarkAsUnread)
 }
 
-func (r *MutationResolver) MarkAllNotificationsRead(ctx context.Context) (bool, error) {
+func (r *MutationResolver) DismissNotifications(ctx context.Context, ids []string) (bool, error) {
+	return r.notificationAction(ctx, ids, r.NotificationService.Dismiss)
+}
+
+func (r *MutationResolver) DismissAllNotifications(ctx context.Context, lens notification.Lens) (bool, error) {
 	authCtx, err := r.RequireAuth(ctx)
 	if err != nil {
 		return false, err
 	}
 
-	if err = r.NotificationService.MarkAllAsRead(
-		ctx,
-		authCtx.UserID,
-		resolvercore.TenantInfo(authCtx),
-		authCtx.IsPortalUser,
-	); err != nil {
+	if err = r.NotificationService.DismissAll(ctx, notificationports.DismissAllNotificationsRequest{
+		TenantInfo:   resolvercore.TenantInfo(authCtx),
+		Lens:         lens,
+		PersonalOnly: authCtx.IsPortalUser,
+	}); err != nil {
 		return false, err
 	}
 
 	return true, nil
 }
 
-func (r *MutationResolver) DismissNotifications(ctx context.Context, ids []string) (bool, error) {
-	return r.notificationAction(ctx, ids, r.NotificationService.Dismiss)
-}
-
 func (r *MutationResolver) RestoreNotifications(ctx context.Context, ids []string) (bool, error) {
 	return r.notificationAction(ctx, ids, r.NotificationService.Restore)
+}
+
+func (r *MutationResolver) SnoozeNotifications(ctx context.Context, ids []string, until int) (bool, error) {
+	return r.notificationAction(
+		ctx,
+		ids,
+		func(ctx context.Context, req notificationports.NotificationActionRequest) error {
+			return r.NotificationService.Snooze(ctx, notificationports.SnoozeNotificationsRequest{
+				NotificationActionRequest: req,
+				Until:                     int64(until),
+			})
+		},
+	)
+}
+
+func (r *MutationResolver) WakeNotifications(ctx context.Context, ids []string) (bool, error) {
+	return r.notificationAction(ctx, ids, r.NotificationService.Wake)
 }
 
 func (r *QueryResolver) Notifications(ctx context.Context, input gqlmodel.DataTableConnectionInput, filter *gqlmodel.NotificationFilterInput) (*gqlmodel.NotificationConnection, error) {
@@ -75,21 +92,11 @@ func (r *QueryResolver) Notifications(ctx context.Context, input gqlmodel.DataTa
 	return notificationmapping.NotificationConnectionToModel(result)
 }
 
-func (r *QueryResolver) NotificationUnreadCount(ctx context.Context) (int, error) {
+func (r *QueryResolver) NotificationCounts(ctx context.Context) (*notificationports.NotificationCounts, error) {
 	authCtx, err := r.RequireAuth(ctx)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 
-	count, err := r.NotificationService.CountUnread(
-		ctx,
-		authCtx.UserID,
-		resolvercore.TenantInfo(authCtx),
-		authCtx.IsPortalUser,
-	)
-	if err != nil {
-		return 0, err
-	}
-
-	return int(count), nil
+	return r.NotificationService.Counts(ctx, resolvercore.TenantInfo(authCtx), authCtx.IsPortalUser)
 }

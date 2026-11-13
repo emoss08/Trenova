@@ -29,7 +29,7 @@ export function QuickActionsWidget({ widget }: WidgetProps) {
               key={definition.id}
               to={href}
               title={t(definition.description)}
-              className="ui-focus-ring flex min-w-0 items-center gap-2 rounded-md px-1.5 py-1.5 text-sm transition-colors outline-none hover:bg-surface-hover"
+              className="flex min-w-0 items-center gap-2 rounded-md ui-focus-ring px-1.5 py-1.5 text-sm transition-colors outline-none hover:bg-surface-hover"
             >
               <Icon aria-hidden className="size-3.5 shrink-0 text-foreground-subtle" />
               <span className="truncate">{t(definition.label)}</span>
@@ -58,7 +58,7 @@ export function FavoritesWidget({ widget }: WidgetProps) {
             <Link
               key={favorite.id}
               to={favorite.pageUrl}
-              className="ui-focus-ring flex items-center gap-2 rounded-md px-1.5 py-1.5 text-sm transition-colors outline-none hover:bg-surface-hover"
+              className="flex items-center gap-2 rounded-md ui-focus-ring px-1.5 py-1.5 text-sm transition-colors outline-none hover:bg-surface-hover"
             >
               <Star01Icon
                 aria-hidden
@@ -155,7 +155,7 @@ export function SavedViewsWidget({ widget }: WidgetProps) {
           <Link
             key={target.href}
             to={target.href}
-            className="ui-focus-ring rounded-md px-1.5 py-1.5 text-sm transition-colors outline-none hover:bg-surface-hover"
+            className="rounded-md ui-focus-ring px-1.5 py-1.5 text-sm transition-colors outline-none hover:bg-surface-hover"
           >
             {target.label}
           </Link>
@@ -170,11 +170,11 @@ export function NotificationsWidget({ widget }: WidgetProps) {
 
   const limit = widget.config.limit ?? 8;
   const { data: notifications, isLoading } = useQuery({
-    ...notificationQueries.feed({ first: limit, unreadOnly: true }),
+    ...notificationQueries.feed({ first: limit, lens: "forYou", unreadOnly: true }),
     select: (data) => data.results,
   });
-  // The badge is the true unread total, not the page size the list happened to
-  // fetch — a widget showing 8 rows over 40 unread must not read as "8".
+  // The badge is the true count of what is the person's own and unread, not the page size
+  // the list happened to fetch — a widget showing 8 rows over 40 unread must not read as "8".
   const { data: unreadCount } = useUnreadNotificationCount();
 
   return (
@@ -191,7 +191,7 @@ export function NotificationsWidget({ widget }: WidgetProps) {
           {notifications.map((notification) => (
             <div key={notification.id} className="flex flex-col gap-0.5 rounded-md px-1.5 py-1">
               <span className="truncate text-xs font-medium">{t(notification.title)}</span>
-              <span className="text-muted-foreground truncate text-2xs">
+              <span className="truncate text-2xs text-muted-foreground">
                 {notification.message}
               </span>
             </div>

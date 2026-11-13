@@ -231,7 +231,15 @@ func TestNotifyPending_TellsEveryDeciderOnce(t *testing.T) {
 	assert.Equal(t, EventProposalsPending, first.EventType)
 	assert.Equal(t, notification.ChannelUser, first.Channel)
 	assert.Equal(t, h.roles.users[0].UserID, *first.TargetUserID)
-	assert.Equal(t, "Dispatch coverage has 2 changes waiting for a decision", first.Title)
+	assert.Equal(t, "Dispatch coverage has changes waiting for a decision", first.Title)
+	assert.Equal(t, notification.ReasonTeam, first.Reason)
+	assert.Equal(t, 2, first.OccurrenceCount, "the row counts the changes that are waiting")
+	assert.Equal(
+		t,
+		"agent:proposals:"+h.definition.ID.String(),
+		first.SubjectKey,
+		"every run of one agent lands on the same row",
+	)
 	assert.Equal(
 		t,
 		"It proposed assign dispatch move and add shipment comment. Nothing runs until someone decides.",
@@ -245,8 +253,16 @@ func TestNotifyPending_TellsEveryDeciderOnce(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "/desk/needs", parsed.Path)
 	assert.Equal(t, "decisions", parsed.Query().Get("lens"))
-	assert.Equal(t, h.run.ID.String(), parsed.Query().Get("run"),
-		"the link lands on the decisions queue filtered to this run",
+	assert.Empty(t, parsed.Query().Get("run"),
+		"a row that stands for every run of the agent opens the whole decisions queue",
+	)
+
+	runLink, ok := first.Data["runLink"].(string)
+	require.True(t, ok)
+	parsedRun, err := url.Parse(runLink)
+	require.NoError(t, err)
+	assert.Equal(t, h.run.ID.String(), parsedRun.Query().Get("run"),
+		"the run that raised it is still reachable",
 	)
 
 	assert.Empty(t, h.mailer.sent, "the first notice is in-app only")
@@ -309,9 +325,17 @@ func TestRemindPending_NotifiesAtHighPriorityAndEmailsThoseWithAnAddress(t *test
 	assert.Equal(t, notification.PriorityHigh, h.notifications.created[0].Priority)
 	assert.Equal(
 		t,
-		"Dispatch coverage still has 2 changes waiting after 6 hours",
+		"Dispatch coverage has changes waiting for a decision",
 		h.notifications.created[0].Title,
 	)
+	assert.Contains(t, h.notifications.created[0].Message, "after 6 hours")
+	assert.Equal(
+		t,
+		notification.NoNewOccurrence,
+		h.notifications.created[0].OccurrenceCount,
+		"a reminder moves the row up without counting the same changes again",
+	)
+	assert.Equal(t, 6, h.notifications.created[0].Data["waitingHours"])
 
 	require.Len(t, h.mailer.sent, 1, "only the decider with an address is emailed")
 	assert.Equal(t, []string{"dana@example.com"}, h.mailer.sent[0].To)
@@ -367,6 +391,4 @@ func TestDescribeTools(t *testing.T) {
 		describeTools(mk("dispatch_assign_move", "worker_send_message", "dispatch_assign_move")),
 	)
 	assert.Equal(t, "a, b, c and 2 more", describeTools(mk("a", "b", "c", "d", "e")))
-	assert.Equal(t, "a change", countChanges(1))
-	assert.Equal(t, "3 changes", countChanges(3))
 }

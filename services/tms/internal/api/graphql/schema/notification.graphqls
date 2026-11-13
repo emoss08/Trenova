@@ -42,7 +42,32 @@ type Notification {
   jobId: String
   correlationId: String
   tags: [String!]
+  "Why the person got it: it was theirs, or it went to everyone who could act."
+  reason: NotificationReason!
+  "How many times the subject came up while this notification was open."
+  occurrenceCount: Int!
+  "When it shows: now, or later when the person set it aside."
+  surfacesAt: Timestamp!
+  "Set when the work it pointed at was finished and it cleared itself."
+  resolvedAt: Timestamp
+  "How it cleared itself, in words."
+  resolution: String!
   version: Int!
+}
+
+"Why a person got a notification."
+enum NotificationReason {
+  direct
+  team
+}
+
+"How many notifications wait in each part of the panel."
+type NotificationCounts {
+  forYou: Int!
+  forYouUnread: Int!
+  team: Int!
+  teamUnread: Int!
+  later: Int!
 }
 
 type NotificationEdge {
@@ -58,13 +83,21 @@ type NotificationConnection {
   totalCountExact: Boolean!
 }
 
-enum NotificationState {
-  inbox
-  archived
+"""
+A part of the panel. forYou and team split what is open by why the person got it,
+later is what they set aside, done is what they finished or what cleared itself, and
+open is everything open whatever the reason.
+"""
+enum NotificationLens {
+  forYou
+  team
+  later
+  done
+  open
 }
 
 input NotificationFilterInput {
-  state: NotificationState
+  lens: NotificationLens
   unreadOnly: Boolean
 }
 
@@ -73,13 +106,18 @@ extend type Query {
     input: DataTableConnectionInput!
     filter: NotificationFilterInput
   ): NotificationConnection!
-  notificationUnreadCount: Int!
+  notificationCounts: NotificationCounts!
 }
 
 extend type Mutation {
   markNotificationsRead(ids: [ID!]!): Boolean!
   markNotificationsUnread(ids: [ID!]!): Boolean!
-  markAllNotificationsRead: Boolean!
   dismissNotifications(ids: [ID!]!): Boolean!
+  "Marks every open notification in one part of the panel done."
+  dismissAllNotifications(lens: NotificationLens!): Boolean!
   restoreNotifications(ids: [ID!]!): Boolean!
+  "Sets notifications aside until a time, when they come back unread."
+  snoozeNotifications(ids: [ID!]!, until: Timestamp!): Boolean!
+  "Brings set-aside notifications back now."
+  wakeNotifications(ids: [ID!]!): Boolean!
 }

@@ -86,7 +86,6 @@
   "Unpaid break (minutes)": "Descanso no retribuido (minutos)",
   "Void run": "Anular la corrida",
   "Void this payroll run": "Anular esta corrida de nómina",
-  "Waiting {0, plural, one {# day} other {# days}}": "Esperando {0, plural, one {# día} other {# días}}",
   "Week of {0}, overtime past {1}": "Semana del {0}, horas extra a partir de {1}",
   "Weeks a manager has approved that payroll has not yet locked into an export.": "Semanas aprobadas por un responsable que nómina todavía no ha fijado en una exportación.",
   "Weeks still being worked, and any sent back for another look, land here.": "Aquí llegan las semanas que aún se están trabajando y las que se devolvieron para otra revisión.",
