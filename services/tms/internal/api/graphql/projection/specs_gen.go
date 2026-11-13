@@ -90,6 +90,10 @@ var ApprovalDelegationSpec TypeSpec
 
 var AuditEntrySpec TypeSpec
 
+var AuditExportSpec TypeSpec
+
+var AuditLegalHoldSpec TypeSpec
+
 var AuthEventSpec TypeSpec
 
 var BenefitPlanSpec TypeSpec
@@ -204,6 +208,8 @@ var DOTRandomPoolSpec TypeSpec
 
 var DashControlSpec TypeSpec
 
+var DeskCaseOptionSpec TypeSpec
+
 var DetentionClockPriceSpec TypeSpec
 
 var DetentionEvidenceSpec TypeSpec
@@ -215,6 +221,18 @@ var DetentionOccurrenceSpec TypeSpec
 var DetentionPolicyTierSpec TypeSpec
 
 var DispatchCarrierEligibilityFindingSpec TypeSpec
+
+var DispatchDriverPlannedMoveSpec TypeSpec
+
+var DispatchForecastDaySpec TypeSpec
+
+var DispatchForecastQualitySpec TypeSpec
+
+var DispatchMovePlanPriceSpec TypeSpec
+
+var DispatchPlanAlternativeSpec TypeSpec
+
+var DispatchPositioningSpec TypeSpec
 
 var DispatchTimeOffSpec TypeSpec
 
@@ -270,6 +288,8 @@ var EdiPartnerSpec TypeSpec
 
 var EdiPartnerCustomerSpec TypeSpec
 
+var EdiPartnerReadinessItemSpec TypeSpec
+
 var EdiTenderChargeSpec TypeSpec
 
 var EdiTenderCommoditySpec TypeSpec
@@ -293,6 +313,8 @@ var ExternalIdentitySpec TypeSpec
 var FactoringAgreementSpec TypeSpec
 
 var FactoringCompanySpec TypeSpec
+
+var FactoringDeliveryHealthSpec TypeSpec
 
 var FactoringFeeTierSpec TypeSpec
 
@@ -476,6 +498,8 @@ var RateQuoteSpec TypeSpec
 
 var RateZoneSpec TypeSpec
 
+var RecordShareSpec TypeSpec
+
 var RecurringDeductionSpec TypeSpec
 
 var RecurringEarningSpec TypeSpec
@@ -585,6 +609,8 @@ var TCASubscriptionSpec TypeSpec
 var TableConfigurationSpec TypeSpec
 
 var TableLayoutSpec TypeSpec
+
+var TariffChoiceSpec TypeSpec
 
 var TenderSpec TypeSpec
 
@@ -2774,6 +2800,10 @@ func init() {
 				Column: "learning_off",
 			},
 			{
+				Name:   "passingLearningOff",
+				Column: "passing_learning_off",
+			},
+			{
 				Name:   "autoChaptersOff",
 				Column: "auto_chapters_off",
 			},
@@ -3186,6 +3216,10 @@ func init() {
 				Column: "status",
 			},
 			{
+				Name:   "automatic",
+				Column: "automatic",
+			},
+			{
 				Name:   "trigger",
 				Column: "trigger",
 			},
@@ -3216,6 +3250,10 @@ func init() {
 			{
 				Name:   "input",
 				Column: "input",
+			},
+			{
+				Name:   "askedAt",
+				Column: "asked_at",
 			},
 			{
 				Name:   "history",
@@ -3609,6 +3647,14 @@ func init() {
 			{
 				Name:   "reviewedAt",
 				Column: "reviewed_at",
+			},
+			{
+				Name:   "confirmedByUserId",
+				Column: "confirmed_by_user_id",
+			},
+			{
+				Name:   "confirmedAt",
+				Column: "confirmed_at",
 			},
 			{
 				Name:   "taintRunId",
@@ -4101,6 +4147,18 @@ func init() {
 				Column: "force_rerun_days",
 			},
 			{
+				Name:   "autoActivate",
+				Column: "auto_activate",
+			},
+			{
+				Name:   "autoCasesPerAgent",
+				Column: "auto_cases_per_agent",
+			},
+			{
+				Name:    "autoCaseDays",
+				Special: "autoCaseDays",
+			},
+			{
 				Name:   "version",
 				Column: "version",
 			},
@@ -4348,6 +4406,10 @@ func init() {
 				Name:    "handedBy",
 				Special: "handedBy",
 			},
+			{
+				Name:    "subjectLabel",
+				Special: "subjectLabel",
+			},
 		},
 	}
 
@@ -4577,6 +4639,14 @@ func init() {
 			{
 				Name:   "requestedByUserId",
 				Column: "requested_by_user_id",
+			},
+			{
+				Name:   "trialProviderId",
+				Column: "trial_provider_id",
+			},
+			{
+				Name:   "trialLabel",
+				Column: "trial_label",
 			},
 			{
 				Name:   "version",
@@ -4920,12 +4990,20 @@ func init() {
 				Column: "operation",
 			},
 			{
+				Name:   "action",
+				Column: "action",
+			},
+			{
 				Name:   "resourceId",
 				Column: "resource_id",
 			},
 			{
 				Name:   "correlationId",
 				Column: "correlation_id",
+			},
+			{
+				Name:   "traceId",
+				Column: "trace_id",
 			},
 			{
 				Name:   "userAgent",
@@ -4942,6 +5020,22 @@ func init() {
 			{
 				Name:   "category",
 				Column: "category",
+			},
+			{
+				Name:   "retentionClass",
+				Column: "retention_class",
+			},
+			{
+				Name:   "channel",
+				Column: "channel",
+			},
+			{
+				Name:   "actorName",
+				Column: "actor_name",
+			},
+			{
+				Name:   "aiRunId",
+				Column: "ai_run_id",
 			},
 			{
 				Name:   "sensitiveData",
@@ -4961,6 +5055,146 @@ func init() {
 				Relation: &RelationSpec{
 					Target: &UserSpec,
 				},
+			},
+			{
+				Name:    "requestEntryCount",
+				Special: "requestEntryCount",
+			},
+		},
+	}
+
+	AuditExportSpec = TypeSpec{
+		TypeName: "AuditExport",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "format",
+				Column: "format",
+			},
+			{
+				Name:   "filters",
+				Column: "filters",
+			},
+			{
+				Name:   "rangeFrom",
+				Column: "range_from",
+			},
+			{
+				Name:   "rangeTo",
+				Column: "range_to",
+			},
+			{
+				Name:   "includeSecurity",
+				Column: "include_security",
+			},
+			{
+				Name:   "status",
+				Column: "status",
+			},
+			{
+				Name:   "rowCount",
+				Column: "row_count",
+			},
+			{
+				Name:   "byteSize",
+				Column: "byte_size",
+			},
+			{
+				Name:   "sha256",
+				Column: "sha256",
+			},
+			{
+				Name:   "artifactExpiresAt",
+				Column: "artifact_expires_at",
+			},
+			{
+				Name:   "errorMessage",
+				Column: "error_message",
+			},
+			{
+				Name:   "startedAt",
+				Column: "started_at",
+			},
+			{
+				Name:   "completedAt",
+				Column: "completed_at",
+			},
+			{
+				Name:   "createdAt",
+				Column: "created_at",
+			},
+			{
+				Name:    "downloadable",
+				Special: "downloadable",
+			},
+		},
+	}
+
+	AuditLegalHoldSpec = TypeSpec{
+		TypeName: "AuditLegalHold",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "name",
+				Column: "name",
+			},
+			{
+				Name:   "reason",
+				Column: "reason",
+			},
+			{
+				Name:   "resource",
+				Column: "resource",
+			},
+			{
+				Name:   "resourceId",
+				Column: "resource_id",
+			},
+			{
+				Name:   "placedById",
+				Column: "placed_by_id",
+			},
+			{
+				Name:   "placedAt",
+				Column: "placed_at",
+			},
+			{
+				Name:   "releasedById",
+				Column: "released_by_id",
+			},
+			{
+				Name:   "releasedAt",
+				Column: "released_at",
+			},
+			{
+				Name:   "releaseReason",
+				Column: "release_reason",
+			},
+			{
+				Name:    "active",
+				Special: "active",
+			},
+			{
+				Name:    "placedBy",
+				Special: "placedBy",
+			},
+			{
+				Name:    "releasedBy",
+				Special: "releasedBy",
 			},
 		},
 	}
@@ -5541,6 +5775,10 @@ func init() {
 			{
 				Name:   "headline",
 				Column: "headline",
+			},
+			{
+				Name:   "headlineLinks",
+				Column: "headline_links",
 			},
 			{
 				Name:   "sections",
@@ -8372,6 +8610,10 @@ func init() {
 				Column: "auto_post_on_approve",
 			},
 			{
+				Name:   "requireSeparateApprover",
+				Column: "require_separate_approver",
+			},
+			{
 				Name:   "varianceToleranceMinor",
 				Column: "variance_tolerance_minor",
 			},
@@ -10321,6 +10563,56 @@ func init() {
 		},
 	}
 
+	DeskCaseOptionSpec = TypeSpec{
+		TypeName: "DeskCaseOption",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "kind",
+				Column: "kind",
+			},
+			{
+				Name:   "label",
+				Column: "label",
+			},
+			{
+				Name:   "outcome",
+				Column: "outcome",
+			},
+			{
+				Name:   "outcomeNote",
+				Column: "outcome_note",
+			},
+			{
+				Name:   "tone",
+				Column: "tone",
+			},
+			{
+				Name:   "cost",
+				Column: "cost",
+			},
+			{
+				Name:   "description",
+				Column: "description",
+			},
+			{
+				Name:   "recommended",
+				Column: "recommended",
+			},
+			{
+				Name:   "chosen",
+				Column: "chosen",
+			},
+		},
+	}
+
 	DetentionClockPriceSpec = TypeSpec{
 		TypeName: "DetentionClockPrice",
 		AlwaysColumns: []string{
@@ -10837,6 +11129,249 @@ func init() {
 			{
 				Name:    "requiresOverride",
 				Special: "requiresOverride",
+			},
+		},
+	}
+
+	DispatchDriverPlannedMoveSpec = TypeSpec{
+		TypeName: "DispatchDriverPlannedMove",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "moveId",
+				Column: "move_id",
+			},
+			{
+				Name:    "proNumber",
+				Special: "proNumber",
+			},
+			{
+				Name:   "costCents",
+				Column: "cost_cents",
+			},
+			{
+				Name:    "valueCents",
+				Special: "valueCents",
+			},
+			{
+				Name:   "generatedAt",
+				Column: "generated_at",
+			},
+		},
+	}
+
+	DispatchForecastDaySpec = TypeSpec{
+		TypeName: "DispatchForecastDay",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "dayStart",
+				Column: "day_start",
+			},
+			{
+				Name:   "low",
+				Column: "low",
+			},
+			{
+				Name:   "high",
+				Column: "high",
+			},
+			{
+				Name:   "mean",
+				Column: "mean",
+			},
+			{
+				Name:   "actual",
+				Column: "actual",
+			},
+		},
+	}
+
+	DispatchForecastQualitySpec = TypeSpec{
+		TypeName: "DispatchForecastQuality",
+		AlwaysColumns: []string{
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "status",
+				Column: "status",
+			},
+			{
+				Name:   "historyWeeks",
+				Column: "history_weeks",
+			},
+			{
+				Name:   "historyLoads",
+				Column: "history_loads",
+			},
+			{
+				Name:   "weeksTested",
+				Column: "weeks_tested",
+			},
+			{
+				Name:   "loadsTested",
+				Column: "loads_tested",
+			},
+			{
+				Name:   "intervalCoverage",
+				Column: "interval_coverage",
+			},
+			{
+				Name:    "meanAbsoluteError",
+				Special: "meanAbsoluteError",
+			},
+			{
+				Name:    "naiveMeanAbsoluteError",
+				Special: "naiveMeanAbsoluteError",
+			},
+			{
+				Name:   "skill",
+				Column: "skill",
+			},
+			{
+				Name:   "fittedAt",
+				Column: "fitted_at",
+			},
+			{
+				Name:    "refitting",
+				Special: "refitting",
+			},
+		},
+	}
+
+	DispatchMovePlanPriceSpec = TypeSpec{
+		TypeName: "DispatchMovePlanPrice",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "workerId",
+				Column: "worker_id",
+			},
+			{
+				Name:   "workerName",
+				Column: "worker_name",
+			},
+			{
+				Name:   "costCents",
+				Column: "cost_cents",
+			},
+			{
+				Name:   "preferenceFloorCents",
+				Column: "preference_floor_cents",
+			},
+			{
+				Name:   "coveragePriceCents",
+				Column: "coverage_price_cents",
+			},
+			{
+				Name:   "driverValueCents",
+				Column: "driver_value_cents",
+			},
+			{
+				Name:   "uncoveredReason",
+				Column: "uncovered_reason",
+			},
+			{
+				Name:   "alternatives",
+				Column: "alternatives",
+			},
+			{
+				Name:   "generatedAt",
+				Column: "generated_at",
+			},
+		},
+	}
+
+	DispatchPlanAlternativeSpec = TypeSpec{
+		TypeName: "DispatchPlanAlternative",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "workerId",
+				Column: "worker_id",
+			},
+			{
+				Name:   "workerName",
+				Column: "worker_name",
+			},
+			{
+				Name:    "extraCents",
+				Special: "extraCents",
+			},
+		},
+	}
+
+	DispatchPositioningSpec = TypeSpec{
+		TypeName: "DispatchPositioning",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "workerId",
+				Column: "worker_id",
+			},
+			{
+				Name:    "workerName",
+				Special: "workerName",
+			},
+			{
+				Name:   "fromLabel",
+				Column: "from_label",
+			},
+			{
+				Name:   "toCell",
+				Column: "to_cell",
+			},
+			{
+				Name:   "toLabel",
+				Column: "to_label",
+			},
+			{
+				Name:   "slotStart",
+				Column: "slot_start",
+			},
+			{
+				Name:   "freeAt",
+				Column: "free_at",
+			},
+			{
+				Name:   "arriveAt",
+				Column: "arrive_at",
+			},
+			{
+				Name:   "miles",
+				Column: "miles",
+			},
+			{
+				Name:   "valueCents",
+				Column: "value_cents",
+			},
+			{
+				Name:   "status",
+				Column: "status",
+			},
+			{
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 		},
 	}
@@ -12208,6 +12743,10 @@ func init() {
 				Special: "secretState",
 			},
 			{
+				Name:    "as2InboundPath",
+				Special: "as2InboundPath",
+			},
+			{
 				Name:   "version",
 				Column: "version",
 			},
@@ -13046,6 +13585,28 @@ func init() {
 		},
 	}
 
+	EdiPartnerReadinessItemSpec = TypeSpec{
+		TypeName: "EdiPartnerReadinessItem",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "key",
+				Column: "key",
+			},
+			{
+				Name:   "label",
+				Column: "label",
+			},
+			{
+				Name:    "complete",
+				Special: "complete",
+			},
+		},
+	}
+
 	EdiTenderChargeSpec = TypeSpec{
 		TypeName: "EdiTenderCharge",
 		AlwaysColumns: []string{
@@ -13831,6 +14392,22 @@ func init() {
 					Target: &FactoringCompanySpec,
 				},
 			},
+			{
+				Name:    "dueFromFactorAccount",
+				Special: "dueFromFactorAccount",
+			},
+			{
+				Name:    "feeExpenseAccount",
+				Special: "feeExpenseAccount",
+			},
+			{
+				Name:    "liabilityAccount",
+				Special: "liabilityAccount",
+			},
+			{
+				Name:    "cashAccount",
+				Special: "cashAccount",
+			},
 		},
 	}
 
@@ -13931,6 +14508,32 @@ func init() {
 			{
 				Name:    "agreements",
 				Special: "agreements",
+			},
+		},
+	}
+
+	FactoringDeliveryHealthSpec = TypeSpec{
+		TypeName: "FactoringDeliveryHealth",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:    "configured",
+				Special: "configured",
+			},
+			{
+				Name:   "method",
+				Column: "method",
+			},
+			{
+				Name:   "lastTestedAt",
+				Column: "last_tested_at",
+			},
+			{
+				Name:   "lastTestError",
+				Column: "last_test_error",
 			},
 		},
 	}
@@ -21954,6 +22557,62 @@ func init() {
 		},
 	}
 
+	RecordShareSpec = TypeSpec{
+		TypeName: "RecordShare",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "recordId",
+				Column: "record_id",
+			},
+			{
+				Name:   "path",
+				Column: "path",
+			},
+			{
+				Name:   "note",
+				Column: "note",
+			},
+			{
+				Name:   "shareCount",
+				Column: "share_count",
+			},
+			{
+				Name:   "firstSharedAt",
+				Column: "first_shared_at",
+			},
+			{
+				Name:   "lastSharedAt",
+				Column: "last_shared_at",
+			},
+			{
+				Name:   "sharedWith",
+				Column: "shared_with_id",
+				Relation: &RelationSpec{
+					Target: &UserSpec,
+				},
+			},
+			{
+				Name:   "sharedBy",
+				Column: "shared_by_id",
+				Relation: &RelationSpec{
+					Target: &UserSpec,
+				},
+			},
+			{
+				Name:    "removable",
+				Special: "removable",
+			},
+		},
+	}
+
 	RecurringDeductionSpec = TypeSpec{
 		TypeName: "RecurringDeduction",
 		AlwaysColumns: []string{
@@ -26646,6 +27305,36 @@ func init() {
 		},
 	}
 
+	TariffChoiceSpec = TypeSpec{
+		TypeName: "TariffChoice",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "label",
+				Column: "label",
+			},
+			{
+				Name:   "kind",
+				Column: "kind",
+			},
+			{
+				Name:    "currency",
+				Special: "currency",
+			},
+			{
+				Name:   "chosen",
+				Column: "chosen",
+			},
+			{
+				Name:    "options",
+				Special: "options",
+			},
+		},
+	}
+
 	TenderSpec = TypeSpec{
 		TypeName: "Tender",
 		AlwaysColumns: []string{
@@ -28340,6 +29029,10 @@ func init() {
 				Column: "trail",
 			},
 			{
+				Name:   "panel",
+				Column: "panel",
+			},
+			{
 				Name:   "suggestedAgentId",
 				Column: "event_kind",
 			},
@@ -28350,6 +29043,14 @@ func init() {
 			{
 				Name:    "agentWork",
 				Special: "agentWork",
+			},
+			{
+				Name:   "deskLens",
+				Column: "source_kind",
+			},
+			{
+				Name:   "aboutId",
+				Column: "about_id",
 			},
 		},
 	}
@@ -28536,6 +29237,22 @@ func init() {
 			{
 				Name:   "availableForDispatch",
 				Column: "available_for_dispatch",
+			},
+			{
+				Name:   "homeLatitude",
+				Column: "home_latitude",
+			},
+			{
+				Name:   "homeLongitude",
+				Column: "home_longitude",
+			},
+			{
+				Name:   "homePlaceId",
+				Column: "home_place_id",
+			},
+			{
+				Name:   "lastHomeAt",
+				Column: "last_home_at",
 			},
 			{
 				Name:   "version",

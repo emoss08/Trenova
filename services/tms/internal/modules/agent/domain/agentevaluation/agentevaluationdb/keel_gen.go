@@ -51,6 +51,7 @@ var evaluationsTable = schema.Table{
 		{Name: "fingerprint", Quoted: `"fingerprint"`, Field: "Fingerprint", Kind: schema.KindJSON, Flags: schema.FlagNullable | schema.FlagJSONB, Label: `Fingerprint`, JSON: `fingerprint`},
 		{Name: "suite_run_id", Quoted: `"suite_run_id"`, Field: "SuiteRunID", Kind: schema.KindString, Flags: schema.FlagNullable, Label: `Suite Run ID`, JSON: `suiteRunId`},
 		{Name: "suite_ordinal", Quoted: `"suite_ordinal"`, Field: "SuiteOrdinal", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Suite Ordinal`, JSON: `suiteOrdinal`},
+		{Name: "trial_provider_id", Quoted: `"trial_provider_id"`, Field: "TrialProviderID", Kind: schema.KindString, Flags: schema.FlagNullable, Label: `Trial Provider ID`, JSON: `trialProviderId`},
 		{Name: "workflow_id", Quoted: `"workflow_id"`, Field: "WorkflowID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Workflow ID`, JSON: `workflowId`},
 		{Name: "error_message", Quoted: `"error_message"`, Field: "ErrorMessage", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Error Message`, JSON: `errorMessage`},
 		{Name: "requested_by_user_id", Quoted: `"requested_by_user_id"`, Field: "RequestedByUserID", Kind: schema.KindString, Flags: schema.FlagNullable, Label: `Requested By User ID`, JSON: `requestedByUserId`},
@@ -62,14 +63,14 @@ var evaluationsTable = schema.Table{
 	},
 	PK:           []int32{0, 1, 2},
 	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 33},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 34},
 	Returning:    nil,
-	Version:      31,
+	Version:      32,
 	AutoID:       0,
-	AutoCreate:   32,
-	AutoUpdate:   33,
+	AutoCreate:   33,
+	AutoUpdate:   34,
 	IDPrefix:     "aeval_",
 	New:          newEvaluation,
 	NewN:         newNEvaluation,
@@ -110,6 +111,7 @@ type EvaluationsTable struct {
 	Fingerprint       keel.JSONBCol
 	SuiteRunID        keelkinds.PulidIDCol
 	SuiteOrdinal      keel.Int64Col
+	TrialProviderID   keelkinds.PulidIDCol
 	WorkflowID        keel.StringCol
 	ErrorMessage      keel.StringCol
 	RequestedByUserID keelkinds.PulidIDCol
@@ -149,14 +151,15 @@ var Evaluations = &EvaluationsTable{
 	Fingerprint:       keel.JSONBCol{Col: keel.Col{Ref: &evaluationsRef, Index: 23}},
 	SuiteRunID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &evaluationsRef, Index: 24}}},
 	SuiteOrdinal:      keel.Int64Col{Col: keel.Col{Ref: &evaluationsRef, Index: 25}},
-	WorkflowID:        keel.StringCol{Col: keel.Col{Ref: &evaluationsRef, Index: 26}},
-	ErrorMessage:      keel.StringCol{Col: keel.Col{Ref: &evaluationsRef, Index: 27}},
-	RequestedByUserID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &evaluationsRef, Index: 28}}},
-	StartedAt:         keel.Int64Col{Col: keel.Col{Ref: &evaluationsRef, Index: 29}},
-	CompletedAt:       keel.Int64Col{Col: keel.Col{Ref: &evaluationsRef, Index: 30}},
-	Version:           keel.Int64Col{Col: keel.Col{Ref: &evaluationsRef, Index: 31}},
-	CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: &evaluationsRef, Index: 32}},
-	UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: &evaluationsRef, Index: 33}},
+	TrialProviderID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &evaluationsRef, Index: 26}}},
+	WorkflowID:        keel.StringCol{Col: keel.Col{Ref: &evaluationsRef, Index: 27}},
+	ErrorMessage:      keel.StringCol{Col: keel.Col{Ref: &evaluationsRef, Index: 28}},
+	RequestedByUserID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &evaluationsRef, Index: 29}}},
+	StartedAt:         keel.Int64Col{Col: keel.Col{Ref: &evaluationsRef, Index: 30}},
+	CompletedAt:       keel.Int64Col{Col: keel.Col{Ref: &evaluationsRef, Index: 31}},
+	Version:           keel.Int64Col{Col: keel.Col{Ref: &evaluationsRef, Index: 32}},
+	CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: &evaluationsRef, Index: 33}},
+	UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: &evaluationsRef, Index: 34}},
 }
 
 // BuildEvaluations builds the table of agent_evaluations for ref. Generated relation and alias methods call it.
@@ -189,14 +192,15 @@ func BuildEvaluations(r *keel.Ref) *EvaluationsTable {
 		Fingerprint:       keel.JSONBCol{Col: keel.Col{Ref: r, Index: 23}},
 		SuiteRunID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 24}}},
 		SuiteOrdinal:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 25}},
-		WorkflowID:        keel.StringCol{Col: keel.Col{Ref: r, Index: 26}},
-		ErrorMessage:      keel.StringCol{Col: keel.Col{Ref: r, Index: 27}},
-		RequestedByUserID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 28}}},
-		StartedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 29}},
-		CompletedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 30}},
-		Version:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 31}},
-		CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 32}},
-		UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 33}},
+		TrialProviderID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 26}}},
+		WorkflowID:        keel.StringCol{Col: keel.Col{Ref: r, Index: 27}},
+		ErrorMessage:      keel.StringCol{Col: keel.Col{Ref: r, Index: 28}},
+		RequestedByUserID: keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 29}}},
+		StartedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 30}},
+		CompletedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 31}},
+		Version:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 32}},
+		CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 33}},
+		UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 34}},
 	}
 }
 
@@ -640,20 +644,22 @@ func ptrEvaluation(p unsafe.Pointer, c int32) any {
 	case 25:
 		return (**int64)(unsafe.Pointer(&r.SuiteOrdinal))
 	case 26:
-		return &r.WorkflowID
+		return (**string)(unsafe.Pointer(&r.TrialProviderID))
 	case 27:
-		return &r.ErrorMessage
+		return &r.WorkflowID
 	case 28:
-		return (**string)(unsafe.Pointer(&r.RequestedByUserID))
+		return &r.ErrorMessage
 	case 29:
-		return &r.StartedAt
+		return (**string)(unsafe.Pointer(&r.RequestedByUserID))
 	case 30:
-		return &r.CompletedAt
+		return &r.StartedAt
 	case 31:
-		return &r.Version
+		return &r.CompletedAt
 	case 32:
-		return &r.CreatedAt
+		return &r.Version
 	case 33:
+		return &r.CreatedAt
+	case 34:
 		return &r.UpdatedAt
 	}
 	return nil
@@ -766,35 +772,40 @@ func valueEvaluation(p unsafe.Pointer, c int32) any {
 		}
 		return int64(*r.SuiteOrdinal)
 	case 26:
+		if r.TrialProviderID == nil {
+			return nil
+		}
+		return string(*r.TrialProviderID)
+	case 27:
 		if r.WorkflowID == "" {
 			return nil
 		}
 		return r.WorkflowID
-	case 27:
+	case 28:
 		if r.ErrorMessage == "" {
 			return nil
 		}
 		return r.ErrorMessage
-	case 28:
+	case 29:
 		if r.RequestedByUserID == nil {
 			return nil
 		}
 		return string(*r.RequestedByUserID)
-	case 29:
+	case 30:
 		if r.StartedAt == nil {
 			return nil
 		}
 		return *r.StartedAt
-	case 30:
+	case 31:
 		if r.CompletedAt == nil {
 			return nil
 		}
 		return *r.CompletedAt
-	case 31:
-		return r.Version
 	case 32:
-		return r.CreatedAt
+		return r.Version
 	case 33:
+		return r.CreatedAt
+	case 34:
 		return r.UpdatedAt
 	}
 	return nil

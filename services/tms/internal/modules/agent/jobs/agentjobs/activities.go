@@ -100,9 +100,7 @@ type ActivitiesParams struct {
 	PaletteQuestions paletteports.QuestionRepository
 	// Watchtower puts a run that could not finish on the feed, so a
 	// failure nobody was watching for still reaches someone.
-	Watchtower watchtowerports.WatchtowerProjector
-	// Conditions closes what was handed to a run that proposed nothing.
-	Conditions  watchtowerports.RunSettler
+	Watchtower  watchtowerports.WatchtowerProjector
 	Reflections agentreflectionports.AgentReflectionScheduler
 	RunCloser   agentruntimeports.RunCloser
 	// Chases and EventRuns are the queued agent work whose lost wakes the
@@ -143,7 +141,6 @@ type Activities struct {
 	subjects         agentruntimeports.AgentSubjectDescriber
 	activity         agentactivityports.AgentActivityPublisher
 	watchtower       watchtowerports.WatchtowerProjector
-	conditions       watchtowerports.RunSettler
 	reflections      agentreflectionports.AgentReflectionScheduler
 	runCloser        agentruntimeports.RunCloser
 	queuedWork       []queuedWaker
@@ -184,7 +181,6 @@ func NewActivities(p ActivitiesParams) *Activities {
 		subjects:         p.Subjects,
 		activity:         p.Activity,
 		watchtower:       p.Watchtower,
-		conditions:       p.Conditions,
 		reflections:      p.Reflections,
 		runCloser:        p.RunCloser,
 		queuedWork:       []queuedWaker{p.Chases, p.EventRuns},
@@ -369,6 +365,7 @@ func (a *Activities) OpenRunActivity(
 	if err != nil {
 		return nil, err
 	}
+	req.Shadow = input.Shadow
 
 	return &OpenRunResult{
 		Run:  agentflow.NewRunContext(req, agentflowcontract.PriorityBackground),
@@ -602,55 +599,12 @@ func (a *Activities) CompleteRunActivity(ctx context.Context, input *CompleteRun
 	}
 
 	a.projectFailedRun(ctx, input.TenantInfo, completed)
-	a.settleEmptyRun(ctx, input, completed)
 	a.reflections.AfterRun(ctx, &agentreflectionports.ReflectOnRunRequest{
 		TenantInfo: input.TenantInfo,
 		RunID:      input.RunID,
 	})
 
 	return nil
-}
-
-// settleEmptyRun closes what was handed to a run that ended without asking
-// for any change: the agent looked and found nothing to do, so the item is
-// not left saying work is under way. A run that left a wait open is paused,
-// not finished, and keeps its item.
-func (a *Activities) settleEmptyRun(
-	ctx context.Context,
-	input *CompleteRunInput,
-	run *agent.AgentRun,
-) {
-	if run == nil || !input.ProposedNothing || run.Status != agent.RunStatusCompleted {
-		return
-	}
-
-	waiting, err := a.waits.HasOpenForRun(ctx, input.TenantInfo, run.ID)
-	if err != nil {
-		a.logger.Warn("could not tell whether a finished run is waiting on something",
-			zap.String("run", run.ID.String()), zap.Error(err))
-
-		return
-	}
-	if waiting {
-		return
-	}
-
-	actor, err := a.unattendedActor(ctx, input.TenantInfo, nil)
-	if err != nil {
-		a.logger.Warn("could not close what a finished run was working",
-			zap.String("run", run.ID.String()), zap.Error(err))
-
-		return
-	}
-	if run.AgentDefinitionID.IsNotNil() {
-		actor.PrincipalID = run.AgentDefinitionID
-	}
-
-	a.conditions.SettleRun(ctx, &watchtowerports.SettleRunRequest{
-		TenantInfo: input.TenantInfo,
-		RunID:      run.ID,
-		Note:       run.Summary,
-	}, actor)
 }
 
 // projectFailedRun puts a run that could not finish on the watchtower. A
@@ -667,6 +621,11 @@ func (a *Activities) projectFailedRun(
 
 	name := ""
 	if run.AgentDefinitionID.IsNotNil() {
+		// An agent in shadow is watched, not worked: its failures are read in
+		// AI control and never put in front of the people working the queue.
+		if a.inShadow(ctx, tenant, run.AgentDefinitionID) {
+			return
+		}
 		definition, err := a.definitions.GetByID(
 			ctx,
 			agentdefinitionports.GetAgentDefinitionByIDRequest{
@@ -682,6 +641,32 @@ func (a *Activities) projectFailedRun(
 	}
 
 	a.watchtower.Upsert(ctx, watchtowersources.DescribeFailedRun(run, name))
+}
+
+// inShadow reports whether the agent is in shadow now, by its own switch or
+// the organization's. An agent that cannot be read is treated as live, so a
+// real failure is never hidden by a lookup that failed.
+func (a *Activities) inShadow(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	definitionID pulid.ID,
+) bool {
+	definition, err := a.definitions.GetByID(
+		ctx,
+		agentdefinitionports.GetAgentDefinitionByIDRequest{
+			ID:         definitionID,
+			TenantInfo: tenant,
+		},
+	)
+	if err != nil || definition == nil {
+		return false
+	}
+	if definition.ShadowMode {
+		return true
+	}
+	control, err := a.controls.GetOrCreate(ctx, tenant)
+
+	return err == nil && control != nil && control.ShadowMode
 }
 
 func (a *Activities) ExpireProposalsActivity(

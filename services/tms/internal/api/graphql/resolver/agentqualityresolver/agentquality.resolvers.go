@@ -240,7 +240,7 @@ func (r *MutationResolver) ReplayAgentEvalCase(ctx context.Context, id string) (
 	}, actorutil.FromAuthContext(authCtx))
 }
 
-func (r *MutationResolver) RunAgentSuite(ctx context.Context, agentDefinitionID string) (*agentqualitysuite.SuiteRun, error) {
+func (r *MutationResolver) RunAgentSuite(ctx context.Context, agentDefinitionID string, trialProviderID *string) (*agentqualitysuite.SuiteRun, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentEvalSuite, permission.OpCreate)
 	if err != nil {
 		return nil, err
@@ -251,9 +251,15 @@ func (r *MutationResolver) RunAgentSuite(ctx context.Context, agentDefinitionID 
 		return nil, err
 	}
 
+	trialProvider, err := gqlid.ParseOptionalIDField("trialProviderId", trialProviderID)
+	if err != nil {
+		return nil, err
+	}
+
 	return r.AgentQualityService.RunSuite(ctx, &agentqualityports.RunAgentSuiteRequest{
 		TenantInfo:        resolvercore.TenantInfo(authCtx),
 		AgentDefinitionID: definitionID,
+		TrialProviderID:   trialProvider,
 	}, actorutil.FromAuthContext(authCtx))
 }
 

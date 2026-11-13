@@ -92,6 +92,12 @@ query DeskCase($kind: String!, $id: ID!, $timezone: String) {
         ...WatchtowerAgentFields
       }
       note
+      play
+      request {
+        at
+        by
+        summary
+      }
     }
     away {
       until

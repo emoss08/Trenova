@@ -8,6 +8,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtowerpanel"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtowerplay"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -43,7 +46,7 @@ type WatchtowerItemInput struct {
 	// Panel is what is happening, in the shape made for it: a stop and its
 	// window, a clock, a paper that is missing. Left nil, the item is read
 	// from its facts.
-	Panel *watchtower.Panel
+	Panel *watchtowerpanel.Panel
 }
 
 // WatchtowerProjector is what a source calls as its records open and close.
@@ -98,6 +101,9 @@ type ListWatchtowerItemsRequest struct {
 	AboutIDs       []pulid.ID
 	OrderByDue     bool
 	AgentWorking   bool
+	// Mine narrows a reader who may see everyone's cases to their own and
+	// the ones nobody owns.
+	Mine bool
 }
 
 type WatchtowerPage struct {
@@ -273,6 +279,14 @@ type WatchtowerService interface {
 		tenant pagination.TenantInfo,
 		actor *permissionports.RequestActor,
 	) (*WatchtowerCounts, error)
+	// CountsFor is Counts, narrowed when mine is set to the reader's own
+	// cases and the ones nobody owns.
+	CountsFor(
+		ctx context.Context,
+		tenant pagination.TenantInfo,
+		actor *permissionports.RequestActor,
+		mine bool,
+	) (*WatchtowerCounts, error)
 	MarkSeen(
 		ctx context.Context,
 		tenant pagination.TenantInfo,
@@ -354,26 +368,103 @@ type RecordSettler interface {
 	) int
 }
 
-// SettleRunRequest closes what was handed to an agent's run that looked and
-// found nothing to change.
-type SettleRunRequest struct {
+// PlanRequest is the item a play is planned for.
+type PlanRequest struct {
 	TenantInfo pagination.TenantInfo
-	// RunID is the run the items were handed to.
-	RunID pulid.ID
-	// Note is what the agent found, kept in the trail of each item it closes.
-	Note string
+	Item       *watchtower.Item
 }
 
-// RunSettler closes the items an agent's run was working once the run ends
-// having proposed nothing: the agent looked, there was nothing to change, and
-// leaving the item in progress would say work is under way that is not. The
-// item is closed as a person's Done closes it, so it stays closed while the
-// source keeps reporting the same problem and comes back when the problem
-// clears and returns.
-type RunSettler interface {
-	SettleRun(
+// PlayGrant is something the person sending a play must be allowed to do.
+type PlayGrant struct {
+	Resource  permission.Resource
+	Operation permission.Operation
+}
+
+// PlaySending is a play as the person approved it: the words they left in
+// the box, and the key that keeps a repeated click from sending it twice.
+type PlaySending struct {
+	Message        string
+	IdempotencyKey string
+}
+
+// PlannedPlay is a play planned for one item: what the person is shown,
+// what they must be allowed to do to send it, the sentence the item keeps
+// once it is sent, and the send itself. Who it goes to is closed over by
+// Send, so an address or a number never leaves the playbook.
+type PlannedPlay struct {
+	watchtowerplay.Play
+
+	Needs []PlayGrant
+	Asked string
+	Send  func(ctx context.Context, sending *PlaySending) error
+}
+
+// Playbook plans one kind of play from the record. What an item of its kind
+// needs first follows from the kind, and who to ask and how follows from
+// what is on the record, so nothing here asks a model and nothing depends
+// on an agent being set up: the play is the person's own action, sent under
+// their name with their permissions.
+type Playbook interface {
+	Kind() watchtowerplay.Kind
+	// Plan reads the record and says what would be sent, to whom and how.
+	// It fails with a business error, in words for the person, when the
+	// play cannot be made: nobody can be reached, or it is already done.
+	Plan(ctx context.Context, req *PlanRequest) (*PlannedPlay, error)
+}
+
+// PlayPreview is a play as the person about to send it is shown it.
+type PlayPreview struct {
+	ItemID       pulid.ID
+	Kind         watchtowerplay.Kind
+	Channel      watchtowerplay.Channel
+	Recipient    string
+	Sender       string
+	Subject      string
+	Message      string
+	MessageLimit int
+	Summary      string
+	// CanReword says Nova can rewrite the message for this organization.
+	CanReword bool
+}
+
+type PlayTarget struct {
+	TenantInfo pagination.TenantInfo
+	ItemID     pulid.ID
+}
+
+type RewordPlayRequest struct {
+	PlayTarget
+
+	// Message is the words in the box now; Guidance is how the person wants
+	// them to read.
+	Message  string
+	Guidance string
+}
+
+type SendPlayRequest struct {
+	PlayTarget
+
+	// Message is the words the person approved; empty sends the play's own.
+	Message        string
+	IdempotencyKey string
+}
+
+// PlayService is a person's first move on a Watchtower item: preview it,
+// have its words reworded, send it.
+type PlayService interface {
+	Preview(
 		ctx context.Context,
-		req *SettleRunRequest,
+		req *PlayTarget,
 		actor *permissionports.RequestActor,
-	) int
+	) (*PlayPreview, error)
+	Reword(
+		ctx context.Context,
+		req *RewordPlayRequest,
+		actor *permissionports.RequestActor,
+	) (string, error)
+	Send(
+		ctx context.Context,
+		req *SendPlayRequest,
+		actor *permissionports.RequestActor,
+	) (*watchtower.Item, error)
 }

@@ -1,4 +1,10 @@
-import { parseAsArrayOf, parseAsBoolean, parseAsString, parseAsStringLiteral } from "nuqs";
+import {
+  parseAsArrayOf,
+  parseAsBoolean,
+  parseAsInteger,
+  parseAsString,
+  parseAsStringLiteral,
+} from "nuqs";
 
 export const aiControlTabValues = [
   "overview",
@@ -57,6 +63,10 @@ export type BuilderStart = (typeof BUILDER_STARTS)[number];
 
 export const AGENT_EDIT_PARAM = "editAgent";
 export const agentEditParser = parseAsString.withOptions({ history: "push", shallow: true });
+
+/** An earlier version the builder loads as a draft when it opens, then drops from the address. */
+export const AGENT_RESTORE_PARAM = "restoreVersion";
+export const agentRestoreParser = parseAsInteger.withOptions({ history: "replace", shallow: true });
 
 export const AGENT_NEW_PARAM = "newAgent";
 export const agentNewParser = parseAsStringLiteral(BUILDER_STARTS).withOptions({

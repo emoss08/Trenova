@@ -191,6 +191,42 @@ func TestRun_ASimulatedWriteReadsTheBaselinePreview(t *testing.T) {
 	assert.False(t, previews.asked[0].Persist, "a simulated write files no baseline")
 }
 
+// A shadow agent files nothing for anyone to decide: a write it would have
+// asked approval for is recorded as what it would have done, so it reaches
+// neither Decisions nor the Watchtower. The same write from a live agent is
+// held for a person.
+func TestRun_AShadowRunSimulatesAWriteItWouldHaveAskedApprovalFor(t *testing.T) {
+	t.Parallel()
+
+	for _, shadow := range []bool{true, false} {
+		tool := &targetedStubTool{actionTool("shipment_place_hold", agent.TierPropose, nil)}
+		completion := &scriptedCompletion{Turns: []*llmports.ChatCompletionResult{
+			runtimetest.ToolTurn(
+				"shipment_place_hold",
+				map[string]any{"shipmentId": pulid.MustNew("shp_").String()},
+			),
+			runtimetest.TextTurn("held"),
+		}}
+		rt := newRuntime(completion, &stubQueryRegistry{}, &stubActionRegistry{
+			Tools: []agenttoolports.AgentTool{tool},
+		}, nil)
+		rewire(rt, func(p *runtimeParts) { p.Previews = &recordingPreviews{} })
+
+		result, err := rt.Run(t.Context(), &agentruntimeports.RunRequest{
+			Definition: runtimetest.Definition("shipment_place_hold"),
+			Actor:      runtimetest.Actor(),
+			Input:      "hold it",
+			Shadow:     shadow,
+		})
+		require.NoError(t, err)
+
+		require.Len(t, result.Actions, 1)
+		assert.Equal(t, shadow, result.Actions[0].Simulated,
+			"in shadow the write is what it would have done; live it is held for a person")
+		assert.Zero(t, tool.Calls, "nothing ran either way")
+	}
+}
+
 func TestRun_AnEvaluationKeepsNoBaseline(t *testing.T) {
 	t.Parallel()
 

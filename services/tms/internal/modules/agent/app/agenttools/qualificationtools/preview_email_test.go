@@ -3,16 +3,18 @@ package qualificationtools
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/outboundpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/app/requestemail"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestEmailCustomerPreview_IsTheEmailExecuteSends(t *testing.T) {
@@ -132,11 +134,11 @@ func TestRequestMissingDocsPreview_IsTheEmailExecuteSends(t *testing.T) {
 	t.Parallel()
 
 	mailer := &agenttoolstest.FakeMailer{}
-	tool := &RequestMissingDocsTool{
-		email:     mailer,
-		templates: &agenttoolstest.FakeRenderer{},
-		senders:   agenttoolstest.FakeSenders{},
-	}
+	tool := &RequestMissingDocsTool{requests: requestemail.New(requestemail.Params{
+		Email:     mailer,
+		Templates: &agenttoolstest.FakeRenderer{},
+		Senders:   agenttoolstest.FakeSenders{},
+	})}
 	params := agenttoolstest.ExecuteParams(map[string]any{
 		"profileId":          pulid.MustNew("emp_").String(),
 		"to":                 []any{"pod@consignee.example"},

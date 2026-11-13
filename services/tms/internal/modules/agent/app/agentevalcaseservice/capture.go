@@ -7,9 +7,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmessage"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitycontrol"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentreplay"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aifeedback"
@@ -34,6 +36,7 @@ type frozenTurn struct {
 	threadID  pulid.ID
 	messageID pulid.ID
 	input     string
+	askedAt   int64
 	history   []agentquality.HistoryMessage
 	page      *agentpagecontext.PageContext
 	mentions  []agentpagecontext.EntityRef
@@ -51,6 +54,15 @@ func (s *Service) CreateFromProposal(
 	ctx context.Context,
 	req *agentqualityports.CreateEvalCaseFromProposalRequest,
 	actor *permissionports.RequestActor,
+) (*agentqualityports.EvalCaseCapture, error) {
+	return s.captureProposal(ctx, req, actor, false)
+}
+
+func (s *Service) captureProposal(
+	ctx context.Context,
+	req *agentqualityports.CreateEvalCaseFromProposalRequest,
+	actor *permissionports.RequestActor,
+	automatic bool,
 ) (*agentqualityports.EvalCaseCapture, error) {
 	tenantInfo := req.TenantInfo
 	existing, err := s.cases.GetByProposal(ctx, agentqualityports.GetAgentEvalCaseByProposalRequest{
@@ -106,35 +118,15 @@ func (s *Service) CreateFromProposal(
 		return nil, err
 	}
 
-	original := agentreplay.NewOriginalProposal(proposal, decided)
-	rejected := original.Decision == agentdecision.DecisionRejected
-	runID := run.ID
-	proposalID := proposal.ID
-	evalCase := &agentquality.EvalCase{
-		OrganizationID:    tenantInfo.OrgID,
-		BusinessUnitID:    tenantInfo.BuID,
-		AgentDefinitionID: definition.ID,
-		Title:             strings.TrimSpace(req.Title),
-		Source:            agentquality.CaseSourceDecidedProposal,
-		Status:            agentquality.CaseStatusCandidate,
-		Trigger:           run.Trigger,
-		SourceRunID:       &runID,
-		SourceProposalID:  &proposalID,
-		HeldTools:         definition.EffectiveToolNames(),
-		Expected: agentquality.Expected{
-			ToolMode: agentquality.ToolMatchAnyOrder,
-			Proposals: []agentquality.ExpectedProposal{{
-				ToolName:         proposal.ToolName,
-				Params:           original.Expected(),
-				Rejected:         rejected,
-				SourceProposalID: proposal.ID.String(),
-			}},
-		},
-		CapturedFingerprint: agentquality.FingerprintOf(definition, promptVersion),
-	}
-	if evalCase.Title == "" {
-		evalCase.Title = proposalTitle(proposal.ToolName, rejected)
-	}
+	evalCase := proposalCase(&proposalCapture{
+		tenant:     tenantInfo,
+		title:      req.Title,
+		proposal:   proposal,
+		decided:    decided,
+		run:        run,
+		definition: definition,
+		automatic:  automatic,
+	})
 
 	if run.SubjectType == agent.SubjectAssistantThread {
 		frozen, redacted, freezeErr := s.freezeChat(ctx, tenantInfo, turnAnchor{
@@ -153,6 +145,54 @@ func (s *Service) CreateFromProposal(
 	}
 
 	return s.save(ctx, evalCase, actor)
+}
+
+type proposalCapture struct {
+	tenant     pagination.TenantInfo
+	title      string
+	proposal   *agent.AgentProposal
+	decided    []*agentdecision.AgentDecision
+	run        *agent.AgentRun
+	definition *agentdefinition.Definition
+	automatic  bool
+}
+
+func proposalCase(p *proposalCapture) *agentquality.EvalCase {
+	original := agentreplay.NewOriginalProposal(p.proposal, p.decided)
+	rejected := original.Decision == agentdecision.DecisionRejected
+	runID := p.run.ID
+	proposalID := p.proposal.ID
+	evalCase := &agentquality.EvalCase{
+		OrganizationID:    p.tenant.OrgID,
+		BusinessUnitID:    p.tenant.BuID,
+		AgentDefinitionID: p.definition.ID,
+		Title:             strings.TrimSpace(p.title),
+		Source:            agentquality.CaseSourceDecidedProposal,
+		Status:            agentquality.CaseStatusCandidate,
+		Trigger:           p.run.Trigger,
+		SourceRunID:       &runID,
+		SourceProposalID:  &proposalID,
+		HeldTools:         p.definition.EffectiveToolNames(),
+		Expected: agentquality.Expected{
+			ToolMode: agentquality.ToolMatchAnyOrder,
+			Proposals: []agentquality.ExpectedProposal{{
+				ToolName:         p.proposal.ToolName,
+				Params:           original.Expected(),
+				Rejected:         rejected,
+				SourceProposalID: p.proposal.ID.String(),
+			}},
+		},
+		CapturedFingerprint: agentquality.FingerprintOf(p.definition, promptVersion),
+	}
+	if evalCase.Title == "" {
+		evalCase.Title = proposalTitle(p.proposal.ToolName, rejected)
+	}
+	if p.automatic {
+		evalCase.Status = agentquality.CaseStatusActive
+		evalCase.Automatic = true
+	}
+
+	return evalCase
 }
 
 func (s *Service) CreateFromMessage(
@@ -317,28 +357,38 @@ func (s *Service) captureMessage(
 	return s.save(ctx, evalCase, actor)
 }
 
+type agentScope struct {
+	tenant  pagination.TenantInfo
+	agentID pulid.ID
+}
+
 func (s *Service) CaptureCandidates(
 	ctx context.Context,
 	req agentqualityports.CaptureEvalCaseCandidatesRequest,
 ) (*agentqualityports.CaptureEvalCaseCandidatesResult, error) {
 	candidates, err := s.cases.ListCaptureCandidates(
 		ctx,
-		agentqualityports.ListEvalCaseCaptureCandidatesRequest{Since: req.Since, Limit: req.Limit},
+		agentqualityports.ListEvalCaseCaptureCandidatesRequest(req),
 	)
 	if err != nil {
 		return nil, err
 	}
 
 	result := &agentqualityports.CaptureEvalCaseCandidatesResult{Scanned: len(candidates)}
+	controls := make(map[pagination.TenantInfo]*agentqualitycontrol.Control)
+	grown := make(map[agentScope]int)
 	for _, candidate := range candidates {
-		request := &agentqualityports.CreateEvalCaseFromProposalRequest{
-			ProposalID: candidate.ProposalID,
-			TenantInfo: candidate.TenantInfo(),
-		}
-		captured, captureErr := s.CreateFromProposal(
-			dbscope.WithTenant(ctx, request.TenantInfo.DBTenant()),
-			request,
+		tenantInfo := candidate.TenantInfo()
+		tenantCtx := dbscope.WithTenant(ctx, tenantInfo.DBTenant())
+		control := s.controlOf(tenantCtx, tenantInfo, controls)
+		captured, captureErr := s.captureProposal(
+			tenantCtx,
+			&agentqualityports.CreateEvalCaseFromProposalRequest{
+				ProposalID: candidate.ProposalID,
+				TenantInfo: tenantInfo,
+			},
 			nil,
+			control.AutoActivate,
 		)
 		switch {
 		case captureErr != nil:
@@ -352,10 +402,134 @@ func (s *Service) CaptureCandidates(
 			result.Duplicates++
 		default:
 			result.Captured++
+			if captured.Case.Automatic {
+				result.Activated++
+				grown[agentScope{
+					tenant:  tenantInfo,
+					agentID: captured.Case.AgentDefinitionID,
+				}] = control.AutoCasesPerAgent
+			}
 		}
 	}
 
+	result.Adopted = s.adopt(ctx, req.Limit, controls, grown)
+
+	for scope, keep := range grown {
+		result.Rotated += s.rotate(
+			dbscope.WithTenant(ctx, scope.tenant.DBTenant()),
+			scope,
+			keep,
+		)
+	}
+
 	return result, nil
+}
+
+const maxAdoptBatches = 5
+
+func (s *Service) adopt(
+	ctx context.Context,
+	limit int,
+	controls map[pagination.TenantInfo]*agentqualitycontrol.Control,
+	grown map[agentScope]int,
+) int {
+	now := s.now()
+	adopted := 0
+	for range maxAdoptBatches {
+		batch, err := s.cases.AdoptCandidates(ctx, agentqualityports.AdoptEvalCaseCandidatesRequest{
+			CreatedAfter: agentqualitycontrol.AutomaticCaseCutoff(now),
+			At:           now,
+			Limit:        limit,
+		})
+		if err != nil {
+			s.l.Warn("candidate evaluation cases not adopted this round", zap.Error(err))
+
+			return adopted
+		}
+		for i := range batch {
+			tenantInfo := batch[i].TenantInfo()
+			control := s.controlOf(
+				dbscope.WithTenant(ctx, tenantInfo.DBTenant()),
+				tenantInfo,
+				controls,
+			)
+			grown[agentScope{
+				tenant:  tenantInfo,
+				agentID: batch[i].AgentDefinitionID,
+			}] = control.AutoCasesPerAgent
+		}
+		adopted += len(batch)
+		if len(batch) == 0 || (limit > 0 && len(batch) < limit) {
+			return adopted
+		}
+	}
+
+	return adopted
+}
+
+func (s *Service) controlOf(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	read map[pagination.TenantInfo]*agentqualitycontrol.Control,
+) *agentqualitycontrol.Control {
+	if control, ok := read[tenantInfo]; ok {
+		return control
+	}
+
+	control, err := s.settings.Control(ctx, tenantInfo)
+	if err != nil {
+		s.l.Warn("quality controls unread; decided proposals stay candidates this round",
+			zap.String("organizationId", tenantInfo.OrgID.String()),
+			zap.Error(err),
+		)
+		control = &agentqualitycontrol.Control{}
+	}
+	read[tenantInfo] = control
+
+	return control
+}
+
+func (s *Service) rotate(ctx context.Context, scope agentScope, keep int) int {
+	if keep <= 0 {
+		return 0
+	}
+
+	cases, err := s.cases.ListAutomatic(ctx, agentqualityports.ListAutomaticEvalCasesRequest{
+		TenantInfo:        scope.tenant,
+		AgentDefinitionID: scope.agentID,
+	})
+	if err != nil {
+		s.l.Warn("automatic evaluation cases unread; the agent keeps more than its share",
+			zap.String("agentDefinitionId", scope.agentID.String()),
+			zap.Error(err),
+		)
+
+		return 0
+	}
+
+	overflow := agentquality.AutomaticOverflow(cases, keep)
+	if len(overflow) == 0 {
+		return 0
+	}
+
+	retired, err := s.cases.RetireAutomatic(ctx, &agentqualityports.RetireAutomaticEvalCasesRequest{
+		TenantInfo: scope.tenant,
+		IDs:        overflow,
+		At:         s.now(),
+	})
+	if err != nil {
+		s.l.Warn("automatic evaluation cases not retired; the agent keeps more than its share",
+			zap.String("agentDefinitionId", scope.agentID.String()),
+			zap.Error(err),
+		)
+
+		return 0
+	}
+	if retired > 0 {
+		s.logRotation(ctx, scope, overflow, keep)
+	}
+
+	return retired
 }
 
 func (s *Service) proposalDecisions(
@@ -465,6 +639,7 @@ func (s *Service) freezeChat(
 	frozen := &frozenTurn{
 		threadID: anchor.threadID,
 		input:    asked.Content,
+		askedAt:  asked.CreatedAt,
 		history:  s.redactor.History(agentquality.HistoryFromMessages(messages[:turn]), out),
 		page:     asked.PageContext,
 		mentions: asked.Mentions,
@@ -533,6 +708,10 @@ func applyFrozen(
 		evalCase.SourceMessageID = &messageID
 	}
 	evalCase.Input = frozen.input
+	if frozen.askedAt > 0 {
+		askedAt := frozen.askedAt
+		evalCase.AskedAt = &askedAt
+	}
 	evalCase.History = frozen.history
 	evalCase.PageContext = frozen.page
 	evalCase.Mentions = frozen.mentions

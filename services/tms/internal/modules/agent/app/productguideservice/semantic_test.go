@@ -184,6 +184,76 @@ func TestSearch_FusesWordsAndMeaning(t *testing.T) {
 	assert.Nil(t, matches[1].Task, "a page found by meaning alone names no task it did not match")
 }
 
+func TestRankPaths_ATieGoesToThePageFoundByItsWords(t *testing.T) {
+	t.Parallel()
+
+	guide := NewOffline(&productguide.Catalog{Pages: []productguide.Page{
+		{
+			Path:         "/a/board",
+			Name:         "Board",
+			InNavigation: true,
+			Description:  "Cover open moves against available capacity.",
+		},
+		{
+			Path:         "/z/desk",
+			Name:         "Desk",
+			InNavigation: true,
+			Aliases:      []string{"snooze a case"},
+			Description:  "Work with agents and keep cases.",
+		},
+	}})
+
+	ranked := guide.RankPaths("snooze a case", retrievalports.CatalogSimilarities{
+		Available: true,
+		ByKey:     map[string]float64{"/a/board": 0.9},
+		Floor:     0.5,
+	}, 5)
+
+	require.Len(t, ranked, 2)
+	assert.Equal(t, []string{"/z/desk", "/a/board"}, ranked,
+		"one page was found by the words and one only by resemblance, each first in its own "+
+			"ranking; path order would have put the lookalike first")
+}
+
+func TestRankPaths_ABetterFusedScoreStillBeatsAKeywordMatch(t *testing.T) {
+	t.Parallel()
+
+	guide := NewOffline(&productguide.Catalog{Pages: []productguide.Page{
+		{
+			Path:         "/a/board",
+			Name:         "Board",
+			InNavigation: true,
+			Aliases:      []string{"snooze a case"},
+			Description:  "Cover open moves against available capacity.",
+		},
+		{
+			Path:         "/z/desk",
+			Name:         "Cases",
+			InNavigation: true,
+			Aliases:      []string{"snooze a case"},
+			Description:  "Work with agents and keep cases.",
+		},
+		{Path: "/m/customers", Name: "Customers", InNavigation: true, Description: "Who you bill."},
+		{Path: "/n/workers", Name: "Workers", InNavigation: true, Description: "Who drives."},
+	}})
+
+	require.Equal(t,
+		[]string{"/z/desk", "/a/board"},
+		guide.RankPaths("snooze a case", retrievalports.CatalogSimilarities{}, 5),
+		"by its words alone the lookalike is second",
+	)
+
+	ranked := guide.RankPaths("snooze a case", retrievalports.CatalogSimilarities{
+		Available: true,
+		ByKey:     map[string]float64{"/a/board": 0.9},
+		Floor:     0.5,
+	}, 5)
+
+	require.NotEmpty(t, ranked)
+	assert.Equal(t, "/a/board", ranked[0],
+		"a page found second by its words and first by meaning outranks one found by words alone")
+}
+
 func TestSearch_NonsenseStillFindsNothing(t *testing.T) {
 	t.Parallel()
 

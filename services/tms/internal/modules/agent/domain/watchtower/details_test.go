@@ -4,9 +4,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
 func TestNormalizeFacts_DropsEmptyFactsAndCapsTheList(t *testing.T) {

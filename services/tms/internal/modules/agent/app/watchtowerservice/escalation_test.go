@@ -3,10 +3,11 @@ package watchtowerservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 )
 
 func TestSweepAttention_EscalatesOverdueItemsUpToTheCap(t *testing.T) {

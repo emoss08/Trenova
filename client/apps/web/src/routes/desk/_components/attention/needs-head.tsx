@@ -19,6 +19,8 @@ export function NeedsHead({
   total,
   keysEnabled = true,
   onClearFilters,
+  whose = null,
+  onWhose,
 }: {
   lens: NeedsLens;
   /** The lenses the person may open, in page order. */
@@ -32,6 +34,9 @@ export function NeedsHead({
   keysEnabled?: boolean;
   /** Set while the list is filtered; clears the filters. */
   onClearFilters?: () => void;
+  /** Whose cases are listed; null for a reader who only ever sees their own. */
+  whose?: "mine" | "everyone" | null;
+  onWhose?: (whose: "mine" | "everyone") => void;
 }) {
   const t = useT();
 
@@ -89,6 +94,26 @@ export function NeedsHead({
             <span className="dk-w-chip-n">{counts[value]}</span>
           </button>
         ))}
+        {whose !== null && onWhose && (
+          <span className="ml-auto inline-flex gap-1" role="group" aria-label={t("Whose cases")}>
+            <button
+              type="button"
+              className="dk-w-chip ui-focus-ring"
+              aria-pressed={whose === "mine"}
+              onClick={() => onWhose("mine")}
+            >
+              {t("Mine")}
+            </button>
+            <button
+              type="button"
+              className="dk-w-chip ui-focus-ring"
+              aria-pressed={whose === "everyone"}
+              onClick={() => onWhose("everyone")}
+            >
+              {t("Everyone")}
+            </button>
+          </span>
+        )}
         {onClearFilters && (
           <button
             type="button"

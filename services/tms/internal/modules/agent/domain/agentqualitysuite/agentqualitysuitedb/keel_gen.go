@@ -53,20 +53,22 @@ var suiteRunsTable = schema.Table{
 		{Name: "comments", Quoted: `"comments"`, Field: "Comments", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Comments`, JSON: `comments`},
 		{Name: "workflow_id", Quoted: `"workflow_id"`, Field: "WorkflowID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Workflow ID`, JSON: `workflowId`},
 		{Name: "requested_by_user_id", Quoted: `"requested_by_user_id"`, Field: "RequestedByUserID", Kind: schema.KindString, Flags: schema.FlagNullable, Label: `Requested By User ID`, JSON: `requestedByUserId`},
+		{Name: "trial_provider_id", Quoted: `"trial_provider_id"`, Field: "TrialProviderID", Kind: schema.KindString, Flags: schema.FlagNullable, Label: `Trial Provider ID`, JSON: `trialProviderId`},
+		{Name: "trial_label", Quoted: `"trial_label"`, Field: "TrialLabel", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Trial Label`, JSON: `trialLabel`},
 		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, JSON: `version`},
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
 	PK:           []int32{0, 1, 2},
 	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 31},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 33},
 	Returning:    nil,
-	Version:      29,
+	Version:      31,
 	AutoID:       -1,
-	AutoCreate:   30,
-	AutoUpdate:   31,
+	AutoCreate:   32,
+	AutoUpdate:   33,
 	IDPrefix:     "",
 	New:          newSuiteRun,
 	NewN:         newNSuiteRun,
@@ -110,6 +112,8 @@ type SuiteRunsTable struct {
 	Comments           keel.StringCol
 	WorkflowID         keel.StringCol
 	RequestedByUserID  keelkinds.PulidIDCol
+	TrialProviderID    keelkinds.PulidIDCol
+	TrialLabel         keel.StringCol
 	Version            keel.Int64Col
 	CreatedAt          keel.Int64Col
 	UpdatedAt          keel.Int64Col
@@ -147,9 +151,11 @@ var SuiteRuns = &SuiteRunsTable{
 	Comments:           keel.StringCol{Col: keel.Col{Ref: &suiteRunsRef, Index: 26}},
 	WorkflowID:         keel.StringCol{Col: keel.Col{Ref: &suiteRunsRef, Index: 27}},
 	RequestedByUserID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &suiteRunsRef, Index: 28}}},
-	Version:            keel.Int64Col{Col: keel.Col{Ref: &suiteRunsRef, Index: 29}},
-	CreatedAt:          keel.Int64Col{Col: keel.Col{Ref: &suiteRunsRef, Index: 30}},
-	UpdatedAt:          keel.Int64Col{Col: keel.Col{Ref: &suiteRunsRef, Index: 31}},
+	TrialProviderID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &suiteRunsRef, Index: 29}}},
+	TrialLabel:         keel.StringCol{Col: keel.Col{Ref: &suiteRunsRef, Index: 30}},
+	Version:            keel.Int64Col{Col: keel.Col{Ref: &suiteRunsRef, Index: 31}},
+	CreatedAt:          keel.Int64Col{Col: keel.Col{Ref: &suiteRunsRef, Index: 32}},
+	UpdatedAt:          keel.Int64Col{Col: keel.Col{Ref: &suiteRunsRef, Index: 33}},
 }
 
 // BuildSuiteRuns builds the table of agent_suite_runs for ref. Generated relation and alias methods call it.
@@ -185,9 +191,11 @@ func BuildSuiteRuns(r *keel.Ref) *SuiteRunsTable {
 		Comments:           keel.StringCol{Col: keel.Col{Ref: r, Index: 26}},
 		WorkflowID:         keel.StringCol{Col: keel.Col{Ref: r, Index: 27}},
 		RequestedByUserID:  keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 28}}},
-		Version:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 29}},
-		CreatedAt:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 30}},
-		UpdatedAt:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 31}},
+		TrialProviderID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 29}}},
+		TrialLabel:         keel.StringCol{Col: keel.Col{Ref: r, Index: 30}},
+		Version:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 31}},
+		CreatedAt:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 32}},
+		UpdatedAt:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 33}},
 	}
 }
 
@@ -637,10 +645,14 @@ func ptrSuiteRun(p unsafe.Pointer, c int32) any {
 	case 28:
 		return (**string)(unsafe.Pointer(&r.RequestedByUserID))
 	case 29:
-		return &r.Version
+		return (**string)(unsafe.Pointer(&r.TrialProviderID))
 	case 30:
-		return &r.CreatedAt
+		return &r.TrialLabel
 	case 31:
+		return &r.Version
+	case 32:
+		return &r.CreatedAt
+	case 33:
 		return &r.UpdatedAt
 	}
 	return nil
@@ -744,10 +756,20 @@ func valueSuiteRun(p unsafe.Pointer, c int32) any {
 		}
 		return string(*r.RequestedByUserID)
 	case 29:
-		return r.Version
+		if r.TrialProviderID == nil {
+			return nil
+		}
+		return string(*r.TrialProviderID)
 	case 30:
-		return r.CreatedAt
+		if r.TrialLabel == "" {
+			return nil
+		}
+		return r.TrialLabel
 	case 31:
+		return r.Version
+	case 32:
+		return r.CreatedAt
+	case 33:
 		return r.UpdatedAt
 	}
 	return nil

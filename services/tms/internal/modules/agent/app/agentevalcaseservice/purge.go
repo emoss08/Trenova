@@ -3,6 +3,7 @@ package agentevalcaseservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitycontrol"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -26,6 +27,21 @@ func (s *Service) Purge(
 	}
 	limit := intutils.WithDefault(req.Limit, defaultPurgeBatch)
 	result := &agentqualityports.PurgeEvalCasesResult{}
+
+	aged, err := drain(limit, func() (int, error) {
+		return s.cases.RetireStaleAutomatic(
+			ctx,
+			agentqualityports.RetireStaleAutomaticEvalCasesRequest{
+				CreatedBefore: agentqualitycontrol.AutomaticCaseCutoff(now),
+				At:            now,
+				Limit:         limit,
+			},
+		)
+	})
+	result.Aged = aged
+	if err != nil {
+		return result, err
+	}
 
 	retentions, err := s.retention.List(ctx)
 	if err != nil {

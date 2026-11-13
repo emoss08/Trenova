@@ -10,6 +10,7 @@ import type { FreightOutlook, FreightPositioning } from "@/lib/graphql/freight-o
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { formatUnixDateTimeMedium } from "@trenova/shared/lib/date";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { FreightOutlook as FreightOutlookView } from "../freight-outlook";
@@ -320,8 +321,40 @@ describe("FreightOutlook", () => {
     renderPage();
 
     expect(
-      await screen.findByText("Freight forecast: Not better than last week yet"),
+      await screen.findByRole("heading", { name: "Not better than last week yet" }),
     ).toBeInTheDocument();
+    expect(screen.queryByRole("group", { name: "History counted so far" })).toBeNull();
+    expect(screen.getByRole("status")).toHaveTextContent(
+      `Last checked ${formatUnixDateTimeMedium(readyQuality.fittedAt)}. Checked again every night, and whenever this is opened more than an hour later.`,
+    );
     expect(screen.queryByRole("region", { name: "Summary" })).toBeNull();
+  });
+
+  it("shows how much history the forecast has and that it is being counted again", async () => {
+    mocks.outlook.mockResolvedValue(
+      outlook({
+        quality: {
+          ...readyQuality,
+          status: "InsufficientHistory",
+          historyWeeks: 11,
+          historyLoads: 35,
+          refitting: true,
+        },
+        areas: [],
+        moves: [],
+      }),
+    );
+
+    renderPage();
+
+    expect(
+      await screen.findByRole("heading", { name: "Not enough history yet" }),
+    ).toBeInTheDocument();
+    const history = screen.getByRole("group", { name: "History counted so far" });
+    expect(within(history).getByText("11 of 8")).toBeInTheDocument();
+    expect(within(history).getByText("35 of 200")).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent(
+      `Last checked ${formatUnixDateTimeMedium(readyQuality.fittedAt)}. Checking your shipment history again now; this updates when it finishes.`,
+    );
   });
 });

@@ -115,6 +115,7 @@ type RunContext struct {
 	RunID               pulid.ID                            `json:"runId,omitzero"`
 	ThreadID            pulid.ID                            `json:"threadId,omitzero"`
 	Unattended          bool                                `json:"unattended"`
+	Shadow              bool                                `json:"shadow,omitempty"`
 	Proposals           []agentruntimeports.ProposalOutcome `json:"proposals,omitempty"`
 	StepOwner           agentruntimeports.RunStepOwner      `json:"stepOwner"`
 	PreferredProviderID pulid.ID                            `json:"preferredProviderId,omitzero"`
@@ -159,6 +160,7 @@ func NewRunContext(req *agentruntimeports.RunRequest, priorityKey int) RunContex
 		RunID:               req.RunID,
 		ThreadID:            req.ThreadID,
 		Unattended:          req.Unattended,
+		Shadow:              req.Shadow,
 		Proposals:           req.Proposals,
 		StepOwner:           req.StepOwner,
 		PreferredProviderID: req.PreferredProviderID,
@@ -182,6 +184,7 @@ func (rc *RunContext) request() *agentruntimeports.RunRequest {
 		RunID:               rc.RunID,
 		ThreadID:            rc.ThreadID,
 		Unattended:          rc.Unattended,
+		Shadow:              rc.Shadow,
 		Proposals:           rc.Proposals,
 		StepOwner:           rc.StepOwner,
 		PreferredProviderID: rc.PreferredProviderID,

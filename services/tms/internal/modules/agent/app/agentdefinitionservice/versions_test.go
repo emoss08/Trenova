@@ -36,17 +36,6 @@ func (v *versionStore) List(
 	return v.created, nil
 }
 
-func (v *versionStore) Get(
-	_ context.Context,
-	req *agentdefinitionports.GetAgentDefinitionVersionRequest,
-) (*agentversion.DefinitionVersion, error) {
-	version, ok := v.byNumber[req.Version]
-	if !ok {
-		return nil, errortypes.NewNotFoundError("Agent version")
-	}
-	return version, nil
-}
-
 func (v *versionStore) LatestAt(
 	_ context.Context,
 	req *agentdefinitionports.GetAgentDefinitionVersionAtRequest,
@@ -190,6 +179,51 @@ func TestRestoreVersionIsADraftOnTheCurrentVersion(t *testing.T) {
 	assert.Equal(t, "Earlier instructions.", draft.Instructions)
 	assert.Equal(t, int64(9), draft.Version, "saving the draft replaces the agent as it is now")
 	assert.Equal(t, "Current instructions.", current.Instructions, "nothing was saved")
+}
+
+func TestRestoreVersionLoadsTheSaveAtOrBeforeAVersionBetweenSaves(t *testing.T) {
+	t.Parallel()
+
+	current := agentFixture()
+	current.Version = 9
+	earlier := agentFixture()
+	earlier.ID = current.ID
+	earlier.Instructions = "Earlier instructions."
+	later := agentFixture()
+	later.ID = current.ID
+	later.Instructions = "Later instructions."
+
+	svc := &Service{
+		l:    zap.NewNop(),
+		repo: &stubDefinitionRepo{existing: current},
+		versions: &versionStore{byNumber: map[int64]*agentversion.DefinitionVersion{
+			2: {Version: 2, Snapshot: earlier},
+			7: {Version: 7, Snapshot: later},
+		}},
+	}
+
+	draft, err := svc.RestoreVersion(
+		t.Context(),
+		&agentdefinitionports.GetAgentDefinitionVersionRequest{
+			TenantInfo:        testTenant(),
+			AgentDefinitionID: current.ID,
+			Version:           5,
+		},
+	)
+	require.NoError(t, err)
+	assert.Equal(t, "Earlier instructions.", draft.Instructions,
+		"the agent's counter moves on writes that are not saves, so 5 is the save at 2")
+
+	_, err = svc.RestoreVersion(
+		t.Context(),
+		&agentdefinitionports.GetAgentDefinitionVersionRequest{
+			TenantInfo:        testTenant(),
+			AgentDefinitionID: current.ID,
+			Version:           1,
+		},
+	)
+	require.Error(t, err)
+	assert.True(t, errortypes.IsNotFoundError(err), "nothing was saved at or before version 1")
 }
 
 func agentFixture() *agentdefinition.Definition {

@@ -1083,6 +1083,8 @@ var itemsTable = schema.Table{
 		{Name: "agent_run_id", Quoted: `"agent_run_id"`, Field: "AgentRunID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Agent Run ID`, JSON: `agentRunId`},
 		{Name: "agent_handed_at", Quoted: `"agent_handed_at"`, Field: "AgentHandedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Agent Handed At`, JSON: `agentHandedAt`},
 		{Name: "agent_handed_by_id", Quoted: `"agent_handed_by_id"`, Field: "AgentHandedByID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Agent Handed By ID`, JSON: `agentHandedById`},
+		{Name: "last_request", Quoted: `"last_request"`, Field: "LastRequest", Kind: schema.KindJSON, Flags: schema.FlagNullable | schema.FlagJSONB, Label: `Last Request`, Doc: `LastRequest is the last play a person sent for the item; nil when none has been.`, JSON: `lastRequest`},
+		{Name: "described_at", Quoted: `"described_at"`, Field: "DescribedAt", Kind: schema.KindInt64, Flags: 0, Label: `Described At`, Doc: `DescribedAt is when what the item says last changed. An agent handed the item reads that description, so it is what "the record changed since the agent looked" is measured against.`, JSON: `describedAt`},
 		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, JSON: `version`},
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
@@ -1091,14 +1093,14 @@ var itemsTable = schema.Table{
 	},
 	PK:           []int32{0, 1, 2},
 	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 41},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 43},
 	Returning:    nil,
-	Version:      39,
+	Version:      41,
 	AutoID:       0,
-	AutoCreate:   40,
-	AutoUpdate:   41,
+	AutoCreate:   42,
+	AutoUpdate:   43,
 	IDPrefix:     "wt_",
 	New:          newItem,
 	NewN:         newNItem,
@@ -1152,6 +1154,8 @@ type ItemsTable struct {
 	AgentRunID        keelkinds.PulidIDCol
 	AgentHandedAt     keel.Int64Col
 	AgentHandedByID   keelkinds.PulidIDCol
+	LastRequest       keel.JSONBCol
+	DescribedAt       keel.Int64Col
 	Version           keel.Int64Col
 	CreatedAt         keel.Int64Col
 	UpdatedAt         keel.Int64Col
@@ -1201,11 +1205,13 @@ var Items = &ItemsTable{
 	AgentRunID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &itemsRef, Index: 36}}},
 	AgentHandedAt:     keel.Int64Col{Col: keel.Col{Ref: &itemsRef, Index: 37}},
 	AgentHandedByID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &itemsRef, Index: 38}}},
-	Version:           keel.Int64Col{Col: keel.Col{Ref: &itemsRef, Index: 39}},
-	CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: &itemsRef, Index: 40}},
-	UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: &itemsRef, Index: 41}},
-	Inserted:          keel.BoolCol{Col: keel.Col{Ref: &itemsRef, Index: 42}},
-	Reopened:          keel.BoolCol{Col: keel.Col{Ref: &itemsRef, Index: 43}},
+	LastRequest:       keel.JSONBCol{Col: keel.Col{Ref: &itemsRef, Index: 39}},
+	DescribedAt:       keel.Int64Col{Col: keel.Col{Ref: &itemsRef, Index: 40}},
+	Version:           keel.Int64Col{Col: keel.Col{Ref: &itemsRef, Index: 41}},
+	CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: &itemsRef, Index: 42}},
+	UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: &itemsRef, Index: 43}},
+	Inserted:          keel.BoolCol{Col: keel.Col{Ref: &itemsRef, Index: 44}},
+	Reopened:          keel.BoolCol{Col: keel.Col{Ref: &itemsRef, Index: 45}},
 }
 
 // BuildItems builds the table of watchtower_items for ref. Generated relation and alias methods call it.
@@ -1251,11 +1257,13 @@ func BuildItems(r *keel.Ref) *ItemsTable {
 		AgentRunID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 36}}},
 		AgentHandedAt:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 37}},
 		AgentHandedByID:   keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 38}}},
-		Version:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 39}},
-		CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 40}},
-		UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 41}},
-		Inserted:          keel.BoolCol{Col: keel.Col{Ref: r, Index: 42}},
-		Reopened:          keel.BoolCol{Col: keel.Col{Ref: r, Index: 43}},
+		LastRequest:       keel.JSONBCol{Col: keel.Col{Ref: r, Index: 39}},
+		DescribedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 40}},
+		Version:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 41}},
+		CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 42}},
+		UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 43}},
+		Inserted:          keel.BoolCol{Col: keel.Col{Ref: r, Index: 44}},
+		Reopened:          keel.BoolCol{Col: keel.Col{Ref: r, Index: 45}},
 	}
 }
 
@@ -1723,14 +1731,18 @@ func ptrItem(p unsafe.Pointer, c int32) any {
 	case 38:
 		return (*string)(unsafe.Pointer(&r.AgentHandedByID))
 	case 39:
-		return &r.Version
+		return &r.LastRequest
 	case 40:
-		return &r.CreatedAt
+		return &r.DescribedAt
 	case 41:
-		return &r.UpdatedAt
+		return &r.Version
 	case 42:
-		return &r.Inserted
+		return &r.CreatedAt
 	case 43:
+		return &r.UpdatedAt
+	case 44:
+		return &r.Inserted
+	case 45:
 		return &r.Reopened
 	}
 	return nil
@@ -1905,14 +1917,21 @@ func valueItem(p unsafe.Pointer, c int32) any {
 		}
 		return string(r.AgentHandedByID)
 	case 39:
-		return r.Version
+		if r.LastRequest == nil {
+			return nil
+		}
+		return *r.LastRequest
 	case 40:
-		return r.CreatedAt
+		return r.DescribedAt
 	case 41:
-		return r.UpdatedAt
+		return r.Version
 	case 42:
-		return r.Inserted
+		return r.CreatedAt
 	case 43:
+		return r.UpdatedAt
+	case 44:
+		return r.Inserted
+	case 45:
 		return r.Reopened
 	}
 	return nil
@@ -2486,6 +2505,7 @@ var enumEventKind = [...]schema.EnumValue{
 	{Value: `SourceResolved`, Label: `Event Source Resolved`},
 	{Value: `SourceReopened`, Label: `Event Source Reopened`},
 	{Value: `HandedOff`, Label: `Event Handed Off`},
+	{Value: `Requested`, Label: `Event Requested`, Doc: `EventRequested is a play a person sent for the item: a question to whoever has the load, or an offer to carriers. Its note is what was asked of whom.`},
 }
 
 var enumRecordkindKind = [...]schema.EnumValue{

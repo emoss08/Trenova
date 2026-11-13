@@ -3114,7 +3114,7 @@ models:
         resolver: true
   WatchtowerAgentWork:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtower.AgentWork
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentwork.Work
     fields:
       agent:
         resolver: true
@@ -3127,76 +3127,76 @@ models:
       - github.com/emoss08/trenova/internal/modules/agent/domain/watchtower.DueSource
   WatchtowerAgentStatus:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtower.AgentStatus
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentwork.Status
   WatchtowerPanel:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtower.Panel
+      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtowerpanel.Panel
   WatchtowerPanelKind:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtower.PanelKind
+      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtowerpanel.Kind
   WatchtowerStopRole:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtower.StopRole
+      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtowerpanel.StopRole
   WatchtowerStopVerdict:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtower.StopVerdict
+      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtowerpanel.StopVerdict
   WatchtowerStopPanel:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtower.StopPanel
+      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtowerpanel.StopPanel
   WatchtowerClockPanel:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtower.ClockPanel
+      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtowerpanel.ClockPanel
   WatchtowerPaper:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtower.Paper
+      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtowerpanel.Paper
   WatchtowerPaperPanel:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtower.PaperPanel
+      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtowerpanel.PaperPanel
   WatchtowerMessagePanel:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtower.MessagePanel
+      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtowerpanel.MessagePanel
   WatchtowerExpiringPaper:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtower.ExpiringPaper
+      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtowerpanel.ExpiringPaper
   WatchtowerExpiryPanel:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtower.ExpiryPanel
+      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtowerpanel.ExpiryPanel
   WatchtowerCoveragePanel:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtower.CoveragePanel
+      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtowerpanel.CoveragePanel
   WatchtowerContactPanel:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtower.ContactPanel
+      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtowerpanel.ContactPanel
   WatchtowerRunPanel:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtower.RunPanel
+      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtowerpanel.RunPanel
   WatchtowerBooksPanel:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtower.BooksPanel
+      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtowerpanel.BooksPanel
   WatchtowerMoneyStake:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtower.MoneyStake
+      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtowerpanel.MoneyStake
   WatchtowerMoneyPanel:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtower.MoneyPanel
+      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtowerpanel.MoneyPanel
   WatchtowerChangePanel:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtower.ChangePanel
+      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtowerpanel.ChangePanel
   WatchtowerAskPanel:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtower.AskPanel
+      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtowerpanel.AskPanel
   WatchtowerFindingPanel:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtower.FindingPanel
+      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtowerpanel.FindingPanel
   WatchtowerFilePanel:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtower.FilePanel
+      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtowerpanel.FilePanel
   WatchtowerSightingPanel:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtower.SightingPanel
+      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtowerpanel.SightingPanel
   WatchtowerAgentStep:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtower.AgentStep
+      - github.com/emoss08/trenova/internal/modules/agent/domain/agentwork.Step
   WatchtowerItemEvent:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/watchtower.Event
@@ -3220,12 +3220,27 @@ models:
   WatchtowerSourceKind:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/watchtower.SourceKind
+  WatchtowerPlayKind:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtowerplay.Kind
+  WatchtowerPlayChannel:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtowerplay.Channel
+  WatchtowerRequest:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtower.Request
+    fields:
+      by:
+        fieldName: ByName
+  WatchtowerPlay:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports.PlayPreview
   WatchtowerSeverity:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/watchtower.Severity
   DeskLens:
     model:
-      - github.com/emoss08/trenova/internal/modules/agent/domain/watchtower.DeskLens
+      - github.com/emoss08/trenova/internal/modules/agent/domain/desklens.Lens
   WatchtowerKindSummary:
     fields:
       deskLens:
@@ -3333,6 +3348,8 @@ models:
       - github.com/emoss08/trenova/internal/modules/agent/domain/recordcase.HandOff
     fields:
       agent:
+        resolver: true
+      play:
         resolver: true
   DeskCaseAway:
     model:

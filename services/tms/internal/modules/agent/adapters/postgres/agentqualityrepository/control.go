@@ -112,6 +112,8 @@ func (r *controlRepository) Upsert(
 			c.RegressionThreshold,
 			c.MinCases,
 			c.ForceRerunDays,
+			c.AutoActivate,
+			c.AutoCasesPerAgent,
 		)
 		if err != nil {
 			if dberror.IsVersionConflict(err) {

@@ -6,15 +6,17 @@ import (
 	"fmt"
 	"strings"
 
+	"go.uber.org/fx"
+
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/detentionpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/outboundpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/agent/app/drivermessage"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/notificationtemplate"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
@@ -25,12 +27,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentcommentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
-	"github.com/emoss08/trenova/internal/modules/workforce/app/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
-	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
 	"github.com/emoss08/trenova/shared/pulid"
-	"go.uber.org/fx"
 )
 
 var driverMessagePriorities = agenttoolschema.Source(
@@ -54,27 +53,21 @@ var waiverReasons = agenttoolschema.Source("detention.waiverReason", []detention
 	detention.WaiverReasonOther,
 })
 
-// driverNotifier is the driver portal's notification path. The wording
-// comes from the organization's template for the kind; the tool supplies
-// the title and the text, and the template decides how they are dressed.
-type driverNotifier interface {
-	Notify(ctx context.Context, req *drivernotificationservice.DriverNotification)
-	Preview(
-		ctx context.Context,
-		req *drivernotificationservice.DriverNotification,
-	) (*notificationports.DriverNotificationPreview, error)
-}
+const (
+	MaxDriverMessageChars = drivermessage.MaxChars
+	DispatchMessageEvent  = drivermessage.DispatchEvent
+)
 
-const MaxDriverMessageChars = 500
-
-const DispatchMessageEvent = "dash.dispatch_message"
-
+// NotifyDriverTool sends a driver a message through drivermessage.Sender,
+// which reaches them in Dash when they have a login and by text to the
+// number on file when they do not and the plan includes text messages. The
+// number never passes through a model.
 type NotifyDriverTool struct {
-	drivers driverNotifier
+	messages *drivermessage.Sender
 }
 
-func NewNotifyDriverTool(drivers driverNotifier) agenttoolports.AgentTool {
-	return &NotifyDriverTool{drivers: drivers}
+func NewNotifyDriverTool(messages *drivermessage.Sender) agenttoolports.AgentTool {
+	return &NotifyDriverTool{messages: messages}
 }
 
 func (t *NotifyDriverTool) Name() string { return "worker_send_message" }
@@ -89,8 +82,9 @@ func (t *NotifyDriverTool) Description() string {
 		"dispatch. Passing on what the person told you needs no record checked or changed " +
 		"first: send it as they said it, naming the load when you know it. Keep it " +
 		"to what the driver needs to do; it goes to their phone. A driver without " +
-		"portal access cannot be reached this way, and the message is not " +
-		"delivered; say so if a reply matters. It is a message, not a record: put " +
+		"portal access gets it as a text when a number is on file and the plan " +
+		"includes text messages; otherwise it is not delivered, and the preview " +
+		"says so. It is a message, not a record: put " +
 		"anything the office needs later on the shipment with shipment_add_comment."
 }
 
@@ -147,21 +141,21 @@ func (t *NotifyDriverTool) Execute(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
 ) error {
-	request, err := t.request(params)
+	message, err := t.message(params)
 	if err != nil {
 		return err
 	}
 
-	t.drivers.Notify(ctx, request)
+	_, err = t.messages.Send(ctx, message)
 
-	return nil
+	return err
 }
 
-// request is the message the preview renders and the write sends: the
-// dispatch template, the model's title and text, and the shipment it opens.
-func (t *NotifyDriverTool) request(
+// message is what the preview renders and the write sends: the model's
+// title and text, and the shipment it opens.
+func (t *NotifyDriverTool) message(
 	params *agenttoolports.ToolExecuteParams,
-) (*drivernotificationservice.DriverNotification, error) {
+) (*drivermessage.Message, error) {
 	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
@@ -174,14 +168,14 @@ func (t *NotifyDriverTool) request(
 	if err != nil {
 		return nil, err
 	}
-	message, err := toolparams.RequireString(params.Params, "message")
+	text, err := toolparams.RequireString(params.Params, "message")
 	if err != nil {
 		return nil, err
 	}
-	if len(message) > MaxDriverMessageChars {
+	if len(text) > MaxDriverMessageChars {
 		return nil, fmt.Errorf(
 			"parameter \"message\" is %d characters; keep it under %d so it reads on a phone",
-			len(message), MaxDriverMessageChars,
+			len(text), MaxDriverMessageChars,
 		)
 	}
 
@@ -195,26 +189,22 @@ func (t *NotifyDriverTool) request(
 		return nil, errors.New("parameter \"priority\" must be low, medium, high or critical")
 	}
 
-	request := &drivernotificationservice.DriverNotification{
+	message := &drivermessage.Message{
 		TenantInfo: toolparams.TenantFrom(params),
 		WorkerID:   workerID,
-		EventType:  DispatchMessageEvent,
+		Title:      title,
+		Text:       text,
 		Priority:   priority,
-		Context: notificationtemplate.DriverNotificationContext{
-			AlertTitle:   strings.TrimSpace(title),
-			AlertMessage: strings.TrimSpace(message),
-		},
 	}
 	if raw := toolparams.OptionalString(params.Params, toolparams.ParamShipmentID); raw != "" {
 		shipmentID, parseErr := pulid.Parse(raw)
 		if parseErr != nil {
 			return nil, fmt.Errorf("parameter \"shipmentId\" is not a valid id: %w", parseErr)
 		}
-		request.RelatedEntities = map[string]any{toolparams.ParamShipmentID: shipmentID.String()}
-		request.Link = "/loads/" + shipmentID.String()
+		message.ShipmentID = shipmentID
 	}
 
-	return request, nil
+	return message, nil
 }
 
 // customerMailer is what customer_send_email needs: the shipment for its customer

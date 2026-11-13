@@ -7,8 +7,9 @@ export function casePath(kind: string, id: string): string {
 
 /**
  * What the Watchtower sends with a person it takes to a case: they came to
- * work it, so a case no agent has looked at is handed over as it opens. A
- * link from anywhere else (the rail, a card, a pasted address) only reads it.
+ * work it, so an unowned case becomes theirs as it opens. No agent is
+ * started on it. A link from anywhere else (the rail, a card, a pasted
+ * address) only reads it.
  */
 export const START_CASE = { startCase: true } as const;
 

@@ -1033,6 +1033,7 @@ func FromServices(s *Services) *Resolver {
 		Core:                 s.Core,
 		WatchtowerService:    s.WatchtowerService,
 		WatchtowerExceptions: s.WatchtowerExceptions,
+		WatchtowerPlays:      s.WatchtowerPlays,
 	}
 	workerDeps := &workerresolver.Deps{
 		Core:          s.Core,

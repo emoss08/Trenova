@@ -920,6 +920,7 @@ var enumAitaskTask = [...]schema.EnumValue{
 	{Value: `PaperworkReading`, Label: `Paperwork Reading`, Doc: `TaskPaperworkReading reads a shipment's billing paperwork (a proof of delivery, a bill of lading, a receipt) for the facts billing checks, in a single structured call that reads the file itself, without waiting for the document to be converted.`},
 	{Value: `PaletteAnswer`, Label: `Palette Answer`, Doc: `TaskPaletteAnswer answers a quick question typed into the command palette: a short streamed answer from a few read-only lookups, run through the Nova harness rather than as a Desk turn.`},
 	{Value: `CaseReading`, Label: `Case Reading`, Doc: `TaskCaseReading writes Nova's reading of a record's case: the verdict a person reads first, citing the numbered evidence beside it. It produces wording only, and every number it writes is checked against that evidence afterwards.`},
+	{Value: `RequestWording`, Label: `Request Wording`, Doc: `TaskRequestWording rewrites a request code wrote (asking a driver for paperwork or a status) the way the person sending it asked. It produces wording only: who it goes to and how is decided in code.`},
 	{Value: `EvaluationJudge`, Label: `Evaluation Judge`},
 	{Value: `Embedding`, Label: `Embedding`},
 	{Value: `General`, Label: `General`},
@@ -951,6 +952,7 @@ var enumFeature = [...]schema.EnumValue{
 	{Value: `PaletteAnswer`, Label: `Palette Answer`},
 	{Value: `InsightNarration`, Label: `Insight Narration`},
 	{Value: `CaseReading`, Label: `Case Reading`},
+	{Value: `RequestWording`, Label: `Request Wording`},
 }
 
 var enumSubjectType = [...]schema.EnumValue{

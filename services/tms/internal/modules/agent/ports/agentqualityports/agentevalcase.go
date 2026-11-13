@@ -72,6 +72,40 @@ type PurgeOrphanedEvalCasesRequest struct {
 	Limit int
 }
 
+type ListAutomaticEvalCasesRequest struct {
+	TenantInfo        pagination.TenantInfo
+	AgentDefinitionID pulid.ID
+}
+
+type RetireAutomaticEvalCasesRequest struct {
+	TenantInfo pagination.TenantInfo
+	IDs        []pulid.ID
+	At         int64
+}
+
+type RetireStaleAutomaticEvalCasesRequest struct {
+	CreatedBefore int64
+	At            int64
+	Limit         int
+}
+
+type AdoptEvalCaseCandidatesRequest struct {
+	CreatedAfter int64
+	At           int64
+	Limit        int
+}
+
+type AdoptedEvalCase struct {
+	ID                pulid.ID
+	OrganizationID    pulid.ID
+	BusinessUnitID    pulid.ID
+	AgentDefinitionID pulid.ID
+}
+
+func (c *AdoptedEvalCase) TenantInfo() pagination.TenantInfo {
+	return pagination.TenantInfo{OrgID: c.OrganizationID, BuID: c.BusinessUnitID}
+}
+
 type ListAgentsWithActiveEvalCasesRequest struct {
 	TenantInfo pagination.TenantInfo
 }
@@ -116,6 +150,19 @@ type AgentEvalCaseRepository interface {
 		ctx context.Context,
 		req ListEvalCaseCaptureCandidatesRequest,
 	) ([]EvalCaseCaptureCandidate, error)
+	ListAutomatic(
+		ctx context.Context,
+		req ListAutomaticEvalCasesRequest,
+	) ([]agentquality.AutomaticCase, error)
+	RetireAutomatic(ctx context.Context, req *RetireAutomaticEvalCasesRequest) (int, error)
+	RetireStaleAutomatic(
+		ctx context.Context,
+		req RetireStaleAutomaticEvalCasesRequest,
+	) (int, error)
+	AdoptCandidates(
+		ctx context.Context,
+		req AdoptEvalCaseCandidatesRequest,
+	) ([]AdoptedEvalCase, error)
 	PurgeExpired(ctx context.Context, req PurgeExpiredEvalCasesRequest) (int, error)
 	PurgeOrphaned(ctx context.Context, req PurgeOrphanedEvalCasesRequest) (int, error)
 }

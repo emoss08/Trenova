@@ -1,6 +1,7 @@
 /** The hours a sweep is usually started at; another hour set elsewhere is added. */
 export const START_HOUR_PRESETS = [0, 2, 4, 6] as const;
 export const CASES_PER_AGENT_PRESETS = [20, 40, 100] as const;
+export const AUTO_CASES_PRESETS = [50, 100, 200] as const;
 export const RERUN_DAYS_PRESETS = [7, 14, 30] as const;
 export const JUDGE_SHARE_PRESETS = [10, 25, 50, 100] as const;
 export const THRESHOLD_PRESETS = [3, 5, 10] as const;

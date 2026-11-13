@@ -466,26 +466,33 @@ Keywords: AI quality, agent score, regression, satisfaction, thumbs down, golden
    **Regression threshold**, the **Judge**, **Cases per night**, **What changed** and the answers
    rated **Lowest rated**. Select **Run suite now** to score it without waiting for the night,
    **Open agent** to edit it, or **All runs** to list its suite runs; **Show every agent** widens
-   them again.
+   them again. When the agent's score fell after it was saved, **Go back a version** opens the
+   agent with the version before that save loaded; nothing changes until you save it.
+   **Try another model** asks the agent's golden cases on another provider's model without
+   changing the agent, so you can see how it would score before moving it.
 6. In **Suite runs**, each run shows its **Status**, **Cases asked** and **Quality score**. Select
    a run to read its **Score**, **Change**, **Cost** and **What changed**, with a square for every
    case: red ones scored below the bar. **See the cases** lists what each case scored; select a
    case to read the reply and the judge's note. **Back to suite runs** returns to the runs. A
    run from the nightly sweep has its answers judged together in a batch, at half the price,
    so it can stay running for up to a day after its cases are asked; a run you start with
-   **Run suite now** is judged at once.
+   **Run suite now** is judged at once. A run marked **Trial** was asked on another model: its sheet
+   says which under **Tried on**, and its **Change** is against the agent's own recent median.
 7. **Worst rated** lists the answers people rated down in the last 30 days, most disliked first.
    Select one to read **The question**, **The answer** and **What they said**. Select
    **Add to golden set** to score the agent against it every night, **Write a memory** to tell
    the agents what was wrong, or **Open the conversation** to read one you were part of.
-8. Keep the cases the agents are scored against in **Golden set**: **Activate** a candidate
-   captured from a decided proposal, **Add case** to write one by hand, or **Quarantine** a case
-   that is no longer fair.
+8. The cases the agents are scored against are in **Golden set**. A change a person approved
+   or rejected becomes a case on its own, and **Kept** says **Automatically** for those. Select
+   **Keep** to hold on to an automatic case, **Add case** to write one by hand, or **Quarantine**
+   a case that is no longer fair. When the golden set is not kept automatically, decided
+   proposals arrive as candidates: select **Activate** on the ones worth scoring against.
 9. In **Agents**, select **Sweep settings** to change the **Nightly sweep**: when it should
    **Start at**, the **Cases per agent**, and when to **Rerun an unchanged agent after**; turn the
    **Judge model** on and choose its **Share of answers**; set the **Regression threshold** and
-   the **Fewest cases to compare**; and the **Budget** **Per night** and **Per month**. Select
-   **Save changes**. Changing these needs permission to update AI control and the golden set.
+   the **Fewest cases to compare**; and the **Budget** **Per night** and **Per month**. Under
+   **Golden set**, turn **Keep the golden set automatically** on or off and choose the
+   **Cases kept per agent**. Select **Save changes**. Changing these needs permission to update AI control and the golden set.
 
 ### Check whether a document extraction model is getting worse
 Keywords: extraction accuracy over time, model drift, accuracy dropped, provider accuracy trend, weekly accuracy, extraction getting worse, accuracy alert
@@ -713,7 +720,7 @@ Opening the page needs read access to AI control. Each tab appears only for
 people who may read it (agents, AI providers, agent runs, agent proposals, agent exceptions,
 agent memory); a tab someone cannot open is left out. **Safety** appears for people who may
 read agents, and **Quality** for people who may read the evaluation suite. **Worst rated**
-and satisfaction need read access to agent feedback, **Run suite now** and **Add to golden set**
+and satisfaction need read access to agent feedback, **Run suite now**, **Try another model** and **Add to golden set**
 need create access to the evaluation suite, and changing **Sweep settings** needs update access to
 both the evaluation suite and AI control, because the budgets are spend. The organization-wide switches need
 update access to AI control, deciding proposals needs update access to agent proposals, and
@@ -753,9 +760,33 @@ needs update access to both agents and roles; someone without update access to r
 save the rest of an agent as long as they leave who can use it as it was. The same grants can be managed from a role's page
 on [Roles](/admin/roles), under **Agents**.
 
+While the golden set is kept automatically, which it is unless **Sweep settings** says otherwise,
+every proposal a person approves, changes and approves, or rejects becomes an active case within
+a few hours: an approved one expects the agent to propose the same change again, a rejected one
+expects it not to. Each agent keeps at most the **Cases kept per agent**. Past that the oldest
+automatic cases are retired, a tool at a time, so one busy tool does not crowd out the rest. An
+automatic case is also retired after 30 days, because an old case stops being fair as the records
+it is about move on. Turning the automatic golden set on also activates the candidates captured
+in the last 30 days that nobody has touched. A case someone keeps, edits, quarantines
+or restores is theirs from then on and is never retired on its own. What the cases cost to
+replay counts toward the evaluation budget.
+
+A trial lists the providers that are turned on and serve conversations. Its cases are asked on
+the provider you pick and on no other: if that provider cannot answer, the case fails rather than
+falling back to another model. A trial is never the agent's quality score, is never compared with
+as a baseline, never counts as a regression and tells nobody; what it costs counts toward the
+evaluation budget like any other run. Nothing about the agent changes: to move it, edit the
+agent's provider.
+
 Every night, at the hour chosen in **Sweep settings** (in the organization's timezone unless another
 is chosen there), each agent with active cases is replayed against a sample of its golden set
-with every write simulated. The sample always includes the cases the agent failed most recently
+with every write simulated. A case captured from a conversation answers the agent's reads with
+what the original was given, so the agent is judged on the situation the person decided in, not
+on records that have changed since. Such a replay runs as of the moment the question was asked:
+the date the agent is told, the dates in what it reads and what "today" means in what it asks
+for all agree. A read the original never made, a result that had a
+restricted field taken out when the case was captured, and every read of a case captured from a
+run an agent started on its own are made against the records as they are now. The sample always includes the cases the agent failed most recently
 and is otherwise spread across where the cases came from; it is the same sample for the same run.
 An agent is skipped when nothing about it (its instructions, tools, model or provider) or its
 cases changed since its last run, unless that run is older than the rerun limit. A run stops

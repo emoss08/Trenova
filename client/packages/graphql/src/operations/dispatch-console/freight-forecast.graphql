@@ -9,6 +9,7 @@ fragment DispatchForecastQualityFields on DispatchForecastQuality {
   naiveMeanAbsoluteError
   skill
   fittedAt
+  refitting
 }
 
 fragment DispatchFreightAreaFields on DispatchFreightArea {

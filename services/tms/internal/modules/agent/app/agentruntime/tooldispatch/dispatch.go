@@ -142,6 +142,7 @@ func (s *Dispatcher) dispatchQuery(
 		}
 		call.Arguments = inheritScriptName(call.Arguments, p.gate.Continues)
 	}
+	asked := call.Arguments
 	contract, err := argcheck.ContractCall(
 		s.arguments, call.Name, tool.ParamSchema(), call.Arguments, organizationToday(req),
 	)
@@ -155,7 +156,9 @@ func (s *Dispatcher) dispatchQuery(
 	}
 
 	outcome := s.runQueryToolWith(ctx, req, tool, &call, &queryExtras{
-		fitPage: p.caller != aitrace.CallerScript,
+		fitPage:  p.caller != aitrace.CallerScript,
+		recorded: req.Recorded,
+		asked:    asked,
 	})
 	outcome.RanWith = call.Arguments
 	if note := contract.Note(); note != "" && !outcome.Failed {
@@ -216,6 +219,13 @@ func (s *Dispatcher) dispatchAction(
 
 	if outcome, refused := validateCall(ctx, p, tool, hold.tier); refused {
 		return outcome
+	}
+
+	// An agent in shadow files nothing for anyone to decide: what it would
+	// have asked approval for is previewed and recorded like any other write
+	// it would have made, and stays out of Decisions and the Watchtower.
+	if req.Shadow {
+		return s.simulateAction(ctx, &actionParams{DispatchParams: *p, tool: tool, action: action})
 	}
 
 	if hold.tier != agent.TierAutoExecute {
@@ -742,9 +752,13 @@ func deniedAccess(
 // the calendar day it is now in the organization's timezone, which is the
 // day the runtime context told the model.
 func organizationToday(req *agentruntimeports.RunRequest) toolcoerce.Option {
-	return toolcoerce.WithToday(
-		time.Unix(timeutils.NowUnix(), 0).In(timeutils.LoadLocation(req.Context.Timezone)),
-	)
+	return toolcoerce.WithToday(organizationNow(req))
+}
+
+// organizationNow is the turn's own clock in the organization's zone, so the
+// day a call's "today" means is the day the prompt named.
+func organizationNow(req *agentruntimeports.RunRequest) time.Time {
+	return time.Unix(req.Context.Clock(), 0).In(timeutils.LoadLocation(req.Context.Timezone))
 }
 
 // deniedAdvice tells the model what to do with a denial. Before it, a model
@@ -783,16 +797,42 @@ type queryExtras struct {
 	stepKey   string
 	continues map[string]any
 	fitPage   bool
+	recorded  agentruntimeports.RecordedReads
+	asked     map[string]any
 }
 
-func (s *Dispatcher) runQueryToolWith(
+// recordedRead is what an earlier run was given for this call, by the
+// arguments the model sent and then by the ones the contract made of them:
+// which of the two a conversation kept depends on when it was saved.
+func recordedRead(call *llmports.ToolCall, extras *queryExtras) (data any, failed, ok bool) {
+	if extras.recorded == nil {
+		return nil, false, false
+	}
+	if data, failed, ok = extras.recorded.Recorded(call.Name, extras.asked); ok {
+		return data, failed, true
+	}
+
+	return extras.recorded.Recorded(call.Name, call.Arguments)
+}
+
+func recordedFailure(toolName string, recorded any) toolcall.Result {
+	message, _ := recorded.(string)
+	if unfenced, ok := toolresult.UnfenceFailure(message); ok {
+		message = unfenced
+	}
+
+	return toolcall.Refused(aitrace.OutcomeFailed, "it failed when the case was captured",
+		"%s", toolresult.FenceFailure(toolName, message))
+}
+
+func (s *Dispatcher) queryData(
 	ctx context.Context,
 	req *agentruntimeports.RunRequest,
 	tool agenttoolports.AgentQueryTool,
 	call *llmports.ToolCall,
 	extras *queryExtras,
-) toolcall.Result {
-	data, err := tool.Query(ctx, &agenttoolports.QueryToolParams{
+) (any, error) {
+	return tool.Query(ctx, &agenttoolports.QueryToolParams{
 		OrganizationID:    req.Actor.OrganizationID,
 		BusinessUnitID:    req.Actor.BusinessUnitID,
 		Actor:             req.Actor,
@@ -809,6 +849,23 @@ func (s *Dispatcher) runQueryToolWith(
 		Continues:         extras.continues,
 		IncludeTotal:      extras.fitPage && firstPage(call.Arguments),
 	})
+}
+
+func (s *Dispatcher) runQueryToolWith(
+	ctx context.Context,
+	req *agentruntimeports.RunRequest,
+	tool agenttoolports.AgentQueryTool,
+	call *llmports.ToolCall,
+	extras *queryExtras,
+) toolcall.Result {
+	data, failed, replayed := recordedRead(call, extras)
+	if replayed && failed {
+		return recordedFailure(call.Name, data)
+	}
+	var err error
+	if !replayed {
+		data, err = s.queryData(ctx, req, tool, call, extras)
+	}
 	if refused, ok := errors.AsType[*graphqlreadports.ReadRefusedError](err); ok {
 		return toolcall.Refused(
 			aitrace.OutcomeDenied,
@@ -824,7 +881,7 @@ func (s *Dispatcher) runQueryToolWith(
 			"%s", toolresult.FenceFailure(call.Name, err.Error()))
 	}
 
-	now := timeutils.NowUnix()
+	now := req.Context.Clock()
 	var fields []string
 	if extras.fitPage {
 		fields = toolresult.ListFields(call.Arguments)
@@ -959,7 +1016,7 @@ func (s *Dispatcher) executeAction(ctx context.Context, a *actionParams) toolcal
 	outcome := toolcall.Result{
 		Content: ranContent(call.Name, result),
 		Action:  action,
-		Taint:   turntaint.Call(&policy, &call, nil, timeutils.NowUnix()),
+		Taint:   turntaint.Call(&policy, &call, nil, a.req.Context.Clock()),
 		Verdict: aitrace.OutcomeRan,
 		Saved:   saved,
 	}

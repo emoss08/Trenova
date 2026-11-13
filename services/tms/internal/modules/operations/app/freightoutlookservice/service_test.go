@@ -42,18 +42,19 @@ func cellOf(t *testing.T, p dispatchmarket.Point) int64 {
 type fakeForecasts struct {
 	demandforecastports.Service
 
-	quality *demandforecast.Quality
-	areas   []*demandforecast.Area
-	rates   []*demandforecast.Rate
-	booked  []demandforecast.Booked
-	request *demandforecastports.ForecasterRequest
+	quality   *demandforecast.Quality
+	refitting bool
+	areas     []*demandforecast.Area
+	rates     []*demandforecast.Rate
+	booked    []demandforecast.Booked
+	request   *demandforecastports.ForecasterRequest
 }
 
-func (f *fakeForecasts) Quality(
+func (f *fakeForecasts) Standing(
 	context.Context,
 	pagination.TenantInfo,
-) (*demandforecast.Quality, error) {
-	return f.quality, nil
+) (*demandforecast.Standing, error) {
+	return &demandforecast.Standing{Quality: f.quality, Refitting: f.refitting}, nil
 }
 
 func (f *fakeForecasts) Forecaster(
@@ -198,12 +199,14 @@ func TestOutlook_ReadsNothingElseUntilTheForecastIsReady(t *testing.T) {
 		{Status: demandforecast.StatusNoSkill},
 	} {
 		repo := &fakeRepo{}
-		svc := newTestService(t, &fakeForecasts{quality: quality}, repo, positioningtest.Fixed{})
+		forecasts := &fakeForecasts{quality: quality, refitting: true}
+		svc := newTestService(t, forecasts, repo, positioningtest.Fixed{})
 
 		outlook, err := svc.Outlook(t.Context(), &freightoutlookports.Request{TenantInfo: tenant})
 		require.NoError(t, err)
 
 		assert.Same(t, quality, outlook.Quality)
+		assert.True(t, outlook.Refitting, "the page is told the history is being read again")
 		assert.Equal(t, testNow, outlook.GeneratedAt)
 		assert.Len(t, outlook.Starts, demandforecast.OutlookSlots)
 		assert.Empty(t, outlook.Areas)
@@ -278,7 +281,11 @@ func TestArea_ReadsTheWorstWindowWhenNoneIsAskedAndItsRecentWeeks(t *testing.T) 
 
 	assert.Equal(t, starts[4], detail.SlotStart)
 	assert.Equal(t, "Dallas, TX", detail.Area.Balance.Label)
-	assert.True(t, detail.Bounds.Contains(dallas), "the area's bounds hold the place it is named for")
+	assert.True(
+		t,
+		detail.Bounds.Contains(dallas),
+		"the area's bounds hold the place it is named for",
+	)
 	assert.Less(t, detail.Bounds.West, detail.Bounds.East)
 	assert.Less(t, detail.Bounds.South, detail.Bounds.North)
 	assert.Equal(t, []int32{3, 2, 4, 3, 3, 5, 2, 3}, detail.Recent)

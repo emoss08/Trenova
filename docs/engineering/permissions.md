@@ -683,3 +683,18 @@ The details are in [security-audit.md](security-audit.md#when-access-ends).
 Triage, Decisions and Case lead are worked inside the Desk, so each of those bundles carries read
 access to the Desk itself (`deskRoom()` in `platformbundles/bundles.go`). A role built from one of
 them alone can open the room its work is in; a new bundle for work done in the Desk does the same.
+
+## Sharing a record
+
+Putting a record in front of someone else is its own permission, `record_share`
+(`recordShareResource()` in `agentperms/resources.go`): read lists who a record is shared with,
+create shares it and takes a share away. The record's own read permission is still asked of the
+person sharing, so `record_share` never widens what they can see; it decides whether they may
+hand a record on at all. The resolvers in `recordshareresolver` require it, and the Share button
+(`components/share/share-dialog.tsx`) is drawn only for a person who holds it.
+
+The grant is one value, `permissionspec.ShareRecords()`, carried by the bundles that put people
+where records are shared from: every Desk bundle (`platformbundles`), and `billing.queue` and
+`billing.receivables` (`financebundles`), whose invoices and disputes are sent to someone else
+to look at. A new bundle whose people need to pass records on adds the same grant.
+

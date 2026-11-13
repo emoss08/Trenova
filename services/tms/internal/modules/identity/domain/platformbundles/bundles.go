@@ -145,7 +145,7 @@ func platformAssistantBundle() permissionspec.Bundle {
 				Resource:   permission.ResourceBriefing,
 				Operations: []permission.Operation{permission.OpRead},
 			},
-			shareRecords(),
+			permissionspec.ShareRecords(),
 			{
 				Resource:   permission.ResourceInsight,
 				Operations: []permission.Operation{permission.OpRead},
@@ -173,15 +173,6 @@ func deskRoom() permissionspec.BundleGrant {
 	}
 }
 
-// shareRecords lets a person share what they can read. It rides with the
-// bundles that put people in the Desk, where records are shared from.
-func shareRecords() permissionspec.BundleGrant {
-	return permissionspec.BundleGrant{
-		Resource:   permission.ResourceRecordShare,
-		Operations: []permission.Operation{permission.OpRead, permission.OpCreate},
-	}
-}
-
 func deskDecisionsBundle() permissionspec.Bundle {
 	return permissionspec.Bundle{
 		ID:          "desk.decisions",
@@ -190,7 +181,7 @@ func deskDecisionsBundle() permissionspec.Bundle {
 		Description: "Approve or decline what the agents propose, and work the watchtower's exceptions.",
 		Grants: []permissionspec.BundleGrant{
 			deskRoom(),
-			shareRecords(),
+			permissionspec.ShareRecords(),
 			{
 				Resource:   permission.ResourceAgentProposal,
 				Operations: []permission.Operation{permission.OpRead, permission.OpUpdate},
@@ -211,7 +202,7 @@ func deskCaseLeadBundle() permissionspec.Bundle {
 		Description: "See the cases other people own, give a case to someone and take one over.",
 		Grants: []permissionspec.BundleGrant{
 			deskRoom(),
-			shareRecords(),
+			permissionspec.ShareRecords(),
 			{
 				Resource: permission.ResourceWatchtower,
 				Operations: []permission.Operation{
@@ -233,7 +224,7 @@ func deskTriageBundle() permissionspec.Bundle {
 		Description: "Work the messages that arrive from connected sources: link them to records, reply, hand them off and mark them handled.",
 		Grants: []permissionspec.BundleGrant{
 			deskRoom(),
-			shareRecords(),
+			permissionspec.ShareRecords(),
 			{
 				Resource: permission.ResourceInboundMessage,
 				Operations: []permission.Operation{

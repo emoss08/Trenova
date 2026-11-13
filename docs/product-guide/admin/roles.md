@@ -1,6 +1,6 @@
 ---
 path: /admin/roles
-aliases: [permissions, access control, security roles, user groups, RBAC, permission sets, page access, view as role, role preview, what a role can see]
+aliases: [permissions, access control, security roles, user groups, RBAC, permission sets, page access, give someone access, grant access to a module, who can open a page, view as role, role preview, what a role can see]
 related:
   - /admin/users
   - /admin/home-layouts

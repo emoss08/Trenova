@@ -2,6 +2,7 @@ package dispatchquerytools
 
 import (
 	"context"
+	"strings"
 	"testing"
 	"time"
 
@@ -189,6 +190,37 @@ func TestForecastFreight_SaysPlainlyWhenTheForecastIsNotReady(t *testing.T) {
 			assert.Empty(t, view.Spare)
 			assert.Empty(t, view.Moves, "an unproven forecast suggests no move")
 		})
+	}
+}
+
+func TestForecastFreight_SaysWhenTheHistoryIsBeingReadAgain(t *testing.T) {
+	t.Parallel()
+
+	for _, refitting := range []bool{true, false} {
+		outlook := &fakeOutlook{outlook: &freightoutlookports.Outlook{
+			Quality: &demandforecast.Quality{
+				Status:       demandforecast.StatusInsufficientHistory,
+				HistoryWeeks: 11,
+				HistoryLoads: 35,
+				FittedAt:     tuesdayMorning() - 9*3600,
+			},
+			Refitting:   refitting,
+			GeneratedAt: tuesdayMorning(),
+		}}
+		result, err := NewForecastDemandTool(outlook).Query(
+			t.Context(),
+			querytooltest.TestParams(map[string]any{}),
+		)
+		require.NoError(t, err)
+
+		view, ok := result.(*freightOutlookView)
+		require.True(t, ok)
+		assert.Contains(t, view.Quality.Meaning, "11 weeks and 35 loads")
+		assert.Equal(
+			t,
+			refitting,
+			strings.Contains(view.Quality.Meaning, "The history is being read again right now"),
+		)
 	}
 }
 

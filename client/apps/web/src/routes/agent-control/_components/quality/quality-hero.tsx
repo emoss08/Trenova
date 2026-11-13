@@ -9,12 +9,14 @@ import { Button } from "@trenova/shared/components/ui/button";
 
 type QualityHeroProps = {
   overview: AgentQualityOverview;
+  /** Whether decided proposals become active cases on their own. */
+  automatic: boolean;
   /** Opens the agent that regressed furthest. */
   onOpenAgent: (agentId: string) => void;
 };
 
 /** Nova's sentence on how the agents score and what people think, and the agent to look at. */
-export function QualityHero({ overview, onOpenAgent }: QualityHeroProps) {
+export function QualityHero({ overview, automatic, onOpenAgent }: QualityHeroProps) {
   const t = useT();
   const rt = useRichT();
   const facts = qualityHeroFacts(overview);
@@ -30,7 +32,12 @@ export function QualityHero({ overview, onOpenAgent }: QualityHeroProps) {
       control={
         worst && (
           <>
-            <Button type="button" variant="default" size="lg" onClick={() => onOpenAgent(worst.agentId)}>
+            <Button
+              type="button"
+              variant="default"
+              size="lg"
+              onClick={() => onOpenAgent(worst.agentId)}
+            >
               {t("Look at {0}", worst.agentName)}
             </Button>
             <span>{sweep}</span>
@@ -40,7 +47,11 @@ export function QualityHero({ overview, onOpenAgent }: QualityHeroProps) {
     >
       {facts.score === null
         ? facts.noCases
-          ? t("No agent has a golden set yet, so nothing is scored.")
+          ? automatic
+            ? t(
+                "No agent has a golden set yet. Cases are added on their own as people approve or reject what agents propose.",
+              )
+            : t("No agent has a golden set yet, so nothing is scored.")
           : t("No agent has been scored against its golden set yet.")
         : facts.liked === null
           ? rt(

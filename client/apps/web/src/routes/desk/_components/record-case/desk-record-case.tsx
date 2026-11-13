@@ -118,7 +118,8 @@ export function DeskRecordCase({ kind, id }: { kind: string; id: string }) {
   const { allowed: mayResolve } = usePermission(Resource.Watchtower, Operation.Update);
   const { allowed: mayDecide } = usePermission(Resource.AgentProposal, Operation.Update);
   const preferredAgent = useDeskSetting("agent");
-  // Opened from the Watchtower to be worked: an unworked case starts at once.
+  // Opened from the Watchtower to be worked: the person takes the case as it
+  // opens. No agent starts on it; that is theirs to ask for.
   const startOnOpen = startsCase(useLocation().state);
 
   // When the person handed the case to an agent from this page: the page
@@ -588,29 +589,17 @@ export function DeskRecordCase({ kind, id }: { kind: string; id: string }) {
                 canHandOff={canResolve}
                 locked={locked}
                 writing={writing}
-                autoStart={startOnOpen}
+                agentRaised={data.handOff.kind === "AgentException"}
                 onHanded={() => {
                   handedAt.current = Date.now();
                   void refresh();
                 }}
                 onAcceptRisk={canResolve && data.open > 0 ? () => setAccepting(true) : null}
                 actions={
-                  data.handOff.kind === "PodMissing" && kind === "shipment"
+                  data.handOff.kind === "PodMissing" && kind === "shipment" && canFile
                     ? [
                         // Filing a paper takes document create, whoever owns the case.
-                        ...(canFile
-                          ? [{ label: t("Upload the POD"), onClick: () => setUploadingPod(true) }]
-                          : []),
-                        {
-                          label: t("Request the driver's paperwork"),
-                          onClick: () =>
-                            ask(
-                              t(
-                                "The proof of delivery for {0} is missing. Ask its driver for the paperwork, or the carrier if a carrier hauled it, and draft the message for me to approve.",
-                                label,
-                              ),
-                            ),
-                        },
+                        { label: t("Upload the POD"), onClick: () => setUploadingPod(true) },
                       ]
                     : undefined
                 }

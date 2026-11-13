@@ -1,4 +1,6 @@
+import { ForecastChecked, ForecastHistoryMeters } from "@/components/dispatch/forecast-history";
 import {
+  createRefitPoll,
   FORECAST_STANDING_TONE,
   forecastStanding,
   forecastStandingCopy,
@@ -21,6 +23,7 @@ import {
 import { DescriptionItem, DescriptionList } from "@trenova/shared/components/ui/description-list";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { formatUnixDateTimeMedium } from "@trenova/shared/lib/date";
+import { useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 import { FreightForecastSkeleton } from "./freight-forecast-skeleton";
 
@@ -31,9 +34,11 @@ import { FreightForecastSkeleton } from "./freight-forecast-skeleton";
  */
 export function FreightForecastCard() {
   const t = useT();
-  const { data, isPending, isError, refetch, isRefetching } = useQuery(
-    dispatchConsoleQueries.forecastQuality(),
-  );
+  const [refitPoll] = useState(() => createRefitPoll(false));
+  const { data, isPending, isError, refetch, isRefetching } = useQuery({
+    ...dispatchConsoleQueries.forecastQuality(),
+    refetchInterval: (current) => refitPoll(current.state.data?.refitting),
+  });
 
   if (isPending) {
     return <FreightForecastSkeleton />;
@@ -86,6 +91,11 @@ function ForecastQualityBody({ quality }: { quality: DispatchForecastQuality }) 
         <Badge variant={FORECAST_STANDING_TONE[standing]}>{copy.title}</Badge>
         <p className="text-sm">{copy.description}</p>
       </div>
+
+      {standing === "InsufficientHistory" ? (
+        <ForecastHistoryMeters quality={quality} className="max-w-sm" />
+      ) : null}
+      {quality.refitting ? <ForecastChecked quality={quality} /> : null}
 
       {anticipating && standing !== "Ready" ? (
         <Alert size="sm" variant="warning">

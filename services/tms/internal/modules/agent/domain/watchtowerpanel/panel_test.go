@@ -1,4 +1,4 @@
-package watchtower
+package watchtowerpanel
 
 import (
 	"strings"
@@ -11,8 +11,8 @@ import (
 func TestNormalizePanel_KeepsOnlyTheViewItsKindNames(t *testing.T) {
 	t.Parallel()
 
-	panel := NormalizePanel(&Panel{
-		Kind:  PanelStop,
+	panel := Normalize(&Panel{
+		Kind:  KindStop,
 		Stop:  &StopPanel{Role: StopRoleDelivery, Verdict: StopMissed, Place: "  Dock 4  "},
 		Clock: &ClockPanel{Place: "Somewhere else"},
 	})
@@ -25,11 +25,11 @@ func TestNormalizePanel_KeepsOnlyTheViewItsKindNames(t *testing.T) {
 func TestNormalizePanel_IsNothingWithoutTheViewItsKindNames(t *testing.T) {
 	t.Parallel()
 
-	assert.Nil(t, NormalizePanel(nil))
-	assert.Nil(t, NormalizePanel(&Panel{Kind: PanelClock, Stop: &StopPanel{Place: "Dock 4"}}))
-	assert.Nil(t, NormalizePanel(&Panel{Kind: PanelKind("Unknown"), Stop: &StopPanel{}}))
-	assert.Nil(t, NormalizePanel(&Panel{Kind: PanelPaper, Paper: &PaperPanel{}}))
-	assert.Nil(t, NormalizePanel(&Panel{Kind: PanelExpiry, Expiry: &ExpiryPanel{Who: "Jane"}}))
+	assert.Nil(t, Normalize(nil))
+	assert.Nil(t, Normalize(&Panel{Kind: KindClock, Stop: &StopPanel{Place: "Dock 4"}}))
+	assert.Nil(t, Normalize(&Panel{Kind: Kind("Unknown"), Stop: &StopPanel{}}))
+	assert.Nil(t, Normalize(&Panel{Kind: KindPaper, Paper: &PaperPanel{}}))
+	assert.Nil(t, Normalize(&Panel{Kind: KindExpiry, Expiry: &ExpiryPanel{Who: "Jane"}}))
 }
 
 func TestNormalizePanel_ShowsNoRecordIDAndBoundsWhatItHolds(t *testing.T) {
@@ -39,8 +39,8 @@ func TestNormalizePanel_ShowsNoRecordIDAndBoundsWhatItHolds(t *testing.T) {
 	for range maxPanelPapers + 3 {
 		papers = append(papers, Paper{Name: "Proof of delivery"})
 	}
-	panel := NormalizePanel(&Panel{
-		Kind: PanelPaper,
+	panel := Normalize(&Panel{
+		Kind: KindPaper,
 		Paper: &PaperPanel{
 			Customer: "Acme shp_01M717A2F8BF7TD40E2KW8V12H",
 			Papers:   append(papers, Paper{Name: "   "}),
@@ -57,12 +57,12 @@ func TestNormalizePanel_ShowsNoRecordIDAndBoundsWhatItHolds(t *testing.T) {
 func TestSamePanel_TellsAChangedViewFromTheSameOne(t *testing.T) {
 	t.Parallel()
 
-	a := &Panel{Kind: PanelClock, Clock: &ClockPanel{Place: "Dock", BillableMinutes: 10}}
-	b := &Panel{Kind: PanelClock, Clock: &ClockPanel{Place: "Dock", BillableMinutes: 10}}
-	c := &Panel{Kind: PanelClock, Clock: &ClockPanel{Place: "Dock", BillableMinutes: 25}}
+	a := &Panel{Kind: KindClock, Clock: &ClockPanel{Place: "Dock", BillableMinutes: 10}}
+	b := &Panel{Kind: KindClock, Clock: &ClockPanel{Place: "Dock", BillableMinutes: 10}}
+	c := &Panel{Kind: KindClock, Clock: &ClockPanel{Place: "Dock", BillableMinutes: 25}}
 
-	assert.True(t, SamePanel(a, b))
-	assert.False(t, SamePanel(a, c))
-	assert.True(t, SamePanel(nil, nil))
-	assert.False(t, SamePanel(a, nil))
+	assert.True(t, Same(a, b))
+	assert.False(t, Same(a, c))
+	assert.True(t, Same(nil, nil))
+	assert.False(t, Same(a, nil))
 }

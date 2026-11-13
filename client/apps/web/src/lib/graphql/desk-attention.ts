@@ -45,6 +45,8 @@ export type DeskAttention = {
   counts: DeskLensCounts;
   hasMore: boolean;
   seenAt: number;
+  /** The reader may see everyone's cases, so the list can offer only their own. */
+  seesEveryone: boolean;
 };
 
 export type DeskActivityEntry = {
@@ -77,6 +79,8 @@ export type DeskAttentionFilter = {
   recordId?: string | null;
   /** Only rows with an item an agent's run is working on right now. */
   working?: boolean;
+  /** Only the reader's own cases and the ones nobody owns. */
+  mine?: boolean;
 };
 
 export async function fetchDeskAttention(
@@ -95,6 +99,7 @@ export async function fetchDeskAttention(
         first: filter.first ?? null,
         recordId: filter.recordId ?? null,
         working: filter.working ?? false,
+        mine: filter.mine ?? false,
       },
     },
     signal: options?.signal,
@@ -117,6 +122,7 @@ export async function fetchDeskAttention(
     counts: result.counts,
     hasMore: result.hasMore,
     seenAt: result.seenAt,
+    seesEveryone: result.seesEveryone,
   };
 }
 

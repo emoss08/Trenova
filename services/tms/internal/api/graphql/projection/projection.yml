@@ -197,6 +197,32 @@ aliases:
     mine: runAsId
 
 virtuals:
+  TariffChoice:
+    - currency
+    - options
+  RecordShare:
+    - removable
+  FactoringDeliveryHealth:
+    - configured
+  EdiPartnerReadinessItem:
+    - complete
+  DispatchPositioning:
+    - workerName
+  DispatchPlanAlternative:
+    - extraCents
+  DispatchForecastQuality:
+    - meanAbsoluteError
+    - naiveMeanAbsoluteError
+    - refitting
+  DispatchDriverPlannedMove:
+    - proNumber
+    - valueCents
+  AuditLegalHold:
+    - active
+    - placedBy
+    - releasedBy
+  AuditExport:
+    - downloadable
   EdiTransfer:
     - counterparty
   EdiTenderCommodity:
@@ -273,10 +299,13 @@ virtuals:
     - handedBy
     - traceUrl
     - transcript
+    - subjectLabel
   AgentDecision:
     - traceUrl
   AgentEvalCase:
     - weight
+  AgentQualityControl:
+    - autoCaseDays
   AgentSuiteRun:
     - agentName
     - changeSummary
@@ -477,6 +506,7 @@ virtuals:
     - stopOrder
   EdiCommunicationProfile:
     - secretState
+    - as2InboundPath
   AuditEntry:
     - entityRef
     - requestEntryCount
@@ -569,6 +599,10 @@ virtuals:
     - payment
   FactoringAgreement:
     - documentTypes
+    - dueFromFactorAccount
+    - feeExpenseAccount
+    - liabilityAccount
+    - cashAccount
   FactoringCompany:
     - agreements
   FactoringInvoiceState:

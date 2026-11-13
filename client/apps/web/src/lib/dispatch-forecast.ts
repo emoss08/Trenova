@@ -8,6 +8,33 @@ import { formatNumber } from "@trenova/shared/i18n/format";
  */
 export type ForecastStanding = "Unfitted" | DispatchForecastQuality["status"];
 
+/** What the forecast needs before it is tested; the server's MinHistoryWeeks and MinHistoryLoads. */
+export const FORECAST_MIN_WEEKS = 8;
+export const FORECAST_MIN_LOADS = 200;
+
+/** How often a page asks again while the history is being re-read, and for how long. */
+export const FORECAST_REFIT_POLL_MS = 4_000;
+export const FORECAST_REFIT_POLL_FOR_MS = 120_000;
+
+/**
+ * The refetch interval for a read that carries the forecast's standing: quick while the server
+ * says it is refitting, so the page turns over when the fit lands, then back to the page's own
+ * pace. The quick pace is held for two minutes at most, so a fit that keeps failing is not
+ * asked for every few seconds for as long as the page is open.
+ */
+export function createRefitPoll(idleMs: number | false, now: () => number = Date.now) {
+  let since: number | null = null;
+
+  return (refitting: boolean | undefined): number | false => {
+    if (!refitting) {
+      since = null;
+      return idleMs;
+    }
+    since ??= now();
+    return now() - since < FORECAST_REFIT_POLL_FOR_MS ? FORECAST_REFIT_POLL_MS : idleMs;
+  };
+}
+
 export function forecastStanding(quality: DispatchForecastQuality): ForecastStanding {
   return quality.fittedAt ? quality.status : "Unfitted";
 }
@@ -43,15 +70,17 @@ export function forecastStandingCopy(
     case "Unfitted":
       return {
         title: t("Not fitted yet"),
-        description: t("The forecast is fitted every night from your shipment history."),
+        description: quality.refitting
+          ? t("Your shipment history is being read for the first time. This takes about a minute.")
+          : t("The forecast is fitted every night from your shipment history."),
       };
     case "InsufficientHistory":
       return {
         title: t("Not enough history yet"),
         description: t(
-          "The forecast needs 8 weeks and 200 loads of history; it has {0, plural, one {# week} other {# weeks}} and {1, plural, one {# load} other {# loads}}.",
-          quality.historyWeeks,
-          quality.historyLoads,
+          "The forecast is tested once the last 35 weeks hold {0, plural, one {# week} other {# weeks}} with loads and {1, plural, one {# load} other {# loads}} picked up.",
+          FORECAST_MIN_WEEKS,
+          FORECAST_MIN_LOADS,
         ),
       };
     case "NoSkill":

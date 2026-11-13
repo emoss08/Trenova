@@ -25,10 +25,13 @@ const (
 	DefaultRegressionThreshold = 0.10
 	DefaultMinCases            = 10
 	DefaultForceRerunDays      = 7
+	DefaultAutoCasesPerAgent   = 100
+	AutomaticCaseDays          = 30
 
 	MaxCasesPerAgentLimit = 500
 	MaxMinCases           = 500
 	MaxForceRerunDays     = 90
+	MaxAutoCasesPerAgent  = 500
 	MaxTimezoneChars      = 100
 )
 
@@ -56,6 +59,8 @@ type Control struct {
 	RegressionThreshold float64         `json:"regressionThreshold" keel:"regression_threshold"`
 	MinCases            int             `json:"minCases"            keel:"min_cases"`
 	ForceRerunDays      int             `json:"forceRerunDays"      keel:"force_rerun_days"`
+	AutoActivate        bool            `json:"autoActivate"        keel:"auto_activate"`
+	AutoCasesPerAgent   int             `json:"autoCasesPerAgent"   keel:"auto_cases_per_agent"`
 
 	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
@@ -90,6 +95,9 @@ func (c *Control) BeforeCreate(_ context.Context) error {
 	if c.ForceRerunDays == 0 {
 		c.ForceRerunDays = 7
 	}
+	if c.AutoCasesPerAgent == 0 {
+		c.AutoCasesPerAgent = DefaultAutoCasesPerAgent
+	}
 
 	return nil
 }
@@ -108,6 +116,8 @@ func DefaultControl(orgID, buID pulid.ID) *Control {
 		RegressionThreshold: DefaultRegressionThreshold,
 		MinCases:            DefaultMinCases,
 		ForceRerunDays:      DefaultForceRerunDays,
+		AutoActivate:        true,
+		AutoCasesPerAgent:   DefaultAutoCasesPerAgent,
 	}
 }
 
@@ -145,6 +155,12 @@ func (c *Control) Validate(multiErr *errortypes.MultiError) {
 				"Rerun an unchanged agent at least every 90 days",
 			),
 		),
+		validation.Field(&c.AutoCasesPerAgent,
+			validation.Min(1).Error("Keep at least one automatic case per agent"),
+			validation.Max(MaxAutoCasesPerAgent).Error(
+				"Keep at most 500 automatic cases per agent",
+			),
+		),
 	))
 
 	validateBudget(multiErr, "nightlyBudgetUsd", c.NightlyBudgetUSD)
@@ -164,6 +180,12 @@ func validateBudget(multiErr *errortypes.MultiError, field string, value decimal
 	if err := budgetRule.Validate(value); err != nil {
 		multiErr.Add(field, errortypes.ErrInvalid, err.Error())
 	}
+}
+
+func (c *Control) AutoCaseDays() int { return AutomaticCaseDays }
+
+func AutomaticCaseCutoff(now int64) int64 {
+	return now - int64(AutomaticCaseDays)*24*60*60
 }
 
 type SuiteSettings struct {

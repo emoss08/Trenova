@@ -4180,6 +4180,12 @@ type AgentEvalCase {
   title: String!
   source: AgentEvalCaseSource!
   status: AgentEvalCaseStatus!
+  """
+  Whether the system keeps the case: activated on capture, retired when its
+  agent holds more than the organization keeps or when it ages. False once a
+  person keeps, edits or moves it.
+  """
+  automatic: Boolean!
   trigger: AgentRunTrigger!
   sourceRunId: ID
   sourceTurnId: ID
@@ -4189,6 +4195,12 @@ type AgentEvalCase {
   sourceFeedbackId: ID
   "The question the agent is asked."
   input: String!
+  """
+  When the person asked it. A replay answered from the recorded tool results
+  runs with its clock at this moment; null for a case written by hand or
+  captured from a background run, which replays as of now.
+  """
+  askedAt: Timestamp
   "The conversation before the question, redacted when captured."
   history: [JSON!]!
   pageContext: JSON
@@ -4294,6 +4306,10 @@ extend type Query {
 extend type Mutation {
   createAgentEvalCase(input: CreateAgentEvalCaseInput!): AgentEvalCaseCapture!
   updateAgentEvalCase(id: ID!, input: UpdateAgentEvalCaseInput!): AgentEvalCase!
+  """
+  Moves a case to another status. Setting an automatic active case to Active
+  keeps it: it stays active and is no longer retired on its own.
+  """
   setAgentEvalCaseStatus(id: ID!, status: AgentEvalCaseStatus!): AgentEvalCase!
   "Replays a case against its agent as it is now, writes simulated, and scores it."
   replayAgentEvalCase(id: ID!): AgentEvaluation!
@@ -4362,6 +4378,10 @@ type AgentSuiteRun {
   comments: String!
   workflowId: String!
   requestedByUserId: ID
+  "The provider a trial run was asked on in place of the agent's own; null for a run that scores the agent."
+  trialProviderId: ID
+  "The trial provider's name and model in words; empty for a run that scores the agent."
+  trialLabel: String!
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -4415,6 +4435,12 @@ type AgentQualityControl {
   minCases: Int!
   "An unchanged agent is run again once its last run is this many days old."
   forceRerunDays: Int!
+  "Whether a proposal a person approved or rejected becomes an active case on capture."
+  autoActivate: Boolean!
+  "The most automatic cases one agent keeps active; past it the oldest are retired, a tool at a time."
+  autoCasesPerAgent: Int!
+  "Days after which an automatic case is retired, because an old case stops being fair as its records move on."
+  autoCaseDays: Int!
   version: Int!
   updatedAt: Timestamp!
 }
@@ -4434,6 +4460,8 @@ input UpdateAgentQualityControlInput {
   regressionThreshold: Float!
   minCases: Int!
   forceRerunDays: Int!
+  autoActivate: Boolean!
+  autoCasesPerAgent: Int!
 }
 
 "One scored suite run on an agent's quality line."
@@ -4603,8 +4631,13 @@ extend type Query {
 }
 
 extend type Mutation {
-  "Runs one agent's suite now, whatever changed or did not."
-  runAgentSuite(agentDefinitionId: ID!): AgentSuiteRun!
+  """
+  Runs one agent's suite now, whatever changed or did not. With a trial
+  provider the cases are asked on that provider's model and nothing about the
+  agent changes: the run is never the agent's score, baseline or a regression.
+  The provider must be turned on and serve conversations.
+  """
+  runAgentSuite(agentDefinitionId: ID!, trialProviderId: ID): AgentSuiteRun!
   updateAgentQualityControl(input: UpdateAgentQualityControlInput!): AgentQualityControl!
 }
 `, BuiltIn: false},
@@ -6510,6 +6543,7 @@ enum AITask {
   PaperworkReading
   PaletteAnswer
   CaseReading
+  RequestWording
   EvaluationJudge
   Embedding
   AssistantChat
@@ -7063,6 +7097,7 @@ enum AIUsageFeature {
   PaletteAnswer
   InsightNarration
   CaseReading
+  RequestWording
 }
 
 """
@@ -12440,6 +12475,8 @@ type DeskAttention {
   hasMore: Boolean!
   "Where the reader's unseen line sits."
   seenAt: Timestamp!
+  "True when the reader may see everyone's cases, so the list can offer only their own."
+  seesEveryone: Boolean!
 }
 
 input DeskAttentionInput {
@@ -12455,6 +12492,8 @@ input DeskAttentionInput {
   recordId: ID
   "Only rows with an item an agent's run is working on right now. A run that finished, failed or waits on a person is not working."
   working: Boolean = false
+  "Only the reader's own cases and the ones nobody owns, for a reader who may see everyone's."
+  mine: Boolean = false
 }
 
 "How a write an agent made ended."
@@ -13024,6 +13063,10 @@ type DeskCaseHandOff {
   agent: AgentDefinition
   "What that agent said when it finished and proposed nothing; markdown. Empty otherwise."
   note: String!
+  "The first move this kind of condition has, which the reader sends themselves with ` + "`" + `sendWatchtowerPlay` + "`" + `. Null when the kind has none."
+  play: WatchtowerPlayKind
+  "The last play a person sent for it; null when none has been."
+  request: WatchtowerRequest
 }
 
 """
@@ -14836,6 +14879,11 @@ type DispatchForecastQuality {
   skill: Float!
   "When it was last fitted; null before the first fit."
   fittedAt: Timestamp
+  """
+  True while the history is being read again: a forecast that is not Ready and was fitted more
+  than an hour ago is refitted when it is read. The figures are still those from fittedAt.
+  """
+  refitting: Boolean!
 }
 
 """
@@ -34016,6 +34064,8 @@ enum WatchtowerItemEventKind {
   SourceReopened
   "The item was handed to an agent, which is now working it."
   HandedOff
+  "A person sent the item's play: a question to whoever has the load, or an offer to carriers."
+  Requested
 }
 
 "Where an item's due time came from."
@@ -34556,6 +34606,74 @@ input HandOffWatchtowerItemInput {
   agentDefinitionId: ID
 }
 
+"The first move a kind of item has, which the person working it sends themselves."
+enum WatchtowerPlayKind {
+  "Ask whoever delivered a load for its signed proof of delivery."
+  AskForPod
+  "Ask whoever has a load where it is."
+  AskForStatus
+  "Offer a move down its routing guide again."
+  TenderAgain
+}
+
+"How a play reaches whoever it is for."
+enum WatchtowerPlayChannel {
+  "A message in the driver's portal."
+  Dash
+  "A text to the driver's phone."
+  Text
+  "An email in the organization's letterhead."
+  Email
+  "An offer to carriers, which carries no message."
+  Tender
+}
+
+"""
+What a play would do for one item, planned from the record for the person
+about to send it. Who it goes to and how is decided by the server and is not
+theirs to change; the words are.
+"""
+type WatchtowerPlay {
+  itemId: ID!
+  kind: WatchtowerPlayKind!
+  channel: WatchtowerPlayChannel!
+  "Who it goes to, by name."
+  recipient: String!
+  "Who an email is from; empty otherwise."
+  sender: String!
+  "An email's subject; empty otherwise."
+  subject: String!
+  "The words that would be sent; empty for a play that sends none."
+  message: String!
+  "The longest message the channel takes."
+  messageLimit: Int!
+  "What sending does, for a play that sends no message; empty otherwise."
+  summary: String!
+  "Nova can reword the message for this organization."
+  canReword: Boolean!
+}
+
+"The last play a person sent for an item."
+type WatchtowerRequest {
+  at: Timestamp!
+  "Who sent it, by name."
+  by: String!
+  "What was asked of whom and how, as one sentence."
+  summary: String!
+}
+
+input RewordWatchtowerPlayInput {
+  "The words in the box now; empty rewords the play's own."
+  message: String
+  "How the person wants them to read."
+  guidance: String!
+}
+
+input SendWatchtowerPlayInput {
+  "The words the person approved; empty sends the play's own."
+  message: String
+}
+
 extend type Query {
   "What needs attention, newest first, filtered to what this reader may see."
   watchtowerItems(input: WatchtowerItemsInput!): WatchtowerItemConnection!
@@ -34570,6 +34688,12 @@ extend type Query {
   watchtowerCleared(since: Timestamp!): Int!
   "The agents an item can be handed to: every enabled agent that runs on its own."
   watchtowerHandOffAgents: [AgentDefinition!]!
+  """
+  The item's play as the reader would send it: who it goes to, how, and the
+  words. Fails with the reason when it cannot be sent: nobody on the record
+  can be reached, it is already done, or it is not the reader's to send.
+  """
+  watchtowerPlay(itemId: ID!): WatchtowerPlay!
 }
 
 extend type Mutation {
@@ -34579,6 +34703,10 @@ extend type Mutation {
   dismissWatchtowerItem(id: ID!): WatchtowerItem!
   "Hands an item to an agent, or to whoever subscribes to its event."
   handOffWatchtowerItem(id: ID!, input: HandOffWatchtowerItemInput!): WatchtowerHandOffResult!
+  "Has Nova rewrite a play's message the way the reader asks. Only the words change; nothing is sent."
+  rewordWatchtowerPlay(itemId: ID!, input: RewordWatchtowerPlayInput!): String!
+  "Sends the item's play under the reader's name and notes on the item who asked what of whom."
+  sendWatchtowerPlay(itemId: ID!, input: SendWatchtowerPlayInput!): WatchtowerItem!
   "Gives an exception to someone who can see it, or to nobody."
   assignWatchtowerItem(id: ID!, input: AssignWatchtowerItemInput!): WatchtowerItem!
   "Says someone has seen an open exception; an unowned one becomes the reader's."

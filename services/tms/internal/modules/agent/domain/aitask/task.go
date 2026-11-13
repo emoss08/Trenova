@@ -61,7 +61,11 @@ const (
 	// a person reads first, citing the numbered evidence beside it. It
 	// produces wording only, and every number it writes is checked against
 	// that evidence afterwards.
-	TaskCaseReading     = Task("CaseReading")
+	TaskCaseReading = Task("CaseReading")
+	// TaskRequestWording rewrites a request code wrote (asking a driver for
+	// paperwork or a status) the way the person sending it asked. It
+	// produces wording only: who it goes to and how is decided in code.
+	TaskRequestWording  = Task("RequestWording")
 	TaskEvaluationJudge = Task("EvaluationJudge")
 	TaskEmbedding       = Task("Embedding")
 	TaskGeneral         = Task("General")
@@ -97,7 +101,8 @@ func (t Task) Nova() bool {
 		TaskRemittanceExtraction,
 		TaskPaperworkReading,
 		TaskPaletteAnswer,
-		TaskCaseReading:
+		TaskCaseReading,
+		TaskRequestWording:
 		return true
 	case TaskScopeClassification,
 		TaskAssistantChat,
@@ -128,6 +133,7 @@ func (t Task) IsValid() bool {
 		TaskPaperworkReading,
 		TaskPaletteAnswer,
 		TaskCaseReading,
+		TaskRequestWording,
 		TaskEvaluationJudge,
 		TaskEmbedding,
 		TaskGeneral:
@@ -156,6 +162,7 @@ func AllTasks() []Task {
 		TaskPaperworkReading,
 		TaskPaletteAnswer,
 		TaskCaseReading,
+		TaskRequestWording,
 		TaskEvaluationJudge,
 		TaskEmbedding,
 		TaskGeneral,

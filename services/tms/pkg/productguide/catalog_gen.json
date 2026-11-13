@@ -1,5 +1,5 @@
 {
-  "version": "sha256:82cb022cf07397370ec9d12e53272bb5c6495ca5336d577a751b705c6886edad",
+  "version": "sha256:cc34142a58a19e451161dc4d54fae45c94a46383d67797f382158472c09b1fae",
   "modules": [
     {
       "id": "home",
@@ -9,12 +9,7 @@
     {
       "id": "desk",
       "label": "Desk",
-      "description": "Your conversations with the agents, what they produced, and what they ask you to decide"
-    },
-    {
-      "id": "inbox",
-      "label": "Triage",
-      "description": "Messages from connected sources, what Nova did with them, and what is left for you"
+      "description": "Your conversations with the agents, what needs you, and Triage for the mail that arrives"
     },
     {
       "id": "intake",
@@ -166,7 +161,7 @@
       "related": [
         "/shipment-management/shipments",
         "/shipment-management/service-failures",
-        "/desk/decisions",
+        "/desk/needs",
         "/admin/home-layouts"
       ],
       "covers": [],
@@ -3055,11 +3050,11 @@
             "Read the figures: **Satisfaction** (the share of rated answers that were thumbs up), **Ratings**, **Quality score**, **Regressions** still open, and **Eval spend this month** against the monthly budget.",
             "Under **View**, choose **Agents**, **Suite runs**, **Worst rated**, **Golden set** or **Document extraction**.",
             "In **Agents**, each agent is listed with its **Quality score** and a line of its recent runs, the **Change** against its recent median, and how its **Last run** went: **Completed**, **Skipped** (nothing about the agent or its cases changed), **Budget stopped** or **Failed**. **Display** shows **Satisfaction** and **Ratings**. Select **Filter** to narrow by **Last run** or **Regressed**, and **Sort** to order by **Quality score**.",
-            "Select an agent to open it: its score and the change, **Satisfaction**, the **Regression threshold**, the **Judge**, **Cases per night**, **What changed** and the answers rated **Lowest rated**. Select **Run suite now** to score it without waiting for the night, **Open agent** to edit it, or **All runs** to list its suite runs; **Show every agent** widens them again.",
-            "In **Suite runs**, each run shows its **Status**, **Cases asked** and **Quality score**. Select a run to read its **Score**, **Change**, **Cost** and **What changed**, with a square for every case: red ones scored below the bar. **See the cases** lists what each case scored; select a case to read the reply and the judge's note. **Back to suite runs** returns to the runs. A run from the nightly sweep has its answers judged together in a batch, at half the price, so it can stay running for up to a day after its cases are asked; a run you start with **Run suite now** is judged at once.",
+            "Select an agent to open it: its score and the change, **Satisfaction**, the **Regression threshold**, the **Judge**, **Cases per night**, **What changed** and the answers rated **Lowest rated**. Select **Run suite now** to score it without waiting for the night, **Open agent** to edit it, or **All runs** to list its suite runs; **Show every agent** widens them again. When the agent's score fell after it was saved, **Go back a version** opens the agent with the version before that save loaded; nothing changes until you save it. **Try another model** asks the agent's golden cases on another provider's model without changing the agent, so you can see how it would score before moving it.",
+            "In **Suite runs**, each run shows its **Status**, **Cases asked** and **Quality score**. Select a run to read its **Score**, **Change**, **Cost** and **What changed**, with a square for every case: red ones scored below the bar. **See the cases** lists what each case scored; select a case to read the reply and the judge's note. **Back to suite runs** returns to the runs. A run from the nightly sweep has its answers judged together in a batch, at half the price, so it can stay running for up to a day after its cases are asked; a run you start with **Run suite now** is judged at once. A run marked **Trial** was asked on another model: its sheet says which under **Tried on**, and its **Change** is against the agent's own recent median.",
             "**Worst rated** lists the answers people rated down in the last 30 days, most disliked first. Select one to read **The question**, **The answer** and **What they said**. Select **Add to golden set** to score the agent against it every night, **Write a memory** to tell the agents what was wrong, or **Open the conversation** to read one you were part of.",
-            "Keep the cases the agents are scored against in **Golden set**: **Activate** a candidate captured from a decided proposal, **Add case** to write one by hand, or **Quarantine** a case that is no longer fair.",
-            "In **Agents**, select **Sweep settings** to change the **Nightly sweep**: when it should **Start at**, the **Cases per agent**, and when to **Rerun an unchanged agent after**; turn the **Judge model** on and choose its **Share of answers**; set the **Regression threshold** and the **Fewest cases to compare**; and the **Budget** **Per night** and **Per month**. Select **Save changes**. Changing these needs permission to update AI control and the golden set."
+            "The cases the agents are scored against are in **Golden set**. A change a person approved or rejected becomes a case on its own, and **Kept** says **Automatically** for those. Select **Keep** to hold on to an automatic case, **Add case** to write one by hand, or **Quarantine** a case that is no longer fair. When the golden set is not kept automatically, decided proposals arrive as candidates: select **Activate** on the ones worth scoring against.",
+            "In **Agents**, select **Sweep settings** to change the **Nightly sweep**: when it should **Start at**, the **Cases per agent**, and when to **Rerun an unchanged agent after**; turn the **Judge model** on and choose its **Share of answers**; set the **Regression threshold** and the **Fewest cases to compare**; and the **Budget** **Per night** and **Per month**. Under **Golden set**, turn **Keep the golden set automatically** on or off and choose the **Cases kept per agent**. Select **Save changes**. Changing these needs permission to update AI control and the golden set."
           ]
         },
         {
@@ -3256,7 +3251,7 @@
           ]
         }
       ],
-      "notes": "An embedding provider turns memories, documents and mail into vectors so agents can find them by what they mean rather than by the exact words; until one is set up, agents search by keywords only. Social security, card and bank account numbers are masked before a document is sent. Changing the embedding model or its size re-indexes everything that was embedded. Providers with the same model and size back each other up; a provider with a different model is never used in their place.\n\nRetrieval is read with read access to AI providers; changing its settings or re-indexing needs update access to AI providers. Only chunks whose text changed are embedded again on a re-index, so the cost shown before one is the most it could cost, and a re-index when nothing changed costs nothing. The monthly indexing budget covers indexing for the calendar month (UTC); when it is spent indexing pauses, and it resumes on its own the next month or as soon as the budget is raised. What agents' searches cost counts against each agent's own monthly budget. When the Embedding task is routed to a different model, every source is indexed under the new model beside the old one, and searches move to it only when all of it is done; **Sources** shows how far that has come.\n\nAn agent that has read content written outside the organization (an inbound email, an extracted document, an EDI file, a bank receipt, a file attached in chat, or a memory such a run wrote) never sends anything to a customer, driver or outside address, or moves money, on its own: that change waits for a person's approval whatever tier the tool has, and the proposal is marked as having read outside content. A memory such a run wrote stops counting once a person reviews it or approves it as a suggestion; the review is recorded in the audit log, and **Where it came from** still shows that it came from outside content. A suggested memory drawn from ratings of one agent is kept for that agent alone once approved.\n\nAn agent looks back over a conversation once it has been quiet for ten minutes (or after an hour of steady back and forth), and over a background run once every proposal it raised is decided. It does so only when something in the work is worth learning from, so most conversations cost nothing. A lesson is a **Procedure** (the steps that worked, naming the tools), a **Fact** no record holds, or, from a person's own words, an **Instruction** that was not already saved. It is kept for the person in the conversation unless they may create agent memories, follows their saving preference, and replaces an older memory rather than contradicting it. A lesson for a team or the whole organization, anything learned from a background run nobody was in, and anything learned from work that read outside content, is only ever offered. Retiring or editing a learned memory works like any other.\n\nAgents are told what kind of business the organization is from a note written each night from its own records and from the guidance its people gave; each person who talks to agents has a short note of their own, kept up each week. A note is written again only when the facts behind it move, never edited by a model on its own, and never states a number that is not in the facts or the guidance; an attempt that would is set aside and the version before it stays. Notes are written only while **Learn from their work** is on. Seeing the organization's note needs read access to agent memory, adding guidance needs create access, and retiring a line or writing it again needs update access.\n\nA memory holds up to 4,000 characters. Each prompt carries only as much memory as the agent's **Memory in the prompt** setting allows (6,000 tokens unless changed), starting with what is recorded about the record the conversation is about. **Used** above a reply counts only the memories that bear on what was asked: a note about a shipment's customer is still in front of the agent when you ask about that shipment's arrival, but is not counted as used unless it is about that. A procedure the agent learned is brought in only for the kind of task it describes. When the organization keeps close to 5,000 active memories, the Memory section warns that fewer of them reach each prompt; retire what no longer holds.\n\nA provider's **Advisor** costs extra: each consultation is billed at the advisor model's price on top of the provider's own, and is already part of a run's cost in **Analytics**, which also shows the advisor's calls, tokens and cost for the scope and for each model or provider. Whether the advisor is strong enough for the provider's model is Anthropic's call: when the API refuses it, the refusal is recorded on the provider, the editor shows it under **Advisor** with the API's message, the advisor, the model and when it happened, and calls go out without the advisor until the advisor, the model or the platform changes.\n\nA script runs inside Trenova in a sandboxed Python interpreter with no access to files or the network, so nothing it reads leaves Trenova and nothing about it is billed. Every read a script makes goes through the same permissions as a normal tool call. **Scripts** is on for every provider that handles assistant chat unless it is turned off; a person also needs the Scripts and analysis permission, which the Desk bundle grants. **Scripts may propose writes** is off by default. With **Scripts may propose writes**, nothing a script prepares is ever done on its own: the changes are proposed as one batch a person approves, each change is checked again against the record when it is approved, and a script that read outside text cannot run anything.\n\nA provider on a cloud platform keeps its credential for the region, project, workspace and identity it was entered for. Change any of them, or the platform, and the editor asks for the credential again; the saved one is never sent somewhere it was not entered for. Signing in with the server's own credentials is off unless the server's operator turns it on, because on a server shared by several organizations it would spend the operator's cloud account; choosing it removes any credential the provider had saved.\n\nOpening the page needs read access to AI control. Each tab appears only for people who may read it (agents, AI providers, agent runs, agent proposals, agent exceptions, agent memory); a tab someone cannot open is left out. **Safety** appears for people who may read agents, and **Quality** for people who may read the evaluation suite. **Worst rated** and satisfaction need read access to agent feedback, **Run suite now** and **Add to golden set** need create access to the evaluation suite, and changing **Sweep settings** needs update access to both the evaluation suite and AI control, because the budgets are spend. The organization-wide switches need update access to AI control, deciding proposals needs update access to agent proposals, and **Test** on a provider needs manage access to AI providers. Viewing **Extensions** needs read access to agent extensions, and turning one on, changing its settings or testing it needs update access. An agent searches the web for someone only when their role has the web research permission, and looks something up on a portal only when their role may view portal automation; an action on a portal needs a person who may act on portal automation to approve it. An agent's script reads only the report runs the person it works for ran and the files they attached to the conversation. **Analyses** under **Activity** needs read access to agent runs; the person an analysis ran for can always open it from the Desk.\n\nSearch queries and the addresses of pages agents read are sent to the extension's vendor. Queries that contain Trenova record IDs, email addresses or phone numbers are refused before they leave Trenova. Once an agent has read web content, every change it asks for in the rest of that reply waits for a person's approval, whatever the agent's autonomy. An agent stays on a portal site's addresses; a task that reached any other page has what it found withheld and is marked **Left the site**. Every action on a portal is a proposal: the person approving sees exactly what the browser will be told and the details it will type, and the work picks up with what the portal said once the task ends. Each extension counts its requests against the daily limit, which resets at midnight UTC, and the card shows today's requests and this month's cost.\n\nAn agent asks only the agents listed under **Can ask**; with none listed it works with its own tools alone. Only agents people talk to can ask or be asked, and an agent that was asked cannot hand the task on. The agent asked works as the person in the conversation, with its own tools and approvals, so it can never do more than that person could.\n\nWho can use an agent is set under **Who can use it**. An agent open to everyone that holds tools reaching restricted or confidential data, or whose work leaves the organization, shows a warning there as soon as the form says so, before it is saved; each person can still only do what their own permissions allow. An agent limited to specific roles with none chosen can be used by nobody. Roles chosen while an agent is open to everyone are kept for when it is limited again. A system agent is always open to everyone and cannot be limited to roles. Someone who loses access to an agent keeps their conversations with it, read-only. Setting who can use an agent needs update access to both agents and roles; someone without update access to roles can still save the rest of an agent as long as they leave who can use it as it was. The same grants can be managed from a role's page on [Roles](/admin/roles), under **Agents**.\n\nEvery night, at the hour chosen in **Sweep settings** (in the organization's timezone unless another is chosen there), each agent with active cases is replayed against a sample of its golden set with every write simulated. The sample always includes the cases the agent failed most recently and is otherwise spread across where the cases came from; it is the same sample for the same run. An agent is skipped when nothing about it (its instructions, tools, model or provider) or its cases changed since its last run, unless that run is older than the rerun limit. A run stops when the nightly or monthly budget is spent, and says so. When an agent's score falls below the median of its recent runs by more than the threshold, the run is marked **Regressed**, a Watchtower item is raised (critical when a case failed a hard check), and the people who can update AI control are told once, with what changed.\n\nThe **Audit trail** section appears for people with read access to the AI audit trail; reading agent runs does not grant it. **Verify now** needs the same read access. **Export trail** and **Download** need export access to the AI audit trail, and only the person who asked for an export can download it; the file can be downloaded until it expires, seven days after it was written unless the organization's configuration says otherwise. Requesting and downloading an export are written to the audit log. The audit log entries shown with an event appear only for people who may read the audit log. Arguments show only what the reader may see on that record; anything above it reads `[withheld]`, and confidential values were never recorded. Events reach the trail within a minute of happening. How long they are kept is set on [Data retention](/organization/data-retention).\n\n**Analytics** appears for people who may read agent runs. Routing a task from it, or putting a provider first, needs update access to AI providers. Its figures are worked out from runs every few minutes. A model or provider with too few runs, or a tool cell with too few calls, is shown but never ranked or suggested, and a route is suggested only when another provider is well ahead on that task. Spend is counted from the prices set on each provider, so a model with no price, such as one on your own hardware, counts as costing nothing.\n\nRemoving a provider stops any task routed only to it until another provider is assigned. Removing an agent keeps its existing conversations but they cannot be continued, and its schedule stops. On **Runs**, right-clicking a finished run offers **Replay against the current agent**; the comparison appears under **Evaluations**, where **Open comparison** shows what the replay would have done beside the original.",
+      "notes": "An embedding provider turns memories, documents and mail into vectors so agents can find them by what they mean rather than by the exact words; until one is set up, agents search by keywords only. Social security, card and bank account numbers are masked before a document is sent. Changing the embedding model or its size re-indexes everything that was embedded. Providers with the same model and size back each other up; a provider with a different model is never used in their place.\n\nRetrieval is read with read access to AI providers; changing its settings or re-indexing needs update access to AI providers. Only chunks whose text changed are embedded again on a re-index, so the cost shown before one is the most it could cost, and a re-index when nothing changed costs nothing. The monthly indexing budget covers indexing for the calendar month (UTC); when it is spent indexing pauses, and it resumes on its own the next month or as soon as the budget is raised. What agents' searches cost counts against each agent's own monthly budget. When the Embedding task is routed to a different model, every source is indexed under the new model beside the old one, and searches move to it only when all of it is done; **Sources** shows how far that has come.\n\nAn agent that has read content written outside the organization (an inbound email, an extracted document, an EDI file, a bank receipt, a file attached in chat, or a memory such a run wrote) never sends anything to a customer, driver or outside address, or moves money, on its own: that change waits for a person's approval whatever tier the tool has, and the proposal is marked as having read outside content. A memory such a run wrote stops counting once a person reviews it or approves it as a suggestion; the review is recorded in the audit log, and **Where it came from** still shows that it came from outside content. A suggested memory drawn from ratings of one agent is kept for that agent alone once approved.\n\nAn agent looks back over a conversation once it has been quiet for ten minutes (or after an hour of steady back and forth), and over a background run once every proposal it raised is decided. It does so only when something in the work is worth learning from, so most conversations cost nothing. A lesson is a **Procedure** (the steps that worked, naming the tools), a **Fact** no record holds, or, from a person's own words, an **Instruction** that was not already saved. It is kept for the person in the conversation unless they may create agent memories, follows their saving preference, and replaces an older memory rather than contradicting it. A lesson for a team or the whole organization, anything learned from a background run nobody was in, and anything learned from work that read outside content, is only ever offered. Retiring or editing a learned memory works like any other.\n\nAgents are told what kind of business the organization is from a note written each night from its own records and from the guidance its people gave; each person who talks to agents has a short note of their own, kept up each week. A note is written again only when the facts behind it move, never edited by a model on its own, and never states a number that is not in the facts or the guidance; an attempt that would is set aside and the version before it stays. Notes are written only while **Learn from their work** is on. Seeing the organization's note needs read access to agent memory, adding guidance needs create access, and retiring a line or writing it again needs update access.\n\nA memory holds up to 4,000 characters. Each prompt carries only as much memory as the agent's **Memory in the prompt** setting allows (6,000 tokens unless changed), starting with what is recorded about the record the conversation is about. **Used** above a reply counts only the memories that bear on what was asked: a note about a shipment's customer is still in front of the agent when you ask about that shipment's arrival, but is not counted as used unless it is about that. A procedure the agent learned is brought in only for the kind of task it describes. When the organization keeps close to 5,000 active memories, the Memory section warns that fewer of them reach each prompt; retire what no longer holds.\n\nA provider's **Advisor** costs extra: each consultation is billed at the advisor model's price on top of the provider's own, and is already part of a run's cost in **Analytics**, which also shows the advisor's calls, tokens and cost for the scope and for each model or provider. Whether the advisor is strong enough for the provider's model is Anthropic's call: when the API refuses it, the refusal is recorded on the provider, the editor shows it under **Advisor** with the API's message, the advisor, the model and when it happened, and calls go out without the advisor until the advisor, the model or the platform changes.\n\nA script runs inside Trenova in a sandboxed Python interpreter with no access to files or the network, so nothing it reads leaves Trenova and nothing about it is billed. Every read a script makes goes through the same permissions as a normal tool call. **Scripts** is on for every provider that handles assistant chat unless it is turned off; a person also needs the Scripts and analysis permission, which the Desk bundle grants. **Scripts may propose writes** is off by default. With **Scripts may propose writes**, nothing a script prepares is ever done on its own: the changes are proposed as one batch a person approves, each change is checked again against the record when it is approved, and a script that read outside text cannot run anything.\n\nA provider on a cloud platform keeps its credential for the region, project, workspace and identity it was entered for. Change any of them, or the platform, and the editor asks for the credential again; the saved one is never sent somewhere it was not entered for. Signing in with the server's own credentials is off unless the server's operator turns it on, because on a server shared by several organizations it would spend the operator's cloud account; choosing it removes any credential the provider had saved.\n\nOpening the page needs read access to AI control. Each tab appears only for people who may read it (agents, AI providers, agent runs, agent proposals, agent exceptions, agent memory); a tab someone cannot open is left out. **Safety** appears for people who may read agents, and **Quality** for people who may read the evaluation suite. **Worst rated** and satisfaction need read access to agent feedback, **Run suite now**, **Try another model** and **Add to golden set** need create access to the evaluation suite, and changing **Sweep settings** needs update access to both the evaluation suite and AI control, because the budgets are spend. The organization-wide switches need update access to AI control, deciding proposals needs update access to agent proposals, and **Test** on a provider needs manage access to AI providers. Viewing **Extensions** needs read access to agent extensions, and turning one on, changing its settings or testing it needs update access. An agent searches the web for someone only when their role has the web research permission, and looks something up on a portal only when their role may view portal automation; an action on a portal needs a person who may act on portal automation to approve it. An agent's script reads only the report runs the person it works for ran and the files they attached to the conversation. **Analyses** under **Activity** needs read access to agent runs; the person an analysis ran for can always open it from the Desk.\n\nSearch queries and the addresses of pages agents read are sent to the extension's vendor. Queries that contain Trenova record IDs, email addresses or phone numbers are refused before they leave Trenova. Once an agent has read web content, every change it asks for in the rest of that reply waits for a person's approval, whatever the agent's autonomy. An agent stays on a portal site's addresses; a task that reached any other page has what it found withheld and is marked **Left the site**. Every action on a portal is a proposal: the person approving sees exactly what the browser will be told and the details it will type, and the work picks up with what the portal said once the task ends. Each extension counts its requests against the daily limit, which resets at midnight UTC, and the card shows today's requests and this month's cost.\n\nAn agent asks only the agents listed under **Can ask**; with none listed it works with its own tools alone. Only agents people talk to can ask or be asked, and an agent that was asked cannot hand the task on. The agent asked works as the person in the conversation, with its own tools and approvals, so it can never do more than that person could.\n\nWho can use an agent is set under **Who can use it**. An agent open to everyone that holds tools reaching restricted or confidential data, or whose work leaves the organization, shows a warning there as soon as the form says so, before it is saved; each person can still only do what their own permissions allow. An agent limited to specific roles with none chosen can be used by nobody. Roles chosen while an agent is open to everyone are kept for when it is limited again. A system agent is always open to everyone and cannot be limited to roles. Someone who loses access to an agent keeps their conversations with it, read-only. Setting who can use an agent needs update access to both agents and roles; someone without update access to roles can still save the rest of an agent as long as they leave who can use it as it was. The same grants can be managed from a role's page on [Roles](/admin/roles), under **Agents**.\n\nWhile the golden set is kept automatically, which it is unless **Sweep settings** says otherwise, every proposal a person approves, changes and approves, or rejects becomes an active case within a few hours: an approved one expects the agent to propose the same change again, a rejected one expects it not to. Each agent keeps at most the **Cases kept per agent**. Past that the oldest automatic cases are retired, a tool at a time, so one busy tool does not crowd out the rest. An automatic case is also retired after 30 days, because an old case stops being fair as the records it is about move on. Turning the automatic golden set on also activates the candidates captured in the last 30 days that nobody has touched. A case someone keeps, edits, quarantines or restores is theirs from then on and is never retired on its own. What the cases cost to replay counts toward the evaluation budget.\n\nA trial lists the providers that are turned on and serve conversations. Its cases are asked on the provider you pick and on no other: if that provider cannot answer, the case fails rather than falling back to another model. A trial is never the agent's quality score, is never compared with as a baseline, never counts as a regression and tells nobody; what it costs counts toward the evaluation budget like any other run. Nothing about the agent changes: to move it, edit the agent's provider.\n\nEvery night, at the hour chosen in **Sweep settings** (in the organization's timezone unless another is chosen there), each agent with active cases is replayed against a sample of its golden set with every write simulated. A case captured from a conversation answers the agent's reads with what the original was given, so the agent is judged on the situation the person decided in, not on records that have changed since. Such a replay runs as of the moment the question was asked: the date the agent is told, the dates in what it reads and what \"today\" means in what it asks for all agree. A read the original never made, a result that had a restricted field taken out when the case was captured, and every read of a case captured from a run an agent started on its own are made against the records as they are now. The sample always includes the cases the agent failed most recently and is otherwise spread across where the cases came from; it is the same sample for the same run. An agent is skipped when nothing about it (its instructions, tools, model or provider) or its cases changed since its last run, unless that run is older than the rerun limit. A run stops when the nightly or monthly budget is spent, and says so. When an agent's score falls below the median of its recent runs by more than the threshold, the run is marked **Regressed**, a Watchtower item is raised (critical when a case failed a hard check), and the people who can update AI control are told once, with what changed.\n\nThe **Audit trail** section appears for people with read access to the AI audit trail; reading agent runs does not grant it. **Verify now** needs the same read access. **Export trail** and **Download** need export access to the AI audit trail, and only the person who asked for an export can download it; the file can be downloaded until it expires, seven days after it was written unless the organization's configuration says otherwise. Requesting and downloading an export are written to the audit log. The audit log entries shown with an event appear only for people who may read the audit log. Arguments show only what the reader may see on that record; anything above it reads `[withheld]`, and confidential values were never recorded. Events reach the trail within a minute of happening. How long they are kept is set on [Data retention](/organization/data-retention).\n\n**Analytics** appears for people who may read agent runs. Routing a task from it, or putting a provider first, needs update access to AI providers. Its figures are worked out from runs every few minutes. A model or provider with too few runs, or a tool cell with too few calls, is shown but never ranked or suggested, and a route is suggested only when another provider is well ahead on that task. Spend is counted from the prices set on each provider, so a model with no price, such as one on your own hardware, counts as costing nothing.\n\nRemoving a provider stops any task routed only to it until another provider is assigned. Removing an agent keeps its existing conversations but they cannot be continued, and its schedule stops. On **Runs**, right-clicking a finished run offers **Replay against the current agent**; the comparison appears under **Evaluations**, where **Open comparison** shows what the replay would have done beside the original.",
       "related": [
         "/admin/document-intelligence",
         "/admin/inbound-mailboxes",
@@ -3371,7 +3366,7 @@
         "Audit entries"
       ],
       "description": "Every change, access and administrative action in your organization, sealed against tampering",
-      "summary": "The audit log is the record of activity across your organization: who created, changed, read or deleted what, when, and how the change arrived. Each entry shows the **Resource ID**, the **Record** it was about, a **Description**, the kind of **Resource**, the **Action**, the **Timestamp**, **Who** did it and the **Channel** it came through (the web app, an API key, an agent, a SCIM directory or a background job). You see the entries for the kinds of record you can read; security entries need security audit access.\n\nOpening an entry shows its **Entry details** (event ID, action code, channel, agent run, how long it is **Kept as**, IP address, **Request ID**, **Trace ID** and user agent), the **Changes** made field by field with the previous and current value, the other entries written by the **Same request**, and the **Metadata** behind it. A created record keeps its **Current state** and a deleted one its **Previous state**. Entries are written with the change itself, so they appear at once, and every hour they are sealed so a changed or removed entry is found. The page is read-only.",
+      "summary": "The audit log is the record of activity across your organization: who created, changed, read or deleted what, when, and how the change arrived. You see the entries for the kinds of record you can read; security entries need security audit access.\n\nThe top of the page sums up a window you choose (**Today**, **7 days**, **30 days** or 90 days): Nova's summary, five figures (**Changes**, **Who acted**, **Sensitive actions**, **Made by agents** and **People working off hours**), a chart of **When changes happened** split into people, agents, integrations and jobs, **Who made the changes**, and what **Needs a review**. The figures are refreshed every minute. Select **Hide overview** to fold it into one line.\n\nBelow it, the **Trail** lists every entry newest first, grouped by day; while nothing narrows it, each day says how many entries it holds. Each row says what happened in a sentence, with the fields it changed and their values before and after, who did it, the record and how it arrived (**Via**). With **One row per request** on, a request that wrote many entries shows once, at its first entry, with \"+2 more in this request\" (or however many there are) to open the rest; while you search or filter, every match is shown. The chip beside the title says whether the entries' seals verify; entries are sealed every hour so a changed or removed entry is found. The page is read-only apart from marking reviews.",
       "requires": [
         {
           "resource": "audit_log",
@@ -3389,7 +3384,9 @@
         "change log",
         "legal hold",
         "audit export",
-        "security alerts"
+        "security alerts",
+        "alert review",
+        "needs a review"
       ],
       "tasks": [
         {
@@ -3402,8 +3399,8 @@
           ],
           "steps": [
             "Open [Audit log](/admin/audit-logs).",
-            "Select **Filter** and filter **Resource ID** with the record's ID, or **Record** with its number or name, or filter **Resource** to the kind of record.",
-            "Narrow further by **Action**, **Who** or **Timestamp** if needed, and sort by **Timestamp**."
+            "Select **Filter** and filter **Record** with the record's number or name, **Record ID** with its ID, or **Kind of record** to the kind of record.",
+            "Narrow further by **Action**, **Who** or **Time** if needed. From an open entry, select **Record history** to see every entry for its record."
           ]
         },
         {
@@ -3417,20 +3414,49 @@
           ],
           "steps": [
             "Open [Audit log](/admin/audit-logs).",
-            "Select an entry's row to open its details.",
-            "Read **Changes** for each field's **Previous value** and **Current value**. A value marked **Sensitive** was left out of the log. Select **History** beside a field to see every earlier change to it.",
-            "Read **Same request** to see everything else the same request changed."
+            "Select an entry's row. It opens beside the trail; use the arrow keys to move to the next entry and Esc to close it.",
+            "Read **What changed** for each field's old and new value. A value marked **Sensitive** was left out of the log. Select **History** under a field to see every earlier value it held.",
+            "Read **Same request** for everything else the same request changed, **Who** for the person or agent, the IP address and the device, and **Raw** for the record before and after."
           ]
         },
         {
-          "title": "Review what a person did",
+          "title": "Review what a person or agent did",
           "keywords": [
             "user activity",
-            "actions by user"
+            "actions by user",
+            "agent activity"
           ],
           "steps": [
             "Open [Audit log](/admin/audit-logs).",
-            "Select **Filter** and filter **Who** to the person, and sort by **Timestamp** to see their activity in order."
+            "Pick them under **Who made the changes**, or select **Filter** and filter **Who** to them.",
+            "To see only what agents did, select **By agents** above the trail."
+          ]
+        },
+        {
+          "title": "Look at a span of time",
+          "keywords": [
+            "what happened last night",
+            "changes at a time",
+            "off hours"
+          ],
+          "steps": [
+            "Open [Audit log](/admin/audit-logs) and choose the window.",
+            "Drag across **When changes happened** over the hours or days you want. The trail narrows to them; clear the time filter to see everything again."
+          ]
+        },
+        {
+          "title": "Review a security alert",
+          "keywords": [
+            "needs a review",
+            "mark reviewed",
+            "bulk delete",
+            "role changed alert",
+            "reopen alert"
+          ],
+          "steps": [
+            "Open [Audit log](/admin/audit-logs). Open alerts are under **Needs a review** and pinned on the chart.",
+            "Select an alert to open the entry that set it off, and read it.",
+            "Select **Mark reviewed**. To put it back in front of the security reviewers, open its entry and select **Reopen**."
           ]
         },
         {
@@ -3467,12 +3493,12 @@
             "bulk delete alert"
           ],
           "steps": [
-            "Open [Audit log](/admin/audit-logs) and select **Alerts**.",
+            "Open [Audit log](/admin/audit-logs) and select **Alert rules**.",
             "Turn each alert on or off. For the alerts on many deletes or many exports, set how many entries in how many minutes raise it."
           ]
         }
       ],
-      "notes": "Viewing the page needs read access to audit logs; exports need export access; legal holds need audit legal hold access; alerts and the seal status need security audit access. How long each kind of entry is kept is set on [Data retention](/organization/data-retention). Sign-ins are on **Sign-in activity**, and what agents did on **AI audit trail**.",
+      "notes": "Viewing the page needs read access to audit logs; exports need export access; legal holds need audit legal hold access; alerts, their reviews and the seal status need security audit access, and marking a review needs security audit update access. Off hours are 8 PM to 6 AM in your organization's time zone. How long each kind of entry is kept is set on [Data retention](/organization/data-retention). Sign-ins are on **Sign-in activity**, and what agents did on **AI audit trail**.",
       "related": [
         "/admin/users",
         "/admin/roles",
@@ -4273,8 +4299,8 @@
           ],
           "steps": [
             "Open [Dispatch controls](/admin/dispatch-controls) and find **Freight forecast**.",
-            "The forecast is learned from your shipment history and tested every night on the weeks it has not seen. Its status is one of: - **Ready**: how many actual counts fell inside the forecast range, and how much more accurate it was than repeating last week. Plans use it when **Anticipate freight** is on. - **Not better than last week yet**: it was tested but did not beat repeating last week, so plans ignore it until it does better. - **Not enough history yet**: it needs 8 weeks and 200 loads of history before it can be tested; the card says how much it has. - **Not fitted yet**: it has not been fitted from your history yet.",
-            "**History**, **Average miss** and **Last fitted** give the figures behind the status.",
+            "The forecast is learned from your shipment history and tested every night on the weeks it has not seen. Its status is one of: - **Ready**: how many actual counts fell inside the forecast range, and how much more accurate it was than repeating last week. Plans use it when **Anticipate freight** is on. - **Not better than last week yet**: it was tested but did not beat repeating last week, so plans ignore it until it does better. - **Not enough history yet**: it is tested once the last 35 weeks hold 8 weeks with loads and 200 loads picked up; **Weeks with loads** and **Loads picked up** show how far it has got. - **Not fitted yet**: it has not been fitted from your history yet.",
+            "**History**, **Average miss** and **Last fitted** give the figures behind the status. While the forecast is not **Ready**, opening the card more than an hour after **Last fitted** checks your history again; the card says so and updates by itself when the check finishes.",
             "If the card says **The freight forecast could not be loaded.**, select **Try again**."
           ]
         },
@@ -4932,7 +4958,7 @@
         "Inbound mailboxes"
       ],
       "description": "Addresses the system listens on, where each provider posts, and how much each is trusted to do without a person",
-      "summary": "Inbound mailboxes are the email addresses Trenova listens on, such as one for tenders, one for PODs and one for carrier invoices. Each mailbox has an **Address**, the **Provider** that receives the mail and posts it to Trenova (Resend or Postmark), a webhook URL the provider posts to, a signing secret that proves each delivery really came from the provider, and a trust level saying how much the desk may do with its mail without a person. Resend sends only a message's sender, recipients and subject to the webhook, so a Resend mailbox also needs an API key: the body and attachments are read from Resend with it after the message arrives.\n\nEach mailbox card shows whether it is **Listening** or **Not listening**, when mail last arrived, and when it was created. A mailbox without a signing secret refuses every delivery, and a Resend mailbox without an API key accepts mail but cannot read its body or attachments, so each message waits for a person saying why. Resend forwards everything its account receives to every webhook, so a Resend mailbox only keeps mail addressed to its own **Address** (including Cc and Bcc). Administrators set mailboxes up here; the mail itself is read in the [Triage](/triage).",
+      "summary": "Inbound mailboxes are the email addresses Trenova listens on, such as one for tenders, one for PODs and one for carrier invoices. Each mailbox has an **Address**, the **Provider** that receives the mail and posts it to Trenova (Resend or Postmark), a webhook URL the provider posts to, a signing secret that proves each delivery really came from the provider, and a trust level saying how much the desk may do with its mail without a person. Resend sends only a message's sender, recipients and subject to the webhook, so a Resend mailbox also needs an API key: the body and attachments are read from Resend with it after the message arrives.\n\nEach mailbox card shows whether it is **Listening** or **Not listening**, when mail last arrived, and when it was created. A mailbox without a signing secret refuses every delivery, and a Resend mailbox without an API key accepts mail but cannot read its body or attachments, so each message waits for a person saying why. Resend forwards everything its account receives to every webhook, so a Resend mailbox only keeps mail addressed to its own **Address** (including Cc and Bcc). Administrators set mailboxes up here; the mail itself is read in the [Triage](/desk/triage).",
       "requires": [
         {
           "resource": "inbound_mailbox",
@@ -5033,13 +5059,13 @@
           ],
           "steps": [
             "Open [Inbound mailboxes](/admin/inbound-mailboxes).",
-            "Select **Open its mail** on the mailbox to open the [Triage](/triage) filtered to it."
+            "Select **Open its mail** on the mailbox to open the [Triage](/desk/triage) filtered to it."
           ]
         }
       ],
-      "notes": "Viewing the page needs read access to inbound mailboxes. **New mailbox** needs create access, and **Edit**, **Rotate URL**, the secret buttons and the API key buttons need update access. The webhook URL carries the mailbox's token, which is stored only as a hash; if it is lost, rotate for a new one. The signing secret and the API key are stored encrypted and never shown again.\n\nIf mail sent to a mailbox never appears in the [Triage](/triage), check the webhook's delivery log in the provider: a 404 means the URL's token is wrong or the mailbox is **Not listening**, a 401 means the signing secret does not match, and a 200 marked ignored means the message was not addressed to the mailbox's **Address**.",
+      "notes": "Viewing the page needs read access to inbound mailboxes. **New mailbox** needs create access, and **Edit**, **Rotate URL**, the secret buttons and the API key buttons need update access. The webhook URL carries the mailbox's token, which is stored only as a hash; if it is lost, rotate for a new one. The signing secret and the API key are stored encrypted and never shown again.\n\nIf mail sent to a mailbox never appears in the [Triage](/desk/triage), check the webhook's delivery log in the provider: a 404 means the URL's token is wrong or the mailbox is **Not listening**, a 401 means the signing secret does not match, and a 200 marked ignored means the message was not addressed to the mailbox's **Address**.",
       "related": [
-        "/triage",
+        "/desk/triage",
         "/admin/integrations",
         "/admin/agent-control"
       ],
@@ -5924,6 +5950,9 @@
         "RBAC",
         "permission sets",
         "page access",
+        "give someone access",
+        "grant access to a module",
+        "who can open a page",
         "view as role",
         "role preview",
         "what a role can see"
@@ -7233,7 +7262,7 @@
         "Factoring companies"
       ],
       "description": "The factors your receivables are sold to. Customers assigned to one are invoiced with its remit-to and notice of assignment.",
-      "summary": "Factoring companies lists the factors you sell receivables to. Each one holds the factor's **Code**, **Name** and remit-to address, how customers pay it (**Remittance instructions**) and the **Notice of assignment** printed on every invoice assigned to it.\n\nAssign a customer to a factor on the customer's billing profile. From then on, each invoice for that customer records the factor when it posts. The invoice PDF and email name the factor as the place to pay and print its notice of assignment, and the customer's statements do the same. Payment reminders leave factored invoices out, because the factor collects them.\n\nA factor is either recourse or **Non-recourse**. With recourse, the usual arrangement, an invoice the customer never pays comes back to you, so factored invoices stay on the [Collections](/accounting/ar/collections) worklist and still count toward the customer's credit limit. A non-recourse factor buys the invoices outright and carries the risk, so its invoices leave the worklist and stop counting toward the credit limit.\n\nEach factor's panel also holds its **Agreements** and its **Notices of assignment**. The agreement records the terms: advance and reserve rates, the fee by days outstanding, the chargeback window, funding days and the documents the factor needs with every invoice. A notice of assignment tells one customer to pay the factor. A customer's invoices are only ready to factor on the [Factoring](/billing/factoring) page once the factor has an active agreement and the customer has acknowledged a notice.\n\nThe panel's **Remittances** section lists the factor's newest funding and reserve reports, each opening its review on its own page, and **Import remittance** reads the next one. Emails the inbox classifies as a factor remittance are matched to the factor by its **Email** address, or by its domain when no factor uses that exact address, so keep the factor's email current.",
+      "summary": "Factoring companies lists the factors you sell receivables to. Selecting a factor opens its own page, and **New factoring company** opens a page to add one.\n\nA factor's page has these tabs:\n\n- **Overview**: Nova's summary of the factor, then where its invoices are on their way to cash: **Ready to submit**, **With the factor**, **Funded, reserve held** and **Released**, with the recourse invoices nearing their chargeback window branching off. Each stage opens the [Factoring](/billing/factoring) workspace narrowed to this factor. Below it, **Needs attention** lists what needs someone, worst first, each with the step that moves it; **Terms in force** says the agreement in plain words; and **Funding pace** plots how many business days the factor took to fund its last schedules against the days agreed. A factor that has funded nothing yet shows the steps it needs instead: an agreement, schedule delivery, customers and their notices. - **Details**: the factor's **Identity**, **Remit-to address**, **Payment instructions and notice**, **Contact**, **Recourse** and **Notes**, each saying where it prints, beside a sample invoice laid out as your invoices print. Pointing at or editing a section marks its part of the invoice. The save bar names what changed. - **Agreement**: every version of the agreement. **What an invoice pays** works out the advance, fee and payment on release for an amount and the days left on its terms, the way funding computes them, and what the fee costs a year. Drafts show what they would change from the agreement in force. **Under this agreement** totals the schedules sent on the version (how many were funded, their invoices, face value, the advance and fees expected); **Booked to** names the ledger account each part of the factoring posts to, or your organization's default; and **History** shows when the version was drafted, activated, took effect and ends, and what it changed from the one before. - **Customers**: the customers assigned to the factor in their billing profiles, each with where its notice of assignment stands and the action that moves it on. - **Delivery**: how schedules reach the factor, its last test, and the last schedules sent. - **Ledger**: the reserve held over the last 90 days, every reserve movement, and the factor's remittances. - **Activity**: the factor's history.\n\nAssign a customer to a factor on the customer's billing profile. From then on, each invoice for that customer records the factor when it posts. The invoice PDF and email name the factor as the place to pay and print its notice of assignment, and the customer's statements do the same. Payment reminders leave factored invoices out, because the factor collects them.\n\nA factor is either recourse or non-recourse. With recourse, the usual arrangement, an invoice the customer never pays comes back to you, so factored invoices stay on the [Collections](/accounting/ar/collections) worklist and still count toward the customer's credit limit. A non-recourse factor buys the invoices outright and carries the risk, so its invoices leave the worklist and stop counting toward the credit limit. Once a factor has an agreement, the agreement sets recourse.\n\nA customer's invoices are only ready to factor on the [Factoring](/billing/factoring) page once the factor has an active agreement and the customer has acknowledged a notice. Emails the inbox classifies as a factor remittance are matched to the factor by its **Email** address, or by its domain when no factor uses that exact address, so keep the factor's email current.",
       "requires": [
         {
           "resource": "factoring_company",
@@ -7250,7 +7279,10 @@
         "invoice factoring",
         "recourse",
         "non-recourse",
-        "without recourse"
+        "without recourse",
+        "factor page",
+        "factor reserve",
+        "funding pace"
       ],
       "tasks": [
         {
@@ -7266,19 +7298,35 @@
             "Fill in **Code**, **Name** and the remit-to address (**Address line 1**, **City**, **State**, **Postal code**), and optionally **Email** and **Phone**.",
             "Fill in **Remittance instructions** with the factor's bank, lockbox or ACH details.",
             "Turn on **Non-recourse** if the factor buys invoices without recourse.",
-            "Optionally enter the **Notice of assignment** your agreement requires, then select **Save**."
+            "Optionally enter the **Notice of assignment** your agreement requires, then select **Create factoring company**. The factor's page opens on the steps it still needs."
           ]
         },
         {
-          "title": "Mark a factor as non-recourse",
+          "title": "Change a factor's remit-to or invoice wording",
           "keywords": [
-            "without recourse",
-            "factor carries the risk",
-            "remove factored invoices from collections"
+            "factor address",
+            "lockbox",
+            "remittance instructions",
+            "notice wording"
           ],
           "steps": [
-            "Open [Factoring companies](/billing/configuration-files/factoring-companies) and select the factor's row.",
-            "Under **Agreement**, turn on **Non-recourse**, then select **Save**."
+            "Open [Factoring companies](/billing/configuration-files/factoring-companies) and select the factor.",
+            "Open the **Details** tab and change the fields. The sample invoice shows how invoices will print them. If customers already have a notice naming the current remit-to, the page says how many; send them an updated notice from **Customers** after you save.",
+            "Select **Save changes**."
+          ]
+        },
+        {
+          "title": "See what needs attention on a factor",
+          "keywords": [
+            "chargebacks due",
+            "schedule failed",
+            "funding late",
+            "remittance to apply",
+            "factor problems"
+          ],
+          "steps": [
+            "Open [Factoring companies](/billing/configuration-files/factoring-companies) and select the factor.",
+            "On the **Overview** tab, read **Needs attention** and select the button on the item to act on."
           ]
         },
         {
@@ -7317,12 +7365,26 @@
             "factoring contract"
           ],
           "steps": [
-            "Open [Factoring companies](/billing/configuration-files/factoring-companies) and select the factor's row.",
-            "Under **Agreements**, select **New agreement**.",
+            "Open the factor from [Factoring companies](/billing/configuration-files/factoring-companies).",
+            "On the **Agreement** tab, select **New agreement**, or **New version from these terms** to start from the selected one.",
             "Fill in **Starts**, **Advance rate**, **Reserve rate**, **Chargeback window**, **Recourse** and **Accounting treatment**.",
             "Under **Fees**, enter each band's **Until day**, **Fee rate** and **Flat fee**. Select **Add tier** for another band and leave the last one open-ended. The **Advance rate** plus any band's **Fee rate** cannot be more than 100% of the invoice.",
             "Fill in **Funding days** and **Daily schedule time**, and pick the **Documents the factor needs**.",
             "Select **Save draft**, then **Activate** once the contract is signed."
+          ]
+        },
+        {
+          "title": "Work out what an invoice will pay",
+          "keywords": [
+            "factoring calculator",
+            "advance",
+            "fee",
+            "reserve release",
+            "cost of factoring"
+          ],
+          "steps": [
+            "Open the factor from [Factoring companies](/billing/configuration-files/factoring-companies).",
+            "On the **Agreement** tab, pick the version, then enter the **Invoice amount** and drag **Days left on its terms when submitted**."
           ]
         },
         {
@@ -7332,8 +7394,8 @@
             "terminate agreement"
           ],
           "steps": [
-            "Open the factor's row in [Factoring companies](/billing/configuration-files/factoring-companies).",
-            "Under **Agreements**, select **End** on the active agreement.",
+            "Open the factor from [Factoring companies](/billing/configuration-files/factoring-companies).",
+            "On the **Agreement** tab, pick the active version and select **End**.",
             "Optionally choose when it **Ends**, then select **End agreement**."
           ]
         },
@@ -7346,8 +7408,8 @@
             "tell the customer to pay the factor"
           ],
           "steps": [
-            "Open the factor's row in [Factoring companies](/billing/configuration-files/factoring-companies).",
-            "Under **Notices of assignment**, select **New notice**, choose the **Customer**, then select **Save draft**.",
+            "Open the factor from [Factoring companies](/billing/configuration-files/factoring-companies).",
+            "On the **Customers** tab, select **Draft notice** on the customer, or **New notice** to choose one, then select **Save draft**.",
             "In the dialog that opens, optionally enter a **Recipient**, then select **Send notice**."
           ]
         },
@@ -7360,8 +7422,8 @@
             "acknowledgement"
           ],
           "steps": [
-            "Open the factor's row in [Factoring companies](/billing/configuration-files/factoring-companies).",
-            "Under **Notices of assignment**, select **Record acknowledgement** on the customer's notice.",
+            "Open the factor from [Factoring companies](/billing/configuration-files/factoring-companies).",
+            "On the **Customers** tab, select **Record acknowledgement** on the customer.",
             "Choose **Acknowledged on**, upload the signed copy or pick it under **Signed copy**, and optionally set when it **Expires**.",
             "Select **Record acknowledgement**."
           ]
@@ -7374,8 +7436,8 @@
             "customer pays us again"
           ],
           "steps": [
-            "Open the factor's row in [Factoring companies](/billing/configuration-files/factoring-companies).",
-            "Under **Notices of assignment**, select **Release** on the notice.",
+            "Open the factor from [Factoring companies](/billing/configuration-files/factoring-companies).",
+            "On the **Customers** tab, select **Release** on the customer.",
             "Enter the **Reason**, then select **Release notice**."
           ]
         },
@@ -7390,20 +7452,34 @@
             "host key"
           ],
           "steps": [
-            "Open the factor's row in [Factoring companies](/billing/configuration-files/factoring-companies).",
-            "Under **Schedule delivery**, select **Set up** (or **Edit**).",
+            "Open the factor from [Factoring companies](/billing/configuration-files/factoring-companies).",
+            "On the **Delivery** tab, select **Set up** (or **Edit**).",
             "Choose **Send by**: - **Email**: add the **Recipients** and choose whether to **Attach invoice packets**. - **SFTP**: fill in **Host**, **Port**, **User name** and **Folder**, choose **Sign in with**, enter the **Password** or **Private key**, and paste the server's **Host key** from the factor.",
             "Select **Save**, then select **Test** to connect with the saved settings without sending anything."
           ]
+        },
+        {
+          "title": "Import a factor's remittance",
+          "keywords": [
+            "funding report",
+            "reserve report",
+            "remittance file"
+          ],
+          "steps": [
+            "Open the factor from [Factoring companies](/billing/configuration-files/factoring-companies).",
+            "Select **Import remittance** at the top of the page."
+          ]
         }
       ],
-      "notes": "Opening the page needs read access to factoring companies; adding and changing them needs create and update access. Only an active factor can be assigned to a customer, and a factor cannot be made inactive while customers are still assigned to it.\n\nAn invoice records its factor when it posts, so changing a customer's factor affects only invoices posted afterwards. A draft shows the customer's current factor until it posts. A customer assigned to a factor that has since been made inactive cannot post invoices until the assignment is changed.\n\nRecourse is a property of the agreement, so it applies to every invoice assigned to the factor, including ones already posted. Credit standings follow at the next credit review, which runs each night and whenever the customer's receivables change.\n\nThe factor takes its fee out of the invoice, so the advance and the highest fee rate together must fit within it. A **Flat fee** or **Minimum fee** is an amount rather than a share of the invoice, so on a small invoice where it leaves less than the advance rate, the expected advance is lowered to what remains after the fee.\n\nAgreements need factoring agreement access and notices need notice of assignment access. An ended agreement cannot be changed, and a factor has one active agreement at a time.\n\nWhen **Notice of assignment** is blank, invoices print a standard notice saying the invoice is payable only to the factor. Your factoring agreement may require exact wording; use it if so.\n\nSchedule delivery needs update access to factoring companies. A stored password or key is never shown again; leave it blank to keep it. An SFTP server is checked against the pasted host key and refused if it presents another, and only public addresses are reached.",
+      "notes": "Opening the page needs read access to factoring companies; adding and changing them needs create and update access. Only an active factor can be assigned to a customer, and a factor cannot be made inactive while customers are still assigned to it.\n\nAmounts on the factor's page need read access to factoring reserves. Without it the money path shows invoice counts, the summary leaves money out and the **Ledger** tab shows only remittances when you can read those. The **Agreement** tab needs factoring agreement access, the **Customers** tab customer access, and the **Activity** tab audit log access.\n\nAn invoice records its factor when it posts, so changing a customer's factor affects only invoices posted afterwards. A draft shows the customer's current factor until it posts. A customer assigned to a factor that has since been made inactive cannot post invoices until the assignment is changed.\n\nRecourse is a property of the agreement, so it applies to every invoice assigned to the factor, including ones already posted. Credit standings follow at the next credit review, which runs each night and whenever the customer's receivables change.\n\nThe factor takes its fee out of the invoice, so the advance and the highest fee rate together must fit within it. A **Flat fee** or **Minimum fee** is an amount rather than a share of the invoice, so on a small invoice where it leaves less than the advance rate, the expected advance is lowered to what remains after the fee. **What an invoice pays** follows the same rule.\n\nFunding pace counts business days, Monday to Friday, in your organization's time zone. A schedule is late when it took more than the agreement's funding days.\n\nWhen **Notice of assignment** is blank, invoices print a standard notice saying the invoice is payable only to the factor; the preview shows it word for word. Your factoring agreement may require exact wording; use it if so.\n\nSchedule delivery needs update access to factoring companies. A stored password or key is never shown again; leave it blank to keep it. An SFTP server is checked against the pasted host key and refused if it presents another, and only public addresses are reached.",
       "related": [
         "/billing/configuration-files/customers",
         "/billing/invoices",
         "/billing/factoring"
       ],
-      "covers": [],
+      "covers": [
+        "/billing/configuration-files/factoring-companies/new"
+      ],
       "createAction": {
         "label": "New factoring company",
         "query": {
@@ -8698,7 +8774,7 @@
           "steps": [
             "Open [Billing queue](/billing/queue).",
             "Type a PRO or BOL number in the search box above the list.",
-            "Select **Filters** to narrow by **Status**, **Bill type**, **Payer** or **Assigned billers**, or turn on **Include posted items** to see records that already produced a posted invoice.",
+            "Select **Filters** to narrow by **Status**, **Bill type**, **Payer** or **Assigned billers**, or turn on **Include closed items** to add a **Closed** lane with the records that were posted or canceled.",
             "To reuse a combination, save it as a preset with the save icon in the filters panel; pick a saved preset from the preset picker there. **Clear all** removes every filter."
           ]
         },
@@ -9469,8 +9545,8 @@
       "breadcrumb": [
         "Desk"
       ],
-      "description": "The Desk is where you talk to Trenova's AI agents about the work in front of you: a shipment, a driver, a customer, or how to do something in the app.",
-      "summary": "The Desk is where you talk to Trenova's AI agents about the work in front of you: a shipment, a driver, a customer, or how to do something in the app. Its **Today** page greets you with the date and one line on what the day holds (the morning briefing's headline when one was written, otherwise how many decisions are waiting on you, which opens them), and below it the box you ask in. The box names the agent it will ask and types out that agent's starter questions as its placeholder: press Tab to take the one on screen, or ⌘1–3 (Ctrl+1–3) to ask it outright. The rail down the left holds **New conversation**, search, links to **Today**, **Watchtower** and **Decisions** (each with a count only while something waits there), every conversation grouped by when it was last used (**Pinned** first, then **Today**, **Yesterday**, **Previous 7 days**, **Previous 30 days** and **Older**), **Keyboard shortcuts**, **Desk settings** and **Back to Trenova**. A conversation that needs you or has an agent at work says so under its name, with the agent: \"Needs your approval\", \"Writing a reply\" or \"Last reply failed\". Press ? anywhere outside a text box to see every Desk shortcut. Select a group's heading to fold it away or open it again; a folded group shows how many conversations it holds, and the rail remembers which groups you folded. On a phone the rail slides over the page from the menu button at the top left.\n\nEach conversation opens in the middle, and anything an agent produces (a table, a draft, a document, a plan) opens in the workspace beside it. Changes an agent wants to make to your records are not applied on their own: in a Desk conversation they wait in a card above the message box, and they are also listed on [Decisions](/desk/decisions).\n\nWhile an agent replies you can steer it with a correction or queue the next question. The message box names records with @, takes slash commands, files, scans and dictation, and can share the page you came from. A conversation about a shipment, invoice or dispute becomes a case, with a ready-to-bill or ready-to-close checklist, snoozes and waiting on the customer's or carrier's reply. Conversations can also run a request on a schedule, be handed to another agent, keep pinned facts in mind, and compact themselves when they grow long. Each fact an agent looked up carries a number tying it to the step that found it.",
+      "description": "The Desk is where you work with Trenova's AI agents, keep a case on each shipment, invoice or dispute you are working, and see everything that needs you, in one room: the rail down the left, the page in the middle, and Nova's margin on the right when you ask something.",
+      "summary": "The Desk is where you work with Trenova's AI agents, keep a case on each shipment, invoice or dispute you are working, and see everything that needs you, in one room: the rail down the left, the page in the middle, and Nova's margin on the right when you ask something. You can snooze a case until a time, the next appointment or the truck's ETA and pick it up again later. The bar across the top names where you are and, on every page but a conversation, holds the operation in one strip (the morning's first figures, how much needs you and how many runs your agents have going under **Agents working**), **Search or do** (⌘K / Ctrl+K) and **Ask** (⌘J / Ctrl+J), which opens Nova's margin on whatever the page is about.\n\nIts **Today** page greets you with the date and one line on what the day holds (the morning briefing's headline when one was written, with a note on how it was written, otherwise how many decisions are waiting on you), the box you ask in, and under it the day itself: the morning's figures in one strip, the four rows that need you soonest with every signal about each, what changed since you left, what agents changed today (on their own, after someone approved it, only as a preview, or not at all) and what they are working on now. The box names the agent it will ask and types out that agent's starter questions as its placeholder: press Tab to take the one on screen, or ⌘1–3 (Ctrl+1–3) to ask it outright. Your question opens in Nova's margin, beside Today.\n\nThe rail down the left holds its fold (⌘B / Ctrl+B), the logo (which leads back to Trenova), search, **New conversation**, **Today**, **Needs you** with its two lenses under it (**Watchtower** and **Decisions**, each opening Needs you on that lens, with a count only while something waits there), **Triage** (the room where mail is read and filed, with how many messages wait on you; while it is open the rail holds Triage's folders in place of your conversations), **Scheduled**, **Memory**, the cases you opened this session, every conversation grouped by when it was last used (**Pinned** first, then **Today**, **Yesterday**, **Previous 7 days**, **Previous 30 days** and **Older**), and at the foot your name with **Keyboard shortcuts** and **Desk settings**. Each conversation names its agent under its title, and says so when it needs you or has an agent at work: \"Needs your approval\", \"Writing a reply\" or \"Last reply failed\". Selecting a conversation opens it as a page of its own, wherever you are. To keep the page you are on and read the conversation beside it, right-click the conversation and choose **Open beside the page**; **Open full width** at the top of the margin then opens it as its own page. Press ? anywhere outside a text box to see every Desk shortcut, ⌘K (Ctrl+K) to search or do anything, ⌘J (Ctrl+J) to ask Nova, and G then D, N, W or T to go to Today, Needs you, or Needs you on the Watchtower or Triage lens. On a phone the rail slides over the page from the menu button at the top left.\n\n**Needs you** puts everything waiting on people in one list, one row per record: a shipment's late warning, the customer's email about it and the plan an agent drafted to recover it are one row. Opening a record gives its case: what it is and how long is left, what was found with each point numbered to the evidence beside it, the ways it could go, and the plan to approve or decline as written.\n\nEach conversation opens in the middle, and anything an agent produces (a table, a draft, a document, a plan, a board) opens in the workspace beside it. Changes an agent wants to make to your records are not applied on their own: in a Desk conversation they wait in a card above the message box, and they are also listed in the Decisions lens of [Needs you](/desk/needs).\n\nWhile an agent replies you can steer it with a correction or queue the next question. The message box names records with @, takes slash commands, files, scans and dictation, and can share the page you came from. A conversation about a shipment, invoice or dispute becomes a case, with a ready-to-bill or ready-to-close checklist, snoozes and waiting on the customer's or carrier's reply. Conversations can also run a request on a schedule, be handed to another agent, keep pinned facts in mind, and compact themselves when they grow long. Each fact an agent looked up carries a number tying it to the step that found it.",
       "requires": [
         {
           "resource": "assistant",
@@ -9479,6 +9555,15 @@
       ],
       "capabilities": [],
       "aliases": [
+        "needs you",
+        "what needs me",
+        "case",
+        "cases",
+        "record case",
+        "snooze a case",
+        "case checklist",
+        "nova handled",
+        "since you left",
         "AI assistant",
         "assistant",
         "agents",
@@ -9508,6 +9593,71 @@
         "morning briefing"
       ],
       "tasks": [
+        {
+          "title": "Open a record's case",
+          "keywords": [
+            "case",
+            "record page in desk",
+            "everything about a shipment",
+            "ask about this record",
+            "evidence",
+            "approve plan"
+          ],
+          "steps": [
+            "From [Needs you](/desk/needs), select **Open the case** (or press Enter); from Today, select a row in **Needs you**. The case also joins the rail, where right-clicking it offers **Remove from Cases**.",
+            "The top names the record, where it stands and how long is left before its deadline, with **Open the record** beside it. Under it, what was found, in Nova's words when Nova has read the case: each claim carries a number that lights up the evidence beside it, and the four cells under it say why it matters, what happens if nothing changes, what the agent proposes and why it needs your approval. When Nova has not read it, the same place says what the Watchtower raised.",
+            "Under **What could happen**, when the agent laid out more than one way to go, choose one (or press 1, 2 or 3). One is marked **Recommended**. Choosing another asks the agent to draft that plan; choosing to leave it as it is offers **Accept the risk…**, which asks why and clears the record from Needs you.",
+            "The plan shows each step with the record it changes, what was there before and what it would be, and which steps can't be undone. Select **Approve plan**, or press ⌘Enter (Ctrl+Enter), to approve exactly what is shown; select **Decline**, or press D, and say why. To change the plan, select **Change values** and say what to change in the box at the bottom.",
+            "An approval waits a few seconds before anything runs: select **Undo** to take it back, or **Do it now** to start it. Each step is marked as run only once the server confirms it. If a step doesn't go through, the plan stops and offers to have the agent redraft it or to finish it by hand on the record.",
+            "The evidence runs down the right: where the truck is, the driver's hours, what the customer wrote and the stops for a shipment; what is owed, the dispute and the invoice's history for an invoice. To ask about the record, pick a suggested question or type one in the box at the bottom: the answer opens in Nova's margin with the record attached, and a shipment, invoice or dispute keeps the conversation as the record's case."
+          ]
+        },
+        {
+          "title": "Make the first move on a case yourself",
+          "keywords": [
+            "ask for the POD",
+            "missing proof of delivery",
+            "missing paperwork",
+            "ask where the load is",
+            "status request",
+            "check call",
+            "missed pickup",
+            "missed delivery",
+            "running late",
+            "tender again",
+            "routing guide",
+            "message the driver",
+            "text the driver",
+            "email the carrier",
+            "no agent set up"
+          ],
+          "steps": [
+            "Open the case from [Needs you](/desk/needs). When no agent has worked it, the plan area offers the first step for what the Watchtower raised: **Ask for the POD** for a delivered load with no proof of delivery, **Ask where it is** for a missed pickup or delivery, a late arrival or a missed check call, and **Tender it again** when every carrier in the routing guide passed.",
+            "Select it. Trenova reads the load and shows who it goes to and how: a **Dash message** to a driver with a Dash login, a **Text message** to a driver with only a phone number (when your plan includes text messages), or an **Email** to the driver or to the carrier that has the load. A tender shows the routing guide and the carriers in the order they will be asked.",
+            "Read the message and change the words if you like. To have Nova rewrite it, say how in the line under the message (firmer, shorter, mention it is the third ask) and select **Reword**; read the result before you send it.",
+            "Select **Send**, or **Offer it** for a tender. It goes out under your name. No agent has to be set up or turned on for this.",
+            "The case now says who was asked what, by whom and how long ago, and the button reads **Ask again**.",
+            "If it can't be sent, the box says why in plain words, for example that the driver has no Dash login, email or phone number on file, or that no email profile is set up. Fix that on the record, or for a missing proof of delivery select **Upload the POD**.",
+            "**Hand it to an agent** is still there when you want an agent to look at the record and draft a plan instead."
+          ]
+        },
+        {
+          "title": "See what agents changed today",
+          "keywords": [
+            "nova handled",
+            "what did the agent do",
+            "ran on its own",
+            "approved by",
+            "previewed only",
+            "didn't go through"
+          ],
+          "steps": [
+            "Open [Desk](/desk). **Agents handled** lists what agents changed, newest first, with the time, the agent, the records and who stood behind it.",
+            "Each line says how it ended: **Done on its own** (a tool AI control lets run without asking), **Done** after someone approved it, **Previewed only** (an agent in shadow or simulation) or **Didn't go through**.",
+            "Several writes of the same kind in one run are one line, such as \"Filed 11 rate confirmations\". Select a line to open it: why the agent could make it (the rule it ran under, or who approved it), how often it has made it in the last 30 days, and every record it changed.",
+            "The \"Since you left\" section says what came in, what was cleared, the changes other people approved and the writes that did not go through since you last looked."
+          ]
+        },
         {
           "title": "Ask an agent a question",
           "keywords": [
@@ -9562,7 +9712,7 @@
             "While a change waits on you, a card stands above the message box. It names the change and the record it is for (or how many records it touches), and the value it would set. A change that can't be undone is marked **Permanent**; one that can says reversible.",
             "Select **Approve** once it has been checked against your records, or press ⌘Enter (Ctrl+Enter on Windows) while the message box is empty. With text in the box the key never approves, so a question about the change is never taken as a yes. A plan of several steps approves as one. For a few seconds after, a bar says when it goes through and **Undo** takes it back; the keyboard lands on **Undo**.",
             "Select **Decline** to turn it down. Say why: the agent reads it in the conversation, and so does whoever looks after the agent. A declined change never runs.",
-            "Select **Review** to read the change in full in the workspace, or **Decide later** (the clock) to put it off; it then waits in the workspace and on [Decisions](/desk/decisions), where you can also change its values first.",
+            "Select **Review** to read the change in full in the workspace, or **Decide later** (the clock) to put it off; it then waits in the workspace and in the Decisions lens of [Needs you](/desk/needs), where you can also change its values first.",
             "If the card says the change is out of date, what it was drafted against has changed since. Select the redraft button on the card to ask the agent to draft it again with the records as they are now."
           ]
         },
@@ -9583,7 +9733,7 @@
             "The assistant on every page asks the same way the Desk does: while a change waits on you, a card stands above the message box. It names the change and the record it is for (or how many records it touches), and the value it would set. A change that can't be undone is marked **Permanent**; one that can says reversible.",
             "Select **Approve** once it has been checked against your records, or press ⌘Enter (Ctrl+Enter on Windows) while the message box is empty; Enter alone never approves. For a few seconds after, a bar says when it goes through: select **Undo** to take it back, or **Do it now** to let it go straight away.",
             "Select **Decline** to turn it down, and say why; the agent reads your reason.",
-            "Select **Review** to read the change in full: the assistant opens the conversation on the [Desk](/desk) with the change beside it, where you can also change its values first. Select **Decide later** (the clock) to put it off; it waits on [Decisions](/desk/decisions), and a pill above the message box says how many changes wait on you.",
+            "Select **Review** to read the change in full: the assistant opens the conversation on the [Desk](/desk) with the change beside it, where you can also change its values first. Select **Decide later** (the clock) to put it off; it waits in the Decisions lens of [Needs you](/desk/needs), and a pill above the message box says how many changes wait on you.",
             "If the card says the change is out of date, what it was drafted against has changed since. Select the redraft button on the card to ask the agent to draft it again with the records as they are now."
           ]
         },
@@ -9626,7 +9776,7 @@
           "steps": [
             "Open [Desk](/desk).",
             "Select the conversation in the rail, where conversations are grouped by when they were last used with pinned ones first.",
-            "To find one by what was said in it, open search from the rail (or press ⌘K / Ctrl+K) and type a load number, customer, invoice ID or any words from the conversation. Results cover conversations, messages and what they produced."
+            "To find one by what was said in it, select **Search** in the rail (or press ⌘K / Ctrl+K and choose **Conversations**) and type a load number, customer, invoice ID or any words from the conversation. Results cover conversations, chapters, messages, what they produced and decisions."
           ]
         },
         {
@@ -9677,8 +9827,8 @@
             "Open the conversation from [Desk](/desk).",
             "In the bar at the top, open **More actions** and use **Pin conversation** (or **Unpin conversation**) to keep it at the top of the rail, or **Download transcript** to save it.",
             "To rename it, select its name in the bar at the top, type the new name and press Enter (Esc keeps the old name).",
-            "To delete it, hover over it in the rail and select **Delete conversation** (the bin). It is deleted at once. A conversation with scheduled requests asks first, because they are deleted with it and stop running: the question lists them, and you select **Delete** to go ahead or **Cancel**.",
-            "Select **Workspace** in the top bar (or press ⌘\\\\ / Ctrl+\\\\) to show or hide what the agent produced, or **Hide artifacts** inside it to make room for the conversation."
+            "To delete it, open it full width, open **More actions** in the bar at the top and select **Delete conversation**. It is deleted at once. A conversation with scheduled requests asks first, because they are deleted with it and stop running: the question lists them, and you select **Delete** to go ahead or **Cancel**.",
+            "Select **Workspace** in the top bar (or press ⌘\\\\ / Ctrl+\\\\) to open it on everything the conversation produced or fold it away, or **Hide artifacts** inside it to make room for the conversation."
           ]
         },
         {
@@ -10035,7 +10185,7 @@
           ]
         },
         {
-          "title": "Snooze a case",
+          "title": "Snooze a case until a time, an appointment or the truck's ETA",
           "keywords": [
             "case",
             "snooze",
@@ -10231,9 +10381,9 @@
           "steps": [
             "Open the conversation from [Desk](/desk). Select **Workspace** in the top bar to open the workspace beside it. The number on the button is how many things the conversation has produced.",
             "The open item sits in front of a small stack of the others. Select it (**Switch artifact**) to fan the stack out and pick another, or use **Previous** and **Next** to step through them.",
-            "To see everything the conversation produced, select **All artifacts** at the bottom of the fanned stack, or press ⌘J (Ctrl+J). Type in **Search artifacts** to find one by its title, the tool that made it or the turn it came from, or narrow the list with **All**, **Pinned** or a kind such as a table, record or document. Press Enter to open the first match.",
+            "To see everything the conversation produced, select **All artifacts** at the bottom of the fanned stack, or press ⌘\\\\ (Ctrl+\\\\). Type in **Search artifacts** to find one by its title, the tool that made it or the turn it came from, or narrow the list with **All**, **Pinned** or a kind such as a table, record or document. Press Enter to open the first match.",
             "Select **Pin to conversation** at the bottom of the workspace to keep an item at the top of the conversation. Select it again to unpin it.",
-            "Select **Copy link** to copy a link that opens the conversation with this item beside it, or **Open on its own page** to read it full width in a new tab. On that page, **Open in conversation** takes you back.",
+            "Select **Copy link** to copy a link that opens the conversation with this item beside it, or **Open on the canvas** to read it full width on a page of its own. On that page, **Open in the conversation** takes you back.",
             "Select **Hide artifacts** to close the workspace."
           ]
         },
@@ -10492,14 +10642,15 @@
             "find artifact",
             "find decision",
             "search desk",
-            "recent searches"
+            "command palette",
+            "recent conversations"
           ],
           "steps": [
-            "On [Desk](/desk), select **Search** in the rail or press ⌘K (Ctrl+K).",
-            "Type in **Search chats, messages, artifacts…**. Results are grouped as **Conversations**, **Chapters**, **Messages**, **Artifacts** and **Decisions**.",
-            "Narrow the results with **All**, **Chats**, **Chapters**, **Messages**, **Artifacts** or **Decisions**, or press Tab to move between them.",
-            "Use the arrow keys and Enter, or select a result. A conversation or message opens its conversation, a chapter opens its conversation at that chapter, an artifact opens the conversation with it beside it, and a decision opens [Decisions](/desk/decisions).",
-            "With nothing typed, the search offers **Recent searches** and recent conversations and artifacts."
+            "On [Desk](/desk), select **Search** in the rail, or press ⌘K (Ctrl+K). ⌘K opens the same command palette everywhere in Trenova; the rail's search opens it on **Conversations**.",
+            "Type in **Find a conversation, a message or what an agent made…**. Each result says whether it is a conversation, chapter, message, artifact or decision, and which conversation it is in.",
+            "Press Tab to move between **All**, the kinds of record, **Conversations**, **Pages** and **Commands**. On the Desk, **All** lists the top conversations beside records and pages.",
+            "Use the arrow keys and Enter, or select a result. A conversation or message opens its conversation, a chapter opens its conversation at that chapter, an artifact opens the conversation with it beside it, and a decision opens the Decisions lens of [Needs you](/desk/needs).",
+            "With nothing typed, **Conversations** lists your recent conversations and artifacts."
           ]
         },
         {
@@ -10522,229 +10673,21 @@
           ]
         }
       ],
-      "notes": "Needs read access to the assistant. If no agents are available, an administrator has to connect an AI provider and enable an agent in [AI control](/admin/agent-control); people who can manage agents see **Open AI Control** on the Desk.\n\nWhen an agent in your own conversation proposes a change, the card above the message box shows it the same way on the Desk and in the floating assistant: what it would set and whether it can be undone, checked against your records as they are now. **Approve** waits until that check has loaded. If the change was drafted against records that have changed since, the card says it is out of date and offers to redraft it instead. A plan of several steps, or several changes of one kind, is approved with one answer. You need only access to the assistant and to that agent, and each change still runs only if your own permissions allow it.\n\nThe conversation marks each decided change with a line (\"Approved\"), and deciding on the card or on [Decisions](/desk/decisions) updates both.\n\nA long conversation eventually becomes read-only; select **Start a new conversation** to carry on. A conversation also becomes read-only when its agent is turned off, removed, set to run on its own, or no longer available to you, and the note in place of the message box says which, and whether an administrator can change it.\n\n- Enter sends and Shift+Enter starts a new line. In **Desk settings**, **Send with** can be set to ⌘Enter (Ctrl+Enter on Windows) instead. **@ mentions**, **Slash commands** and **Dictation** can each be turned off there. - Only words can steer a reply under way. A message carrying files always waits until the reply finishes. Once a steering message has been handed to the agent, it can't be edited or taken back; stopping the reply is the only way to undo it. Waiting messages are kept with the conversation, so they survive a reload or another tab. - You can't change the agent or the model while an agent is replying. - A message can carry up to 5 files, each up to 25 MB: PDF, PNG, JPG, HEIC, TIFF, CSV, Excel, Word, text and email (.eml) files. Password-protected PDFs and other file types are refused before they upload. Scanning works only inside an open conversation, not from the box on Today. - @ search lists only records you are allowed to read. Dictation isn't available in every browser; where it isn't, the microphone says so. - A conversation keeps up to 12 pinned facts of up to 200 characters each. Compacting keeps pinned facts, pending approvals and, where it can, the latest turns in full. A conversation set to compact itself does so at 85% full. - An agent can wait on up to ten things in one conversation. A wait gives up after a day unless the agent sets a longer limit (at most a week); either way the agent picks the task back up and is told it ran out. If the thing has already happened, the agent acts on it right away. - A case is in one of four states, shown on its card and in its menu. **Working**: nothing is put off. Waiting: on something such as **Waiting on the customer**, **Waiting on the carrier** or **Waiting on a reply**. Snoozed: put away until a time, the next appointment or the ETA. **Settled**: the record is closed. A shipment settles once it is invoiced or canceled, not when it delivers, because the ready-to-bill work comes after delivery; an invoice once it is paid or voided; a dispute once it is resolved or withdrawn. - A case's state is worked out each time you look, so a payment recorded elsewhere settles its invoice's case on its own. In the rail a case stays with the other conversations, grouped by when it was last used; a snoozed case comes back on time, or sooner when something the agent was waiting on arrives. A conversation started from a shipment, invoice or dispute is a case from the start. - Which steps a case checklist shows, their order, and whether each is required or optional, are set in **Settings** › **Case checklists** on the Desk; a customer can have its own. A ticked step belongs to the record, so everyone working a case about the same shipment or invoice sees it. - If a record the agent was working with changes elsewhere during its turn, a note headed **Changed while the agent was working** lists what changed, and the agent reads those records again before relying on them. - An agent can hand a task only to the agents chosen for it in [AI control](/admin/agent-control), and only ones you may use. A case step you hand to another agent with its button needs only that you may use that agent. That agent works as you, its changes still wait for your approval, and it cannot pass the work on again. Hand-off goes to another agent, not to another person. - Anything an agent produces lands in the workspace: tables, reports, record cards, documents, email drafts, plans, read documents, decisions and billing items. With **Open new artifacts** set to **Right away**, a new item opens as it arrives; otherwise a dot on **Workspace** marks something new. - Billing actions on a billing item are your own and need billing queue permissions. The agent never approves or posts an invoice on its own. - Desk settings are kept in this browser; they do not follow you to another browser or computer. Chapters are kept with the conversation and follow you everywhere. - A conversation holds up to 200 chapters. A chapter name is at most 60 characters. Requests the agent runs on a schedule each open a chapter of their own, marked with the date they ran. A downloaded transcript and a compaction summary keep each chapter's name. - The Desk names chapters with a small model, one short call per question. Its cost shows under **Desk chapters** in usage. An administrator can turn it off with **Name Desk chapters** in [AI control](/admin/agent-control); you can still start and name chapters yourself. - Changing what an agent can do needs permission to manage agents.",
+      "notes": "Needs read access to the assistant. If no agents are available, an administrator has to connect an AI provider and enable an agent in [AI control](/admin/agent-control); people who can manage agents see **Open AI Control** on the Desk.\n\nWhen an agent in your own conversation proposes a change, the card above the message box shows it the same way on the Desk and in the floating assistant: what it would set and whether it can be undone, checked against your records as they are now. **Approve** waits until that check has loaded. If the change was drafted against records that have changed since, the card says it is out of date and offers to redraft it instead. A plan of several steps, or several changes of one kind, is approved with one answer. You need only access to the assistant and to that agent, and each change still runs only if your own permissions allow it.\n\nThe conversation marks each decided change with a line (\"Approved\"), and deciding on the card or in the Decisions lens of [Needs you](/desk/needs) updates both.\n\nA long conversation eventually becomes read-only; select **Start a new conversation** to carry on. A conversation also becomes read-only when its agent is turned off, removed, set to run on its own, or no longer available to you, and the note in place of the message box says which, and whether an administrator can change it.\n\n- Enter sends and Shift+Enter starts a new line. In **Desk settings**, **Send with** can be set to ⌘Enter (Ctrl+Enter on Windows) instead. **@ mentions**, **Slash commands** and **Dictation** can each be turned off there. - Only words can steer a reply under way. A message carrying files always waits until the reply finishes. Once a steering message has been handed to the agent, it can't be edited or taken back; stopping the reply is the only way to undo it. Waiting messages are kept with the conversation, so they survive a reload or another tab. - You can't change the agent or the model while an agent is replying. - A message can carry up to 5 files, each up to 25 MB: PDF, PNG, JPG, HEIC, TIFF, CSV, Excel, Word, text and email (.eml) files. Password-protected PDFs and other file types are refused before they upload. Scanning works only inside an open conversation, not from the box on Today. - @ search lists only records you are allowed to read. Dictation isn't available in every browser; where it isn't, the microphone says so. - A conversation keeps up to 12 pinned facts of up to 200 characters each. Compacting keeps pinned facts, pending approvals and, where it can, the latest turns in full. A conversation set to compact itself does so at 85% full. - An agent can wait on up to ten things in one conversation. A wait gives up after a day unless the agent sets a longer limit (at most a week); either way the agent picks the task back up and is told it ran out. If the thing has already happened, the agent acts on it right away. - A case is in one of four states, shown on its card and in its menu. **Working**: nothing is put off. Waiting: on something such as **Waiting on the customer**, **Waiting on the carrier** or **Waiting on a reply**. Snoozed: put away until a time, the next appointment or the ETA. **Settled**: the record is closed. A shipment settles once it is invoiced or canceled, not when it delivers, because the ready-to-bill work comes after delivery; an invoice once it is paid or voided; a dispute once it is resolved or withdrawn. - A case's state is worked out each time you look, so a payment recorded elsewhere settles its invoice's case on its own. In the rail a case stays with the other conversations, grouped by when it was last used; a snoozed case comes back on time, or sooner when something the agent was waiting on arrives. A conversation started from a shipment, invoice or dispute is a case from the start. - Which steps a case checklist shows, their order, and whether each is required or optional, are set in **Settings** › **Case checklists** on the Desk; a customer can have its own. A ticked step belongs to the record, so everyone working a case about the same shipment or invoice sees it. - If a record the agent was working with changes elsewhere during its turn, a note headed **Changed while the agent was working** lists what changed, and the agent reads those records again before relying on them. - An agent can hand a task only to the agents chosen for it in [AI control](/admin/agent-control), and only ones you may use. A case step you hand to another agent with its button needs only that you may use that agent. That agent works as you, its changes still wait for your approval, and it cannot pass the work on again. Hand-off goes to another agent, not to another person. - Anything an agent produces lands in the workspace: tables, reports, record cards, documents, email drafts, plans, read documents, decisions and billing items. With **Open new artifacts** set to **Right away**, a new item opens as it arrives; otherwise a dot on **Workspace** marks something new. - Billing actions on a billing item are your own and need billing queue permissions. The agent never approves or posts an invoice on its own. - Desk settings are kept in this browser; they do not follow you to another browser or computer. Chapters are kept with the conversation and follow you everywhere. - A conversation holds up to 200 chapters. A chapter name is at most 60 characters. Requests the agent runs on a schedule each open a chapter of their own, marked with the date they ran. A downloaded transcript and a compaction summary keep each chapter's name. - The Desk names chapters with a small model, one short call per question. Its cost shows under **Desk chapters** in usage. An administrator can turn it off with **Name Desk chapters** in [AI control](/admin/agent-control); you can still start and name chapters yourself. - Changing what an agent can do needs permission to manage agents.",
       "related": [
-        "/desk/decisions",
-        "/desk/watchtower",
+        "/desk/needs",
         "/desk/scheduled",
-        "/triage",
+        "/desk/triage",
         "/admin/agent-control"
       ],
       "covers": [
+        "/desk/r/:kind/:id",
+        "/desk/handled/:id",
         "/desk/t/:threadId",
         "/desk/agents/:agentId",
         "/desk/c/:threadId/a/:slug",
-        "/desk/c/:threadId/a/:slug/page"
+        "/desk/v/:viewThreadId/:slug"
       ],
-      "createAction": null,
-      "inNavigation": false
-    },
-    {
-      "path": "/desk/decisions",
-      "name": "Decisions",
-      "module": "desk",
-      "breadcrumb": [
-        "Desk",
-        "Decisions"
-      ],
-      "description": "Decisions is the queue of changes AI agents have proposed and that wait on a person before they run, such as updating shipments, posting invoices, sending a message, or a plan of several steps.",
-      "summary": "Decisions is the queue of changes AI agents have proposed and that wait on a person before they run, such as updating shipments, posting invoices, sending a message, or a plan of several steps. Open it from **Decisions** in the [Desk](/desk) sidebar, which shows how many are waiting. Dispatchers, billing staff and managers work it so agents only change the operation with a person's say-so.\n\nThe **Queue** on the left lists every waiting proposal, newest first, grouped by the kind of change, with how many of today's are decided. The middle shows one proposal at a time: which agent wants it and when, a one-line title with how many records it touches, the agent's reason, and what it would change. That is worked out by the same code that would make the change, read from your records as they are now. A **Dry run** line says whether it would go through as shown. Changes are marked **Reversible** or **Can't be undone**. The bar underneath approves or declines it.",
-      "requires": [
-        {
-          "resource": "assistant",
-          "operation": "read"
-        },
-        {
-          "resource": "agent_proposal",
-          "operation": "read"
-        }
-      ],
-      "capabilities": [],
-      "aliases": [
-        "agent approvals",
-        "AI proposals",
-        "approval queue",
-        "pending approvals",
-        "pending changes",
-        "proposed changes",
-        "agent proposals",
-        "approve agent change",
-        "decline agent change",
-        "agent plan approval",
-        "dry run",
-        "human in the loop",
-        "review agent actions",
-        "preview agent change",
-        "what will this change"
-      ],
-      "tasks": [
-        {
-          "title": "Review what a change would do",
-          "keywords": [
-            "preview agent change",
-            "before and after",
-            "dry run",
-            "check proposed values",
-            "would it go through"
-          ],
-          "steps": [
-            "Open [Decisions](/desk/decisions) and select a proposal in the **Queue**. A dot marks proposals you have not opened yet.",
-            "Read the change. When every record gets the same value, it is one line per record with the old value struck through and the new one after it. The first five are shown, then how many more there are. Otherwise each record is listed with every value that changes. A message is shown as it would go out, with its recipients and subject. Money is shown line by line with the total before and after and the difference.",
-            "A value that moved since the agent proposed the change says \"Was … when proposed\". A value that may still move before the change runs says so.",
-            "Read the **Dry run** line. It says the change would go through as shown, or how many records would go through and how many would be refused and why, or how many records changed since the agent drafted it.",
-            "Select **Arguments the agent sent** to see exactly what the agent asked for."
-          ]
-        },
-        {
-          "title": "Approve a proposed change",
-          "keywords": [
-            "approve AI action",
-            "accept agent change",
-            "approve proposal"
-          ],
-          "steps": [
-            "Open [Decisions](/desk/decisions) and select the proposal.",
-            "Read what it changes. **Approve** stays off until that has loaded.",
-            "Select **Approve** (or press a). The change is approved at once and runs. The next proposal in the queue comes up.",
-            "If some records would be refused, the button names how many go through and how many are skipped. Approving runs the rest.",
-            "If the change moved while you were reading it, nothing is recorded. A notice says it changed since you opened it, and the change is shown again as it is now. Read it again and approve.",
-            "If the change was approved but could not be carried out, a message says it didn't go through and why, and it is marked that way under **Decided today**."
-          ]
-        },
-        {
-          "title": "Decline a proposed change",
-          "keywords": [
-            "reject agent change",
-            "deny proposal",
-            "turn down",
-            "decline reason"
-          ],
-          "steps": [
-            "Open [Decisions](/desk/decisions) and select the proposal.",
-            "Select **Decline** (or press d or r).",
-            "In **Decline this change?**, enter a **Reason**. It is required, and both the agent and whoever looks after the agent see it.",
-            "Select **Decline** to confirm, or **Cancel**. A declined change never runs."
-          ]
-        },
-        {
-          "title": "Change the values before approving",
-          "keywords": [
-            "edit proposal",
-            "adjust agent change",
-            "modify and approve",
-            "approve with changes"
-          ],
-          "steps": [
-            "Open [Decisions](/desk/decisions) and select the proposal.",
-            "Select **Change values** (or press m). It is offered only for a single change that has values you can edit, not for a plan or a group decided together.",
-            "Adjust the values. A value marked \"Stays as proposed\" cannot be changed: you can change what is done to that record, never which record it is.",
-            "Under the values, the dialog shows what your values would do. Values that would not go through say why, and the change cannot be approved with them.",
-            "Optionally add a **Reason**, then select **Approve with changes**. It stays off while **Nothing changed yet** is shown. The change runs with the values you saw previewed."
-          ]
-        },
-        {
-          "title": "Fix a change that would not go through",
-          "keywords": [
-            "would be refused",
-            "refused values",
-            "ask agent to fix",
-            "change refused value"
-          ],
-          "steps": [
-            "Open [Decisions](/desk/decisions) and select the proposal. A change its own rules would refuse shows **This would not go through as it stands**, reason by reason. In the one-line-per-record view, records that would be refused are listed first and marked **Refused**.",
-            "Where you can edit the value a reason names, select the button next to the reason to open the values on it. Then approve with your changes.",
-            "Or select **Ask the agent to fix it**. This opens the decline dialog with the reasons already written as the **Reason**. Decline it, and the agent learns what to fix and can propose it again."
-          ]
-        },
-        {
-          "title": "Decide every change like this one together",
-          "keywords": [
-            "bulk approve",
-            "batch decline",
-            "approve all like this",
-            "decide together"
-          ],
-          "steps": [
-            "Open [Decisions](/desk/decisions) and select a proposal that has others of the same kind waiting. A line under it says how many more are waiting.",
-            "Select the link on that line to decide all of them together (or press x). The line then says how many you are deciding together and how many you have not opened yet. Select **Just this one** (or press x again) to go back.",
-            "Select **Approve** or **Decline**. Both buttons show the count. Declining asks for one **Reason** for all of them.",
-            "If some could not be approved, a message says how many went through and why the rest did not. Those stay in the queue."
-          ]
-        },
-        {
-          "title": "Approve or decline a plan",
-          "keywords": [
-            "multi-step plan",
-            "agent plan",
-            "plan steps"
-          ],
-          "steps": [
-            "Open [Decisions](/desk/decisions) and select a plan. Its title shows how many steps it has.",
-            "Read each step in the order it runs. A step that works on a record an earlier step also changes says which step, and its values are shown as that step would leave them.",
-            "Select **Approve** or **Decline**. A plan is decided as one, and always on its own. It cannot be grouped with other proposals, and its values cannot be changed. If a step would not go through, **Ask the agent to fix it** declines the plan with the reasons."
-          ]
-        },
-        {
-          "title": "Move through the queue",
-          "keywords": [
-            "next proposal",
-            "previous proposal",
-            "keyboard shortcuts",
-            "decisions shortcuts"
-          ],
-          "steps": [
-            "Open [Decisions](/desk/decisions).",
-            "Use **Previous** and **Next** in the bar, or press k and j (or the up and down arrows). The bar shows where you are in the queue.",
-            "Shortcuts: a approves, d or r declines, m opens **Change values**, x decides every change like this one together. They do nothing while you are typing or a dialog is open.",
-            "When more are waiting than the queue shows, select **Load more**. The queue also refreshes on its own every minute."
-          ]
-        },
-        {
-          "title": "See what was decided today",
-          "keywords": [
-            "decided today",
-            "approval history",
-            "who approved"
-          ],
-          "steps": [
-            "Open [Decisions](/desk/decisions).",
-            "Look under **Decided today** at the bottom of the **Queue**. Each change is marked approved, declined, or approved but didn't go through. Hover over one to see who decided it.",
-            "When nothing is waiting, the page says **Queue clear** and how many were decided today."
-          ]
-        },
-        {
-          "title": "See where a proposal came from",
-          "keywords": [
-            "agent conversation",
-            "agent run",
-            "source of proposal"
-          ],
-          "steps": [
-            "Open [Decisions](/desk/decisions) and select the proposal.",
-            "Select **See the conversation** if an agent proposed it in a conversation, or **See the run** if it came from an agent's run."
-          ]
-        },
-        {
-          "title": "Decide a change in your own conversation instead",
-          "keywords": [
-            "approval card",
-            "approve in chat",
-            "not now",
-            "redraft"
-          ],
-          "steps": [
-            "Open the conversation on the [Desk](/desk). A change waiting on you sits on a card above the message box.",
-            "Select **Approve**, **Review** to read it in full, or **Not now** to put it off. A change that is out of date offers **Redraft** or **Review** instead of **Approve**. A decision made there leaves this queue."
-          ]
-        }
-      ],
-      "notes": "You need read access to the assistant and to agent proposals to open this page. Approving, declining and changing values need update permission on agent proposals. Without it, the page says you can read these but not decide them.\n\nAn approval records exactly what you were shown. When you decide several together, a proposal you never opened is recorded as approved without its preview having been reviewed. If what a change would do cannot be loaded, a notice says so and offers **Try again**. You can still approve it, and the decision is recorded as made without a preview.\n\nA value, record or amount you are not allowed to see reads **Hidden by your data access**, and the number of hidden parts is shown under the change. You can still approve it.\n\nIf a record the change depends on was edited or removed after the agent proposed it, the change is out of date. It may say **Changed since it was proposed**, and **Approve** stays off. It can only be declined. Ask the agent again for a fresh proposal.\n\nSome changes cannot say exactly what they would do. They show the values they would run with under a warning instead. In a plan, a later step on a record an earlier step changed runs against what that step left. When every step of an approved plan changes a different record of the same kind, such as posting several invoices, each step runs whatever happens to the others. Otherwise the first step that fails stops the rest.",
-      "related": [
-        "/desk",
-        "/desk/watchtower",
-        "/admin/agent-control"
-      ],
-      "covers": [],
       "createAction": null,
       "inNavigation": false
     },
@@ -10963,6 +10906,344 @@
       "inNavigation": false
     },
     {
+      "path": "/desk/needs",
+      "name": "Needs",
+      "module": "desk",
+      "breadcrumb": [
+        "Desk",
+        "Needs"
+      ],
+      "description": "Needs you is everything waiting on people across the operation, in one list with one row per record: a shipment's late warning from the Watchtower, the customer's email about it in Triage and the change an agent drafted to recover it in Decisions are one row.",
+      "summary": "Needs you is everything waiting on people across the operation, in one list with one row per record: a shipment's late warning from the Watchtower, the customer's email about it in Triage and the change an agent drafted to recover it in Decisions are one row. It is also where you approve or decline what AI agents have proposed before it runs. Open it from **Needs you** in the [Desk](/desk) rail, or press G then N.\n\nThe list down the left is grouped by how long is left before each row's soonest deadline: **Act now** (four hours or less, or already past), **Today**, **Coming up** and **For your information** (no deadline). Each row has a square coloured by its worst severity, the title of what is most urgent, the record's number and what it is, and under it one line for every signal about the record with the queue that raised it. On the right it shows how long is left (red inside four hours, amber inside a day) and where the work stands: **Needs your approval**, **Looking into it** while an agent works it, or **Didn't go through**. A blue dot marks a row you have not opened yet. Above the list, the bar shows how many items you have cleared today out of all of them.\n\n**Everything**, **Watchtower** and **Decisions** above the list are lenses, not separate places: pick one (or press 1 to 3) to see only the rows with something in that queue. The **Decisions** lens holds the changes AI agents have proposed and that wait on a person before they run. Each row still shows every signal about its record, a customer's email included. Mail has no lens here: a message shows on the row of the record it is about, and it is read, answered and filed in [Triage](/desk/triage), the one place mail is worked. Select **Open in Triage** on a message to go to it; answering, filing or ignoring it there clears it from this list.\n\nThe **Decisions** lens is where changes AI agents have proposed wait on a person before they run, such as updating shipments, posting invoices, sending a message, or a plan of several steps. It is the one place they are decided, one at a time or several together. Its list is grouped by the kind of change instead of by deadline, newest first, and the bar above it shows how many of today's are decided. Each row is named for what is its own: who a message goes to, the record a change touches, or how many records. A dot on the right marks a change with something to look at before you decide (amber) or one that can't run as it stands (red). The page beside the list shows one change at a time: which agent wants it and when, the agent's reason, whether it is **Reversible** or **Can't be undone**, anything to know before deciding, and then the change itself, worked out by the same code that would make it and read from your records as they are now. A message is drawn as it would go out. A line under it says whether it would go through as shown. The bar underneath approves or declines that one change. To decide several, tick them in the list. A change that shows on a record's row under **Everything** can be approved there too, and **Approve several at once in Decisions** opens it in this lens.\n\nUnder **Everything** and **Watchtower**, the right side is the item in front of you: what it is and the record it is about, how long is left, the **Condition** the Watchtower raised (what is at stake, the facts and how it got here), the agent working it with its steps, or the agent that could take it, the **Message** Triage read, and for a change an agent wants to make, the **Decision**: what it would change, why the agent proposes it, whether it can be undone and why it asks. The bar at the bottom acts on it.\n\nYou only see the kinds of items whose records you are allowed to open, and a record you may not read is counted, never named. An item leaves the list when you mark it done, snooze it or decide it, or when the problem behind it clears. The numbers in the rail and in the bar across the top of the Desk are how many items wait in each lens.",
+      "requires": [
+        {
+          "resource": "assistant",
+          "operation": "read"
+        }
+      ],
+      "capabilities": [],
+      "aliases": [
+        "needs you",
+        "what needs me",
+        "everything waiting",
+        "one list",
+        "lenses",
+        "watchtower",
+        "watch tower",
+        "watchtower lens",
+        "decisions lens",
+        "unified queue",
+        "alerts feed",
+        "exceptions feed",
+        "exception feed",
+        "exception queue",
+        "things to look at",
+        "operational alerts",
+        "AI monitoring",
+        "failed agent runs",
+        "agent exceptions",
+        "quarantined EDI",
+        "deadlines",
+        "approve in place",
+        "agent approvals",
+        "AI proposals",
+        "approval queue",
+        "pending approvals",
+        "pending changes",
+        "proposed changes",
+        "agent proposals",
+        "approve agent change",
+        "decline agent change",
+        "agent plan approval",
+        "dry run",
+        "human in the loop",
+        "review agent actions",
+        "preview agent change",
+        "what will this change"
+      ],
+      "tasks": [
+        {
+          "title": "Work what needs you",
+          "keywords": [
+            "next item",
+            "keyboard",
+            "check alerts",
+            "what went wrong",
+            "exceptions today",
+            "open alerts"
+          ],
+          "steps": [
+            "Open [Needs you](/desk/needs) from the rail, or press G then N.",
+            "Select a row, or press J (or the down arrow) for the next one and K (or the up arrow) for the previous one. Opening an item marks it seen, so its blue dot goes away.",
+            "Pick a lens above the list, or press 1 to 3, to see only one queue's rows."
+          ]
+        },
+        {
+          "title": "Mark an item done or snooze it",
+          "keywords": [
+            "clear alert",
+            "resolve",
+            "close alert",
+            "finished",
+            "remove from list",
+            "later",
+            "put aside",
+            "remind me tomorrow"
+          ],
+          "steps": [
+            "Select the item in [Needs you](/desk/needs).",
+            "Select **Done**, or press E. It leaves the list for everyone and the next row takes its place; it comes back if the problem returns.",
+            "Select **Snooze**, or press S, to put it away until eight tomorrow morning in your time zone.",
+            "If the item changed while you had it open, it comes back as it is now. Look at it again before you clear it."
+          ]
+        },
+        {
+          "title": "Hand an item to an agent",
+          "keywords": [
+            "delegate to AI",
+            "let the agent handle it",
+            "assign to agent"
+          ],
+          "steps": [
+            "Select the item in [Needs you](/desk/needs). When an agent can take it, the page names it.",
+            "Select **Hand off**, or press H, to give it to that agent. To choose another agent, select the arrow beside **Hand off** and pick one.",
+            "The agent starts at once. The row now says **Looking into it**, and the item shows the agent with a bar of its steps: reading the record, working out what to do and asking you to approve."
+          ]
+        },
+        {
+          "title": "Approve or decline a change in place",
+          "keywords": [
+            "approve agent change",
+            "decline agent change",
+            "review agent work",
+            "agent needs me"
+          ],
+          "steps": [
+            "Under **Everything** or **Watchtower**, select a row that says **Needs your approval**.",
+            "Read the **Decision**: what it would change, why the agent proposes it and whether it can be undone. A change that has to be shown before it can be approved draws its preview under it.",
+            "Select **Approve**, or press A. Nothing is marked done until the server confirms it; if it does not go through, the page says why and that nothing changed.",
+            "Select **Decline**, or press D, and say why. The agent reads your reason in its conversation, and so does whoever looks after it."
+          ]
+        },
+        {
+          "title": "See only your own cases, or everyone's",
+          "keywords": [
+            "mine",
+            "everyone",
+            "my cases",
+            "all cases",
+            "other people's cases",
+            "case lead",
+            "team view"
+          ],
+          "steps": [
+            "Open [Needs you](/desk/needs). When your role lets you see cases other people own, **Mine** and **Everyone** show beside the lenses.",
+            "**Mine** lists the cases you own and the ones nobody owns yet; it is what the page opens on. **Everyone** adds the cases other people own.",
+            "Your choice is kept on this browser. The count in the Desk rail still counts everything you may see."
+          ]
+        },
+        {
+          "title": "Open the case behind a row",
+          "keywords": [
+            "open case",
+            "open record",
+            "go to the shipment",
+            "view the source"
+          ],
+          "steps": [
+            "Select the row in [Needs you](/desk/needs).",
+            "Select **Open the case**, or press Enter, to see everything open about the record as one decision."
+          ]
+        },
+        {
+          "title": "Ask Nova about an item",
+          "keywords": [
+            "investigate alert",
+            "explain this exception",
+            "ask AI about alert"
+          ],
+          "steps": [
+            "Select the item in [Needs you](/desk/needs).",
+            "Select **Ask** at the top of the Desk, or press ⌘J (Ctrl+J). Nova's margin opens beside the list with the record attached to your question."
+          ]
+        },
+        {
+          "title": "Review what a change would do",
+          "keywords": [
+            "preview agent change",
+            "before and after",
+            "dry run",
+            "check proposed values",
+            "would it go through"
+          ],
+          "steps": [
+            "Open [Needs you](/desk/needs), pick the **Decisions** lens (or press 3) and select a proposal in the list. A dot marks proposals you have not opened yet.",
+            "Read the change. When every record gets the same value, it is one line per record with the old value struck through and the new one after it. The first eight are shown, then how many more there are. Otherwise each record is listed with every value that changes. A message is shown as it would go out, with its recipients and subject. Money is shown line by line with the total before and after and the difference.",
+            "A value that moved since the agent proposed the change says \"Was … when proposed\". A value that may still move before the change runs says so.",
+            "Read the line under the change. It says the change would go through as shown, or how many records would go through and how many would be refused and why, or how many records changed since the agent drafted it.",
+            "A long reason from the agent is folded to its first lines. Select **Show more** to read all of it."
+          ]
+        },
+        {
+          "title": "Approve a proposed change",
+          "keywords": [
+            "approve AI action",
+            "accept agent change",
+            "approve proposal"
+          ],
+          "steps": [
+            "Open [Needs you](/desk/needs), pick the **Decisions** lens (or press 3) and select the proposal.",
+            "Read what it changes. **Approve** stays off until that has loaded.",
+            "Select **Approve** (or press a). The change is approved at once and runs. The next proposal in the queue comes up.",
+            "If some records would be refused, the button names how many go through and how many are skipped. Approving runs the rest.",
+            "If the change moved while you were reading it, nothing is recorded. A notice says it changed since you opened it, and the change is shown again as it is now. Read it again and approve.",
+            "If the change was approved but could not be carried out, a message says it didn't go through and why, and it is marked that way under **Decided today**."
+          ]
+        },
+        {
+          "title": "Decline a proposed change",
+          "keywords": [
+            "reject agent change",
+            "deny proposal",
+            "turn down",
+            "decline reason"
+          ],
+          "steps": [
+            "Open [Needs you](/desk/needs), pick the **Decisions** lens (or press 3) and select the proposal.",
+            "Select **Decline** (or press d or r).",
+            "In **Decline this change?**, enter a **Reason**. It is required, and both the agent and whoever looks after the agent see it.",
+            "Select **Decline** to confirm, or **Cancel**. A declined change never runs."
+          ]
+        },
+        {
+          "title": "Change the values before approving",
+          "keywords": [
+            "edit proposal",
+            "adjust agent change",
+            "modify and approve",
+            "approve with changes"
+          ],
+          "steps": [
+            "Open [Needs you](/desk/needs), pick the **Decisions** lens (or press 3) and select the proposal.",
+            "Select **Change values** (or press m). It is offered for the open change when it has values you can edit, never for a plan.",
+            "Adjust the values. A value marked \"Stays as proposed\" cannot be changed: you can change what is done to that record, never which record it is.",
+            "Under the values, the dialog shows what your values would do. Values that would not go through say why, and the change cannot be approved with them.",
+            "Optionally add a **Reason**, then select **Approve with changes**. It stays off while **Nothing changed yet** is shown. The change runs with the values you saw previewed."
+          ]
+        },
+        {
+          "title": "Fix a change that would not go through",
+          "keywords": [
+            "would be refused",
+            "refused values",
+            "ask agent to fix",
+            "change refused value"
+          ],
+          "steps": [
+            "Open [Needs you](/desk/needs), pick the **Decisions** lens (or press 3) and select the proposal. A change its own rules would refuse has a red dot on its row and lists each reason in a red block above the change. In the one-line-per-record view, records that would be refused are listed first and marked **Refused**.",
+            "Where you can edit the value a reason names, select the button next to the reason to open the values on it. Then approve with your changes.",
+            "Or select **Send back to the agent**, which takes the place of **Approve**. This opens the decline dialog with the reasons already written as the **Reason**. Decline it, and the agent learns what to fix and can propose it again."
+          ]
+        },
+        {
+          "title": "Decide several changes together",
+          "keywords": [
+            "bulk approve",
+            "batch decline",
+            "approve all like this",
+            "decide together",
+            "select all",
+            "tick changes"
+          ],
+          "steps": [
+            "Open [Needs you](/desk/needs) and pick the **Decisions** lens (or press 3).",
+            "Point at a row in the list and tick the checkbox that takes the place of its agent's mark, or press x to tick the open change. Once one is ticked, every row shows its checkbox.",
+            "To tick a whole kind, point at its heading and select **Select all**. When some of the kind have a dot, the heading also offers to select only the ones with nothing flagged. Up to 50 changes can be decided together.",
+            "The box at the foot of the list shows how many are selected. It says when some have something to look at first, and when some can't be approved as they stand and will be left out. Select **Clear** or press Esc to untick them all.",
+            "To approve, select the button that reviews and approves them. One review opens: **The same for every one** shows what the changes share once, with a shared message as a template with numbered places, and each row shows what fills each place, the ones with something to look at first. A message worded differently is shown in full on its row. Select **Approve** with the count to approve them, or **Cancel**.",
+            "To decline, select **Decline** with the count in the box and enter one **Reason** for all of them. A change whose record moved since it was proposed can only be declined.",
+            "If some could not be approved, a message says how many went through and why the rest did not. Those stay in the queue. Changes you did not tick stay too."
+          ]
+        },
+        {
+          "title": "Approve or decline a plan",
+          "keywords": [
+            "multi-step plan",
+            "agent plan",
+            "plan steps"
+          ],
+          "steps": [
+            "Open [Needs you](/desk/needs), pick the **Decisions** lens (or press 3) and select a plan. Its title shows how many steps it has.",
+            "Read each step in the order it runs. A step that works on a record an earlier step also changes says which step, and its values are shown as that step would leave them.",
+            "Select **Approve** or **Decline**. A plan is decided as one, and always on its own. It has no checkbox in the list, and its values cannot be changed. If a step would not go through, **Ask the agent to fix it** declines the plan with the reasons."
+          ]
+        },
+        {
+          "title": "Move through the decisions",
+          "keywords": [
+            "next proposal",
+            "previous proposal",
+            "keyboard shortcuts",
+            "decisions shortcuts"
+          ],
+          "steps": [
+            "Open [Needs you](/desk/needs) and pick the **Decisions** lens (or press 3).",
+            "Use **Previous** and **Next** in the bar, or press k and j (or the up and down arrows). The bar shows where you are in the queue.",
+            "Shortcuts: a approves the open change, d or r declines it, m opens **Change values**, x ticks the open change, Esc unticks every change. Ticked changes are decided from the box at the foot of the list. The keys do nothing while you are typing or a dialog is open.",
+            "When more are waiting than the queue shows, select **Load more**. The queue also refreshes on its own every minute."
+          ]
+        },
+        {
+          "title": "See what was decided today",
+          "keywords": [
+            "decided today",
+            "approval history",
+            "who approved"
+          ],
+          "steps": [
+            "Open [Needs you](/desk/needs) and pick the **Decisions** lens (or press 3).",
+            "Look under **Decided today** at the bottom of the list. Each change is marked approved, declined, or approved but didn't go through. Hover over one to see who decided it.",
+            "When nothing is waiting, the page says **Queue clear** and how many were decided today."
+          ]
+        },
+        {
+          "title": "See where a proposal came from",
+          "keywords": [
+            "agent conversation",
+            "agent run",
+            "source of proposal"
+          ],
+          "steps": [
+            "Open [Needs you](/desk/needs), pick the **Decisions** lens (or press 3) and select the proposal.",
+            "Select **See the conversation** if an agent proposed it in a conversation, or **See the run** if it came from an agent's run."
+          ]
+        },
+        {
+          "title": "Decide a change in your own conversation instead",
+          "keywords": [
+            "approval card",
+            "approve in chat",
+            "not now",
+            "redraft"
+          ],
+          "steps": [
+            "Open the conversation on the [Desk](/desk). A change waiting on you sits on a card above the message box.",
+            "Select **Approve**, **Review** to read it in full, or **Not now** to put it off. A change that is out of date offers **Redraft** or **Review** instead of **Approve**. A decision made there leaves this queue."
+          ]
+        }
+      ],
+      "notes": "- You need read access to the assistant to open the Desk, and read access to Watchtower or to agent proposals to open this page; you see the lenses you may read. Each kind of item shows only if you can read that kind of record. - Marking items done, snoozing them and handing them off need update access to Watchtower; approving and declining need update access to agent proposals. - A deadline the record reports itself, such as a dock closing or a certificate lapsing, is the item's deadline. Otherwise it comes from the due times for each severity in dispatch controls. - When nothing is left, the page says **Nothing here needs you**.\n\n- The Decisions lens needs read access to agent proposals; the other lenses need read access to the Watchtower. Approving, declining and changing values need update permission on agent proposals. Without it, the page says you can read these but not decide them.\n\nAn approval records exactly what you were shown, including when you decide several together. If what the changes would do cannot be loaded, a notice says so and offers **Try again**. You can still approve a change that stays inside your organization, and the decision is recorded as made without a preview. A change that moves money, reaches a customer or driver, or goes outside the organization waits until it can be read.\n\nA value, record or amount you are not allowed to see reads **Hidden by your data access**, and the number of hidden parts is shown under the change. You can still approve it.\n\nIf a record the change depends on was edited or removed after the agent proposed it, the change is out of date. It may say **Changed since it was proposed**, and **Approve** stays off. It can only be declined. Ask the agent again for a fresh proposal.\n\nSome changes cannot say exactly what they would do. They show the values they would run with under a warning instead. In a plan, a later step on a record an earlier step changed runs against what that step left. When every step of an approved plan changes a different record of the same kind, such as posting several invoices, each step runs whatever happens to the others. Otherwise the first step that fails stops the rest.",
+      "related": [
+        "/desk",
+        "/admin/agent-control",
+        "/desk/triage",
+        "/shipment-management/service-failures"
+      ],
+      "covers": [],
+      "createAction": null,
+      "inNavigation": false
+    },
+    {
       "path": "/desk/scheduled",
       "name": "Scheduled",
       "module": "desk",
@@ -11102,158 +11383,160 @@
       "inNavigation": false
     },
     {
-      "path": "/desk/watchtower",
-      "name": "Watchtower",
+      "path": "/desk/triage",
+      "name": "Triage",
       "module": "desk",
       "breadcrumb": [
         "Desk",
-        "Watchtower"
+        "Triage"
       ],
-      "description": "Watchtower is the Desk's queue of everything across the operation that needs someone, worked one item at a time, soonest deadline first.",
-      "summary": "Watchtower is the Desk's queue of everything across the operation that needs someone, worked one item at a time, soonest deadline first. It brings together items from many places: agent insights, proposals and plans, failed agent runs, agent exceptions, drops in agent quality, service failures, carrier changes, hours-of-service problems, weather, quarantined EDI, billing exceptions, detention, inbound messages, expiring driver credentials, moves whose coverage is at risk, late or missed stops, missing PODs, exhausted tenders, missing check calls, truck arrivals and departures that could not be recorded on their stop, accounting sync problems and factoring.\n\nThe queue down the left is grouped by how long is left before each item's deadline: **Act now** (four hours or less, or already past), **Today**, **Coming up** (more than a day out) and **For your information** (no deadline). Each row shows the kind of item on a tile coloured by severity (red for Critical, amber for Warning), its title, the record it is about, and the countdown when the deadline is less than a day away. A blue dot marks an item you have not opened yet. When an agent is working an item, the row shows the agent instead and says it is on it, or that it needs you. Across the top, the bar shows how many items you have cleared today out of all of them, and **On it** shows a ring for each agent at work; select a ring to open that item.\n\nThe middle of the page is the item in front of you: a clock counting down to its deadline and what happens then (such as \"Minneapolis dock closes in\"), what kind of item it is and when it was raised, its title and summary, **At stake** (the loads, money or customers involved), a button that opens the record it is about with its key facts, the events that led to it, and either the agent working it with its progress or the agent best placed to take it.\n\nYou only see the kinds of items whose records you are allowed to open. An item leaves the queue when you mark it done, when you snooze it, or when the problem behind it clears. The number next to **Watchtower** in the Desk sidebar is how many items are in the queue.",
+      "description": "Triage is the inbox where you read the emails customers, carriers and brokers sent in, answer them and file them.",
+      "summary": "Triage is the inbox where you read the emails customers, carriers and brokers sent in, answer them and file them. Messages arrive from your connected sources, and today a source is an inbound email address. Nova reads every message, works out what kind it is (tender, rate confirmation, proof of delivery, invoice, status request, detention dispute or other) and which shipment or customer it is about, and handles whatever a rule allows. Anything left over waits for a person with its next step already worked out. Customer service, dispatch and billing staff use it to clear the queue.\n\nTriage opens on the **Briefing**, laid out like the Desk's Today: a headline with how many messages are waiting on you, Nova's line about the day (who has waited longest and roughly how long the rest will take), and a strip of the day's figures, each opening the folder behind it (**Waiting on you**, **Cleared by you**, **Handled by Nova** to **Spot-check**, **Corrections this week** and **Coming back later**). **Worth a look** holds sources that stopped receiving mail (**Fix**) and a rule Nova suggests (**Preview**, **Hand it to Nova**). **What is left, by what it needs** lists every group with the people in it and the one button that clears it (**File all**, **Draft all**, **Start**, **Link**, **Review**). **Today so far** is a timeline of what Nova handled on one lane and what was yours on the other. At the end of the day the groups become **Carrying over**, with a button to hand what is left to the person on call.\n\nTriage is a room of the [Desk](/desk) and the only place mail is worked: select **Triage** in the Desk's rail, or press G then T in the Desk. While it is open the Desk's rail holds Triage's own places: the **Briefing**, the lanes (**Waiting on you**, **Assigned to me**, **Waiting on them**, **Snoozed**, **Handled**, **Ignored**, **Everything**), the kinds still **Waiting**, saved **Views**, your **Sources** and **Rules**, with **Back to chats** and **Needs you** above them. ⌘B (Ctrl+B) folds the rail away to give Triage the room; while it is folded, and on a phone, the Briefing and the lanes run along the top and the rest is in the rail. A message about a record also shows on that record's row in [Needs you](/desk/needs), where **Open in Triage** brings you here. Each message's response target counts down beside it: what is past its target is listed under **Over target**.\n\nAn open message shows its subject, sender and thread, the kind Nova read it as, the words, its files and what happened to it. Beside it (above it on a narrow screen, in a sheet on a phone) are its **Actions**, a numbered list of steps each finished in place, and its **Information**: the shipment and customer it is about and the facts Nova read from it. A bar along the foot of the message always holds the next step.",
       "requires": [
         {
           "resource": "assistant",
           "operation": "read"
         },
         {
-          "resource": "watchtower",
+          "resource": "inbound_message",
           "operation": "read"
         }
       ],
       "capabilities": [],
       "aliases": [
-        "watchtower",
-        "watch tower",
-        "alerts feed",
-        "exceptions feed",
-        "exception feed",
-        "exception queue",
-        "notifications",
-        "things to look at",
-        "operational alerts",
-        "AI monitoring",
-        "failed agent runs",
-        "agent exceptions",
-        "quarantined EDI",
-        "deadlines"
+        "triage",
+        "triage in desk",
+        "inbox",
+        "email",
+        "mail",
+        "inbound email",
+        "monitored mailbox",
+        "shared inbox",
+        "customer emails",
+        "tenders by email",
+        "queue",
+        "nova"
       ],
       "tasks": [
         {
-          "title": "Work through the queue",
+          "title": "Clear a group from the Briefing",
           "keywords": [
-            "check alerts",
-            "what went wrong",
-            "exceptions today",
-            "open alerts",
-            "next item",
-            "keyboard"
+            "briefing",
+            "file all",
+            "draft all",
+            "deck",
+            "what is left"
           ],
           "steps": [
-            "Open the [Desk](/desk) and select **Watchtower** in the sidebar, or go straight to [Watchtower](/desk/watchtower).",
-            "The queue opens on the item with the soonest deadline. Select any row to open it instead.",
-            "Use the arrows under the card, or press J (or the down arrow) for the next item and K (or the up arrow) for the previous one.",
-            "Opening an item marks it as seen, so its blue dot goes away."
+            "Open [Triage](/desk/triage). The **Briefing** is the first thing you see.",
+            "Read the first group under **What is left, by what it needs**: who is in it, the time left on each, and roughly how long it takes.",
+            "Select its button (**File all**, **Draft all**, **Start**, **Link** or **Review**). A finished group leaves the list and a badge under it opens its first message again.",
+            "Select a name in Nova's line, a row in a group or a dot on the timeline to open that message."
           ]
         },
         {
-          "title": "Mark an item done",
+          "title": "Work through what is waiting on you",
           "keywords": [
-            "clear alert",
-            "resolve",
-            "close alert",
-            "finished",
-            "remove from queue"
+            "triage email",
+            "review inbound messages",
+            "clear the queue",
+            "next message"
           ],
           "steps": [
-            "Open [Watchtower](/desk/watchtower) on the item.",
-            "Select **Done**, or press E. The card slides away, the next item takes its place and the cleared count goes up.",
-            "If the item changed while you had it open, it comes back as it is now. Look at it again and select **Done** if it still is."
+            "Open [Triage](/desk/triage) and select **Waiting on you**.",
+            "The first message opens. Press j to go to the next one and k to go back.",
+            "The bar at the foot of the message shows the next step: select **Do it**, **Have Nova do it** or **Review reply** (or press Enter), and finish each step under **Actions**.",
+            "When every step is done, select **Mark handled** (e). Tick **Do this on its own next time** to have Nova handle messages like it from now on. **Wait for reply** parks it under **Waiting on them** until they answer, and **Ignore** (#) sets it aside. The next waiting message opens, and **Undo** in the notice puts it back."
           ]
         },
         {
-          "title": "Snooze an item",
+          "title": "Hand a message to an agent in Desk",
           "keywords": [
-            "later",
-            "put aside",
-            "remind me tomorrow",
-            "hide until tomorrow"
+            "desk agent",
+            "ask an agent",
+            "help with a message"
           ],
           "steps": [
-            "Open [Watchtower](/desk/watchtower) on the item.",
-            "Select **Snooze**, or press S. The item leaves the queue until eight tomorrow morning in your time zone, then comes back on its own."
+            "Open the message in [Triage](/desk/triage).",
+            "Select **Work on it in Desk** at the foot of the actions, choose an agent and send.",
+            "When the agent answers, select **Yes, do it** to start its next step in Triage."
           ]
         },
         {
-          "title": "Hand an item to an agent",
+          "title": "Snooze, assign or act on several messages at once",
           "keywords": [
-            "delegate to AI",
-            "let the agent handle it",
-            "assign to agent"
+            "snooze email",
+            "assign email",
+            "bulk handle",
+            "select messages"
           ],
           "steps": [
-            "Open [Watchtower](/desk/watchtower) on the item.",
-            "Select **Hand off**, or press H, to give it to the agent the card suggests. To choose another agent, select the arrow beside **Hand off** and pick one from the list.",
-            "The agent starts at once. The item stays in the queue, now showing the agent and a bar of its steps: reading the record, working out what to do, and asking you to approve.",
-            "**Hand off** appears only on items about a record an agent can work on, and only while no agent is working the item."
+            "In [Triage](/desk/triage), right-click a message (or press and hold it on a touch screen) to open its menu: **Mark handled**, **Ignore**, **Snooze**, **Assign**, **Correct the kind**, **Copy link** and more.",
+            "To act on several, select them with x, or ⌘/Ctrl-click, or Shift-click for a range, then use the bar at the foot of the list: **Snooze until tomorrow**, **Assign to me**, **Ignore** or **Handled**."
           ]
         },
         {
-          "title": "Approve what an agent drafted",
+          "title": "Link a message to the right shipment or customer",
           "keywords": [
-            "agent needs me",
-            "review agent work",
-            "approve agent change"
+            "wrong shipment",
+            "match email",
+            "Nova could not tell",
+            "attach email to load"
           ],
           "steps": [
-            "Open [Watchtower](/desk/watchtower) on an item whose agent needs you; its row says so.",
-            "Select **Review & approve** in the agent's panel. [Decisions](/desk/decisions) opens on the change the agent proposed.",
-            "If the agent's run stopped before it finished, the panel says why and offers **See the run** instead."
+            "Open the message in [Triage](/desk/triage) and press l, or right-click it and select **Link to a record…**.",
+            "Choose the **Shipment** or **Customer**, fill in **Why this is the right record**, and select **Link**."
           ]
         },
         {
-          "title": "Ask an agent about an item",
+          "title": "Let Nova handle a kind of message on its own",
           "keywords": [
-            "investigate alert",
-            "explain this exception",
-            "ask AI about alert"
+            "rule",
+            "automation",
+            "auto file",
+            "let nova handle"
           ],
           "steps": [
-            "Open [Watchtower](/desk/watchtower) on the item.",
-            "Select **Ask about this**. A new conversation opens on the [Desk](/desk) about the item: the agent sees the record behind it, its deadline, its facts and what is at stake. It uses the agent you last talked to, or your first available agent if you haven't talked to one yet."
+            "In [Triage](/desk/triage), select **Rules** in the rail.",
+            "Select **New rule** and fill in the blanks of the sentence: which kind of message, from whom, on which source, and what Nova should do.",
+            "Check how many messages from the last 30 days it would have matched and how many look off, then select **Turn on**.",
+            "Hover a rule and select **See what it matched** to spot-check it; the switch beside a rule pauses it."
           ]
         },
         {
-          "title": "Open the record behind an item",
+          "title": "Connect a source",
           "keywords": [
-            "go to the shipment",
-            "view the source",
-            "jump to record"
+            "connect mailbox",
+            "add email address",
+            "forward email",
+            "new source"
           ],
           "steps": [
-            "Open [Watchtower](/desk/watchtower) on the item.",
-            "Select the record button under **At stake**. It names the record and its key facts, and opens the record's page."
+            "In [Triage](/desk/triage), select **Add** beside **Sources** (or **Add a source** when there is none yet).",
+            "Choose the kind of source and the address Nova should watch, then follow the steps to forward mail to the address Trenova gives you.",
+            "Select **Send a test email** to see a message arrive."
           ]
         },
         {
-          "title": "See the critical items",
+          "title": "Find a message and keep the search",
           "keywords": [
-            "show only critical",
-            "critical alerts",
-            "what is on fire"
+            "search email",
+            "find by sender",
+            "find by subject",
+            "saved search"
           ],
           "steps": [
-            "On the Desk's **Today** page, select the link that says how many items are critical in Watchtower, or the **Critical** block of the morning briefing.",
-            "Watchtower opens on the first critical item in the queue."
+            "Open a folder in [Triage](/desk/triage) and type in the search box at the top of the list (press / to jump there).",
+            "Choose **Due first** or **Newest** to change the order.",
+            "Select **Save** to keep the search as a view under **Views**."
           ]
         }
       ],
-      "notes": "- You need read access to the assistant to open the Desk, and read access to Watchtower to open this page. Inside it, you only see each kind of item if you can read that kind of record. For example, EDI items need EDI access and credential items need driver access. - Marking items done, snoozing them and handing them off need update access to Watchtower. With read access only, the bar says you can read the items but not act on them. - A deadline the record reports itself, such as a dock closing or a certificate lapsing, is the item's deadline. Otherwise the deadline comes from the due times for each severity in dispatch controls. - **Ask about this** needs at least one agent available to you. - When nothing is left, the page says **All clear** and how many items you cleared today.",
+      "notes": "Needs read access to inbound messages. Messages that look like phishing are held back and also land in **Waiting on you**; the bar offers **Ignore** and **Not phishing**.\n\nSources are set up under [Inbound mailboxes](/admin/inbound-mailboxes). A source that has stopped receiving mail shows a dot in the rail, and its folder offers **Send a test email**. Press ? in Triage for the **Keyboard shortcuts**.\n\nThe folder, search and open message are kept in the page address, so a link to a message opens exactly that message. Old links to the inbox open Triage.",
       "related": [
         "/desk",
-        "/desk/decisions",
-        "/triage",
-        "/shipment-management/service-failures"
+        "/shipment-management/shipments",
+        "/admin/inbound-mailboxes"
       ],
       "covers": [],
       "createAction": null,
@@ -12214,7 +12497,6 @@
         "/dispatch/routing-guides",
         "/dispatch/carriers",
         "/hr/workers",
-        "/desk/watchtower",
         "/dispatch/outlook"
       ],
       "covers": [],
@@ -12327,7 +12609,7 @@
         "Freight outlook"
       ],
       "description": "Where trucks will be short or idle over the next two days, the moves that fix it and how far to trust the forecast",
-      "summary": "The freight outlook shows where your trucks will be short or idle over the next two days, before the freight is booked, and the moves that fix it. It is learned from your own shipment history, not market data, and it appears once the forecast has proven itself on that history (**Ready**). Until then the page says why, and selecting **See the forecast in Dispatch controls** shows how it was tested.\n\nThe page fills the screen like the dispatch console. Across the top, the figures show **Loads with no truck nearby**, **Drivers with nothing nearby**, **Across the network** (whether you have enough drivers overall, which usually you do, so the trouble is where they are), **Worth acting on** and **Range held** (how many of the last fourteen days landed inside the forecast's range). Under them, a paragraph reads the outlook in words: which areas will run short, how many drivers will sit with little to haul and what moving them is worth, and which customer is behind its usual booking pace. **12 h**, **24 h** and **48 h** at the top right set how far ahead the page reads.\n\nThe middle of the page is the board, and the panel on the right is the brief: the track record, the next moves and customer pace in one scroll. Selecting an area turns the panel into that area; **Brief** or Escape brings it back. Select **Hide the brief** (the double arrow in the panel's header) to fold it to a narrow rail and give the board the room; the rail still shows how many moves are waiting, and **Show the brief** brings it back. The page remembers which way you left it.",
+      "summary": "The freight outlook shows where your trucks will be short or idle over the next two days, before the freight is booked, and the moves that fix it. It is learned from your own shipment history, not market data, and it appears once the forecast has proven itself on that history (**Ready**). Until then the page says why: what the forecast still needs, how many weeks and loads of history it has counted so far, and when it last checked. Your history is checked every night, and again whenever you open the page more than an hour after the last check, so loads you have just imported are counted within a minute or so; the page says it is checking and updates by itself when it finishes. Selecting **See the forecast in Dispatch controls** shows how it was tested.\n\nThe page fills the screen like the dispatch console. Across the top, the figures show **Loads with no truck nearby**, **Drivers with nothing nearby**, **Across the network** (whether you have enough drivers overall, which usually you do, so the trouble is where they are), **Worth acting on** and **Range held** (how many of the last fourteen days landed inside the forecast's range). Under them, a paragraph reads the outlook in words: which areas will run short, how many drivers will sit with little to haul and what moving them is worth, and which customer is behind its usual booking pace. **12 h**, **24 h** and **48 h** at the top right set how far ahead the page reads.\n\nThe middle of the page is the board, and the panel on the right is the brief: the track record, the next moves and customer pace in one scroll. Selecting an area turns the panel into that area; **Brief** or Escape brings it back. Select **Hide the brief** (the double arrow in the panel's header) to fold it to a narrow rail and give the board the room; the rail still shows how many moves are waiting, and **Show the brief** brings it back. The page remembers which way you left it.",
       "requires": [
         {
           "resource": "shipment_move",
@@ -16263,7 +16545,7 @@
       ],
       "notes": "Needs read access to capture batches to see the queue; filing needs update access and the permission to add documents to the record, and discarding needs delete access. A person whose access is limited to their own records sees only the stacks they captured.\n\nPages that are not filed are deleted when the stack's retention runs out, set in the organization's document settings. A stack within a week of that says so on its row and when it is opened.",
       "related": [
-        "/triage",
+        "/desk/triage",
         "/shipment-management/shipments"
       ],
       "covers": [],
@@ -19086,160 +19368,6 @@
       "covers": [],
       "createAction": null,
       "inNavigation": false
-    },
-    {
-      "path": "/triage",
-      "name": "Triage",
-      "module": "inbox",
-      "breadcrumb": [
-        "Triage"
-      ],
-      "description": "Messages from connected sources, what Nova did with them on its own, and what is left for a person, each with its next step",
-      "summary": "Triage is where messages from your connected sources arrive. Today a source is an inbound email address; Nova reads every message, works out what kind it is (tender, rate confirmation, proof of delivery, invoice, status request, detention dispute or other) and which shipment or customer it is about, and handles whatever a rule allows. Anything left over waits for a person with its next step already worked out. Customer service, dispatch and billing staff use it to clear the queue.\n\nTriage opens on the **Briefing**: a ring with how many messages are left for you, Nova's line about the day (who has waited longest and roughly how long the rest will take), a timeline of today with what Nova handled on one lane and what was yours on the other, and a deck of cards that each clear a group at once (**File all**, **Draft all**, **Start**, **Link**, **Review**). Under the deck sit what Nova handled on its own (**Spot-check**), corrections this week, sources that stopped receiving mail (**Fix**) and a rule Nova suggests (**Hand it to Nova**). At the end of the day the deck becomes **Carrying over**, with a button to hand what is left to the person on call.\n\nThe rail on the left holds the **Briefing**, the lanes (**Waiting on you**, **Assigned to me**, **Waiting on them**, **Snoozed**, **Handled**, **Ignored**, **Everything**), the kinds still **Waiting**, saved **Views**, your **Sources** and **Rules**. Hide or show it with the sidebar button at the left of the header, or ⌘B / Ctrl+B. On a phone the lanes run along the top and the rest of the rail opens from the menu button beside them. Each message's response target counts down beside it: what is past its target is listed under **Over target**.\n\nAn open message shows its subject, sender and thread, the kind Nova read it as, the words, its files and what happened to it. Beside it (above it on a narrow screen, in a sheet on a phone) are its **Actions**, a numbered list of steps each finished in place, and its **Information**: the shipment and customer it is about and the facts Nova read from it. A bar along the foot of the message always holds the next step.",
-      "requires": [
-        {
-          "resource": "inbound_message",
-          "operation": "read"
-        }
-      ],
-      "capabilities": [],
-      "aliases": [
-        "inbox",
-        "email",
-        "mail",
-        "inbound email",
-        "monitored mailbox",
-        "shared inbox",
-        "customer emails",
-        "tenders by email",
-        "queue",
-        "nova"
-      ],
-      "tasks": [
-        {
-          "title": "Clear a group from the Briefing",
-          "keywords": [
-            "briefing",
-            "file all",
-            "draft all",
-            "deck",
-            "what is left"
-          ],
-          "steps": [
-            "Open [Triage](/triage). The **Briefing** is the first thing you see.",
-            "Read the front card in the deck: who is in the group, the time left on each, and roughly how long it takes.",
-            "Select its button (**File all**, **Draft all**, **Start**, **Link** or **Review**). A finished card turns into a chip, and the next card comes forward.",
-            "Select a name in Nova's line or a dot on the timeline to open that message."
-          ]
-        },
-        {
-          "title": "Work through what is waiting on you",
-          "keywords": [
-            "triage email",
-            "review inbound messages",
-            "clear the queue",
-            "next message"
-          ],
-          "steps": [
-            "Open [Triage](/triage) and select **Waiting on you**.",
-            "The first message opens. Press j to go to the next one and k to go back.",
-            "The bar at the foot of the message shows the next step: select **Do it**, **Have Nova do it** or **Review reply** (or press Enter), and finish each step under **Actions**.",
-            "When every step is done, select **Mark handled** (e). Tick **Do this on its own next time** to have Nova handle messages like it from now on. **Wait for reply** parks it under **Waiting on them** until they answer, and **Ignore** (#) sets it aside. The next waiting message opens, and **Undo** in the notice puts it back."
-          ]
-        },
-        {
-          "title": "Hand a message to an agent in Desk",
-          "keywords": [
-            "desk agent",
-            "ask an agent",
-            "help with a message"
-          ],
-          "steps": [
-            "Open the message in [Triage](/triage).",
-            "Select **Work on it in Desk** at the foot of the actions, choose an agent and send.",
-            "When the agent answers, select **Yes, do it** to start its next step in Triage."
-          ]
-        },
-        {
-          "title": "Snooze, assign or act on several messages at once",
-          "keywords": [
-            "snooze email",
-            "assign email",
-            "bulk handle",
-            "select messages"
-          ],
-          "steps": [
-            "In [Triage](/triage), right-click a message (or press and hold it on a touch screen) to open its menu: **Mark handled**, **Ignore**, **Snooze**, **Assign**, **Correct the kind**, **Copy link** and more.",
-            "To act on several, select them with x, or ⌘/Ctrl-click, or Shift-click for a range, then use the bar at the foot of the list: **Snooze until tomorrow**, **Assign to me**, **Ignore** or **Handled**."
-          ]
-        },
-        {
-          "title": "Link a message to the right shipment or customer",
-          "keywords": [
-            "wrong shipment",
-            "match email",
-            "Nova could not tell",
-            "attach email to load"
-          ],
-          "steps": [
-            "Open the message in [Triage](/triage) and press l, or right-click it and select **Link to a record…**.",
-            "Choose the **Shipment** or **Customer**, fill in **Why this is the right record**, and select **Link**."
-          ]
-        },
-        {
-          "title": "Let Nova handle a kind of message on its own",
-          "keywords": [
-            "rule",
-            "automation",
-            "auto file",
-            "let nova handle"
-          ],
-          "steps": [
-            "In [Triage](/triage), select **Rules** in the rail.",
-            "Select **New rule** and fill in the blanks of the sentence: which kind of message, from whom, on which source, and what Nova should do.",
-            "Check how many messages from the last 30 days it would have matched and how many look off, then select **Turn on**.",
-            "Hover a rule and select **See what it matched** to spot-check it; the switch beside a rule pauses it."
-          ]
-        },
-        {
-          "title": "Connect a source",
-          "keywords": [
-            "connect mailbox",
-            "add email address",
-            "forward email",
-            "new source"
-          ],
-          "steps": [
-            "In [Triage](/triage), select **Add** beside **Sources** (or **Add a source** when there is none yet).",
-            "Choose the kind of source and the address Nova should watch, then follow the steps to forward mail to the address Trenova gives you.",
-            "Select **Send a test email** to see a message arrive."
-          ]
-        },
-        {
-          "title": "Find a message and keep the search",
-          "keywords": [
-            "search email",
-            "find by sender",
-            "find by subject",
-            "saved search"
-          ],
-          "steps": [
-            "Open a folder in [Triage](/triage) and type in the search box at the top of the list (press / to jump there).",
-            "Choose **Due first** or **Newest** to change the order.",
-            "Select **Save** to keep the search as a view under **Views**."
-          ]
-        }
-      ],
-      "notes": "Needs read access to inbound messages. Messages that look like phishing are held back and also land in **Waiting on you**; the bar offers **Ignore** and **Not phishing**.\n\nSources are set up under [Inbound mailboxes](/admin/inbound-mailboxes). A source that has stopped receiving mail shows a dot in the rail, and its folder offers **Send a test email**. Press ? in Triage for the **Keyboard shortcuts**.\n\nThe folder, search and open message are kept in the page address, so a link to a message opens exactly that message. Old links to the inbox open Triage.",
-      "related": [
-        "/desk",
-        "/desk/watchtower",
-        "/shipment-management/shipments",
-        "/admin/inbound-mailboxes"
-      ],
-      "covers": [],
-      "createAction": null,
-      "inNavigation": false
     }
   ],
   "records": [
@@ -19442,29 +19570,20 @@
     {
       "entity": "factoring_agreement",
       "label": "Factoring agreement",
-      "path": "/billing/configuration-files/factoring-companies",
-      "params": {
-        "section": "agreements",
-        "agreement": "{id}"
-      }
+      "path": "/billing/configuration-files/factoring-companies/agreements/{id}",
+      "params": {}
     },
     {
       "entity": "factoring_company",
       "label": "Factoring company",
-      "path": "/billing/configuration-files/factoring-companies",
-      "params": {
-        "panelType": "edit",
-        "panelEntityId": "{id}"
-      }
+      "path": "/billing/configuration-files/factoring-companies/{id}",
+      "params": {}
     },
     {
       "entity": "factoring_noa",
       "label": "Notice of assignment",
-      "path": "/billing/configuration-files/factoring-companies",
-      "params": {
-        "section": "notices",
-        "noa": "{id}"
-      }
+      "path": "/billing/configuration-files/factoring-companies/notices/{id}",
+      "params": {}
     },
     {
       "entity": "factoring_remittance",
@@ -19523,7 +19642,7 @@
     {
       "entity": "inbound_message",
       "label": "Message",
-      "path": "/triage",
+      "path": "/desk/triage",
       "params": {
         "message": "{id}"
       }

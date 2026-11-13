@@ -8,10 +8,15 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/caseownerports"
 	"github.com/emoss08/trenova/shared/stringutils"
 
+	"go.uber.org/fx"
+	"go.uber.org/zap"
+
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentshadow"
 	"github.com/emoss08/trenova/internal/modules/agent/app/deskrecords"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentwork"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/recordcase"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtowerplay"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentproposalports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
@@ -29,8 +34,6 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"go.uber.org/fx"
-	"go.uber.org/zap"
 )
 
 const (
@@ -513,7 +516,12 @@ func (s *Service) handOffOf(
 		return nil
 	}
 
-	out := &recordcase.HandOff{ItemID: primary.ID, Kind: primary.SourceKind}
+	out := &recordcase.HandOff{
+		ItemID:  primary.ID,
+		Kind:    primary.SourceKind,
+		Play:    watchtowerplay.Of(primary.SourceKind),
+		Request: primary.LastRequest,
+	}
 	if !primary.HasAgent() {
 		return out
 	}
@@ -526,7 +534,7 @@ func (s *Service) handOffOf(
 	if err != nil {
 		return out
 	}
-	if primary.AgentWorkFrom(run).Active() {
+	if agentwork.From(primary, run).Active() {
 		out.Working = true
 		built.stream = run.WorkflowID
 

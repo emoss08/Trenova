@@ -33,6 +33,10 @@ Shipment event ─▶ ShipmentExceptionObserver ─▶ ReconcileSubject for that
 | Piece | Where |
 |---|---|
 | Workflow on the item, statuses, codes, events | `agent/domain/watchtower` (`item.go`, `exception.go`) |
+| What is happening on an item, typed by kind, for the view made for it | `agent/domain/watchtowerpanel` |
+| Where the agent an item was handed to stands, read from its run | `agent/domain/agentwork` |
+| The Desk's lenses over the kinds of item | `agent/domain/desklens` |
+| The first move a kind of item has, and how a person is shown it | `agent/domain/watchtowerplay` |
 | Migration | `20261231009210_exception_queue` (columns, history table, settings) |
 | Repository | `agent/adapters/postgres/watchtowerrepository` |
 | Source reads (missed stops, PODs, tenders) | `agent/adapters/postgres/exceptionsourcerepository` |
@@ -122,7 +126,7 @@ matched shipment, customer or carrier; a proposal its target; a plan the record 
 change (`agent_plans.target_id`, kept when the plan opens); detention, billing exceptions and move
 coverage their shipment; a carrier event its carrier. `idx_watchtower_items_open_about` serves the
 read that fills a page of rows ([desk-workspace.md](desk-workspace.md)). Each kind is filed under a
-Desk lens (`SourceKind.DeskLens`: proposals and plans under Decisions, inbound messages under
+Desk lens (`desklens.Of`: proposals and plans under Decisions, inbound messages under
 Triage, everything else under Watchtower), exposed as `WatchtowerItem.deskLens` and on
 `WatchtowerKindSummary` so the client never keeps the mapping.
 
@@ -157,7 +161,7 @@ Handing an item to a named agent (`handOffWatchtowerItem` with `agentDefinitionI
 the run and records it on the item (`agent_definition_id`, `agent_run_id`,
 `agent_handed_at`, `agent_handed_by_id`) with a `HandedOff` event; the item becomes
 `InProgress`. A second hand-off is refused while the run is still working. How far along the
-agent is, `agentWork`, is worked out on read from the run (`Item.AgentWorkFrom`): Pending and
+agent is, `agentWork`, is worked out on read from the run (`agentwork.From`): Pending and
 GatheringContext are step 1 of 3 (reading the record), Diagnosing step 2 (working out what to
 do), AwaitingDecision waits on a person to approve, Completed is done with the run's summary,
 and Failed waits on a person with the run's error. The run is read through the

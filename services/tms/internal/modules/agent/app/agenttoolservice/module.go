@@ -1,6 +1,9 @@
 package agenttoolservice
 
 import (
+	"go.uber.org/fx"
+	"go.uber.org/zap"
+
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/accountingdrifttools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/accountinginboundtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/accountingsynctools"
@@ -92,13 +95,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/places/ports/locationcategoryports"
 	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
-	"github.com/emoss08/trenova/internal/modules/workforce/app/drivernotificationservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workercredentialservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
-	"go.uber.org/fx"
-	"go.uber.org/zap"
 )
 
 var Module = fx.Module("agent-tool-service", fx.Provide(append(grouped(), NewRegistry)...))
@@ -174,7 +174,7 @@ func ToolProviders() []any {
 		provideForkReportTool,
 		provideEvaluateServiceFailuresTool,
 		provideResolveServiceFailureTool,
-		provideNotifyDriverTool,
+		operationstools.NewNotifyDriverTool,
 		operationstools.NewEmailCustomerTool,
 		portaltools.NewActOnPortalTool,
 		webwatchtools.NewWatchWebTool,
@@ -321,10 +321,6 @@ func provideResolveServiceFailureTool(
 	failures servicefailureports.ServiceFailureService,
 ) agenttoolports.AgentTool {
 	return servicefailuretools.NewResolveServiceFailureTool(failures)
-}
-
-func provideNotifyDriverTool(drivers *drivernotificationservice.Service) agenttoolports.AgentTool {
-	return operationstools.NewNotifyDriverTool(drivers)
 }
 
 type intakeToolParams struct {

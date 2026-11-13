@@ -6,10 +6,12 @@ import (
 	"strings"
 
 	"github.com/emoss08/keel"
+
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtowerpanel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -52,7 +54,7 @@ type queueSeedSpec struct {
 	eventKind agenttrigger.EventKind
 	seen      bool
 	agent     *queueSeedAgent
-	panel     func(now int64) *watchtower.Panel
+	panel     func(now int64) *watchtowerpanel.Panel
 }
 
 type queueSeed struct {
@@ -63,22 +65,22 @@ type queueSeed struct {
 
 func minutes(value int64) *int64 { return &value }
 
-func seedExpiry(who string, papers ...any) func(now int64) *watchtower.Panel {
-	return func(now int64) *watchtower.Panel {
-		out := make([]watchtower.ExpiringPaper, 0, len(papers)/2)
+func seedExpiry(who string, papers ...any) func(now int64) *watchtowerpanel.Panel {
+	return func(now int64) *watchtowerpanel.Panel {
+		out := make([]watchtowerpanel.ExpiringPaper, 0, len(papers)/2)
 		for i := 0; i+1 < len(papers); i += 2 {
 			name, _ := papers[i].(string)
 			days, _ := papers[i+1].(int)
-			out = append(out, watchtower.ExpiringPaper{
+			out = append(out, watchtowerpanel.ExpiringPaper{
 				Name:      name,
 				DaysLeft:  int64(days),
 				ExpiresAt: now + int64(days)*24*60*deskSeedMinute,
 			})
 		}
 
-		return &watchtower.Panel{
-			Kind:   watchtower.PanelExpiry,
-			Expiry: &watchtower.ExpiryPanel{Who: who, Papers: out},
+		return &watchtowerpanel.Panel{
+			Kind:   watchtowerpanel.KindExpiry,
+			Expiry: &watchtowerpanel.ExpiryPanel{Who: who, Papers: out},
 		}
 	}
 }
@@ -268,10 +270,10 @@ func (r *deskSeedRefs) queueSpecs() []queueSeedSpec {
 			ago:      60,
 			record:   recordRef(permission.ResourceCustomer, "Bluewater Retail"),
 			facts:    seedFacts("Messages", "3 × 204", "Unknown code", "BW-DC-17"),
-			panel: func(now int64) *watchtower.Panel {
-				return &watchtower.Panel{
-					Kind: watchtower.PanelFile,
-					File: &watchtower.FilePanel{
+			panel: func(now int64) *watchtowerpanel.Panel {
+				return &watchtowerpanel.Panel{
+					Kind: watchtowerpanel.KindFile,
+					File: &watchtowerpanel.FilePanel{
 						Name:       "BW_204_batch.edi",
 						Reason:     "The 204s reference a location code that is not mapped (BW-DC-17).",
 						ReceivedAt: now - 60*deskSeedMinute,

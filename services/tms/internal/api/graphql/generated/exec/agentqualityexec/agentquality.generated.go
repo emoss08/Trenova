@@ -118,9 +118,19 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNAgentEvalCaseStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentqualityᚐCaseStatus),
 			},
 			{
-				Name:     "trigger",
+				Name:     "automatic",
 				NonNull:  true,
 				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agentquality.EvalCase)
+					return obj.Automatic, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:     "trigger",
+				NonNull:  true,
+				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentquality.EvalCase)
 					return obj.Trigger, nil
@@ -192,11 +202,20 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 			{
+				Name:     "askedAt",
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agentquality.EvalCase)
+					return obj.AskedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
+			},
+			{
 				Name:       "history",
 				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild5,
+				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentquality.EvalCase)
 					return gqlexec.Resolver[AgentEvalCaseResolver](ec, "AgentEvalCase@agentquality").History(ctx, obj)
@@ -207,7 +226,7 @@ var Shard = &gqlexec.Shard{
 				Name:       "pageContext",
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild5,
+				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentquality.EvalCase)
 					return gqlexec.Resolver[AgentEvalCaseResolver](ec, "AgentEvalCase@agentquality").PageContext(ctx, obj)
@@ -219,7 +238,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild5,
+				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentquality.EvalCase)
 					return gqlexec.Resolver[AgentEvalCaseResolver](ec, "AgentEvalCase@agentquality").Mentions(ctx, obj)
@@ -262,7 +281,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild5,
+				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentquality.EvalCase)
 					return gqlexec.Resolver[AgentEvalCaseResolver](ec, "AgentEvalCase@agentquality").ToolFixtures(ctx, obj)
@@ -274,7 +293,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild5,
+				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentquality.EvalCase)
 					return gqlexec.Resolver[AgentEvalCaseResolver](ec, "AgentEvalCase@agentquality").Expected(ctx, obj)
@@ -295,7 +314,7 @@ var Shard = &gqlexec.Shard{
 				Name:       "redaction",
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild5,
+				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentquality.EvalCase)
 					return gqlexec.Resolver[AgentEvalCaseResolver](ec, "AgentEvalCase@agentquality").Redaction(ctx, obj)
@@ -316,7 +335,7 @@ var Shard = &gqlexec.Shard{
 				Name:       "capturedFingerprint",
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild5,
+				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentquality.EvalCase)
 					return gqlexec.Resolver[AgentEvalCaseResolver](ec, "AgentEvalCase@agentquality").CapturedFingerprint(ctx, obj)
@@ -345,7 +364,7 @@ var Shard = &gqlexec.Shard{
 				Name:     "weight",
 				NonNull:  true,
 				IsMethod: true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentquality.EvalCase)
 					return obj.Weight(), nil
@@ -355,7 +374,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "version",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentquality.EvalCase)
 					return obj.Version, nil
@@ -398,7 +417,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "duplicate",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AgentEvalCaseCapture)
 					return obj.Duplicate, nil
@@ -431,7 +450,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "totalCount",
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AgentEvalCaseConnection)
 					return obj.TotalCount, nil
@@ -441,7 +460,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "totalCountExact",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AgentEvalCaseConnection)
 					return obj.TotalCountExact, nil
@@ -528,7 +547,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "enabled",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentqualityports.AgentQualityDetail)
 					return obj.Enabled, nil
@@ -538,7 +557,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "windowDays",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentqualityports.AgentQualityDetail)
 					return obj.WindowDays, nil
@@ -558,7 +577,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "ratingsVisible",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentqualityports.AgentQualityDetail)
 					return obj.RatingsVisible, nil
@@ -567,7 +586,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "satisfaction",
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentqualityports.AgentQualityDetail)
 					return obj.Satisfaction, nil
@@ -577,7 +596,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "ratings",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentqualityports.AgentQualityDetail)
 					return obj.Ratings, nil
@@ -630,7 +649,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "activeCases",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentqualityports.AgentQualityDetail)
 					return obj.ActiveCases, nil
@@ -674,7 +693,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "enabled",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentqualityports.AgentQualityAgent)
 					return obj.Enabled, nil
@@ -684,7 +703,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "ratingsVisible",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentqualityports.AgentQualityAgent)
 					return obj.RatingsVisible, nil
@@ -693,7 +712,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "satisfaction",
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentqualityports.AgentQualityAgent)
 					return obj.Satisfaction, nil
@@ -702,7 +721,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "satisfactionDelta",
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentqualityports.AgentQualityAgent)
 					return obj.SatisfactionDelta, nil
@@ -712,7 +731,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "ratings",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentqualityports.AgentQualityAgent)
 					return obj.Ratings, nil
@@ -721,7 +740,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "qualityScore",
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentqualityports.AgentQualityAgent)
 					return obj.QualityScore, nil
@@ -752,7 +771,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "openRegression",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentqualityports.AgentQualityAgent)
 					return obj.OpenRegression, nil
@@ -785,7 +804,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "totalCount",
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AgentQualityAgentConnection)
 					return obj.TotalCount, nil
@@ -795,7 +814,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "totalCountExact",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AgentQualityAgentConnection)
 					return obj.TotalCountExact, nil
@@ -841,7 +860,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "enabled",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentqualitycontrol.Control)
 					return obj.Enabled, nil
@@ -851,7 +870,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "runHourLocal",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentqualitycontrol.Control)
 					return obj.RunHourLocal, nil
@@ -871,7 +890,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "maxCasesPerAgent",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentqualitycontrol.Control)
 					return obj.MaxCasesPerAgent, nil
@@ -905,7 +924,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "judgeEnabled",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentqualitycontrol.Control)
 					return obj.JudgeEnabled, nil
@@ -915,7 +934,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "judgeSampleRate",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentqualitycontrol.Control)
 					return obj.JudgeSampleRate, nil
@@ -925,7 +944,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "regressionThreshold",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentqualitycontrol.Control)
 					return obj.RegressionThreshold, nil
@@ -935,7 +954,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "minCases",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentqualitycontrol.Control)
 					return obj.MinCases, nil
@@ -945,7 +964,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "forceRerunDays",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentqualitycontrol.Control)
 					return obj.ForceRerunDays, nil
@@ -953,9 +972,40 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNInt2int),
 			},
 			{
+				Name:     "autoActivate",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agentqualitycontrol.Control)
+					return obj.AutoActivate, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:     "autoCasesPerAgent",
+				NonNull:  true,
+				ChildErr: errNoChild9,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agentqualitycontrol.Control)
+					return obj.AutoCasesPerAgent, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "autoCaseDays",
+				NonNull:  true,
+				IsMethod: true,
+				ChildErr: errNoChild9,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agentqualitycontrol.Control)
+					return obj.AutoCaseDays(), nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
 				Name:     "version",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentqualitycontrol.Control)
 					return obj.Version, nil
@@ -977,7 +1027,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "windowDays",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentqualityports.AgentQualityOverview)
 					return obj.WindowDays, nil
@@ -997,7 +1047,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "ratingsVisible",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentqualityports.AgentQualityOverview)
 					return obj.RatingsVisible, nil
@@ -1006,7 +1056,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "satisfaction",
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentqualityports.AgentQualityOverview)
 					return obj.Satisfaction, nil
@@ -1016,7 +1066,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "ratings",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentqualityports.AgentQualityOverview)
 					return obj.Ratings, nil
@@ -1025,7 +1075,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "qualityScore",
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentqualityports.AgentQualityOverview)
 					return obj.QualityScore, nil
@@ -1035,7 +1085,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "agentsScored",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentqualityports.AgentQualityOverview)
 					return obj.AgentsScored, nil
@@ -1045,7 +1095,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "suiteRuns",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentqualityports.AgentQualityOverview)
 					return obj.SuiteRuns, nil
@@ -1055,7 +1105,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "regressions",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentqualityports.AgentQualityOverview)
 					return obj.Regressions, nil
@@ -1065,7 +1115,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "openRegressions",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentqualityports.AgentQualityOverview)
 					return obj.OpenRegressions, nil
@@ -1085,7 +1135,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "evalUnpricedCalls",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentqualityports.AgentQualityOverview)
 					return obj.EvalUnpricedCalls, nil
@@ -1115,7 +1165,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "sweepEnabled",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentqualityports.AgentQualityOverview)
 					return obj.SweepEnabled, nil
@@ -1125,7 +1175,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "nextSweepHourLocal",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentqualityports.AgentQualityOverview)
 					return obj.NextSweepHourLocal, nil
@@ -1145,7 +1195,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "agentsWithCases",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentqualityports.AgentQualityOverview)
 					return obj.AgentsWithCases, nil
@@ -1155,7 +1205,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "judgeEnabled",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentqualityports.AgentQualityOverview)
 					return obj.JudgeEnabled, nil
@@ -1165,7 +1215,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "regressionThreshold",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentqualityports.AgentQualityOverview)
 					return obj.RegressionThreshold, nil
@@ -1207,7 +1257,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "qualityScore",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentqualityports.AgentQualityPoint)
 					return obj.QualityScore, nil
@@ -1227,7 +1277,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "regression",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentqualityports.AgentQualityPoint)
 					return obj.Regression, nil
@@ -1302,7 +1352,7 @@ var Shard = &gqlexec.Shard{
 				Name:       "fingerprint",
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild5,
+				ChildErr:   errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentqualitysuite.SuiteRun)
 					return gqlexec.Resolver[AgentSuiteRunResolver](ec, "AgentSuiteRun@agentquality").Fingerprint(ctx, obj)
@@ -1367,7 +1417,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "casesTotal",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentqualitysuite.SuiteRun)
 					return obj.CasesTotal, nil
@@ -1377,7 +1427,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "casesPassed",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentqualitysuite.SuiteRun)
 					return obj.CasesPassed, nil
@@ -1387,7 +1437,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "casesFailed",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentqualitysuite.SuiteRun)
 					return obj.CasesFailed, nil
@@ -1397,7 +1447,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "casesSkipped",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentqualitysuite.SuiteRun)
 					return obj.CasesSkipped, nil
@@ -1407,7 +1457,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "hardFailures",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentqualitysuite.SuiteRun)
 					return obj.HardFailures, nil
@@ -1416,7 +1466,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "deterministicScore",
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentqualitysuite.SuiteRun)
 					return obj.DeterministicScore, nil
@@ -1425,7 +1475,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "judgeScore",
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentqualitysuite.SuiteRun)
 					return obj.JudgeScore, nil
@@ -1434,7 +1484,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "qualityScore",
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentqualitysuite.SuiteRun)
 					return obj.QualityScore, nil
@@ -1443,7 +1493,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "baselineScore",
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentqualitysuite.SuiteRun)
 					return obj.BaselineScore, nil
@@ -1462,7 +1512,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "regression",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentqualitysuite.SuiteRun)
 					return obj.Regression, nil
@@ -1530,9 +1580,28 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalOID2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
 			},
 			{
+				Name:     "trialProviderId",
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agentqualitysuite.SuiteRun)
+					return obj.TrialProviderID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOID2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "trialLabel",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*agentqualitysuite.SuiteRun)
+					return obj.TrialLabel, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
 				Name:     "version",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentqualitysuite.SuiteRun)
 					return obj.Version, nil
@@ -1585,7 +1654,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "totalCount",
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AgentSuiteRunCaseConnection)
 					return obj.TotalCount, nil
@@ -1595,7 +1664,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "totalCountExact",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AgentSuiteRunCaseConnection)
 					return obj.TotalCountExact, nil
@@ -1651,7 +1720,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "totalCount",
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AgentSuiteRunConnection)
 					return obj.TotalCount, nil
@@ -1661,7 +1730,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "totalCountExact",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AgentSuiteRunConnection)
 					return obj.TotalCountExact, nil
@@ -1738,7 +1807,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "positive",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentqualityports.AgentWorstRatedAnswer)
 					return obj.Positive, nil
@@ -1748,7 +1817,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "negative",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentqualityports.AgentWorstRatedAnswer)
 					return obj.Negative, nil
@@ -1787,7 +1856,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "canOpenThread",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*agentqualityports.AgentWorstRatedAnswer)
 					return obj.CanOpenThread, nil
@@ -1839,7 +1908,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "totalCount",
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AgentWorstRatedAnswerConnection)
 					return obj.TotalCount, nil
@@ -1849,7 +1918,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "totalCountExact",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.AgentWorstRatedAnswerConnection)
 					return obj.TotalCountExact, nil
@@ -1942,7 +2011,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Mutation_runAgentSuite_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[MutationResolver](ec, "Mutation@agentquality").RunAgentSuite(ctx, fc.Args["agentDefinitionId"].(string))
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@agentquality").RunAgentSuite(ctx, fc.Args["agentDefinitionId"].(string), fc.Args["trialProviderId"].(*string))
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentSuiteRun2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentqualitysuiteᚐSuiteRun),
 			},
@@ -2157,7 +2226,7 @@ type MutationResolver interface {
 	UpdateAgentEvalCase(ctx context.Context, id string, input gqlmodel.UpdateAgentEvalCaseInput) (*agentquality.EvalCase, error)
 	SetAgentEvalCaseStatus(ctx context.Context, id string, status agentquality.CaseStatus) (*agentquality.EvalCase, error)
 	ReplayAgentEvalCase(ctx context.Context, id string) (*agentevaluation.Evaluation, error)
-	RunAgentSuite(ctx context.Context, agentDefinitionID string) (*agentqualitysuite.SuiteRun, error)
+	RunAgentSuite(ctx context.Context, agentDefinitionID string, trialProviderID *string) (*agentqualitysuite.SuiteRun, error)
 	UpdateAgentQualityControl(ctx context.Context, input gqlmodel.UpdateAgentQualityControlInput) (*agentqualitycontrol.Control, error)
 }
 
@@ -2179,12 +2248,12 @@ var (
 	errNoChild1  = errors.New("field of type String does not have child fields")
 	errNoChild2  = errors.New("field of type AgentEvalCaseSource does not have child fields")
 	errNoChild3  = errors.New("field of type AgentEvalCaseStatus does not have child fields")
-	errNoChild4  = errors.New("field of type AgentRunTrigger does not have child fields")
-	errNoChild5  = errors.New("field of type JSON does not have child fields")
+	errNoChild4  = errors.New("field of type Boolean does not have child fields")
+	errNoChild5  = errors.New("field of type AgentRunTrigger does not have child fields")
 	errNoChild6  = errors.New("field of type Timestamp does not have child fields")
-	errNoChild7  = errors.New("field of type Float does not have child fields")
-	errNoChild8  = errors.New("field of type Int does not have child fields")
-	errNoChild9  = errors.New("field of type Boolean does not have child fields")
+	errNoChild7  = errors.New("field of type JSON does not have child fields")
+	errNoChild8  = errors.New("field of type Float does not have child fields")
+	errNoChild9  = errors.New("field of type Int does not have child fields")
 	errNoChild10 = errors.New("field of type Decimal does not have child fields")
 	errNoChild11 = errors.New("field of type AgentSuiteRunStatus does not have child fields")
 	errNoChild12 = errors.New("field of type AgentSuiteRunTrigger does not have child fields")
@@ -2260,7 +2329,7 @@ func field_Mutation_replayAgentEvalCase_args(ctx context.Context, ec *gqlexec.Ex
 }
 
 func field_Mutation_runAgentSuite_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
-	args := make(map[string]any, 1)
+	args := make(map[string]any, 2)
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "agentDefinitionId",
 		func(ctx context.Context, v any) (string, error) {
 			return unmarshalNID2string(ctx, ec, v)
@@ -2269,6 +2338,14 @@ func field_Mutation_runAgentSuite_args(ctx context.Context, ec *gqlexec.Exec, ra
 		return nil, err
 	}
 	args["agentDefinitionId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "trialProviderId",
+		func(ctx context.Context, v any) (*string, error) {
+			return unmarshalOID2ᚖstring(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["trialProviderId"] = arg1
 	return args, nil
 }
 
@@ -2809,7 +2886,7 @@ func unmarshalInputUpdateAgentQualityControlInput(ctx context.Context, ec *gqlex
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"version", "enabled", "runHourLocal", "timezone", "maxCasesPerAgent", "nightlyBudgetUsd", "monthlyBudgetUsd", "judgeEnabled", "judgeSampleRate", "regressionThreshold", "minCases", "forceRerunDays"}
+	fieldsInOrder := [...]string{"version", "enabled", "runHourLocal", "timezone", "maxCasesPerAgent", "nightlyBudgetUsd", "monthlyBudgetUsd", "judgeEnabled", "judgeSampleRate", "regressionThreshold", "minCases", "forceRerunDays", "autoActivate", "autoCasesPerAgent"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -2900,6 +2977,20 @@ func unmarshalInputUpdateAgentQualityControlInput(ctx context.Context, ec *gqlex
 				return it, err
 			}
 			it.ForceRerunDays = data
+		case "autoActivate":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("autoActivate"))
+			data, err := unmarshalNBoolean2bool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.AutoActivate = data
+		case "autoCasesPerAgent":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("autoCasesPerAgent"))
+			data, err := unmarshalNInt2int(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.AutoCasesPerAgent = data
 		}
 	}
 	return it, nil

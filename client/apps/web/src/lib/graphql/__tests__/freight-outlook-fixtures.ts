@@ -21,6 +21,7 @@ export const readyQuality: DispatchForecastQuality = {
   naiveMeanAbsoluteError: 1.22,
   skill: 0.26,
   fittedAt: OUTLOOK_START - 12 * 3_600,
+  refitting: false,
 };
 
 export const slotStarts = Array.from({ length: 12 }, (_, index) => OUTLOOK_START + index * SLOT);

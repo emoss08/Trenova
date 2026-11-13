@@ -3,49 +3,23 @@ package qualificationtools
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/agent/app/requestemail"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttooltrust"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/portaltemplate"
-	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
-	"github.com/emoss08/trenova/internal/modules/operations/app/customerupdateservice"
-	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
-	"github.com/emoss08/trenova/pkg/pagination"
-	"go.uber.org/fx"
 )
 
+// RequestMissingDocsTool asks an outside party for paperwork by email. The
+// email is composed and sent by requestemail.Sender, the same sender a
+// person's own request from the Watchtower uses.
 type RequestMissingDocsTool struct {
-	email     emailports.EmailService
-	templates documenttemplateports.DocumentTemplateResolver
-	orgRepo   tenantports.OrganizationRepository
-	inliner   documenttemplateports.AssetInliner
-	senders   emailports.EmailSenderResolver
+	requests *requestemail.Sender
 }
 
-type requestMissingDocsParams struct {
-	fx.In
-
-	Email     emailports.EmailService
-	Templates documenttemplateports.DocumentTemplateResolver
-	OrgRepo   tenantports.OrganizationRepository
-	Inliner   documenttemplateports.AssetInliner
-	Senders   emailports.EmailSenderResolver
-}
-
-func NewRequestMissingDocsTool(
-	p requestMissingDocsParams, //nolint:gocritic // fx params are passed by value
-) agenttoolports.AgentTool {
-	return &RequestMissingDocsTool{
-		email:     p.Email,
-		templates: p.Templates,
-		orgRepo:   p.OrgRepo,
-		inliner:   p.Inliner,
-		senders:   p.Senders,
-	}
+func NewRequestMissingDocsTool(requests *requestemail.Sender) agenttoolports.AgentTool {
+	return &RequestMissingDocsTool{requests: requests}
 }
 
 func (t *RequestMissingDocsTool) Name() string { return "shipment_request_documents" }
@@ -132,45 +106,5 @@ func (t *RequestMissingDocsTool) Execute(
 		return err
 	}
 
-	_, err = t.email.Send(ctx, composed.send)
-
-	return err
-}
-
-// agentEmailContext assembles what the template wraps the agent's prose in.
-//
-// The optional parameters are read leniently: a malformed customer name must not
-// stop a document request going out, because the agent's own words already say
-// what is being asked for.
-func (t *RequestMissingDocsTool) agentEmailContext(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	subject, body string,
-	raw map[string]any,
-) portaltemplate.AgentEmailContext {
-	out := portaltemplate.AgentEmailContext{
-		AgentSubject: subject,
-		AgentBody:    body,
-	}
-
-	out.CustomerName = toolparams.OptionalString(raw, "customerName")
-	out.ShipmentProNumber = toolparams.OptionalString(raw, "shipmentProNumber")
-
-	var documents []string
-	if err := toolparams.DecodeParam(raw, "requestedDocuments", &documents); err == nil {
-		out.RequestedDocuments = documents
-	}
-
-	t.applyBranding(ctx, tenantInfo, &out)
-
-	return out
-}
-
-// applyBranding names the sender and inlines their logo.
-func (t *RequestMissingDocsTool) applyBranding(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	out *portaltemplate.AgentEmailContext,
-) {
-	customerupdateservice.Brand(ctx, t.orgRepo, t.inliner, tenantInfo, out)
+	return t.requests.Send(ctx, composed)
 }

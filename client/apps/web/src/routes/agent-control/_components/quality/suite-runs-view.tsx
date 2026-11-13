@@ -194,6 +194,7 @@ function SuiteRunDetails({ run }: { run: AgentSuiteRunRow }) {
       )}
       <KV
         items={[
+          run.trialLabel ? [t("Tried on"), run.trialLabel] : null,
           [t("Score"), formatShare(run.qualityScore)],
           [t("Change"), <Pts key="change" value={pointsChange(run)} />],
           [t("Cases asked"), t("{0} of {1}", asked, run.casesTotal)],

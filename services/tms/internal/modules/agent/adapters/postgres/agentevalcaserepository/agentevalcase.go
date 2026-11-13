@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation/agentevaluationdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality/agentqualitydb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitycontrol/agentqualitycontroldb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitysuite"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
@@ -81,7 +82,9 @@ func (r *repository) Update(
 			entity,
 			c.Title,
 			c.Status,
+			c.Automatic,
 			c.Input,
+			c.AskedAt,
 			c.History,
 			c.PageContext,
 			c.Mentions,
@@ -345,6 +348,168 @@ func (r *repository) deleteKeys(
 	return int(n), nil
 }
 
+func (r *repository) ListAutomatic(
+	ctx context.Context,
+	req agentqualityports.ListAutomaticEvalCasesRequest,
+) ([]agentquality.AutomaticCase, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]agentquality.AutomaticCase, error) {
+		c := agentqualitydb.EvalCases
+		cases, err := keel.Into[agentquality.AutomaticCase](ctx, r.db.Keel(ctx), c.
+			Pick(
+				c.ID,
+				c.Expected.Text("proposals", "0", "toolName").Coalesce(""),
+				c.CreatedAt,
+			).
+			Where(
+				c.AgentDefinitionID.Eq(req.AgentDefinitionID),
+				c.Status.Eq(agentquality.CaseStatusActive),
+				c.Automatic.IsTrue(),
+			).
+			Order(c.CreatedAt.Desc(), c.ID.Desc()).
+			Limit(maxListLimit))
+		if err != nil {
+			return nil, fmt.Errorf("list automatic eval cases: %w", err)
+		}
+		if cases == nil {
+			cases = []agentquality.AutomaticCase{}
+		}
+
+		return cases, nil
+	})
+}
+
+func (r *repository) RetireAutomatic(
+	ctx context.Context,
+	req *agentqualityports.RetireAutomaticEvalCasesRequest,
+) (int, error) {
+	if len(req.IDs) == 0 {
+		return 0, nil
+	}
+
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
+		c := agentqualitydb.EvalCases
+		n, err := c.Where(
+			c.ID.In(req.IDs...),
+			c.Status.Eq(agentquality.CaseStatusActive),
+			c.Automatic.IsTrue(),
+		).Update(ctx, r.db.Keel(ctx), retiredAssignments(req.At)...)
+		if err != nil {
+			return 0, fmt.Errorf("retire automatic eval cases: %w", err)
+		}
+
+		return int(n), nil
+	})
+}
+
+func (r *repository) RetireStaleAutomatic(
+	ctx context.Context,
+	req agentqualityports.RetireStaleAutomaticEvalCasesRequest,
+) (int, error) {
+	ctx = dbscope.WithSystem(
+		ctx,
+		"retire aged automatic evaluation cases across every organization",
+	)
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
+		c := agentqualitydb.EvalCases
+		stale := agentqualitydb.EvalCases.As("stale")
+		keys := stale.AllTenants().
+			Pick(stale.ID).
+			Where(
+				stale.Automatic.IsTrue(),
+				stale.Status.Eq(agentquality.CaseStatusActive),
+				stale.CreatedAt.Lt(req.CreatedBefore),
+			).
+			Order(stale.CreatedAt.Asc()).
+			Limit(clamp(req.Limit, defaultBatchLimit, maxBatchLimit))
+
+		n, err := c.AllTenants().
+			Where(
+				c.ID.InQuery(keys),
+				c.Automatic.IsTrue(),
+				c.Status.Eq(agentquality.CaseStatusActive),
+			).
+			Update(ctx, r.db.Keel(ctx), retiredAssignments(req.At)...)
+		if err != nil {
+			return 0, fmt.Errorf("retire aged automatic eval cases: %w", err)
+		}
+
+		return int(n), nil
+	})
+}
+
+func (r *repository) AdoptCandidates(
+	ctx context.Context,
+	req agentqualityports.AdoptEvalCaseCandidatesRequest,
+) ([]agentqualityports.AdoptedEvalCase, error) {
+	ctx = dbscope.WithSystem(
+		ctx,
+		"activate candidate evaluation cases across every organization that keeps its golden set automatically",
+	)
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) ([]agentqualityports.AdoptedEvalCase, error) {
+			c := agentqualitydb.EvalCases
+			control := agentqualitycontroldb.Controls
+
+			adopted, err := keel.Into[agentqualityports.AdoptedEvalCase](
+				ctx,
+				r.db.Keel(ctx),
+				c.AllTenants().
+					Pick(c.ID, c.OrganizationID, c.BusinessUnitID, c.AgentDefinitionID).
+					Where(
+						c.Status.Eq(agentquality.CaseStatusCandidate),
+						c.Source.Eq(agentquality.CaseSourceDecidedProposal),
+						c.CreatedByUserID.IsNull(),
+						c.CreatedAt.Gte(req.CreatedAfter),
+						keel.NotExists(control.AllTenants().Where(
+							control.OrganizationID.EqCol(c.OrganizationID),
+							control.BusinessUnitID.EqCol(c.BusinessUnitID),
+							control.AutoActivate.IsFalse(),
+						)),
+					).
+					Order(c.CreatedAt.Asc(), c.ID.Asc()).
+					Limit(clamp(req.Limit, defaultBatchLimit, maxBatchLimit)),
+			)
+			if err != nil {
+				return nil, fmt.Errorf("list evaluation case candidates to adopt: %w", err)
+			}
+			if len(adopted) == 0 {
+				return []agentqualityports.AdoptedEvalCase{}, nil
+			}
+
+			ids := make([]pulid.ID, 0, len(adopted))
+			for i := range adopted {
+				ids = append(ids, adopted[i].ID)
+			}
+			if _, err = c.AllTenants().
+				Where(c.ID.In(ids...), c.Status.Eq(agentquality.CaseStatusCandidate)).
+				Update(
+					ctx,
+					r.db.Keel(ctx),
+					c.Status.To(agentquality.CaseStatusActive),
+					c.Automatic.To(true),
+					c.UpdatedAt.To(req.At),
+					c.Version.Increment(1),
+				); err != nil {
+				return nil, fmt.Errorf("adopt evaluation case candidates: %w", err)
+			}
+
+			return adopted, nil
+		},
+	)
+}
+
+func retiredAssignments(at int64) []keel.Assignment {
+	c := agentqualitydb.EvalCases
+
+	return []keel.Assignment{
+		c.Status.To(agentquality.CaseStatusRetired),
+		c.UpdatedAt.To(at),
+		c.Version.Increment(1),
+	}
+}
+
 func clamp(value, fallback, ceiling int) int {
 	return intutils.Clamp(intutils.WithDefault(value, fallback), 1, ceiling)
 }
@@ -395,6 +560,7 @@ func (r *repository) ListSamplingCases(
 					Else(keel.Int64(0))).
 				Where(
 					ev.EvalCaseID.EqCol(c.ID),
+					ev.TrialProviderID.IsNull(),
 					ev.Status.In(agentevaluation.EvaluationStatusCompleted, agentevaluation.EvaluationStatusFailed),
 				).
 				Order(ev.CreatedAt.Desc(), ev.ID.Desc()).

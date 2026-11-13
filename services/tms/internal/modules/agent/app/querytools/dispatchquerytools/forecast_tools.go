@@ -31,8 +31,10 @@ const (
 	forecastStatusInsufficient = "InsufficientHistory"
 	forecastStatusNotFitted    = "NotFitted"
 
-	notFittedYet = "not fitted yet"
-	unnamedArea  = "an area with no named origin"
+	notFittedYet     = "not fitted yet"
+	refittingMeaning = " The history is being read again right now, so these figures may " +
+		"change within a minute; say so, and read the outlook again before relying on them."
+	unnamedArea = "an area with no named origin"
 )
 
 type freightOutlookReader interface {
@@ -179,7 +181,7 @@ func freightOutlookViewOf(
 		outlook = &freightoutlookports.Outlook{}
 	}
 	view := &freightOutlookView{
-		Quality: forecastQualityViewOf(outlook.Quality, location),
+		Quality: forecastQualityViewOf(outlook.Quality, outlook.Refitting, location),
 		Hours:   hours,
 		Short:   []forecastAreaView{},
 		Spare:   []forecastAreaView{},
@@ -284,6 +286,19 @@ func forecastMoveViewOf(step *freightmove.Step, location *time.Location) forecas
 }
 
 func forecastQualityViewOf(
+	quality *demandforecast.Quality,
+	refitting bool,
+	location *time.Location,
+) forecastQualityView {
+	view := fittedQualityViewOf(quality, location)
+	if refitting {
+		view.Meaning += refittingMeaning
+	}
+
+	return view
+}
+
+func fittedQualityViewOf(
 	quality *demandforecast.Quality,
 	location *time.Location,
 ) forecastQualityView {

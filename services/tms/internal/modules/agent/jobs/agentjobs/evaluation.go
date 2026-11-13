@@ -61,6 +61,7 @@ type replaySource struct {
 	actor     *permissionports.RequestActor
 	input     *replayInput
 	originals []agentreplay.OriginalProposal
+	recorded  *agentquality.Recording
 }
 
 // openReplay reads what an evaluation replays and marks it running. It returns
@@ -125,7 +126,9 @@ func (a *Activities) openReplay(
 	evaluation.DefinitionVersion = definition.Version
 	evaluation.PromptVersion = promptVersion
 	evaluation.OriginalProposals = len(source.originals)
-	evaluation.Fingerprint = a.fingerprintOf(definition)
+	if !evaluation.OnTrial() {
+		evaluation.Fingerprint = a.fingerprintOf(definition)
+	}
 	if evaluation, err = a.evaluations.Update(ctx, evaluation); err != nil {
 		return nil, fmt.Errorf("mark evaluation running: %w", err)
 	}
@@ -136,20 +139,25 @@ func (a *Activities) openReplay(
 	replayed := *definition
 	replayed.SimulationMode = true
 
-	return &replay{
-		evaluation: evaluation,
-		originals:  source.originals,
-		request: &agentruntimeports.RunRequest{
-			Definition:   &replayed,
-			Actor:        source.actor,
-			Context:      source.input.context,
-			History:      source.input.history,
-			Input:        source.input.input,
-			RunID:        evaluation.ID,
-			Unattended:   true,
-			UsagePurpose: aiusageports.AIUsagePurposeEvaluation,
-		},
-	}, nil
+	request := &agentruntimeports.RunRequest{
+		Definition:   &replayed,
+		Actor:        source.actor,
+		Context:      source.input.context,
+		History:      source.input.history,
+		Input:        source.input.input,
+		RunID:        evaluation.ID,
+		Unattended:   true,
+		UsagePurpose: aiusageports.AIUsagePurposeEvaluation,
+	}
+	if evaluation.OnTrial() {
+		request.PreferredProviderID = *evaluation.TrialProviderID
+		request.PinProvider = true
+	}
+	if source.recorded != nil {
+		request.Recorded = source.recorded
+	}
+
+	return &replay{evaluation: evaluation, originals: source.originals, request: request}, nil
 }
 
 func (a *Activities) fingerprintOf(
@@ -244,6 +252,14 @@ func (a *Activities) caseSource(
 		return nil, fmt.Errorf("build runtime context: %w", err)
 	}
 
+	// A replay answered from what the original was given runs as of the
+	// moment the person asked: the recorded results word their dates against
+	// that day, and so must the prompt and the dates the agent passes back.
+	recorded := evalCase.Recording()
+	if asked := evalCase.Asked(); recorded != nil && asked > 0 {
+		runtimeContext.Now = asked
+	}
+
 	return &replaySource{
 		actor: actor,
 		input: &replayInput{
@@ -252,6 +268,7 @@ func (a *Activities) caseSource(
 			context: runtimeContext,
 		},
 		originals: originals,
+		recorded:  recorded,
 	}, nil
 }
 

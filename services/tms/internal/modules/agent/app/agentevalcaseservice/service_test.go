@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitycontrol"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitysuite"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aifeedback"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
@@ -36,6 +37,10 @@ type fakeCases struct {
 	byID       map[pulid.ID]*agentquality.EvalCase
 	candidates []agentqualityports.EvalCaseCaptureCandidate
 	purges     []agentqualityports.PurgeExpiredEvalCasesRequest
+	aged       []agentqualityports.RetireStaleAutomaticEvalCasesRequest
+	adoptions  []agentqualityports.AdoptEvalCaseCandidatesRequest
+	keeps      func() bool
+	retiredIn  []dbscope.Tenant
 	creates    int
 	createdIn  []dbscope.Tenant
 	purgedIn   []dbscope.Tenant
@@ -53,6 +58,9 @@ func (f *fakeCases) Create(
 	scope, _ := dbscope.TenantFrom(ctx)
 	f.createdIn = append(f.createdIn, scope)
 	entity.ID = pulid.MustNew("aec_")
+	if entity.CreatedAt == 0 {
+		entity.CreatedAt = 1_700_000_000
+	}
 	stored := *entity
 	f.byID[entity.ID] = &stored
 
@@ -137,6 +145,104 @@ func (f *fakeCases) PurgeExpired(
 	f.purgedIn = append(f.purgedIn, scope)
 
 	return 0, nil
+}
+
+func (f *fakeCases) ListAutomatic(
+	_ context.Context,
+	req agentqualityports.ListAutomaticEvalCasesRequest,
+) ([]agentquality.AutomaticCase, error) {
+	cases := make([]agentquality.AutomaticCase, 0, len(f.byID))
+	for _, stored := range f.byID {
+		if stored.AgentDefinitionID != req.AgentDefinitionID ||
+			stored.OrganizationID != req.TenantInfo.OrgID ||
+			stored.Status != agentquality.CaseStatusActive ||
+			!stored.Automatic {
+			continue
+		}
+		tool := ""
+		if len(stored.Expected.Proposals) > 0 {
+			tool = stored.Expected.Proposals[0].ToolName
+		}
+		cases = append(cases, agentquality.AutomaticCase{
+			ID:        stored.ID,
+			Tool:      tool,
+			CreatedAt: stored.CreatedAt,
+		})
+	}
+
+	return cases, nil
+}
+
+func (f *fakeCases) RetireAutomatic(
+	ctx context.Context,
+	req *agentqualityports.RetireAutomaticEvalCasesRequest,
+) (int, error) {
+	scope, _ := dbscope.TenantFrom(ctx)
+	f.retiredIn = append(f.retiredIn, scope)
+	retired := 0
+	for _, id := range req.IDs {
+		stored, ok := f.byID[id]
+		if !ok || stored.Status != agentquality.CaseStatusActive || !stored.Automatic {
+			continue
+		}
+		stored.Status = agentquality.CaseStatusRetired
+		stored.UpdatedAt = req.At
+		retired++
+	}
+
+	return retired, nil
+}
+
+func (f *fakeCases) RetireStaleAutomatic(
+	_ context.Context,
+	req agentqualityports.RetireStaleAutomaticEvalCasesRequest,
+) (int, error) {
+	f.aged = append(f.aged, req)
+
+	return 0, nil
+}
+
+func (f *fakeCases) AdoptCandidates(
+	_ context.Context,
+	req agentqualityports.AdoptEvalCaseCandidatesRequest,
+) ([]agentqualityports.AdoptedEvalCase, error) {
+	f.adoptions = append(f.adoptions, req)
+	adopted := make([]agentqualityports.AdoptedEvalCase, 0)
+	if f.keeps == nil || !f.keeps() {
+		return adopted, nil
+	}
+	for _, stored := range f.byID {
+		if stored.Status != agentquality.CaseStatusCandidate ||
+			stored.Source != agentquality.CaseSourceDecidedProposal ||
+			stored.CreatedByUserID != nil ||
+			stored.CreatedAt < req.CreatedAfter {
+			continue
+		}
+		stored.Status = agentquality.CaseStatusActive
+		stored.Automatic = true
+		adopted = append(adopted, agentqualityports.AdoptedEvalCase{
+			ID:                stored.ID,
+			OrganizationID:    stored.OrganizationID,
+			BusinessUnitID:    stored.BusinessUnitID,
+			AgentDefinitionID: stored.AgentDefinitionID,
+		})
+	}
+
+	return adopted, nil
+}
+
+type fakeSettings struct {
+	control *agentqualitycontrol.Control
+	reads   int
+}
+
+func (f *fakeSettings) Control(
+	context.Context,
+	pagination.TenantInfo,
+) (*agentqualitycontrol.Control, error) {
+	f.reads++
+
+	return f.control, nil
 }
 
 func (f *fakeCases) PurgeOrphaned(
@@ -261,6 +367,7 @@ type world struct {
 	messages   []conversation.Message
 	cases      *fakeCases
 	feedback   *fakeFeedback
+	settings   *fakeSettings
 	service    *Service
 }
 
@@ -386,6 +493,11 @@ func newWorld(t *testing.T, decision *agentdecision.AgentDecision) *world {
 
 	cases := newFakeCases()
 	feedback := &fakeFeedback{rows: map[pulid.ID]*aifeedback.Feedback{}}
+	settings := &fakeSettings{
+		control: agentqualitycontrol.DefaultControl(tenantInfo.OrgID, tenantInfo.BuID),
+	}
+	settings.control.AutoActivate = false
+	cases.keeps = func() bool { return settings.control.AutoActivate }
 	service := &Service{
 		l:             zap.NewNop(),
 		cases:         cases,
@@ -396,6 +508,7 @@ func newWorld(t *testing.T, decision *agentdecision.AgentDecision) *world {
 		conversations: fakeConversations{thread: thread, messages: messages},
 		feedback:      feedback,
 		retention:     fakeRetention{},
+		settings:      settings,
 		redactor:      testRedactor(t),
 		audit:         &mocks.NoopAuditService{},
 		now:           func() int64 { return 1_700_000_000 },
@@ -410,8 +523,58 @@ func newWorld(t *testing.T, decision *agentdecision.AgentDecision) *world {
 		messages:   messages,
 		cases:      cases,
 		feedback:   feedback,
+		settings:   settings,
 		service:    service,
 	}
+}
+
+func (w *world) candidate() agentqualityports.EvalCaseCaptureCandidate {
+	return agentqualityports.EvalCaseCaptureCandidate{
+		OrganizationID:    w.tenant.OrgID,
+		BusinessUnitID:    w.tenant.BuID,
+		ProposalID:        w.proposal.ID,
+		AgentDefinitionID: w.definition.ID,
+	}
+}
+
+func (w *world) seedAutomatic(tool string, createdAt int64) pulid.ID {
+	id := pulid.MustNew("aec_")
+	proposalID := pulid.MustNew("aprop_")
+	w.cases.byID[id] = &agentquality.EvalCase{
+		ID:                id,
+		OrganizationID:    w.tenant.OrgID,
+		BusinessUnitID:    w.tenant.BuID,
+		AgentDefinitionID: w.definition.ID,
+		Source:            agentquality.CaseSourceDecidedProposal,
+		Status:            agentquality.CaseStatusActive,
+		Automatic:         true,
+		Trigger:           agent.RunTriggerChat,
+		SourceProposalID:  &proposalID,
+		Input:             "Rate " + id.String(),
+		HeldTools:         []string{tool},
+		Expected: agentquality.Expected{
+			ToolMode: agentquality.ToolMatchAnyOrder,
+			Proposals: []agentquality.ExpectedProposal{{
+				ToolName:         tool,
+				Params:           map[string]any{"rate": 1350},
+				SourceProposalID: proposalID.String(),
+			}},
+		},
+		CreatedAt: createdAt,
+	}
+
+	return id
+}
+
+func (w *world) onlyCase(t *testing.T) *agentquality.EvalCase {
+	t.Helper()
+
+	require.Len(t, w.cases.byID, 1)
+	for _, stored := range w.cases.byID {
+		return stored
+	}
+
+	return nil
 }
 
 func (w *world) rate(rating aifeedback.Rating, target pulid.ID) *aifeedback.Feedback {
@@ -460,6 +623,8 @@ func TestCreateFromProposal_FreezesTheTurnWithTheCorrectedParameters(t *testing.
 	assert.Equal(t, agentquality.CaseSourceDecidedProposal, evalCase.Source)
 	assert.Equal(t, agentquality.CaseStatusCandidate, evalCase.Status)
 	assert.Equal(t, "Rate S-100 at 1,200", evalCase.Input)
+	assert.Equal(t, int64(200), evalCase.Asked(),
+		"the case keeps when the question was asked, which is the day its replay runs as of")
 	require.Len(t, evalCase.History, 2)
 	assert.Equal(t, "Earlier question", evalCase.History[0].Content)
 	assert.Equal(t, "/shipments/S-100", evalCase.PageContext.Path)
@@ -664,7 +829,7 @@ func TestCreateCurated_ValidatesBeforeSaving(t *testing.T) {
 	require.ErrorAs(t, err, &multiErr)
 	fields := make([]string, 0, len(multiErr.Errors))
 	for _, fieldErr := range multiErr.Errors {
-		fields = append(fields, fieldErr.Field)
+		fields = append(fields, fieldErr.Field())
 	}
 	assert.Contains(t, fields, "input")
 	assert.Contains(t, fields, "expected.tools[0].rules.rate.kind")
@@ -733,6 +898,221 @@ func TestCaptureCandidates_CountsWhatHappened(t *testing.T) {
 	)
 	require.NoError(t, err)
 	assert.Equal(t, 1, again.Duplicates)
+}
+
+func TestCaptureCandidates_LeavesACandidateWhenTheSetIsNotKeptAutomatically(t *testing.T) {
+	t.Parallel()
+
+	w := newWorld(t, &agentdecision.AgentDecision{Decision: agentdecision.DecisionAccepted})
+	w.cases.candidates = []agentqualityports.EvalCaseCaptureCandidate{w.candidate()}
+
+	result, err := w.service.CaptureCandidates(
+		t.Context(),
+		agentqualityports.CaptureEvalCaseCandidatesRequest{},
+	)
+	require.NoError(t, err)
+
+	assert.Equal(t, 1, result.Captured)
+	assert.Zero(t, result.Activated)
+	assert.Zero(t, result.Rotated)
+	stored := w.onlyCase(t)
+	assert.Equal(t, agentquality.CaseStatusCandidate, stored.Status)
+	assert.False(t, stored.Automatic)
+}
+
+func TestCaptureCandidates_ActivatesADecidedProposalWhenTheSetIsKeptAutomatically(t *testing.T) {
+	t.Parallel()
+
+	w := newWorld(t, &agentdecision.AgentDecision{Decision: agentdecision.DecisionAccepted})
+	w.settings.control.AutoActivate = true
+	missing := w.candidate()
+	missing.ProposalID = pulid.MustNew("aprop_")
+	w.cases.candidates = []agentqualityports.EvalCaseCaptureCandidate{w.candidate(), missing}
+
+	result, err := w.service.CaptureCandidates(
+		t.Context(),
+		agentqualityports.CaptureEvalCaseCandidatesRequest{},
+	)
+	require.NoError(t, err)
+
+	assert.Equal(t, 1, result.Captured)
+	assert.Equal(t, 1, result.Activated)
+	assert.Equal(t, 1, result.Failed)
+	assert.Zero(t, result.Rotated, "one case is within the agent's limit")
+	stored := w.onlyCase(t)
+	assert.Equal(t, agentquality.CaseStatusActive, stored.Status)
+	assert.True(t, stored.Automatic)
+	assert.Equal(t, 1, w.settings.reads, "an organization's controls are read once a round")
+}
+
+func TestCaptureCandidates_RetiresTheOldestAutomaticCasesPastTheAgentsLimit(t *testing.T) {
+	t.Parallel()
+
+	w := newWorld(t, &agentdecision.AgentDecision{Decision: agentdecision.DecisionAccepted})
+	w.settings.control.AutoActivate = true
+	w.settings.control.AutoCasesPerAgent = 2
+	oldest := w.seedAutomatic(w.proposal.ToolName, 100)
+	newer := w.seedAutomatic(w.proposal.ToolName, 200)
+	other := w.seedAutomatic("shipment_place_hold", 50)
+	kept := w.seedAutomatic(w.proposal.ToolName, 10)
+	w.cases.byID[kept].Automatic = false
+	w.cases.candidates = []agentqualityports.EvalCaseCaptureCandidate{w.candidate()}
+
+	result, err := w.service.CaptureCandidates(
+		t.Context(),
+		agentqualityports.CaptureEvalCaseCandidatesRequest{},
+	)
+	require.NoError(t, err)
+
+	assert.Equal(t, 1, result.Activated)
+	assert.Equal(t, 2, result.Rotated)
+	assert.Equal(t, agentquality.CaseStatusRetired, w.cases.byID[oldest].Status)
+	assert.Equal(t, agentquality.CaseStatusRetired, w.cases.byID[newer].Status,
+		"the tool's newest case is the one just captured")
+	assert.Equal(t, agentquality.CaseStatusActive, w.cases.byID[other].Status,
+		"another tool's only case is not crowded out by a busy tool")
+	assert.Equal(t, agentquality.CaseStatusActive, w.cases.byID[kept].Status,
+		"a case a person keeps is never rotated out and does not count toward the limit")
+	require.Len(t, w.cases.retiredIn, 1)
+	assert.Equal(t, w.tenant.OrgID, w.cases.retiredIn[0].OrganizationID,
+		"the rotation runs under the organization the agent belongs to")
+}
+
+func TestCaptureCandidates_AdoptsCandidatesCapturedBeforeTheSetKeptItselfAndRotatesThem(
+	t *testing.T,
+) {
+	t.Parallel()
+
+	w := newWorld(t, nil)
+	w.settings.control.AutoActivate = true
+	w.settings.control.AutoCasesPerAgent = 1
+	now := int64(1_700_000_000)
+	older := w.seedAutomatic("update_rate", now-3600)
+	newer := w.seedAutomatic("update_rate", now-60)
+	for _, id := range []pulid.ID{older, newer} {
+		w.cases.byID[id].Status = agentquality.CaseStatusCandidate
+		w.cases.byID[id].Automatic = false
+	}
+	tooOld := w.seedAutomatic("update_rate", now-40*86400)
+	w.cases.byID[tooOld].Status = agentquality.CaseStatusCandidate
+	w.cases.byID[tooOld].Automatic = false
+
+	result, err := w.service.CaptureCandidates(
+		t.Context(),
+		agentqualityports.CaptureEvalCaseCandidatesRequest{},
+	)
+	require.NoError(t, err)
+
+	assert.Equal(t, 2, result.Adopted)
+	assert.Equal(t, 1, result.Rotated, "adopted cases count toward the agent's limit")
+	assert.Equal(t, agentquality.CaseStatusActive, w.cases.byID[newer].Status)
+	assert.True(t, w.cases.byID[newer].Automatic)
+	assert.Equal(t, agentquality.CaseStatusRetired, w.cases.byID[older].Status)
+	assert.Equal(t, agentquality.CaseStatusCandidate, w.cases.byID[tooOld].Status,
+		"a candidate already past the age an automatic case lives is left alone")
+	require.NotEmpty(t, w.cases.adoptions)
+	assert.Equal(t,
+		now-int64(agentqualitycontrol.AutomaticCaseDays)*86400,
+		w.cases.adoptions[0].CreatedAfter,
+	)
+}
+
+func TestCaptureCandidates_AnUnreadableLimitRetiresNothing(t *testing.T) {
+	t.Parallel()
+
+	w := newWorld(t, nil)
+	w.settings.control.AutoActivate = true
+	w.settings.control.AutoCasesPerAgent = 0
+	kept := w.seedAutomatic("update_rate", 100)
+	candidate := w.seedAutomatic("update_rate", 1_700_000_000-60)
+	w.cases.byID[candidate].Status = agentquality.CaseStatusCandidate
+	w.cases.byID[candidate].Automatic = false
+
+	result, err := w.service.CaptureCandidates(
+		t.Context(),
+		agentqualityports.CaptureEvalCaseCandidatesRequest{},
+	)
+	require.NoError(t, err)
+
+	assert.Zero(t, result.Rotated)
+	assert.Equal(t, agentquality.CaseStatusActive, w.cases.byID[kept].Status,
+		"a limit that could not be read is not read as keep none")
+}
+
+func TestSetStatus_KeepingAnAutomaticCaseMakesItThePersons(t *testing.T) {
+	t.Parallel()
+
+	w := newWorld(t, nil)
+	id := w.seedAutomatic("update_rate", 100)
+
+	kept, err := w.service.SetStatus(t.Context(), &agentqualityports.SetEvalCaseStatusRequest{
+		ID:         id,
+		Status:     agentquality.CaseStatusActive,
+		TenantInfo: w.tenant,
+	}, nil)
+	require.NoError(t, err)
+
+	assert.Equal(t, agentquality.CaseStatusActive, kept.Status)
+	assert.False(t, kept.Automatic)
+	assert.False(t, w.cases.byID[id].Automatic)
+}
+
+func TestSetStatus_MovingAnAutomaticCaseMakesItThePersons(t *testing.T) {
+	t.Parallel()
+
+	w := newWorld(t, nil)
+	id := w.seedAutomatic("update_rate", 100)
+
+	quarantined, err := w.service.SetStatus(
+		t.Context(),
+		&agentqualityports.SetEvalCaseStatusRequest{
+			ID:         id,
+			Status:     agentquality.CaseStatusQuarantined,
+			TenantInfo: w.tenant,
+		},
+		nil,
+	)
+	require.NoError(t, err)
+
+	assert.Equal(t, agentquality.CaseStatusQuarantined, quarantined.Status)
+	assert.False(t, quarantined.Automatic,
+		"a case someone quarantined and restores is not retired on its own later")
+}
+
+func TestUpdate_EditingAnAutomaticCaseMakesItThePersons(t *testing.T) {
+	t.Parallel()
+
+	w := newWorld(t, nil)
+	id := w.seedAutomatic("update_rate", 100)
+	title := "Rate the Acme load"
+
+	updated, err := w.service.Update(t.Context(), &agentqualityports.UpdateEvalCaseRequest{
+		ID:         id,
+		Version:    w.cases.byID[id].Version,
+		Title:      &title,
+		TenantInfo: w.tenant,
+	}, nil)
+	require.NoError(t, err)
+
+	assert.Equal(t, title, updated.Title)
+	assert.False(t, updated.Automatic)
+}
+
+func TestPurge_RetiresAutomaticCasesPastTheirAge(t *testing.T) {
+	t.Parallel()
+
+	w := newWorld(t, nil)
+	now := int64(1_700_000_000)
+
+	_, err := w.service.Purge(t.Context(), agentqualityports.PurgeEvalCasesRequest{Now: now})
+	require.NoError(t, err)
+
+	require.Len(t, w.cases.aged, 1)
+	assert.Equal(t,
+		now-int64(agentqualitycontrol.AutomaticCaseDays)*86400,
+		w.cases.aged[0].CreatedBefore,
+	)
+	assert.Equal(t, now, w.cases.aged[0].At)
 }
 
 func TestPurge_AppliesEachOrganizationsRetention(t *testing.T) {

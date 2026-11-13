@@ -59,6 +59,7 @@ vi.mock("@/lib/queries/dispatch-console", () => ({
         naiveMeanAbsoluteError: 0,
         skill: 0,
         fittedAt: 1_793_577_600,
+        refitting: false,
       }),
     }),
   },

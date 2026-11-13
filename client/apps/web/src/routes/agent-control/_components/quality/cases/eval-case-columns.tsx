@@ -75,6 +75,24 @@ export function getEvalCaseColumns(t: TranslateFn): ColumnDef<AgentEvalCaseRow>[
       },
     },
     {
+      accessorKey: "automatic",
+      header: t("Kept"),
+      cell: ({ row }) => (
+        <span
+          className="text-muted-foreground text-xs"
+          title={
+            row.original.automatic
+              ? t("Retired on its own as it ages or newer cases arrive. Keep it to hold on to it.")
+              : undefined
+          }
+        >
+          {row.original.automatic ? t("Automatically") : t("By a person")}
+        </span>
+      ),
+      size: 130,
+      meta: { label: t("Kept"), apiField: "automatic", filterable: false, sortable: false },
+    },
+    {
       accessorKey: "trigger",
       header: t("Asked as"),
       cell: ({ row }) => <TriggerBadge value={row.original.trigger} t={t} />,

@@ -133,6 +133,8 @@ export function aiUsageFeatureLabel(feature: AiUsageFeature | null, t: Translate
       return t("Insight wording");
     case "CaseReading":
       return t("Case readings");
+    case "RequestWording":
+      return t("Request wording");
     case null:
       return t("Other");
   }

@@ -155,6 +155,7 @@ type AgentWorstRatedPage struct {
 type RunAgentSuiteRequest struct {
 	TenantInfo        pagination.TenantInfo
 	AgentDefinitionID pulid.ID
+	TrialProviderID   pulid.ID
 }
 
 type AgentQualityService interface {

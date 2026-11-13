@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/board"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/boardassemble"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/desklens"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/deskattentionports"
@@ -35,7 +36,7 @@ func (s *Service) readWork(
 		}
 		for _, item := range group.Items {
 			reads.Work[group.Record.ID] = append(reads.Work[group.Record.ID], board.WorkSignal{
-				Lens:  item.SourceKind.DeskLens().String(),
+				Lens:  desklens.Of(item.SourceKind).String(),
 				Title: item.Title,
 				Tone:  toneOf(item.Severity),
 				DueAt: item.DueAt,

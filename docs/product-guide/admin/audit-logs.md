@@ -12,8 +12,8 @@ The audit log is the record of activity across your organization: who created, c
 deleted what, when, and how the change arrived. You see the entries for the kinds of record you
 can read; security entries need security audit access.
 
-The top of the page sums up a window you choose (**Today**, **7 days**, **30 days** or **90
-days**): Nova's summary, five figures (**Changes**, **Who acted**, **Sensitive actions**, **Made
+The top of the page sums up a window you choose (**Today**, **7 days**, **30 days** or 90
+days): Nova's summary, five figures (**Changes**, **Who acted**, **Sensitive actions**, **Made
 by agents** and **People working off hours**), a chart of **When changes happened** split into
 people, agents, integrations and jobs, **Who made the changes**, and what **Needs a review**. The
 figures are refreshed every minute. Select **Hide overview** to fold it into one line.
@@ -21,7 +21,7 @@ figures are refreshed every minute. Select **Hide overview** to fold it into one
 Below it, the **Trail** lists every entry newest first, grouped by day; while nothing narrows it,
 each day says how many entries it holds. Each row says what
 happened in a sentence, with the fields it changed and their values before and after, who did it,
-the record and how it arrived (**Via**). With **One row per request** on, a request that wrote many entries shows once, at its first entry, with **more in this request** to open the rest; while you search or filter, every match is shown. The chip beside the title says whether the entries'
+the record and how it arrived (**Via**). With **One row per request** on, a request that wrote many entries shows once, at its first entry, with "+2 more in this request" (or however many there are) to open the rest; while you search or filter, every match is shown. The chip beside the title says whether the entries'
 seals verify; entries are sealed every hour so a changed or removed entry is found. The page is
 read-only apart from marking reviews.
 

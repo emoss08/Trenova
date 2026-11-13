@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentwork"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
@@ -44,8 +44,8 @@ func (s *Service) handOffCandidates(
 	}
 
 	candidates := make([]*agentdefinition.Definition, 0, len(listed.Items))
-	for _, definition := range listed.Items {
-		if definition != nil && definition.TriggerMode != agentdefinition.TriggerChat {
+	for _, definition := range withoutShadow(listed.Items) {
+		if definition.TriggerMode != agentdefinition.TriggerChat {
 			candidates = append(candidates, definition)
 		}
 	}
@@ -62,13 +62,6 @@ func (s *Service) handOffToAgent(
 	item *watchtower.Item,
 	actor *permissionports.RequestActor,
 ) (*watchtowerports.HandOffWatchtowerItemResult, error) {
-	if item.IsResolved() {
-		return nil, errortypes.NewBusinessError("This exception is resolved; reopen it first")
-	}
-	if err := s.assertNoAgentWorking(ctx, req.TenantInfo, item); err != nil {
-		return nil, err
-	}
-
 	run, err := s.runs.StartForDefinition(ctx, &agentruntimeports.StartAgentRunForDefinitionRequest{
 		DefinitionID: req.AgentDefinitionID,
 		SubjectType:  item.SubjectType,
@@ -97,13 +90,53 @@ func (s *Service) handOffToAgent(
 	return &watchtowerports.HandOffWatchtowerItemResult{Item: saved, Run: run}, nil
 }
 
-func (s *Service) assertNoAgentWorking(
+// refusePaused refuses to put an agent on an item while the organization's
+// agents are paused: every run would be recorded as what the agent would
+// have done, and the person would wait on a plan that can never be
+// approved. A play is not an agent's work and is sent all the same.
+func (s *Service) refusePaused(ctx context.Context, tenant pagination.TenantInfo) error {
+	if s.shadow == nil {
+		return nil
+	}
+	paused, err := s.shadow.Organization(ctx, tenant)
+	if err != nil {
+		return err
+	}
+	if paused {
+		return errortypes.NewBusinessError(
+			"Agents are paused for the organization, so none can be put on this. Lift the pause in AI control, or do it yourself.",
+		)
+	}
+
+	return nil
+}
+
+// withoutShadow leaves out the agents switched to shadow. A hand-off asks
+// for work a person can approve, and a shadow agent only records what it
+// would have done, so it is neither picked for an item nor offered for one.
+func withoutShadow(definitions []*agentdefinition.Definition) []*agentdefinition.Definition {
+	live := make([]*agentdefinition.Definition, 0, len(definitions))
+	for _, definition := range definitions {
+		if definition != nil && !definition.ShadowMode {
+			live = append(live, definition)
+		}
+	}
+
+	return live
+}
+
+// agentStanding reads where the item's agent stands. It refuses an item an
+// agent is working now, and answers the agent that already looked at the
+// item as it still reads: that agent is not run on it again, named or
+// picked, until the item says something new. Nil when no agent answered or
+// the item changed since.
+func (s *Service) agentStanding(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 	item *watchtower.Item,
-) error {
+) (answered pulid.ID, err error) {
 	if !item.HasAgent() {
-		return nil
+		return pulid.Nil, nil
 	}
 
 	run, err := s.runRepo.GetByID(ctx, agentruntimeports.GetAgentRunByIDRequest{
@@ -112,15 +145,56 @@ func (s *Service) assertNoAgentWorking(
 	})
 	if err != nil {
 		if dberror.IsNotFoundError(err) || errortypes.IsNotFoundError(err) {
-			return nil
+			return pulid.Nil, nil
 		}
-		return err
+		return pulid.Nil, err
 	}
-	if item.AgentWorkFrom(run).Active() {
-		return errortypes.NewBusinessError("An agent is already working on this")
+	if agentwork.From(item, run).Active() {
+		return pulid.Nil, errortypes.NewBusinessError("An agent is already working on this")
+	}
+	if agentwork.AnsweredUnchanged(item, run) {
+		return item.AgentDefinitionID, nil
 	}
 
-	return nil
+	return pulid.Nil, nil
+}
+
+// refuseAnswered says why the agent that already looked is not run again.
+func (s *Service) refuseAnswered(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	definitionID pulid.ID,
+) error {
+	name := "That agent"
+	definition, err := s.definitions.GetByID(ctx, agentdefinitionports.GetAgentDefinitionByIDRequest{
+		ID:         definitionID,
+		TenantInfo: tenant,
+	})
+	if err == nil && definition != nil && definition.Name != "" {
+		name = definition.Name
+	}
+
+	return errortypes.NewBusinessError(
+		"{0} already looked at this, and nothing about it has changed since. Do it yourself, or hand it to a different agent.",
+		name,
+	)
+}
+
+func without(
+	definitions []*agentdefinition.Definition,
+	id pulid.ID,
+) []*agentdefinition.Definition {
+	if id.IsNil() {
+		return definitions
+	}
+	kept := make([]*agentdefinition.Definition, 0, len(definitions))
+	for _, definition := range definitions {
+		if definition != nil && definition.ID != id {
+			kept = append(kept, definition)
+		}
+	}
+
+	return kept
 }
 
 type handOffRecord struct {
@@ -157,42 +231,4 @@ func (s *Exceptions) recordHandOff(
 			}, nil
 		},
 	})
-}
-
-// handOffTemplates names the agent that works a kind of item no event
-// announces. A missed stop, a late projection, a quiet truck and a tender run
-// dry are found by a sweep, so no agent subscribes to them, and handing one
-// over used to answer "choose who works it" every time. They are a
-// dispatcher's exceptions, and the dispatch agent is the one that covers a
-// move, so a hand-off with no agent named goes to it. An exception an agent
-// raised is not listed: it already asked for a person.
-//
-//nolint:exhaustive // only the kinds no event announces and one agent plainly works
-var handOffTemplates = map[watchtower.SourceKind]agenttemplate.Template{
-	watchtower.SourceMissedPickup:    agenttemplate.TemplateDispatchAssignment,
-	watchtower.SourceMissedDelivery:  agenttemplate.TemplateDispatchAssignment,
-	watchtower.SourceEtaAtRisk:       agenttemplate.TemplateDispatchAssignment,
-	watchtower.SourceNoCheckCall:     agenttemplate.TemplateDispatchAssignment,
-	watchtower.SourceTenderExhausted: agenttemplate.TemplateDispatchAssignment,
-}
-
-// workerOf is the organization's agent that works this kind of item, among
-// the ones a hand-off may go to: the first, by name, built from the template
-// the kind is worked by. Nil when the kind has none or the organization runs
-// no such agent, and the person chooses.
-func workerOf(
-	kind watchtower.SourceKind,
-	candidates []*agentdefinition.Definition,
-) *agentdefinition.Definition {
-	template, ok := handOffTemplates[kind]
-	if !ok {
-		return nil
-	}
-	for _, candidate := range candidates {
-		if candidate != nil && candidate.Template == template {
-			return candidate
-		}
-	}
-
-	return nil
 }

@@ -4,6 +4,8 @@ import { useId, type ReactNode } from "react";
 type EmptySheetProps = {
   title: string;
   description: string;
+  /** What the words need beside them to be believed: progress so far, when it was last checked. */
+  children?: ReactNode;
   /** The way forward, usually one button or link. */
   action?: ReactNode;
   /** A faint drawing of what the page will hold: the blank form, the unfilled list. */
@@ -22,6 +24,7 @@ type EmptySheetProps = {
 export function EmptySheet({
   title,
   description,
+  children,
   action,
   sketch,
   className,
@@ -53,6 +56,7 @@ export function EmptySheet({
         <p className="text-muted-foreground text-xs leading-relaxed whitespace-pre-line">
           {description}
         </p>
+        {children}
         {action ? <div className="mt-2">{action}</div> : null}
       </div>
     </section>

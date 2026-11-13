@@ -6,14 +6,16 @@ import (
 	"strings"
 
 	"github.com/emoss08/keel"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
+
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtowerpanel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
-	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
 
 const (
@@ -73,17 +75,26 @@ type Item struct {
 
 	// AboutKind and AboutID name the business record the item is about, which
 	// the Desk groups by. Empty when the item is about nothing beyond itself.
-	AboutKind recordkind.Kind `json:"aboutKind" keel:"about_kind,nullzero"`
-	AboutID   pulid.ID        `json:"aboutId"   keel:"about_id,nullzero"`
-	Facts     []Fact          `json:"facts"       keel:"facts,jsonb"`
-	Impact    []string        `json:"impact"      keel:"impact,jsonb"`
-	Trail     []TrailEvent    `json:"trail"       keel:"trail,jsonb"`
-	Panel     *Panel          `json:"panel"       keel:"panel,jsonb"`
+	AboutKind recordkind.Kind        `json:"aboutKind" keel:"about_kind,nullzero"`
+	AboutID   pulid.ID               `json:"aboutId"   keel:"about_id,nullzero"`
+	Facts     []Fact                 `json:"facts"       keel:"facts,jsonb"`
+	Impact    []string               `json:"impact"      keel:"impact,jsonb"`
+	Trail     []TrailEvent           `json:"trail"       keel:"trail,jsonb"`
+	Panel     *watchtowerpanel.Panel `json:"panel"       keel:"panel,jsonb"`
 
 	AgentDefinitionID pulid.ID `json:"agentDefinitionId" keel:"agent_definition_id,nullzero"`
 	AgentRunID        pulid.ID `json:"agentRunId"        keel:"agent_run_id,nullzero"`
 	AgentHandedAt     *int64   `json:"agentHandedAt"     keel:"agent_handed_at"`
 	AgentHandedByID   pulid.ID `json:"agentHandedById"   keel:"agent_handed_by_id,nullzero"`
+
+	// LastRequest is the last play a person sent for the item; nil when
+	// none has been.
+	LastRequest *Request `json:"lastRequest" keel:"last_request,jsonb"`
+
+	// DescribedAt is when what the item says last changed. An agent handed
+	// the item reads that description, so it is what "the record changed
+	// since the agent looked" is measured against.
+	DescribedAt int64 `json:"describedAt" keel:"described_at"`
 
 	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
@@ -126,7 +137,7 @@ func (i *Item) Normalize() {
 	i.Facts = NormalizeFacts(i.Facts)
 	i.Impact = NormalizeImpact(i.Impact)
 	i.Trail = NormalizeTrail(i.Trail)
-	i.Panel = NormalizePanel(i.Panel)
+	i.Panel = watchtowerpanel.Normalize(i.Panel)
 }
 
 func (i *Item) ApplyDeadline(deadline *Deadline) {
@@ -153,7 +164,7 @@ func (i *Item) SameDescription(other *Item) bool {
 		slices.Equal(i.Facts, other.Facts) &&
 		slices.Equal(i.Impact, other.Impact) &&
 		slices.Equal(i.Trail, other.Trail) &&
-		SamePanel(i.Panel, other.Panel)
+		watchtowerpanel.Same(i.Panel, other.Panel)
 }
 
 func (i *Item) SetAbout(id pulid.ID) {

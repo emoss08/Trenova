@@ -26,6 +26,12 @@ type Driver struct {
 	// OnDash says the driver has a portal login, so a Dash message reaches
 	// them.
 	OnDash bool
+	// Email reaches a driver with no login. It goes into a request in code
+	// and is never shown to a model.
+	Email string
+	// HasPhone says a number is on file, so a text reaches a driver with no
+	// login. The number itself stays with the message tool.
+	HasPhone bool
 }
 
 type Carrier struct {
@@ -43,9 +49,7 @@ type ListFactsRequest struct {
 }
 
 // FactsReader reads, for the shipments still delivered without a proof of
-// delivery on file, who can be asked for one, and the tenant's billing
-// sender for an email request.
+// delivery on file, who can be asked for one.
 type FactsReader interface {
 	ListPODChaseFacts(ctx context.Context, req *ListFactsRequest) ([]*Facts, error)
-	BillingSenderProfile(ctx context.Context, tenantInfo pagination.TenantInfo) (pulid.ID, error)
 }

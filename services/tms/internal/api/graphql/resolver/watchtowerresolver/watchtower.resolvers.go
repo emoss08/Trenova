@@ -16,10 +16,12 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentwork"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/pkg/idempotency"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/textcase"
@@ -461,15 +463,15 @@ func (r *QueryResolver) WatchtowerHandOffAgents(ctx context.Context) ([]*agentde
 	)
 }
 
-func (r *WatchtowerAgentWorkResolver) Agent(ctx context.Context, obj *watchtower.AgentWork) (*agentdefinition.Definition, error) {
+func (r *WatchtowerAgentWorkResolver) Agent(ctx context.Context, obj *agentwork.Work) (*agentdefinition.Definition, error) {
 	return optionalAgent(ctx, obj.AgentID)
 }
 
-func (r *WatchtowerAgentWorkResolver) HandedByID(ctx context.Context, obj *watchtower.AgentWork) (*string, error) {
+func (r *WatchtowerAgentWorkResolver) HandedByID(ctx context.Context, obj *agentwork.Work) (*string, error) {
 	return gqlid.IDPtr(obj.HandedByID), nil
 }
 
-func (r *WatchtowerAgentWorkResolver) HandedBy(ctx context.Context, obj *watchtower.AgentWork) (*tenant.User, error) {
+func (r *WatchtowerAgentWorkResolver) HandedBy(ctx context.Context, obj *agentwork.Work) (*tenant.User, error) {
 	return optionalUser(ctx, obj.HandedByID)
 }
 
@@ -506,7 +508,7 @@ func (r *WatchtowerItemResolver) SuggestedAgent(ctx context.Context, obj *watcht
 	return suggestedAgent(ctx, obj)
 }
 
-func (r *WatchtowerItemResolver) AgentWork(ctx context.Context, obj *watchtower.Item) (*watchtower.AgentWork, error) {
+func (r *WatchtowerItemResolver) AgentWork(ctx context.Context, obj *watchtower.Item) (*agentwork.Work, error) {
 	if !obj.HasAgent() {
 		return nil, nil
 	}
@@ -515,7 +517,7 @@ func (r *WatchtowerItemResolver) AgentWork(ctx context.Context, obj *watchtower.
 		return nil, err
 	}
 
-	return obj.AgentWorkFrom(run), nil
+	return agentwork.From(obj, run), nil
 }
 
 func (r *WatchtowerRecordResolver) Kind(ctx context.Context, obj *watchtower.RecordRef) (string, error) {
@@ -528,4 +530,61 @@ func (r *WatchtowerRecordResolver) Noun(ctx context.Context, obj *watchtower.Rec
 	}
 
 	return textcase.CapitalizeFirst(obj.Kind.Noun()), nil
+}
+
+func (r *MutationResolver) RewordWatchtowerPlay(ctx context.Context, itemID string, input gqlmodel.RewordWatchtowerPlayInput) (string, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceWatchtower, permission.OpUpdate)
+	if err != nil {
+		return "", err
+	}
+	id, err := pulid.MustParse(itemID)
+	if err != nil {
+		return "", err
+	}
+
+	return r.WatchtowerPlays.Reword(ctx, &watchtowerports.RewordPlayRequest{
+		PlayTarget: watchtowerports.PlayTarget{
+			TenantInfo: resolvercore.TenantInfo(authCtx),
+			ItemID:     id,
+		},
+		Message:  typeutils.ValueOrZero(input.Message),
+		Guidance: input.Guidance,
+	}, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *MutationResolver) SendWatchtowerPlay(ctx context.Context, itemID string, input gqlmodel.SendWatchtowerPlayInput) (*watchtower.Item, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceWatchtower, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+	id, err := pulid.MustParse(itemID)
+	if err != nil {
+		return nil, err
+	}
+	idempotencyKey, _ := idempotency.KeyFrom(ctx)
+
+	return r.WatchtowerPlays.Send(ctx, &watchtowerports.SendPlayRequest{
+		PlayTarget: watchtowerports.PlayTarget{
+			TenantInfo: resolvercore.TenantInfo(authCtx),
+			ItemID:     id,
+		},
+		Message:        typeutils.ValueOrZero(input.Message),
+		IdempotencyKey: idempotencyKey,
+	}, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *QueryResolver) WatchtowerPlay(ctx context.Context, itemID string) (*watchtowerports.PlayPreview, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceWatchtower, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+	id, err := pulid.MustParse(itemID)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.WatchtowerPlays.Preview(ctx, &watchtowerports.PlayTarget{
+		TenantInfo: resolvercore.TenantInfo(authCtx),
+		ItemID:     id,
+	}, actorutil.FromAuthContext(authCtx))
 }

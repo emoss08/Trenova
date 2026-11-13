@@ -31,6 +31,8 @@ export type DeskSettings = {
   artNotify: "on" | "off";
   celebrate: "confetti" | "subtle" | "off";
   ring: "on" | "off";
+  /** Whose cases Needs you lists, for a person who may see everyone's. */
+  cases: "mine" | "everyone";
 };
 
 export const DESK_SETTINGS_DEFAULTS: DeskSettings = {
@@ -56,6 +58,7 @@ export const DESK_SETTINGS_DEFAULTS: DeskSettings = {
   artNotify: "on",
   celebrate: "confetti",
   ring: "on",
+  cases: "mine",
 };
 
 /** How many past searches the palette offers back. */

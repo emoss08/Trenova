@@ -277,7 +277,18 @@ with a bounded concurrency over every tenant that has a dispatch controls row. E
 aggregates its history in one statement, fits, backtests and replaces its rows in one
 transaction. Turning `anticipateFreight` on starts `FitDemandForecastWorkflow` for that tenant
 (one workflow ID per tenant, an existing run reused); a failed start only logs a warning and
-the nightly run fits it. Nothing is fitted on a request path. `anticipateFreight` lives on
+the nightly run fits it.
+
+**A forecast that is not Ready refits when it is read.** The nightly fit can run while history
+is still arriving (an import, a migration from another system, a seed), and a count taken then
+would stand for a day. So `demandforecastservice.Standing`, which every read of the forecast's
+quality goes through, starts the same per-tenant workflow when the forecast is not Ready and
+was fitted more than an hour ago (`Quality.Stale`, `RefitAfterSeconds`) or never, and answers
+`refitting: true` with the figures it has. The client asks again every few seconds for at
+most two minutes (`createRefitPoll`), so the page turns over when the fit lands and a fit that
+keeps failing is not polled for. Only tenants someone is looking at pay for it, at most one
+fit an hour each; a Ready forecast is left to the nightly run. Nothing is fitted on a request
+path: the read only starts a workflow. `anticipateFreight` lives on
 dispatch controls and is off by default. The freight outlook (`dispatchFreightOutlook`,
 `dispatchFreightArea`) and Nova's `dispatch_forecast_demand` read
 `freightoutlookports.Service`; the quality card reads `dispatchForecastQuality`.

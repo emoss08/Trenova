@@ -1,0 +1,7 @@
+-- A request a playbook wrote, reworded by Nova the way the person sending it
+-- asked, is counted under its own feature.
+ALTER TABLE "ai_usage_records"
+    DROP CONSTRAINT IF EXISTS "ck_ai_usage_records_feature";
+
+ALTER TABLE "ai_usage_records"
+    ADD CONSTRAINT "ck_ai_usage_records_feature" CHECK ("feature" IN ('AgentTurn', 'AgentWakeUp', 'AgentEvaluation', 'TableQuery', 'FormulaGenerate', 'FormulaExplain', 'ShipmentImportChat', 'DocumentIntelligenceRoute', 'DocumentIntelligenceExtract', 'AccountingMapping', 'FactoringRemittanceExtract', 'AgentReflection', 'AgentMemoryConsolidation', 'AgentDrafting', 'AgentProfile', 'AgentRecommendation', 'ConversationChapters', 'BillingQueueReview', 'BillingQueueBrief', 'BillingQueueSearch', 'PaperworkReading', 'InboundMail', 'PaletteAnswer', 'InsightNarration', 'CaseReading', 'RequestWording'));

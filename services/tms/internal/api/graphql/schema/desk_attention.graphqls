@@ -60,6 +60,8 @@ type DeskAttention {
   hasMore: Boolean!
   "Where the reader's unseen line sits."
   seenAt: Timestamp!
+  "True when the reader may see everyone's cases, so the list can offer only their own."
+  seesEveryone: Boolean!
 }
 
 input DeskAttentionInput {
@@ -75,6 +77,8 @@ input DeskAttentionInput {
   recordId: ID
   "Only rows with an item an agent's run is working on right now. A run that finished, failed or waits on a person is not working."
   working: Boolean = false
+  "Only the reader's own cases and the ones nobody owns, for a reader who may see everyone's."
+  mine: Boolean = false
 }
 
 "How a write an agent made ended."

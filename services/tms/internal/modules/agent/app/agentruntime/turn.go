@@ -603,11 +603,7 @@ func (t *Turn) localNow(fx TurnEffects) time.Time {
 // ages and its taint marks agree with it, and a replay with a fixed clock sends
 // the same request every run.
 func turnNow(rc *agentturn.RuntimeContext) int64 {
-	if rc.Now > 0 {
-		return rc.Now
-	}
-
-	return timeutils.NowUnix()
+	return rc.Clock()
 }
 
 func clockLine(now int64, timezone string) string {

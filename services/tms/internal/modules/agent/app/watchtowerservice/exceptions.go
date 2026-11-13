@@ -6,9 +6,12 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/caseownerports"
-	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/textcase"
 
+	"go.uber.org/fx"
+	"go.uber.org/zap"
+
+	"github.com/emoss08/trenova/internal/modules/agent/domain/desklens"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -23,8 +26,6 @@ import (
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"go.uber.org/fx"
-	"go.uber.org/zap"
 )
 
 const (
@@ -80,8 +81,6 @@ func AsExceptionService(e *Exceptions) watchtowerports.ExceptionService { return
 
 func AsRecordSettler(e *Exceptions) watchtowerports.RecordSettler { return e }
 
-func AsRunSettler(e *Exceptions) watchtowerports.RunSettler { return e }
-
 const maxSettledItems = 25
 
 // SettleRecord resolves every condition open about a record as fixed, by the
@@ -114,7 +113,7 @@ func (s *Exceptions) SettleRecord(
 
 	settled := 0
 	for _, item := range open {
-		if item.SourceKind.DeskLens() == watchtower.DeskLensDecisions {
+		if desklens.Of(item.SourceKind) == desklens.Decisions {
 			continue
 		}
 		if _, err = s.ResolveException(ctx, &watchtowerports.ResolveExceptionRequest{
@@ -127,55 +126,6 @@ func (s *Exceptions) SettleRecord(
 			Note: req.Note,
 		}, actor); err != nil {
 			s.l.Warn("a finished plan left a condition open",
-				zap.String("item", item.ID.String()), zap.Error(err))
-
-			continue
-		}
-		settled++
-	}
-
-	return settled
-}
-
-func (s *Exceptions) SettleRun(
-	ctx context.Context,
-	req *watchtowerports.SettleRunRequest,
-	actor *permissionports.RequestActor,
-) int {
-	if req == nil || req.RunID.IsNil() || actor == nil {
-		return 0
-	}
-
-	scoped := dbscope.WithTenant(ctx, req.TenantInfo.DBTenant())
-	handed, err := s.repo.List(scoped, watchtowerports.ListWatchtowerItemsQuery{
-		TenantInfo:     req.TenantInfo,
-		UnresolvedOnly: true,
-		AgentRunID:     req.RunID,
-		Limit:          maxSettledItems,
-	})
-	if err != nil {
-		s.l.Warn("could not read what a finished run was working",
-			zap.String("run", req.RunID.String()), zap.Error(err))
-
-		return 0
-	}
-
-	note := stringutils.Ellipsize(strings.TrimSpace(req.Note), watchtower.MaxNoteLength)
-	settled := 0
-	for _, item := range handed {
-		if item.SourceKind.DeskLens() == watchtower.DeskLensDecisions {
-			continue
-		}
-		if _, err = s.ResolveException(ctx, &watchtowerports.ResolveExceptionRequest{
-			ExceptionTarget: watchtowerports.ExceptionTarget{
-				TenantInfo:      req.TenantInfo,
-				ItemID:          item.ID,
-				ExpectedVersion: item.Version,
-			},
-			Code: watchtower.ResolutionNoActionNeeded,
-			Note: note,
-		}, actor); err != nil {
-			s.l.Warn("a run that proposed nothing left its item in progress",
 				zap.String("item", item.ID.String()), zap.Error(err))
 
 			continue

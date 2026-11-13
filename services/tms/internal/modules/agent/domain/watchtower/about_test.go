@@ -6,26 +6,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestDeskLens_FilesDecisionsMessagesAndTheRest(t *testing.T) {
-	assert.Equal(t, DeskLensDecisions, SourceAgentProposal.DeskLens())
-	assert.Equal(t, DeskLensDecisions, SourceAgentPlan.DeskLens())
-	assert.Equal(t, DeskLensTriage, SourceInboundMessage.DeskLens())
-	assert.Equal(t, DeskLensWatchtower, SourceEtaAtRisk.DeskLens())
-}
-
-func TestDeskLens_KindsCoverEveryKindExactlyOnce(t *testing.T) {
-	assert.Nil(t, DeskLensEverything.Kinds())
-	seen := map[SourceKind]int{}
-	for _, lens := range []DeskLens{DeskLensWatchtower, DeskLensTriage, DeskLensDecisions} {
-		for _, kind := range lens.Kinds() {
-			seen[kind]++
-		}
-	}
-	for _, kind := range AllSourceKinds() {
-		assert.Equal(t, 1, seen[kind], "kind %s", kind)
-	}
-}
-
 func TestItem_SetAboutTakesTheKindFromTheID(t *testing.T) {
 	item := &Item{}
 	item.SetAbout("shp_01JABCDEFGHJKMNPQRSTVWXYZ0")

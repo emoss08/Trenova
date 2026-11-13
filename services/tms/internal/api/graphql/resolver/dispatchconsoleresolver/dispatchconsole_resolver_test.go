@@ -523,14 +523,15 @@ type forecastService struct {
 
 	qualityTenant pagination.TenantInfo
 	quality       *demandforecast.Quality
+	refitting     bool
 }
 
-func (s *forecastService) Quality(
+func (s *forecastService) Standing(
 	_ context.Context,
 	tenantInfo pagination.TenantInfo,
-) (*demandforecast.Quality, error) {
+) (*demandforecast.Standing, error) {
 	s.qualityTenant = tenantInfo
-	return s.quality, nil
+	return &demandforecast.Standing{Quality: s.quality, Refitting: s.refitting}, nil
 }
 
 type outlookService struct {
@@ -622,7 +623,8 @@ func TestDispatchForecastQuality_ReadsTheCallersTenant(t *testing.T) {
 
 	ctx := dispatchAuthContext(t)
 	service := &forecastService{
-		quality: &demandforecast.Quality{Status: demandforecast.StatusNoSkill, Skill: 0.02},
+		quality:   &demandforecast.Quality{Status: demandforecast.StatusNoSkill, Skill: 0.02},
+		refitting: true,
 	}
 
 	quality, err := (&QueryResolver{&Deps{
@@ -638,6 +640,7 @@ func TestDispatchForecastQuality_ReadsTheCallersTenant(t *testing.T) {
 	assert.Equal(t, gqlmodel.DispatchForecastStatusNoSkill, quality.Status)
 	assert.InDelta(t, 0.02, quality.Skill, 0.0001)
 	assert.Nil(t, quality.FittedAt)
+	assert.True(t, quality.Refitting)
 }
 
 func TestDispatchForecastResolvers_DeniedReadNeverReachesTheService(t *testing.T) {

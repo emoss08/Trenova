@@ -129,6 +129,7 @@ enum AITask {
   PaperworkReading
   PaletteAnswer
   CaseReading
+  RequestWording
   EvaluationJudge
   Embedding
   AssistantChat

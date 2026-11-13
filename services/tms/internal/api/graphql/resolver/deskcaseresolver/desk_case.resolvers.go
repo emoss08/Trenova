@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/recordcase"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtowerplay"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/deskattentionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/recordcaseports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -241,4 +242,13 @@ func (r *MutationResolver) BringBackDeskCase(ctx context.Context, kind string, i
 		Kind:       recordkind.Kind(kind),
 		ID:         recordID,
 	}, actorutil.FromAuthContext(authCtx))
+}
+
+func (r *DeskCaseHandOffResolver) Play(ctx context.Context, obj *recordcase.HandOff) (*watchtowerplay.Kind, error) {
+	if obj.Play == watchtowerplay.None {
+		return nil, nil
+	}
+	play := obj.Play
+
+	return &play, nil
 }

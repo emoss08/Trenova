@@ -34,10 +34,6 @@ type AgentDefinitionVersionRepository interface {
 		ctx context.Context,
 		req *ListAgentDefinitionVersionsRequest,
 	) ([]*agentversion.DefinitionVersion, error)
-	Get(
-		ctx context.Context,
-		req *GetAgentDefinitionVersionRequest,
-	) (*agentversion.DefinitionVersion, error)
 	// LatestAt returns the newest version at or before the one asked for, with
 	// its author, or nil when there is none.
 	LatestAt(

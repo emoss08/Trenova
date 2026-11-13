@@ -2024,6 +2024,7 @@ var enumKind = [...]schema.EnumValue{
 	{Value: `agent.customer_update.email`, Label: `Agent Customer Update Email`, Doc: `KindAgentCustomerUpdateEmail wraps a status update an agent composed for a customer, such as a late delivery or a revised arrival, in the organization's letterhead.`},
 	{Value: `agent.proposal_reminder.email`, Label: `Agent Proposal Reminder Email`, Doc: `KindAgentProposalReminderEmail tells the people who can decide an agent's proposals that some have been waiting for hours.`},
 	{Value: `agent.inbound_reply.email`, Label: `Agent Inbound Reply Email`, Doc: `KindAgentInboundReplyEmail wraps an agent-composed answer to a message that arrived on a monitored address, sent back to its sender in the same thread.`},
+	{Value: `agent.status_request.email`, Label: `Agent Status Request Email`, Doc: `KindAgentStatusRequestEmail asks whoever has a load, a carrier's dispatcher or a driver reached by email, where it is and when it will arrive, in the organization's letterhead.`},
 	{Value: `notification.dash.load_assigned`, Label: `Notification Load Assigned`, Doc: `KindNotificationLoadAssigned tells a driver a load is on their schedule.`},
 	{Value: `notification.dash.load_unassigned`, Label: `Notification Load Unassigned`, Doc: `KindNotificationLoadUnassigned tells a driver a load was removed.`},
 	{Value: `notification.dash.pto_reviewed`, Label: `Notification PTO Reviewed`, Doc: `KindNotificationPTOReviewed answers a time-off request.`},

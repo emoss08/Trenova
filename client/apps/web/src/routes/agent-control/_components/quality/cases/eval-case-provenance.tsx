@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { SectionPanel, SectionPanelQuiet } from "@/components/section-panel";
 import type { AgentEvalCaseDetail } from "@/lib/graphql/agent-eval-cases";
 import { Badge } from "@trenova/shared/components/ui/badge";
@@ -41,6 +42,13 @@ export function EvalCaseProvenance({ evalCase }: { evalCase: AgentEvalCaseDetail
           <DescriptionItem label={t("Weight")} numeric>
             {evalCase.weight}
           </DescriptionItem>
+          <DescriptionItem label={t("Asked")}>
+            {evalCase.askedAt ? (
+              <HoverCardTimestamp timestamp={evalCase.askedAt} />
+            ) : (
+              <DescriptionEmpty />
+            )}
+          </DescriptionItem>
           <DescriptionItem label={t("Conversation")}>
             <Identifier value={evalCase.sourceThreadId} />
           </DescriptionItem>
@@ -72,7 +80,7 @@ export function EvalCaseProvenance({ evalCase }: { evalCase: AgentEvalCaseDetail
         title={t("Tool results it was given")}
         count={fixtures.length}
         help={t(
-          "What each tool returned when the case was captured. Fields the registry marks restricted or confidential were replaced before the case was saved.",
+          "What each tool returned when the case was captured. A replay answers the same call with this result, as of the moment the question was asked. Fields the registry marks restricted or confidential were replaced before the case was saved, and a result that lost one is read from your records again.",
         )}
       >
         {fixtures.length === 0 ? (

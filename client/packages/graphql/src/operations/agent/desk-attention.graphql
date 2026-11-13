@@ -45,6 +45,7 @@ query DeskAttention($input: DeskAttentionInput!) {
     }
     hasMore
     seenAt
+    seesEveryone
   }
 }
 

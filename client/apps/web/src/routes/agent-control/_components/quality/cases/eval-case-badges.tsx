@@ -12,7 +12,7 @@ const CASE_STATUS: Record<AgentEvalCaseStatus, BadgeAttrProps> = {
   Candidate: {
     phase: "awaiting",
     text: "Candidate",
-    description: "Captured and waiting for an administrator to activate it",
+    description: "Captured and waiting for someone to activate it",
   },
   Active: { phase: "active", text: "Active", description: "Replayed in every suite" },
   Quarantined: {

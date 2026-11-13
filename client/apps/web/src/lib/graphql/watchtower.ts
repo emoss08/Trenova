@@ -3,6 +3,8 @@ import {
   HandOffWatchtowerItemDocument,
   MarkWatchtowerItemSeenDocument,
   ResolveWatchtowerItemDocument,
+  RewordWatchtowerPlayDocument,
+  SendWatchtowerPlayDocument,
   SnoozeWatchtowerItemDocument,
   WatchtowerAgentFieldsFragmentDoc,
   WatchtowerClearedDocument,
@@ -12,6 +14,8 @@ import {
   WatchtowerHandOffAgentsDocument,
   WatchtowerItemDetailDocument,
   WatchtowerItemFieldsFragmentDoc,
+  WatchtowerPlayDocument,
+  type WatchtowerPlayQuery,
   type WatchtowerAgentFieldsFragment,
   type WatchtowerAgentStatus,
   type WatchtowerAgentStep,
@@ -280,4 +284,60 @@ export async function resolveWatchtowerItem(
   });
 
   return getFragmentData(WatchtowerItemFieldsFragmentDoc, data.resolveWatchtowerItem);
+}
+
+/**
+ * An item's play as the reader would send it: who it goes to, how, and the
+ * words. The server plans it from the record; only the words are the
+ * reader's to change.
+ */
+export type WatchtowerPlay = WatchtowerPlayQuery["watchtowerPlay"];
+
+/**
+ * Plans the item's play. It rejects with the reason, in words for the
+ * reader, when the play cannot be sent: nobody on the record can be reached,
+ * it is already done, or it is not theirs to send.
+ */
+export async function fetchWatchtowerPlay(
+  itemId: string,
+  options?: RequestOptions,
+): Promise<WatchtowerPlay> {
+  const data = await requestGraphQL({
+    document: WatchtowerPlayDocument,
+    operationName: "WatchtowerPlay",
+    variables: { itemId },
+    signal: options?.signal,
+  });
+
+  return data.watchtowerPlay;
+}
+
+/** Has Nova rewrite the words in the box the way the reader asks. Nothing is sent. */
+export async function rewordWatchtowerPlay(
+  itemId: string,
+  input: { message: string; guidance: string },
+): Promise<string> {
+  const data = await requestGraphQL({
+    document: RewordWatchtowerPlayDocument,
+    operationName: "RewordWatchtowerPlay",
+    variables: { itemId, input },
+  });
+
+  return data.rewordWatchtowerPlay;
+}
+
+/** Sends the item's play under the reader's name, with the words they approved. */
+export async function sendWatchtowerPlay(
+  itemId: string,
+  message: string,
+  options?: WriteOptions,
+): Promise<WatchtowerItem> {
+  const data = await requestGraphQL({
+    document: SendWatchtowerPlayDocument,
+    operationName: "SendWatchtowerPlay",
+    variables: { itemId, input: { message: message === "" ? null : message } },
+    idempotencyKey: options?.idempotencyKey,
+  });
+
+  return getFragmentData(WatchtowerItemFieldsFragmentDoc, data.sendWatchtowerPlay);
 }

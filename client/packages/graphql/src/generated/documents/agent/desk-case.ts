@@ -3,7 +3,7 @@ import type { TypedDocumentString, AcceptDeskCaseRiskMutation, AcceptDeskCaseRis
 
 export const DeskCaseExhibitFieldsFragmentDoc = {"__meta__":{"fragmentName":"DeskCaseExhibitFields"}} as unknown as TypedDocumentString<DeskCaseExhibitFieldsFragment, unknown>;
 export const DeskCaseDecisionFieldsFragmentDoc = {"__meta__":{"fragmentName":"DeskCaseDecisionFields"}} as unknown as TypedDocumentString<DeskCaseDecisionFieldsFragment, unknown>;
-export const DeskCaseDocument = {"__meta__":{"kind":"query","name":"DeskCase","hash":"sha256:0037db4f4e8907673f1370d874eba884003bb9f4da2a739e7f277ad2632f70f9"}} as unknown as TypedDocumentString<DeskCaseQuery, DeskCaseQueryVariables>;
+export const DeskCaseDocument = {"__meta__":{"kind":"query","name":"DeskCase","hash":"sha256:98e814ab53adff8ab15853d380eac43fd972f0e17cb59d33b0db83d67d2b41fe"}} as unknown as TypedDocumentString<DeskCaseQuery, DeskCaseQueryVariables>;
 export const ChooseDeskCaseOptionDocument = {"__meta__":{"kind":"mutation","name":"ChooseDeskCaseOption","hash":"sha256:6d9cadb45b42e5b29810103f02609d9bd49ccdff42186d142029608193e539fa"}} as unknown as TypedDocumentString<ChooseDeskCaseOptionMutation, ChooseDeskCaseOptionMutationVariables>;
 export const AcceptDeskCaseRiskDocument = {"__meta__":{"kind":"mutation","name":"AcceptDeskCaseRisk","hash":"sha256:80358f039f07086f919763223544b84900184e035b79ad608ad3818d0f2f44a7"}} as unknown as TypedDocumentString<AcceptDeskCaseRiskMutation, AcceptDeskCaseRiskMutationVariables>;
 export const PutAwayDeskCaseDocument = {"__meta__":{"kind":"mutation","name":"PutAwayDeskCase","hash":"sha256:7f0856384ee0adccda45a6ea5e7a781036e2bffc16776c8dbff37a5926f68bce"}} as unknown as TypedDocumentString<PutAwayDeskCaseMutation, PutAwayDeskCaseMutationVariables>;

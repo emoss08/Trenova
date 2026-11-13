@@ -13,7 +13,6 @@
   "Keep rate": "保留費率",
   "No row in this file can be published as it stands.": "此檔案中沒有任何一列可以就現況發布。",
   "Not sure how to lay out the file? Start from the template.": "不確定檔案該如何編排嗎？請從範本開始。",
-  "OK": "確定",
   "Only for jurisdictions that publish one. Empty is stored as zero.": "僅適用於有公布的管轄區。留空會以零儲存。",
   "Period & product": "期間與產品",
   "Publish one jurisdiction's rate for a quarter and fuel type. Rates are global, so this is what every organization's return will owe.": "為某一管轄區發布特定季別與燃油類型的稅率。稅率為全域共用，因此這即是每個組織申報時應繳的依據。",

@@ -28,6 +28,7 @@ import {
   type QualityControlFormValues,
 } from "./quality-model";
 import {
+  AUTO_CASES_PRESETS,
   CASES_PER_AGENT_PRESETS,
   JUDGE_SHARE_PRESETS,
   MIN_CASES_PRESETS,
@@ -47,7 +48,7 @@ type SweepSettingsEditorProps = {
 
 type NumberName = Exclude<
   keyof QualityControlFormValues,
-  "enabled" | "judgeEnabled" | "runHour" | "timezone" | "version"
+  "enabled" | "judgeEnabled" | "autoActivate" | "runHour" | "timezone" | "version"
 >;
 
 /**
@@ -102,6 +103,8 @@ export function SweepSettingsEditor({ open, control, onClose }: SweepSettingsEdi
     timezone: { label: t("Timezone") },
     maxCasesPerAgent: { label: t("Cases per agent") },
     forceRerunDays: { label: t("Rerun an unchanged agent after") },
+    autoActivate: { label: t("Keep the golden set automatically") },
+    autoCasesPerAgent: { label: t("Cases kept per agent") },
     judgeEnabled: { label: t("Judge model") },
     judgeSamplePercent: { label: t("Share of answers"), format: (value) => `${String(value)}%` },
     regressionThresholdPoints: {
@@ -165,6 +168,37 @@ export function SweepSettingsEditor({ open, control, onClose }: SweepSettingsEdi
         </>
       ) : (
         <p className="es-note">{t("A suite can still be run by hand from an agent's sheet.")}</p>
+      ),
+    },
+    {
+      id: "golden",
+      label: t("Golden set"),
+      keys: ["autoActivate", "autoCasesPerAgent"],
+      actions: (
+        <HeaderSwitch
+          control={form.control}
+          name="autoActivate"
+          label={t("Keep the golden set automatically")}
+        />
+      ),
+      note: t(
+        "A change a person approved or rejected becomes a case on its own, so nobody has to build the set by hand.",
+      ),
+      content: values.autoActivate ? (
+        <PresetField
+          control={form.control}
+          name="autoCasesPerAgent"
+          label={t("Cases kept per agent")}
+          hint={t(
+            "Past this the oldest are retired, a tool at a time. An automatic case is also retired after {0, plural, one {# day} other {# days}}, because an old case stops being fair as your records move on. A case you keep or edit stays.",
+            control.autoCaseDays,
+          )}
+          presets={AUTO_CASES_PRESETS}
+        />
+      ) : (
+        <p className="es-note">
+          {t("Decided proposals arrive as candidates and wait for someone to activate them.")}
+        </p>
       ),
     },
     {
@@ -259,7 +293,7 @@ function HeaderSwitch({
   label,
 }: {
   control: Control<QualityControlFormValues>;
-  name: "enabled" | "judgeEnabled";
+  name: "enabled" | "judgeEnabled" | "autoActivate";
   label: string;
 }) {
   return (

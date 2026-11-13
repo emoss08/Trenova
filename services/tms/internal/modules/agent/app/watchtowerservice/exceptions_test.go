@@ -4,6 +4,10 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
+
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
@@ -12,9 +16,6 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/notificationtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"go.uber.org/zap"
 )
 
 type userDeniedPermissions struct {
@@ -199,35 +200,6 @@ func TestResolveException_RequiresANoteForOtherAndRefusesTheSystemCode(t *testin
 	assert.Equal(t, f.actor.UserID, saved.ResolvedByID)
 	assert.Equal(t, "Customer called it in", saved.ResolutionNote)
 	assert.Equal(t, []watchtower.EventKind{watchtower.EventResolved}, eventKinds(f.repo.events))
-}
-
-func TestSettleRun_ClosesWhatWasHandedToARunThatProposedNothing(t *testing.T) {
-	t.Parallel()
-
-	f := newExceptionFixture(t, &agenttest.StubPermissions{})
-	runID := pulid.MustNew("ar_")
-	require.NoError(t, f.item.HandTo(pulid.MustNew("adef_"), runID, f.actor.UserID, 1_700_000_000))
-
-	settled := f.exceptions.SettleRun(t.Context(), &watchtowerports.SettleRunRequest{
-		TenantInfo: f.actor.TenantInfo(),
-		RunID:      pulid.MustNew("ar_"),
-		Note:       "Someone else's run",
-	}, f.actor)
-	assert.Zero(t, settled)
-	assert.Equal(t, watchtower.StatusInProgress, f.item.Status)
-
-	settled = f.exceptions.SettleRun(t.Context(), &watchtowerports.SettleRunRequest{
-		TenantInfo: f.actor.TenantInfo(),
-		RunID:      runID,
-		Note:       "  The POD is on file; nothing to change.  ",
-	}, f.actor)
-
-	saved := f.repo.items[f.repo.key(f.item.SourceKind, f.item.SourceID)]
-	assert.Equal(t, 1, settled)
-	assert.Equal(t, watchtower.StatusResolved, saved.Status)
-	assert.Equal(t, watchtower.ResolutionNoActionNeeded, saved.ResolutionCode)
-	assert.Equal(t, "The POD is on file; nothing to change.", saved.ResolutionNote)
-	assert.Equal(t, f.actor.UserID, saved.ResolvedByID)
 }
 
 func TestReopenException_ClearsTheResolutionAndSetsAFreshDueTime(t *testing.T) {

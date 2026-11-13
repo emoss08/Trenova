@@ -2,6 +2,7 @@ package agentresolver
 
 import (
 	"context"
+	"slices"
 	"strings"
 
 	"github.com/99designs/gqlgen/graphql"
@@ -11,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/gqlconnection"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentexception"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
@@ -35,7 +37,19 @@ func agentRunColumns(ctx context.Context, nodePathPrefix string) []string {
 		projection.SelectOptions{PathPrefix: nodePathPrefix},
 	)
 
-	return selection.Columns
+	columns := selection.Columns
+	if len(columns) == 0 || !graphql.FieldRequested(ctx, nodePathPrefix+".subjectLabel") {
+		return columns
+	}
+
+	r := agentdb.AgentRuns
+	for _, column := range projection.ColumnNames(r.SubjectType.Col, r.SubjectID.Col) {
+		if !slices.Contains(columns, column) {
+			columns = append(columns, column)
+		}
+	}
+
+	return columns
 }
 
 func runTranscript(ctx context.Context, run *agent.AgentRun) (*agent.RunTranscript, error) {

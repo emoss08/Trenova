@@ -4,10 +4,14 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentwork"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/briefing"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
@@ -17,8 +21,6 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func deskRefs(t *testing.T) *deskSeedRefs {
@@ -134,23 +136,23 @@ func TestDeskSeed_QueueHasAgentsWorkingWaitingAndDone(t *testing.T) {
 	for _, run := range queue.runs {
 		runs[run.ID] = run
 	}
-	statuses := map[watchtower.AgentStatus]int{}
+	statuses := map[agentwork.Status]int{}
 	for _, item := range queue.items {
 		if !item.HasAgent() {
 			continue
 		}
 		run, ok := runs[item.AgentRunID]
 		require.Truef(t, ok, "%q is handed to a run the seed does not write", item.Title)
-		work := item.AgentWorkFrom(run)
+		work := agentwork.From(item, run)
 		statuses[work.Status]++
 		assert.Equal(t, watchtower.StatusInProgress, item.Status,
 			"an item an agent works is in progress")
 	}
 
-	assert.Equal(t, map[watchtower.AgentStatus]int{
-		watchtower.AgentStatusWorking:  2,
-		watchtower.AgentStatusNeedsYou: 1,
-		watchtower.AgentStatusDone:     1,
+	assert.Equal(t, map[agentwork.Status]int{
+		agentwork.StatusWorking:  2,
+		agentwork.StatusNeedsYou: 1,
+		agentwork.StatusDone:     1,
 	}, statuses)
 }
 

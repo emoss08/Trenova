@@ -189,6 +189,8 @@ func qualityControlFromInput(
 		RegressionThreshold: input.RegressionThreshold,
 		MinCases:            input.MinCases,
 		ForceRerunDays:      input.ForceRerunDays,
+		AutoActivate:        input.AutoActivate,
+		AutoCasesPerAgent:   input.AutoCasesPerAgent,
 		Version:             int64(input.Version),
 	}, nil
 }

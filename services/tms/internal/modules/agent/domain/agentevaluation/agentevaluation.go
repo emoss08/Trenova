@@ -161,8 +161,9 @@ type Evaluation struct {
 	CaseScore   *float64                      `json:"caseScore"   keel:"case_score"`
 	Fingerprint *agentfingerprint.Fingerprint `json:"fingerprint" keel:"fingerprint,jsonb"`
 
-	SuiteRunID   *pulid.ID `json:"suiteRunId"   keel:"suite_run_id"`
-	SuiteOrdinal *int      `json:"suiteOrdinal" keel:"suite_ordinal"`
+	SuiteRunID      *pulid.ID `json:"suiteRunId"      keel:"suite_run_id"`
+	SuiteOrdinal    *int      `json:"suiteOrdinal"    keel:"suite_ordinal"`
+	TrialProviderID *pulid.ID `json:"trialProviderId" keel:"trial_provider_id"`
 
 	WorkflowID        string    `json:"workflowId"        keel:"workflow_id,nullzero"`
 	ErrorMessage      string    `json:"errorMessage"      keel:"error_message,nullzero"`
@@ -222,6 +223,10 @@ func (e *Evaluation) Validate(multiErr *errortypes.MultiError) {
 
 func (e *Evaluation) ReplaysRun() bool {
 	return e.SourceRunID.IsNotNil()
+}
+
+func (e *Evaluation) OnTrial() bool {
+	return e.TrialProviderID != nil && e.TrialProviderID.IsNotNil()
 }
 
 func (e *Evaluation) ReplaysCase() bool {

@@ -13,7 +13,6 @@
   "Keep rate": "保留费率",
   "No row in this file can be published as it stands.": "此文件中没有任何一行可以按现状发布。",
   "Not sure how to lay out the file? Start from the template.": "不确定文件该如何编排吗？请从模板开始。",
-  "OK": "确定",
   "Only for jurisdictions that publish one. Empty is stored as zero.": "仅适用于有公布的管辖区。留空会以零保存。",
   "Period & product": "期间与产品",
   "Publish one jurisdiction's rate for a quarter and fuel type. Rates are global, so this is what every organization's return will owe.": "为某一管辖区发布特定季度与燃油类型的税率。税率为全局共用，因此这即是每个组织申报时应缴的依据。",

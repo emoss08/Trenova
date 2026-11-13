@@ -31,12 +31,14 @@ import { useNavigate } from "react-router";
 import { toast } from "@trenova/shared/components/ui/toast";
 import {
   AGENT_EDIT_PARAM,
+  AGENT_RESTORE_PARAM,
   AGENT_FILTER_PARAM,
   AGENT_NEW_PARAM,
   AGENT_OPEN_PARAM,
   AGENT_TRY_PARAM,
   TOOL_PICKER_PARAM,
   agentEditParser,
+  agentRestoreParser,
   agentFilterParser,
   agentNewParser,
   agentOpenParser,
@@ -85,6 +87,7 @@ const SHELF_ICON = {
 
 const builderParsers = {
   [AGENT_EDIT_PARAM]: agentEditParser,
+  [AGENT_RESTORE_PARAM]: agentRestoreParser,
   [AGENT_NEW_PARAM]: agentNewParser,
   [AGENT_TRY_PARAM]: agentTryParser,
   [TOOL_PICKER_PARAM]: toolPickerParser,
@@ -93,6 +96,7 @@ const builderParsers = {
 /** The builder closed, with the panels it opened over the agent it was editing. */
 const BUILDER_CLOSED = {
   [AGENT_EDIT_PARAM]: null,
+  [AGENT_RESTORE_PARAM]: null,
   [AGENT_NEW_PARAM]: null,
   [AGENT_TRY_PARAM]: null,
   [TOOL_PICKER_PARAM]: null,
@@ -114,8 +118,10 @@ export default function AgentsTab() {
   useSlashFocus(searchRef);
 
   const [filter, setFilter] = useQueryState(AGENT_FILTER_PARAM, agentFilterParser);
-  const [{ [AGENT_EDIT_PARAM]: editId, [AGENT_NEW_PARAM]: start }, setBuilder] =
-    useQueryStates(builderParsers);
+  const [
+    { [AGENT_EDIT_PARAM]: editId, [AGENT_NEW_PARAM]: start, [AGENT_RESTORE_PARAM]: restoreVersion },
+    setBuilder,
+  ] = useQueryStates(builderParsers);
   const [query, setQuery] = useState("");
   const [openId, setOpenId] = useQueryState(AGENT_OPEN_PARAM, agentOpenParser);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -273,6 +279,10 @@ export default function AgentsTab() {
     [setBuilder],
   );
   const closeBuilder = useCallback(() => void setBuilder(BUILDER_CLOSED), [setBuilder]);
+  const restored = useCallback(
+    () => void setBuilder({ [AGENT_RESTORE_PARAM]: null }),
+    [setBuilder],
+  );
   const activity = useCallback(
     (agent: AgentDefinitionRow) =>
       go({
@@ -642,6 +652,8 @@ export default function AgentsTab() {
           key={editing?.id ?? `new:${start ?? "blank"}`}
           agent={editing}
           start={start ?? "blank"}
+          restoreVersion={editing ? restoreVersion : null}
+          onRestored={restored}
           onClose={closeBuilder}
           onOpenActivity={editing ? () => activity(editing) : undefined}
         />

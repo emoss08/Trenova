@@ -28,6 +28,8 @@ fragment AgentSuiteRunFields on AgentSuiteRun {
   finishedAt
   comments
   requestedByUserId
+  trialProviderId
+  trialLabel
 }
 
 fragment AgentQualityPointFields on AgentQualityPoint {
@@ -82,6 +84,9 @@ fragment AgentQualityControlFields on AgentQualityControl {
   regressionThreshold
   minCases
   forceRerunDays
+  autoActivate
+  autoCasesPerAgent
+  autoCaseDays
   version
   updatedAt
 }
@@ -271,8 +276,8 @@ mutation UpdateAgentQualityControl($input: UpdateAgentQualityControlInput!) {
   }
 }
 
-mutation RunAgentSuite($agentDefinitionId: ID!) {
-  runAgentSuite(agentDefinitionId: $agentDefinitionId) {
+mutation RunAgentSuite($agentDefinitionId: ID!, $trialProviderId: ID) {
+  runAgentSuite(agentDefinitionId: $agentDefinitionId, trialProviderId: $trialProviderId) {
     ...AgentSuiteRunFields
   }
 }

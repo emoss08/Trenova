@@ -9,11 +9,11 @@ related:
 ---
 
 ## What it's for
-Needs you is everything waiting on people across the operation, in one list with one row per record: a shipment's late warning from the Watchtower, the customer's email about it in Triage and the change an agent drafted to recover it in Decisions are one row. Open it from **Needs you** in the [Desk](/desk) rail, or press G then N.
+Needs you is everything waiting on people across the operation, in one list with one row per record: a shipment's late warning from the Watchtower, the customer's email about it in Triage and the change an agent drafted to recover it in Decisions are one row. It is also where you approve or decline what AI agents have proposed before it runs. Open it from **Needs you** in the [Desk](/desk) rail, or press G then N.
 
 The list down the left is grouped by how long is left before each row's soonest deadline: **Act now** (four hours or less, or already past), **Today**, **Coming up** and **For your information** (no deadline). Each row has a square coloured by its worst severity, the title of what is most urgent, the record's number and what it is, and under it one line for every signal about the record with the queue that raised it. On the right it shows how long is left (red inside four hours, amber inside a day) and where the work stands: **Needs your approval**, **Looking into it** while an agent works it, or **Didn't go through**. A blue dot marks a row you have not opened yet. Above the list, the bar shows how many items you have cleared today out of all of them.
 
-**Everything**, **Watchtower** and **Decisions** above the list are lenses, not separate places: pick one (or press 1 to 3) to see only the rows with something in that queue. Each row still shows every signal about its record, a customer's email included. Mail has no lens here: a message shows on the row of the record it is about, and it is read, answered and filed in [Triage](/desk/triage), the one place mail is worked. Select **Open in Triage** on a message to go to it; answering, filing or ignoring it there clears it from this list.
+**Everything**, **Watchtower** and **Decisions** above the list are lenses, not separate places: pick one (or press 1 to 3) to see only the rows with something in that queue. The **Decisions** lens holds the changes AI agents have proposed and that wait on a person before they run. Each row still shows every signal about its record, a customer's email included. Mail has no lens here: a message shows on the row of the record it is about, and it is read, answered and filed in [Triage](/desk/triage), the one place mail is worked. Select **Open in Triage** on a message to go to it; answering, filing or ignoring it there clears it from this list.
 
 The **Decisions** lens is where changes AI agents have proposed wait on a person before they run, such as updating shipments, posting invoices, sending a message, or a plan of several steps. It is the one place they are decided, one at a time or several together. Its list is grouped by the kind of change instead of by deadline, newest first, and the bar above it shows how many of today's are decided. Each row is named for what is its own: who a message goes to, the record a change touches, or how many records. A dot on the right marks a change with something to look at before you decide (amber) or one that can't run as it stands (red). The page beside the list shows one change at a time: which agent wants it and when, the agent's reason, whether it is **Reversible** or **Can't be undone**, anything to know before deciding, and then the change itself, worked out by the same code that would make it and read from your records as they are now. A message is drawn as it would go out. A line under it says whether it would go through as shown. The bar underneath approves or declines that one change. To decide several, tick them in the list. A change that shows on a record's row under **Everything** can be approved there too, and **Approve several at once in Decisions** opens it in this lens.
 
@@ -48,6 +48,12 @@ Keywords: approve agent change, decline agent change, review agent work, agent n
 2. Read the **Decision**: what it would change, why the agent proposes it and whether it can be undone. A change that has to be shown before it can be approved draws its preview under it.
 3. Select **Approve**, or press A. Nothing is marked done until the server confirms it; if it does not go through, the page says why and that nothing changed.
 4. Select **Decline**, or press D, and say why. The agent reads your reason in its conversation, and so does whoever looks after it.
+
+### See only your own cases, or everyone's
+Keywords: mine, everyone, my cases, all cases, other people's cases, case lead, team view
+1. Open [Needs you](/desk/needs). When your role lets you see cases other people own, **Mine** and **Everyone** show beside the lenses.
+2. **Mine** lists the cases you own and the ones nobody owns yet; it is what the page opens on. **Everyone** adds the cases other people own.
+3. Your choice is kept on this browser. The count in the Desk rail still counts everything you may see.
 
 ### Open the case behind a row
 Keywords: open case, open record, go to the shipment, view the source

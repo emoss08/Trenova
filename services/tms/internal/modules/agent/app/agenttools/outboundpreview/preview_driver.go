@@ -32,6 +32,26 @@ func DriverMessageSend(
 	)
 }
 
+// DriverTextSend is a text to one driver with no Dash login, as the driver
+// would read it. It names the driver, never the number.
+func DriverTextSend(
+	notice *notificationports.DriverNotificationPreview,
+	text string,
+) *agentpreview.RecordChange {
+	return toolpreview.Send(
+		toolpreview.Record{
+			Resource: permission.ResourceWorker,
+			ID:       notice.WorkerID,
+			Label:    DriverName(notice),
+		},
+		&agentpreview.MessagePreview{
+			Channel: agentpreview.MessageChannelSMS,
+			To:      []string{DriverName(notice)},
+			Body:    text,
+		},
+	)
+}
+
 func WarnDriverUnreachable(
 	preview *agentpreview.ToolPreview,
 	notice *notificationports.DriverNotificationPreview,

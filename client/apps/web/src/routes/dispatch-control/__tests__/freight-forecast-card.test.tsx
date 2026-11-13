@@ -1,3 +1,4 @@
+import { FORECAST_REFIT_POLL_MS } from "@/lib/dispatch-forecast";
 import type { DispatchForecastQuality } from "@/lib/graphql/dispatch-console";
 import type { DispatchControl } from "@/types/dispatch-control";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -30,6 +31,7 @@ const ready: DispatchForecastQuality = {
   naiveMeanAbsoluteError: 2.1,
   skill: 0.324,
   fittedAt: FITTED_AT,
+  refitting: false,
 };
 
 const neverFitted: DispatchForecastQuality = {
@@ -43,6 +45,7 @@ const neverFitted: DispatchForecastQuality = {
   naiveMeanAbsoluteError: 0,
   skill: 0,
   fittedAt: null,
+  refitting: false,
 };
 
 function Form({
@@ -72,7 +75,8 @@ function renderCard({ anticipateFreight = false } = {}) {
 describe("FreightForecastCard", () => {
   afterEach(() => {
     cleanup();
-    vi.clearAllMocks();
+    vi.useRealTimers();
+    vi.resetAllMocks();
   });
 
   it("draws its own outline while the forecast's test loads", () => {
@@ -98,13 +102,30 @@ describe("FreightForecastCard", () => {
     ).toBeInTheDocument();
     expect(screen.queryByText("Last fitted")).toBeNull();
     expect(screen.queryByText("Not enough history yet")).toBeNull();
+    expect(screen.queryByRole("status")).toBeNull();
   });
 
-  it("says how much history is missing when there is not enough to test", async () => {
+  it("says the history is being read when a forecast is fitted for the first time", async () => {
+    mocks.fetch.mockResolvedValue({ ...neverFitted, refitting: true });
+
+    renderCard();
+
+    expect(await screen.findByText("Not fitted yet")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Your shipment history is being read for the first time. This takes about a minute.",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Reading your shipment history now; this updates when it finishes.",
+    );
+  });
+
+  it("shows how far the history is from what the forecast needs", async () => {
     mocks.fetch.mockResolvedValue({
       ...neverFitted,
-      historyWeeks: 3,
-      historyLoads: 1,
+      historyWeeks: 11,
+      historyLoads: 35,
       fittedAt: FITTED_AT,
     });
 
@@ -113,10 +134,50 @@ describe("FreightForecastCard", () => {
     expect(await screen.findByText("Not enough history yet")).toBeInTheDocument();
     expect(
       screen.getByText(
-        "The forecast needs 8 weeks and 200 loads of history; it has 3 weeks and 1 load.",
+        "The forecast is tested once the last 35 weeks hold 8 weeks with loads and 200 loads picked up.",
       ),
     ).toBeInTheDocument();
+    const history = screen.getByRole("group", { name: "History counted so far" });
+    expect(within(history).getByText("11 of 8")).toBeInTheDocument();
+    expect(within(history).getByText("35 of 200")).toBeInTheDocument();
+    expect(within(history).getByRole("progressbar", { name: "Weeks with loads" })).toHaveAttribute(
+      "aria-valuenow",
+      "8",
+    );
+    expect(within(history).getByRole("progressbar", { name: "Loads picked up" })).toHaveAttribute(
+      "aria-valuenow",
+      "35",
+    );
     expect(screen.getByText(formatUnixDateTimeMedium(FITTED_AT))).toBeInTheDocument();
+    expect(screen.queryByRole("status")).toBeNull();
+  });
+
+  it("says a stale count is being taken again, and asks again until it lands", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const stale = {
+      ...neverFitted,
+      historyWeeks: 11,
+      historyLoads: 35,
+      fittedAt: FITTED_AT,
+      refitting: true,
+    };
+    mocks.fetch.mockResolvedValueOnce(stale).mockResolvedValue(ready);
+
+    renderCard();
+
+    expect(await screen.findByRole("status")).toHaveTextContent(
+      `Last checked ${formatUnixDateTimeMedium(FITTED_AT)}. Checking your shipment history again now; this updates when it finishes.`,
+    );
+    expect(mocks.fetch).toHaveBeenCalledTimes(1);
+
+    await vi.advanceTimersByTimeAsync(FORECAST_REFIT_POLL_MS);
+
+    expect(await screen.findByText("Ready")).toBeInTheDocument();
+    expect(screen.queryByRole("status")).toBeNull();
+    expect(mocks.fetch).toHaveBeenCalledTimes(2);
+
+    await vi.advanceTimersByTimeAsync(FORECAST_REFIT_POLL_MS * 3);
+    expect(mocks.fetch).toHaveBeenCalledTimes(2);
   });
 
   it("says a forecast no better than last week is ignored by plans", async () => {

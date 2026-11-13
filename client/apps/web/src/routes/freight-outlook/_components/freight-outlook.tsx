@@ -1,15 +1,16 @@
 import { ForecastNotReady } from "@/components/dispatch/forecast-not-ready";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { isTypingTarget, isWithinDialog } from "@/lib/dom";
-import { forecastStanding } from "@/lib/dispatch-forecast";
+import { createRefitPoll, forecastStanding } from "@/lib/dispatch-forecast";
 import { FREIGHT_OUTLOOK_REFETCH_MS, freightOutlook } from "@/lib/queries/freight-outlook";
 import { useQuery } from "@tanstack/react-query";
 import { ErrorState } from "@trenova/shared/components/errors/error-state";
 import { EmptySheet } from "@trenova/shared/components/ui/empty-sheet";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { AreaInspector, type OpenArea } from "./area-inspector";
+import { BoardSketch } from "./board-sketch";
 import { BriefRail } from "./brief-rail";
 import { FreightOutlookSkeleton } from "./freight-outlook-skeleton";
 import { OutlookBoard } from "./outlook-board";
@@ -19,32 +20,11 @@ import { OutlookBrief, OutlookFigures } from "./outlook-overview";
 
 /** Whether the inspector is unfolded: a per-browser layout choice, never a record. */
 const BRIEF_OPEN_KEY = "trenova-freight-outlook-brief-open";
-const SKETCH_ROWS = 6;
-const SKETCH_WINDOWS = 12;
-/** A few warm and cool cells, so the empty board reads as the heat grid it will become. */
-const SKETCH_TONE: Record<string, string> = {
-  "0:4": "bg-warning/40",
-  "0:5": "bg-warning/70",
-  "1:2": "bg-warning/30",
-  "3:3": "bg-accent-sky/40",
-  "3:4": "bg-accent-sky/60",
-  "4:8": "bg-accent-sky/30",
-};
-
-function BoardSketch() {
+/** An outlook with no board to draw sits in the middle of the workspace, not under its header. */
+function BoardStandIn({ children }: { children: ReactNode }) {
   return (
-    <div className="flex flex-col gap-1">
-      {Array.from({ length: SKETCH_ROWS }, (_, row) => (
-        <div key={row} className="grid grid-cols-[6rem_repeat(12,minmax(0,1fr))] gap-0.5">
-          <span className="my-1.5 h-2 w-16 rounded-full bg-border/70" />
-          {Array.from({ length: SKETCH_WINDOWS }, (_, col) => (
-            <span
-              key={col}
-              className={cn("h-5 rounded-[3px]", SKETCH_TONE[`${row}:${col}`] ?? "bg-foreground/4")}
-            />
-          ))}
-        </div>
-      ))}
+    <div className="flex min-h-0 flex-1 items-center justify-center overflow-y-auto">
+      {children}
     </div>
   );
 }
@@ -57,9 +37,10 @@ function BoardSketch() {
  */
 export function FreightOutlook({ horizon }: { horizon: Horizon }) {
   const t = useT();
+  const [refitPoll] = useState(() => createRefitPoll(FREIGHT_OUTLOOK_REFETCH_MS));
   const query = useQuery({
     ...freightOutlook.outlook(),
-    refetchInterval: FREIGHT_OUTLOOK_REFETCH_MS,
+    refetchInterval: (current) => refitPoll(current.state.data?.quality.refitting),
   });
   const [pinned, setPinned] = useState<number | null>(null);
   const [openArea, setOpenArea] = useState<OpenArea | null>(null);
@@ -96,17 +77,23 @@ export function FreightOutlook({ horizon }: { horizon: Horizon }) {
     );
   }
   if (forecastStanding(outlook.quality) !== "Ready") {
-    return <ForecastNotReady quality={outlook.quality} />;
+    return (
+      <BoardStandIn>
+        <ForecastNotReady quality={outlook.quality} sketch={<BoardSketch />} />
+      </BoardStandIn>
+    );
   }
   if (outlook.areas.length === 0) {
     return (
-      <EmptySheet
-        sketch={<BoardSketch />}
-        title={t("No forecast areas yet")}
-        description={t(
-          "The forecast learns areas from where your loads pick up. Once it has, they appear here.",
-        )}
-      />
+      <BoardStandIn>
+        <EmptySheet
+          sketch={<BoardSketch />}
+          title={t("No forecast areas yet")}
+          description={t(
+            "The forecast learns areas from where your loads pick up. Once it has, they appear here.",
+          )}
+        />
+      </BoardStandIn>
     );
   }
 

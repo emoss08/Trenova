@@ -2759,6 +2759,13 @@ front of the prompt.
 2. **Open** builds the turn: permissions, memory, what the ledger already knows.
    A definition in **shadow mode is opened in simulation**, so an automatic
    write is previewed rather than made — shadow mode exists to withhold it.
+   The run also carries `RunRequest.Shadow`, and the dispatcher simulates
+   every write of a shadow run, whatever its tier: a write a live agent
+   would hold for approval is recorded as what the agent would have done
+   and never filed as a proposal, so a shadow agent puts nothing in
+   Decisions or the Watchtower. A shadow agent's failed run raises no
+   Watchtower item either (`projectFailedRun`, `FailedRunSource`), by the
+   agent's own switch or the organization's pause.
 3. **The loop** runs in workflow code under the definition's run timeout.
 4. **Finish** files the proposals, the summary and the trajectory. It runs
    however the loop ended, so a write made before a failure is on the record.
@@ -2803,17 +2810,47 @@ a subject queued twice runs once, on the latest event. Scheduled runs keep
 counting waiting runs against the cap, so a scheduled agent never stacks
 runs nobody has decided.
 
-The proof-of-delivery chase (`podchasejobs`) is the first routine: the
-built-in billing exception agent's `shipment.pod_missing` events are queued
-per tenant, and `PODChaseDrainWorkflow` reads a page's facts in two round
+The proof-of-delivery chase is the first routine: the built-in billing
+exception agent's `shipment.pod_missing` events are queued per tenant, and
+`PODChaseDrainWorkflow` (`podchasejobs`) reads a page's facts in two round
 trips (still delivered with no POD on file, who hauled the last move, the
 billing sender), skips a shipment with an open run of the agent, and asks
-once: a Dash message to a driver with portal access, otherwise an email to
-the carrier. Each request is an inline event run about the shipment whose
-one call goes through `agentruntime.Service.DispatchStep`, so its tier,
-holds and egress are the runtime's own, and is recorded by the proposal
-recorder like a run's. A shipment nobody can be asked about goes to the
-agent's queue for its model. An agent an organization wrote keeps its model.
+once through `podchase.Asker`: a Dash message to a driver with portal
+access, otherwise an email to the driver when one is on file, otherwise an
+email to the carrier, otherwise a text to the driver when a number is all
+there is and the plan includes text messages. The address or number is put
+into the request in code and no model sees it. A shipment nobody can be
+asked about is asked about by nobody: a model could not reach them either,
+so no run is started and the Watchtower item waits for a person. An agent
+an organization wrote keeps its model for its own event triggers.
+
+### Coded requests
+
+`codedrequest.Filer` is how code files a request for an agent acting on its
+own, as a routine does when an event reaches it. It opens an inline run
+about the record, puts one tool call through
+`agentruntime.Service.DispatchStep`, so its tier, holds, egress and shadow
+are the runtime's own, and records what the call made with the proposal
+recorder like a run's. No model is called.
+
+A person's own request is not an agent's and does not come through here.
+The Watchtower's plays (`watchtowerports.Playbook`; see "A case nobody has
+worked" in desk-workspace.md) plan the same question from the same record
+(`podchase.planAsk` serves both the routine and the play) and send it under
+the person's name with their permissions, so a play works with every agent
+off, in shadow or paused.
+
+Both paths send through one owner per channel. `drivermessage.Sender`
+reaches a driver where they can be reached: in Dash with a portal login, or
+by text to the number on file when they have none and the plan includes
+text messages (`SendSMSWorkflow`). `requestemail.Sender` renders a request
+in the organization's template for its kind (`agent.request_missing_docs.email`
+for paperwork, `agent.status_request.email` for where a load is) and sends
+it from the billing email profile or else the general one. The agent tools
+`worker_send_message` and `shipment_request_documents` are thin readers of
+their arguments over these two. An address or a number is read inside the
+sender and never passes through a model, and a preview says which way a
+message goes.
 
 An approved proposal is executed by the decision service, not by the run: that
 path carries the modification checks, the trust ledger, memory and follow-ups,

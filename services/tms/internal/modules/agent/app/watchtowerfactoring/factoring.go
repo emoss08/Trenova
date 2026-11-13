@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtowerpanel"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoringreadiness"
@@ -269,10 +270,10 @@ func DescribeFactoringUnfunded(
 			row.SubmissionID,
 			pathFactoringQueue,
 		),
-		Panel: &watchtower.Panel{
-			Kind: watchtower.PanelMoney,
-			Money: &watchtower.MoneyPanel{
-				Stake:  watchtower.StakeAdvance,
+		Panel: &watchtowerpanel.Panel{
+			Kind: watchtowerpanel.KindMoney,
+			Money: &watchtowerpanel.MoneyPanel{
+				Stake:  watchtowerpanel.StakeAdvance,
 				Party:  row.FactorName,
 				Amount: money.FormatMinor(row.ExpectedAdvanceMinor, row.CurrencyCode),
 				Count:  int64(row.PendingCount),
@@ -318,10 +319,10 @@ func DescribeFactoringChargebackDue(
 		SubjectID:   row.InvoiceID,
 		EventKind:   agenttrigger.EventFactoringChargebackDue,
 		Path:        factoringRecordPath("invoice", row.InvoiceID, pathFactoringInvoices),
-		Panel: &watchtower.Panel{
-			Kind: watchtower.PanelMoney,
-			Money: &watchtower.MoneyPanel{
-				Stake:  watchtower.StakeChargeback,
+		Panel: &watchtowerpanel.Panel{
+			Kind: watchtowerpanel.KindMoney,
+			Money: &watchtowerpanel.MoneyPanel{
+				Stake:  watchtowerpanel.StakeChargeback,
 				Party:  stringutils.FirstNonEmpty(row.CustomerName, row.FactorName),
 				Amount: money.FormatMinor(row.RepurchaseMinor, row.CurrencyCode),
 				DueAt:  row.DeadlineAt,

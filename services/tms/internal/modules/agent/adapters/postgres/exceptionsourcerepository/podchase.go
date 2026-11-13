@@ -2,11 +2,11 @@ package exceptionsourcerepository
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/emoss08/keel"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/podchaseports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
@@ -14,9 +14,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier/carrierdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/email/emaildb"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -46,6 +43,8 @@ type chaseWorker struct {
 	FirstName string
 	LastName  string
 	UserID    pulid.ID
+	Email     string
+	Phone     string
 }
 
 type chaseCarrier struct {
@@ -151,8 +150,8 @@ type chaseHaulers struct {
 	carriers map[pulid.ID]*podchaseports.Carrier
 }
 
-// haulers reads who hauled each move: its driver and whether they are on
-// Dash, or its carrier and the carrier's email.
+// haulers reads who hauled each move: its driver, whether they are on Dash
+// and their email, or its carrier and the carrier's email.
 func (r *repository) haulers(
 	ctx context.Context,
 	lastMove map[pulid.ID]pulid.ID,
@@ -208,7 +207,10 @@ func (r *repository) haulers(
 	items := make([]keel.BatchItem, 0, 2)
 	if len(workerIDs) > 0 {
 		items = append(items, keel.IntoSlice(
-			wk.Pick(wk.ID, wk.FirstName, wk.LastName, wk.UserID.Coalesce("")).
+			wk.Pick(
+				wk.ID, wk.FirstName, wk.LastName,
+				wk.UserID.Coalesce(""), wk.Email.Coalesce(""), wk.PhoneNumber.Coalesce(""),
+			).
 				Where(wk.ID.In(workerIDs...)).
 				Limit(len(workerIDs)), &workers))
 	}
@@ -238,6 +240,8 @@ func (r *repository) haulers(
 				WorkerID: w.ID,
 				Name:     strings.TrimSpace(w.FirstName + " " + w.LastName),
 				OnDash:   w.UserID.IsNotNil(),
+				Email:    strings.TrimSpace(w.Email),
+				HasPhone: strings.TrimSpace(w.Phone) != "",
 			}
 		}
 	}
@@ -252,28 +256,4 @@ func (r *repository) haulers(
 	}
 
 	return out, nil
-}
-
-// BillingSenderProfile is the email profile the organization sends billing
-// mail from, or nil when it has none.
-func (r *repository) BillingSenderProfile(
-	ctx context.Context,
-	_ pagination.TenantInfo,
-) (pulid.ID, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (pulid.ID, error) {
-		pa := emaildb.ProfileAssignments
-		row, err := keel.IntoOne[pulid.ID](ctx, r.db.Keel(ctx),
-			pa.Pick(pa.ProfileID).
-				Where(pa.Purpose.Eq(email.PurposeBilling)).
-				Limit(1),
-		)
-		if errors.Is(err, keel.ErrNotFound) {
-			return pulid.Nil, nil
-		}
-		if err != nil {
-			return pulid.Nil, fmt.Errorf("read the billing sender profile: %w", err)
-		}
-
-		return row, nil
-	})
 }

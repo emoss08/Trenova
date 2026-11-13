@@ -569,16 +569,22 @@ func (s *Engine) FinalizeSuite(
 		if regressionErr != nil {
 			return nil, regressionErr
 		}
-		run.Regression = regression.Regressed
 		if regression.Compared > 0 {
 			median := regression.Median
 			run.BaselineScore = &median
 		}
-		comments = joinComments(comments, regressionComment(regression))
+		if run.IsTrial() {
+			comments = joinComments(comments, trialComment(run))
+		} else {
+			run.Regression = regression.Regressed
+			comments = joinComments(comments, regressionComment(regression))
+		}
 	}
 
 	run.Finish(status, stringutils.Ellipsize(comments, agentqualitysuite.MaxSuiteComments), s.now())
-	s.announce(ctx, run)
+	if !run.IsTrial() {
+		s.announce(ctx, run)
+	}
 
 	updated, err := s.suiteRuns.Update(ctx, run)
 	if err != nil {
@@ -616,6 +622,11 @@ func joinComments(parts ...string) string {
 	}
 
 	return joined
+}
+
+func trialComment(run *agentqualitysuite.SuiteRun) string {
+	return "A trial on " + run.TrialLabel +
+		". The agent was not changed, and the trial does not count toward its score."
 }
 
 func regressionComment(regression agentscoring.Regression) string {

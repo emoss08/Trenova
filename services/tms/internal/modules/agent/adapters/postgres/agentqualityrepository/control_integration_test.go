@@ -48,4 +48,23 @@ func TestControlUpsertCreatesTheFirstControl(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, 4, updated.RunHourLocal)
 	require.Equal(t, created.ID, updated.ID)
+	require.Equal(t, agentqualitycontrol.DefaultAutoCasesPerAgent, updated.AutoCasesPerAgent,
+		"a first save that names no limit keeps the default")
+
+	updated.AutoActivate = true
+	updated.AutoCasesPerAgent = 200
+	_, err = repo.Upsert(ctx, updated)
+	require.NoError(t, err)
+
+	stored, err := repo.Get(ctx, tenant)
+	require.NoError(t, err)
+	require.True(t, stored.AutoActivate)
+	require.Equal(t, 200, stored.AutoCasesPerAgent)
+
+	stored.AutoActivate = false
+	_, err = repo.Upsert(ctx, stored)
+	require.NoError(t, err)
+	off, err := repo.Get(ctx, tenant)
+	require.NoError(t, err)
+	require.False(t, off.AutoActivate, "turning the automatic golden set off is saved")
 }

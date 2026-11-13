@@ -7,7 +7,17 @@ import {
   type AgentSuiteRun,
 } from "@/lib/graphql/agent-quality";
 import { agentQuality } from "@/lib/queries/agent-quality";
+import { aiProvider } from "@/lib/queries/ai-provider";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@trenova/shared/components/ui/dropdown-menu";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { DataTablePanelProps } from "@trenova/shared/types/data-table";
 import { Operation, Resource } from "@trenova/shared/types/permission";
@@ -25,6 +35,9 @@ import {
   pointsChange,
   ratingReasonLabels,
   sparklineValues,
+  trialProviders,
+  versionBefore,
+  type TrialProvider,
 } from "./quality-model";
 
 type AgentQualitySheetProps = {
@@ -99,9 +112,18 @@ function AgentQualityBody({
   const navigate = useAIControlNavigation();
   const control = useQuery({ ...agentQuality.control(), staleTime: QUALITY_STALE_MS });
   const { allowed: canRun } = usePermission(Resource.AgentEvalSuite, Operation.Create);
+  const { allowed: canEdit } = usePermission(Resource.AgentDefinition, Operation.Update);
   const last = detail.lastSuiteRun;
+  const earlier = last?.regression ? versionBefore(last) : null;
   const values = sparklineValues(detail.qualityPoints);
   const change = pointsChange(last);
+
+  const providers = useQuery({
+    ...aiProvider.list(),
+    enabled: canRun && detail.activeCases > 0,
+    staleTime: QUALITY_STALE_MS,
+  });
+  const trials = trialProviders(providers.data ?? []);
 
   const run = useApiMutation<AgentSuiteRun, string>({
     mutationFn: (agentDefinitionId) => runAgentSuite(agentDefinitionId),
@@ -110,6 +132,28 @@ function AgentQualityBody({
     },
     resourceName: t("Suite run"),
   });
+
+  const openRuns = () => {
+    onClose();
+    navigate({ tab: "quality", view: "runs", qualityAgent: detail.agentDefinitionId });
+  };
+
+  // A trial never shows on this sheet, which scores the agent as it is, so the
+  // person is told where its result will be.
+  const trial = useApiMutation<AgentSuiteRun, TrialProvider>({
+    mutationFn: (provider) => runAgentSuite(detail.agentDefinitionId, provider.id),
+    onSuccess: async (_started, provider) => {
+      toast.success(t("Trial started on {0}", provider.name), {
+        description: t(
+          "The agent is not changed. The trial's score appears in its suite runs when it finishes.",
+        ),
+        action: { label: t("See the runs"), onClick: openRuns },
+      });
+      await queryClient.invalidateQueries({ queryKey: agentQuality._def });
+    },
+    resourceName: t("Suite run"),
+  });
+  const busy = run.isPending || trial.isPending;
 
   const settings = control.data;
   const satisfaction = !detail.ratingsVisible
@@ -201,12 +245,66 @@ function AgentQualityBody({
           <button
             type="button"
             className="xa"
-            disabled={run.isPending || detail.activeCases === 0}
-            title={detail.activeCases === 0 ? t("Add a golden case first") : undefined}
+            disabled={busy || detail.activeCases === 0}
+            title={detail.activeCases === 0 ? t("This agent has no golden cases yet") : undefined}
             onClick={() => run.mutate(detail.agentDefinitionId)}
           >
             <Ic n="refresh" s={13} />
             {t("Run suite now")}
+          </button>
+        )}
+        {canRun && detail.activeCases > 0 && trials.length > 0 && (
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={
+                <button
+                  type="button"
+                  className="xa"
+                  disabled={busy}
+                  title={t(
+                    "Asks this agent's golden cases on another model without changing the agent.",
+                  )}
+                />
+              }
+            >
+              <Ic n="flask" s={13} />
+              {t("Try another model")}
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-72" listClassName="max-h-80">
+              <DropdownMenuGroup>
+                <DropdownMenuLabel>{t("The agent stays as it is")}</DropdownMenuLabel>
+                {trials.map((provider) => (
+                  <DropdownMenuItem
+                    key={provider.id}
+                    title={provider.name}
+                    description={provider.model}
+                    onClick={() => trial.mutate(provider)}
+                  />
+                ))}
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+        {canEdit && earlier !== null && (
+          <button
+            type="button"
+            className="xa"
+            title={t(
+              "Opens the agent with the version before this change loaded. Nothing is saved until you save it.",
+            )}
+            onClick={() =>
+              navigate({
+                tab: "agents",
+                builder: {
+                  mode: "edit",
+                  agentId: detail.agentDefinitionId,
+                  restoreVersion: earlier,
+                },
+              })
+            }
+          >
+            <Ic n="undo" s={13} />
+            {t("Go back a version")}
           </button>
         )}
         <button
@@ -223,14 +321,7 @@ function AgentQualityBody({
           {t("Open agent")}
         </button>
         <span className="sp" />
-        <button
-          type="button"
-          className="xa"
-          onClick={() => {
-            onClose();
-            navigate({ tab: "quality", view: "runs", qualityAgent: detail.agentDefinitionId });
-          }}
-        >
+        <button type="button" className="xa" onClick={openRuns}>
           {t("All runs")}
         </button>
       </div>

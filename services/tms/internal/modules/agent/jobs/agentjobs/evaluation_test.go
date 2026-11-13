@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentevaluation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentfingerprint"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentturn"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
@@ -431,6 +432,152 @@ func TestOpenReplay_ACaseReplaysItsFrozenInputAsItsPerson(t *testing.T) {
 	require.Len(t, opened.originals, 1)
 	assert.Equal(t, float64(1350), opened.originals[0].Params["rate"])
 	assert.Equal(t, 1, w.evaluations.stored.OriginalProposals)
+}
+
+func TestOpenReplay_ATrialReplayIsPinnedToItsProviderAndKeepsItsFingerprint(t *testing.T) {
+	t.Parallel()
+
+	w := newReplayWorld(t)
+	caseEvaluation(w, chatCase(w))
+	w.member(domaintypes.StatusActive)
+	providerID := pulid.MustNew("aip_")
+	planned := &agentfingerprint.Fingerprint{
+		DefinitionVersion: 3,
+		Model:             "claude-haiku-5-5",
+		ProviderID:        providerID,
+	}
+	w.evaluations.stored.TrialProviderID = &providerID
+	w.evaluations.stored.Fingerprint = planned
+
+	opened, err := w.activities.openReplay(t.Context(), w.payload)
+	require.NoError(t, err)
+	require.NotNil(t, opened)
+
+	assert.Equal(t, providerID, opened.request.PreferredProviderID)
+	assert.True(t, opened.request.PinProvider,
+		"a trial that fell back to another provider would score the wrong model")
+	assert.NotEqual(t, providerID, opened.request.Definition.PreferredProviderID,
+		"the agent itself is not moved to the trial provider")
+	require.NotNil(t, w.evaluations.stored.Fingerprint)
+	assert.Equal(t, "claude-haiku-5-5", w.evaluations.stored.Fingerprint.Model,
+		"the trial's planned model is kept, not replaced by the agent's own")
+	assert.Equal(t, providerID, w.evaluations.stored.Fingerprint.ProviderID)
+}
+
+func TestOpenReplay_AReplayOnTheAgentsOwnProviderIsNotPinned(t *testing.T) {
+	t.Parallel()
+
+	w := newReplayWorld(t)
+	caseEvaluation(w, chatCase(w))
+	w.member(domaintypes.StatusActive)
+
+	opened, err := w.activities.openReplay(t.Context(), w.payload)
+	require.NoError(t, err)
+	require.NotNil(t, opened)
+
+	assert.True(t, opened.request.PreferredProviderID.IsNil())
+	assert.False(t, opened.request.PinProvider)
+}
+
+func TestOpenReplay_ACaseReplaysAgainstTheReadsItsOriginalWasGiven(t *testing.T) {
+	t.Parallel()
+
+	w := newReplayWorld(t)
+	evalCase := chatCase(w)
+	evalCase.ToolFixtures = []agentquality.ToolFixture{{
+		Tool:   "shipment_get",
+		Args:   map[string]any{"id": "shp_1"},
+		Result: map[string]any{"proNumber": "S-100", "status": "InTransit"},
+	}}
+	caseEvaluation(w, evalCase)
+	w.member(domaintypes.StatusActive)
+
+	opened, err := w.activities.openReplay(t.Context(), w.payload)
+	require.NoError(t, err)
+	require.NotNil(t, opened)
+
+	require.NotNil(t, opened.request.Recorded)
+	result, failed, ok := opened.request.Recorded.Recorded(
+		"shipment_get",
+		map[string]any{"id": "shp_1"},
+	)
+	require.True(t, ok)
+	assert.False(t, failed)
+	assert.Equal(t, map[string]any{"proNumber": "S-100", "status": "InTransit"}, result)
+}
+
+func TestOpenReplay_ACaseAnsweredFromItsRecordingRunsAsOfWhenThePersonAsked(t *testing.T) {
+	t.Parallel()
+
+	asked := int64(1_772_530_200)
+	w := newReplayWorld(t)
+	evalCase := chatCase(w)
+	evalCase.AskedAt = &asked
+	evalCase.ToolFixtures = []agentquality.ToolFixture{{
+		Tool:   "shipment_get",
+		Args:   map[string]any{"id": "shp_1"},
+		Result: map[string]any{"eta": "2026-03-05 09:30 UTC (in 2 days)"},
+	}}
+	caseEvaluation(w, evalCase)
+	w.member(domaintypes.StatusActive)
+
+	opened, err := w.activities.openReplay(t.Context(), w.payload)
+	require.NoError(t, err)
+	require.NotNil(t, opened)
+
+	assert.Equal(t, asked, opened.request.Context.Now,
+		"\"in 2 days\" in the recorded result is two days after the day the agent is told it is")
+}
+
+func TestOpenReplay_ACaseThatReadsTheRecordsRunsAsOfNow(t *testing.T) {
+	t.Parallel()
+
+	asked := int64(1_772_530_200)
+	w := newReplayWorld(t)
+	evalCase := chatCase(w)
+	evalCase.AskedAt = &asked
+	caseEvaluation(w, evalCase)
+	w.member(domaintypes.StatusActive)
+
+	opened, err := w.activities.openReplay(t.Context(), w.payload)
+	require.NoError(t, err)
+	require.NotNil(t, opened)
+
+	assert.Zero(t, opened.request.Context.Now,
+		"with nothing recorded every read is of the records as they are, so the clock is left "+
+			"as the context was built with it")
+
+	unknown := newReplayWorld(t)
+	undated := chatCase(unknown)
+	undated.ToolFixtures = []agentquality.ToolFixture{{
+		Tool:   "shipment_get",
+		Args:   map[string]any{"id": "shp_1"},
+		Result: map[string]any{"status": "InTransit"},
+	}}
+	caseEvaluation(unknown, undated)
+	unknown.member(domaintypes.StatusActive)
+
+	opened, err = unknown.activities.openReplay(t.Context(), unknown.payload)
+	require.NoError(t, err)
+	require.NotNil(t, opened)
+	require.NotNil(t, opened.request.Recorded)
+	assert.Zero(t, opened.request.Context.Now,
+		"a case that does not know when it was asked keeps the clock it was built with")
+}
+
+func TestOpenReplay_ACaseWithNoRecordedReadsReadsTheRecords(t *testing.T) {
+	t.Parallel()
+
+	w := newReplayWorld(t)
+	caseEvaluation(w, chatCase(w))
+	w.member(domaintypes.StatusActive)
+
+	opened, err := w.activities.openReplay(t.Context(), w.payload)
+	require.NoError(t, err)
+	require.NotNil(t, opened)
+
+	assert.Nil(t, opened.request.Recorded,
+		"an empty recording would be an interface that is not nil and answers nothing")
 }
 
 func TestOpenReplay_ADeletedCaseIsSkipped(t *testing.T) {

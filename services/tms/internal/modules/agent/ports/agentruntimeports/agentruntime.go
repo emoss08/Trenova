@@ -102,6 +102,13 @@ type ProposalTarget struct {
 	Version  int64               `json:"version"`
 }
 
+// RecordedReads answers a read with what an earlier run was given for the
+// same tool and arguments. ok is false for a read it holds nothing for, which
+// is then made against the records as they are now.
+type RecordedReads interface {
+	Recorded(tool string, arguments map[string]any) (result any, failed, ok bool)
+}
+
 type RunRequest struct {
 	Definition *agentdefinition.Definition
 	Actor      *permissionports.RequestActor
@@ -113,6 +120,11 @@ type RunRequest struct {
 	// scheduled agent. Tools that put a question to a person are withheld,
 	// since a question nobody will answer only ends the run on it.
 	Unattended bool
+	// Shadow says the run is of an agent in shadow: it is watched, and
+	// nothing it does reaches a person's queue. A write it would file for
+	// approval is simulated and recorded as such, like one it would make on
+	// its own, so no proposal waits on a decision nobody can give.
+	Shadow bool
 	// ThreadID is the conversation a chat turn belongs to, for attributing
 	// what the turn cost. Empty for a background run.
 	ThreadID pulid.ID
@@ -125,6 +137,11 @@ type RunRequest struct {
 	// even though no observer rides on this request: a durable turn keeps it
 	// in an activity of its own, where the observer lives.
 	Publishes bool
+	// Recorded, when set, is what the reads of an earlier run returned. An
+	// evaluation replays a case against it, so the agent is judged on the
+	// situation the person decided in rather than on records that have since
+	// moved on. A read is still authorized first; only its data is recorded.
+	Recorded RecordedReads
 	// History is the conversation so far, oldest first, excluding Input.
 	History []conversation.Message
 	Input   string

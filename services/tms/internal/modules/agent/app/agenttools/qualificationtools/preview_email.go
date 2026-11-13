@@ -8,33 +8,25 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/outboundpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolparams"
+	"github.com/emoss08/trenova/internal/modules/agent/app/requestemail"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/portaltemplate"
-	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
-	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
-// docsRequest is a request for paperwork as it would go out: to the
+// compose reads the call and renders the request as it would go out: to the
 // addresses the call names, in the organization's letterhead, with no
-// fallback when the template fails.
-type docsRequest struct {
-	data      portaltemplate.AgentEmailContext
-	send      *emailports.SendEmailRequest
-	versionID *pulid.ID
-}
-
+// fallback when the template fails. The optional parameters are read
+// leniently: a malformed name must not stop a document request going out,
+// because the request's own words already say what is being asked for.
 func (t *RequestMissingDocsTool) compose(
 	ctx context.Context,
 	params *agenttoolports.ToolExecuteParams,
-) (*docsRequest, error) {
+) (*requestemail.Composed, error) {
 	if err := toolguard.GuardExecute(t, params); err != nil {
 		return nil, err
 	}
@@ -56,40 +48,26 @@ func (t *RequestMissingDocsTool) compose(
 	if err = toolparams.DecodeParam(params.Params, "to", &to); err != nil {
 		return nil, err
 	}
-
-	tenantInfo := pagination.TenantInfo{
-		OrgID: params.OrganizationID,
-		BuID:  params.BusinessUnitID,
+	var documents []string
+	if dErr := toolparams.DecodeParam(params.Params, "requestedDocuments", &documents); dErr != nil {
+		documents = nil
 	}
 
-	// The agent's prose is wrapped by the organization's template rather than
-	// being the whole message, and it renders with no fallback: a template a
-	// carrier authored badly must not be silently replaced on a message sent
-	// under their letterhead.
-	data := t.agentEmailContext(ctx, tenantInfo, subject, body, params.Params)
-	rendered, err := t.templates.RenderMessage(ctx, &documenttemplateports.RenderMessageRequest{
-		TenantInfo: tenantInfo,
-		Kind:       documenttemplate.KindAgentRequestMissingDocsEmail,
-		Data:       data,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return &docsRequest{
-		data:      data,
-		versionID: rendered.VersionID,
-		send: &emailports.SendEmailRequest{
-			TenantInfo:     tenantInfo,
-			ProfileID:      profileID,
-			Purpose:        email.PurposeBilling,
-			To:             to,
-			Subject:        rendered.Subject,
-			HTML:           rendered.HTML,
-			Text:           rendered.Text,
-			IdempotencyKey: params.IdempotencyKey,
+	return t.requests.Compose(ctx, &requestemail.Request{
+		TenantInfo: pagination.TenantInfo{
+			OrgID: params.OrganizationID,
+			BuID:  params.BusinessUnitID,
 		},
-	}, nil
+		Kind:               documenttemplate.KindAgentRequestMissingDocsEmail,
+		ProfileID:          profileID,
+		To:                 to,
+		Subject:            subject,
+		Body:               body,
+		RecipientName:      toolparams.OptionalString(params.Params, "customerName"),
+		ProNumber:          toolparams.OptionalString(params.Params, "shipmentProNumber"),
+		RequestedDocuments: documents,
+		IdempotencyKey:     params.IdempotencyKey,
+	})
 }
 
 func (t *RequestMissingDocsTool) Preview(
@@ -101,38 +79,38 @@ func (t *RequestMissingDocsTool) Preview(
 		return nil, err
 	}
 
-	sender, err := outboundpreview.ResolveEmailSender(ctx, t.senders, composed.send)
+	sender, err := t.requests.From(ctx, composed)
 	if err != nil {
 		return nil, err
 	}
 
 	label := stringutils.FirstNonEmpty(
-		composed.data.CustomerName,
-		strings.Join(composed.send.To, ", "),
+		composed.Data.CustomerName,
+		strings.Join(composed.Send.To, ", "),
 	)
 	send := toolpreview.Send(
 		toolpreview.Record{Resource: permission.ResourceCustomerCommunication, Label: label},
 		outboundpreview.EmailMessagePreview(
 			sender,
-			outboundpreview.RenderedEmailPreview(composed.send, composed.versionID),
+			outboundpreview.RenderedEmailPreview(composed.Send, composed.VersionID),
 		),
 	)
 
-	summary := "Would email " + strings.Join(composed.send.To, ", ") +
+	summary := "Would email " + strings.Join(composed.Send.To, ", ") +
 		" asking for the missing paperwork"
-	if len(composed.data.RequestedDocuments) > 0 {
-		summary += ": " + strings.Join(composed.data.RequestedDocuments, ", ")
+	if len(composed.Data.RequestedDocuments) > 0 {
+		summary += ": " + strings.Join(composed.Data.RequestedDocuments, ", ")
 	}
-	if composed.data.ShipmentProNumber != "" {
-		summary += " for " + composed.data.ShipmentProNumber
+	if composed.Data.ShipmentProNumber != "" {
+		summary += " for " + composed.Data.ShipmentProNumber
 	}
 
 	preview := toolpreview.Build(summary+". It cannot be recalled once sent.", send)
 	outboundpreview.WarnSuppressedRecipients(preview, sender)
 	outboundpreview.WarnSensitiveContent(
 		preview,
-		composed.data.AgentSubject,
-		composed.data.AgentBody,
+		composed.Data.AgentSubject,
+		composed.Data.AgentBody,
 	)
 
 	return preview, nil

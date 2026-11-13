@@ -3,11 +3,15 @@ package watchtowerrepository
 import (
 	"context"
 	"fmt"
+
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/caseownerquery"
 
 	"github.com/emoss08/trenova/pkg/keelexpr"
 
 	"github.com/emoss08/keel"
+	"go.uber.org/fx"
+	"go.uber.org/zap"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -21,8 +25,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"go.uber.org/fx"
-	"go.uber.org/zap"
+	"github.com/emoss08/trenova/shared/timeutils"
 )
 
 const (
@@ -124,6 +127,7 @@ func (r *repository) raise(ctx context.Context, db *keel.DB, item *watchtower.It
 	if item.Status == "" {
 		item.Status = watchtower.StatusOpen
 	}
+	item.DescribedAt = timeutils.NowUnix()
 
 	it := watchtowerdb.Items
 	inserted, err := it.Upsert(ctx, db, []*watchtower.Item{item}, keel.OnConflict(
@@ -148,6 +152,7 @@ func (r *repository) raise(ctx context.Context, db *keel.DB, item *watchtower.It
 		it.Trail,
 		it.Panel,
 		it.Severity,
+		it.DescribedAt,
 	))
 	if err != nil {
 		return err
@@ -208,6 +213,9 @@ func planUpsert(existing, incoming *watchtower.Item) upsertPlan {
 
 func applyUpsert(existing, incoming *watchtower.Item, plan upsertPlan) *watchtower.Item {
 	merged := *existing
+	if plan.reopen || !existing.SameDescription(incoming) {
+		merged.DescribedAt = timeutils.NowUnix()
+	}
 	merged.Title = incoming.Title
 	merged.Summary = incoming.Summary
 	merged.SubjectType = incoming.SubjectType
@@ -237,6 +245,9 @@ func applyUpsert(existing, incoming *watchtower.Item, plan upsertPlan) *watchtow
 		merged.SnoozedUntil = nil
 		merged.EscalationLevel = 0
 		merged.LastEscalatedAt = nil
+		// A condition that came back is a new one to work: the question
+		// asked about the last one is not out about this one.
+		merged.LastRequest = nil
 	}
 	switch {
 	case plan.takeDeadline:
@@ -404,6 +415,7 @@ func workflowSets(item *watchtower.Item) []keel.Assignment {
 		it.AgentRunID.To(item.AgentRunID),
 		keelexpr.OptionalInt64(it.AgentHandedAt, item.AgentHandedAt),
 		it.AgentHandedByID.To(item.AgentHandedByID),
+		it.LastRequest.To(item.LastRequest),
 	}
 }
 

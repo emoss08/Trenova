@@ -30,6 +30,7 @@ type LastAgentSuiteRunRequest struct {
 	Statuses          []agentqualitysuite.SuiteRunStatus
 	Before            int64
 	ExcludeID         pulid.ID
+	IncludeTrials     bool
 }
 
 type ListAgentSuiteRunConnectionRequest struct {

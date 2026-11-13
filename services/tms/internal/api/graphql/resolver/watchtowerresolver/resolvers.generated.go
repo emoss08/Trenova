@@ -11,6 +11,7 @@ type Deps struct {
 	*resolvercore.Core
 	WatchtowerService    watchtowerports.WatchtowerService
 	WatchtowerExceptions watchtowerports.ExceptionService
+	WatchtowerPlays      watchtowerports.PlayService
 }
 
 type MutationResolver struct{ *Deps }

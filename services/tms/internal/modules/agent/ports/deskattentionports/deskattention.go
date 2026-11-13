@@ -3,6 +3,7 @@ package deskattentionports
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/desklens"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/recordcase"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
@@ -13,13 +14,16 @@ import (
 
 type AttentionRequest struct {
 	TenantInfo pagination.TenantInfo
-	Lens       watchtower.DeskLens
+	Lens       desklens.Lens
 	Kinds      []watchtower.SourceKind
 	Severities []watchtower.Severity
 	First      int
 	RecordIDs  []pulid.ID
 	// Working keeps the rows with an item an agent is working on right now.
 	Working bool
+	// Mine narrows a reader who may see everyone's cases to their own and
+	// the ones nobody owns.
+	Mine bool
 }
 
 type Record struct {
@@ -56,6 +60,9 @@ type Attention struct {
 	Counts  LensCounts
 	HasMore bool
 	SeenAt  int64
+	// SeesEveryone says the reader may see everyone's cases, so the list
+	// can offer only their own.
+	SeesEveryone bool
 }
 
 type DeskAttentionService interface {

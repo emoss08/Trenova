@@ -133,7 +133,9 @@ func (s *Service) ListVersions(
 
 // RestoreVersion loads an earlier version as a draft of the agent as it is
 // now: its settings, on the current version number, so saving the draft
-// replaces the agent the way any edit does. Nothing is saved here.
+// replaces the agent the way any edit does. Nothing is saved here. The
+// version asked for is the agent's own counter, which also moves on writes
+// that are not saves, so the save at or before it is the one loaded.
 func (s *Service) RestoreVersion(
 	ctx context.Context,
 	req *agentdefinitionports.GetAgentDefinitionVersionRequest,
@@ -146,11 +148,11 @@ func (s *Service) RestoreVersion(
 		return nil, err
 	}
 
-	version, err := s.versions.Get(ctx, req)
+	version, err := s.versions.LatestAt(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-	if version.Snapshot == nil {
+	if version == nil || version.Snapshot == nil {
 		return nil, errortypes.NewNotFoundError("Agent version")
 	}
 

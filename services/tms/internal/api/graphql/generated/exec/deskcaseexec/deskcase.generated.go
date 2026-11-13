@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/recordcase"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtowerplay"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/deskattentionports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -726,6 +727,27 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
+			{
+				Name:       "play",
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild12,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*recordcase.HandOff)
+					return gqlexec.Resolver[DeskCaseHandOffResolver](ec, "DeskCaseHandOff@deskcase").Play(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalOWatchtowerPlayKind2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerplayᚐKind),
+			},
+			{
+				Name:      "request",
+				HasChild:  true,
+				ChildType: "WatchtowerRequest",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*recordcase.HandOff)
+					return obj.Request, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOWatchtowerRequest2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐRequest),
+			},
 		}},
 		{Object: "DeskCaseHead", Fields: []*gqlexec.Field{
 			{
@@ -857,7 +879,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "fraction",
 				NonNull:  true,
-				ChildErr: errNoChild12,
+				ChildErr: errNoChild13,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*recordcase.Meter)
 					return obj.Fraction, nil
@@ -889,7 +911,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "kind",
 				NonNull:  true,
-				ChildErr: errNoChild13,
+				ChildErr: errNoChild14,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*recordcase.Option)
 					return obj.Kind, nil
@@ -1088,7 +1110,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "x",
 				NonNull:  true,
-				ChildErr: errNoChild12,
+				ChildErr: errNoChild13,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*recordcase.RouteMarker)
 					return obj.X, nil
@@ -1098,7 +1120,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "y",
 				NonNull:  true,
-				ChildErr: errNoChild12,
+				ChildErr: errNoChild13,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*recordcase.RouteMarker)
 					return obj.Y, nil
@@ -1108,7 +1130,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "latitude",
 				NonNull:  true,
-				ChildErr: errNoChild12,
+				ChildErr: errNoChild13,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*recordcase.RouteMarker)
 					return obj.Latitude, nil
@@ -1118,7 +1140,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "longitude",
 				NonNull:  true,
-				ChildErr: errNoChild12,
+				ChildErr: errNoChild13,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*recordcase.RouteMarker)
 					return obj.Longitude, nil
@@ -1140,7 +1162,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "x",
 				NonNull:  true,
-				ChildErr: errNoChild12,
+				ChildErr: errNoChild13,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*recordcase.RoutePoint)
 					return obj.X, nil
@@ -1150,7 +1172,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "y",
 				NonNull:  true,
-				ChildErr: errNoChild12,
+				ChildErr: errNoChild13,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*recordcase.RoutePoint)
 					return obj.Y, nil
@@ -1160,7 +1182,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "latitude",
 				NonNull:  true,
-				ChildErr: errNoChild12,
+				ChildErr: errNoChild13,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*recordcase.RoutePoint)
 					return obj.Latitude, nil
@@ -1170,7 +1192,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "longitude",
 				NonNull:  true,
-				ChildErr: errNoChild12,
+				ChildErr: errNoChild13,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*recordcase.RoutePoint)
 					return obj.Longitude, nil
@@ -1180,7 +1202,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "state",
 				NonNull:  true,
-				ChildErr: errNoChild14,
+				ChildErr: errNoChild15,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*recordcase.RoutePoint)
 					return obj.State, nil
@@ -1265,7 +1287,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "state",
 				NonNull:  true,
-				ChildErr: errNoChild14,
+				ChildErr: errNoChild15,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*recordcase.TimelineRow)
 					return obj.State, nil
@@ -1277,7 +1299,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "key",
 				NonNull:  true,
-				ChildErr: errNoChild15,
+				ChildErr: errNoChild16,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*recordcase.TrustCell)
 					return obj.Key, nil
@@ -1417,6 +1439,7 @@ type DeskCaseFindingResolver interface {
 
 type DeskCaseHandOffResolver interface {
 	Agent(ctx context.Context, obj *recordcase.HandOff) (*agentdefinition.Definition, error)
+	Play(ctx context.Context, obj *recordcase.HandOff) (*watchtowerplay.Kind, error)
 }
 
 type DeskCaseMessageResolver interface {
@@ -1461,10 +1484,11 @@ var (
 	errNoChild9  = errors.New("field of type DeskCaseTone does not have child fields")
 	errNoChild10 = errors.New("field of type DeskCaseReadingStatus does not have child fields")
 	errNoChild11 = errors.New("field of type WatchtowerSourceKind does not have child fields")
-	errNoChild12 = errors.New("field of type Float does not have child fields")
-	errNoChild13 = errors.New("field of type DeskCaseOptionKind does not have child fields")
-	errNoChild14 = errors.New("field of type DeskCasePointState does not have child fields")
-	errNoChild15 = errors.New("field of type DeskCaseTrustKey does not have child fields")
+	errNoChild12 = errors.New("field of type WatchtowerPlayKind does not have child fields")
+	errNoChild13 = errors.New("field of type Float does not have child fields")
+	errNoChild14 = errors.New("field of type DeskCaseOptionKind does not have child fields")
+	errNoChild15 = errors.New("field of type DeskCasePointState does not have child fields")
+	errNoChild16 = errors.New("field of type DeskCaseTrustKey does not have child fields")
 )
 
 func field_Mutation_chooseDeskCaseOption_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
@@ -2046,4 +2070,19 @@ func marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋide
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "User", v)
+}
+
+func marshalOWatchtowerPlayKind2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerplayᚐKind(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *watchtowerplay.Kind) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalString(string(*v))
+	return res
+}
+
+func marshalOWatchtowerRequest2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐRequest(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *watchtower.Request) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "WatchtowerRequest", v)
 }

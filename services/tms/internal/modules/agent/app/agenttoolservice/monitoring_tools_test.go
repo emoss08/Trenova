@@ -6,12 +6,16 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/detentionpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/outboundpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/servicefailuretools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/toolguard"
+	"github.com/emoss08/trenova/internal/modules/agent/app/drivermessage"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
@@ -30,8 +34,6 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func openFailure() *servicefailure.ServiceFailure {
@@ -177,7 +179,7 @@ func TestNotifyDriver_SendsThroughTheDispatchMessageTemplate(t *testing.T) {
 		"shipmentId": shipmentID.String(),
 	})
 
-	require.NoError(t, operationstools.NewNotifyDriverTool(drivers).Execute(t.Context(), params))
+	require.NoError(t, operationstools.NewNotifyDriverTool(drivermessage.New(drivers, nil, nil)).Execute(t.Context(), params))
 
 	require.NotNil(t, drivers.sent)
 	assert.Equal(t, workerID, drivers.sent.WorkerID)
@@ -200,7 +202,7 @@ func TestNotifyDriver_DefaultsThePriorityAndBoundsTheMessage(t *testing.T) {
 	t.Parallel()
 
 	drivers := &fakeDriverNotifier{}
-	tool := operationstools.NewNotifyDriverTool(drivers)
+	tool := operationstools.NewNotifyDriverTool(drivermessage.New(drivers, nil, nil))
 
 	require.NoError(t, tool.Execute(t.Context(), agenttoolstest.ExecuteParams(map[string]any{
 		"workerId": pulid.MustNew("wrk_").String(),
@@ -415,7 +417,7 @@ func TestMonitoringActionTools_RejectAMismatchedActor(t *testing.T) {
 	for _, candidate := range []agenttoolports.AgentTool{
 		servicefailuretools.NewEvaluateServiceFailuresTool(&agenttoolstest.FakeFailureDecider{}),
 		servicefailuretools.NewResolveServiceFailureTool(&agenttoolstest.FakeFailureDecider{}),
-		operationstools.NewNotifyDriverTool(&fakeDriverNotifier{}),
+		operationstools.NewNotifyDriverTool(drivermessage.New(&fakeDriverNotifier{}, nil, nil)),
 		tool,
 		operationstools.NewSendDetentionNoticeTool(&agenttoolstest.FakeDetention{}),
 		operationstools.NewWaiveDetentionTool(&agenttoolstest.FakeDetention{}),
@@ -445,7 +447,7 @@ func TestOutboundTools_AreGatedOnTheCommunicationTheySend(t *testing.T) {
 		resource permission.Resource
 	}{
 		{
-			operationstools.NewNotifyDriverTool(&fakeDriverNotifier{}),
+			operationstools.NewNotifyDriverTool(drivermessage.New(&fakeDriverNotifier{}, nil, nil)),
 			permission.ResourceDriverMessage,
 		},
 		{customerTool, permission.ResourceCustomerCommunication},

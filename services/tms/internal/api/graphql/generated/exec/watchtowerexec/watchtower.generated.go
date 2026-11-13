@@ -11,7 +11,11 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentwork"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtowerpanel"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtowerplay"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/vektah/gqlparser/v2/ast"
@@ -44,7 +48,9 @@ var Shard = &gqlexec.Shard{
 		{Name: "WatchtowerPanel", Implementors: []string{"WatchtowerPanel"}},
 		{Name: "WatchtowerPaper", Implementors: []string{"WatchtowerPaper"}},
 		{Name: "WatchtowerPaperPanel", Implementors: []string{"WatchtowerPaperPanel"}},
+		{Name: "WatchtowerPlay", Implementors: []string{"WatchtowerPlay"}},
 		{Name: "WatchtowerRecord", Implementors: []string{"WatchtowerRecord"}},
+		{Name: "WatchtowerRequest", Implementors: []string{"WatchtowerRequest"}},
 		{Name: "WatchtowerResolutionCodeOption", Implementors: []string{"WatchtowerResolutionCodeOption"}},
 		{Name: "WatchtowerRunPanel", Implementors: []string{"WatchtowerRunPanel"}},
 		{Name: "WatchtowerSightingPanel", Implementors: []string{"WatchtowerSightingPanel"}},
@@ -91,6 +97,31 @@ var Shard = &gqlexec.Shard{
 					return gqlexec.Resolver[MutationResolver](ec, "Mutation@watchtower").HandOffWatchtowerItem(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.HandOffWatchtowerItemInput))
 				},
 				Marshal: gqlexec.Marshal(marshalNWatchtowerHandOffResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐWatchtowerHandOffResult),
+			},
+			{
+				Name:       "rewordWatchtowerPlay",
+				NonNull:    true,
+				IsResolver: true,
+				ChildErr:   errNoChild0,
+				Args:       field_Mutation_rewordWatchtowerPlay_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@watchtower").RewordWatchtowerPlay(ctx, fc.Args["itemId"].(string), fc.Args["input"].(gqlmodel.RewordWatchtowerPlayInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:       "sendWatchtowerPlay",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "WatchtowerItem",
+				Args:       field_Mutation_sendWatchtowerPlay_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[MutationResolver](ec, "Mutation@watchtower").SendWatchtowerPlay(ctx, fc.Args["itemId"].(string), fc.Args["input"].(gqlmodel.SendWatchtowerPlayInput))
+				},
+				Marshal: gqlexec.Marshal(marshalNWatchtowerItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐItem),
 			},
 			{
 				Name:       "assignWatchtowerItem",
@@ -295,7 +326,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild0,
+				ChildErr:   errNoChild1,
 				Args:       field_Query_watchtowerCleared_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
@@ -315,14 +346,28 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalNAgentDefinition2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentdefinitionᚐDefinitionᚄ),
 			},
+			{
+				Name:       "watchtowerPlay",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "WatchtowerPlay",
+				Args:       field_Query_watchtowerPlay_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[QueryResolver](ec, "Query@watchtower").WatchtowerPlay(ctx, fc.Args["itemId"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNWatchtowerPlay2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋwatchtowerportsᚐPlayPreview),
+			},
 		}},
 		{Object: "WatchtowerAgentWork", Fields: []*gqlexec.Field{
 			{
 				Name:     "agentId",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.AgentWork)
+					obj := o.(*agentwork.Work)
 					return obj.AgentID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -334,7 +379,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "AgentDefinition",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.AgentWork)
+					obj := o.(*agentwork.Work)
 					return gqlexec.Resolver[WatchtowerAgentWorkResolver](ec, "WatchtowerAgentWork@watchtower").Agent(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOAgentDefinition2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentdefinitionᚐDefinition),
@@ -342,9 +387,9 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "runId",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.AgentWork)
+					obj := o.(*agentwork.Work)
 					return obj.RunID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
@@ -352,19 +397,19 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "status",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.AgentWork)
+					obj := o.(*agentwork.Work)
 					return obj.Status, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNWatchtowerAgentStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐAgentStatus),
+				Marshal: gqlexec.Marshal(marshalNWatchtowerAgentStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentworkᚐStatus),
 			},
 			{
 				Name:     "step",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.AgentWork)
+					obj := o.(*agentwork.Work)
 					return obj.Step, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
@@ -372,19 +417,19 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "steps",
 				NonNull:  true,
-				ChildErr: errNoChild3,
+				ChildErr: errNoChild4,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.AgentWork)
+					obj := o.(*agentwork.Work)
 					return obj.Steps, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNWatchtowerAgentStep2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐAgentStepᚄ),
+				Marshal: gqlexec.Marshal(marshalNWatchtowerAgentStep2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentworkᚐStepᚄ),
 			},
 			{
 				Name:     "note",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.AgentWork)
+					obj := o.(*agentwork.Work)
 					return obj.Note, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -394,7 +439,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.AgentWork)
+					obj := o.(*agentwork.Work)
 					return obj.Failed, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -404,7 +449,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.AgentWork)
+					obj := o.(*agentwork.Work)
 					return obj.HandedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -413,9 +458,9 @@ var Shard = &gqlexec.Shard{
 				Name:       "handedById",
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild1,
+				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.AgentWork)
+					obj := o.(*agentwork.Work)
 					return gqlexec.Resolver[WatchtowerAgentWorkResolver](ec, "WatchtowerAgentWork@watchtower").HandedByID(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
@@ -427,7 +472,7 @@ var Shard = &gqlexec.Shard{
 				HasChild:   true,
 				ChildType:  "User",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.AgentWork)
+					obj := o.(*agentwork.Work)
 					return gqlexec.Resolver[WatchtowerAgentWorkResolver](ec, "WatchtowerAgentWork@watchtower").HandedBy(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
@@ -437,9 +482,9 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "category",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.AskPanel)
+					obj := o.(*watchtowerpanel.AskPanel)
 					return obj.Category, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -447,9 +492,9 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "tried",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.AskPanel)
+					obj := o.(*watchtowerpanel.AskPanel)
 					return obj.Tried, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -459,9 +504,9 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "system",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.BooksPanel)
+					obj := o.(*watchtowerpanel.BooksPanel)
 					return obj.System, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -469,9 +514,9 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "count",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.BooksPanel)
+					obj := o.(*watchtowerpanel.BooksPanel)
 					return obj.Count, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -481,7 +526,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.BooksPanel)
+					obj := o.(*watchtowerpanel.BooksPanel)
 					return obj.Since, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -491,7 +536,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.BooksPanel)
+					obj := o.(*watchtowerpanel.BooksPanel)
 					return obj.ExpiresAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -501,7 +546,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.BooksPanel)
+					obj := o.(*watchtowerpanel.BooksPanel)
 					return obj.Down, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -511,9 +556,9 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "who",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.ChangePanel)
+					obj := o.(*watchtowerpanel.ChangePanel)
 					return obj.Who, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -521,9 +566,9 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "what",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.ChangePanel)
+					obj := o.(*watchtowerpanel.ChangePanel)
 					return obj.What, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -531,9 +576,9 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "from",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.ChangePanel)
+					obj := o.(*watchtowerpanel.ChangePanel)
 					return obj.From, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -541,9 +586,9 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "to",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.ChangePanel)
+					obj := o.(*watchtowerpanel.ChangePanel)
 					return obj.To, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -551,9 +596,9 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "ref",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.ChangePanel)
+					obj := o.(*watchtowerpanel.ChangePanel)
 					return obj.Ref, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -563,7 +608,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.ChangePanel)
+					obj := o.(*watchtowerpanel.ChangePanel)
 					return obj.At, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -573,9 +618,9 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "place",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.ClockPanel)
+					obj := o.(*watchtowerpanel.ClockPanel)
 					return obj.Place, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -583,9 +628,9 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "customer",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.ClockPanel)
+					obj := o.(*watchtowerpanel.ClockPanel)
 					return obj.Customer, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -595,7 +640,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.ClockPanel)
+					obj := o.(*watchtowerpanel.ClockPanel)
 					return obj.ArrivedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -605,7 +650,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.ClockPanel)
+					obj := o.(*watchtowerpanel.ClockPanel)
 					return obj.FreeEndsAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -615,7 +660,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.ClockPanel)
+					obj := o.(*watchtowerpanel.ClockPanel)
 					return obj.DepartedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -623,9 +668,9 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "freeMinutes",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.ClockPanel)
+					obj := o.(*watchtowerpanel.ClockPanel)
 					return obj.FreeMinutes, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -633,9 +678,9 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "billableMinutes",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.ClockPanel)
+					obj := o.(*watchtowerpanel.ClockPanel)
 					return obj.BillableMinutes, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -643,9 +688,9 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "accrued",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.ClockPanel)
+					obj := o.(*watchtowerpanel.ClockPanel)
 					return obj.Accrued, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -655,9 +700,9 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "who",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.ContactPanel)
+					obj := o.(*watchtowerpanel.ContactPanel)
 					return obj.Who, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -667,7 +712,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.ContactPanel)
+					obj := o.(*watchtowerpanel.ContactPanel)
 					return obj.LastHeardAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -675,9 +720,9 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "everyHours",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.ContactPanel)
+					obj := o.(*watchtowerpanel.ContactPanel)
 					return obj.EveryHours, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -687,7 +732,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.ContactPanel)
+					obj := o.(*watchtowerpanel.ContactPanel)
 					return obj.DueAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -697,7 +742,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "unresolved",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.WatchtowerCounts)
 					return obj.Unresolved, nil
@@ -707,7 +752,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "critical",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.WatchtowerCounts)
 					return obj.Critical, nil
@@ -717,7 +762,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "active",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.WatchtowerCounts)
 					return obj.Active, nil
@@ -727,7 +772,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "activeCritical",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.WatchtowerCounts)
 					return obj.ActiveCritical, nil
@@ -737,7 +782,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "unseen",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.WatchtowerCounts)
 					return obj.Unseen, nil
@@ -747,7 +792,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "unseenCritical",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.WatchtowerCounts)
 					return obj.UnseenCritical, nil
@@ -757,7 +802,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "overdue",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.WatchtowerCounts)
 					return obj.Overdue, nil
@@ -767,7 +812,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "unassigned",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.WatchtowerCounts)
 					return obj.Unassigned, nil
@@ -777,7 +822,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "mine",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.WatchtowerCounts)
 					return obj.Mine, nil
@@ -787,7 +832,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "mineOverdue",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.WatchtowerCounts)
 					return obj.MineOverdue, nil
@@ -797,7 +842,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "withAgents",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.WatchtowerCounts)
 					return obj.WithAgents, nil
@@ -832,7 +877,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.CoveragePanel)
+					obj := o.(*watchtowerpanel.CoveragePanel)
 					return obj.StartsAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -840,9 +885,9 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "reason",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.CoveragePanel)
+					obj := o.(*watchtowerpanel.CoveragePanel)
 					return obj.Reason, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -852,7 +897,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.CoveragePanel)
+					obj := o.(*watchtowerpanel.CoveragePanel)
 					return obj.Exhausted, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -862,7 +907,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.CoveragePanel)
+					obj := o.(*watchtowerpanel.CoveragePanel)
 					return obj.EndedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -872,9 +917,9 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "name",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.ExpiringPaper)
+					obj := o.(*watchtowerpanel.ExpiringPaper)
 					return obj.Name, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -884,7 +929,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.ExpiringPaper)
+					obj := o.(*watchtowerpanel.ExpiringPaper)
 					return obj.ExpiresAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -892,9 +937,9 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "daysLeft",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.ExpiringPaper)
+					obj := o.(*watchtowerpanel.ExpiringPaper)
 					return obj.DaysLeft, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -904,9 +949,9 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "who",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.ExpiryPanel)
+					obj := o.(*watchtowerpanel.ExpiryPanel)
 					return obj.Who, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -917,17 +962,17 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "WatchtowerExpiringPaper",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.ExpiryPanel)
+					obj := o.(*watchtowerpanel.ExpiryPanel)
 					return obj.Papers, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNWatchtowerExpiringPaper2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐExpiringPaperᚄ),
+				Marshal: gqlexec.Marshal(marshalNWatchtowerExpiringPaper2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerpanelᚐExpiringPaperᚄ),
 			},
 		}},
 		{Object: "WatchtowerFact", Fields: []*gqlexec.Field{
 			{
 				Name:     "label",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.WatchtowerFact)
 					return obj.Label, nil
@@ -936,7 +981,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "value",
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.WatchtowerFact)
 					return obj.Value, nil
@@ -957,9 +1002,9 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "name",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.FilePanel)
+					obj := o.(*watchtowerpanel.FilePanel)
 					return obj.Name, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -967,9 +1012,9 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "reason",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.FilePanel)
+					obj := o.(*watchtowerpanel.FilePanel)
 					return obj.Reason, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -979,7 +1024,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.FilePanel)
+					obj := o.(*watchtowerpanel.FilePanel)
 					return obj.ReceivedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -989,9 +1034,9 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "advice",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.FindingPanel)
+					obj := o.(*watchtowerpanel.FindingPanel)
 					return obj.Advice, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -999,9 +1044,9 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "detail",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.FindingPanel)
+					obj := o.(*watchtowerpanel.FindingPanel)
 					return obj.Detail, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1054,7 +1099,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "templates",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.WatchtowerHandOffResult)
 					return obj.Templates, nil
@@ -1066,7 +1111,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "id",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*watchtower.Item)
 					return obj.ID, nil
@@ -1076,7 +1121,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "businessUnitId",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*watchtower.Item)
 					return obj.BusinessUnitID, nil
@@ -1086,7 +1131,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "organizationId",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*watchtower.Item)
 					return obj.OrganizationID, nil
@@ -1106,7 +1151,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "sourceId",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*watchtower.Item)
 					return obj.SourceID, nil
@@ -1126,7 +1171,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "title",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*watchtower.Item)
 					return obj.Title, nil
@@ -1136,7 +1181,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "summary",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*watchtower.Item)
 					return obj.Summary, nil
@@ -1158,7 +1203,7 @@ var Shard = &gqlexec.Shard{
 				Name:       "subjectId",
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild1,
+				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*watchtower.Item)
 					return gqlexec.Resolver[WatchtowerItemResolver](ec, "WatchtowerItem@watchtower").SubjectID(ctx, obj)
@@ -1169,7 +1214,7 @@ var Shard = &gqlexec.Shard{
 				Name:       "eventKind",
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild4,
+				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*watchtower.Item)
 					return gqlexec.Resolver[WatchtowerItemResolver](ec, "WatchtowerItem@watchtower").EventKind(ctx, obj)
@@ -1179,7 +1224,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "path",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*watchtower.Item)
 					return obj.Path, nil
@@ -1218,7 +1263,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "version",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*watchtower.Item)
 					return obj.Version, nil
@@ -1250,7 +1295,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild4,
+				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*watchtower.Item)
 					return gqlexec.Resolver[WatchtowerItemResolver](ec, "WatchtowerItem@watchtower").KindLabel(ctx, obj)
@@ -1271,7 +1316,7 @@ var Shard = &gqlexec.Shard{
 				Name:       "assigneeId",
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild1,
+				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*watchtower.Item)
 					return gqlexec.Resolver[WatchtowerItemResolver](ec, "WatchtowerItem@watchtower").AssigneeID(ctx, obj)
@@ -1344,7 +1389,7 @@ var Shard = &gqlexec.Shard{
 				Name:       "resolutionNote",
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild4,
+				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*watchtower.Item)
 					return gqlexec.Resolver[WatchtowerItemResolver](ec, "WatchtowerItem@watchtower").ResolutionNote(ctx, obj)
@@ -1355,7 +1400,7 @@ var Shard = &gqlexec.Shard{
 				Name:       "resolvedById",
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild1,
+				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*watchtower.Item)
 					return gqlexec.Resolver[WatchtowerItemResolver](ec, "WatchtowerItem@watchtower").ResolvedByID(ctx, obj)
@@ -1386,7 +1431,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "escalationLevel",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*watchtower.Item)
 					return obj.EscalationLevel, nil
@@ -1406,7 +1451,7 @@ var Shard = &gqlexec.Shard{
 				Name:       "dueLabel",
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild4,
+				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*watchtower.Item)
 					return gqlexec.Resolver[WatchtowerItemResolver](ec, "WatchtowerItem@watchtower").DueLabel(ctx, obj)
@@ -1452,7 +1497,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "impact",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*watchtower.Item)
 					return obj.Impact, nil
@@ -1480,13 +1525,13 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*watchtower.Item)
 					return obj.Panel, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOWatchtowerPanel2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐPanel),
+				Marshal: gqlexec.Marshal(marshalOWatchtowerPanel2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerpanelᚐPanel),
 			},
 			{
 				Name:       "suggestedAgentId",
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild1,
+				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*watchtower.Item)
 					return gqlexec.Resolver[WatchtowerItemResolver](ec, "WatchtowerItem@watchtower").SuggestedAgentID(ctx, obj)
@@ -1515,7 +1560,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*watchtower.Item)
 					return gqlexec.Resolver[WatchtowerItemResolver](ec, "WatchtowerItem@watchtower").AgentWork(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalOWatchtowerAgentWork2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐAgentWork),
+				Marshal: gqlexec.Marshal(marshalOWatchtowerAgentWork2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentworkᚐWork),
 			},
 		}},
 		{Object: "WatchtowerItemConnection", Fields: []*gqlexec.Field{
@@ -1567,7 +1612,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "cursor",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.WatchtowerItemEdge)
 					return obj.Cursor, nil
@@ -1579,7 +1624,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "id",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*watchtower.Event)
 					return obj.ID, nil
@@ -1589,7 +1634,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "itemId",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*watchtower.Event)
 					return obj.ItemID, nil
@@ -1610,7 +1655,7 @@ var Shard = &gqlexec.Shard{
 				Name:       "actorId",
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild1,
+				ChildErr:   errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*watchtower.Event)
 					return gqlexec.Resolver[WatchtowerItemEventResolver](ec, "WatchtowerItemEvent@watchtower").ActorID(ctx, obj)
@@ -1632,7 +1677,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "fromValue",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*watchtower.Event)
 					return obj.FromValue, nil
@@ -1642,7 +1687,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "toValue",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*watchtower.Event)
 					return obj.ToValue, nil
@@ -1652,7 +1697,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "note",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*watchtower.Event)
 					return obj.Note, nil
@@ -1684,7 +1729,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "label",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.WatchtowerKindSummary)
 					return obj.Label, nil
@@ -1694,7 +1739,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "count",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.WatchtowerKindSummary)
 					return obj.Count, nil
@@ -1706,9 +1751,9 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "fromName",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.MessagePanel)
+					obj := o.(*watchtowerpanel.MessagePanel)
 					return obj.FromName, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1716,9 +1761,9 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "fromAddress",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.MessagePanel)
+					obj := o.(*watchtowerpanel.MessagePanel)
 					return obj.FromAddress, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1726,9 +1771,9 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "subject",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.MessagePanel)
+					obj := o.(*watchtowerpanel.MessagePanel)
 					return obj.Subject, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1736,9 +1781,9 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "readAs",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.MessagePanel)
+					obj := o.(*watchtowerpanel.MessagePanel)
 					return obj.ReadAs, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1746,9 +1791,9 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "why",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.MessagePanel)
+					obj := o.(*watchtowerpanel.MessagePanel)
 					return obj.Why, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1758,7 +1803,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.MessagePanel)
+					obj := o.(*watchtowerpanel.MessagePanel)
 					return obj.ReceivedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -1768,7 +1813,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.MessagePanel)
+					obj := o.(*watchtowerpanel.MessagePanel)
 					return obj.Held, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -1780,17 +1825,17 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild14,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.MoneyPanel)
+					obj := o.(*watchtowerpanel.MoneyPanel)
 					return obj.Stake, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNWatchtowerMoneyStake2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐMoneyStake),
+				Marshal: gqlexec.Marshal(marshalNWatchtowerMoneyStake2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerpanelᚐMoneyStake),
 			},
 			{
 				Name:     "party",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.MoneyPanel)
+					obj := o.(*watchtowerpanel.MoneyPanel)
 					return obj.Party, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1798,9 +1843,9 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "amount",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.MoneyPanel)
+					obj := o.(*watchtowerpanel.MoneyPanel)
 					return obj.Amount, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1808,9 +1853,9 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "count",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.MoneyPanel)
+					obj := o.(*watchtowerpanel.MoneyPanel)
 					return obj.Count, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -1820,7 +1865,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.MoneyPanel)
+					obj := o.(*watchtowerpanel.MoneyPanel)
 					return obj.DueAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -1828,9 +1873,9 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "reason",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.MoneyPanel)
+					obj := o.(*watchtowerpanel.MoneyPanel)
 					return obj.Reason, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -1842,169 +1887,169 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild15,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.Panel)
+					obj := o.(*watchtowerpanel.Panel)
 					return obj.Kind, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNWatchtowerPanelKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐPanelKind),
+				Marshal: gqlexec.Marshal(marshalNWatchtowerPanelKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerpanelᚐKind),
 			},
 			{
 				Name:      "stop",
 				HasChild:  true,
 				ChildType: "WatchtowerStopPanel",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.Panel)
+					obj := o.(*watchtowerpanel.Panel)
 					return obj.Stop, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOWatchtowerStopPanel2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐStopPanel),
+				Marshal: gqlexec.Marshal(marshalOWatchtowerStopPanel2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerpanelᚐStopPanel),
 			},
 			{
 				Name:      "clock",
 				HasChild:  true,
 				ChildType: "WatchtowerClockPanel",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.Panel)
+					obj := o.(*watchtowerpanel.Panel)
 					return obj.Clock, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOWatchtowerClockPanel2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐClockPanel),
+				Marshal: gqlexec.Marshal(marshalOWatchtowerClockPanel2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerpanelᚐClockPanel),
 			},
 			{
 				Name:      "paper",
 				HasChild:  true,
 				ChildType: "WatchtowerPaperPanel",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.Panel)
+					obj := o.(*watchtowerpanel.Panel)
 					return obj.Paper, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOWatchtowerPaperPanel2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐPaperPanel),
+				Marshal: gqlexec.Marshal(marshalOWatchtowerPaperPanel2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerpanelᚐPaperPanel),
 			},
 			{
 				Name:      "message",
 				HasChild:  true,
 				ChildType: "WatchtowerMessagePanel",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.Panel)
+					obj := o.(*watchtowerpanel.Panel)
 					return obj.Message, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOWatchtowerMessagePanel2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐMessagePanel),
+				Marshal: gqlexec.Marshal(marshalOWatchtowerMessagePanel2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerpanelᚐMessagePanel),
 			},
 			{
 				Name:      "expiry",
 				HasChild:  true,
 				ChildType: "WatchtowerExpiryPanel",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.Panel)
+					obj := o.(*watchtowerpanel.Panel)
 					return obj.Expiry, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOWatchtowerExpiryPanel2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐExpiryPanel),
+				Marshal: gqlexec.Marshal(marshalOWatchtowerExpiryPanel2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerpanelᚐExpiryPanel),
 			},
 			{
 				Name:      "coverage",
 				HasChild:  true,
 				ChildType: "WatchtowerCoveragePanel",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.Panel)
+					obj := o.(*watchtowerpanel.Panel)
 					return obj.Coverage, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOWatchtowerCoveragePanel2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐCoveragePanel),
+				Marshal: gqlexec.Marshal(marshalOWatchtowerCoveragePanel2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerpanelᚐCoveragePanel),
 			},
 			{
 				Name:      "contact",
 				HasChild:  true,
 				ChildType: "WatchtowerContactPanel",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.Panel)
+					obj := o.(*watchtowerpanel.Panel)
 					return obj.Contact, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOWatchtowerContactPanel2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐContactPanel),
+				Marshal: gqlexec.Marshal(marshalOWatchtowerContactPanel2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerpanelᚐContactPanel),
 			},
 			{
 				Name:      "run",
 				HasChild:  true,
 				ChildType: "WatchtowerRunPanel",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.Panel)
+					obj := o.(*watchtowerpanel.Panel)
 					return obj.Run, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOWatchtowerRunPanel2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐRunPanel),
+				Marshal: gqlexec.Marshal(marshalOWatchtowerRunPanel2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerpanelᚐRunPanel),
 			},
 			{
 				Name:      "books",
 				HasChild:  true,
 				ChildType: "WatchtowerBooksPanel",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.Panel)
+					obj := o.(*watchtowerpanel.Panel)
 					return obj.Books, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOWatchtowerBooksPanel2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐBooksPanel),
+				Marshal: gqlexec.Marshal(marshalOWatchtowerBooksPanel2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerpanelᚐBooksPanel),
 			},
 			{
 				Name:      "money",
 				HasChild:  true,
 				ChildType: "WatchtowerMoneyPanel",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.Panel)
+					obj := o.(*watchtowerpanel.Panel)
 					return obj.Money, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOWatchtowerMoneyPanel2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐMoneyPanel),
+				Marshal: gqlexec.Marshal(marshalOWatchtowerMoneyPanel2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerpanelᚐMoneyPanel),
 			},
 			{
 				Name:      "change",
 				HasChild:  true,
 				ChildType: "WatchtowerChangePanel",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.Panel)
+					obj := o.(*watchtowerpanel.Panel)
 					return obj.Change, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOWatchtowerChangePanel2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐChangePanel),
+				Marshal: gqlexec.Marshal(marshalOWatchtowerChangePanel2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerpanelᚐChangePanel),
 			},
 			{
 				Name:      "ask",
 				HasChild:  true,
 				ChildType: "WatchtowerAskPanel",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.Panel)
+					obj := o.(*watchtowerpanel.Panel)
 					return obj.Ask, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOWatchtowerAskPanel2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐAskPanel),
+				Marshal: gqlexec.Marshal(marshalOWatchtowerAskPanel2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerpanelᚐAskPanel),
 			},
 			{
 				Name:      "finding",
 				HasChild:  true,
 				ChildType: "WatchtowerFindingPanel",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.Panel)
+					obj := o.(*watchtowerpanel.Panel)
 					return obj.Finding, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOWatchtowerFindingPanel2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐFindingPanel),
+				Marshal: gqlexec.Marshal(marshalOWatchtowerFindingPanel2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerpanelᚐFindingPanel),
 			},
 			{
 				Name:      "file",
 				HasChild:  true,
 				ChildType: "WatchtowerFilePanel",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.Panel)
+					obj := o.(*watchtowerpanel.Panel)
 					return obj.File, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOWatchtowerFilePanel2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐFilePanel),
+				Marshal: gqlexec.Marshal(marshalOWatchtowerFilePanel2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerpanelᚐFilePanel),
 			},
 			{
 				Name:      "sighting",
 				HasChild:  true,
 				ChildType: "WatchtowerSightingPanel",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.Panel)
+					obj := o.(*watchtowerpanel.Panel)
 					return obj.Sighting, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOWatchtowerSightingPanel2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐSightingPanel),
+				Marshal: gqlexec.Marshal(marshalOWatchtowerSightingPanel2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerpanelᚐSightingPanel),
 			},
 		}},
 		{Object: "WatchtowerPaper", Fields: []*gqlexec.Field{
 			{
 				Name:     "name",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.Paper)
+					obj := o.(*watchtowerpanel.Paper)
 					return obj.Name, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -2014,7 +2059,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.Paper)
+					obj := o.(*watchtowerpanel.Paper)
 					return obj.OnFile, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -2024,9 +2069,9 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "customer",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.PaperPanel)
+					obj := o.(*watchtowerpanel.PaperPanel)
 					return obj.Customer, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -2036,7 +2081,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.PaperPanel)
+					obj := o.(*watchtowerpanel.PaperPanel)
 					return obj.DeliveredAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -2047,20 +2092,122 @@ var Shard = &gqlexec.Shard{
 				HasChild:  true,
 				ChildType: "WatchtowerPaper",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.PaperPanel)
+					obj := o.(*watchtowerpanel.PaperPanel)
 					return obj.Papers, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNWatchtowerPaper2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐPaperᚄ),
+				Marshal: gqlexec.Marshal(marshalNWatchtowerPaper2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerpanelᚐPaperᚄ),
 			},
 			{
 				Name:     "holds",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.PaperPanel)
+					obj := o.(*watchtowerpanel.PaperPanel)
 					return obj.Holds, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+		}},
+		{Object: "WatchtowerPlay", Fields: []*gqlexec.Field{
+			{
+				Name:     "itemId",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*watchtowerports.PlayPreview)
+					return obj.ItemID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2githubᚗcomᚋemoss08ᚋtrenovaᚋsharedᚋpulidᚐID),
+			},
+			{
+				Name:     "kind",
+				NonNull:  true,
+				ChildErr: errNoChild16,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*watchtowerports.PlayPreview)
+					return obj.Kind, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNWatchtowerPlayKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerplayᚐKind),
+			},
+			{
+				Name:     "channel",
+				NonNull:  true,
+				ChildErr: errNoChild17,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*watchtowerports.PlayPreview)
+					return obj.Channel, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNWatchtowerPlayChannel2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerplayᚐChannel),
+			},
+			{
+				Name:     "recipient",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*watchtowerports.PlayPreview)
+					return obj.Recipient, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "sender",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*watchtowerports.PlayPreview)
+					return obj.Sender, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "subject",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*watchtowerports.PlayPreview)
+					return obj.Subject, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "message",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*watchtowerports.PlayPreview)
+					return obj.Message, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "messageLimit",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*watchtowerports.PlayPreview)
+					return obj.MessageLimit, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "summary",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*watchtowerports.PlayPreview)
+					return obj.Summary, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "canReword",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*watchtowerports.PlayPreview)
+					return obj.CanReword, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
 		}},
 		{Object: "WatchtowerRecord", Fields: []*gqlexec.Field{
@@ -2069,7 +2216,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild4,
+				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*watchtower.RecordRef)
 					return gqlexec.Resolver[WatchtowerRecordResolver](ec, "WatchtowerRecord@watchtower").Kind(ctx, obj)
@@ -2081,7 +2228,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:    true,
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild4,
+				ChildErr:   errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*watchtower.RecordRef)
 					return gqlexec.Resolver[WatchtowerRecordResolver](ec, "WatchtowerRecord@watchtower").Noun(ctx, obj)
@@ -2091,10 +2238,42 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "label",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*watchtower.RecordRef)
 					return obj.Label, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+		}},
+		{Object: "WatchtowerRequest", Fields: []*gqlexec.Field{
+			{
+				Name:     "at",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*watchtower.Request)
+					return obj.At, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
+			},
+			{
+				Name:     "by",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*watchtower.Request)
+					return obj.ByName, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "summary",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*watchtower.Request)
+					return obj.Summary, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
@@ -2113,7 +2292,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "label",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*watchtower.ResolutionCodeOption)
 					return obj.Label, nil
@@ -2135,9 +2314,9 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "agent",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.RunPanel)
+					obj := o.(*watchtowerpanel.RunPanel)
 					return obj.Agent, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -2145,9 +2324,9 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "reason",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.RunPanel)
+					obj := o.(*watchtowerpanel.RunPanel)
 					return obj.Reason, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -2157,7 +2336,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.RunPanel)
+					obj := o.(*watchtowerpanel.RunPanel)
 					return obj.FailedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -2169,7 +2348,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.SightingPanel)
+					obj := o.(*watchtowerpanel.SightingPanel)
 					return obj.Departure, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -2177,9 +2356,9 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "place",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.SightingPanel)
+					obj := o.(*watchtowerpanel.SightingPanel)
 					return obj.Place, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -2189,7 +2368,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.SightingPanel)
+					obj := o.(*watchtowerpanel.SightingPanel)
 					return obj.SeenAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -2197,9 +2376,9 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "why",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.SightingPanel)
+					obj := o.(*watchtowerpanel.SightingPanel)
 					return obj.Why, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -2209,29 +2388,29 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "role",
 				NonNull:  true,
-				ChildErr: errNoChild16,
+				ChildErr: errNoChild18,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.StopPanel)
+					obj := o.(*watchtowerpanel.StopPanel)
 					return obj.Role, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNWatchtowerStopRole2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐStopRole),
+				Marshal: gqlexec.Marshal(marshalNWatchtowerStopRole2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerpanelᚐStopRole),
 			},
 			{
 				Name:     "verdict",
 				NonNull:  true,
-				ChildErr: errNoChild17,
+				ChildErr: errNoChild19,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.StopPanel)
+					obj := o.(*watchtowerpanel.StopPanel)
 					return obj.Verdict, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNWatchtowerStopVerdict2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐStopVerdict),
+				Marshal: gqlexec.Marshal(marshalNWatchtowerStopVerdict2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerpanelᚐStopVerdict),
 			},
 			{
 				Name:     "place",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.StopPanel)
+					obj := o.(*watchtowerpanel.StopPanel)
 					return obj.Place, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
@@ -2241,7 +2420,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.StopPanel)
+					obj := o.(*watchtowerpanel.StopPanel)
 					return obj.WindowEnd, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -2251,7 +2430,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.StopPanel)
+					obj := o.(*watchtowerpanel.StopPanel)
 					return obj.EstimatedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -2261,7 +2440,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.StopPanel)
+					obj := o.(*watchtowerpanel.StopPanel)
 					return obj.ArrivedAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -2271,7 +2450,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.StopPanel)
+					obj := o.(*watchtowerpanel.StopPanel)
 					return obj.LastHeardAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
@@ -2279,9 +2458,9 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "milesRemaining",
 				NonNull:  true,
-				ChildErr: errNoChild0,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.StopPanel)
+					obj := o.(*watchtowerpanel.StopPanel)
 					return obj.MilesRemaining, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int64),
@@ -2291,7 +2470,7 @@ var Shard = &gqlexec.Shard{
 				NonNull:  true,
 				ChildErr: errNoChild5,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*watchtower.StopPanel)
+					obj := o.(*watchtowerpanel.StopPanel)
 					return obj.Stale, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
@@ -2310,7 +2489,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "text",
 				NonNull:  true,
-				ChildErr: errNoChild4,
+				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.WatchtowerTrailEvent)
 					return obj.Text, nil
@@ -2324,6 +2503,8 @@ var Shard = &gqlexec.Shard{
 		{Name: "HandOffWatchtowerItemInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputHandOffWatchtowerItemInput)},
 		{Name: "ReopenWatchtowerItemInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputReopenWatchtowerItemInput)},
 		{Name: "ResolveWatchtowerItemInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputResolveWatchtowerItemInput)},
+		{Name: "RewordWatchtowerPlayInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputRewordWatchtowerPlayInput)},
+		{Name: "SendWatchtowerPlayInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputSendWatchtowerPlayInput)},
 		{Name: "SetWatchtowerItemDueInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputSetWatchtowerItemDueInput)},
 		{Name: "SnoozeWatchtowerItemInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputSnoozeWatchtowerItemInput)},
 		{Name: "WatchtowerItemsInput", Unmarshal: gqlexec.Unmarshal(unmarshalInputWatchtowerItemsInput)},
@@ -2342,6 +2523,8 @@ type MutationResolver interface {
 	MarkWatchtowerSeen(ctx context.Context, seenAt *int) (*gqlmodel.WatchtowerCounts, error)
 	DismissWatchtowerItem(ctx context.Context, id string) (*watchtower.Item, error)
 	HandOffWatchtowerItem(ctx context.Context, id string, input gqlmodel.HandOffWatchtowerItemInput) (*gqlmodel.WatchtowerHandOffResult, error)
+	RewordWatchtowerPlay(ctx context.Context, itemID string, input gqlmodel.RewordWatchtowerPlayInput) (string, error)
+	SendWatchtowerPlay(ctx context.Context, itemID string, input gqlmodel.SendWatchtowerPlayInput) (*watchtower.Item, error)
 	AssignWatchtowerItem(ctx context.Context, id string, input gqlmodel.AssignWatchtowerItemInput) (*watchtower.Item, error)
 	AcknowledgeWatchtowerItem(ctx context.Context, id string, expectedVersion *int) (*watchtower.Item, error)
 	StartWatchtowerItem(ctx context.Context, id string, expectedVersion *int) (*watchtower.Item, error)
@@ -2362,12 +2545,13 @@ type QueryResolver interface {
 	WatchtowerResolutionCodes(ctx context.Context) ([]*watchtower.ResolutionCodeOption, error)
 	WatchtowerCleared(ctx context.Context, since int) (int, error)
 	WatchtowerHandOffAgents(ctx context.Context) ([]*agentdefinition.Definition, error)
+	WatchtowerPlay(ctx context.Context, itemID string) (*watchtowerports.PlayPreview, error)
 }
 
 type WatchtowerAgentWorkResolver interface {
-	Agent(ctx context.Context, obj *watchtower.AgentWork) (*agentdefinition.Definition, error)
-	HandedByID(ctx context.Context, obj *watchtower.AgentWork) (*string, error)
-	HandedBy(ctx context.Context, obj *watchtower.AgentWork) (*tenant.User, error)
+	Agent(ctx context.Context, obj *agentwork.Work) (*agentdefinition.Definition, error)
+	HandedByID(ctx context.Context, obj *agentwork.Work) (*string, error)
+	HandedBy(ctx context.Context, obj *agentwork.Work) (*tenant.User, error)
 }
 
 type WatchtowerItemEventResolver interface {
@@ -2394,7 +2578,7 @@ type WatchtowerItemResolver interface {
 	Trail(ctx context.Context, obj *watchtower.Item) ([]*gqlmodel.WatchtowerTrailEvent, error)
 	SuggestedAgentID(ctx context.Context, obj *watchtower.Item) (*string, error)
 	SuggestedAgent(ctx context.Context, obj *watchtower.Item) (*agentdefinition.Definition, error)
-	AgentWork(ctx context.Context, obj *watchtower.Item) (*watchtower.AgentWork, error)
+	AgentWork(ctx context.Context, obj *watchtower.Item) (*agentwork.Work, error)
 }
 
 type WatchtowerRecordResolver interface {
@@ -2403,11 +2587,11 @@ type WatchtowerRecordResolver interface {
 }
 
 var (
-	errNoChild0  = errors.New("field of type Int does not have child fields")
-	errNoChild1  = errors.New("field of type ID does not have child fields")
-	errNoChild2  = errors.New("field of type WatchtowerAgentStatus does not have child fields")
-	errNoChild3  = errors.New("field of type WatchtowerAgentStep does not have child fields")
-	errNoChild4  = errors.New("field of type String does not have child fields")
+	errNoChild0  = errors.New("field of type String does not have child fields")
+	errNoChild1  = errors.New("field of type Int does not have child fields")
+	errNoChild2  = errors.New("field of type ID does not have child fields")
+	errNoChild3  = errors.New("field of type WatchtowerAgentStatus does not have child fields")
+	errNoChild4  = errors.New("field of type WatchtowerAgentStep does not have child fields")
 	errNoChild5  = errors.New("field of type Boolean does not have child fields")
 	errNoChild6  = errors.New("field of type Timestamp does not have child fields")
 	errNoChild7  = errors.New("field of type WatchtowerSourceKind does not have child fields")
@@ -2419,8 +2603,10 @@ var (
 	errNoChild13 = errors.New("field of type WatchtowerItemEventKind does not have child fields")
 	errNoChild14 = errors.New("field of type WatchtowerMoneyStake does not have child fields")
 	errNoChild15 = errors.New("field of type WatchtowerPanelKind does not have child fields")
-	errNoChild16 = errors.New("field of type WatchtowerStopRole does not have child fields")
-	errNoChild17 = errors.New("field of type WatchtowerStopVerdict does not have child fields")
+	errNoChild16 = errors.New("field of type WatchtowerPlayKind does not have child fields")
+	errNoChild17 = errors.New("field of type WatchtowerPlayChannel does not have child fields")
+	errNoChild18 = errors.New("field of type WatchtowerStopRole does not have child fields")
+	errNoChild19 = errors.New("field of type WatchtowerStopVerdict does not have child fields")
 )
 
 func field_Mutation_markWatchtowerSeen_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
@@ -2462,6 +2648,48 @@ func field_Mutation_handOffWatchtowerItem_args(ctx context.Context, ec *gqlexec.
 	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input",
 		func(ctx context.Context, v any) (gqlmodel.HandOffWatchtowerItemInput, error) {
 			return unmarshalNHandOffWatchtowerItemInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐHandOffWatchtowerItemInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
+
+func field_Mutation_rewordWatchtowerPlay_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "itemId",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["itemId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.RewordWatchtowerPlayInput, error) {
+			return unmarshalNRewordWatchtowerPlayInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRewordWatchtowerPlayInput(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["input"] = arg1
+	return args, nil
+}
+
+func field_Mutation_sendWatchtowerPlay_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 2)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "itemId",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["itemId"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "input",
+		func(ctx context.Context, v any) (gqlmodel.SendWatchtowerPlayInput, error) {
+			return unmarshalNSendWatchtowerPlayInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSendWatchtowerPlayInput(ctx, ec, v)
 		})
 	if err != nil {
 		return nil, err
@@ -2732,6 +2960,19 @@ func field_Query_watchtowerCleared_args(ctx context.Context, ec *gqlexec.Exec, r
 	return args, nil
 }
 
+func field_Query_watchtowerPlay_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "itemId",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["itemId"] = arg0
+	return args, nil
+}
+
 func unmarshalInputAssignWatchtowerItemInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.AssignWatchtowerItemInput, error) {
 	var it gqlmodel.AssignWatchtowerItemInput
 	if obj == nil {
@@ -2882,6 +3123,73 @@ func unmarshalInputResolveWatchtowerItemInput(ctx context.Context, ec *gqlexec.E
 				return it, err
 			}
 			it.ExpectedVersion = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputRewordWatchtowerPlayInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.RewordWatchtowerPlayInput, error) {
+	var it gqlmodel.RewordWatchtowerPlayInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"message", "guidance"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "message":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("message"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Message = data
+		case "guidance":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("guidance"))
+			data, err := unmarshalNString2string(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Guidance = data
+		}
+	}
+	return it, nil
+}
+
+func unmarshalInputSendWatchtowerPlayInput(ctx context.Context, ec *gqlexec.Exec, obj any) (gqlmodel.SendWatchtowerPlayInput, error) {
+	var it gqlmodel.SendWatchtowerPlayInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"message"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "message":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("message"))
+			data, err := unmarshalOString2ᚖstring(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Message = data
 		}
 	}
 	return it, nil
@@ -3132,6 +3440,16 @@ func unmarshalNResolveWatchtowerItemInput2githubᚗcomᚋemoss08ᚋtrenovaᚋint
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func unmarshalNRewordWatchtowerPlayInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐRewordWatchtowerPlayInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.RewordWatchtowerPlayInput, error) {
+	res, err := unmarshalInputRewordWatchtowerPlayInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func unmarshalNSendWatchtowerPlayInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSendWatchtowerPlayInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.SendWatchtowerPlayInput, error) {
+	res, err := unmarshalInputSendWatchtowerPlayInput(ctx, ec, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func unmarshalNSetWatchtowerItemDueInput2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐSetWatchtowerItemDueInput(ctx context.Context, ec *gqlexec.Exec, v any) (gqlmodel.SetWatchtowerItemDueInput, error) {
 	res, err := unmarshalInputSetWatchtowerItemDueInput(ctx, ec, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -3346,7 +3664,7 @@ func marshalNTimestamp2int64(ctx context.Context, ec *gqlexec.Exec, sel ast.Sele
 	return res
 }
 
-func marshalNWatchtowerAgentStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐAgentStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v watchtower.AgentStatus) graphql.Marshaler {
+func marshalNWatchtowerAgentStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentworkᚐStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agentwork.Status) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -3354,7 +3672,7 @@ func marshalNWatchtowerAgentStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return res
 }
 
-func marshalNWatchtowerAgentStep2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐAgentStep(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v watchtower.AgentStep) graphql.Marshaler {
+func marshalNWatchtowerAgentStep2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentworkᚐStep(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agentwork.Step) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -3362,9 +3680,9 @@ func marshalNWatchtowerAgentStep2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋm
 	return res
 }
 
-func marshalNWatchtowerAgentStep2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐAgentStepᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []watchtower.AgentStep) graphql.Marshaler {
-	return gqlexec.List[watchtower.AgentStep]{
-		Elem:        marshalNWatchtowerAgentStep2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐAgentStep,
+func marshalNWatchtowerAgentStep2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentworkᚐStepᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []agentwork.Step) graphql.Marshaler {
+	return gqlexec.List[agentwork.Step]{
+		Elem:        marshalNWatchtowerAgentStep2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentworkᚐStep,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
@@ -3378,13 +3696,13 @@ func marshalNWatchtowerCounts2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋa
 	return ec.MarshalType(ctx, sel, "WatchtowerCounts", v)
 }
 
-func marshalNWatchtowerExpiringPaper2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐExpiringPaper(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v watchtower.ExpiringPaper) graphql.Marshaler {
+func marshalNWatchtowerExpiringPaper2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerpanelᚐExpiringPaper(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v watchtowerpanel.ExpiringPaper) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "WatchtowerExpiringPaper", &v)
 }
 
-func marshalNWatchtowerExpiringPaper2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐExpiringPaperᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []watchtower.ExpiringPaper) graphql.Marshaler {
-	return gqlexec.List[watchtower.ExpiringPaper]{
-		Elem:        marshalNWatchtowerExpiringPaper2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐExpiringPaper,
+func marshalNWatchtowerExpiringPaper2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerpanelᚐExpiringPaperᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []watchtowerpanel.ExpiringPaper) graphql.Marshaler {
+	return gqlexec.List[watchtowerpanel.ExpiringPaper]{
+		Elem:        marshalNWatchtowerExpiringPaper2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerpanelᚐExpiringPaper,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
@@ -3494,7 +3812,7 @@ func marshalNWatchtowerKindSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinterna
 	return ec.MarshalType(ctx, sel, "WatchtowerKindSummary", v)
 }
 
-func marshalNWatchtowerMoneyStake2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐMoneyStake(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v watchtower.MoneyStake) graphql.Marshaler {
+func marshalNWatchtowerMoneyStake2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerpanelᚐMoneyStake(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v watchtowerpanel.MoneyStake) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -3502,7 +3820,7 @@ func marshalNWatchtowerMoneyStake2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋ
 	return res
 }
 
-func marshalNWatchtowerPanelKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐPanelKind(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v watchtower.PanelKind) graphql.Marshaler {
+func marshalNWatchtowerPanelKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerpanelᚐKind(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v watchtowerpanel.Kind) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -3510,16 +3828,40 @@ func marshalNWatchtowerPanelKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋm
 	return res
 }
 
-func marshalNWatchtowerPaper2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐPaper(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v watchtower.Paper) graphql.Marshaler {
+func marshalNWatchtowerPaper2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerpanelᚐPaper(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v watchtowerpanel.Paper) graphql.Marshaler {
 	return ec.MarshalType(ctx, sel, "WatchtowerPaper", &v)
 }
 
-func marshalNWatchtowerPaper2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐPaperᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []watchtower.Paper) graphql.Marshaler {
-	return gqlexec.List[watchtower.Paper]{
-		Elem:        marshalNWatchtowerPaper2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐPaper,
+func marshalNWatchtowerPaper2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerpanelᚐPaperᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []watchtowerpanel.Paper) graphql.Marshaler {
+	return gqlexec.List[watchtowerpanel.Paper]{
+		Elem:        marshalNWatchtowerPaper2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerpanelᚐPaper,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNWatchtowerPlay2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋportsᚋwatchtowerportsᚐPlayPreview(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *watchtowerports.PlayPreview) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "WatchtowerPlay", v)
+}
+
+func marshalNWatchtowerPlayChannel2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerplayᚐChannel(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v watchtowerplay.Channel) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
+func marshalNWatchtowerPlayKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerplayᚐKind(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v watchtowerplay.Kind) graphql.Marshaler {
+	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
 }
 
 func marshalNWatchtowerResolutionCode2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐResolutionCode(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v watchtower.ResolutionCode) graphql.Marshaler {
@@ -3562,7 +3904,7 @@ func marshalNWatchtowerSourceKind2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋ
 	return res
 }
 
-func marshalNWatchtowerStopRole2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐStopRole(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v watchtower.StopRole) graphql.Marshaler {
+func marshalNWatchtowerStopRole2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerpanelᚐStopRole(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v watchtowerpanel.StopRole) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -3570,7 +3912,7 @@ func marshalNWatchtowerStopRole2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmo
 	return res
 }
 
-func marshalNWatchtowerStopVerdict2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐStopVerdict(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v watchtower.StopVerdict) graphql.Marshaler {
+func marshalNWatchtowerStopVerdict2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerpanelᚐStopVerdict(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v watchtowerpanel.StopVerdict) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
@@ -3655,49 +3997,49 @@ func marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋide
 	return ec.MarshalType(ctx, sel, "User", v)
 }
 
-func marshalOWatchtowerAgentWork2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐAgentWork(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *watchtower.AgentWork) graphql.Marshaler {
+func marshalOWatchtowerAgentWork2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentworkᚐWork(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agentwork.Work) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "WatchtowerAgentWork", v)
 }
 
-func marshalOWatchtowerAskPanel2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐAskPanel(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *watchtower.AskPanel) graphql.Marshaler {
+func marshalOWatchtowerAskPanel2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerpanelᚐAskPanel(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *watchtowerpanel.AskPanel) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "WatchtowerAskPanel", v)
 }
 
-func marshalOWatchtowerBooksPanel2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐBooksPanel(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *watchtower.BooksPanel) graphql.Marshaler {
+func marshalOWatchtowerBooksPanel2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerpanelᚐBooksPanel(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *watchtowerpanel.BooksPanel) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "WatchtowerBooksPanel", v)
 }
 
-func marshalOWatchtowerChangePanel2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐChangePanel(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *watchtower.ChangePanel) graphql.Marshaler {
+func marshalOWatchtowerChangePanel2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerpanelᚐChangePanel(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *watchtowerpanel.ChangePanel) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "WatchtowerChangePanel", v)
 }
 
-func marshalOWatchtowerClockPanel2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐClockPanel(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *watchtower.ClockPanel) graphql.Marshaler {
+func marshalOWatchtowerClockPanel2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerpanelᚐClockPanel(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *watchtowerpanel.ClockPanel) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "WatchtowerClockPanel", v)
 }
 
-func marshalOWatchtowerContactPanel2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐContactPanel(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *watchtower.ContactPanel) graphql.Marshaler {
+func marshalOWatchtowerContactPanel2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerpanelᚐContactPanel(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *watchtowerpanel.ContactPanel) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "WatchtowerContactPanel", v)
 }
 
-func marshalOWatchtowerCoveragePanel2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐCoveragePanel(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *watchtower.CoveragePanel) graphql.Marshaler {
+func marshalOWatchtowerCoveragePanel2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerpanelᚐCoveragePanel(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *watchtowerpanel.CoveragePanel) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -3712,49 +4054,49 @@ func marshalOWatchtowerDueSource2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return res
 }
 
-func marshalOWatchtowerExpiryPanel2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐExpiryPanel(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *watchtower.ExpiryPanel) graphql.Marshaler {
+func marshalOWatchtowerExpiryPanel2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerpanelᚐExpiryPanel(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *watchtowerpanel.ExpiryPanel) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "WatchtowerExpiryPanel", v)
 }
 
-func marshalOWatchtowerFilePanel2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐFilePanel(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *watchtower.FilePanel) graphql.Marshaler {
+func marshalOWatchtowerFilePanel2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerpanelᚐFilePanel(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *watchtowerpanel.FilePanel) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "WatchtowerFilePanel", v)
 }
 
-func marshalOWatchtowerFindingPanel2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐFindingPanel(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *watchtower.FindingPanel) graphql.Marshaler {
+func marshalOWatchtowerFindingPanel2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerpanelᚐFindingPanel(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *watchtowerpanel.FindingPanel) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "WatchtowerFindingPanel", v)
 }
 
-func marshalOWatchtowerMessagePanel2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐMessagePanel(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *watchtower.MessagePanel) graphql.Marshaler {
+func marshalOWatchtowerMessagePanel2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerpanelᚐMessagePanel(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *watchtowerpanel.MessagePanel) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "WatchtowerMessagePanel", v)
 }
 
-func marshalOWatchtowerMoneyPanel2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐMoneyPanel(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *watchtower.MoneyPanel) graphql.Marshaler {
+func marshalOWatchtowerMoneyPanel2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerpanelᚐMoneyPanel(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *watchtowerpanel.MoneyPanel) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "WatchtowerMoneyPanel", v)
 }
 
-func marshalOWatchtowerPanel2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐPanel(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *watchtower.Panel) graphql.Marshaler {
+func marshalOWatchtowerPanel2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerpanelᚐPanel(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *watchtowerpanel.Panel) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "WatchtowerPanel", v)
 }
 
-func marshalOWatchtowerPaperPanel2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐPaperPanel(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *watchtower.PaperPanel) graphql.Marshaler {
+func marshalOWatchtowerPaperPanel2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerpanelᚐPaperPanel(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *watchtowerpanel.PaperPanel) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -3776,21 +4118,21 @@ func marshalOWatchtowerResolutionCode2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinte
 	return res
 }
 
-func marshalOWatchtowerRunPanel2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐRunPanel(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *watchtower.RunPanel) graphql.Marshaler {
+func marshalOWatchtowerRunPanel2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerpanelᚐRunPanel(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *watchtowerpanel.RunPanel) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "WatchtowerRunPanel", v)
 }
 
-func marshalOWatchtowerSightingPanel2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐSightingPanel(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *watchtower.SightingPanel) graphql.Marshaler {
+func marshalOWatchtowerSightingPanel2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerpanelᚐSightingPanel(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *watchtowerpanel.SightingPanel) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "WatchtowerSightingPanel", v)
 }
 
-func marshalOWatchtowerStopPanel2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐStopPanel(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *watchtower.StopPanel) graphql.Marshaler {
+func marshalOWatchtowerStopPanel2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerpanelᚐStopPanel(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *watchtowerpanel.StopPanel) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

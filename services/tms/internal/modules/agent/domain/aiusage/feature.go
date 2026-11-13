@@ -30,6 +30,7 @@ const (
 	FeaturePaletteAnswer               = Feature("PaletteAnswer")
 	FeatureInsightNarration            = Feature("InsightNarration")
 	FeatureCaseReading                 = Feature("CaseReading")
+	FeatureRequestWording              = Feature("RequestWording")
 )
 
 func AllFeatures() []Feature {
@@ -59,6 +60,7 @@ func AllFeatures() []Feature {
 		FeaturePaletteAnswer,
 		FeatureInsightNarration,
 		FeatureCaseReading,
+		FeatureRequestWording,
 	}
 }
 

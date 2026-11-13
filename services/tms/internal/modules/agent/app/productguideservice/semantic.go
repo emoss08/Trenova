@@ -205,6 +205,13 @@ func (s *Service) fuse(
 		if left != right {
 			return left > right
 		}
+		// A page found by the words asked for and a page that only resembles
+		// the question can fuse to the same score. The words are the stronger
+		// evidence, so the tie goes to them; a page found by meaning alone
+		// carries no keyword score.
+		if fused[a].score != fused[b].score {
+			return fused[a].score > fused[b].score
+		}
 		return catalogOrder(fused[a].entry, fused[b].entry)
 	})
 

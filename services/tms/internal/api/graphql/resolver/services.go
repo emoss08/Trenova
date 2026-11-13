@@ -481,6 +481,7 @@ type Params struct {
 	AgentToolRuleService              agenttoolports.AgentToolRuleService
 	WatchtowerService                 watchtowerports.WatchtowerService
 	WatchtowerExceptions              watchtowerports.ExceptionService
+	WatchtowerPlays                   watchtowerports.PlayService
 	InboundQueueService               *inboundqueue.Service
 	InboundReadService                *inboundreads.Service
 	InboundViewService                *inboundviews.Service
@@ -784,6 +785,7 @@ type Services struct {
 	AgentToolRuleService              agenttoolports.AgentToolRuleService
 	WatchtowerService                 watchtowerports.WatchtowerService
 	WatchtowerExceptions              watchtowerports.ExceptionService
+	WatchtowerPlays                   watchtowerports.PlayService
 	InboundQueueService               *inboundqueue.Service
 	InboundReadService                *inboundreads.Service
 	InboundViewService                *inboundviews.Service
@@ -1093,6 +1095,7 @@ func newServices(p *Params) *Services {
 		AgentToolRuleService:              p.AgentToolRuleService,
 		WatchtowerService:                 p.WatchtowerService,
 		WatchtowerExceptions:              p.WatchtowerExceptions,
+		WatchtowerPlays:                   p.WatchtowerPlays,
 		InboundQueueService:               p.InboundQueueService,
 		InboundReadService:                p.InboundReadService,
 		InboundViewService:                p.InboundViewService,

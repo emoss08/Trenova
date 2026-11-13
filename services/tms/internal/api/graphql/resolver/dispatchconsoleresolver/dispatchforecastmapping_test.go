@@ -141,7 +141,7 @@ func TestMapDispatchForecastQuality_MapsEveryStatus(t *testing.T) {
 		t.Run(string(tc.status), func(t *testing.T) {
 			t.Parallel()
 
-			mapped := mapDispatchForecastQuality(&demandforecast.Quality{Status: tc.status})
+			mapped := mapDispatchForecastQuality(&demandforecast.Quality{Status: tc.status}, false)
 			assert.Equal(t, tc.want, mapped.Status)
 		})
 	}
@@ -161,7 +161,7 @@ func TestMapDispatchForecastQuality_CarriesTheBacktest(t *testing.T) {
 		NaiveMAE:         2.1,
 		Skill:            0.33,
 		FittedAt:         1_800_000_000,
-	})
+	}, true)
 
 	assert.Equal(t, &gqlmodel.DispatchForecastQuality{
 		Status:                 gqlmodel.DispatchForecastStatusReady,
@@ -174,6 +174,7 @@ func TestMapDispatchForecastQuality_CarriesTheBacktest(t *testing.T) {
 		NaiveMeanAbsoluteError: 2.1,
 		Skill:                  0.33,
 		FittedAt:               new(1_800_000_000),
+		Refitting:              true,
 	}, mapped)
 }
 
@@ -182,9 +183,10 @@ func TestMapDispatchForecastQuality_NeverFittedHasNoFittedAt(t *testing.T) {
 
 	mapped := mapDispatchForecastQuality(&demandforecast.Quality{
 		Status: demandforecast.StatusInsufficientHistory,
-	})
+	}, false)
 
 	assert.Nil(t, mapped.FittedAt)
+	assert.False(t, mapped.Refitting)
 	assert.Equal(t, gqlmodel.DispatchForecastStatusInsufficientHistory, mapped.Status)
 }
 

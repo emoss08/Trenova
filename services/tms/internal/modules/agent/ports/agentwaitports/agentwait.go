@@ -96,9 +96,6 @@ type AgentWaitRepository interface {
 		ctx context.Context,
 		req *ListOpenWaitsByThreadsRequest,
 	) (map[pulid.ID][]*agentwait.Wait, error)
-	// HasOpenForRun reports whether the run left a wait still open: it is
-	// not done with its work, only paused until something happens.
-	HasOpenForRun(ctx context.Context, tenant pagination.TenantInfo, runID pulid.ID) (bool, error)
 	// ListOverdueAcrossTenants is every open wait, in every organization,
 	// that should have ended before the time given: one whose workflow is
 	// gone without having closed it.

@@ -74,7 +74,7 @@ func validate(t *testing.T, d *agentdefinition.Definition) map[string]bool {
 
 	fields := make(map[string]bool)
 	for _, e := range multiErr.Errors {
-		fields[e.Field] = true
+		fields[e.Field()] = true
 	}
 
 	return fields
@@ -328,7 +328,7 @@ func TestValidateToolSelection_RefusesATierAboveAToolsCeiling(t *testing.T) {
 
 		fields := make(map[string]bool)
 		for _, e := range multiErr.Errors {
-			fields[e.Field] = true
+			fields[e.Field()] = true
 		}
 		assert.Equal(t, refused, fields["toolTiers.customer_send_email"], tier)
 	}
@@ -361,7 +361,7 @@ func tierMessages(
 
 	messages := make(map[string]string, len(multiErr.Errors))
 	for _, e := range multiErr.Errors {
-		messages[e.Field] = e.Message
+		messages[e.Field()] = e.Message
 	}
 
 	return messages

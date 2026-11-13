@@ -71,7 +71,7 @@ func delegateMessages(t *testing.T, s *Service, definition, previous *agentdefin
 
 	messages := make(map[string]string, len(multiErr.Errors))
 	for _, e := range multiErr.Errors {
-		messages[e.Field] = e.Message
+		messages[e.Field()] = e.Message
 	}
 
 	return messages

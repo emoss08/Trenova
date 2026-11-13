@@ -159,6 +159,7 @@ func (r *suiteRunRepository) Last(
 		s := agentqualitysuitedb.SuiteRuns
 		entity, err := s.Where(
 			s.AgentDefinitionID.Eq(req.AgentDefinitionID),
+			keel.When(!req.IncludeTrials, s.TrialProviderID.IsNull()),
 			keel.When(len(req.Statuses) > 0, s.Status.In(req.Statuses...)),
 			keel.When(req.Before > 0, s.StartedAt.Lte(req.Before)),
 			keel.When(req.ExcludeID.IsNotNil(), s.ID.Ne(req.ExcludeID)),
@@ -225,6 +226,7 @@ func historyQuery(
 		).
 		Where(
 			ranked.AgentDefinitionID.In(req.AgentDefinitionIDs...),
+			ranked.TrialProviderID.IsNull(),
 			ranked.Status.In(scoredStatuses()...),
 			ranked.QualityScore.IsNotNull(),
 			ranked.StartedAt.Gte(req.Since),
@@ -272,6 +274,7 @@ func (r *suiteRunRepository) Latest(
 		s := agentqualitysuitedb.SuiteRuns
 		runs, err := s.DistinctOn(s.AgentDefinitionID).
 			Where(
+				s.TrialProviderID.IsNull(),
 				keel.When(
 					len(req.AgentDefinitionIDs) > 0,
 					s.AgentDefinitionID.In(req.AgentDefinitionIDs...),
@@ -304,7 +307,7 @@ func (r *suiteRunRepository) Overview(
 				s.Pick(
 					keel.Count().Filter(s.Status.In(scoredStatuses()...)),
 					keel.Count().Filter(s.Regression.IsTrue()),
-				).Where(s.StartedAt.Gte(req.Since)),
+				).Where(s.StartedAt.Gte(req.Since), s.TrialProviderID.IsNull()),
 			)
 			if err != nil {
 				return nil, fmt.Errorf("summarize agent suite runs: %w", err)

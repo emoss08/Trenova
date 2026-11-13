@@ -71,7 +71,11 @@ export default function QualityTab({ view }: { view: QualityView }) {
           </Callout>
         ) : overview.data ? (
           <>
-            <QualityHero overview={overview.data} onOpenAgent={setOpenAgent} />
+            <QualityHero
+              overview={overview.data}
+              automatic={control.data?.autoActivate ?? false}
+              onOpenAgent={setOpenAgent}
+            />
             <QualityFigures overview={overview.data} />
           </>
         ) : (

@@ -258,11 +258,18 @@ export async function updateAgentQualityControl(
   return getFragmentData(AgentQualityControlFieldsFragmentDoc, data.updateAgentQualityControl);
 }
 
-export async function runAgentSuite(agentDefinitionId: string): Promise<AgentSuiteRun> {
+/**
+ * Scores an agent against its golden set now. With a trial provider the cases are asked on
+ * that provider's model and the agent is left as it is.
+ */
+export async function runAgentSuite(
+  agentDefinitionId: string,
+  trialProviderId?: string,
+): Promise<AgentSuiteRun> {
   const data = await requestGraphQL({
     document: RunAgentSuiteDocument,
     operationName: "RunAgentSuite",
-    variables: { agentDefinitionId },
+    variables: { agentDefinitionId, trialProviderId: trialProviderId ?? null },
   });
 
   return getFragmentData(AgentSuiteRunFieldsFragmentDoc, data.runAgentSuite);

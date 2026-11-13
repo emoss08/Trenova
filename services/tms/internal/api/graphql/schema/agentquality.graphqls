@@ -24,6 +24,12 @@ type AgentEvalCase {
   title: String!
   source: AgentEvalCaseSource!
   status: AgentEvalCaseStatus!
+  """
+  Whether the system keeps the case: activated on capture, retired when its
+  agent holds more than the organization keeps or when it ages. False once a
+  person keeps, edits or moves it.
+  """
+  automatic: Boolean!
   trigger: AgentRunTrigger!
   sourceRunId: ID
   sourceTurnId: ID
@@ -33,6 +39,12 @@ type AgentEvalCase {
   sourceFeedbackId: ID
   "The question the agent is asked."
   input: String!
+  """
+  When the person asked it. A replay answered from the recorded tool results
+  runs with its clock at this moment; null for a case written by hand or
+  captured from a background run, which replays as of now.
+  """
+  askedAt: Timestamp
   "The conversation before the question, redacted when captured."
   history: [JSON!]!
   pageContext: JSON
@@ -138,6 +150,10 @@ extend type Query {
 extend type Mutation {
   createAgentEvalCase(input: CreateAgentEvalCaseInput!): AgentEvalCaseCapture!
   updateAgentEvalCase(id: ID!, input: UpdateAgentEvalCaseInput!): AgentEvalCase!
+  """
+  Moves a case to another status. Setting an automatic active case to Active
+  keeps it: it stays active and is no longer retired on its own.
+  """
   setAgentEvalCaseStatus(id: ID!, status: AgentEvalCaseStatus!): AgentEvalCase!
   "Replays a case against its agent as it is now, writes simulated, and scores it."
   replayAgentEvalCase(id: ID!): AgentEvaluation!
@@ -206,6 +222,10 @@ type AgentSuiteRun {
   comments: String!
   workflowId: String!
   requestedByUserId: ID
+  "The provider a trial run was asked on in place of the agent's own; null for a run that scores the agent."
+  trialProviderId: ID
+  "The trial provider's name and model in words; empty for a run that scores the agent."
+  trialLabel: String!
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -259,6 +279,12 @@ type AgentQualityControl {
   minCases: Int!
   "An unchanged agent is run again once its last run is this many days old."
   forceRerunDays: Int!
+  "Whether a proposal a person approved or rejected becomes an active case on capture."
+  autoActivate: Boolean!
+  "The most automatic cases one agent keeps active; past it the oldest are retired, a tool at a time."
+  autoCasesPerAgent: Int!
+  "Days after which an automatic case is retired, because an old case stops being fair as its records move on."
+  autoCaseDays: Int!
   version: Int!
   updatedAt: Timestamp!
 }
@@ -278,6 +304,8 @@ input UpdateAgentQualityControlInput {
   regressionThreshold: Float!
   minCases: Int!
   forceRerunDays: Int!
+  autoActivate: Boolean!
+  autoCasesPerAgent: Int!
 }
 
 "One scored suite run on an agent's quality line."
@@ -447,7 +475,12 @@ extend type Query {
 }
 
 extend type Mutation {
-  "Runs one agent's suite now, whatever changed or did not."
-  runAgentSuite(agentDefinitionId: ID!): AgentSuiteRun!
+  """
+  Runs one agent's suite now, whatever changed or did not. With a trial
+  provider the cases are asked on that provider's model and nothing about the
+  agent changes: the run is never the agent's score, baseline or a regression.
+  The provider must be turned on and serve conversations.
+  """
+  runAgentSuite(agentDefinitionId: ID!, trialProviderId: ID): AgentSuiteRun!
   updateAgentQualityControl(input: UpdateAgentQualityControlInput!): AgentQualityControl!
 }

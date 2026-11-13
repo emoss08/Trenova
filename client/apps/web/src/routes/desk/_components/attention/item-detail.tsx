@@ -420,15 +420,18 @@ export function ItemDetail({
                 <DeskIcon name="clock" size={13} />
                 {t("Snooze")} <Key k="S" />
               </Button>
-              {item.agentWork === null && item.subjectId !== null && (
-                <WatchtowerHandOff
-                  suggested={item.suggestedAgent}
-                  open={actions.menuOpen}
-                  onOpenChange={actions.setMenuOpen}
-                  onHandOff={actions.handOff}
-                  disabled={actions.handingOff}
-                />
-              )}
+              {/* An agent raised it to ask for a person: no agent is offered for it. */}
+              {item.agentWork === null &&
+                item.subjectId !== null &&
+                item.sourceKind !== "AgentException" && (
+                  <WatchtowerHandOff
+                    suggested={item.suggestedAgent}
+                    open={actions.menuOpen}
+                    onOpenChange={actions.setMenuOpen}
+                    onHandOff={actions.handOff}
+                    disabled={actions.handingOff}
+                  />
+                )}
               <Button variant={readable ? "outline" : "default"} onClick={actions.done}>
                 <DeskIcon name="check" size={13} />
                 {t("Done")} <Key k="E" inv={!readable} />

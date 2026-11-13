@@ -108,6 +108,10 @@ const (
 	// that arrived on a monitored address, sent back to its sender in the same
 	// thread.
 	KindAgentInboundReplyEmail Kind = "agent.inbound_reply.email"
+	// KindAgentStatusRequestEmail asks whoever has a load, a carrier's
+	// dispatcher or a driver reached by email, where it is and when it will
+	// arrive, in the organization's letterhead.
+	KindAgentStatusRequestEmail Kind = "agent.status_request.email"
 
 	// Notifications.
 	//
@@ -222,6 +226,7 @@ func AllKinds() []Kind {
 		KindAgentCustomerUpdateEmail,
 		KindAgentProposalReminderEmail,
 		KindAgentInboundReplyEmail,
+		KindAgentStatusRequestEmail,
 		KindNotificationLoadAssigned,
 		KindNotificationLoadUnassigned,
 		KindNotificationPTOReviewed,

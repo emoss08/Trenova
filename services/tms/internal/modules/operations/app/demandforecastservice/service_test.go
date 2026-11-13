@@ -47,6 +47,9 @@ type fakeRepository struct {
 	booked     []demandforecastports.BookedSlot
 	starts     []demandforecastports.DriverStart
 
+	quality    *demandforecast.Quality
+	qualityErr error
+
 	histories []*demandforecastports.HistoryRequest
 	replaced  []*demandforecastports.ReplaceRequest
 	startsFor []*demandforecastports.DriverStartsRequest
@@ -74,7 +77,22 @@ func (f *fakeRepository) Quality(
 	context.Context,
 	pagination.TenantInfo,
 ) (*demandforecast.Quality, error) {
-	return nil, errUnexpected
+	if f.quality == nil && f.qualityErr == nil {
+		return nil, errUnexpected
+	}
+
+	return f.quality, f.qualityErr
+}
+
+type fakeFits struct {
+	err     error
+	started []pagination.TenantInfo
+}
+
+func (f *fakeFits) StartFitting(_ context.Context, tenantInfo pagination.TenantInfo) error {
+	f.started = append(f.started, tenantInfo)
+
+	return f.err
 }
 
 func (f *fakeRepository) ModelForCells(
@@ -154,9 +172,19 @@ func newService(
 	controls dispatchcontrolports.DispatchControlRepository,
 	organizations tenantports.OrganizationRepository,
 ) *Service {
+	return newServiceWithFits(repo, &fakeFits{}, controls, organizations)
+}
+
+func newServiceWithFits(
+	repo demandforecastports.Repository,
+	fits demandforecastports.FitStarter,
+	controls dispatchcontrolports.DispatchControlRepository,
+	organizations tenantports.OrganizationRepository,
+) *Service {
 	svc := New(Params{
 		Logger:        zap.NewNop(),
 		Repo:          repo,
+		Fits:          fits,
 		Controls:      controls,
 		Organizations: organizations,
 	})
@@ -328,4 +356,94 @@ func TestFit_ReturnsTheRepositoryError(t *testing.T) {
 			assert.Len(t, tt.repo.replaced, tt.wantReplaced)
 		})
 	}
+}
+
+func TestStanding_RefitsAForecastThatIsNotReadyAndWasFittedOverAnHourAgo(t *testing.T) {
+	t.Parallel()
+
+	fresh := testNow - demandforecast.RefitAfterSeconds + 1
+	old := testNow - demandforecast.RefitAfterSeconds
+	tests := []struct {
+		name    string
+		quality *demandforecast.Quality
+		refits  bool
+	}{
+		{
+			name:    "never fitted",
+			quality: &demandforecast.Quality{Status: demandforecast.StatusInsufficientHistory},
+			refits:  true,
+		},
+		{
+			name: "short of history an hour ago",
+			quality: &demandforecast.Quality{
+				Status:   demandforecast.StatusInsufficientHistory,
+				FittedAt: old,
+			},
+			refits: true,
+		},
+		{
+			name:    "no skill an hour ago",
+			quality: &demandforecast.Quality{Status: demandforecast.StatusNoSkill, FittedAt: old},
+			refits:  true,
+		},
+		{
+			name: "short of history within the hour",
+			quality: &demandforecast.Quality{
+				Status:   demandforecast.StatusInsufficientHistory,
+				FittedAt: fresh,
+			},
+		},
+		{
+			name:    "ready, however old",
+			quality: &demandforecast.Quality{Status: demandforecast.StatusReady, FittedAt: 1},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			fits := &fakeFits{}
+			svc := newServiceWithFits(&fakeRepository{quality: tt.quality}, fits, nil, nil)
+
+			standing, err := svc.Standing(t.Context(), tenantInfo)
+
+			require.NoError(t, err)
+			assert.Same(t, tt.quality, standing.Quality)
+			assert.Equal(t, tt.refits, standing.Refitting)
+			if tt.refits {
+				assert.Equal(t, []pagination.TenantInfo{tenantInfo}, fits.started)
+			} else {
+				assert.Empty(t, fits.started)
+			}
+		})
+	}
+}
+
+func TestStanding_StillAnswersWhenTheRefitCannotStart(t *testing.T) {
+	t.Parallel()
+
+	quality := &demandforecast.Quality{Status: demandforecast.StatusInsufficientHistory}
+	fits := &fakeFits{err: errors.New("temporal down")}
+	svc := newServiceWithFits(&fakeRepository{quality: quality}, fits, nil, nil)
+
+	standing, err := svc.Standing(t.Context(), tenantInfo)
+
+	require.NoError(t, err)
+	assert.Same(t, quality, standing.Quality)
+	assert.False(t, standing.Refitting)
+	assert.Len(t, fits.started, 1)
+}
+
+func TestStanding_ReturnsTheRepositoryErrorWithoutRefitting(t *testing.T) {
+	t.Parallel()
+
+	down := errors.New("quality down")
+	fits := &fakeFits{}
+	svc := newServiceWithFits(&fakeRepository{qualityErr: down}, fits, nil, nil)
+
+	standing, err := svc.Standing(t.Context(), tenantInfo)
+
+	require.ErrorIs(t, err, down)
+	assert.Nil(t, standing)
+	assert.Empty(t, fits.started)
 }

@@ -4,6 +4,10 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
+
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
@@ -20,9 +24,6 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"go.uber.org/zap"
 )
 
 type stubRepo struct {
@@ -547,7 +548,7 @@ func TestUpsert_RefusesAPathThatLeavesTheApplication(t *testing.T) {
 	assert.Empty(t, repo.items)
 }
 
-func TestHandOff_PublishesToSubscribersOrNamesWhoCouldTakeIt(t *testing.T) {
+func TestHandOff_StartsTheLiveSubscriberOrNamesWhoCouldTakeIt(t *testing.T) {
 	t.Parallel()
 
 	repo := newStubRepo()
@@ -591,23 +592,49 @@ func TestHandOff_PublishesToSubscribersOrNamesWhoCouldTakeIt(t *testing.T) {
 	assert.Equal(t, "Load monitor", result.Candidates[0].Name)
 	assert.Equal(t, agenttrigger.EventServiceFailureDetected, definitions.lastTrigger.EventKind)
 
-	// A subscriber: the event is published to it.
-	definitions.subscribers = []*agentdefinition.Definition{{Name: "Service desk"}}
+	// A subscriber is started on the subject directly; one in shadow is
+	// passed over, since it could only record what it would have done.
+	runs := &stubRuns{}
+	svc.runs = runs
+	live := pulid.MustNew("agdef_")
+	definitions.subscribers = []*agentdefinition.Definition{
+		{ID: pulid.MustNew("agdef_"), Name: "Shadow desk", ShadowMode: true},
+		{ID: live, Name: "Service desk"},
+	}
 	result, err = svc.HandOff(
 		t.Context(),
 		watchtowerports.HandOffWatchtowerItemRequest{TenantInfo: tenant, ItemID: item.ID},
 		actor,
 	)
 	require.NoError(t, err)
-	require.Len(t, events.published, 1)
-	assert.Equal(t, subject, events.published[0].SubjectID)
-	assert.Len(t, result.Subscribers, 1)
+	assert.Empty(t, events.published, "an event that already happened is not published again")
+	require.Len(t, result.Subscribers, 1)
+	assert.Equal(t, "Service desk", result.Subscribers[0].Name)
+	assert.Equal(t, live, runs.last.DefinitionID)
+	assert.Equal(t, subject, runs.last.SubjectID)
+}
 
-	// A named agent runs on the subject at once.
+// A named agent runs on the subject at once.
+func TestHandOff_RunsTheAgentThePersonNamed(t *testing.T) {
+	t.Parallel()
+
+	repo := newStubRepo()
+	actor := testActor()
+	tenant := actor.TenantInfo()
 	runs := &stubRuns{}
+	svc := newService(repo, &agenttest.StubPermissions{})
+	svc.definitions = &stubDefinitions{}
 	svc.runs = runs
+
+	subject := pulid.MustNew("shp_")
+	in := input(tenant, watchtower.SourceServiceFailure, "sf_1", watchtower.SeverityWarning, 100)
+	in.SubjectType = agent.SubjectShipment
+	in.SubjectID = subject
+	require.NoError(t, svc.projector.upsert(t.Context(), in))
+	item := repo.items[repo.key(in.SourceKind, in.SourceID)]
+
 	chosen := pulid.MustNew("agdef_")
-	result, err = svc.HandOff(t.Context(), watchtowerports.HandOffWatchtowerItemRequest{
+	result, err := svc.HandOff(t.Context(), watchtowerports.HandOffWatchtowerItemRequest{
 		TenantInfo: tenant, ItemID: item.ID, AgentDefinitionID: chosen,
 	}, actor)
 	require.NoError(t, err)
@@ -615,6 +642,84 @@ func TestHandOff_PublishesToSubscribersOrNamesWhoCouldTakeIt(t *testing.T) {
 	assert.Equal(t, chosen, runs.last.DefinitionID)
 	assert.Equal(t, subject, runs.last.SubjectID)
 	assert.Equal(t, agent.RunTriggerManual, runs.last.Trigger)
+}
+
+// An item an agent raised to ask for a person is never handed to an agent,
+// named or not: a second agent can only ask the same question.
+func TestHandOff_RefusesAnItemAnAgentRaisedForAPerson(t *testing.T) {
+	t.Parallel()
+
+	repo := newStubRepo()
+	actor := testActor()
+	tenant := actor.TenantInfo()
+	runs := &stubRuns{}
+	svc := newService(repo, &agenttest.StubPermissions{})
+	svc.definitions = &stubDefinitions{}
+	svc.runs = runs
+
+	in := input(tenant, watchtower.SourceAgentException, "aex_1", watchtower.SeverityWarning, 100)
+	in.SubjectType = agent.SubjectShipment
+	in.SubjectID = pulid.MustNew("shp_")
+	require.NoError(t, svc.projector.upsert(t.Context(), in))
+	item := repo.items[repo.key(in.SourceKind, in.SourceID)]
+
+	for _, named := range []pulid.ID{pulid.Nil, pulid.MustNew("agdef_")} {
+		_, err := svc.HandOff(t.Context(), watchtowerports.HandOffWatchtowerItemRequest{
+			TenantInfo: tenant, ItemID: item.ID, AgentDefinitionID: named,
+		}, actor)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "needs a person")
+	}
+	assert.Nil(t, runs.last, "no agent was started")
+}
+
+// A kind with a play is never given to an agent unnamed, even when one
+// subscribes to its event: its first move is the person's own. The person
+// is answered with who could take it, and an agent they name still runs.
+func TestHandOff_NeverStartsAnAgentUnnamedOnAKindWithAPlay(t *testing.T) {
+	t.Parallel()
+
+	repo := newStubRepo()
+	actor := testActor()
+	tenant := actor.TenantInfo()
+	runs := &stubRuns{}
+	named := pulid.MustNew("agdef_")
+	definitions := &stubDefinitions{
+		subscribers: []*agentdefinition.Definition{{ID: pulid.MustNew("agdef_"), Name: "Custom POD agent"}},
+		enabled: []*agentdefinition.Definition{{
+			ID:          named,
+			Name:        "Load monitor",
+			TriggerMode: agentdefinition.TriggerScheduled,
+		}},
+	}
+	svc := newService(repo, &agenttest.StubPermissions{})
+	svc.definitions = definitions
+	svc.runs = runs
+
+	in := input(tenant, watchtower.SourcePodMissing, "shp_1", watchtower.SeverityWarning, 100)
+	in.SubjectType = agent.SubjectShipment
+	in.SubjectID = pulid.MustNew("shp_")
+	in.EventKind = agenttrigger.EventShipmentPODMissing
+	require.NoError(t, svc.projector.upsert(t.Context(), in))
+	item := repo.items[repo.key(in.SourceKind, in.SourceID)]
+
+	result, err := svc.HandOff(
+		t.Context(),
+		watchtowerports.HandOffWatchtowerItemRequest{TenantInfo: tenant, ItemID: item.ID},
+		actor,
+	)
+	require.NoError(t, err)
+	assert.Nil(t, runs.last, "the subscriber is not started on its own")
+	assert.Nil(t, result.Run)
+	require.Len(t, result.Candidates, 1)
+	assert.Equal(t, "Load monitor", result.Candidates[0].Name)
+
+	result, err = svc.HandOff(t.Context(), watchtowerports.HandOffWatchtowerItemRequest{
+		TenantInfo: tenant, ItemID: item.ID, AgentDefinitionID: named,
+	}, actor)
+	require.NoError(t, err)
+	require.NotNil(t, result.Run)
+	assert.Equal(t, named, runs.last.DefinitionID)
 }
 
 func TestHandOff_SuggestsTheStarterThatListensForTheEvent(t *testing.T) {

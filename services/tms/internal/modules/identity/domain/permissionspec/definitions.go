@@ -10,6 +10,16 @@ type BundleGrant struct {
 	Scope      permission.DataScope   `json:"scope,omitempty"`
 }
 
+// ShareRecords lets a person share what they can read. It rides with the
+// bundles that put people where records are shared from: the Desk, and the
+// billing work whose invoices and disputes go to someone else to look at.
+func ShareRecords() BundleGrant {
+	return BundleGrant{
+		Resource:   permission.ResourceRecordShare,
+		Operations: []permission.Operation{permission.OpRead, permission.OpCreate},
+	}
+}
+
 type Bundle struct {
 	ID          string        `json:"id"`
 	Module      string        `json:"module"`

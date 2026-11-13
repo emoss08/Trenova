@@ -46,6 +46,7 @@ enum AIUsageFeature {
   PaletteAnswer
   InsightNarration
   CaseReading
+  RequestWording
 }
 
 """

@@ -361,6 +361,35 @@ func TestFinalizeSuite_ASteadyRunRaisesNothing(t *testing.T) {
 		"a steady run closes whatever the previous run raised")
 }
 
+func TestFinalizeSuite_ATrialIsScoredAndComparedButNeverRaised(t *testing.T) {
+	t.Parallel()
+
+	world := newRegressionWorld(t, true)
+	providerID := pulid.MustNew("aip_")
+	world.run.TrialProviderID = &providerID
+	world.run.TrialLabel = "Anthropic fast · claude-haiku-5-5"
+
+	finalized := world.finalize(t)
+
+	assert.False(t, finalized.Regression,
+		"a model the agent does not run on cannot make the agent regress")
+	assert.Equal(t, agentqualitysuite.SuiteRunStatusCompleted, finalized.Status)
+	assert.Equal(t, 1, finalized.HardFailures, "the trial still says what broke on that model")
+	assert.Empty(t, world.tower.upserts)
+	assert.Empty(t, world.notifier.requests)
+	assert.Empty(t, world.tower.resolved,
+		"a trial does not close the item the agent's own last run raised")
+
+	stored := world.runs.runs[world.run.ID]
+	assert.False(t, stored.Regression)
+	require.NotNil(t, stored.QualityScore)
+	require.NotNil(t, stored.BaselineScore,
+		"the trial is still measured against the agent's recent median")
+	assert.InDelta(t, 0.9, *stored.BaselineScore, 1e-9)
+	assert.Contains(t, stored.Comments, "A trial on Anthropic fast · claude-haiku-5-5")
+	assert.Contains(t, stored.Comments, "does not count toward its score")
+}
+
 func TestNotifyRegression_IsKeyedOnTheRun(t *testing.T) {
 	t.Parallel()
 

@@ -1,9 +1,10 @@
-package watchtower
+package watchtowerpanel
 
 import (
 	"reflect"
 	"strings"
 
+	"github.com/emoss08/trenova/shared/recordids"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
@@ -12,34 +13,39 @@ const (
 	maxPanelPapers = 8
 )
 
-type PanelKind string
+// Kind names the view an item's panel is drawn with. A panel says what is
+// happening on an item in the shape made for it: a stop and its window, a
+// detention clock, a paper that is missing, a message, credentials coming
+// due. The source fills it as it describes the item, and exactly one of the
+// panel's views is set: the one its kind names.
+type Kind string
 
 const (
-	PanelStop     = PanelKind("Stop")
-	PanelClock    = PanelKind("Clock")
-	PanelPaper    = PanelKind("Paper")
-	PanelMessage  = PanelKind("Message")
-	PanelExpiry   = PanelKind("Expiry")
-	PanelCoverage = PanelKind("Coverage")
-	PanelContact  = PanelKind("Contact")
-	PanelRun      = PanelKind("Run")
-	PanelBooks    = PanelKind("Books")
-	PanelMoney    = PanelKind("Money")
-	PanelChange   = PanelKind("Change")
-	PanelAsk      = PanelKind("Ask")
-	PanelFinding  = PanelKind("Finding")
-	PanelFile     = PanelKind("File")
-	PanelSighting = PanelKind("Sighting")
+	KindStop     = Kind("Stop")
+	KindClock    = Kind("Clock")
+	KindPaper    = Kind("Paper")
+	KindMessage  = Kind("Message")
+	KindExpiry   = Kind("Expiry")
+	KindCoverage = Kind("Coverage")
+	KindContact  = Kind("Contact")
+	KindRun      = Kind("Run")
+	KindBooks    = Kind("Books")
+	KindMoney    = Kind("Money")
+	KindChange   = Kind("Change")
+	KindAsk      = Kind("Ask")
+	KindFinding  = Kind("Finding")
+	KindFile     = Kind("File")
+	KindSighting = Kind("Sighting")
 )
 
-func (k PanelKind) String() string { return string(k) }
+func (k Kind) String() string { return string(k) }
 
-func AllPanelKinds() []PanelKind {
-	return []PanelKind{
-		PanelStop, PanelClock, PanelPaper, PanelMessage,
-		PanelExpiry, PanelCoverage, PanelContact, PanelRun,
-		PanelBooks, PanelMoney, PanelChange, PanelAsk,
-		PanelFinding, PanelFile, PanelSighting,
+func AllKinds() []Kind {
+	return []Kind{
+		KindStop, KindClock, KindPaper, KindMessage,
+		KindExpiry, KindCoverage, KindContact, KindRun,
+		KindBooks, KindMoney, KindChange, KindAsk,
+		KindFinding, KindFile, KindSighting,
 	}
 }
 
@@ -195,7 +201,7 @@ type SightingPanel struct {
 }
 
 type Panel struct {
-	Kind     PanelKind      `json:"kind"`
+	Kind     Kind           `json:"kind"`
 	Stop     *StopPanel     `json:"stop,omitempty"`
 	Clock    *ClockPanel    `json:"clock,omitempty"`
 	Paper    *PaperPanel    `json:"paper,omitempty"`
@@ -215,29 +221,36 @@ type Panel struct {
 
 const maxPanelProse = 600
 
+// plain is text as a person reads it on the Watchtower: with no internal
+// record id in it. A panel is stored with its item and drawn as it stands,
+// so its words lose any id here, as the item's own do.
+func plain(text string) string {
+	return strings.TrimSpace(recordids.Strip(text))
+}
+
 func panelProse(text string) string {
-	return stringutils.Ellipsize(Plain(text), maxPanelProse)
+	return stringutils.Ellipsize(plain(text), maxPanelProse)
 }
 
 func panelText(text string) string {
-	return stringutils.Ellipsize(Plain(text), maxPanelText)
+	return stringutils.Ellipsize(plain(text), maxPanelText)
 }
 
-func NormalizePanel(panel *Panel) *Panel {
+func Normalize(panel *Panel) *Panel {
 	if panel == nil {
 		return nil
 	}
 
 	out := &Panel{Kind: panel.Kind}
 	switch panel.Kind {
-	case PanelStop:
+	case KindStop:
 		if panel.Stop == nil {
 			return nil
 		}
 		stop := *panel.Stop
 		stop.Place = panelText(stop.Place)
 		out.Stop = &stop
-	case PanelClock:
+	case KindClock:
 		if panel.Clock == nil {
 			return nil
 		}
@@ -248,7 +261,7 @@ func NormalizePanel(panel *Panel) *Panel {
 		clock.FreeMinutes = max(clock.FreeMinutes, 0)
 		clock.BillableMinutes = max(clock.BillableMinutes, 0)
 		out.Clock = &clock
-	case PanelPaper:
+	case KindPaper:
 		if panel.Paper == nil {
 			return nil
 		}
@@ -268,7 +281,7 @@ func NormalizePanel(panel *Panel) *Panel {
 		}
 		paper.Papers = papers
 		out.Paper = &paper
-	case PanelMessage:
+	case KindMessage:
 		if panel.Message == nil {
 			return nil
 		}
@@ -282,7 +295,7 @@ func NormalizePanel(panel *Panel) *Panel {
 		message.ReadAs = panelText(message.ReadAs)
 		message.Why = panelText(message.Why)
 		out.Message = &message
-	case PanelExpiry:
+	case KindExpiry:
 		if panel.Expiry == nil {
 			return nil
 		}
@@ -305,14 +318,14 @@ func NormalizePanel(panel *Panel) *Panel {
 		}
 		expiry.Papers = papers
 		out.Expiry = &expiry
-	case PanelCoverage:
+	case KindCoverage:
 		if panel.Coverage == nil {
 			return nil
 		}
 		coverage := *panel.Coverage
 		coverage.Reason = panelText(coverage.Reason)
 		out.Coverage = &coverage
-	case PanelContact:
+	case KindContact:
 		if panel.Contact == nil {
 			return nil
 		}
@@ -320,7 +333,7 @@ func NormalizePanel(panel *Panel) *Panel {
 		contact.Who = panelText(contact.Who)
 		contact.EveryHours = max(contact.EveryHours, 0)
 		out.Contact = &contact
-	case PanelRun:
+	case KindRun:
 		if panel.Run == nil {
 			return nil
 		}
@@ -328,7 +341,7 @@ func NormalizePanel(panel *Panel) *Panel {
 		run.Agent = panelText(run.Agent)
 		run.Reason = panelText(run.Reason)
 		out.Run = &run
-	case PanelBooks:
+	case KindBooks:
 		if panel.Books == nil {
 			return nil
 		}
@@ -336,7 +349,7 @@ func NormalizePanel(panel *Panel) *Panel {
 		books.System = panelText(books.System)
 		books.Count = max(books.Count, 0)
 		out.Books = &books
-	case PanelMoney:
+	case KindMoney:
 		if panel.Money == nil {
 			return nil
 		}
@@ -346,7 +359,7 @@ func NormalizePanel(panel *Panel) *Panel {
 		money.Reason = panelProse(money.Reason)
 		money.Count = max(money.Count, 0)
 		out.Money = &money
-	case PanelChange:
+	case KindChange:
 		if panel.Change == nil {
 			return nil
 		}
@@ -357,7 +370,7 @@ func NormalizePanel(panel *Panel) *Panel {
 		change.To = panelText(change.To)
 		change.Ref = panelText(change.Ref)
 		out.Change = &change
-	case PanelAsk:
+	case KindAsk:
 		if panel.Ask == nil {
 			return nil
 		}
@@ -365,7 +378,7 @@ func NormalizePanel(panel *Panel) *Panel {
 		ask.Category = panelText(ask.Category)
 		ask.Tried = panelProse(ask.Tried)
 		out.Ask = &ask
-	case PanelFinding:
+	case KindFinding:
 		if panel.Finding == nil {
 			return nil
 		}
@@ -376,7 +389,7 @@ func NormalizePanel(panel *Panel) *Panel {
 			return nil
 		}
 		out.Finding = &finding
-	case PanelFile:
+	case KindFile:
 		if panel.File == nil {
 			return nil
 		}
@@ -384,7 +397,7 @@ func NormalizePanel(panel *Panel) *Panel {
 		file.Name = panelText(file.Name)
 		file.Reason = panelProse(file.Reason)
 		out.File = &file
-	case PanelSighting:
+	case KindSighting:
 		if panel.Sighting == nil {
 			return nil
 		}
@@ -399,7 +412,7 @@ func NormalizePanel(panel *Panel) *Panel {
 	return out
 }
 
-func SamePanel(a, b *Panel) bool {
+func Same(a, b *Panel) bool {
 	return reflect.DeepEqual(a, b)
 }
 

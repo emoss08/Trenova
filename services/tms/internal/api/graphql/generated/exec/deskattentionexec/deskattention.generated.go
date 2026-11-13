@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/desklens"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/recordcase"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/deskactivityports"
@@ -372,6 +373,16 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
 			},
+			{
+				Name:     "seesEveryone",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*deskattentionports.Attention)
+					return obj.SeesEveryone, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
 		}},
 		{Object: "DeskAttentionGroup", Fields: []*gqlexec.Field{
 			{
@@ -629,7 +640,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*watchtower.Item)
 					return gqlexec.Resolver[WatchtowerItemResolver](ec, "WatchtowerItem@deskattention").DeskLens(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalNDeskLens2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐDeskLens),
+				Marshal: gqlexec.Marshal(marshalNDeskLens2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋdesklensᚐLens),
 			},
 			{
 				Name:       "aboutId",
@@ -654,7 +665,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.WatchtowerKindSummary)
 					return gqlexec.Resolver[WatchtowerKindSummaryResolver](ec, "WatchtowerKindSummary@deskattention").DeskLens(ctx, obj)
 				},
-				Marshal: gqlexec.Marshal(marshalNDeskLens2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐDeskLens),
+				Marshal: gqlexec.Marshal(marshalNDeskLens2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋdesklensᚐLens),
 			},
 		}},
 	},
@@ -693,12 +704,12 @@ type QueryResolver interface {
 }
 
 type WatchtowerItemResolver interface {
-	DeskLens(ctx context.Context, obj *watchtower.Item) (watchtower.DeskLens, error)
+	DeskLens(ctx context.Context, obj *watchtower.Item) (desklens.Lens, error)
 	AboutID(ctx context.Context, obj *watchtower.Item) (*string, error)
 }
 
 type WatchtowerKindSummaryResolver interface {
-	DeskLens(ctx context.Context, obj *gqlmodel.WatchtowerKindSummary) (watchtower.DeskLens, error)
+	DeskLens(ctx context.Context, obj *gqlmodel.WatchtowerKindSummary) (desklens.Lens, error)
 }
 
 var (
@@ -778,8 +789,11 @@ func unmarshalInputDeskAttentionInput(ctx context.Context, ec *gqlexec.Exec, obj
 	if _, present := asMap["working"]; !present {
 		asMap["working"] = false
 	}
+	if _, present := asMap["mine"]; !present {
+		asMap["mine"] = false
+	}
 
-	fieldsInOrder := [...]string{"lens", "kinds", "severities", "first", "recordId", "working"}
+	fieldsInOrder := [...]string{"lens", "kinds", "severities", "first", "recordId", "working", "mine"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -788,7 +802,7 @@ func unmarshalInputDeskAttentionInput(ctx context.Context, ec *gqlexec.Exec, obj
 		switch k {
 		case "lens":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lens"))
-			data, err := unmarshalODeskLens2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐDeskLens(ctx, ec, v)
+			data, err := unmarshalODeskLens2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋdesklensᚐLens(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -828,6 +842,13 @@ func unmarshalInputDeskAttentionInput(ctx context.Context, ec *gqlexec.Exec, obj
 				return it, err
 			}
 			it.Working = data
+		case "mine":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mine"))
+			data, err := unmarshalOBoolean2ᚖbool(ctx, ec, v)
+			if err != nil {
+				return it, err
+			}
+			it.Mine = data
 		}
 	}
 	return it, nil
@@ -868,12 +889,12 @@ func unmarshalOBoolean2ᚖbool(ctx context.Context, ec *gqlexec.Exec, v any) (*b
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func unmarshalODeskLens2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐDeskLens(ctx context.Context, ec *gqlexec.Exec, v any) (*watchtower.DeskLens, error) {
+func unmarshalODeskLens2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋdesklensᚐLens(ctx context.Context, ec *gqlexec.Exec, v any) (*desklens.Lens, error) {
 	if v == nil {
 		return nil, nil
 	}
 	tmp, err := graphql.UnmarshalString(v)
-	res := watchtower.DeskLens(tmp)
+	res := desklens.Lens(tmp)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -995,7 +1016,7 @@ func marshalNDeskAttentionGroup2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return ec.MarshalType(ctx, sel, "DeskAttentionGroup", v)
 }
 
-func marshalNDeskLens2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐDeskLens(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v watchtower.DeskLens) graphql.Marshaler {
+func marshalNDeskLens2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋdesklensᚐLens(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v desklens.Lens) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)

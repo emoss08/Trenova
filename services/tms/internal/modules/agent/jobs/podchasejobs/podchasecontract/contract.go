@@ -34,8 +34,8 @@ type RoutineParams struct {
 
 // Routine takes the built-in billing agent's missing-proof-of-delivery
 // events in code: the request is the same for every shipment, so a page of
-// them is asked for together and the agent's model is kept for a shipment
-// nobody can be asked about.
+// them is asked for together and no model reads any of them. A shipment
+// nobody can be asked about is left to the person the Watchtower shows it to.
 type Routine struct {
 	drain *temporaljobs.DrainRequester
 }

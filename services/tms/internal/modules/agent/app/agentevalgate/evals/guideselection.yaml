@@ -53,9 +53,9 @@ cases:
   - request: create a load from a rate confirmation PDF
     expect: [/shipment-management/shipments/import]
   - request: where do I approve what the AI proposed
-    expect: [/desk/decisions]
+    expect: [/desk/needs]
   - request: where do I read emails customers sent in
-    expect: [/triage]
+    expect: [/desk/triage]
   - request: what does the Desk do
     expect: [/desk]
   - request: how do I steer the agent while it is still replying

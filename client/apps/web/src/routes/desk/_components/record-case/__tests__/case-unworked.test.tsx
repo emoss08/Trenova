@@ -15,7 +15,25 @@ vi.mock("@/components/desk-chat/desk-agent-tile", () => ({
   DeskAgentTile: () => <i data-testid="tile" />,
 }));
 
-const ITEM = { itemId: "wt_1", kind: "PodMissing" as const, working: false, agent: null, note: "" };
+vi.mock("../case-play-dialog", () => ({
+  CasePlayDialog: ({ itemId, play }: { itemId: string; play: string }) => (
+    <div role="dialog" aria-label={`play ${play} for ${itemId}`} />
+  ),
+}));
+
+/** A condition with no first move of its own: a person decides, or puts an agent on it. */
+const ITEM = {
+  itemId: "wt_1",
+  kind: "BillingException" as const,
+  working: false,
+  agent: null,
+  note: "",
+  play: null,
+  request: null,
+};
+
+/** A missing proof of delivery, whose first move is to ask for it. */
+const POD = { ...ITEM, itemId: "wt_2", kind: "PodMissing" as const, play: "AskForPod" as const };
 
 function result(overrides: Record<string, unknown> = {}) {
   return { item: {}, runId: null, subscribers: [], candidates: [], templates: [], ...overrides };
@@ -175,58 +193,114 @@ describe("a case nobody has worked", () => {
     expect(screen.getByRole("button", { name: "Accept the risk…" })).toBeTruthy();
   });
 
-  it("is handed over as it opens when the person came from the Watchtower to work it", async () => {
-    handOffWatchtowerItem.mockResolvedValue(
-      result({ runId: "ar_1", subscribers: [{ id: "agdef_1", name: "Billing exception agent" }] }),
-    );
-    const onHanded = vi.fn();
-    render(
-      <CaseUnworked handOff={ITEM} canHandOff autoStart onHanded={onHanded} onAcceptRisk={null} />,
-    );
+  it("starts no agent by opening: the hand-off waits for the person to ask", async () => {
+    render(<CaseUnworked handOff={ITEM} canHandOff onHanded={vi.fn()} onAcceptRisk={null} />);
 
-    expect(screen.queryByRole("button", { name: "Hand it to an agent" })).toBeNull();
-    await waitFor(() => expect(onHanded).toHaveBeenCalledTimes(1));
-    expect(handOffWatchtowerItem).toHaveBeenCalledTimes(1);
-    expect(handOffWatchtowerItem).toHaveBeenCalledWith(
-      "wt_1",
-      undefined,
-      expect.objectContaining({ idempotencyKey: expect.any(String) }),
-    );
-    expect(
-      screen.getByText(
-        "Billing exception agent is working this case. What it proposes shows here for you to approve.",
-      ),
-    ).toBeTruthy();
+    await Promise.resolve();
+    expect(handOffWatchtowerItem).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "Hand it to an agent" })).toBeTruthy();
   });
 
-  it("asks who works it when it opens to be worked and no agent takes it alone", async () => {
-    handOffWatchtowerItem.mockResolvedValue(
-      result({ candidates: [{ id: "agdef_2", name: "Dispatch desk" }] }),
-    );
-    render(
-      <CaseUnworked handOff={ITEM} canHandOff autoStart onHanded={vi.fn()} onAcceptRisk={null} />,
-    );
+  it("offers the condition's first move first, for the person to read and send themselves", async () => {
+    const onHanded = vi.fn();
+    render(<CaseUnworked handOff={POD} canHandOff onHanded={onHanded} onAcceptRisk={null} />);
 
-    expect(await screen.findByRole("button", { name: "Dispatch desk" })).toBeTruthy();
-    expect(handOffWatchtowerItem).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole("dialog")).toBeNull();
+    await userEvent.click(screen.getByRole("button", { name: "Ask for the POD" }));
+
+    expect(screen.getByRole("dialog", { name: "play AskForPod for wt_2" })).toBeTruthy();
+    expect(handOffWatchtowerItem).not.toHaveBeenCalled();
+    expect(onHanded).not.toHaveBeenCalled();
+    // An agent is still theirs to ask for, as the second thing.
+    expect(screen.getByRole("button", { name: "Hand it to an agent" })).toBeTruthy();
+  });
+
+  it("offers no first move for a condition that has none", () => {
+    render(<CaseUnworked handOff={ITEM} canHandOff onHanded={vi.fn()} onAcceptRisk={null} />);
+
+    expect(screen.queryByRole("button", { name: "Ask for the POD" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Ask where it is" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Tender it again" })).toBeNull();
   });
 
   it.each([
-    ["an agent already answered", { ...ITEM, note: "Nothing to propose." }, true],
-    ["an agent is on it", { ...ITEM, working: true }, true],
-    ["the reader may not work it", ITEM, false],
-  ])("starts nothing on opening when %s", async (_name, handOff, canHandOff) => {
+    ["AskForStatus" as const, "Ask where it is"],
+    ["TenderAgain" as const, "Tender it again"],
+  ])("names the %s move as a person would", (play, label) => {
     render(
       <CaseUnworked
-        handOff={handOff}
-        canHandOff={canHandOff}
-        autoStart
+        handOff={{ ...POD, kind: "MissedDelivery", play }}
+        canHandOff
         onHanded={vi.fn()}
         onAcceptRisk={null}
       />,
     );
 
-    await Promise.resolve();
-    expect(handOffWatchtowerItem).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: label })).toBeTruthy();
+  });
+
+  it("says who was asked what, and when, once the move was made, and offers to ask again", () => {
+    const twoHoursAgo = Math.floor(Date.now() / 1000) - 2 * 3600;
+    render(
+      <CaseUnworked
+        handOff={{
+          ...POD,
+          request: {
+            at: twoHoursAgo,
+            by: "Dana Reyes",
+            summary: "Asked Laura Wright for the signed proof of delivery in Dash",
+          },
+        }}
+        canHandOff
+        onHanded={vi.fn()}
+        onAcceptRisk={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen.getByRole("heading", {
+        name: "Asked Laura Wright for the signed proof of delivery in Dash",
+      }),
+    ).toBeTruthy();
+    expect(screen.getByText("Dana Reyes, 2 hours ago")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Ask again" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Ask for the POD" })).toBeNull();
+    expect(screen.queryByText("No agent has worked this yet.")).toBeNull();
+  });
+
+  it("offers a reader who may not work the case no first move", () => {
+    render(
+      <CaseUnworked
+        handOff={POD}
+        canHandOff={false}
+        locked="Dana Reyes owns this case, so only they can act on it."
+        onHanded={vi.fn()}
+        onAcceptRisk={null}
+      />,
+    );
+
+    expect(screen.queryByRole("button", { name: "Ask for the POD" })).toBeNull();
+    expect(screen.getByText("Dana Reyes owns this case, so only they can act on it.")).toBeTruthy();
+  });
+
+  it("offers no agent for an item an agent raised to ask for a person", () => {
+    render(
+      <CaseUnworked
+        handOff={{ ...ITEM, note: "I could not reach the driver." }}
+        canHandOff
+        agentRaised
+        onHanded={vi.fn()}
+        onAcceptRisk={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByRole("button", { name: "Hand it to another agent" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Hand it to an agent" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Accept the risk…" })).toBeTruthy();
+    expect(
+      screen.getByText(
+        "An agent raised this because it needs you. Do it yourself, ask about it below, or accept the risk.",
+      ),
+    ).toBeTruthy();
   });
 });

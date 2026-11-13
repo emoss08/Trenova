@@ -9,7 +9,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/desklens"
 	"github.com/vektah/gqlparser/v2/ast"
 )
 
@@ -1040,7 +1040,7 @@ var Shard = &gqlexec.Shard{
 					obj := o.(*gqlmodel.DeskBoardWorkSignal)
 					return obj.Lens, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNDeskLens2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐDeskLens),
+				Marshal: gqlexec.Marshal(marshalNDeskLens2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋdesklensᚐLens),
 			},
 			{
 				Name:     "title",
@@ -1351,7 +1351,7 @@ func marshalNDeskBoardWorkSignal2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return ec.MarshalType(ctx, sel, "DeskBoardWorkSignal", v)
 }
 
-func marshalNDeskLens2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋwatchtowerᚐDeskLens(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v watchtower.DeskLens) graphql.Marshaler {
+func marshalNDeskLens2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋdesklensᚐLens(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v desklens.Lens) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)

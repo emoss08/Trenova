@@ -35,6 +35,7 @@ function attention(): DeskAttention {
     counts: { everything: 3, watchtower: 3, triage: 0, decisions: 0 },
     hasMore: false,
     seenAt: 0,
+    seesEveryone: false,
   };
 }
 

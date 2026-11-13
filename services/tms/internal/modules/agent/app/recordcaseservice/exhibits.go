@@ -5,6 +5,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/desklens"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/recordcase"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/shared/recordids"
@@ -79,7 +80,7 @@ func conditions(built *composed) []*watchtower.Item {
 	seen := map[string]struct{}{}
 	out := make([]*watchtower.Item, 0, len(built.items))
 	for _, item := range built.items {
-		if item.SourceKind.DeskLens() != watchtower.DeskLensWatchtower {
+		if desklens.Of(item.SourceKind) != desklens.Watchtower {
 			continue
 		}
 		key := string(item.SourceKind) + "\x1f" + item.Title

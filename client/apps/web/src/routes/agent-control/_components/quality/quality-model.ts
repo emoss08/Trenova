@@ -137,6 +137,8 @@ export const qualityControlSchema = z
     regressionThresholdPoints: z.number().min(1).max(100),
     minCases: z.number().int().min(1).max(500),
     forceRerunDays: z.number().int().min(1).max(90),
+    autoActivate: z.boolean(),
+    autoCasesPerAgent: z.number().int().min(1).max(500),
     version: z.number().int().min(0),
   })
   .refine((values) => values.monthlyBudgetCents >= values.nightlyBudgetCents, {
@@ -160,6 +162,8 @@ export function toFormValues(control: AgentQualityControl): QualityControlFormVa
     regressionThresholdPoints: Math.round(control.regressionThreshold * 100),
     minCases: control.minCases,
     forceRerunDays: control.forceRerunDays,
+    autoActivate: control.autoActivate,
+    autoCasesPerAgent: control.autoCasesPerAgent,
     version: control.version,
   };
 }
@@ -181,6 +185,8 @@ export function toUpdateInput(values: QualityControlFormValues): UpdateAgentQual
     regressionThreshold: values.regressionThresholdPoints / 100,
     minCases: values.minCases,
     forceRerunDays: values.forceRerunDays,
+    autoActivate: values.autoActivate,
+    autoCasesPerAgent: values.autoCasesPerAgent,
   };
 }
 
@@ -194,6 +200,38 @@ export function pointsChange(run: Pick<AgentSuiteRun, "qualityScore" | "baseline
   }
 
   return Math.round((run.qualityScore - run.baselineScore) * 100);
+}
+
+/**
+ * The agent's version before the save a run was scored after, which is the way back from a
+ * fall. Null when the agent itself was not saved between the two runs: a model or provider
+ * that changed under it has no earlier version of the agent to return to.
+ */
+export function versionBefore(run: Pick<AgentSuiteRun, "fingerprintChanges"> | null) {
+  const saved = run?.fingerprintChanges.find((change) => change.field === "definitionVersion");
+  const version = saved ? Number(saved.from) : Number.NaN;
+
+  return Number.isInteger(version) && version > 0 ? version : null;
+}
+
+type TrialProviderSource = {
+  id: string;
+  name: string;
+  model: string;
+  enabled: boolean;
+  tasks: readonly string[];
+};
+
+export type TrialProvider = { id: string; name: string; model: string };
+
+/**
+ * The providers an agent's golden set can be tried on: the ones turned on that serve
+ * conversations, in the order they route. The server refuses any other.
+ */
+export function trialProviders(providers: readonly TrialProviderSource[]): TrialProvider[] {
+  return providers
+    .filter((provider) => provider.enabled && provider.tasks.includes("AssistantChat"))
+    .map(({ id, name, model }) => ({ id, name, model }));
 }
 
 export type QualityHeroFacts = {

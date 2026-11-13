@@ -18,6 +18,7 @@ import {
   ArchiveIcon,
   ArchiveRestoreIcon,
   CheckCircleIcon,
+  BookmarkCheckIcon,
   PauseCircleIcon,
   PlayIcon,
 } from "@trenova/shared/components/icons";
@@ -31,9 +32,11 @@ type StatusMove = { id: string; status: AgentEvalCaseStatus };
 
 /**
  * The golden set: every question an agent is replayed against after a change.
- * Decided proposals arrive here as candidates on their own; an administrator
- * activates the ones worth keeping, writes cases by hand, and quarantines a
- * case that has stopped being fair.
+ * Decided proposals arrive here on their own, active when the organization keeps
+ * its set automatically and as candidates when it does not. An automatic case is
+ * retired as it ages or is crowded out; an administrator keeps the ones worth
+ * holding on to, writes cases by hand, and quarantines a case that has stopped
+ * being fair.
  */
 export function EvalCasesTable() {
   const t = useT();
@@ -78,6 +81,13 @@ export function EvalCasesTable() {
       icon: ArchiveRestoreIcon,
       onClick: (row) => move.mutate({ id: row.original.id, status: "Active" }),
       hidden: (row) => !movable(row, "Active") || row.original.status !== "Retired",
+    },
+    {
+      id: "keep",
+      label: t("Keep"),
+      icon: BookmarkCheckIcon,
+      onClick: (row) => move.mutate({ id: row.original.id, status: "Active" }),
+      hidden: (row) => !canUpdate || row.original.status !== "Active" || !row.original.automatic,
     },
     {
       id: "quarantine",

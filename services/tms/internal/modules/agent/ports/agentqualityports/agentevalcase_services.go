@@ -77,6 +77,9 @@ type CaptureEvalCaseCandidatesRequest struct {
 
 type CaptureEvalCaseCandidatesResult struct {
 	Captured   int `json:"captured"`
+	Activated  int `json:"activated"`
+	Adopted    int `json:"adopted"`
+	Rotated    int `json:"rotated"`
 	Duplicates int `json:"duplicates"`
 	Failed     int `json:"failed"`
 	Scanned    int `json:"scanned"`
@@ -88,6 +91,7 @@ type PurgeEvalCasesRequest struct {
 }
 
 type PurgeEvalCasesResult struct {
+	Aged     int `json:"aged"`
 	Retained int `json:"retained"`
 	Expired  int `json:"expired"`
 	Orphaned int `json:"orphaned"`

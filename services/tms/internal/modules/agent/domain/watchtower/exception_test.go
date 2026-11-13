@@ -4,9 +4,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/emoss08/trenova/shared/pulid"
 )
 
 const testNow = int64(1_700_000_000)

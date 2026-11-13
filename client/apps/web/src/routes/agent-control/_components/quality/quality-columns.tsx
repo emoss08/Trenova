@@ -269,6 +269,14 @@ export function getSuiteRunColumns(t: TranslateFn): ColumnDef<AgentSuiteRunRow>[
         <div className="flex items-center gap-1.5">
           <SuiteRunStatusBadge status={row.original.status} />
           {row.original.regression ? <Badge variant="danger">{t("Regressed")}</Badge> : null}
+          {row.original.trialLabel ? (
+            <Badge
+              variant="info"
+              title={t("Tried on {0}. The agent was not changed.", row.original.trialLabel)}
+            >
+              {t("Trial")}
+            </Badge>
+          ) : null}
         </div>
       ),
       size: 190,

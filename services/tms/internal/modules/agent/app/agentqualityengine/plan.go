@@ -33,6 +33,7 @@ type SweepRequest struct {
 	TenantInfo        pagination.TenantInfo `json:"tenantInfo"`
 	AgentDefinitionID pulid.ID              `json:"agentDefinitionId,omitzero"`
 	Forced            bool                  `json:"forced"`
+	TrialProviderID   pulid.ID              `json:"trialProviderId,omitzero"`
 }
 
 type PlannedAgent struct {
@@ -42,6 +43,8 @@ type PlannedAgent struct {
 	FingerprintHash   string                        `json:"fingerprintHash"`
 	SuiteRevision     string                        `json:"suiteRevision"`
 	ActiveCases       int                           `json:"activeCases"`
+	TrialProviderID   pulid.ID                      `json:"trialProviderId,omitzero"`
+	TrialLabel        string                        `json:"trialLabel,omitempty"`
 	Skip              bool                          `json:"skip"`
 	SkipReason        string                        `json:"skipReason,omitempty"`
 }
@@ -97,15 +100,20 @@ func (s *Engine) PlanSweep(ctx context.Context, req *SweepRequest) (*SweepPlan, 
 	if err != nil {
 		return nil, err
 	}
+	trial, err := provider.trial(req.TrialProviderID)
+	if err != nil {
+		return nil, err
+	}
 
 	for _, definition := range definitions {
 		planned, planErr := s.planAgent(ctx, &planAgentParams{
 			tenant:     req.TenantInfo,
 			definition: definition,
 			provider:   provider,
+			trial:      trial,
 			control:    control,
 			now:        now,
-			forced:     req.Forced,
+			forced:     req.Forced || trial != nil,
 		})
 		if planErr != nil {
 			return nil, planErr
@@ -191,6 +199,34 @@ func (r resolvedProvider) forAgent(preferred pulid.ID) (providerID pulid.ID, mod
 	return r.candidates[0].ID, r.candidates[0].Model
 }
 
+func (r resolvedProvider) trial(id pulid.ID) (*aiprovider.Provider, error) {
+	if id.IsNil() {
+		return nil, nil //nolint:nilnil // no provider was asked for, which is a run on the agent's own
+	}
+	for _, candidate := range r.candidates {
+		if candidate.ID == id {
+			return candidate, nil
+		}
+	}
+
+	return nil, errortypes.NewValidationError(
+		"trialProviderId",
+		errortypes.ErrInvalid,
+		"Pick a provider that is turned on and serves conversations",
+	)
+}
+
+func trialLabel(provider *aiprovider.Provider) string {
+	if provider.Model == "" || provider.Model == provider.Name {
+		return stringutils.Ellipsize(provider.Name, agentqualitysuite.MaxTrialLabelChars)
+	}
+
+	return stringutils.Ellipsize(
+		provider.Name+" · "+provider.Model,
+		agentqualitysuite.MaxTrialLabelChars,
+	)
+}
+
 func (s *Engine) chatProvider(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
@@ -217,6 +253,7 @@ type planAgentParams struct {
 	tenant     pagination.TenantInfo
 	definition *agentdefinition.Definition
 	provider   resolvedProvider
+	trial      *aiprovider.Provider
 	control    *agentqualitycontrol.Control
 	now        int64
 	forced     bool
@@ -233,6 +270,9 @@ func (s *Engine) fingerprint(
 
 func (s *Engine) planAgent(ctx context.Context, p *planAgentParams) (*PlannedAgent, error) {
 	fingerprint := s.fingerprint(p.definition, p.provider)
+	if p.trial != nil {
+		fingerprint = s.runtime.Fingerprint(p.definition, p.trial.ID, p.trial.Model)
+	}
 	cases, err := s.cases.ListSamplingCases(ctx, agentqualityports.ListEvalCaseSamplingRequest{
 		TenantInfo:        p.tenant,
 		AgentDefinitionID: p.definition.ID,
@@ -248,6 +288,10 @@ func (s *Engine) planAgent(ctx context.Context, p *planAgentParams) (*PlannedAge
 		FingerprintHash:   fingerprint.Hash(),
 		SuiteRevision:     agentqualitysuite.SuiteRevision(cases),
 		ActiveCases:       len(cases),
+	}
+	if p.trial != nil {
+		planned.TrialProviderID = p.trial.ID
+		planned.TrialLabel = trialLabel(p.trial)
 	}
 	if len(cases) == 0 {
 		planned.Skip = true
@@ -463,6 +507,11 @@ func (s *Engine) newSuiteRun(p newSuiteRunParams) *agentqualitysuite.SuiteRun {
 		userID := p.req.RequestedByUserID
 		run.RequestedByUserID = &userID
 	}
+	if p.req.Agent.TrialProviderID.IsNotNil() {
+		providerID := p.req.Agent.TrialProviderID
+		run.TrialProviderID = &providerID
+		run.TrialLabel = p.req.Agent.TrialLabel
+	}
 	if p.baseline != nil {
 		baselineID := p.baseline.ID
 		run.BaselineRunID = &baselineID
@@ -499,6 +548,7 @@ func suiteEvaluations(
 			RequestedByUserID: run.RequestedByUserID,
 			SuiteRunID:        &suiteRunID,
 			SuiteOrdinal:      &ordinal,
+			TrialProviderID:   run.TrialProviderID,
 			Actions:           []agentreplay.ReplayAction{},
 		})
 	}
@@ -546,6 +596,7 @@ func (s *Engine) clearStaleRunning(ctx context.Context, req *OpenSuiteRequest) (
 		Statuses: []agentqualitysuite.SuiteRunStatus{
 			agentqualitysuite.SuiteRunStatusRunning,
 		},
+		IncludeTrials: true,
 	})
 	if err != nil || running == nil {
 		return false, err

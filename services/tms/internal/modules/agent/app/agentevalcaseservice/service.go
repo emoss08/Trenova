@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentqualitysettings"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdecision"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentprompt"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitycontrol"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aifeedback"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdecisionports"
@@ -62,6 +64,22 @@ type caseStore interface {
 		ctx context.Context,
 		req agentqualityports.ListEvalCaseCaptureCandidatesRequest,
 	) ([]agentqualityports.EvalCaseCaptureCandidate, error)
+	ListAutomatic(
+		ctx context.Context,
+		req agentqualityports.ListAutomaticEvalCasesRequest,
+	) ([]agentquality.AutomaticCase, error)
+	RetireAutomatic(
+		ctx context.Context,
+		req *agentqualityports.RetireAutomaticEvalCasesRequest,
+	) (int, error)
+	RetireStaleAutomatic(
+		ctx context.Context,
+		req agentqualityports.RetireStaleAutomaticEvalCasesRequest,
+	) (int, error)
+	AdoptCandidates(
+		ctx context.Context,
+		req agentqualityports.AdoptEvalCaseCandidatesRequest,
+	) ([]agentqualityports.AdoptedEvalCase, error)
 	PurgeExpired(
 		ctx context.Context,
 		req agentqualityports.PurgeExpiredEvalCasesRequest,
@@ -119,6 +137,13 @@ type feedbackStore interface {
 	LinkEvalCase(ctx context.Context, req aifeedbackports.LinkAIFeedbackEvalCaseRequest) error
 }
 
+type controlReader interface {
+	Control(
+		ctx context.Context,
+		tenant pagination.TenantInfo,
+	) (*agentqualitycontrol.Control, error)
+}
+
 type retentionReader interface {
 	List(ctx context.Context) (*pagination.ListResult[*dataretention.DataRetention], error)
 }
@@ -135,6 +160,7 @@ type Params struct {
 	Conversations conversationports.ConversationRepository
 	Feedback      aifeedbackports.AIFeedbackRepository
 	Retention     tenantports.DataRetentionRepository
+	Settings      *agentqualitysettings.Reader
 	Registry      *permissioncatalog.Registry
 	QueryTools    agenttoolports.AgentQueryToolRegistry
 	ActionTools   agenttoolports.AgentToolRegistry
@@ -152,6 +178,7 @@ type Service struct {
 	conversations conversationReader
 	feedback      feedbackStore
 	retention     retentionReader
+	settings      controlReader
 	redactor      *Redactor
 	subjects      agentruntimeports.AgentSubjectDescriber
 	audit         auditports.AuditService
@@ -170,6 +197,7 @@ func New(p Params) agentqualityports.AgentEvalCaseService {
 		conversations: p.Conversations,
 		feedback:      p.Feedback,
 		retention:     p.Retention,
+		settings:      p.Settings,
 		redactor:      NewRedactor(p.Registry, p.QueryTools, p.ActionTools),
 		subjects:      p.Subjects,
 		audit:         p.AuditService,
@@ -256,6 +284,7 @@ func (s *Service) Update(
 	}
 
 	previous := *evalCase
+	evalCase.Automatic = false
 	if req.Title != nil {
 		evalCase.Title = strings.TrimSpace(*req.Title)
 	}
@@ -312,10 +341,10 @@ func (s *Service) SetStatus(
 	if err != nil {
 		return nil, err
 	}
-	if evalCase.Status == req.Status {
+	if evalCase.Status == req.Status && !evalCase.Automatic {
 		return evalCase, nil
 	}
-	if !evalCase.Status.CanBecome(req.Status) {
+	if evalCase.Status != req.Status && !evalCase.Status.CanBecome(req.Status) {
 		return nil, errortypes.NewValidationError(
 			"status",
 			errortypes.ErrInvalid,
@@ -325,6 +354,7 @@ func (s *Service) SetStatus(
 
 	previous := *evalCase
 	evalCase.Status = req.Status
+	evalCase.Automatic = false
 	if err = s.prepare(evalCase); err != nil {
 		return nil, err
 	}
@@ -334,8 +364,15 @@ func (s *Service) SetStatus(
 		return nil, err
 	}
 
-	s.log(ctx, updated, &previous, actor, permission.OpUpdate,
-		fmt.Sprintf("Evaluation case moved from %s to %s", previous.Status, updated.Status))
+	comment := fmt.Sprintf(
+		"Evaluation case moved from %s to %s",
+		previous.Status,
+		updated.Status,
+	)
+	if previous.Status == updated.Status {
+		comment = "Automatic evaluation case kept by a person"
+	}
+	s.log(ctx, updated, &previous, actor, permission.OpUpdate, comment)
 
 	return updated, nil
 }
@@ -406,8 +443,11 @@ func (s *Service) save(
 		return &agentqualityports.EvalCaseCapture{Case: existing, Duplicate: true}, nil
 	}
 
-	s.log(ctx, created, nil, actor, permission.OpCreate,
-		fmt.Sprintf("Evaluation case captured from %s", created.Source))
+	comment := fmt.Sprintf("Evaluation case captured from %s", created.Source)
+	if created.Automatic {
+		comment += " and activated automatically"
+	}
+	s.log(ctx, created, nil, actor, permission.OpCreate, comment)
 
 	return &agentqualityports.EvalCaseCapture{Case: created}, nil
 }
@@ -461,12 +501,48 @@ func (s *Service) log(
 	}
 }
 
+type rotationAudit struct {
+	AgentDefinitionID pulid.ID   `json:"agentDefinitionId"`
+	Kept              int        `json:"kept"`
+	Retired           []pulid.ID `json:"retired"`
+}
+
+func (s *Service) logRotation(
+	ctx context.Context,
+	scope agentScope,
+	retired []pulid.ID,
+	keep int,
+) {
+	auditActor := permissionports.SystemAuditActor()
+	if err := s.audit.LogAction(ctx, &auditports.LogActionParams{
+		Resource:      permission.ResourceAgentEvalSuite,
+		ResourceID:    scope.agentID.String(),
+		Operation:     permission.OpUpdate,
+		UserID:        auditActor.UserID,
+		PrincipalType: auditActor.PrincipalType,
+		PrincipalID:   auditActor.PrincipalID,
+		APIKeyID:      auditActor.APIKeyID,
+		CurrentState: jsonutils.MustToJSON(rotationAudit{
+			AgentDefinitionID: scope.agentID,
+			Kept:              keep,
+			Retired:           retired,
+		}),
+		OrganizationID: scope.tenant.OrgID,
+		BusinessUnitID: scope.tenant.BuID,
+	}, auditservice.WithComment(
+		"Oldest automatic evaluation cases retired to keep the agent's golden set to its limit",
+	)); err != nil {
+		s.l.Error("failed to log evaluation case rotation audit", zap.Error(err))
+	}
+}
+
 type caseAudit struct {
 	ID                pulid.ID                `json:"id"`
 	AgentDefinitionID pulid.ID                `json:"agentDefinitionId"`
 	Title             string                  `json:"title"`
 	Source            agentquality.CaseSource `json:"source"`
 	Status            agentquality.CaseStatus `json:"status"`
+	Automatic         bool                    `json:"automatic"`
 	Expected          agentquality.Expected   `json:"expected"`
 	HeldTools         []string                `json:"heldTools"`
 	Rubric            string                  `json:"rubric"`
@@ -481,6 +557,7 @@ func auditSummary(evalCase *agentquality.EvalCase) caseAudit {
 		Title:             evalCase.Title,
 		Source:            evalCase.Source,
 		Status:            evalCase.Status,
+		Automatic:         evalCase.Automatic,
 		Expected:          evalCase.Expected,
 		HeldTools:         evalCase.HeldTools,
 		Rubric:            evalCase.Rubric,

@@ -1658,6 +1658,7 @@ enum AITask {
   PaperworkReading
   QueryCompose
   RemittanceExtraction
+  RequestWording
   ScopeClassification
 }
 
@@ -1863,6 +1864,7 @@ enum AIUsageFeature {
   InsightNarration
   PaletteAnswer
   PaperworkReading
+  RequestWording
   ShipmentImportChat
   TableQuery
 }
@@ -4395,6 +4397,18 @@ and scored.
 """
 type AgentEvalCase {
   agentDefinitionId: ID!
+  """
+  When the person asked it. A replay answered from the recorded tool results
+  runs with its clock at this moment; null for a case written by hand or
+  captured from a background run, which replays as of now.
+  """
+  askedAt: Timestamp
+  """
+  Whether the system keeps the case: activated on capture, retired when its
+  agent holds more than the organization keeps or when it ages. False once a
+  person keeps, edits or moves it.
+  """
+  automatic: Boolean!
   businessUnitId: ID!
   capturedFingerprint: JSON
   contentHash: String!
@@ -5858,6 +5872,18 @@ type AgentQualityAgentEdge {
 
 """When and how far the nightly agent quality sweep runs."""
 type AgentQualityControl {
+  """
+  Whether a proposal a person approved or rejected becomes an active case on capture.
+  """
+  autoActivate: Boolean!
+  """
+  Days after which an automatic case is retired, because an old case stops being fair as its records move on.
+  """
+  autoCaseDays: Int!
+  """
+  The most automatic cases one agent keeps active; past it the oldest are retired, a tool at a time.
+  """
+  autoCasesPerAgent: Int!
   enabled: Boolean!
   """
   An unchanged agent is run again once its last run is this many days old.
@@ -6587,6 +6613,14 @@ type AgentSuiteRun {
   startedAt: Timestamp!
   status: AgentSuiteRunStatus!
   suiteRevision: String!
+  """
+  The trial provider's name and model in words; empty for a run that scores the agent.
+  """
+  trialLabel: String!
+  """
+  The provider a trial run was asked on in place of the agent's own; null for a run that scores the agent.
+  """
+  trialProviderId: ID
   trigger: AgentSuiteRunTrigger!
   updatedAt: Timestamp!
   version: Int!
@@ -12936,6 +12970,10 @@ type DeskAttention {
   hasMore: Boolean!
   """Where the reader's unseen line sits."""
   seenAt: Timestamp!
+  """
+  True when the reader may see everyone's cases, so the list can offer only their own.
+  """
+  seesEveryone: Boolean!
 }
 
 """
@@ -12975,6 +13013,10 @@ input DeskAttentionInput {
   Rows with at least one item in this lens; each row still shows all its items.
   """
   lens: DeskLens = Everything
+  """
+  Only the reader's own cases and the ones nobody owns, for a reader who may see everyone's.
+  """
+  mine: Boolean = false
   """One record's row, for its case: every open item about it."""
   recordId: ID
   """Rows with an item of one of these severities. Empty is every severity."""
@@ -13379,6 +13421,12 @@ type DeskCaseHandOff {
   What that agent said when it finished and proposed nothing; markdown. Empty otherwise.
   """
   note: String!
+  """
+  The first move this kind of condition has, which the reader sends themselves with `sendWatchtowerPlay`. Null when the kind has none.
+  """
+  play: WatchtowerPlayKind
+  """The last play a person sent for it; null when none has been."""
+  request: WatchtowerRequest
   """True while an agent has the item and has not finished."""
   working: Boolean!
 }
@@ -15103,6 +15151,11 @@ type DispatchForecastQuality {
   meanAbsoluteError: Float!
   """The same average miss for repeating the same slot of the week before."""
   naiveMeanAbsoluteError: Float!
+  """
+  True while the history is being read again: a forecast that is not Ready and was fitted more
+  than an hour ago is refitted when it is read. The figures are still those from fittedAt.
+  """
+  refitting: Boolean!
   """
   How much better than repeating last week the forecast is: 0.3 is 30% smaller misses.
   """
@@ -25069,6 +25122,10 @@ type Mutation {
   """
   revokeWorkerPortalAccess(workerId: ID!): Boolean!
   """
+  Has Nova rewrite a play's message the way the reader asks. Only the words change; nothing is sent.
+  """
+  rewordWatchtowerPlay(input: RewordWatchtowerPlayInput!, itemId: ID!): String!
+  """
   Rollback creates a new draft from the target and publishes it rather than
   reactivating history, so a generated document never names a version that was
   live at two different times under two different approvals.
@@ -25082,8 +25139,13 @@ type Mutation {
   task where it goes. Returns the providers in routing order.
   """
   routeAITask(providerId: ID!, task: AITask!): [AIProvider!]!
-  """Runs one agent's suite now, whatever changed or did not."""
-  runAgentSuite(agentDefinitionId: ID!): AgentSuiteRun!
+  """
+  Runs one agent's suite now, whatever changed or did not. With a trial
+  provider the cases are asked on that provider's model and nothing about the
+  agent changes: the run is never the agent's score, baseline or a regression.
+  The provider must be turned on and serve conversations.
+  """
+  runAgentSuite(agentDefinitionId: ID!, trialProviderId: ID): AgentSuiteRun!
   runDotRandomDraw(input: RunDOTRandomDrawInput!): DOTRandomDraw!
   runPtoAccrual(input: RunPTOAccrualInput!): PTOAccrualRunPayload!
   runReport(input: RunReportInput!): ReportRun!
@@ -25125,11 +25187,19 @@ type Mutation {
   """
   sendInvoiceEdi(force: Boolean, invoiceId: ID!): InvoiceEDISendResult!
   sendTestMessageTemplate(input: SendTestMessageTemplateInput!): Boolean!
+  """
+  Sends the item's play under the reader's name and notes on the item who asked what of whom.
+  """
+  sendWatchtowerPlay(input: SendWatchtowerPlayInput!, itemId: ID!): WatchtowerItem!
   setAccountingMapping(input: SetAccountingMappingInput!): AccountingMapping!
   """
   Sets who may use an agent. Needs permission to update agents and roles.
   """
   setAgentAccess(agentId: ID!, input: SetAgentAccessInput!): AgentDefinition! @authorizes(resource: "role")
+  """
+  Moves a case to another status. Setting an automatic active case to Active
+  keeps it: it stays active and is no longer retired on its own.
+  """
   setAgentEvalCaseStatus(id: ID!, status: AgentEvalCaseStatus!): AgentEvalCase!
   """
   Retires or restores a memory; a retired one is kept and no longer read. A suggested memory is refused.
@@ -28760,6 +28830,12 @@ type Query {
   What needs attention, newest first, filtered to what this reader may see.
   """
   watchtowerItems(input: WatchtowerItemsInput!): WatchtowerItemConnection!
+  """
+  The item's play as the reader would send it: who it goes to, how, and the
+  words. Fails with the reason when it cannot be sent: nobody on the record
+  can be reached, it is already done, or it is not the reader's to send.
+  """
+  watchtowerPlay(itemId: ID!): WatchtowerPlay!
   """The resolutions a person may pick."""
   watchtowerResolutionCodes: [WatchtowerResolutionCodeOption!]!
   """
@@ -30687,6 +30763,13 @@ input ReviseDeskMemoryInput {
   version: Int!
 }
 
+input RewordWatchtowerPlayInput {
+  """How the person wants them to read."""
+  guidance: String!
+  """The words in the box now; empty rewords the play's own."""
+  message: String
+}
+
 """What the risk checks decided about a sign-in."""
 type RiskDecision {
   createdAt: Timestamp!
@@ -31294,6 +31377,11 @@ input SendTestMessageTemplateInput {
   kind: String!
   toEmail: String!
   versionId: ID
+}
+
+input SendWatchtowerPlayInput {
+  """The words the person approved; empty sends the play's own."""
+  message: String
 }
 
 type ServiceFailure {
@@ -36115,6 +36203,8 @@ input UpdateAgentEvalCaseInput {
 }
 
 input UpdateAgentQualityControlInput {
+  autoActivate: Boolean!
+  autoCasesPerAgent: Int!
   enabled: Boolean!
   forceRerunDays: Int!
   judgeEnabled: Boolean!
@@ -37050,6 +37140,10 @@ enum WatchtowerItemEventKind {
   """The item was handed to an agent, which is now working it."""
   HandedOff
   Reopened
+  """
+  A person sent the item's play: a question to whoever has the load, or an offer to carriers.
+  """
+  Requested
   Resolved
   Snoozed
   SourceReopened
@@ -37218,6 +37312,55 @@ type WatchtowerPaperPanel {
   papers: [WatchtowerPaper!]!
 }
 
+"""
+What a play would do for one item, planned from the record for the person
+about to send it. Who it goes to and how is decided by the server and is not
+theirs to change; the words are.
+"""
+type WatchtowerPlay {
+  """Nova can reword the message for this organization."""
+  canReword: Boolean!
+  channel: WatchtowerPlayChannel!
+  itemId: ID!
+  kind: WatchtowerPlayKind!
+  """The words that would be sent; empty for a play that sends none."""
+  message: String!
+  """The longest message the channel takes."""
+  messageLimit: Int!
+  """Who it goes to, by name."""
+  recipient: String!
+  """Who an email is from; empty otherwise."""
+  sender: String!
+  """An email's subject; empty otherwise."""
+  subject: String!
+  """What sending does, for a play that sends no message; empty otherwise."""
+  summary: String!
+}
+
+"""How a play reaches whoever it is for."""
+enum WatchtowerPlayChannel {
+  """A message in the driver's portal."""
+  Dash
+  """An email in the organization's letterhead."""
+  Email
+  """An offer to carriers, which carries no message."""
+  Tender
+  """A text to the driver's phone."""
+  Text
+}
+
+"""
+The first move a kind of item has, which the person working it sends themselves.
+"""
+enum WatchtowerPlayKind {
+  """Ask whoever delivered a load for its signed proof of delivery."""
+  AskForPod
+  """Ask whoever has a load where it is."""
+  AskForStatus
+  """Offer a move down its routing guide again."""
+  TenderAgain
+}
+
 """The record an item is about, for the button that opens it."""
 type WatchtowerRecord {
   """The kind of record, as the permission registry names it."""
@@ -37226,6 +37369,15 @@ type WatchtowerRecord {
   label: String!
   """The kind in the reader's words."""
   noun: String!
+}
+
+"""The last play a person sent for an item."""
+type WatchtowerRequest {
+  at: Timestamp!
+  """Who sent it, by name."""
+  by: String!
+  """What was asked of whom and how, as one sentence."""
+  summary: String!
 }
 
 """

@@ -2337,6 +2337,16 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
 			},
+			{
+				Name:     "refitting",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DispatchForecastQuality)
+					return obj.Refitting, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
 		}},
 		{Object: "DispatchFreightArea", Fields: []*gqlexec.Field{
 			{

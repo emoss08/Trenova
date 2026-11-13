@@ -3084,6 +3084,11 @@ writes:
   "mutation handOffWatchtowerItem":
     exempt: agent-administration
     reason: "Starts an agent on the item's subject, or publishes its event to the agents that subscribe; agents hand work to one another through delegate_task instead."
+  "mutation sendWatchtowerPlay":
+    tools: [worker_send_message, shipment_request_documents, dispatch_create_tender_from_routing_guide]
+  "mutation rewordWatchtowerPlay":
+    exempt: read-only
+    reason: "Has Nova rewrite the wording of a message a person is about to send and returns the text; nothing is stored or sent."
   "mutation markWatchtowerSeen":
     exempt: user-preference
     reason: "A person's own interface state; it changes nothing anyone else sees."

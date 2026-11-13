@@ -3,13 +3,19 @@ package watchtowerservice
 import (
 	"context"
 	"fmt"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/caseownerports"
 	"slices"
+
+	"github.com/emoss08/trenova/internal/modules/agent/app/agentshadow"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/caseownerports"
+
+	"go.uber.org/fx"
+	"go.uber.org/zap"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreset"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttemplate"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtowerplay"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
@@ -20,8 +26,6 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"go.uber.org/fx"
-	"go.uber.org/zap"
 )
 
 const (
@@ -63,6 +67,7 @@ type Params struct {
 	Dismisser   *Dismisser
 	Exceptions  *Exceptions
 	Owners      caseownerports.Service
+	Shadow      *agentshadow.Resolver
 }
 
 // Service is the watchtower's read face: what a reader may see of it, where
@@ -85,6 +90,7 @@ type Service struct {
 	events      agenteventports.AgentEventPublisher
 	sources     map[watchtower.SourceKind]watchtowerports.WatchtowerSource
 	owners      caseownerports.Service
+	shadow      *agentshadow.Resolver
 	now         func() int64
 }
 
@@ -111,6 +117,7 @@ func New(p Params) *Service {
 		sources:     sources,
 		dismisser:   p.Dismisser,
 		owners:      p.Owners,
+		shadow:      p.Shadow,
 		now:         timeutils.NowUnix,
 	}
 
@@ -207,6 +214,9 @@ func (s *Service) List(
 	if err != nil {
 		return nil, err
 	}
+	if req.Mine {
+		sight.All = false
+	}
 
 	listReq := watchtowerports.ListWatchtowerItemsQuery{
 		TenantInfo:     req.TenantInfo,
@@ -282,6 +292,15 @@ func (s *Service) Counts(
 	tenant pagination.TenantInfo,
 	actor *permissionports.RequestActor,
 ) (*watchtowerports.WatchtowerCounts, error) {
+	return s.CountsFor(ctx, tenant, actor, false)
+}
+
+func (s *Service) CountsFor(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	actor *permissionports.RequestActor,
+	mine bool,
+) (*watchtowerports.WatchtowerCounts, error) {
 	kinds, err := s.access.visibleKinds(ctx, actor, nil)
 	if err != nil {
 		return nil, err
@@ -305,6 +324,9 @@ func (s *Service) Counts(
 	sight, err := s.owners.Sight(ctx, actor)
 	if err != nil {
 		return nil, err
+	}
+	if mine {
+		sight.All = false
 	}
 
 	stored, err := s.repo.Counts(ctx, watchtowerports.CountWatchtowerItemsRequest{
@@ -382,11 +404,21 @@ func (s *Service) PlanDismiss(
 	return s.dismisser.PlanDismiss(ctx, tenant, id, actor)
 }
 
-// HandOff gives an item to an agent. A named agent runs on the item's
-// subject at once. Otherwise the first agent that subscribes to the item's
-// event is started on it the same way, so the item says which run has it
-// and when that run ends; with no subscriber, the answer is who could take
-// it, so the person can pick rather than be told nothing happened.
+// HandOff puts an agent on an item, and only ever because a person asked.
+// A named agent runs on the item's subject at once. With none named, the
+// first live agent that subscribes to the item's event is started on it, so
+// the item says which run has it and when that run ends; with no
+// subscriber, the answer is who could take it, so the person can pick
+// rather than be told nothing happened.
+//
+// A kind with a play (watchtower.SourceKind.Play) is never given to an
+// agent unnamed: its first move is the person's own, sent from Plays, and
+// an agent is put on it only when the person picks one from the list this
+// answers with.
+//
+// An item an agent raised to ask for a person is never handed to an agent:
+// the question was put to a person, and a second agent reading the same
+// record can only ask it again.
 func (s *Service) HandOff(
 	ctx context.Context,
 	req watchtowerports.HandOffWatchtowerItemRequest,
@@ -411,12 +443,34 @@ func (s *Service) HandOff(
 		)
 	}
 
+	if item.SourceKind == watchtower.SourceAgentException {
+		return nil, errortypes.NewBusinessError(
+			"An agent raised this because it needs a person. Decide it here, or ask about it below.",
+		)
+	}
+	if item.IsResolved() {
+		return nil, errortypes.NewBusinessError("This exception is resolved; reopen it first")
+	}
+	answered, err := s.agentStanding(ctx, req.TenantInfo, item)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = s.refusePaused(ctx, req.TenantInfo); err != nil {
+		return nil, err
+	}
+
 	if req.AgentDefinitionID.IsNotNil() {
+		if req.AgentDefinitionID == answered {
+			return nil, s.refuseAnswered(ctx, req.TenantInfo, answered)
+		}
+
 		return s.handOffToAgent(ctx, req, item, actor)
 	}
 
 	result := &watchtowerports.HandOffWatchtowerItemResult{Item: item}
-	if item.EventKind != "" {
+	played := watchtowerplay.Of(item.SourceKind) != watchtowerplay.None
+	if item.EventKind != "" && !played {
 		subscribers, lErr := s.definitions.ListEnabledByTrigger(
 			ctx,
 			agentdefinitionports.ListAgentDefinitionsByTriggerRequest{
@@ -428,6 +482,7 @@ func (s *Service) HandOff(
 		if lErr != nil {
 			return nil, lErr
 		}
+		subscribers = without(withoutShadow(subscribers), answered)
 		if len(subscribers) > 0 {
 			// The agent that takes this kind of thing is started on it
 			// directly. Publishing the event again would not do: an event
@@ -455,16 +510,7 @@ func (s *Service) HandOff(
 	if err != nil {
 		return nil, err
 	}
-	if worker := workerOf(item.SourceKind, candidates); worker != nil {
-		req.AgentDefinitionID = worker.ID
-		handed, hErr := s.handOffToAgent(ctx, req, item, actor)
-		if hErr != nil {
-			return nil, hErr
-		}
-		handed.Subscribers = []*agentdefinition.Definition{worker}
-
-		return handed, nil
-	}
+	candidates = without(candidates, answered)
 	result.Candidates = candidates
 
 	return result, nil

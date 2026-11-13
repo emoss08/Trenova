@@ -76,10 +76,12 @@ Keywords: forecast quality, is the forecast ready, forecast accuracy, not enough
      it was than repeating last week. Plans use it when **Anticipate freight** is on.
    - **Not better than last week yet**: it was tested but did not beat repeating last week, so
      plans ignore it until it does better.
-   - **Not enough history yet**: it needs 8 weeks and 200 loads of history before it can be
-     tested; the card says how much it has.
+   - **Not enough history yet**: it is tested once the last 35 weeks hold 8 weeks with loads and
+     200 loads picked up; **Weeks with loads** and **Loads picked up** show how far it has got.
    - **Not fitted yet**: it has not been fitted from your history yet.
-3. **History**, **Average miss** and **Last fitted** give the figures behind the status.
+3. **History**, **Average miss** and **Last fitted** give the figures behind the status. While the
+   forecast is not **Ready**, opening the card more than an hour after **Last fitted** checks your
+   history again; the card says so and updates by itself when the check finishes.
 4. If the card says **The freight forecast could not be loaded.**, select **Try again**.
 
 ### See and reset the learned dispatch style

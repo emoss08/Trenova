@@ -2,7 +2,10 @@ package watchtowerservice
 
 import (
 	"context"
+
 	"github.com/emoss08/trenova/internal/modules/agent/ports/caseownerports"
+
+	"go.uber.org/fx"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
@@ -12,7 +15,6 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"go.uber.org/fx"
 )
 
 type DismisserParams struct {

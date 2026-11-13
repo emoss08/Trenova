@@ -3,33 +3,41 @@ package qualificationtools
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/agentceiling"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
+	"github.com/emoss08/trenova/internal/modules/agent/app/requestemail"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/agentceiling"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 )
+
+func docsTool() *RequestMissingDocsTool {
+	return &RequestMissingDocsTool{requests: requestemail.New(requestemail.Params{
+		Templates: &agenttoolstest.FakeRenderer{},
+	})}
+}
 
 // The agent writes prose; the organization's template writes the letter around
 // it. This asserts the prose arrives as data rather than as markup or as a
 // pre-assembled message, which is what lets a carrier put their own greeting and
 // sign-off around everything an agent sends.
-func TestAgentEmailContextCarriesTheAgentsProseAsData(t *testing.T) {
+func TestRequestMissingDocsCarriesTheAgentsProseAsData(t *testing.T) {
 	t.Parallel()
 
-	tool := &RequestMissingDocsTool{}
+	params := agenttoolstest.ExecuteParams(map[string]any{
+		"to":                 []any{"pod@consignee.example"},
+		"subject":            "Missing paperwork for SHP-1001",
+		"body":               "We are missing the signed bill of lading.",
+		"customerName":       "Halstead Grocery Group",
+		"shipmentProNumber":  "SHP-1001",
+		"requestedDocuments": []any{"Signed bill of lading", "Lumper receipt"},
+	})
+	params.IdempotencyKey = "idem-1"
 
-	out := tool.agentEmailContext(
-		t.Context(),
-		pagination.TenantInfo{},
-		"Missing paperwork for SHP-1001",
-		"We are missing the signed bill of lading.",
-		map[string]any{
-			"customerName":       "Halstead Grocery Group",
-			"shipmentProNumber":  "SHP-1001",
-			"requestedDocuments": []any{"Signed bill of lading", "Lumper receipt"},
-		},
-	)
+	composed, err := docsTool().compose(t.Context(), params)
+	require.NoError(t, err)
+	out := composed.Data
 
 	assert.Equal(t, "Missing paperwork for SHP-1001", out.AgentSubject)
 	assert.Equal(t, "We are missing the signed bill of lading.", out.AgentBody)
@@ -42,33 +50,34 @@ func TestAgentEmailContextCarriesTheAgentsProseAsData(t *testing.T) {
 // The optional parameters are the agent's to supply and easy for it to get
 // wrong. A malformed one must not stop a document request going out, because the
 // agent's own words already say what is being asked for.
-func TestAgentEmailContextToleratesMissingAndMalformedExtras(t *testing.T) {
+func TestRequestMissingDocsToleratesMissingAndMalformedExtras(t *testing.T) {
 	t.Parallel()
 
-	tool := &RequestMissingDocsTool{}
-
-	bare := tool.agentEmailContext(
-		t.Context(),
-		pagination.TenantInfo{},
-		"Subject",
-		"Body",
-		map[string]any{},
-	)
+	bareParams := agenttoolstest.ExecuteParams(map[string]any{
+		"to":      []any{"pod@consignee.example"},
+		"subject": "Subject",
+		"body":    "Body",
+	})
+	bareParams.IdempotencyKey = "idem-2"
+	composed, err := docsTool().compose(t.Context(), bareParams)
+	require.NoError(t, err)
+	bare := composed.Data
 	assert.Empty(t, bare.CustomerName)
 	assert.Empty(t, bare.ShipmentProNumber)
 	assert.Empty(t, bare.RequestedDocuments)
 	assert.Equal(t, "Subject", bare.AgentSubject)
 
-	malformed := tool.agentEmailContext(
-		t.Context(),
-		pagination.TenantInfo{},
-		"Subject",
-		"Body",
-		map[string]any{
-			"customerName":       42,
-			"requestedDocuments": "a signed BOL",
-		},
-	)
+	malformedParams := agenttoolstest.ExecuteParams(map[string]any{
+		"to":                 []any{"pod@consignee.example"},
+		"subject":            "Subject",
+		"body":               "Body",
+		"customerName":       42,
+		"requestedDocuments": "a signed BOL",
+	})
+	malformedParams.IdempotencyKey = "idem-3"
+	composed, err = docsTool().compose(t.Context(), malformedParams)
+	require.NoError(t, err)
+	malformed := composed.Data
 	assert.Empty(t, malformed.CustomerName)
 	assert.Empty(t, malformed.RequestedDocuments)
 	assert.Equal(t, "Body", malformed.AgentBody)

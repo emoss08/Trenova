@@ -95,6 +95,13 @@ const fetchAgentSuiteRun = vi.fn();
 const fetchSuiteRunCases = vi.fn();
 const updateAgentQualityControl = vi.fn();
 const createAgentEvalCase = vi.fn();
+const runAgentSuite = vi.fn();
+const fetchAIProviders = vi.fn();
+
+vi.mock("@/lib/graphql/ai-provider", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/graphql/ai-provider")>()),
+  fetchAIProviders: () => fetchAIProviders(),
+}));
 
 vi.mock("@/lib/graphql/agent-eval-cases", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/graphql/agent-eval-cases")>()),
@@ -114,6 +121,7 @@ vi.mock("@/lib/graphql/agent-quality", async (importOriginal) => {
     fetchAgentSuiteRun: (...args: unknown[]) => fetchAgentSuiteRun(...args),
     fetchSuiteRunCases: (...args: unknown[]) => fetchSuiteRunCases(...args),
     updateAgentQualityControl: (...args: unknown[]) => updateAgentQualityControl(...args),
+    runAgentSuite: (...args: unknown[]) => runAgentSuite(...args),
   };
 });
 
@@ -131,6 +139,9 @@ beforeEach(() => {
   fetchSuiteRunCases.mockReset();
   updateAgentQualityControl.mockReset();
   createAgentEvalCase.mockReset();
+  runAgentSuite.mockReset();
+  fetchAIProviders.mockReset();
+  fetchAIProviders.mockResolvedValue([]);
   table.rows = [];
   table.openRow = null;
   table.props = [];
@@ -192,6 +203,8 @@ function suiteRun(overrides: Partial<AgentSuiteRun> = {}): AgentSuiteRunRow {
     finishedAt: 1_790_000_600,
     comments: "",
     requestedByUserId: null,
+    trialProviderId: null,
+    trialLabel: "",
     ...overrides,
   } as AgentSuiteRunRow;
 }
@@ -243,6 +256,9 @@ const control: AgentQualityControl = {
   regressionThreshold: 0.1,
   minCases: 10,
   forceRerunDays: 7,
+  autoActivate: true,
+  autoCasesPerAgent: 100,
+  autoCaseDays: 30,
   version: 0,
   updatedAt: 0,
 } as AgentQualityControl;
@@ -412,8 +428,92 @@ describe("QualityTab", () => {
     expect(fetchAgentQuality).toHaveBeenCalledWith("agdef_2", expect.anything());
   });
 
+  it("offers the way back to the version before a change that lowered an agent's score", async () => {
+    primeDefaults();
+    fetchAgentQuality.mockResolvedValue(
+      detail({
+        lastSuiteRun: suiteRun({
+          regression: true,
+          qualityScore: 0.7,
+          baselineScore: 0.9,
+          fingerprintChanges: [{ field: "definitionVersion", from: "4", to: "6" }],
+        }),
+      }),
+    );
+    table.rows = rows;
+    table.openRow = rows[0] as unknown as Record<string, unknown>;
+    const updates: URLSearchParams[] = [];
+    renderTab("agents", "?panelType=edit&panelEntityId=agdef_1", (event) => {
+      updates.push(event.searchParams);
+    });
+
+    const sheet = await screen.findByRole("complementary", { name: "Billing desk" });
+    await userEvent.click(await within(sheet).findByRole("button", { name: "Go back a version" }));
+
+    await waitFor(() => expect(updates.at(-1)?.get("editAgent")).toBe("agdef_1"));
+    expect(updates.at(-1)?.get("tab")).toBe("agents");
+    expect(updates.at(-1)?.get("restoreVersion")).toBe("4");
+  });
+
+  // Nothing about the agent was saved, so there is no earlier version of it:
+  // a model or provider changed under it, or it did not regress at all.
+  it("offers no way back when the agent was not saved or did not fall", async () => {
+    primeDefaults();
+    fetchAgentQuality.mockResolvedValue(
+      detail({
+        lastSuiteRun: suiteRun({
+          regression: true,
+          fingerprintChanges: [
+            { field: "model", from: "claude-sonnet-5-5", to: "claude-haiku-5-5" },
+          ],
+        }),
+      }),
+    );
+    table.rows = rows;
+    table.openRow = rows[0] as unknown as Record<string, unknown>;
+    const first = renderTab("agents", "?panelType=edit&panelEntityId=agdef_1");
+
+    const sheet = await screen.findByRole("complementary", { name: "Billing desk" });
+    await within(sheet).findByRole("button", { name: "All runs" });
+    expect(within(sheet).queryByRole("button", { name: "Go back a version" })).toBeNull();
+    first.unmount();
+
+    fetchAgentQuality.mockResolvedValue(
+      detail({
+        lastSuiteRun: suiteRun({
+          regression: false,
+          fingerprintChanges: [{ field: "definitionVersion", from: "4", to: "6" }],
+        }),
+      }),
+    );
+    renderTab("agents", "?panelType=edit&panelEntityId=agdef_1");
+
+    const again = await screen.findByRole("complementary", { name: "Billing desk" });
+    await within(again).findByRole("button", { name: "All runs" });
+    expect(within(again).queryByRole("button", { name: "Go back a version" })).toBeNull();
+  });
+
+  it("says cases arrive on their own when no agent has a golden set and the set keeps itself", async () => {
+    primeDefaults();
+    fetchAgentQualityOverview.mockResolvedValue({
+      ...overview,
+      qualityScore: null,
+      ratingsVisible: false,
+      agentsWithCases: 0,
+      openRegressions: 0,
+    });
+    renderTab("agents");
+
+    expect(
+      await screen.findByText(
+        "No agent has a golden set yet. Cases are added on their own as people approve or reject what agents propose.",
+      ),
+    ).toBeTruthy();
+  });
+
   it("says nothing is scored and offers no agent when no agent has a golden set", async () => {
     primeDefaults();
+    fetchAgentQualityControl.mockResolvedValue({ ...control, autoActivate: false });
     fetchAgentQualityOverview.mockResolvedValue({
       ...overview,
       qualityScore: null,
@@ -427,6 +527,105 @@ describe("QualityTab", () => {
       await screen.findByText("No agent has a golden set yet, so nothing is scored."),
     ).toBeTruthy();
     expect(screen.queryByRole("button", { name: /^Look at/ })).toBeNull();
+  });
+
+  it("tries an agent's golden set on another model and says where the result will be", async () => {
+    primeDefaults();
+    fetchAgentQuality.mockResolvedValue(detail());
+    fetchAIProviders.mockResolvedValue([
+      {
+        id: "aip_haiku",
+        name: "Anthropic fast",
+        model: "claude-haiku-5-5",
+        enabled: true,
+        tasks: ["AssistantChat"],
+      },
+      {
+        id: "aip_embed",
+        name: "Embeddings",
+        model: "text-embedding-3-small",
+        enabled: true,
+        tasks: ["Embedding"],
+      },
+      {
+        id: "aip_off",
+        name: "Switched off",
+        model: "claude-opus-5-5",
+        enabled: false,
+        tasks: ["AssistantChat"],
+      },
+    ]);
+    runAgentSuite.mockResolvedValue(suiteRun({ id: "asr_trial", status: "Running" }));
+    table.rows = rows;
+    table.openRow = rows[0] as unknown as Record<string, unknown>;
+    renderTab("agents", "?panelType=edit&panelEntityId=agdef_1");
+
+    const sheet = await screen.findByRole("complementary", { name: "Billing desk" });
+    await userEvent.click(await within(sheet).findByRole("button", { name: "Try another model" }));
+
+    const offered = await screen.findAllByRole("menuitem");
+    expect(offered).toHaveLength(1);
+    expect(offered[0]).toHaveTextContent("Anthropic fast");
+    expect(offered[0]).toHaveTextContent("claude-haiku-5-5");
+    await userEvent.click(offered[0] as HTMLElement);
+
+    await waitFor(() => expect(runAgentSuite).toHaveBeenCalledTimes(1));
+    expect(runAgentSuite).toHaveBeenCalledWith("agdef_1", "aip_haiku");
+    const { toast } = await import("@trenova/shared/components/ui/toast");
+    await waitFor(() =>
+      expect(toast.success).toHaveBeenCalledWith(
+        "Trial started on Anthropic fast",
+        expect.objectContaining({ action: expect.objectContaining({ label: "See the runs" }) }),
+      ),
+    );
+  });
+
+  // With nothing to try it on, or nothing to ask, the menu would only disappoint.
+  it("offers no trial without another provider that serves conversations or without cases", async () => {
+    primeDefaults();
+    fetchAgentQuality.mockResolvedValue(detail());
+    table.rows = rows;
+    table.openRow = rows[0] as unknown as Record<string, unknown>;
+    const first = renderTab("agents", "?panelType=edit&panelEntityId=agdef_1");
+
+    const sheet = await screen.findByRole("complementary", { name: "Billing desk" });
+    await within(sheet).findByRole("button", { name: "Run suite now" });
+    expect(within(sheet).queryByRole("button", { name: "Try another model" })).toBeNull();
+    first.unmount();
+
+    fetchAIProviders.mockResolvedValue([
+      {
+        id: "aip_haiku",
+        name: "Anthropic fast",
+        model: "m",
+        enabled: true,
+        tasks: ["AssistantChat"],
+      },
+    ]);
+    fetchAgentQuality.mockResolvedValue(detail({ activeCases: 0 }));
+    renderTab("agents", "?panelType=edit&panelEntityId=agdef_1");
+
+    const empty = await screen.findByRole("complementary", { name: "Billing desk" });
+    await within(empty).findByRole("button", { name: "All runs" });
+    expect(within(empty).queryByRole("button", { name: "Try another model" })).toBeNull();
+  });
+
+  it("marks a trial run and says what it was tried on", async () => {
+    primeDefaults();
+    const run = suiteRun({
+      trialProviderId: "aip_haiku",
+      trialLabel: "Anthropic fast · claude-haiku-5-5",
+      comments: "A trial on Anthropic fast · claude-haiku-5-5.",
+    });
+    fetchSuiteRunCases.mockResolvedValue([]);
+    table.rows = [run, suiteRun({ id: "asr_2" })];
+    table.openRow = run as unknown as Record<string, unknown>;
+    renderTab("runs");
+
+    const sheet = await screen.findByRole("complementary", { name: "Suite run · Billing desk" });
+    expect(within(sheet).getByText("Tried on")).toBeTruthy();
+    expect(within(sheet).getByText("Anthropic fast · claude-haiku-5-5")).toBeTruthy();
+    expect(screen.getAllByText("Trial")).toHaveLength(1);
   });
 
   it("shows a run's cases as squares in its sheet", async () => {
@@ -579,6 +778,33 @@ describe("QualityTab", () => {
       regressionThreshold: 0.05,
       runHourLocal: 2,
       maxCasesPerAgent: 50,
+    });
+  });
+
+  it("turns the automatic golden set off and saves it", async () => {
+    primeDefaults();
+    updateAgentQualityControl.mockResolvedValue({ ...control, autoActivate: false, version: 1 });
+    renderTab("agents");
+
+    await userEvent.click(await screen.findByRole("button", { name: "Sweep settings" }));
+    const editor = await screen.findByRole("complementary", { name: "Sweep settings" });
+    const kept = within(editor).getByRole("radiogroup", { name: "Cases kept per agent" });
+    await userEvent.click(within(kept).getByRole("radio", { name: "200" }));
+    await userEvent.click(
+      within(editor).getByRole("switch", { name: "Keep the golden set automatically" }),
+    );
+    expect(
+      within(editor).getByText(
+        "Decided proposals arrive as candidates and wait for someone to activate them.",
+      ),
+    ).toBeTruthy();
+    await userEvent.click(within(editor).getByRole("button", { name: /Save changes/ }));
+
+    await waitFor(() => expect(updateAgentQualityControl).toHaveBeenCalledTimes(1));
+    expect(updateAgentQualityControl.mock.calls[0]?.[0]).toMatchObject({
+      version: 0,
+      autoActivate: false,
+      autoCasesPerAgent: 200,
     });
   });
 

@@ -419,6 +419,7 @@ var starterTools = map[agenttemplate.Template][]string{
 		"carrier_list_capacity_postings",
 		"carrier_create_capacity_posting",
 		"carrier_update_capacity_posting",
+		"worker_send_message",
 	},
 	agenttemplate.TemplateImportAssistant: {
 		"intake_get_draft",

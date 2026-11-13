@@ -26,6 +26,7 @@ var (
 const (
 	SuiteRunIDPrefix   = "asr_"
 	MaxSuiteComments   = 2000
+	MaxTrialLabelChars = 300
 	MaxSweepKeyChars   = 200
 	SuiteRevisionChars = 64
 )
@@ -112,6 +113,8 @@ type SuiteRun struct {
 	Comments          string          `json:"comments"          keel:"comments,nullzero"`
 	WorkflowID        string          `json:"workflowId"        keel:"workflow_id,nullzero"`
 	RequestedByUserID *pulid.ID       `json:"requestedByUserId" keel:"requested_by_user_id"`
+	TrialProviderID   *pulid.ID       `json:"trialProviderId"   keel:"trial_provider_id"`
+	TrialLabel        string          `json:"trialLabel"        keel:"trial_label,nullzero"`
 
 	Version   int64 `json:"version"   keel:"version,version"`
 	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
@@ -183,7 +186,20 @@ func (r *SuiteRun) Validate(multiErr *errortypes.MultiError) {
 			validation.Length(0, MaxSuiteComments).Error("Comments are at most 2000 characters"),
 		),
 		validation.Field(&r.StartedAt, validation.Required.Error("Start time is required")),
+		validation.Field(
+			&r.TrialLabel,
+			validation.Length(0, MaxTrialLabelChars).
+				Error("The trial's provider and model are at most 300 characters"),
+		),
 	))
+
+	if r.IsTrial() != (r.TrialLabel != "") {
+		multiErr.Add(
+			"trialLabel",
+			errortypes.ErrInvalid,
+			"A trial run names the provider and model it was asked on, and no other run does",
+		)
+	}
 
 	if r.CasesTotal < 0 || r.CasesPassed < 0 || r.CasesFailed < 0 || r.CasesSkipped < 0 {
 		multiErr.Add("casesTotal", errortypes.ErrInvalid, "Case counts cannot be negative")
@@ -212,6 +228,10 @@ func (r *SuiteRun) Validate(multiErr *errortypes.MultiError) {
 			multiErr.Add(score.field, errortypes.ErrInvalid, "A score is between 0 and 1")
 		}
 	}
+}
+
+func (r *SuiteRun) IsTrial() bool {
+	return r.TrialProviderID != nil && r.TrialProviderID.IsNotNil()
 }
 
 func (r *SuiteRun) Finish(status SuiteRunStatus, comments string, at int64) {

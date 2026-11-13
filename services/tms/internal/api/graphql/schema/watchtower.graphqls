@@ -80,6 +80,8 @@ enum WatchtowerItemEventKind {
   SourceReopened
   "The item was handed to an agent, which is now working it."
   HandedOff
+  "A person sent the item's play: a question to whoever has the load, or an offer to carriers."
+  Requested
 }
 
 "Where an item's due time came from."
@@ -620,6 +622,74 @@ input HandOffWatchtowerItemInput {
   agentDefinitionId: ID
 }
 
+"The first move a kind of item has, which the person working it sends themselves."
+enum WatchtowerPlayKind {
+  "Ask whoever delivered a load for its signed proof of delivery."
+  AskForPod
+  "Ask whoever has a load where it is."
+  AskForStatus
+  "Offer a move down its routing guide again."
+  TenderAgain
+}
+
+"How a play reaches whoever it is for."
+enum WatchtowerPlayChannel {
+  "A message in the driver's portal."
+  Dash
+  "A text to the driver's phone."
+  Text
+  "An email in the organization's letterhead."
+  Email
+  "An offer to carriers, which carries no message."
+  Tender
+}
+
+"""
+What a play would do for one item, planned from the record for the person
+about to send it. Who it goes to and how is decided by the server and is not
+theirs to change; the words are.
+"""
+type WatchtowerPlay {
+  itemId: ID!
+  kind: WatchtowerPlayKind!
+  channel: WatchtowerPlayChannel!
+  "Who it goes to, by name."
+  recipient: String!
+  "Who an email is from; empty otherwise."
+  sender: String!
+  "An email's subject; empty otherwise."
+  subject: String!
+  "The words that would be sent; empty for a play that sends none."
+  message: String!
+  "The longest message the channel takes."
+  messageLimit: Int!
+  "What sending does, for a play that sends no message; empty otherwise."
+  summary: String!
+  "Nova can reword the message for this organization."
+  canReword: Boolean!
+}
+
+"The last play a person sent for an item."
+type WatchtowerRequest {
+  at: Timestamp!
+  "Who sent it, by name."
+  by: String!
+  "What was asked of whom and how, as one sentence."
+  summary: String!
+}
+
+input RewordWatchtowerPlayInput {
+  "The words in the box now; empty rewords the play's own."
+  message: String
+  "How the person wants them to read."
+  guidance: String!
+}
+
+input SendWatchtowerPlayInput {
+  "The words the person approved; empty sends the play's own."
+  message: String
+}
+
 extend type Query {
   "What needs attention, newest first, filtered to what this reader may see."
   watchtowerItems(input: WatchtowerItemsInput!): WatchtowerItemConnection!
@@ -634,6 +704,12 @@ extend type Query {
   watchtowerCleared(since: Timestamp!): Int!
   "The agents an item can be handed to: every enabled agent that runs on its own."
   watchtowerHandOffAgents: [AgentDefinition!]!
+  """
+  The item's play as the reader would send it: who it goes to, how, and the
+  words. Fails with the reason when it cannot be sent: nobody on the record
+  can be reached, it is already done, or it is not the reader's to send.
+  """
+  watchtowerPlay(itemId: ID!): WatchtowerPlay!
 }
 
 extend type Mutation {
@@ -643,6 +719,10 @@ extend type Mutation {
   dismissWatchtowerItem(id: ID!): WatchtowerItem!
   "Hands an item to an agent, or to whoever subscribes to its event."
   handOffWatchtowerItem(id: ID!, input: HandOffWatchtowerItemInput!): WatchtowerHandOffResult!
+  "Has Nova rewrite a play's message the way the reader asks. Only the words change; nothing is sent."
+  rewordWatchtowerPlay(itemId: ID!, input: RewordWatchtowerPlayInput!): String!
+  "Sends the item's play under the reader's name and notes on the item who asked what of whom."
+  sendWatchtowerPlay(itemId: ID!, input: SendWatchtowerPlayInput!): WatchtowerItem!
   "Gives an exception to someone who can see it, or to nobody."
   assignWatchtowerItem(id: ID!, input: AssignWatchtowerItemInput!): WatchtowerItem!
   "Says someone has seen an open exception; an unowned one becomes the reader's."

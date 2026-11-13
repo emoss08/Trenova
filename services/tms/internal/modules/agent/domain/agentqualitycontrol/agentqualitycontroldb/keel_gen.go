@@ -37,20 +37,22 @@ var controlsTable = schema.Table{
 		{Name: "regression_threshold", Quoted: `"regression_threshold"`, Field: "RegressionThreshold", Kind: schema.KindFloat64, Flags: 0, Label: `Regression Threshold`, JSON: `regressionThreshold`},
 		{Name: "min_cases", Quoted: `"min_cases"`, Field: "MinCases", Kind: schema.KindInt64, Flags: 0, Label: `Min Cases`, JSON: `minCases`},
 		{Name: "force_rerun_days", Quoted: `"force_rerun_days"`, Field: "ForceRerunDays", Kind: schema.KindInt64, Flags: 0, Label: `Force Rerun Days`, JSON: `forceRerunDays`},
+		{Name: "auto_activate", Quoted: `"auto_activate"`, Field: "AutoActivate", Kind: schema.KindBool, Flags: 0, Label: `Auto Activate`, JSON: `autoActivate`},
+		{Name: "auto_cases_per_agent", Quoted: `"auto_cases_per_agent"`, Field: "AutoCasesPerAgent", Kind: schema.KindInt64, Flags: 0, Label: `Auto Cases Per Agent`, JSON: `autoCasesPerAgent`},
 		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, JSON: `version`},
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
 	},
 	PK:           []int32{0, 1, 2},
 	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 16},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 18},
 	Returning:    nil,
-	Version:      14,
+	Version:      16,
 	AutoID:       0,
-	AutoCreate:   15,
-	AutoUpdate:   16,
+	AutoCreate:   17,
+	AutoUpdate:   18,
 	IDPrefix:     "aqc_",
 	New:          newControl,
 	NewN:         newNControl,
@@ -79,6 +81,8 @@ type ControlsTable struct {
 	RegressionThreshold keel.Float64Col
 	MinCases            keel.Int64Col
 	ForceRerunDays      keel.Int64Col
+	AutoActivate        keel.BoolCol
+	AutoCasesPerAgent   keel.Int64Col
 	Version             keel.Int64Col
 	CreatedAt           keel.Int64Col
 	UpdatedAt           keel.Int64Col
@@ -101,9 +105,11 @@ var Controls = &ControlsTable{
 	RegressionThreshold: keel.Float64Col{Col: keel.Col{Ref: &controlsRef, Index: 11}},
 	MinCases:            keel.Int64Col{Col: keel.Col{Ref: &controlsRef, Index: 12}},
 	ForceRerunDays:      keel.Int64Col{Col: keel.Col{Ref: &controlsRef, Index: 13}},
-	Version:             keel.Int64Col{Col: keel.Col{Ref: &controlsRef, Index: 14}},
-	CreatedAt:           keel.Int64Col{Col: keel.Col{Ref: &controlsRef, Index: 15}},
-	UpdatedAt:           keel.Int64Col{Col: keel.Col{Ref: &controlsRef, Index: 16}},
+	AutoActivate:        keel.BoolCol{Col: keel.Col{Ref: &controlsRef, Index: 14}},
+	AutoCasesPerAgent:   keel.Int64Col{Col: keel.Col{Ref: &controlsRef, Index: 15}},
+	Version:             keel.Int64Col{Col: keel.Col{Ref: &controlsRef, Index: 16}},
+	CreatedAt:           keel.Int64Col{Col: keel.Col{Ref: &controlsRef, Index: 17}},
+	UpdatedAt:           keel.Int64Col{Col: keel.Col{Ref: &controlsRef, Index: 18}},
 }
 
 // BuildControls builds the table of agent_quality_controls for ref. Generated relation and alias methods call it.
@@ -124,9 +130,11 @@ func BuildControls(r *keel.Ref) *ControlsTable {
 		RegressionThreshold: keel.Float64Col{Col: keel.Col{Ref: r, Index: 11}},
 		MinCases:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
 		ForceRerunDays:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
-		Version:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
-		CreatedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
-		UpdatedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
+		AutoActivate:        keel.BoolCol{Col: keel.Col{Ref: r, Index: 14}},
+		AutoCasesPerAgent:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
+		Version:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
+		CreatedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
+		UpdatedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
 	}
 }
 
@@ -546,10 +554,14 @@ func ptrControl(p unsafe.Pointer, c int32) any {
 	case 13:
 		return (*int64)(unsafe.Pointer(&r.ForceRerunDays))
 	case 14:
-		return &r.Version
+		return &r.AutoActivate
 	case 15:
-		return &r.CreatedAt
+		return (*int64)(unsafe.Pointer(&r.AutoCasesPerAgent))
 	case 16:
+		return &r.Version
+	case 17:
+		return &r.CreatedAt
+	case 18:
 		return &r.UpdatedAt
 	}
 	return nil
@@ -590,10 +602,14 @@ func valueControl(p unsafe.Pointer, c int32) any {
 	case 13:
 		return int64(r.ForceRerunDays)
 	case 14:
-		return r.Version
+		return r.AutoActivate
 	case 15:
-		return r.CreatedAt
+		return int64(r.AutoCasesPerAgent)
 	case 16:
+		return r.Version
+	case 17:
+		return r.CreatedAt
+	case 18:
 		return r.UpdatedAt
 	}
 	return nil

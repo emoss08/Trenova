@@ -3,9 +3,13 @@ package recordcaseservice
 import (
 	"context"
 	"errors"
+
 	"github.com/emoss08/trenova/internal/modules/agent/ports/caseownerports"
 
+	"go.uber.org/zap"
+
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/desklens"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/recordcase"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
@@ -14,7 +18,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
-	"go.uber.org/zap"
 )
 
 const (
@@ -178,7 +181,7 @@ func (s *Service) AcceptRisk(
 
 	accepted := 0
 	for _, item := range page.Items {
-		if item.SourceKind.DeskLens() != watchtower.DeskLensWatchtower {
+		if desklens.Of(item.SourceKind) != desklens.Watchtower {
 			continue
 		}
 		if accepted == maxAcceptedItems {
@@ -258,7 +261,7 @@ func (s *Service) PutAway(
 		return 0, err
 	}
 	for _, item := range page.Items {
-		if item.SourceKind.DeskLens() == watchtower.DeskLensDecisions {
+		if desklens.Of(item.SourceKind) == desklens.Decisions {
 			return 0, errortypes.NewBusinessError(
 				"A change is waiting to be approved or declined. Decide it before putting " +
 					"the case away.",

@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/insight"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtowerpanel"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
@@ -98,9 +99,9 @@ func DescribeInsight(entity *insight.Insight) watchtowerports.WatchtowerItemInpu
 		SubjectID:   entity.ID,
 		EventKind:   agenttrigger.EventInsightDetected,
 		Path:        path,
-		Panel: &watchtower.Panel{
-			Kind:    watchtower.PanelFinding,
-			Finding: &watchtower.FindingPanel{Advice: entity.Recommendation, Detail: entity.Narrative},
+		Panel: &watchtowerpanel.Panel{
+			Kind:    watchtowerpanel.KindFinding,
+			Finding: &watchtowerpanel.FindingPanel{Advice: entity.Recommendation, Detail: entity.Narrative},
 		},
 		OccurredAt: entity.DetectedAt,
 	}
@@ -222,9 +223,9 @@ func DescribeFailedRun(
 			watchtoweritem.Fact("Why", reason),
 		},
 		Trail: trail,
-		Panel: &watchtower.Panel{
-			Kind: watchtower.PanelRun,
-			Run:  &watchtower.RunPanel{Agent: who, Reason: reason, FailedAt: occurredAt},
+		Panel: &watchtowerpanel.Panel{
+			Kind: watchtowerpanel.KindRun,
+			Run:  &watchtowerpanel.RunPanel{Agent: who, Reason: reason, FailedAt: occurredAt},
 		},
 		OccurredAt: occurredAt,
 	}
@@ -254,9 +255,9 @@ func DescribeException(entity *agentexception.AgentException) watchtowerports.Wa
 		Facts: []watchtower.Fact{
 			watchtoweritem.Fact("Category", textcase.HumanizeCamelCaseSentence(string(entity.Category))),
 		},
-		Panel: &watchtower.Panel{
-			Kind: watchtower.PanelAsk,
-			Ask: &watchtower.AskPanel{
+		Panel: &watchtowerpanel.Panel{
+			Kind: watchtowerpanel.KindAsk,
+			Ask: &watchtowerpanel.AskPanel{
 				Category: exceptionCategoryWords(entity.Category),
 				Tried:    entity.AttemptSummary,
 			},
@@ -330,22 +331,22 @@ func DescribeServiceFailure(
 	}
 }
 
-func serviceFailurePanel(entity *servicefailure.ServiceFailure) *watchtower.Panel {
-	stop := &watchtower.StopPanel{
-		Role:      watchtower.StopRoleDelivery,
-		Verdict:   watchtower.StopArrivedLate,
+func serviceFailurePanel(entity *servicefailure.ServiceFailure) *watchtowerpanel.Panel {
+	stop := &watchtowerpanel.StopPanel{
+		Role:      watchtowerpanel.StopRoleDelivery,
+		Verdict:   watchtowerpanel.StopArrivedLate,
 		WindowEnd: entity.ScheduledCutoff,
 		ArrivedAt: entity.ActualArrival,
 	}
 	if entity.StopType == shipmentvocab.StopTypePickup {
-		stop.Role = watchtower.StopRolePickup
+		stop.Role = watchtowerpanel.StopRolePickup
 	}
 	if entity.Type == servicefailure.TypeMissedDelivery ||
 		entity.Type == servicefailure.TypeMissedPickup {
-		stop.Verdict = watchtower.StopMissed
+		stop.Verdict = watchtowerpanel.StopMissed
 	}
 
-	return &watchtower.Panel{Kind: watchtower.PanelStop, Stop: stop}
+	return &watchtowerpanel.Panel{Kind: watchtowerpanel.KindStop, Stop: stop}
 }
 
 // CarrierIntelEventOnTower reports whether a change belongs on the feed.
@@ -398,9 +399,9 @@ func DescribeCarrierIntelEvent(
 			watchtoweritem.Fact("Change", textcase.HumanizeSnakeCase(string(entity.Category))),
 			watchtoweritem.FactAt("Detected", entity.DetectedAt),
 		},
-		Panel: &watchtower.Panel{
-			Kind: watchtower.PanelChange,
-			Change: &watchtower.ChangePanel{
+		Panel: &watchtowerpanel.Panel{
+			Kind: watchtowerpanel.KindChange,
+			Change: &watchtowerpanel.ChangePanel{
 				Who:  name,
 				What: textcase.HumanizeSnakeCase(string(entity.Category)),
 				Ref:  dotRef(entity.DOTNumber),
@@ -448,9 +449,9 @@ func DescribeQuarantinedFile(
 				intutils.FirstPositive(entity.ReceivedAt, entity.CreatedAt),
 			),
 		},
-		Panel: &watchtower.Panel{
-			Kind: watchtower.PanelFile,
-			File: &watchtower.FilePanel{
+		Panel: &watchtowerpanel.Panel{
+			Kind: watchtowerpanel.KindFile,
+			File: &watchtowerpanel.FilePanel{
 				Name:       entity.FileName,
 				Reason:     entity.FailureReason,
 				ReceivedAt: intutils.FirstPositive(entity.ReceivedAt, entity.CreatedAt),
@@ -488,10 +489,10 @@ func DescribeBillingException(
 		Facts: []watchtower.Fact{
 			watchtoweritem.Fact("Reason", reason),
 		},
-		Panel: &watchtower.Panel{
-			Kind: watchtower.PanelMoney,
-			Money: &watchtower.MoneyPanel{
-				Stake:  watchtower.StakeInvoice,
+		Panel: &watchtowerpanel.Panel{
+			Kind: watchtowerpanel.KindMoney,
+			Money: &watchtowerpanel.MoneyPanel{
+				Stake:  watchtowerpanel.StakeInvoice,
 				Reason: stringutils.FirstNonEmpty(entity.ExceptionNotes, reason),
 			},
 		},
@@ -586,8 +587,8 @@ func DescribeDetentionOccurrence(
 	}
 }
 
-func detentionPanel(entity *detention.DetentionOccurrence, where string) *watchtower.Panel {
-	clock := &watchtower.ClockPanel{
+func detentionPanel(entity *detention.DetentionOccurrence, where string) *watchtowerpanel.Panel {
+	clock := &watchtowerpanel.ClockPanel{
 		Place:           where,
 		Customer:        entity.CustomerName,
 		FreeEndsAt:      entity.FreeTimeExpiresAt,
@@ -604,7 +605,7 @@ func detentionPanel(entity *detention.DetentionOccurrence, where string) *watcht
 		clock.Accrued = money.Display(entity.Currency, entity.BillableAmount)
 	}
 
-	return &watchtower.Panel{Kind: watchtower.PanelClock, Clock: clock}
+	return &watchtowerpanel.Panel{Kind: watchtowerpanel.KindClock, Clock: clock}
 }
 
 // ExpiringPaper is one credential coming due, in the words the desk uses
@@ -688,19 +689,19 @@ func DescribeExpiringCredentials(entity ExpiringCredentials) watchtowerports.Wat
 	}
 }
 
-func expiryPanel(who string, papers []ExpiringPaper) *watchtower.Panel {
-	out := make([]watchtower.ExpiringPaper, 0, len(papers))
+func expiryPanel(who string, papers []ExpiringPaper) *watchtowerpanel.Panel {
+	out := make([]watchtowerpanel.ExpiringPaper, 0, len(papers))
 	for _, paper := range papers {
-		out = append(out, watchtower.ExpiringPaper{
+		out = append(out, watchtowerpanel.ExpiringPaper{
 			Name:      paper.Name,
 			ExpiresAt: paper.ExpiresAt,
 			DaysLeft:  paper.DaysLeft,
 		})
 	}
 
-	return &watchtower.Panel{
-		Kind:   watchtower.PanelExpiry,
-		Expiry: &watchtower.ExpiryPanel{Who: who, Papers: out},
+	return &watchtowerpanel.Panel{
+		Kind:   watchtowerpanel.KindExpiry,
+		Expiry: &watchtowerpanel.ExpiryPanel{Who: who, Papers: out},
 	}
 }
 
@@ -780,9 +781,9 @@ func DescribeMoveCoverageRisk(entity UncoveredMove) watchtowerports.WatchtowerIt
 			watchtoweritem.FactAt("Starts", entity.StartsAt),
 			watchtoweritem.Fact("Reason", entity.Reason),
 		},
-		Panel: &watchtower.Panel{
-			Kind:     watchtower.PanelCoverage,
-			Coverage: &watchtower.CoveragePanel{StartsAt: entity.StartsAt, Reason: entity.Reason},
+		Panel: &watchtowerpanel.Panel{
+			Kind:     watchtowerpanel.KindCoverage,
+			Coverage: &watchtowerpanel.CoveragePanel{StartsAt: entity.StartsAt, Reason: entity.Reason},
 		},
 		Deadline:   watchtoweritem.DeadlineAt(entity.StartsAt, "Move starts"),
 		OccurredAt: entity.StartsAt,
@@ -837,15 +838,15 @@ func DescribeInboundMessage(
 	}
 }
 
-func inboundMessagePanel(entity *inboundmessage.InboundMessage) *watchtower.Panel {
+func inboundMessagePanel(entity *inboundmessage.InboundMessage) *watchtowerpanel.Panel {
 	readAs := ""
 	if entity.Classification != "" && entity.Classification != inboundmessage.ClassificationOther {
 		readAs = textcase.HumanizeCamelCaseSentence(string(entity.Classification))
 	}
 
-	return &watchtower.Panel{
-		Kind: watchtower.PanelMessage,
-		Message: &watchtower.MessagePanel{
+	return &watchtowerpanel.Panel{
+		Kind: watchtowerpanel.KindMessage,
+		Message: &watchtowerpanel.MessagePanel{
 			FromName:    entity.FromName,
 			FromAddress: entity.FromAddress,
 			Subject:     entity.Subject,

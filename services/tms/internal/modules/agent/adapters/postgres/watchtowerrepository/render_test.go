@@ -64,7 +64,10 @@ func TestApplyUpsertRefreshesTheDescriptionOnly(t *testing.T) {
 func TestApplyUpsertReopensWithACleanSlateAndKeepsAnEscalatedSeverity(t *testing.T) {
 	t.Parallel()
 
-	reopened := applyUpsert(resolvedItem(), &watchtower.Item{}, upsertPlan{reopen: true})
+	asked := resolvedItem()
+	asked.LastRequest = &watchtower.Request{At: 50, ByName: "Dana Reyes", Summary: "Asked for the POD"}
+	reopened := applyUpsert(asked, &watchtower.Item{}, upsertPlan{reopen: true})
+	assert.Nil(t, reopened.LastRequest, "the question asked about the last occurrence is not out about this one")
 	assert.Nil(t, reopened.ResolvedAt)
 	assert.Equal(t, watchtower.StatusOpen, reopened.Status)
 	assert.Empty(t, reopened.ResolutionCode)
@@ -84,6 +87,22 @@ func TestApplyUpsertReopensWithACleanSlateAndKeepsAnEscalatedSeverity(t *testing
 		upsertPlan{keepSeverity: true},
 	)
 	assert.Equal(t, watchtower.SeverityCritical, kept.Severity)
+}
+
+// A refresh that only changes what the item says keeps the request a person
+// sent for it: the question is still out.
+func TestApplyUpsertKeepsTheRequestThroughARefresh(t *testing.T) {
+	t.Parallel()
+
+	existing := &watchtower.Item{
+		Status:      watchtower.StatusInProgress,
+		Title:       "POD missing",
+		LastRequest: &watchtower.Request{At: 50, ByName: "Dana Reyes", Summary: "Asked for the POD"},
+	}
+	merged := applyUpsert(existing, &watchtower.Item{Title: "POD missing for 3 days"}, upsertPlan{})
+
+	assert.Equal(t, "POD missing for 3 days", merged.Title)
+	assert.Equal(t, existing.LastRequest, merged.LastRequest)
 }
 
 func TestApplyUpsertWritesTheDeadlineOnlyWhenPlanned(t *testing.T) {

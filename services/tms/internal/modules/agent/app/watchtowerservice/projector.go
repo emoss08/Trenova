@@ -2,9 +2,14 @@ package watchtowerservice
 
 import (
 	"context"
+
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenteventports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/caseownerports"
 
+	"go.uber.org/fx"
+	"go.uber.org/zap"
+
+	"github.com/emoss08/trenova/internal/modules/agent/domain/desklens"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentactivityports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
@@ -19,8 +24,6 @@ import (
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"go.uber.org/fx"
-	"go.uber.org/zap"
 )
 
 type ProjectorParams struct {
@@ -315,7 +318,7 @@ func (p *Projector) caseRecord(
 	}
 	for _, item := range raised {
 		if item.AboutID.IsNotNil() && item.AboutID != about &&
-			item.SourceKind.DeskLens() == watchtower.DeskLensWatchtower {
+			desklens.Of(item.SourceKind) == desklens.Watchtower {
 			return item.AboutID
 		}
 	}

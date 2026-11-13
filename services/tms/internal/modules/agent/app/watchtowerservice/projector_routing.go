@@ -4,6 +4,8 @@ import (
 	"context"
 	"strconv"
 
+	"go.uber.org/zap"
+
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -11,7 +13,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"go.uber.org/zap"
 )
 
 func (p *Projector) route(

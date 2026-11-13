@@ -5,6 +5,7 @@ import {
   fetchWatchtowerFeed,
   fetchWatchtowerHandOffAgents,
   fetchWatchtowerItem,
+  fetchWatchtowerPlay,
   type WatchtowerPage,
 } from "@/lib/graphql/watchtower";
 import type { WatchtowerSourceKind } from "@trenova/graphql/generated/graphql";
@@ -50,6 +51,12 @@ export const watchtower = createQueryKeys("watchtower", {
   handOffAgents: () => ({
     queryKey: ["hand-off-agents"],
     queryFn: ({ signal }: QueryContext) => fetchWatchtowerHandOffAgents({ signal }),
+  }),
+  // An item's play, planned from the record each time the dialog opens: who
+  // can be reached changes with the record, so it is never kept.
+  play: (itemId: string) => ({
+    queryKey: [itemId],
+    queryFn: ({ signal }: QueryContext) => fetchWatchtowerPlay(itemId, { signal }),
   }),
   item: (id: string) => ({
     queryKey: [id],

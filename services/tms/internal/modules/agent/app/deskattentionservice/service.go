@@ -5,7 +5,10 @@ import (
 	"context"
 	"slices"
 
+	"go.uber.org/fx"
+
 	"github.com/emoss08/trenova/internal/modules/agent/app/deskrecords"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/desklens"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/caseownerports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/deskattentionports"
@@ -13,7 +16,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
-	"go.uber.org/fx"
 )
 
 const (
@@ -53,7 +55,7 @@ func (s *Service) Attention(
 ) (*deskattentionports.Attention, error) {
 	lens := req.Lens
 	if lens == "" {
-		lens = watchtower.DeskLensEverything
+		lens = desklens.Everything
 	}
 	if !lens.IsValid() {
 		return nil, errortypes.NewValidationError("lens", errortypes.ErrInvalid, "Unknown lens")
@@ -64,14 +66,19 @@ func (s *Service) Attention(
 	}
 	first = min(first, maxGroups)
 
-	counts, err := s.watchtower.Counts(ctx, req.TenantInfo, actor)
+	counts, err := s.watchtower.CountsFor(ctx, req.TenantInfo, actor, req.Mine)
+	if err != nil {
+		return nil, err
+	}
+	sight, err := s.owners.Sight(ctx, actor)
 	if err != nil {
 		return nil, err
 	}
 	out := &deskattentionports.Attention{
-		Groups: []*deskattentionports.Group{},
-		Counts: lensCounts(counts),
-		SeenAt: counts.SeenAt,
+		Groups:       []*deskattentionports.Group{},
+		Counts:       lensCounts(counts),
+		SeenAt:       counts.SeenAt,
+		SeesEveryone: sight.All,
 	}
 
 	var items []*watchtower.Item
@@ -173,6 +180,7 @@ func (s *Service) list(
 		AboutIDs:       about,
 		OrderByDue:     true,
 		First:          window,
+		Mine:           req.Mine,
 	}, actor)
 }
 
@@ -180,10 +188,10 @@ func lensCounts(counts *watchtowerports.WatchtowerCounts) deskattentionports.Len
 	out := deskattentionports.LensCounts{}
 	for kind, n := range counts.ByKind {
 		out.Everything += n
-		switch kind.DeskLens() {
-		case watchtower.DeskLensDecisions:
+		switch desklens.Of(kind) {
+		case desklens.Decisions:
 			out.Decisions += n
-		case watchtower.DeskLensTriage:
+		case desklens.Triage:
 			out.Triage += n
 		default:
 			out.Watchtower += n

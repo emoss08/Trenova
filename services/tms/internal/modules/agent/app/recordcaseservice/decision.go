@@ -5,8 +5,11 @@ import (
 	"context"
 	"slices"
 
+	"go.uber.org/zap"
+
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentplan"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/desklens"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/recordcase"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
@@ -15,7 +18,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/textcase"
-	"go.uber.org/zap"
 )
 
 const (
@@ -352,7 +354,7 @@ func otherPending(rest []*recordcase.Decision, title string) int {
 
 func itemFor(items []*watchtower.Item, id pulid.ID) pulid.ID {
 	for _, item := range items {
-		if item.SourceKind.DeskLens() == watchtower.DeskLensDecisions &&
+		if desklens.Of(item.SourceKind) == desklens.Decisions &&
 			item.SourceID == id.String() {
 			return item.ID
 		}

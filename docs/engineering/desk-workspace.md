@@ -65,15 +65,13 @@ agent did or is doing is labelled as the agents' ("Agents handled", "Agents are 
 
 **"Working" means a run that is running.** One definition, `agent.WorkingRunStatuses` (Pending,
 Gathering context, Diagnosing), decides it everywhere: the count (`agentWorking` in the Watchtower
-repository joins the item's run), an item's `agentWork.status` (`AgentWorkFrom`), and Today's
+repository joins the item's run), an item's `agentWork.status` (`agentwork.From`), and Today's
 **Agents are working on**, which reads `deskAttention(working: true)` so a run far down the queue is
 still listed. A run that finished, failed or waits on a person is not working, whatever status its
-item still has. A run that ends having proposed nothing closes what was handed to it
-(`RunSettler.SettleRun`, from `CompleteRunActivity`): the item is resolved as No action needed
-with the agent's summary as its note, by the system user, so like a person's Done it stays closed
-while the source keeps reporting the same problem and returns when the problem clears and comes
-back. A run that left a wait open is paused, not finished, and keeps its item
-(`AgentWaitRepository.HasOpenForRun`). The run's own realtime notice (`agent_run`) refreshes the count and the Desk's rows
+item still has. A run that ends having proposed nothing closes nothing: the condition the item
+reports is still true, so the item stays open and the case says the agent looked and proposed
+nothing. (It once resolved the item as No action needed, which closed a missing proof of
+delivery that was still missing.) The run's own realtime notice (`agent_run`) refreshes the count and the Desk's rows
 (`handleRun` in `watchtower-realtime.ts`), so a row appears when a run starts and leaves when it
 stops, with no queue on screen. The Desk reads the working runs themselves
 (`aiControl.workingRuns`, the query AI control uses) for whoever may read runs, so the two screens
@@ -107,7 +105,7 @@ A Needs you item is not read from one generic table. Its source says what is hap
 shape, and the item is drawn by the view made for that shape, so a missed stop, a detention clock
 and missing paperwork do not look alike.
 
-- **The shape is the server's.** `watchtower.Panel` (`domain/watchtower/panel.go`) is a `Kind` and
+- **The shape is the server's.** `watchtowerpanel.Panel` (`domain/watchtowerpanel`) is a `Kind` and
   the one struct that kind names: `Stop` (missed, projected late, at risk), `Clock` (detention),
   `Paper` (documents a load waits on), `Message`, `Expiry` (credentials), `Coverage` (uncovered
   move, exhausted tender), `Contact` (no check call), `Run` (failed agent run), `Books`
@@ -191,7 +189,7 @@ resource, is its own row with no record.
   the queue is `/desk/needs?lens=decisions`, with `&proposal=<id>` or `&run=<id>` to open on one
   change (`lib/desk-paths.ts`). A decision on a record's row under Everything still has its card
   there, and links to its sheet.
-- **A message is a signal here, never a lens.** `DeskLens.Triage` says where an item came from, and
+- **A message is a signal here, never a lens.** `desklens.Triage` says where an item came from, and
   a row draws it as mail beside the record it is about, but Needs you has no Triage lens
   (`NEEDS_LENSES`): mail is read, answered, filed and set aside in Triage and nowhere else. A
   message's item offers **Open in Triage** (Enter when the row opens no case) and takes no Done or
@@ -203,6 +201,14 @@ resource, is its own row with no record.
   server's words. Decline asks why and sends it as the decision's note.
 - `/desk/watchtower` is gone: the Watchtower lens is it, and the old address redirects there.
   Links to one item are `/desk/needs?item=<id>`.
+- **Mine and Everyone.** A person who may see everyone's cases (`caseowner.Sight.All`, the
+  Watchtower's Manage) reads their own and the unowned ones by default and everyone's when
+  they ask. `deskAttention(mine: true)` narrows the list and its lens counts
+  (`ListWatchtowerItemsRequest.Mine`, `WatchtowerService.CountsFor`), and the answer's
+  `seesEveryone` says whether to draw the switch at all. The choice is the `cases` Desk
+  setting, kept in the person's browser. The rail's badge still counts everything they may
+  see.
+
 
 ## Agents handled
 
@@ -459,17 +465,73 @@ do. `DeskCase.handOff` is what the page offers instead (`recordcaseservice.handO
 kind, whether an agent has it now, and what the last agent on it said if it finished and proposed
 nothing.
 
-- **Hand it to an agent** calls `handOffWatchtowerItem`: the first agent that subscribes to the
-  item's event is started on it directly (`handOffToAgent`), and when none does, the person picks
-  one. The event is never published again for a hand-off: an event that already happened is not
-  delivered twice, which once left the page saying an agent was working when no run had begun.
-  The run is recorded on the item, so the case says for itself that an agent has it
-  (`handOff.working`), a reload shows the same, and a second hand-off is refused while it runs.
-- **Open the case** in the Watchtower (the button and ↵) hands the case over as it opens: the
-  navigation carries `START_CASE` router state, and `CaseUnworked` takes `autoStart` and sends
-  the same hand-off once. It starts only a case no agent has looked at, that the reader may
-  work; a case opened from the rail, a card or a pasted address is only read, so looking at a
-  case never costs a run.
+- **Nothing starts by opening a case.** An agent run costs the organization, and most of what
+  the Watchtower raises a person settles faster than a model reads the record, so an agent is
+  something the person asks for. **Open the case** in the Watchtower (the button and ↵) carries
+  `START_CASE` router state, which only makes an unowned case the reader's (`useClaimOnOpen`).
+- **A kind's first move is the person's own.** What an item needs first follows from its kind
+  (`watchtowerplay.Of`), and who to ask and how follows from what is on the record, so
+  nothing asks a model what to do and nothing depends on an agent being set up, enabled or out
+  of shadow. The case offers the move as its first button (`DeskCaseHandOff.play`,
+  `casePlayLabel`); it opens `CasePlayDialog`, which reads `watchtowerPlay(itemId)`: who it
+  goes to and how, and the words, which the person may change. **Send** calls
+  `sendWatchtowerPlay`, and the move goes out under the person's name with their permissions.
+
+  | Kind | Play | Playbook | Who and how, in order |
+  |---|---|---|---|
+  | Missing proof of delivery | `AskForPod` | `podchase.Playbook` | The driver in Dash; the driver by email; the carrier by email; the driver by text |
+  | Missed pickup, missed delivery, ETA at risk, no check call | `AskForStatus` | `statusask.Playbook` | The driver in Dash; the driver by text; the driver by email; the carrier by email |
+  | Tender exhausted | `TenderAgain` | `retender.Playbook` | The move is offered down its routing guide again, to the carriers the guide names, in its order |
+
+  The rules that keep it simple and safe:
+  - **The server plans, every time.** `watchtowerservice.Plays` plans the play from the record
+    on preview and again on send (`Playbook.Plan`). The client sends back only the words; who it
+    goes to is closed over by the plan's `Send`, so an address or a phone number never reaches
+    the browser, a log or a model.
+  - **The person's permissions decide.** A play needs what the page for the same act asks:
+    `driver_message` create, `customer_communication` create or `tender` create
+    (`PlannedPlay.Needs`, `assertMaySend`), on top of the Watchtower's update and the case
+    being theirs to work. A refusal says which access is missing.
+  - **One sender per channel.** A driver is reached through `drivermessage.Sender` (Dash with
+    a login, else a text to the number on file when the plan includes text messages) and an
+    outside party through `requestemail.Sender` (the organization's template for the kind, from
+    its billing email profile or else its general one). The agent tools `worker_send_message`
+    and `shipment_request_documents` send through the same two, so a person's message and an
+    agent's go out identically.
+  - **When it cannot be sent, the dialog says why** in words the person can act on: who has no
+    Dash login, email or textable number, that no email profile exists, that the recipient is
+    on the do-not-email list, that the paperwork is already on file.
+  - **The item remembers.** A sent play is noted on the item (`Item.RecordRequest`,
+    `watchtower_items.last_request`: who asked, when, and what in a sentence), in its history
+    (`EventRequested`) and in the audit log, and the item goes in progress. The case then
+    leads with "Asked …" and offers **Ask again**, so the next person does not ask twice
+    without knowing.
+  - **Rewording is the only model call, and only when asked.** `rewordWatchtowerPlay` has Nova
+    rewrite the words in the box to follow the person's guidance (`requestwording.Service`,
+    `aitask.TaskRequestWording`, the `RequestWording` usage feature). Nova is given the
+    message and the guidance, never the recipient, and nothing is sent: the person reads the
+    result and sends it themselves. The dialog offers it only where Nova can run
+    (`WatchtowerPlay.canReword`).
+- **Hand it to an agent** calls `handOffWatchtowerItem`, and an agent only ever runs because a
+  person asked. For a kind with no play the first live agent that subscribes to the item's
+  event is started on it directly (`handOffToAgent`), and when none does, the person picks one.
+  A kind with a play is never given to an agent unnamed, even when one subscribes: the answer
+  is who could take it, and the person picks. An agent switched to shadow is neither picked nor
+  offered (`withoutShadow`), and while the organization's agents are paused no agent is put on
+  anything (`refusePaused`); a play is not an agent's work and is sent all the same. The event
+  is never published again for a hand-off: an event that already happened is not delivered
+  twice, which once left the page saying an agent was working when no run had begun. The run is
+  recorded on the item, so the case says for itself that an agent has it (`handOff.working`), a
+  reload shows the same, and a second hand-off is refused while it runs.
+- **An agent that already answered is not run again on the same reading.** An item records
+  when what it says last changed (`watchtower_items.described_at`, set by the upsert when the
+  description differs). An agent whose run on the item finished, with nothing new said since
+  it was handed the item (`agentwork.AnsweredUnchanged`), is refused when named and passed over
+  when one is picked; the person may still name a different agent. A failed run answered
+  nothing and may be tried again.
+- **An item an agent raised to ask for a person is never handed to an agent**
+  (`SourceAgentException`): the server refuses it and the page offers no agent (`agentRaised`).
+  A second agent reading the same record can only ask the same question.
 - **Put away.** A case whose plan ran or was declined, or that an agent looked at and proposed
   nothing on, can be put away while something about its record is still open
   (`putAwayDeskCase(kind, id, until)`, `recordcaseservice.PutAway`). It snoozes every open

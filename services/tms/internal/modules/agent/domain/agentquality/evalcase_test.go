@@ -47,7 +47,7 @@ func fieldsOf(t *testing.T, evalCase *EvalCase) []string {
 	evalCase.Validate(multiErr)
 	fields := make([]string, 0, len(multiErr.Errors))
 	for _, err := range multiErr.Errors {
-		fields = append(fields, err.Field)
+		fields = append(fields, err.Field())
 	}
 
 	return fields

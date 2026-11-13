@@ -2,7 +2,11 @@ package watchtowershipment
 
 import (
 	"context"
+
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtowerpanel"
+
+	"go.uber.org/fx"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtoweritem"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -16,7 +20,6 @@ import (
 	"github.com/emoss08/trenova/pkg/productguide"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"go.uber.org/fx"
 )
 
 const (
@@ -277,11 +280,11 @@ func DescribeMissedStop(
 ) watchtowerports.WatchtowerItemInput {
 	what := "pickup"
 	title := "Missed pickup"
-	role := watchtower.StopRolePickup
+	role := watchtowerpanel.StopRolePickup
 	if kind == watchtower.SourceMissedDelivery {
 		what = "delivery"
 		title = "Missed delivery"
-		role = watchtower.StopRoleDelivery
+		role = watchtowerpanel.StopRoleDelivery
 	}
 	late := max(now-stop.Cutoff, 0)
 	summary := "The " + what + " window at " + missedStopPlace(stop) +
@@ -302,11 +305,11 @@ func DescribeMissedStop(
 			watchtoweritem.Fact("Stop", missedStopPlace(stop)),
 			watchtoweritem.FactAt("Window closed", stop.Cutoff),
 		},
-		Panel: &watchtower.Panel{
-			Kind: watchtower.PanelStop,
-			Stop: &watchtower.StopPanel{
+		Panel: &watchtowerpanel.Panel{
+			Kind: watchtowerpanel.KindStop,
+			Stop: &watchtowerpanel.StopPanel{
 				Role:      role,
-				Verdict:   watchtower.StopMissed,
+				Verdict:   watchtowerpanel.StopMissed,
 				Place:     missedStopPlace(stop),
 				WindowEnd: stop.Cutoff,
 			},
@@ -344,12 +347,12 @@ func DescribeMissingPOD(
 			watchtoweritem.Fact("Customer", row.CustomerName),
 			watchtoweritem.FactAt("Delivered", row.DeliveredAt),
 		},
-		Panel: &watchtower.Panel{
-			Kind: watchtower.PanelPaper,
-			Paper: &watchtower.PaperPanel{
+		Panel: &watchtowerpanel.Panel{
+			Kind: watchtowerpanel.KindPaper,
+			Paper: &watchtowerpanel.PaperPanel{
 				Customer:    row.CustomerName,
 				DeliveredAt: row.DeliveredAt,
-				Papers:      []watchtower.Paper{{Name: "Proof of delivery"}},
+				Papers:      []watchtowerpanel.Paper{{Name: "Proof of delivery"}},
 			},
 		},
 		OccurredAt: row.DeliveredAt + grace,
@@ -376,9 +379,9 @@ func DescribeExhaustedTender(
 		Facts: []watchtower.Fact{
 			watchtoweritem.FactAt("Exhausted", row.ExhaustedAt),
 		},
-		Panel: &watchtower.Panel{
-			Kind:     watchtower.PanelCoverage,
-			Coverage: &watchtower.CoveragePanel{Exhausted: true, EndedAt: row.ExhaustedAt},
+		Panel: &watchtowerpanel.Panel{
+			Kind:     watchtowerpanel.KindCoverage,
+			Coverage: &watchtowerpanel.CoveragePanel{Exhausted: true, EndedAt: row.ExhaustedAt},
 		},
 		OccurredAt: row.ExhaustedAt,
 		OwnerID:    row.OwnerID,

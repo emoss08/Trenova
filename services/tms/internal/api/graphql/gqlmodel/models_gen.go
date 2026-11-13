@@ -46,6 +46,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aitask"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aituneup"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/briefing"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/desklens"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentcapabilityports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
@@ -3638,7 +3639,7 @@ type DeliveryHourBucket struct {
 
 type DeskAttentionInput struct {
 	// Rows with at least one item in this lens; each row still shows all its items.
-	Lens *watchtower.DeskLens `json:"lens,omitempty"`
+	Lens *desklens.Lens `json:"lens,omitempty"`
 	// Rows with an item of one of these kinds, within the lens. Empty is every kind in it.
 	Kinds []watchtower.SourceKind `json:"kinds,omitempty"`
 	// Rows with an item of one of these severities. Empty is every severity.
@@ -3649,6 +3650,8 @@ type DeskAttentionInput struct {
 	RecordID *string `json:"recordId,omitempty"`
 	// Only rows with an item an agent's run is working on right now. A run that finished, failed or waits on a person is not working.
 	Working *bool `json:"working,omitempty"`
+	// Only the reader's own cases and the ones nobody owns, for a reader who may see everyone's.
+	Mine *bool `json:"mine,omitempty"`
 }
 
 // A button an actions block offers. It sends its request as the person's own message
@@ -3837,8 +3840,8 @@ type DeskBoardWorkRow struct {
 
 // One thing open about a record on a work block, as Needs you holds it.
 type DeskBoardWorkSignal struct {
-	Lens  watchtower.DeskLens `json:"lens"`
-	Title string              `json:"title"`
+	Lens  desklens.Lens `json:"lens"`
+	Title string        `json:"title"`
 	// bad, warn or info, from the item's severity.
 	Tone  string `json:"tone"`
 	DueAt *int   `json:"dueAt,omitempty"`
@@ -5001,6 +5004,9 @@ type DispatchForecastQuality struct {
 	Skill float64 `json:"skill"`
 	// When it was last fitted; null before the first fit.
 	FittedAt *int `json:"fittedAt,omitempty"`
+	// True while the history is being read again: a forecast that is not Ready and was fitted more
+	// than an hour ago is refitted when it is read. The figures are still those from fittedAt.
+	Refitting bool `json:"refitting"`
 }
 
 // A forecast area (a map tile about 50 miles across) over the next 48 hours.
@@ -9938,6 +9944,13 @@ type ReviseDeskMemoryInput struct {
 	Version int                      `json:"version"`
 }
 
+type RewordWatchtowerPlayInput struct {
+	// The words in the box now; empty rewords the play's own.
+	Message *string `json:"message,omitempty"`
+	// How the person wants them to read.
+	Guidance string `json:"guidance"`
+}
+
 type RiskDecisionConnection struct {
 	Edges      []*RiskDecisionEdge `json:"edges"`
 	PageInfo   *PageInfo           `json:"pageInfo"`
@@ -10268,6 +10281,11 @@ type SendTestMessageTemplateInput struct {
 	VersionID *string                       `json:"versionId,omitempty"`
 	Content   *DocumentTemplateVersionInput `json:"content,omitempty"`
 	ToEmail   string                        `json:"toEmail"`
+}
+
+type SendWatchtowerPlayInput struct {
+	// The words the person approved; empty sends the play's own.
+	Message *string `json:"message,omitempty"`
 }
 
 type ServiceFailureConnection struct {
@@ -13090,6 +13108,8 @@ type UpdateAgentQualityControlInput struct {
 	RegressionThreshold float64 `json:"regressionThreshold"`
 	MinCases            int     `json:"minCases"`
 	ForceRerunDays      int     `json:"forceRerunDays"`
+	AutoActivate        bool    `json:"autoActivate"`
+	AutoCasesPerAgent   int     `json:"autoCasesPerAgent"`
 }
 
 type UpdateAuditAlertPolicyInput struct {
@@ -13722,7 +13742,7 @@ type WatchtowerKindSummary struct {
 	Label string                `json:"label"`
 	Count int                   `json:"count"`
 	// The Desk lens items of this kind are filed under.
-	DeskLens watchtower.DeskLens `json:"deskLens"`
+	DeskLens desklens.Lens `json:"deskLens"`
 }
 
 // One of the events that led to an item, oldest first.

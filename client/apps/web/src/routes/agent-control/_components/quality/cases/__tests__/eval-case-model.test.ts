@@ -53,6 +53,8 @@ function detail(expected: unknown): AgentEvalCaseDetail {
     title: "Rate S-100",
     source: "DecidedProposal",
     status: "Candidate",
+    automatic: false,
+    askedAt: null,
     trigger: "Chat",
     input: "Rate S-100",
     sourceThreadId: null,

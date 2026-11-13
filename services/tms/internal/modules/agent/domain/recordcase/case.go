@@ -2,6 +2,7 @@ package recordcase
 
 import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtowerplay"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -164,6 +165,11 @@ type HandOff struct {
 	// Note is what that agent said when it finished and proposed nothing;
 	// markdown.
 	Note string
+	// Play is the first move this kind of condition has, which the person
+	// sends themselves; empty when the kind has none.
+	Play watchtowerplay.Kind
+	// Request is the last play a person sent for it; nil when none has been.
+	Request *watchtower.Request
 }
 
 // Away says a case was put away: its plan is done, or nothing more can be

@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/loaderfields"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvercore"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/desklens"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/deskactivityports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/deskattentionports"
@@ -80,6 +81,7 @@ func (r *QueryResolver) DeskAttention(ctx context.Context, input gqlmodel.DeskAt
 		First:      typeutils.ValueOrZero(input.First),
 		RecordIDs:  recordIDs,
 		Working:    typeutils.ValueOrZero(input.Working),
+		Mine:       typeutils.ValueOrZero(input.Mine),
 	}, actorutil.FromAuthContext(authCtx))
 }
 
@@ -112,14 +114,14 @@ func (r *QueryResolver) DeskActivityEntry(ctx context.Context, id string) (*desk
 	}, actorutil.FromAuthContext(authCtx))
 }
 
-func (r *WatchtowerItemResolver) DeskLens(ctx context.Context, obj *watchtower.Item) (watchtower.DeskLens, error) {
-	return obj.SourceKind.DeskLens(), nil
+func (r *WatchtowerItemResolver) DeskLens(ctx context.Context, obj *watchtower.Item) (desklens.Lens, error) {
+	return desklens.Of(obj.SourceKind), nil
 }
 
 func (r *WatchtowerItemResolver) AboutID(ctx context.Context, obj *watchtower.Item) (*string, error) {
 	return gqlid.IDPtr(obj.AboutID), nil
 }
 
-func (r *WatchtowerKindSummaryResolver) DeskLens(ctx context.Context, obj *gqlmodel.WatchtowerKindSummary) (watchtower.DeskLens, error) {
-	return obj.Kind.DeskLens(), nil
+func (r *WatchtowerKindSummaryResolver) DeskLens(ctx context.Context, obj *gqlmodel.WatchtowerKindSummary) (desklens.Lens, error) {
+	return desklens.Of(obj.Kind), nil
 }

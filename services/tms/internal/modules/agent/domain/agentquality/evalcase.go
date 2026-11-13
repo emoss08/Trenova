@@ -183,6 +183,7 @@ type EvalCase struct {
 	Title             string           `json:"title"             keel:"title,nullzero"`
 	Source            CaseSource       `json:"source"            keel:"source"`
 	Status            CaseStatus       `json:"status"            keel:"status"`
+	Automatic         bool             `json:"automatic"         keel:"automatic"`
 	Trigger           agent.RunTrigger `json:"trigger"           keel:"trigger"`
 
 	SourceRunID      *pulid.ID `json:"sourceRunId"      keel:"source_run_id"`
@@ -193,6 +194,7 @@ type EvalCase struct {
 	SourceFeedbackID *pulid.ID `json:"sourceFeedbackId" keel:"source_feedback_id"`
 
 	Input        string                        `json:"input"        keel:"input"`
+	AskedAt      *int64                        `json:"askedAt"      keel:"asked_at"`
 	History      []HistoryMessage              `json:"history"      keel:"history,jsonb"`
 	PageContext  *agentpagecontext.PageContext `json:"pageContext"  keel:"page_context,jsonb"`
 	Mentions     []agentpagecontext.EntityRef  `json:"mentions"     keel:"mentions,jsonb"`
@@ -367,6 +369,14 @@ func (c *EvalCase) Conversation() []conversation.Message {
 	}
 
 	return messages
+}
+
+func (c *EvalCase) Asked() int64 {
+	if c.AskedAt == nil {
+		return 0
+	}
+
+	return *c.AskedAt
 }
 
 func (c *EvalCase) IsChat() bool {

@@ -4852,6 +4852,15 @@
       "go/other"
     ]
   },
+  "A change a person approved or rejected becomes a case on its own, so nobody has to build the set by hand.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "A change applies to one proposal; approve with changes from its card": {
     "sites": 1,
     "scope": [
@@ -10341,6 +10350,15 @@
       "go/other"
     ]
   },
+  "A proof of delivery is already on file for this shipment": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "A property can't expect a refusal: it states what holds when the tariff rates. Narrow it with `assume` or its ranges instead": {
     "sites": 2,
     "scope": [
@@ -14206,6 +14224,15 @@
     ]
   },
   "A transfer needs a new fleet code or manager": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "A trial run names the provider and model it was asked on, and no other run does": {
     "sites": 1,
     "scope": [
       "go"
@@ -19975,15 +20002,6 @@
       "routes/inbox"
     ]
   },
-  "Add a golden case first": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/agent-control"
-    ]
-  },
   "Add a guide or library": {
     "sites": 1,
     "scope": [
@@ -24490,6 +24508,15 @@
       "apps/web/components"
     ]
   },
+  "Agents are paused for the organization, so none can be put on this. Lift the pause in AI control, or do it yourself.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Agents are working on": {
     "sites": 1,
     "scope": [
@@ -28261,6 +28288,24 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "An agent raised this because it needs a person. Decide it here, or ask about it below.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "An agent raised this because it needs you. Do it yourself, ask about it below, or accept the risk.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "An agent stopped": {
@@ -35485,7 +35530,7 @@
     ]
   },
   "Ask again": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -35705,6 +35750,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Ask for the POD": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Ask for the proofs of delivery a tenant's delivered shipments are missing, a page at a time": {
@@ -36013,6 +36067,15 @@
       "routes/desk"
     ]
   },
+  "Ask where it is": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Ask whether the question starts a chapter and what to call it": {
     "sites": 1,
     "scope": [
@@ -36114,12 +36177,14 @@
     ]
   },
   "Asked": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/agent-control",
+      "routes/desk"
     ]
   },
   "Asked another agent": {
@@ -36334,6 +36399,24 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Asks this agent's golden cases on another model without changing the agent.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Asks whoever has a load, a carrier's dispatcher or a driver reached by email, where it is and when it will arrive, in your own letterhead. Sent from the Watchtower when a stop is missed, an arrival is projected late or a check call never came.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Assembled on read from the credentials, documents, previous-employer investigations and testing record. 49 CFR 391.51.": {
@@ -40137,11 +40220,12 @@
     ]
   },
   "Automatically": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/agent-control",
       "routes/desk"
     ]
   },
@@ -47563,6 +47647,15 @@
       "routes/worker"
     ]
   },
+  "By a person": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "By agent": {
     "sites": 2,
     "scope": [
@@ -48798,7 +48891,7 @@
     ]
   },
   "Cancel": {
-    "sites": 331,
+    "sites": 332,
     "scope": [
       "go",
       "ts"
@@ -50491,7 +50584,7 @@
       "routes/agent-control"
     ]
   },
-  "Captured and waiting for an administrator to activate it": {
+  "Captured and waiting for someone to activate it": {
     "sites": 1,
     "scope": [
       "ts"
@@ -52677,6 +52770,15 @@
       "routes/agent-control"
     ]
   },
+  "Cases kept per agent": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Cases per agent": {
     "sites": 2,
     "scope": [
@@ -54653,6 +54755,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Character limit": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Characters drawn from each selected attribute (1–10).": {
@@ -76240,6 +76351,15 @@
       "routes/dash-control"
     ]
   },
+  "Dash message": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Dashboard": {
     "sites": 8,
     "scope": [
@@ -77966,6 +78086,15 @@
     ]
   },
   "Decided proposal": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Decided proposals arrive as candidates and wait for someone to activate them.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -95433,7 +95562,7 @@
     ]
   },
   "Email": {
-    "sites": 37,
+    "sites": 38,
     "scope": [
       "go",
       "ts"
@@ -103661,7 +103790,7 @@
     ]
   },
   "Everyone": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "go",
       "ts"
@@ -103671,6 +103800,7 @@
       "go/other",
       "packages/shared/lib",
       "routes/agent-control",
+      "routes/desk",
       "routes/my-team",
       "routes/policies"
     ]
@@ -117925,15 +118055,6 @@
       "go/other"
     ]
   },
-  "Freight forecast: {0}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
   "Freight invoice": {
     "sites": 3,
     "scope": [
@@ -118143,7 +118264,7 @@
     ]
   },
   "From": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "ts"
     ],
@@ -121574,6 +121695,15 @@
       "packages/shared/components"
     ]
   },
+  "Go back a version": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Go back to the briefing": {
     "sites": 1,
     "scope": [
@@ -121875,7 +122005,7 @@
     ]
   },
   "Golden set": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -123635,6 +123765,15 @@
       "routes/inbox"
     ]
   },
+  "Have Nova reword it: firmer, shorter, mention it is the third ask…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Hawaii (HI)": {
     "sites": 1,
     "scope": [
@@ -124465,7 +124604,7 @@
     ]
   },
   "Hello {0},": {
-    "sites": 26,
+    "sites": 28,
     "scope": [
       "go"
     ],
@@ -124474,6 +124613,7 @@
       "template/agent.inbound_reply.email",
       "template/agent.proposal_reminder.email",
       "template/agent.request_missing_docs.email",
+      "template/agent.status_request.email",
       "template/carriertracking.link.email",
       "template/customer.statement.email",
       "template/customertracking.link.email",
@@ -124497,7 +124637,7 @@
     ]
   },
   "Hello,": {
-    "sites": 26,
+    "sites": 28,
     "scope": [
       "go"
     ],
@@ -124506,6 +124646,7 @@
       "template/agent.inbound_reply.email",
       "template/agent.proposal_reminder.email",
       "template/agent.request_missing_docs.email",
+      "template/agent.status_request.email",
       "template/carriertracking.link.email",
       "template/customer.statement.email",
       "template/customertracking.link.email",
@@ -125375,6 +125516,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "History counted so far": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Hit count cannot be negative": {
@@ -126499,6 +126649,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "How Nova should change the message": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "How Trenova looks and keeps time for you.": {
@@ -136982,6 +137141,15 @@
       "routes/desk"
     ]
   },
+  "It goes out under your name. Who it goes to comes from the load; the words are yours to change.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "It handles no tasks.": {
     "sites": 1,
     "scope": [
@@ -137100,6 +137268,15 @@
     "areas": [
       "apps/web/rules",
       "rules/tariff"
+    ]
+  },
+  "It is made under your name, from what is on the load.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "It is off Needs you for everyone. If anything new is raised, the case opens again.": {
@@ -139353,7 +139530,7 @@
     ]
   },
   "Keep": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -139418,6 +139595,15 @@
       "apps/web/components"
     ]
   },
+  "Keep at least one automatic case per agent": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Keep at least one of the proposed records, or reject the proposal": {
     "sites": 1,
     "scope": [
@@ -139434,6 +139620,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Keep at most 500 automatic cases per agent": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Keep benefit plans and enroll workers on them.": {
@@ -139902,6 +140097,15 @@
       "routes/ifta-return"
     ]
   },
+  "Keep the golden set automatically": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Keep the label under 100 characters": {
     "sites": 1,
     "scope": [
@@ -140209,6 +140413,15 @@
       "go/other"
     ]
   },
+  "Keep what you want it to say to a few sentences": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Keep worker records, employment events, positions and checklists, and invite drivers to the portal or revoke their access.": {
     "sites": 1,
     "scope": [
@@ -140421,7 +140634,7 @@
     ]
   },
   "Kept": {
-    "sites": 7,
+    "sites": 9,
     "scope": [
       "ts"
     ],
@@ -141998,6 +142211,24 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Last checked {0}. Checked again every night, and whenever this is opened more than an hour later.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Last checked {0}. Checking your shipment history again now; this updates when it finishes.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Last contact": {
@@ -147568,6 +147799,15 @@
       "routes/shipment"
     ]
   },
+  "Load Status Request": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Load acceptance": {
     "sites": 1,
     "scope": [
@@ -147813,6 +148053,15 @@
     ],
     "areas": [
       "routes/onboarding"
+    ]
+  },
+  "Load status": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/agent.status_request.email"
     ]
   },
   "Load tender": {
@@ -150359,6 +150608,15 @@
     ]
   },
   "Loads observed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Loads picked up": {
     "sites": 1,
     "scope": [
       "ts"
@@ -157337,7 +157595,7 @@
     ]
   },
   "Message": {
-    "sites": 16,
+    "sites": 17,
     "scope": [
       "go",
       "ts"
@@ -158342,12 +158600,13 @@
     ]
   },
   "Mine": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/collections"
+      "routes/collections",
+      "routes/desk"
     ]
   },
   "Minimal": {
@@ -167770,6 +168029,15 @@
       "routes/agent-control"
     ]
   },
+  "No agent has a golden set yet. Cases are added on their own as people approve or reject what agents propose.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "No agent has been scored against its golden set yet.": {
     "sites": 1,
     "scope": [
@@ -170048,6 +170316,24 @@
     ]
   },
   "No email profile is set up for this organization, so nothing can be emailed until an administrator adds one in the email settings.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "No email profile is set up to send from, so the proof of delivery cannot be asked for by email. Upload it here, or ask an administrator to add one in the email settings.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "No email profile is set up to send from, so {0} cannot be asked by email. Call them, or ask an administrator to add one in the email settings.": {
     "sites": 1,
     "scope": [
       "go"
@@ -176039,6 +176325,24 @@
       "routes/billing-queue"
     ]
   },
+  "Nobody is assigned to the delivering move, so there is nobody to ask for the proof of delivery. Upload it here.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Nobody is assigned to this load yet, so there is nobody to ask. Assign a driver or a carrier first.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Nobody is carrying points.": {
     "sites": 1,
     "scope": [
@@ -179322,6 +179626,15 @@
       "routes/dispatch-console"
     ]
   },
+  "Nothing can be sent from here for this kind of item": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Nothing can run until a provider is connected.": {
     "sites": 1,
     "scope": [
@@ -182598,6 +182911,15 @@
       "routes/agent-control"
     ]
   },
+  "Nova could not write that message. Edit it yourself, or say it another way.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Nova couldn't be reached just now. Try again in a moment.": {
     "sites": 1,
     "scope": [
@@ -182821,6 +183143,15 @@
     ],
     "areas": [
       "routes/billing-queue"
+    ]
+  },
+  "Nova is not set up to write messages for this organization. Edit the message yourself, or turn Nova on in AI control.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Nova is off": {
@@ -183719,11 +184050,12 @@
     ]
   },
   "OK": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/desk",
       "routes/ifta-tax-rate"
     ]
   },
@@ -184307,6 +184639,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Offer it": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Offer one at a time": {
@@ -192470,6 +192811,15 @@
       "routes/dispatch-console"
     ]
   },
+  "Opens the agent with the version before this change loaded. Nothing is saved until you save it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Opens the console with the load and driver picked.": {
     "sites": 1,
     "scope": [
@@ -199790,6 +200140,15 @@
       "packages/shared/lib"
     ]
   },
+  "Past this the oldest are retired, a tool at a time. An automatic case is also retired after {0, plural, one {# day} other {# days}}, because an old case stops being fair as your records move on. A case you keep or edit stays.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Paste": {
     "sites": 1,
     "scope": [
@@ -204230,6 +204589,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Pick a provider that is turned on and serves conversations": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Pick a query type": {
@@ -219068,6 +219436,24 @@
       "routes/rate-agreement"
     ]
   },
+  "Reading the load": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Reading the load to see who can be reached.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Reading the memories…": {
     "sites": 1,
     "scope": [
@@ -219213,6 +219599,15 @@
     ]
   },
   "Reading your records…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
+  "Reading your shipment history now; this updates when it finishes.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -228842,6 +229237,15 @@
       "template/agent.request_missing_docs.email"
     ]
   },
+  "Reply to this message with where the load is and when it will arrive.": {
+    "sites": 2,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "template/agent.status_request.email"
+    ]
+  },
   "Reply to {0}": {
     "sites": 2,
     "scope": [
@@ -229741,15 +230145,6 @@
       "routes/journal-reversal"
     ]
   },
-  "Request the driver's paperwork": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
-    ]
-  },
   "Request the missing paperwork for {0}.": {
     "sites": 1,
     "scope": [
@@ -229820,6 +230215,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Request wording": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Request worker PTO": {
@@ -233127,6 +233531,15 @@
       "routes/scheduling"
     ]
   },
+  "Retired on its own as it ages or newer cases arrive. Keep it to hold on to it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Retired, superseded, empty, or too sensitive to send. Still found by their words.": {
     "sites": 1,
     "scope": [
@@ -235432,6 +235845,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Reword": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Rewrite": {
@@ -241341,6 +241763,15 @@
       "packages/shared/types"
     ]
   },
+  "Say how the message should read": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Say how to change it in a sentence": {
     "sites": 1,
     "scope": [
@@ -245637,6 +246068,15 @@
       "routes/desk"
     ]
   },
+  "See the runs": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "See the statement and its journal on its page": {
     "sites": 2,
     "scope": [
@@ -248692,7 +249132,7 @@
     ]
   },
   "Send": {
-    "sites": 22,
+    "sites": 23,
     "scope": [
       "go",
       "ts"
@@ -250060,6 +250500,15 @@
     ]
   },
   "Sender qualifier cannot be longer than 4 characters": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Sender's guidance": {
     "sites": 1,
     "scope": [
       "go"
@@ -255845,7 +256294,7 @@
     ]
   },
   "Shipment {0}": {
-    "sites": 11,
+    "sites": 13,
     "scope": [
       "go",
       "ts"
@@ -255855,6 +256304,7 @@
       "template/agent.customer_update.email",
       "template/agent.inbound_reply.email",
       "template/agent.request_missing_docs.email",
+      "template/agent.status_request.email",
       "template/detention.notice.email",
       "template/invoice.email"
     ]
@@ -262316,6 +262766,15 @@
       "routes/formula-template"
     ]
   },
+  "Standard message": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Standard templates already installed": {
     "sites": 1,
     "scope": [
@@ -266050,7 +266509,7 @@
     ]
   },
   "Subject": {
-    "sites": 17,
+    "sites": 18,
     "scope": [
       "go",
       "ts"
@@ -266969,7 +267428,7 @@
     ]
   },
   "Suite run": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -270823,7 +271282,7 @@
     ]
   },
   "Tender": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
       "go",
       "ts"
@@ -270831,6 +271290,7 @@
     "areas": [
       "apps/web/lib",
       "go/other",
+      "routes/desk",
       "routes/dispatch-console",
       "routes/edi",
       "routes/inbox",
@@ -270986,6 +271446,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Tender it again": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Tender needs review": {
@@ -272007,12 +272476,13 @@
     ]
   },
   "Text message": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/desk"
     ]
   },
   "Text messages": {
@@ -272581,6 +273051,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "That is too long for how it is sent. Shorten it to send.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "That isn't one of this check's choices": {
@@ -273625,6 +274104,15 @@
       "routes/desk"
     ]
   },
+  "The Watchtower raised it and nobody has looked. Start with the first step: you read it and send it yourself.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "The X12": {
     "sites": 1,
     "scope": [
@@ -274032,6 +274520,15 @@
       "routes/desk"
     ]
   },
+  "The agent is not changed. The trial's score appears in its suite runs when it finishes.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "The agent is replying; ask again once it is done": {
     "sites": 1,
     "scope": [
@@ -274060,6 +274557,15 @@
     ]
   },
   "The agent should decline. Answering fails the case, as does refusing when this is off.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "The agent stays as it is": {
     "sites": 1,
     "scope": [
       "ts"
@@ -281444,6 +281950,15 @@
       "apps/web/lib"
     ]
   },
+  "The forecast is tested once the last 35 weeks hold {0, plural, one {# week} other {# weeks}} with loads and {1, plural, one {# load} other {# loads}} picked up.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
+    ]
+  },
   "The forecast learns areas from where your loads pick up. Once it has, they appear here.": {
     "sites": 1,
     "scope": [
@@ -281451,15 +281966,6 @@
     ],
     "areas": [
       "routes/freight-outlook"
-    ]
-  },
-  "The forecast needs 8 weeks and 200 loads of history; it has {0, plural, one {# week} other {# weeks}} and {1, plural, one {# load} other {# loads}}.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/lib"
     ]
   },
   "The formatted cell value.": {
@@ -284465,6 +284971,15 @@
       "apps/web/components"
     ]
   },
+  "The message did not reach {0}: they no longer have a Dash login or a number that can be texted.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The message has no body.": {
     "sites": 2,
     "scope": [
@@ -284495,6 +285010,15 @@
     ]
   },
   "The message is no longer in the conversation": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The message is too long for how it is sent. Shorten it and send again.": {
     "sites": 1,
     "scope": [
       "go"
@@ -287718,15 +288242,6 @@
       "template/customertracking.status.email"
     ]
   },
-  "The proof of delivery for {0} is missing. Ask its driver for the paperwork, or the carrier if a carrier hauled it, and draft the message for me to approve.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/desk"
-    ]
-  },
   "The proof of delivery is not on file yet": {
     "sites": 1,
     "scope": [
@@ -290082,6 +290597,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "The routing guide has no carrier left to offer this move to. Shop other carriers, or put your own driver on it.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "The rows could not be counted.": {
@@ -292519,6 +293043,15 @@
       "go/other"
     ]
   },
+  "The subject, which names the load. Required on the subject channel so the reply threads with the request.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "The substance abuse professional handling the evaluation and follow-up plan.": {
     "sites": 1,
     "scope": [
@@ -293033,6 +293566,15 @@
     ]
   },
   "The tender offer email could not be rendered: {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "The tender this is about is gone, so there is nothing to offer again.": {
     "sites": 1,
     "scope": [
       "go"
@@ -293881,6 +294423,15 @@
     ],
     "areas": [
       "routes/billing-queue"
+    ]
+  },
+  "The trial's provider and model are at most 300 characters": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "The truck arrived at {0}, but there's no appointment window on record to measure it against.": {
@@ -295838,6 +296389,15 @@
       "edi/lading"
     ]
   },
+  "There is no message to reword": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "There is no module `{0}`": {
     "sites": 2,
     "scope": [
@@ -296899,6 +297459,15 @@
       "go/other"
     ]
   },
+  "This agent has no golden cases yet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "This agent is already on the list": {
     "sites": 1,
     "scope": [
@@ -297313,6 +297882,15 @@
     "areas": [
       "apps/web/rules",
       "rules/tariff"
+    ]
+  },
+  "This cannot be sent from here right now.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "This card is already cancelled": {
@@ -299967,6 +300545,15 @@
       "routes/admin"
     ]
   },
+  "This is already resolved": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "This is always true: {0}": {
     "sites": 2,
     "scope": [
@@ -300309,7 +300896,34 @@
       "go/other"
     ]
   },
+  "This item is not about a load": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "This item is not about a record an agent can work on": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "This item is not about a shipment": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "This item is not about a tender": {
     "sites": 1,
     "scope": [
       "go"
@@ -302749,6 +303363,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "This sends no message, so there is nothing to reword": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "This server does not allow providers on private network addresses": {
@@ -305867,7 +306490,7 @@
     ]
   },
   "To": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "ts"
     ],
@@ -310603,6 +311226,15 @@
       "routes/inbox"
     ]
   },
+  "Trial": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Trial balance": {
     "sites": 2,
     "scope": [
@@ -310631,7 +311263,34 @@
       "go/other"
     ]
   },
+  "Trial started on {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
   "Tried first. Automatic follows the routing on the Providers tab.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Tried on": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
+    ]
+  },
+  "Tried on {0}. The agent was not changed.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -311241,6 +311900,15 @@
     ],
     "areas": [
       "routes/accounting-mapping"
+    ]
+  },
+  "Try another model": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/agent-control"
     ]
   },
   "Try another word or category.": {
@@ -322230,6 +322898,15 @@
       "routes/desk"
     ]
   },
+  "Waiting on an answer. You can ask again, do it yourself, or accept the risk.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Waiting on approval": {
     "sites": 7,
     "scope": [
@@ -324612,6 +325289,15 @@
       "routes/time-attendance"
     ]
   },
+  "Weeks with loads": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Weigh station fees": {
     "sites": 1,
     "scope": [
@@ -325568,7 +326254,7 @@
       "routes/rate-agreement"
     ]
   },
-  "What each tool returned when the case was captured. Fields the registry marks restricted or confidential were replaced before the case was saved.": {
+  "What each tool returned when the case was captured. A replay answers the same call with this result, as of the moment the question was asked. Fields the registry marks restricted or confidential were replaced before the case was saved, and a result that lost one is read from your records again.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -325812,6 +326498,15 @@
     ]
   },
   "What is being asked for, as a list, so it can be rendered as bullets instead of buried in a paragraph.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "What is being asked, as the person sending it approved it. Required: this is the substance of the message.": {
     "sites": 1,
     "scope": [
       "go"
@@ -332229,6 +332924,15 @@
       "apps/dash/routes"
     ]
   },
+  "Whose cases": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Whose mistake was it": {
     "sites": 1,
     "scope": [
@@ -335753,6 +336457,15 @@
     ],
     "areas": [
       "routes/rate-agreement"
+    ]
+  },
+  "Write the message, or cancel.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Write the morning briefing for every organization whose hour has come": {
@@ -339627,6 +340340,33 @@
       "routes/worker"
     ]
   },
+  "Your role does not let you email customers and carriers, so this cannot be sent from here. Ask an administrator for that access.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Your role does not let you message drivers, so this cannot be sent from here. Ask an administrator for that access.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Your role does not let you tender loads, so this cannot be sent from here. Ask an administrator for that access.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "Your role keeps views private. An administrator can share one with your organization.": {
     "sites": 1,
     "scope": [
@@ -339697,6 +340437,15 @@
     ],
     "areas": [
       "apps/dash/routes"
+    ]
+  },
+  "Your shipment history is being read for the first time. This takes about a minute.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/lib"
     ]
   },
   "Your sign-in has expired. Sign in again.": {
@@ -361496,6 +362245,15 @@
       "go/other"
     ]
   },
+  "{0} already looked at this, and nothing about it has changed since. Do it yourself, or hand it to a different agent.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "{0} already open": {
     "sites": 1,
     "scope": [
@@ -362358,6 +363116,15 @@
       "routes/desk"
     ]
   },
+  "{0} can only be reached by text, and the organization's plan does not include text messages. Upload the proof of delivery here, or add their email.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "{0} can only be used inside a `for` loop": {
     "sites": 2,
     "scope": [
@@ -362653,6 +363420,15 @@
     ],
     "areas": [
       "apps/web/types",
+      "go/other"
+    ]
+  },
+  "{0} cannot be reached in Dash or by text right now. Upload the proof of delivery here, or add a way to reach them.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
       "go/other"
     ]
   },
@@ -364765,6 +365541,42 @@
       "routes/agent-control"
     ]
   },
+  "{0} has no Dash login, email or phone number on file and {1} has no email on file, so neither can be asked for the proof of delivery. Upload it here, or add a way to reach them.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "{0} has no Dash login, email or phone number on file, so they cannot be asked for the proof of delivery. Upload it here, or add a way to reach them.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "{0} has no Dash login, phone number that can be texted or email on file, and {1} has no email on file, so neither can be asked from here. Call them, or add a way to reach them.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "{0} has no Dash login, phone number that can be texted or email on file, so they cannot be asked from here. Call them, or add a way to reach them.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "{0} has no Lading project; create one from the partner's EDI page": {
     "sites": 1,
     "scope": [
@@ -364843,6 +365655,24 @@
     "areas": [
       "apps/web/edi",
       "edi/lading"
+    ]
+  },
+  "{0} has no email on file, so they cannot be asked for the proof of delivery. Upload it here, or add their email.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "{0} has no email on file, so they cannot be asked from here. Call them, or add their email.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "{0} has no field or property named {1}": {
@@ -367372,6 +368202,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "{0} is on the organization's do-not-email list, so the request would not be sent.": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "{0} is on the suppression list and would be skipped.": {
@@ -370258,7 +371097,7 @@
     ]
   },
   "{0} of {1}": {
-    "sites": 36,
+    "sites": 38,
     "scope": [
       "ts"
     ],

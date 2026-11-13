@@ -70,7 +70,7 @@ func TestCheckDataAccess_OnlyAPersonWhoReachesRestrictedMayGrantIt(t *testing.T)
 	require.Error(t, err)
 	var multiErr *errortypes.MultiError
 	require.True(t, errors.As(err, &multiErr))
-	assert.Equal(t, dataAccessField, multiErr.Errors[0].Field)
+	assert.Equal(t, dataAccessField, multiErr.Errors[0].Field())
 
 	restricted := &Service{l: zap.NewNop(),
 		permissions: &sensitivityEngine{max: permission.SensitivityRestricted}}

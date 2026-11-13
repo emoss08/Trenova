@@ -5,6 +5,8 @@ related:
   - /billing/configuration-files/customers
   - /billing/invoices
   - /billing/factoring
+covers:
+  - /billing/configuration-files/factoring-companies/new
 ---
 
 ## What it's for

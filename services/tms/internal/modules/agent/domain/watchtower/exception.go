@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/keel"
+
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -166,6 +167,10 @@ const (
 	EventSourceResolved = EventKind("SourceResolved")
 	EventSourceReopened = EventKind("SourceReopened")
 	EventHandedOff      = EventKind("HandedOff")
+	// EventRequested is a play a person sent for the item: a question to
+	// whoever has the load, or an offer to carriers. Its note is what was
+	// asked of whom.
+	EventRequested = EventKind("Requested")
 )
 
 func (k EventKind) String() string { return string(k) }
@@ -175,7 +180,7 @@ func AllEventKinds() []EventKind {
 		EventCreated, EventAssigned, EventUnassigned, EventAcknowledged, EventStarted,
 		EventSnoozed, EventWoke, EventDueChanged, EventCommented, EventEscalated,
 		EventResolved, EventReopened, EventSourceResolved, EventSourceReopened,
-		EventHandedOff,
+		EventHandedOff, EventRequested,
 	}
 }
 
@@ -184,7 +189,7 @@ func (k EventKind) IsValid() bool {
 	case EventCreated, EventAssigned, EventUnassigned, EventAcknowledged, EventStarted,
 		EventSnoozed, EventWoke, EventDueChanged, EventCommented, EventEscalated,
 		EventResolved, EventReopened, EventSourceResolved, EventSourceReopened,
-		EventHandedOff:
+		EventHandedOff, EventRequested:
 		return true
 	default:
 		return false

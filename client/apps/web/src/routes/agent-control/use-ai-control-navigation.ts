@@ -6,6 +6,7 @@ import { AUDIT_SCOPE_PARAM, auditScopeParser } from "./_components/audit/audit-m
 import {
   ACTIVITY_VIEW_PARAM,
   AGENT_EDIT_PARAM,
+  AGENT_RESTORE_PARAM,
   AGENT_FILTER_PARAM,
   AGENT_NEW_PARAM,
   AGENT_OPEN_PARAM,
@@ -22,6 +23,7 @@ import {
   activityViewParser,
   activityViews,
   agentEditParser,
+  agentRestoreParser,
   agentFilterParser,
   agentNewParser,
   agentOpenParser,
@@ -56,6 +58,7 @@ const navigationParsers = {
   [AGENT_FILTER_PARAM]: agentFilterParser,
   [AGENT_OPEN_PARAM]: agentOpenParser,
   [AGENT_EDIT_PARAM]: agentEditParser,
+  [AGENT_RESTORE_PARAM]: agentRestoreParser,
   [AGENT_NEW_PARAM]: agentNewParser,
   [SAFETY_VIEW_PARAM]: safetyViewParser,
   [SAFETY_AGENTS_PARAM]: safetyAgentsParser,
@@ -74,8 +77,13 @@ export type AIControlDestination = {
   agentFilter?: AgentFilter;
   /** Opens one agent's sheet on the Agents tab. */
   agent?: string;
-  /** Opens the agent builder on the Agents tab: an agent to edit, or what a new one starts from. */
-  builder?: { mode: "edit"; agentId: string } | { mode: "create"; start: BuilderStart };
+  /**
+   * Opens the agent builder on the Agents tab: an agent to edit, optionally with an earlier
+   * version loaded as a draft, or what a new one starts from.
+   */
+  builder?:
+    | { mode: "edit"; agentId: string; restoreVersion?: number }
+    | { mode: "create"; start: BuilderStart };
   /** Narrows the quality views that take an agent to one agent. */
   qualityAgent?: string | null;
   /** Opens one suite run's cases. */
@@ -143,6 +151,10 @@ export function useAIControlNavigation() {
           [AGENT_EDIT_PARAM]:
             destination.tab === "agents" && destination.builder?.mode === "edit"
               ? destination.builder.agentId
+              : null,
+          [AGENT_RESTORE_PARAM]:
+            destination.tab === "agents" && destination.builder?.mode === "edit"
+              ? (destination.builder.restoreVersion ?? null)
               : null,
           [AGENT_NEW_PARAM]:
             destination.tab === "agents" && destination.builder?.mode === "create"

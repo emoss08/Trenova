@@ -300,3 +300,28 @@ mutation MarkWatchtowerItemSeen($id: ID!) @requiresRead(kind: "agent_definition"
     ...WatchtowerItemFields
   }
 }
+
+query WatchtowerPlay($itemId: ID!) {
+  watchtowerPlay(itemId: $itemId) {
+    itemId
+    kind
+    channel
+    recipient
+    sender
+    subject
+    message
+    messageLimit
+    summary
+    canReword
+  }
+}
+
+mutation RewordWatchtowerPlay($itemId: ID!, $input: RewordWatchtowerPlayInput!) {
+  rewordWatchtowerPlay(itemId: $itemId, input: $input)
+}
+
+mutation SendWatchtowerPlay($itemId: ID!, $input: SendWatchtowerPlayInput!) @requiresRead(kind: "agent_definition") {
+  sendWatchtowerPlay(itemId: $itemId, input: $input) {
+    ...WatchtowerItemFields
+  }
+}

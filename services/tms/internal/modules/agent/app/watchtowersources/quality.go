@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtoweritem"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentqualitysuite"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtowerpanel"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
@@ -80,9 +81,9 @@ func DescribeQualityRegression(
 		Title:      who + " answers its evaluation cases worse than before",
 		Summary:    QualityRegressionSummary(run),
 		Path:       QualityRegressionPath(run),
-		Panel: &watchtower.Panel{
-			Kind: watchtower.PanelChange,
-			Change: &watchtower.ChangePanel{
+		Panel: &watchtowerpanel.Panel{
+			Kind: watchtowerpanel.KindChange,
+			Change: &watchtowerpanel.ChangePanel{
 				Who:  who,
 				What: "Evaluation score",
 				From: scorePercent(run.BaselineScore),

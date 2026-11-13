@@ -5,6 +5,9 @@ package exceptionsourcerepository_test
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/exceptionsourcerepository"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/podchaseports"
@@ -12,8 +15,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func (h *harness) worker(t *testing.T, first, last string, userID pulid.ID) pulid.ID {
@@ -160,43 +161,4 @@ func TestListPODChaseFactsAsksTheLastMovesDriver(t *testing.T) {
 	require.NotNil(t, facts[0].Driver)
 	assert.Equal(t, "Final Leg", facts[0].Driver.Name)
 	assert.True(t, facts[0].Driver.OnDash)
-}
-
-// The billing sender is the profile assigned to billing mail, never one
-// assigned to another purpose.
-func TestBillingSenderProfileIsTheBillingAssignment(t *testing.T) {
-	h := newHarness(t)
-	reader := h.chaseFacts()
-
-	none, err := reader.BillingSenderProfile(h.ctx, h.tenant)
-	require.NoError(t, err)
-	assert.True(t, none.IsNil(), "no billing sender until one is assigned")
-
-	profile := func(name string) pulid.ID {
-		id := pulid.MustNew("emp_")
-		h.exec(t, `INSERT INTO email_profiles (
-				id, organization_id, business_unit_id, name, provider_type, from_address
-			) VALUES ($1, $2, $3, $4, 'Postmark', 'billing@example.test')`,
-			id.String(), h.tenant.OrgID.String(), h.tenant.BuID.String(), name)
-		return id
-	}
-	assign := func(profileID pulid.ID, purpose string) {
-		h.exec(t, `INSERT INTO email_profile_assignments (
-				id, organization_id, business_unit_id, purpose, profile_id
-			) VALUES ($1, $2, $3, $4, $5)`,
-			pulid.MustNew("epa_").String(), h.tenant.OrgID.String(), h.tenant.BuID.String(),
-			purpose, profileID.String())
-	}
-
-	general := profile("General")
-	assign(general, "General")
-	none, err = reader.BillingSenderProfile(h.ctx, h.tenant)
-	require.NoError(t, err)
-	assert.True(t, none.IsNil(), "a general profile is not the billing sender")
-
-	billing := profile("Billing")
-	assign(billing, "Billing")
-	got, err := reader.BillingSenderProfile(h.ctx, h.tenant)
-	require.NoError(t, err)
-	assert.Equal(t, billing, got)
 }

@@ -1,6 +1,8 @@
 package agent
 
 import (
+	"go.uber.org/fx"
+
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/accountingbriefrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/agentactivityrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/agentdecisionqueuerepository"
@@ -138,6 +140,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/briefingservice/briefingwriter"
 	"github.com/emoss08/trenova/internal/modules/agent/app/casechecklistservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/caseownerservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/codedrequest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/conversationscheduleservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/deskactivityservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/deskattentionservice"
@@ -145,6 +148,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/dispatchautoassignservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/dispatchcoveragewatch"
 	"github.com/emoss08/trenova/internal/modules/agent/app/documentreader"
+	"github.com/emoss08/trenova/internal/modules/agent/app/drivermessage"
 	"github.com/emoss08/trenova/internal/modules/agent/app/extensionportalservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/extensionwebwatchservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/formulastudioservice"
@@ -154,6 +158,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/novaharness"
 	"github.com/emoss08/trenova/internal/modules/agent/app/paletteanswer"
 	"github.com/emoss08/trenova/internal/modules/agent/app/paletteservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/podchase"
 	"github.com/emoss08/trenova/internal/modules/agent/app/productguideservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/proposalexecutor"
 	"github.com/emoss08/trenova/internal/modules/agent/app/proposalpreviewservice"
@@ -162,11 +167,15 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/recordcaseservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/recordcaseservice/casereading"
 	"github.com/emoss08/trenova/internal/modules/agent/app/recordshareservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/requestemail"
+	"github.com/emoss08/trenova/internal/modules/agent/app/requestwording"
+	"github.com/emoss08/trenova/internal/modules/agent/app/retender"
 	"github.com/emoss08/trenova/internal/modules/agent/app/retrievalquery"
 	"github.com/emoss08/trenova/internal/modules/agent/app/retrievalservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/scriptrunner"
 	"github.com/emoss08/trenova/internal/modules/agent/app/shipmentbriefingservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/shipmentimportassistantservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/statusask"
 	"github.com/emoss08/trenova/internal/modules/agent/app/tablequeryservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowerservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtowersources"
@@ -202,9 +211,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/recordcaseports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentimportassistantports"
-	"go.uber.org/fx"
 )
 
 //nolint:funlen // the module's providers are its part of the application graph
@@ -326,6 +335,7 @@ func SharedOptions() fx.Option {
 			watchtowerrepository.New,
 			exceptionsourcerepository.New,
 			exceptionsourcerepository.NewPODChaseFacts,
+			exceptionsourcerepository.NewHaulers,
 			briefingrepository.New,
 			recordcaserepository.New,
 			caseownerrepository.New,
@@ -402,6 +412,26 @@ func SharedOptions() fx.Option {
 			dispatchcoveragecontract.NewRequester,
 			agenteventcontract.NewQueue,
 			func(q *agenteventcontract.Queue) agenteventports.EventRunQueue { return q },
+			drivermessage.Provide,
+			requestemail.New,
+			codedrequest.New,
+			requestwording.New,
+			podchase.NewAsker,
+			podchase.NewPlaybook,
+			fx.Annotate(
+				func(p *podchase.Playbook) watchtowerports.Playbook { return p },
+				fx.ResultTags(`group:"watchtower_playbooks"`),
+			),
+			statusask.New,
+			fx.Annotate(
+				func(p *statusask.Playbook) watchtowerports.Playbook { return p },
+				fx.ResultTags(`group:"watchtower_playbooks"`),
+			),
+			retender.New,
+			fx.Annotate(
+				func(p *retender.Playbook) watchtowerports.Playbook { return p },
+				fx.ResultTags(`group:"watchtower_playbooks"`),
+			),
 			podchasecontract.NewRoutine,
 			fx.Annotate(
 				func(r *podchasecontract.Routine) agenteventports.EventRoutine { return r },
@@ -424,11 +454,12 @@ func SharedOptions() fx.Option {
 			watchtowerservice.NewExceptions,
 			watchtowerservice.AsExceptionService,
 			watchtowerservice.AsRecordSettler,
-			watchtowerservice.AsRunSettler,
 			watchtowerservice.AsExceptionSweeper,
 			watchtowerservice.AsProjector,
 			watchtowerservice.AsSubjectReconciler,
 			watchtowerservice.AsService,
+			watchtowerservice.NewPlays,
+			watchtowerservice.AsPlayService,
 			deskrecords.New,
 			deskattentionservice.New,
 			deskactivityservice.New,

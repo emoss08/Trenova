@@ -6,6 +6,7 @@ fragment AgentEvalCaseTableRowFields on AgentEvalCase {
   title
   source
   status
+  automatic
   trigger
   input
   sourceThreadId
@@ -21,6 +22,7 @@ fragment AgentEvalCaseTableRowFields on AgentEvalCase {
 
 fragment AgentEvalCaseDetailFields on AgentEvalCase {
   ...AgentEvalCaseTableRowFields
+  askedAt
   sourceRunId
   sourceTurnId
   sourceMessageId

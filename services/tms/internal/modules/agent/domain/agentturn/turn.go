@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentmemory"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpagecontext"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 )
 
 type RuntimeAnchor struct {
@@ -129,6 +130,18 @@ type RuntimeContext struct {
 	OrganizationProfile string
 	// UserProfile is what the person's own records say they work on.
 	UserProfile string
+}
+
+// Clock is the moment the turn runs as of: when its context was built, or
+// the moment a replay was set back to. The prompt's date, the dates a tool
+// result is worded against and the day a call's "today" resolves to all read
+// it, so they agree with each other.
+func (rc *RuntimeContext) Clock() int64 {
+	if rc.Now > 0 {
+		return rc.Now
+	}
+
+	return timeutils.NowUnix()
 }
 
 func (rc *RuntimeContext) MemoryRecords() []agentpagecontext.EntityRef {

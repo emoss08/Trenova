@@ -16,7 +16,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { downloadJsonFile, slugify } from "@trenova/shared/lib/utils";
 import { cn } from "@trenova/shared/lib/utils";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FormProvider, useForm, useWatch, type Resolver } from "react-hook-form";
 import { toast } from "@trenova/shared/components/ui/toast";
 import { AGENT_TRY_PARAM, agentTryParser } from "../../../ai-control-tabs";
@@ -107,6 +107,10 @@ type AgentBuilderProps = {
   /** The agent being edited, or null for a new one. */
   agent: AgentDefinitionRow | null;
   start: BuilderStart;
+  /** An earlier version to load as a draft once, when the builder opens on it. */
+  restoreVersion?: number | null;
+  /** Called once that version is loaded, or could not be. */
+  onRestored?: () => void;
   onClose: () => void;
   onOpenActivity?: () => void;
   onOpened?: (agentId: string) => void;
@@ -121,6 +125,8 @@ type AgentBuilderProps = {
 export function AgentBuilder({
   agent,
   start,
+  restoreVersion = null,
+  onRestored,
   onClose,
   onOpenActivity,
   onOpened,
@@ -391,6 +397,13 @@ export function AgentBuilder({
     },
     [agent, set, t],
   );
+
+  const restoredVersion = useRef<number | null>(null);
+  useEffect(() => {
+    if (restoreVersion === null || restoredVersion.current === restoreVersion) return;
+    restoredVersion.current = restoreVersion;
+    void restore(restoreVersion).then(() => onRestored?.());
+  }, [onRestored, restore, restoreVersion]);
 
   const duplicate = useCallback(async () => {
     const copy = await agentDefinitionService.create(

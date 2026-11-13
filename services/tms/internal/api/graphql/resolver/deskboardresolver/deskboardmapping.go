@@ -3,7 +3,7 @@ package deskboardresolver
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/board"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/desklens"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/shared/jsonutils"
 )
@@ -148,7 +148,7 @@ func workToModel(rows []board.WorkRow) []*gqlmodel.DeskBoardWorkRow {
 		signals := make([]*gqlmodel.DeskBoardWorkSignal, 0, len(row.Signals))
 		for _, signal := range row.Signals {
 			signals = append(signals, &gqlmodel.DeskBoardWorkSignal{
-				Lens:  watchtower.DeskLens(signal.Lens),
+				Lens:  desklens.Lens(signal.Lens),
 				Title: signal.Title,
 				Tone:  string(signal.Tone),
 				DueAt: int64PtrToInt(signal.DueAt),

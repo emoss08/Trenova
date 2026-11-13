@@ -14,8 +14,6 @@ import (
 	"go.uber.org/zap"
 )
 
-var versionErrors = dberror.Mapping{Entity: "Agent version"}
-
 type VersionParams struct {
 	fx.In
 
@@ -73,27 +71,6 @@ func (r *versionRepository) List(
 			}
 
 			return versions, nil
-		},
-	)
-}
-
-func (r *versionRepository) Get(
-	ctx context.Context,
-	req *agentdefinitionports.GetAgentDefinitionVersionRequest,
-) (*agentversion.DefinitionVersion, error) {
-	return dbtx.Read(
-		ctx,
-		r.db,
-		func(ctx context.Context) (*agentversion.DefinitionVersion, error) {
-			v := agentversiondb.DefinitionVersions
-			version, err := v.Load(v.Author()).
-				Where(v.AgentDefinitionID.Eq(req.AgentDefinitionID), v.Version.Eq(req.Version)).
-				One(ctx, r.db.Keel(ctx))
-			if err != nil {
-				return nil, versionErrors.Map(err, req.AgentDefinitionID.String())
-			}
-
-			return version, nil
 		},
 	)
 }

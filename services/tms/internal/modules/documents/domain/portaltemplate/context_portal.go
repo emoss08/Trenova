@@ -80,6 +80,19 @@ func newAgentEmailSampleContext() any {
 	}
 }
 
+func newAgentStatusRequestSampleContext() any {
+	return AgentEmailContext{
+		AgentSubject: "Status needed for " + templatecatalog.SampleProNumber,
+		AgentBody: "The delivery window for this load has closed and we have no arrival " +
+			"recorded. Where is the truck now, and when do you expect it to arrive?",
+		CompanyName:       templatecatalog.SampleCompanyName,
+		CustomerName:      "Northline Carriers",
+		ShipmentProNumber: templatecatalog.SampleProNumber,
+		//nolint:gosec // A compile-time constant data: URI; see the field's doc comment.
+		LogoDataURI: template.URL(templatecatalog.SampleLogoDataURI),
+	}
+}
+
 func newAgentInboundReplySampleContext() any {
 	return AgentEmailContext{
 		AgentSubject:      "Re: Where is " + templatecatalog.SampleProNumber + "?",
@@ -243,6 +256,7 @@ func RegisterAgentKinds(r *templatecatalog.Registry) {
 	_ = r.Register(agentInboundReplyKind())
 	_ = r.Register(agentProposalReminderKind())
 	_ = r.Register(agentRequestMissingDocsKind())
+	_ = r.Register(agentStatusRequestKind())
 }
 
 func agentCustomerUpdateKind() *templatecatalog.KindDefinition {
@@ -384,6 +398,42 @@ func agentRequestMissingDocsKind() *templatecatalog.KindDefinition {
 				Type:        templatecatalog.VariableStringList,
 				Description: "What is being asked for, as a list, so it can be rendered as bullets instead of buried in a paragraph.",
 			},
+			templatecatalog.LogoVariable(),
+		},
+	}
+}
+
+func agentStatusRequestKind() *templatecatalog.KindDefinition {
+	return &templatecatalog.KindDefinition{
+		Kind:        documenttemplate.KindAgentStatusRequestEmail,
+		DisplayName: "Load Status Request",
+		Description: "Asks whoever has a load, a carrier's dispatcher or a driver reached by " +
+			"email, where it is and when it will arrive, in your own letterhead. Sent from " +
+			"the Watchtower when a stop is missed, an arrival is projected late or a check " +
+			"call never came.",
+		Category: agentCategory,
+		Channels: []documenttemplate.Channel{
+			documenttemplate.ChannelSubject,
+			documenttemplate.ChannelEmailHTML,
+			documenttemplate.ChannelEmailText,
+		},
+		SampleFactory: newAgentStatusRequestSampleContext,
+		Variables: []templatecatalog.VariableDefinition{
+			{
+				Path:        agentSubjectPath,
+				Type:        templatecatalog.VariableString,
+				Required:    true,
+				Description: "The subject, which names the load. Required on the subject channel so the reply threads with the request.",
+			},
+			{
+				Path:        agentBodyPath,
+				Type:        templatecatalog.VariableString,
+				Required:    true,
+				Description: "What is being asked, as the person sending it approved it. Required: this is the substance of the message.",
+			},
+			templatecatalog.CompanyNameVariable(),
+			templatecatalog.CustomerNameVariable(false, "Who is being asked: the carrier, or the driver."),
+			templatecatalog.ProNumberVariable(false, "The load the question is about."),
 			templatecatalog.LogoVariable(),
 		},
 	}

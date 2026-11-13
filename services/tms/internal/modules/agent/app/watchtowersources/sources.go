@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/edimessageports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
@@ -269,17 +270,27 @@ func unique(ids []pulid.ID) []pulid.ID {
 // working again, and a timeout it got over days ago is nothing for a person
 // to do. So a failure is on the tower until the agent's next run that ends
 // well, or until it ages out of the window.
+//
+// An agent in shadow, by its own switch or the organization's pause, is not
+// working for anyone yet, so its failures are not news for the tower.
 type FailedRunSource struct {
 	runs        agentruntimeports.AgentRunRepository
 	definitions agentdefinitionports.AgentDefinitionRepository
+	controls    tenantports.AgentControlRepository
 	now         func() int64
 }
 
 func NewFailedRunSource(
 	runs agentruntimeports.AgentRunRepository,
 	definitions agentdefinitionports.AgentDefinitionRepository,
+	controls tenantports.AgentControlRepository,
 ) watchtowerports.WatchtowerSource {
-	return &FailedRunSource{runs: runs, definitions: definitions, now: timeutils.NowUnix}
+	return &FailedRunSource{
+		runs:        runs,
+		definitions: definitions,
+		controls:    controls,
+		now:         timeutils.NowUnix,
+	}
 }
 
 func (s *FailedRunSource) Kind() watchtower.SourceKind { return watchtower.SourceAgentRunFailed }
@@ -288,6 +299,16 @@ func (s *FailedRunSource) Snapshot(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 ) ([]watchtowerports.WatchtowerItemInput, error) {
+	if s.controls != nil {
+		control, cErr := s.controls.GetOrCreate(ctx, tenant)
+		if cErr != nil {
+			return nil, cErr
+		}
+		if control != nil && control.ShadowMode {
+			return []watchtowerports.WatchtowerItemInput{}, nil
+		}
+	}
+
 	filter := tenantQuery(tenant, watchtoweritem.SnapshotLimit)
 	filter.FieldFilters = []domaintypes.FieldFilter{
 		filterEq("status", string(agent.RunStatusFailed)),
@@ -309,6 +330,7 @@ func (s *FailedRunSource) Snapshot(
 		}
 	}
 	names := map[pulid.ID]string{}
+	shadowed := map[pulid.ID]struct{}{}
 	if len(definitionIDs) > 0 && s.definitions != nil {
 		definitions, dErr := s.definitions.ListByIDs(
 			ctx,
@@ -321,6 +343,9 @@ func (s *FailedRunSource) Snapshot(
 			for _, definition := range definitions {
 				if definition != nil {
 					names[definition.ID] = definition.Name
+					if definition.ShadowMode {
+						shadowed[definition.ID] = struct{}{}
+					}
 				}
 			}
 		}
@@ -332,6 +357,11 @@ func (s *FailedRunSource) Snapshot(
 	}
 	items := make([]watchtowerports.WatchtowerItemInput, 0, len(latest))
 	for _, run := range latest {
+		// An agent in shadow is watched in AI control; its failures are not
+		// put in front of the people working the queue.
+		if _, shadow := shadowed[run.AgentDefinitionID]; shadow {
+			continue
+		}
 		items = append(items, DescribeFailedRun(run, names[run.AgentDefinitionID]))
 	}
 

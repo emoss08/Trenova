@@ -20,6 +20,10 @@ type DriverNotificationPreview struct {
 	Message      string
 	Priority     notification.Priority
 	Link         string
+	// Text is the message as a text to the driver's phone, set for a driver
+	// with no portal login and a number on file. Whether it is sent is the
+	// sender's to decide: text messages are part of some plans only.
+	Text *DriverSMSPreview
 }
 
 // DriverSMSPreview is a text message as it would be sent to a driver's

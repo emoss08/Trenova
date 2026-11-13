@@ -3,13 +3,14 @@ package watchtowerservice
 import (
 	"context"
 
+	"go.uber.org/fx"
+	"go.uber.org/zap"
+
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"go.uber.org/fx"
-	"go.uber.org/zap"
 )
 
 type RouterParams struct {

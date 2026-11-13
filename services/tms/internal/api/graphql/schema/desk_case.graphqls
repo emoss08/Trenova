@@ -254,6 +254,10 @@ type DeskCaseHandOff {
   agent: AgentDefinition
   "What that agent said when it finished and proposed nothing; markdown. Empty otherwise."
   note: String!
+  "The first move this kind of condition has, which the reader sends themselves with `sendWatchtowerPlay`. Null when the kind has none."
+  play: WatchtowerPlayKind
+  "The last play a person sent for it; null when none has been."
+  request: WatchtowerRequest
 }
 
 """

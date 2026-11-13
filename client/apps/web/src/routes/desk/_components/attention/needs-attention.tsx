@@ -1,3 +1,4 @@
+import { useDeskSetting, useDeskSettingsStore } from "@/stores/desk-settings-store";
 import { DeskIcon } from "@/components/desk-chat/desk-icons";
 import type { VirtualRow, VirtualRowsHandle } from "@/components/virtual-rows";
 import { usePermission } from "@/hooks/use-permission";
@@ -95,7 +96,11 @@ export function NeedsAttention({
   const severities = address.severities as WatchtowerSeverity[];
   const askedItem = address.item;
 
-  const query = useQuery(deskAttention.list({ lens, kinds, severities }));
+  // A person who may see everyone's cases reads their own by default, and
+  // everyone's when they ask; the choice is theirs and stays with them.
+  const whose = useDeskSetting("cases");
+  const setDeskSetting = useDeskSettingsStore((state) => state.set);
+  const query = useQuery(deskAttention.list({ lens, kinds, severities, mine: whose === "mine" }));
   const clearedQuery = useQuery(watchtower.cleared(since));
   const groups = useMemo(() => query.data?.groups ?? [], [query.data]);
   const items = useMemo(() => attentionItems(groups), [groups]);
@@ -281,6 +286,8 @@ export function NeedsAttention({
           done={cleared}
           total={total}
           keysEnabled={!declineOpen}
+          whose={query.data?.seesEveryone ? whose : null}
+          onWhose={(next) => setDeskSetting("cases", next)}
           onClearFilters={
             filtered ? () => void setAddress({ kinds: null, severities: null }) : undefined
           }

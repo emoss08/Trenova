@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agenttrigger"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtowerpanel"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -156,9 +157,9 @@ func DescribeAccountingConnectionHealth(
 		SubjectID:   conn.ID,
 		EventKind:   agenttrigger.EventAccountingConnectionDegraded,
 		Path:        accountingprovider.SetupPath(conn.IntegrationType),
-		Panel: &watchtower.Panel{
-			Kind:  watchtower.PanelBooks,
-			Books: &watchtower.BooksPanel{System: provider, Since: occurredAt, Down: true},
+		Panel: &watchtowerpanel.Panel{
+			Kind:  watchtowerpanel.KindBooks,
+			Books: &watchtowerpanel.BooksPanel{System: provider, Since: occurredAt, Down: true},
 		},
 		OccurredAt: occurredAt,
 	}, true
@@ -194,9 +195,9 @@ func DescribeAccountingReconnect(
 		SubjectID:   conn.ID,
 		EventKind:   agenttrigger.EventAccountingConnectionDegraded,
 		Path:        accountingprovider.SetupPath(conn.IntegrationType),
-		Panel: &watchtower.Panel{
-			Kind: watchtower.PanelBooks,
-			Books: &watchtower.BooksPanel{
+		Panel: &watchtowerpanel.Panel{
+			Kind: watchtowerpanel.KindBooks,
+			Books: &watchtowerpanel.BooksPanel{
 				System:    provider,
 				ExpiresAt: conn.RefreshTokenAbsoluteExpiresAt,
 			},
@@ -205,9 +206,9 @@ func DescribeAccountingReconnect(
 	}, true
 }
 
-func booksPanel(provider string, count, since int64) *watchtower.Panel {
-	return &watchtower.Panel{
-		Kind:  watchtower.PanelBooks,
-		Books: &watchtower.BooksPanel{System: provider, Count: count, Since: since},
+func booksPanel(provider string, count, since int64) *watchtowerpanel.Panel {
+	return &watchtowerpanel.Panel{
+		Kind:  watchtowerpanel.KindBooks,
+		Books: &watchtowerpanel.BooksPanel{System: provider, Count: count, Since: since},
 	}
 }

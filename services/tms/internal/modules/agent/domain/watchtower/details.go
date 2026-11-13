@@ -1,8 +1,9 @@
 package watchtower
 
 import (
-	"github.com/emoss08/trenova/shared/recordids"
 	"strings"
+
+	"github.com/emoss08/trenova/shared/recordids"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/recordkind"
 	"github.com/emoss08/trenova/shared/stringutils"

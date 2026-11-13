@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/watchtoweritem"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtowerpanel"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentvocab"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta"
@@ -76,9 +77,9 @@ func DescribeTelematicsStopVisit(
 			watchtoweritem.Fact("Place", event.AddressName),
 			watchtoweritem.FactAt("Seen", event.OccurredAt),
 		},
-		Panel: &watchtower.Panel{
-			Kind: watchtower.PanelSighting,
-			Sighting: &watchtower.SightingPanel{
+		Panel: &watchtowerpanel.Panel{
+			Kind: watchtowerpanel.KindSighting,
+			Sighting: &watchtowerpanel.SightingPanel{
 				Departure: event.StopVisit == shipmentvocab.VisitDeparture,
 				Place:     event.AddressName,
 				SeenAt:    event.OccurredAt,
@@ -129,9 +130,9 @@ func DescribeNoCheckCall(
 			watchtoweritem.FactAt("Last contact", move.LastContactAt),
 			watchtoweritem.Fact("Window", hours+"h"),
 		},
-		Panel: &watchtower.Panel{
-			Kind: watchtower.PanelContact,
-			Contact: &watchtower.ContactPanel{
+		Panel: &watchtowerpanel.Panel{
+			Kind: watchtowerpanel.KindContact,
+			Contact: &watchtowerpanel.ContactPanel{
 				Who:         carrier,
 				LastHeardAt: move.LastContactAt,
 				EveryHours:  int64(move.IntervalHours),
@@ -223,20 +224,20 @@ func DescribeEtaRisk(
 
 // etaStopName is the stop as a fact names it: where it is, without the words
 // that fit it into a sentence.
-func etaPanel(stop *stopetaports.AttentionStop, late bool) *watchtower.Panel {
+func etaPanel(stop *stopetaports.AttentionStop, late bool) *watchtowerpanel.Panel {
 	row := stop.ETA
-	panel := &watchtower.StopPanel{
-		Role:           watchtower.StopRoleDelivery,
-		Verdict:        watchtower.StopAtRisk,
+	panel := &watchtowerpanel.StopPanel{
+		Role:           watchtowerpanel.StopRoleDelivery,
+		Verdict:        watchtowerpanel.StopAtRisk,
 		Place:          etaStopName(stop),
 		MilesRemaining: int64(row.MilesRemaining),
 		Stale:          row.InputStale,
 	}
 	if stop.StopType == shipmentvocab.StopTypePickup {
-		panel.Role = watchtower.StopRolePickup
+		panel.Role = watchtowerpanel.StopRolePickup
 	}
 	if late {
-		panel.Verdict = watchtower.StopLate
+		panel.Verdict = watchtowerpanel.StopLate
 	}
 	if row.WindowEnd != nil {
 		panel.WindowEnd = *row.WindowEnd
@@ -248,7 +249,7 @@ func etaPanel(stop *stopetaports.AttentionStop, late bool) *watchtower.Panel {
 		panel.LastHeardAt = *row.InputAt
 	}
 
-	return &watchtower.Panel{Kind: watchtower.PanelStop, Stop: panel}
+	return &watchtowerpanel.Panel{Kind: watchtowerpanel.KindStop, Stop: panel}
 }
 
 func etaStopName(stop *stopetaports.AttentionStop) string {

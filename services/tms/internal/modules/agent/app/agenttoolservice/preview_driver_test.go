@@ -5,10 +5,15 @@ import (
 	"testing"
 	"time"
 
+	"github.com/shopspring/decimal"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/agenttoolstest"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/findingtools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/operationstools"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/ptodecisiontools"
+	"github.com/emoss08/trenova/internal/modules/agent/app/drivermessage"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentpreview"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/notificationtemplate"
@@ -18,9 +23,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerptoports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/shopspring/decimal"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func (f *fakeDriverNotifier) Preview(
@@ -115,7 +117,7 @@ func TestNotifyDriverPreview_ShowsTheDashMessage(t *testing.T) {
 	t.Parallel()
 
 	drivers := &fakeDriverNotifier{}
-	tool := operationstools.NewNotifyDriverTool(drivers)
+	tool := operationstools.NewNotifyDriverTool(drivermessage.New(drivers, nil, nil))
 	params := agenttoolstest.ExecuteParams(map[string]any{
 		"workerId": pulid.MustNew("wrk_").String(),
 		"title":    "Delivery moved to 3 PM",
@@ -143,7 +145,7 @@ func TestNotifyDriverPreview_ShowsTheDashMessage(t *testing.T) {
 func TestNotifyDriverPreview_WarnsADriverWithoutDash(t *testing.T) {
 	t.Parallel()
 
-	tool := operationstools.NewNotifyDriverTool(&unreachableDriverNotifier{})
+	tool := operationstools.NewNotifyDriverTool(drivermessage.New(&unreachableDriverNotifier{}, nil, nil))
 	preview, err := tool.(agenttoolports.ToolPreviewer).Preview(
 		t.Context(),
 		agenttoolstest.ExecuteParams(map[string]any{

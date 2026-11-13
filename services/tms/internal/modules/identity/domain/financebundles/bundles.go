@@ -64,6 +64,7 @@ func billingQueueBundle() permissionspec.Bundle {
 				Resource:   permission.ResourceCustomer,
 				Operations: []permission.Operation{permission.OpRead},
 			},
+			permissionspec.ShareRecords(),
 		},
 	}
 }
@@ -273,6 +274,7 @@ func billingReceivablesBundle() permissionspec.Bundle {
 				Resource:   permission.ResourceInvoiceDispute,
 				Operations: []permission.Operation{permission.OpRead},
 			},
+			permissionspec.ShareRecords(),
 		},
 	}
 }

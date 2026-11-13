@@ -24,6 +24,7 @@ func (s *Service) RunSuite(
 		TenantInfo:        req.TenantInfo,
 		AgentDefinitionID: req.AgentDefinitionID,
 		Forced:            true,
+		TrialProviderID:   req.TrialProviderID,
 	})
 	if err != nil {
 		return nil, err
@@ -101,7 +102,15 @@ func (s *Service) logRun(
 		CurrentState:   jsonutils.MustToJSON(run),
 		OrganizationID: run.OrganizationID,
 		BusinessUnitID: run.BusinessUnitID,
-	}, auditservice.WithComment("Agent suite run started by hand")); err != nil {
+	}, auditservice.WithComment(runComment(run))); err != nil {
 		s.l.Error("failed to log agent suite run audit", zap.Error(err))
 	}
+}
+
+func runComment(run *agentqualitysuite.SuiteRun) string {
+	if run.IsTrial() {
+		return "Agent suite trial started by hand on " + run.TrialLabel
+	}
+
+	return "Agent suite run started by hand"
 }

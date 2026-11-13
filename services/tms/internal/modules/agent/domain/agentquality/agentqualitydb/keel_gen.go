@@ -31,6 +31,7 @@ var evalCasesTable = schema.Table{
 		{Name: "title", Quoted: `"title"`, Field: "Title", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Title`, JSON: `title`},
 		{Name: "source", Quoted: `"source"`, Field: "Source", Kind: schema.KindString, Flags: 0, Label: `Source`, JSON: `source`, Enum: enumCaseSource[:]},
 		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, JSON: `status`, Enum: enumCaseStatus[:]},
+		{Name: "automatic", Quoted: `"automatic"`, Field: "Automatic", Kind: schema.KindBool, Flags: 0, Label: `Automatic`, JSON: `automatic`},
 		{Name: "trigger", Quoted: `"trigger"`, Field: "Trigger", Kind: schema.KindString, Flags: 0, Label: `Trigger`, JSON: `trigger`, Enum: enumAgentRunTrigger[:]},
 		{Name: "source_run_id", Quoted: `"source_run_id"`, Field: "SourceRunID", Kind: schema.KindString, Flags: schema.FlagNullable, Label: `Source Run ID`, JSON: `sourceRunId`},
 		{Name: "source_turn_id", Quoted: `"source_turn_id"`, Field: "SourceTurnID", Kind: schema.KindString, Flags: schema.FlagNullable, Label: `Source Turn ID`, JSON: `sourceTurnId`},
@@ -39,6 +40,7 @@ var evalCasesTable = schema.Table{
 		{Name: "source_proposal_id", Quoted: `"source_proposal_id"`, Field: "SourceProposalID", Kind: schema.KindString, Flags: schema.FlagNullable, Label: `Source Proposal ID`, JSON: `sourceProposalId`},
 		{Name: "source_feedback_id", Quoted: `"source_feedback_id"`, Field: "SourceFeedbackID", Kind: schema.KindString, Flags: schema.FlagNullable, Label: `Source Feedback ID`, JSON: `sourceFeedbackId`},
 		{Name: "input", Quoted: `"input"`, Field: "Input", Kind: schema.KindString, Flags: 0, Label: `Input`, JSON: `input`},
+		{Name: "asked_at", Quoted: `"asked_at"`, Field: "AskedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Asked At`, JSON: `askedAt`},
 		{Name: "history", Quoted: `"history"`, Field: "History", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `History`, JSON: `history`},
 		{Name: "page_context", Quoted: `"page_context"`, Field: "PageContext", Kind: schema.KindJSON, Flags: schema.FlagNullable | schema.FlagJSONB, Label: `Page Context`, JSON: `pageContext`},
 		{Name: "mentions", Quoted: `"mentions"`, Field: "Mentions", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Mentions`, JSON: `mentions`},
@@ -59,14 +61,14 @@ var evalCasesTable = schema.Table{
 	},
 	PK:           []int32{0, 1, 2},
 	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 31},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 33},
 	Returning:    nil,
-	Version:      29,
+	Version:      31,
 	AutoID:       0,
-	AutoCreate:   30,
-	AutoUpdate:   31,
+	AutoCreate:   32,
+	AutoUpdate:   33,
 	IDPrefix:     "aec_",
 	New:          newEvalCase,
 	NewN:         newNEvalCase,
@@ -88,6 +90,7 @@ type EvalCasesTable struct {
 	Title               keel.StringCol
 	Source              CaseSourceCol
 	Status              CaseStatusCol
+	Automatic           keel.BoolCol
 	Trigger             agentdb.RunTriggerCol
 	SourceRunID         keelkinds.PulidIDCol
 	SourceTurnID        keelkinds.PulidIDCol
@@ -96,6 +99,7 @@ type EvalCasesTable struct {
 	SourceProposalID    keelkinds.PulidIDCol
 	SourceFeedbackID    keelkinds.PulidIDCol
 	Input               keel.StringCol
+	AskedAt             keel.Int64Col
 	History             keel.JSONBCol
 	PageContext         keel.JSONBCol
 	Mentions            keel.JSONBCol
@@ -125,31 +129,33 @@ var EvalCases = &EvalCasesTable{
 	Title:               keel.StringCol{Col: keel.Col{Ref: &evalCasesRef, Index: 4}},
 	Source:              CaseSourceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &evalCasesRef, Index: 5}}},
 	Status:              CaseStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &evalCasesRef, Index: 6}}},
-	Trigger:             agentdb.RunTriggerCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &evalCasesRef, Index: 7}}},
-	SourceRunID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &evalCasesRef, Index: 8}}},
-	SourceTurnID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &evalCasesRef, Index: 9}}},
-	SourceThreadID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &evalCasesRef, Index: 10}}},
-	SourceMessageID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &evalCasesRef, Index: 11}}},
-	SourceProposalID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &evalCasesRef, Index: 12}}},
-	SourceFeedbackID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &evalCasesRef, Index: 13}}},
-	Input:               keel.StringCol{Col: keel.Col{Ref: &evalCasesRef, Index: 14}},
-	History:             keel.JSONBCol{Col: keel.Col{Ref: &evalCasesRef, Index: 15}},
-	PageContext:         keel.JSONBCol{Col: keel.Col{Ref: &evalCasesRef, Index: 16}},
-	Mentions:            keel.JSONBCol{Col: keel.Col{Ref: &evalCasesRef, Index: 17}},
-	SubjectType:         agentdb.SubjectTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &evalCasesRef, Index: 18}}},
-	SubjectID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &evalCasesRef, Index: 19}}},
-	HeldTools:           keel.StringArrayCol{Col: keel.Col{Ref: &evalCasesRef, Index: 20}},
-	ToolFixtures:        keel.JSONBCol{Col: keel.Col{Ref: &evalCasesRef, Index: 21}},
-	Expected:            keel.JSONBCol{Col: keel.Col{Ref: &evalCasesRef, Index: 22}},
-	Rubric:              keel.StringCol{Col: keel.Col{Ref: &evalCasesRef, Index: 23}},
-	Redaction:           keel.JSONBCol{Col: keel.Col{Ref: &evalCasesRef, Index: 24}},
-	ContentHash:         keel.StringCol{Col: keel.Col{Ref: &evalCasesRef, Index: 25}},
-	CapturedFingerprint: keel.JSONBCol{Col: keel.Col{Ref: &evalCasesRef, Index: 26}},
-	ExpiresAt:           keel.Int64Col{Col: keel.Col{Ref: &evalCasesRef, Index: 27}},
-	CreatedByUserID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &evalCasesRef, Index: 28}}},
-	Version:             keel.Int64Col{Col: keel.Col{Ref: &evalCasesRef, Index: 29}},
-	CreatedAt:           keel.Int64Col{Col: keel.Col{Ref: &evalCasesRef, Index: 30}},
-	UpdatedAt:           keel.Int64Col{Col: keel.Col{Ref: &evalCasesRef, Index: 31}},
+	Automatic:           keel.BoolCol{Col: keel.Col{Ref: &evalCasesRef, Index: 7}},
+	Trigger:             agentdb.RunTriggerCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &evalCasesRef, Index: 8}}},
+	SourceRunID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &evalCasesRef, Index: 9}}},
+	SourceTurnID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &evalCasesRef, Index: 10}}},
+	SourceThreadID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &evalCasesRef, Index: 11}}},
+	SourceMessageID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &evalCasesRef, Index: 12}}},
+	SourceProposalID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &evalCasesRef, Index: 13}}},
+	SourceFeedbackID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &evalCasesRef, Index: 14}}},
+	Input:               keel.StringCol{Col: keel.Col{Ref: &evalCasesRef, Index: 15}},
+	AskedAt:             keel.Int64Col{Col: keel.Col{Ref: &evalCasesRef, Index: 16}},
+	History:             keel.JSONBCol{Col: keel.Col{Ref: &evalCasesRef, Index: 17}},
+	PageContext:         keel.JSONBCol{Col: keel.Col{Ref: &evalCasesRef, Index: 18}},
+	Mentions:            keel.JSONBCol{Col: keel.Col{Ref: &evalCasesRef, Index: 19}},
+	SubjectType:         agentdb.SubjectTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &evalCasesRef, Index: 20}}},
+	SubjectID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &evalCasesRef, Index: 21}}},
+	HeldTools:           keel.StringArrayCol{Col: keel.Col{Ref: &evalCasesRef, Index: 22}},
+	ToolFixtures:        keel.JSONBCol{Col: keel.Col{Ref: &evalCasesRef, Index: 23}},
+	Expected:            keel.JSONBCol{Col: keel.Col{Ref: &evalCasesRef, Index: 24}},
+	Rubric:              keel.StringCol{Col: keel.Col{Ref: &evalCasesRef, Index: 25}},
+	Redaction:           keel.JSONBCol{Col: keel.Col{Ref: &evalCasesRef, Index: 26}},
+	ContentHash:         keel.StringCol{Col: keel.Col{Ref: &evalCasesRef, Index: 27}},
+	CapturedFingerprint: keel.JSONBCol{Col: keel.Col{Ref: &evalCasesRef, Index: 28}},
+	ExpiresAt:           keel.Int64Col{Col: keel.Col{Ref: &evalCasesRef, Index: 29}},
+	CreatedByUserID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: &evalCasesRef, Index: 30}}},
+	Version:             keel.Int64Col{Col: keel.Col{Ref: &evalCasesRef, Index: 31}},
+	CreatedAt:           keel.Int64Col{Col: keel.Col{Ref: &evalCasesRef, Index: 32}},
+	UpdatedAt:           keel.Int64Col{Col: keel.Col{Ref: &evalCasesRef, Index: 33}},
 }
 
 // BuildEvalCases builds the table of agent_eval_cases for ref. Generated relation and alias methods call it.
@@ -163,31 +169,33 @@ func BuildEvalCases(r *keel.Ref) *EvalCasesTable {
 		Title:               keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
 		Source:              CaseSourceCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 5}}},
 		Status:              CaseStatusCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		Trigger:             agentdb.RunTriggerCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 7}}},
-		SourceRunID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
-		SourceTurnID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
-		SourceThreadID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
-		SourceMessageID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 11}}},
-		SourceProposalID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 12}}},
-		SourceFeedbackID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 13}}},
-		Input:               keel.StringCol{Col: keel.Col{Ref: r, Index: 14}},
-		History:             keel.JSONBCol{Col: keel.Col{Ref: r, Index: 15}},
-		PageContext:         keel.JSONBCol{Col: keel.Col{Ref: r, Index: 16}},
-		Mentions:            keel.JSONBCol{Col: keel.Col{Ref: r, Index: 17}},
-		SubjectType:         agentdb.SubjectTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 18}}},
-		SubjectID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 19}}},
-		HeldTools:           keel.StringArrayCol{Col: keel.Col{Ref: r, Index: 20}},
-		ToolFixtures:        keel.JSONBCol{Col: keel.Col{Ref: r, Index: 21}},
-		Expected:            keel.JSONBCol{Col: keel.Col{Ref: r, Index: 22}},
-		Rubric:              keel.StringCol{Col: keel.Col{Ref: r, Index: 23}},
-		Redaction:           keel.JSONBCol{Col: keel.Col{Ref: r, Index: 24}},
-		ContentHash:         keel.StringCol{Col: keel.Col{Ref: r, Index: 25}},
-		CapturedFingerprint: keel.JSONBCol{Col: keel.Col{Ref: r, Index: 26}},
-		ExpiresAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 27}},
-		CreatedByUserID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 28}}},
-		Version:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 29}},
-		CreatedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 30}},
-		UpdatedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 31}},
+		Automatic:           keel.BoolCol{Col: keel.Col{Ref: r, Index: 7}},
+		Trigger:             agentdb.RunTriggerCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		SourceRunID:         keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		SourceTurnID:        keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		SourceThreadID:      keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 11}}},
+		SourceMessageID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 12}}},
+		SourceProposalID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 13}}},
+		SourceFeedbackID:    keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 14}}},
+		Input:               keel.StringCol{Col: keel.Col{Ref: r, Index: 15}},
+		AskedAt:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
+		History:             keel.JSONBCol{Col: keel.Col{Ref: r, Index: 17}},
+		PageContext:         keel.JSONBCol{Col: keel.Col{Ref: r, Index: 18}},
+		Mentions:            keel.JSONBCol{Col: keel.Col{Ref: r, Index: 19}},
+		SubjectType:         agentdb.SubjectTypeCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 20}}},
+		SubjectID:           keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 21}}},
+		HeldTools:           keel.StringArrayCol{Col: keel.Col{Ref: r, Index: 22}},
+		ToolFixtures:        keel.JSONBCol{Col: keel.Col{Ref: r, Index: 23}},
+		Expected:            keel.JSONBCol{Col: keel.Col{Ref: r, Index: 24}},
+		Rubric:              keel.StringCol{Col: keel.Col{Ref: r, Index: 25}},
+		Redaction:           keel.JSONBCol{Col: keel.Col{Ref: r, Index: 26}},
+		ContentHash:         keel.StringCol{Col: keel.Col{Ref: r, Index: 27}},
+		CapturedFingerprint: keel.JSONBCol{Col: keel.Col{Ref: r, Index: 28}},
+		ExpiresAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 29}},
+		CreatedByUserID:     keelkinds.PulidIDCol{TypedStringCol: keel.TypedStringCol{Col: keel.Col{Ref: r, Index: 30}}},
+		Version:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 31}},
+		CreatedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 32}},
+		UpdatedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 33}},
 	}
 }
 
@@ -593,54 +601,58 @@ func ptrEvalCase(p unsafe.Pointer, c int32) any {
 	case 6:
 		return (*string)(unsafe.Pointer(&r.Status))
 	case 7:
-		return (*string)(unsafe.Pointer(&r.Trigger))
+		return &r.Automatic
 	case 8:
-		return (**string)(unsafe.Pointer(&r.SourceRunID))
+		return (*string)(unsafe.Pointer(&r.Trigger))
 	case 9:
-		return (**string)(unsafe.Pointer(&r.SourceTurnID))
+		return (**string)(unsafe.Pointer(&r.SourceRunID))
 	case 10:
-		return (**string)(unsafe.Pointer(&r.SourceThreadID))
+		return (**string)(unsafe.Pointer(&r.SourceTurnID))
 	case 11:
-		return (**string)(unsafe.Pointer(&r.SourceMessageID))
+		return (**string)(unsafe.Pointer(&r.SourceThreadID))
 	case 12:
-		return (**string)(unsafe.Pointer(&r.SourceProposalID))
+		return (**string)(unsafe.Pointer(&r.SourceMessageID))
 	case 13:
-		return (**string)(unsafe.Pointer(&r.SourceFeedbackID))
+		return (**string)(unsafe.Pointer(&r.SourceProposalID))
 	case 14:
-		return &r.Input
+		return (**string)(unsafe.Pointer(&r.SourceFeedbackID))
 	case 15:
-		return &r.History
+		return &r.Input
 	case 16:
-		return &r.PageContext
+		return &r.AskedAt
 	case 17:
-		return &r.Mentions
+		return &r.History
 	case 18:
-		return (*string)(unsafe.Pointer(&r.SubjectType))
+		return &r.PageContext
 	case 19:
-		return (*string)(unsafe.Pointer(&r.SubjectID))
+		return &r.Mentions
 	case 20:
-		return &r.HeldTools
+		return (*string)(unsafe.Pointer(&r.SubjectType))
 	case 21:
-		return &r.ToolFixtures
+		return (*string)(unsafe.Pointer(&r.SubjectID))
 	case 22:
-		return &r.Expected
+		return &r.HeldTools
 	case 23:
-		return &r.Rubric
+		return &r.ToolFixtures
 	case 24:
-		return &r.Redaction
+		return &r.Expected
 	case 25:
-		return &r.ContentHash
+		return &r.Rubric
 	case 26:
-		return &r.CapturedFingerprint
+		return &r.Redaction
 	case 27:
-		return &r.ExpiresAt
+		return &r.ContentHash
 	case 28:
-		return (**string)(unsafe.Pointer(&r.CreatedByUserID))
+		return &r.CapturedFingerprint
 	case 29:
-		return &r.Version
+		return &r.ExpiresAt
 	case 30:
-		return &r.CreatedAt
+		return (**string)(unsafe.Pointer(&r.CreatedByUserID))
 	case 31:
+		return &r.Version
+	case 32:
+		return &r.CreatedAt
+	case 33:
 		return &r.UpdatedAt
 	}
 	return nil
@@ -667,108 +679,115 @@ func valueEvalCase(p unsafe.Pointer, c int32) any {
 	case 6:
 		return string(r.Status)
 	case 7:
-		return string(r.Trigger)
+		return r.Automatic
 	case 8:
+		return string(r.Trigger)
+	case 9:
 		if r.SourceRunID == nil {
 			return nil
 		}
 		return string(*r.SourceRunID)
-	case 9:
+	case 10:
 		if r.SourceTurnID == nil {
 			return nil
 		}
 		return string(*r.SourceTurnID)
-	case 10:
+	case 11:
 		if r.SourceThreadID == nil {
 			return nil
 		}
 		return string(*r.SourceThreadID)
-	case 11:
+	case 12:
 		if r.SourceMessageID == nil {
 			return nil
 		}
 		return string(*r.SourceMessageID)
-	case 12:
+	case 13:
 		if r.SourceProposalID == nil {
 			return nil
 		}
 		return string(*r.SourceProposalID)
-	case 13:
+	case 14:
 		if r.SourceFeedbackID == nil {
 			return nil
 		}
 		return string(*r.SourceFeedbackID)
-	case 14:
-		return r.Input
 	case 15:
+		return r.Input
+	case 16:
+		if r.AskedAt == nil {
+			return nil
+		}
+		return *r.AskedAt
+	case 17:
 		if r.History == nil {
 			return keel.EmptyJSONArray
 		}
 		return r.History
-	case 16:
+	case 18:
 		if r.PageContext == nil {
 			return nil
 		}
 		return *r.PageContext
-	case 17:
+	case 19:
 		if r.Mentions == nil {
 			return keel.EmptyJSONArray
 		}
 		return r.Mentions
-	case 18:
+	case 20:
 		if r.SubjectType == "" {
 			return nil
 		}
 		return string(r.SubjectType)
-	case 19:
+	case 21:
 		if r.SubjectID == "" {
 			return nil
 		}
 		return string(r.SubjectID)
-	case 20:
+	case 22:
 		if r.HeldTools == nil {
 			return []string{}
 		}
 		return r.HeldTools
-	case 21:
+	case 23:
 		if r.ToolFixtures == nil {
 			return keel.EmptyJSONArray
 		}
 		return r.ToolFixtures
-	case 22:
+	case 24:
 		return r.Expected
-	case 23:
+	case 25:
 		if r.Rubric == "" {
 			return nil
 		}
 		return r.Rubric
-	case 24:
+	case 26:
 		if r.Redaction == nil {
 			return nil
 		}
 		return *r.Redaction
-	case 25:
+	case 27:
 		return r.ContentHash
-	case 26:
+	case 28:
 		if r.CapturedFingerprint == nil {
 			return nil
 		}
 		return *r.CapturedFingerprint
-	case 27:
+	case 29:
 		if r.ExpiresAt == nil {
 			return nil
 		}
 		return *r.ExpiresAt
-	case 28:
+	case 30:
 		if r.CreatedByUserID == nil {
 			return nil
 		}
 		return string(*r.CreatedByUserID)
-	case 29:
-		return r.Version
-	case 30:
-		return r.CreatedAt
 	case 31:
+		return r.Version
+	case 32:
+		return r.CreatedAt
+	case 33:
 		return r.UpdatedAt
 	}
 	return nil

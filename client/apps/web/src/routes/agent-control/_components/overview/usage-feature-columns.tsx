@@ -35,6 +35,7 @@ const FEATURES: AiUsageFeature[] = [
   "PaletteAnswer",
   "InsightNarration",
   "CaseReading",
+  "RequestWording",
 ];
 
 /** The share of the busiest feature's calls a bar may never fall below, so a failure shows. */

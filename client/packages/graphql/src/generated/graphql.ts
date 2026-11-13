@@ -410,6 +410,7 @@ export type AiTask =
   | 'PaperworkReading'
   | 'QueryCompose'
   | 'RemittanceExtraction'
+  | 'RequestWording'
   | 'ScopeClassification';
 
 /**
@@ -480,6 +481,7 @@ export type AiUsageFeature =
   | 'InsightNarration'
   | 'PaletteAnswer'
   | 'PaperworkReading'
+  | 'RequestWording'
   | 'ShipmentImportChat'
   | 'TableQuery';
 
@@ -3722,6 +3724,8 @@ export type DeskAttentionInput = {
   kinds?: Array<WatchtowerSourceKind> | null | undefined;
   /** Rows with at least one item in this lens; each row still shows all its items. */
   lens?: DeskLens | null | undefined;
+  /** Only the reader's own cases and the ones nobody owns, for a reader who may see everyone's. */
+  mine?: boolean | null | undefined;
   /** One record's row, for its case: every open item about it. */
   recordId?: string | number | null | undefined;
   /** Rows with an item of one of these severities. Empty is every severity. */
@@ -7625,6 +7629,13 @@ export type ReviseDeskMemoryInput = {
   version: number;
 };
 
+export type RewordWatchtowerPlayInput = {
+  /** How the person wants them to read. */
+  guidance: string;
+  /** The words in the box now; empty rewords the play's own. */
+  message?: string | null | undefined;
+};
+
 export type RoleResourceGuideInput = {
   maxSensitivity: string;
   /** At most 64 resources, such as one category of the role editor. */
@@ -7908,6 +7919,11 @@ export type SendInboundReplyInput = {
   templateId?: string | number | null | undefined;
   /** Another address to send to instead of the sender, after a refusal. */
   toAddress?: string | null | undefined;
+};
+
+export type SendWatchtowerPlayInput = {
+  /** The words the person approved; empty sends the play's own. */
+  message?: string | null | undefined;
 };
 
 export type ServiceFailureReasonCategory =
@@ -9148,6 +9164,8 @@ export type UpdateAgentEvalCaseInput = {
 };
 
 export type UpdateAgentQualityControlInput = {
+  autoActivate: boolean;
+  autoCasesPerAgent: number;
   enabled: boolean;
   forceRerunDays: number;
   judgeEnabled: boolean;
@@ -9747,6 +9765,26 @@ export type WatchtowerPanelKind =
   | 'Sighting'
   /** A stop and its window: missed, projected late, or at risk. */
   | 'Stop';
+
+/** How a play reaches whoever it is for. */
+export type WatchtowerPlayChannel =
+  /** A message in the driver's portal. */
+  | 'Dash'
+  /** An email in the organization's letterhead. */
+  | 'Email'
+  /** An offer to carriers, which carries no message. */
+  | 'Tender'
+  /** A text to the driver's phone. */
+  | 'Text';
+
+/** The first move a kind of item has, which the person working it sends themselves. */
+export type WatchtowerPlayKind =
+  /** Ask whoever delivered a load for its signed proof of delivery. */
+  | 'AskForPod'
+  /** Ask whoever has a load where it is. */
+  | 'AskForStatus'
+  /** Offer a move down its routing guide again. */
+  | 'TenderAgain';
 
 /**
  * Why an exception was closed. Cleared is the system's own code for a source
@@ -11354,7 +11392,7 @@ export type DeskAttentionQueryVariables = Exact<{
 }>;
 
 
-export type DeskAttentionQuery = { deskAttention: { hasMore: boolean, seenAt: number, groups: Array<{ ' $fragmentRefs'?: { 'DeskAttentionGroupFieldsFragment': DeskAttentionGroupFieldsFragment } }>, counts: { everything: number, watchtower: number, triage: number, decisions: number } } };
+export type DeskAttentionQuery = { deskAttention: { hasMore: boolean, seenAt: number, seesEveryone: boolean, groups: Array<{ ' $fragmentRefs'?: { 'DeskAttentionGroupFieldsFragment': DeskAttentionGroupFieldsFragment } }>, counts: { everything: number, watchtower: number, triage: number, decisions: number } } };
 
 export type DeskActivityEntryFieldsFragment = { id: string, outcome: DeskActivityOutcome, at: number, runId: string, planId: string | null, title: string, detail: string, count: number, recordsMore: number, proposalIds: Array<string>, agent: { ' $fragmentRefs'?: { 'WatchtowerAgentFieldsFragment': WatchtowerAgentFieldsFragment } } | null, records: Array<{ ' $fragmentRefs'?: { 'DeskRecordFieldsFragment': DeskRecordFieldsFragment } }>, decidedBy: { id: string, name: string } | null } & { ' $fragmentName'?: 'DeskActivityEntryFieldsFragment' };
 
@@ -11392,7 +11430,7 @@ export type DeskCaseQueryVariables = Exact<{
 }>;
 
 
-export type DeskCaseQuery = { deskCase: { drafting: boolean, draftNote: string, note: string, starters: Array<string>, open: number, severity: WatchtowerSeverity, record: { ' $fragmentRefs'?: { 'DeskRecordFieldsFragment': DeskRecordFieldsFragment } }, handOff: { itemId: string, kind: WatchtowerSourceKind, working: boolean, note: string, agent: { ' $fragmentRefs'?: { 'WatchtowerAgentFieldsFragment': WatchtowerAgentFieldsFragment } } | null } | null, away: { until: number } | null, ownership: { auto: boolean, covering: boolean, canWork: boolean, canClaim: boolean, canAssign: boolean, owner: { id: string, name: string } | null }, head: { references: Array<string>, title: string, status: string, statusTone: DeskCaseTone, details: Array<string>, deadline: { at: number, label: string } | null }, finding: { foundAt: number, sources: number, raised: string, computed: string, readingStatus: DeskCaseReadingStatus, agent: { ' $fragmentRefs'?: { 'WatchtowerAgentFieldsFragment': WatchtowerAgentFieldsFragment } } | null, reading: Array<{ text: string, highlight: boolean, cite: number | null }>, trust: Array<{ key: DeskCaseTrustKey, text: string }> } | null, options: Array<{ id: string, kind: DeskCaseOptionKind, label: string, outcome: string, outcomeNote: string, tone: DeskCaseTone, cost: string, description: string, recommended: boolean, chosen: boolean }>, decision: { ' $fragmentRefs'?: { 'DeskCaseDecisionFieldsFragment': DeskCaseDecisionFieldsFragment } } | null, exhibits: Array<{ ' $fragmentRefs'?: { 'DeskCaseExhibitFieldsFragment': DeskCaseExhibitFieldsFragment } }> } };
+export type DeskCaseQuery = { deskCase: { drafting: boolean, draftNote: string, note: string, starters: Array<string>, open: number, severity: WatchtowerSeverity, record: { ' $fragmentRefs'?: { 'DeskRecordFieldsFragment': DeskRecordFieldsFragment } }, handOff: { itemId: string, kind: WatchtowerSourceKind, working: boolean, note: string, play: WatchtowerPlayKind | null, agent: { ' $fragmentRefs'?: { 'WatchtowerAgentFieldsFragment': WatchtowerAgentFieldsFragment } } | null, request: { at: number, by: string, summary: string } | null } | null, away: { until: number } | null, ownership: { auto: boolean, covering: boolean, canWork: boolean, canClaim: boolean, canAssign: boolean, owner: { id: string, name: string } | null }, head: { references: Array<string>, title: string, status: string, statusTone: DeskCaseTone, details: Array<string>, deadline: { at: number, label: string } | null }, finding: { foundAt: number, sources: number, raised: string, computed: string, readingStatus: DeskCaseReadingStatus, agent: { ' $fragmentRefs'?: { 'WatchtowerAgentFieldsFragment': WatchtowerAgentFieldsFragment } } | null, reading: Array<{ text: string, highlight: boolean, cite: number | null }>, trust: Array<{ key: DeskCaseTrustKey, text: string }> } | null, options: Array<{ id: string, kind: DeskCaseOptionKind, label: string, outcome: string, outcomeNote: string, tone: DeskCaseTone, cost: string, description: string, recommended: boolean, chosen: boolean }>, decision: { ' $fragmentRefs'?: { 'DeskCaseDecisionFieldsFragment': DeskCaseDecisionFieldsFragment } } | null, exhibits: Array<{ ' $fragmentRefs'?: { 'DeskCaseExhibitFieldsFragment': DeskCaseExhibitFieldsFragment } }> } };
 
 export type ChooseDeskCaseOptionMutationVariables = Exact<{
   kind: string;
@@ -11530,10 +11568,10 @@ export type SetMemorySavingModeMutationVariables = Exact<{
 
 export type SetMemorySavingModeMutation = { setMemorySavingMode: { ' $fragmentRefs'?: { 'DeskMemorySettingsFieldsFragment': DeskMemorySettingsFieldsFragment } } };
 
-export type AgentEvalCaseTableRowFieldsFragment = { id: string, organizationId: string, businessUnitId: string, agentDefinitionId: string, title: string, source: AgentEvalCaseSource, status: AgentEvalCaseStatus, trigger: AgentRunTrigger, input: string, sourceThreadId: string | null, sourceProposalId: string | null, heldTools: Array<string>, expected: unknown, weight: number, expiresAt: number | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'AgentEvalCaseTableRowFieldsFragment' };
+export type AgentEvalCaseTableRowFieldsFragment = { id: string, organizationId: string, businessUnitId: string, agentDefinitionId: string, title: string, source: AgentEvalCaseSource, status: AgentEvalCaseStatus, automatic: boolean, trigger: AgentRunTrigger, input: string, sourceThreadId: string | null, sourceProposalId: string | null, heldTools: Array<string>, expected: unknown, weight: number, expiresAt: number | null, version: number, createdAt: number, updatedAt: number } & { ' $fragmentName'?: 'AgentEvalCaseTableRowFieldsFragment' };
 
 export type AgentEvalCaseDetailFieldsFragment = (
-  { sourceRunId: string | null, sourceTurnId: string | null, sourceMessageId: string | null, sourceFeedbackId: string | null, history: Array<unknown>, pageContext: unknown, mentions: Array<unknown>, subjectType: string, subjectId: string | null, toolFixtures: Array<unknown>, rubric: string, redaction: unknown, contentHash: string, capturedFingerprint: unknown, createdByUserId: string | null }
+  { askedAt: number | null, sourceRunId: string | null, sourceTurnId: string | null, sourceMessageId: string | null, sourceFeedbackId: string | null, history: Array<unknown>, pageContext: unknown, mentions: Array<unknown>, subjectType: string, subjectId: string | null, toolFixtures: Array<unknown>, rubric: string, redaction: unknown, contentHash: string, capturedFingerprint: unknown, createdByUserId: string | null }
   & { ' $fragmentRefs'?: { 'AgentEvalCaseTableRowFieldsFragment': AgentEvalCaseTableRowFieldsFragment } }
 ) & { ' $fragmentName'?: 'AgentEvalCaseDetailFieldsFragment' };
 
@@ -11901,13 +11939,13 @@ export type DecideAgentProposalMutationVariables = Exact<{
 
 export type DecideAgentProposalMutation = { decideAgentProposal: { proposalId: string, executed: boolean, refused: boolean, error: string | null, decision: { id: string, proposalId: string | null, decision: AgentDecisionType, reasonCode: string, decidedByUserId: string, previewDigest: string, previewReviewed: boolean, version: number, createdAt: number } | null } };
 
-export type AgentSuiteRunFieldsFragment = { id: string, agentDefinitionId: string, agentName: string, trigger: AgentSuiteRunTrigger, fingerprintHash: string, changeSummary: string, suiteRevision: string, status: AgentSuiteRunStatus, casesTotal: number, casesPassed: number, casesFailed: number, casesSkipped: number, hardFailures: number, deterministicScore: number | null, judgeScore: number | null, qualityScore: number | null, baselineScore: number | null, baselineRunId: string | null, regression: boolean, costUsd: string, startedAt: number, finishedAt: number | null, comments: string, requestedByUserId: string | null, fingerprintChanges: Array<{ field: string, from: string, to: string }> } & { ' $fragmentName'?: 'AgentSuiteRunFieldsFragment' };
+export type AgentSuiteRunFieldsFragment = { id: string, agentDefinitionId: string, agentName: string, trigger: AgentSuiteRunTrigger, fingerprintHash: string, changeSummary: string, suiteRevision: string, status: AgentSuiteRunStatus, casesTotal: number, casesPassed: number, casesFailed: number, casesSkipped: number, hardFailures: number, deterministicScore: number | null, judgeScore: number | null, qualityScore: number | null, baselineScore: number | null, baselineRunId: string | null, regression: boolean, costUsd: string, startedAt: number, finishedAt: number | null, comments: string, requestedByUserId: string | null, trialProviderId: string | null, trialLabel: string, fingerprintChanges: Array<{ field: string, from: string, to: string }> } & { ' $fragmentName'?: 'AgentSuiteRunFieldsFragment' };
 
 export type AgentQualityPointFieldsFragment = { suiteRunId: string, at: number, qualityScore: number, status: AgentSuiteRunStatus, regression: boolean } & { ' $fragmentName'?: 'AgentQualityPointFieldsFragment' };
 
 export type AgentWorstRatedAnswerFieldsFragment = { id: string, targetType: AiFeedbackTargetType, targetId: string, targetPart: string, positive: number, negative: number, lastRatedAt: number, threadId: string | null, canOpenThread: boolean, agentDefinitionId: string | null, agentName: string, sample: { id: string, reasons: Array<AiFeedbackReason>, comment: string, createdAt: number, turnSnapshot: { question: string, answer: string, omittedTools: number, redacted: boolean, tools: Array<{ name: string, summary: string, failed: boolean }> } | null } | null } & { ' $fragmentName'?: 'AgentWorstRatedAnswerFieldsFragment' };
 
-export type AgentQualityControlFieldsFragment = { id: string | null, enabled: boolean, runHourLocal: number, timezone: string, maxCasesPerAgent: number, nightlyBudgetUsd: string, monthlyBudgetUsd: string, judgeEnabled: boolean, judgeSampleRate: number, regressionThreshold: number, minCases: number, forceRerunDays: number, version: number, updatedAt: number } & { ' $fragmentName'?: 'AgentQualityControlFieldsFragment' };
+export type AgentQualityControlFieldsFragment = { id: string | null, enabled: boolean, runHourLocal: number, timezone: string, maxCasesPerAgent: number, nightlyBudgetUsd: string, monthlyBudgetUsd: string, judgeEnabled: boolean, judgeSampleRate: number, regressionThreshold: number, minCases: number, forceRerunDays: number, autoActivate: boolean, autoCasesPerAgent: number, autoCaseDays: number, version: number, updatedAt: number } & { ' $fragmentName'?: 'AgentQualityControlFieldsFragment' };
 
 export type AgentSuiteRunCaseFieldsFragment = { id: string, evalCaseId: string | null, suiteOrdinal: number | null, status: AgentEvaluationStatus, reply: string, checks: unknown, judge: unknown, caseScore: number | null, errorMessage: string, model: string, completedAt: number | null } & { ' $fragmentName'?: 'AgentSuiteRunCaseFieldsFragment' };
 
@@ -11984,6 +12022,7 @@ export type UpdateAgentQualityControlMutation = { updateAgentQualityControl: { '
 
 export type RunAgentSuiteMutationVariables = Exact<{
   agentDefinitionId: string | number;
+  trialProviderId?: string | number | null | undefined;
 }>;
 
 
@@ -13867,7 +13906,7 @@ export type DeleteDetentionPolicyMutationVariables = Exact<{
 
 export type DeleteDetentionPolicyMutation = { deleteDetentionPolicy: boolean };
 
-export type DispatchForecastQualityFieldsFragment = { status: DispatchForecastStatus, historyWeeks: number, historyLoads: number, weeksTested: number, loadsTested: number, intervalCoverage: number, meanAbsoluteError: number, naiveMeanAbsoluteError: number, skill: number, fittedAt: number | null } & { ' $fragmentName'?: 'DispatchForecastQualityFieldsFragment' };
+export type DispatchForecastQualityFieldsFragment = { status: DispatchForecastStatus, historyWeeks: number, historyLoads: number, weeksTested: number, loadsTested: number, intervalCoverage: number, meanAbsoluteError: number, naiveMeanAbsoluteError: number, skill: number, fittedAt: number | null, refitting: boolean } & { ' $fragmentName'?: 'DispatchForecastQualityFieldsFragment' };
 
 export type DispatchFreightAreaFieldsFragment = { cell: number, label: string, latitude: number, longitude: number, valueCents: number, slots: Array<{ start: number, likelyLow: number, likelyHigh: number, booked: number, need: number, drivers: number, short: number, spare: number }>, customers: Array<{ customerId: string, name: string, share: number }> } & { ' $fragmentName'?: 'DispatchFreightAreaFieldsFragment' };
 
@@ -20253,6 +20292,29 @@ export type MarkWatchtowerItemSeenMutationVariables = Exact<{
 
 export type MarkWatchtowerItemSeenMutation = { markWatchtowerItemSeen: { ' $fragmentRefs'?: { 'WatchtowerItemFieldsFragment': WatchtowerItemFieldsFragment } } };
 
+export type WatchtowerPlayQueryVariables = Exact<{
+  itemId: string | number;
+}>;
+
+
+export type WatchtowerPlayQuery = { watchtowerPlay: { itemId: string, kind: WatchtowerPlayKind, channel: WatchtowerPlayChannel, recipient: string, sender: string, subject: string, message: string, messageLimit: number, summary: string, canReword: boolean } };
+
+export type RewordWatchtowerPlayMutationVariables = Exact<{
+  itemId: string | number;
+  input: RewordWatchtowerPlayInput;
+}>;
+
+
+export type RewordWatchtowerPlayMutation = { rewordWatchtowerPlay: string };
+
+export type SendWatchtowerPlayMutationVariables = Exact<{
+  itemId: string | number;
+  input: SendWatchtowerPlayInput;
+}>;
+
+
+export type SendWatchtowerPlayMutation = { sendWatchtowerPlay: { ' $fragmentRefs'?: { 'WatchtowerItemFieldsFragment': WatchtowerItemFieldsFragment } } };
+
 export type DeskWorkerChecklistsQueryVariables = Exact<{
   workerId: string | number;
   includeClosed?: boolean | null | undefined;
@@ -21558,7 +21620,7 @@ export { DeskTractorCardDocument, DeskTractorPositionDocument, DeskVehiclePositi
 export { DeskTrailerCardDocument } from "./documents/trailer/desk";
 export { UserDetailDocument, CreateUserDocument, PatchUserDocument } from "./documents/user/detail";
 export { UserTableRowFieldsFragmentDoc, UserTableDocument } from "./documents/user/table";
-export { WatchtowerItemFieldsFragmentDoc, WatchtowerAgentFieldsFragmentDoc, WatchtowerCountsFieldsFragmentDoc, WatchtowerFeedDocument, WatchtowerCountsDocument, HandOffWatchtowerItemDocument, WatchtowerItemDetailDocument, SnoozeWatchtowerItemDocument, ResolveWatchtowerItemDocument, WatchtowerClearedDocument, WatchtowerHandOffAgentsDocument, MarkWatchtowerItemSeenDocument } from "./documents/watchtower/watchtower";
+export { WatchtowerItemFieldsFragmentDoc, WatchtowerAgentFieldsFragmentDoc, WatchtowerCountsFieldsFragmentDoc, WatchtowerFeedDocument, WatchtowerCountsDocument, HandOffWatchtowerItemDocument, WatchtowerItemDetailDocument, SnoozeWatchtowerItemDocument, ResolveWatchtowerItemDocument, WatchtowerClearedDocument, WatchtowerHandOffAgentsDocument, MarkWatchtowerItemSeenDocument, WatchtowerPlayDocument, RewordWatchtowerPlayDocument, SendWatchtowerPlayDocument } from "./documents/watchtower/watchtower";
 export { DeskWorkerChecklistsDocument, DeskWorkerChecklistTemplatesDocument } from "./documents/worker-checklist/desk";
 export { WorkerChecklistTemplateItemFieldsFragmentDoc, WorkerChecklistTemplateFieldsFragmentDoc, WorkerChecklistItemFieldsFragmentDoc, WorkerChecklistFieldsFragmentDoc, WorkerChecklistTemplateTableDocument, ActiveWorkerChecklistTemplatesDocument, WorkerChecklistsDocument, CreateWorkerChecklistTemplateDocument, UpdateWorkerChecklistTemplateDocument, ArchiveWorkerChecklistTemplateDocument, RestoreWorkerChecklistTemplateDocument, StartWorkerChecklistDocument, CompleteWorkerChecklistItemDocument, SkipWorkerChecklistItemDocument, MarkWorkerChecklistItemNotApplicableDocument, ReopenWorkerChecklistItemDocument, CancelWorkerChecklistDocument } from "./documents/worker-checklist/operations";
 export { DeskWorkerCredentialDocument, DeskWorkerCredentialListDocument, DeskWorkerCredentialTypesDocument } from "./documents/worker-credential/desk";
