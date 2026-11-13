@@ -31,20 +31,19 @@ export function NotificationFeedSkeleton() {
 }
 
 /**
- * The whole panel while its code loads: the title, the line that says what waits, the tab
- * strip and the feed, so the sheet does not reflow when the panel takes over. It keeps a
- * real SheetTitle so the dialog stays labelled meanwhile.
+ * The whole panel while its code loads: the title, the tab strip and the feed, so the sheet
+ * does not reflow when the panel takes over. It keeps a real SheetTitle so the dialog stays
+ * labelled meanwhile.
  */
 export function NotificationPanelSkeleton() {
   const t = useT();
 
   return (
     <>
-      <div className="flex flex-col gap-2.5 pt-3 pr-3 pl-4">
+      <div className="flex flex-col gap-2 pt-3 pr-3 pl-4">
         <div className="flex min-h-7 items-center pr-9">
           <SheetTitle className="text-lg font-semibold">{t("Notifications")}</SheetTitle>
         </div>
-        <Skeleton className="-mt-1 h-3 w-40 rounded-md" />
         <div className="-mr-3 -ml-4 flex h-8 items-center gap-4 border-b border-border pr-3 pl-4">
           <Skeleton className="h-3 w-14 rounded-md" />
           <Skeleton className="h-3 w-12 rounded-md" />

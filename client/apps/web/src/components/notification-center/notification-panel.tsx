@@ -6,7 +6,6 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { createDropdownMenuHandle } from "@trenova/shared/components/ui/dropdown-menu";
 import { Kbd } from "@trenova/shared/components/ui/kbd";
 import { SheetTitle } from "@trenova/shared/components/ui/sheet";
-import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Spinner } from "@trenova/shared/components/ui/spinner";
 import { Tabs, TabsList, TabsTab } from "@trenova/shared/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
@@ -17,9 +16,8 @@ import {
 } from "@trenova/shared/hooks/use-notifications";
 import { useNow } from "@trenova/shared/hooks/use-now";
 import { defineLabels } from "@trenova/shared/i18n/labels";
-import { useRichT } from "@trenova/shared/i18n/rich";
 import { useT } from "@trenova/shared/i18n/use-t";
-import type { Notification, NotificationCounts } from "@trenova/shared/types/notification";
+import type { Notification } from "@trenova/shared/types/notification";
 import {
   useImperativeHandle,
   useRef,
@@ -78,32 +76,6 @@ const SHORTCUT_BLOCKERS = "input, textarea, select, [contenteditable='true'], [r
  * the focus), so it holds a ref to this and the panel fills it in.
  */
 export type NotificationPanelKeyHandler = (event: KeyboardEvent<HTMLElement>) => void;
-
-function Summary({ counts }: { counts: NotificationCounts | undefined }) {
-  const t = useT();
-  const rt = useRichT();
-
-  if (counts === undefined) return <Skeleton className="h-3 w-40 rounded-md" />;
-  if (counts.forYou === 0 && counts.team === 0) {
-    return t("Nothing is waiting on you or your team.");
-  }
-
-  const bold = {
-    b: (content: ReactNode) => <b className="font-medium text-foreground">{content}</b>,
-  };
-  const forYou = lensCount(counts, "forYou");
-
-  return (
-    <>
-      {counts.forYou === 0
-        ? t("Nothing is waiting on you.")
-        : counts.forYouUnread === 0
-          ? rt("<b>{0} for you</b>, nothing new.", bold, forYou)
-          : rt("<b>{0} for you</b>, {1} new.", bold, forYou, counts.forYouUnread)}
-      {counts.team > 0 && <> {t("{0} for your team.", lensCount(counts, "team"))}</>}
-    </>
-  );
-}
 
 function Shortcut({ keys, children }: { keys: string[]; children: ReactNode }) {
   return (
@@ -245,7 +217,7 @@ export default function NotificationPanel({
 
   return (
     <div ref={rootRef} className="flex min-h-0 flex-1 flex-col">
-      <div className="flex flex-col gap-2.5 pt-3 pr-3 pl-4">
+      <div className="flex flex-col gap-2 pt-3 pr-3 pl-4">
         <div className="flex min-h-7 items-center gap-2 pr-9">
           <SheetTitle className="min-w-0 flex-1 text-lg font-semibold">
             {t("Notifications")}
@@ -267,12 +239,6 @@ export default function NotificationPanel({
             <TooltipContent side="bottom">{t("Notification settings")}</TooltipContent>
           </Tooltip>
         </div>
-
-        <p className="-mt-1 flex min-h-4.5 items-center text-sm text-muted-foreground">
-          <span>
-            <Summary counts={counts} />
-          </span>
-        </p>
 
         <div className="-mr-3 -ml-4 flex items-end gap-0.5 border-b border-border pr-3 pl-2">
           <Tabs

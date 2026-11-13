@@ -145,31 +145,14 @@ beforeEach(() => {
 });
 
 describe("NotificationPanel — its header", () => {
-  it("says what waits in one line and counts each part on its tab", () => {
+  it("counts each part on its tab, and says nothing else about what waits", () => {
     renderPanel();
 
-    expect(screen.getByText("9 for you")).toBeVisible();
-    expect(screen.getByText(/, 6 new\./)).toBeVisible();
-    expect(screen.getByText(/26 for your team\./)).toBeVisible();
+    expect(screen.queryByText(/for your team/)).toBeNull();
     expect(screen.getByRole("tab", { name: "For you 9" })).toHaveAttribute("aria-selected", "true");
     expect(screen.getByRole("tab", { name: "Team 26" })).toBeVisible();
     expect(screen.getByRole("tab", { name: "Later 2" })).toBeVisible();
     expect(screen.getByRole("tab", { name: "Done" })).toBeVisible();
-  });
-
-  it("says so when nothing waits on the person or their team", () => {
-    hooks.counts = { forYou: 0, forYouUnread: 0, team: 0, teamUnread: 0, later: 3 };
-    hooks.feeds = {};
-    renderPanel();
-
-    expect(screen.getByText("Nothing is waiting on you or your team.")).toBeVisible();
-  });
-
-  it("says nothing is new when everything for the person has been read", () => {
-    hooks.counts = { ...COUNTS, forYouUnread: 0 };
-    renderPanel();
-
-    expect(screen.getByText(/, nothing new\./)).toBeVisible();
   });
 
   it("opens the notification settings and closes the panel", () => {

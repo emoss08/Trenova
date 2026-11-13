@@ -2760,24 +2760,6 @@
       "go/other"
     ]
   },
-  "<b>{0} for you</b>, nothing new.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
-  "<b>{0} for you</b>, {1} new.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
   "<b>{0} of the last {1, plural, other {# schedules}}</b> funded late.": {
     "sites": 1,
     "scope": [
@@ -181238,24 +181220,6 @@
     ]
   },
   "Nothing is waiting on you": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
-  "Nothing is waiting on you or your team.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
-  "Nothing is waiting on you.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -366288,15 +366252,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "{0} for your team.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
     ]
   },
   "{0} for {1}": {
