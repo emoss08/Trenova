@@ -12,7 +12,6 @@
   "Either a short text or an attached document — a signature has to be on something. Everybody it applies to is asked to sign the version in force.": "簡短文字或附加文件擇一 — 簽署必須有標的。所有適用者都會被要求簽署目前生效的版本。",
   "Everybody it applies to has signed.": "所有適用對象皆已簽署。",
   "Find a name": "尋找姓名",
-  "Handbooks and policies people sign from Dash. A signature records the version it was given for, so revising the words means giving them a new version — and everybody bound by it goes back to outstanding.": "由人員自 Dash 簽署的手冊與政策。簽署會記錄其適用的版本，因此修訂文字即等於賦予新版本 — 所有受其拘束者都會重新回到待簽署狀態。",
   "Its checksum is copied onto every signature": "其總和檢查碼會複製到每一筆簽署上",
   "Kept so old signatures still point at something": "保留下來，讓舊的簽署仍有所指向",
   "Loading policies": "正在載入政策",

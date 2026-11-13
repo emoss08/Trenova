@@ -121,7 +121,6 @@
   "Leave empty to use your invoice email template. Text here replaces the template's message for this customer. Supports {number}, {customer}, {company}, {invoiceTotal} and {dueDate}.": "留空以使用您的發票電子郵件範本。此處的文字會取代此客戶的範本訊息。支援 {number}、{customer}、{company}、{invoiceTotal} 與 {dueDate}。",
   "Link this customer to records in external systems like your ERP, CRM, or mapping provider": "將此客戶連結至 ERP、CRM 或地圖供應商等外部系統中的記錄",
   "Lower numbers are consolidated first when trailer space is limited. Use 1 for highest priority customers.": "拖車空間有限時，數字較小者優先合併。最高優先的客戶請設為 1。",
-  "Manage and configure customers for your organization": "管理與設定貴組織的客戶",
   "Mark this customer as exempt from sales tax. You must have a valid tax exemption certificate on file.": "將此客戶標記為免徵營業稅。您必須備有有效的免稅證明。",
   "Max shipments per invoice": "每張發票最多運單數",
   "Memos": "通知單",

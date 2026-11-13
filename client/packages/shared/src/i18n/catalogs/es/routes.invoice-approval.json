@@ -15,7 +15,6 @@
   "Policy: {0}": "Política: {0}",
   "Reconciliation exception": "Excepción de conciliación",
   "Replacement review": "Revisión de la sustitución",
-  "Review policy-controlled invoice adjustments awaiting finance approval.": "Revise los ajustes de factura regidos por políticas que esperan la aprobación de finanzas.",
   "Search invoice, customer, reason...": "Buscar factura, cliente, motivo...",
   "The approval queue could not be read. Check your connection and reload the page.": "No se pudo leer la cola de aprobaciones. Revise su conexión y vuelva a cargar la página.",
   "This adjustment could not be read. It may have been decided by someone else; refresh the queue to see what is still waiting.": "No se pudo leer este ajuste. Es posible que otra persona ya lo haya resuelto; actualice la cola para ver lo que sigue pendiente.",

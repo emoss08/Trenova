@@ -91,7 +91,6 @@
   "Taxable miles": "应税英里数",
   "The computation flagged nothing on this quarter.": "本季度的计算未标记任何项目。",
   "The fleet bought more taxed fuel than it burned, so the base jurisdiction owes it back.": "车队购买的已税燃油多于其消耗量，因此基础辖区应退还差额。",
-  "The quarterly fuel tax worksheet: every jurisdiction's miles and tax-paid gallons, the fleet MPG they are taxed through, and what the quarter owes or is owed. Draft figures move with the data until the return is finalized.": "季度燃油税工作表：各辖区的英里数与已纳税加仑数、据以课税的车队 MPG，以及该季度应缴或应退的金额。在申报表定案前，草稿数字会随数据变动。",
   "The return could not be read": "无法读取此申报表",
   "The return is recomputed one last time and then locked: its figures stop moving with the miles, fuel and rates on file, so it is the record you file from. Reopening it afterwards takes a reason, which is kept with the return.": "申报表会最后重新计算一次后锁定：其数字不再随归档的英里数、燃油与税率变动，因此可作为您据以申报的记录。之后若要重新打开，须填写原因，并随申报表一并保存。",
   "The worksheet and every jurisdiction line on it are removed outright. The miles, fuel purchases and rates it was built from are untouched, so generating the quarter again rebuilds it from the same data.": "工作表及其上的每一笔辖区明细都会完全移除。其据以建立的英里数、加油采购与税率均维持不变，因此重新生成该季度即可按相同数据重建。",

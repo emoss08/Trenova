@@ -3,7 +3,6 @@
   "Business justification for the adjustment, shown to approvers.": "此調整的業務理由，會顯示給核准者。",
   "Cancel reason...": "取消原因...",
   "Create a new manual journal entry draft.": "建立新的人工分錄草稿。",
-  "Create and manage manual journal entries.": "建立並管理人工分錄。",
   "Create draft": "建立草稿",
   "Describe the entry and when it should hit the general ledger.": "說明此分錄的內容及其應計入總帳的時點。",
   "Each line debits or credits a GL account. Total debits must equal total credits before the journal can be submitted.": "每一行皆借記或貸記一個總帳科目。借方合計須等於貸方合計，分錄才能送出。",

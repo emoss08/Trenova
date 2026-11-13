@@ -13,7 +13,6 @@
   "Carrier settlements created for this period, across every status except voided.": "Liquidaciones de transportistas creadas para este período, en todos los estados salvo anulado.",
   "Cost events accrue automatically as carrier-covered moves complete. Once there is pending cost, generate the period's settlements from here.": "Los eventos de costo se devengan automáticamente a medida que se completan los tramos cubiertos por transportistas. Cuando haya costos pendientes, genere aquí las liquidaciones del periodo.",
   "Everything affecting this carrier's payable — cost accruals, recent statements, and the AP subledger.": "Todo lo que afecta la cuenta por pagar de este transportista: devengos de costos, estados de cuenta recientes y el submayor de cuentas por pagar.",
-  "Everything needed to run a carrier pay period from one screen — review the queue, process settlements one at a time or in bulk, and keep the AP subledger current.": "Todo lo necesario para ejecutar un período de pago de transportistas desde una sola pantalla: revise la cola, procese las liquidaciones de una en una o en bloque y mantenga al día el submayor de cuentas por pagar.",
   "Latest statements for this carrier.": "Últimos estados de cuenta de este transportista.",
   "No other settlements on record.": "No hay otras liquidaciones registradas.",
   "No pending cost events are waiting — there is nothing to generate": "No hay eventos de costo pendientes: no hay nada que generar",

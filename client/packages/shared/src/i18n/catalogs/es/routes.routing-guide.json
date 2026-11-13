@@ -32,7 +32,6 @@
   "Primary waterfall for the Dallas–Atlanta contract freight": "Cascada principal para la carga contratada Dallas-Atlanta",
   "Rank": "Orden",
   "Rank the carriers a lane should waterfall through, with the rate and offer window for each.": "Ordene los transportistas por los que una ruta debe pasar en cascada, con la tarifa y la ventana de oferta de cada uno.",
-  "Ranked carrier waterfalls that cover a lane automatically when a move tenders": "Cascadas de transportistas ordenadas que cubren una ruta automáticamente cuando se ofrece un tramo",
   "Ranked carriers with the rate, offer expiry, and channel each is tendered on": "Transportistas ordenados con la tarifa, la caducidad de la oferta y el canal por el que se ofrece a cada uno",
   "Requires a default EDI channel on the carrier": "Requiere un canal EDI predeterminado en el transportista",
   "Routing guide": "Guía de enrutamiento",

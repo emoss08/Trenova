@@ -5,7 +5,6 @@
   "Last known location": "最后已知位置",
   "Links the trailer to its Samsara asset for telematics. Auto-matched by VIN when left blank.": "将此挂车关联至其 Samsara 资产以获取车联网数据。留空则依 VIN 自动匹配。",
   "Locating...": "定位中...",
-  "Manage and configure trailers for your organization": "管理并配置您组织的挂车",
   "Max load weight": "最大载重",
   "No trailers yet": "尚无挂车",
   "Registration state": "注册州别",

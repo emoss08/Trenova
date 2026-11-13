@@ -7,7 +7,6 @@
   "As drivers complete work, new pay events flow into their open draft settlement automatically — no manual transfer needed.": "司机完成工作后，新的薪酬事件会自动流入其未结的结算草稿 — 无须手动转入。",
   "Auto-approve clean settlements": "自动批准无异常的结算",
   "Auto-attach new pay to open drafts": "自动将新薪酬附加至未结草稿",
-  "Configure pay periods, accrual triggers, exception policies, and escrow interest": "配置薪资期间、计提触发条件、例外政策与履约保证利息",
   "Default annual interest rate": "默认年利率",
   "Defines the settlement cycle and when drivers earn pay for a shipment.": "定义结算周期，以及司机就某运单赚得薪酬的时点。",
   "Escrow interest": "履约保证利息",

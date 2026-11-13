@@ -1,36 +1,14 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { Badge, type BadgeVariant } from "@trenova/shared/components/ui/badge";
-import { Tabs, TabsList, TabsPanel, TabsTab } from "@trenova/shared/components/ui/tabs";
-import { TextShimmer } from "@trenova/shared/components/ui/text-shimmer";
-import { WithheldPanel, WithheldValue } from "@trenova/shared/components/withheld-value";
-import { panelSearchParamsParser } from "@/hooks/data-table/use-data-table-state";
-import { getShipmentPageAnalyticsGraphQL } from "@/lib/graphql/shipment";
+import { WithheldPanel } from "@trenova/shared/components/withheld-value";
 import { cn, formatCompactCurrency, formatCurrency } from "@trenova/shared/lib/utils";
-import { useInfiniteQuery } from "@tanstack/react-query";
-import { useQueryStates } from "nuqs";
-import type React from "react";
-import { useEffect, useMemo, useRef } from "react";
 import type { ShipmentAnalyticsData } from "@/lib/shipment-analytics";
-import { formatUnixInUserTimezone } from "@trenova/shared/lib/date";
 
 type CustomerMixCard = NonNullable<ShipmentAnalyticsData["customerMix"]>;
 type CustomerMixEntry = CustomerMixCard["entries"][number];
-type TomorrowPickup = ShipmentAnalyticsData["tomorrowsPickups"]["pickups"][number];
-type TomorrowsPickupsCard = ShipmentAnalyticsData["tomorrowsPickups"];
-type PickupStatus = TomorrowPickup["status"];
 
 type CustomerMixProps = {
   /** Null when the reader cannot read customers. */
   customerMix: CustomerMixCard | null;
-  tomorrowsPickups: ShipmentAnalyticsData["tomorrowsPickups"];
-  enabled?: boolean;
-};
-
-const PICKUP_STATUS: Record<PickupStatus, { label: string; variant: BadgeVariant }> = {
-  scheduled: { label: "Scheduled", variant: "neutral" },
-  confirmed: { label: "Confirmed", variant: "success" },
-  tentative: { label: "Tentative", variant: "warning" },
-  unassigned: { label: "Needs coverage", variant: "warning" },
 };
 
 const SHARE_BAR_COLORS = [
@@ -41,51 +19,21 @@ const SHARE_BAR_COLORS = [
   "var(--chart-8)",
 ];
 
-const PICKUPS_PAGE_SIZE = 20;
-
-export function CustomerMix({ customerMix, tomorrowsPickups, enabled = true }: CustomerMixProps) {
+/**
+ * Who the revenue comes from, largest first, each with its share and how it is
+ * trending. It is a widget's body, not a card: the widget that shows it draws the
+ * frame and the title, and names the window in its own header.
+ */
+export function CustomerMix({ customerMix }: CustomerMixProps) {
   const t = useT();
 
-  return (
-    <CustomerMixSection>
-      <Tabs defaultValue="customers" className="flex min-h-0 flex-1 flex-col gap-0">
-        <header className="border-border flex min-h-9 items-center justify-between gap-2 border-b px-3 py-1.5">
-          <TabsList
-            variant="underline"
-            className="h-6 bg-transparent p-0 hover:bg-transparent *:data-[slot=tabs-tab]:hover:bg-transparent"
-          >
-            <TabsTab value="customers" className="h-6 px-2 text-xs hover:bg-transparent">
-              {t("Customers")}
-            </TabsTab>
-            <TabsTab value="pickups" className="h-7 px-2 text-xs hover:bg-transparent">
-              {t("Tomorrow's pickups")}
-            </TabsTab>
-          </TabsList>
-          {customerMix ? (
-            <span className="text-muted-foreground font-mono text-2xs">
-              {t("{0}d", customerMix.windowDays)}
-            </span>
-          ) : null}
-        </header>
-        <TabsPanel value="customers" className="flex min-h-0 flex-1 flex-col overflow-y-auto">
-          {customerMix ? (
-            <CustomersList entries={customerMix.entries} />
-          ) : (
-            <WithheldPanel>
-              {t("You need access to customers to see the customer mix")}
-            </WithheldPanel>
-          )}
-        </TabsPanel>
-        <TabsPanel value="pickups" className="min-h-0 flex-1 overflow-y-auto">
-          <PickupsList initialData={tomorrowsPickups} enabled={enabled} />
-        </TabsPanel>
-      </Tabs>
-    </CustomerMixSection>
-  );
-}
+  if (!customerMix) {
+    return (
+      <WithheldPanel>{t("You need access to customers to see the customer mix")}</WithheldPanel>
+    );
+  }
 
-function CustomerMixSection({ children }: { children: React.ReactNode }) {
-  return <section className="cc-module-card flex min-h-65 flex-col">{children}</section>;
+  return <CustomersList entries={customerMix.entries} />;
 }
 
 function CustomersList({ entries }: { entries: CustomerMixEntry[] }) {
@@ -96,7 +44,7 @@ function CustomersList({ entries }: { entries: CustomerMixEntry[] }) {
   }
 
   return (
-    <ul className="flex flex-col gap-2 px-3 py-2">
+    <ul className="flex flex-col gap-2.5">
       {entries.map((entry, index) => (
         <li key={entry.customerId} className="flex items-center gap-2">
           <div className="min-w-0 flex-1">
@@ -113,7 +61,7 @@ function CustomersList({ entries }: { entries: CustomerMixEntry[] }) {
                 {formatCompactCurrency(entry.revenue)} · {entry.loads}
               </span>
             </div>
-            <div aria-hidden className="bg-muted mt-1 h-1 w-full overflow-hidden rounded-full">
+            <div aria-hidden className="mt-1 h-1 w-full overflow-hidden rounded-full bg-muted">
               <span
                 className="block h-full rounded-full"
                 style={{
@@ -146,166 +94,12 @@ function CustomerTrend({ trend }: { trend: number }) {
   );
 }
 
-function PickupsList({
-  initialData,
-  enabled,
-}: {
-  initialData: TomorrowsPickupsCard;
-  enabled: boolean;
-}) {
-  const t = useT();
-
-  const [, setSearchParams] = useQueryStates(panelSearchParamsParser);
-  const observerTarget = useRef<HTMLLIElement>(null);
-
-  const query = useInfiniteQuery({
-    queryKey: [
-      "analytics",
-      "shipment-management",
-      "tomorrowsPickups",
-      Intl.DateTimeFormat().resolvedOptions().timeZone,
-    ],
-    queryFn: async ({ pageParam }) =>
-      getShipmentPageAnalyticsGraphQL({
-        include: "tomorrowsPickups",
-        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        limit: PICKUPS_PAGE_SIZE,
-        offset: pageParam,
-      }).then((response) => ({
-        page: response.page,
-        tomorrowsPickups: response.tomorrowsPickups as TomorrowsPickupsCard | undefined,
-      })),
-    initialPageParam: 0,
-    initialData: {
-      pageParams: [0],
-      pages: [
-        {
-          page: "shipment-management",
-          tomorrowsPickups: initialData,
-        },
-      ],
-    },
-    getNextPageParam: (lastPage, _, lastPageParam) => {
-      const pickups = (lastPage.tomorrowsPickups as TomorrowsPickupsCard | undefined)?.pickups;
-      if (pickups && pickups.length === PICKUPS_PAGE_SIZE) {
-        return lastPageParam + PICKUPS_PAGE_SIZE;
-      }
-
-      return undefined;
-    },
-    staleTime: 60 * 1000,
-    retry: false,
-    refetchOnWindowFocus: false,
-    enabled,
-  });
-
-  const pickups = useMemo(
-    () =>
-      query.data.pages.flatMap((page) => {
-        const card = page.tomorrowsPickups as TomorrowsPickupsCard | undefined;
-        return card?.pickups ?? [];
-      }),
-    [query.data.pages],
-  );
-
-  const { hasNextPage, isFetchingNextPage, fetchNextPage } = query;
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0]?.isIntersecting && hasNextPage && !isFetchingNextPage) {
-          void fetchNextPage();
-        }
-      },
-      { threshold: 0.1 },
-    );
-
-    const currentTarget = observerTarget.current;
-    if (currentTarget) observer.observe(currentTarget);
-
-    return () => {
-      if (currentTarget) observer.unobserve(currentTarget);
-    };
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
-
-  if (pickups.length === 0) {
-    return <EmptyState label={t("No pickups scheduled for tomorrow")} />;
-  }
-
-  return (
-    <ul className="flex flex-col">
-      {pickups.map((pickup, index) => (
-        <li
-          key={`${pickup.shipmentId}-${pickup.pickupWindowStart}`}
-          className={cn(
-            "hover:bg-muted transition-colors",
-            index < pickups.length - 1 && "border-border/60 border-b",
-          )}
-        >
-          <button
-            type="button"
-            className="flex w-full cursor-pointer items-center gap-2 px-3 py-1.5 text-left"
-            onClick={() =>
-              void setSearchParams({
-                panelType: "edit",
-                panelEntityId: pickup.shipmentId,
-              })
-            }
-          >
-            <span className="w-10 font-mono text-xs font-semibold tabular-nums">
-              {formatPickupTime(pickup.pickupWindowStart)}
-            </span>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-xs font-medium">
-                {pickup.customer ?? <WithheldValue kind="customer" />}
-              </p>
-              <p className="text-muted-foreground truncate font-mono text-3xs">
-                {pickup.origin ?? <WithheldValue kind="location" className="text-3xs" />} →{" "}
-                {pickup.destination ?? <WithheldValue kind="location" className="text-3xs" />}
-              </p>
-            </div>
-            {pickup.status === "unassigned" || pickup.status === "tentative" ? (
-              <Badge variant={PICKUP_STATUS[pickup.status].variant}>
-                {t(PICKUP_STATUS[pickup.status].label)}
-              </Badge>
-            ) : (
-              <span className="text-muted-foreground max-w-20 truncate font-mono text-2xs">
-                {pickup.driver === null ? (
-                  <WithheldValue kind="worker" className="text-2xs" />
-                ) : (
-                  pickup.driver || PICKUP_STATUS[pickup.status].label
-                )}
-              </span>
-            )}
-          </button>
-        </li>
-      ))}
-      {isFetchingNextPage && (
-        <li className="flex items-center justify-center py-3">
-          <TextShimmer className="font-mono text-xs" duration={1}>
-            {t("Loading more...")}
-          </TextShimmer>
-        </li>
-      )}
-      {hasNextPage && <li ref={observerTarget} className="h-px" aria-hidden />}
-    </ul>
-  );
-}
-
 function EmptyState({ label }: { label: string }) {
   return (
     <div className="text-muted-foreground flex h-full min-h-32 items-center justify-center px-3 py-6 text-center text-xs">
       {label}
     </div>
   );
-}
-
-function formatPickupTime(unixSeconds: number) {
-  return formatUnixInUserTimezone(unixSeconds, {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  });
 }
 
 function formatPercent(value: number) {

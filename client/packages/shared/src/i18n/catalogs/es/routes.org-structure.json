@@ -80,7 +80,6 @@
   "The name of the job as it appears on the chart and on each holder's record.": "El nombre del puesto tal como aparece en el organigrama y en la ficha de cada ocupante.",
   "The part of the business the position sits in.": "La parte del negocio a la que pertenece el puesto.",
   "The position this one answers to; leave it empty for the top of the chart. A person's own manager is set on their record, because two people in the same position can report to different managers.": "El puesto del que depende este; déjelo vacío para el nivel superior del organigrama. El responsable de cada persona se define en su ficha, porque dos personas en el mismo puesto pueden depender de responsables distintos.",
-  "The shape of the organisation: the positions the roster is counted by, the headcount in each, and who is approving in whose place.": "La forma de la organización: los puestos por los que se cuenta la plantilla, el número de personas en cada uno y quién aprueba en lugar de quién.",
   "Titles nobody holds yet": "Cargos que aún no ocupa nadie",
   "Titles the roster is counted by": "Puestos por los que se cuenta la plantilla",
   "Under the Fair Labor Standards Act. Recorded per position because that is where the duties test is applied.": "Conforme a la Ley de Normas Justas de Trabajo. Se registra por puesto, porque es ahí donde se aplica la prueba de funciones.",

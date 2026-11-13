@@ -8,7 +8,9 @@ import type { WidgetProps } from "../widget-registry";
  * The live fleet map is the heaviest thing on the canvas — Google Maps, vehicle
  * positions, geofences, and weather layers — so it loads only once a layout
  * actually places it, and it is the same panel the dispatch board draws rather
- * than a second, thinner map that would drift from it.
+ * than a second, thinner map that would drift from it. A tile gets the panel's
+ * compact form: the map, the stage chips and the detail card, with the full
+ * workspace one press away on the panel's own full-screen control.
  */
 const ShipmentMapPanel = lazy(() => import("@/routes/shipment/_components/map/shipment-map-panel"));
 
@@ -25,7 +27,7 @@ export function AnnouncementWidget({ widget }: WidgetProps) {
   const text = widget.config.text?.trim();
 
   return (
-    <WidgetShell title={widget.title || "Announcement"}>
+    <WidgetShell title={widget.title || t("Announcement")}>
       {!text ? (
         <WidgetEmpty>{t("Nothing announced.")}</WidgetEmpty>
       ) : (
@@ -40,7 +42,7 @@ export function MapWidget({ widget }: WidgetProps) {
 
   return (
     <WidgetShell
-      title={widget.title || "Fleet Map"}
+      title={widget.title || t("Fleet map")}
       href="/shipment-management/shipments"
       hrefLabel={t("Open dispatch board")}
       scroll={false}
@@ -48,7 +50,7 @@ export function MapWidget({ widget }: WidgetProps) {
     >
       <div className="min-h-0 flex-1 overflow-hidden">
         <Suspense fallback={<Skeleton className="size-full rounded-none" />}>
-          <ShipmentMapPanel />
+          <ShipmentMapPanel compact />
         </Suspense>
       </div>
     </WidgetShell>

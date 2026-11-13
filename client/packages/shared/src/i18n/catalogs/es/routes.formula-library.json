@@ -18,7 +18,6 @@
   "Every save makes a version. The first is made when you create the library.": "Cada vez que guarda se crea una versión. La primera se crea al crear la biblioteca.",
   "Explain this library, function by function": "Explicar esta biblioteca, función por función",
   "Fix the highlighted fields to create the library": "Corrija los campos resaltados para crear la biblioteca",
-  "Functions, constants and types written once in Tariff and imported by your formula templates": "Funciones, constantes y tipos escritos una sola vez en Tariff e importados por sus plantillas de fórmula",
   "Functions, constants, types and enums, with the tests that pin what they return. Everything is exported unless marked private.": "Funciones, constantes, tipos y enumeraciones, con las pruebas que fijan lo que devuelven. Todo se exporta salvo lo marcado como privado.",
   "Hazmat and residential delivery fees our tariffs can share": "Cargos por materiales peligrosos y entrega residencial que nuestras tarifas pueden compartir",
   "Imported by": "Importada por",

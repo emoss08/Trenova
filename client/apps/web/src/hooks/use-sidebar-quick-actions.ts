@@ -13,8 +13,6 @@ export interface SidebarQuickAction {
   definition: QuickActionCommand;
   icon: IconComponent;
   href: string;
-  /** "Create Shipment" reads as "New Shipment" next to a plus sign. */
-  shortLabel: string;
 }
 
 const QUICK_ACTIONS_BY_ID = new Map(
@@ -23,8 +21,8 @@ const QUICK_ACTIONS_BY_ID = new Map(
 
 /**
  * The create shortcuts a person chose, in their order, minus the ones they
- * cannot perform. Every surface that offers quick actions reads from here so
- * the sidebar grid, the "New" menu and the rail all agree.
+ * cannot perform or whose part of the product the organization has turned off.
+ * Every surface that offers quick actions reads from here so they all agree.
  */
 export function useSidebarQuickActions(): SidebarQuickAction[] {
   const hasPermission = usePermissionStore((state) => state.hasPermission);
@@ -46,7 +44,6 @@ export function useSidebarQuickActions(): SidebarQuickAction[] {
           definition,
           icon: QUICK_ACTION_ICONS[definition.id],
           href: buildCommandHref(definition.path, definition.query),
-          shortLabel: definition.label.replace(/^Create /, "New "),
         })),
     [capabilities, hasPermission, quickActionIds],
   );

@@ -4,7 +4,6 @@
   "Adjustment reason requirement": "Requisito de motivo para los ajustes",
   "Approval policy": "Política de aprobación",
   "Closed period adjustment policy": "Política de ajustes en períodos cerrados",
-  "Configure organization policy for credits, rebills, write-offs, and invoice adjustment review.": "Configure la política de la organización para abonos, refacturaciones, cancelaciones y revisión de ajustes de facturas.",
   "Controls unapplied customer-credit outcomes caused by payment state and does not permit credit beyond true eligible invoice line or item scope.": "Controla los créditos no aplicados de clientes derivados del estado del pago y no permite abonar más allá del alcance realmente elegible de líneas o partidas de la factura.",
   "Controls whether disputed invoices can be adjusted and whether approval is required.": "Controla si las facturas en disputa pueden ajustarse y si se requiere aprobación.",
   "Controls whether fully paid invoices may be adjusted through the formal adjustment workflow.": "Controla si las facturas totalmente pagadas pueden ajustarse mediante el flujo formal de ajustes.",

@@ -56,7 +56,6 @@
   "Pick a match from the list to compare the invoice against the negotiated buy rate.": "請自清單中選擇一筆比對，以將發票與議定採購運價進行比較。",
   "Possible duplicate": "可能重複",
   "Reason (required) — e.g. Invoice bills a different load": "原因（必填）— 例如：發票開立的是另一趟貨載",
-  "Reconcile inbound carrier freight invoices against negotiated buy rates — link carriers, create matches, and resolve variances.": "將收到的承運業者運費發票與議定採購運價核對 — 連結承運業者、建立比對並處理差異。",
   "Reconciles the invoice against the buy rate without changing the accrued cost": "將發票與採購運價核對，且不變動已計提的成本",
   "Reconciliation status": "核對狀態",
   "Reject match": "拒絕比對",

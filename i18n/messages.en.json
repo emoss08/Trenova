@@ -18305,12 +18305,13 @@
     ]
   },
   "Accrual rules for paid time off — how days are earned, capped, and carried over, and which drivers each policy governs.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/pto-policy"
+      "routes/pto-policy",
+      "routes/section-index"
     ]
   },
   "Accrual run complete": {
@@ -19555,7 +19556,7 @@
     ]
   },
   "Activity": {
-    "sites": 16,
+    "sites": 17,
     "scope": [
       "go",
       "ts"
@@ -19568,6 +19569,7 @@
       "routes/carrier-monitoring",
       "routes/desk",
       "routes/factoring-company",
+      "routes/home",
       "routes/invoice",
       "routes/shipment"
     ]
@@ -22837,12 +22839,13 @@
     ]
   },
   "Addresses the system listens on, where each provider posts, and how much each is trusted to do without a person": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin"
+      "routes/admin",
+      "routes/section-index"
     ]
   },
   "Adds a line to the bill: `charge \"Label\" as CODE (quantity: q, rate: r, minimum: lo, maximum: hi) = amount`; in a test, `charge(CODE)` reads a line's amount.": {
@@ -30314,7 +30317,7 @@
     ]
   },
   "Announcement": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
@@ -36615,12 +36618,13 @@
     ]
   },
   "Assets, liabilities, and equity as of a fiscal period.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/balance-sheet"
+      "routes/balance-sheet",
+      "routes/section-index"
     ]
   },
   "Assign": {
@@ -38516,7 +38520,7 @@
     ]
   },
   "At risk": {
-    "sites": 15,
+    "sites": 16,
     "scope": [
       "go",
       "ts"
@@ -39440,12 +39444,13 @@
     ]
   },
   "Authority, insurance and safety changes on the carriers you watch.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/carrier-monitoring"
+      "routes/carrier-monitoring",
+      "routes/section-index"
     ]
   },
   "Authority, insurance, safety, fraud signals and lanes from the <link>CarrierOk developer API.</link>": {
@@ -40385,12 +40390,13 @@
     ]
   },
   "Automatically generate shipments for repeating lanes on a schedule you control": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/recurring-shipment"
+      "routes/recurring-shipment",
+      "routes/section-index"
     ]
   },
   "Automatically ingested prices cannot be deleted": {
@@ -44413,7 +44419,7 @@
     ]
   },
   "Billing Queue": {
-    "sites": 3,
+    "sites": 1,
     "scope": [
       "go"
     ],
@@ -44860,7 +44866,7 @@
     ]
   },
   "Billing queue": {
-    "sites": 12,
+    "sites": 15,
     "scope": [
       "go",
       "ts"
@@ -44872,6 +44878,7 @@
       "routes/billing-control",
       "routes/billing-queue",
       "routes/desk",
+      "routes/home",
       "routes/invoice"
     ]
   },
@@ -47238,12 +47245,13 @@
     ]
   },
   "Build, run, and share reports over your organization's data": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/reports"
+      "routes/reports",
+      "routes/section-index"
     ]
   },
   "Building a table…": {
@@ -47482,6 +47490,15 @@
     ],
     "areas": [
       "routes/freight-outlook"
+    ]
+  },
+  "Busiest lane: {0} → {1}, {2, plural, one {# load} other {# loads}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Business Central journal lines cannot post to a customer or vendor or apply to an invoice, so Trenova's journals cannot be sent to Business Central as they are. Send documents instead.": {
@@ -50853,12 +50870,13 @@
     ]
   },
   "Cards a connected fuel card feed saw a transaction on before anybody had registered them. Until a card is tied to a tractor or driver, its purchases can only be matched by the unit number on the receipt.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/fuel-card"
+      "routes/fuel-card",
+      "routes/section-index"
     ]
   },
   "Cargo": {
@@ -52932,12 +52950,13 @@
     ]
   },
   "Cash and money-code advances that are automatically recovered from the driver's next settlement.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/pay-advance"
+      "routes/pay-advance",
+      "routes/section-index"
     ]
   },
   "Cash and money-code advances, what has been recovered, and what was written off": {
@@ -58403,12 +58422,13 @@
     ]
   },
   "Choose what drivers can see and do in the Dash driver portal": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/dash-control"
+      "routes/dash-control",
+      "routes/section-index"
     ]
   },
   "Choose what happens when a carrier or broker trips a rule. Block stops tenders and assignments, Warn asks for acknowledgement, Notify only records an event.": {
@@ -63209,12 +63229,13 @@
     ]
   },
   "Company holidays PTO policies skip when counting days, and blackout dates no one can request off.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/holiday"
+      "routes/holiday",
+      "routes/section-index"
     ]
   },
   "Company id is required": {
@@ -64618,38 +64639,42 @@
     ]
   },
   "Configure and manage your accounting control settings": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/accounting-control"
+      "routes/accounting-control",
+      "routes/section-index"
     ]
   },
   "Configure and manage your billing control settings": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/billing-control"
+      "routes/billing-control",
+      "routes/section-index"
     ]
   },
   "Configure and manage your dispatch control settings": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/dispatch-control"
+      "routes/dispatch-control",
+      "routes/section-index"
     ]
   },
   "Configure and manage your shipment control settings": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/section-index",
       "routes/shipment-control"
     ]
   },
@@ -64663,21 +64688,23 @@
     ]
   },
   "Configure carrier pay periods, cost accrual triggers, batch automation, invoice-match tolerance, and AP posting accounts": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/carrier-settlement-control"
+      "routes/carrier-settlement-control",
+      "routes/section-index"
     ]
   },
   "Configure case formatting rules for data entry across the system": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/data-entry-control"
+      "routes/data-entry-control",
+      "routes/section-index"
     ]
   },
   "Configure dispatch-time compliance checks for worker qualification, medical certification, hazmat eligibility, and testing requirements.": {
@@ -64708,12 +64735,13 @@
     ]
   },
   "Configure how documents are read, classified, extracted, and drafted into shipments": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin"
+      "routes/admin",
+      "routes/section-index"
     ]
   },
   "Configure how the system automatically voids shipments that have been in the \"New\" status for more than the configured threshold based on the creation date. This helps maintain operational efficiency and ensures that shipments are not left in a \"New\" state for an extended period of time.": {
@@ -64771,29 +64799,32 @@
     ]
   },
   "Configure mileage storage behavior and distance profile assignments": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin"
+      "routes/admin",
+      "routes/section-index"
     ]
   },
   "Configure organization policy for credits, rebills, write-offs, and invoice adjustment review.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/invoice-adjustment-control"
+      "routes/invoice-adjustment-control",
+      "routes/section-index"
     ]
   },
   "Configure pay periods, accrual triggers, exception policies, and escrow interest": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/section-index",
       "routes/settlement-control"
     ]
   },
@@ -64825,12 +64856,13 @@
     ]
   },
   "Configure sequence generation formats for shipments and billing workflows": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin"
+      "routes/admin",
+      "routes/section-index"
     ]
   },
   "Configure single sign-on, SCIM, access policies and API keys, and review sign-in activity.": {
@@ -64852,12 +64884,13 @@
     ]
   },
   "Configure the cost-per-mile model that powers shipment profitability estimates": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/cost-control"
+      "routes/cost-control",
+      "routes/section-index"
     ]
   },
   "Configure the transport profile and envelope values used for this organization.": {
@@ -64879,12 +64912,13 @@
     ]
   },
   "Configure which document types are required for each resource type": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/document-packet-rule"
+      "routes/document-packet-rule",
+      "routes/section-index"
     ]
   },
   "Configure your Samsara integration settings for this organization.": {
@@ -65227,7 +65261,7 @@
     ]
   },
   "Confirmed": {
-    "sites": 15,
+    "sites": 14,
     "scope": [
       "go",
       "ts"
@@ -65581,12 +65615,13 @@
     ]
   },
   "Connect the outside services Trenova works with: mileage, telematics, email, fuel prices and carrier data.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin"
+      "routes/admin",
+      "routes/section-index"
     ]
   },
   "Connect this organisation": {
@@ -71081,12 +71116,13 @@
     ]
   },
   "Cover open moves against available capacity without opening a shipment": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/dispatch-console"
+      "routes/dispatch-console",
+      "routes/section-index"
     ]
   },
   "Cover prices outside the range": {
@@ -71780,12 +71816,13 @@
     ]
   },
   "Create and manage manual journal entries.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/manual-journal"
+      "routes/manual-journal",
+      "routes/section-index"
     ]
   },
   "Create anything you have permission to create": {
@@ -74747,15 +74784,6 @@
       "go/other"
     ]
   },
-  "Customer Mix": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Customer PO": {
     "sites": 3,
     "scope": [
@@ -75089,6 +75117,17 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Customer mix": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "go/other",
+      "routes/home"
     ]
   },
   "Customer name": {
@@ -75516,7 +75555,7 @@
     ]
   },
   "Customers": {
-    "sites": 16,
+    "sites": 15,
     "scope": [
       "go",
       "ts"
@@ -75589,12 +75628,13 @@
     ]
   },
   "Customers with overdue receivables, ranked by who to call first. Open one to log a call, record a promise to pay, or schedule the next follow-up.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/collections"
+      "routes/collections",
+      "routes/section-index"
     ]
   },
   "Customers with their own": {
@@ -75644,15 +75684,16 @@
     ]
   },
   "Customized": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/desk"
+      "routes/desk",
+      "routes/home"
     ]
   },
-  "Customized{0}": {
+  "Customized from {0}": {
     "sites": 1,
     "scope": [
       "ts"
@@ -75878,12 +75919,13 @@
     ]
   },
   "DOE diesel prices, fuel surcharge programs, and automatic surcharge application": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/fuel-management"
+      "routes/fuel-management",
+      "routes/section-index"
     ]
   },
   "DOE indices ingest automatically each week via the EIA integration — custom indices take manually entered weekly prices (e.g. Canadian FCA or contract-specific pegs)": {
@@ -76462,7 +76504,7 @@
     ]
   },
   "Dashboard": {
-    "sites": 8,
+    "sites": 10,
     "scope": [
       "go",
       "ts"
@@ -77341,15 +77383,6 @@
       "go/other"
     ]
   },
-  "Days Sales Outstanding": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Days a worker earns per period; balances are kept in days.": {
     "sites": 1,
     "scope": [
@@ -77558,11 +77591,13 @@
     ]
   },
   "Days sales outstanding": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
+      "go/other",
       "routes/accounting-dashboard",
       "routes/home"
     ]
@@ -78408,15 +78443,6 @@
       "routes/desk"
     ]
   },
-  "Decisions Waiting": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Decisions cannot be followed up here": {
     "sites": 2,
     "scope": [
@@ -78445,7 +78471,7 @@
     ]
   },
   "Decisions waiting": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
@@ -79971,12 +79997,13 @@
     ]
   },
   "Define custom fields for trailers, workers, and other resources": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin"
+      "routes/admin",
+      "routes/section-index"
     ]
   },
   "Define how each type of paid time off accrues, caps, and carries over for the workers you assign to it.": {
@@ -83700,15 +83727,6 @@
       "routes/dash-control"
     ]
   },
-  "Detention Watch": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Detention accruing": {
     "sites": 2,
     "scope": [
@@ -84213,6 +84231,17 @@
     ],
     "areas": [
       "routes/shipment"
+    ]
+  },
+  "Detention watch": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "go/other",
+      "routes/home"
     ]
   },
   "Detention · {0}": {
@@ -90701,20 +90730,22 @@
     ]
   },
   "Driver-submitted out-of-pocket expenses — review receipts, approve to reimburse on the driver's open settlement, or reject with an explanation.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/driver-expense"
+      "routes/driver-expense",
+      "routes/section-index"
     ]
   },
   "Driver-submitted questions and challenges against issued settlements — review, resolve with a correcting adjustment, or deny with an explanation.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/section-index",
       "routes/settlement-dispute"
     ]
   },
@@ -92491,15 +92522,6 @@
       "routes/edi"
     ]
   },
-  "EDI Needs Attention": {
-    "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "EDI Operations": {
     "sites": 1,
     "scope": [
@@ -92840,12 +92862,15 @@
     ]
   },
   "EDI needs attention": {
-    "sites": 1,
+    "sites": 4,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/config"
+      "apps/web/config",
+      "go/other",
+      "routes/home"
     ]
   },
   "EDI overrides": {
@@ -97681,12 +97706,13 @@
     ]
   },
   "Encode each contract's detention terms and see what they would charge before they touch a shipment": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/detention-policy"
+      "routes/detention-policy",
+      "routes/section-index"
     ]
   },
   "Encode the contract's detention terms and see what they would charge before they touch a shipment.": {
@@ -102325,12 +102351,13 @@
     ]
   },
   "Every change, access and administrative action in your organization, sealed against tampering": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin"
+      "routes/admin",
+      "routes/section-index"
     ]
   },
   "Every check an invoice must pass before it can be sold to the factor. A failed check names what clears it.": {
@@ -102490,12 +102517,13 @@
     ]
   },
   "Every document Trenova sends to {0}, what happened to it, and what to do when it did not go through.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/accounting-sync"
+      "routes/accounting-sync",
+      "routes/section-index"
     ]
   },
   "Every document is filed": {
@@ -102708,12 +102736,13 @@
     ]
   },
   "Every gallon bought for a tractor, keyed by hand or imported from a fuel card statement. Tax-paid gallons credit the jurisdiction they were bought in on the quarterly IFTA return.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/fuel-purchase"
+      "routes/fuel-purchase",
+      "routes/section-index"
     ]
   },
   "Every generated shipment copies this one's stops, commodities, and charges. Changing it does not touch shipments already generated.": {
@@ -102807,12 +102836,13 @@
     ]
   },
   "Every invoice issued, with its bill-to, shipper, dates and settlement status.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/invoice-register"
+      "routes/invoice-register",
+      "routes/section-index"
     ]
   },
   "Every invoice needs": {
@@ -102971,11 +103001,12 @@
     ]
   },
   "Every load on the board, what needs a hand, and who can take it.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/section-index",
       "routes/shipment"
     ]
   },
@@ -103745,12 +103776,13 @@
     ]
   },
   "Every time a connected fuel card feed has read your transactions, and what became of the rows. Rows a run could not place wait here until the card they were on is assigned or the unit they name is added.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/fuel-feed-run"
+      "routes/fuel-feed-run",
+      "routes/section-index"
     ]
   },
   "Every tool call it made in the last 30 days, including the ones turned away before a tool ran. A call the runtime turned away never became a proposal, so the figures above cannot show it. The tools with the most calls that didn't go through come first; open one to read the reasons its calls gave most often.": {
@@ -104086,12 +104118,13 @@
     ]
   },
   "Everyone you answer for: your own reports, the terminals you run, and anybody whose approvals have been handed to you.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/my-team"
+      "routes/my-team",
+      "routes/section-index"
     ]
   },
   "Everyone's": {
@@ -104238,20 +104271,22 @@
     ]
   },
   "Everything needed to run a carrier pay period from one screen — review the queue, process settlements one at a time or in bulk, and keep the AP subledger current.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/carrier-settlement-workspace"
+      "routes/carrier-settlement-workspace",
+      "routes/section-index"
     ]
   },
   "Everything needed to run a pay period from one screen — review the queue, transfer pay, manage deductions, and process settlements one at a time or in bulk.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/section-index",
       "routes/settlement-workspace"
     ]
   },
@@ -104836,7 +104871,7 @@
     ]
   },
   "Exceptions": {
-    "sites": 17,
+    "sites": 18,
     "scope": [
       "go",
       "ts"
@@ -104848,6 +104883,7 @@
       "routes/bank-receipt-batch",
       "routes/bank-receipt-queue",
       "routes/dispatch-console",
+      "routes/home",
       "routes/reconciliation-summary",
       "routes/settlement-batch",
       "routes/shipment"
@@ -107414,15 +107450,6 @@
       "routes/worker"
     ]
   },
-  "Expiring Credentials": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Expiring Soon": {
     "sites": 1,
     "scope": [
@@ -107433,12 +107460,15 @@
     ]
   },
   "Expiring credentials": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "go/other",
+      "routes/home"
     ]
   },
   "Expiring in 30 days": {
@@ -112028,12 +112058,14 @@
     ]
   },
   "Favorites": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "go/other",
+      "routes/home"
     ]
   },
   "Favors the carrier when a facility accepts early delivery.": {
@@ -114290,12 +114322,13 @@
     ]
   },
   "Find carriers, vet them against your rules and import the ones you want": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/carrier-sourcing"
+      "routes/carrier-sourcing",
+      "routes/section-index"
     ]
   },
   "Find drivers": {
@@ -114509,12 +114542,13 @@
     ]
   },
   "Findings computed from your own records. The figures come from your data; where an explanation was written by AI, the card says so.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/insights"
+      "routes/insights",
+      "routes/section-index"
     ]
   },
   "Findings computed from your own records: service slipping, revenue unbilled, detention unclaimed, credentials running out": {
@@ -115958,24 +115992,6 @@
       "routes/fuel-management"
     ]
   },
-  "Fleet Map": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "Fleet Status": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Fleet code": {
     "sites": 14,
     "scope": [
@@ -116044,6 +116060,17 @@
       "go/other"
     ]
   },
+  "Fleet map": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "go/other",
+      "routes/home"
+    ]
+  },
   "Fleet miles per gallon": {
     "sites": 1,
     "scope": [
@@ -116070,6 +116097,17 @@
     ],
     "areas": [
       "routes/carrier-sourcing"
+    ]
+  },
+  "Fleet status": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "go/other",
+      "routes/home"
     ]
   },
   "Fleet {0}": {
@@ -119781,12 +119819,13 @@
     ]
   },
   "Functions, constants and types written once in Tariff and imported by your formula templates": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/formula-library"
+      "routes/formula-library",
+      "routes/section-index"
     ]
   },
   "Functions, constants, types and enums, with the tests that pin what they return. Everything is exported unless marked private.": {
@@ -120897,20 +120936,22 @@
     ]
   },
   "Generate pay-period AP runs, review totals, and export remittance files.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/carrier-settlement-batch"
+      "routes/carrier-settlement-batch",
+      "routes/section-index"
     ]
   },
   "Generate pay-period batches, monitor exceptions, and export payroll files.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/section-index",
       "routes/settlement-batch"
     ]
   },
@@ -122204,12 +122245,13 @@
     ]
   },
   "Good afternoon, {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/desk"
+      "routes/desk",
+      "routes/home"
     ]
   },
   "Good evening": {
@@ -122232,12 +122274,13 @@
     ]
   },
   "Good evening, {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/desk"
+      "routes/desk",
+      "routes/home"
     ]
   },
   "Good morning": {
@@ -122260,12 +122303,13 @@
     ]
   },
   "Good morning, {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/desk"
+      "routes/desk",
+      "routes/home"
     ]
   },
   "Good standing": {
@@ -123411,12 +123455,13 @@
     ]
   },
   "Handbooks and policies people sign from Dash. A signature records the version it was given for, so revising the words means giving them a new version — and everybody bound by it goes back to outstanding.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/policies"
+      "routes/policies",
+      "routes/section-index"
     ]
   },
   "Handbooks and policies people sign from the portal, and who has signed them": {
@@ -125949,12 +125994,13 @@
     ]
   },
   "Hold your fleet to stricter limits than a state requires. An override can only tighten a limit, never loosen one, and applies to your organization alone.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/jurisdiction-rule-override"
+      "routes/jurisdiction-rule-override",
+      "routes/section-index"
     ]
   },
   "Hold {0, plural, one {# pay event} other {# pay events}}": {
@@ -126707,11 +126753,12 @@
     ]
   },
   "Hours worked by staff paid by the clock. A week's totals are frozen when it is handed over, so what a manager approves is what payroll is run from.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/section-index",
       "routes/time-attendance"
     ]
   },
@@ -126963,12 +127010,13 @@
     ]
   },
   "How family and medical leave is measured, and what an employee must do to qualify": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/leave-control"
+      "routes/leave-control",
+      "routes/section-index"
     ]
   },
   "How far ahead": {
@@ -127318,12 +127366,13 @@
     ]
   },
   "How long each kind of record is kept before the nightly purge jobs remove it.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/organization"
+      "routes/organization",
+      "routes/section-index"
     ]
   },
   "How long one call may run before it's abandoned.": {
@@ -134697,12 +134746,13 @@
     ]
   },
   "Investigate adjustment-created finance exceptions and trace them back to source artifacts.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/invoice-reconciliation"
+      "routes/invoice-reconciliation",
+      "routes/section-index"
     ]
   },
   "Investigated": {
@@ -139325,22 +139375,16 @@
       "routes/agent-control"
     ]
   },
-  "Jump Back In": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Jump back in": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "go/other",
+      "routes/home"
     ]
   },
   "Jump directly into the related billing and invoice surfaces.": {
@@ -141147,6 +141191,15 @@
       "routes/admin"
     ]
   },
+  "Key figures": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/home"
+    ]
+  },
   "Key is required": {
     "sites": 3,
     "scope": [
@@ -141835,15 +141888,6 @@
       "template/invoice.pdf"
     ]
   },
-  "Lane Heatmap": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Lane Key": {
     "sites": 1,
     "scope": [
@@ -141883,10 +141927,12 @@
   "Lane heatmap": {
     "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "go/other",
+      "routes/home"
     ]
   },
   "Lane history": {
@@ -143143,12 +143189,13 @@
     ]
   },
   "Last {0, plural, one {# day} other {# days}}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin"
+      "routes/admin",
+      "routes/home"
     ]
   },
   "Last {0, plural, one {# schedule} other {# schedules}}": {
@@ -147734,12 +147781,13 @@
     ]
   },
   "Live free-time clocks, notice deadlines, and accruing detention across every driver currently on a dock": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/detention-desk"
+      "routes/detention-desk",
+      "routes/section-index"
     ]
   },
   "Live fuel": {
@@ -149109,7 +149157,7 @@
     ]
   },
   "Loading more...": {
-    "sites": 10,
+    "sites": 9,
     "scope": [
       "ts"
     ],
@@ -150609,6 +150657,15 @@
       "routes/formula-library"
     ]
   },
+  "Loading widget": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/home"
+    ]
+  },
   "Loading worker...": {
     "sites": 1,
     "scope": [
@@ -150634,6 +150691,15 @@
     ],
     "areas": [
       "routes/fleet-safety"
+    ]
+  },
+  "Loading your home screen": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/home"
     ]
   },
   "Loading your team": {
@@ -153593,200 +153659,222 @@
     ]
   },
   "Manage and configure accessorial charges for your organization": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/accessorial-charge"
+      "routes/accessorial-charge",
+      "routes/section-index"
     ]
   },
   "Manage and configure account types for your organization": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/account-type"
+      "routes/account-type",
+      "routes/section-index"
     ]
   },
   "Manage and configure carriers for your organization": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/carrier"
+      "routes/carrier",
+      "routes/section-index"
     ]
   },
   "Manage and configure commodities for your organization": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/commodity"
+      "routes/commodity",
+      "routes/section-index"
     ]
   },
   "Manage and configure customers for your organization": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/customer"
+      "routes/customer",
+      "routes/section-index"
     ]
   },
   "Manage and configure document types for your organization": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/document-type"
+      "routes/document-type",
+      "routes/section-index"
     ]
   },
   "Manage and configure equipment manufacturers for your organization": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/equipment-manufacturer"
+      "routes/equipment-manufacturer",
+      "routes/section-index"
     ]
   },
   "Manage and configure equipment types for your organization": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/equipment-type"
+      "routes/equipment-type",
+      "routes/section-index"
     ]
   },
   "Manage and configure fiscal years for your organization": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/fiscal-year"
+      "routes/fiscal-year",
+      "routes/section-index"
     ]
   },
   "Manage and configure fleet codes for your organization": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/fleet-code"
+      "routes/fleet-code",
+      "routes/section-index"
     ]
   },
   "Manage and configure formula templates for your organization": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/formula-template"
+      "routes/formula-template",
+      "routes/section-index"
     ]
   },
   "Manage and configure hazardous materials for your organization": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/hazardous-material"
+      "routes/hazardous-material",
+      "routes/section-index"
     ]
   },
   "Manage and configure hazmat segregation rules for your organization": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/hazmat-segregation-rule"
+      "routes/hazmat-segregation-rule",
+      "routes/section-index"
     ]
   },
   "Manage and configure hold reasons for your organization": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/hold-reason"
+      "routes/hold-reason",
+      "routes/section-index"
     ]
   },
   "Manage and configure location categories for your organization": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/location-category"
+      "routes/location-category",
+      "routes/section-index"
     ]
   },
   "Manage and configure locations for your organization": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/location"
+      "routes/location",
+      "routes/section-index"
     ]
   },
   "Manage and configure service types for your organization": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/section-index",
       "routes/service-type"
     ]
   },
   "Manage and configure shipment types for your organization": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/section-index",
       "routes/shipment-type"
     ]
   },
   "Manage and configure tractors for your organization": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/section-index",
       "routes/tractor"
     ]
   },
   "Manage and configure trailers for your organization": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/section-index",
       "routes/trailer"
     ]
   },
   "Manage and track orders for your organization": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/order"
+      "routes/order",
+      "routes/section-index"
     ]
   },
   "Manage and track workers along with their compliance and paid time off": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/section-index",
       "routes/worker"
     ]
   },
@@ -153800,12 +153888,13 @@
     ]
   },
   "Manage business-unit routing policy used by distance calculations": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin"
+      "routes/admin",
+      "routes/section-index"
     ]
   },
   "Manage fiscal periods": {
@@ -153827,11 +153916,12 @@
     ]
   },
   "Manage operational exception reasons and EDI 214 defaults": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/section-index",
       "routes/service-failure-reason-code"
     ]
   },
@@ -153872,21 +153962,23 @@
     ]
   },
   "Manage users and their role assignments": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin"
+      "routes/admin",
+      "routes/section-index"
     ]
   },
   "Manage verified sender identities and route email purposes to the right provider profile.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/organization"
+      "routes/organization",
+      "routes/section-index"
     ]
   },
   "Manage violations": {
@@ -153899,12 +153991,13 @@
     ]
   },
   "Manage your organization profile, compliance, and security settings": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin"
+      "routes/admin",
+      "routes/section-index"
     ]
   },
   "Managed": {
@@ -155779,12 +155872,13 @@
     ]
   },
   "Match imported bank receipts to customer payments and resolve exceptions.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/bank-receipt"
+      "routes/bank-receipt",
+      "routes/section-index"
     ]
   },
   "Match level": {
@@ -158262,7 +158356,7 @@
     ]
   },
   "Metric": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
@@ -158270,15 +158364,6 @@
     "areas": [
       "go/other",
       "routes/home"
-    ]
-  },
-  "Metric Strip": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Metric key is required": {
@@ -158291,6 +158376,15 @@
     ]
   },
   "Metric label is required": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Metric strip": {
     "sites": 1,
     "scope": [
       "go"
@@ -158419,6 +158513,15 @@
       "routes/admin"
     ]
   },
+  "Midwest": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Mile": {
     "sites": 3,
     "scope": [
@@ -158545,12 +158648,13 @@
     ]
   },
   "Miles by state or province that dispatch did not compute — deadhead, yard moves, and units without telematics. They are added to the miles the quarter's IFTA return works out from shipment moves.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/ifta-jurisdiction-mileage"
+      "routes/ifta-jurisdiction-mileage",
+      "routes/section-index"
     ]
   },
   "Miles cannot be negative": {
@@ -160604,11 +160708,12 @@
     ]
   },
   "Monitor and review system activity across your organization": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/section-index",
       "routes/table-change-alert"
     ]
   },
@@ -162844,15 +162949,6 @@
       "routes/desk"
     ]
   },
-  "My Approvals": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "My DOT": {
     "sites": 1,
     "scope": [
@@ -162860,6 +162956,17 @@
     ],
     "areas": [
       "routes/fleet-safety"
+    ]
+  },
+  "My approvals": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "go/other",
+      "routes/home"
     ]
   },
   "My documents": {
@@ -163107,12 +163214,13 @@
     ]
   },
   "Name a market area once and price against it, instead of listing every postal prefix it covers": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/rate-zone"
+      "routes/rate-zone",
+      "routes/section-index"
     ]
   },
   "Name a pool to draw from, or mark one as the default": {
@@ -164388,7 +164496,7 @@
     ]
   },
   "Needs Attention": {
-    "sites": 4,
+    "sites": 2,
     "scope": [
       "go",
       "ts"
@@ -164600,7 +164708,7 @@
     ]
   },
   "Needs attention": {
-    "sites": 23,
+    "sites": 26,
     "scope": [
       "go",
       "ts"
@@ -164619,6 +164727,7 @@
       "routes/edi",
       "routes/factoring-company",
       "routes/fleet-safety",
+      "routes/home",
       "routes/ifta-tax-rate",
       "routes/my-team",
       "routes/reports",
@@ -164635,7 +164744,7 @@
     ]
   },
   "Needs coverage": {
-    "sites": 8,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -173326,15 +173435,6 @@
       "routes/desk"
     ]
   },
-  "No pickups scheduled for tomorrow": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
   "No pickups scheduled for tomorrow.": {
     "sites": 1,
     "scope": [
@@ -177351,6 +177451,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Northeast": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Not Available on Your Plan": {
@@ -182882,7 +182991,7 @@
     ]
   },
   "Notifications": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
       "go",
       "ts"
@@ -182894,6 +183003,7 @@
       "apps/web/config",
       "go/other",
       "packages/shared/components",
+      "routes/home",
       "routes/settings",
       "routes/table-change-alert"
     ]
@@ -186411,15 +186521,6 @@
       "routes/holiday"
     ]
   },
-  "On-Time Goal": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "On-time": {
     "sites": 1,
     "scope": [
@@ -186445,6 +186546,17 @@
     ],
     "areas": [
       "routes/detention-policy"
+    ]
+  },
+  "On-time goal": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "go/other",
+      "routes/home"
     ]
   },
   "On-time history": {
@@ -186505,11 +186617,12 @@
     ]
   },
   "Onboarding and offboarding checklists that start automatically from a hire, rehire or termination — with who owns each step and when it is due.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/section-index",
       "routes/worker-checklist-template"
     ]
   },
@@ -190476,15 +190589,6 @@
       "routes/agent-control"
     ]
   },
-  "Open Receivables": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Open Reports": {
     "sites": 1,
     "scope": [
@@ -190621,12 +190725,13 @@
     ]
   },
   "Open a partner to write its maps, guides, rules and flows": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/edi"
+      "routes/edi",
+      "routes/section-index"
     ]
   },
   "Open a resolved exception again when it was closed too soon. It gets a fresh due time and keeps its owner.": {
@@ -190976,12 +191081,13 @@
     ]
   },
   "Open customers": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/factoring-company"
+      "routes/factoring-company",
+      "routes/home"
     ]
   },
   "Open dashboard": {
@@ -191730,11 +191836,13 @@
     ]
   },
   "Open receivables": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
+      "go/other",
       "routes/customer",
       "routes/home"
     ]
@@ -191838,7 +191946,7 @@
     ]
   },
   "Open shipments": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "ts"
     ],
@@ -193414,15 +193522,6 @@
       "apps/web/lib"
     ]
   },
-  "Operational Insights": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Operational changes": {
     "sites": 1,
     "scope": [
@@ -193462,12 +193561,14 @@
     ]
   },
   "Operational insights": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/web/config",
+      "go/other",
       "routes/home"
     ]
   },
@@ -196303,12 +196404,13 @@
     ]
   },
   "Outstanding invoices and their payment status across all customers.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/ar-open-items"
+      "routes/ar-open-items",
+      "routes/section-index"
     ]
   },
   "Outstanding minor": {
@@ -196532,15 +196634,6 @@
       "routes/worker"
     ]
   },
-  "Overdue Receivables": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Overdue acknowledgments": {
     "sites": 1,
     "scope": [
@@ -196578,12 +196671,22 @@
     ]
   },
   "Overdue invoices charged once per thirty-day period at each customer's rate, raised as one debit memo per customer.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/late-charges"
+      "routes/late-charges",
+      "routes/section-index"
+    ]
+  },
+  "Overdue receivables": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Overdue {0}": {
@@ -196734,12 +196837,13 @@
     ]
   },
   "Override calculated distances between location pairs for routing and billing adjustments": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/distance-override"
+      "routes/distance-override",
+      "routes/section-index"
     ]
   },
   "Override component does not belong to the selected pay profile": {
@@ -196907,12 +197011,13 @@
     ]
   },
   "Oversize and overweight limits per state. These limits are shared across every organization; record a carrier override to hold your own fleet to something stricter.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/jurisdiction-rule"
+      "routes/jurisdiction-rule",
+      "routes/section-index"
     ]
   },
   "Oversize and overweight permits and their derived requirements": {
@@ -196952,12 +197057,13 @@
     ]
   },
   "Overview of bank receipt reconciliation status.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/reconciliation-summary"
+      "routes/reconciliation-summary",
+      "routes/section-index"
     ]
   },
   "Overwrite this view with the current filters, sorting, and columns": {
@@ -197272,12 +197378,13 @@
     ]
   },
   "Owner-operator maintenance escrow with a full transaction ledger and quarterly interest per 49 CFR 376.12(k).": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/escrow-account"
+      "routes/escrow-account",
+      "routes/section-index"
     ]
   },
   "Owner-operator settlement": {
@@ -198541,7 +198648,7 @@
     ]
   },
   "Pages": {
-    "sites": 10,
+    "sites": 9,
     "scope": [
       "ts"
     ],
@@ -198549,8 +198656,7 @@
       "apps/web/components",
       "routes/billing-queue",
       "routes/desk",
-      "routes/inbox",
-      "routes/section-index"
+      "routes/inbox"
     ]
   },
   "Pages appear here as they arrive": {
@@ -202327,12 +202433,13 @@
     ]
   },
   "Payments recorded in {0} against invoices and settlements Trenova sent, and whether each was brought into Trenova.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/accounting-inbound"
+      "routes/accounting-inbound",
+      "routes/section-index"
     ]
   },
   "Payments recorded in {0} are left out of Trenova. Turn them on in the integration settings.": {
@@ -202631,15 +202738,6 @@
       "go/other"
     ]
   },
-  "Pending Approvals": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Pending EDI connection requests": {
     "sites": 1,
     "scope": [
@@ -202662,13 +202760,15 @@
     ]
   },
   "Pending approvals": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "apps/web/config",
+      "go/other",
       "routes/invoice-approval",
       "routes/invoice-reconciliation"
     ]
@@ -208740,12 +208840,13 @@
     ]
   },
   "Posted invoices assigned to a factor, split by whether they are ready to sell. Select ready invoices to send them to their factor on a schedule, open one to see the checks it failed, or follow funded invoices until the factor releases their reserve.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/factoring"
+      "routes/factoring",
+      "routes/section-index"
     ]
   },
   "Posted on the effective date; leave 0 for none.": {
@@ -210546,12 +210647,13 @@
     ]
   },
   "Price a tariff the way it was published — a grid of zones, weight breaks and classes — instead of one lane per cell": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/rate-matrix"
+      "routes/rate-matrix",
+      "routes/section-index"
     ]
   },
   "Price band table": {
@@ -213576,12 +213678,13 @@
     ]
   },
   "Provision bearer credentials for third-party systems with direct, tenant-scoped permissions.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin"
+      "routes/admin",
+      "routes/section-index"
     ]
   },
   "Provisioning": {
@@ -214046,12 +214149,13 @@
     ]
   },
   "Purchased-transportation cost accrued as carrier-covered shipments deliver — the source ledger behind every carrier settlement.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/carrier-cost-event"
+      "routes/carrier-cost-event",
+      "routes/section-index"
     ]
   },
   "Purchases": {
@@ -215513,22 +215617,16 @@
       "routes/reports"
     ]
   },
-  "Quick Actions": {
-    "sites": 2,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Quick actions": {
-    "sites": 3,
+    "sites": 6,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "go/other",
+      "routes/home",
       "routes/shipment"
     ]
   },
@@ -216472,12 +216570,13 @@
     ]
   },
   "Ranked carrier waterfalls that cover a lane automatically when a move tenders": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/routing-guide"
+      "routes/routing-guide",
+      "routes/section-index"
     ]
   },
   "Ranked carriers with the rate, offer expiry, and channel each is tendered on": {
@@ -219539,21 +219638,23 @@
     ]
   },
   "Read-only record of every carrier payable statement across pay periods — process active settlements in the workspace.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/carrier-settlement"
+      "routes/carrier-settlement",
+      "routes/section-index"
     ]
   },
   "Read-only record of every driver and owner-operator settlement across pay periods — process active settlements in the workspace.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/driver-settlement"
+      "routes/driver-settlement",
+      "routes/section-index"
     ]
   },
   "Read-only until you approve": {
@@ -220470,12 +220571,13 @@
     ]
   },
   "Real-time driver earnings accrued as shipments deliver — the source ledger behind every settlement.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/driver-pay-event"
+      "routes/driver-pay-event",
+      "routes/section-index"
     ]
   },
   "Real-time weather map overlays including wind speed, cloud cover, temperature, and atmospheric pressure layers for fleet route planning.": {
@@ -221457,7 +221559,7 @@
     ]
   },
   "Receivables": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "go",
       "ts"
@@ -221465,7 +221567,8 @@
     "areas": [
       "go/other",
       "routes/collections",
-      "routes/desk"
+      "routes/desk",
+      "routes/home"
     ]
   },
   "Receivables (Minor)": {
@@ -221477,22 +221580,14 @@
       "go/other"
     ]
   },
-  "Receivables Snapshot": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Receivables aging by customer with drill-down to the ledger.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/ar-aging"
+      "routes/ar-aging",
+      "routes/section-index"
     ]
   },
   "Receivables assistant": {
@@ -221523,12 +221618,22 @@
     ]
   },
   "Receivables health, collections, and cash-flow at a glance.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/accounting-dashboard"
+      "routes/accounting-dashboard",
+      "routes/section-index"
+    ]
+  },
+  "Receivables snapshot": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Receivables stay on the books and the advance is a liability to the factor.": {
@@ -221722,22 +221827,15 @@
       "routes/inbox"
     ]
   },
-  "Recent Activity": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Recent activity": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "go/other",
       "routes/admin"
     ]
   },
@@ -222257,12 +222355,13 @@
     ]
   },
   "Reconcile inbound carrier freight invoices against negotiated buy rates — link carriers, create matches, and resolve variances.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/carrier-invoice-matching"
+      "routes/carrier-invoice-matching",
+      "routes/section-index"
     ]
   },
   "Reconcile stale document extraction jobs": {
@@ -222331,15 +222430,6 @@
       "routes/invoice-approval"
     ]
   },
-  "Reconciliation Exceptions": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Reconciliation exception": {
     "sites": 1,
     "scope": [
@@ -222359,12 +222449,14 @@
     ]
   },
   "Reconciliation exceptions": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/web/config",
+      "go/other",
       "routes/invoice-reconciliation"
     ]
   },
@@ -223707,12 +223799,13 @@
     ]
   },
   "Record, apply, and reverse customer payments with full GL traceability.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/customer-payments"
+      "routes/customer-payments",
+      "routes/section-index"
     ]
   },
   "Recordable cases": {
@@ -223743,12 +223836,13 @@
     ]
   },
   "Recordable injuries and illnesses for the year, and the 300A summary posted over them. The totals are counted from the log every time it is read, so a case corrected years later cannot leave a stale summary behind.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/osha"
+      "routes/osha",
+      "routes/section-index"
     ]
   },
   "Recorded": {
@@ -229694,7 +229788,7 @@
     ]
   },
   "Report": {
-    "sites": 17,
+    "sites": 19,
     "scope": [
       "go",
       "ts"
@@ -230337,12 +230431,13 @@
     ]
   },
   "Request and manage journal entry reversals.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/journal-reversal"
+      "routes/journal-reversal",
+      "routes/section-index"
     ]
   },
   "Request certification": {
@@ -234528,12 +234623,13 @@
     ]
   },
   "Reusable driver pay packages: mileage rates and bands, revenue percentages, accessorial pay, and guarantees.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/pay-profile"
+      "routes/pay-profile",
+      "routes/section-index"
     ]
   },
   "Reusable onboarding and offboarding checklists": {
@@ -234568,15 +234664,6 @@
       "routes/formula-template",
       "routes/home",
       "routes/shipment"
-    ]
-  },
-  "Revenue & Volume": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Revenue / mile": {
@@ -234631,6 +234718,17 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Revenue and volume": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "go/other",
+      "routes/home"
     ]
   },
   "Revenue basis": {
@@ -234726,12 +234824,13 @@
     ]
   },
   "Revenue, expenses, and net income for a fiscal period.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/income-statement"
+      "routes/income-statement",
+      "routes/section-index"
     ]
   },
   "Reversal": {
@@ -235215,12 +235314,13 @@
     ]
   },
   "Review and resolve bank receipt exceptions requiring attention.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/bank-receipt-queue"
+      "routes/bank-receipt-queue",
+      "routes/section-index"
     ]
   },
   "Review and respond to a load offer": {
@@ -235314,12 +235414,13 @@
     ]
   },
   "Review draft invoices, confirm billing details, and post completed charges": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/invoice"
+      "routes/invoice",
+      "routes/section-index"
     ]
   },
   "Review every customer's open receivables against its credit limit": {
@@ -235478,12 +235579,13 @@
     ]
   },
   "Review policy-controlled invoice adjustments awaiting finance approval.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/invoice-approval"
+      "routes/invoice-approval",
+      "routes/section-index"
     ]
   },
   "Review providers": {
@@ -235544,12 +235646,13 @@
     ]
   },
   "Review reusable mileage records captured from PC*Miler calculations": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin"
+      "routes/admin",
+      "routes/section-index"
     ]
   },
   "Review rows": {
@@ -235735,11 +235838,12 @@
     ]
   },
   "Review unresolved pickup and delivery service failures": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/section-index",
       "routes/service-failure"
     ]
   },
@@ -241648,15 +241752,6 @@
       "routes/settings"
     ]
   },
-  "Saved Views": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Saved as a view": {
     "sites": 1,
     "scope": [
@@ -241836,6 +241931,17 @@
     ],
     "areas": [
       "routes/reports"
+    ]
+  },
+  "Saved views": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "go/other",
+      "routes/home"
     ]
   },
   "Saved views belong to a signed-in person": {
@@ -243819,7 +243925,7 @@
     ]
   },
   "Scheduled": {
-    "sites": 21,
+    "sites": 20,
     "scope": [
       "go",
       "ts"
@@ -252187,7 +252293,7 @@
     ]
   },
   "Service Failures": {
-    "sites": 4,
+    "sites": 2,
     "scope": [
       "go",
       "ts"
@@ -252638,13 +252744,16 @@
     ]
   },
   "Service failures": {
-    "sites": 4,
+    "sites": 7,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
       "apps/web/config",
+      "go/other",
       "routes/desk",
+      "routes/home",
       "routes/service-failure"
     ]
   },
@@ -257958,7 +258067,7 @@
     ]
   },
   "Show stages": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -260924,7 +261033,7 @@
     ]
   },
   "Someone": {
-    "sites": 16,
+    "sites": 15,
     "scope": [
       "go",
       "ts"
@@ -260934,7 +261043,6 @@
       "go/other",
       "routes/agent-control",
       "routes/desk",
-      "routes/home",
       "routes/inbox",
       "routes/org-structure",
       "routes/shipment"
@@ -262226,6 +262334,15 @@
       "routes/inbox"
     ]
   },
+  "South": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "South carolina (SC)": {
     "sites": 1,
     "scope": [
@@ -263297,21 +263414,23 @@
     ]
   },
   "Standing per-settlement deductions: insurance, lease payments, escrow contributions, and loan repayments with caps.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/recurring-deduction"
+      "routes/recurring-deduction",
+      "routes/section-index"
     ]
   },
   "Standing per-settlement earnings: per diem, safety and performance bonuses, stipends, and equipment rental payments with caps.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/recurring-earning"
+      "routes/recurring-earning",
+      "routes/section-index"
     ]
   },
   "Standing, engine on": {
@@ -264799,12 +264918,13 @@
     ]
   },
   "Statement-style transaction history with the customer's AR profile.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/customer-ledger"
+      "routes/customer-ledger",
+      "routes/section-index"
     ]
   },
   "Statements": {
@@ -272328,15 +272448,6 @@
       "apps/web/lib"
     ]
   },
-  "Tentative": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
   "Tenure": {
     "sites": 3,
     "scope": [
@@ -276751,12 +276862,13 @@
     ]
   },
   "The cards drivers fuel with — which provider issued each one, who carries it, and which unit it is tied to. Imported statements are matched to purchases through these cards.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/fuel-card"
+      "routes/fuel-card",
+      "routes/section-index"
     ]
   },
   "The carrier": {
@@ -278359,12 +278471,13 @@
     ]
   },
   "The contracts that decide what a shipment costs, and the lanes each one prices": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/rate-agreement"
+      "routes/rate-agreement",
+      "routes/section-index"
     ]
   },
   "The contractual notice has not gone out yet — acting here decides whether the money is collectable at all": {
@@ -278487,11 +278600,12 @@
     ]
   },
   "The courses workers can be put through — which are required for each driver type, how they are delivered, what passes, and how long a completion stays valid.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/section-index",
       "routes/training-course"
     ]
   },
@@ -281492,12 +281606,13 @@
     ]
   },
   "The factors your receivables are sold to. Customers assigned to one are invoiced with its remit-to and notice of assignment.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/factoring-company"
+      "routes/factoring-company",
+      "routes/section-index"
     ]
   },
   "The fallback policy used when no scoped policy matches a stop. Leave empty to rely on a policy marked as the organization default.": {
@@ -282332,12 +282447,13 @@
     ]
   },
   "The fleet read the way a safety director thinks: the seven CSA BASICs, the trend behind them, and which terminals and drivers are carrying the weight.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/fleet-safety"
+      "routes/fleet-safety",
+      "routes/section-index"
     ]
   },
   "The fleet the worker moves to.": {
@@ -284452,11 +284568,12 @@
     ]
   },
   "The licences, cards, endorsements and certificates workers can hold — which are required, for whom, and how far ahead renewals are flagged.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/section-index",
       "routes/worker-credential-type"
     ]
   },
@@ -287803,12 +287920,13 @@
     ]
   },
   "The per-gallon rates each jurisdiction publishes for a quarter and fuel type, as the IFTA rate matrix lists them. A return cannot be finalized while any of its member lines is missing a rate.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/ifta-tax-rate"
+      "routes/ifta-tax-rate",
+      "routes/section-index"
     ]
   },
   "The percentage applied to the linehaul rate": {
@@ -288265,12 +288383,13 @@
     ]
   },
   "The pools drivers are drawn from and the rounds drawn from them. Each round keeps the seed it was drawn with, so a selection can be re-checked years later.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/random-testing"
+      "routes/random-testing",
+      "routes/section-index"
     ]
   },
   "The port number of the SFTP server.": {
@@ -289014,12 +289133,13 @@
     ]
   },
   "The quarterly fuel tax worksheet: every jurisdiction's miles and tax-paid gallons, the fleet MPG they are taxed through, and what the quarter owes or is owed. Draft figures move with the data until the return is finalized.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/ifta-return"
+      "routes/ifta-return",
+      "routes/section-index"
     ]
   },
   "The query ID on the Clearinghouse response.": {
@@ -292208,12 +292328,13 @@
     ]
   },
   "The shape of the organisation: the positions the roster is counted by, the headcount in each, and who is approving in whose place.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/org-structure"
+      "routes/org-structure",
+      "routes/section-index"
     ]
   },
   "The share judged is between 0 and 1": {
@@ -307317,7 +307438,7 @@
     ]
   },
   "Today": {
-    "sites": 38,
+    "sites": 39,
     "scope": [
       "go",
       "ts"
@@ -307335,6 +307456,7 @@
       "routes/carrier-monitoring",
       "routes/desk",
       "routes/dispatch-console",
+      "routes/home",
       "routes/inbox",
       "routes/intake",
       "routes/late-charges",
@@ -307762,22 +307884,15 @@
       "apps/web/lib"
     ]
   },
-  "Tomorrow's Pickups": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "Tomorrow's pickups": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "go/other",
+      "routes/home"
     ]
   },
   "Tomorrow+": {
@@ -308508,15 +308623,6 @@
     ],
     "areas": [
       "routes/pay-profile"
-    ]
-  },
-  "Top: {0} → {1} ({2})": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
     ]
   },
   "Topic": {
@@ -309452,12 +309558,13 @@
     ]
   },
   "Track bulk adjustment submission progress, failures, and created artifacts.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/invoice-adjustment-batch"
+      "routes/invoice-adjustment-batch",
+      "routes/section-index"
     ]
   },
   "Track customer rejections": {
@@ -309525,12 +309632,13 @@
     ]
   },
   "Track report generation, download artifacts, and cancel active runs": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/reports"
+      "routes/reports",
+      "routes/section-index"
     ]
   },
   "Track shipment": {
@@ -310784,12 +310892,13 @@
     ]
   },
   "Transactional email send and delivery history.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/organization"
+      "routes/organization",
+      "routes/section-index"
     ]
   },
   "Transactional email send and delivery logs": {
@@ -312940,12 +313049,13 @@
     ]
   },
   "Turn on Trenova Capture, set the scan profiles people pick from, and see every computer paired to scan": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin"
+      "routes/admin",
+      "routes/section-index"
     ]
   },
   "Turn on Vet as a broker on the General tab and save to check this customer's broker authority, surety bond and insurance.": {
@@ -314167,7 +314277,7 @@
     ]
   },
   "Unassigned": {
-    "sites": 16,
+    "sites": 17,
     "scope": [
       "go",
       "ts"
@@ -314183,15 +314293,6 @@
       "routes/organization",
       "routes/service-failure",
       "routes/shipment"
-    ]
-  },
-  "Unassigned Loads": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
     ]
   },
   "Unassigned cards": {
@@ -314211,6 +314312,17 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Unassigned loads": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "go/other",
+      "routes/home"
     ]
   },
   "Unassigned {0}": {
@@ -320963,11 +321075,12 @@
     ]
   },
   "View account balances for a fiscal period.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/section-index",
       "routes/trial-balance"
     ]
   },
@@ -321035,12 +321148,13 @@
     ]
   },
   "View all": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin"
+      "routes/admin",
+      "routes/home"
     ]
   },
   "View all inbound files": {
@@ -321062,12 +321176,13 @@
     ]
   },
   "View and create bank receipt import batches.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/bank-receipt-batch"
+      "routes/bank-receipt-batch",
+      "routes/section-index"
     ]
   },
   "View as": {
@@ -326240,6 +326355,15 @@
       "routes/desk"
     ]
   },
+  "West": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "West region, last quarter": {
     "sites": 1,
     "scope": [
@@ -326470,12 +326594,13 @@
     ]
   },
   "What a performance review rates and how much each item counts. Items are copied onto every review, so editing a template never rewrites history.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/review-template"
+      "routes/review-template",
+      "routes/section-index"
     ]
   },
   "What a quantity past the last band, or below the first, prices at. Strict is a lookup miss; clamping prices heavy freight at the top break.": {
@@ -326931,12 +327056,13 @@
     ]
   },
   "What each statement customer has accrued this period, and the invoices it becomes": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/billing-queue"
+      "routes/billing-queue",
+      "routes/section-index"
     ]
   },
   "What each step above the peg adds, when the contract negotiated its own": {
@@ -327840,6 +327966,15 @@
       "routes/formula-template"
     ]
   },
+  "What needs you": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/home"
+    ]
+  },
   "What needs you could not be read": {
     "sites": 1,
     "scope": [
@@ -328161,12 +328296,13 @@
     ]
   },
   "What the carrier offers and who is on it. An employee contribution is taken through an ordinary settlement deduction, so it caps, pauses and reverses exactly like every other one.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/benefits"
+      "routes/benefits",
+      "routes/section-index"
     ]
   },
   "What the charge is for": {
@@ -331584,21 +331720,23 @@
     ]
   },
   "Where trucks wait past free time, who caused it, when it happens, how much of the money is recovered and what to do next": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/detention-intelligence"
+      "routes/detention-intelligence",
+      "routes/section-index"
     ]
   },
   "Where trucks will be short or idle over the next two days, the moves that fix it and how far to trust the forecast": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/freight-outlook"
+      "routes/freight-outlook",
+      "routes/section-index"
     ]
   },
   "Where volume is concentrating, origin against destination": {
@@ -333164,12 +333302,13 @@
     ]
   },
   "Who is expected on which days. The board is composed on every read from the pattern, approved time off, open leave and the work dispatch has already assigned — so it cannot go stale.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/scheduling"
+      "routes/scheduling",
+      "routes/section-index"
     ]
   },
   "Who is invoiced for this charge. Leave blank to bill the shipment's payer.": {
@@ -336252,13 +336391,15 @@
       "routes/admin"
     ]
   },
-  "Workforce Attention": {
-    "sites": 1,
+  "Workforce attention": {
+    "sites": 3,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "go/other",
+      "routes/home"
     ]
   },
   "Workforce coordinator": {
@@ -340046,12 +340187,13 @@
     ]
   },
   "Your carrier's catalog of earning and deduction codes — behavior flags and GL account mappings drive how each code settles and posts.": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/pay-code"
+      "routes/pay-code",
+      "routes/section-index"
     ]
   },
   "Your case": {
@@ -343422,15 +343564,6 @@
     ],
     "areas": [
       "routes/agent-control"
-    ]
-  },
-  "at risk": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/home"
     ]
   },
   "at {0} after a counter-offer": {
@@ -347730,13 +347863,12 @@
     ]
   },
   "from {0}": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components",
-      "routes/home"
+      "apps/web/components"
     ]
   },
   "from {0} L": {
@@ -348339,15 +348471,6 @@
       "routes/billing-queue"
     ]
   },
-  "item needs": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/home"
-    ]
-  },
   "items": {
     "sites": 1,
     "scope": [
@@ -348355,15 +348478,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "items need": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/home"
     ]
   },
   "its history": {
@@ -350307,15 +350421,6 @@
     ],
     "areas": [
       "go/other"
-    ]
-  },
-  "origin → destination · {0} loads": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
     ]
   },
   "original name": {
@@ -356271,6 +356376,15 @@
       "apps/web/components"
     ]
   },
+  "{0, plural, one {# item needs you} other {# items need you}} across {1, plural, one {# queue} other {# queues}}.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/home"
+    ]
+  },
   "{0, plural, one {# item was cleared, by people or on its own.} other {# items were cleared, by people or on their own.}}": {
     "sites": 1,
     "scope": [
@@ -356539,6 +356653,15 @@
     ],
     "areas": [
       "routes/freight-outlook"
+    ]
+  },
+  "{0, plural, one {# load} other {# loads}} in {1, plural, one {# day} other {# days}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/home"
     ]
   },
   "{0, plural, one {# load} other {# loads}} sent to carriers": {
@@ -376201,15 +376324,6 @@
       "routes/worker"
     ]
   },
-  "{0} {1} you": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/home"
-    ]
-  },
   "{0} {1} {2} . Failed shipments are excluded from the totals below.": {
     "sites": 1,
     "scope": [
@@ -378392,12 +378506,11 @@
     ]
   },
   "{0}d": {
-    "sites": 14,
+    "sites": 12,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components",
       "routes/accounting-dashboard",
       "routes/collections",
       "routes/customer-ledger",

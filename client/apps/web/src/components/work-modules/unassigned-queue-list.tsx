@@ -49,7 +49,12 @@ export type UnassignedQueueSummary = {
   totalCount: number | undefined;
   /** False when totalCount is the server's estimate of a queue too large to count. */
   totalCountExact: boolean;
-  pendingRevenue: number;
+  /**
+   * The revenue on the whole queue, or null when the rows read so far are only part
+   * of it: a sum over the first few rows beside the queue's count reads as a total
+   * it is not.
+   */
+  pendingRevenue: number | null;
 };
 
 export type UnassignedQueueListProps = {
@@ -78,7 +83,7 @@ export function UnassignedQueueList({
   const t = useT();
 
   const { data, isLoading, hasNextPage, isFetchingNextPage, fetchNextPage } =
-    useUnassignedShipments(undefined, enabled);
+    useUnassignedShipments(limit || undefined, enabled);
 
   const shipments = useMemo(
     () => (data?.pages.flatMap((page) => page.results) ?? []) as Shipment[],
@@ -89,11 +94,13 @@ export function UnassignedQueueList({
 
   const pendingRevenue = useMemo(
     () =>
-      shipments.reduce(
-        (total, s) => total + parseDecimal(s.totalChargeAmount as unknown as string),
-        0,
-      ),
-    [shipments],
+      hasNextPage
+        ? null
+        : shipments.reduce(
+            (total, s) => total + parseDecimal(s.totalChargeAmount as unknown as string),
+            0,
+          ),
+    [shipments, hasNextPage],
   );
 
   useEffect(() => {

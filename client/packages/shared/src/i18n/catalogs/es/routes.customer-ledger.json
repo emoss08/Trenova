@@ -12,7 +12,6 @@
   "Payments — trailing 12 months": "Pagos: últimos 12 meses",
   "Pick a customer": "Elija un cliente",
   "Select a customer...": "Seleccione un cliente...",
-  "Statement-style transaction history with the customer's AR profile.": "Historial de transacciones en formato de estado de cuenta con el perfil de cuentas por cobrar del cliente.",
   "Totals · {0, plural, one {# entry} other {# entries}}": "Totales · {0, plural, one {# asiento} other {# asientos}}",
   "d avg": "d de media",
   "no credit limit set": "sin límite de crédito establecido",

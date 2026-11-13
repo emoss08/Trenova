@@ -4,6 +4,7 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SectionIndexPage } from "../page";
+import { PAGE_DESCRIPTIONS } from "../page-descriptions.gen";
 
 const Icon = () => null;
 
@@ -76,24 +77,35 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe("SectionIndexPage", () => {
-  it("titles a module section after the module and links every page it may open", () => {
+  it("titles a module section after the module and lays out every page it may open as a card", () => {
     renderAt("/billing");
 
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Billing management");
     expect(screen.getByText("Invoices, rates and what customers owe")).toBeInTheDocument();
 
-    const pages = screen.getByRole("region", { name: "Pages" });
-    expect(within(pages).getByRole("link", { name: /Billing queue/ })).toHaveAttribute(
-      "href",
-      "/billing/queue",
-    );
-    expect(within(pages).getByText("4")).toBeInTheDocument();
+    const queue = screen.getByRole("link", { name: /Billing queue/ });
+    expect(queue).toHaveAttribute("href", "/billing/queue");
+    expect(queue).toHaveAttribute("data-glide-target");
+    expect(queue).toHaveTextContent(PAGE_DESCRIPTIONS["/billing/queue"]);
+    expect(within(queue).getByText("4")).toBeInTheDocument();
 
-    const configuration = screen.getByRole("region", { name: "Configuration" });
-    expect(within(configuration).getByRole("link", { name: /Formula libraries/ })).toHaveAttribute(
-      "href",
-      "/billing/configuration-files/formula-libraries",
+    const configuration = screen.getByRole("region", { name: /Configuration/ });
+    expect(within(configuration).getByRole("heading", { level: 2 })).toHaveTextContent(
+      "Configuration1",
     );
+    const libraries = within(configuration).getByRole("link", { name: /Formula libraries/ });
+    expect(libraries).toHaveAttribute("href", "/billing/configuration-files/formula-libraries");
+    expect(libraries).toHaveTextContent(
+      PAGE_DESCRIPTIONS["/billing/configuration-files/formula-libraries"],
+    );
+  });
+
+  it("leads with the module's own pages under no heading of their own", () => {
+    renderAt("/billing");
+
+    expect(
+      screen.getAllByRole("heading", { level: 2 }).map((heading) => heading.textContent),
+    ).toEqual(["Configuration1"]);
   });
 
   it("lists only the group's own pages under a group section", () => {

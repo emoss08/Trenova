@@ -16,7 +16,6 @@
   "Choose a day from 1 to 28": "请选择 1 至 28 日",
   "Choose at least one day past due to send a reminder on": "请至少选择一个逾期天数来发送提醒",
   "Choose the day of the month to send statements on": "请选择每月发送对账单的日期",
-  "Configure and manage your billing control settings": "配置与管理您的计费控制设置",
   "Control how shipments move into billing, when invoice drafts are created, and whether posted invoices remain manual-review only or may auto-post when no blocking issues exist.": "控制运单如何进入计费流程、发票草稿的创建时机，以及已过账发票是仅限人工审查，或在无阻断问题时可自动过账。",
   "Controls whether eligible shipments are marked ready to bill automatically or only by user action.": "控制符合条件的运单是自动标记为可开具账单，或仅由用户手动标记。",
   "Controls whether invoice drafts are created only by users or automatically when items are transferred.": "控制发票草稿仅由用户创建，或在项目转移时自动创建。",

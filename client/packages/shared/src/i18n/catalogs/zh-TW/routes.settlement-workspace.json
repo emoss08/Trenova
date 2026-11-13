@@ -22,7 +22,6 @@
   "Driver context appears here once a settlement is selected.": "選取結算後，此處會顯示駕駛員的相關資訊。",
   "Every driver holding accrued pay this period. Settle a driver individually to pay them early, or generate for everyone at once — either way, drivers who already have a settlement are skipped and their new accruals attach automatically.": "本期有已計提薪酬的每位駕駛員。可個別結算以提前付款，或一次為所有人產生 — 無論哪種方式，已有結算的駕駛員都會略過，其新增計提會自動附加。",
   "Everything affecting this driver's pay — manage it without leaving the workspace.": "影響此駕駛員薪酬的所有項目 — 無須離開工作區即可管理。",
-  "Everything needed to run a pay period from one screen — review the queue, transfer pay, manage deductions, and process settlements one at a time or in bulk.": "在單一畫面完成薪資期間作業所需的一切 — 檢視佇列、轉入薪酬、管理扣款，並逐筆或批次處理結算。",
   "Failed to add pay event": "無法新增薪酬事件",
   "Failed to settle driver": "為駕駛員結算失敗",
   "Failed to update deduction": "無法更新扣款",

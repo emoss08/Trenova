@@ -39,7 +39,7 @@ export default function ShipmentMapView() {
   return (
     <ShipmentMapPanelBoundary>
       <Suspense fallback={null}>
-        <ShipmentMapPanel backgroundEnabled fill />
+        <ShipmentMapPanel backgroundEnabled />
       </Suspense>
     </ShipmentMapPanelBoundary>
   );

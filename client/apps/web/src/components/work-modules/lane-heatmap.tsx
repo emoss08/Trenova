@@ -1,3 +1,4 @@
+import { defineLabels } from "@trenova/shared/i18n/labels";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { WithheldValue } from "@trenova/shared/components/withheld-value";
@@ -8,6 +9,13 @@ import type { Region, ShipmentAnalyticsData } from "@/lib/shipment-analytics";
 const HIGH_INTENSITY_THRESHOLD = 0.55;
 const REGIONS: Region[] = ["West", "Midwest", "South", "Northeast"];
 
+const REGION_LABELS = defineLabels({
+  West: "West",
+  Midwest: "Midwest",
+  South: "South",
+  Northeast: "Northeast",
+} satisfies Record<Region, string>);
+
 type LaneHeatmapCard = NonNullable<ShipmentAnalyticsData["laneHeatmap"]>;
 
 type LaneHeatmapProps = {
@@ -15,27 +23,21 @@ type LaneHeatmapProps = {
   data: LaneHeatmapCard | null;
 };
 
+/**
+ * Where volume concentrates, origin region against destination region. It is a
+ * widget's body, not a card: the widget that shows it draws the frame and the
+ * title, and says how many loads over how many days in its own header.
+ */
 export function LaneHeatmap({ data }: LaneHeatmapProps) {
   if (data === null) {
-    return <WithheldLaneHeatmap />;
+    return (
+      <div className="flex flex-1 items-center justify-center py-6">
+        <WithheldValue kind="location" />
+      </div>
+    );
   }
 
   return <LaneHeatmapGrid data={data} />;
-}
-
-function WithheldLaneHeatmap() {
-  const t = useT();
-
-  return (
-    <section className="cc-module-card flex min-h-65 flex-col">
-      <header className="border-border flex min-h-9 items-center gap-2 border-b px-3 py-1.5">
-        <h3 className="text-sm font-semibold">{t("Lane heatmap")}</h3>
-      </header>
-      <div className="flex flex-1 items-center justify-center px-3 py-6">
-        <WithheldValue kind="location" />
-      </div>
-    </section>
-  );
 }
 
 function LaneHeatmapGrid({ data }: { data: LaneHeatmapCard }) {
@@ -44,32 +46,20 @@ function LaneHeatmapGrid({ data }: { data: LaneHeatmapCard }) {
   const { grid, total, max, top } = useMemo(() => buildGrid(data), [data]);
 
   return (
-    <section className="cc-module-card flex min-h-65 flex-col">
-      <header className="border-border flex min-h-9 items-center justify-between gap-2 border-b px-3 py-1.5">
-        <div className="flex min-w-0 items-center gap-2">
-          <h3 className="text-sm font-semibold">{t("Lane heatmap")}</h3>
-          <span className="text-muted-foreground font-mono text-2xs">
-            {t("origin → destination · {0} loads", total)}
-          </span>
-        </div>
-        <span className="text-muted-foreground font-mono text-2xs">
-          {t("{0}d", data.windowDays)}
-        </span>
-      </header>
-
-      <div className="flex flex-1 flex-col gap-1 px-3 py-3">
-        <div className="grid grid-cols-[60px_repeat(4,minmax(0,1fr))] gap-1">
+    <div className="flex min-h-0 flex-1 flex-col gap-3">
+      <div className="flex flex-col gap-1">
+        <div className="grid grid-cols-[4.5rem_repeat(4,minmax(0,1fr))] gap-1">
           <span aria-hidden />
-          {REGIONS.map((r) => (
-            <span key={r} className="text-muted-foreground text-center font-mono text-2xs">
-              {r}
+          {REGIONS.map((region) => (
+            <span key={region} className="text-center text-xs text-muted-foreground">
+              {REGION_LABELS[region]}
             </span>
           ))}
         </div>
         {REGIONS.map((origin, rowIdx) => (
-          <div key={origin} className="grid grid-cols-[60px_repeat(4,minmax(0,1fr))] gap-1">
-            <span className="text-muted-foreground flex items-center font-mono text-2xs">
-              {origin}
+          <div key={origin} className="grid grid-cols-[4.5rem_repeat(4,minmax(0,1fr))] gap-1">
+            <span className="flex items-center text-xs text-muted-foreground">
+              {REGION_LABELS[origin]}
             </span>
             {REGIONS.map((destination, colIdx) => (
               <HeatCell
@@ -85,15 +75,20 @@ function LaneHeatmapGrid({ data }: { data: LaneHeatmapCard }) {
         ))}
       </div>
 
-      <footer className="border-border text-muted-foreground flex items-center justify-between border-t px-3 py-2 text-2xs">
-        <span className="font-mono">
+      <div className="mt-auto flex items-center justify-between gap-3 text-xs text-muted-foreground">
+        <span className="min-w-0 truncate">
           {top
-            ? t("Top: {0} → {1} ({2})", top.origin, top.destination, top.count)
+            ? t(
+                "Busiest lane: {0} → {1}, {2, plural, one {# load} other {# loads}}",
+                REGION_LABELS[top.origin],
+                REGION_LABELS[top.destination],
+                top.count,
+              )
             : t("No lane activity")}
         </span>
         <ScaleLegend max={max} />
-      </footer>
-    </section>
+      </div>
+    </div>
   );
 }
 
@@ -111,7 +106,7 @@ function HeatCell({ value, max, origin, destination, total }: CellProps) {
     return (
       <div
         aria-hidden
-        className="border-border-2 text-muted-foreground flex h-[26px] items-center justify-center rounded-[3px] border font-mono text-xs tabular-nums"
+        className="flex h-6.5 items-center justify-center rounded-sm border border-border-2 font-mono text-xs text-muted-foreground tabular-nums"
       >
         ·
       </div>
@@ -125,12 +120,12 @@ function HeatCell({ value, max, origin, destination, total }: CellProps) {
   const tooltipContent = value
     ? t(
         "{0} → {1}: {2, plural, one {# load} other {# loads}} · {3}% of total",
-        origin,
-        destination,
+        REGION_LABELS[origin],
+        REGION_LABELS[destination],
         value,
         percent,
       )
-    : t("{0} → {1}: 0 loads", origin, destination);
+    : t("{0} → {1}: 0 loads", REGION_LABELS[origin], REGION_LABELS[destination]);
 
   return (
     <Tooltip>
@@ -138,7 +133,7 @@ function HeatCell({ value, max, origin, destination, total }: CellProps) {
         render={
           <div
             className={cn(
-              "border-border-2 flex h-6.5 items-center justify-center rounded-[3px] border font-mono text-xs tabular-nums",
+              "flex h-6.5 items-center justify-center rounded-sm border border-border-2 font-mono text-xs tabular-nums",
               value === 0 && "text-muted-foreground",
               value > 0 && !isHighIntensity && "text-foreground",
               isHighIntensity && "text-foreground-on-solid",
@@ -162,7 +157,7 @@ function HeatCell({ value, max, origin, destination, total }: CellProps) {
 function ScaleLegend({ max }: { max: number }) {
   return (
     <span className="flex items-center gap-1.5">
-      <span className="font-mono text-3xs">0</span>
+      <span className="font-mono text-2xs">0</span>
       <span
         aria-hidden
         className="block h-1.5 w-20 rounded-full"
@@ -171,7 +166,7 @@ function ScaleLegend({ max }: { max: number }) {
             "linear-gradient(to right, color-mix(in oklch, var(--color-brand) 5%, transparent), var(--color-brand))",
         }}
       />
-      <span className="font-mono text-3xs">{max}</span>
+      <span className="font-mono text-2xs">{max}</span>
     </span>
   );
 }

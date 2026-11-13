@@ -48,7 +48,6 @@
   "The cleanest records on the fleet. The two lists read the same ranking from opposite ends, so nobody appears on both.": "Los historiales más limpios de la flota. Las dos listas leen la misma clasificación desde extremos opuestos, así que nadie aparece en ambas.",
   "The drivers carrying the most active points, worst first. Points roll off two years after the event.": "Los conductores con más puntos activos, de peor a mejor. Los puntos se eliminan dos años después del evento.",
   "The fleet could not be read. {0}": "No se pudo leer la flota. {0}",
-  "The fleet read the way a safety director thinks: the seven CSA BASICs, the trend behind them, and which terminals and drivers are carrying the weight.": "La flota vista como la piensa un director de seguridad: los siete BASIC de CSA, la tendencia detrás de ellos, y qué terminales y conductores cargan con el peso.",
   "This is how a broker or shipper vetting you sees your record. Findings use your organization's own rules.": "Así es como ve su registro un agente de carga o remitente que lo esté evaluando a usted. Los hallazgos usan las propias reglas de su organización.",
   "Your DOT profile": "Su perfil DOT",
   "Your DOT profile could not be loaded": "No se pudo cargar su perfil DOT",

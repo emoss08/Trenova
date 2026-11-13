@@ -163,7 +163,6 @@
   "The contract gives this service away, which is a stated term rather than an omission": "合同将此服务免费提供，这是明订的条款，而非疏漏",
   "The contract this sheet's lanes are imported into.": "此表单中的线路所导入的合同。",
   "The contract's name as somebody reading an invoice would recognize it": "阅读发票的人所能识别的合同名称",
-  "The contracts that decide what a shipment costs, and the lanes each one prices": "决定运单费用的合同，以及各合同所计价的线路",
   "The currency every lane rates in unless it sets its own, and the terms every lane's tariff reads when the lane leaves them unset.": "各路线计价使用的币种（除非路线自行设置），以及路线未设置时各路线运价表读取的条款。",
   "The customer this agreement bills": "此协议收费对象的客户",
   "The day the imported rates start pricing — the negotiated date, not the upload date.": "导入费率开始计价的日期 — 为议定日期，而非上传日期。",

@@ -3,7 +3,6 @@
   "Business justification for the adjustment, shown to approvers.": "Justificación de negocio del ajuste, que se muestra a los aprobadores.",
   "Cancel reason...": "Motivo de la cancelación...",
   "Create a new manual journal entry draft.": "Cree un nuevo borrador de asiento manual.",
-  "Create and manage manual journal entries.": "Cree y gestione asientos manuales.",
   "Create draft": "Crear un borrador",
   "Describe the entry and when it should hit the general ledger.": "Describa el asiento y cuándo debe llegar al libro mayor.",
   "Each line debits or credits a GL account. Total debits must equal total credits before the journal can be submitted.": "Cada línea carga o abona una cuenta del libro mayor. El total del debe debe ser igual al total del haber antes de poder enviar el asiento.",

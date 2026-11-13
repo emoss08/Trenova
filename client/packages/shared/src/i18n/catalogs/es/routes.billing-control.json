@@ -16,7 +16,6 @@
   "Choose a day from 1 to 28": "Elija un día del 1 al 28",
   "Choose at least one day past due to send a reminder on": "Elija al menos un día de atraso para enviar un recordatorio",
   "Choose the day of the month to send statements on": "Elija el día del mes en que se envían los estados de cuenta",
-  "Configure and manage your billing control settings": "Configure y gestione los ajustes del control de facturación",
   "Control how shipments move into billing, when invoice drafts are created, and whether posted invoices remain manual-review only or may auto-post when no blocking issues exist.": "Controle cómo pasan los envíos a facturación, cuándo se crean los borradores de factura y si las facturas contabilizadas requieren siempre revisión manual o pueden contabilizarse automáticamente cuando no hay incidencias bloqueantes.",
   "Controls whether eligible shipments are marked ready to bill automatically or only by user action.": "Controla si los envíos elegibles se marcan como listos para facturar automáticamente o solo por acción del usuario.",
   "Controls whether invoice drafts are created only by users or automatically when items are transferred.": "Controla si los borradores de factura los crean únicamente los usuarios o se crean automáticamente al transferir los elementos.",

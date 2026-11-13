@@ -12,7 +12,7 @@ export function ReportWidget({ widget }: WidgetProps) {
 
   if (!definitionId && !cannedKey) {
     return (
-      <WidgetShell title={widget.title || "Report"} scroll={false}>
+      <WidgetShell title={widget.title || t("Report")} scroll={false}>
         <WidgetNeedsSetup message={t("Choose the report this tile shows.")} />
       </WidgetShell>
     );
@@ -35,7 +35,7 @@ export function DashboardLinkWidget({ widget }: WidgetProps) {
 
   if (!widget.config.dashboardId) {
     return (
-      <WidgetShell title={widget.title || "Dashboard"} scroll={false}>
+      <WidgetShell title={widget.title || t("Dashboard")} scroll={false}>
         <WidgetNeedsSetup message={t("Choose the dashboard this tile links to.")} />
       </WidgetShell>
     );
@@ -43,7 +43,7 @@ export function DashboardLinkWidget({ widget }: WidgetProps) {
 
   return (
     <WidgetShell
-      title={widget.title || "Dashboard"}
+      title={widget.title || t("Dashboard")}
       href={`/reports/dashboards/${widget.config.dashboardId}`}
       hrefLabel={t("Open dashboard")}
       scroll={false}
@@ -59,48 +59,50 @@ export function DashboardLinkWidget({ widget }: WidgetProps) {
 }
 
 export function LaneHeatmapWidget({ widget, data }: WidgetProps) {
+  const t = useT();
+
+  const heatmap = data.shipmentAnalytics.laneHeatmap;
+  const loading = data.shipmentAnalyticsLoading;
+
   return (
     <WidgetShell
-      title={widget.title || "Lane Heatmap"}
+      title={widget.title || t("Lane heatmap")}
+      hint={
+        heatmap && !loading
+          ? t(
+              "{0, plural, one {# load} other {# loads}} in {1, plural, one {# day} other {# days}}",
+              heatmap.total,
+              heatmap.windowDays,
+            )
+          : undefined
+      }
       href="/shipment-management/shipments"
+      hrefLabel={t("Open shipments")}
       scroll={false}
-      bodyClassName="p-0"
     >
-      {data.shipmentAnalyticsLoading ? (
-        <div className="p-3">
-          <WidgetSkeleton rows={5} />
-        </div>
-      ) : (
-        // The command-center modules bring their own card chrome, which the
-        // widget shell already provides — stripping it avoids a nested frame.
-        <div className="min-h-0 flex-1 [&>section]:h-full [&>section]:min-h-0 [&>section]:border-0 [&>section]:bg-transparent">
-          <LaneHeatmap data={data.shipmentAnalytics.laneHeatmap} />
-        </div>
-      )}
+      {loading ? <WidgetSkeleton rows={5} /> : <LaneHeatmap data={heatmap} />}
     </WidgetShell>
   );
 }
 
 export function CustomerMixWidget({ widget, data }: WidgetProps) {
+  const t = useT();
+
+  const customerMix = data.shipmentAnalytics.customerMix;
+  const loading = data.shipmentAnalyticsLoading;
+
   return (
     <WidgetShell
-      title={widget.title || "Customer Mix"}
-      href="/customers"
-      scroll={false}
-      bodyClassName="p-0"
+      title={widget.title || t("Customer mix")}
+      hint={
+        customerMix && !loading
+          ? t("Last {0, plural, one {# day} other {# days}}", customerMix.windowDays)
+          : undefined
+      }
+      href="/billing/configuration-files/customers"
+      hrefLabel={t("Open customers")}
     >
-      {data.shipmentAnalyticsLoading ? (
-        <div className="p-3">
-          <WidgetSkeleton rows={5} />
-        </div>
-      ) : (
-        <div className="min-h-0 flex-1 [&>section]:h-full [&>section]:min-h-0 [&>section]:border-0 [&>section]:bg-transparent">
-          <CustomerMix
-            customerMix={data.shipmentAnalytics.customerMix}
-            tomorrowsPickups={data.shipmentAnalytics.tomorrowsPickups}
-          />
-        </div>
-      )}
+      {loading ? <WidgetSkeleton rows={5} /> : <CustomerMix customerMix={customerMix} />}
     </WidgetShell>
   );
 }

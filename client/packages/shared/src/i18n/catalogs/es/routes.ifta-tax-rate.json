@@ -33,7 +33,6 @@
   "The columns are jurisdiction code, fuel type, rate per gallon and surcharge per gallon, matched by name. Start from the template if in doubt.": "Las columnas son código de jurisdicción, tipo de combustible, tasa por galón y recargo por galón, emparejadas por nombre. Empiece por la plantilla en caso de duda.",
   "The edition or bulletin, and anything odd about how the figure was read.": "La edición o el boletín, y cualquier particularidad sobre cómo se leyó la cifra.",
   "The matrix lists a separate rate for each fuel; DEF, reefer and other never carry one.": "La matriz indica una tasa distinta para cada combustible; DEF, refrigerado y otros nunca llevan una.",
-  "The per-gallon rates each jurisdiction publishes for a quarter and fuel type, as the IFTA rate matrix lists them. A return cannot be finalized while any of its member lines is missing a rate.": "Las tasas por galón que cada jurisdicción publica para un trimestre y un tipo de combustible, tal como las lista la matriz de tasas IFTA. Una declaración no puede finalizarse mientras a alguna de sus líneas le falte una tasa.",
   "The state or province that levies the tax.": "El estado o provincia que aplica el impuesto.",
   "The {0} rate for {1} in {2} ( {3} per gallon) will be removed.": "Se eliminará la tasa de {0} para {1} en {2} ( {3} por galón).",
   "This file": "Este archivo",

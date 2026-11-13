@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { WIDGET_COMPONENTS, widgetComponentFor } from "../widget-registry";
+import { beforeAll, describe, expect, it } from "vitest";
+import { WIDGET_COMPONENTS, WIDGET_LOADERS, widgetComponentFor } from "../widget-registry";
 
 /**
  * Mirrors the widget keys in
@@ -48,8 +48,18 @@ const CATALOG_KEYS = [
 ];
 
 describe("widget registry", () => {
-  it.each(CATALOG_KEYS)("draws %s", (key) => {
-    expect(widgetComponentFor(key)).toBeTypeOf("function");
+  // The first read of a widget module transforms everything it draws with, which is
+  // slower than one test's allowance; reading them all once here keeps each case fast.
+  beforeAll(async () => {
+    await Promise.all(Object.values(WIDGET_LOADERS).map((load) => load()));
+  }, 120_000);
+
+  // The registry holds loaders, so the proof that a key draws is that its loader
+  // lands on a real component: a renamed export would otherwise pass here and leave
+  // the tile on its skeleton for ever.
+  it.each(CATALOG_KEYS)("loads the component that draws %s", async (key) => {
+    expect(await WIDGET_LOADERS[key]()).toBeTypeOf("function");
+    expect(widgetComponentFor(key)).not.toBeNull();
   });
 
   it("registers nothing the catalog does not offer", () => {

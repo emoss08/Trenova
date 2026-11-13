@@ -18,7 +18,6 @@
   "Create {0} (USDOT {1}) from its FMCSA record.": "Cree {0} (USDOT {1}) a partir de su registro de la FMCSA.",
   "Enter a USDOT or MC number to pull a carrier and check it against your vetting rules before you import it.": "Ingrese un número USDOT o MC para obtener un transportista y verificarlo con sus reglas de evaluación antes de importarlo.",
   "Find a carrier": "Buscar un transportista",
-  "Find carriers, vet them against your rules and import the ones you want": "Busque transportistas, evalúelos con sus reglas e importe los que desee",
   "Fleet size": "Tamaño de la flota",
   "Generated from the name": "Generado a partir del nombre",
   "Hazmat carriers in Ohio": "Transportistas de materiales peligrosos en Ohio",

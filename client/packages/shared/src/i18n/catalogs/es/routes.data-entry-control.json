@@ -2,7 +2,6 @@
   "Case formatting rules": "Reglas de formato de mayúsculas",
   "City case": "Mayúsculas de la ciudad",
   "Code case": "Mayúsculas del código",
-  "Configure case formatting rules for data entry across the system": "Configure las reglas de formato de mayúsculas para la introducción de datos en todo el sistema",
   "Control how text is automatically formatted when entering data. These rules apply system-wide to standardize codes, names, emails, and city fields.": "Controle cómo se formatea automáticamente el texto al introducir datos. Estas reglas se aplican en todo el sistema para estandarizar códigos, nombres, correos y campos de ciudad.",
   "Data entry control": "Control de introducción de datos",
   "Email case": "Mayúsculas del correo",

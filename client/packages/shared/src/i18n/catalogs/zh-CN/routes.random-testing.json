@@ -71,7 +71,6 @@
   "Show every pool's rounds": "显示所有抽选池的批次",
   "Show rounds for {0}": "显示 {0} 的批次",
   "The pool a draw runs against when none is named; turning this on takes the default off whichever pool had it.": "未指定抽选池时所使用的抽选池；开启此项会取消原先默认抽选池的默认状态。",
-  "The pools drivers are drawn from and the rounds drawn from them. Each round keeps the seed it was drawn with, so a selection can be re-checked years later.": "抽选司机所依据的抽选池，以及从中抽出的批次。每个批次都保留当时使用的随机种子，因此多年后仍可重新验证抽选结果。",
   "The programme could not be read. {0}": "无法读取此方案。{0}",
   "The rates are annual. Each round draws its share of them, rounded up so a year of rounds cannot finish under the minimum.": "这些比率为年度值。每个批次抽出其应分摊的比例并向上取整，确保整年的批次合计不会低于最低标准。",
   "The same seed over the same roster reproduces exactly these names, in this order.": "相同的随机种子搭配相同的名册，会完全重现这些名单及其顺序。",

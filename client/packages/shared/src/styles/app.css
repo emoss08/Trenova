@@ -582,13 +582,6 @@
   z-index: 1;
 }
 
-.cc-module-card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  overflow: hidden;
-}
-
 /* A live pin: a still halo round the dot, wider when the pin is highlighted.
    Being live or moving is a state, not work, so the pin does not pulse; a map
    of pulsing pins never stopped moving. */

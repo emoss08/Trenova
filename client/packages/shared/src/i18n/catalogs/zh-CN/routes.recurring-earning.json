@@ -11,7 +11,6 @@
   "Paid / cap": "已支付／上限",
   "Pause to skip upcoming settlements without losing history; completed earnings stop permanently.": "暂停即可跳过接下来的结算而不失去历史记录；已完成的薪酬则永久停止。",
   "Recurring earning": "周期性薪酬",
-  "Standing per-settlement earnings: per diem, safety and performance bonuses, stipends, and equipment rental payments with caps.": "每次结算的常设薪酬：每日津贴、安全与绩效奖金、补助，以及设有上限的设备租金支付。",
   "The amount added each time the earning applies to a settlement.": "此薪酬每次套用于结算时所加计的金额。",
   "The driver whose settlements this earning is added to.": "此薪酬所加计的对象司机。",
   "The earning begins applying to settlements whose period ends after this date.": "此薪酬自期间结束日晚于此日期的结算开始套用。",

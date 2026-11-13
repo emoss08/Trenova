@@ -18,7 +18,6 @@
   "Taxable": "Gravable",
   "Taxable amounts post as earnings; non-taxable amounts (per diem, stipends) post as reimbursements.": "Los importes gravables se contabilizan como percepciones; los no gravables (viáticos, estipendios) como reembolsos.",
   "When off, pay under this code is ignored when checking a driver's guaranteed period minimum.": "Cuando está desactivado, el pago con este código se ignora al comprobar el mínimo garantizado del período de un conductor.",
-  "Your carrier's catalog of earning and deduction codes — behavior flags and GL account mappings drive how each code settles and posts.": "El catálogo de códigos de percepción y deducción de su transportista: los indicadores de comportamiento y las asignaciones de cuentas del libro mayor determinan cómo se liquida y contabiliza cada código.",
   "e.g. CHAINPAY": "p. ej., CHAINPAY",
   "e.g. Chain-Up Pay": "p. ej., Pago por colocación de cadenas",
   "{0, plural, one {# pay code activated} other {# pay codes activated}}": "{0, plural, one {# código de pago activado} other {# códigos de pago activados}}",

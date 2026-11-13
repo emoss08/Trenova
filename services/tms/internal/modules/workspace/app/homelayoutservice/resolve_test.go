@@ -130,7 +130,7 @@ func TestResolve_FallsBackToBuiltInForCoreResponsibility(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, SourceBuiltIn, effective.Source)
-	assert.Equal(t, "Billing Home", effective.PresetName)
+	assert.Equal(t, "Billing home", effective.PresetName)
 	assert.True(t, effective.CanCustomize)
 	assert.False(t, effective.Locked)
 	assert.NotEmpty(t, effective.Layout.Widgets)
@@ -471,7 +471,7 @@ func TestResolve_DeletedPresetLeavesCustomLayoutIntact(t *testing.T) {
 	assert.Equal(t, SourceUser, effective.Source)
 	assert.Equal(t, []string{homelayout.WidgetFavorites}, widgetKeys(effective.Layout))
 	assert.True(t, effective.PresetID.IsNil())
-	assert.Equal(t, "Operations Home", effective.PresetName)
+	assert.Equal(t, "Operations home", effective.PresetName)
 }
 
 // TestResolve_DropsRetiredWidgetKeys proves a stored layout survives a widget

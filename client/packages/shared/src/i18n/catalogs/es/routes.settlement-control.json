@@ -7,7 +7,6 @@
   "As drivers complete work, new pay events flow into their open draft settlement automatically — no manual transfer needed.": "A medida que los conductores completan trabajo, los nuevos eventos de pago fluyen automáticamente a su liquidación en borrador abierta; no hace falta transferirlos a mano.",
   "Auto-approve clean settlements": "Aprobar automáticamente las liquidaciones sin incidencias",
   "Auto-attach new pay to open drafts": "Adjuntar automáticamente el pago nuevo a los borradores abiertos",
-  "Configure pay periods, accrual triggers, exception policies, and escrow interest": "Configure los períodos de pago, los activadores de devengo, las políticas de excepción y los intereses del depósito en garantía",
   "Default annual interest rate": "Tasa de interés anual predeterminada",
   "Defines the settlement cycle and when drivers earn pay for a shipment.": "Define el ciclo de liquidación y cuándo los conductores ganan el pago por un envío.",
   "Escrow interest": "Intereses del depósito en garantía",

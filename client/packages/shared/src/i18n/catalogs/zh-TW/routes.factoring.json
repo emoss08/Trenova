@@ -18,7 +18,6 @@
   "None of the selected invoices is assigned to a factor.": "所選發票均未轉讓給承購公司。",
   "Nothing is booked until you review the matches and apply them.": "在您檢視比對結果並套用之前，不會入帳任何項目。",
   "Open its page": "開啟其頁面",
-  "Posted invoices assigned to a factor, split by whether they are ready to sell. Select ready invoices to send them to their factor on a schedule, open one to see the checks it failed, or follow funded invoices until the factor releases their reserve.": "已轉讓給承購公司的已過帳發票，依是否可出售區分。選取可出售的發票以清單送交承購公司，開啟發票查看未通過的檢查，或追蹤已撥款發票直到承購公司釋出保留款。",
   "Reading the remittance…": "正在讀取匯款通知…",
   "Ready over a day": "就緒超過一天",
   "Remitted": "已匯款",

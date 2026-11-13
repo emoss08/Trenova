@@ -25,7 +25,6 @@
   "Check call monitoring": "Supervisión de llamadas de control",
   "Choose which incident types should be captured as service failures.": "Elija qué tipos de incidente deben registrarse como fallos de servicio.",
   "Compliance enforcement level": "Nivel de aplicación del cumplimiento",
-  "Configure and manage your dispatch control settings": "Configure y gestione los ajustes del control de despacho",
   "Configure dispatch-time compliance checks for worker qualification, medical certification, hazmat eligibility, and testing requirements.": "Configure las comprobaciones de cumplimiento en el momento del despacho para la habilitación del trabajador, la certificación médica, la aptitud para materiales peligrosos y los requisitos de pruebas.",
   "Configure how the system chooses workers and equipment for shipments. These controls influence assignment consistency, utilization, and dispatch throughput.": "Configure cómo elige el sistema trabajadores y equipos para los envíos. Estos controles afectan a la coherencia de las asignaciones, la utilización y el rendimiento del despacho.",
   "Costs and prices": "Costos y precios",

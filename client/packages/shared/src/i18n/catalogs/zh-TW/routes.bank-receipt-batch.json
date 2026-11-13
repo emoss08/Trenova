@@ -26,7 +26,6 @@
   "The file imported with nothing in it, or every line was rejected. Import it again once it has rows.": "匯入的檔案內容為空，或所有明細皆被拒絕。請待其有資料列後再重新匯入。",
   "Total amount": "總金額",
   "Total batches": "批次總數",
-  "View and create bank receipt import batches.": "檢視並建立銀行入帳匯入批次。",
   "e.g. Chase, Wells Fargo": "例如：Chase、Wells Fargo",
   "e.g. Statement 2026-04": "例如：2026-04 對帳單"
 }

@@ -6,7 +6,6 @@
   "Add US federal holidays": "Agregar los días festivos federales de EE. UU.",
   "Already blocked": "Ya bloqueado",
   "Auto-generation is off — occurrences wait for someone to generate them, and would be created the same day as pickup.": "La generación automática está desactivada: las ocurrencias esperan a que alguien las genere y se crearían el mismo día de la recogida.",
-  "Automatically generate shipments for repeating lanes on a schedule you control": "Genere automáticamente envíos para rutas recurrentes según una programación que usted controla",
   "Blackout dates": "Fechas bloqueadas",
   "Blocked days": "Días bloqueados",
   "Changing the schedule recalculates the next pickup from the next future occurrence. Shipments that have already been generated are never modified.": "Cambiar la programación recalcula la siguiente recogida a partir de la próxima ocurrencia futura. Los envíos ya generados nunca se modifican.",

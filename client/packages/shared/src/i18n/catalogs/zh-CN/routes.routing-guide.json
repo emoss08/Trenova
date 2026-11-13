@@ -32,7 +32,6 @@
   "Primary waterfall for the Dallas–Atlanta contract freight": "达拉斯—亚特兰大合同货运的主要瀑布式流程",
   "Rank": "排序",
   "Rank the carriers a lane should waterfall through, with the rate and offer window for each.": "为线路排定瀑布式流程应依序询问的承运商，并填入各自的费率与要约时限。",
-  "Ranked carrier waterfalls that cover a lane automatically when a move tenders": "运程发出要约时自动涵盖该线路的承运商排序瀑布式流程",
   "Ranked carriers with the rate, offer expiry, and channel each is tendered on": "已排序的承运商，含各自的费率、要约到期时间与发出通道",
   "Requires a default EDI channel on the carrier": "承运商须设有默认的 EDI 通道",
   "Routing guide": "路线指引",

@@ -42,7 +42,6 @@
   "Leg {0} cannot be invoiced": "El tramo {0} no se puede facturar",
   "Legs subtotal": "Subtotal de tramos",
   "Lifecycle stage, derived automatically from the status of the order's shipment legs.": "Etapa del ciclo de vida, derivada automáticamente del estado de los tramos de envío del pedido.",
-  "Manage and track orders for your organization": "Gestione y siga los pedidos de su organización",
   "No leg is ready to invoice yet. A leg must be completed or ready to invoice before it can be billed.": "Todavía no hay ningún tramo listo para facturar. Un tramo debe estar completado o listo para facturar antes de poder cobrarse.",
   "No legs": "Sin tramos",
   "No order charges": "Sin cargos de pedido",

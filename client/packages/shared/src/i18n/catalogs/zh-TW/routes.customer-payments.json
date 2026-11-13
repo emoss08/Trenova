@@ -29,7 +29,6 @@
   "Post a customer payment and apply it across open invoices in one step.": "一次完成客戶付款過帳並沖抵各未結發票。",
   "Post payment": "過帳付款",
   "Posted today": "今日已過帳",
-  "Record, apply, and reverse customer payments with full GL traceability.": "記錄、沖抵與沖銷客戶付款，並具備完整的總帳追溯性。",
   "Reverse": "沖銷",
   "Reverse payment": "沖銷付款",
   "Reversed {0} — cash was backed out and the applied invoices were reopened.": "已沖銷 {0} — 款項已回沖，已沖抵的發票也重新開啟。",

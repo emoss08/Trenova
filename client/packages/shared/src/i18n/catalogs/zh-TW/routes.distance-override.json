@@ -8,7 +8,6 @@
   "No distance overrides yet": "尚無距離覆寫",
   "No intermediate stops configured.": "尚未設定中途停靠點。",
   "Optionally scope this override to a specific customer": "可選擇將此覆寫限定於特定客戶",
-  "Override calculated distances between location pairs for routing and billing adjustments": "覆寫地點配對之間的計算距離，供路徑規劃與帳務調整使用",
   "Select customer (optional)": "選擇客戶（選填）",
   "Select destination location": "選擇目的地地點",
   "Select origin location": "選擇起點地點",

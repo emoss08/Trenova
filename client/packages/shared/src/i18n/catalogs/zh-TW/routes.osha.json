@@ -66,7 +66,6 @@
   "Recordable cases": "應記錄案件",
   "Recordable cases per 100 full-time workers, over {0} hours": "以 {0} 工時為基準，每 100 名全職員工的可登錄案件數",
   "Recordable cases times 200,000, divided by the hours worked from the 300A figures: the rate per 100 full-time workers OSHA and insurers compare fleets on.": "可登錄案件數乘以 200,000，再除以 300A 表格中的工作時數：即 OSHA 與保險業者用來比較各車隊、以每 100 名全職員工計的比率。",
-  "Recordable injuries and illnesses for the year, and the 300A summary posted over them. The totals are counted from the log every time it is read, so a case corrected years later cannot leave a stale summary behind.": "該年度應記錄的傷害與疾病，以及據此張貼的 300A 摘要。總計每次讀取時都自紀錄重新計算，因此多年後才更正的案件不會留下過時的摘要。",
   "Restricted or transferred": "限制工作或調職",
   "Search the log": "搜尋紀錄",
   "Show every case": "顯示所有案件",

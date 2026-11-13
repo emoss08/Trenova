@@ -9,23 +9,23 @@ related:
 ---
 
 ## What it's for
-Home is the first screen after signing in. The band across the top greets you, shows the time in your profile timezone, and lists what needs you right now as clickable chips: unassigned and at-risk shipments (when you can read shipments), plus counts from the billing queue, pending approvals, reconciliation exceptions, service failures, EDI problems and decisions waiting on the desk. Each chip opens the page that holds those items. When nothing is flagged it says you're clear.
+Home is the first screen after signing in. It opens on a brief: the date and time in your profile timezone, a greeting, and one sentence saying how much needs you. Under it a strip counts each queue that has work in it: unassigned and at-risk shipments (when you can read shipments), then the billing queue, pending approvals, reconciliation exceptions, service failures, EDI problems and decisions waiting on the desk. Each figure opens the page that holds those items, and a queue with nothing in it is left out. When nothing is flagged the brief says you're clear.
 
-Below the band is a grid of widgets: queues, metrics, report tiles, dashboards, insights and announcements. Your administrator can give each role a preset home screen; you can customize your own copy unless the administrator has locked it.
+Below the brief is a grid of widgets: work lists, key figures, report tiles, dashboards, insights and announcements. Your administrator can give each role a preset home screen; you can customize your own copy unless the administrator has locked it. On a phone the widgets stack one under another in the same order.
 
 ## Tasks
 
 ### Jump to what needs attention
 Keywords: what should I work on, flagged items, todo, alerts
 1. Open [Home](/).
-2. Select a chip in the top band (for example unassigned, at risk or service failures) to open the page with those items.
+2. Select a figure in the strip under the greeting (for example **Unassigned**, **At risk** or **Service failures**) to open the page with those items.
 
 ### Customize your home screen
 Keywords: add widget, rearrange dashboard, change layout, personalize home
 1. Open [Home](/) and select **Customize**.
 2. Select **Add widget**, search or pick a category, and select a widget card to add it. Some widgets ask what to show before they land.
 3. Drag widgets to rearrange them. Open a widget's menu to change its **Width** and **Height**, **Configure** what it shows, or **Remove** it.
-4. Select **Save** in the floating bar, or **Done** in the top band. **Discard** throws the changes away.
+4. Select **Save** in the floating bar, or **Done** where **Customize** was. **Discard** throws the changes away.
 
 ### Configure a widget
 Keywords: widget settings, rename widget, choose metrics

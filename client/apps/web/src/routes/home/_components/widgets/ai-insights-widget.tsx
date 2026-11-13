@@ -16,7 +16,7 @@ import {
   XCloseIcon,
 } from "@trenova/shared/components/icons";
 import { Link } from "react-router";
-import { WidgetCount, WidgetEmpty, WidgetShell, WidgetSkeleton } from "../widget-shell";
+import { WidgetEmpty, WidgetShell, WidgetSkeleton } from "../widget-shell";
 import type { WidgetProps } from "../widget-registry";
 import {
   formatMetricChange,
@@ -62,7 +62,7 @@ export function AIInsightsWidget({ widget }: WidgetProps) {
     <WidgetShell
       title={widget.title || t("Operational insights")}
       icon={Lightbulb01Icon}
-      badge={criticalCount > 0 ? <WidgetCount value={criticalCount} tone="danger" /> : null}
+      count={criticalCount}
       href="/insights"
       hrefLabel={t("All insights")}
     >

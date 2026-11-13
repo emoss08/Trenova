@@ -12,7 +12,6 @@
   "Pay Event — {0}": "Evento de pago — {0}",
   "Pay events accrue automatically when a shipment reaches your configured pay trigger and are locked once settled.": "Los eventos de pago se devengan automáticamente cuando un envío alcanza el activador de pago configurado y quedan bloqueados una vez liquidados.",
   "Qty × rate": "Cant. × tarifa",
-  "Real-time driver earnings accrued as shipments deliver — the source ledger behind every settlement.": "Percepciones de los conductores devengadas en tiempo real a medida que se entregan los envíos: el libro de origen detrás de cada liquidación.",
   "Release holds": "Liberar las retenciones",
   "e.g. Awaiting signed BOL from the shipper": "p. ej., A la espera del conocimiento de embarque firmado por el expedidor",
   "e.g. Awaiting signed BOLs for this batch": "p. ej., A la espera de los conocimientos de embarque firmados de este lote",

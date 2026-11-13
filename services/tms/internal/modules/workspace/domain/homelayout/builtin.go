@@ -28,15 +28,15 @@ func BuiltInLayout(responsibility rbac.CoreResponsibility) *Layout {
 func BuiltInLayoutName(responsibility rbac.CoreResponsibility) string {
 	switch responsibility {
 	case rbac.CoreResponsibilityOperations:
-		return "Operations Home"
+		return "Operations home"
 	case rbac.CoreResponsibilityBilling:
-		return "Billing Home"
+		return "Billing home"
 	case rbac.CoreResponsibilityFinance:
-		return "Finance Home"
+		return "Finance home"
 	case rbac.CoreResponsibilityLeadership:
-		return "Leadership Home"
+		return "Leadership home"
 	default:
-		return "Trenova Home"
+		return "Trenova home"
 	}
 }
 
@@ -45,21 +45,20 @@ func operationsLayout() *Layout {
 		widget(WidgetKPIRow, 12, 2, WidgetConfig{
 			Metrics: []string{
 				"activeShipments",
-				"unassigned",
-				"atRisk",
-				"onTimePercent",
 				"readyToDispatch",
+				"movesLate",
+				"onTimePercent",
+				"emptyMilePercent",
 				"revenueToday",
 			},
 		}),
-		widget(WidgetAttention, 4, 4, WidgetConfig{}),
-		widget(WidgetUnassigned, 4, 4, WidgetConfig{Limit: 8}),
-		widget(WidgetExceptions, 4, 4, WidgetConfig{Limit: 8}),
-		widget(WidgetDetentionWatch, 4, 5, WidgetConfig{Limit: 8}),
+		widget(WidgetUnassigned, 6, 5, WidgetConfig{Limit: 8}),
+		widget(WidgetExceptions, 6, 5, WidgetConfig{Limit: 8}),
 		widget(WidgetTomorrowsPickups, 8, 5, WidgetConfig{Limit: 10}),
-		widget(WidgetFleetStatus, 4, 4, WidgetConfig{}),
-		widget(WidgetMap, 8, 4, WidgetConfig{}),
-		widget(WidgetQuickActions, 12, 2, WidgetConfig{}),
+		widget(WidgetDetentionWatch, 4, 5, WidgetConfig{Limit: 8}),
+		widget(WidgetMap, 8, 5, WidgetConfig{}),
+		widget(WidgetFleetStatus, 4, 3, WidgetConfig{}),
+		widget(WidgetQuickActions, 4, 2, WidgetConfig{}),
 	)
 }
 
@@ -68,18 +67,16 @@ func billingLayout() *Layout {
 		widget(WidgetKPIRow, 12, 2, WidgetConfig{
 			Metrics: []string{"arTotalOpen", "arOverdue", "arDaysSalesOutstanding", "revenueToday"},
 		}),
-		// The queue and approvals tiles are a single number with a destination;
-		// three rows fit them, and five leaves a tile that is mostly air.
-		widget(WidgetBillingQueue, 4, 3, WidgetConfig{Limit: 10}),
-		widget(WidgetMyApprovals, 4, 3, WidgetConfig{Limit: 10}),
-		widget(WidgetAttention, 4, 3, WidgetConfig{}),
-		widget(WidgetARSnapshot, 6, 3, WidgetConfig{}),
 		widget(WidgetReport, 6, 5, WidgetConfig{
 			CannedKey: cannedUnbilledDelivered,
 			Limit:     10,
 		}),
-		widget(WidgetActivity, 6, 5, WidgetConfig{Limit: 10}),
-		widget(WidgetQuickActions, 6, 3, WidgetConfig{}),
+		widget(WidgetReport, 6, 5, WidgetConfig{
+			CannedKey: cannedARAgingByCustomer,
+			Limit:     10,
+		}),
+		widget(WidgetActivity, 8, 3, WidgetConfig{Limit: 10}),
+		widget(WidgetQuickActions, 4, 3, WidgetConfig{}),
 	)
 }
 
@@ -95,38 +92,32 @@ func financeLayout() *Layout {
 				"marginPercent",
 			},
 		}),
-		widget(WidgetARSnapshot, 6, 3, WidgetConfig{}),
-		widget(WidgetRevenueTrend, 6, 4, WidgetConfig{WindowDays: 90}),
+		widget(WidgetRevenueTrend, 8, 4, WidgetConfig{WindowDays: 90}),
+		widget(WidgetOnTimeGoal, 4, 4, WidgetConfig{}),
+		// No dashboard-link here: a shipped preset has no dashboard to point
+		// at, and a link widget without a target fails its own validation.
 		widget(WidgetReport, 6, 5, WidgetConfig{
 			CannedKey: cannedARAgingByCustomer,
 			Limit:     10,
 		}),
 		widget(WidgetCustomerMix, 6, 5, WidgetConfig{}),
-		// No dashboard-link here: a shipped preset has no dashboard to point
-		// at, and a link widget without a target fails its own validation.
-		widget(WidgetOnTimeGoal, 3, 4, WidgetConfig{}),
-		widget(WidgetActivity, 9, 4, WidgetConfig{Limit: 10}),
 	)
 }
 
 func leadershipLayout() *Layout {
 	return layoutOf(
-		widget(WidgetAnnouncement, 12, 2, WidgetConfig{
-			Text: "Welcome to Trenova. Edit this announcement to speak to your team.",
-		}),
 		widget(WidgetKPIRow, 12, 2, WidgetConfig{
 			Metrics: []string{
 				"revenueToday",
+				"marginPercent",
 				"onTimePercent",
 				"emptyMilePercent",
-				"marginPercent",
 				"activeShipments",
-				"atRisk",
+				"arOverdue",
 			},
 		}),
-		widget(WidgetRevenueTrend, 5, 4, WidgetConfig{WindowDays: 90}),
-		widget(WidgetOnTimeGoal, 3, 4, WidgetConfig{}),
-		widget(WidgetARSnapshot, 4, 4, WidgetConfig{}),
+		widget(WidgetRevenueTrend, 8, 4, WidgetConfig{WindowDays: 90}),
+		widget(WidgetOnTimeGoal, 4, 4, WidgetConfig{}),
 		widget(WidgetLaneHeatmap, 6, 5, WidgetConfig{}),
 		widget(WidgetCustomerMix, 6, 5, WidgetConfig{}),
 		widget(WidgetReport, 12, 5, WidgetConfig{
@@ -138,11 +129,14 @@ func leadershipLayout() *Layout {
 
 func fallbackLayout() *Layout {
 	return layoutOf(
-		widget(WidgetAttention, 4, 4, WidgetConfig{}),
-		widget(WidgetQuickActions, 4, 4, WidgetConfig{}),
-		widget(WidgetFavorites, 4, 4, WidgetConfig{}),
-		widget(WidgetJumpBackIn, 6, 4, WidgetConfig{Limit: 8}),
-		widget(WidgetActivity, 6, 4, WidgetConfig{Limit: 10}),
+		widget(WidgetKPIRow, 12, 2, WidgetConfig{
+			Metrics: []string{"activeShipments", "onTimePercent", "revenueToday", "arOverdue"},
+		}),
+		widget(WidgetUnassigned, 6, 5, WidgetConfig{Limit: 8}),
+		widget(WidgetExceptions, 6, 5, WidgetConfig{Limit: 8}),
+		widget(WidgetTomorrowsPickups, 8, 5, WidgetConfig{Limit: 10}),
+		widget(WidgetQuickActions, 4, 2, WidgetConfig{}),
+		widget(WidgetJumpBackIn, 4, 3, WidgetConfig{Limit: 6}),
 	)
 }
 

@@ -18,7 +18,6 @@
   "None of the selected invoices is assigned to a factor.": "所选发票均未转让给保理公司。",
   "Nothing is booked until you review the matches and apply them.": "在您审核匹配结果并应用之前，不会入账任何内容。",
   "Open its page": "打开其页面",
-  "Posted invoices assigned to a factor, split by whether they are ready to sell. Select ready invoices to send them to their factor on a schedule, open one to see the checks it failed, or follow funded invoices until the factor releases their reserve.": "已转让给保理公司的已过账发票，按是否可出售分组。选择可出售的发票，以清单形式发送给其保理公司；打开发票可查看未通过的检查；或跟踪已放款的发票，直到保理公司释放其保留金。",
   "Reading the remittance…": "正在读取汇款…",
   "Ready over a day": "就绪超过一天",
   "Remitted": "已汇款",

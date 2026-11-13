@@ -6,7 +6,6 @@
   "Choose the first document date": "選擇第一個文件日期",
   "Choose the last document date": "選擇最後一個文件日期",
   "Documents (leave all unticked for every kind)": "單據（全部不勾選即包含所有類型）",
-  "Every document Trenova sends to {0}, what happened to it, and what to do when it did not go through.": "Trenova 傳送至 {0} 的每份單據、其處理結果，以及未能送達時的處理方式。",
   "Loading sync record...": "正在載入同步紀錄…",
   "Loading tries...": "正在載入嘗試紀錄…",
   "Month-end close in progress": "月結作業進行中",

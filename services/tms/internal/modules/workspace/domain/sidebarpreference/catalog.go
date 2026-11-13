@@ -41,32 +41,32 @@ type QuickActionDefinition struct {
 
 func SectionCatalog() []SectionDefinition {
 	return []SectionDefinition{
-		{Key: SectionAttention, Label: "Needs Attention", Hideable: true},
-		{Key: SectionQuickActions, Label: "Quick Actions", Hideable: true},
+		{Key: SectionAttention, Label: "Needs attention", Hideable: true},
+		{Key: SectionQuickActions, Label: "Quick actions", Hideable: true},
 		{Key: SectionFavorites, Label: "Favorites", Hideable: true},
-		{Key: SectionActivity, Label: "Recent Activity", Hideable: true},
+		{Key: SectionActivity, Label: "Recent activity", Hideable: true},
 		{Key: SectionBrowse, Label: "Browse", Hideable: false},
 	}
 }
 
 func AttentionMetricCatalog() []AttentionMetricDefinition {
 	return []AttentionMetricDefinition{
-		{Key: "billingQueue", Label: "Billing Queue", Resource: permission.ResourceBillingQueue},
-		{Key: "pendingApprovals", Label: "Pending Approvals", Resource: permission.ResourceInvoice},
+		{Key: "billingQueue", Label: "Billing queue", Resource: permission.ResourceBillingQueue},
+		{Key: "pendingApprovals", Label: "Pending approvals", Resource: permission.ResourceInvoice},
 		{
 			Key:      "reconciliationExceptions",
-			Label:    "Reconciliation Exceptions",
+			Label:    "Reconciliation exceptions",
 			Resource: permission.ResourceInvoice,
 		},
 		{
 			Key:      "serviceFailures",
-			Label:    "Service Failures",
+			Label:    "Service failures",
 			Resource: permission.ResourceServiceFailure,
 		},
-		{Key: "ediAttention", Label: "EDI Needs Attention", Resource: permission.ResourceEDI},
+		{Key: "ediAttention", Label: "EDI needs attention", Resource: permission.ResourceEDI},
 		{
 			Key:      "agentDecisions",
-			Label:    "Decisions Waiting",
+			Label:    "Decisions waiting",
 			Resource: permission.ResourceAgentProposal,
 		},
 	}

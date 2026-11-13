@@ -5,7 +5,6 @@
   "Auto-post source events": "自动过账来源事件",
   "Base currency used for organization accounting and financial reporting.": "用于组织会计与财务报表的基准货币。",
   "Closed period posting policy": "已结账期间的过账政策",
-  "Configure and manage your accounting control settings": "配置与管理您的会计控制设置",
   "Configure automatic journal creation, manual journal policy, and the chart-of-account defaults required for accounting automation.": "配置自动分录创建、手工分录政策，以及会计自动化所需的会计科目表默认值。",
   "Configure exchange-rate date selection, override handling, and realized FX accounts.": "配置汇率日期的选取方式、覆盖处理，以及已实现汇兑损益科目。",
   "Configure the accounting currency mode and functional currency for financial reporting.": "配置财务报表所用的会计币种模式与功能货币。",

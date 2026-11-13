@@ -27,7 +27,6 @@
   "Optional — tagging a pay code posts the adjustment to that code's GL account instead of the default expense account.": "选填 — 标注薪酬代码后，调整会过账至该代码的总账科目，而非默认费用科目。",
   "Pay profile: {0}": "薪酬配置文件：{0}",
   "Positive amounts add pay (layover, breakdown, bonus); negative amounts deduct.": "正值增加薪酬（滞留待命、故障、奖金）；负值则扣除。",
-  "Read-only record of every driver and owner-operator settlement across pay periods — process active settlements in the workspace.": "跨薪资期间所有司机与自营车主结算的只读记录 — 进行中的结算请于工作区处理。",
   "Record how the net pay was disbursed to the worker.": "记录净薪酬如何发放给员工。",
   "Remove pay event from settlement": "自结算中移除薪酬事件",
   "Remove this pay event — it returns to the unsettled pool for a later settlement": "移除此薪酬事件 — 它会退回未结算池，留待后续结算",

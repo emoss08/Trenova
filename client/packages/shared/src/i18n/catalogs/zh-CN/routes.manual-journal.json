@@ -3,7 +3,6 @@
   "Business justification for the adjustment, shown to approvers.": "此调整的业务理由，会显示给批准者。",
   "Cancel reason...": "取消原因...",
   "Create a new manual journal entry draft.": "创建新的手工分录草稿。",
-  "Create and manage manual journal entries.": "创建并管理手工分录。",
   "Create draft": "创建草稿",
   "Describe the entry and when it should hit the general ledger.": "说明此分录的内容及其应计入总账的时点。",
   "Each line debits or credits a GL account. Total debits must equal total credits before the journal can be submitted.": "每一行皆借记或贷记一个总账科目。借方合计须等于贷方合计，分录才能送出。",

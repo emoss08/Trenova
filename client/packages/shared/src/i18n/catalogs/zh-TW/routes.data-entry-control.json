@@ -2,7 +2,6 @@
   "Case formatting rules": "大小寫格式規則",
   "City case": "城市大小寫",
   "Code case": "代碼大小寫",
-  "Configure case formatting rules for data entry across the system": "設定全系統資料輸入的大小寫格式規則",
   "Control how text is automatically formatted when entering data. These rules apply system-wide to standardize codes, names, emails, and city fields.": "控制輸入資料時文字的自動格式化方式。這些規則適用於全系統，用以統一代碼、名稱、電子郵件與城市欄位。",
   "Data entry control": "資料輸入控制",
   "Email case": "電子郵件大小寫",

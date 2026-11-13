@@ -1,3 +1,4 @@
+import { SectionPanel } from "@/components/section-panel";
 import { Button } from "@trenova/shared/components/ui/button";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
@@ -22,11 +23,16 @@ export function useWidgetEditing(): boolean {
 }
 
 export type WidgetShellProps = {
+  /** The widget's name in the reader's language, sentence case. */
   title: string;
   icon?: IconComponent;
-  /** Rendered beside the title as a count or a short status. */
-  badge?: ReactNode;
-  /** Controls that belong to the widget itself, left of the edit controls. */
+  /** How many things the widget lists; drawn beside the title when above zero. */
+  count?: number;
+  /** False when `count` is the server's estimate of a list too large to count. */
+  countExact?: boolean;
+  /** A short muted note on the right of the header: an amount waiting, a window. */
+  hint?: ReactNode;
+  /** Controls that belong to the widget itself, on the right of the header. */
   actions?: ReactNode;
   /** The single "see everything" destination. Home is a launcher: every widget has one. */
   href?: string;
@@ -38,94 +44,82 @@ export type WidgetShellProps = {
   children: ReactNode;
 };
 
+/** The tile draws the frame, so the panel inside it brings only its header and body. */
+const PANEL_IN_TILE = "min-h-0 flex-1 rounded-none border-0 bg-transparent";
+
 /**
- * The one chrome every home widget wears: a micro label, an optional count, the
- * widget's own controls, and exactly one way through to the full view. Widgets
- * supply content, never their own frame, so a canvas of twenty cards still
- * reads as one surface.
+ * The one chrome every home widget wears, and it is the app's own: the panel
+ * header every dashboard uses (`SectionPanel`), a body, and exactly one way
+ * through to the full view. Widgets supply content, never their own frame, so
+ * a canvas of twenty cards reads as one surface and as part of the app.
  */
 export function WidgetShell({
   title,
   icon: Icon,
-  badge,
+  count,
+  countExact = true,
+  hint,
   actions,
   href,
-  hrefLabel = "View all",
+  hrefLabel,
   scroll = true,
   className,
   bodyClassName,
   children,
 }: WidgetShellProps) {
+  const t = useT();
   const editing = useWidgetEditing();
 
   const body = (
     <div className={cn("flex min-h-0 flex-1 flex-col p-3", bodyClassName)}>{children}</div>
   );
+  const content = scroll ? (
+    <ScrollArea className="min-h-0 flex-1" maskVariant="card">
+      {body}
+    </ScrollArea>
+  ) : (
+    body
+  );
+
+  if (editing) {
+    return <div className={cn("flex min-h-0 flex-1 flex-col", className)}>{content}</div>;
+  }
+
+  // A figure the server could not count is not drawn as one: it reads as an
+  // estimate in words, beside whatever else the header notes.
+  const estimate =
+    count !== undefined && count > 0 && !countExact
+      ? t("About {0}", formatRowTotal(count, false))
+      : null;
 
   return (
-    <div className={cn("flex min-h-0 flex-1 flex-col", className)}>
-      {!editing && (
-        <div className="border-border/60 flex h-8 shrink-0 items-center gap-1.5 border-b px-2.5">
-          {Icon && <Icon className="text-muted-foreground size-3 shrink-0" />}
-          <span className="cc-label text-foreground min-w-0 flex-1 truncate">{title}</span>
-          {badge}
-          {actions}
-        </div>
-      )}
-
-      {scroll ? (
-        <ScrollArea className="min-h-0 flex-1" maskVariant="card">
-          {body}
-        </ScrollArea>
-      ) : (
-        body
-      )}
-
-      {href && !editing && (
+    <SectionPanel
+      title={title}
+      icon={Icon ? <Icon /> : undefined}
+      count={countExact ? count : undefined}
+      hint={
+        estimate && hint ? (
+          <>
+            {estimate} · {hint}
+          </>
+        ) : (
+          (estimate ?? hint)
+        )
+      }
+      action={actions}
+      className={cn(PANEL_IN_TILE, className)}
+    >
+      {content}
+      {href ? (
         <Link
           to={href}
-          className="group/footer border-border/60 text-2xs text-muted-foreground hover:bg-muted/40 hover:text-foreground flex h-7 shrink-0 items-center justify-between border-t px-2.5 transition-colors"
+          className="group/footer ui-inset-focus-ring flex h-8 shrink-0 items-center justify-between border-t border-border px-3 text-xs text-muted-foreground transition-colors hover:bg-surface-hover hover:text-foreground"
         >
-          <span>{hrefLabel}</span>
+          <span>{hrefLabel ?? t("View all")}</span>
           <ArrowRightIcon className="size-3 transition-transform duration-200 group-hover/footer:translate-x-0.5" />
         </Link>
-      )}
-    </div>
-  );
-}
-
-export function WidgetCount({
-  value,
-  exact = true,
-  tone = "muted",
-}: {
-  value: number | undefined;
-  /** False when value is the server's estimate of a list too large to count. */
-  exact?: boolean;
-  tone?: "muted" | "danger" | "warning" | "brand" | "success";
-}) {
-  const t = useT();
-  if (value === undefined) return null;
-  const estimate = exact ? undefined : t("About {0}", formatRowTotal(value, false));
-
-  const toneClass = {
-    muted: "bg-muted text-muted-foreground",
-    danger: "bg-danger-subtle text-destructive",
-    warning: "bg-warning-subtle text-warning",
-    brand: "bg-brand/15 text-brand",
-    success: "bg-success-subtle text-success",
-  }[tone];
-
-  return (
-    <span
-      className={cn(
-        "font-table inline-flex min-w-4.5 shrink-0 justify-center rounded-md px-1 text-3xs tabular-nums",
-        toneClass,
-      )}
-      title={estimate}
-    >
-      {!exact || value > 999 ? "999+" : value}
-    </span>
+      ) : null}
+    </SectionPanel>
   );
 }
 
@@ -142,10 +136,28 @@ export function WidgetEmpty({
 }) {
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-2 py-4 text-center">
-      <span className="border-border/60 bg-muted/50 flex size-7 items-center justify-center rounded-full border">
-        <Icon className="text-muted-foreground/70 size-3.5" />
-      </span>
-      <p className="text-2xs text-muted-foreground max-w-52">{children}</p>
+      <Icon aria-hidden className="size-4 text-foreground-subtle" />
+      <p className="max-w-56 text-xs text-muted-foreground">{children}</p>
+    </div>
+  );
+}
+
+/**
+ * A tile before its widget is there: while it is still below the fold, and while
+ * the widget's code is on its way. It is the shape every widget shares, a title
+ * over a few rows, so the tile does not jump when the real one lands.
+ */
+export function WidgetTileSkeleton() {
+  const t = useT();
+
+  return (
+    <div
+      aria-busy
+      aria-label={t("Loading widget")}
+      className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden p-3"
+    >
+      <Skeleton className="h-4 w-32 rounded-md" />
+      <WidgetSkeleton rows={3} />
     </div>
   );
 }
@@ -176,7 +188,7 @@ export function WidgetNeedsSetup({
 }) {
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-2 py-4 text-center">
-      <p className="text-2xs text-muted-foreground max-w-50">{message}</p>
+      <p className="max-w-56 text-xs text-muted-foreground">{message}</p>
       {actionLabel && onAction && (
         <Button variant="outline" size="xs" onClick={onAction}>
           {actionLabel}

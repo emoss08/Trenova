@@ -5,7 +5,6 @@
   "At least 10 characters. This is what explains the override to whoever reads it next.": "至少 10 个字符。这是向下一位阅读者说明此覆盖的依据。",
   "Carrier override": "承运商覆盖",
   "Defer to state": "依州法规定",
-  "Hold your fleet to stricter limits than a state requires. An override can only tighten a limit, never loosen one, and applies to your organization alone.": "以比州法更严格的限制要求您的车队。覆盖只能收紧限制，绝不能放宽，且仅适用于您的组织。",
   "Leave blank to defer to the state. A value above the state limit is rejected.": "留空即依州法规定。高于州法上限的数值会被拒绝。",
   "Loading carrier override...": "正在加载承运商覆盖...",
   "No carrier overrides yet": "尚无承运商覆盖",

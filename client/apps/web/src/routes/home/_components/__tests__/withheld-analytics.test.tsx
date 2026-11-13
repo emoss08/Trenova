@@ -152,8 +152,25 @@ describe("withheld shipment analytics", () => {
   it("draws a withheld lane heatmap as hidden", () => {
     render(<LaneHeatmap data={null} />);
 
-    expect(screen.getByText("Lane heatmap")).toBeInTheDocument();
     expect(screen.getByText("Hidden")).toBeInTheDocument();
     expect(screen.queryByText("No lane activity")).toBeNull();
+  });
+
+  // The widget that shows the heatmap draws the one frame and the one title, so the
+  // heatmap brings neither: a second card inside the tile was a frame within a frame.
+  it("draws the lane heatmap with no card or heading of its own", () => {
+    const { container } = render(
+      <LaneHeatmap
+        data={{
+          windowDays: 7,
+          total: 53,
+          cells: [{ origin: "South", destination: "South", count: 53 }],
+        }}
+      />,
+    );
+
+    expect(container.querySelector("section, header, footer")).toBeNull();
+    expect(screen.queryByRole("heading")).toBeNull();
+    expect(screen.getByText("Busiest lane: South → South, 53 loads")).toBeInTheDocument();
   });
 });

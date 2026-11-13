@@ -3,7 +3,6 @@
   "Average fleet fuel efficiency used to convert diesel price per gallon into cost per mile.": "用以将每加仑柴油价格换算为每英里成本的车队平均油耗效率。",
   "Benchmark {0}": "基准 {0}",
   "Charges empty repositioning miles to the shipment cost estimate. Industry practice is to include them.": "将空车调度的里程计入运单成本估算。业界惯例为纳入计算。",
-  "Configure the cost-per-mile model that powers shipment profitability estimates": "配置驱动运单盈利能力估算的每英里成本模型",
   "Core assumptions behind the cost-per-mile estimate: fuel pricing, fleet efficiency, and how deadhead miles are attributed to shipment cost.": "每英里成本估算背后的核心假设：燃油价格、车队效率，以及空驶里程如何归属至运单成本。",
   "Cost basis": "成本基准",
   "Derive this rate from posted GL expenses divided by fleet miles over the rolling window.": "以滚动期间内已过账的总账费用除以车队里程，推导出此费率。",

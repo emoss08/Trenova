@@ -5,7 +5,6 @@
   "Auto-post source events": "Contabilizar automáticamente los eventos de origen",
   "Base currency used for organization accounting and financial reporting.": "Moneda base usada para la contabilidad y los informes financieros de la organización.",
   "Closed period posting policy": "Política de contabilización en períodos cerrados",
-  "Configure and manage your accounting control settings": "Configure y gestione los ajustes del control contable",
   "Configure automatic journal creation, manual journal policy, and the chart-of-account defaults required for accounting automation.": "Configure la creación automática de asientos, la política de asientos manuales y los valores predeterminados del plan de cuentas necesarios para la automatización contable.",
   "Configure exchange-rate date selection, override handling, and realized FX accounts.": "Configure la selección de la fecha del tipo de cambio, el tratamiento de las anulaciones y las cuentas de diferencias de cambio realizadas.",
   "Configure the accounting currency mode and functional currency for financial reporting.": "Configure el modo de moneda contable y la moneda funcional para los informes financieros.",

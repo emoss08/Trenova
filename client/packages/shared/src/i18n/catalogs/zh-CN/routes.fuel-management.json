@@ -42,7 +42,6 @@
   "Customers assigned to this program will stop receiving fuel surcharges on new shipments. Already-billed surcharges and their audit snapshots are preserved.": "分配至此方案的客户，其新运单将不再收取燃油附加费。已开具账单的附加费及其审计快照则予以保留。",
   "Customize bands": "自定义区间",
   "DOE ${0}": "DOE ${0}",
-  "DOE diesel prices, fuel surcharge programs, and automatic surcharge application": "美国能源部柴油价格、燃油附加费方案，以及附加费的自动应用",
   "DOE indices ingest automatically each week via the EIA integration — custom indices take manually entered weekly prices (e.g. Canadian FCA or contract-specific pegs)": "DOE 指数每周通过 EIA 集成自动采集 — 自定义指数则采人工输入的每周价格 (例如加拿大 FCA 或合同专属基准价)",
   "Date basis": "日期基准",
   "Decimal places for the computed per-mile rate (0–6).": "计算所得每英里费率的小数位数 (0–6)。",

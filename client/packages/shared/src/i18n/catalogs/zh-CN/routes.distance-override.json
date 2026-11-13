@@ -8,7 +8,6 @@
   "No distance overrides yet": "尚无距离覆盖",
   "No intermediate stops configured.": "尚未配置中途停靠点。",
   "Optionally scope this override to a specific customer": "可选择将此覆盖限定于特定客户",
-  "Override calculated distances between location pairs for routing and billing adjustments": "覆盖地点配对之间的计算距离，供路径规划与计费调整使用",
   "Select customer (optional)": "选择客户（选填）",
   "Select destination location": "选择目的地地点",
   "Select origin location": "选择起点地点",

@@ -18,7 +18,6 @@
   "No rate confirmations on the covered moves.": "已承运的运程上没有费率确认书。",
   "Positive amounts add cost owed to the carrier (detention, lumper); negative amounts deduct (damage claim, advance recovery).": "正值会增加应付给承运商的成本（滞留费、装卸工费）；负值则会扣除（损害索赔、预付款回收）。",
   "Rate confirmations": "费率确认书",
-  "Read-only record of every carrier payable statement across pay periods — process active settlements in the workspace.": "跨薪资期间所有承运商应付对账单的只读记录 — 进行中的结算请于工作区处理。",
   "Records the disbursement to the carrier and posts the cash journal (debit accounts payable, credit cash) plus the ledger payment entry.": "记录支付给承运商的款项，并过账现金日记账（借记应付账款、贷记现金）及账册付款分录。",
   "The check number or ACH trace so the payment reconciles against the bank.": "支票号码或 ACH 追踪码，以便款项与银行核对。",
   "Traced back to the accrued cost event": "可回溯至已计提的成本事件",

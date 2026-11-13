@@ -11,18 +11,21 @@ import {
   ChevronSelectorVerticalIcon,
   DotsHorizontalIcon,
   Edit02Icon,
-  Grid01Icon,
   PlusIcon,
   Trash01Icon,
 } from "@trenova/shared/components/icons";
+import { useInView } from "@/hooks/use-in-view";
+import { scrollParent } from "@/lib/dom";
+import { LazyComponent } from "@trenova/shared/components/error-boundary";
+import { EmptySheet, GhostLine } from "@trenova/shared/components/ui/empty-sheet";
 import { AnimatePresence } from "motion/react";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { AddWidgetDialog } from "./add-widget-dialog";
 import { HomeEditDock } from "./edit-dock";
 import type { HomeData } from "./use-home-data";
 import { WIDGET_COMPONENTS, type WidgetProps } from "./widget-registry";
 import { WidgetConfigDialog } from "./widget-config-dialog";
-import { WidgetEditingProvider } from "./widget-shell";
+import { WidgetEditingProvider, WidgetTileSkeleton } from "./widget-shell";
 
 const DEFAULT_GRID_COLUMNS = 12;
 
@@ -128,13 +131,20 @@ export function HomeCanvas({
 
   if (widgets.length === 0 && !editing) {
     return (
-      <div className="border-border flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed py-16 text-center">
-        <Grid01Icon className="text-muted-foreground/40 size-5" />
-        <p className="text-sm font-medium">{t("Your home screen is empty")}</p>
-        <p className="text-muted-foreground max-w-xs text-xs">
-          {t("Choose Customize to add the queues and numbers you want to land on.")}
-        </p>
-      </div>
+      <EmptySheet
+        title={t("Your home screen is empty")}
+        description={t("Choose Customize to add the queues and numbers you want to land on.")}
+        sketch={
+          <div className="grid grid-cols-3 gap-2">
+            {[0, 1, 2].map((index) => (
+              <div key={index} className="flex h-16 flex-col gap-2 rounded-lg border p-3">
+                <GhostLine className="w-1/2" />
+                <GhostLine className="w-5/6" />
+              </div>
+            ))}
+          </div>
+        }
+      />
     );
   }
 
@@ -174,8 +184,8 @@ export function HomeCanvas({
                 {editing && (
                   <div className="border-border/60 bg-muted/40 flex h-8 shrink-0 items-center gap-1.5 border-b px-2">
                     <TileDragHandle {...drag} />
-                    <span className="cc-label text-foreground min-w-0 flex-1 truncate">
-                      {widget.title || optionsByKey.get(widget.key)?.label || widget.key}
+                    <span className="min-w-0 flex-1 truncate text-sm font-semibold">
+                      {widget.title || widgetLabel(optionsByKey.get(widget.key), t)}
                     </span>
                     <span className="text-muted-foreground shrink-0 font-mono text-3xs tabular-nums">
                       {widget.w}×{widget.h}
@@ -247,15 +257,57 @@ export function HomeCanvas({
 }
 
 /**
- * Renders one widget, or nothing at all when the deployed client has no
- * component for its key. A silent skip is right here: the server already
- * dropped everything the viewer may not see, so a key that survives to the
- * client and has no drawer is a version skew, not a user's problem.
+ * How far below the fold a tile starts loading. A tile is read just before it
+ * scrolls in rather than as it arrives, so it is usually drawn by the time it is
+ * looked at.
+ */
+const TILE_LOAD_MARGIN = "240px 0px";
+
+/**
+ * Renders one widget once its tile is on screen, or nothing at all when the
+ * deployed client has no component for its key. A silent skip is right there: the
+ * server already dropped everything the viewer may not see, so a key that
+ * survives to the client and has no drawer is a version skew, not a user's
+ * problem.
+ *
+ * A home screen can hold two dozen widgets, most of them below the fold, and each
+ * brings its own code and its own reads. Until a tile comes into view it draws its
+ * skeleton and asks for nothing, so opening Home costs what the first screenful
+ * costs. Once seen a widget stays mounted, so scrolling back does not reload it.
  */
 function WidgetBody({ widget, data }: WidgetProps) {
   const Component = WIDGET_COMPONENTS[widget.key];
+  // The page scrolls inside the shell, and a watcher rooted at the window ignores its
+  // margin for anything an inner scroller clips, so the tile is watched against the
+  // element that actually scrolls it.
+  const [tile, setTile] = useState<HTMLDivElement | null>(null);
+  const scroller = useMemo(() => scrollParent(tile), [tile]);
+  const [watch, seen] = useInView<HTMLDivElement>({
+    root: scroller,
+    rootMargin: TILE_LOAD_MARGIN,
+    once: true,
+  });
+  const tileRef = useCallback(
+    (node: HTMLDivElement | null) => {
+      setTile(node);
+      watch(node);
+    },
+    [watch],
+  );
+
   if (!Component) return null;
-  return <Component widget={widget} data={data} />;
+
+  return (
+    <div ref={tileRef} className="flex min-h-0 flex-1 flex-col">
+      {seen ? (
+        <LazyComponent fallback={<WidgetTileSkeleton />}>
+          <Component widget={widget} data={data} />
+        </LazyComponent>
+      ) : (
+        <WidgetTileSkeleton />
+      )}
+    </div>
+  );
 }
 
 function WidgetControls({
@@ -330,6 +382,15 @@ function WidgetControls({
       </PopoverContent>
     </Popover>
   );
+}
+
+/**
+ * A widget's name as the catalog has it, in the reader's language. A widget the
+ * catalog has not answered for yet is unnamed for that moment rather than shown by
+ * its key, which is a code name nobody should read.
+ */
+function widgetLabel(option: HomeWidgetOption | undefined, t: (message: string) => string) {
+  return option ? t(option.label) : "";
 }
 
 function emptyConfig(): HomeWidget["config"] {

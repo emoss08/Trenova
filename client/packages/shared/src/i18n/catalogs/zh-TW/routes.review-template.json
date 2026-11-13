@@ -23,7 +23,6 @@
   "Shown to the reviewer as the thing being scored.": "顯示給考核者，作為評分的對象。",
   "Shown when someone picks a template to start a review.": "有人選擇範本開始考核時顯示。",
   "Stable identifier kept on every review; must be unique within the template.": "保留於每次考核上的固定識別碼；在範本內必須唯一。",
-  "What a performance review rates and how much each item counts. Items are copied onto every review, so editing a template never rewrites history.": "績效考核所評的內容，以及各項目的權重。項目會複製到每一次考核上，因此編輯範本絕不會改寫歷史紀錄。",
   "What the reviewer should be looking at": "考核者應檢視的重點",
   "Who this review is for and what it covers": "此考核的適用對象與涵蓋範圍",
   "e.g. Annual Driver Review": "例如：駕駛員年度考核",

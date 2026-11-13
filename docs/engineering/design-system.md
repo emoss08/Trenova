@@ -551,9 +551,40 @@ above this one (never Home, never a crumb that repeats the title), then the titl
 at `text-lg` semibold with the description behind an info icon; actions on the
 right, and the star behind a hairline after them. Pass `title`, `description`,
 `actions` and `context` through `pageHeaderProps`; never mount `PageHeader` by hand,
-and never set its `leading` or `trailing` slots, which belong to the shell. The two
-pages that draw their own bar (Home's briefing, AI control's head) put
-`PageBarControls` from `rail-page-bar.tsx` where the fold and history would be.
+and never set its `leading` or `trailing` slots, which belong to the shell. The one
+page that draws its own bar (AI control's head) puts `PageBarControls` from
+`rail-page-bar.tsx` where the fold and history would be.
+
+**The bar says where you are, not hello.** Home's bar reads "Home" with Customize as its
+action, like any page. What greets the person is a brief at the top of the body
+(`routes/home/_components/home-brief.tsx`): the day, a greeting at `text-2xl`, one sentence
+on what needs them, and the queues with work in them as a bare `KpiStrip` whose every
+figure is a link. A page that wants to lead with a sentence puts it there, never in the bar.
+
+**Home's widgets wear `SectionPanel`.** `WidgetShell` (`widget-shell.tsx`) draws the panel
+header inside the tile's frame, so a widget's title, count and note look like every other
+panel's; a row of figures on the canvas is a `KpiStrip`. Widget names are sentence case on
+the server catalog and the client alike. The tile grid (`components/tile-grid`) holds its
+authored columns from `lg` up; below that a tile takes half the grid or all of it, and on
+a phone the whole row.
+
+**A widget's body brings no frame.** The tile is the card and `WidgetShell` is its header, so
+what a widget shows is content only: no `section` with its own border, radius or title row
+inside it, and what that inner header used to say (a window, a count) goes in the shell's
+`hint`. The lane heatmap and the customer mix each drew a second card inside their tile.
+A workspace shown in a tile takes a form built for one: the fleet map's `compact` fills the
+tile with one header row of stage chips that scrolls sideways, no rail, and the whole
+workspace behind its full-screen control. A panel that sets its own height inside a tile
+is clipped by it, which is how the map's detail card stopped scrolling.
+
+**A tile loads when it is about to be seen.** A home screen holds up to two dozen widgets,
+most below the fold. The registry (`widget-registry.tsx`) maps each key to a loader, so a
+widget's code is its own download, and the canvas mounts a widget only once its tile comes
+within 240px of the scroller's edge (`useInView` rooted at `scrollParent`), drawing
+`WidgetTileSkeleton` until then. A widget therefore fetches in its own component, never in
+the page, or it would be read for a tile nobody scrolled to; the two reads the brief shares
+with the canvas (`use-home-data.ts`) are the exception. A list a widget caps asks the server
+for the rows it shows, not a page it then slices.
 
 **Every crumb in the trail opens something.** The trail takes its names from the
 navigation config (`generateBreadcrumbSegments` in `lib/route-utils.ts`) and shows a

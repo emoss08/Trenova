@@ -109,7 +109,7 @@ export type ExceptionsListProps = {
 export function ExceptionsList({ enabled = true, limit, onSelect, onCount }: ExceptionsListProps) {
   const t = useT();
 
-  const { data, isLoading } = useExceptionShipments("all", undefined, enabled);
+  const { data, isLoading } = useExceptionShipments("all", limit || undefined, enabled);
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
 
   const items = useMemo<DerivedException[]>(() => {

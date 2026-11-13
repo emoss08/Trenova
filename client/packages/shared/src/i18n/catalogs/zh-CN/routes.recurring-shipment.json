@@ -6,7 +6,6 @@
   "Add US federal holidays": "加入美国联邦假日",
   "Already blocked": "已被阻止",
   "Auto-generation is off — occurrences wait for someone to generate them, and would be created the same day as pickup.": "自动生成已关闭 — 各期需由人员手动生成，并将于提货当日创建。",
-  "Automatically generate shipments for repeating lanes on a schedule you control": "依您设置的排程，为重复线路自动生成运单",
   "Blackout dates": "封锁日期",
   "Blocked days": "已封锁的日子",
   "Changing the schedule recalculates the next pickup from the next future occurrence. Shipments that have already been generated are never modified.": "变更排程会依下一次未来的发生时点重新计算下次取货时间。已生成的运单绝不会被修改。",

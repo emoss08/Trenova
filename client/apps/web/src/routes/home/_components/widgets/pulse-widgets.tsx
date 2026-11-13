@@ -8,6 +8,7 @@ import { RingGauge } from "@trenova/shared/components/ui/ring-gauge";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import { Area, AreaChart, CartesianGrid, XAxis } from "recharts";
 import { Link } from "react-router";
+import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
 import { MetricTile } from "../metric-tile";
 import { resolveMetric } from "../metric-values";
 import { WidgetEmpty, WidgetNeedsSetup, WidgetShell, WidgetSkeleton } from "../widget-shell";
@@ -23,7 +24,7 @@ export function KPIWidget({ widget, data }: WidgetProps) {
 
   if (!widget.config.metric) {
     return (
-      <WidgetShell title={widget.title || "Metric"} scroll={false}>
+      <WidgetShell title={widget.title || t("Metric")} scroll={false}>
         <WidgetNeedsSetup message={t("Choose the metric this tile shows.")} />
       </WidgetShell>
     );
@@ -31,7 +32,7 @@ export function KPIWidget({ widget, data }: WidgetProps) {
 
   if (!metric) {
     return (
-      <WidgetShell title={widget.title || "Metric"} scroll={false}>
+      <WidgetShell title={widget.title || t("Metric")} scroll={false}>
         <WidgetSkeleton rows={2} />
       </WidgetShell>
     );
@@ -55,7 +56,7 @@ export function KPIRowWidget({ widget, data }: WidgetProps) {
       configured.length > 0 && (data.shipmentAnalyticsLoading || data.receivablesLoading);
 
     return (
-      <WidgetShell title={widget.title || "Metrics"} scroll={false}>
+      <WidgetShell title={widget.title || t("Key figures")} scroll={false}>
         {loading ? (
           <WidgetSkeleton rows={2} />
         ) : (
@@ -65,15 +66,29 @@ export function KPIRowWidget({ widget, data }: WidgetProps) {
     );
   }
 
+  // A row of figures is the app's one joined strip, not a grid of cards. The tile
+  // draws the frame, so the strip gives up its own and fills the tile; each figure
+  // is a door to the page it comes from.
   return (
-    <div
-      className="grid h-full min-h-0 gap-2 p-0.5"
-      style={{ gridTemplateColumns: `repeat(${metrics.length}, minmax(0, 1fr))` }}
+    <KpiStrip
+      aria-label={widget.title || t("Key figures")}
+      className="h-full rounded-none border-0 bg-transparent [&>div]:h-full"
     >
       {metrics.map((metric) => (
-        <MetricTile key={metric.key} metric={metric} />
+        <KpiStripItem
+          key={metric.key}
+          size="lg"
+          label={metric.label}
+          value={metric.unit ? `${metric.display}${metric.unit}` : metric.display}
+          delta={metric.delta}
+          deltaLabel={metric.deltaLabel}
+          deltaTone={metric.deltaTone}
+          sub={metric.sub}
+          to={metric.href}
+          className="flex flex-col justify-center"
+        />
       ))}
-    </div>
+    </KpiStrip>
   );
 }
 
@@ -84,7 +99,7 @@ export function ARSnapshotWidget({ widget, data }: WidgetProps) {
 
   return (
     <WidgetShell
-      title={widget.title || "Receivables"}
+      title={widget.title || t("Receivables")}
       href={RECEIVABLES_HREF}
       hrefLabel={t("Open aging")}
       scroll={false}
@@ -118,12 +133,12 @@ export function ARSnapshotWidget({ widget, data }: WidgetProps) {
 function Figure({ label, value, tone }: { label: string; value: string; tone?: "danger" }) {
   return (
     <div className="flex flex-col justify-center gap-1">
-      <span className="cc-label text-muted-foreground">{label}</span>
+      <span className="text-xs font-medium text-foreground-subtle">{label}</span>
       <span
         className={
           tone === "danger"
-            ? "text-destructive font-mono text-base leading-none font-semibold tabular-nums"
-            : "font-mono text-base leading-none font-semibold tabular-nums"
+            ? "text-xl leading-none font-semibold text-danger-foreground tabular-nums"
+            : "text-xl leading-none font-semibold tabular-nums"
         }
       >
         {value}
@@ -146,7 +161,7 @@ export function RevenueTrendWidget({ widget, data }: WidgetProps) {
 
   return (
     <WidgetShell
-      title={widget.title || "Revenue & Volume"}
+      title={widget.title || t("Revenue and volume")}
       href={SHIPMENTS_HREF}
       hrefLabel={t("Open shipments")}
       scroll={false}
@@ -208,7 +223,7 @@ export function OnTimeGoalWidget({ widget, data }: WidgetProps) {
 
   return (
     <WidgetShell
-      title={widget.title || "On-Time Goal"}
+      title={widget.title || t("On-time goal")}
       href={SHIPMENTS_HREF}
       hrefLabel={t("Open shipments")}
       scroll={false}
@@ -249,7 +264,7 @@ export function FleetStatusWidget({ widget, data }: WidgetProps) {
   const total = rows.reduce((sum, row) => sum + row.value, 0);
 
   return (
-    <WidgetShell title={widget.title || "Fleet Status"} href="/equipment/tractors">
+    <WidgetShell title={widget.title || t("Fleet status")} href="/equipment/tractors">
       {data.shipmentAnalyticsLoading ? (
         <WidgetSkeleton rows={4} />
       ) : total === 0 ? (

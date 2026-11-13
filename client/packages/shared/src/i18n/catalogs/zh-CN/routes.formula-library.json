@@ -18,7 +18,6 @@
   "Every save makes a version. The first is made when you create the library.": "每次保存都会生成一个版本。第一个版本在创建公式库时生成。",
   "Explain this library, function by function": "逐个函数解释此公式库",
   "Fix the highlighted fields to create the library": "修正突出显示的字段后才能创建公式库",
-  "Functions, constants and types written once in Tariff and imported by your formula templates": "用 Tariff 编写一次、供您的公式模板导入的函数、常量和类型",
   "Functions, constants, types and enums, with the tests that pin what they return. Everything is exported unless marked private.": "函数、常量、类型和枚举，以及确定其返回值的测试。除非标记为 private，否则全部导出。",
   "Hazmat and residential delivery fees our tariffs can share": "可供我们各运价表共用的危险品和住宅配送费用",
   "Imported by": "导入方",

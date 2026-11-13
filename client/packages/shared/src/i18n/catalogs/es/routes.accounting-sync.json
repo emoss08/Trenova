@@ -6,7 +6,6 @@
   "Choose the first document date": "Elija la fecha del primer documento",
   "Choose the last document date": "Elija la fecha del último documento",
   "Documents (leave all unticked for every kind)": "Documentos (deje todos sin marcar para incluir todos los tipos)",
-  "Every document Trenova sends to {0}, what happened to it, and what to do when it did not go through.": "Cada documento que Trenova envía a {0}, qué ocurrió con él y qué hacer cuando no se completó.",
   "Loading sync record...": "Cargando el registro de sincronización...",
   "Loading tries...": "Cargando los intentos...",
   "Month-end close in progress": "Cierre de mes en curso",

@@ -51,7 +51,6 @@
   "Open the short-paid invoices": "打开短付发票",
   "Open this customer's ledger": "打开此客户的明细账",
   "Receivables begin when the first invoice posts from billing. Once one does, the balance, days sales outstanding, aging and collections figures fill in here.": "应收账款会在账单作业过账第一张发票时开始。过账后，余额、应收账款周转天数、账龄和收款数据会显示在这里。",
-  "Receivables health, collections, and cash-flow at a glance.": "应收账款健全度、收款与现金流一览。",
   "Reserve releases": "保留金释放",
   "Short-pay rate": "短付率",
   "The open invoices most worth a call, ordered by how far past due they are and how much is at stake. Disputes and short payments are marked.": "最值得致电催收的未结发票，按逾期时间长短和涉及金额排序。争议和短付款项会单独标示。",

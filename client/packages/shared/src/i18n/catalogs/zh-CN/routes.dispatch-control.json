@@ -25,7 +25,6 @@
   "Check call monitoring": "跟踪电话监控",
   "Choose which incident types should be captured as service failures.": "选择哪些事件类型应记录为服务失误。",
   "Compliance enforcement level": "合规强制层级",
-  "Configure and manage your dispatch control settings": "配置与管理您的调度控制设置",
   "Configure dispatch-time compliance checks for worker qualification, medical certification, hazmat eligibility, and testing requirements.": "配置派工当下就司机资格、体检证明、危险品资格与检测要求所做的合规检查。",
   "Configure how the system chooses workers and equipment for shipments. These controls influence assignment consistency, utilization, and dispatch throughput.": "配置系统为运单挑选司机与设备的方式。这些控制项会影响指派一致性、使用率与调度处理量。",
   "Costs and prices": "成本与价格",

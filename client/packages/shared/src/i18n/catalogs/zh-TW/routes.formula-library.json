@@ -18,7 +18,6 @@
   "Every save makes a version. The first is made when you create the library.": "每次儲存都會產生一個版本。第一個版本會在建立公式庫時產生。",
   "Explain this library, function by function": "逐一說明此公式庫的每個函式",
   "Fix the highlighted fields to create the library": "修正醒目標示的欄位後才能建立公式庫",
-  "Functions, constants and types written once in Tariff and imported by your formula templates": "以 Tariff 撰寫一次、供您的公式範本匯入的函式、常數與型別",
   "Functions, constants, types and enums, with the tests that pin what they return. Everything is exported unless marked private.": "函式、常數、型別與列舉，以及確保其回傳值的測試。除非標記為 private，否則全部都會匯出。",
   "Hazmat and residential delivery fees our tariffs can share": "可供我們各運價表共用的危險品與住宅配送費用",
   "Imported by": "匯入者",

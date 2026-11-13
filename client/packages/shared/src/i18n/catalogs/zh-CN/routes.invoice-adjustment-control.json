@@ -4,7 +4,6 @@
   "Adjustment reason requirement": "调整的原因要求",
   "Approval policy": "批准政策",
   "Closed period adjustment policy": "已结账期间的调整政策",
-  "Configure organization policy for credits, rebills, write-offs, and invoice adjustment review.": "配置组织在贷记、重新开单、冲销与发票调整审查方面的政策。",
   "Controls unapplied customer-credit outcomes caused by payment state and does not permit credit beyond true eligible invoice line or item scope.": "控制因付款状态而产生的未冲抵客户贷项，且不允许贷记超出实际符合资格的发票明细或项目范围。",
   "Controls whether disputed invoices can be adjusted and whether approval is required.": "控制争议中的发票是否可调整，以及是否需要批准。",
   "Controls whether fully paid invoices may be adjusted through the formal adjustment workflow.": "控制已全额付款的发票是否可经由正式调整流程进行调整。",

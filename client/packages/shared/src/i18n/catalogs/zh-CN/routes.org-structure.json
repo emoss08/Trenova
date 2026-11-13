@@ -80,7 +80,6 @@
   "The name of the job as it appears on the chart and on each holder's record.": "此职务在组织结构图及各担任者记录上显示的名称。",
   "The part of the business the position sits in.": "此职务所属的业务单位。",
   "The position this one answers to; leave it empty for the top of the chart. A person's own manager is set on their record, because two people in the same position can report to different managers.": "此职务所隶属的上级职务；若为组织结构图最上层请留空。个人的直属主管于其个人记录中设置，因为同一职务的两个人可能隶属不同主管。",
-  "The shape of the organisation: the positions the roster is counted by, the headcount in each, and who is approving in whose place.": "组织的样貌：作为人数统计依据的职务、各职务的人数，以及谁在代谁进行审批。",
   "Titles nobody holds yet": "尚无人担任的职称",
   "Titles the roster is counted by": "名册据以统计的职务名称",
   "Under the Fair Labor Standards Act. Recorded per position because that is where the duties test is applied.": "依据《公平劳动基准法》。以职务为单位记录，因为职责判定是在职务层级进行。",

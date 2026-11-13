@@ -51,16 +51,20 @@ const OWM_LAYER_MAP: Record<string, OWMLayerId> = {
  * what is in focus, a rail listing the shipments (and, with public alerts on,
  * the alerts that touch them), and one detail card.
  *
- * `fill` takes the height of the container, as the dispatch board does; without
- * it the panel keeps its own height, for the Home widget. The rail shows only
- * when the panel is wide enough to keep the map usable beside it.
+ * The panel always takes the height of what holds it. On the dispatch board that
+ * is the workspace, and the rail shows when the panel is wide enough to keep the
+ * map usable beside it. `compact` is for a tile, where there is room for a glance
+ * and not for a workspace: the tile draws the frame, the header is one row of
+ * stage chips that scrolls sideways rather than wrapping, and the rail is left
+ * out so the map and the one detail card have the space. Full screen is the way
+ * from the glance to the workspace, so there the panel is whole again.
  */
 export default function ShipmentMapPanel({
   backgroundEnabled = true,
-  fill = false,
+  compact = false,
 }: {
   backgroundEnabled?: boolean;
-  fill?: boolean;
+  compact?: boolean;
 }) {
   const t = useT();
 
@@ -190,12 +194,19 @@ export default function ShipmentMapPanel({
   const owmLayerId = OWM_LAYER_MAP[weatherLayer];
   const showWeather = overlays.weather;
 
+  const glance = compact && !isFullscreen;
+  const frame = isFullscreen
+    ? "fixed inset-0 z-50 h-screen"
+    : glance
+      ? "h-full"
+      : "h-full min-h-105 rounded-lg border";
+
   if (!data.config.apiKey) {
     return (
       <div
         className={cn(
-          "bg-card text-muted-foreground flex items-center justify-center rounded-lg border px-6 text-center text-sm",
-          isFullscreen ? "fixed inset-0 z-50 h-screen rounded-none border-none" : "h-full",
+          "flex items-center justify-center bg-card px-6 text-center text-sm text-muted-foreground",
+          frame,
         )}
       >
         {t(
@@ -209,15 +220,12 @@ export default function ShipmentMapPanel({
     <APIProvider apiKey={data.config.apiKey}>
       <div
         className={cn(
-          "@container/map bg-card relative flex w-full flex-col overflow-hidden rounded-lg border",
-          isFullscreen
-            ? "fixed inset-0 z-50 h-screen rounded-none border-none"
-            : fill
-              ? "h-full min-h-105"
-              : "h-[clamp(420px,calc(100vh-380px),540px)]",
+          "@container/map relative flex w-full flex-col overflow-hidden bg-card",
+          frame,
         )}
       >
         <ShipmentMapHeader
+          compact={glance}
           counts={countByStage(allModels)}
           hiddenStages={hiddenStages}
           onToggleStage={toggleStage}
@@ -238,16 +246,18 @@ export default function ShipmentMapPanel({
           }
         />
         <div className="flex min-h-0 flex-1">
-          <ShipmentMapRail
-            className="hidden @3xl/map:flex"
-            models={models}
-            matches={matches}
-            alertsOn={overlays.alerts}
-            features={alerts}
-            allFeatures={allAlerts}
-            hiddenAlertCategories={hiddenAlertCategories}
-            onToggleAlertCategory={toggleAlertCategory}
-          />
+          {glance ? null : (
+            <ShipmentMapRail
+              className="hidden @3xl/map:flex"
+              models={models}
+              matches={matches}
+              alertsOn={overlays.alerts}
+              features={alerts}
+              allFeatures={allAlerts}
+              hiddenAlertCategories={hiddenAlertCategories}
+              onToggleAlertCategory={toggleAlertCategory}
+            />
+          )}
           <div ref={bodyRef} className="relative min-h-0 min-w-0 flex-1">
             <MapDimState target={bodyRef} pinned={pinnedIds.size > 0} modelsById={modelsById} />
             <Map

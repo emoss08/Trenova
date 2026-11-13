@@ -1,6 +1,5 @@
 {
   "Accrual rules": "計提規則",
-  "Accrual rules for paid time off — how days are earned, capped, and carried over, and which drivers each policy governs.": "有薪假的計提規則 — 假日如何取得、設定上限與結轉，以及各政策所適用的駕駛員。",
   "Accruals are posted once per period. Changing an amount, cap or tier affects periods that have not been posted yet; days already in a worker's ledger are not recalculated.": "計提每期執行一次。變更金額、上限或級距只影響尚未入帳的期間；已計入駕駛員帳上的天數不會重新計算。",
   "Accruals stop at this balance.": "餘額達到此數值後即停止計提。",
   "Add type": "新增類型",

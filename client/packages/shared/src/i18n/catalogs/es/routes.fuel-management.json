@@ -42,7 +42,6 @@
   "Customers assigned to this program will stop receiving fuel surcharges on new shipments. Already-billed surcharges and their audit snapshots are preserved.": "Los clientes asignados a este programa dejarán de recibir recargos por combustible en los nuevos envíos. Los recargos ya facturados y sus instantáneas de auditoría se conservan.",
   "Customize bands": "Personalizar las bandas",
   "DOE ${0}": "DOE {0} $",
-  "DOE diesel prices, fuel surcharge programs, and automatic surcharge application": "Precios del diésel del DOE, programas de recargo por combustible y aplicación automática del recargo",
   "DOE indices ingest automatically each week via the EIA integration — custom indices take manually entered weekly prices (e.g. Canadian FCA or contract-specific pegs)": "Los índices del DOE se incorporan automáticamente cada semana mediante la integración con la EIA; los índices personalizados admiten precios semanales introducidos a mano (p. ej., el FCA canadiense o pegs específicos de un contrato)",
   "Date basis": "Base de la fecha",
   "Decimal places for the computed per-mile rate (0–6).": "Decimales de la tarifa por milla calculada (0–6).",

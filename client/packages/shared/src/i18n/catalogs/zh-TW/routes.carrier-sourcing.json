@@ -18,7 +18,6 @@
   "Create {0} (USDOT {1}) from its FMCSA record.": "根據其 FMCSA 紀錄建立 {0}（USDOT {1}）。",
   "Enter a USDOT or MC number to pull a carrier and check it against your vetting rules before you import it.": "輸入 USDOT 或 MC 編號以取得承運業者，並在匯入前依您的審核規則進行查核。",
   "Find a carrier": "尋找承運業者",
-  "Find carriers, vet them against your rules and import the ones you want": "尋找承運業者，依您的規則進行審核，並匯入您想要的承運業者",
   "Fleet size": "車隊規模",
   "Generated from the name": "由名稱產生",
   "Hazmat carriers in Ohio": "俄亥俄州的危險品承運業者",

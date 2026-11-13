@@ -16,7 +16,6 @@
   "Choose a day from 1 to 28": "請選擇 1 至 28 日",
   "Choose at least one day past due to send a reminder on": "請至少選擇一個逾期天數來寄送提醒",
   "Choose the day of the month to send statements on": "請選擇每月寄送對帳單的日期",
-  "Configure and manage your billing control settings": "設定與管理您的帳務控制設定",
   "Control how shipments move into billing, when invoice drafts are created, and whether posted invoices remain manual-review only or may auto-post when no blocking issues exist.": "控制運單如何進入帳務流程、發票草稿的建立時機，以及已過帳發票是僅限人工審查，或在無阻擋問題時可自動過帳。",
   "Controls whether eligible shipments are marked ready to bill automatically or only by user action.": "控制符合條件的運單是自動標記為可開立帳單，或僅由使用者手動標記。",
   "Controls whether invoice drafts are created only by users or automatically when items are transferred.": "控制發票草稿僅由使用者建立，或在項目轉移時自動建立。",

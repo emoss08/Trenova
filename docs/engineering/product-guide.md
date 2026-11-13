@@ -33,6 +33,11 @@ code, read statically (nothing is imported or run):
 | `client/apps/web/src/config/record-links.ts` | where each kind of record opens |
 | `docs/product-guide/**.md` | what each page is for and how to do things on it |
 
+The same run writes `client/apps/web/src/routes/section-index/page-descriptions.gen.ts`:
+each navigation page's own header description, as a `defineLabels` map, which the
+section index cards show under each page's name. A page's description is written
+once, in its `pageHeaderProps`, and `guide:check` fails when the file is stale.
+
 Because the structure is read from the router and navigation, moving a page,
 renaming it or changing what guards it updates the catalog on the next
 generate. The words are the only hand-written part.

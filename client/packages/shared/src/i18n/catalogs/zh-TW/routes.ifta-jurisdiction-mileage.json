@@ -9,7 +9,6 @@
   "Leave on when the trailer carried freight. Turn off for empty or bobtail miles.": "拖車載有貨物時請保持開啟。空駛或單頭車里程請關閉。",
   "Loaded and empty miles are both taxable; the split is kept for the fleet's own reporting.": "載貨與空車里程皆須課稅；區分兩者僅供車隊自身報表使用。",
   "Manual miles and the return": "手動里程與申報",
-  "Miles by state or province that dispatch did not compute — deadhead, yard moves, and units without telematics. They are added to the miles the quarter's IFTA return works out from shipment moves.": "調度未計算的各州或省里程 — 空駛、場區調度，以及未裝設車聯網的車輛。這些里程會加入該季 IFTA 申報自運單運程推算出的里程中。",
   "Move {0}.": "調度 {0}。",
   "Record miles a tractor ran in a jurisdiction that routing did not see, such as repositioning between shipments. The entry lands on the quarter's return at its next recompute.": "記錄牽引車在某管轄區行駛、但路徑規劃未擷取到的里程，例如運單之間的調度移動。此記錄會在該季申報下次重新計算時納入。",
   "Routed miles are captured from every completed move automatically. A manual entry is for travel the system did not see, such as bobtailing to a shop or repositioning between customers, and is added to the jurisdiction's line on the quarter's return at its next recompute. Manual miles are never subtracted, so do not enter miles a move already carries unless the entry names that move.": "路徑里程會自每個已完成的運程自動擷取。手動記錄用於系統未擷取到的行程，例如單頭車前往維修廠或在客戶之間調度，並會在該季申報下次重新計算時加入該管轄區的明細。手動里程絕不會被扣除，因此除非該記錄指明某個運程，否則請勿輸入運程已包含的里程。",

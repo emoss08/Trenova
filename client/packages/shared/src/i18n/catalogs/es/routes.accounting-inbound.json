@@ -15,7 +15,6 @@
   "Paid by": "Pagado por",
   "Paid on": "Pagado el",
   "Payments from the books could not be loaded.": "No se pudieron cargar los pagos de la contabilidad.",
-  "Payments recorded in {0} against invoices and settlements Trenova sent, and whether each was brought into Trenova.": "Pagos registrados en {0} contra facturas y liquidaciones que envió Trenova, y si cada uno se trajo a Trenova.",
   "Payments recorded in {0} are left out of Trenova. Turn them on in the integration settings.": "Los pagos registrados en {0} quedan fuera de Trenova. Actívelos en la configuración de la integración.",
   "Payments recorded in {0}: {1}. Last read {2}.": "Pagos registrados en {0}: {1}. Última lectura: {2}.",
   "Pays": "Paga",

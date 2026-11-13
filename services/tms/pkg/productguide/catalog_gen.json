@@ -1,5 +1,5 @@
 {
-  "version": "sha256:8e3743342a8dbb31d74c9f2a93e90ba1424a94094a007e1d1535fb79f4969e92",
+  "version": "sha256:43bd8ad40df10f054d59351d7e14db97c42f5674d0c0e222937389eb18486398",
   "modules": [
     {
       "id": "home",
@@ -90,8 +90,8 @@
       "breadcrumb": [
         "Home"
       ],
-      "description": "Home is the first screen after signing in.",
-      "summary": "Home is the first screen after signing in. The band across the top greets you, shows the time in your profile timezone, and lists what needs you right now as clickable chips: unassigned and at-risk shipments (when you can read shipments), plus counts from the billing queue, pending approvals, reconciliation exceptions, service failures, EDI problems and decisions waiting on the desk. Each chip opens the page that holds those items. When nothing is flagged it says you're clear.\n\nBelow the band is a grid of widgets: queues, metrics, report tiles, dashboards, insights and announcements. Your administrator can give each role a preset home screen; you can customize your own copy unless the administrator has locked it.",
+      "description": "Your work, your numbers, and where to go next.",
+      "summary": "Home is the first screen after signing in. It opens on a brief: the date and time in your profile timezone, a greeting, and one sentence saying how much needs you. Under it a strip counts each queue that has work in it: unassigned and at-risk shipments (when you can read shipments), then the billing queue, pending approvals, reconciliation exceptions, service failures, EDI problems and decisions waiting on the desk. Each figure opens the page that holds those items, and a queue with nothing in it is left out. When nothing is flagged the brief says you're clear.\n\nBelow the brief is a grid of widgets: work lists, key figures, report tiles, dashboards, insights and announcements. Your administrator can give each role a preset home screen; you can customize your own copy unless the administrator has locked it. On a phone the widgets stack one under another in the same order.",
       "requires": [],
       "capabilities": [],
       "aliases": [
@@ -113,7 +113,7 @@
           ],
           "steps": [
             "Open [Home](/).",
-            "Select a chip in the top band (for example unassigned, at risk or service failures) to open the page with those items."
+            "Select a figure in the strip under the greeting (for example **Unassigned**, **At risk** or **Service failures**) to open the page with those items."
           ]
         },
         {
@@ -128,7 +128,7 @@
             "Open [Home](/) and select **Customize**.",
             "Select **Add widget**, search or pick a category, and select a widget card to add it. Some widgets ask what to show before they land.",
             "Drag widgets to rearrange them. Open a widget's menu to change its **Width** and **Height**, **Configure** what it shows, or **Remove** it.",
-            "Select **Save** in the floating bar, or **Done** in the top band. **Discard** throws the changes away."
+            "Select **Save** in the floating bar, or **Done** where **Customize** was. **Discard** throws the changes away."
           ]
         },
         {

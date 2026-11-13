@@ -1,5 +1,6 @@
 import { InfoPopover } from "@/components/info-popover";
 import { InfoTooltip } from "@/components/info-tooltip";
+import { formatNumber } from "@trenova/shared/i18n/format";
 import { cn } from "@trenova/shared/lib/utils";
 import type { ReactNode } from "react";
 import { Link } from "react-router";
@@ -78,7 +79,9 @@ export function SectionPanel({
               </InfoPopover>
             ) : null}
             {count !== undefined && count > 0 ? (
-              <span className="text-xs text-muted-foreground tabular-nums">{count}</span>
+              <span className="text-xs text-muted-foreground tabular-nums">
+                {formatNumber(count)}
+              </span>
             ) : null}
           </div>
           {description ? (

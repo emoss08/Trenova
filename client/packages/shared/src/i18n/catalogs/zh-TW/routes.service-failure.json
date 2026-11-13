@@ -18,7 +18,6 @@
   "Payload copied to clipboard.": "已將酬載複製到剪貼簿。",
   "Removes the assigned reason code while preserving the service failure record.": "移除已指派的原因代碼，同時保留服務失誤紀錄。",
   "Resolved · {0, plural, one {# minute after grace} other {# minutes after grace}}": "已解決 · {0, plural, other {超過寬限時間 # 分鐘}}",
-  "Review unresolved pickup and delivery service failures": "審查未處理的取貨與交貨服務失誤",
   "Reviewed · {0, plural, one {# minute after grace} other {# minutes after grace}}": "已審查 · {0, plural, other {超過寬限時間 # 分鐘}}",
   "Select reason code": "選擇原因代碼",
   "Voided · {0, plural, one {# minute after grace} other {# minutes after grace}}": "已作廢 · {0, plural, other {超過寬限時間 # 分鐘}}",

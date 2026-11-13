@@ -8,7 +8,6 @@
   "No distance overrides yet": "Aún no hay anulaciones de distancia",
   "No intermediate stops configured.": "No hay paradas intermedias configuradas.",
   "Optionally scope this override to a specific customer": "Opcionalmente, limite esta anulación a un cliente concreto",
-  "Override calculated distances between location pairs for routing and billing adjustments": "Anule las distancias calculadas entre pares de ubicaciones para ajustes de enrutamiento y facturación",
   "Select customer (optional)": "Seleccione el cliente (opcional)",
   "Select destination location": "Seleccione la ubicación de destino",
   "Select origin location": "Seleccione la ubicación de origen",

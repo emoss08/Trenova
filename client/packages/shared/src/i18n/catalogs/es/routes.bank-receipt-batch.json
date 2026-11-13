@@ -26,7 +26,6 @@
   "The file imported with nothing in it, or every line was rejected. Import it again once it has rows.": "El archivo se importó vacío, o se rechazaron todas sus líneas. Vuelva a importarlo cuando tenga filas.",
   "Total amount": "Importe total",
   "Total batches": "Total de lotes",
-  "View and create bank receipt import batches.": "Vea y cree lotes de importación de recibos bancarios.",
   "e.g. Chase, Wells Fargo": "p. ej., Chase, Wells Fargo",
   "e.g. Statement 2026-04": "p. ej., Extracto 2026-04"
 }

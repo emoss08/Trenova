@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/seeds/fixtures/shipmentfixtures"
 	"github.com/emoss08/trenova/internal/seeds/fixtures/tenantfixtures"
 	"github.com/emoss08/trenova/internal/seeds/fixtures/workforcefixtures"
+	"github.com/emoss08/trenova/internal/seeds/fixtures/workspacefixtures"
 	"github.com/emoss08/trenova/internal/seeds/reference"
 )
 
@@ -376,4 +377,13 @@ var Receivables = Seeds.Add(seed.Seed{
 	Description: "Posts aged invoices, customer payments and a credit memo so receivables read a real ledger",
 	After:       []*seed.Seed{AdminAccount, SystemAccount, Shipment, FiscalYear},
 	Run:         (&accountingfixtures.ReceivablesSeed{}).Run,
+})
+
+var HomeScreen = Seeds.Add(seed.Seed{
+	Name: "home_screen",
+	Kind: seed.Fixture,
+	Description: "Gives the administrator a home screen with every kind of widget on it, " +
+		"with pinned pages and unread notifications behind the tiles that list them",
+	After: []*seed.Seed{AdminAccount},
+	Run:   (&workspacefixtures.HomeScreenSeed{}).Run,
 })

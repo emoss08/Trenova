@@ -78,7 +78,12 @@ function activityHeadline(entry: RecentActivityEntry, actor: string, name: Actor
   }
 }
 
-function ActivityRow({ entry }: { entry: RecentActivityEntry }) {
+/**
+ * One thing that happened, as a sentence: who, what they did and to which record.
+ * The sidebar's feed and Home's activity tiles draw the same row, so an entry reads
+ * the same wherever it shows.
+ */
+export function ActivityRow({ entry }: { entry: RecentActivityEntry }) {
   const t = useT();
   const nowSeconds = useNowSeconds();
   const actorName = entry.user?.name ?? entry.user?.username ?? t("System");

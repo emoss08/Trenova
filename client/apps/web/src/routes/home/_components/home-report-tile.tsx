@@ -1,3 +1,4 @@
+import { useT } from "@trenova/shared/i18n/use-t";
 import type { ReportDashboardTile } from "@/types/report";
 import { useMemo } from "react";
 import {
@@ -33,6 +34,8 @@ export function HomeReportTile({
   columnId,
   limit,
 }: HomeReportTileProps) {
+  const t = useT();
+
   const tile = useMemo<ReportDashboardTile>(
     () => ({
       id: "home_report",
@@ -57,7 +60,7 @@ export function HomeReportTile({
 
   return (
     <WidgetShell
-      title={title || report.name || "Report"}
+      title={title || report.name || t("Report")}
       actions={<TileFooterLink tile={tile} />}
       scroll={false}
       bodyClassName="p-0"

@@ -18,7 +18,6 @@
   "Taxable": "應稅",
   "Taxable amounts post as earnings; non-taxable amounts (per diem, stipends) post as reimbursements.": "應稅金額以薪酬入帳；免稅金額（每日津貼、補助）則以核銷入帳。",
   "When off, pay under this code is ignored when checking a driver's guaranteed period minimum.": "關閉時，檢核駕駛員的期間保障下限時會忽略此代碼下的薪酬。",
-  "Your carrier's catalog of earning and deduction codes — behavior flags and GL account mappings drive how each code settles and posts.": "貴承運業者的薪酬與扣款代碼目錄 — 行為旗標與總帳科目對應決定各代碼的結算與過帳方式。",
   "e.g. CHAINPAY": "例如：CHAINPAY",
   "e.g. Chain-Up Pay": "例如：加裝雪鏈津貼",
   "{0, plural, one {# pay code activated} other {# pay codes activated}}": "{0, plural, other {已啟用 # 個薪酬代碼}}",

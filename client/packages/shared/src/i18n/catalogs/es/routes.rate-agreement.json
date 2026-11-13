@@ -163,7 +163,6 @@
   "The contract gives this service away, which is a stated term rather than an omission": "El contrato ofrece este servicio sin coste, lo cual es una condición expresa y no una omisión",
   "The contract this sheet's lanes are imported into.": "El contrato al que se importan las rutas de esta hoja.",
   "The contract's name as somebody reading an invoice would recognize it": "El nombre del contrato tal como lo reconocería alguien que lea una factura",
-  "The contracts that decide what a shipment costs, and the lanes each one prices": "Los contratos que determinan cuánto cuesta un envío, y las rutas que tarifica cada uno",
   "The currency every lane rates in unless it sets its own, and the terms every lane's tariff reads when the lane leaves them unset.": "La moneda en la que tarifica cada ruta salvo que establezca la suya, y las condiciones que lee la tarifa de cada ruta cuando la ruta no las establece.",
   "The customer this agreement bills": "El cliente al que factura este acuerdo",
   "The day the imported rates start pricing — the negotiated date, not the upload date.": "El día en que las tarifas importadas empiezan a tarificar: la fecha negociada, no la de subida.",

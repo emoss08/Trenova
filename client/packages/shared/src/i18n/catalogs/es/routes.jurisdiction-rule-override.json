@@ -5,7 +5,6 @@
   "At least 10 characters. This is what explains the override to whoever reads it next.": "Al menos 10 caracteres. Esto es lo que explica la anulación a quien la lea después.",
   "Carrier override": "Anulación del transportista",
   "Defer to state": "Seguir lo que fije el estado",
-  "Hold your fleet to stricter limits than a state requires. An override can only tighten a limit, never loosen one, and applies to your organization alone.": "Someta a su flota a límites más estrictos que los que exige un estado. Una anulación solo puede endurecer un límite, nunca relajarlo, y se aplica únicamente a su organización.",
   "Leave blank to defer to the state. A value above the state limit is rejected.": "Déjelo en blanco para seguir lo que fije el estado. Se rechaza cualquier valor superior al límite estatal.",
   "Loading carrier override...": "Cargando la anulación del transportista...",
   "No carrier overrides yet": "Aún no hay anulaciones de transportistas",

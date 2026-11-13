@@ -29,7 +29,6 @@
   "Post a customer payment and apply it across open invoices in one step.": "Contabilice un pago de cliente y aplíquelo a las facturas abiertas en un solo paso.",
   "Post payment": "Contabilizar el pago",
   "Posted today": "Contabilizado hoy",
-  "Record, apply, and reverse customer payments with full GL traceability.": "Registre, aplique y revierta los pagos de clientes con trazabilidad contable completa.",
   "Reverse": "Revertir",
   "Reverse payment": "Revertir el pago",
   "Reversed {0} — cash was backed out and the applied invoices were reopened.": "Revertido {0}: se retiró el efectivo y las facturas aplicadas se reabrieron.",

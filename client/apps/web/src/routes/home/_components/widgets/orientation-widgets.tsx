@@ -1,62 +1,37 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { buildCommandHref } from "@/components/command-palette/route-command-data";
-import { navigationConfig } from "@/config/navigation.config";
-import type { QuickActionCommand } from "@/config/navigation.types";
-import { QUICK_ACTION_ICONS } from "@/config/quick-action-icons";
 import { useRecentActivityInfinite } from "@/hooks/use-attention";
 import { useUnreadNotificationCount } from "@trenova/shared/hooks/use-notifications";
-import { useSidebarPreferences } from "@/hooks/use-sidebar-preferences";
+import { useSidebarQuickActions } from "@/hooks/use-sidebar-quick-actions";
 import { pageFavorite } from "@/lib/queries/page-favorite";
 import { notification as notificationQueries } from "@trenova/shared/lib/queries/notification";
-import { formatToUserTimezone } from "@trenova/shared/lib/date";
 import { useAuthStore } from "@trenova/shared/stores/auth-store";
-import { usePermissionStore } from "@trenova/shared/stores/permission-store";
-import { Operation } from "@trenova/shared/types/permission";
 import { useQuery } from "@tanstack/react-query";
 import { Star01Icon } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 import { Link } from "react-router";
-import { WidgetCount, WidgetEmpty, WidgetShell, WidgetSkeleton } from "../widget-shell";
+import { ActivityRow } from "@/components/navigation/activity-section";
+import { WidgetEmpty, WidgetShell, WidgetSkeleton } from "../widget-shell";
 import type { WidgetProps } from "../widget-registry";
 
 export function QuickActionsWidget({ widget }: WidgetProps) {
   const t = useT();
 
-  const hasPermission = usePermissionStore((state) => state.hasPermission);
-  const { data: preferences } = useSidebarPreferences();
-
-  const actions = useMemo(() => {
-    const definitions = navigationConfig.quickActions ?? [];
-    const definitionsById = new Map(definitions.map((definition) => [definition.id, definition]));
-
-    return (preferences?.quickActionIds ?? [])
-      .map((id) => definitionsById.get(id))
-      .filter((definition): definition is QuickActionCommand => {
-        if (!definition || !QUICK_ACTION_ICONS[definition.id]) return false;
-        if (!definition.resource) return true;
-        return hasPermission(definition.resource, definition.requiredOperation ?? Operation.Create);
-      })
-      .map((definition) => ({
-        definition,
-        icon: QUICK_ACTION_ICONS[definition.id],
-        href: buildCommandHref(definition.path, definition.query),
-      }));
-  }, [hasPermission, preferences?.quickActionIds]);
+  const actions = useSidebarQuickActions();
 
   return (
-    <WidgetShell title={widget.title || "Quick Actions"}>
+    <WidgetShell title={widget.title || t("Quick actions")}>
       {actions.length === 0 ? (
         <WidgetEmpty>{t("Pick your quick actions from the sidebar settings.")}</WidgetEmpty>
       ) : (
-        <div className="grid grid-cols-2 gap-1.5">
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(9rem,1fr))] gap-x-2 gap-y-0.5">
           {actions.map(({ definition, icon: Icon, href }) => (
             <Link
               key={definition.id}
               to={href}
               title={t(definition.description)}
-              className="border-border bg-background text-foreground/80 hover:bg-muted hover:text-foreground flex h-7 items-center gap-1.5 truncate rounded-md border px-2 text-xs font-medium transition-colors"
+              className="ui-focus-ring flex min-w-0 items-center gap-2 rounded-md px-1.5 py-1.5 text-sm transition-colors outline-none hover:bg-surface-hover"
             >
-              <Icon className="size-3 shrink-0" />
+              <Icon aria-hidden className="size-3.5 shrink-0 text-foreground-subtle" />
               <span className="truncate">{t(definition.label)}</span>
             </Link>
           ))}
@@ -72,10 +47,7 @@ export function FavoritesWidget({ widget }: WidgetProps) {
   const { data: favorites, isLoading } = useQuery(pageFavorite.all());
 
   return (
-    <WidgetShell
-      title={widget.title || "Favorites"}
-      badge={<WidgetCount value={favorites?.length} />}
-    >
+    <WidgetShell title={widget.title || t("Favorites")} count={favorites?.length}>
       {isLoading ? (
         <WidgetSkeleton />
       ) : !favorites || favorites.length === 0 ? (
@@ -86,9 +58,12 @@ export function FavoritesWidget({ widget }: WidgetProps) {
             <Link
               key={favorite.id}
               to={favorite.pageUrl}
-              className="hover:bg-muted/60 flex items-center gap-2 rounded-md px-1.5 py-1 text-xs transition-colors"
+              className="ui-focus-ring flex items-center gap-2 rounded-md px-1.5 py-1.5 text-sm transition-colors outline-none hover:bg-surface-hover"
             >
-              <Star01Icon className="size-3 shrink-0 fill-warning text-warning-foreground" />
+              <Star01Icon
+                aria-hidden
+                className="size-3.5 shrink-0 fill-warning text-warning-foreground"
+              />
               <span className="truncate">{favorite.pageTitle}</span>
             </Link>
           ))}
@@ -127,23 +102,9 @@ function ActivityRows({ limit, mineOnly }: { limit: number; mineOnly: boolean })
   }
 
   return (
-    <div className="flex flex-col gap-0.5">
+    <div className="-mx-1 flex flex-col gap-0.5">
       {rows.map((entry) => (
-        <div key={entry.id} className="flex flex-col gap-0.5 rounded-md px-1.5 py-1">
-          <div className="flex items-baseline justify-between gap-2">
-            <span className="truncate text-xs">
-              <span className="font-medium">{entry.user?.name ?? t("Someone")}</span>{" "}
-              <span className="text-muted-foreground">{entry.operation}</span>{" "}
-              <span className="text-muted-foreground">{entry.resource}</span>
-            </span>
-            <span className="font-table text-muted-foreground shrink-0 text-3xs tabular-nums">
-              {formatToUserTimezone(entry.timestamp, {
-                showTimeZone: false,
-                showSeconds: false,
-              })}
-            </span>
-          </div>
-        </div>
+        <ActivityRow key={entry.id} entry={entry} />
       ))}
     </div>
   );
@@ -154,7 +115,7 @@ export function ActivityWidget({ widget }: WidgetProps) {
 
   return (
     <WidgetShell
-      title={widget.title || "Activity"}
+      title={widget.title || t("Activity")}
       href="/admin/audit-logs"
       hrefLabel={t("Open audit log")}
     >
@@ -164,8 +125,10 @@ export function ActivityWidget({ widget }: WidgetProps) {
 }
 
 export function JumpBackInWidget({ widget }: WidgetProps) {
+  const t = useT();
+
   return (
-    <WidgetShell title={widget.title || "Jump Back In"}>
+    <WidgetShell title={widget.title || t("Jump back in")}>
       <ActivityRows limit={widget.config.limit ?? 8} mineOnly />
     </WidgetShell>
   );
@@ -186,15 +149,15 @@ export function SavedViewsWidget({ widget }: WidgetProps) {
   ];
 
   return (
-    <WidgetShell title={widget.title || "Saved Views"}>
+    <WidgetShell title={widget.title || t("Saved views")}>
       <div className="flex flex-col gap-0.5">
         {targets.map((target) => (
           <Link
             key={target.href}
             to={target.href}
-            className="hover:bg-muted/60 rounded-md px-1.5 py-1 text-xs transition-colors"
+            className="ui-focus-ring rounded-md px-1.5 py-1.5 text-sm transition-colors outline-none hover:bg-surface-hover"
           >
-            {t(target.label)}
+            {target.label}
           </Link>
         ))}
       </div>
@@ -216,8 +179,8 @@ export function NotificationsWidget({ widget }: WidgetProps) {
 
   return (
     <WidgetShell
-      title={widget.title || "Notifications"}
-      badge={<WidgetCount value={unreadCount ?? notifications?.length} />}
+      title={widget.title || t("Notifications")}
+      count={unreadCount ?? notifications?.length}
     >
       {isLoading ? (
         <WidgetSkeleton />

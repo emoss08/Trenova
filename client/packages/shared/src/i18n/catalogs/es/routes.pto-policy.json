@@ -1,6 +1,5 @@
 {
   "Accrual rules": "Reglas de devengo",
-  "Accrual rules for paid time off — how days are earned, capped, and carried over, and which drivers each policy governs.": "Reglas de devengo del tiempo libre remunerado: cómo se ganan, topan y arrastran los días, y a qué conductores rige cada política.",
   "Accruals are posted once per period. Changing an amount, cap or tier affects periods that have not been posted yet; days already in a worker's ledger are not recalculated.": "Los devengos se registran una vez por período. Cambiar un importe, tope o nivel afecta a los períodos que aún no se han registrado; los días que ya están en el saldo de un trabajador no se recalculan.",
   "Accruals stop at this balance.": "Los devengos se detienen en este saldo.",
   "Add type": "Agregar tipo",

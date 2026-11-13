@@ -45,7 +45,6 @@
   "Dollar ceiling for a single stop's detention.": "单一停靠点滞留费的金额上限。",
   "Driver pay free time": "司机薪酬免费时间",
   "Emails a printable copy alongside the message and files it against the shipment, which is what a customer's claims desk asks for in a dispute.": "随消息一并发出可打印的副本，并归档于该运单下，这正是客户理赔窗口在争议时所要求的资料。",
-  "Encode each contract's detention terms and see what they would charge before they touch a shipment": "编码每份合同的滞留费条款，并在其影响运单之前先看出其收费金额",
   "Encode the contract's detention terms and see what they would charge before they touch a shipment.": "编码合同的滞留费条款，并在其影响运单之前先看出其收费金额。",
   "Entitlement survives, but lateness burns the carrier's own free time.": "应享权利保留，但迟到会消耗承运商自己的免费时间。",
   "Favors the carrier when a facility accepts early delivery.": "设施接受提前送货时对承运商有利。",

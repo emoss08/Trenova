@@ -426,7 +426,6 @@
   "Waived on this contract": "此合約已豁免",
   "Watch each customer's period build toward one invoice": "追蹤各客戶本期的累積，直到匯整為一張發票",
   "What approving sends: the invoice, then each document in its packet.": "核准後寄出的內容：發票，接著是資料包中的每份文件。",
-  "What each statement customer has accrued this period, and the invoices it becomes": "各對帳單客戶本期累積的項目，以及其將產生的發票",
   "What it charged": "收取的費用",
   "What it waits on (optional)": "等待的事項（選填）",
   "What moved into the billing queue, and what is still holding the rest back.": "已移入帳務佇列的運單，以及其餘運單仍被阻擋的原因。",

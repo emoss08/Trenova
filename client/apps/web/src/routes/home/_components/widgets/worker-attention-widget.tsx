@@ -37,7 +37,7 @@ export function WorkerAttentionWidget({ widget }: WidgetProps) {
 
   if (isLoading) {
     return (
-      <WidgetShell title={widget.title || "Workforce Attention"} href="/hr/workers">
+      <WidgetShell title={widget.title || t("Workforce attention")} href="/hr/workers">
         <div className="flex flex-col gap-1.5">
           {[0, 1, 2, 3].map((row) => (
             <Skeleton key={row} className="h-7 w-full" />
@@ -72,7 +72,7 @@ export function WorkerAttentionWidget({ widget }: WidgetProps) {
   const allClear = lines.every((line) => line.count === 0);
 
   return (
-    <WidgetShell title={widget.title || "Workforce Attention"} href="/hr/workers">
+    <WidgetShell title={widget.title || t("Workforce attention")} href="/hr/workers">
       {allClear ? (
         <p className="text-muted-foreground px-1.5 py-2 text-xs">
           {t("Every active worker is compliant, in date and off the watch list.")}
@@ -83,7 +83,7 @@ export function WorkerAttentionWidget({ widget }: WidgetProps) {
             <Link
               key={line.view}
               to={rosterViewHref(line.view)}
-              className="hover:bg-muted/60 flex items-center justify-between rounded-md px-1.5 py-1 text-xs transition-colors"
+              className="hover:bg-surface-hover flex items-center justify-between rounded-md px-1.5 py-1 text-xs transition-colors"
             >
               <span className={cn(line.count === 0 && "text-muted-foreground")}>
                 {t(line.label)}

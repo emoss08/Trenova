@@ -49,11 +49,11 @@ export type HomeData = {
 
 export type UseHomeDataOptions = {
   /**
-   * Set on the home page, where the briefing bar reads the shipment payload
+   * Set on the home page, where the brief reads the shipment payload
    * even when no widget on the canvas does. The preset editor leaves it unset
    * so an administrator arranging orientation widgets fetches nothing extra.
    */
-  briefing?: boolean;
+  brief?: boolean;
 };
 
 function widgetReadsReceivables(widget: HomeWidget): boolean {
@@ -90,7 +90,7 @@ export function useHomeData(widgets: HomeWidget[], options: UseHomeDataOptions =
 
   const needsShipmentAnalytics =
     canReadShipments &&
-    (options.briefing === true ||
+    (options.brief === true ||
       widgets.some((widget) => SHIPMENT_ANALYTICS_WIDGETS.has(widget.key)));
   const needsReceivables = widgets.some(widgetReadsReceivables);
 

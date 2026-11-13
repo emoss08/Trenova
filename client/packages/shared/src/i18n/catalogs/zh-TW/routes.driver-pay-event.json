@@ -12,7 +12,6 @@
   "Pay Event — {0}": "薪酬事件 — {0}",
   "Pay events accrue automatically when a shipment reaches your configured pay trigger and are locked once settled.": "運單達到您設定的付款觸發條件時，薪酬事件會自動計提，並在結算後鎖定。",
   "Qty × rate": "數量 × 費率",
-  "Real-time driver earnings accrued as shipments deliver — the source ledger behind every settlement.": "運單完成交貨時即時計提的駕駛員薪酬 — 每筆結算背後的來源帳冊。",
   "Release holds": "解除暫扣",
   "e.g. Awaiting signed BOL from the shipper": "例如：等待託運人簽署的提單",
   "e.g. Awaiting signed BOLs for this batch": "例如：等待此批次已簽署的提單",

@@ -5,7 +5,6 @@
   "Assess now": "立即核算",
   "Failed to load the late charge preview. Try refreshing the page.": "無法載入逾期費用預覽，請重新整理頁面再試一次。",
   "Late charge assessment is disabled for this organization. You can still preview here; enable it in billing control to raise memos.": "此組織已停用逾期費用核算功能。您仍可在此預覽；請至帳務控制中啟用該功能以開立通知單。",
-  "Overdue invoices charged once per thirty-day period at each customer's rate, raised as one debit memo per customer.": "逾期發票按各客戶的費率，每三十天計收一次，並為每位客戶各開立一張借項通知單。",
   "Period {0}": "期間 {0}",
   "Preview as of {0}": "截至 {0} 的預覽",
   "Raises {0, plural, one {# debit memo} other {# debit memos}} totalling {1}. Each invoice period is charged once; a rerun cannot double-charge.": "開立 {0, plural, other {# 筆借項通知單}}，合計 {1}。每個發票期間僅計收一次；重新執行不會重複計費。",

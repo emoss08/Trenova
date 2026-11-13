@@ -5,7 +5,6 @@
   "Approve contact edits": "核准聯絡資料修改",
   "Automated notifications driven by driver activity and credential dates.": "依駕駛員活動與證照日期觸發的自動通知。",
   "Bundle everything a driver owes into one notice instead of one each. The per-obligation reminders are suppressed while a round-up is in use, so nobody is told twice.": "將駕駛員應辦的所有事項合併為一則通知，而非逐項發送。使用彙總通知期間，個別事項的提醒會停用，因此不會重複通知。",
-  "Choose what drivers can see and do in the Dash driver portal": "選擇駕駛員在 Dash 駕駛員入口中可檢視與執行的內容",
   "Contact info edits": "聯絡資料修改",
   "Credential expiry reminders": "證照到期提醒",
   "Detention Threshold (minutes)": "滯留費門檻（分鐘）",

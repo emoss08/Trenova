@@ -121,7 +121,6 @@
   "Leave empty to use your invoice email template. Text here replaces the template's message for this customer. Supports {number}, {customer}, {company}, {invoiceTotal} and {dueDate}.": "Déjelo vacío para usar su plantilla de correo de facturas. El texto aquí reemplaza el mensaje de la plantilla para este cliente. Admite {number}, {customer}, {company}, {invoiceTotal} y {dueDate}.",
   "Link this customer to records in external systems like your ERP, CRM, or mapping provider": "Vincule este cliente con registros de sistemas externos como su ERP, CRM o proveedor de mapas",
   "Lower numbers are consolidated first when trailer space is limited. Use 1 for highest priority customers.": "Los números más bajos se consolidan primero cuando el espacio del remolque es limitado. Use 1 para los clientes de mayor prioridad.",
-  "Manage and configure customers for your organization": "Gestione y configure los clientes de su organización",
   "Mark this customer as exempt from sales tax. You must have a valid tax exemption certificate on file.": "Marque este cliente como exento del impuesto sobre las ventas. Debe tener un certificado de exención fiscal válido archivado.",
   "Max shipments per invoice": "Máx. de envíos por factura",
   "Memos": "Notas",

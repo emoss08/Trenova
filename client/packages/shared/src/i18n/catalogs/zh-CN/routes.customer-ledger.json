@@ -12,7 +12,6 @@
   "Payments — trailing 12 months": "付款 — 过去 12 个月",
   "Pick a customer": "选择客户",
   "Select a customer...": "选择客户…",
-  "Statement-style transaction history with the customer's AR profile.": "以对账单形式呈现的交易历史，并附客户的应收账款概况。",
   "Totals · {0, plural, one {# entry} other {# entries}}": "合计 · {0, plural, other {# 条分录}}",
   "d avg": "天平均",
   "no credit limit set": "未设置信用额度",

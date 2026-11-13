@@ -339,6 +339,6 @@ func TestPreviewPreset_FallsBackToShippedLayoutForRole(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, SourceBuiltIn, effective.Source)
-	assert.Equal(t, "Leadership Home", effective.PresetName)
+	assert.Equal(t, "Leadership home", effective.PresetName)
 	assert.NotEmpty(t, effective.Layout.Widgets)
 }

@@ -56,7 +56,6 @@
   "Pick a match from the list to compare the invoice against the negotiated buy rate.": "Elija una coincidencia de la lista para comparar la factura con la tarifa de compra negociada.",
   "Possible duplicate": "Posible duplicado",
   "Reason (required) — e.g. Invoice bills a different load": "Motivo (obligatorio): p. ej., la factura corresponde a otra carga",
-  "Reconcile inbound carrier freight invoices against negotiated buy rates — link carriers, create matches, and resolve variances.": "Concilie las facturas de flete entrantes de transportistas con las tarifas de compra negociadas: vincule transportistas, cree coincidencias y resuelva variaciones.",
   "Reconciles the invoice against the buy rate without changing the accrued cost": "Concilia la factura con la tarifa de compra sin modificar el costo devengado",
   "Reconciliation status": "Estado de conciliación",
   "Reject match": "Rechazar la coincidencia",

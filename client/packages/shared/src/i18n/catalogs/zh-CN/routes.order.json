@@ -42,7 +42,6 @@
   "Leg {0} cannot be invoiced": "区段 {0} 无法开具发票",
   "Legs subtotal": "航段小计",
   "Lifecycle stage, derived automatically from the status of the order's shipment legs.": "生命周期阶段，由订单各运单航段的状态自动推导。",
-  "Manage and track orders for your organization": "管理并跟踪您组织的订单",
   "No leg is ready to invoice yet. A leg must be completed or ready to invoice before it can be billed.": "目前尚无可开具发票的区段。区段必须为已完成或可开具发票，才能进行计费。",
   "No legs": "无航段",
   "No order charges": "无订单费用",

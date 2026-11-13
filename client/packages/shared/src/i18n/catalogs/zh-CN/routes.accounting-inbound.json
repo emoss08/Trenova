@@ -15,7 +15,6 @@
   "Paid by": "付款方",
   "Paid on": "付款日",
   "Payments from the books could not be loaded.": "无法加载账簿中的付款。",
-  "Payments recorded in {0} against invoices and settlements Trenova sent, and whether each was brought into Trenova.": "在 {0} 中针对 Trenova 发送的发票和结算记录的付款，以及每笔是否已带入 Trenova。",
   "Payments recorded in {0} are left out of Trenova. Turn them on in the integration settings.": "在 {0} 中记录的付款不会带入 Trenova。请在集成设置中开启。",
   "Payments recorded in {0}: {1}. Last read {2}.": "在 {0} 中记录的付款：{1}。上次读取：{2}。",
   "Pays": "支付项目",

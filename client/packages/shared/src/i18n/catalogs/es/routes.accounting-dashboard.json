@@ -51,7 +51,6 @@
   "Open the short-paid invoices": "Abrir las facturas pagadas de menos",
   "Open this customer's ledger": "Abrir el libro mayor de este cliente",
   "Receivables begin when the first invoice posts from billing. Once one does, the balance, days sales outstanding, aging and collections figures fill in here.": "Las cuentas por cobrar comienzan cuando se contabiliza la primera factura desde facturación. A partir de entonces, aquí se muestran el saldo, los días de ventas pendientes de cobro, la antigüedad y las cifras de cobranza.",
-  "Receivables health, collections, and cash-flow at a glance.": "Salud de las cuentas por cobrar, cobros y flujo de caja de un vistazo.",
   "Reserve releases": "Liberaciones de reserva",
   "Short-pay rate": "Tasa de pagos incompletos",
   "The open invoices most worth a call, ordered by how far past due they are and how much is at stake. Disputes and short payments are marked.": "Las facturas abiertas que más vale la pena reclamar, ordenadas según cuánto llevan vencidas y cuánto está en juego. Se marcan las disputas y los pagos incompletos.",

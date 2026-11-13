@@ -93,7 +93,7 @@ func workWidgets() []WidgetDefinition {
 	return []WidgetDefinition{
 		{
 			Key:         WidgetAttention,
-			Label:       "Needs Attention",
+			Label:       "Needs attention",
 			Description: "Every open queue across billing, operations, and EDI in one grid",
 			Category:    CategoryWork,
 			ConfigKind:  ConfigKindNone,
@@ -101,7 +101,7 @@ func workWidgets() []WidgetDefinition {
 		},
 		{
 			Key:         WidgetUnassigned,
-			Label:       "Unassigned Loads",
+			Label:       "Unassigned loads",
 			Description: "Active shipments with no usable assignment, and the revenue waiting on them",
 			Category:    CategoryWork,
 			Resource:    permission.ResourceShipment,
@@ -126,7 +126,7 @@ func workWidgets() []WidgetDefinition {
 		},
 		{
 			Key:         WidgetDetentionWatch,
-			Label:       "Detention Watch",
+			Label:       "Detention watch",
 			Description: "Stops dwelling past the detention threshold, longest first",
 			Category:    CategoryWork,
 			Resource:    permission.ResourceShipment,
@@ -136,7 +136,7 @@ func workWidgets() []WidgetDefinition {
 		},
 		{
 			Key:              WidgetTomorrowsPickups,
-			Label:            "Tomorrow's Pickups",
+			Label:            "Tomorrow's pickups",
 			Description:      "The next business day's pickup windows with driver coverage",
 			Category:         CategoryWork,
 			Resource:         permission.ResourceShipment,
@@ -147,7 +147,7 @@ func workWidgets() []WidgetDefinition {
 		},
 		{
 			Key:         WidgetMyApprovals,
-			Label:       "My Approvals",
+			Label:       "My approvals",
 			Description: "Invoices and billing transfers waiting on your decision",
 			Category:    CategoryWork,
 			Resource:    permission.ResourceInvoice,
@@ -157,7 +157,7 @@ func workWidgets() []WidgetDefinition {
 		},
 		{
 			Key:         WidgetBillingQueue,
-			Label:       "Billing Queue",
+			Label:       "Billing queue",
 			Description: "Delivered loads waiting to be reviewed and billed",
 			Category:    CategoryWork,
 			Resource:    permission.ResourceBillingQueue,
@@ -167,7 +167,7 @@ func workWidgets() []WidgetDefinition {
 		},
 		{
 			Key:         WidgetServiceFailures,
-			Label:       "Service Failures",
+			Label:       "Service failures",
 			Description: "Open service failures and the loads they belong to",
 			Category:    CategoryWork,
 			Resource:    permission.ResourceServiceFailure,
@@ -177,7 +177,7 @@ func workWidgets() []WidgetDefinition {
 		},
 		{
 			Key:         WidgetEDIAttention,
-			Label:       "EDI Needs Attention",
+			Label:       "EDI needs attention",
 			Description: "Inbound and outbound EDI messages that failed or are held",
 			Category:    CategoryWork,
 			Resource:    permission.ResourceEDI,
@@ -187,7 +187,7 @@ func workWidgets() []WidgetDefinition {
 		},
 		{
 			Key:         WidgetWorkerAttention,
-			Label:       "Workforce Attention",
+			Label:       "Workforce attention",
 			Description: "Drivers who are non-compliant, overdue on training, at risk, or about to lapse",
 			Category:    CategoryWork,
 			Resource:    permission.ResourceWorker,
@@ -202,7 +202,7 @@ func workWidgets() []WidgetDefinition {
 		},
 		{
 			Key:         WidgetExpiringCredentials,
-			Label:       "Expiring Credentials",
+			Label:       "Expiring credentials",
 			Description: "Driver licenses and medical cards, plus equipment registrations, coming due",
 			Category:    CategoryWork,
 			Resource:    permission.ResourceWorker,
@@ -232,7 +232,7 @@ func pulseWidgets() []WidgetDefinition {
 		},
 		{
 			Key:         WidgetKPIRow,
-			Label:       "Metric Strip",
+			Label:       "Metric strip",
 			Description: "Up to six metrics in one compact band",
 			Category:    CategoryPulse,
 			Resource:    permission.ResourceShipment,
@@ -242,7 +242,7 @@ func pulseWidgets() []WidgetDefinition {
 		},
 		{
 			Key:         WidgetARSnapshot,
-			Label:       "Receivables Snapshot",
+			Label:       "Receivables snapshot",
 			Description: "Open, overdue, unapplied cash, and days sales outstanding",
 			Category:    CategoryPulse,
 			Resource:    permission.ResourceAccountsReceivable,
@@ -252,7 +252,7 @@ func pulseWidgets() []WidgetDefinition {
 		},
 		{
 			Key:         WidgetRevenueTrend,
-			Label:       "Revenue & Volume",
+			Label:       "Revenue and volume",
 			Description: "Revenue against load count over a rolling window",
 			Category:    CategoryPulse,
 			Resource:    permission.ResourceShipment,
@@ -262,7 +262,7 @@ func pulseWidgets() []WidgetDefinition {
 		},
 		{
 			Key:         WidgetFleetStatus,
-			Label:       "Fleet Status",
+			Label:       "Fleet status",
 			Description: "Tractor, trailer, and driver availability at a glance",
 			Category:    CategoryPulse,
 			Resource:    permission.ResourceTractor,
@@ -272,7 +272,7 @@ func pulseWidgets() []WidgetDefinition {
 		},
 		{
 			Key:         WidgetOnTimeGoal,
-			Label:       "On-Time Goal",
+			Label:       "On-time goal",
 			Description: "Service performance against target, with the seven-day trail",
 			Category:    CategoryPulse,
 			Resource:    permission.ResourceShipment,
@@ -307,7 +307,7 @@ func insightWidgets() []WidgetDefinition {
 		},
 		{
 			Key:         WidgetLaneHeatmap,
-			Label:       "Lane Heatmap",
+			Label:       "Lane heatmap",
 			Description: "Where volume is concentrating, origin against destination",
 			Category:    CategoryInsight,
 			Resource:    permission.ResourceShipment,
@@ -317,7 +317,7 @@ func insightWidgets() []WidgetDefinition {
 		},
 		{
 			Key:   WidgetAIInsights,
-			Label: "Operational Insights",
+			Label: "Operational insights",
 			Description: "Findings computed from your own records: service slipping, " +
 				"revenue unbilled, detention unclaimed, credentials running out",
 			Category:   CategoryInsight,
@@ -331,7 +331,7 @@ func insightWidgets() []WidgetDefinition {
 		},
 		{
 			Key:         WidgetCustomerMix,
-			Label:       "Customer Mix",
+			Label:       "Customer mix",
 			Description: "Top customers by revenue share, with direction of travel",
 			Category:    CategoryInsight,
 			Resource:    permission.ResourceCustomer,
@@ -346,7 +346,7 @@ func orientationWidgets() []WidgetDefinition {
 	return []WidgetDefinition{
 		{
 			Key:         WidgetQuickActions,
-			Label:       "Quick Actions",
+			Label:       "Quick actions",
 			Description: "Create anything you have permission to create",
 			Category:    CategoryOrientation,
 			ConfigKind:  ConfigKindNone,
@@ -362,7 +362,7 @@ func orientationWidgets() []WidgetDefinition {
 		},
 		{
 			Key:         WidgetJumpBackIn,
-			Label:       "Jump Back In",
+			Label:       "Jump back in",
 			Description: "Records you touched most recently",
 			Category:    CategoryOrientation,
 			Resource:    permission.ResourceAuditLog,
@@ -372,7 +372,7 @@ func orientationWidgets() []WidgetDefinition {
 		},
 		{
 			Key:         WidgetSavedViews,
-			Label:       "Saved Views",
+			Label:       "Saved views",
 			Description: "Your pinned table views and report views",
 			Category:    CategoryOrientation,
 			Resource:    permission.ResourceTableConfiguration,
@@ -418,7 +418,7 @@ func commsWidgets() []WidgetDefinition {
 		},
 		{
 			Key:         WidgetMap,
-			Label:       "Fleet Map",
+			Label:       "Fleet map",
 			Description: "Where the fleet is right now",
 			Category:    CategoryComms,
 			Resource:    permission.ResourceShipment,
@@ -443,35 +443,35 @@ func MetricCatalog() []MetricDefinition {
 	}
 
 	return []MetricDefinition{
-		shipment("activeShipments", "Active Shipments"),
-		shipment("revenueToday", "Revenue Today"),
-		shipment("onTimePercent", "On-Time %"),
-		shipment("emptyMilePercent", "Empty Mile %"),
-		shipment("atRisk", "At Risk"),
+		shipment("activeShipments", "Active shipments"),
+		shipment("revenueToday", "Revenue today"),
+		shipment("onTimePercent", "On-time %"),
+		shipment("emptyMilePercent", "Empty mile %"),
+		shipment("atRisk", "At risk"),
 		shipment("unassigned", "Unassigned"),
-		shipment("readyToDispatch", "Ready to Dispatch"),
+		shipment("readyToDispatch", "Ready to dispatch"),
 		shipment("marginPercent", "Margin %"),
-		shipment("revenuePerMile", "Revenue per Mile"),
-		shipment("costPerMile", "Cost per Mile"),
-		shipment("movesLate", "Late Moves"),
-		shipment("movesDueNow", "Moves Due Now"),
-		shipment("movesDueToday", "Moves Due Today"),
-		shipment("movesUncovered", "Uncovered Moves"),
+		shipment("revenuePerMile", "Revenue per mile"),
+		shipment("costPerMile", "Cost per mile"),
+		shipment("movesLate", "Late moves"),
+		shipment("movesDueNow", "Moves due now"),
+		shipment("movesDueToday", "Moves due today"),
+		shipment("movesUncovered", "Uncovered moves"),
 		{
 			Key:       "arTotalOpen",
-			Label:     "Open Receivables",
+			Label:     "Open receivables",
 			Resource:  permission.ResourceAccountsReceivable,
 			Operation: permission.OpRead,
 		},
 		{
 			Key:       "arOverdue",
-			Label:     "Overdue Receivables",
+			Label:     "Overdue receivables",
 			Resource:  permission.ResourceAccountsReceivable,
 			Operation: permission.OpRead,
 		},
 		{
 			Key:       "arDaysSalesOutstanding",
-			Label:     "Days Sales Outstanding",
+			Label:     "Days sales outstanding",
 			Resource:  permission.ResourceAccountsReceivable,
 			Operation: permission.OpRead,
 		},

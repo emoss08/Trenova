@@ -14,7 +14,7 @@ import { WithheldValue } from "@trenova/shared/components/withheld-value";
 import { cn, formatCurrency } from "@trenova/shared/lib/utils";
 import { useCallback, useState } from "react";
 import { Link, useNavigate } from "react-router";
-import { WidgetCount, WidgetEmpty, WidgetShell, WidgetSkeleton } from "../widget-shell";
+import { WidgetEmpty, WidgetShell, WidgetSkeleton } from "../widget-shell";
 import type { WidgetProps } from "../widget-registry";
 
 const SHIPMENTS_HREF = "/shipment-management/shipments";
@@ -25,13 +25,12 @@ function shipmentHref(shipmentId: string): string {
 }
 
 export function AttentionWidget({ widget, data }: WidgetProps) {
+  const t = useT();
+
   const total = ATTENTION_ROWS.reduce((sum, row) => sum + (data.attention?.[row.key] ?? 0), 0);
 
   return (
-    <WidgetShell
-      title={widget.title || "Needs Attention"}
-      badge={<WidgetCount value={total} tone={total > 0 ? "warning" : "muted"} />}
-    >
+    <WidgetShell title={widget.title || t("Needs attention")} count={total}>
       {data.attentionLoading ? (
         <WidgetSkeleton rows={5} />
       ) : (
@@ -53,7 +52,7 @@ function AttentionTile({ row, count }: { row: AttentionRowConfig; count: number 
   return (
     <Link
       to={row.path}
-      className="hover:bg-muted/60 flex items-center gap-2 rounded-md px-1.5 py-1 transition-colors"
+      className="hover:bg-surface-hover flex items-center gap-2 rounded-md px-1.5 py-1 transition-colors"
     >
       <span
         className={cn(
@@ -81,7 +80,7 @@ export function UnassignedWidget({ widget }: WidgetProps) {
   const [summary, setSummary] = useState<UnassignedQueueSummary>({
     totalCount: undefined,
     totalCountExact: true,
-    pendingRevenue: 0,
+    pendingRevenue: null,
   });
 
   const handleSelect = useCallback(
@@ -91,20 +90,13 @@ export function UnassignedWidget({ widget }: WidgetProps) {
 
   return (
     <WidgetShell
-      title={widget.title || "Unassigned Loads"}
-      badge={
-        <WidgetCount
-          value={summary.totalCount}
-          exact={summary.totalCountExact}
-          tone="warning"
-        />
-      }
-      actions={
-        summary.pendingRevenue > 0 ? (
-          <span className="font-table text-muted-foreground shrink-0 text-3xs tabular-nums">
-            {t("{0} waiting", formatCurrency(summary.pendingRevenue))}
-          </span>
-        ) : undefined
+      title={widget.title || t("Unassigned loads")}
+      count={summary.totalCount}
+      countExact={summary.totalCountExact}
+      hint={
+        summary.pendingRevenue !== null && summary.pendingRevenue > 0
+          ? t("{0} waiting", formatCurrency(summary.pendingRevenue))
+          : undefined
       }
       href={SHIPMENTS_HREF}
       hrefLabel={t("Open dispatch board")}
@@ -131,8 +123,8 @@ export function ExceptionsWidget({ widget }: WidgetProps) {
 
   return (
     <WidgetShell
-      title={widget.title || "Exceptions"}
-      badge={<WidgetCount value={count} tone={count > 0 ? "danger" : "muted"} />}
+      title={widget.title || t("Exceptions")}
+      count={count}
       href={SHIPMENTS_HREF}
       hrefLabel={t("Open dispatch board")}
       bodyClassName="p-0"
@@ -155,8 +147,8 @@ export function DetentionWatchWidget({ widget, data }: WidgetProps) {
 
   return (
     <WidgetShell
-      title={widget.title || "Detention Watch"}
-      badge={<WidgetCount value={all.length} tone={all.length > 0 ? "warning" : "muted"} />}
+      title={widget.title || t("Detention watch")}
+      count={all.length}
       href={SHIPMENTS_HREF}
     >
       {data.shipmentAnalyticsLoading ? (
@@ -169,7 +161,7 @@ export function DetentionWatchWidget({ widget, data }: WidgetProps) {
             <Link
               key={item.shipmentId}
               to={shipmentHref(item.shipmentId)}
-              className="hover:bg-muted/60 flex items-center gap-2 rounded-md px-1.5 py-1 transition-colors"
+              className="hover:bg-surface-hover flex items-center gap-2 rounded-md px-1.5 py-1 transition-colors"
             >
               <span
                 className={cn(
@@ -199,8 +191,8 @@ export function TomorrowsPickupsWidget({ widget, data }: WidgetProps) {
 
   return (
     <WidgetShell
-      title={widget.title || "Tomorrow's Pickups"}
-      badge={<WidgetCount value={all.length} />}
+      title={widget.title || t("Tomorrow's pickups")}
+      count={all.length}
       href={SHIPMENTS_HREF}
     >
       {data.shipmentAnalyticsLoading ? (
@@ -213,7 +205,7 @@ export function TomorrowsPickupsWidget({ widget, data }: WidgetProps) {
             <Link
               key={item.shipmentId}
               to={shipmentHref(item.shipmentId)}
-              className="hover:bg-muted/60 flex flex-col gap-0.5 rounded-md px-1.5 py-1 transition-colors"
+              className="hover:bg-surface-hover flex flex-col gap-0.5 rounded-md px-1.5 py-1 transition-colors"
             >
               <div className="flex items-baseline justify-between gap-2">
                 <span className="font-table truncate text-2xs font-semibold tabular-nums">
@@ -301,7 +293,7 @@ export function MyApprovalsWidget({ widget, data }: WidgetProps) {
 
   return (
     <CountWidget
-      title={widget.title || "My Approvals"}
+      title={widget.title || t("My approvals")}
       count={data.attention?.pendingApprovals ?? undefined}
       loading={data.attentionLoading}
       href="/billing/pending-approvals"
@@ -317,7 +309,7 @@ export function BillingQueueWidget({ widget, data }: WidgetProps) {
 
   return (
     <CountWidget
-      title={widget.title || "Billing Queue"}
+      title={widget.title || t("Billing queue")}
       count={data.attention?.billingQueue ?? undefined}
       loading={data.attentionLoading}
       href="/billing/queue"
@@ -333,7 +325,7 @@ export function ServiceFailuresWidget({ widget, data }: WidgetProps) {
 
   return (
     <CountWidget
-      title={widget.title || "Service Failures"}
+      title={widget.title || t("Service failures")}
       count={data.attention?.serviceFailures ?? undefined}
       loading={data.attentionLoading}
       href="/shipment-management/service-failures"
@@ -349,7 +341,7 @@ export function EDIAttentionWidget({ widget, data }: WidgetProps) {
 
   return (
     <CountWidget
-      title={widget.title || "EDI Needs Attention"}
+      title={widget.title || t("EDI needs attention")}
       count={data.attention?.ediAttention ?? undefined}
       loading={data.attentionLoading}
       href="/edi/overview"
@@ -378,13 +370,13 @@ export function ExpiringCredentialsWidget({ widget }: WidgetProps) {
   ];
 
   return (
-    <WidgetShell title={widget.title || "Expiring Credentials"} href="/reports">
+    <WidgetShell title={widget.title || t("Expiring credentials")} href="/reports">
       <div className="flex flex-col gap-0.5">
         {targets.map((target) => (
           <Link
             key={target.href}
             to={target.href}
-            className="hover:bg-muted/60 rounded-md px-1.5 py-1 text-xs transition-colors"
+            className="hover:bg-surface-hover rounded-md px-1.5 py-1 text-xs transition-colors"
           >
             {t(target.label)}
           </Link>

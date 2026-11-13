@@ -1,5 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
-import { Metadata } from "@/components/metadata";
+import { PageLayout } from "@/components/navigation/sidebar-layout";
 import {
   useHomeLayout,
   useHomeWidgetCatalog,
@@ -17,10 +17,11 @@ import { Operation, Resource } from "@trenova/shared/types/permission";
 import { Button } from "@trenova/shared/components/ui/button";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
-import { FlipBackwardIcon } from "@trenova/shared/components/icons";
+import { FlipBackwardIcon, Grid01Icon, Lock01Icon } from "@trenova/shared/components/icons";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { useState } from "react";
 import { toast } from "@trenova/shared/components/ui/toast";
-import { BriefingBar } from "./_components/briefing-bar";
+import { HomeBrief } from "./_components/home-brief";
 import { HomeCanvas } from "./_components/home-canvas";
 import { useHomeData } from "./_components/use-home-data";
 
@@ -28,7 +29,7 @@ import { useHomeData } from "./_components/use-home-data";
 // layout the way the page itself would rather than fetching it again from the loader.
 const HOME_LAYOUT_STALE_TIME = 60_000;
 
-// The layout and the attention summary are asked for on every visit. The briefing bar
+// The layout and the attention summary are asked for on every visit. The brief
 // reads the shipment analytics payload too, but only for a viewer who can read shipments;
 // the home route has no permission loader of its own, so the manifest is settled here
 // the same way createPermissionLoader settles it for every other route.
@@ -81,9 +82,9 @@ export function Home() {
     setDraft(null);
   }
 
-  // The briefing bar reads the same payload the canvas does, so both show the
+  // The brief reads the same payload the canvas does, so both show the
   // same instant's numbers rather than two requests a second apart.
-  const data = useHomeData(widgets, { briefing: true });
+  const data = useHomeData(widgets, { brief: true });
 
   const startEditing = () => {
     setDraft(layout.widgets);
@@ -129,53 +130,103 @@ export function Home() {
   };
 
   return (
-    <>
-      <Metadata
-        title={t("Home")}
-        description={t("Your work, your numbers, and where to go next.")}
-      />
-
-      <BriefingBar
+    <PageLayout
+      pageHeaderProps={{
+        title: t("Home"),
+        description: t("Your work, your numbers, and where to go next."),
+        actions: (
+          <CustomizeButton
+            locked={layout.locked}
+            editing={editing}
+            disabled={!layout.canCustomize || updateLayout.isPending}
+            onClick={() => (editing ? void save() : startEditing())}
+          />
+        ),
+      }}
+    >
+      <HomeBrief
         attention={data.attention}
         analytics={data.shipmentAnalytics}
         analyticsReady={data.shipmentAnalyticsReady}
-        loading={layoutQuery.isLoading || data.attentionLoading || data.shipmentAnalyticsLoading}
-        canCustomize={layout.canCustomize}
-        locked={layout.locked}
-        editing={editing}
-        saving={updateLayout.isPending}
-        onCustomize={() => (editing ? void save() : startEditing())}
+        loading={data.attentionLoading || data.shipmentAnalyticsLoading}
       />
 
-      <div className="flex flex-col gap-4 p-4">
-        {!editing && layout.source === "USER" && (
-          <DivergenceChip
-            presetName={layout.presetName}
-            pending={resetLayout.isPending}
-            onReset={() => void reset()}
-          />
-        )}
+      {!editing && layout.source === "USER" && (
+        <DivergenceChip
+          presetName={layout.presetName}
+          pending={resetLayout.isPending}
+          onReset={() => void reset()}
+        />
+      )}
 
-        {layoutQuery.isLoading ? (
-          <HomeSkeleton />
-        ) : (
-          <HomeCanvas
-            widgets={widgets}
-            data={data}
-            catalog={catalog.data}
-            catalogLoading={catalog.isLoading}
-            editing={editing}
-            onChange={setDraft}
-            dock={{
-              dirty: draft != null && !sameWidgets(draft, layout.widgets),
-              saving: updateLayout.isPending,
-              onSave: () => void save(),
-              onDiscard: discard,
-            }}
-          />
-        )}
-      </div>
-    </>
+      {layoutQuery.isLoading ? (
+        <HomeSkeleton />
+      ) : (
+        <HomeCanvas
+          widgets={widgets}
+          data={data}
+          catalog={catalog.data}
+          catalogLoading={catalog.isLoading}
+          editing={editing}
+          onChange={setDraft}
+          dock={{
+            dirty: draft != null && !sameWidgets(draft, layout.widgets),
+            saving: updateLayout.isPending,
+            onSave: () => void save(),
+            onDiscard: discard,
+          }}
+        />
+      )}
+    </PageLayout>
+  );
+}
+
+/**
+ * The page bar's one action. An administrator who locked the home screen leaves the
+ * control in place, disabled, with the reason behind it, so nobody hunts for a way to
+ * rearrange a screen they are not allowed to.
+ */
+function CustomizeButton({
+  locked,
+  editing,
+  disabled,
+  onClick,
+}: {
+  locked: boolean;
+  editing: boolean;
+  disabled: boolean;
+  onClick: () => void;
+}) {
+  const t = useT();
+
+  if (locked) {
+    return (
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <Button variant="outline" size="sm" disabled>
+              <Lock01Icon className="size-3.5" />
+              {t("Customize")}
+            </Button>
+          }
+        />
+        <TooltipContent side="bottom">
+          {t("Your administrator manages this home screen.")}
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
+
+  return (
+    <Button
+      variant={editing ? "default" : "outline"}
+      size="sm"
+      onClick={onClick}
+      disabled={disabled}
+    >
+      <Grid01Icon className="size-3.5" />
+      {editing ? t("Done") : t("Customize")}
+    </Button>
   );
 }
 
@@ -196,8 +247,8 @@ function DivergenceChip({
   const t = useT();
 
   return (
-    <div className="border-border/70 bg-card text-2xs text-muted-foreground flex flex-wrap items-center gap-1.5 self-start rounded-badge border py-0.5 pr-1 pl-2.5">
-      <span>{t("Customized{0}", presetName ? ` ${t("from {0}", presetName)}` : "")}</span>
+    <div className="flex flex-wrap items-center gap-1.5 self-start rounded-badge border border-border bg-card py-0.5 pr-1 pl-2.5 text-xs text-muted-foreground">
+      <span>{presetName ? t("Customized from {0}", presetName) : t("Customized")}</span>
       <Button
         variant="ghost"
         size="xxs"
@@ -213,15 +264,18 @@ function DivergenceChip({
 }
 
 function HomeSkeleton() {
+  const t = useT();
+
   return (
     <div
-      className="grid gap-3"
-      style={{ gridTemplateColumns: "repeat(12, minmax(0, 1fr))", gridAutoRows: "64px" }}
+      aria-busy
+      aria-label={t("Loading your home screen")}
+      className="grid grid-cols-12 gap-3"
+      style={{ gridAutoRows: "64px" }}
     >
-      <Skeleton className="col-span-12 row-span-2 rounded-lg" />
-      <Skeleton className="col-span-4 row-span-4 rounded-lg" />
-      <Skeleton className="col-span-4 row-span-4 rounded-lg" />
-      <Skeleton className="col-span-4 row-span-4 rounded-lg" />
+      <Skeleton className="col-span-full row-span-2 rounded-lg" />
+      <Skeleton className="col-span-full row-span-5 rounded-lg md:col-span-6" />
+      <Skeleton className="col-span-full row-span-5 rounded-lg md:col-span-6" />
     </div>
   );
 }

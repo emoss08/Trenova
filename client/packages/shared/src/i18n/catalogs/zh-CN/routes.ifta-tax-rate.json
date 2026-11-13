@@ -33,7 +33,6 @@
   "The columns are jurisdiction code, fuel type, rate per gallon and surcharge per gallon, matched by name. Start from the template if in doubt.": "列为管辖区代码、燃油类型、每加仑税率与每加仑附加费，按名称匹配。若有疑问，请从模板开始。",
   "The edition or bulletin, and anything odd about how the figure was read.": "版本或公告，以及读取该数字时的任何特殊情形。",
   "The matrix lists a separate rate for each fuel; DEF, reefer and other never carry one.": "矩阵对每种燃油分别列出税率；DEF、冷藏机组与其他类别则从无税率。",
-  "The per-gallon rates each jurisdiction publishes for a quarter and fuel type, as the IFTA rate matrix lists them. A return cannot be finalized while any of its member lines is missing a rate.": "各管辖区就特定季度与燃油类型公布的每加仑税率，依 IFTA 税率矩阵所列。只要其中任一成员明细缺少税率，申报即无法定案。",
   "The state or province that levies the tax.": "征收此税的州或省。",
   "The {0} rate for {1} in {2} ( {3} per gallon) will be removed.": "{2} 中 {1} 的 {0} 税率（每加仑 {3}）将被移除。",
   "This file": "此文件",

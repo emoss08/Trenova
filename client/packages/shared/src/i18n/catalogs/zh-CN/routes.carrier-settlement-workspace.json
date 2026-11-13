@@ -13,7 +13,6 @@
   "Carrier settlements created for this period, across every status except voided.": "本期创建的承运商结算，涵盖作废以外的所有状态。",
   "Cost events accrue automatically as carrier-covered moves complete. Once there is pending cost, generate the period's settlements from here.": "成本事件会在承运商承运的运程完成时自动累计。一旦有待处理的成本，即可在此生成本期的结算。",
   "Everything affecting this carrier's payable — cost accruals, recent statements, and the AP subledger.": "影响此承运商应付款的所有项目 — 成本计提、近期对账单，以及应付账款明细账。",
-  "Everything needed to run a carrier pay period from one screen — review the queue, process settlements one at a time or in bulk, and keep the AP subledger current.": "在单一界面完成承运商薪资期间作业所需的一切 — 查看队列、逐笔或批量处理结算，并保持应付账款明细账的即时性。",
   "Latest statements for this carrier.": "此承运商的最新对账单。",
   "No other settlements on record.": "没有其他结算记录。",
   "No pending cost events are waiting — there is nothing to generate": "没有等待处理的成本事件 — 无可生成的内容",

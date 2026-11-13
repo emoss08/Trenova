@@ -27,7 +27,6 @@
   "Optional — tagging a pay code posts the adjustment to that code's GL account instead of the default expense account.": "Opcional: etiquetar un código de pago contabiliza el ajuste en la cuenta del libro mayor de ese código en lugar de en la cuenta de gastos predeterminada.",
   "Pay profile: {0}": "Perfil de pago: {0}",
   "Positive amounts add pay (layover, breakdown, bonus); negative amounts deduct.": "Los importes positivos suman pago (escala, avería, bonificación); los negativos lo descuentan.",
-  "Read-only record of every driver and owner-operator settlement across pay periods — process active settlements in the workspace.": "Registro de solo lectura de todas las liquidaciones de conductores y transportistas propietarios en los distintos períodos de pago; procese las liquidaciones activas en el espacio de trabajo.",
   "Record how the net pay was disbursed to the worker.": "Registre cómo se desembolsó el pago neto al trabajador.",
   "Remove pay event from settlement": "Quitar el evento de pago de la liquidación",
   "Remove this pay event — it returns to the unsettled pool for a later settlement": "Quitar este evento de pago: vuelve al fondo sin liquidar para una liquidación posterior",
