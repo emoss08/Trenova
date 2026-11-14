@@ -30,7 +30,7 @@
   "devDependencies": {
     "@graphql-codegen/cli": "^7.4.0",
     "@graphql-codegen/client-preset": "^6.1.3",
-    "@graphql-codegen/schema-ast": "^6.1.0",
+    "@graphql-codegen/schema-ast": "^7.0.0",
     "@trenova/config": "workspace:*",
     "graphql": "^17.0.2",
     "typescript": "~7.0.2"
